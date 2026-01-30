@@ -28,6 +28,7 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --dry-run    Show what would be done without executing"
+    echo "  --verbose    Show more detailed Claude output"
     echo "  --sandbox    Run in Docker sandbox (safer, isolated environment)"
     exit 1
 }
@@ -58,7 +59,7 @@ get_scenario_config() {
             PROVIDER="hookdeck"
             FRAMEWORK="express"
             SKILL_NAME="hookdeck-event-gateway"
-            PROMPT="Set up Hookdeck Event Gateway to receive webhooks in my Express app. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            PROMPT="Create an Express webhook handler that receives webhooks forwarded through Hookdeck Event Gateway. Hookdeck is a webhook proxy - it receives webhooks from providers and forwards them to my app, adding an x-hookdeck-signature header for verification. I need to verify this signature using HMAC SHA-256 with base64 encoding. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         *)
             return 1
@@ -69,11 +70,16 @@ get_scenario_config() {
 # Parse arguments
 SCENARIO=""
 DRY_RUN=false
+VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dry-run)
             DRY_RUN=true
+            shift
+            ;;
+        --verbose)
+            VERBOSE=true
             shift
             ;;
         -h|--help)
@@ -217,11 +223,18 @@ run_agent() {
     
     local start_time=$(date +%s)
     
-        # Run Claude with the prompt
-        # -p for print mode (non-interactive)
-        # --dangerously-skip-permissions to allow file writes without prompts
-        cd "$SCENARIO_DIR"
+    # Run Claude with the prompt
+    # -p for print mode (non-interactive)
+    # --dangerously-skip-permissions to allow file writes without prompts
+    cd "$SCENARIO_DIR"
+    
+    if [ "$VERBOSE" = true ]; then
+        # Verbose mode shows more detailed output
+        echo -e "${YELLOW}(Verbose mode enabled)${NC}"
+        claude -p --verbose --dangerously-skip-permissions "$PROMPT" 2>&1 | tee "$log_file" || true
+    else
         claude -p --dangerously-skip-permissions "$PROMPT" 2>&1 | tee "$log_file" || true
+    fi
     
     local end_time=$(date +%s)
     local duration=$((end_time - start_time))

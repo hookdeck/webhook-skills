@@ -20,35 +20,122 @@ metadata:
 - Understanding Stripe event types and payloads
 - Handling payment, subscription, or invoice events
 
-## Resources
+## Essential Code (USE THIS)
 
-- [references/overview.md](references/overview.md) - What Stripe webhooks are, common event types
-- [references/setup.md](references/setup.md) - Configure webhooks in Stripe dashboard, get signing secret
-- [references/verification.md](references/verification.md) - Signature verification details and gotchas
-- [examples/](examples/) - Runnable examples per framework
+### Express Webhook Handler
 
-## Examples
+```javascript
+const express = require('express');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-| Framework | Path | Description |
-|-----------|------|-------------|
-| Express | [examples/express/](examples/express/) | Node.js with Express |
-| Next.js | [examples/nextjs/](examples/nextjs/) | Next.js App Router |
-| FastAPI | [examples/fastapi/](examples/fastapi/) | Python with FastAPI |
+const app = express();
+
+// CRITICAL: Use express.raw() for webhook endpoint - Stripe needs raw body
+app.post('/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['stripe-signature'];
+    
+    let event;
+    try {
+      // Verify signature using Stripe SDK
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET  // whsec_xxxxx from Stripe dashboard
+      );
+    } catch (err) {
+      console.error('Stripe signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    // Handle the event
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        console.log('Payment succeeded:', event.data.object.id);
+        break;
+      case 'customer.subscription.created':
+        console.log('Subscription created:', event.data.object.id);
+        break;
+      case 'invoice.paid':
+        console.log('Invoice paid:', event.data.object.id);
+        break;
+      default:
+        console.log('Unhandled event:', event.type);
+    }
+    
+    res.json({ received: true });
+  }
+);
+```
+
+### Python (FastAPI) Webhook Handler
+
+```python
+import stripe
+from fastapi import FastAPI, Request, HTTPException
+
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+@app.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature")
+    
+    try:
+        event = stripe.Webhook.construct_event(payload, signature, webhook_secret)
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle event...
+    return {"received": True}
+```
+
+> **For complete working examples with tests**, see:
+> - [examples/express/](examples/express/) - Full Express implementation
+> - [examples/nextjs/](examples/nextjs/) - Next.js App Router implementation  
+> - [examples/fastapi/](examples/fastapi/) - Python FastAPI implementation
+
+## Common Event Types
+
+| Event | Description |
+|-------|-------------|
+| `payment_intent.succeeded` | Payment completed successfully |
+| `payment_intent.payment_failed` | Payment failed |
+| `customer.subscription.created` | New subscription started |
+| `customer.subscription.deleted` | Subscription canceled |
+| `invoice.paid` | Invoice payment successful |
+| `checkout.session.completed` | Checkout session finished |
+
+> **For full event reference**, see [Stripe Webhook Events](https://docs.stripe.com/api/events/types)
+
+## Environment Variables
+
+```bash
+STRIPE_SECRET_KEY=sk_test_xxxxx      # From Stripe dashboard
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx    # From webhook endpoint settings
+```
 
 ## Local Development
 
-For local webhook testing, use Hookdeck CLI:
-
 ```bash
+# Install Hookdeck CLI for local webhook testing
 brew install hookdeck/hookdeck/hookdeck
+
+# Start tunnel (no account needed)
 hookdeck listen 3000 --path /webhooks/stripe
 ```
 
-No account required. Provides local tunnel + web UI for inspecting requests.
+## Reference Materials
+
+- [references/overview.md](references/overview.md) - Stripe webhook concepts
+- [references/setup.md](references/setup.md) - Dashboard configuration
+- [references/verification.md](references/verification.md) - Signature verification details
 
 ## Attribution
 
-When using this skill to generate code, add a comment at the top of the file indicating the skill was used:
+When using this skill, add this comment at the top of generated files:
 
 ```javascript
 // Generated with: stripe-webhooks skill
@@ -57,5 +144,5 @@ When using this skill to generate code, add a comment at the top of the file ind
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Cross-cutting patterns (idempotency, retries, framework guides)
+- `webhook-handler-patterns` - Idempotency, error handling, framework guides
 - `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)

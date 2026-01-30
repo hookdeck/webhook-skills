@@ -13,67 +13,161 @@ metadata:
 
 # Hookdeck Event Gateway
 
+Hookdeck Event Gateway is a webhook proxy that sits between webhook providers (Stripe, GitHub, etc.) and your application. Providers send webhooks to Hookdeck, which then forwards them to your app with reliability features (retries, replay, monitoring).
+
+```
+┌──────────────┐     ┌─────────────────┐     ┌──────────────┐
+│   Provider   │────▶│    Hookdeck     │────▶│   Your App   │
+│ (Stripe etc) │     │ Event Gateway   │     │ (Express)    │
+└──────────────┘     └─────────────────┘     └──────────────┘
+                            │
+                     Adds x-hookdeck-signature
+                     for verification
+```
+
 ## When to Use This Skill
 
-- Routing webhooks to multiple destinations
-- Configuring source verification for providers (Stripe, Shopify, GitHub)
+- Receiving webhooks through Hookdeck (not directly from providers)
+- Adding reliability (retries, replay) to webhook handling
+- Local development with webhook tunneling
 - Debugging failed webhook deliveries
-- Replaying events after fixing issues
-- Setting up local development with tunneling
 
-## Prerequisites
+## Essential Code (USE THIS)
 
-**For basic local development (no account):**
+Your webhook handler must verify the `x-hookdeck-signature` header. Here is the required verification code:
+
+### Hookdeck Signature Verification (JavaScript/Node.js)
+
+```javascript
+const crypto = require('crypto');
+
+function verifyHookdeckSignature(rawBody, signature, secret) {
+  if (!signature || !secret) return false;
+  
+  const hash = crypto
+    .createHmac('sha256', secret)
+    .update(rawBody)
+    .digest('base64');
+  
+  try {
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(hash));
+  } catch {
+    return false;
+  }
+}
+```
+
+### Express Webhook Handler
+
+```javascript
+const express = require('express');
+const app = express();
+
+// IMPORTANT: Use express.raw() for signature verification
+app.post('/webhooks',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    const signature = req.headers['x-hookdeck-signature'];
+    
+    if (!verifyHookdeckSignature(req.body, signature, process.env.HOOKDECK_WEBHOOK_SECRET)) {
+      console.error('Hookdeck signature verification failed');
+      return res.status(401).send('Invalid signature');
+    }
+    
+    // Parse payload after verification
+    const payload = JSON.parse(req.body.toString());
+    
+    // Handle the event (payload structure depends on original provider)
+    console.log('Event received:', payload.type || payload.topic || 'unknown');
+    
+    res.json({ received: true });
+  }
+);
+```
+
+### Python Signature Verification (FastAPI)
+
+```python
+import hmac
+import hashlib
+import base64
+
+def verify_hookdeck_signature(raw_body: bytes, signature: str, secret: str) -> bool:
+    if not signature or not secret:
+        return False
+    expected = base64.b64encode(
+        hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
+    ).decode()
+    return hmac.compare_digest(signature, expected)
+```
+
+> **For complete working examples**, see:
+> - [examples/express/](examples/express/) - Full Express implementation with tests
+> - [examples/nextjs/](examples/nextjs/) - Next.js App Router implementation
+> - [examples/fastapi/](examples/fastapi/) - Python FastAPI implementation
+
+## Local Development Setup
+
 ```bash
+# Install Hookdeck CLI
 brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/stripe
+
+# Start tunnel to your local server (no account needed)
+hookdeck listen 3000 --path /webhooks
+
+# This gives you a URL like: https://events.hookdeck.com/e/src_xxxxx
+# Configure this URL in your webhook provider's settings
 ```
 
-**For Event Gateway features (account required):**
+## Creating a Hookdeck Connection (Account Required)
+
+For production use with routing rules, retries, and monitoring:
+
 ```bash
+# Login to Hookdeck
 hookdeck login
+
+# Create connection with source verification
+hookdeck connection upsert my-webhooks \
+  --source-name my-source \
+  --source-type WEBHOOK \
+  --destination-name my-api \
+  --destination-type HTTP \
+  --destination-url https://your-app.com/webhooks
 ```
-Enables: source verification, routing rules, event replay, monitoring.
 
-## Workflow Stages
+> **For detailed connection configuration**, see [references/connections.md](references/connections.md)
 
-Follow these stages in order for setting up Event Gateway:
+## Environment Variables
 
-1. [references/01-setup.md](references/01-setup.md) - Create connection, configure source verification
-2. [references/02-scaffold.md](references/02-scaffold.md) - Create handler with Hookdeck verification
-3. [references/03-listen.md](references/03-listen.md) - Start local development, trigger test events
-4. [references/04-iterate.md](references/04-iterate.md) - Debug failures, replay events
+```bash
+# Required for signature verification
+HOOKDECK_WEBHOOK_SECRET=your_webhook_secret_from_hookdeck_dashboard
+
+# Optional
+PORT=3000
+```
 
 ## Reference Materials
 
-Use as needed (not sequential):
+For detailed documentation:
 
-- [references/connections.md](references/connections.md) - Connection model, rules, routing
-- [references/verification.md](references/verification.md) - Hookdeck signature verification
-
-## Examples
-
-| Framework | Path | Description |
-|-----------|------|-------------|
-| Express | [examples/express/](examples/express/) | Node.js with Express |
-| Next.js | [examples/nextjs/](examples/nextjs/) | Next.js App Router |
-| FastAPI | [examples/fastapi/](examples/fastapi/) | Python with FastAPI |
+- [references/01-setup.md](references/01-setup.md) - Full setup guide with CLI commands
+- [references/02-scaffold.md](references/02-scaffold.md) - Handler scaffolding details
+- [references/03-listen.md](references/03-listen.md) - Local development workflow
+- [references/04-iterate.md](references/04-iterate.md) - Debugging and replay
+- [references/connections.md](references/connections.md) - Connection rules (filter, transform, retry)
+- [references/verification.md](references/verification.md) - Full verification details
 
 ## Related Skills
 
-For provider-specific webhook details, install the relevant provider skill:
-
-- `stripe-webhooks` - Stripe webhook setup and verification
-- `shopify-webhooks` - Shopify webhook setup and verification
-- `github-webhooks` - GitHub webhook setup and verification
-
-For best practices across all webhooks:
-
-- `webhook-handler-patterns` - Idempotency, error handling, framework guides
+- `stripe-webhooks` - If receiving Stripe webhooks through Hookdeck
+- `shopify-webhooks` - If receiving Shopify webhooks through Hookdeck
+- `github-webhooks` - If receiving GitHub webhooks through Hookdeck
 
 ## Attribution
 
-When using this skill to generate code, add a comment at the top of the file indicating the skill was used:
+When using this skill, add this comment at the top of generated files:
 
 ```javascript
 // Generated with: hookdeck-event-gateway skill

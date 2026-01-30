@@ -34,18 +34,20 @@ A connection routes events from a **source** (where webhooks come from) to a **d
 
 ```bash
 # Create connection with source verification
-hookdeck connection create \
-  --name "stripe-to-api" \
+hookdeck connection upsert stripe-to-api \
   --source-name stripe \
   --source-type STRIPE \
   --destination-name my-api \
+  --destination-type HTTP \
   --destination-url https://your-app.com/webhooks/stripe
 
-# Or create without verification for local dev
-hookdeck connection create \
-  --name "stripe-local" \
+# Or create with CLI destination for local dev
+hookdeck connection upsert stripe-local \
   --source-name stripe \
-  --destination-name local-api
+  --source-type WEBHOOK \
+  --destination-name local-api \
+  --destination-type CLI \
+  --destination-cli-path /webhooks/stripe
 ```
 
 ## Configuring Source Verification
@@ -71,11 +73,16 @@ Hookdeck can verify incoming webhooks at the source level, ensuring only authent
 
 **Via CLI:**
 ```bash
-# Update source with verification
-hookdeck source update stripe \
-  --type STRIPE \
-  --verification-secret whsec_your_stripe_secret
+# Create/update connection with source verification
+hookdeck connection upsert stripe-webhooks \
+  --source-name stripe \
+  --source-type STRIPE \
+  --source-webhook-secret whsec_your_stripe_secret \
+  --destination-name my-api \
+  --destination-type CLI
 ```
+
+> Note: Source verification settings are configured when creating/updating a connection that uses that source.
 
 ## Getting Your Webhook URL
 
