@@ -49,3 +49,6 @@ yarn.lock
 # Plan files (internal)
 .plan/
 *.plan.md
+
+# Test results (generated during agent testing)
+test-results/
