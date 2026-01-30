@@ -42,9 +42,9 @@ coverage/
 htmlcov/
 .pytest_cache/
 
-# Package lock files (optional - uncomment if you don't want to track these)
-# package-lock.json
-# yarn.lock
+# Package lock files (not tracked for example projects)
+package-lock.json
+yarn.lock
 
 # Plan files (internal)
 .plan/

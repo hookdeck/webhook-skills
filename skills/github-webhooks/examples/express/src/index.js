@@ -116,8 +116,14 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Webhook endpoint: POST http://localhost:${PORT}/webhooks/github`);
-});
+// Export app for testing
+module.exports = { app, verifyGitHubWebhook };
+
+// Start server only when run directly (not when imported for testing)
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Webhook endpoint: POST http://localhost:${PORT}/webhooks/github`);
+  });
+}
