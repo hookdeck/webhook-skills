@@ -33,15 +33,23 @@ Sources define where webhooks come from and how to verify them.
 
 ### Creating Sources
 
-```bash
-# Source with verification
-hookdeck source create stripe \
-  --type STRIPE \
-  --verification-secret whsec_your_secret
+Sources are created inline when creating a connection. Use `upsert` for idempotent operations:
 
-# Generic source
-hookdeck source create generic-webhooks \
-  --type WEBHOOK
+```bash
+# Create connection with Stripe source (auto-creates source)
+hookdeck connection upsert stripe-to-local \
+  --source-type STRIPE \
+  --source-name stripe-webhooks \
+  --source-webhook-secret whsec_your_secret \
+  --destination-type CLI \
+  --destination-name local-dev
+
+# Create connection with generic webhook source
+hookdeck connection upsert generic-to-local \
+  --source-type WEBHOOK \
+  --source-name generic-webhooks \
+  --destination-type CLI \
+  --destination-name local-dev
 ```
 
 ## Destinations
@@ -57,15 +65,34 @@ Destinations define where events are delivered.
 
 ### Creating Destinations
 
+Destinations are created inline when creating a connection:
+
 ```bash
 # HTTP destination
-hookdeck destination create my-api \
-  --url https://api.example.com/webhooks
+hookdeck connection upsert my-webhooks \
+  --source-type WEBHOOK \
+  --source-name my-source \
+  --destination-type HTTP \
+  --destination-name my-api \
+  --destination-url https://api.example.com/webhooks
 
-# With authentication
-hookdeck destination create my-api \
-  --url https://api.example.com/webhooks \
-  --auth-header "Authorization: Bearer token123"
+# With bearer token authentication
+hookdeck connection upsert my-webhooks \
+  --source-type WEBHOOK \
+  --source-name my-source \
+  --destination-type HTTP \
+  --destination-name my-api \
+  --destination-url https://api.example.com/webhooks \
+  --destination-auth-method bearer \
+  --destination-bearer-token "token123"
+
+# CLI destination for local development
+hookdeck connection upsert my-local \
+  --source-type WEBHOOK \
+  --source-name my-source \
+  --destination-type CLI \
+  --destination-name local-dev \
+  --destination-cli-path /webhooks
 ```
 
 ## Connection Rules
@@ -93,30 +120,44 @@ hookdeck connection upsert my-connection \
 
 ### Filter Rule
 
-Route events based on content:
+Route events based on content using JSON filter syntax:
 
 ```bash
-# Only allow specific event types
+# Only allow specific event types (using --rules flag for complex filters)
 hookdeck connection upsert my-connection \
-  --rule-filter '{"body.type": {"$in": ["payment_intent.succeeded", "invoice.paid"]}}'
+  --rules '[{"type":"filter","body":{"type":{"$in":["payment_intent.succeeded","invoice.paid"]}}}]'
+
+# Filter by header value
+hookdeck connection upsert my-connection \
+  --rules '[{"type":"filter","headers":{"x-shopify-topic":{"$startsWith":"order/"}}}]'
 ```
 
 Filter operators:
-- `$eq` - Equal
-- `$ne` - Not equal
-- `$in` - In array
-- `$nin` - Not in array
-- `$contains` - Contains string
-- `$regex` - Regex match
+- `$eq` - Equal (or deep equal)
+- `$neq` - Not equal
+- `$in` - Contains (for arrays/strings)
+- `$nin` - Does not contain
+- `$gt`, `$gte`, `$lt`, `$lte` - Comparison operators
+- `$startsWith`, `$endsWith` - String matching
+- `$or`, `$and` - Logical operators
+- `$not` - Negation
+- `$exist` - Check if field exists
+
+> **Note:** For complex JSON filters, use the `--rules` flag with a full rules array. 
+> See [Hookdeck Filters documentation](https://hookdeck.com/docs/filters) for full syntax.
 
 ### Transform Rule
 
-Modify events before delivery:
+Modify events before delivery using transformations:
 
 ```bash
-# Add custom header
+# Apply a named transformation
 hookdeck connection upsert my-connection \
-  --rule-transform '{"headers": {"X-Custom": "value"}}'
+  --rule-transform-name my-transform
+
+# Create inline transformation code
+hookdeck connection upsert my-connection \
+  --rule-transform-code 'addHandler("transform", (request, context) => { request.headers["X-Custom"] = "value"; return request; })'
 ```
 
 Transformations can modify:
@@ -124,6 +165,8 @@ Transformations can modify:
 - Body
 - Query parameters
 - Path
+
+See [Hookdeck Transformations](https://hookdeck.com/docs/transformations) for full transformation syntax.
 
 ### Delay Rule
 
@@ -140,9 +183,15 @@ hookdeck connection upsert my-connection \
 Prevent duplicate event processing:
 
 ```bash
-# Deduplicate by event ID
+# Deduplicate by specific fields with 1-hour window
 hookdeck connection upsert my-connection \
-  --rule-deduplicate '{"key": "body.id", "window": 3600}'
+  --rule-deduplicate-include-fields "body.id,body.type" \
+  --rule-deduplicate-window 3600
+
+# Deduplicate excluding certain fields
+hookdeck connection upsert my-connection \
+  --rule-deduplicate-exclude-fields "body.timestamp,headers.x-request-id" \
+  --rule-deduplicate-window 3600
 ```
 
 ## One-to-Many Delivery
@@ -159,20 +208,29 @@ Create multiple connections with the same source:
 
 ```bash
 # Connection to API
-hookdeck connection create stripe-to-api \
+hookdeck connection upsert stripe-to-api \
+  --source-type STRIPE \
   --source-name stripe \
-  --destination-name api-server
+  --destination-type HTTP \
+  --destination-name api-server \
+  --destination-url https://api.example.com/webhooks
 
-# Connection to analytics
-hookdeck connection create stripe-to-analytics \
+# Connection to analytics (reuses existing source by name)
+hookdeck connection upsert stripe-to-analytics \
+  --source-type STRIPE \
   --source-name stripe \
-  --destination-name analytics
+  --destination-type HTTP \
+  --destination-name analytics \
+  --destination-url https://analytics.example.com/events
 
 # Connection to notifications (with filter)
-hookdeck connection create stripe-to-notifications \
+hookdeck connection upsert stripe-to-notifications \
+  --source-type STRIPE \
   --source-name stripe \
+  --destination-type HTTP \
   --destination-name notifications \
-  --rule-filter '{"body.type": {"$in": ["payment_intent.succeeded"]}}'
+  --destination-url https://notify.example.com/webhooks \
+  --rules '[{"type":"filter","body":{"type":"payment_intent.succeeded"}}]'
 ```
 
 ## Managing Connections
@@ -205,12 +263,12 @@ hookdeck connection delete my-connection
 
 ```bash
 # Good: Descriptive names
-hookdeck connection create stripe-orders-to-fulfillment
-hookdeck connection create shopify-products-to-inventory
+hookdeck connection upsert stripe-orders-to-fulfillment ...
+hookdeck connection upsert shopify-products-to-inventory ...
 
 # Bad: Generic names
-hookdeck connection create conn1
-hookdeck connection create webhook
+hookdeck connection upsert conn1 ...
+hookdeck connection upsert webhook ...
 ```
 
 ### Configure Appropriate Retries
@@ -234,12 +292,14 @@ Match retry settings to your use case:
 Only forward events you care about:
 
 ```bash
-# Only payment events
---rule-filter '{"body.type": {"$regex": "^payment_intent\\."}}'
+# Only payment events (using --rules flag)
+--rules '[{"type":"filter","body":{"type":{"$startsWith":"payment_intent."}}}]'
 
-# Only orders above $100
---rule-filter '{"body.data.object.amount": {"$gte": 10000}}'
+# Only orders above $100 (amount in cents)
+--rules '[{"type":"filter","body":{"data":{"object":{"amount":{"$gte":10000}}}}}]'
 ```
+
+See [Hookdeck Filters](https://hookdeck.com/docs/filters) for full filter syntax and examples.
 
 ## Full Documentation
 
