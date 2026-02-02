@@ -27,6 +27,9 @@ usage() {
     echo "  paddle-express   - Paddle webhook handling in Express"
     echo "  paddle-nextjs    - Paddle webhook handling in Next.js"
     echo "  paddle-fastapi   - Paddle webhook handling in FastAPI"
+    echo "  resend-express   - Resend webhook handling in Express"
+    echo "  resend-nextjs    - Resend webhook handling in Next.js"
+    echo "  resend-fastapi   - Resend webhook handling in FastAPI"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -75,6 +78,24 @@ get_scenario_config() {
             FRAMEWORK="fastapi"
             SKILL_NAME="paddle-webhooks"
             PROMPT="Add a Paddle webhook endpoint to my FastAPI app. I need to handle subscription.created and subscription.canceled events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        resend-express)
+            PROVIDER="resend"
+            FRAMEWORK="express"
+            SKILL_NAME="resend-webhooks"
+            PROMPT="Add Resend webhook handling to my Express app. I want to handle email.delivered and email.bounced events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        resend-nextjs)
+            PROVIDER="resend"
+            FRAMEWORK="nextjs"
+            SKILL_NAME="resend-webhooks"
+            PROMPT="Add a Resend webhook endpoint to handle email events in my Next.js app. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        resend-fastapi)
+            PROVIDER="resend"
+            FRAMEWORK="fastapi"
+            SKILL_NAME="resend-webhooks"
+            PROMPT="Add a Resend webhook endpoint to my FastAPI app. I need to handle email.sent and email.bounced events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"

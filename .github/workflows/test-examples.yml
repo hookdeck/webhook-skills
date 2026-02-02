@@ -17,6 +17,7 @@ jobs:
           - stripe-webhooks
           - shopify-webhooks
           - github-webhooks
+          - resend-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -25,8 +26,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: skills/${{ matrix.provider }}/examples/express/package.json
 
       - name: Install dependencies
@@ -47,6 +48,7 @@ jobs:
           - stripe-webhooks
           - shopify-webhooks
           - github-webhooks
+          - resend-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -55,8 +57,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: skills/${{ matrix.provider }}/examples/nextjs/package.json
 
       - name: Install dependencies
@@ -77,6 +79,7 @@ jobs:
           - stripe-webhooks
           - shopify-webhooks
           - github-webhooks
+          - resend-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -85,8 +88,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
           cache-dependency-path: skills/${{ matrix.provider }}/examples/fastapi/requirements.txt
 
       - name: Install dependencies
