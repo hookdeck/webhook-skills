@@ -2,18 +2,17 @@
 name: hookdeck-event-gateway
 description: >
   Webhook infrastructure with Hookdeck Event Gateway. Use when receiving
-  webhooks through Hookdeck, configuring source verification, debugging
-  delivery issues, or setting up routing, filtering, and replay.
+  webhooks through the Hookdeck Event Gateway, configuring source verification, debugging delivery issues, or setting up routing, filtering, and replay.
 license: MIT
 metadata:
   author: hookdeck
-  version: "1.0.0"
+  version: "0.1.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
 # Hookdeck Event Gateway
 
-Hookdeck Event Gateway is a webhook proxy that sits between webhook providers (Stripe, GitHub, etc.) and your application. Providers send webhooks to Hookdeck, which then forwards them to your app with reliability features (retries, replay, monitoring).
+Hookdeck Event Gateway is a webhook proxy that sits between webhook providers (Stripe, GitHub, etc.) and your application. Providers send webhooks to Hookdeck, which then forwards them to your app with reliability features (queueing, retries, replay, filtering, routing, monitoring, rate limiting).
 
 ```
 ┌──────────────┐     ┌─────────────────┐     ┌──────────────┐
@@ -27,14 +26,21 @@ Hookdeck Event Gateway is a webhook proxy that sits between webhook providers (S
 
 ## When to Use This Skill
 
-- Receiving webhooks through Hookdeck (not directly from providers)
-- Adding reliability (retries, replay) to webhook handling
-- Local development with webhook tunneling
+- Receiving webhooks through Hookdeck Event Gateway (not directly from providers)
+- Adding reliability (queueing, retries, deduplication, replay, filtering, routing, monitoring, rate limiting) to webhook handling
+- Local development with webhook tunneling with the [Hookdeck CLI](https://hookdeck.com/docs/cli)
 - Debugging failed webhook deliveries
 
 ## Essential Code (USE THIS)
 
 Your webhook handler must verify the `x-hookdeck-signature` header. Here is the required verification code:
+
+## Environment Variables
+
+```bash
+# Required for signature verification
+HOOKDECK_WEBHOOK_SECRET=your_webhook_secret_from_hookdeck_dashboard
+```
 
 ### Hookdeck Signature Verification (JavaScript/Node.js)
 
@@ -112,6 +118,9 @@ def verify_hookdeck_signature(raw_body: bytes, signature: str, secret: str) -> b
 # Install Hookdeck CLI
 brew install hookdeck/hookdeck/hookdeck
 
+# Or via NPM
+npm install -g hookdeck-cli
+
 # Start tunnel to your local server (no account needed)
 hookdeck listen 3000 --path /webhooks
 
@@ -138,16 +147,6 @@ hookdeck connection upsert my-webhooks \
 
 > **For detailed connection configuration**, see [references/connections.md](references/connections.md)
 
-## Environment Variables
-
-```bash
-# Required for signature verification
-HOOKDECK_WEBHOOK_SECRET=your_webhook_secret_from_hookdeck_dashboard
-
-# Optional
-PORT=3000
-```
-
 ## Reference Materials
 
 For detailed documentation:
@@ -161,9 +160,9 @@ For detailed documentation:
 
 ## Related Skills
 
-- `stripe-webhooks` - If receiving Stripe webhooks through Hookdeck
-- `shopify-webhooks` - If receiving Shopify webhooks through Hookdeck
-- `github-webhooks` - If receiving GitHub webhooks through Hookdeck
+- [`stripe-webhooks`](../stripe-webhooks/) - If receiving Stripe webhooks through Hookdeck
+- [`shopify-webhooks`](../shopify-webhooks/) - If receiving Shopify webhooks through Hookdeck
+- [`github-webhooks`](../github-webhooks/) - If receiving GitHub webhooks through Hookdeck
 
 ## Attribution
 
