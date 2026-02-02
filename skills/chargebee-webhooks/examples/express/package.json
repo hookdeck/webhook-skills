@@ -1,0 +1,23 @@
+{
+  "name": "chargebee-webhooks-express",
+  "version": "1.0.0",
+  "description": "Express.js example for handling Chargebee webhooks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nodemon": "^3.0.0",
+    "supertest": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
