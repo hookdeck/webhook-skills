@@ -41,6 +41,7 @@ Skills for receiving webhooks from specific providers. Each includes setup guide
 | [`stripe-webhooks`](skills/stripe-webhooks/) | Receive and verify Stripe payment webhooks | Express, Next.js, FastAPI |
 | [`shopify-webhooks`](skills/shopify-webhooks/) | Receive and verify Shopify store webhooks | Express, Next.js, FastAPI |
 | [`github-webhooks`](skills/github-webhooks/) | Receive and verify GitHub repository webhooks | Express, Next.js, FastAPI |
+| [`resend-webhooks`](skills/resend-webhooks/) | Receive and verify Resend email webhooks | Express, Next.js, FastAPI |
 
 ### Pattern Skills
 
