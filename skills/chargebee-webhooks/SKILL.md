@@ -57,8 +57,8 @@ app.post('/webhooks/chargebee', express.json(), (req, res) => {
     case 'subscription_cancelled':
       // Process subscription events
       break;
-    case 'payment_succeeded':
-    case 'payment_failed':
+    case 'payment_initiated':
+    case 'payment_collection_failed':
       // Process payment events
       break;
   }
@@ -66,6 +66,18 @@ app.post('/webhooks/chargebee', express.json(), (req, res) => {
   res.status(200).send('OK');
 });
 ```
+
+> **Note:** While Chargebee uses Basic Auth which doesn't require raw body for signature verification, you may want to preserve the raw body for future extensibility. To do this, use `express.raw({ type: 'application/json' })` instead of `express.json()`, then manually parse the JSON:
+>
+> ```javascript
+> app.post('/webhooks/chargebee', express.raw({ type: 'application/json' }), (req, res) => {
+>   // ... Basic Auth verification ...
+>
+>   // Parse JSON from raw body
+>   const event = JSON.parse(req.body.toString());
+>   // ... rest of handler ...
+> });
+> ```
 
 ### Next.js (App Router)
 
@@ -119,7 +131,14 @@ def verify_chargebee_auth(authorization: Optional[str] = Header(None)):
     # Decode credentials
     encoded = authorization[6:]
     decoded = base64.b64decode(encoded).decode('utf-8')
-    username, password = decoded.split(':', 1)
+
+    # Split username:password (handle colons in password)
+    if ':' not in decoded:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+
+    colon_index = decoded.index(':')
+    username = decoded[:colon_index]
+    password = decoded[colon_index + 1:]
 
     expected_username = os.getenv("CHARGEBEE_WEBHOOK_USERNAME")
     expected_password = os.getenv("CHARGEBEE_WEBHOOK_PASSWORD")
@@ -142,7 +161,7 @@ async def handle_chargebee_webhook(
     if event_type in ["subscription_created", "subscription_updated", "subscription_cancelled"]:
         # Handle subscription events
         pass
-    elif event_type in ["payment_succeeded", "payment_failed"]:
+    elif event_type in ["payment_initiated", "payment_collection_failed"]:
         # Handle payment events
         pass
 
@@ -157,8 +176,8 @@ async def handle_chargebee_webhook(
 | `subscription_updated` | Subscription is modified | Update user permissions, sync changes |
 | `subscription_cancelled` | Subscription is cancelled | Revoke access, trigger retention flow |
 | `subscription_reactivated` | Cancelled subscription is reactivated | Restore access, send notification |
-| `payment_succeeded` | Payment is successful | Update payment status, send receipt |
-| `payment_failed` | Payment fails | Retry payment, notify customer |
+| `payment_initiated` | Payment is initiated | Track payment process, update status |
+| `payment_collection_failed` | Payment collection fails | Retry payment, notify customer |
 | `invoice_generated` | Invoice is created | Send invoice to customer |
 | `customer_created` | New customer is created | Create user account, sync data |
 

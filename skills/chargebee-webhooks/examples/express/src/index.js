@@ -1,6 +1,18 @@
 require('dotenv').config();
 const express = require('express');
 
+// Validate required environment variables at startup
+const requiredEnvVars = ['CHARGEBEE_WEBHOOK_USERNAME', 'CHARGEBEE_WEBHOOK_PASSWORD'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error(`Error: Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  console.error('Please set these variables in your .env file or environment');
+  if (process.env.NODE_ENV !== 'test') {
+    process.exit(1);
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -31,11 +43,6 @@ function verifyChargebeeAuth(req, res, next) {
   // Verify credentials against environment variables
   const expectedUsername = process.env.CHARGEBEE_WEBHOOK_USERNAME;
   const expectedPassword = process.env.CHARGEBEE_WEBHOOK_PASSWORD;
-
-  if (!expectedUsername || !expectedPassword) {
-    console.error('Missing CHARGEBEE_WEBHOOK_USERNAME or CHARGEBEE_WEBHOOK_PASSWORD environment variables');
-    return res.status(500).send('Server configuration error');
-  }
 
   if (username !== expectedUsername || password !== expectedPassword) {
     return res.status(401).send('Invalid credentials');
@@ -77,13 +84,13 @@ app.post('/webhooks/chargebee', express.json(), verifyChargebeeAuth, (req, res) 
       // TODO: Restore user access
       break;
 
-    case 'payment_succeeded':
-      console.log('Payment succeeded:', event.content?.transaction?.id);
-      // TODO: Update payment status, send receipt
+    case 'payment_initiated':
+      console.log('Payment initiated:', event.content?.transaction?.id);
+      // TODO: Track payment process, update status
       break;
 
-    case 'payment_failed':
-      console.log('Payment failed:', event.content?.transaction?.id);
+    case 'payment_collection_failed':
+      console.log('Payment collection failed:', event.content?.transaction?.id);
       // TODO: Send payment failure notification, retry logic
       break;
 

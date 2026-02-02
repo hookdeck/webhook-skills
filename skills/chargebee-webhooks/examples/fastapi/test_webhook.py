@@ -132,8 +132,8 @@ class TestChargebeeWebhook:
             "subscription_updated",
             "subscription_cancelled",
             "subscription_reactivated",
-            "payment_succeeded",
-            "payment_failed",
+            "payment_initiated",
+            "payment_collection_failed",
             "invoice_generated",
             "customer_created",
             "unknown_event_type"

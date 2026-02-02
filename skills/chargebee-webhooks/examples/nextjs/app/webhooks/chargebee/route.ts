@@ -74,13 +74,13 @@ export async function POST(request: NextRequest) {
         // TODO: Restore user access
         break;
 
-      case 'payment_succeeded':
-        console.log('Payment succeeded:', event.content?.transaction?.id);
-        // TODO: Update payment status, send receipt
+      case 'payment_initiated':
+        console.log('Payment initiated:', event.content?.transaction?.id);
+        // TODO: Track payment process, update status
         break;
 
-      case 'payment_failed':
-        console.log('Payment failed:', event.content?.transaction?.id);
+      case 'payment_collection_failed':
+        console.log('Payment collection failed:', event.content?.transaction?.id);
         // TODO: Send payment failure notification, retry logic
         break;
 

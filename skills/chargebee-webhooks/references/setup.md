@@ -9,9 +9,9 @@
 ## Configure Webhook Endpoint
 
 1. Log in to your Chargebee dashboard
-2. Navigate to **Settings** → **Configure Chargebee** → **API Keys and Webhooks**
-3. Click on the **Webhooks** tab
-4. Click **Add Webhook** button
+2. Navigate to **Settings** → **Webhooks**
+   - Note: The exact path may vary. Look for "Webhooks" under Settings, Configure Chargebee, or Developer Settings
+3. Click **Add Webhook** or **New Webhook** button
 
 ## Webhook Configuration
 
@@ -46,7 +46,7 @@ https://app.example.com/webhooks/chargebee?key=your_secret_key_here
 
 2. Common events to select:
    - Subscription Events: `subscription_created`, `subscription_updated`, `subscription_cancelled`
-   - Payment Events: `payment_succeeded`, `payment_failed`
+   - Payment Events: `payment_initiated`, `payment_collection_failed`
    - Invoice Events: `invoice_generated`, `invoice_updated`
    - Customer Events: `customer_created`, `customer_updated`
 

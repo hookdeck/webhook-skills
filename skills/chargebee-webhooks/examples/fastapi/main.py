@@ -83,14 +83,14 @@ async def handle_chargebee_webhook(
         print(f"Subscription reactivated: {subscription.get('id')}")
         # TODO: Restore user access
 
-    elif event_type == "payment_succeeded":
+    elif event_type == "payment_initiated":
         transaction = event.get("content", {}).get("transaction", {})
-        print(f"Payment succeeded: {transaction.get('id')}")
-        # TODO: Update payment status, send receipt
+        print(f"Payment initiated: {transaction.get('id')}")
+        # TODO: Track payment process, update status
 
-    elif event_type == "payment_failed":
+    elif event_type == "payment_collection_failed":
         transaction = event.get("content", {}).get("transaction", {})
-        print(f"Payment failed: {transaction.get('id')}")
+        print(f"Payment collection failed: {transaction.get('id')}")
         # TODO: Send payment failure notification, retry logic
 
     elif event_type == "invoice_generated":
