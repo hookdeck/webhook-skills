@@ -50,7 +50,7 @@ All OpenAI webhook events follow this structure:
 ## Key Fields
 
 - **`id`**: Unique identifier for the webhook event
-- **`type`**: The event type (e.g., "fine_tuning.job.completed")
+- **`type`**: The event type (e.g., "fine_tuning.job.succeeded")
 - **`created_at`**: Unix timestamp when the event was created
 - **`data`**: Object containing event-specific data
 
