@@ -27,7 +27,7 @@ Create a complete webhook skill for {{PROVIDER}} following the AGENTS.md specifi
 
 Read the AGENTS.md file in this repository to understand the full skill creation checklist.
 
-Create all required files:
+**CRITICAL: You MUST create ALL of the following files. Missing files = incomplete skill.**
 
 ### Core Files
 - `skills/{{PROVIDER_KEBAB}}-webhooks/SKILL.md` - Main skill file with frontmatter and essential code

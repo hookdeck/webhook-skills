@@ -50,6 +50,20 @@ If the provider uses Standard Webhooks (Svix), verify:
 - [ ] **Payload field names are accurate** - The example payload fields should match real payloads
 - [ ] **Same events handled in ALL frameworks** - Express, Next.js, and FastAPI should handle the same events
 
+### Required Files (CRITICAL - skill structure)
+
+**All skills MUST have these files. Missing files = CRITICAL error:**
+
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/SKILL.md` - Main skill file
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/overview.md` - Webhook overview
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/setup.md` - Setup instructions
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/verification.md` - Signature verification
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/express/` - Express example (all files)
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/nextjs/` - Next.js example (all files)
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/` - FastAPI example (all files)
+
+If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplete.
+
 ### Documentation
 
 - [ ] **Setup steps are accurate** - Do the dashboard paths and steps match {{PROVIDER}}'s current UI?
@@ -116,11 +130,17 @@ After reviewing, respond with a JSON object in this exact format:
 ```
 
 **Severity levels:**
-- `critical` - Will cause verification failures or security issues. Must fix.
+- `critical` - Will cause verification failures, security issues, or skill is incomplete. Must fix.
 - `major` - Incorrect information that will confuse users. Should fix.
 - `minor` - Style issues or minor improvements. Nice to fix.
 
+**ALWAYS mark as CRITICAL:**
+- Missing required files (overview.md, setup.md, verification.md, examples)
+- Signature verification errors
+- Non-existent package versions
+
 **Categories:**
+- `structure` - Missing required files or directories
 - `verification` - Signature verification issues
 - `events` - Event type or payload issues
 - `documentation` - Documentation accuracy issues
