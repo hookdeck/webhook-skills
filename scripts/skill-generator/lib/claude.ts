@@ -50,10 +50,37 @@ export function buildPromptReplacements(provider: ProviderConfig): Record<string
     docsSection = `Search for ${provider.displayName || provider.name}'s official webhook documentation.`;
   }
   
-  // Build docs reference for review prompt
-  const docsReference = provider.docs?.webhooks
-    ? `Primary documentation reference: ${provider.docs.webhooks}`
-    : '';
+  // Build docs reference for review prompt (includes all available references)
+  let docsReference = '';
+  if (provider.docs) {
+    const docsList: string[] = [];
+    if (provider.docs.webhooks) {
+      docsList.push(`- Webhooks: ${provider.docs.webhooks}`);
+    }
+    if (provider.docs.verification) {
+      docsList.push(`- Verification: ${provider.docs.verification}`);
+    }
+    if (provider.docs.events) {
+      docsList.push(`- Events: ${provider.docs.events}`);
+    }
+    if (provider.docs.api) {
+      docsList.push(`- API Reference: ${provider.docs.api}`);
+    }
+    // Include any additional doc URLs (like reference_impl)
+    for (const [key, url] of Object.entries(provider.docs)) {
+      if (!['webhooks', 'verification', 'events', 'api'].includes(key) && url) {
+        docsList.push(`- ${key.replace(/_/g, ' ')}: ${url}`);
+      }
+    }
+    
+    if (docsList.length > 0) {
+      docsReference = `## Reference Documentation\n\nUse these official sources to verify accuracy:\n\n${docsList.join('\n')}`;
+      
+      if (provider.notes) {
+        docsReference += `\n\n**Important context:** ${provider.notes}`;
+      }
+    }
+  }
   
   const replacements: Record<string, string> = {
     PROVIDER: provider.displayName || provider.name,

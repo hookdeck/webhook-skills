@@ -1,5 +1,14 @@
 Review the {{PROVIDER_KEBAB}}-webhooks skill that was generated. Your task is to validate the content accuracy against {{PROVIDER}}'s official documentation.
 
+## Check for Existing TODO.md
+
+First, check if `skills/{{PROVIDER_KEBAB}}-webhooks/TODO.md` exists. If it does, read it to understand:
+- Previously identified issues that may or may not have been fixed
+- Known limitations or areas needing improvement
+- Items that were deferred as acceptable for initial release
+
+Verify that issues listed in TODO.md have been addressed, or explain why they remain.
+
 ## Review Instructions
 
 For each item in the checklist below, verify against {{PROVIDER}}'s official webhook documentation. If you need to look up documentation, do so.
@@ -10,19 +19,36 @@ For each item in the checklist below, verify against {{PROVIDER}}'s official web
 
 ### Signature Verification (CRITICAL - most common source of bugs)
 
-- [ ] **Algorithm is correct** - Is it HMAC-SHA256, HMAC-SHA1, or something else?
+- [ ] **Algorithm is correct** - Is it HMAC-SHA256, HMAC-SHA1, ECDSA, or something else?
 - [ ] **Encoding is correct** - Is the signature hex-encoded or base64-encoded?
-- [ ] **Header name(s) are exactly right** - Header names are case-sensitive in some frameworks
+- [ ] **Header name(s) are exactly right** - Common patterns:
+  - Simple: `X-Provider-Signature` 
+  - Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`
+  - Provider-specific: `Stripe-Signature`, `X-GitHub-Event`, etc.
 - [ ] **Secret format handled correctly** - Does the secret have a prefix like `whsec_` that needs to be stripped?
 - [ ] **Timestamp validation** - If the provider uses timestamp validation, is it implemented?
-- [ ] **Signed content format** - What exactly is signed? Just the body? `timestamp.body`? `msgId.timestamp.body`?
+- [ ] **Signed content format** - What exactly is signed?
+  - Just the body: `HMAC(secret, body)`
+  - Timestamp + body: `HMAC(secret, "timestamp.body")`
+  - Standard Webhooks: `HMAC(secret, "msgId.timestamp.body")`
 - [ ] **Raw body used** - Is the raw body (not parsed JSON) used for verification?
 
-### Event Types
+**Standard Webhooks Detection:**
+If the provider uses Standard Webhooks (Svix), verify:
+- Headers are `webhook-id`, `webhook-timestamp`, `webhook-signature` (NOT `provider-signature`)
+- Signed content is `{msgId}.{timestamp}.{body}`
+- Timestamp tolerance is checked (usually 5 minutes)
+- Providers using Standard Webhooks: Resend, OpenAI, Clerk, and others
+
+### Event Types (CRITICAL - verify against official docs)
 
 - [ ] **Events actually exist** - All listed events should exist in {{PROVIDER}}'s documentation
-- [ ] **Event names are spelled correctly** - Typos will cause handlers to never trigger
+- [ ] **Event names are EXACTLY correct** - Must match official docs precisely:
+  - Underscores vs dots vs spaces matter (`spam_report` vs `spam.report` vs `spam report`)
+  - Past tense matters (`completed` vs `succeeded` vs `finished`)
+  - Verify by searching {{PROVIDER}}'s webhook documentation
 - [ ] **Payload field names are accurate** - The example payload fields should match real payloads
+- [ ] **Same events handled in ALL frameworks** - Express, Next.js, and FastAPI should handle the same events
 
 ### Documentation
 
@@ -41,13 +67,25 @@ For each item in the checklist below, verify against {{PROVIDER}}'s official web
 
 ### Dependency Versions (CRITICAL - security risk)
 
-- [ ] **Next.js version is 15.x or later** - Version 14.x has known security vulnerabilities
-- [ ] **Express version is 4.21.x or later** - Older versions may have vulnerabilities
-- [ ] **FastAPI version is 0.115.x or later** - Use current stable releases
-- [ ] **Test framework versions are current** - Jest 29.x+, Vitest 2.x+, pytest 8.x+
-- [ ] **No pinned old versions** - Dependencies should use ^ or >= to allow security updates
+**Check each file against these EXACT requirements:**
 
-Check package.json and requirements.txt files for outdated versions. If found, flag as critical.
+| Package | Required | Flag if |
+|---------|----------|---------|
+| `next` | ^15.1.0+ | 14.x or lower (security issues) |
+| `express` | ^4.21.0+ | 5.x (beta) or <4.21 |
+| `vitest` | ^2.1.0+ | 3.x, 4.x, or higher (don't exist!) |
+| `jest` | ^29.7.0+ | <29.x |
+| `fastapi` | >=0.115.0 | 0.128+ (doesn't exist yet!) |
+| `pytest` | >=8.3.0 | 9.x+ (doesn't exist yet!) |
+| `httpx` | >=0.27.0 | |
+
+**Common hallucination errors to catch:**
+- vitest 4.x or 5.x (latest is 2.x)
+- pytest 9.x (latest is 8.x)  
+- fastapi 0.128+ (latest is ~0.115)
+- Express 5.x (still in RC/beta)
+
+If you see these versions, flag as CRITICAL - they don't exist!
 
 ### Consistency
 

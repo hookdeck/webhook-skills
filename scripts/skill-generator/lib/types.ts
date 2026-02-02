@@ -11,9 +11,11 @@ export interface ProviderConfig {
   name: string;           // kebab-case name (e.g., "elevenlabs")
   displayName?: string;   // Proper casing (e.g., "ElevenLabs")
   docs?: {
-    webhooks?: string;    // Main webhook docs URL
-    verification?: string; // Signature verification docs
-    events?: string;      // Event types reference
+    webhooks?: string;      // Main webhook docs URL
+    verification?: string;  // Signature verification docs
+    events?: string;        // Event types reference
+    api?: string;           // API reference docs
+    [key: string]: string | undefined; // Additional doc URLs (e.g., reference_impl)
   };
   notes?: string;         // Hints for the agent
 }

@@ -3,7 +3,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, isAbsolute } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type { ProviderConfig } from './types';
 
@@ -84,29 +84,65 @@ export function toDisplayName(name: string): string {
  * Load provider configs from a YAML file
  */
 export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
-  if (!existsSync(filePath)) {
-    throw new Error(`Config file not found: ${filePath}`);
+  // Resolve relative paths from repo root
+  const resolvedPath = isAbsolute(filePath) ? filePath : join(ROOT_DIR, filePath);
+  
+  if (!existsSync(resolvedPath)) {
+    throw new Error(`Config file not found: ${filePath} (resolved to: ${resolvedPath})`);
   }
   
-  const content = readFileSync(filePath, 'utf-8');
+  const content = readFileSync(resolvedPath, 'utf-8');
   const parsed = parseYaml(content) as Record<string, unknown>;
   
   const configs = new Map<string, ProviderConfig>();
   
-  for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value !== 'object' || value === null) {
-      continue;
+  // Handle both formats:
+  // 1. providers: [array] - array under 'providers' key
+  // 2. {name: config, ...} - object with provider names as keys
+  
+  const providersArray = parsed.providers;
+  
+  if (Array.isArray(providersArray)) {
+    // Format: providers: [{ name: "chargebee", ... }, ...]
+    for (const item of providersArray) {
+      if (typeof item !== 'object' || item === null) {
+        continue;
+      }
+      
+      const config = item as Record<string, unknown>;
+      const name = config.name as string;
+      
+      if (!name) {
+        console.warn('Skipping provider config without name:', config);
+        continue;
+      }
+      
+      const normalizedName = normalizeProviderName(name);
+      
+      configs.set(normalizedName, {
+        name: normalizedName,
+        displayName: (config.displayName as string) || toDisplayName(name),
+        docs: config.docs as ProviderConfig['docs'],
+        notes: config.notes as string | undefined,
+      });
     }
-    
-    const config = value as Record<string, unknown>;
-    const normalizedName = normalizeProviderName(key);
-    
-    configs.set(normalizedName, {
-      name: normalizedName,
-      displayName: (config.displayName as string) || toDisplayName(key),
-      docs: config.docs as ProviderConfig['docs'],
-      notes: config.notes as string | undefined,
-    });
+  } else {
+    // Format: { chargebee: { ... }, openai: { ... } }
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value !== 'object' || value === null) {
+        continue;
+      }
+      
+      const config = value as Record<string, unknown>;
+      const normalizedName = normalizeProviderName(key);
+      
+      configs.set(normalizedName, {
+        name: normalizedName,
+        displayName: (config.displayName as string) || toDisplayName(key),
+        docs: config.docs as ProviderConfig['docs'],
+        notes: config.notes as string | undefined,
+      });
+    }
   }
   
   return configs;

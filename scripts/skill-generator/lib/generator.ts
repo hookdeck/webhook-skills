@@ -80,7 +80,8 @@ export async function runTests(
 
 /**
  * Run Node.js tests (npm test)
- * Uses vitest --run directly to avoid watch mode hanging
+ * Respects the project's test runner (Jest, Vitest, etc.)
+ * CI=true disables watch mode for most test runners
  */
 async function runNodeTests(
   dir: string,
@@ -90,13 +91,13 @@ async function runNodeTests(
     // Install dependencies first
     await execa('npm', ['install'], { cwd: dir, reject: false, timeout: 120000 });
     
-    // Run vitest directly with --run flag to avoid watch mode
-    // This is more reliable than npm test which may not have --run configured
-    const result = await execa('npx', ['vitest', 'run'], {
+    // Run npm test - respects project's configured test runner
+    // CI=true disables watch mode for Jest, Vitest, and most test runners
+    const result = await execa('npm', ['test'], {
       cwd: dir,
       reject: false,
       timeout: 120000, // 2 minute timeout for tests
-      env: { ...process.env, CI: 'true' }, // CI=true also disables watch mode
+      env: { ...process.env, CI: 'true' },
     });
     
     if (result.exitCode !== 0) {

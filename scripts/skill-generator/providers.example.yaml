@@ -1,65 +1,41 @@
-# Example provider configuration file
-# Copy this file and customize for your batch generation runs
+# Example provider configuration for batch skill generation
 #
 # Usage:
-#   ./scripts/generate-skills.sh generate --config providers.yaml
+#   cp providers.example.yaml providers.yaml
+#   # Edit providers.yaml with your target providers
+#   ./scripts/generate-skills.sh generate --config scripts/skill-generator/providers.yaml
+#
+# The 'docs' section helps Claude find accurate information.
+# The more specific documentation URLs you provide, the better the output.
 
-# ElevenLabs - AI voice generation webhooks
-elevenlabs:
-  displayName: ElevenLabs
-  docs:
-    webhooks: https://elevenlabs.io/docs/api-reference/webhooks
-  notes: "Uses standard HMAC-SHA256 verification"
+providers:
+  # Example: Simple provider with just webhook docs
+  - name: acme
+    displayName: Acme Corp
+    docs:
+      webhooks: https://docs.acme.com/webhooks
+    notes: >
+      Brief notes about this provider's webhook implementation.
+      Mention any quirks or special requirements.
 
-# Deepgram - Speech-to-text webhooks
-deepgram:
-  displayName: Deepgram
-  docs:
-    webhooks: https://developers.deepgram.com/docs/webhooks
-  notes: "Callback-based API, verify webhook signature docs"
+  # Example: Provider with detailed documentation
+  - name: example
+    displayName: Example Provider
+    docs:
+      webhooks: https://example.com/docs/webhooks
+      verification: https://example.com/docs/webhook-security
+      events: https://example.com/docs/webhook-events
+      api: https://example.com/api-reference
+    notes: >
+      Uses HMAC-SHA256 for signature verification.
+      Secret is base64 encoded. Timestamp tolerance is 5 minutes.
 
-# Chargebee - Subscription billing webhooks
-chargebee:
-  displayName: Chargebee
-  docs:
-    webhooks: https://www.chargebee.com/docs/2.0/webhook_settings.html
-    events: https://www.chargebee.com/docs/2.0/events_list.html
-  notes: "Uses basic auth or IP whitelisting for verification"
-
-# OpenAI - AI model webhooks (if available)
-# openai:
-#   displayName: OpenAI
-#   docs:
-#     webhooks: https://platform.openai.com/docs/api-reference
-#   notes: "Check if webhooks are available"
-
-# Clerk - Authentication webhooks
-clerk:
-  displayName: Clerk
-  docs:
-    webhooks: https://clerk.com/docs/integrations/webhooks
-    verification: https://clerk.com/docs/integrations/webhooks/sync-data#validate-the-webhook-signature
-  notes: "Uses Svix for webhook delivery - similar to Resend"
-
-# Auth0 - Identity webhooks
-auth0:
-  displayName: Auth0
-  docs:
-    webhooks: https://auth0.com/docs/customize/log-streams/webhook-log-streams
-  notes: "Log streams with signature verification"
-
-# Twilio - Communications webhooks
-twilio:
-  displayName: Twilio
-  docs:
-    webhooks: https://www.twilio.com/docs/usage/webhooks
-    verification: https://www.twilio.com/docs/usage/webhooks/webhooks-security
-  notes: "Uses X-Twilio-Signature header with HMAC-SHA1"
-
-# SendGrid - Email webhooks
-sendgrid:
-  displayName: SendGrid
-  docs:
-    webhooks: https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook
-    verification: https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features
-  notes: "Event webhook with optional signature verification"
+  # Example: Provider with reference implementation
+  - name: demo
+    displayName: Demo Service
+    docs:
+      webhooks: https://demo.com/webhooks
+      reference_impl: https://github.com/org/demo-webhook-handler
+    notes: >
+      See reference_impl for working example code.
+      Uses Standard Webhooks (Svix) format.

@@ -10,7 +10,7 @@ import { config } from 'dotenv';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import pLimit from 'p-limit';
-import { mkdirSync, writeFileSync, appendFileSync } from 'fs';
+import { mkdirSync, writeFileSync, appendFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // Load .env from skill-generator directory
@@ -35,6 +35,7 @@ import {
   getRepoInfo,
   cleanupAllWorktrees,
   hasUnpushedCommits,
+  getWorktreePath,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
 
@@ -151,17 +152,22 @@ async function handleGenerate(
     process.exit(1);
   }
   
+  // Default parallel to number of providers (run all in parallel unless throttled)
+  const parallelCount = options.parallel 
+    ? parseInt(options.parallel, 10) 
+    : providerConfigs.length;
+  
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (providerConfigs.length > 1) {
-    console.log(chalk.blue(`Max parallel: ${options.parallel}`));
+    console.log(chalk.blue(`Parallel: ${parallelCount}`));
   }
   console.log(chalk.blue(`Dry run: ${options.dryRun}`));
   console.log(chalk.gray(`\nNote: Generation can take 5-15 minutes per provider depending on model.\n`));
   
   const generateOptions: GenerateOptions = {
     command: 'generate',
-    parallel: parseInt(options.parallel, 10),
+    parallel: parallelCount,
     dryRun: options.dryRun,
     baseBranch: options.baseBranch,
     skipTests: options.skipTests,
@@ -320,13 +326,23 @@ async function handleReview(
     // Will resolve relative paths later when we have the path module
     console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
   } else {
-    // Filter to only existing skills in main repo
+    // Filter to only existing skills (in main repo OR in a worktree)
     existingProviders = providerConfigs.filter(p => {
-      const exists = skillExists(p);
-      if (!exists) {
-        console.log(chalk.yellow(`Skipping ${p.name}: skill does not exist (use 'generate' command first)`));
+      // Check main repo first
+      if (skillExists(p)) {
+        return true;
       }
-      return exists;
+      
+      // Check if there's an existing worktree with the skill
+      const worktreePath = getWorktreePath(ROOT_DIR, p.name);
+      const skillPathInWorktree = join(worktreePath, 'skills', `${p.name}-webhooks`, 'SKILL.md');
+      if (existsSync(skillPathInWorktree)) {
+        console.log(chalk.blue(`Found ${p.name} in existing worktree: ${worktreePath}`));
+        return true;
+      }
+      
+      console.log(chalk.yellow(`Skipping ${p.name}: skill does not exist (use 'generate' command first)`));
+      return false;
     });
     
     if (existingProviders.length === 0) {
@@ -335,17 +351,22 @@ async function handleReview(
     }
   }
   
+  // Default parallel to number of providers (run all in parallel unless throttled)
+  const parallelCount = options.parallel 
+    ? parseInt(options.parallel, 10) 
+    : existingProviders.length;
+  
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`Model: ${options.model}`));
-  if (!useProvidedDir) {
-    console.log(chalk.blue(`Parallel: ${options.parallel}`));
+  if (!useProvidedDir && existingProviders.length > 1) {
+    console.log(chalk.blue(`Parallel: ${parallelCount}`));
   }
   console.log(chalk.blue(`Dry run: ${options.dryRun}`));
   console.log('');
   
   const reviewOptions: ReviewOptions = {
     command: 'review',
-    parallel: parseInt(options.parallel, 10),
+    parallel: parallelCount,
     dryRun: options.dryRun,
     maxIterations: parseInt(options.maxIterations, 10),
     createPr: normalizeCreatePr(options.createPr),
@@ -400,12 +421,46 @@ async function handleReview(
     logger.info(`Using directory: ${options.workingDir}`);
     logger.info(`Current branch: ${branchName}`);
   } else {
-    // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
-    console.log(chalk.gray('Creating worktrees...\n'));
+    // PHASE 1: Create worktrees SEQUENTIALLY (or use existing ones from generate)
+    console.log(chalk.gray('Setting up worktrees...\n'));
     
     for (const provider of existingProviders) {
       const logFile = join(resultsDir, `${provider.name}.log`);
       const logger = createLogger(provider.name, logFile);
+      
+      // Check if there's an existing worktree from a previous generate run
+      const existingWorktreePath = getWorktreePath(ROOT_DIR, provider.name);
+      const skillPathInWorktree = join(existingWorktreePath, 'skills', `${provider.name}-webhooks`, 'SKILL.md');
+      
+      if (existsSync(skillPathInWorktree)) {
+        // Use existing worktree
+        logger.info(`Using existing worktree at ${existingWorktreePath}`);
+        
+        // Get branch name from the existing worktree
+        const { simpleGit } = await import('simple-git');
+        const git = simpleGit(existingWorktreePath);
+        let branchName: string;
+        try {
+          const branchResult = await git.branch();
+          branchName = branchResult.current;
+        } catch {
+          branchName = `feat/${provider.name}-webhooks`;
+        }
+        
+        worktrees.set(provider.name, {
+          path: existingWorktreePath,
+          branch: branchName,
+          worktreeId: provider.name, // worktree ID from generate
+          logger,
+          logFile,
+          isExternal: false, // Can be cleaned up after PR
+        });
+        
+        logger.info(`Current branch: ${branchName}`);
+        continue;
+      }
+      
+      // No existing worktree - create a new one
       const branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
       const worktreeId = `review-${provider.name}`;
       
@@ -621,7 +676,7 @@ program
   .argument('[providers...]', 'Provider names (e.g., elevenlabs, "openai=https://docs...")')
   .option('--config <file>', 'Load provider configs from YAML file')
   .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
-  .option('--parallel <n>', 'Max concurrent agents', '2')
+  .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--base-branch <branch>', 'Branch to create from', 'main')
   .option('--skip-tests', 'Skip running tests after generation', false)
@@ -636,7 +691,7 @@ program
   .argument('[providers...]', 'Provider names to review')
   .option('--config <file>', 'Load provider configs from YAML file')
   .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
-  .option('--parallel <n>', 'Max concurrent agents', '2')
+  .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)

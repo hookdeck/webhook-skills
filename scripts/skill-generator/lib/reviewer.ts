@@ -2,6 +2,8 @@
  * Review and iteration logic for skills
  */
 
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import type {
   ProviderConfig,
   Logger,
@@ -11,6 +13,16 @@ import type {
 } from './types';
 import { runReviewSkill, runFixIssues } from './claude';
 import { runTests } from './generator';
+
+/**
+ * Thresholds for accepting a skill
+ */
+export const ACCEPTANCE_THRESHOLDS = {
+  maxCritical: 0,    // No critical issues allowed
+  maxMajor: 1,       // At most 1 major issue
+  maxMinor: 2,       // At most 2 minor issues
+  maxTotal: 5,       // At most 5 issues total
+};
 
 export interface ReviewAndIterateOptions {
   workingDir: string;
@@ -30,6 +42,110 @@ export interface ReviewAndIterateResult {
   iterations: number;
   issuesFound: number;
   issuesFixed: number;
+  remainingIssues?: ReviewIssue[];
+}
+
+/**
+ * Check if issues are within acceptance thresholds
+ */
+function issuesWithinThresholds(issues: ReviewIssue[]): boolean {
+  const critical = issues.filter(i => i.severity === 'critical').length;
+  const major = issues.filter(i => i.severity === 'major').length;
+  const minor = issues.filter(i => i.severity === 'minor').length;
+  const total = issues.length;
+  
+  return (
+    critical <= ACCEPTANCE_THRESHOLDS.maxCritical &&
+    major <= ACCEPTANCE_THRESHOLDS.maxMajor &&
+    minor <= ACCEPTANCE_THRESHOLDS.maxMinor &&
+    total <= ACCEPTANCE_THRESHOLDS.maxTotal
+  );
+}
+
+/**
+ * Read existing TODO.md from skill directory
+ */
+function readTodoFile(skillDir: string): string | null {
+  const todoPath = join(skillDir, 'TODO.md');
+  if (existsSync(todoPath)) {
+    return readFileSync(todoPath, 'utf-8');
+  }
+  return null;
+}
+
+/**
+ * Write TODO.md with remaining issues
+ */
+function writeTodoFile(
+  skillDir: string, 
+  issues: ReviewIssue[], 
+  suggestions: string[],
+  dryRun?: boolean
+): void {
+  if (issues.length === 0 && suggestions.length === 0) {
+    return; // Nothing to write
+  }
+  
+  const todoPath = join(skillDir, 'TODO.md');
+  const timestamp = new Date().toISOString().split('T')[0];
+  
+  let content = `# TODO - Known Issues and Improvements\n\n`;
+  content += `*Last updated: ${timestamp}*\n\n`;
+  content += `These items were identified during automated review but are acceptable for merge.\n`;
+  content += `Contributions to address these items are welcome.\n\n`;
+  
+  if (issues.length > 0) {
+    content += `## Issues\n\n`;
+    
+    const critical = issues.filter(i => i.severity === 'critical');
+    const major = issues.filter(i => i.severity === 'major');
+    const minor = issues.filter(i => i.severity === 'minor');
+    
+    if (critical.length > 0) {
+      content += `### Critical\n\n`;
+      for (const issue of critical) {
+        content += `- [ ] **${issue.file}**: ${issue.description}\n`;
+        if (issue.suggestedFix) {
+          content += `  - Suggested fix: ${issue.suggestedFix}\n`;
+        }
+      }
+      content += `\n`;
+    }
+    
+    if (major.length > 0) {
+      content += `### Major\n\n`;
+      for (const issue of major) {
+        content += `- [ ] **${issue.file}**: ${issue.description}\n`;
+        if (issue.suggestedFix) {
+          content += `  - Suggested fix: ${issue.suggestedFix}\n`;
+        }
+      }
+      content += `\n`;
+    }
+    
+    if (minor.length > 0) {
+      content += `### Minor\n\n`;
+      for (const issue of minor) {
+        content += `- [ ] **${issue.file}**: ${issue.description}\n`;
+        if (issue.suggestedFix) {
+          content += `  - Suggested fix: ${issue.suggestedFix}\n`;
+        }
+      }
+      content += `\n`;
+    }
+  }
+  
+  if (suggestions.length > 0) {
+    content += `## Suggestions\n\n`;
+    for (const suggestion of suggestions) {
+      content += `- [ ] ${suggestion}\n`;
+    }
+    content += `\n`;
+  }
+  
+  if (!dryRun) {
+    writeFileSync(todoPath, content, 'utf-8');
+  }
 }
 
 /**
@@ -40,6 +156,9 @@ export async function reviewAndIterate(
   options: ReviewAndIterateOptions
 ): Promise<ReviewAndIterateResult> {
   const { workingDir, logger, dryRun, skipTests, skipReview, maxIterations, model, parallel } = options;
+  
+  logger.info(`Starting review for ${provider.displayName || provider.name}`);
+  logger.info(`Acceptance thresholds: critical=${ACCEPTANCE_THRESHOLDS.maxCritical}, major≤${ACCEPTANCE_THRESHOLDS.maxMajor}, minor≤${ACCEPTANCE_THRESHOLDS.maxMinor}, total≤${ACCEPTANCE_THRESHOLDS.maxTotal}`);
   
   let iteration = 0;
   let totalIssuesFound = 0;
@@ -115,6 +234,13 @@ export async function reviewAndIterate(
         lastReviewIssues = review.reviewResult.issues;
         totalIssuesFound += lastReviewIssues.length;
         
+        // Check if approved or within thresholds
+        const criticalIssues = lastReviewIssues.filter(i => i.severity === 'critical');
+        const majorIssues = lastReviewIssues.filter(i => i.severity === 'major');
+        const minorIssues = lastReviewIssues.filter(i => i.severity === 'minor');
+        
+        const issuesSummary = `${criticalIssues.length} critical, ${majorIssues.length} major, ${minorIssues.length} minor`;
+        
         if (review.reviewResult.approved) {
           reviewResult = {
             passed: true,
@@ -124,17 +250,29 @@ export async function reviewAndIterate(
           break; // Success!
         }
         
-        // Issues found - need to fix
-        const criticalIssues = lastReviewIssues.filter(i => i.severity === 'critical');
-        const majorIssues = lastReviewIssues.filter(i => i.severity === 'major');
-        const minorIssues = lastReviewIssues.filter(i => i.severity === 'minor');
+        // Check if issues are within acceptance thresholds
+        if (issuesWithinThresholds(lastReviewIssues)) {
+          reviewResult = {
+            passed: true,
+            details: `Accepted within thresholds (${issuesSummary})`,
+          };
+          
+          // Write remaining issues to TODO.md
+          const skillDir = join(workingDir, 'skills', `${provider.name}-webhooks`);
+          writeTodoFile(skillDir, lastReviewIssues, review.reviewResult.suggestions, dryRun);
+          
+          logger.success(`Review accepted within thresholds: ${issuesSummary}`);
+          logger.info(`Remaining issues written to TODO.md`);
+          break; // Success - within thresholds
+        }
         
+        // Issues exceed thresholds - need to fix
         reviewResult = {
           passed: false,
-          details: `Found ${criticalIssues.length} critical, ${majorIssues.length} major, ${minorIssues.length} minor issues`,
+          details: `Found ${issuesSummary} (exceeds thresholds)`,
         };
         
-        logger.warn(`Review found issues: ${reviewResult.details}`);
+        logger.warn(`Review found issues: ${issuesSummary}`);
         
         // Log issues
         for (const issue of lastReviewIssues) {
@@ -173,6 +311,13 @@ export async function reviewAndIterate(
   
   if (!success && iteration >= maxIterations) {
     logger.error(`Exhausted ${maxIterations} iterations without success`);
+    
+    // Write remaining issues to TODO.md even on failure
+    if (lastReviewIssues.length > 0) {
+      const skillDir = join(workingDir, 'skills', `${provider.name}-webhooks`);
+      writeTodoFile(skillDir, lastReviewIssues, [], dryRun);
+      logger.info(`Remaining issues written to TODO.md for future reference`);
+    }
   }
   
   return {
@@ -182,6 +327,7 @@ export async function reviewAndIterate(
     iterations: iteration,
     issuesFound: totalIssuesFound,
     issuesFixed: totalIssuesFixed,
+    remainingIssues: lastReviewIssues,
   };
 }
 
