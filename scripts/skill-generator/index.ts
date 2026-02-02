@@ -37,6 +37,7 @@ import {
   cleanupAllWorktrees,
   hasUnpushedCommits,
   getWorktreePath,
+  pathExistsInBranch,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
 
@@ -569,8 +570,22 @@ async function handleReview(
         // Commit changes if any fixes were made
         if (reviewResult.issuesFixed > 0) {
           const skillPath = `skills/${provider.name}-webhooks`;
+          
+          // Check if this is a new skill (feat) or existing skill (fix)
+          // We check against 'main' branch to determine if this is a new addition
+          const isNewSkill = !(await pathExistsInBranch(
+            ROOT_DIR,
+            `${skillPath}/SKILL.md`,
+            'main',
+            { logger, dryRun: reviewOptions.dryRun }
+          ));
+          
+          const commitPrefix = isNewSkill ? 'feat' : 'fix';
+          const commitVerb = isNewSkill ? 'add' : 'improve';
+          const commitMessage = `${commitPrefix}: ${commitVerb} ${provider.name}-webhooks skill`;
+          
           await addFiles(workingDir, [skillPath], { logger, dryRun: reviewOptions.dryRun });
-          await commit(workingDir, `fix: improve ${provider.name}-webhooks skill`, {
+          await commit(workingDir, commitMessage, {
             logger,
             dryRun: reviewOptions.dryRun,
           });
@@ -580,11 +595,15 @@ async function handleReview(
             await push(workingDir, branchName, { logger, dryRun: reviewOptions.dryRun });
             
             const isDraft = reviewOptions.createPr === 'draft';
+            const prBody = isNewSkill
+              ? `## Summary\n\nAdd webhook skill for ${provider.displayName || provider.name}.\n\n- Issues found during review: ${reviewResult.issuesFound}\n- Issues fixed: ${reviewResult.issuesFixed}\n- Review iterations: ${reviewResult.iterations}`
+              : `## Summary\n\nAutomated improvements to ${provider.name}-webhooks skill.\n\n- Issues found: ${reviewResult.issuesFound}\n- Issues fixed: ${reviewResult.issuesFixed}\n- Iterations: ${reviewResult.iterations}`;
+            
             const pr = await createPullRequest({
               owner: repoInfo.owner,
               repo: repoInfo.repo,
-              title: `fix: improve ${provider.name}-webhooks skill`,
-              body: `## Summary\n\nAutomated improvements to ${provider.name}-webhooks skill.\n\n- Issues found: ${reviewResult.issuesFound}\n- Issues fixed: ${reviewResult.issuesFixed}\n- Iterations: ${reviewResult.iterations}`,
+              title: commitMessage,
+              body: prBody,
               head: branchName,
               draft: isDraft,
               logger,

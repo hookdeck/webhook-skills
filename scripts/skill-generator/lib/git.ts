@@ -343,6 +343,34 @@ export async function hasUnpushedCommits(
 }
 
 /**
+ * Check if a path exists in a specific branch (e.g., main)
+ * Used to determine if a skill is new (feat) or existing (fix)
+ */
+export async function pathExistsInBranch(
+  rootDir: string,
+  path: string,
+  branch: string,
+  options: { logger: Logger; dryRun?: boolean }
+): Promise<boolean> {
+  const { logger, dryRun } = options;
+  
+  if (dryRun) {
+    logger.info(`[DRY RUN] Would check if ${path} exists in ${branch}`);
+    return false;
+  }
+  
+  try {
+    const git = createGit(rootDir);
+    // git ls-tree returns exit code 0 if path exists, non-zero otherwise
+    await git.raw(['ls-tree', '-r', branch, '--', path]);
+    return true;
+  } catch {
+    // Path doesn't exist in that branch
+    return false;
+  }
+}
+
+/**
  * Clean up all worktrees (for cleanup after run)
  */
 export async function cleanupAllWorktrees(
