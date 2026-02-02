@@ -79,13 +79,23 @@ If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplet
 - [ ] **Error responses use appropriate status codes** - 400 for invalid signature, not 500
 - [ ] **Examples are idiomatic** - Code follows framework conventions
 
-### Dependency Versions (CRITICAL - security risk)
+### Dependency Versions
 
 **Check package.json and requirements.txt against these current stable versions:**
 
 {{VERSIONS_TABLE}}
 
-Flag as CRITICAL if versions are significantly older than these (e.g., next 14.x when current is 16.x).
+**Severity guidelines for version issues:**
+
+| Situation | Severity | Example |
+|-----------|----------|---------|
+| Version doesn't exist | Critical | vitest 5.x (doesn't exist) |
+| Known security vulnerability | Critical | — |
+| 2+ major versions behind | Major | Express 3.x when 5.x is current |
+| 1 major version behind | Minor | Express 4.x when 5.x is current |
+| Minor/patch behind | Ignore | 4.21.0 vs 4.21.2 |
+
+**Do NOT flag as critical** just because a newer version exists. Being one major version behind is acceptable (minor issue at most).
 
 ### Consistency
 
@@ -122,8 +132,12 @@ After reviewing, respond with a JSON object in this exact format:
 
 **ALWAYS mark as CRITICAL:**
 - Missing required files (overview.md, setup.md, verification.md, examples)
-- Signature verification errors
-- Non-existent package versions
+- Signature verification errors (wrong algorithm, wrong header, etc.)
+- Non-existent package versions (e.g., vitest 5.x, pytest 10.x)
+- Known security vulnerabilities
+
+**NOT critical (use major or minor):**
+- Using an older but valid major version (e.g., Express 4.x when 5.x exists)
 
 **Categories:**
 - `structure` - Missing required files or directories
