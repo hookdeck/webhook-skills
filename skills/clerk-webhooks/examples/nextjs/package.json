@@ -1,0 +1,25 @@
+{
+  "name": "clerk-webhooks-nextjs-example",
+  "version": "1.0.0",
+  "description": "Next.js example for receiving Clerk webhooks",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

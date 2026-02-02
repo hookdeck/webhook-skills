@@ -1,0 +1,21 @@
+{
+  "name": "clerk-webhooks-express-example",
+  "version": "1.0.0",
+  "description": "Express example for receiving Clerk webhooks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --testTimeout=10000 --forceExit"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
