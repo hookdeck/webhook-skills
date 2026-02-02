@@ -1,0 +1,67 @@
+# Deepgram Webhooks - Express Example
+
+Minimal example of receiving Deepgram webhooks with authentication verification.
+
+## Prerequisites
+
+- Node.js 18+
+- Deepgram account with API access
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Add your Deepgram API Key ID to `.env`:
+   - Log into [Deepgram Console](https://console.deepgram.com/)
+   - Navigate to API Keys
+   - Copy the API Key ID (not the key itself)
+
+## Run
+
+```bash
+npm start
+```
+
+Server runs on http://localhost:3000
+
+## Test Webhook Locally
+
+1. Start the server:
+   ```bash
+   npm start
+   ```
+
+2. In another terminal, use Hookdeck CLI to create a tunnel:
+   ```bash
+   hookdeck listen 3000 --path /webhooks/deepgram
+   ```
+
+3. Use the provided URL when making Deepgram requests:
+   ```bash
+   curl -X POST \
+     --header "Authorization: Token YOUR_DEEPGRAM_API_KEY" \
+     --header "Content-Type: audio/wav" \
+     --data-binary @audio.wav \
+     "https://api.deepgram.com/v1/listen?callback=YOUR_HOOKDECK_URL"
+   ```
+
+## Run Tests
+
+```bash
+npm test
+```
+
+## Implementation Notes
+
+- Verifies webhooks using the `dg-token` header
+- Returns appropriate HTTP status codes
+- Handles JSON payloads with transcription results
+- Includes comprehensive test coverage
