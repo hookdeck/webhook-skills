@@ -52,3 +52,9 @@ yarn.lock
 
 # Test results (generated during agent testing)
 test-results/
+
+# Skill generator results
+results/
+
+# Git worktrees (used by skill generator for parallel execution)
+.worktrees/

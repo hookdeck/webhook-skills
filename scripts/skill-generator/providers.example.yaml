@@ -1,0 +1,65 @@
+# Example provider configuration file
+# Copy this file and customize for your batch generation runs
+#
+# Usage:
+#   ./scripts/generate-skills.sh generate --config providers.yaml
+
+# ElevenLabs - AI voice generation webhooks
+elevenlabs:
+  displayName: ElevenLabs
+  docs:
+    webhooks: https://elevenlabs.io/docs/api-reference/webhooks
+  notes: "Uses standard HMAC-SHA256 verification"
+
+# Deepgram - Speech-to-text webhooks
+deepgram:
+  displayName: Deepgram
+  docs:
+    webhooks: https://developers.deepgram.com/docs/webhooks
+  notes: "Callback-based API, verify webhook signature docs"
+
+# Chargebee - Subscription billing webhooks
+chargebee:
+  displayName: Chargebee
+  docs:
+    webhooks: https://www.chargebee.com/docs/2.0/webhook_settings.html
+    events: https://www.chargebee.com/docs/2.0/events_list.html
+  notes: "Uses basic auth or IP whitelisting for verification"
+
+# OpenAI - AI model webhooks (if available)
+# openai:
+#   displayName: OpenAI
+#   docs:
+#     webhooks: https://platform.openai.com/docs/api-reference
+#   notes: "Check if webhooks are available"
+
+# Clerk - Authentication webhooks
+clerk:
+  displayName: Clerk
+  docs:
+    webhooks: https://clerk.com/docs/integrations/webhooks
+    verification: https://clerk.com/docs/integrations/webhooks/sync-data#validate-the-webhook-signature
+  notes: "Uses Svix for webhook delivery - similar to Resend"
+
+# Auth0 - Identity webhooks
+auth0:
+  displayName: Auth0
+  docs:
+    webhooks: https://auth0.com/docs/customize/log-streams/webhook-log-streams
+  notes: "Log streams with signature verification"
+
+# Twilio - Communications webhooks
+twilio:
+  displayName: Twilio
+  docs:
+    webhooks: https://www.twilio.com/docs/usage/webhooks
+    verification: https://www.twilio.com/docs/usage/webhooks/webhooks-security
+  notes: "Uses X-Twilio-Signature header with HMAC-SHA1"
+
+# SendGrid - Email webhooks
+sendgrid:
+  displayName: SendGrid
+  docs:
+    webhooks: https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook
+    verification: https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features
+  notes: "Event webhook with optional signature verification"

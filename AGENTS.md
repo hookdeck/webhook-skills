@@ -294,6 +294,31 @@ Server runs on http://localhost:3000
 - Show proper error handling (return appropriate status codes)
 - Keep dependencies minimal (avoid adding SDK just for verification if manual works)
 
+### Dependency Version Guidelines
+
+**CRITICAL: Always use current/latest stable versions of dependencies.** AI training data contains older versions that may have security vulnerabilities.
+
+- **Look up current versions** before adding dependencies to package.json or requirements.txt
+- **For Next.js**: Use version 15.x or later (not 14.x which has known vulnerabilities)
+- **For Express**: Use version 4.21.x or later
+- **For FastAPI**: Use version 0.115.x or later
+- **Never hardcode old versions** from memory — always verify against npm/pypi
+- When in doubt, use `latest` or `^` prefix to allow minor updates
+
+**How to check current versions:**
+```bash
+# Node.js packages
+npm view <package> version
+
+# Python packages  
+pip index versions <package>
+```
+
+**Common outdated versions to avoid:**
+- `next@14.x` → use `next@15.x` or later
+- `express@4.18.x` → use `express@4.21.x` or later
+- `fastapi@0.100.x` → use `fastapi@0.115.x` or later
+
 ## References Structure
 
 Reference files in `references/` are documentation the agent loads on demand. Keep them focused and flat (no nested directories).
