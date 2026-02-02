@@ -9,7 +9,7 @@ Chargebee webhooks are HTTP callbacks that notify your application when events o
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `subscription_created` | New subscription is created | Provision user access, create account, send welcome email |
-| `subscription_updated` | Subscription plan or state changes | Update user permissions, sync subscription data |
+| `subscription_changed` | Subscription's recurring items change | Update user permissions, sync subscription data |
 | `subscription_cancelled` | Customer cancels subscription | Schedule access revocation, trigger retention campaigns |
 | `subscription_reactivated` | Cancelled subscription is reactivated | Restore user access, update billing status |
 | `subscription_renewed` | Subscription auto-renews | Log renewal, send confirmation |
