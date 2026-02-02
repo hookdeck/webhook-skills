@@ -24,6 +24,9 @@ usage() {
     echo "  stripe-express   - Stripe webhook handling in Express"
     echo "  shopify-nextjs   - Shopify webhook handling in Next.js"
     echo "  github-fastapi   - GitHub webhook handling in FastAPI"
+    echo "  paddle-express   - Paddle webhook handling in Express"
+    echo "  paddle-nextjs    - Paddle webhook handling in Next.js"
+    echo "  paddle-fastapi   - Paddle webhook handling in FastAPI"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -54,6 +57,24 @@ get_scenario_config() {
             FRAMEWORK="fastapi"
             SKILL_NAME="github-webhooks"
             PROMPT="Add a GitHub webhook endpoint to my FastAPI app. I need to handle push and pull_request events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        paddle-express)
+            PROVIDER="paddle"
+            FRAMEWORK="express"
+            SKILL_NAME="paddle-webhooks"
+            PROMPT="Add Paddle webhook handling to my Express app. I want to handle subscription.created and transaction.completed events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        paddle-nextjs)
+            PROVIDER="paddle"
+            FRAMEWORK="nextjs"
+            SKILL_NAME="paddle-webhooks"
+            PROMPT="Add a Paddle webhook endpoint to handle subscription events in my Next.js app. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        paddle-fastapi)
+            PROVIDER="paddle"
+            FRAMEWORK="fastapi"
+            SKILL_NAME="paddle-webhooks"
+            PROMPT="Add a Paddle webhook endpoint to my FastAPI app. I need to handle subscription.created and subscription.canceled events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"
