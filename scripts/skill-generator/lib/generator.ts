@@ -187,7 +187,7 @@ export async function generateSkill(
   try {
     // Get repo info for PR creation
     const repoInfo = await getRepoInfo(rootDir);
-    if (!repoInfo && !options.skipPr) {
+    if (!repoInfo && options.createPr) {
       throw new Error('Could not determine repository owner/name from git remote');
     }
     
@@ -263,10 +263,11 @@ export async function generateSkill(
       dryRun: options.dryRun,
     });
     
-    if (!options.skipPr && repoInfo) {
+    if (options.createPr && repoInfo) {
       await push(worktreePath, branchName, { logger, dryRun: options.dryRun });
       
       const prBody = buildPrBody(provider, result);
+      const isDraft = options.createPr === 'draft';
       const pr = await createPullRequest({
         owner: repoInfo.owner,
         repo: repoInfo.repo,
@@ -274,11 +275,20 @@ export async function generateSkill(
         body: prBody,
         head: branchName,
         base: options.baseBranch,
+        draft: isDraft,
         logger,
         dryRun: options.dryRun,
       });
       
       result.prUrl = pr.prUrl;
+    } else {
+      // No PR - inform user about worktree location
+      logger.info(`Changes committed locally (no PR created)`);
+      logger.info(`  Branch: ${branchName}`);
+      logger.info(`  Path: ${worktreePath}`);
+      logger.info(`To push and create PR manually:`);
+      logger.info(`  cd ${worktreePath} && git push -u origin HEAD`);
+      logger.info(`  gh pr create`);
     }
     
     result.success = true;

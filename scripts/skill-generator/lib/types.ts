@@ -30,6 +30,11 @@ export interface BaseOptions {
 }
 
 /**
+ * PR creation mode: false (no PR), true (normal PR), or 'draft' (draft PR)
+ */
+export type CreatePrOption = boolean | 'draft';
+
+/**
  * Options for the generate command
  */
 export interface GenerateOptions extends BaseOptions {
@@ -37,7 +42,7 @@ export interface GenerateOptions extends BaseOptions {
   baseBranch: string;
   skipTests: boolean;
   skipReview: boolean;
-  skipPr: boolean;
+  createPr: CreatePrOption;
 }
 
 /**
@@ -45,7 +50,7 @@ export interface GenerateOptions extends BaseOptions {
  */
 export interface ReviewOptions extends BaseOptions {
   command: 'review';
-  createPr: boolean;
+  createPr: CreatePrOption;
   branchPrefix: string;
 }
 

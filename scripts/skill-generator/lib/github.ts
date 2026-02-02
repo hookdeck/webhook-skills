@@ -38,13 +38,14 @@ export async function createPullRequest(options: {
   body: string;
   head: string;  // branch name
   base?: string; // target branch (default: main)
+  draft?: boolean; // create as draft PR
   logger: Logger;
   dryRun?: boolean;
 }): Promise<{ success: boolean; prUrl?: string; prNumber?: number; error?: string }> {
-  const { owner, repo, title, body, head, base = 'main', logger, dryRun } = options;
+  const { owner, repo, title, body, head, base = 'main', draft = false, logger, dryRun } = options;
   
   if (dryRun) {
-    logger.info(`[DRY RUN] Would create PR: ${title}`);
+    logger.info(`[DRY RUN] Would create ${draft ? 'draft ' : ''}PR: ${title}`);
     logger.info(`[DRY RUN] ${owner}/${repo}: ${head} -> ${base}`);
     return { 
       success: true, 
@@ -56,7 +57,7 @@ export async function createPullRequest(options: {
   try {
     const octokit = getOctokit();
     
-    logger.info(`Creating pull request: ${title}`);
+    logger.info(`Creating ${draft ? 'draft ' : ''}pull request: ${title}`);
     
     const response = await octokit.pulls.create({
       owner,
@@ -65,6 +66,7 @@ export async function createPullRequest(options: {
       body,
       head,
       base,
+      draft,
     });
     
     const prUrl = response.data.html_url;

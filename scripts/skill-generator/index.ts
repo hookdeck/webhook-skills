@@ -114,6 +114,17 @@ function writeSummary(results: OperationResult[], resultsDir: string): void {
 }
 
 /**
+ * Normalize createPr option value
+ * Commander passes: true (flag without value), 'draft', 'true', or false (no flag)
+ */
+function normalizeCreatePr(value: boolean | string): boolean | 'draft' {
+  if (value === false) return false;
+  if (value === true || value === 'true' || value === '') return true;
+  if (value === 'draft') return 'draft';
+  return false;
+}
+
+/**
  * Generate command handler
  */
 async function handleGenerate(
@@ -126,7 +137,7 @@ async function handleGenerate(
     skipTests: boolean;
     skipReview: boolean;
     maxIterations: string;
-    skipPr: boolean;
+    createPr: boolean | string;
     model: string;
   }
 ): Promise<void> {
@@ -155,7 +166,7 @@ async function handleGenerate(
     skipTests: options.skipTests,
     skipReview: options.skipReview,
     maxIterations: parseInt(options.maxIterations, 10),
-    skipPr: options.skipPr,
+    createPr: normalizeCreatePr(options.createPr),
     model: options.model,
   };
   
@@ -224,7 +235,7 @@ async function handleReview(
     parallel: string;
     dryRun: boolean;
     maxIterations: string;
-    createPr: boolean;
+    createPr: boolean | string;
     branchPrefix: string;
     model: string;
   }
@@ -263,7 +274,7 @@ async function handleReview(
     parallel: parseInt(options.parallel, 10),
     dryRun: options.dryRun,
     maxIterations: parseInt(options.maxIterations, 10),
-    createPr: options.createPr,
+    createPr: normalizeCreatePr(options.createPr),
     branchPrefix: options.branchPrefix,
     model: options.model,
   };
@@ -289,23 +300,20 @@ async function handleReview(
         
         logger.info(`Starting review for ${provider.displayName || provider.name}`);
         
-        const branchName = reviewOptions.createPr
-          ? `${reviewOptions.branchPrefix}/${provider.name}-webhooks`
-          : undefined;
+        // Always use worktrees for parallel safety
+        const branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
+        const worktreeId = `review-${provider.name}`;
         
-        let workingDir = ROOT_DIR;
+        const worktreeResult = await createWorktree(ROOT_DIR, worktreeId, branchName, {
+          logger,
+          dryRun: reviewOptions.dryRun,
+        });
         
-        // Create worktree if creating PR (for parallel execution)
-        if (branchName) {
-          const worktreeResult = await createWorktree(ROOT_DIR, `review-${provider.name}`, branchName, {
-            logger,
-            dryRun: reviewOptions.dryRun,
-          });
-          
-          if (worktreeResult.success) {
-            workingDir = worktreeResult.path;
-          }
+        if (!worktreeResult.success) {
+          throw new Error(`Failed to create worktree: ${worktreeResult.error}`);
         }
+        
+        const workingDir = worktreeResult.path;
         
         const reviewResult = await reviewExistingSkill(provider, {
           workingDir,
@@ -331,32 +339,48 @@ async function handleReview(
           logFile,
         };
         
-        // Commit and PR if requested and changes were made
-        if (reviewOptions.createPr && reviewResult.issuesFixed > 0 && branchName && repoInfo) {
+        // Commit changes if any fixes were made
+        if (reviewResult.issuesFixed > 0) {
           const skillPath = `skills/${provider.name}-webhooks`;
           await addFiles(workingDir, [skillPath], { logger, dryRun: reviewOptions.dryRun });
           await commit(workingDir, `fix: improve ${provider.name}-webhooks skill`, {
             logger,
             dryRun: reviewOptions.dryRun,
           });
-          await push(workingDir, branchName, { logger, dryRun: reviewOptions.dryRun });
           
-          const pr = await createPullRequest({
-            owner: repoInfo.owner,
-            repo: repoInfo.repo,
-            title: `fix: improve ${provider.name}-webhooks skill`,
-            body: `## Summary\n\nAutomated improvements to ${provider.name}-webhooks skill.\n\n- Issues found: ${reviewResult.issuesFound}\n- Issues fixed: ${reviewResult.issuesFixed}\n- Iterations: ${reviewResult.iterations}`,
-            head: branchName,
-            logger,
-            dryRun: reviewOptions.dryRun,
-          });
-          
-          result.prUrl = pr.prUrl;
-        }
-        
-        // Cleanup worktree
-        if (branchName && workingDir !== ROOT_DIR) {
-          await removeWorktree(ROOT_DIR, `review-${provider.name}`, { logger, dryRun: reviewOptions.dryRun });
+          // Push and create PR if requested
+          if (reviewOptions.createPr && repoInfo) {
+            await push(workingDir, branchName, { logger, dryRun: reviewOptions.dryRun });
+            
+            const isDraft = reviewOptions.createPr === 'draft';
+            const pr = await createPullRequest({
+              owner: repoInfo.owner,
+              repo: repoInfo.repo,
+              title: `fix: improve ${provider.name}-webhooks skill`,
+              body: `## Summary\n\nAutomated improvements to ${provider.name}-webhooks skill.\n\n- Issues found: ${reviewResult.issuesFound}\n- Issues fixed: ${reviewResult.issuesFixed}\n- Iterations: ${reviewResult.iterations}`,
+              head: branchName,
+              draft: isDraft,
+              logger,
+              dryRun: reviewOptions.dryRun,
+            });
+            
+            result.prUrl = pr.prUrl;
+            
+            // Cleanup worktree after PR created
+            await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+          } else {
+            // No PR - inform user about worktree location
+            logger.info(`Changes committed locally (no PR created)`);
+            logger.info(`  Branch: ${branchName}`);
+            logger.info(`  Path: ${workingDir}`);
+            logger.info(`To push and create PR manually:`);
+            logger.info(`  cd ${workingDir} && git push -u origin HEAD`);
+            logger.info(`  gh pr create`);
+          }
+        } else {
+          // No changes made - cleanup worktree
+          logger.info(`No issues fixed - cleaning up worktree`);
+          await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
         }
         
         if (result.success) {
@@ -409,7 +433,7 @@ program
   .option('--skip-tests', 'Skip running tests after generation', false)
   .option('--skip-review', 'Skip the review/validation phase', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
-  .option('--skip-pr', 'Skip creating pull requests', false)
+  .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
   .action(handleGenerate);
 
 program
@@ -421,7 +445,7 @@ program
   .option('--parallel <n>', 'Max concurrent agents', '2')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
-  .option('--create-pr', 'Create PRs with improvements', false)
+  .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
   .option('--branch-prefix <prefix>', 'Prefix for improvement branches', 'improve')
   .action(handleReview);
 
