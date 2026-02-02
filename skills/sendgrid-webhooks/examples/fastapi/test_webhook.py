@@ -217,7 +217,7 @@ async def test_all_event_types():
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "bounce", "reason": "Invalid"},
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "open"},
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "click", "url": "https://example.com"},
-        {"email": "test@example.com", "timestamp": int(timestamp), "event": "spam report"},
+        {"email": "test@example.com", "timestamp": int(timestamp), "event": "spamreport"},
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "unsubscribe"},
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "deferred", "reason": "Mailbox full"},
         {"email": "test@example.com", "timestamp": int(timestamp), "event": "dropped", "reason": "Bounced address"},

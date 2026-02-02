@@ -109,8 +109,8 @@ app.post('/webhooks/sendgrid', express.raw({ type: 'application/json' }), (req, 
 | `click` | Recipient clicked a link | Link tracking, CTR analysis |
 | `spam report` | Email marked as spam | List hygiene, sender reputation |
 | `unsubscribe` | Recipient unsubscribed | Update subscription status |
-| `group_unsubscribe` | Recipient unsubscribed from a group | Update group subscription preferences |
-| `group_resubscribe` | Recipient resubscribed to a group | Update group subscription preferences |
+| `group unsubscribe` | Recipient unsubscribed from a group | Update group subscription preferences |
+| `group resubscribe` | Recipient resubscribed to a group | Update group subscription preferences |
 
 ## Environment Variables
 

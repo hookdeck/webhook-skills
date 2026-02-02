@@ -206,6 +206,8 @@ describe('SendGrid Webhook Handler', () => {
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'click', url: 'https://example.com' },
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'spam report' },
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'unsubscribe' },
+        { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'group unsubscribe' },
+        { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'group resubscribe' },
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'deferred', reason: 'Mailbox full' },
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'dropped', reason: 'Bounced address' },
         { email: 'test@example.com', timestamp: parseInt(timestamp), event: 'processed' },

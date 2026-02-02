@@ -100,11 +100,33 @@ app.post('/webhooks/sendgrid', express.raw({ type: 'application/json' }), (req, 
         console.log(`Unsubscribe from ${event.email}`);
         // Update subscription preferences
         break;
+      case 'group unsubscribe':
+        console.log(`Group unsubscribe from ${event.email}`);
+        // Update group subscription preferences
+        break;
+      case 'group resubscribe':
+        console.log(`Group resubscribe from ${event.email}`);
+        // Update group subscription preferences
+        break;
       case 'open':
         console.log(`Email opened by ${event.email}`);
+        // Track engagement metrics
         break;
       case 'click':
         console.log(`Link clicked by ${event.email}: ${event.url}`);
+        // Track click analytics
+        break;
+      case 'deferred':
+        console.log(`Email deferred for ${event.email}: ${event.reason}`);
+        // Monitor delivery issues
+        break;
+      case 'dropped':
+        console.log(`Email dropped for ${event.email}: ${event.reason}`);
+        // Investigate drop reasons
+        break;
+      case 'processed':
+        console.log(`Email processed for ${event.email}`);
+        // Track processing status
         break;
       default:
         console.log(`Unhandled event type: ${event.event}`);

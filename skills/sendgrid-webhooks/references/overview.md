@@ -25,8 +25,8 @@ SendGrid webhooks (Event Webhook) provide real-time notifications about email de
 | `click` | Recipient clicks a tracked link | Analyze CTR, popular links |
 | `spam report` | Email marked as spam | Maintain sender reputation |
 | `unsubscribe` | Recipient unsubscribes | Update subscription lists |
-| `group_unsubscribe` | Unsubscribe from specific group | Manage group preferences |
-| `group_resubscribe` | Resubscribe to specific group | Track re-engagement |
+| `group unsubscribe` | Unsubscribe from specific group | Manage group preferences |
+| `group resubscribe` | Resubscribe to specific group | Track re-engagement |
 
 ## Event Payload Structure
 

@@ -114,6 +114,12 @@ async def handle_sendgrid_webhook(
             case 'unsubscribe':
                 print(f"Unsubscribe from {event['email']}")
                 # Update subscription preferences
+            case 'group unsubscribe':
+                print(f"Group unsubscribe from {event['email']}")
+                # Update group subscription preferences
+            case 'group resubscribe':
+                print(f"Group resubscribe from {event['email']}")
+                # Update group subscription preferences
             case 'open':
                 print(f"Email opened by {event['email']}")
                 # Track engagement metrics

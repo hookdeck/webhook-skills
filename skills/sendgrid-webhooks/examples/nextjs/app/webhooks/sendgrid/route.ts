@@ -114,6 +114,14 @@ export async function POST(request: NextRequest) {
         console.log(`Unsubscribe from ${event.email}`);
         // Update subscription preferences
         break;
+      case 'group unsubscribe':
+        console.log(`Group unsubscribe from ${event.email}`);
+        // Update group subscription preferences
+        break;
+      case 'group resubscribe':
+        console.log(`Group resubscribe from ${event.email}`);
+        // Update group subscription preferences
+        break;
       case 'open':
         console.log(`Email opened by ${event.email}`);
         // Track engagement metrics
