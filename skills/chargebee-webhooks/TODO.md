@@ -7,17 +7,32 @@ Contributions to address these items are welcome.
 
 ## Issues
 
+### Critical
+
+- [ ] **skills/chargebee-webhooks/examples/express/package.json**: Express version is significantly outdated - using ^4.21.0 when current stable is 5.2.1
+  - Suggested fix: Update to "express": "^5.2.1"
+- [ ] **skills/chargebee-webhooks/examples/express/package.json**: Jest version is outdated - using ^29.0.0 when current stable is 30.2.0
+  - Suggested fix: Update to "jest": "^30.2.0"
+- [ ] **skills/chargebee-webhooks/examples/nextjs/package.json**: Next.js version is outdated - using ^15.1.0 when current stable is 16.1.6
+  - Suggested fix: Update to "next": "^16.1.6"
+- [ ] **skills/chargebee-webhooks/examples/nextjs/package.json**: Vitest version is significantly outdated - using ^2.1.0 when current stable is 4.0.18
+  - Suggested fix: Update to "vitest": "^4.0.18"
+- [ ] **skills/chargebee-webhooks/examples/fastapi/requirements.txt**: FastAPI version is outdated - using >=0.115.0 when current stable is 0.128.0
+  - Suggested fix: Update to "fastapi>=0.128.0"
+- [ ] **skills/chargebee-webhooks/examples/fastapi/requirements.txt**: pytest version is outdated - using >=8.0.0 when current stable is 9.0.2
+  - Suggested fix: Update to "pytest>=9.0.2"
+- [ ] **skills/chargebee-webhooks/examples/fastapi/requirements.txt**: httpx version is outdated - using >=0.27.0 when current stable is 0.28.1
+  - Suggested fix: Update to "httpx>=0.28.1"
+
 ### Major
 
-- [ ] **skills/chargebee-webhooks/examples/express/src/index.js**: Using incorrect event names. The reference implementation uses 'payment_succeeded' but the code uses 'payment_initiated' and 'payment_collection_failed' which are not documented
-  - Suggested fix: Replace 'payment_initiated' with 'payment_succeeded' and remove 'payment_collection_failed' unless verified against Chargebee API docs
-- [ ] **skills/chargebee-webhooks/references/overview.md**: Inconsistent event names between overview.md (uses 'payment_succeeded' and 'payment_failed') and implementations (use 'payment_initiated' and 'payment_collection_failed')
-  - Suggested fix: Use consistent event names across all files. Based on the reference implementation, 'payment_succeeded' is correct
+- [ ] **skills/chargebee-webhooks/SKILL.md**: Event names 'payment_succeeded' and 'payment_failed' could not be verified against Chargebee documentation. These were already flagged in TODO.md as potentially incorrect
+  - Suggested fix: Verify exact event names against Chargebee API documentation - they may be 'payment_source_added', 'payment_source_updated', or other names
+- [ ] **skills/chargebee-webhooks/references/overview.md**: Overview uses 'subscription_updated' but examples use 'subscription_changed' - inconsistent event names
+  - Suggested fix: Use consistent event names across all files. Based on the code, 'subscription_changed' appears to be correct
 
 ### Minor
 
-- [ ] **skills/chargebee-webhooks/SKILL.md**: The warning note about verifying event types is good but could be more prominent since payment events appear to have incorrect names
-  - Suggested fix: Move the warning to the top of the event types section and specifically call out that payment event names need verification
-- [ ] **skills/chargebee-webhooks/examples/express/src/index.js**: Express example doesn't use express.raw() for raw body access even though the SKILL.md shows it in comments
-  - Suggested fix: Either remove the express.raw() example from SKILL.md or explain why it's not needed for Basic Auth (unlike HMAC signatures)
+- [ ] **skills/chargebee-webhooks/SKILL.md**: Express example in SKILL.md shows express.raw() in comments but it's not needed for Basic Auth
+  - Suggested fix: Remove the express.raw() comment example as it's confusing and not relevant to Basic Auth verification
 

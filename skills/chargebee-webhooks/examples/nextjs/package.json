@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "next": "^15.1.0",
+    "next": "^16.1.6",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
@@ -18,7 +18,7 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^2.1.0"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18.0.0"
