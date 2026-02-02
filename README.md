@@ -121,20 +121,37 @@ The agent will:
 
 ## Contributing
 
-We welcome contributions! See [AGENTS.md](AGENTS.md) for:
-- Repository structure and conventions
-- SKILL.md format and frontmatter requirements
-- Example code guidelines
-- Reference file templates
+We actively encourage contributions! Whether you're adding a new webhook provider, improving existing skills, or fixing bugs — your help makes this resource better for everyone.
 
-### Adding a New Provider Skill
+### Quick Start: Generate a New Skill
 
-1. Create `skills/{provider}-webhooks/` directory
-2. Add `SKILL.md` with frontmatter and content following the template
-3. Add reference files: `overview.md`, `setup.md`, `verification.md`
-4. Create examples for Express, Next.js, and FastAPI
-5. Test locally: `npx skills add ./skills/{provider}-webhooks --list`
-6. Submit a pull request
+The fastest way to contribute a new provider skill is using our generator:
+
+```bash
+# Install dependencies (one-time)
+cd scripts/skill-generator && npm install && cd ../..
+
+# Generate a skill with automatic PR creation
+./scripts/generate-skills.sh generate "providername=https://docs.provider.com/webhooks" --create-pr
+```
+
+The generator uses Claude to research the provider's documentation, create accurate verification code, generate examples for Express/Next.js/FastAPI, run tests, and create a pull request — all automatically.
+
+### Ways to Contribute
+
+| Contribution | Description |
+|--------------|-------------|
+| **Add a provider** | Create a webhook skill for Twilio, SendGrid, Linear, or any provider not yet covered |
+| **Improve existing skills** | Fix bugs, update documentation, add missing event types |
+| **Add framework examples** | Add examples for Flask, Hono, Deno, or other frameworks |
+| **Report issues** | Found a bug or inaccuracy? [Open an issue](https://github.com/hookdeck/webhook-skills/issues) |
+| **Request providers** | [Suggest a provider](https://github.com/hookdeck/webhook-skills/issues/new?labels=provider-request) you'd like to see covered |
+
+### Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Complete guide to contributing, including detailed generator usage
+- **[AGENTS.md](AGENTS.md)** — Repository structure, skill format, and code guidelines
+- **[TESTING.md](TESTING.md)** — How to run and write tests
 
 ## Related Resources
 
