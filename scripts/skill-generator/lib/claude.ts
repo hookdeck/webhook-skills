@@ -78,9 +78,10 @@ export async function runClaude(
     logger: Logger;
     dryRun?: boolean;
     model?: string;
+    parallel?: boolean;  // If true, use log messages instead of in-place spinner
   }
 ): Promise<{ output: string; success: boolean }> {
-  const { workingDir, logger, dryRun, model = DEFAULT_MODEL } = options;
+  const { workingDir, logger, dryRun, model = DEFAULT_MODEL, parallel = false } = options;
   
   if (dryRun) {
     logger.info(`[DRY RUN] Would run Claude (model: ${model}) with prompt:`);
@@ -92,9 +93,6 @@ export async function runClaude(
     logger.info(`Running Claude CLI (model: ${model})...`);
     logger.info(`Working directory: ${workingDir}`);
     
-    // Spinner animation frames
-    const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-    let spinnerIndex = 0;
     const startTime = Date.now();
     
     // Format elapsed time as "Xm Ys"
@@ -105,11 +103,28 @@ export async function runClaude(
       return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
     };
     
-    // Start spinner
-    const spinner = setInterval(() => {
-      spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-      process.stdout.write(`\r${spinnerFrames[spinnerIndex]} Working... (${formatElapsed()} elapsed)   `);
-    }, 100);
+    let progressInterval: ReturnType<typeof setInterval>;
+    
+    if (parallel) {
+      // In parallel mode, use periodic log messages (no in-place updates)
+      let lastLogTime = Date.now();
+      progressInterval = setInterval(() => {
+        const now = Date.now();
+        // Log every 30 seconds
+        if (now - lastLogTime >= 30000) {
+          logger.info(`Still working... (${formatElapsed()} elapsed)`);
+          lastLogTime = now;
+        }
+      }, 5000);
+    } else {
+      // Single mode: use in-place spinner
+      const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+      let spinnerIndex = 0;
+      progressInterval = setInterval(() => {
+        spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
+        process.stdout.write(`\r${spinnerFrames[spinnerIndex]} Working... (${formatElapsed()} elapsed)   `);
+      }, 100);
+    }
     
     // Use stdin to pass the prompt - more reliable for long prompts
     // Capture output while also streaming it to console
@@ -144,12 +159,17 @@ export async function runClaude(
     
     const result = await subprocess;
     
-    // Stop spinner and clear the line
-    clearInterval(spinner);
-    process.stdout.write(`\r✓ Completed in ${formatElapsed()}                    \n`);
+    // Stop progress indicator
+    clearInterval(progressInterval);
     
-    // Show Claude's output
-    if (stdout) {
+    if (parallel) {
+      logger.success(`Claude completed in ${formatElapsed()}`);
+    } else {
+      process.stdout.write(`\r✓ Completed in ${formatElapsed()}                    \n`);
+    }
+    
+    // Show Claude's output (only in non-parallel mode to avoid interleaved output)
+    if (stdout && !parallel) {
       console.log('\n--- Claude Output ---');
       console.log(stdout);
       console.log('--- End Output ---\n');
@@ -171,16 +191,22 @@ export async function runClaude(
 }
 
 /**
+ * Common options for Claude operations
+ */
+interface ClaudeOperationOptions {
+  workingDir: string;
+  logger: Logger;
+  dryRun?: boolean;
+  model?: string;
+  parallel?: boolean;
+}
+
+/**
  * Run Claude to generate a skill
  */
 export async function runGenerateSkill(
   provider: ProviderConfig,
-  options: {
-    workingDir: string;
-    logger: Logger;
-    dryRun?: boolean;
-    model?: string;
-  }
+  options: ClaudeOperationOptions
 ): Promise<{ output: string; success: boolean }> {
   const replacements = buildPromptReplacements(provider);
   const prompt = loadPrompt('generate-skill.md', replacements);
@@ -193,12 +219,7 @@ export async function runGenerateSkill(
  */
 export async function runReviewSkill(
   provider: ProviderConfig,
-  options: {
-    workingDir: string;
-    logger: Logger;
-    dryRun?: boolean;
-    model?: string;
-  }
+  options: ClaudeOperationOptions
 ): Promise<{ output: string; success: boolean; reviewResult?: ReviewResult }> {
   const replacements = buildPromptReplacements(provider);
   const prompt = loadPrompt('review-skill.md', replacements);
@@ -221,12 +242,7 @@ export async function runReviewSkill(
 export async function runFixIssues(
   provider: ProviderConfig,
   issuesJson: string,
-  options: {
-    workingDir: string;
-    logger: Logger;
-    dryRun?: boolean;
-    model?: string;
-  }
+  options: ClaudeOperationOptions
 ): Promise<{ output: string; success: boolean }> {
   const replacements = {
     ...buildPromptReplacements(provider),

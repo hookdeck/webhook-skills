@@ -20,6 +20,7 @@ export interface ReviewAndIterateOptions {
   skipReview?: boolean;
   maxIterations: number;
   model?: string;
+  parallel?: boolean;
 }
 
 export interface ReviewAndIterateResult {
@@ -38,7 +39,7 @@ export async function reviewAndIterate(
   provider: ProviderConfig,
   options: ReviewAndIterateOptions
 ): Promise<ReviewAndIterateResult> {
-  const { workingDir, logger, dryRun, skipTests, skipReview, maxIterations, model } = options;
+  const { workingDir, logger, dryRun, skipTests, skipReview, maxIterations, model, parallel } = options;
   
   let iteration = 0;
   let totalIssuesFound = 0;
@@ -88,6 +89,7 @@ export async function reviewAndIterate(
           logger,
           dryRun,
           model,
+          parallel,
         });
         
         totalIssuesFixed += testIssues.length; // Assume fixed, will verify next iteration
@@ -101,7 +103,7 @@ export async function reviewAndIterate(
     // Phase 2: Review content accuracy
     if (!skipReview) {
       logger.info('Reviewing content accuracy...');
-      const review = await runReviewSkill(provider, { workingDir, logger, dryRun, model });
+      const review = await runReviewSkill(provider, { workingDir, logger, dryRun, model, parallel });
       
       if (!review.success) {
         reviewResult = { passed: false, details: 'Review failed to run' };
@@ -145,6 +147,7 @@ export async function reviewAndIterate(
           logger,
           dryRun,
           model,
+          parallel,
         });
         
         totalIssuesFixed += lastReviewIssues.length; // Assume fixed, will verify next iteration
