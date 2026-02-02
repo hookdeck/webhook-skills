@@ -140,11 +140,11 @@ describe('Chargebee Webhook Handler', () => {
     it('should handle different event types', async () => {
       const eventTypes = [
         'subscription_created',
-        'subscription_updated',
+        'subscription_changed',
         'subscription_cancelled',
         'subscription_reactivated',
-        'payment_initiated',
-        'payment_collection_failed',
+        'payment_succeeded',
+        'payment_failed',
         'invoice_generated',
         'customer_created',
         'unknown_event_type'

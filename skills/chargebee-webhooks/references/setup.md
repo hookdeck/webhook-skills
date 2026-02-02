@@ -45,8 +45,8 @@ https://app.example.com/webhooks/chargebee?key=your_secret_key_here
    - **Selected Events**: Choose specific events (recommended)
 
 2. Common events to select:
-   - Subscription Events: `subscription_created`, `subscription_updated`, `subscription_cancelled`
-   - Payment Events: `payment_initiated`, `payment_collection_failed`
+   - Subscription Events: `subscription_created`, `subscription_changed`, `subscription_cancelled`
+   - Payment Events: `payment_succeeded`, `payment_failed`
    - Invoice Events: `invoice_generated`, `invoice_updated`
    - Customer Events: `customer_created`, `customer_updated`
 

@@ -27,6 +27,8 @@ Chargebee uses Basic Authentication for webhook verification. Here's how to impl
 
 ```javascript
 // Verify Chargebee webhook with Basic Auth
+// NOTE: Chargebee uses Basic Auth (not HMAC signatures), so raw body access
+// is not required. Use express.json() for automatic JSON parsing:
 app.post('/webhooks/chargebee', express.json(), (req, res) => {
   // Extract Basic Auth credentials
   const auth = req.headers.authorization;
@@ -46,38 +48,33 @@ app.post('/webhooks/chargebee', express.json(), (req, res) => {
     return res.status(401).send('Invalid credentials');
   }
 
-  // Process the webhook
+  // Access the parsed JSON directly
   const event = req.body;
   console.log(`Received ${event.event_type} event:`, event.id);
 
   // Handle specific event types
   switch (event.event_type) {
     case 'subscription_created':
-    case 'subscription_updated':
+    case 'subscription_changed':
     case 'subscription_cancelled':
       // Process subscription events
       break;
-    case 'payment_initiated':
-    case 'payment_collection_failed':
+    case 'payment_succeeded':
+    case 'payment_failed':
       // Process payment events
       break;
   }
 
   res.status(200).send('OK');
 });
-```
 
-> **Note:** While Chargebee uses Basic Auth which doesn't require raw body for signature verification, you may want to preserve the raw body for future extensibility. To do this, use `express.raw({ type: 'application/json' })` instead of `express.json()`, then manually parse the JSON:
->
-> ```javascript
-> app.post('/webhooks/chargebee', express.raw({ type: 'application/json' }), (req, res) => {
->   // ... Basic Auth verification ...
->
->   // Parse JSON from raw body
->   const event = JSON.parse(req.body.toString());
->   // ... rest of handler ...
-> });
-> ```
+// Note: If you later need raw body access (e.g., for HMAC signature
+// verification with other providers), use express.raw():
+// app.post('/webhooks/other', express.raw({ type: 'application/json' }), (req, res) => {
+//   const rawBody = req.body.toString();
+//   // ... verify signature using rawBody ...
+// });
+```
 
 ### Next.js (App Router)
 
@@ -158,10 +155,10 @@ async def handle_chargebee_webhook(
     print(f"Received {event_type} event: {event.get('id')}")
 
     # Process event based on type
-    if event_type in ["subscription_created", "subscription_updated", "subscription_cancelled"]:
+    if event_type in ["subscription_created", "subscription_changed", "subscription_cancelled"]:
         # Handle subscription events
         pass
-    elif event_type in ["payment_initiated", "payment_collection_failed"]:
+    elif event_type in ["payment_succeeded", "payment_failed"]:
         # Handle payment events
         pass
 
@@ -170,14 +167,25 @@ async def handle_chargebee_webhook(
 
 ## Common Event Types
 
+> **⚠️ WARNING: Verify Event Names!**
+>
+> The event type names below are examples and **MUST be verified** against the [Chargebee API documentation](https://apidocs.chargebee.com/docs/api/events#event_types) for your specific Chargebee configuration. Event names can vary significantly between API versions and configurations.
+>
+> **Special attention required for:**
+> - Payment events (shown as `payment_succeeded` and `payment_failed` below)
+> - Invoice events (shown as `invoice_generated` below)
+> - Any custom events specific to your Chargebee setup
+>
+> **Always check your Chargebee Webhook settings for the exact event names your account uses.**
+
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `subscription_created` | New subscription is created | Provision access, send welcome email |
-| `subscription_updated` | Subscription is modified | Update user permissions, sync changes |
+| `subscription_changed` | Subscription is modified | Update user permissions, sync changes |
 | `subscription_cancelled` | Subscription is cancelled | Revoke access, trigger retention flow |
 | `subscription_reactivated` | Cancelled subscription is reactivated | Restore access, send notification |
-| `payment_initiated` | Payment is initiated | Track payment process, update status |
-| `payment_collection_failed` | Payment collection fails | Retry payment, notify customer |
+| `payment_succeeded` | Payment is successfully processed | Update payment status, send receipt |
+| `payment_failed` | Payment attempt fails | Retry payment, notify customer |
 | `invoice_generated` | Invoice is created | Send invoice to customer |
 | `customer_created` | New customer is created | Create user account, sync data |
 

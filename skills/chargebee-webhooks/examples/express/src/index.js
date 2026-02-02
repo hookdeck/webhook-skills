@@ -69,7 +69,7 @@ app.post('/webhooks/chargebee', express.json(), verifyChargebeeAuth, (req, res) 
       // TODO: Provision user access, send welcome email, etc.
       break;
 
-    case 'subscription_updated':
+    case 'subscription_changed':
       console.log('Subscription updated:', event.content?.subscription?.id);
       // TODO: Update user permissions, sync subscription data
       break;
@@ -84,13 +84,13 @@ app.post('/webhooks/chargebee', express.json(), verifyChargebeeAuth, (req, res) 
       // TODO: Restore user access
       break;
 
-    case 'payment_initiated':
-      console.log('Payment initiated:', event.content?.transaction?.id);
-      // TODO: Track payment process, update status
+    case 'payment_succeeded':
+      console.log('Payment succeeded:', event.content?.transaction?.id);
+      // TODO: Update payment status, send receipt
       break;
 
-    case 'payment_collection_failed':
-      console.log('Payment collection failed:', event.content?.transaction?.id);
+    case 'payment_failed':
+      console.log('Payment failed:', event.content?.transaction?.id);
       // TODO: Send payment failure notification, retry logic
       break;
 
