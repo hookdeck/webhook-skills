@@ -12,7 +12,14 @@ A community collection of webhook integration skills for AI coding agents. Skill
 webhook-skills/
 ├── README.md                    # Installation guide and skills overview
 ├── AGENTS.md                    # This file
+├── TESTING.md                   # Testing documentation
 ├── LICENSE
+├── scripts/
+│   ├── test-all-examples.sh     # Run all example tests
+│   └── test-agent-scenario.sh   # Run agent integration tests
+├── .github/
+│   └── workflows/
+│       └── test-examples.yml    # CI pipeline
 │
 └── skills/
     ├── stripe-webhooks/
@@ -379,20 +386,140 @@ For the complete list of events, see [{Provider}'s webhook documentation]({url})
 
 ## Contributing a New Provider Skill
 
+### Checklist
+
+Use this checklist when creating a new provider skill:
+
+#### Core Files
+- [ ] `skills/{provider}-webhooks/SKILL.md` - Main skill file with frontmatter
+- [ ] `skills/{provider}-webhooks/references/overview.md` - Webhook concepts, common events
+- [ ] `skills/{provider}-webhooks/references/setup.md` - Dashboard configuration
+- [ ] `skills/{provider}-webhooks/references/verification.md` - Signature verification details
+
+#### Examples (each framework)
+- [ ] `examples/express/package.json`
+- [ ] `examples/express/.env.example`
+- [ ] `examples/express/README.md`
+- [ ] `examples/express/src/index.js`
+- [ ] `examples/express/test/webhook.test.js`
+- [ ] `examples/nextjs/package.json`
+- [ ] `examples/nextjs/.env.example`
+- [ ] `examples/nextjs/README.md`
+- [ ] `examples/nextjs/app/webhooks/{provider}/route.ts`
+- [ ] `examples/nextjs/test/webhook.test.ts`
+- [ ] `examples/nextjs/vitest.config.ts`
+- [ ] `examples/fastapi/requirements.txt`
+- [ ] `examples/fastapi/.env.example`
+- [ ] `examples/fastapi/README.md`
+- [ ] `examples/fastapi/main.py`
+- [ ] `examples/fastapi/test_webhook.py`
+
+#### Integration
+- [ ] Update `README.md` - Add skill to Provider Skills table
+- [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
+- [ ] Run example tests: `cd examples/express && npm test`
+- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+
+### Step-by-Step Process
+
 1. Create `skills/{provider}-webhooks/` directory
 2. Add SKILL.md following the provider skill template:
    - Frontmatter with name, description, license, metadata
    - "When to Use This Skill" section
-   - "Resources" section listing available files
+   - "Essential Code" section with inline examples
+   - "Common Event Types" table
+   - "Environment Variables" section
    - "Local Development" section with Hookdeck CLI
+   - "Reference Materials" section
    - "Related Skills" section
 3. Add reference files in `references/`:
    - `overview.md` - What the webhooks are, common events
    - `setup.md` - Dashboard configuration, signing secret
    - `verification.md` - Signature verification details
 4. Create examples for Express, Next.js, and FastAPI in `examples/`
-5. Test locally with `npx skills add ./skills/{provider}-webhooks --list`
-6. Update root README.md to list the new skill
+5. Test example code: Run tests in each example directory
+6. Update `scripts/test-agent-scenario.sh` to add scenarios for the new provider
+7. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express`
+8. Update root README.md to list the new skill
+
+### Example Code Best Practices
+
+When writing example code, follow these defensive patterns:
+
+**Handle edge cases gracefully:**
+```javascript
+// GOOD - handles buffer length mismatch
+return signatures.some(sig => {
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(sig),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;  // Different lengths = invalid
+  }
+});
+
+// AVOID - throws on length mismatch
+return crypto.timingSafeEqual(
+  Buffer.from(signature),
+  Buffer.from(expectedSignature)
+);
+```
+
+**Always validate inputs:**
+```javascript
+// Check for missing headers before processing
+if (!signatureHeader) {
+  return res.status(400).send('Missing signature header');
+}
+```
+
+**Return appropriate status codes:**
+- `200` - Successfully processed
+- `400` - Invalid request (missing headers, invalid JSON, invalid signature)
+- `500` - Server error (unexpected exceptions)
+
+## Testing
+
+See [TESTING.md](TESTING.md) for comprehensive testing documentation.
+
+### Quick Test Commands
+
+**Run example tests:**
+```bash
+# All examples
+./scripts/test-all-examples.sh
+
+# Single example
+cd skills/{provider}-webhooks/examples/express && npm test
+```
+
+**Run agent integration test:**
+```bash
+# Dry run (shows what would happen)
+./scripts/test-agent-scenario.sh {provider}-express --dry-run
+
+# Full test (requires Claude CLI)
+./scripts/test-agent-scenario.sh {provider}-express
+```
+
+### Adding Test Scenarios
+
+When adding a new provider skill, add scenarios to `scripts/test-agent-scenario.sh`:
+
+```bash
+# In the usage() function, add:
+echo "  {provider}-express   - {Provider} webhook handling in Express"
+
+# In get_scenario_config(), add:
+{provider}-express)
+    PROVIDER="{provider}"
+    FRAMEWORK="express"
+    SKILL_NAME="{provider}-webhooks"
+    PROMPT="Add {Provider} webhook handling to my Express app. I want to handle {common_event} events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+    ;;
+```
 
 ## Related Resources
 
