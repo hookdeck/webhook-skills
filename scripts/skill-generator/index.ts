@@ -34,6 +34,7 @@ import {
   push,
   getRepoInfo,
   cleanupAllWorktrees,
+  hasUnpushedCommits,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
 
@@ -173,13 +174,64 @@ async function handleGenerate(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
+  // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
+  console.log(chalk.gray('Creating worktrees...\n'));
+  const worktrees: Map<string, { path: string; branch: string; logger: Logger; logFile: string }> = new Map();
+  
+  for (const provider of providerConfigs) {
+    const logFile = join(resultsDir, `${provider.name}.log`);
+    const logger = createLogger(provider.name, logFile);
+    const branchName = `feat/${provider.name}-webhooks`;
+    
+    logger.info(`Creating worktree for ${provider.name}...`);
+    const worktreeResult = await createWorktree(ROOT_DIR, provider.name, branchName, {
+      logger,
+      baseBranch: generateOptions.baseBranch,
+      dryRun: generateOptions.dryRun,
+    });
+    
+    if (!worktreeResult.success) {
+      logger.error(`Failed to create worktree: ${worktreeResult.error}`);
+      continue;
+    }
+    
+    worktrees.set(provider.name, {
+      path: worktreeResult.path!,
+      branch: branchName,
+      logger,
+      logFile,
+    });
+  }
+  
+  // PHASE 2: Run generation IN PARALLEL now that worktrees exist
   const limit = pLimit(generateOptions.parallel);
   
   const results = await Promise.all(
     providerConfigs.map(provider =>
       limit(async () => {
-        const logFile = join(resultsDir, `${provider.name}.log`);
-        const logger = createLogger(provider.name, logFile);
+        const worktree = worktrees.get(provider.name);
+        
+        if (!worktree) {
+          // Worktree creation failed earlier
+          return {
+            provider: provider.name,
+            command: 'generate',
+            success: false,
+            error: 'Worktree creation failed',
+            phases: {
+              generation: { passed: false },
+              testing: { passed: false },
+              review: { passed: false },
+              iterations: 0,
+            },
+            issuesFound: 0,
+            issuesFixed: 0,
+            duration: 0,
+            logFile: join(resultsDir, `${provider.name}.log`),
+          } as OperationResult;
+        }
+        
+        const { logger, logFile, path: worktreePath, branch: branchName } = worktree;
         
         logger.info(`Starting generation for ${provider.displayName || provider.name}`);
         
@@ -187,6 +239,9 @@ async function handleGenerate(
           rootDir: ROOT_DIR,
           logger,
           logFile,
+          worktreePath,
+          branchName,
+          isParallel: providerConfigs.length > 1,
         });
         
         if (result.success) {
@@ -238,9 +293,13 @@ async function handleReview(
     createPr: boolean | string;
     branchPrefix: string;
     model: string;
+    workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🔍 Skill Generator - Review Mode\n'));
+  
+  // When --working-dir is specified, review in that directory instead of creating a worktree
+  const useProvidedDir = !!options.workingDir;
   
   const providerConfigs = mergeProviderConfigs(providers, options.config);
   
@@ -249,23 +308,38 @@ async function handleReview(
     process.exit(1);
   }
   
-  // Filter to only existing skills
-  const existingProviders = providerConfigs.filter(p => {
-    const exists = skillExists(p);
-    if (!exists) {
-      console.log(chalk.yellow(`Skipping ${p.name}: skill does not exist (use 'generate' command first)`));
+  // When using provided directory, skip the skill existence check in main repo
+  let existingProviders: typeof providerConfigs;
+  if (useProvidedDir) {
+    // Trust that the skill exists in the provided directory
+    existingProviders = providerConfigs;
+    if (providerConfigs.length > 1) {
+      console.log(chalk.yellow('Warning: --working-dir only supports single provider. Using first one.'));
+      existingProviders = [providerConfigs[0]];
     }
-    return exists;
-  });
-  
-  if (existingProviders.length === 0) {
-    console.log(chalk.red('No existing skills found to review.'));
-    process.exit(1);
+    // Will resolve relative paths later when we have the path module
+    console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
+  } else {
+    // Filter to only existing skills in main repo
+    existingProviders = providerConfigs.filter(p => {
+      const exists = skillExists(p);
+      if (!exists) {
+        console.log(chalk.yellow(`Skipping ${p.name}: skill does not exist (use 'generate' command first)`));
+      }
+      return exists;
+    });
+    
+    if (existingProviders.length === 0) {
+      console.log(chalk.red('No existing skills found to review.'));
+      process.exit(1);
+    }
   }
   
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`Model: ${options.model}`));
-  console.log(chalk.blue(`Parallel: ${options.parallel}`));
+  if (!useProvidedDir) {
+    console.log(chalk.blue(`Parallel: ${options.parallel}`));
+  }
   console.log(chalk.blue(`Dry run: ${options.dryRun}`));
   console.log('');
   
@@ -282,8 +356,6 @@ async function handleReview(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  const limit = pLimit(reviewOptions.parallel);
-  
   // Get repo info for PR creation
   const repoInfo = await getRepoInfo(ROOT_DIR);
   if (!repoInfo && reviewOptions.createPr) {
@@ -291,29 +363,105 @@ async function handleReview(
     process.exit(1);
   }
   
+  const worktrees: Map<string, { path: string; branch: string; worktreeId: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
+  
+  if (useProvidedDir) {
+    // Use the provided working directory
+    const provider = existingProviders[0];
+    const logFile = join(resultsDir, `${provider.name}.log`);
+    const logger = createLogger(provider.name, logFile);
+    
+    // Resolve working directory path (relative paths are relative to repo root)
+    const { resolve, isAbsolute } = await import('path');
+    const resolvedWorkingDir = isAbsolute(options.workingDir!)
+      ? options.workingDir!
+      : resolve(ROOT_DIR, options.workingDir!);
+    
+    // Get current branch name from the directory (if it's a git repo)
+    const { simpleGit } = await import('simple-git');
+    const git = simpleGit(resolvedWorkingDir);
+    let branchName: string;
+    try {
+      const branchResult = await git.branch();
+      branchName = branchResult.current;
+    } catch {
+      branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
+    }
+    
+    worktrees.set(provider.name, {
+      path: resolvedWorkingDir,
+      branch: branchName,
+      worktreeId: 'external',
+      logger,
+      logFile,
+      isExternal: true,  // Don't clean up user-provided directories
+    });
+    
+    logger.info(`Using directory: ${options.workingDir}`);
+    logger.info(`Current branch: ${branchName}`);
+  } else {
+    // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
+    console.log(chalk.gray('Creating worktrees...\n'));
+    
+    for (const provider of existingProviders) {
+      const logFile = join(resultsDir, `${provider.name}.log`);
+      const logger = createLogger(provider.name, logFile);
+      const branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
+      const worktreeId = `review-${provider.name}`;
+      
+      logger.info(`Creating worktree for ${provider.name}...`);
+      const worktreeResult = await createWorktree(ROOT_DIR, worktreeId, branchName, {
+        logger,
+        dryRun: reviewOptions.dryRun,
+      });
+      
+      if (!worktreeResult.success) {
+        logger.error(`Failed to create worktree: ${worktreeResult.error}`);
+        continue;
+      }
+      
+      worktrees.set(provider.name, {
+        path: worktreeResult.path!,
+        branch: branchName,
+        worktreeId,
+        logger,
+        logFile,
+        isExternal: false,
+      });
+    }
+  }
+  
+  // PHASE 2: Run reviews IN PARALLEL now that worktrees exist
+  const limit = pLimit(reviewOptions.parallel);
+  
   const results = await Promise.all(
     existingProviders.map(provider =>
       limit(async () => {
-        const logFile = join(resultsDir, `${provider.name}.log`);
-        const logger = createLogger(provider.name, logFile);
+        const worktree = worktrees.get(provider.name);
+        
+        if (!worktree) {
+          // Worktree creation failed earlier
+          return {
+            provider: provider.name,
+            command: 'review',
+            success: false,
+            error: 'Worktree creation failed',
+            phases: {
+              testing: { passed: false },
+              review: { passed: false },
+              iterations: 0,
+            },
+            issuesFound: 0,
+            issuesFixed: 0,
+            duration: 0,
+            logFile: join(resultsDir, `${provider.name}.log`),
+          } as OperationResult;
+        }
+        
+        const { logger, logFile, path: workingDir, branch: branchName, worktreeId, isExternal } = worktree;
         const startTime = Date.now();
         
         logger.info(`Starting review for ${provider.displayName || provider.name}`);
-        
-        // Always use worktrees for parallel safety
-        const branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
-        const worktreeId = `review-${provider.name}`;
-        
-        const worktreeResult = await createWorktree(ROOT_DIR, worktreeId, branchName, {
-          logger,
-          dryRun: reviewOptions.dryRun,
-        });
-        
-        if (!worktreeResult.success) {
-          throw new Error(`Failed to create worktree: ${worktreeResult.error}`);
-        }
-        
-        const workingDir = worktreeResult.path;
         
         const reviewResult = await reviewExistingSkill(provider, {
           workingDir,
@@ -321,6 +469,7 @@ async function handleReview(
           dryRun: reviewOptions.dryRun,
           maxIterations: reviewOptions.maxIterations,
           model: reviewOptions.model,
+          parallel: existingProviders.length > 1,
         });
         
         const result: OperationResult = {
@@ -348,8 +497,8 @@ async function handleReview(
             dryRun: reviewOptions.dryRun,
           });
           
-          // Push and create PR if requested
-          if (reviewOptions.createPr && repoInfo) {
+          // Only push and create PR if review was fully successful
+          if (reviewOptions.createPr && repoInfo && reviewResult.success) {
             await push(workingDir, branchName, { logger, dryRun: reviewOptions.dryRun });
             
             const isDraft = reviewOptions.createPr === 'draft';
@@ -366,11 +515,16 @@ async function handleReview(
             
             result.prUrl = pr.prUrl;
             
-            // Cleanup worktree after PR created
-            await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+            // Cleanup worktree after PR created (but not external worktrees)
+            if (!isExternal) {
+              await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+            }
           } else {
-            // No PR - inform user about worktree location
+            // No PR - either not requested, not successful, or missing repo info
             logger.info(`Changes committed locally (no PR created)`);
+            if (!reviewResult.success) {
+              logger.warn(`Review had unfixed issues - PR not created`);
+            }
             logger.info(`  Branch: ${branchName}`);
             logger.info(`  Path: ${workingDir}`);
             logger.info(`To push and create PR manually:`);
@@ -378,9 +532,49 @@ async function handleReview(
             logger.info(`  gh pr create`);
           }
         } else {
-          // No changes made - cleanup worktree
-          logger.info(`No issues fixed - cleaning up worktree`);
-          await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+          // No new changes in this run
+          // But check if there are unpushed commits from a previous run (e.g., failed generate that we're retrying)
+          if (reviewOptions.createPr && repoInfo && reviewResult.success) {
+            const hasUnpushed = await hasUnpushedCommits(workingDir, { logger, dryRun: reviewOptions.dryRun });
+            
+            if (hasUnpushed) {
+              logger.info(`No new fixes needed, but found unpushed commits from previous run`);
+              await push(workingDir, branchName, { logger, dryRun: reviewOptions.dryRun });
+              
+              const isDraft = reviewOptions.createPr === 'draft';
+              const pr = await createPullRequest({
+                owner: repoInfo.owner,
+                repo: repoInfo.repo,
+                title: `feat: add ${provider.name}-webhooks skill`,
+                body: `## Summary\n\nAdd webhook skill for ${provider.displayName || provider.name}.\n\n- Review passed with no issues`,
+                head: branchName,
+                draft: isDraft,
+                logger,
+                dryRun: reviewOptions.dryRun,
+              });
+              
+              result.prUrl = pr.prUrl;
+              
+              // Cleanup worktree after PR created (but not external worktrees)
+              if (!isExternal) {
+                await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+              }
+            } else {
+              logger.info(`No issues fixed and no unpushed commits`);
+              // Cleanup worktree (but not external worktrees)
+              if (!isExternal) {
+                await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+              }
+            }
+          } else {
+            // No PR requested or review failed - cleanup worktree (but not external worktrees)
+            if (!isExternal) {
+              logger.info(`No issues fixed - cleaning up worktree`);
+              await removeWorktree(ROOT_DIR, worktreeId, { logger, dryRun: reviewOptions.dryRun });
+            } else {
+              logger.info(`No issues fixed`);
+            }
+          }
         }
         
         if (result.success) {
@@ -447,6 +641,7 @@ program
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
   .option('--branch-prefix <prefix>', 'Prefix for improvement branches', 'improve')
+  .option('--working-dir <path>', 'Review skill in specified directory (skips skill existence check and worktree creation)')
   .action(handleReview);
 
 program.parse();

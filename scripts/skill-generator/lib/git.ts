@@ -284,6 +284,65 @@ export async function getRepoInfo(rootDir: string): Promise<{ owner: string; rep
 }
 
 /**
+ * Check if the current branch has unpushed commits
+ * Returns true if there are local commits not on the remote
+ */
+export async function hasUnpushedCommits(
+  workingDir: string,
+  options: { logger: Logger; dryRun?: boolean }
+): Promise<boolean> {
+  const { logger, dryRun } = options;
+  
+  if (dryRun) {
+    logger.info(`[DRY RUN] Would check for unpushed commits`);
+    return false;
+  }
+  
+  try {
+    const git = createGit(workingDir);
+    
+    // Get current branch
+    const branchResult = await git.branch();
+    const currentBranch = branchResult.current;
+    
+    // Check if remote tracking branch exists
+    const remoteRef = `origin/${currentBranch}`;
+    try {
+      await git.raw(['rev-parse', '--verify', remoteRef]);
+    } catch {
+      // Remote branch doesn't exist - check if we have any local commits
+      const log = await git.log({ maxCount: 1 });
+      if (log.total > 0) {
+        logger.info(`Branch ${currentBranch} has commits but no remote tracking branch`);
+        return true;
+      }
+      return false;
+    }
+    
+    // Compare local HEAD with remote
+    const localHead = await git.revparse(['HEAD']);
+    const remoteHead = await git.revparse([remoteRef]);
+    
+    if (localHead !== remoteHead) {
+      // Check if local is ahead of remote
+      const aheadBehind = await git.raw(['rev-list', '--left-right', '--count', `${remoteRef}...HEAD`]);
+      const [behind, ahead] = aheadBehind.trim().split(/\s+/).map(Number);
+      
+      if (ahead > 0) {
+        logger.info(`Branch ${currentBranch} is ${ahead} commit(s) ahead of ${remoteRef}`);
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    const err = error as Error;
+    logger.warn(`Failed to check for unpushed commits: ${err.message}`);
+    return false;
+  }
+}
+
+/**
  * Clean up all worktrees (for cleanup after run)
  */
 export async function cleanupAllWorktrees(
