@@ -25,7 +25,8 @@ import type {
 import { mergeProviderConfigs, skillExists } from './lib/config';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
-import { DEFAULT_MODEL } from './lib/claude';
+import { DEFAULT_MODEL, setCachedVersions } from './lib/claude';
+import { getLatestVersions } from './lib/versions';
 import {
   createWorktree,
   removeWorktree,
@@ -179,6 +180,17 @@ async function handleGenerate(
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
+  
+  // Query latest package versions and cache them for prompts
+  console.log(chalk.blue('Querying package managers for latest stable versions...'));
+  try {
+    const versions = await getLatestVersions();
+    setCachedVersions(versions);
+    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+  } catch (error) {
+    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  }
   
   // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
   console.log(chalk.gray('Creating worktrees...\n'));
@@ -376,6 +388,17 @@ async function handleReview(
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
+  
+  // Query latest package versions and cache them for prompts
+  console.log(chalk.blue('Querying package managers for latest stable versions...'));
+  try {
+    const versions = await getLatestVersions();
+    setCachedVersions(versions);
+    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+  } catch (error) {
+    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  }
   
   // Get repo info for PR creation
   const repoInfo = await getRepoInfo(ROOT_DIR);

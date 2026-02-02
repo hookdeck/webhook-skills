@@ -92,20 +92,11 @@ Copy their structure and adapt for {{PROVIDER}}'s specific verification method.
 
 ## CRITICAL: Dependency Versions
 
-**Your training data has OUTDATED versions. You MUST use these exact versions or newer:**
+**Use these EXACT versions (queried from package managers at generation time):**
 
-| Package | Minimum Version | Notes |
-|---------|-----------------|-------|
-| `next` | ^15.1.0 | NOT 14.x (security vulnerabilities) |
-| `express` | ^4.21.0 | NOT 5.x (still beta) |
-| `vitest` | ^2.1.0 | NOT 3.x or 4.x (don't exist) |
-| `jest` | ^29.7.0 | |
-| `typescript` | ^5.3.0 | |
-| `fastapi` | >=0.115.0 | NOT 0.128+ (doesn't exist yet) |
-| `pytest` | >=8.3.0 | NOT 9.x (doesn't exist yet) |
-| `httpx` | >=0.27.0 | For FastAPI testing |
+{{VERSIONS_TABLE}}
 
-**IMPORTANT:** If a version seems too high (e.g., vitest 4.x, pytest 9.x, fastapi 0.128), it probably doesn't exist. Use the versions from this table.
+These are the current stable versions. Use them exactly as shown.
 
 ## Validation Phase
 

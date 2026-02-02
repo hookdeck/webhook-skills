@@ -6,8 +6,20 @@ import { execa, type ExecaError } from 'execa';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { ProviderConfig, Logger, ReviewResult } from './types';
+import { type PackageVersions, formatVersionsTable } from './versions';
 
 const PROMPTS_DIR = join(__dirname, '..', 'prompts');
+
+// Cached versions to avoid repeated queries
+let cachedVersions: PackageVersions | null = null;
+
+export function setCachedVersions(versions: PackageVersions): void {
+  cachedVersions = versions;
+}
+
+export function getCachedVersions(): PackageVersions | null {
+  return cachedVersions;
+}
 
 /**
  * Load a prompt template and replace placeholders
@@ -82,11 +94,18 @@ export function buildPromptReplacements(provider: ProviderConfig): Record<string
     }
   }
   
+  // Build versions table from cached versions (or empty if not available)
+  let versionsTable = '*Version lookup not available - use latest stable versions from npm/pip*';
+  if (cachedVersions) {
+    versionsTable = formatVersionsTable(cachedVersions);
+  }
+  
   const replacements: Record<string, string> = {
     PROVIDER: provider.displayName || provider.name,
     PROVIDER_KEBAB: provider.name,
     DOCS_SECTION: docsSection,
     DOCS_REFERENCE: docsReference,
+    VERSIONS_TABLE: versionsTable,
   };
   
   return replacements;

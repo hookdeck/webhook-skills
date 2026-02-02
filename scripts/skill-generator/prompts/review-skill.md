@@ -81,25 +81,11 @@ If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplet
 
 ### Dependency Versions (CRITICAL - security risk)
 
-**Check each file against these EXACT requirements:**
+**Check package.json and requirements.txt against these current stable versions:**
 
-| Package | Required | Flag if |
-|---------|----------|---------|
-| `next` | ^15.1.0+ | 14.x or lower (security issues) |
-| `express` | ^4.21.0+ | 5.x (beta) or <4.21 |
-| `vitest` | ^2.1.0+ | 3.x, 4.x, or higher (don't exist!) |
-| `jest` | ^29.7.0+ | <29.x |
-| `fastapi` | >=0.115.0 | 0.128+ (doesn't exist yet!) |
-| `pytest` | >=8.3.0 | 9.x+ (doesn't exist yet!) |
-| `httpx` | >=0.27.0 | |
+{{VERSIONS_TABLE}}
 
-**Common hallucination errors to catch:**
-- vitest 4.x or 5.x (latest is 2.x)
-- pytest 9.x (latest is 8.x)  
-- fastapi 0.128+ (latest is ~0.115)
-- Express 5.x (still in RC/beta)
-
-If you see these versions, flag as CRITICAL - they don't exist!
+Flag as CRITICAL if versions are significantly older than these (e.g., next 14.x when current is 16.x).
 
 ### Consistency
 
