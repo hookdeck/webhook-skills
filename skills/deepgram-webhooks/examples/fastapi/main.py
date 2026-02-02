@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 import os
 from dotenv import load_dotenv
 import logging
+import json
 
 # Load environment variables
 load_dotenv()
@@ -54,12 +55,20 @@ async def verify_deepgram_webhook(dg_token: Optional[str] = Header(None, alias="
 
 @app.post("/webhooks/deepgram")
 async def handle_deepgram_webhook(
-    webhook: DeepgramWebhook,
     request: Request,
     authenticated: bool = Depends(verify_deepgram_webhook)
 ):
     """Handle Deepgram webhook callbacks"""
     try:
+        # Get raw body first (for potential future signature verification)
+        raw_body = await request.body()
+
+        # Parse the JSON body
+        webhook_data = json.loads(raw_body)
+
+        # Validate with Pydantic model
+        webhook = DeepgramWebhook(**webhook_data)
+
         # Extract key information
         request_id = webhook.request_id
         created = webhook.created

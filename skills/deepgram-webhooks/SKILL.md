@@ -108,6 +108,8 @@ Deepgram sends transcription results as webhook payloads. The structure varies b
 DEEPGRAM_API_KEY=your_api_key_here
 
 # API Key Identifier (shown in Deepgram console, used to verify dg-token)
+# Note: This is NOT your API Key secret - it's a unique identifier shown
+# in the Deepgram console that identifies which API key was used for a request
 DEEPGRAM_API_KEY_ID=your_api_key_id_here
 
 # Your webhook endpoint URL
@@ -145,7 +147,7 @@ This provides:
 - Ensure your webhook endpoint uses one of these ports
 
 ### No Signature Verification
-- Unlike many webhook providers, Deepgram doesn't use HMAC signatures
+- Deepgram uses a simple token-based authentication via the dg-token header rather than cryptographic HMAC signatures used by other providers
 - Authentication relies on the `dg-token` header or Basic Auth
 - Always use HTTPS for webhook endpoints
 

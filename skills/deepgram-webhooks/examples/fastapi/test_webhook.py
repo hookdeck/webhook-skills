@@ -148,7 +148,7 @@ class TestDeepgramWebhook:
                 "Content-Type": "application/json"
             }
         )
-        assert response.status_code == 422  # FastAPI validation error
+        assert response.status_code == 400  # Invalid webhook payload
 
     def test_multi_channel_transcription(self):
         """Test handling multi-channel transcription"""
@@ -211,7 +211,7 @@ class TestDeepgramWebhook:
             json=invalid_payload,
             headers={"dg-token": valid_api_key_id}
         )
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 400  # Invalid webhook payload
 
 class TestHealthEndpoint:
     def test_health_check(self):

@@ -17,7 +17,7 @@ const verifyDeepgramWebhook = (req, res, next) => {
   }
 
   if (dgToken !== expectedToken) {
-    return res.status(401).json({ error: 'Invalid dg-token' });
+    return res.status(403).json({ error: 'Invalid dg-token' });
   }
 
   next();

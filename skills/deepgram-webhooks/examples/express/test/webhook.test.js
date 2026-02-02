@@ -75,7 +75,7 @@ describe('Deepgram Webhook Handler', () => {
         .set('Content-Type', 'application/json')
         .send(validPayload);
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
       expect(response.body).toHaveProperty('error', 'Invalid dg-token');
     });
 
