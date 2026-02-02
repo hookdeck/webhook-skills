@@ -1,0 +1,128 @@
+import os
+import hmac
+import hashlib
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request, HTTPException
+
+load_dotenv()
+
+app = FastAPI()
+
+webhook_secret = os.environ.get("PADDLE_WEBHOOK_SECRET")
+
+
+def verify_paddle_signature(payload: str, signature_header: str, secret: str) -> bool:
+    """
+    Verify Paddle webhook signature.
+
+    Args:
+        payload: Raw request body as string
+        signature_header: Paddle-Signature header value
+        secret: Webhook secret key
+
+    Returns:
+        bool: Whether signature is valid
+    """
+    if not signature_header:
+        return False
+
+    try:
+        # Parse the signature header (format: ts=1234567890;h1=abc123...)
+        parts = signature_header.split(";")
+        timestamp = None
+        signatures = []
+
+        for part in parts:
+            if part.startswith("ts="):
+                timestamp = part[3:]
+            elif part.startswith("h1="):
+                signatures.append(part[3:])
+
+        if not timestamp or not signatures:
+            return False
+
+        # Build the signed payload (timestamp:rawBody)
+        signed_payload = f"{timestamp}:{payload}"
+
+        # Compute the expected signature
+        expected_signature = hmac.new(
+            secret.encode(), signed_payload.encode(), hashlib.sha256
+        ).hexdigest()
+
+        # Check if any signature matches (handles secret rotation)
+        return any(hmac.compare_digest(sig, expected_signature) for sig in signatures)
+    except Exception as e:
+        print(f"Error verifying signature: {e}")
+        return False
+
+
+@app.post("/webhooks/paddle")
+async def paddle_webhook(request: Request):
+    # Get the raw body for signature verification
+    payload = await request.body()
+    payload_str = payload.decode()
+    signature_header = request.headers.get("paddle-signature")
+
+    if not signature_header:
+        raise HTTPException(status_code=400, detail="Missing Paddle-Signature header")
+
+    # Verify the webhook signature
+    if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
+        print("Webhook signature verification failed")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    # Parse the event
+    try:
+        event = await request.json()
+    except Exception as e:
+        print(f"Failed to parse webhook payload: {e}")
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    # Handle the event based on type
+    event_type = event.get("event_type")
+    data = event.get("data", {})
+
+    if event_type == "subscription.created":
+        print(f"Subscription created: {data.get('id')}")
+        # TODO: Provision access, send welcome email, etc.
+
+    elif event_type == "subscription.activated":
+        print(f"Subscription activated: {data.get('id')}")
+        # TODO: Grant full access after first payment
+
+    elif event_type == "subscription.canceled":
+        print(f"Subscription canceled: {data.get('id')}")
+        # TODO: Revoke access, send retention email, etc.
+
+    elif event_type == "subscription.paused":
+        print(f"Subscription paused: {data.get('id')}")
+        # TODO: Limit access, send pause confirmation
+
+    elif event_type == "subscription.resumed":
+        print(f"Subscription resumed: {data.get('id')}")
+        # TODO: Restore access, send welcome back email
+
+    elif event_type == "transaction.completed":
+        print(f"Transaction completed: {data.get('id')}")
+        # TODO: Fulfill order, send receipt, etc.
+
+    elif event_type == "transaction.payment_failed":
+        print(f"Transaction payment failed: {data.get('id')}")
+        # TODO: Notify customer, update status, etc.
+
+    else:
+        print(f"Unhandled event type: {event_type}")
+
+    # Return 200 to acknowledge receipt (respond within 5 seconds)
+    return {"received": True}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=3000)
