@@ -2,8 +2,6 @@
 
 Thank you for your interest in contributing! This project builds a comprehensive collection of webhook integration skills for AI coding agents, and community contributions are essential to its success.
 
-**All contributions are welcome** — whether you use AI tools, write code manually, or contribute documentation improvements.
-
 ## Ways to Contribute
 
 | Contribution | Description |
@@ -14,113 +12,258 @@ Thank you for your interest in contributing! This project builds a comprehensive
 | **Report issues** | Found a bug or inaccuracy? [Open an issue](https://github.com/hookdeck/webhook-skills/issues) |
 | **Request providers** | [Suggest a provider](https://github.com/hookdeck/webhook-skills/issues/new?labels=provider-request) you'd like to see covered |
 
-## Quick Start: AI-Assisted Contribution (Recommended)
+---
 
-The fastest way to create a new provider skill is using our AI-powered generator. It researches the provider's documentation, generates code, runs tests, and iterates on failures automatically.
+## AI-Assisted Skill Generation (Recommended)
+
+The recommended way to create new provider skills is using our AI-powered generator. It researches the provider's documentation, generates code for Express/Next.js/FastAPI, runs tests, reviews for accuracy, and iterates on failures automatically.
 
 ### Prerequisites
 
 - **Node.js 18+**
+- **Python 3.9+** (for FastAPI examples)
 - **[Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)** — Install and authenticate with `claude login`
-- **GitHub token** — Set `GITHUB_TOKEN` or `GH_TOKEN` in your environment for PR creation
-
-> **Note:** The generator currently uses Claude CLI. Future versions may support additional AI providers.
-
-### Generate a New Skill
+- **GITHUB_TOKEN** — For PR creation (optional but recommended)
 
 ```bash
-# 1. Clone and setup
+# Clone and setup
 git clone https://github.com/hookdeck/webhook-skills.git
 cd webhook-skills
 cd scripts/skill-generator && npm install && cd ../..
 
-# 2. Generate a skill (with documentation URL for best results)
-./scripts/generate-skills.sh generate "providername=https://docs.provider.com/webhooks"
-
-# 3. Review the generated code in .worktrees/providername/
-
-# 4. When satisfied, create a PR
-./scripts/generate-skills.sh generate "providername=https://docs.provider.com/webhooks" --create-pr
+# Optional: Create .env with GitHub token for PR creation
+echo "GITHUB_TOKEN=your_token_here" > scripts/skill-generator/.env
 ```
 
-The generator will:
-1. Research the provider's webhook documentation
-2. Create SKILL.md with accurate verification details
-3. Generate examples for Express, Next.js, and FastAPI
-4. Write and run tests, iterating on failures
-5. Optionally push and create a pull request
+### The Generation Process
 
-See [Generator Reference](#generator-reference) below for all options.
-
-## Manual Contribution
-
-Prefer to write code yourself? Follow these steps:
-
-### 1. Understand the Structure
-
-Each provider skill follows this structure:
+The generator follows a multi-phase process:
 
 ```
-skills/{provider}-webhooks/
-├── SKILL.md              # Entry point with frontmatter
-├── references/
-│   ├── overview.md       # What webhooks are, common events
-│   ├── setup.md          # Dashboard configuration
-│   └── verification.md   # Signature verification details
-└── examples/
-    ├── express/          # Node.js + Express example
-    ├── nextjs/           # Next.js App Router example
-    └── fastapi/          # Python + FastAPI example
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Research   │ ──▶ │  Generate   │ ──▶ │    Test     │ ──▶ │   Review    │
+│  Provider   │     │    Code     │     │  Examples   │     │  Accuracy   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                  │                   │                   │
+       │                  │                   │                   │
+       ▼                  ▼                   ▼                   ▼
+  Read official      Create SKILL.md,     npm test for      Verify against
+  documentation      references/, and     each framework    provider docs
+                     all examples
 ```
 
-### 2. Research the Provider
+Each phase can iterate up to 3 times to fix issues. If issues remain within acceptable thresholds, the skill is accepted and remaining issues are tracked in `TODO.md`.
 
-Before writing code, gather:
-
-- **Signature verification method** — Algorithm (HMAC-SHA256, RSA), encoding, header names
-- **Common webhook events** — The 5-8 most commonly used events
-- **Gotchas** — Raw body requirements, timestamp validation, etc.
-
-### 3. Create Your Skill
+### Quick Start: Generate a New Skill
 
 ```bash
-# Create directory structure
-mkdir -p skills/{provider}-webhooks/{references,examples/{express,nextjs,fastapi}}
+# Generate with documentation URL (recommended for best results)
+./scripts/generate-skills.sh generate \
+  "twilio=https://www.twilio.com/docs/usage/webhooks" \
+  --create-pr
 
-# Copy from an existing skill as a template
-cp -r skills/stripe-webhooks/SKILL.md skills/{provider}-webhooks/
-cp -r skills/stripe-webhooks/references/* skills/{provider}-webhooks/references/
+# What happens:
+# 1. Creates Git worktree in .worktrees/twilio (isolated branch)
+# 2. Claude researches the provided docs
+# 3. Generates SKILL.md, references/, and examples/
+# 4. Runs tests for Express, Next.js, and FastAPI
+# 5. Reviews for accuracy, fixes issues
+# 6. Creates a draft PR if within acceptance thresholds
+# 7. Generates TODO.md with any remaining minor issues
 ```
 
-### 4. Write the Code
+### Providing Good Documentation URLs
 
-See [AGENTS.md](AGENTS.md) for detailed guidelines on:
-- SKILL.md frontmatter format
-- Reference file templates
-- Example code structure and conventions
-- Signature verification best practices
+The quality of generated skills depends heavily on the documentation you provide. **More specific URLs = better results.**
 
-**Key requirements:**
-- Use current stable dependency versions (Next.js 15+, Express 4.21+)
-- Test scripts must exit after running (`vitest run`, not `vitest`)
-- Prefer manual signature verification over SDK methods
-- Include comprehensive tests
+```yaml
+# Good: Multiple specific documentation URLs
+providers:
+  - name: chargebee
+    displayName: Chargebee
+    docs:
+      webhooks: https://www.chargebee.com/docs/2.0/events_and_webhooks.html
+      verification: https://www.chargebee.com/docs/2.0/webhook_settings.html
+      events: https://www.chargebee.com/docs/2.0/events_list.html
+    notes: >
+      Uses Basic Auth for webhook verification (username:password).
+      Secret is base64 encoded in the Authorization header.
 
-### 5. Test Your Skill
+# Okay: Single webhook documentation URL
+providers:
+  - name: twilio
+    docs:
+      webhooks: https://www.twilio.com/docs/usage/webhooks
+
+# Minimal: No docs (Claude will search)
+providers:
+  - name: linear
+```
+
+You can also provide reference implementations:
+
+```yaml
+providers:
+  - name: chargebee
+    docs:
+      webhooks: https://www.chargebee.com/docs/2.0/events_and_webhooks.html
+      reference_impl: https://github.com/hookdeck/chargebee-demo/tree/main
+    notes: >
+      See reference_impl for working TypeScript/Express example.
+```
+
+### Acceptance Thresholds
+
+Skills are accepted if issues found are within these thresholds:
+
+| Severity | Max Allowed | Description |
+|----------|-------------|-------------|
+| Critical | 0 | Verification failures, missing files, security issues |
+| Major | 1 | Incorrect information, inconsistencies |
+| Minor | 2 | Style issues, minor improvements |
+| **Total** | **5** | Combined limit |
+
+If a skill is accepted with issues, they're tracked in `skills/{provider}-webhooks/TODO.md` for future improvement.
+
+### Using a Configuration File
+
+For generating multiple skills or providing detailed documentation, use a YAML config:
+
+```yaml
+# providers.yaml
+providers:
+  - name: twilio
+    displayName: Twilio
+    docs:
+      webhooks: https://www.twilio.com/docs/usage/webhooks
+      verification: https://www.twilio.com/docs/usage/security
+    notes: Uses X-Twilio-Signature header with HMAC-SHA1
+
+  - name: sendgrid
+    displayName: SendGrid
+    docs:
+      webhooks: https://docs.sendgrid.com/for-developers/tracking-events/event
+      verification: https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features
+    notes: Uses ECDSA signatures with public key verification
+```
 
 ```bash
-# Run tests for each framework
-cd skills/{provider}-webhooks/examples/express && npm install && npm test
-cd ../nextjs && npm install && npm test
-cd ../fastapi && pip install -r requirements.txt && pytest
+# Generate all providers from config
+./scripts/generate-skills.sh generate --config providers.yaml --create-pr=draft
 ```
 
-### 6. Submit a Pull Request
+---
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/{provider}-webhooks`
-3. Commit your changes with a descriptive message
-4. Push and open a PR
+## Common Workflows
+
+### 1. Generate a New Skill (Simple)
+
+```bash
+./scripts/generate-skills.sh generate "twilio" --create-pr
+```
+
+### 2. Generate with Documentation (Recommended)
+
+```bash
+./scripts/generate-skills.sh generate \
+  "twilio=https://www.twilio.com/docs/usage/webhooks" \
+  --create-pr
+```
+
+### 3. Generate Multiple Skills in Parallel
+
+```bash
+./scripts/generate-skills.sh generate \
+  "twilio=https://www.twilio.com/docs/usage/webhooks" \
+  "sendgrid=https://docs.sendgrid.com/webhooks" \
+  "mailgun=https://documentation.mailgun.com/webhooks" \
+  --create-pr=draft
+```
+
+By default, all providers run in parallel. Use `--parallel <n>` to limit concurrency.
+
+### 4. Preview What Would Happen (Dry Run)
+
+```bash
+./scripts/generate-skills.sh generate "linear" --dry-run
+```
+
+### 5. Resume After a Failed Generation
+
+If generation fails (tests won't pass, API timeout, etc.), the worktree is preserved:
+
+```bash
+# Check what's in the worktree
+ls -la .worktrees/
+
+# Resume with the review command
+./scripts/generate-skills.sh review twilio \
+  --working-dir .worktrees/twilio \
+  --create-pr
+```
+
+The review command will:
+1. Use the existing worktree (won't create a new one)
+2. Run tests to verify current state
+3. AI reviews and fixes any issues
+4. If within thresholds, pushes and creates PR
+
+### 6. Update an Existing Skill
+
+Use the review command to improve skills already in the repository:
+
+```bash
+# Review and update an existing skill
+./scripts/generate-skills.sh review stripe --create-pr
+
+# Provide additional documentation for context
+./scripts/generate-skills.sh review stripe \
+  --config stripe-update.yaml \
+  --create-pr
+```
+
+The config can include new documentation URLs:
+
+```yaml
+# stripe-update.yaml
+providers:
+  - name: stripe
+    docs:
+      webhooks: https://docs.stripe.com/webhooks
+      verification: https://docs.stripe.com/webhooks/signatures
+    notes: >
+      Check for any new event types added in 2024.
+      Verify signature verification is current with latest SDK.
+```
+
+### 7. Manual Review and PR Creation
+
+```bash
+# Generate without PR - inspect results first
+./scripts/generate-skills.sh generate "clerk"
+
+# Review the generated code
+ls .worktrees/clerk/skills/clerk-webhooks/
+cat .worktrees/clerk/skills/clerk-webhooks/SKILL.md
+
+# If satisfied, create PR manually
+cd .worktrees/clerk
+git push -u origin HEAD
+gh pr create --title "feat: add clerk-webhooks skill"
+```
+
+### 8. Clean Up Worktrees
+
+```bash
+# List all worktrees
+git worktree list
+
+# Remove a specific worktree
+git worktree remove .worktrees/twilio
+
+# Remove all worktrees
+rm -rf .worktrees && git worktree prune
+```
 
 ---
 
@@ -142,7 +285,7 @@ cd ../fastapi && pip install -r requirements.txt && pytest
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--create-pr [type]` | Push and create PR (`true` or `draft`) | No PR |
-| `--parallel <n>` | Max concurrent generations | 2 |
+| `--parallel <n>` | Max concurrent generations | All providers |
 | `--model <model>` | Claude model | claude-opus-4-20250514 |
 | `--max-iterations <n>` | Max test/fix cycles | 3 |
 | `--base-branch <branch>` | Branch to create from | main |
@@ -151,27 +294,7 @@ cd ../fastapi && pip install -r requirements.txt && pytest
 | `--config <file>` | YAML config file | — |
 | `--dry-run` | Preview without executing | false |
 
-**Examples:**
-
-```bash
-# Generate with documentation URL
-./scripts/generate-skills.sh generate \
-  "twilio=https://www.twilio.com/docs/usage/webhooks" \
-  --create-pr
-
-# Multiple providers in parallel
-./scripts/generate-skills.sh generate \
-  "sendgrid=https://docs.sendgrid.com/webhooks" \
-  "mailgun=https://documentation.mailgun.com/webhooks" \
-  --parallel 2 --create-pr=draft
-
-# Preview what would happen
-./scripts/generate-skills.sh generate "linear" --dry-run
-```
-
 ### Review Command
-
-Review and improve existing skills:
 
 ```bash
 ./scripts/generate-skills.sh review [providers...] [options]
@@ -181,177 +304,93 @@ Review and improve existing skills:
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--working-dir <path>` | Review in specific directory | Creates worktree |
+| `--working-dir <path>` | Review in specific directory/worktree | Creates worktree |
 | `--create-pr [type]` | Create PR with fixes | No PR |
 | `--max-iterations <n>` | Max fix cycles | 3 |
-| `--parallel <n>` | Max concurrent reviews | 2 |
+| `--parallel <n>` | Max concurrent reviews | All providers |
 | `--model <model>` | Claude model | claude-opus-4-20250514 |
 | `--branch-prefix <prefix>` | Branch name prefix | improve |
 | `--config <file>` | YAML config file | — |
 | `--dry-run` | Preview without executing | false |
 
-**Examples:**
-
-```bash
-# Review and fix an existing skill
-./scripts/generate-skills.sh review stripe --create-pr
-
-# Continue from a failed generation
-./scripts/generate-skills.sh review deepgram \
-  --working-dir .worktrees/deepgram \
-  --create-pr
-```
-
-### Common Workflows
-
-#### 1. Generate a New Skill (End-to-End)
-
-```bash
-# Generate skill with documentation for best results
-./scripts/generate-skills.sh generate \
-  "twilio=https://www.twilio.com/docs/usage/webhooks" \
-  --create-pr
-
-# What happens:
-# 1. Creates worktree in .worktrees/twilio
-# 2. Claude researches docs and generates skill
-# 3. Runs tests, iterates on failures (up to 3 times)
-# 4. Reviews for accuracy, fixes issues
-# 5. Pushes and creates PR
-# 6. Cleans up worktree on success
-```
-
-#### 2. Generate Multiple Skills in Parallel
-
-```bash
-# Generate 3 providers with max 2 running concurrently
-./scripts/generate-skills.sh generate \
-  "twilio=https://www.twilio.com/docs/usage/webhooks" \
-  "sendgrid=https://docs.sendgrid.com/webhooks" \
-  "mailgun=https://documentation.mailgun.com/webhooks" \
-  --parallel 2 \
-  --create-pr=draft
-
-# Creates draft PRs for each provider
-```
-
-#### 3. Preview Without Executing (Dry Run)
-
-```bash
-# See what would happen without making changes
-./scripts/generate-skills.sh generate "linear" --dry-run
-```
-
-#### 4. Retry After a Failed Generation
-
-If generation fails (tests won't pass, Claude times out, etc.), the worktree is preserved:
-
-```bash
-# Check what's in the worktree
-ls -la .worktrees/
-
-# Review the failed skill, fix issues, and create PR
-./scripts/generate-skills.sh review twilio \
-  --working-dir .worktrees/twilio \
-  --create-pr
-
-# What happens:
-# 1. Uses existing worktree (doesn't create new one)
-# 2. Runs tests
-# 3. AI reviews and fixes any issues
-# 4. If review passes, pushes and creates PR
-```
-
-#### 5. Review and Improve an Existing Skill
-
-```bash
-# Review a skill that's already in the repo
-./scripts/generate-skills.sh review stripe --create-pr
-
-# Checks for:
-# - Outdated dependencies
-# - Documentation accuracy
-# - Test coverage
-# - Code consistency
-```
-
-#### 6. Manual Review Without PR Creation
-
-```bash
-# Generate without creating PR - inspect results first
-./scripts/generate-skills.sh generate "clerk"
-
-# Review the generated code
-ls .worktrees/clerk/skills/clerk-webhooks/
-
-# If satisfied, create PR manually
-cd .worktrees/clerk
-git push -u origin HEAD
-gh pr create --title "feat: add clerk-webhooks skill"
-```
-
-#### 7. Clean Up Worktrees
-
-```bash
-# List all worktrees
-git worktree list
-
-# Remove a specific worktree
-git worktree remove .worktrees/twilio
-
-# Remove all worktrees (be careful!)
-rm -rf .worktrees && git worktree prune
-```
-
-### Configuration File
-
-For batch operations, use a YAML config:
-
-```yaml
-# providers.yaml
-providers:
-  - name: twilio
-    displayName: Twilio
-    docs:
-      webhooks: https://www.twilio.com/docs/usage/webhooks
-      verification: https://www.twilio.com/docs/usage/security
-    notes: Uses X-Twilio-Signature header with HMAC-SHA1
-
-  - name: sendgrid
-    displayName: SendGrid
-    docs:
-      webhooks: https://docs.sendgrid.com/webhooks
-```
-
-```bash
-./scripts/generate-skills.sh generate --config providers.yaml --create-pr
-```
-
 ---
 
-## Code Guidelines
+## Manual Contribution
 
-For detailed technical guidelines, see [AGENTS.md](AGENTS.md). Key points:
+Prefer to write code yourself? Follow these steps.
 
-### Dependencies
+### 1. Understand the Structure
 
-Always use current stable versions:
-- **Next.js:** 15.x+
-- **Express:** 4.21.x+
-- **FastAPI:** 0.115.x+
-- **Vitest:** 2.x+
+Each provider skill follows this structure:
 
-### Test Scripts
+```
+skills/{provider}-webhooks/
+├── SKILL.md              # Entry point with frontmatter
+├── TODO.md               # Known issues (auto-generated, optional)
+├── references/
+│   ├── overview.md       # What webhooks are, common events
+│   ├── setup.md          # Dashboard configuration
+│   └── verification.md   # Signature verification details
+└── examples/
+    ├── express/          # Node.js + Express example
+    ├── nextjs/           # Next.js App Router example
+    └── fastapi/          # Python + FastAPI example
+```
 
-Tests must run once and exit (for CI):
+### 2. Research the Provider
+
+Before writing code, gather:
+
+- **Signature verification method** — Algorithm (HMAC-SHA256, RSA, ECDSA), encoding, header names
+- **Standard Webhooks?** — Some providers use [Standard Webhooks](https://www.standardwebhooks.com/) (headers: `webhook-id`, `webhook-timestamp`, `webhook-signature`)
+- **Common webhook events** — The 5-8 most commonly used events with exact names
+- **Gotchas** — Raw body requirements, timestamp validation, secret encoding
+
+### 3. Create Your Skill
+
+```bash
+# Create directory structure
+mkdir -p skills/{provider}-webhooks/{references,examples/{express,nextjs,fastapi}}
+
+# Copy from an existing skill as a template
+cp -r skills/stripe-webhooks/SKILL.md skills/{provider}-webhooks/
+cp -r skills/stripe-webhooks/references/* skills/{provider}-webhooks/references/
+```
+
+### 4. Code Guidelines
+
+See [AGENTS.md](AGENTS.md) for detailed technical guidelines. Key points:
+
+**Dependencies:** Use current stable versions. The generator queries npm/pip for latest versions at generation time.
+
+**Test Scripts:** Must run once and exit:
 ```json
 "test": "vitest run"   // ✓ Correct
 "test": "vitest"       // ✗ Hangs in watch mode
 ```
 
-### Signature Verification
+**Signature Verification:** Prefer manual verification over SDK methods — it's more reliable and educational.
 
-Prefer manual verification over SDK methods — it's more reliable and educational.
+**Event Names:** Must match official documentation exactly. Common mistakes:
+- Underscores vs dots vs spaces (`spam_report` vs `spam.report` vs `spam report`)
+- Past tense (`completed` vs `succeeded`)
+
+### 5. Test Your Skill
+
+```bash
+cd skills/{provider}-webhooks/examples/express && npm install && npm test
+cd ../nextjs && npm install && npm test
+cd ../fastapi && pip install -r requirements.txt && pytest
+```
+
+### 6. Submit a Pull Request
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/{provider}-webhooks`
+3. Commit your changes
+4. Push and open a PR
+
+New skills use `feat:` prefix, improvements to existing skills use `fix:`.
 
 ---
 

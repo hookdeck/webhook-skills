@@ -121,37 +121,26 @@ The agent will:
 
 ## Contributing
 
-We actively encourage contributions! Whether you're adding a new webhook provider, improving existing skills, or fixing bugs — your help makes this resource better for everyone.
-
-### Quick Start: Generate a New Skill
-
-The fastest way to contribute a new provider skill is using our generator:
+We welcome contributions! The recommended way to add new provider skills is using our AI-powered generator:
 
 ```bash
-# Install dependencies (one-time)
+# One-time setup
 cd scripts/skill-generator && npm install && cd ../..
 
-# Generate a skill with automatic PR creation
-./scripts/generate-skills.sh generate "providername=https://docs.provider.com/webhooks" --create-pr
+# Generate a skill (with documentation URL for best results)
+./scripts/generate-skills.sh generate \
+  "twilio=https://www.twilio.com/docs/usage/webhooks" \
+  --create-pr
 ```
 
-The generator uses Claude to research the provider's documentation, create accurate verification code, generate examples for Express/Next.js/FastAPI, run tests, and create a pull request — all automatically.
+The generator researches the provider's documentation, generates code and tests for Express/Next.js/FastAPI, validates accuracy, and creates a PR — all automatically.
 
-### Ways to Contribute
-
-| Contribution | Description |
-|--------------|-------------|
-| **Add a provider** | Create a webhook skill for Twilio, SendGrid, Linear, or any provider not yet covered |
-| **Improve existing skills** | Fix bugs, update documentation, add missing event types |
-| **Add framework examples** | Add examples for Flask, Hono, Deno, or other frameworks |
-| **Report issues** | Found a bug or inaccuracy? [Open an issue](https://github.com/hookdeck/webhook-skills/issues) |
-| **Request providers** | [Suggest a provider](https://github.com/hookdeck/webhook-skills/issues/new?labels=provider-request) you'd like to see covered |
-
-### Documentation
-
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Complete guide to contributing, including detailed generator usage
-- **[AGENTS.md](AGENTS.md)** — Repository structure, skill format, and code guidelines
-- **[TESTING.md](TESTING.md)** — How to run and write tests
+**[See CONTRIBUTING.md](CONTRIBUTING.md) for the complete guide**, including:
+- Providing multiple documentation URLs for better results
+- Using YAML configs for batch generation
+- Resuming failed generations with the `review` command
+- Updating existing skills
+- Manual contribution guidelines
 
 ## Related Resources
 
