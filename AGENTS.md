@@ -305,6 +305,15 @@ Server runs on http://localhost:3000
 - **Never hardcode old versions** from memory — always verify against npm/pypi
 - When in doubt, use `latest` or `^` prefix to allow minor updates
 
+### Test Script Guidelines
+
+**CRITICAL: Test scripts must run once and exit.** They will be run in CI and automated pipelines.
+
+- **For vitest**: Use `"test": "vitest run"` (not just `vitest` which defaults to watch mode)
+- **For jest**: Use `"test": "jest"` (exits by default, but avoid `--watch`)
+- **For pytest**: Use `pytest` (exits by default)
+- **Never use watch mode** in the default test script — it will hang in automated environments
+
 **How to check current versions:**
 ```bash
 # Node.js packages

@@ -80,6 +80,7 @@ export async function runTests(
 
 /**
  * Run Node.js tests (npm test)
+ * Uses vitest --run directly to avoid watch mode hanging
  */
 async function runNodeTests(
   dir: string,
@@ -87,10 +88,16 @@ async function runNodeTests(
 ): Promise<{ passed: boolean; output: string; error?: string }> {
   try {
     // Install dependencies first
-    await execa('npm', ['install'], { cwd: dir, reject: false });
+    await execa('npm', ['install'], { cwd: dir, reject: false, timeout: 120000 });
     
-    // Run tests
-    const result = await execa('npm', ['test'], { cwd: dir, reject: false });
+    // Run vitest directly with --run flag to avoid watch mode
+    // This is more reliable than npm test which may not have --run configured
+    const result = await execa('npx', ['vitest', 'run'], {
+      cwd: dir,
+      reject: false,
+      timeout: 120000, // 2 minute timeout for tests
+      env: { ...process.env, CI: 'true' }, // CI=true also disables watch mode
+    });
     
     if (result.exitCode !== 0) {
       return {
@@ -103,7 +110,8 @@ async function runNodeTests(
     return { passed: true, output: result.stdout };
   } catch (error) {
     const err = error as Error;
-    logger.error(`Node test error: ${err.message}`);
+    const isTimeout = err.message.includes('timed out');
+    logger.error(`Node test error: ${isTimeout ? 'Test timed out after 2 minutes' : err.message}`);
     return { passed: false, output: '', error: err.message };
   }
 }
@@ -158,12 +166,19 @@ async function runPythonTests(
 export async function generateSkill(
   provider: ProviderConfig,
   options: GenerateOptions,
-  context: { rootDir: string; logger: Logger; logFile: string }
+  context: {
+    rootDir: string;
+    logger: Logger;
+    logFile: string;
+    worktreePath?: string;  // Pre-created worktree path (optional)
+    branchName?: string;    // Pre-created branch name (optional)
+    isParallel?: boolean;   // Running in parallel with other providers
+  }
 ): Promise<OperationResult> {
   const { rootDir, logger, logFile } = context;
   const { model } = options;
   const startTime = Date.now();
-  const branchName = `feat/${provider.name}-webhooks`;
+  const branchName = context.branchName || `feat/${provider.name}-webhooks`;
   
   const result: OperationResult = {
     provider: provider.name,
@@ -182,7 +197,8 @@ export async function generateSkill(
     logFile,
   };
   
-  let worktreePath: string | undefined;
+  let worktreePath: string | undefined = context.worktreePath;
+  const worktreeProvidedExternally = !!worktreePath;
   
   try {
     // Get repo info for PR creation
@@ -196,19 +212,21 @@ export async function generateSkill(
       throw new Error(`Skill already exists for ${provider.name}. Use 'review' command to improve it.`);
     }
     
-    // Create worktree for this provider
-    logger.info(`Creating worktree for ${provider.name}...`);
-    const worktreeResult = await createWorktree(rootDir, provider.name, branchName, {
-      logger,
-      baseBranch: options.baseBranch,
-      dryRun: options.dryRun,
-    });
-    
-    if (!worktreeResult.success) {
-      throw new Error(`Failed to create worktree: ${worktreeResult.error}`);
+    // Create worktree if not provided externally
+    if (!worktreePath) {
+      logger.info(`Creating worktree for ${provider.name}...`);
+      const worktreeResult = await createWorktree(rootDir, provider.name, branchName, {
+        logger,
+        baseBranch: options.baseBranch,
+        dryRun: options.dryRun,
+      });
+      
+      if (!worktreeResult.success) {
+        throw new Error(`Failed to create worktree: ${worktreeResult.error}`);
+      }
+      
+      worktreePath = worktreeResult.path;
     }
-    
-    worktreePath = worktreeResult.path;
     
     // Generate skill (Claude works in the worktree directory)
     logger.info(`Generating skill for ${provider.displayName || provider.name}...`);
@@ -217,6 +235,7 @@ export async function generateSkill(
       logger,
       dryRun: options.dryRun,
       model,
+      parallel: context.isParallel,
     });
     
     result.phases.generation = {
@@ -238,6 +257,7 @@ export async function generateSkill(
         skipReview: options.skipReview,
         maxIterations: options.maxIterations,
         model,
+        parallel: context.isParallel,
       });
       
       result.phases.testing = reviewResult.testing;
@@ -298,7 +318,8 @@ export async function generateSkill(
     result.error = err.message;
   } finally {
     // Clean up worktree (optional - could keep for debugging)
-    if (worktreePath && !options.dryRun) {
+    // Don't clean up externally-provided worktrees - caller manages those
+    if (worktreePath && !options.dryRun && !worktreeProvidedExternally) {
       // Don't auto-cleanup on success so user can inspect
       // Only cleanup on failure
       if (!result.success) {
