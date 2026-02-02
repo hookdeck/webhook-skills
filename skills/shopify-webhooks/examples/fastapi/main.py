@@ -36,7 +36,7 @@ async def shopify_webhook(request: Request):
 
     # Verify webhook signature
     if not hmac_header or not verify_shopify_webhook(raw_body, hmac_header, shopify_secret):
-        raise HTTPException(status_code=401, detail="Invalid signature")
+        raise HTTPException(status_code=400, detail="Invalid signature")
 
     # Parse the payload after verification
     payload = json.loads(raw_body)
