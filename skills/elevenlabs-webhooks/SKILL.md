@@ -64,7 +64,38 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-The SDK verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message.
+### Python SDK Verification (FastAPI)
+
+```python
+import os
+from fastapi import FastAPI, Request, HTTPException
+from elevenlabs import ElevenLabs
+from elevenlabs.errors import BadRequestError
+
+app = FastAPI()
+elevenlabs = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY") or "webhook-only")
+
+@app.post("/webhooks/elevenlabs")
+async def elevenlabs_webhook(request: Request):
+    raw_body = await request.body()
+    sig = request.headers.get("ElevenLabs-Signature") or request.headers.get("elevenlabs-signature")
+    
+    if not sig:
+        raise HTTPException(status_code=400, detail="Missing signature header")
+    
+    try:
+        event = elevenlabs.webhooks.construct_event(
+            raw_body.decode("utf-8"),
+            sig,
+            os.environ["ELEVENLABS_WEBHOOK_SECRET"]
+        )
+        # Handle event["type"], event["data"]...
+        return {"status": "ok"}
+    except BadRequestError as e:
+        raise HTTPException(status_code=401, detail="Invalid signature")
+```
+
+The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message.
 
 ## Common Event Types
 
