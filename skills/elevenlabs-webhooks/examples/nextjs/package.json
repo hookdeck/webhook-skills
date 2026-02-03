@@ -1,0 +1,27 @@
+{
+  "name": "elevenlabs-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Next.js example for receiving ElevenLabs webhooks",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.2.0",
+    "vitest": "^4.0.18",
+    "@vitejs/plugin-react": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
