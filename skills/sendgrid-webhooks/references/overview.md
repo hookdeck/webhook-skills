@@ -12,10 +12,9 @@ SendGrid webhooks (Event Webhook) provide real-time notifications about email de
 |-------|----------------|------------------|
 | `processed` | Email accepted and queued for delivery | Track processing status |
 | `delivered` | Successfully delivered to recipient server | Confirm delivery |
-| `bounce` | Permanent delivery failure | Update invalid emails |
+| `bounce` | Permanent delivery failure (includes `blocked` subtype) | Update invalid emails |
 | `deferred` | Temporary delivery failure | Monitor delivery delays |
 | `dropped` | Email not sent (prior bounce, unsubscribe, etc.) | Analyze drop reasons |
-| `blocked` | Message blocked by recipient server | Review content/reputation |
 
 ### Engagement Events
 

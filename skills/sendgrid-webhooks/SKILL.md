@@ -40,8 +40,14 @@ function verifySignature(publicKey, payload, signature, timestamp) {
   const verifier = crypto.createVerify('sha256');
   verifier.update(signedContent);
 
+  // Add PEM headers if not present
+  let pemKey = publicKey;
+  if (!pemKey.includes('BEGIN PUBLIC KEY')) {
+    pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
+  }
+
   // Verify the signature
-  return verifier.verify(publicKey, decodedSignature);
+  return verifier.verify(pemKey, decodedSignature);
 }
 
 // Express middleware
@@ -102,9 +108,8 @@ app.post('/webhooks/sendgrid', express.raw({ type: 'application/json' }), (req, 
 |-------|-------------|-----------|
 | `processed` | Message has been received and is ready to be delivered | Track email processing |
 | `delivered` | Message successfully delivered to recipient | Delivery confirmation |
-| `bounce` | Message permanently rejected | Update contact lists, handle failures |
+| `bounce` | Message permanently rejected (includes type='blocked' for blocked messages) | Update contact lists, handle failures |
 | `deferred` | Temporary delivery failure | Monitor delays |
-| `blocked` | Message blocked by recipient server | Review content/reputation |
 | `open` | Recipient opened the email | Engagement tracking |
 | `click` | Recipient clicked a link | Link tracking, CTR analysis |
 | `spam report` | Email marked as spam | List hygiene, sender reputation |

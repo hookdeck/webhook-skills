@@ -9,11 +9,11 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "express": "^4.21.3",
+    "express": "^5.2.1",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
+    "jest": "^30.2.0",
     "supertest": "^7.0.0",
     "nodemon": "^3.1.7"
   },
