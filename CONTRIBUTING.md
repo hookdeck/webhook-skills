@@ -250,9 +250,41 @@ cat .worktrees/clerk/skills/clerk-webhooks/SKILL.md
 cd .worktrees/clerk
 git push -u origin HEAD
 gh pr create --title "feat: add clerk-webhooks skill"
+# Add a description (see "Pull Request Title and Description" below), e.g.:
+# gh pr create --title "feat: add clerk-webhooks skill" --body "$(cat pr-description.md)"
 ```
 
-### 8. Clean Up Worktrees
+When creating or updating a PR, use the title and description format in the next section.
+
+### 8. Pull Request Title and Description
+
+Use these conventions so PRs are consistent and easy to review.
+
+**Title format (conventional commits):**
+
+| Type of change | Title format | Example |
+|----------------|--------------|---------|
+| New provider skill | `feat: add {provider}-webhooks skill` | `feat: add clerk-webhooks skill` |
+| Improvements / fixes to existing skill | `fix: improve {provider}-webhooks skill` | `fix: improve deepgram-webhooks skill` |
+
+**Description structure:** Include the following so reviewers know what's in the PR and how to verify it.
+
+1. **Summary** — One or two sentences: what this PR does (e.g. "Add webhook skill for Deepgram" or "Improvements to deepgram-webhooks skill").
+2. **What's included** — For new or large PRs: SKILL.md, references (overview, setup, verification), examples (Express, Next.js, FastAPI) with test frameworks.
+3. **Integration** — If applicable: README (Provider Skills table), `scripts/test-agent-scenario.sh` (scenario added), `.github/workflows/test-examples.yml` (provider in matrices).
+4. **Testing** — How to run tests, e.g.:
+   - `cd skills/{provider}-webhooks/examples/express && npm test`
+   - `cd skills/{provider}-webhooks/examples/nextjs && npm test`
+   - `cd skills/{provider}-webhooks/examples/fastapi && pytest test_webhook.py -v`
+5. **Documentation reference** (optional) — Links to provider webhook docs used for the skill.
+6. **Test plan** (optional) — Checklist for reviewers, e.g.:
+   - [ ] Verify signature/authentication works correctly
+   - [ ] Test with real webhook events (or note automated tests cover behavior)
+   - [ ] Review documentation accuracy
+
+For generator-created PRs, the body may also include **Generation details** (provider, tests passed, review passed, iterations, issues found/fixed). When editing an existing PR (e.g. after review), update the title and description to match these conventions if they don't already.
+
+### 9. Clean Up Worktrees
 
 ```bash
 # List all worktrees
@@ -388,9 +420,7 @@ cd ../fastapi && pip install -r requirements.txt && pytest
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/{provider}-webhooks`
 3. Commit your changes
-4. Push and open a PR
-
-New skills use `feat:` prefix, improvements to existing skills use `fix:`.
+4. Push and open a PR using the [PR title and description](#8-pull-request-title-and-description) format (e.g. `feat: add {provider}-webhooks skill` for new skills, `fix: improve ...` for improvements). New skills use `feat:` prefix, improvements to existing skills use `fix:`.
 
 ---
 

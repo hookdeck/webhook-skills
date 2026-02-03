@@ -18,6 +18,7 @@ jobs:
           - shopify-webhooks
           - github-webhooks
           - resend-webhooks
+          - deepgram-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -49,6 +50,7 @@ jobs:
           - shopify-webhooks
           - github-webhooks
           - resend-webhooks
+          - deepgram-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -80,6 +82,7 @@ jobs:
           - shopify-webhooks
           - github-webhooks
           - resend-webhooks
+          - deepgram-webhooks
           - hookdeck-event-gateway
 
     steps:

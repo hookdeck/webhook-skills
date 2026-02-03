@@ -30,6 +30,7 @@ usage() {
     echo "  resend-express   - Resend webhook handling in Express"
     echo "  resend-nextjs    - Resend webhook handling in Next.js"
     echo "  resend-fastapi   - Resend webhook handling in FastAPI"
+    echo "  deepgram-express - Deepgram webhook handling in Express"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -96,6 +97,12 @@ get_scenario_config() {
             FRAMEWORK="fastapi"
             SKILL_NAME="resend-webhooks"
             PROMPT="Add a Resend webhook endpoint to my FastAPI app. I need to handle email.sent and email.bounced events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        deepgram-express)
+            PROVIDER="deepgram"
+            FRAMEWORK="express"
+            SKILL_NAME="deepgram-webhooks"
+            PROMPT="Add Deepgram webhook handling to my Express app. I want to receive transcription callbacks and verify the dg-token header. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"
