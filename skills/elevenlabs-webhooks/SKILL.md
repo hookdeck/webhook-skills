@@ -22,46 +22,80 @@ metadata:
 
 ## Essential Code
 
-### Signature Verification (Manual)
+### Signature Verification (SDK — Recommended)
 
-ElevenLabs uses HMAC-SHA256 with a custom header format:
+ElevenLabs recommends using the official `@elevenlabs/elevenlabs-js` SDK for webhook verification and event construction. See [Verify the webhook secret and construct the webhook payload](https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload).
 
 ```javascript
-// Express.js example
-const crypto = require('crypto');
+// Express.js / Node example
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
 
-function verifyElevenLabsWebhook(rawBody, signature, secret) {
-  // Parse signature header: "t=timestamp,v0=hash"
-  const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.substring(2);
-  const signatures = elements.filter(e => e.startsWith('v0=')).map(e => e.substring(3));
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
+});
 
-  // Check timestamp (within 30 minutes)
-  const currentTime = Math.floor(Date.now() / 1000);
-  if (Math.abs(currentTime - parseInt(timestamp)) > 1800) {
-    return false;
+// In your webhook handler: get raw body and signature header, then:
+const event = await elevenlabs.webhooks.constructEvent(rawBody, signatureHeader, process.env.ELEVENLABS_WEBHOOK_SECRET);
+// event is the parsed payload; SDK throws on invalid signature
+```
+
+```typescript
+// Next.js example
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
+});
+
+export async function POST(request: NextRequest) {
+  const rawBody = await request.text();
+  const signatureHeader = request.headers.get('ElevenLabs-Signature');
+  try {
+    const event = await elevenlabs.webhooks.constructEvent(
+      rawBody,
+      signatureHeader,
+      process.env.ELEVENLABS_WEBHOOK_SECRET
+    );
+    // Handle event.type, event.data...
+    return new NextResponse('OK', { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 401 });
   }
-
-  // Calculate expected signature
-  const signedPayload = `${timestamp}.${rawBody}`;
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
-
-  // Compare signatures
-  return signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      return false;
-    }
-  });
 }
 ```
+
+### Python SDK Verification (FastAPI)
+
+```python
+import os
+from fastapi import FastAPI, Request, HTTPException
+from elevenlabs import ElevenLabs
+from elevenlabs.errors import BadRequestError
+
+app = FastAPI()
+elevenlabs = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY") or "webhook-only")
+
+@app.post("/webhooks/elevenlabs")
+async def elevenlabs_webhook(request: Request):
+    raw_body = await request.body()
+    sig = request.headers.get("ElevenLabs-Signature") or request.headers.get("elevenlabs-signature")
+    
+    if not sig:
+        raise HTTPException(status_code=400, detail="Missing signature header")
+    
+    try:
+        event = elevenlabs.webhooks.construct_event(
+            raw_body.decode("utf-8"),
+            sig,
+            os.environ["ELEVENLABS_WEBHOOK_SECRET"]
+        )
+        # Handle event["type"], event["data"]...
+        return {"status": "ok"}
+    except BadRequestError as e:
+        raise HTTPException(status_code=401, detail="Invalid signature")
+```
+
+The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message.
 
 ## Common Event Types
 

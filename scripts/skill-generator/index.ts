@@ -715,7 +715,7 @@ program
 program
   .command('generate')
   .description('Generate new webhook skills')
-  .argument('[providers...]', 'Provider names (e.g., elevenlabs, "openai=https://docs...")')
+  .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://github.com/elevenlabs/elevenlabs-js|Official SDK supports webhook verification)')
   .option('--config <file>', 'Load provider configs from YAML file')
   .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
@@ -730,7 +730,7 @@ program
 program
   .command('review')
   .description('Review and improve existing webhook skills')
-  .argument('[providers...]', 'Provider names to review')
+  .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://.../elevenlabs-js|Prefer SDK verification in skill)')
   .option('--config <file>', 'Load provider configs from YAML file')
   .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')

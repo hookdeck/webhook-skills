@@ -64,8 +64,8 @@ describe('ElevenLabs Webhook Handler', () => {
         .set('Content-Type', 'application/json')
         .send(payload);
 
-      expect(response.status).toBe(400);
-      expect(response.text).toContain('Invalid signature');
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('error');
     });
 
     it('should reject webhook without signature header', async () => {
@@ -80,8 +80,8 @@ describe('ElevenLabs Webhook Handler', () => {
         .set('Content-Type', 'application/json')
         .send(payload);
 
-      expect(response.status).toBe(400);
-      expect(response.text).toContain('Invalid signature');
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('error');
     });
 
     it('should reject webhook with expired timestamp', async () => {
@@ -101,8 +101,8 @@ describe('ElevenLabs Webhook Handler', () => {
         .set('Content-Type', 'application/json')
         .send(payload);
 
-      expect(response.status).toBe(400);
-      expect(response.text).toContain('Invalid signature');
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('error');
     });
 
     it('should handle lowercase signature header', async () => {

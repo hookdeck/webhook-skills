@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 
-// Mock environment
+// Mock environment (SDK client init uses ELEVENLABS_API_KEY or placeholder)
 process.env.ELEVENLABS_WEBHOOK_SECRET = 'test_webhook_secret';
 
 // Import the route handler
@@ -75,8 +75,9 @@ describe('ElevenLabs Webhook Handler', () => {
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(400);
-      expect(await response.text()).toBe('Invalid signature');
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toHaveProperty('error');
     });
 
     it('should reject webhook without signature header', async () => {
@@ -91,8 +92,9 @@ describe('ElevenLabs Webhook Handler', () => {
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(400);
-      expect(await response.text()).toBe('Invalid signature');
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toHaveProperty('error');
     });
 
     it('should reject webhook with expired timestamp', async () => {
@@ -112,8 +114,9 @@ describe('ElevenLabs Webhook Handler', () => {
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(400);
-      expect(await response.text()).toBe('Invalid signature');
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toHaveProperty('error');
     });
 
     it('should handle lowercase signature header', async () => {

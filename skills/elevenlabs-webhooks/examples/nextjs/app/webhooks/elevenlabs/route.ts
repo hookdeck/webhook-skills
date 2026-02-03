@@ -1,81 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
-/**
- * Verify ElevenLabs webhook signature
- * Referenced from elevenlabs-webhooks skill
- */
-function verifyElevenLabsWebhook(rawBody: string, signatureHeader: string | null, secret: string) {
-  if (!signatureHeader) {
-    throw new Error('No signature header provided');
-  }
-
-  // Parse the signature header: "t=timestamp,v0=signature"
-  const elements = signatureHeader.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.substring(2);
-  const signatures = elements
-    .filter(e => e.startsWith('v0='))
-    .map(e => e.substring(3));
-
-  if (!timestamp || signatures.length === 0) {
-    throw new Error('Invalid signature header format');
-  }
-
-  // Verify timestamp is within tolerance (30 minutes)
-  const currentTime = Math.floor(Date.now() / 1000);
-  const timestampAge = Math.abs(currentTime - parseInt(timestamp));
-
-  if (timestampAge > 1800) {
-    throw new Error('Webhook timestamp too old');
-  }
-
-  // Create the signed payload
-  const signedPayload = `${timestamp}.${rawBody}`;
-
-  // Calculate expected signature
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
-
-  // Timing-safe comparison
-  const isValid = signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      // Different lengths = not equal
-      return false;
-    }
-  });
-
-  if (!isValid) {
-    throw new Error('Invalid webhook signature');
-  }
-
-  return true;
-}
+// ElevenLabs client — used for SDK webhook verification (recommended by ElevenLabs).
+// API key is required for client init; for webhook-only a placeholder is used.
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
+});
 
 export async function POST(request: NextRequest) {
-  // Get the raw body as text for signature verification
   const rawBody = await request.text();
-
-  // Check both possible header cases
   const signature = request.headers.get('elevenlabs-signature') ||
                    request.headers.get('ElevenLabs-Signature');
 
   try {
-    // Verify webhook signature
-    verifyElevenLabsWebhook(
+    const event = await elevenlabs.webhooks.constructEvent(
       rawBody,
       signature,
-      process.env.ELEVENLABS_WEBHOOK_SECRET!
+      process.env.ELEVENLABS_WEBHOOK_SECRET
     );
-
-    // Parse the webhook payload
-    const event = JSON.parse(rawBody);
 
     console.log(`Received ElevenLabs webhook: ${event.type}`);
 
@@ -111,14 +53,15 @@ export async function POST(request: NextRequest) {
 
     // Return 200 to acknowledge receipt
     return new NextResponse('OK', { status: 200 });
-  } catch (error) {
-    console.error('Webhook processing failed:', (error as Error).message);
+  } catch (error: unknown) {
+    const err = error as { message?: string; statusCode?: number };
+    console.error('Webhook verification failed:', err.message);
 
-    if ((error as Error).message.includes('signature') ||
-        (error as Error).message.includes('timestamp')) {
-      return new NextResponse('Invalid signature', { status: 400 });
+    const statusCode = err.statusCode === 400 ? 401 : (err.statusCode || 500);
+    const message = err.message || 'Invalid signature';
+    if (statusCode === 500) {
+      return new NextResponse('Internal server error', { status: 500 });
     }
-
-    return new NextResponse('Internal server error', { status: 500 });
+    return NextResponse.json({ error: message }, { status: statusCode });
   }
 }

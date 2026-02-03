@@ -9,6 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.34.0",
     "dotenv": "^16.0.3",
     "express": "^5.2.1"
   },
