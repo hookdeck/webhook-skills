@@ -80,10 +80,19 @@ ELEVENLABS_WEBHOOK_SECRET=your_webhook_secret_here
 
 ## Local Development
 
-For local webhook testing, use Hookdeck CLI:
+For local webhook testing, install Hookdeck CLI:
 
 ```bash
+# Install via npm (recommended)
+npm install -g hookdeck-cli
+
+# Or via Homebrew
 brew install hookdeck/hookdeck/hookdeck
+```
+
+Then start the tunnel:
+
+```bash
 hookdeck listen 3000 --path /webhooks/elevenlabs
 ```
 
@@ -100,5 +109,15 @@ No account required. Provides local tunnel + web UI for inspecting requests.
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Cross-cutting patterns (idempotency, retries, framework guides)
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+- [stripe-webhooks](../stripe-webhooks/) - Stripe payment webhook handling
+- [shopify-webhooks](../shopify-webhooks/) - Shopify e-commerce webhook handling  
+- [github-webhooks](../github-webhooks/) - GitHub repository webhook handling
+- [resend-webhooks](../resend-webhooks/) - Resend email webhook handling
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure (routing, replay, monitoring)
+
+## Official ElevenLabs SDK Skills
+
+For making API calls TO ElevenLabs (text-to-speech, transcription, agents), see the official [ElevenLabs Skills](https://github.com/elevenlabs/skills). This skill handles the opposite direction: receiving webhooks FROM ElevenLabs.
+
+> **SDK Warning:** Always use `@elevenlabs/elevenlabs-js` for JavaScript. Do not use `npm install elevenlabs` (that's an outdated v1.x package).

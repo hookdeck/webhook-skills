@@ -89,3 +89,9 @@ All ElevenLabs webhook events follow this structure:
 ## Full Event Reference
 
 For the complete list of events and their payloads, see [ElevenLabs webhook documentation](https://elevenlabs.io/docs/overview/administration/webhooks).
+
+## Making API Calls to ElevenLabs
+
+This skill covers **receiving** webhooks from ElevenLabs. If you also need to **send** API calls to ElevenLabs (text-to-speech, transcription, etc.), see the official [ElevenLabs Skills](https://github.com/elevenlabs/skills).
+
+> **SDK Warning:** For JavaScript, always use `@elevenlabs/elevenlabs-js` (`npm install @elevenlabs/elevenlabs-js`). Do not use `npm install elevenlabs` - that's an outdated v1.x package.
