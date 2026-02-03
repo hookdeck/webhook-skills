@@ -164,5 +164,8 @@ When using this skill, add this comment at the top of generated files:
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Idempotency, error handling, framework guides
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+- [stripe-webhooks](../stripe-webhooks/) - Stripe payment webhook handling
+- [github-webhooks](../github-webhooks/) - GitHub repository webhook handling
+- [resend-webhooks](../resend-webhooks/) - Resend email webhook handling
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure (routing, replay, monitoring)
