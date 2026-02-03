@@ -21,8 +21,9 @@
    - **URL**: Enter your webhook endpoint (e.g., `https://yourdomain.com/webhooks/elevenlabs`)
    - **Events**: Select the events you want to receive:
      - `post_call_transcription` - Recommended for call analysis
-     - `post_call_audio` - For accessing call recordings
-     - `call_initiation_failure` - For monitoring call failures
+     - `voice_removal_notice` - For voice removal notifications
+     - `voice_removal_notice_withdrawn` - For voice removal notice withdrawals
+     - `voice_removed` - For voice removal completions
 3. Click **Create Webhook**
 4. **Important**: Copy the signing secret immediately - it won't be shown again
 
@@ -30,8 +31,8 @@
 
 ElevenLabs doesn't provide a test button, but you can trigger real events:
 
-1. For `post_call_transcription` or `post_call_audio`: Make a test call using the API
-2. For `call_initiation_failure`: Attempt a call with invalid parameters
+1. For `post_call_transcription`: Make a test call using the API
+2. For voice events: Perform voice operations that trigger removal notices
 
 ## Managing Webhooks
 

@@ -98,18 +98,18 @@ app.post('/webhooks/elevenlabs', async (req, res) => {
 
       case 'voice_removal_notice':
         // Handle voice removal notice
-        console.log('Voice removal notice:', event.data);
-        // Add logic to notify user about upcoming voice removal
+        console.log('Voice removal notice received:', event.data);
+        // Add logic to handle voice removal notice
         break;
 
       case 'voice_removal_notice_withdrawn':
-        // Handle voice removal notice withdrawn
+        // Handle voice removal notice withdrawal
         console.log('Voice removal notice withdrawn:', event.data);
-        // Add logic to notify user that voice removal was cancelled
+        // Add logic to handle notice withdrawal
         break;
 
       case 'voice_removed':
-        // Handle voice removed
+        // Handle voice removal completion
         console.log('Voice removed:', event.data);
         // Add logic to handle voice removal completion
         break;
