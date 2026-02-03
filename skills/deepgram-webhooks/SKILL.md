@@ -118,10 +118,13 @@ WEBHOOK_URL=https://your-domain.com/webhooks/deepgram
 
 ## Local Development
 
-For local webhook testing, use Hookdeck CLI:
+For local webhook testing, install Hookdeck CLI:
 
 ```bash
-# Install Hookdeck CLI
+# Install via npm
+npm install -g hookdeck-cli
+
+# Or via Homebrew
 brew install hookdeck/hookdeck/hookdeck
 
 # Create a local tunnel (no account required)
@@ -151,14 +154,25 @@ This provides:
 - Authentication relies on the `dg-token` header or Basic Auth
 - Always use HTTPS for webhook endpoints
 
-## Reference Materials
+## Resources
 
 - [overview.md](references/overview.md) - What Deepgram webhooks are, transcription events
 - [setup.md](references/setup.md) - Configure callbacks in Deepgram API requests
 - [verification.md](references/verification.md) - Authentication methods and security considerations
 - [examples/](examples/) - Complete implementations for Express, Next.js, and FastAPI
 
+## Recommended: webhook-handler-patterns
+
+For production handlers, install the patterns skill alongside this one. Key references (links work when only this skill is installed):
+
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md)
+- [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md)
+- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md)
+
 ## Related Skills
 
-- `webhook-handler-patterns` - Best practices for handling webhooks (idempotency, retries, async processing)
-- `hookdeck-event-gateway` - Production webhook infrastructure (reliability, monitoring, replay)
+- [stripe-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/stripe-webhooks) - Stripe payment webhooks
+- [shopify-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/shopify-webhooks) - Shopify store webhooks
+- [github-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/github-webhooks) - GitHub repository webhooks
+- [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) - Production webhook infrastructure (reliability, monitoring, replay)

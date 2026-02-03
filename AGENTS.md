@@ -586,6 +586,19 @@ echo "  {provider}-express   - {Provider} webhook handling in Express"
     ;;
 ```
 
+## Reviewing a Provider Skill or PR
+
+When reviewing a provider skill (e.g. from a pull request or before merging):
+
+1. **Use the checklist** — In "Contributing a New Provider Skill" above, verify all items under Core Files, Examples (per framework), and **Integration**.
+2. **Integration requirements** — Confirm the skill is wired into:
+   - `README.md` — Provider Skills table
+   - `scripts/test-agent-scenario.sh` — at least one scenario (e.g. `{provider}-express`) in `usage()` and `get_scenario_config()`
+   - `.github/workflows/test-examples.yml` — provider in all three matrices (express, nextjs, fastapi)
+3. **Skill content** — Check SKILL.md has: frontmatter, "When to Use This Skill", "Resources" (or "Reference Materials"), "Related Skills" with **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`), and for provider skills a "Recommended: webhook-handler-patterns" section linking to idempotency, error-handling, retry-logic.
+4. **Tests** — Run example tests: `./scripts/test-all-examples.sh` or per skill `cd skills/{provider}-webhooks/examples/express && npm test` (and nextjs, fastapi). Ensure test scripts exit (e.g. `"test": "vitest run"` not `"vitest"`).
+5. **More detail** — See [CONTRIBUTING.md](CONTRIBUTING.md) for the generator workflow, acceptance thresholds, and manual review steps.
+
 ## Related Resources
 
 - [Agent Skills Specification](https://agentskills.io)

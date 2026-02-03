@@ -42,6 +42,7 @@ Skills for receiving webhooks from specific providers. Each includes setup guide
 | [`shopify-webhooks`](skills/shopify-webhooks/) | Receive and verify Shopify store webhooks | Express, Next.js, FastAPI |
 | [`github-webhooks`](skills/github-webhooks/) | Receive and verify GitHub repository webhooks | Express, Next.js, FastAPI |
 | [`resend-webhooks`](skills/resend-webhooks/) | Receive and verify Resend email webhooks | Express, Next.js, FastAPI |
+| [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks | Express, Next.js, FastAPI |
 
 ### Pattern Skills
 
