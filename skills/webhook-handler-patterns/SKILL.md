@@ -55,7 +55,8 @@ metadata:
 
 ## Related Skills
 
-- `stripe-webhooks` - Stripe-specific webhook handling
-- `shopify-webhooks` - Shopify-specific webhook handling
-- `github-webhooks` - GitHub-specific webhook handling
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+- [stripe-webhooks](../stripe-webhooks/) - Stripe payment webhook handling
+- [shopify-webhooks](../shopify-webhooks/) - Shopify e-commerce webhook handling
+- [github-webhooks](../github-webhooks/) - GitHub repository webhook handling
+- [resend-webhooks](../resend-webhooks/) - Resend email webhook handling
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure (routing, replay, monitoring)

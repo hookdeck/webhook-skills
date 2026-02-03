@@ -1,0 +1,41 @@
+# Example provider configuration for batch skill generation
+#
+# Usage:
+#   cp providers.example.yaml providers.yaml
+#   # Edit providers.yaml with your target providers
+#   ./scripts/generate-skills.sh generate --config scripts/skill-generator/providers.yaml
+#
+# The 'docs' section helps Claude find accurate information.
+# The more specific documentation URLs you provide, the better the output.
+
+providers:
+  # Example: Simple provider with just webhook docs
+  - name: acme
+    displayName: Acme Corp
+    docs:
+      webhooks: https://docs.acme.com/webhooks
+    notes: >
+      Brief notes about this provider's webhook implementation.
+      Mention any quirks or special requirements.
+
+  # Example: Provider with detailed documentation
+  - name: example
+    displayName: Example Provider
+    docs:
+      webhooks: https://example.com/docs/webhooks
+      verification: https://example.com/docs/webhook-security
+      events: https://example.com/docs/webhook-events
+      api: https://example.com/api-reference
+    notes: >
+      Uses HMAC-SHA256 for signature verification.
+      Secret is base64 encoded. Timestamp tolerance is 5 minutes.
+
+  # Example: Provider with reference implementation
+  - name: demo
+    displayName: Demo Service
+    docs:
+      webhooks: https://demo.com/webhooks
+      reference_impl: https://github.com/org/demo-webhook-handler
+    notes: >
+      See reference_impl for working example code.
+      Uses Standard Webhooks (Svix) format.

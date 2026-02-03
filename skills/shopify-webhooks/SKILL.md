@@ -60,7 +60,7 @@ app.post('/webhooks/shopify',
     // Verify signature
     if (!verifyShopifyWebhook(req.body, hmac, process.env.SHOPIFY_API_SECRET)) {
       console.error('Shopify signature verification failed');
-      return res.status(401).send('Invalid signature');
+      return res.status(400).send('Invalid signature');
     }
     
     // Parse payload after verification
@@ -91,6 +91,8 @@ app.post('/webhooks/shopify',
 );
 ```
 
+> **Important**: Shopify requires webhook endpoints to respond within 5 seconds with a 200 OK status. Process webhooks asynchronously if your handler logic takes longer.
+
 ### Python Signature Verification (FastAPI)
 
 ```python
@@ -117,6 +119,7 @@ def verify_shopify_webhook(raw_body: bytes, hmac_header: str, secret: str) -> bo
 | Topic | Description |
 |-------|-------------|
 | `orders/create` | New order placed |
+| `orders/updated` | Order modified |
 | `orders/paid` | Order payment received |
 | `orders/fulfilled` | Order shipped |
 | `products/create` | New product added |
@@ -125,6 +128,8 @@ def verify_shopify_webhook(raw_body: bytes, hmac_header: str, secret: str) -> bo
 | `app/uninstalled` | App removed from store |
 
 > **For full topic reference**, see [Shopify Webhook Topics](https://shopify.dev/docs/api/admin-rest/current/resources/webhook)
+>
+> **Note**: While the REST Admin API is becoming legacy for apps created after April 1, 2025, existing apps can continue using the REST API. New apps should consider using the [GraphQL Admin API](https://shopify.dev/docs/api/admin-graphql) for webhook management.
 
 ## Environment Variables
 
@@ -159,5 +164,8 @@ When using this skill, add this comment at the top of generated files:
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Idempotency, error handling, framework guides
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+- [stripe-webhooks](../stripe-webhooks/) - Stripe payment webhook handling
+- [github-webhooks](../github-webhooks/) - GitHub repository webhook handling
+- [resend-webhooks](../resend-webhooks/) - Resend email webhook handling
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure (routing, replay, monitoring)

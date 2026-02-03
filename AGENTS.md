@@ -207,10 +207,19 @@ metadata:
 
 ## Local Development
 
-For local webhook testing, use Hookdeck CLI:
+For local webhook testing, install Hookdeck CLI:
 
 ```bash
+# Install via npm
+npm install -g hookdeck-cli
+
+# Or via Homebrew
 brew install hookdeck/hookdeck/hookdeck
+```
+
+Then start the tunnel:
+
+```bash
 hookdeck listen 3000 --path /webhooks/{provider}
 ```
 
@@ -218,19 +227,28 @@ No account required. Provides local tunnel + web UI for inspecting requests.
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Cross-cutting patterns (idempotency, retries, framework guides)
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+{List other relevant webhook skills from the skills/ directory. Include:
+- Other provider webhook skills (e.g., stripe-webhooks, shopify-webhooks)
+- webhook-handler-patterns for cross-cutting concerns
+- hookdeck-event-gateway for production infrastructure}
 ```
 
 ### Key Sections Explained
 
-**When to Use This Skill** — Concrete scenarios that help the agent decide when to activate this skill. Include common tasks developers ask for help with.
+**When to Use This Skill** — Concrete scenarios that help the agent decide when to activate this skill. Include common tasks developers ask for help with. Mirror how agents phrase questions (e.g., "How do I verify Stripe webhook signatures?").
 
 **Resources** — A table of contents listing available reference files and examples. Tells the agent exactly what's available without loading everything.
 
 **Local Development** — The Hookdeck CLI funnel. Position as "no account required" for frictionless adoption.
 
-**Related Skills** — Cross-references to other skills in the repository. Helps with discoverability and lets the agent suggest complementary skills.
+**Related Skills** — Cross-references to other skills in the repository. **CRITICAL for discoverability.**
+
+When generating a new skill, search the `skills/` directory to find other existing skills and link to them. Always include:
+- **Other provider webhook skills** — Creates semantic clustering for discovery
+- **`webhook-handler-patterns`** — For idempotency, error handling, retry logic
+- **`hookdeck-event-gateway`** — For production webhook infrastructure
+
+Use relative links (`../skill-name/`) with brief descriptions.
 
 ## Examples Structure
 
@@ -289,9 +307,44 @@ Server runs on http://localhost:3000
 - Be idiomatic to the framework and language (Express examples should look like Express code, FastAPI should be Pythonic, Next.js should follow Next.js conventions)
 - Include only the code needed to demonstrate webhook handling
 - Add inline comments explaining key concepts (signature verification, event parsing)
-- Use the provider's official SDK for signature verification
+- **Prefer manual signature verification** — SDK methods can have undocumented parameter names or change between versions; manual verification is more reliable and educational
+- If showing SDK verification, **always verify the exact method signature against official docs** — parameter names like `secret` vs `webhookSecret` or header key formats can cause silent failures
 - Show proper error handling (return appropriate status codes)
-- Keep dependencies minimal
+- Keep dependencies minimal (avoid adding SDK just for verification if manual works)
+
+### Dependency Version Guidelines
+
+**CRITICAL: Always use current/latest stable versions of dependencies.** AI training data contains older versions that may have security vulnerabilities.
+
+- **Look up current versions** before adding dependencies to package.json or requirements.txt
+- **For Next.js**: Use version 15.x or later (not 14.x which has known vulnerabilities)
+- **For Express**: Use version 4.21.x or later
+- **For FastAPI**: Use version 0.115.x or later
+- **Never hardcode old versions** from memory — always verify against npm/pypi
+- When in doubt, use `latest` or `^` prefix to allow minor updates
+
+### Test Script Guidelines
+
+**CRITICAL: Test scripts must run once and exit.** They will be run in CI and automated pipelines.
+
+- **For vitest**: Use `"test": "vitest run"` (not just `vitest` which defaults to watch mode)
+- **For jest**: Use `"test": "jest"` (exits by default, but avoid `--watch`)
+- **For pytest**: Use `pytest` (exits by default)
+- **Never use watch mode** in the default test script — it will hang in automated environments
+
+**How to check current versions:**
+```bash
+# Node.js packages
+npm view <package> version
+
+# Python packages  
+pip index versions <package>
+```
+
+**Common outdated versions to avoid:**
+- `next@14.x` → use `next@15.x` or later
+- `express@4.18.x` → use `express@4.21.x` or later
+- `fastapi@0.100.x` → use `fastapi@0.115.x` or later
 
 ## References Structure
 
@@ -417,30 +470,163 @@ Use this checklist when creating a new provider skill:
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
 - [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
+- [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
 
+### Provider Research (Do This First)
+
+Before creating any files, research the provider's webhook implementation. **Always verify against the provider's official documentation** — third-party examples and AI training data may be outdated.
+
+Gather this information:
+
+```markdown
+## Provider: {ProviderName}
+
+### Signature Verification
+- Algorithm: (e.g., HMAC-SHA256, RSA)
+- Encoding: (e.g., hex, base64)
+- Header name(s): (e.g., X-Provider-Signature, Stripe-Signature)
+- Secret format: (e.g., whsec_xxx, starts with sk_)
+
+### SDK Verification Method (if using SDK)
+- Package name: (e.g., stripe, @octokit/webhooks)
+- Method signature: (exact parameters and their names)
+- Example: `provider.webhooks.verify({ payload, headers: {id, timestamp, signature}, webhookSecret })`
+
+### Manual Verification (recommended for examples)
+- Signed content format: (e.g., "{timestamp}.{payload}", "{header}.{payload}")
+- Signature comparison: (timing-safe, base64 decode, etc.)
+
+### Events
+- Common events: (list 5-8 most common)
+- Event payload structure: (key fields)
+
+### Gotchas
+- (e.g., "Must use raw body, not parsed JSON")
+- (e.g., "Timestamp tolerance is 5 minutes")
+- (e.g., "Header names are lowercase in some frameworks")
+```
+
+**Why manual verification is often better for examples:**
+- SDK APIs change and documentation may be outdated
+- Manual verification is more educational (shows exactly how it works)
+- Fewer dependencies (don't need full SDK just for verification)
+- Works consistently across all languages/frameworks
+
 ### Step-by-Step Process
 
-1. Create `skills/{provider}-webhooks/` directory
-2. Add SKILL.md following the provider skill template:
+1. **Research the provider** (see "Provider Research" above) — verify all details against official docs
+2. Create `skills/{provider}-webhooks/` directory
+3. Add SKILL.md following the provider skill template:
    - Frontmatter with name, description, license, metadata
    - "When to Use This Skill" section
-   - "Essential Code" section with inline examples
+   - "Essential Code" section with inline examples (show both SDK and manual verification)
    - "Common Event Types" table
    - "Environment Variables" section
    - "Local Development" section with Hookdeck CLI
    - "Reference Materials" section
    - "Related Skills" section
-3. Add reference files in `references/`:
+4. Add reference files in `references/`:
    - `overview.md` - What the webhooks are, common events
    - `setup.md` - Dashboard configuration, signing secret
-   - `verification.md` - Signature verification details
-4. Create examples for Express, Next.js, and FastAPI in `examples/`
-5. Test example code: Run tests in each example directory
-6. Update `scripts/test-agent-scenario.sh` to add scenarios for the new provider
-7. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express`
-8. Update root README.md to list the new skill
+   - `verification.md` - Signature verification details (include manual verification code)
+5. Create examples for Express, Next.js, and FastAPI in `examples/`
+   - **Prefer manual signature verification** over SDK methods (more reliable, educational, fewer dependencies)
+   - Include comprehensive tests for each example
+6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
+7. Update integration files:
+   - `README.md` - Add skill to Provider Skills table
+   - `scripts/test-agent-scenario.sh` - Add test scenarios
+   - `.github/workflows/test-examples.yml` - Add provider to test matrices
+8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+
+## Skill Discoverability
+
+Skills are discovered by agents through semantic search and keyword matching. Optimize for discoverability by following these guidelines.
+
+### SKILL.md Optimization
+
+**Lead with clear trigger phrases** in the description frontmatter:
+
+```yaml
+description: >
+  Receive and verify Stripe webhooks. Use when setting up Stripe webhook
+  handlers, debugging Stripe signature verification, or handling Stripe
+  payment events like checkout.session.completed.
+```
+
+Include:
+- Provider name (Stripe, GitHub, Shopify)
+- Action words (receive, verify, validate, handle, debug)
+- Specific event names (checkout.session.completed, push, pull_request)
+
+**"When to Use This Skill" section** — Mirror how agents phrase questions:
+
+```markdown
+## When to Use This Skill
+
+- How do I receive Stripe webhooks?
+- How do I verify Stripe webhook signatures?
+- How do I handle checkout.session.completed events?
+- Why is my Stripe webhook signature verification failing?
+```
+
+**Repeat key terms naturally** throughout the SKILL.md:
+- `webhook` (6-10 times)
+- `signature verification`
+- Provider name
+- Specific event types
+- `raw body` (common gotcha)
+
+### Related Skills Section (REQUIRED)
+
+Every SKILL.md must include a Related Skills section at the end. This creates semantic clustering that helps retrieval systems.
+
+**When generating a skill, search the `skills/` directory** to discover existing skills and link to all of them:
+
+```markdown
+## Related Skills
+
+- [other-provider-webhooks](../other-provider-webhooks/) - Brief description
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure
+```
+
+Always include:
+- **All other provider skills** found in `skills/` (creates semantic clustering)
+- **`webhook-handler-patterns`** — For cross-cutting concerns
+- **`hookdeck-event-gateway`** — For production infrastructure
+
+Use relative links (`../skill-name/`) so links work from any context.
+
+### Naming Conventions for Discoverability
+
+Use literal, provider-first naming:
+
+| Good | Avoid |
+|------|-------|
+| `stripe-webhooks` | `payment-handler` |
+| `github-webhooks` | `repo-events` |
+| `webhook-handler-patterns` | `best-practices` |
+
+Agents search like: "Stripe webhook skill", not "payment handler skill".
+
+### Reference File Optimization
+
+Use question-style headers in reference files:
+
+```markdown
+# How to Verify Stripe Webhook Signatures
+
+## Why Signature Verification Matters
+
+## Common Signature Verification Errors
+
+## How to Debug Verification Failures
+```
+
+This matches how agents reason and search.
 
 ### Example Code Best Practices
 
@@ -479,6 +665,24 @@ if (!signatureHeader) {
 - `200` - Successfully processed
 - `400` - Invalid request (missing headers, invalid JSON, invalid signature)
 - `500` - Server error (unexpected exceptions)
+
+**Use realistic test secrets:**
+```javascript
+// Document the secret format in tests so future maintainers understand it
+// Example: Svix-style secrets are 'whsec_' + base64-encoded key
+process.env.WEBHOOK_SECRET = 'whsec_dGVzdF9zZWNyZXRfa2V5';  // base64 of "test_secret_key"
+```
+
+**Generate valid test signatures:**
+```javascript
+// Tests should generate real signatures using the same algorithm as the provider
+function generateTestSignature(payload, secret) {
+  // Match the provider's exact signing algorithm
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signedContent = `${msgId}.${timestamp}.${payload}`;
+  return crypto.createHmac('sha256', secret).update(signedContent).digest('base64');
+}
+```
 
 ## Testing
 

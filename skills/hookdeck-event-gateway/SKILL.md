@@ -160,9 +160,11 @@ For detailed documentation:
 
 ## Related Skills
 
-- [`stripe-webhooks`](../stripe-webhooks/) - If receiving Stripe webhooks through Hookdeck
-- [`shopify-webhooks`](../shopify-webhooks/) - If receiving Shopify webhooks through Hookdeck
-- [`github-webhooks`](../github-webhooks/) - If receiving GitHub webhooks through Hookdeck
+- [stripe-webhooks](../stripe-webhooks/) - Stripe payment webhook handling
+- [shopify-webhooks](../shopify-webhooks/) - Shopify e-commerce webhook handling
+- [github-webhooks](../github-webhooks/) - GitHub repository webhook handling
+- [resend-webhooks](../resend-webhooks/) - Resend email webhook handling
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
 
 ## Attribution
 
