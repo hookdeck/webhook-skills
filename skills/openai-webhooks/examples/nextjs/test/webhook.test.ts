@@ -223,8 +223,8 @@ describe('OpenAI Webhook Endpoint', () => {
       'batch.completed',
       'batch.failed',
       'batch.cancelled',
-      'realtime.session.created',
-      'realtime.session.updated'
+      'batch.expired',
+      'realtime.call.incoming'
     ];
 
     eventTypes.forEach(eventType => {

@@ -3,7 +3,7 @@ name: openai-webhooks
 description: >
   Receive and verify OpenAI webhooks. Use when setting up OpenAI webhook
   handlers for fine-tuning jobs, batch completions, or async events like
-  fine_tuning.job.completed, batch.completed, or realtime.session.created.
+  fine_tuning.job.completed, batch.completed, or realtime.call.incoming.
 license: MIT
 metadata:
   author: hookdeck
@@ -19,7 +19,7 @@ metadata:
 - Debugging signature verification failures
 - Handling fine-tuning job completion events
 - Processing batch API completion notifications
-- Managing realtime API session events
+- Handling realtime API incoming calls
 
 ## Essential Code (USE THIS)
 
@@ -52,7 +52,8 @@ function verifyOpenAISignature(payload, webhookId, webhookTimestamp, webhookSign
   }
 
   // Create signed content: webhook_id.webhook_timestamp.payload
-  const signedContent = `${webhookId}.${webhookTimestamp}.${payload}`;
+  const payloadStr = payload instanceof Buffer ? payload.toString('utf8') : payload;
+  const signedContent = `${webhookId}.${webhookTimestamp}.${payloadStr}`;
 
   // Decode base64 secret (remove whsec_ prefix if present)
   const secretKey = secret.startsWith('whsec_') ? secret.slice(6) : secret;
@@ -81,7 +82,7 @@ app.post('/webhooks/openai',
 
     // Verify signature
     if (!verifyOpenAISignature(
-      req.body.toString('utf8'),
+      req.body,
       webhookId,
       webhookTimestamp,
       webhookSignature,
@@ -111,8 +112,11 @@ app.post('/webhooks/openai',
       case 'batch.cancelled':
         console.log('Batch cancelled:', event.data.id);
         break;
-      case 'realtime.session.created':
-        console.log('Realtime session created:', event.data.id);
+      case 'batch.expired':
+        console.log('Batch expired:', event.data.id);
+        break;
+      case 'realtime.call.incoming':
+        console.log('Realtime call incoming:', event.data.id);
         break;
       default:
         console.log('Unhandled event:', event.type);
@@ -215,8 +219,8 @@ async def openai_webhook(
 | `batch.completed` | Batch API job completed |
 | `batch.failed` | Batch API job failed |
 | `batch.cancelled` | Batch API job was cancelled |
-| `realtime.session.created` | Realtime API session created |
-| `realtime.session.updated` | Realtime API session updated |
+| `batch.expired` | Batch API job expired |
+| `realtime.call.incoming` | Realtime API incoming call |
 
 > **For full event reference**, see [OpenAI Webhook Events](https://platform.openai.com/docs/guides/webhooks/events)
 

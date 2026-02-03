@@ -144,13 +144,13 @@ async def openai_webhook(
         print(f"Batch cancelled: {event_data.get('id')}")
         # TODO: Clean up resources, update status
 
-    elif event_type == "realtime.session.created":
-        print(f"Realtime session created: {event_data.get('id')}")
-        # TODO: Initialize session state, connect client
+    elif event_type == "batch.expired":
+        print(f"Batch expired: {event_data.get('id')}")
+        # TODO: Clean up resources, handle timeout
 
-    elif event_type == "realtime.session.updated":
-        print(f"Realtime session updated: {event_data.get('id')}")
-        # TODO: Update session configuration
+    elif event_type == "realtime.call.incoming":
+        print(f"Realtime call incoming: {event_data.get('id')}")
+        # TODO: Handle incoming call, connect client
 
     else:
         print(f"Unhandled event type: {event_type}")

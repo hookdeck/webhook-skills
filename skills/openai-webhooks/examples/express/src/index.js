@@ -126,14 +126,14 @@ app.post('/webhooks/openai',
         // TODO: Clean up resources, update status
         break;
 
-      case 'realtime.session.created':
-        console.log(`Realtime session created: ${event.data.id}`);
-        // TODO: Initialize session state, connect client
+      case 'batch.expired':
+        console.log(`Batch expired: ${event.data.id}`);
+        // TODO: Clean up resources, handle timeout
         break;
 
-      case 'realtime.session.updated':
-        console.log(`Realtime session updated: ${event.data.id}`);
-        // TODO: Update session configuration
+      case 'realtime.call.incoming':
+        console.log(`Realtime call incoming: ${event.data.id}`);
+        // TODO: Handle incoming call, connect client
         break;
 
       default:

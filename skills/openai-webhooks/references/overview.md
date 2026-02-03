@@ -21,8 +21,8 @@ OpenAI webhooks are HTTP callbacks that notify your application when asynchronou
 | `batch.completed` | Batch API request completes | Process results, trigger downstream tasks |
 | `batch.failed` | Batch API request fails | Handle errors, retry failed items |
 | `batch.cancelled` | Batch is cancelled | Clean up, refund credits |
-| `realtime.session.created` | New realtime session starts | Initialize session state |
-| `realtime.session.updated` | Session configuration changes | Update local state |
+| `batch.expired` | Batch API request expires | Clean up, handle timeout |
+| `realtime.call.incoming` | Realtime API incoming call | Handle incoming call, connect client |
 
 ## Event Payload Structure
 

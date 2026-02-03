@@ -211,8 +211,8 @@ class TestOpenAIWebhook:
         "batch.completed",
         "batch.failed",
         "batch.cancelled",
-        "realtime.session.created",
-        "realtime.session.updated"
+        "batch.expired",
+        "realtime.call.incoming"
     ])
     def test_handle_event_types(self, client, webhook_secret, event_type):
         payload = json.dumps({
