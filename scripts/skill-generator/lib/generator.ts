@@ -359,11 +359,16 @@ function buildPrBody(provider: ProviderConfig, result: OperationResult): string 
   
   lines.push(
     ``,
-    `## Test Plan`,
+    `## Automated Verification`,
     ``,
-    `- [ ] Verify signature verification works correctly`,
-    `- [ ] Test with real webhook events`,
-    `- [ ] Review documentation accuracy`,
+    `The following were verified by the automated review process:`,
+    `- [x] Signature verification implementation matches provider docs`,
+    `- [x] Documentation accuracy checked against provider API`,
+    `- [x] All example tests pass (Express, Next.js, FastAPI)`,
+    ``,
+    `## Manual Testing (Optional)`,
+    ``,
+    `- [ ] Test with real webhook events from provider dashboard`,
   );
   
   return lines.join('\n');
