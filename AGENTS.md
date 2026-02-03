@@ -147,7 +147,8 @@ metadata:
 
 - Keep SKILL.md under 500 lines / < 5,000 tokens
 - Put detailed reference material in `references/` files
-- Use relative paths when referencing other files
+- **Links within the same skill:** Use relative paths (e.g. `references/verification.md`, `examples/express/`).
+- **Links to another skill:** Use absolute GitHub URLs so links resolve when only one skill is installed. Use the `main` branch: `https://github.com/hookdeck/webhook-skills/blob/main/skills/{skill-name}/…` for a file, or `https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}` for the skill root.
 
 ### File References from SKILL.md
 
@@ -248,7 +249,7 @@ When generating a new skill, search the `skills/` directory to find other existi
 - **`webhook-handler-patterns`** — For idempotency, error handling, retry logic
 - **`hookdeck-event-gateway`** — For production webhook infrastructure
 
-Use relative links (`../skill-name/`) with brief descriptions.
+Use **absolute GitHub URLs** for cross-skill links so they resolve when only one skill is installed: `https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}` with brief descriptions.
 
 ## Examples Structure
 
@@ -588,9 +589,9 @@ Every SKILL.md must include a Related Skills section at the end. This creates se
 ```markdown
 ## Related Skills
 
-- [other-provider-webhooks](../other-provider-webhooks/) - Brief description
-- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
-- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure
+- [other-provider-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/other-provider-webhooks) - Brief description
+- [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) - Production webhook infrastructure
 ```
 
 Always include:
@@ -598,7 +599,16 @@ Always include:
 - **`webhook-handler-patterns`** — For cross-cutting concerns
 - **`hookdeck-event-gateway`** — For production infrastructure
 
-Use relative links (`../skill-name/`) so links work from any context.
+Use **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`) so links resolve when only one skill is installed.
+
+### Recommended: webhook-handler-patterns (for provider and infrastructure skills)
+
+Provider skills (e.g. stripe-webhooks, shopify-webhooks) and the hookdeck-event-gateway skill should include a **Recommended: webhook-handler-patterns** section before Related Skills. This tells users and agents to install the patterns skill alongside the provider skill, and links to the key references with absolute GitHub URLs so the content is reachable even when only the provider skill is installed:
+
+- [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md)
+- [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md)
+- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md)
 
 ### Naming Conventions for Discoverability
 
