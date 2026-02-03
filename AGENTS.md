@@ -210,7 +210,7 @@ metadata:
 For local webhook testing, install Hookdeck CLI:
 
 ```bash
-# Install via npm (recommended)
+# Install via npm
 npm install -g hookdeck-cli
 
 # Or via Homebrew

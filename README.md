@@ -1,6 +1,6 @@
 # Webhook Skills
 
-This repository contains webhook-related skills for AI coding agents that need to **receive, validate, verify signatures, handle events, retry deliveries, or debug webhook integrations** from providers such as Stripe, Shopify, GitHub, Resend, Clerk, and others.
+This repository contains webhook-related skills for AI coding agents that need to **receive, verify signatures, handle events, retry deliveries, or debug webhook integrations** from providers such as Stripe, Shopify, GitHub, Resend, Clerk, and others.
 
 Skills provide step-by-step instructions, signature verification code, and runnable examples for Express, Next.js, and FastAPI.
 
