@@ -144,20 +144,21 @@ async function handleGenerate(
     createPr: boolean | string;
     model: string;
     workingDir?: string;  // Generate in this directory (skip worktree creation)
-    noWorktree?: boolean; // Shorthand for --working-dir . (current directory)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🚀 Skill Generator - Generate Mode\n'));
   
   // Validate mutually exclusive flags
-  if (options.workingDir && options.noWorktree) {
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
     console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
     console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
     process.exit(1);
   }
   
   // Handle --no-worktree as shorthand for --working-dir .
-  if (options.noWorktree) {
+  if (options.worktree === false) {
     options.workingDir = '.';
   }
   
@@ -173,7 +174,7 @@ async function handleGenerate(
   
   // Validate single provider when using working directory mode
   if (useProvidedDir && providerConfigs.length > 1) {
-    const flagUsed = options.noWorktree ? '--no-worktree' : '--working-dir';
+    const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
     console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
     console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
     process.exit(1);
@@ -386,20 +387,21 @@ async function handleReview(
     branchPrefix: string;
     model: string;
     workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
-    noWorktree?: boolean; // Shorthand for --working-dir . (current directory)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🔍 Skill Generator - Review Mode\n'));
   
   // Validate mutually exclusive flags
-  if (options.workingDir && options.noWorktree) {
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
     console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
     console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
     process.exit(1);
   }
   
   // Handle --no-worktree as shorthand for --working-dir .
-  if (options.noWorktree) {
+  if (options.worktree === false) {
     options.workingDir = '.';
   }
   
@@ -418,7 +420,7 @@ async function handleReview(
   if (useProvidedDir) {
     // Validate single provider when using working directory mode
     if (providerConfigs.length > 1) {
-      const flagUsed = options.noWorktree ? '--no-worktree' : '--working-dir';
+      const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
       console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
       console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
       process.exit(1);
