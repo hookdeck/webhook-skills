@@ -35,7 +35,7 @@ describe('Shopify Webhook Endpoint', () => {
   });
 
   describe('POST /webhooks/shopify', () => {
-    it('should return 401 for missing signature', async () => {
+    it('should return 400 for missing signature', async () => {
       const response = await request(app)
         .post('/webhooks/shopify')
         .set('Content-Type', 'application/json')
@@ -43,11 +43,11 @@ describe('Shopify Webhook Endpoint', () => {
         .set('X-Shopify-Shop-Domain', 'test.myshopify.com')
         .send('{"id":123}');
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid signature');
     });
 
-    it('should return 401 for invalid signature', async () => {
+    it('should return 400 for invalid signature', async () => {
       const payload = JSON.stringify({ id: 123 });
 
       const response = await request(app)
@@ -58,7 +58,7 @@ describe('Shopify Webhook Endpoint', () => {
         .set('X-Shopify-Shop-Domain', 'test.myshopify.com')
         .send(payload);
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(400);
     });
 
     it('should return 200 for valid signature', async () => {

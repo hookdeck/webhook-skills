@@ -38,7 +38,7 @@ app.post('/webhooks/shopify',
     // Verify webhook signature
     if (!hmac || !verifyShopifyWebhook(req.body, hmac, process.env.SHOPIFY_API_SECRET)) {
       console.error('Webhook signature verification failed');
-      return res.status(401).send('Invalid signature');
+      return res.status(400).send('Invalid signature');
     }
 
     // Parse the payload after verification

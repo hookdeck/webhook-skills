@@ -207,10 +207,19 @@ metadata:
 
 ## Local Development
 
-For local webhook testing, use Hookdeck CLI:
+For local webhook testing, install Hookdeck CLI:
 
 ```bash
+# Install via npm
+npm install -g hookdeck-cli
+
+# Or via Homebrew
 brew install hookdeck/hookdeck/hookdeck
+```
+
+Then start the tunnel:
+
+```bash
 hookdeck listen 3000 --path /webhooks/{provider}
 ```
 
@@ -218,19 +227,28 @@ No account required. Provides local tunnel + web UI for inspecting requests.
 
 ## Related Skills
 
-- `webhook-handler-patterns` - Cross-cutting patterns (idempotency, retries, framework guides)
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+{List other relevant webhook skills from the skills/ directory. Include:
+- Other provider webhook skills (e.g., stripe-webhooks, shopify-webhooks)
+- webhook-handler-patterns for cross-cutting concerns
+- hookdeck-event-gateway for production infrastructure}
 ```
 
 ### Key Sections Explained
 
-**When to Use This Skill** — Concrete scenarios that help the agent decide when to activate this skill. Include common tasks developers ask for help with.
+**When to Use This Skill** — Concrete scenarios that help the agent decide when to activate this skill. Include common tasks developers ask for help with. Mirror how agents phrase questions (e.g., "How do I verify Stripe webhook signatures?").
 
 **Resources** — A table of contents listing available reference files and examples. Tells the agent exactly what's available without loading everything.
 
 **Local Development** — The Hookdeck CLI funnel. Position as "no account required" for frictionless adoption.
 
-**Related Skills** — Cross-references to other skills in the repository. Helps with discoverability and lets the agent suggest complementary skills.
+**Related Skills** — Cross-references to other skills in the repository. **CRITICAL for discoverability.**
+
+When generating a new skill, search the `skills/` directory to find other existing skills and link to them. Always include:
+- **Other provider webhook skills** — Creates semantic clustering for discovery
+- **`webhook-handler-patterns`** — For idempotency, error handling, retry logic
+- **`hookdeck-event-gateway`** — For production webhook infrastructure
+
+Use relative links (`../skill-name/`) with brief descriptions.
 
 ## Examples Structure
 
@@ -293,6 +311,40 @@ Server runs on http://localhost:3000
 - If showing SDK verification, **always verify the exact method signature against official docs** — parameter names like `secret` vs `webhookSecret` or header key formats can cause silent failures
 - Show proper error handling (return appropriate status codes)
 - Keep dependencies minimal (avoid adding SDK just for verification if manual works)
+
+### Dependency Version Guidelines
+
+**CRITICAL: Always use current/latest stable versions of dependencies.** AI training data contains older versions that may have security vulnerabilities.
+
+- **Look up current versions** before adding dependencies to package.json or requirements.txt
+- **For Next.js**: Use version 15.x or later (not 14.x which has known vulnerabilities)
+- **For Express**: Use version 4.21.x or later
+- **For FastAPI**: Use version 0.115.x or later
+- **Never hardcode old versions** from memory — always verify against npm/pypi
+- When in doubt, use `latest` or `^` prefix to allow minor updates
+
+### Test Script Guidelines
+
+**CRITICAL: Test scripts must run once and exit.** They will be run in CI and automated pipelines.
+
+- **For vitest**: Use `"test": "vitest run"` (not just `vitest` which defaults to watch mode)
+- **For jest**: Use `"test": "jest"` (exits by default, but avoid `--watch`)
+- **For pytest**: Use `pytest` (exits by default)
+- **Never use watch mode** in the default test script — it will hang in automated environments
+
+**How to check current versions:**
+```bash
+# Node.js packages
+npm view <package> version
+
+# Python packages  
+pip index versions <package>
+```
+
+**Common outdated versions to avoid:**
+- `next@14.x` → use `next@15.x` or later
+- `express@4.18.x` → use `express@4.21.x` or later
+- `fastapi@0.100.x` → use `fastapi@0.115.x` or later
 
 ## References Structure
 
@@ -488,6 +540,93 @@ Gather this information:
    - `scripts/test-agent-scenario.sh` - Add test scenarios
    - `.github/workflows/test-examples.yml` - Add provider to test matrices
 8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+
+## Skill Discoverability
+
+Skills are discovered by agents through semantic search and keyword matching. Optimize for discoverability by following these guidelines.
+
+### SKILL.md Optimization
+
+**Lead with clear trigger phrases** in the description frontmatter:
+
+```yaml
+description: >
+  Receive and verify Stripe webhooks. Use when setting up Stripe webhook
+  handlers, debugging Stripe signature verification, or handling Stripe
+  payment events like checkout.session.completed.
+```
+
+Include:
+- Provider name (Stripe, GitHub, Shopify)
+- Action words (receive, verify, validate, handle, debug)
+- Specific event names (checkout.session.completed, push, pull_request)
+
+**"When to Use This Skill" section** — Mirror how agents phrase questions:
+
+```markdown
+## When to Use This Skill
+
+- How do I receive Stripe webhooks?
+- How do I verify Stripe webhook signatures?
+- How do I handle checkout.session.completed events?
+- Why is my Stripe webhook signature verification failing?
+```
+
+**Repeat key terms naturally** throughout the SKILL.md:
+- `webhook` (6-10 times)
+- `signature verification`
+- Provider name
+- Specific event types
+- `raw body` (common gotcha)
+
+### Related Skills Section (REQUIRED)
+
+Every SKILL.md must include a Related Skills section at the end. This creates semantic clustering that helps retrieval systems.
+
+**When generating a skill, search the `skills/` directory** to discover existing skills and link to all of them:
+
+```markdown
+## Related Skills
+
+- [other-provider-webhooks](../other-provider-webhooks/) - Brief description
+- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure
+```
+
+Always include:
+- **All other provider skills** found in `skills/` (creates semantic clustering)
+- **`webhook-handler-patterns`** — For cross-cutting concerns
+- **`hookdeck-event-gateway`** — For production infrastructure
+
+Use relative links (`../skill-name/`) so links work from any context.
+
+### Naming Conventions for Discoverability
+
+Use literal, provider-first naming:
+
+| Good | Avoid |
+|------|-------|
+| `stripe-webhooks` | `payment-handler` |
+| `github-webhooks` | `repo-events` |
+| `webhook-handler-patterns` | `best-practices` |
+
+Agents search like: "Stripe webhook skill", not "payment handler skill".
+
+### Reference File Optimization
+
+Use question-style headers in reference files:
+
+```markdown
+# How to Verify Stripe Webhook Signatures
+
+## Why Signature Verification Matters
+
+## Common Signature Verification Errors
+
+## How to Debug Verification Failures
+```
+
+This matches how agents reason and search.
 
 ### Example Code Best Practices
 

@@ -1,0 +1,25 @@
+{
+  "name": "skill-generator",
+  "version": "1.0.0",
+  "description": "Generate and review webhook skills using Claude CLI",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "generate": "ts-node index.ts generate",
+    "review": "ts-node index.ts review"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.0",
+    "execa": "^9.5.2",
+    "p-limit": "^6.2.0",
+    "simple-git": "^3.27.0",
+    "yaml": "^2.7.0"
+  }
+}
