@@ -14,14 +14,6 @@ const elevenlabs = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
 });
 
-/**
- * Verify webhook and construct event using the official SDK (recommended).
- * See: https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload
- */
-async function constructWebhookEvent(rawBody, signatureHeader, secret) {
-  return elevenlabs.webhooks.constructEvent(rawBody, signatureHeader, secret);
-}
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -35,7 +27,7 @@ app.post('/webhooks/elevenlabs', async (req, res) => {
   try {
     const secret = process.env.ELEVENLABS_WEBHOOK_SECRET;
     const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
-    const event = await constructWebhookEvent(rawBody, signature, secret);
+    const event = await elevenlabs.webhooks.constructEvent(rawBody, signature, secret);
 
     console.log(`Received ElevenLabs webhook: ${event.type}`);
 

@@ -7,28 +7,13 @@ const elevenlabs = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
 });
 
-/**
- * Verify webhook and construct event using the official SDK (recommended).
- * See: https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload
- */
-async function constructWebhookEvent(
-  rawBody: string,
-  signatureHeader: string | null,
-  secret: string | undefined
-) {
-  return elevenlabs.webhooks.constructEvent(rawBody, signatureHeader, secret);
-}
-
 export async function POST(request: NextRequest) {
-  // Get the raw body as text for signature verification
   const rawBody = await request.text();
-
-  // Check both possible header cases
   const signature = request.headers.get('elevenlabs-signature') ||
                    request.headers.get('ElevenLabs-Signature');
 
   try {
-    const event = await constructWebhookEvent(
+    const event = await elevenlabs.webhooks.constructEvent(
       rawBody,
       signature,
       process.env.ELEVENLABS_WEBHOOK_SECRET
