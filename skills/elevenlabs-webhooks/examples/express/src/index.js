@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const crypto = require('crypto');
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,61 +8,18 @@ const PORT = process.env.PORT || 3000;
 // Middleware to capture raw body for signature verification
 app.use('/webhooks/elevenlabs', express.raw({ type: 'application/json' }));
 
+// ElevenLabs client — used for SDK webhook verification (recommended by ElevenLabs).
+// API key is required for client init; for webhook-only a placeholder is used.
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
+});
+
 /**
- * Verify ElevenLabs webhook signature
- * Referenced from elevenlabs-webhooks skill
+ * Verify webhook and construct event using the official SDK (recommended).
+ * See: https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload
  */
-function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
-  if (!signatureHeader) {
-    throw new Error('No signature header provided');
-  }
-
-  // Parse the signature header: "t=timestamp,v0=signature"
-  const elements = signatureHeader.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.substring(2);
-  const signatures = elements
-    .filter(e => e.startsWith('v0='))
-    .map(e => e.substring(3));
-
-  if (!timestamp || signatures.length === 0) {
-    throw new Error('Invalid signature header format');
-  }
-
-  // Verify timestamp is within tolerance (30 minutes)
-  const currentTime = Math.floor(Date.now() / 1000);
-  const timestampAge = Math.abs(currentTime - parseInt(timestamp));
-
-  if (timestampAge > 1800) {
-    throw new Error('Webhook timestamp too old');
-  }
-
-  // Create the signed payload
-  const signedPayload = `${timestamp}.${rawBody}`;
-
-  // Calculate expected signature
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
-
-  // Timing-safe comparison
-  const isValid = signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      // Different lengths = not equal
-      return false;
-    }
-  });
-
-  if (!isValid) {
-    throw new Error('Invalid webhook signature');
-  }
-
-  return true;
+async function constructWebhookEvent(rawBody, signatureHeader, secret) {
+  return elevenlabs.webhooks.constructEvent(rawBody, signatureHeader, secret);
 }
 
 // Health check endpoint
@@ -76,15 +33,9 @@ app.post('/webhooks/elevenlabs', async (req, res) => {
                    req.headers['ElevenLabs-Signature'];
 
   try {
-    // Verify webhook signature
-    verifyElevenLabsWebhook(
-      req.body,
-      signature,
-      process.env.ELEVENLABS_WEBHOOK_SECRET
-    );
-
-    // Parse the webhook payload
-    const event = JSON.parse(req.body);
+    const secret = process.env.ELEVENLABS_WEBHOOK_SECRET;
+    const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
+    const event = await constructWebhookEvent(rawBody, signature, secret);
 
     console.log(`Received ElevenLabs webhook: ${event.type}`);
 
@@ -121,12 +72,14 @@ app.post('/webhooks/elevenlabs', async (req, res) => {
     // Return 200 to acknowledge receipt
     res.sendStatus(200);
   } catch (error) {
-    console.error('Webhook processing failed:', error.message);
+    console.error('Webhook verification failed:', error.message);
 
-    if (error.message.includes('signature') || error.message.includes('timestamp')) {
-      res.status(400).send('Invalid signature');
-    } else {
+    const statusCode = error.statusCode === 400 ? 401 : (error.statusCode || 500);
+    const message = error.message || 'Invalid signature';
+    if (statusCode === 500) {
       res.status(500).send('Internal server error');
+    } else {
+      res.status(statusCode).json({ error: message });
     }
   }
 });

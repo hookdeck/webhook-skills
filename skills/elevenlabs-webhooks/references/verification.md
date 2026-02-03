@@ -9,7 +9,32 @@ ElevenLabs uses HMAC-SHA256 signature verification with a custom header format t
 3. **Algorithm**: HMAC-SHA256
 4. **Encoding**: Hexadecimal
 
-## Manual Implementation
+## SDK Verification (Recommended for Node/TypeScript)
+
+ElevenLabs recommends using the official `@elevenlabs/elevenlabs-js` SDK for webhook verification and event construction. See [Verify the webhook secret and construct the webhook payload](https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload).
+
+```javascript
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
+
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY || 'webhook-only'
+});
+
+// In your handler: raw body (string), signature header, webhook secret
+const event = await elevenlabs.webhooks.constructEvent(
+  rawBody,
+  signatureHeader,
+  process.env.ELEVENLABS_WEBHOOK_SECRET
+);
+// Returns parsed event; throws ElevenLabsError on invalid signature or missing header
+```
+
+- **Success**: Returns the parsed event object (`event.type`, `event.data`).
+- **Failure**: Throws `ElevenLabsError` with `message` and `statusCode` (400). Return 401 and the error message to the client.
+
+## Manual Implementation (Fallback or Python)
+
+Only the JavaScript/TypeScript SDK (`@elevenlabs/elevenlabs-js`) provides `constructEvent` for verifying incoming webhooks; the [elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) SDK does not support webhook verification or event construction. Use the manual implementation below when using Python/FastAPI or when you need a dependency-free implementation.
 
 ```javascript
 const crypto = require('crypto');
@@ -130,7 +155,10 @@ export async function POST(req: Request) {
 }
 ```
 
-### FastAPI
+### FastAPI (Python)
+
+The official [elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) SDK does **not** provide webhook signature verification or event construction (it only exposes workspace webhook management: list, create, delete, update). Use the manual implementation below. For Node/TypeScript, prefer the [SDK verification](#sdk-verification-recommended-for-nodetypescript) above.
+
 ```python
 import os
 import hmac
