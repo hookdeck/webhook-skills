@@ -52,3 +52,13 @@ yarn.lock
 
 # Test results (generated during agent testing)
 test-results/
+
+# Skill generator results
+results/
+
+# Skill generator provider configs (use providers.example.yaml as template)
+scripts/skill-generator/providers*.yaml
+!scripts/skill-generator/providers.example.yaml
+
+# Git worktrees (used by skill generator for parallel execution)
+.worktrees/

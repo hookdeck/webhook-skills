@@ -420,7 +420,7 @@ cd ../fastapi && pip install -r requirements.txt && pytest
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/{provider}-webhooks`
 3. Commit your changes
-4. Push and open a PR using the [PR title and description](#8-pull-request-title-and-description) format (e.g. `feat: add {provider}-webhooks skill` for new skills, `fix: improve ...` for improvements).
+4. Push and open a PR using the [PR title and description](#8-pull-request-title-and-description) format (e.g. `feat: add {provider}-webhooks skill` for new skills, `fix: improve ...` for improvements). New skills use `feat:` prefix, improvements to existing skills use `fix:`.
 
 ---
 

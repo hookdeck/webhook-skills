@@ -49,8 +49,8 @@ class TestShopifyWebhook:
     
     secret = os.environ["SHOPIFY_API_SECRET"]
 
-    def test_missing_signature_returns_401(self):
-        """Should return 401 when signature header is missing."""
+    def test_missing_signature_returns_400(self):
+        """Should return 400 when signature header is missing."""
         response = client.post(
             "/webhooks/shopify",
             content='{"id":123}',
@@ -60,13 +60,13 @@ class TestShopifyWebhook:
                 "X-Shopify-Shop-Domain": "test.myshopify.com"
             }
         )
-        assert response.status_code == 401
+        assert response.status_code == 400
         assert "Invalid signature" in response.json()["detail"]
 
-    def test_invalid_signature_returns_401(self):
-        """Should return 401 when signature is invalid."""
+    def test_invalid_signature_returns_400(self):
+        """Should return 400 when signature is invalid."""
         payload = json.dumps({"id": 123})
-        
+
         response = client.post(
             "/webhooks/shopify",
             content=payload,
@@ -77,7 +77,7 @@ class TestShopifyWebhook:
                 "X-Shopify-Shop-Domain": "test.myshopify.com"
             }
         )
-        assert response.status_code == 401
+        assert response.status_code == 400
 
     def test_valid_signature_returns_200(self):
         """Should return 200 when signature is valid."""

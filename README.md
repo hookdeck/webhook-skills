@@ -1,20 +1,77 @@
 # Webhook Skills
 
-A community collection of webhook integration skills for AI coding agents. Skills provide step-by-step instructions for setting up webhook receivers, handling events, and building reliable webhook infrastructure.
+This repository contains webhook-related skills for AI coding agents that need to **receive, verify signatures, handle events, retry deliveries, or debug webhook integrations** from providers such as Stripe, Shopify, GitHub, Resend, Clerk, and others.
+
+Skills provide step-by-step instructions, signature verification code, and runnable examples for Express, Next.js, and FastAPI.
 
 Works with [Claude Code](https://claude.ai/code), [Cursor](https://cursor.com), [VS Code Copilot](https://github.com/features/copilot), and other AI coding assistants that support the [Agent Skills specification](https://agentskills.io).
 
+## When Should an Agent Use These Skills?
+
+Use these webhook skills when:
+
+- You need to **receive webhooks** from third-party providers (Stripe, Shopify, GitHub, etc.)
+- You need to **verify webhook signatures** to ensure authenticity
+- You need to **handle webhook event payloads** and extract data
+- You need to **implement idempotency** for webhook handlers
+- You need to **retry or replay** failed webhook deliveries
+- You need **provider-specific webhook handling logic** (e.g., Stripe checkout events, GitHub push events)
+
+These skills are especially useful for integrating with:
+- **Stripe webhooks** — payment events, checkout sessions, subscription changes
+- **Shopify webhooks** — order events, product updates, customer data
+- **GitHub webhooks** — push events, pull requests, issue updates
+- **Resend webhooks** — email delivery events, bounce notifications
+- **Clerk webhooks** — user authentication events, session management
+
+## Skill Discovery
+
+These skills are designed to be discoverable by agents using skill registries and tools like `find-skills`, where an agent searches for webhook-related capabilities by provider or task.
+
+## Available Webhook Skills
+
+### Provider Webhook Skills
+
+Skills for receiving and verifying webhooks from specific providers. Each includes setup guides, webhook signature verification, and runnable examples.
+
+| Provider | Skill | What It Does |
+|----------|-------|--------------|
+| Stripe | [`stripe-webhooks`](skills/stripe-webhooks/) | Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events |
+| Shopify | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
+| GitHub | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
+| Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
+| Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
+| Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
+
+### Webhook Handler Pattern Skills
+
+Framework-agnostic best practices for webhook handling, applicable across any webhook integration.
+
+| Skill | What It Does |
+|-------|--------------|
+| [`webhook-handler-patterns`](skills/webhook-handler-patterns/) | Implement webhook idempotency, error handling, retry logic, async processing |
+
+### Webhook Infrastructure Skills
+
+Skills for setting up reliable webhook infrastructure with routing, replay, and monitoring.
+
+| Skill | What It Does |
+|-------|--------------|
+| [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Set up Hookdeck Event Gateway for webhook routing, retry, replay, and monitoring |
+
 ## Quick Start
 
-### Install Skills
+### Install Webhook Skills
 
 ```bash
-# List available skills
+# List available webhook skills
 npx skills add hookdeck/webhook-skills --list
 
-# Install specific skills
+# Install Stripe webhook skill
 npx skills add hookdeck/webhook-skills --skill stripe-webhooks
-npx skills add hookdeck/webhook-skills --skill stripe-webhooks --skill hookdeck-event-gateway
+
+# Install multiple webhook skills
+npx skills add hookdeck/webhook-skills --skill stripe-webhooks --skill shopify-webhooks
 ```
 
 ### Local Webhook Development
@@ -22,126 +79,96 @@ npx skills add hookdeck/webhook-skills --skill stripe-webhooks --skill hookdeck-
 To receive webhooks on localhost during development, install the [Hookdeck CLI](https://hookdeck.com/docs/cli):
 
 ```bash
+npm i -g hookdeck-cli
+
+# or:
 brew install hookdeck/hookdeck/hookdeck
 
-# Start local tunnel (no account required)
+# Start local webhook tunnel (no account required)
 hookdeck listen 3000 --path /webhooks/stripe
 ```
 
-This provides a public URL that forwards to your local server, plus a web UI for inspecting and replaying requests.
+This provides a public URL that forwards webhook events to your local server, plus a web UI for inspecting and replaying webhook requests.
 
-## Available Skills
+## Example: How to Handle Stripe Webhooks
 
-### Provider Skills
+If an agent receives a `checkout.session.completed` event from Stripe, the `stripe-webhooks` skill can:
 
-Skills for receiving webhooks from specific providers. Each includes setup guides, signature verification, and runnable examples.
+1. **Verify the webhook signature** using Stripe's signing secret
+2. **Parse the event payload** to extract checkout session data
+3. **Return a normalized event object** for further processing
 
-| Skill | Description | Examples |
-|-------|-------------|----------|
-| [`stripe-webhooks`](skills/stripe-webhooks/) | Receive and verify Stripe payment webhooks | Express, Next.js, FastAPI |
-| [`shopify-webhooks`](skills/shopify-webhooks/) | Receive and verify Shopify store webhooks | Express, Next.js, FastAPI |
-| [`github-webhooks`](skills/github-webhooks/) | Receive and verify GitHub repository webhooks | Express, Next.js, FastAPI |
-| [`resend-webhooks`](skills/resend-webhooks/) | Receive and verify Resend email webhooks | Express, Next.js, FastAPI |
-| [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks | Express, Next.js, FastAPI |
-
-### Pattern Skills
-
-Framework-agnostic best practices applicable across any webhook integration.
-
-| Skill | Description |
-|-------|-------------|
-| [`webhook-handler-patterns`](skills/webhook-handler-patterns/) | Idempotency, error handling, retry logic, async processing |
-
-### Infrastructure Skills
-
-Skills for setting up Hookdeck's Event Gateway with signature verification.
-
-| Skill | Description |
-|-------|-------------|
-| [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Webhook infrastructure with routing, replay, and monitoring |
-
-## Skill Structure
-
-Each skill follows a consistent structure:
-
-```
-skills/{skill-name}/
-├── SKILL.md              # Entry point - what the skill does, when to use it
-├── references/           # Documentation loaded on-demand by agents
-│   ├── overview.md       # What the webhooks are, common events
-│   ├── setup.md          # Provider dashboard configuration
-│   └── verification.md   # Signature verification details
-└── examples/             # Runnable example projects
-    ├── express/
-    │   ├── README.md     # Setup and run instructions
-    │   ├── package.json
-    │   ├── .env.example
-    │   └── src/
-    ├── nextjs/
-    └── fastapi/
-```
-
-Examples are complete, runnable mini-apps following [PostHog's approach](https://posthog.com/blog/correct-llm-code-generation) — minimal code that demonstrates webhook handling without unnecessary complexity.
-
-## Using with AI Coding Agents
-
-### Claude Code
-
-Skills are automatically loaded when relevant to your prompt:
-
-```
-> I need to receive Stripe webhooks in my Express app
-
-Claude Code detects "Stripe webhooks" + "Express" and loads:
-- stripe-webhooks/SKILL.md
-- stripe-webhooks/references/verification.md
-- stripe-webhooks/examples/express/
-```
-
-### Cursor / VS Code Copilot
-
-Install skills to your project or global skills directory:
-
-```bash
-npx skills add hookdeck/webhook-skills --skill stripe-webhooks
-```
-
-## Example: Stripe Webhooks with Express
-
-After installing the `stripe-webhooks` skill, ask your AI assistant:
+After installing the skill, ask your AI assistant:
 
 > "Help me set up Stripe webhook handling in my Express app"
 
 The agent will:
 
-1. Read `stripe-webhooks/SKILL.md` to understand the task
-2. Reference `stripe-webhooks/references/setup.md` for Stripe dashboard configuration
+1. Read `stripe-webhooks/SKILL.md` to understand webhook verification
+2. Reference `stripe-webhooks/references/verification.md` for signature verification details
 3. Copy code from `stripe-webhooks/examples/express/` as a starting point
-4. Reference `stripe-webhooks/references/verification.md` for signature verification details
-5. Suggest `hookdeck listen 3000 --path /webhooks/stripe` for local testing
+4. Suggest `hookdeck listen 3000 --path /webhooks/stripe` for local webhook testing
+
+## Example: How to Verify GitHub Webhook Signatures
+
+If an agent needs to verify GitHub webhook authenticity, the `github-webhooks` skill can:
+
+1. **Extract the signature header** (`X-Hub-Signature-256`)
+2. **Compute HMAC-SHA256** of the raw request body
+3. **Compare signatures** using timing-safe comparison
+
+Ask your AI assistant:
+
+> "How do I verify GitHub webhook signatures in Next.js?"
+
+## Skill Structure
+
+Each webhook skill follows a consistent structure:
+
+```
+skills/{provider}-webhooks/
+├── SKILL.md              # Entry point — webhook overview, when to use
+├── references/           # Documentation loaded on-demand
+│   ├── overview.md       # What webhooks are available, common events
+│   ├── setup.md          # Provider dashboard configuration
+│   └── verification.md   # Webhook signature verification details
+└── examples/             # Runnable webhook handler examples
+    ├── express/          # Express.js webhook handler
+    ├── nextjs/           # Next.js API route webhook handler
+    └── fastapi/          # FastAPI webhook handler
+```
+
+Examples are complete, runnable webhook handlers following [PostHog's approach](https://posthog.com/blog/correct-llm-code-generation) — minimal code that demonstrates webhook signature verification and event handling.
 
 ## Contributing
 
-We welcome contributions! See [AGENTS.md](AGENTS.md) for:
-- Repository structure and conventions
-- SKILL.md format and frontmatter requirements
-- Example code guidelines
-- Reference file templates
+We welcome contributions! The recommended way to add new provider webhook skills is using our AI-powered generator:
 
-### Adding a New Provider Skill
+```bash
+# One-time setup
+cd scripts/skill-generator && npm install && cd ../..
 
-1. Create `skills/{provider}-webhooks/` directory
-2. Add `SKILL.md` with frontmatter and content following the template
-3. Add reference files: `overview.md`, `setup.md`, `verification.md`
-4. Create examples for Express, Next.js, and FastAPI
-5. Test locally: `npx skills add ./skills/{provider}-webhooks --list`
-6. Submit a pull request
+# Generate a webhook skill (with documentation URL for best results)
+./scripts/generate-skills.sh generate \
+  "twilio=https://www.twilio.com/docs/usage/webhooks" \
+  --create-pr
+```
+
+The generator researches the provider's webhook documentation, generates signature verification code and tests for Express/Next.js/FastAPI, validates accuracy, and creates a PR — all automatically.
+
+**[See CONTRIBUTING.md](CONTRIBUTING.md) for the complete guide**, including:
+- Providing multiple documentation URLs for better webhook skill generation
+- Using YAML configs for batch webhook skill generation
+- Resuming failed generations with the `review` command
+- Updating existing webhook skills
+- Manual contribution guidelines
 
 ## Related Resources
 
 - [Agent Skills Specification](https://agentskills.io) — The open standard for AI agent skills
 - [Skills Directory](https://skills.sh) — Discover and install agent skills
 - [Hookdeck CLI](https://hookdeck.com/docs/cli) — Local webhook tunnel and debugging
+- [Hookdeck Documentation](https://hookdeck.com/docs) — Webhook infrastructure platform
 
 ## License
 
