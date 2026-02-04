@@ -161,6 +161,13 @@ export async function reviewAndIterate(
   logger.info(`Starting review for ${provider.displayName || provider.name}`);
   logger.info(`Acceptance thresholds: critical=${ACCEPTANCE_THRESHOLDS.maxCritical}, major≤${ACCEPTANCE_THRESHOLDS.maxMajor}, minor≤${ACCEPTANCE_THRESHOLDS.maxMinor}, total≤${ACCEPTANCE_THRESHOLDS.maxTotal}`);
   
+  // Check for existing TODO.md from previous runs
+  const skillDir = join(workingDir, 'skills', `${provider.name}-webhooks`);
+  const existingTodo = readTodoFile(skillDir);
+  if (existingTodo) {
+    logger.info(`Found existing TODO.md with issues from previous run`);
+  }
+  
   let iteration = 0;
   let totalIssuesFound = 0;
   let totalIssuesFixed = 0;
@@ -211,6 +218,7 @@ export async function reviewAndIterate(
           model,
           cliTool,
           parallel,
+          existingTodo,
         });
         
         totalIssuesFixed += testIssues.length; // Assume fixed, will verify next iteration
@@ -289,6 +297,7 @@ export async function reviewAndIterate(
           model,
           cliTool,
           parallel,
+          existingTodo,
         });
         
         totalIssuesFixed += lastReviewIssues.length; // Assume fixed, will verify next iteration

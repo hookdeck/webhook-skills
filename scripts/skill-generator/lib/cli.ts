@@ -248,6 +248,7 @@ interface CliOperationOptions {
   model?: string;
   cliTool?: string;
   parallel?: boolean;
+  existingTodo?: string | null;  // Content from TODO.md if it exists
 }
 
 /**
@@ -293,9 +294,24 @@ export async function runFixIssues(
   issuesJson: string,
   options: CliOperationOptions
 ): Promise<{ output: string; success: boolean }> {
+  // Build TODO context section if we have existing TODO.md content
+  let todoContext = '';
+  if (options.existingTodo) {
+    todoContext = `## Previous Issues (from TODO.md)
+
+The following issues were identified in a previous review run. Use this context to understand what has been tried before and what still needs to be addressed:
+
+\`\`\`markdown
+${options.existingTodo}
+\`\`\`
+
+`;
+  }
+  
   const replacements = {
     ...buildPromptReplacements(provider),
     ISSUES_JSON: issuesJson,
+    TODO_CONTEXT: todoContext,
   };
   const prompt = loadPrompt('fix-issues.md', replacements);
   
