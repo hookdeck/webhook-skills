@@ -20,23 +20,25 @@ The `h1` signature is the current version. There may be multiple `h1` signatures
 
 The official Paddle SDKs handle signature verification automatically:
 
-**Node.js:**
+**Node.js (`@paddle/paddle-node-sdk` v3.5.0+):**
 ```javascript
-import { Environment, Paddle, EventName } from "@paddle/paddle-node-sdk";
+import { Paddle, EventName } from "@paddle/paddle-node-sdk";
 
 const paddle = new Paddle(process.env.PADDLE_API_KEY);
 
 // Express middleware example
-app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['paddle-signature'];
   const rawBody = req.body.toString();
+  const secretKey = process.env.PADDLE_WEBHOOK_SECRET;
 
   try {
     // The SDK handles verification and parsing in one step
-    const event = paddle.notifications.unmarshal(rawBody, signature, process.env.PADDLE_WEBHOOK_SECRET);
+    // Method signature: paddle.webhooks.unmarshal(requestBody, secretKey, signature)
+    const event = await paddle.webhooks.unmarshal(rawBody, secretKey, signature);
 
-    // Handle event...
-    console.log(`Received event: ${event.event_type}`);
+    // Handle event - note: SDK returns camelCase properties
+    console.log(`Received event: ${event.eventType}`);
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook verification failed:', err.message);
@@ -45,30 +47,32 @@ app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), (req, re
 });
 ```
 
-**Python:**
+**Python (`paddle-billing` v1.13.0+):**
+
+The Python SDK uses a `Verifier` class for webhook signature verification. It supports Flask and Django natively:
+
 ```python
-from paddle_billing import Client, Environment
-import os
+from paddle_billing.Notifications import Secret, Verifier
 
-paddle = Client(os.environ['PADDLE_API_KEY'])
-
-@app.post("/webhooks/paddle")
-async def paddle_webhook(request: Request):
-    payload = await request.body()
-    signature = request.headers.get("paddle-signature")
+# Flask example
+@app.route("/webhooks/paddle", methods=["POST"])
+def paddle_webhook():
     webhook_secret = os.environ['PADDLE_WEBHOOK_SECRET']
-
-    try:
-        # The SDK handles verification and parsing in one step
-        event = paddle.notifications.unmarshal(payload.decode(), signature, webhook_secret)
-
-        # Handle event...
-        print(f"Received event: {event.event_type}")
-        return {"received": True}
-    except Exception as e:
-        print(f"Webhook verification failed: {e}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # The Verifier handles signature verification
+    # Method signature: Verifier().verify(request, Secret(secret))
+    is_valid = Verifier().verify(request, Secret(webhook_secret))
+    
+    if not is_valid:
+        return "Invalid signature", 400
+    
+    # Parse and handle event
+    event = request.get_json()
+    print(f"Received event: {event['event_type']}")
+    return {"received": True}
 ```
+
+> **Note for FastAPI users:** The Python SDK's `Verifier` is designed for Flask/Django request objects. For FastAPI, use manual verification (shown below) which is equally secure and more reliable across frameworks.
 
 ### Manual Verification
 

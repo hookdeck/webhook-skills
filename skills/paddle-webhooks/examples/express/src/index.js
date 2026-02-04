@@ -71,7 +71,8 @@ app.post('/webhooks/paddle',
     if (paddle) {
       try {
         // The SDK handles verification and parsing in one step
-        event = paddle.notifications.unmarshal(payload, signatureHeader, secret);
+        // Method signature: paddle.webhooks.unmarshal(requestBody, secretKey, signature)
+        event = await paddle.webhooks.unmarshal(payload, secret, signatureHeader);
         console.log('Webhook verified using Paddle SDK');
       } catch (err) {
         console.error('SDK webhook verification failed:', err.message);

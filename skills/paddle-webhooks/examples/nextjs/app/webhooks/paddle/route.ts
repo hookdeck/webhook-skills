@@ -70,10 +70,17 @@ export async function POST(request: NextRequest) {
   };
 
   // Option 1: Verify using Paddle SDK (recommended if you have SDK initialized)
-  if (paddle) {
+  if (paddle && signatureHeader) {
     try {
       // The SDK handles verification and parsing in one step
-      event = paddle.notifications.unmarshal(body, signatureHeader, secret);
+      // Method signature: paddle.webhooks.unmarshal(requestBody, secretKey, signature)
+      const sdkEvent = await paddle.webhooks.unmarshal(body, secret, signatureHeader);
+      event = {
+        event_id: sdkEvent.eventId,
+        event_type: sdkEvent.eventType,
+        occurred_at: sdkEvent.occurredAt,
+        data: sdkEvent.data as Record<string, unknown>,
+      };
       console.log('Webhook verified using Paddle SDK');
     } catch (err) {
       console.error('SDK webhook verification failed:', err);
