@@ -1,0 +1,20 @@
+{
+  "name": "fusionauth-webhooks-express",
+  "version": "1.0.0",
+  "description": "FusionAuth webhook handler with Express",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.0",
+    "express": "^5.2.1",
+    "jose": "^6.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.0.0"
+  }
+}
