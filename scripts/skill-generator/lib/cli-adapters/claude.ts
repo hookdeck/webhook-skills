@@ -7,7 +7,7 @@
 
 import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
 
-export const DEFAULT_MODEL = 'claude-opus-4-20250514';
+const DEFAULT_MODEL = 'claude-opus-4-20250514';
 
 export const claudeAdapter: CliAdapter = {
   name: 'claude',

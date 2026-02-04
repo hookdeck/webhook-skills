@@ -5,7 +5,8 @@
  */
 
 import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
-import { DEFAULT_MODEL } from './claude';
+
+const DEFAULT_MODEL = 'claude-opus-4.5';
 
 export const copilotAdapter: CliAdapter = {
   name: 'copilot',
