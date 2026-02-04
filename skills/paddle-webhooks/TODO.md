@@ -18,7 +18,3 @@ These items were identified during review. Most SDK-related issues have been fix
 - [ ] **FastAPI SDK support**: The Python SDK's `Verifier` class is designed for Flask/Django. Consider adding native FastAPI support in future.
 - [ ] **Version constraints**: Consider tightening FastAPI version constraint from `>=0.100.0` to `>=0.128.0`
 
-## Feedback for Paddle Team
-
-See `PADDLE_SDK_FEEDBACK.md` for detailed AX/DX feedback to help improve SDK documentation for AI agents and developers.
-
