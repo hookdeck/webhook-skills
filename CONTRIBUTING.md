@@ -316,6 +316,8 @@ rm -rf .worktrees && git worktree prune
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--working-dir <path>` | Generate in specific directory (skip worktree) | Creates worktree |
+| `--no-worktree` | Generate in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Push and create PR (`true` or `draft`) | No PR |
 | `--parallel <n>` | Max concurrent generations | All providers |
 | `--model <model>` | Claude model | claude-opus-4-20250514 |
@@ -336,7 +338,8 @@ rm -rf .worktrees && git worktree prune
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--working-dir <path>` | Review in specific directory/worktree | Creates worktree |
+| `--working-dir <path>` | Review in specific directory (skip worktree) | Creates worktree |
+| `--no-worktree` | Review in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Create PR with fixes | No PR |
 | `--max-iterations <n>` | Max fix cycles | 3 |
 | `--parallel <n>` | Max concurrent reviews | All providers |

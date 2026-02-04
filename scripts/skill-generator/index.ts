@@ -143,14 +143,40 @@ async function handleGenerate(
     maxIterations: string;
     createPr: boolean | string;
     model: string;
+    workingDir?: string;  // Generate in this directory (skip worktree creation)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🚀 Skill Generator - Generate Mode\n'));
+  
+  // Validate mutually exclusive flags
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
+    console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
+    console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
+    process.exit(1);
+  }
+  
+  // Handle --no-worktree as shorthand for --working-dir .
+  if (options.worktree === false) {
+    options.workingDir = '.';
+  }
+  
+  // When using working directory mode, only single provider is supported
+  const useProvidedDir = !!options.workingDir;
   
   const providerConfigs = mergeProviderConfigs(providers, options.config);
   
   if (providerConfigs.length === 0) {
     console.log(chalk.red('No providers specified. Use --config or provide provider names.'));
+    process.exit(1);
+  }
+  
+  // Validate single provider when using working directory mode
+  if (useProvidedDir && providerConfigs.length > 1) {
+    const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
+    console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
+    console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
     process.exit(1);
   }
   
@@ -161,8 +187,11 @@ async function handleGenerate(
   
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`Model: ${options.model}`));
-  if (providerConfigs.length > 1) {
+  if (!useProvidedDir && providerConfigs.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
+  }
+  if (useProvidedDir) {
+    console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
   }
   console.log(chalk.blue(`Dry run: ${options.dryRun}`));
   console.log(chalk.gray(`\nNote: Generation can take 5-15 minutes per provider depending on model.\n`));
@@ -193,50 +222,95 @@ async function handleGenerate(
     console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
   }
   
-  // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
-  console.log(chalk.gray('Creating worktrees...\n'));
-  const worktrees: Map<string, { path: string; branch: string; logger: Logger; logFile: string }> = new Map();
+  // Get repo info for PR creation
+  const repoInfo = await getRepoInfo(ROOT_DIR);
+  if (!repoInfo && generateOptions.createPr) {
+    console.log(chalk.red('Could not determine repository owner/name from git remote'));
+    process.exit(1);
+  }
   
-  for (const provider of providerConfigs) {
+  // Working directories map - may be user-provided directories or auto-created worktrees
+  const workDirs: Map<string, { path: string; branch: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
+  
+  if (useProvidedDir) {
+    // Use the provided working directory (no worktree creation)
+    const provider = providerConfigs[0];
     const logFile = join(resultsDir, `${provider.name}.log`);
     const logger = createLogger(provider.name, logFile);
-    const branchName = `feat/${provider.name}-webhooks`;
     
-    logger.info(`Creating worktree for ${provider.name}...`);
-    const worktreeResult = await createWorktree(ROOT_DIR, provider.name, branchName, {
-      logger,
-      baseBranch: generateOptions.baseBranch,
-      dryRun: generateOptions.dryRun,
-    });
+    // Resolve working directory path (relative paths are relative to repo root)
+    const { resolve, isAbsolute } = await import('path');
+    const resolvedWorkingDir = isAbsolute(options.workingDir!)
+      ? options.workingDir!
+      : resolve(ROOT_DIR, options.workingDir!);
     
-    if (!worktreeResult.success) {
-      logger.error(`Failed to create worktree: ${worktreeResult.error}`);
-      continue;
+    // Get current branch name from the directory (if it's a git repo)
+    const { simpleGit } = await import('simple-git');
+    const git = simpleGit(resolvedWorkingDir);
+    let branchName: string;
+    try {
+      const branchResult = await git.branch();
+      branchName = branchResult.current;
+    } catch {
+      branchName = `feat/${provider.name}-webhooks`;
     }
     
-    worktrees.set(provider.name, {
-      path: worktreeResult.path!,
+    workDirs.set(provider.name, {
+      path: resolvedWorkingDir,
       branch: branchName,
       logger,
       logFile,
+      isExternal: true,  // Don't clean up user-provided directories
     });
+    
+    logger.info(`Using directory: ${options.workingDir}`);
+    logger.info(`Current branch: ${branchName}`);
+  } else {
+    // Create worktrees for parallel execution (sequential creation to avoid .git/config lock contention)
+    console.log(chalk.gray('Creating worktrees...\n'));
+    
+    for (const provider of providerConfigs) {
+      const logFile = join(resultsDir, `${provider.name}.log`);
+      const logger = createLogger(provider.name, logFile);
+      const branchName = `feat/${provider.name}-webhooks`;
+      
+      logger.info(`Creating worktree for ${provider.name}...`);
+      const worktreeResult = await createWorktree(ROOT_DIR, provider.name, branchName, {
+        logger,
+        baseBranch: generateOptions.baseBranch,
+        dryRun: generateOptions.dryRun,
+      });
+      
+      if (!worktreeResult.success) {
+        logger.error(`Failed to create worktree: ${worktreeResult.error}`);
+        continue;
+      }
+      
+      workDirs.set(provider.name, {
+        path: worktreeResult.path!,
+        branch: branchName,
+        logger,
+        logFile,
+        isExternal: false,
+      });
+    }
   }
   
-  // PHASE 2: Run generation IN PARALLEL now that worktrees exist
+  // Run generation for each provider
   const limit = pLimit(generateOptions.parallel);
   
   const results = await Promise.all(
     providerConfigs.map(provider =>
       limit(async () => {
-        const worktree = worktrees.get(provider.name);
+        const workDir = workDirs.get(provider.name);
         
-        if (!worktree) {
-          // Worktree creation failed earlier
+        if (!workDir) {
+          // Working directory setup failed earlier
           return {
             provider: provider.name,
             command: 'generate',
             success: false,
-            error: 'Worktree creation failed',
+            error: 'Working directory setup failed',
             phases: {
               generation: { passed: false },
               testing: { passed: false },
@@ -250,7 +324,7 @@ async function handleGenerate(
           } as OperationResult;
         }
         
-        const { logger, logFile, path: worktreePath, branch: branchName } = worktree;
+        const { logger, logFile, path: workDirPath, branch: branchName } = workDir;
         
         logger.info(`Starting generation for ${provider.displayName || provider.name}`);
         
@@ -258,7 +332,7 @@ async function handleGenerate(
           rootDir: ROOT_DIR,
           logger,
           logFile,
-          worktreePath,
+          worktreePath: workDirPath,
           branchName,
           isParallel: providerConfigs.length > 1,
         });
@@ -313,9 +387,23 @@ async function handleReview(
     branchPrefix: string;
     model: string;
     workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🔍 Skill Generator - Review Mode\n'));
+  
+  // Validate mutually exclusive flags
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
+    console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
+    console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
+    process.exit(1);
+  }
+  
+  // Handle --no-worktree as shorthand for --working-dir .
+  if (options.worktree === false) {
+    options.workingDir = '.';
+  }
   
   // When --working-dir is specified, review in that directory instead of creating a worktree
   const useProvidedDir = !!options.workingDir;
@@ -330,12 +418,15 @@ async function handleReview(
   // When using provided directory, skip the skill existence check in main repo
   let existingProviders: typeof providerConfigs;
   if (useProvidedDir) {
+    // Validate single provider when using working directory mode
+    if (providerConfigs.length > 1) {
+      const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
+      console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
+      console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
+      process.exit(1);
+    }
     // Trust that the skill exists in the provided directory
     existingProviders = providerConfigs;
-    if (providerConfigs.length > 1) {
-      console.log(chalk.yellow('Warning: --working-dir only supports single provider. Using first one.'));
-      existingProviders = [providerConfigs[0]];
-    }
     // Will resolve relative paths later when we have the path module
     console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
   } else {
@@ -408,10 +499,11 @@ async function handleReview(
     process.exit(1);
   }
   
-  const worktrees: Map<string, { path: string; branch: string; worktreeId: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
+  // Working directories map - may be user-provided directories or auto-created worktrees
+  const workDirs: Map<string, { path: string; branch: string; worktreeId: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
   
   if (useProvidedDir) {
-    // Use the provided working directory
+    // Use the provided working directory (no worktree creation)
     const provider = existingProviders[0];
     const logFile = join(resultsDir, `${provider.name}.log`);
     const logger = createLogger(provider.name, logFile);
@@ -433,7 +525,7 @@ async function handleReview(
       branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
     }
     
-    worktrees.set(provider.name, {
+    workDirs.set(provider.name, {
       path: resolvedWorkingDir,
       branch: branchName,
       worktreeId: 'external',
@@ -445,7 +537,7 @@ async function handleReview(
     logger.info(`Using directory: ${options.workingDir}`);
     logger.info(`Current branch: ${branchName}`);
   } else {
-    // PHASE 1: Create worktrees SEQUENTIALLY (or use existing ones from generate)
+    // Create worktrees for parallel execution (or use existing ones from generate)
     console.log(chalk.gray('Setting up worktrees...\n'));
     
     for (const provider of existingProviders) {
@@ -471,7 +563,7 @@ async function handleReview(
           branchName = `feat/${provider.name}-webhooks`;
         }
         
-        worktrees.set(provider.name, {
+        workDirs.set(provider.name, {
           path: existingWorktreePath,
           branch: branchName,
           worktreeId: provider.name, // worktree ID from generate
@@ -499,7 +591,7 @@ async function handleReview(
         continue;
       }
       
-      worktrees.set(provider.name, {
+      workDirs.set(provider.name, {
         path: worktreeResult.path!,
         branch: branchName,
         worktreeId,
@@ -510,21 +602,21 @@ async function handleReview(
     }
   }
   
-  // PHASE 2: Run reviews IN PARALLEL now that worktrees exist
+  // Run reviews for each provider
   const limit = pLimit(reviewOptions.parallel);
   
   const results = await Promise.all(
     existingProviders.map(provider =>
       limit(async () => {
-        const worktree = worktrees.get(provider.name);
+        const workDir = workDirs.get(provider.name);
         
-        if (!worktree) {
-          // Worktree creation failed earlier
+        if (!workDir) {
+          // Working directory setup failed earlier
           return {
             provider: provider.name,
             command: 'review',
             success: false,
-            error: 'Worktree creation failed',
+            error: 'Working directory setup failed',
             phases: {
               testing: { passed: false },
               review: { passed: false },
@@ -537,7 +629,7 @@ async function handleReview(
           } as OperationResult;
         }
         
-        const { logger, logFile, path: workingDir, branch: branchName, worktreeId, isExternal } = worktree;
+        const { logger, logFile, path: workingDir, branch: branchName, worktreeId, isExternal } = workDir;
         const startTime = Date.now();
         
         logger.info(`Starting review for ${provider.displayName || provider.name}`);
@@ -725,6 +817,8 @@ program
   .option('--skip-review', 'Skip the review/validation phase', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
+  .option('--working-dir <path>', 'Generate skill in specified directory (skips worktree creation)')
+  .option('--no-worktree', 'Generate in current directory (shorthand for --working-dir .)')
   .action(handleGenerate);
 
 program
@@ -739,6 +833,7 @@ program
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
   .option('--branch-prefix <prefix>', 'Prefix for improvement branches', 'improve')
   .option('--working-dir <path>', 'Review skill in specified directory (skips skill existence check and worktree creation)')
+  .option('--no-worktree', 'Review in current directory (shorthand for --working-dir .)')
   .action(handleReview);
 
 program.parse();
