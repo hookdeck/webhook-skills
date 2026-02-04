@@ -3,12 +3,18 @@ import hmac
 import hashlib
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
+from paddle_billing import Client, Environment
 
 load_dotenv()
 
 app = FastAPI()
 
 webhook_secret = os.environ.get("PADDLE_WEBHOOK_SECRET")
+
+# Initialize Paddle SDK if API key is available
+paddle = None
+if os.environ.get("PADDLE_API_KEY"):
+    paddle = Client(os.environ["PADDLE_API_KEY"])
 
 
 def verify_paddle_signature(payload: str, signature_header: str, secret: str) -> bool:
@@ -66,17 +72,28 @@ async def paddle_webhook(request: Request):
     if not signature_header:
         raise HTTPException(status_code=400, detail="Missing Paddle-Signature header")
 
-    # Verify the webhook signature
-    if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
-        print("Webhook signature verification failed")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    # Option 1: Verify using Paddle SDK (recommended if you have SDK initialized)
+    if paddle:
+        try:
+            # The SDK handles verification and parsing in one step
+            event = paddle.notifications.unmarshal(payload_str, signature_header, webhook_secret)
+            print("Webhook verified using Paddle SDK")
+        except Exception as e:
+            print(f"SDK webhook verification failed: {e}")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+    else:
+        # Option 2: Manual verification (when SDK is not available)
+        if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
+            print("Manual webhook signature verification failed")
+            raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # Parse the event
-    try:
-        event = await request.json()
-    except Exception as e:
-        print(f"Failed to parse webhook payload: {e}")
-        raise HTTPException(status_code=400, detail="Invalid JSON")
+        # Parse the event
+        try:
+            event = await request.json()
+            print("Webhook verified using manual verification")
+        except Exception as e:
+            print(f"Failed to parse webhook payload: {e}")
+            raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # Handle the event based on type
     event_type = event.get("event_type")
@@ -109,6 +126,14 @@ async def paddle_webhook(request: Request):
     elif event_type == "transaction.payment_failed":
         print(f"Transaction payment failed: {data.get('id')}")
         # TODO: Notify customer, update status, etc.
+
+    elif event_type == "customer.created":
+        print(f"Customer created: {data.get('id')}")
+        # TODO: Create customer record, send welcome email, etc.
+
+    elif event_type == "customer.updated":
+        print(f"Customer updated: {data.get('id')}")
+        # TODO: Update customer record, sync changes, etc.
 
     else:
         print(f"Unhandled event type: {event_type}")

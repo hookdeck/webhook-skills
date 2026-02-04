@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { Paddle } from '@paddle/paddle-node-sdk';
+
+// Initialize Paddle SDK if API key is available
+const paddle = process.env.PADDLE_API_KEY ? new Paddle(process.env.PADDLE_API_KEY) : null;
 
 /**
  * Verify Paddle webhook signature
@@ -55,21 +59,7 @@ export async function POST(request: NextRequest) {
   // Get the raw body for signature verification
   const body = await request.text();
   const signatureHeader = request.headers.get('paddle-signature');
-
-  // Verify the webhook signature
-  const isValid = verifyPaddleSignature(
-    body,
-    signatureHeader,
-    process.env.PADDLE_WEBHOOK_SECRET!
-  );
-
-  if (!isValid) {
-    console.error('Webhook signature verification failed');
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    );
-  }
+  const secret = process.env.PADDLE_WEBHOOK_SECRET!;
 
   // Parse the event
   let event: {
@@ -79,14 +69,42 @@ export async function POST(request: NextRequest) {
     data: Record<string, unknown>;
   };
 
-  try {
-    event = JSON.parse(body);
-  } catch (err) {
-    console.error('Failed to parse webhook payload:', err);
-    return NextResponse.json(
-      { error: 'Invalid JSON' },
-      { status: 400 }
-    );
+  // Option 1: Verify using Paddle SDK (recommended if you have SDK initialized)
+  if (paddle) {
+    try {
+      // The SDK handles verification and parsing in one step
+      event = paddle.notifications.unmarshal(body, signatureHeader, secret);
+      console.log('Webhook verified using Paddle SDK');
+    } catch (err) {
+      console.error('SDK webhook verification failed:', err);
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 400 }
+      );
+    }
+  } else {
+    // Option 2: Manual verification (when SDK is not available)
+    const isValid = verifyPaddleSignature(body, signatureHeader, secret);
+
+    if (!isValid) {
+      console.error('Manual webhook signature verification failed');
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 400 }
+      );
+    }
+
+    // Parse the event
+    try {
+      event = JSON.parse(body);
+      console.log('Webhook verified using manual verification');
+    } catch (err) {
+      console.error('Failed to parse webhook payload:', err);
+      return NextResponse.json(
+        { error: 'Invalid JSON' },
+        { status: 400 }
+      );
+    }
   }
 
   // Handle the event based on type
@@ -124,6 +142,16 @@ export async function POST(request: NextRequest) {
     case 'transaction.payment_failed':
       console.log('Transaction payment failed:', event.data.id);
       // TODO: Notify customer, update status, etc.
+      break;
+
+    case 'customer.created':
+      console.log('Customer created:', event.data.id);
+      // TODO: Create customer record, send welcome email, etc.
+      break;
+
+    case 'customer.updated':
+      console.log('Customer updated:', event.data.id);
+      // TODO: Update customer record, sync changes, etc.
       break;
 
     default:

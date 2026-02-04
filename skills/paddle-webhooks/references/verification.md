@@ -30,17 +30,17 @@ const paddle = new Paddle(process.env.PADDLE_API_KEY);
 app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['paddle-signature'];
   const rawBody = req.body.toString();
-  
+
   try {
-    if (!paddle.webhooks.verify(rawBody, signature, process.env.PADDLE_WEBHOOK_SECRET)) {
-      return res.status(400).send('Invalid signature');
-    }
-    
-    const event = paddle.webhooks.unmarshal(rawBody, signature, process.env.PADDLE_WEBHOOK_SECRET);
+    // The SDK handles verification and parsing in one step
+    const event = paddle.notifications.unmarshal(rawBody, signature, process.env.PADDLE_WEBHOOK_SECRET);
+
     // Handle event...
+    console.log(`Received event: ${event.event_type}`);
     res.json({ received: true });
   } catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('Webhook verification failed:', err.message);
+    res.status(400).send('Invalid signature');
   }
 });
 ```
@@ -48,6 +48,7 @@ app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), (req, re
 **Python:**
 ```python
 from paddle_billing import Client, Environment
+import os
 
 paddle = Client(os.environ['PADDLE_API_KEY'])
 
@@ -55,16 +56,18 @@ paddle = Client(os.environ['PADDLE_API_KEY'])
 async def paddle_webhook(request: Request):
     payload = await request.body()
     signature = request.headers.get("paddle-signature")
-    
+    webhook_secret = os.environ['PADDLE_WEBHOOK_SECRET']
+
     try:
-        if not paddle.notifications.verify(payload.decode(), signature, webhook_secret):
-            raise HTTPException(status_code=400, detail="Invalid signature")
-        
+        # The SDK handles verification and parsing in one step
         event = paddle.notifications.unmarshal(payload.decode(), signature, webhook_secret)
+
         # Handle event...
+        print(f"Received event: {event.event_type}")
         return {"received": True}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Webhook verification failed: {e}")
+        raise HTTPException(status_code=400, detail="Invalid signature")
 ```
 
 ### Manual Verification
@@ -106,9 +109,18 @@ import hashlib
 
 def verify_paddle_signature(payload: str, signature_header: str, secret: str) -> bool:
     # Parse the signature header
-    parts = dict(p.split('=', 1) for p in signature_header.split(';'))
-    timestamp = parts.get('ts')
-    signature = parts.get('h1')
+    parts = signature_header.split(';')
+    timestamp = None
+    signatures = []
+
+    for part in parts:
+        if part.startswith('ts='):
+            timestamp = part[3:]
+        elif part.startswith('h1='):
+            signatures.append(part[3:])
+
+    if not timestamp or not signatures:
+        return False
 
     # Build the signed payload (timestamp:rawBody)
     signed_payload = f"{timestamp}:{payload}"
@@ -120,8 +132,8 @@ def verify_paddle_signature(payload: str, signature_header: str, secret: str) ->
         hashlib.sha256
     ).hexdigest()
 
-    # Use constant-time comparison
-    return hmac.compare_digest(signature, expected)
+    # Check if any signature matches (handles secret rotation)
+    return any(hmac.compare_digest(sig, expected) for sig in signatures)
 ```
 
 ## Common Gotchas
@@ -171,7 +183,7 @@ To prevent replay attacks, check the timestamp (`ts`) against the current time a
 function isTimestampValid(timestamp, toleranceSeconds = 5) {
   const now = Math.floor(Date.now() / 1000);
   const ts = parseInt(timestamp, 10);
-  return Math.abs(now - ts) <= toleranceSeconds;
+  return Math.abs(now - ts) <= toleranceSeconds; // Compare the difference in seconds to the tolerance
 }
 ```
 

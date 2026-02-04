@@ -1,8 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const crypto = require('crypto');
+const { Paddle } = require('@paddle/paddle-node-sdk');
 
 const app = express();
+
+// Initialize Paddle SDK if API key is available
+const paddle = process.env.PADDLE_API_KEY ? new Paddle(process.env.PADDLE_API_KEY) : null;
 
 /**
  * Verify Paddle webhook signature
@@ -60,26 +64,36 @@ app.post('/webhooks/paddle',
   async (req, res) => {
     const signatureHeader = req.headers['paddle-signature'];
     const payload = req.body.toString();
+    const secret = process.env.PADDLE_WEBHOOK_SECRET;
 
-    // Verify the webhook signature
-    const isValid = verifyPaddleSignature(
-      payload,
-      signatureHeader,
-      process.env.PADDLE_WEBHOOK_SECRET
-    );
-
-    if (!isValid) {
-      console.error('Webhook signature verification failed');
-      return res.status(400).send('Invalid signature');
-    }
-
-    // Parse the event
+    // Option 1: Verify using Paddle SDK (recommended if you have SDK initialized)
     let event;
-    try {
-      event = JSON.parse(payload);
-    } catch (err) {
-      console.error('Failed to parse webhook payload:', err);
-      return res.status(400).send('Invalid JSON');
+    if (paddle) {
+      try {
+        // The SDK handles verification and parsing in one step
+        event = paddle.notifications.unmarshal(payload, signatureHeader, secret);
+        console.log('Webhook verified using Paddle SDK');
+      } catch (err) {
+        console.error('SDK webhook verification failed:', err.message);
+        return res.status(400).send('Invalid signature');
+      }
+    } else {
+      // Option 2: Manual verification (when SDK is not available)
+      const isValid = verifyPaddleSignature(payload, signatureHeader, secret);
+
+      if (!isValid) {
+        console.error('Manual webhook signature verification failed');
+        return res.status(400).send('Invalid signature');
+      }
+
+      // Parse the event
+      try {
+        event = JSON.parse(payload);
+        console.log('Webhook verified using manual verification');
+      } catch (err) {
+        console.error('Failed to parse webhook payload:', err);
+        return res.status(400).send('Invalid JSON');
+      }
     }
 
     // Handle the event based on type
@@ -124,6 +138,18 @@ app.post('/webhooks/paddle',
         const failedTx = event.data;
         console.log('Transaction payment failed:', failedTx.id);
         // TODO: Notify customer, update status, etc.
+        break;
+
+      case 'customer.created':
+        const newCustomer = event.data;
+        console.log('Customer created:', newCustomer.id);
+        // TODO: Create customer record, send welcome email, etc.
+        break;
+
+      case 'customer.updated':
+        const updatedCustomer = event.data;
+        console.log('Customer updated:', updatedCustomer.id);
+        // TODO: Update customer record, sync changes, etc.
         break;
 
       default:
