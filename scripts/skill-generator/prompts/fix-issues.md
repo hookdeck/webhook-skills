@@ -1,6 +1,10 @@
 The following issues were found during review of the {{PROVIDER_KEBAB}}-webhooks skill. Fix each issue listed below.
 
+{{DOCS_REFERENCE}}
+
 ## Issues to Fix
+
+{{TODO_CONTEXT}}
 
 {{ISSUES_JSON}}
 
