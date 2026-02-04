@@ -29,6 +29,7 @@ export interface BaseOptions {
   maxIterations: number;
   configFile?: string;
   model: string;
+  cliTool: string;
 }
 
 /**

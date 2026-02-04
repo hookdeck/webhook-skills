@@ -25,7 +25,8 @@ import type {
 import { mergeProviderConfigs, skillExists } from './lib/config';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
-import { DEFAULT_MODEL, setCachedVersions } from './lib/claude';
+import { DEFAULT_MODEL, setCachedVersions } from './lib/cli';
+import { DEFAULT_CLI_TOOL, AVAILABLE_CLI_TOOLS } from './lib/cli-adapters';
 import { getLatestVersions } from './lib/versions';
 import {
   createWorktree,
@@ -143,6 +144,7 @@ async function handleGenerate(
     maxIterations: string;
     createPr: boolean | string;
     model: string;
+    cli: string;
     workingDir?: string;  // Generate in this directory (skip worktree creation)
     worktree?: boolean;   // Set to false by --no-worktree flag
   }
@@ -186,6 +188,7 @@ async function handleGenerate(
     : providerConfigs.length;
   
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (!useProvidedDir && providerConfigs.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
@@ -206,6 +209,7 @@ async function handleGenerate(
     maxIterations: parseInt(options.maxIterations, 10),
     createPr: normalizeCreatePr(options.createPr),
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
@@ -386,6 +390,7 @@ async function handleReview(
     createPr: boolean | string;
     branchPrefix: string;
     model: string;
+    cli: string;
     workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
     worktree?: boolean;   // Set to false by --no-worktree flag
   }
@@ -461,6 +466,7 @@ async function handleReview(
     : existingProviders.length;
   
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (!useProvidedDir && existingProviders.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
@@ -476,6 +482,7 @@ async function handleReview(
     createPr: normalizeCreatePr(options.createPr),
     branchPrefix: options.branchPrefix,
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
@@ -640,6 +647,7 @@ async function handleReview(
           dryRun: reviewOptions.dryRun,
           maxIterations: reviewOptions.maxIterations,
           model: reviewOptions.model,
+          cliTool: reviewOptions.cliTool,
           parallel: existingProviders.length > 1,
         });
         
@@ -801,7 +809,7 @@ const program = new Command();
 
 program
   .name('skill-generator')
-  .description('Generate and review webhook skills using Claude CLI')
+  .description('Generate and review webhook skills using AI CLI tools')
   .version('1.0.0');
 
 program
@@ -809,7 +817,8 @@ program
   .description('Generate new webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://github.com/elevenlabs/elevenlabs-js|Official SDK supports webhook verification)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .option('--cli <tool>', `CLI tool to use (${AVAILABLE_CLI_TOOLS.join(', ')})`, DEFAULT_CLI_TOOL)
+  .option('--model <model>', 'Model to use', DEFAULT_MODEL)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--base-branch <branch>', 'Branch to create from', 'main')
@@ -826,7 +835,8 @@ program
   .description('Review and improve existing webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://.../elevenlabs-js|Prefer SDK verification in skill)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .option('--cli <tool>', `CLI tool to use (${AVAILABLE_CLI_TOOLS.join(', ')})`, DEFAULT_CLI_TOOL)
+  .option('--model <model>', 'Model to use', DEFAULT_MODEL)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')

@@ -1,5 +1,5 @@
 /**
- * Claude CLI wrapper for running prompts
+ * CLI wrapper for running prompts with different AI CLI tools
  */
 
 import { execa, type ExecaError } from 'execa';
@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { ProviderConfig, Logger, ReviewResult } from './types';
 import { type PackageVersions, formatVersionsTable } from './versions';
+import { getCliAdapter, DEFAULT_CLI_TOOL, DEFAULT_MODEL } from './cli-adapters';
 
 const PROMPTS_DIR = join(__dirname, '..', 'prompts');
 
@@ -111,32 +112,37 @@ export function buildPromptReplacements(provider: ProviderConfig): Record<string
   return replacements;
 }
 
-// Default model - Claude Opus 4
-export const DEFAULT_MODEL = 'claude-opus-4-20250514';
+// Re-export DEFAULT_MODEL from cli-adapters for backwards compatibility
+export { DEFAULT_MODEL } from './cli-adapters';
 
 /**
- * Run Claude CLI with a prompt
+ * Run a CLI tool with a prompt
  */
-export async function runClaude(
+export async function runCLI(
   prompt: string,
   options: {
     workingDir: string;
     logger: Logger;
     dryRun?: boolean;
     model?: string;
+    cliTool?: string;
     parallel?: boolean;  // If true, use log messages instead of in-place spinner
   }
 ): Promise<{ output: string; success: boolean }> {
-  const { workingDir, logger, dryRun, model = DEFAULT_MODEL, parallel = false } = options;
+  const { workingDir, logger, dryRun, model, cliTool = DEFAULT_CLI_TOOL, parallel = false } = options;
+  
+  // Get the adapter for the specified CLI tool
+  const adapter = getCliAdapter(cliTool);
+  const { command, args } = adapter.buildCommand({ model });
   
   if (dryRun) {
-    logger.info(`[DRY RUN] Would run Claude (model: ${model}) with prompt:`);
+    logger.info(`[DRY RUN] Would run ${adapter.name} (model: ${model ?? 'default'}) with prompt:`);
     logger.debug(prompt.slice(0, 500) + '...');
     return { output: '[DRY RUN] Skipped', success: true };
   }
   
   try {
-    logger.info(`Running Claude CLI (model: ${model})...`);
+    logger.info(`Running ${adapter.name} CLI (model: ${model ?? 'default'})...`);
     logger.info(`Working directory: ${workingDir}`);
     
     const startTime = Date.now();
@@ -174,11 +180,7 @@ export async function runClaude(
     
     // Use stdin to pass the prompt - more reliable for long prompts
     // Capture output while also streaming it to console
-    const subprocess = execa('claude', [
-      '-p',
-      '--model', model,
-      '--dangerously-skip-permissions',
-    ], {
+    const subprocess = execa(command, args, {
       cwd: workingDir,
       input: prompt,  // Pass prompt via stdin
       timeout: 20 * 60 * 1000, // 20 minute timeout for Opus
@@ -209,86 +211,87 @@ export async function runClaude(
     clearInterval(progressInterval);
     
     if (parallel) {
-      logger.success(`Claude completed in ${formatElapsed()}`);
+      logger.success(`${adapter.name} completed in ${formatElapsed()}`);
     } else {
       process.stdout.write(`\r✓ Completed in ${formatElapsed()}                    \n`);
     }
     
-    // Show Claude's output (only in non-parallel mode to avoid interleaved output)
+    // Show CLI output (only in non-parallel mode to avoid interleaved output)
     if (stdout && !parallel) {
-      console.log('\n--- Claude Output ---');
+      console.log(`\n--- ${adapter.name} Output ---`);
       console.log(stdout);
       console.log('--- End Output ---\n');
     }
     
     if (result.exitCode !== 0) {
-      logger.error(`Claude CLI failed with exit code ${result.exitCode}`);
+      logger.error(`${adapter.name} CLI failed with exit code ${result.exitCode}`);
       if (stderr) logger.error(stderr);
       return { output: stderr || stdout, success: false };
     }
     
-    logger.info(`Claude CLI completed successfully`);
+    logger.info(`${adapter.name} CLI completed successfully`);
     return { output: stdout, success: true };
   } catch (error) {
     const execaError = error as ExecaError;
-    logger.error(`Claude CLI error: ${execaError.message}`);
+    logger.error(`${adapter.name} CLI error: ${execaError.message}`);
     return { output: execaError.message, success: false };
   }
 }
 
 /**
- * Common options for Claude operations
+ * Common options for CLI operations
  */
-interface ClaudeOperationOptions {
+interface CliOperationOptions {
   workingDir: string;
   logger: Logger;
   dryRun?: boolean;
   model?: string;
+  cliTool?: string;
   parallel?: boolean;
 }
 
 /**
- * Run Claude to generate a skill
+ * Run CLI to generate a skill
  */
 export async function runGenerateSkill(
   provider: ProviderConfig,
-  options: ClaudeOperationOptions
+  options: CliOperationOptions
 ): Promise<{ output: string; success: boolean }> {
   const replacements = buildPromptReplacements(provider);
   const prompt = loadPrompt('generate-skill.md', replacements);
   
-  return runClaude(prompt, options);
+  return runCLI(prompt, options);
 }
 
 /**
- * Run Claude to review a skill
+ * Run CLI to review a skill
  */
 export async function runReviewSkill(
   provider: ProviderConfig,
-  options: ClaudeOperationOptions
+  options: CliOperationOptions
 ): Promise<{ output: string; success: boolean; reviewResult?: ReviewResult }> {
   const replacements = buildPromptReplacements(provider);
   const prompt = loadPrompt('review-skill.md', replacements);
   
-  const result = await runClaude(prompt, options);
+  const result = await runCLI(prompt, options);
   
   if (!result.success) {
     return result;
   }
   
-  // Try to parse the review result from Claude's output
+  // Try to parse the review result from CLI output
   const reviewResult = parseReviewResult(result.output);
   
   return { ...result, reviewResult };
 }
 
 /**
- * Run Claude to fix issues
+ * Run CLI to fix issues
  */
 export async function runFixIssues(
   provider: ProviderConfig,
   issuesJson: string,
-  options: ClaudeOperationOptions
+  options: CliOperationOptions
 ): Promise<{ output: string; success: boolean }> {
   const replacements = {
     ...buildPromptReplacements(provider),
@@ -296,7 +299,7 @@ export async function runFixIssues(
   };
   const prompt = loadPrompt('fix-issues.md', replacements);
   
-  return runClaude(prompt, options);
+  return runCLI(prompt, options);
 }
 
 /**
