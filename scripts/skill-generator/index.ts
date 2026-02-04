@@ -211,15 +211,27 @@ async function handleGenerate(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!generateOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
   // Get repo info for PR creation
@@ -481,15 +493,27 @@ async function handleReview(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!reviewOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
   // Get repo info for PR creation
