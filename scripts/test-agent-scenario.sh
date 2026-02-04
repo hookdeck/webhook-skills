@@ -31,6 +31,9 @@ usage() {
     echo "  resend-nextjs    - Resend webhook handling in Next.js"
     echo "  resend-fastapi   - Resend webhook handling in FastAPI"
     echo "  deepgram-express - Deepgram webhook handling in Express"
+    echo "  fusionauth-express - FusionAuth webhook handling in Express"
+    echo "  fusionauth-nextjs  - FusionAuth webhook handling in Next.js"
+    echo "  fusionauth-fastapi - FusionAuth webhook handling in FastAPI"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -103,6 +106,24 @@ get_scenario_config() {
             FRAMEWORK="express"
             SKILL_NAME="deepgram-webhooks"
             PROMPT="Add Deepgram webhook handling to my Express app. I want to receive transcription callbacks and verify the dg-token header. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        fusionauth-express)
+            PROVIDER="fusionauth"
+            FRAMEWORK="express"
+            SKILL_NAME="fusionauth-webhooks"
+            PROMPT="Add FusionAuth webhook handling to my Express app. I want to handle user.create and user.login.success events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        fusionauth-nextjs)
+            PROVIDER="fusionauth"
+            FRAMEWORK="nextjs"
+            SKILL_NAME="fusionauth-webhooks"
+            PROMPT="Add a FusionAuth webhook endpoint to handle user events in my Next.js app. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        fusionauth-fastapi)
+            PROVIDER="fusionauth"
+            FRAMEWORK="fastapi"
+            SKILL_NAME="fusionauth-webhooks"
+            PROMPT="Add a FusionAuth webhook endpoint to my FastAPI app. I need to handle user.create and user.delete events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"
