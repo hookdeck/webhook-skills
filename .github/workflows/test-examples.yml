@@ -14,13 +14,19 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
+          - chargebee-webhooks
+          - clerk-webhooks
           - deepgram-webhooks
+          - elevenlabs-webhooks
           - fusionauth-webhooks
+          - github-webhooks
           - hookdeck-event-gateway
+          - openai-webhooks
+          - paddle-webhooks
+          - resend-webhooks
+          - sendgrid-webhooks
+          - shopify-webhooks
+          - stripe-webhooks
 
     steps:
       - uses: actions/checkout@v4
@@ -47,13 +53,19 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
+          - chargebee-webhooks
+          - clerk-webhooks
           - deepgram-webhooks
+          - elevenlabs-webhooks
           - fusionauth-webhooks
+          - github-webhooks
           - hookdeck-event-gateway
+          - openai-webhooks
+          - paddle-webhooks
+          - resend-webhooks
+          - sendgrid-webhooks
+          - shopify-webhooks
+          - stripe-webhooks
 
     steps:
       - uses: actions/checkout@v4
@@ -80,13 +92,19 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
+          - chargebee-webhooks
+          - clerk-webhooks
           - deepgram-webhooks
+          - elevenlabs-webhooks
           - fusionauth-webhooks
+          - github-webhooks
           - hookdeck-event-gateway
+          - openai-webhooks
+          - paddle-webhooks
+          - resend-webhooks
+          - sendgrid-webhooks
+          - shopify-webhooks
+          - stripe-webhooks
 
     steps:
       - uses: actions/checkout@v4
