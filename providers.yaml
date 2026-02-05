@@ -59,6 +59,19 @@ providers:
         - user.created
         - session.created
 
+  - name: cursor
+    displayName: Cursor
+    docs:
+      webhooks: https://docs.cursor.com/account/cloud-agent-webhooks
+    notes: >
+      AI code editor. Uses x-webhook-signature header with HMAC-SHA256 (hex encoded).
+      Signature format is sha256=<hex_digest>. Cloud Agent webhooks notify of
+      agent status changes (ERROR, FINISHED).
+    testScenario:
+      events:
+        - FINISHED
+        - ERROR
+
   - name: deepgram
     displayName: Deepgram
     docs:
@@ -119,6 +132,20 @@ providers:
         - push
         - pull_request
 
+  - name: gitlab
+    displayName: GitLab
+    docs:
+      webhooks: https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+      events: https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html
+    notes: >
+      Code hosting platform. Uses X-Gitlab-Token header for secret token verification
+      (simple string comparison, not HMAC). Use timing-safe comparison.
+      Common events: push, merge_request, issue, pipeline, release.
+    testScenario:
+      events:
+        - push
+        - merge_request
+
   - name: openai
     displayName: OpenAI
     docs:
@@ -147,6 +174,19 @@ providers:
       events:
         - subscription.created
         - transaction.completed
+
+  - name: replicate
+    displayName: Replicate
+    docs:
+      webhooks: https://replicate.com/docs/webhooks
+    notes: >
+      ML platform for running AI models. Uses Standard Webhooks (Svix) format with headers:
+      webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+      HMAC-SHA256 with base64 encoding. Events: start, output, logs, completed.
+    testScenario:
+      events:
+        - prediction.completed
+        - prediction.output
 
   - name: resend
     displayName: Resend
@@ -220,6 +260,20 @@ providers:
       events:
         - payment_intent.succeeded
         - checkout.session.completed
+
+  - name: vercel
+    displayName: Vercel
+    docs:
+      webhooks: https://vercel.com/docs/observability/webhooks
+      events: https://vercel.com/docs/observability/webhooks#event-types
+    notes: >
+      Platform for deploying web applications. Uses x-vercel-signature header with HMAC-SHA1
+      (hex encoded). Uses raw request body for signature verification.
+      Common events: deployment.created, deployment.succeeded, project.created.
+    testScenario:
+      events:
+        - deployment.created
+        - deployment.succeeded
 
   - name: hookdeck-event-gateway
     displayName: Hookdeck Event Gateway

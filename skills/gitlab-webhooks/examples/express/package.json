@@ -1,0 +1,21 @@
+{
+  "name": "gitlab-webhooks-express",
+  "version": "1.0.0",
+  "description": "GitLab webhook handler for Express.js",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
