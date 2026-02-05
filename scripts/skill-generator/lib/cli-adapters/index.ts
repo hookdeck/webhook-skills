@@ -12,6 +12,11 @@ import { copilotAdapter } from './copilot';
 export type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
 
 /**
+ * Default model to use (Claude's default since it's the default CLI tool)
+ */
+export const DEFAULT_MODEL = 'claude-opus-4-20250514';
+
+/**
  * Registry of available CLI adapters
  */
 const adapters: Map<string, CliAdapter> = new Map([
