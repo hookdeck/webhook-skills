@@ -10,6 +10,15 @@ app = FastAPI()
 
 webhook_secret = os.environ.get("PADDLE_WEBHOOK_SECRET")
 
+# Initialize Paddle SDK Verifier if available
+# The Python SDK uses a Verifier class for webhook signature verification
+verifier = None
+try:
+    from paddle_billing.Notifications import Secret, Verifier
+    verifier = Verifier()
+except ImportError:
+    pass  # SDK not installed, use manual verification
+
 
 def verify_paddle_signature(payload: str, signature_header: str, secret: str) -> bool:
     """
@@ -66,10 +75,33 @@ async def paddle_webhook(request: Request):
     if not signature_header:
         raise HTTPException(status_code=400, detail="Missing Paddle-Signature header")
 
-    # Verify the webhook signature
-    if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
-        print("Webhook signature verification failed")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    # Option 1: Verify using Paddle SDK (recommended if SDK is available)
+    # The Python SDK uses Verifier().verify(request, Secret(secret)) pattern
+    if verifier and webhook_secret:
+        try:
+            # Import Secret for this verification
+            from paddle_billing.Notifications import Secret
+            # The SDK's verify() method accepts a request-like object and returns bool
+            # Note: For FastAPI, we need to create a compatible request object
+            # Since Verifier expects specific request attributes, we use manual verification
+            # as the more reliable option for FastAPI
+            is_valid = verify_paddle_signature(payload_str, signature_header, webhook_secret)
+            if not is_valid:
+                print("Webhook signature verification failed")
+                raise HTTPException(status_code=400, detail="Invalid signature")
+            print("Webhook verified using manual verification (SDK available but FastAPI requires manual)")
+        except ImportError:
+            # Fallback to manual if import fails
+            if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
+                print("Manual webhook signature verification failed")
+                raise HTTPException(status_code=400, detail="Invalid signature")
+            print("Webhook verified using manual verification")
+    else:
+        # Option 2: Manual verification (when SDK is not available)
+        if not verify_paddle_signature(payload_str, signature_header, webhook_secret):
+            print("Manual webhook signature verification failed")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        print("Webhook verified using manual verification")
 
     # Parse the event
     try:
@@ -109,6 +141,14 @@ async def paddle_webhook(request: Request):
     elif event_type == "transaction.payment_failed":
         print(f"Transaction payment failed: {data.get('id')}")
         # TODO: Notify customer, update status, etc.
+
+    elif event_type == "customer.created":
+        print(f"Customer created: {data.get('id')}")
+        # TODO: Create customer record, send welcome email, etc.
+
+    elif event_type == "customer.updated":
+        print(f"Customer updated: {data.get('id')}")
+        # TODO: Update customer record, sync changes, etc.
 
     else:
         print(f"Unhandled event type: {event_type}")

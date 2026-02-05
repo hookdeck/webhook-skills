@@ -76,8 +76,14 @@ app.post('/webhooks/paddle',
 
 function verifyPaddleSignature(payload, signature, secret) {
   const parts = signature.split(';');
-  const ts = parts.find(p => p.startsWith('ts=')).slice(3);
-  const h1 = parts.find(p => p.startsWith('h1=')).slice(3);
+  const ts = parts.find(p => p.startsWith('ts='))?.slice(3);
+  const signatures = parts
+    .filter(p => p.startsWith('h1='))
+    .map(p => p.slice(3));
+
+  if (!ts || signatures.length === 0) {
+    return false;
+  }
 
   const signedPayload = `${ts}:${payload}`;
   const expectedSignature = crypto
@@ -85,9 +91,12 @@ function verifyPaddleSignature(payload, signature, secret) {
     .update(signedPayload)
     .digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(h1),
-    Buffer.from(expectedSignature)
+  // Check if any signature matches (handles secret rotation)
+  return signatures.some(sig =>
+    crypto.timingSafeEqual(
+      Buffer.from(sig),
+      Buffer.from(expectedSignature)
+    )
   );
 }
 ```
@@ -118,12 +127,26 @@ async def paddle_webhook(request: Request):
     return {"received": True}
 
 def verify_paddle_signature(payload, signature, secret):
-    parts = dict(p.split('=') for p in signature.split(';'))
-    signed_payload = f"{parts['ts']}:{payload}"
+    parts = signature.split(';')
+    timestamp = None
+    signatures = []
+
+    for part in parts:
+        if part.startswith('ts='):
+            timestamp = part[3:]
+        elif part.startswith('h1='):
+            signatures.append(part[3:])
+
+    if not timestamp or not signatures:
+        return False
+
+    signed_payload = f"{timestamp}:{payload}"
     expected = hmac.new(
         secret.encode(), signed_payload.encode(), hashlib.sha256
     ).hexdigest()
-    return hmac.compare_digest(parts['h1'], expected)
+
+    # Check if any signature matches (handles secret rotation)
+    return any(hmac.compare_digest(sig, expected) for sig in signatures)
 ```
 
 > **For complete working examples with tests**, see:
