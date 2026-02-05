@@ -34,6 +34,9 @@ usage() {
     echo "  fusionauth-express - FusionAuth webhook handling in Express"
     echo "  fusionauth-nextjs  - FusionAuth webhook handling in Next.js"
     echo "  fusionauth-fastapi - FusionAuth webhook handling in FastAPI"
+    echo "  postmark-express   - Postmark webhook handling in Express"
+    echo "  postmark-nextjs    - Postmark webhook handling in Next.js"
+    echo "  postmark-fastapi   - Postmark webhook handling in FastAPI"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -124,6 +127,24 @@ get_scenario_config() {
             FRAMEWORK="fastapi"
             SKILL_NAME="fusionauth-webhooks"
             PROMPT="Add a FusionAuth webhook endpoint to my FastAPI app. I need to handle user.create and user.delete events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        postmark-express)
+            PROVIDER="postmark"
+            FRAMEWORK="express"
+            SKILL_NAME="postmark-webhooks"
+            PROMPT="Add Postmark webhook handling to my Express app. I want to handle Bounce and Delivery events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        postmark-nextjs)
+            PROVIDER="postmark"
+            FRAMEWORK="nextjs"
+            SKILL_NAME="postmark-webhooks"
+            PROMPT="Add a Postmark webhook endpoint to handle email events in my Next.js app. I need to handle Open and Click events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        postmark-fastapi)
+            PROVIDER="postmark"
+            FRAMEWORK="fastapi"
+            SKILL_NAME="postmark-webhooks"
+            PROMPT="Add a Postmark webhook endpoint to my FastAPI app. I need to handle SpamComplaint and SubscriptionChange events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"

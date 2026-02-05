@@ -20,6 +20,7 @@ jobs:
           - resend-webhooks
           - deepgram-webhooks
           - fusionauth-webhooks
+          - postmark-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -53,6 +54,7 @@ jobs:
           - resend-webhooks
           - deepgram-webhooks
           - fusionauth-webhooks
+          - postmark-webhooks
           - hookdeck-event-gateway
 
     steps:
@@ -86,6 +88,7 @@ jobs:
           - resend-webhooks
           - deepgram-webhooks
           - fusionauth-webhooks
+          - postmark-webhooks
           - hookdeck-event-gateway
 
     steps:
