@@ -7,19 +7,68 @@ on:
     branches: [main]
 
 jobs:
-  test-express:
-    name: Express Examples
+  detect-changes:
+    name: Detect Changed Skills
     runs-on: ubuntu-latest
+    outputs:
+      changed_providers: ${{ steps.detect.outputs.providers }}
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+      run_all: ${{ steps.detect.outputs.run_all }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed providers
+        id: detect
+        run: |
+          # On push to main, run all tests
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Push to main - running all tests"
+            echo "run_all=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            # Return all providers as JSON array
+            PROVIDERS=$(ls -d skills/*-webhooks skills/hookdeck-event-gateway 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "providers=$PROVIDERS" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # On PR, detect changed skills
+          echo "PR - detecting changed skills"
+          echo "run_all=false" >> $GITHUB_OUTPUT
+          
+          # Get changed files compared to base branch
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          # Extract unique skill directories that changed
+          CHANGED_PROVIDERS=$(echo "$CHANGED_FILES" | \
+            grep -E '^skills/[^/]+/' | \
+            sed 's|skills/\([^/]*\)/.*|\1|' | \
+            sort -u | \
+            grep -E '(-webhooks|hookdeck-event-gateway)$' || true)
+          
+          if [ -z "$CHANGED_PROVIDERS" ]; then
+            echo "No skill changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "providers=[]" >> $GITHUB_OUTPUT
+          else
+            echo "Changed providers:"
+            echo "$CHANGED_PROVIDERS"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            # Convert to JSON array
+            PROVIDERS_JSON=$(echo "$CHANGED_PROVIDERS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "providers=$PROVIDERS_JSON" >> $GITHUB_OUTPUT
+          fi
+
+  test-express:
+    name: Express - ${{ matrix.provider }}
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
-          - deepgram-webhooks
-          - hookdeck-event-gateway
+        provider: ${{ fromJson(needs.detect-changes.outputs.changed_providers) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -40,18 +89,14 @@ jobs:
         run: npm test
 
   test-nextjs:
-    name: Next.js Examples
+    name: Next.js - ${{ matrix.provider }}
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
-          - deepgram-webhooks
-          - hookdeck-event-gateway
+        provider: ${{ fromJson(needs.detect-changes.outputs.changed_providers) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -72,18 +117,14 @@ jobs:
         run: npm test
 
   test-fastapi:
-    name: FastAPI Examples
+    name: FastAPI - ${{ matrix.provider }}
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - stripe-webhooks
-          - shopify-webhooks
-          - github-webhooks
-          - resend-webhooks
-          - deepgram-webhooks
-          - hookdeck-event-gateway
+        provider: ${{ fromJson(needs.detect-changes.outputs.changed_providers) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -106,15 +147,38 @@ jobs:
   summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [test-express, test-nextjs, test-fastapi]
+    needs: [detect-changes, test-express, test-nextjs, test-fastapi]
     if: always()
     steps:
       - name: Check test results
         run: |
+          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.detect-changes.outputs.has_changes }}" != "true" ]; then
+            echo "No skill changes detected - tests skipped." >> $GITHUB_STEP_SUMMARY
+            echo "No skill changes detected - tests skipped."
+            exit 0
+          fi
+          
+          echo "**Providers tested:** ${{ needs.detect-changes.outputs.changed_providers }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.detect-changes.outputs.run_all }}" = "true" ]; then
+            echo "_Push to main - all providers tested_" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_PR - only changed providers tested_" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           if [ "${{ needs.test-express.result }}" == "failure" ] || \
              [ "${{ needs.test-nextjs.result }}" == "failure" ] || \
              [ "${{ needs.test-fastapi.result }}" == "failure" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Result:** Some tests failed" >> $GITHUB_STEP_SUMMARY
             echo "Some tests failed"
             exit 1
           fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Result:** All tests passed!" >> $GITHUB_STEP_SUMMARY
           echo "All tests passed!"

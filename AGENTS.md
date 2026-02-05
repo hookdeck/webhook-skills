@@ -470,10 +470,10 @@ Use this checklist when creating a new provider skill:
 
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
-- [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
-- [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
+- [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
 - [ ] Run example tests: `cd examples/express && npm test`
-- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+- [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
+- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ### Provider Research (Do This First)
 
@@ -538,9 +538,8 @@ Gather this information:
 6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
-   - `scripts/test-agent-scenario.sh` - Add test scenarios
-   - `.github/workflows/test-examples.yml` - Add provider to test matrices
-8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+   - `providers.yaml` - Add provider entry with `testScenario` field
+8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
 
@@ -712,41 +711,139 @@ cd skills/{provider}-webhooks/examples/express && npm test
 **Run agent integration test:**
 ```bash
 # Dry run (shows what would happen)
-./scripts/test-agent-scenario.sh {provider}-express --dry-run
+./scripts/test-agent-scenario.sh {provider} express --dry-run
 
 # Full test (requires Claude CLI)
-./scripts/test-agent-scenario.sh {provider}-express
+./scripts/test-agent-scenario.sh {provider} express
+
+# List available providers
+./scripts/test-agent-scenario.sh --help
 ```
 
 ### Adding Test Scenarios
 
-When adding a new provider skill, add scenarios to `scripts/test-agent-scenario.sh`:
+When adding a new provider skill, add `testScenario` to the provider entry in `providers.yaml`:
 
-```bash
-# In the usage() function, add:
-echo "  {provider}-express   - {Provider} webhook handling in Express"
-
-# In get_scenario_config(), add:
-{provider}-express)
-    PROVIDER="{provider}"
-    FRAMEWORK="express"
-    SKILL_NAME="{provider}-webhooks"
-    PROMPT="Add {Provider} webhook handling to my Express app. I want to handle {common_event} events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
-    ;;
+```yaml
+providers:
+  - name: {provider}
+    displayName: {Provider}
+    docs:
+      webhooks: https://...
+    notes: >
+      ...
+    testScenario:
+      events:
+        - event.type.one
+        - event.type.two
+      # Optional: custom prompt (uses default template if not specified)
+      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+      # Optional: override skill name (default is {name}-webhooks)
+      # skillName: custom-skill-name
 ```
+
+The test script reads scenarios from `providers.yaml` dynamically - no script modifications needed.
 
 ## Reviewing a Provider Skill or PR
 
 When reviewing a provider skill (e.g. from a pull request or before merging):
 
-1. **Use the checklist** — In "Contributing a New Provider Skill" above, verify all items under Core Files, Examples (per framework), and **Integration**.
-2. **Integration requirements** — Confirm the skill is wired into:
-   - `README.md` — Provider Skills table
-   - `scripts/test-agent-scenario.sh` — at least one scenario (e.g. `{provider}-express`) in `usage()` and `get_scenario_config()`
-   - `.github/workflows/test-examples.yml` — provider in all three matrices (express, nextjs, fastapi)
-3. **Skill content** — Check SKILL.md has: frontmatter, "When to Use This Skill", "Resources" (or "Reference Materials"), "Related Skills" with **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`), and for provider skills a "Recommended: webhook-handler-patterns" section linking to idempotency, error-handling, retry-logic.
-4. **Tests** — Run example tests: `./scripts/test-all-examples.sh` or per skill `cd skills/{provider}-webhooks/examples/express && npm test` (and nextjs, fastapi). Ensure test scripts exit (e.g. `"test": "vitest run"` not `"vitest"`).
-5. **More detail** — See [CONTRIBUTING.md](CONTRIBUTING.md) for the generator workflow, acceptance thresholds, and manual review steps.
+### Step 1: Run Automated Review (Primary)
+
+First, checkout the PR branch and run the automated review:
+
+```bash
+# Checkout the PR branch
+git fetch origin pull/<PR_NUMBER>/head:pr-<PR_NUMBER>
+git checkout pr-<PR_NUMBER>
+
+# Run automated review (runs tests + AI review against provider docs)
+./scripts/generate-skills.sh review {provider} --no-worktree
+```
+
+This runs all example tests and uses Claude to review the skill against provider documentation for accuracy. See [CONTRIBUTING.md](CONTRIBUTING.md) for acceptance thresholds (0 critical, ≤1 major, ≤2 minor issues).
+
+### Step 2: Verify Integration (Not Covered by Automation)
+
+The automated review checks skill content and tests, but does **not** verify integration with repository infrastructure. Manually confirm:
+
+1. **README.md** — Provider added to Provider Skills table
+2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
+
+### Step 3: Spot-Check Skill Content
+
+Verify SKILL.md has required sections:
+- Frontmatter with name, description, license, metadata
+- "When to Use This Skill" section
+- "Resources" or "Reference Materials" section
+- "Related Skills" with **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`)
+- For provider skills: "Recommended: webhook-handler-patterns" section
+
+### Quick Commands
+
+```bash
+# Run tests for a specific skill
+cd skills/{provider}-webhooks/examples/express && npm test
+cd skills/{provider}-webhooks/examples/nextjs && npm test
+cd skills/{provider}-webhooks/examples/fastapi && pytest test_webhook.py -v
+
+# Run all example tests
+./scripts/test-all-examples.sh
+```
+
+Ensure test scripts exit properly (e.g. `"test": "vitest run"` not `"vitest"`).
+
+## Provider Documentation Registry
+
+The file `providers.yaml` (at repo root) is the authoritative registry of all webhook providers and their official documentation URLs.
+
+**When to update:**
+- Adding a new provider skill — add entry with documentation URLs
+- Reviewing/updating skills — ensure documentation URLs are current
+- Provider changes their docs — update URLs
+
+**Usage:**
+
+```bash
+# Review all providers against their official docs
+./scripts/generate-skills.sh review --config providers.yaml
+
+# Generate a specific provider from this config
+./scripts/generate-skills.sh generate stripe --config providers.yaml
+```
+
+### Updating an Existing Provider Skill
+
+When updating an existing provider skill (e.g., provider changed their API, new events added, documentation URLs changed):
+
+1. **Update `providers.yaml`** with current documentation URLs and any notes about changes:
+
+```yaml
+providers:
+  - name: stripe
+    displayName: Stripe
+    docs:
+      webhooks: https://docs.stripe.com/webhooks
+      verification: https://docs.stripe.com/webhooks/signatures
+      events: https://docs.stripe.com/api/events/types
+    notes: >
+      Verify against latest Stripe API version. Check for new event types.
+```
+
+2. **Run the review command** to update the skill against the documentation:
+
+```bash
+# Update a single provider
+./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+
+# Update multiple providers
+./scripts/generate-skills.sh review stripe shopify paddle --config providers.yaml --create-pr
+
+# Update all providers (for periodic maintenance)
+./scripts/generate-skills.sh review --config providers.yaml --create-pr
+```
+
+3. **Review the generated PR** and verify changes are accurate
 
 ## Related Resources
 
