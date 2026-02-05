@@ -22,7 +22,9 @@ The recommended way to create new provider skills is using our AI-powered genera
 
 - **Node.js 18+**
 - **Python 3.9+** (for FastAPI examples)
-- **[Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)** — Install and authenticate with `claude login`
+- **AI CLI Tool** — One of the following:
+  - [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli) — Install and authenticate with `claude login` (default)
+  - [Copilot CLI](https://docs.github.com/en/copilot/how-tos/use-copilot-for-common-tasks/use-copilot-in-the-cli) — GitHub Copilot command-line tool
 - **GITHUB_TOKEN** — For PR creation (optional but recommended)
 
 ```bash
@@ -204,13 +206,20 @@ providers:
 
 By default, all providers run in parallel. Use `--parallel <n>` to limit concurrency.
 
-### 4. Preview What Would Happen (Dry Run)
+### 4. Use a Different CLI Tool
+
+```bash
+# Use Copilot instead of Claude
+./scripts/generate-skills.sh generate "twilio" --cli copilot --create-pr
+```
+
+### 5. Preview What Would Happen (Dry Run)
 
 ```bash
 ./scripts/generate-skills.sh generate "linear" --dry-run
 ```
 
-### 5. Resume After a Failed Generation
+### 6. Resume After a Failed Generation
 
 If generation fails (tests won't pass, API timeout, etc.), the worktree is preserved:
 
@@ -230,7 +239,7 @@ The review command will:
 3. AI reviews and fixes any issues
 4. If within thresholds, pushes and creates PR
 
-### 6. Update an Existing Skill
+### 7. Update an Existing Skill
 
 Use the review command to improve skills already in the repository. The recommended workflow uses `providers.yaml` as the source of truth:
 
@@ -274,7 +283,7 @@ The review command will:
 
 **Tip:** When a provider updates their webhook documentation or changes their API, update `providers.yaml` first, then run the review to propagate changes to the skill.
 
-### 7. Manual Review and PR Creation
+### 8. Manual Review and PR Creation
 
 ```bash
 # Generate without PR - inspect results first
@@ -294,7 +303,7 @@ gh pr create --title "feat: add clerk-webhooks skill"
 
 When creating or updating a PR, use the title and description format in the next section.
 
-### 8. Pull Request Title and Description
+### 9. Pull Request Title and Description
 
 Use these conventions so PRs are consistent and easy to review.
 
@@ -322,7 +331,7 @@ Use these conventions so PRs are consistent and easy to review.
 
 For generator-created PRs, the body may also include **Generation details** (provider, tests passed, review passed, iterations, issues found/fixed). When editing an existing PR (e.g. after review), update the title and description to match these conventions if they don't already.
 
-### 9. Clean Up Worktrees
+### 10. Clean Up Worktrees
 
 ```bash
 # List all worktrees
@@ -354,11 +363,12 @@ rm -rf .worktrees && git worktree prune
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--cli <tool>` | CLI tool to use (`claude`, `copilot`) | claude |
 | `--working-dir <path>` | Generate in specific directory (skip worktree) | Creates worktree |
 | `--no-worktree` | Generate in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Push and create PR (`true` or `draft`) | No PR |
 | `--parallel <n>` | Max concurrent generations | All providers |
-| `--model <model>` | Claude model | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | claude-opus-4-20250514 |
 | `--max-iterations <n>` | Max test/fix cycles | 3 |
 | `--base-branch <branch>` | Branch to create from | main |
 | `--skip-tests` | Skip test execution | false |
@@ -376,15 +386,66 @@ rm -rf .worktrees && git worktree prune
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--cli <tool>` | CLI tool to use (`claude`, `copilot`) | claude |
 | `--working-dir <path>` | Review in specific directory (skip worktree) | Creates worktree |
 | `--no-worktree` | Review in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Create PR with fixes | No PR |
 | `--max-iterations <n>` | Max fix cycles | 3 |
 | `--parallel <n>` | Max concurrent reviews | All providers |
-| `--model <model>` | Claude model | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | claude-opus-4-20250514 |
 | `--branch-prefix <prefix>` | Branch name prefix | improve |
 | `--config <file>` | YAML config file | — |
 | `--dry-run` | Preview without executing | false |
+
+---
+
+## Adding New CLI Tools
+
+The generator supports a pluggable CLI adapter system. To add support for a new AI CLI tool:
+
+1. **Create an adapter file** at `scripts/skill-generator/lib/cli-adapters/<tool>.ts`:
+
+```typescript
+import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
+
+const DEFAULT_MODEL = 'your-model-name-here';
+export const myToolAdapter: CliAdapter = {
+  name: 'mytool',
+  
+  buildCommand(options: CliAdapterOptions): CliCommandConfig {
+    const model = options.model ?? DEFAULT_MODEL;
+    
+    return {
+      command: 'mytool',  // The CLI command to execute
+      args: [
+        // Arguments specific to this CLI tool
+        '--model', model,
+        '--some-flag',
+      ],
+    };
+  },
+};
+```
+
+2. **Register the adapter** in `scripts/skill-generator/lib/cli-adapters/index.ts`:
+
+```typescript
+import { myToolAdapter } from './mytool';
+
+const adapters: Map<string, CliAdapter> = new Map([
+  ['claude', claudeAdapter],
+  ['copilot', copilotAdapter],
+  ['mytool', myToolAdapter],  // Add your adapter here
+]);
+```
+
+3. **Use it** with the `--cli` flag:
+
+```bash
+./scripts/generate-skills.sh generate stripe --cli mytool
+```
+
+The adapter interface is simple — it just needs to return the command name and arguments. The generator handles stdin prompt passing, timeout, progress display, and output capture.
 
 ---
 
