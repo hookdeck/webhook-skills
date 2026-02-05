@@ -114,6 +114,28 @@ providers:
       See reference_impl for working TypeScript/Express example.
 ```
 
+### Provider Documentation Registry
+
+All providers and their official documentation URLs are tracked in `providers.yaml` at the repository root. When adding a new provider:
+
+1. Add the provider entry to `providers.yaml` with documentation URLs
+2. Generate the skill using the config: `./scripts/generate-skills.sh generate {provider} --config providers.yaml`
+3. Update the README.md Provider Skills table
+4. Add the provider to `.github/workflows/test-examples.yml` matrices
+5. Add at least one scenario to `scripts/test-agent-scenario.sh`
+
+**Validate locally before pushing:**
+
+```bash
+# Validate a specific provider has all required files and integration updates
+./scripts/validate-provider.sh stripe-webhooks
+
+# Validate all providers
+./scripts/validate-provider.sh --all
+```
+
+The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs.
+
 ### Acceptance Thresholds
 
 Skills are accepted if issues found are within these thresholds:
@@ -219,31 +241,47 @@ The review command will:
 
 ### 7. Update an Existing Skill
 
-Use the review command to improve skills already in the repository:
+Use the review command to improve skills already in the repository. The recommended workflow uses `providers.yaml` as the source of truth:
 
-```bash
-# Review and update an existing skill
-./scripts/generate-skills.sh review stripe --create-pr
+**Step 1: Update providers.yaml with current documentation**
 
-# Provide additional documentation for context
-./scripts/generate-skills.sh review stripe \
-  --config stripe-update.yaml \
-  --create-pr
-```
-
-The config can include new documentation URLs:
+First, ensure `providers.yaml` has accurate and up-to-date documentation URLs for the provider:
 
 ```yaml
-# stripe-update.yaml
+# providers.yaml (at repo root)
 providers:
   - name: stripe
+    displayName: Stripe
     docs:
       webhooks: https://docs.stripe.com/webhooks
       verification: https://docs.stripe.com/webhooks/signatures
+      events: https://docs.stripe.com/api/events/types
     notes: >
-      Check for any new event types added in 2024.
-      Verify signature verification is current with latest SDK.
+      Check for any new event types. Verify signature verification
+      is current with latest SDK changes.
 ```
+
+**Step 2: Run the review command**
+
+```bash
+# Review and update a single provider
+./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+
+# Review multiple providers at once
+./scripts/generate-skills.sh review stripe shopify --config providers.yaml --create-pr
+
+# Review all providers (periodic maintenance)
+./scripts/generate-skills.sh review --config providers.yaml --create-pr
+```
+
+The review command will:
+1. Read provider documentation URLs from `providers.yaml`
+2. Run all example tests to verify current state
+3. AI reviews the skill against the official documentation
+4. Fixes any issues found (up to 3 iterations)
+5. If within acceptance thresholds, creates a PR with the updates
+
+**Tip:** When a provider updates their webhook documentation or changes their API, update `providers.yaml` first, then run the review to propagate changes to the skill.
 
 ### 8. Manual Review and PR Creation
 

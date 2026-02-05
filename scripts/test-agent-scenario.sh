@@ -21,20 +21,25 @@ usage() {
     echo "Usage: $0 <scenario> [options]"
     echo ""
     echo "Available scenarios:"
-    echo "  stripe-express   - Stripe webhook handling in Express"
-    echo "  shopify-nextjs   - Shopify webhook handling in Next.js"
-    echo "  github-fastapi   - GitHub webhook handling in FastAPI"
-    echo "  paddle-express   - Paddle webhook handling in Express"
-    echo "  paddle-nextjs    - Paddle webhook handling in Next.js"
-    echo "  paddle-fastapi   - Paddle webhook handling in FastAPI"
-    echo "  resend-express   - Resend webhook handling in Express"
-    echo "  resend-nextjs    - Resend webhook handling in Next.js"
-    echo "  resend-fastapi   - Resend webhook handling in FastAPI"
-    echo "  deepgram-express - Deepgram webhook handling in Express"
+    echo "  chargebee-express  - Chargebee webhook handling in Express"
+    echo "  clerk-express      - Clerk webhook handling in Express"
+    echo "  deepgram-express   - Deepgram webhook handling in Express"
+    echo "  elevenlabs-express - ElevenLabs webhook handling in Express"
     echo "  fusionauth-express - FusionAuth webhook handling in Express"
     echo "  fusionauth-nextjs  - FusionAuth webhook handling in Next.js"
     echo "  fusionauth-fastapi - FusionAuth webhook handling in FastAPI"
-    echo "  hookdeck-express - Hookdeck Event Gateway in Express"
+    echo "  github-fastapi     - GitHub webhook handling in FastAPI"
+    echo "  hookdeck-express   - Hookdeck Event Gateway in Express"
+    echo "  openai-express     - OpenAI webhook handling in Express"
+    echo "  paddle-express     - Paddle webhook handling in Express"
+    echo "  paddle-nextjs      - Paddle webhook handling in Next.js"
+    echo "  paddle-fastapi     - Paddle webhook handling in FastAPI"
+    echo "  resend-express     - Resend webhook handling in Express"
+    echo "  resend-nextjs      - Resend webhook handling in Next.js"
+    echo "  resend-fastapi     - Resend webhook handling in FastAPI"
+    echo "  sendgrid-express   - SendGrid webhook handling in Express"
+    echo "  shopify-nextjs     - Shopify webhook handling in Next.js"
+    echo "  stripe-express     - Stripe webhook handling in Express"
     echo ""
     echo "Options:"
     echo "  --dry-run    Show what would be done without executing"
@@ -47,6 +52,36 @@ usage() {
 get_scenario_config() {
     local scenario=$1
     case $scenario in
+        chargebee-express)
+            PROVIDER="chargebee"
+            FRAMEWORK="express"
+            SKILL_NAME="chargebee-webhooks"
+            PROMPT="Add Chargebee webhook handling to my Express app. I want to handle subscription_created and payment_succeeded events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        clerk-express)
+            PROVIDER="clerk"
+            FRAMEWORK="express"
+            SKILL_NAME="clerk-webhooks"
+            PROMPT="Add Clerk webhook handling to my Express app. I want to handle user.created and user.updated events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        elevenlabs-express)
+            PROVIDER="elevenlabs"
+            FRAMEWORK="express"
+            SKILL_NAME="elevenlabs-webhooks"
+            PROMPT="Add ElevenLabs webhook handling to my Express app. I want to handle post_call_transcription events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        openai-express)
+            PROVIDER="openai"
+            FRAMEWORK="express"
+            SKILL_NAME="openai-webhooks"
+            PROMPT="Add OpenAI webhook handling to my Express app. I want to handle fine_tuning.job.succeeded and batch.completed events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        sendgrid-express)
+            PROVIDER="sendgrid"
+            FRAMEWORK="express"
+            SKILL_NAME="sendgrid-webhooks"
+            PROMPT="Add SendGrid webhook handling to my Express app. I want to handle delivered and bounce events for email tracking. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
         stripe-express)
             PROVIDER="stripe"
             FRAMEWORK="express"
