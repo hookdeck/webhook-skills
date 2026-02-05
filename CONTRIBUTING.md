@@ -121,8 +121,7 @@ All providers and their official documentation URLs are tracked in `providers.ya
 1. Add the provider entry to `providers.yaml` with documentation URLs
 2. Generate the skill using the config: `./scripts/generate-skills.sh generate {provider} --config providers.yaml`
 3. Update the README.md Provider Skills table
-4. Add the provider to `.github/workflows/test-examples.yml` matrices
-5. Add at least one scenario to `scripts/test-agent-scenario.sh`
+4. Add at least one scenario to `scripts/test-agent-scenario.sh`
 
 **Validate locally before pushing:**
 
@@ -318,7 +317,7 @@ Use these conventions so PRs are consistent and easy to review.
 
 1. **Summary** — One or two sentences: what this PR does (e.g. "Add webhook skill for Deepgram" or "Improvements to deepgram-webhooks skill").
 2. **What's included** — For new or large PRs: SKILL.md, references (overview, setup, verification), examples (Express, Next.js, FastAPI) with test frameworks.
-3. **Integration** — If applicable: README (Provider Skills table), `scripts/test-agent-scenario.sh` (scenario added), `.github/workflows/test-examples.yml` (provider in matrices).
+3. **Integration** — If applicable: README (Provider Skills table), `scripts/test-agent-scenario.sh` (scenario added).
 4. **Testing** — How to run tests, e.g.:
    - `cd skills/{provider}-webhooks/examples/express && npm test`
    - `cd skills/{provider}-webhooks/examples/nextjs && npm test`

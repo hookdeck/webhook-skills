@@ -14,8 +14,7 @@
 #   1. Add provider entry here with documentation URLs
 #   2. Generate or create the skill
 #   3. Update README.md Provider Skills table
-#   4. Add to .github/workflows/test-examples.yml matrices
-#   5. Add scenario to scripts/test-agent-scenario.sh
+#   4. Add scenario to scripts/test-agent-scenario.sh
 
 providers:
   - name: chargebee
