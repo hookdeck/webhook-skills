@@ -5,12 +5,11 @@
  */
 
 import type { CliAdapter } from './types';
-import { claudeAdapter, DEFAULT_MODEL } from './claude';
+import { claudeAdapter } from './claude';
 import { copilotAdapter } from './copilot';
 
 // Re-export types and default model
 export type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
-export { DEFAULT_MODEL };
 
 /**
  * Registry of available CLI adapters
