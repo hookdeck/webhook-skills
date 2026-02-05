@@ -11,7 +11,7 @@ import type {
   ReviewResult,
   ReviewIssue,
 } from './types';
-import { runReviewSkill, runFixIssues } from './claude';
+import { runReviewSkill, runFixIssues } from './cli';
 import { runTests } from './generator';
 
 /**
@@ -32,6 +32,7 @@ export interface ReviewAndIterateOptions {
   skipReview?: boolean;
   maxIterations: number;
   model?: string;
+  cliTool?: string;
   parallel?: boolean;
 }
 
@@ -155,7 +156,7 @@ export async function reviewAndIterate(
   provider: ProviderConfig,
   options: ReviewAndIterateOptions
 ): Promise<ReviewAndIterateResult> {
-  const { workingDir, logger, dryRun, skipTests, skipReview, maxIterations, model, parallel } = options;
+  const { workingDir, logger, dryRun, skipTests, skipReview, maxIterations, model, cliTool, parallel } = options;
   
   logger.info(`Starting review for ${provider.displayName || provider.name}`);
   logger.info(`Acceptance thresholds: critical=${ACCEPTANCE_THRESHOLDS.maxCritical}, major≤${ACCEPTANCE_THRESHOLDS.maxMajor}, minor≤${ACCEPTANCE_THRESHOLDS.maxMinor}, total≤${ACCEPTANCE_THRESHOLDS.maxTotal}`);
@@ -215,6 +216,7 @@ export async function reviewAndIterate(
           logger,
           dryRun,
           model,
+          cliTool,
           parallel,
           existingTodo,
         });
@@ -230,7 +232,7 @@ export async function reviewAndIterate(
     // Phase 2: Review content accuracy
     if (!skipReview) {
       logger.info('Reviewing content accuracy...');
-      const review = await runReviewSkill(provider, { workingDir, logger, dryRun, model, parallel });
+      const review = await runReviewSkill(provider, { workingDir, logger, dryRun, model, cliTool, parallel });
       
       if (!review.success) {
         reviewResult = { passed: false, details: 'Review failed to run' };
@@ -293,6 +295,7 @@ export async function reviewAndIterate(
           logger,
           dryRun,
           model,
+          cliTool,
           parallel,
           existingTodo,
         });
