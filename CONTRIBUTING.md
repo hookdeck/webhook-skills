@@ -24,7 +24,7 @@ The recommended way to create new provider skills is using our AI-powered genera
 - **Python 3.9+** (for FastAPI examples)
 - **AI CLI Tool** — One of the following:
   - [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli) — Install and authenticate with `claude login` (default)
-  - [Copilot CLI](https://githubnext.com/projects/copilot-cli) — GitHub Copilot command-line tool
+  - [Copilot CLI](https://docs.github.com/en/copilot/how-tos/use-copilot-for-common-tasks/use-copilot-in-the-cli) — GitHub Copilot command-line tool
 - **GITHUB_TOKEN** — For PR creation (optional but recommended)
 
 ```bash
