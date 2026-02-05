@@ -321,6 +321,55 @@ For skills to be considered effective:
 
 ---
 
+## Running Agent Tests with Scripts
+
+The repository includes a script to automate agent test scenarios:
+
+```bash
+# List available providers and frameworks
+./scripts/test-agent-scenario.sh --help
+
+# Run a test scenario (dry-run to see what would happen)
+./scripts/test-agent-scenario.sh stripe express --dry-run
+
+# Run actual test (requires Claude CLI)
+./scripts/test-agent-scenario.sh stripe express
+
+# Test with other providers/frameworks
+./scripts/test-agent-scenario.sh shopify nextjs
+./scripts/test-agent-scenario.sh github fastapi
+./scripts/test-agent-scenario.sh hookdeck-event-gateway express
+```
+
+### How It Works
+
+1. Creates a fresh project directory in `/tmp/webhook-skills-agent-test/`
+2. Initializes the project based on framework (Express, Next.js, or FastAPI)
+3. Installs the relevant skill via `npx skills add`
+4. Runs Claude CLI with a context-aware prompt
+5. Saves results to `test-results/` for manual evaluation
+
+### Configuration
+
+Test prompts and events are configured in `providers.yaml` at the repository root:
+
+```yaml
+providers:
+  - name: stripe
+    displayName: Stripe
+    # ... docs, notes ...
+    testScenario:
+      events:
+        - payment_intent.succeeded
+        - checkout.session.completed
+      # Optional custom prompt (uses default if not specified)
+      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+```
+
+To add a new test scenario, add the `testScenario` field to the provider in `providers.yaml`.
+
+---
+
 ## Automating Agent Tests (Future)
 
 ### Architecture
