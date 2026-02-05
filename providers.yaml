@@ -206,6 +206,20 @@ providers:
         - payment_intent.succeeded
         - checkout.session.completed
 
+  - name: vercel
+    displayName: Vercel
+    docs:
+      webhooks: https://vercel.com/docs/observability/webhooks
+      events: https://vercel.com/docs/observability/webhooks#event-types
+    notes: >
+      Platform for deploying web applications. Uses x-vercel-signature header with HMAC-SHA1
+      (hex encoded). Uses raw request body for signature verification.
+      Common events: deployment.created, deployment.succeeded, project.created.
+    testScenario:
+      events:
+        - deployment.created
+        - deployment.succeeded
+
   - name: hookdeck-event-gateway
     displayName: Hookdeck Event Gateway
     docs:
