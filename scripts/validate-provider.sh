@@ -221,8 +221,13 @@ validate_integration() {
     errors+=("providers.yaml not found at repository root")
   fi
   
-  # Check test-examples.yml has provider in matrices
-  if ! grep -q "$provider" "$ROOT_DIR/.github/workflows/test-examples.yml"; then
+  # Check test-examples.yml has provider in matrices (or uses dynamic detection)
+  # If workflow uses dynamic detection (detect-changes job), skip hardcoded name check
+  if grep -q "detect-changes" "$ROOT_DIR/.github/workflows/test-examples.yml" || \
+     grep -q "ls -d skills/\*-webhooks" "$ROOT_DIR/.github/workflows/test-examples.yml"; then
+    # Workflow uses dynamic detection - no hardcoded check needed
+    :
+  elif ! grep -q "$provider" "$ROOT_DIR/.github/workflows/test-examples.yml"; then
     errors+=("$provider not found in .github/workflows/test-examples.yml matrices")
   fi
   

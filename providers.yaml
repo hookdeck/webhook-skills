@@ -139,3 +139,15 @@ providers:
       Signature format includes timestamp (t) and signature (v1). Secret starts with whsec_.
       Always use raw request body for verification. Common events: checkout.session.completed,
       payment_intent.succeeded, customer.subscription.created.
+
+  - name: woocommerce
+    displayName: WooCommerce
+    docs:
+      webhooks: https://developer.woocommerce.com/docs/webhooks/
+      events: https://developer.woocommerce.com/docs/webhooks/#webhook-topics
+    notes: >
+      E-commerce platform for WordPress. Uses X-WC-Webhook-Signature header with HMAC-SHA256
+      (base64 encoded). Secret is configured per webhook in WooCommerce admin. Additional headers
+      include X-WC-Webhook-Topic, X-WC-Webhook-Resource, X-WC-Webhook-Event, X-WC-Webhook-Source,
+      X-WC-Webhook-ID, and X-WC-Webhook-Delivery-ID. Common events: order.created, order.updated,
+      product.created, customer.created.
