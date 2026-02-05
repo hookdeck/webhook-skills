@@ -1,0 +1,23 @@
+{
+  "name": "replicate-webhooks-express",
+  "version": "1.0.0",
+  "description": "Express webhook handler for Replicate webhooks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "NODE_NO_WARNINGS=1 jest"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
