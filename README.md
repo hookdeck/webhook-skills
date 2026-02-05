@@ -35,6 +35,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | ElevenLabs | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
 | FusionAuth | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
 | GitHub | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
+| GitLab | [`gitlab-webhooks`](skills/gitlab-webhooks/) | Verify GitLab webhook tokens, handle push, merge_request, issue, and pipeline events |
 | OpenAI | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
 | Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
 | Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
