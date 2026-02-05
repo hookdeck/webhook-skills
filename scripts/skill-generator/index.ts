@@ -7,7 +7,7 @@
  */
 
 import { config } from 'dotenv';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import chalk from 'chalk';
 import pLimit from 'p-limit';
 import { mkdirSync, writeFileSync, appendFileSync, existsSync } from 'fs';
@@ -22,10 +22,12 @@ import type {
   OperationResult,
   Logger,
 } from './lib/types';
-import { mergeProviderConfigs, skillExists } from './lib/config';
+import { mergeProviderConfigs, skillExists, loadConfigFile } from './lib/config';
+import { getScenarioConfig, listProvidersFormatted, SUPPORTED_FRAMEWORKS } from './lib/scenario';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
-import { DEFAULT_MODEL, setCachedVersions } from './lib/claude';
+import { setCachedVersions } from './lib/cli';
+import { DEFAULT_CLI_TOOL, AVAILABLE_CLI_TOOLS } from './lib/cli-adapters';
 import { getLatestVersions } from './lib/versions';
 import {
   createWorktree,
@@ -143,6 +145,7 @@ async function handleGenerate(
     maxIterations: string;
     createPr: boolean | string;
     model: string;
+    cli: string;
     workingDir?: string;  // Generate in this directory (skip worktree creation)
     worktree?: boolean;   // Set to false by --no-worktree flag
   }
@@ -186,6 +189,7 @@ async function handleGenerate(
     : providerConfigs.length;
   
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (!useProvidedDir && providerConfigs.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
@@ -206,20 +210,33 @@ async function handleGenerate(
     maxIterations: parseInt(options.maxIterations, 10),
     createPr: normalizeCreatePr(options.createPr),
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!generateOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
   // Get repo info for PR creation
@@ -386,6 +403,7 @@ async function handleReview(
     createPr: boolean | string;
     branchPrefix: string;
     model: string;
+    cli: string;
     workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
     worktree?: boolean;   // Set to false by --no-worktree flag
   }
@@ -461,6 +479,7 @@ async function handleReview(
     : existingProviders.length;
   
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (!useProvidedDir && existingProviders.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
@@ -476,20 +495,33 @@ async function handleReview(
     createPr: normalizeCreatePr(options.createPr),
     branchPrefix: options.branchPrefix,
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!reviewOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
   // Get repo info for PR creation
@@ -640,6 +672,7 @@ async function handleReview(
           dryRun: reviewOptions.dryRun,
           maxIterations: reviewOptions.maxIterations,
           model: reviewOptions.model,
+          cliTool: reviewOptions.cliTool,
           parallel: existingProviders.length > 1,
         });
         
@@ -796,12 +829,51 @@ async function handleReview(
   process.exit(hasUnfixedIssues ? 1 : 0);
 }
 
+/**
+ * Scenario command handler - outputs JSON config for test-agent-scenario.sh
+ */
+async function handleScenario(
+  provider: string,
+  framework: string,
+  options: { config: string }
+): Promise<void> {
+  const config = getScenarioConfig(provider, framework, options.config);
+  
+  if (!config) {
+    process.exit(1);
+  }
+  
+  // Output JSON for bash script to parse
+  console.log(JSON.stringify(config));
+}
+
+/**
+ * List providers command handler
+ */
+async function handleListProviders(
+  options: { config: string; json?: boolean }
+): Promise<void> {
+  if (options.json) {
+    const providers = loadConfigFile(options.config);
+    const list = Array.from(providers.values()).map(p => ({
+      name: p.name,
+      displayName: p.displayName,
+      hasTestScenario: !!p.testScenario,
+    }));
+    console.log(JSON.stringify(list, null, 2));
+  } else {
+    console.log('Available providers:\n');
+    console.log(listProvidersFormatted(options.config));
+    console.log(`\nSupported frameworks: ${SUPPORTED_FRAMEWORKS.join(', ')}`);
+  }
+}
+
 // CLI setup
 const program = new Command();
 
 program
   .name('skill-generator')
-  .description('Generate and review webhook skills using Claude CLI')
+  .description('Generate and review webhook skills using AI CLI tools')
   .version('1.0.0');
 
 program
@@ -809,7 +881,8 @@ program
   .description('Generate new webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://github.com/elevenlabs/elevenlabs-js|Official SDK supports webhook verification)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
+  .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--base-branch <branch>', 'Branch to create from', 'main')
@@ -826,7 +899,8 @@ program
   .description('Review and improve existing webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://.../elevenlabs-js|Prefer SDK verification in skill)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
+  .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
@@ -835,5 +909,20 @@ program
   .option('--working-dir <path>', 'Review skill in specified directory (skips skill existence check and worktree creation)')
   .option('--no-worktree', 'Review in current directory (shorthand for --working-dir .)')
   .action(handleReview);
+
+program
+  .command('scenario')
+  .description('Get scenario config for agent testing (outputs JSON)')
+  .argument('<provider>', 'Provider name (e.g., stripe, shopify)')
+  .argument('<framework>', `Framework (${SUPPORTED_FRAMEWORKS.join(', ')})`)
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .action(handleScenario);
+
+program
+  .command('list-providers')
+  .description('List available providers from config file')
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .option('--json', 'Output as JSON', false)
+  .action(handleListProviders);
 
 program.parse();

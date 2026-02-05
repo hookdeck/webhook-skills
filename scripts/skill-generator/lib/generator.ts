@@ -14,7 +14,7 @@ import type {
   TestResult,
 } from './types';
 import { getSkillPath, skillExists } from './config';
-import { runGenerateSkill } from './claude';
+import { runGenerateSkill } from './cli';
 import { reviewAndIterate } from './reviewer';
 import {
   createWorktree,
@@ -177,7 +177,7 @@ export async function generateSkill(
   }
 ): Promise<OperationResult> {
   const { rootDir, logger, logFile } = context;
-  const { model } = options;
+  const { model, cliTool } = options;
   const startTime = Date.now();
   const branchName = context.branchName || `feat/${provider.name}-webhooks`;
   
@@ -229,13 +229,14 @@ export async function generateSkill(
       worktreePath = worktreeResult.path;
     }
     
-    // Generate skill (Claude works in the worktree directory)
+    // Generate skill (CLI tool works in the worktree directory)
     logger.info(`Generating skill for ${provider.displayName || provider.name}...`);
     const generateResult = await runGenerateSkill(provider, {
       workingDir: worktreePath,
       logger,
       dryRun: options.dryRun,
       model,
+      cliTool,
       parallel: context.isParallel,
     });
     
@@ -258,6 +259,7 @@ export async function generateSkill(
         skipReview: options.skipReview,
         maxIterations: options.maxIterations,
         model,
+        cliTool,
         parallel: context.isParallel,
       });
       

@@ -1,0 +1,42 @@
+name: Validate Provider PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'skills/**'
+
+jobs:
+  validate:
+    name: Validate New Provider
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate new providers
+        id: validate
+        run: |
+          chmod +x scripts/validate-provider.sh
+          
+          # Detect and validate new providers added in this PR
+          if scripts/validate-provider.sh --detect-new; then
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Provider Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Re-run to capture output for summary
+          if scripts/validate-provider.sh --detect-new 2>&1; then
+            echo "All validations passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Some validations failed. See job output for details." >> $GITHUB_STEP_SUMMARY
+          fi
