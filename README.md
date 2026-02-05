@@ -31,16 +31,20 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 |----------|-------|--------------|
 | Chargebee | [`chargebee-webhooks`](skills/chargebee-webhooks/) | Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events |
 | Clerk | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
+| Cursor | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
 | Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
 | ElevenLabs | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
 | FusionAuth | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
 | GitHub | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
+| GitLab | [`gitlab-webhooks`](skills/gitlab-webhooks/) | Verify GitLab webhook tokens, handle push, merge_request, issue, and pipeline events |
 | OpenAI | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
 | Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
+| Replicate | [`replicate-webhooks`](skills/replicate-webhooks/) | Verify Replicate webhook signatures, handle ML prediction lifecycle events |
 | Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
 | SendGrid | [`sendgrid-webhooks`](skills/sendgrid-webhooks/) | Verify SendGrid webhook signatures (ECDSA), handle email delivery events |
 | Shopify | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
 | Stripe | [`stripe-webhooks`](skills/stripe-webhooks/) | Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events |
+| Vercel | [`vercel-webhooks`](skills/vercel-webhooks/) | Verify Vercel webhook signatures (HMAC-SHA1), handle deployment and project events |
 | WooCommerce | [`woocommerce-webhooks`](skills/woocommerce-webhooks/) | Verify WooCommerce webhook signatures, handle order, product, and customer events |
 
 ### Webhook Handler Pattern Skills
