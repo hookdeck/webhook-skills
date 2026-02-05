@@ -34,6 +34,7 @@ usage() {
     echo "  fusionauth-express - FusionAuth webhook handling in Express"
     echo "  fusionauth-nextjs  - FusionAuth webhook handling in Next.js"
     echo "  fusionauth-fastapi - FusionAuth webhook handling in FastAPI"
+    echo "  woocommerce-express - WooCommerce webhook handling in Express"
     echo "  hookdeck-express - Hookdeck Event Gateway in Express"
     echo ""
     echo "Options:"
@@ -124,6 +125,12 @@ get_scenario_config() {
             FRAMEWORK="fastapi"
             SKILL_NAME="fusionauth-webhooks"
             PROMPT="Add a FusionAuth webhook endpoint to my FastAPI app. I need to handle user.create and user.delete events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
+            ;;
+        woocommerce-express)
+            PROVIDER="woocommerce"
+            FRAMEWORK="express"
+            SKILL_NAME="woocommerce-webhooks"
+            PROMPT="Add WooCommerce webhook handling to my Express app. I want to handle order.created and product.updated events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
             ;;
         hookdeck-express)
             PROVIDER="hookdeck"
