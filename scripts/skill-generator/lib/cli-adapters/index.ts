@@ -8,13 +8,8 @@ import type { CliAdapter } from './types';
 import { claudeAdapter } from './claude';
 import { copilotAdapter } from './copilot';
 
-// Re-export types and default model
+// Re-export types
 export type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
-
-/**
- * Default model to use (Claude's default since it's the default CLI tool)
- */
-export const DEFAULT_MODEL = 'claude-opus-4-20250514';
 
 /**
  * Registry of available CLI adapters

@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { ProviderConfig, Logger, ReviewResult } from './types';
 import { type PackageVersions, formatVersionsTable } from './versions';
-import { getCliAdapter, DEFAULT_CLI_TOOL, DEFAULT_MODEL } from './cli-adapters';
+import { getCliAdapter, DEFAULT_CLI_TOOL } from './cli-adapters';
 
 const PROMPTS_DIR = join(__dirname, '..', 'prompts');
 
@@ -112,8 +112,7 @@ export function buildPromptReplacements(provider: ProviderConfig): Record<string
   return replacements;
 }
 
-// Re-export DEFAULT_MODEL from cli-adapters for backwards compatibility
-export { DEFAULT_MODEL } from './cli-adapters';
+
 
 /**
  * Run a CLI tool with a prompt
