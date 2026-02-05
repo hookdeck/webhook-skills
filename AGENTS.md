@@ -472,7 +472,6 @@ Use this checklist when creating a new provider skill:
 - [ ] Update `README.md` - Add skill to Provider Skills table
 - [ ] Update `providers.yaml` - Add provider entry with documentation URLs
 - [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
-- [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
@@ -541,7 +540,6 @@ Gather this information:
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
    - `scripts/test-agent-scenario.sh` - Add test scenarios
-   - `.github/workflows/test-examples.yml` - Add provider to test matrices
 8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
 
 ## Skill Discoverability
@@ -763,7 +761,6 @@ The automated review checks skill content and tests, but does **not** verify int
 1. **README.md** — Provider added to Provider Skills table
 2. **providers.yaml** — Provider entry added with documentation URLs
 3. **scripts/test-agent-scenario.sh** — At least one scenario added (e.g. `{provider}-express`) in both `usage()` and `get_scenario_config()`
-4. **.github/workflows/test-examples.yml** — Provider added to all three test matrices (express, nextjs, fastapi)
 
 ### Step 3: Spot-Check Skill Content
 
