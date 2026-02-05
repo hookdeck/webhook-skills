@@ -132,6 +132,20 @@ providers:
         - push
         - pull_request
 
+  - name: gitlab
+    displayName: GitLab
+    docs:
+      webhooks: https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+      events: https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html
+    notes: >
+      Code hosting platform. Uses X-Gitlab-Token header for secret token verification
+      (simple string comparison, not HMAC). Use timing-safe comparison.
+      Common events: push, merge_request, issue, pipeline, release.
+    testScenario:
+      events:
+        - push
+        - merge_request
+
   - name: openai
     displayName: OpenAI
     docs:
