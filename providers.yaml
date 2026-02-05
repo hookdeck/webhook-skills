@@ -59,6 +59,19 @@ providers:
         - user.created
         - session.created
 
+  - name: cursor
+    displayName: Cursor
+    docs:
+      webhooks: https://docs.cursor.com/account/cloud-agent-webhooks
+    notes: >
+      AI code editor. Uses x-webhook-signature header with HMAC-SHA256 (hex encoded).
+      Signature format is sha256=<hex_digest>. Cloud Agent webhooks notify of
+      agent status changes (ERROR, FINISHED).
+    testScenario:
+      events:
+        - FINISHED
+        - ERROR
+
   - name: deepgram
     displayName: Deepgram
     docs:

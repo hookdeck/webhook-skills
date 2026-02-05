@@ -31,6 +31,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 |----------|-------|--------------|
 | Chargebee | [`chargebee-webhooks`](skills/chargebee-webhooks/) | Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events |
 | Clerk | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
+| Cursor | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
 | Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
 | ElevenLabs | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
 | FusionAuth | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
