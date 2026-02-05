@@ -1,0 +1,228 @@
+# Webhook Providers - Source of Truth
+#
+# This file is the authoritative list of all webhook providers supported by this repository.
+# Used for: skill generation, periodic reviews, CI validation, agent testing, documentation.
+#
+# Usage:
+#   # Review all providers against their official docs
+#   ./scripts/generate-skills.sh review --config providers.yaml
+#
+#   # Generate a specific provider from this config
+#   ./scripts/generate-skills.sh generate stripe --config providers.yaml
+#
+#   # Run agent test scenario
+#   ./scripts/test-agent-scenario.sh stripe express
+#
+#   # List available providers for testing
+#   ./scripts/generate-skills.sh list-providers --config providers.yaml
+#
+# Provider fields:
+#   name          - kebab-case name (e.g., "stripe", "hookdeck-event-gateway")
+#   displayName   - Human-readable name (e.g., "Stripe", "Hookdeck Event Gateway")
+#   docs          - Documentation URLs (webhooks, verification, events, api)
+#   notes         - Context for AI agents during skill generation
+#   testScenario  - Configuration for agent testing (optional):
+#     events      - Array of event types to test with
+#     prompt      - Custom prompt template (uses default if not specified)
+#     skillName   - Override skill directory name (default: {name}-webhooks)
+#
+# When adding a new provider skill:
+#   1. Add provider entry here with documentation URLs and testScenario
+#   2. Generate or create the skill
+#   3. Update README.md Provider Skills table
+
+providers:
+  - name: chargebee
+    displayName: Chargebee
+    docs:
+      webhooks: https://www.chargebee.com/docs/2.0/events_and_webhooks.html
+      events: https://apidocs.chargebee.com/docs/api/events#event_types
+    notes: >
+      Subscription billing platform. Uses Basic Auth for webhook verification (not HMAC).
+      Username and password are configured in Chargebee webhook settings.
+    testScenario:
+      events:
+        - subscription_created
+        - payment_succeeded
+
+  - name: clerk
+    displayName: Clerk
+    docs:
+      webhooks: https://clerk.com/docs/integrations/webhooks/overview
+      events: https://clerk.com/docs/integrations/webhooks/overview#event-types
+    notes: >
+      User management platform. Uses Standard Webhooks (Svix) format with headers:
+      webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+      HMAC-SHA256 with base64 encoding.
+    testScenario:
+      events:
+        - user.created
+        - session.created
+
+  - name: deepgram
+    displayName: Deepgram
+    docs:
+      webhooks: https://developers.deepgram.com/reference
+    notes: >
+      Speech-to-text transcription platform. Uses callback URLs with optional
+      Basic Auth or token-based verification via dg-token header.
+      Not traditional webhooks - these are transcription completion callbacks.
+    testScenario:
+      events:
+        - transcription callback
+      prompt: >
+        Add Deepgram webhook handling to my {framework} app. I want to receive 
+        transcription callbacks and verify the dg-token header. If you use any 
+        skills to help with this, add a comment in the code noting which skill(s) 
+        you referenced.
+
+  - name: elevenlabs
+    displayName: ElevenLabs
+    docs:
+      webhooks: https://elevenlabs.io/docs/overview/administration/webhooks
+    notes: >
+      Voice AI platform. Uses Standard Webhooks (Svix) format with headers:
+      webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+      HMAC-SHA256 with base64 encoding.
+    testScenario:
+      events:
+        - voice.generation.completed
+        - voice.clone.completed
+
+  - name: fusionauth
+    displayName: FusionAuth
+    docs:
+      webhooks: https://fusionauth.io/docs/extend/events-and-webhooks/
+      events: https://fusionauth.io/docs/extend/events-and-webhooks/events/
+      verification: https://fusionauth.io/docs/extend/events-and-webhooks/signing
+    notes: >
+      Identity and access management platform. Uses JWT-based signature verification.
+      Signatures are RSA-signed JWTs in the X-FusionAuth-Signature header.
+      Verify using FusionAuth's public key from /.well-known/jwks.json endpoint.
+    testScenario:
+      events:
+        - user.create
+        - user.login.success
+
+  - name: github
+    displayName: GitHub
+    docs:
+      webhooks: https://docs.github.com/en/webhooks
+      events: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+      verification: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+    notes: >
+      Code hosting platform. Uses X-Hub-Signature-256 header with HMAC-SHA256 (hex encoded).
+      Signature format is sha256=<hex_digest>. Always use timing-safe comparison.
+      Common events: push, pull_request, issues, release.
+    testScenario:
+      events:
+        - push
+        - pull_request
+
+  - name: openai
+    displayName: OpenAI
+    docs:
+      webhooks: https://platform.openai.com/docs/guides/webhooks
+      events: https://platform.openai.com/docs/guides/webhooks/events
+    notes: >
+      AI platform webhooks for fine-tuning jobs, batch completions, and async events.
+      Uses Standard Webhooks (Svix) format with headers: webhook-id, webhook-timestamp,
+      webhook-signature. Secret format is whsec_<base64>. HMAC-SHA256 with base64 encoding.
+    testScenario:
+      events:
+        - fine_tuning.job.succeeded
+        - batch.completed
+
+  - name: paddle
+    displayName: Paddle
+    docs:
+      webhooks: https://developer.paddle.com/webhooks/overview
+      verification: https://developer.paddle.com/webhooks/signature-verification
+      api: https://developer.paddle.com/api-reference/overview
+    notes: >
+      Payment and subscription platform. Uses Paddle-Signature header with HMAC-SHA256.
+      Signature format includes timestamp (ts) and hash (h1). Secret starts with pdl_ntfset_.
+      Official SDKs available: @paddle/paddle-node-sdk, paddle-billing (Python).
+    testScenario:
+      events:
+        - subscription.created
+        - transaction.completed
+
+  - name: resend
+    displayName: Resend
+    docs:
+      webhooks: https://resend.com/docs/webhooks
+    notes: >
+      Email API platform. Uses Standard Webhooks (Svix) format with headers:
+      webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+      HMAC-SHA256 with base64 encoding. Events: email.sent, email.delivered, email.bounced.
+    testScenario:
+      events:
+        - email.delivered
+        - email.bounced
+
+  - name: sendgrid
+    displayName: SendGrid
+    docs:
+      webhooks: https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event
+      verification: https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features
+    notes: >
+      Email delivery platform. Uses ECDSA signatures with public key verification.
+      Signature in X-Twilio-Email-Event-Webhook-Signature header. Timestamp in
+      X-Twilio-Email-Event-Webhook-Timestamp header. Verify using SendGrid's public key.
+    testScenario:
+      events:
+        - delivered
+        - bounce
+
+  - name: shopify
+    displayName: Shopify
+    docs:
+      webhooks: https://shopify.dev/docs/apps/build/webhooks
+      events: https://shopify.dev/docs/api/admin-rest/current/resources/webhook
+      verification: https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-5-verify-the-webhook
+    notes: >
+      E-commerce platform. Uses X-Shopify-Hmac-SHA256 header with HMAC-SHA256 (base64 encoded).
+      Secret is the API secret key from Shopify Partners dashboard.
+      Common events: orders/create, orders/paid, products/update.
+    testScenario:
+      events:
+        - orders/create
+        - orders/paid
+
+  - name: stripe
+    displayName: Stripe
+    docs:
+      webhooks: https://docs.stripe.com/webhooks
+      verification: https://docs.stripe.com/webhooks/signatures
+      events: https://docs.stripe.com/api/events/types
+    notes: >
+      Payment platform. Uses Stripe-Signature header with HMAC-SHA256 (hex encoded).
+      Signature format includes timestamp (t) and signature (v1). Secret starts with whsec_.
+      Always use raw request body for verification. Common events: checkout.session.completed,
+      payment_intent.succeeded, customer.subscription.created.
+    testScenario:
+      events:
+        - payment_intent.succeeded
+        - checkout.session.completed
+
+  - name: hookdeck-event-gateway
+    displayName: Hookdeck Event Gateway
+    docs:
+      webhooks: https://hookdeck.com/docs/verification
+      setup: https://hookdeck.com/docs/receive-webhooks
+    notes: >
+      Webhook infrastructure platform. Hookdeck Event Gateway receives webhooks from 
+      providers and forwards them to your app with an x-hookdeck-signature header.
+      Uses HMAC-SHA256 with base64 encoding. Signed content format is the raw request body.
+    testScenario:
+      skillName: hookdeck-event-gateway
+      events:
+        - webhooks via Event Gateway
+      prompt: >
+        Create a {framework} webhook handler that receives webhooks forwarded through 
+        Hookdeck Event Gateway. Hookdeck is a webhook proxy - it receives webhooks from 
+        providers and forwards them to my app, adding an x-hookdeck-signature header for 
+        verification. I need to verify this signature using HMAC SHA-256 with base64 
+        encoding. If you use any skills to help with this, add a comment in the code 
+        noting which skill(s) you referenced.
