@@ -212,18 +212,26 @@ validate_integration() {
     errors+=("$provider not found in README.md Provider Skills table")
   fi
   
-  # Check providers.yaml has entry
+  # Check providers.yaml has entry with testScenario
+  # test-agent-scenario.sh now reads scenarios dynamically from providers.yaml
   if [ -f "$ROOT_DIR/providers.yaml" ]; then
     if ! grep -q "name: $provider_name" "$ROOT_DIR/providers.yaml"; then
       errors+=("$provider_name not found in providers.yaml")
+    else
+      # Check that the provider has a testScenario defined
+      # Use awk to find the provider block and check for testScenario
+      local has_test_scenario
+      has_test_scenario=$(awk -v provider="$provider_name" '
+        /^  - name:/ { in_provider = ($3 == provider) }
+        in_provider && /testScenario:/ { print "yes"; exit }
+        /^  - name:/ && !($3 == provider) { in_provider = 0 }
+      ' "$ROOT_DIR/providers.yaml")
+      if [ "$has_test_scenario" != "yes" ]; then
+        errors+=("No testScenario for $provider_name in providers.yaml")
+      fi
     fi
   else
     errors+=("providers.yaml not found at repository root")
-  fi
-  
-  # Check test-agent-scenario.sh has at least one scenario
-  if ! grep -q "$provider_name" "$ROOT_DIR/scripts/test-agent-scenario.sh"; then
-    errors+=("No scenario for $provider_name in scripts/test-agent-scenario.sh")
   fi
   
   # Return errors
@@ -324,8 +332,7 @@ if [ ${#FAILED_PROVIDERS[@]} -gt 0 ]; then
   log "Please ensure you have updated:"
   log "  1. All required skill files (SKILL.md, references/, examples/)"
   log "  2. README.md - Add provider to Provider Skills table"
-  log "  3. providers.yaml - Add provider entry with documentation URLs"
-  log "  4. scripts/test-agent-scenario.sh - Add at least one test scenario"
+  log "  3. providers.yaml - Add provider entry with documentation URLs and testScenario"
   exit 1
 else
   log "${GREEN}All ${#PASSED_PROVIDERS[@]} provider(s) passed validation!${NC}"
