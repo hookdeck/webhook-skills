@@ -470,9 +470,11 @@ Use this checklist when creating a new provider skill:
 
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
+- [ ] Update `providers.yaml` - Add provider entry with documentation URLs
 - [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
 - [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
 - [ ] Run example tests: `cd examples/express && npm test`
+- [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
 
 ### Provider Research (Do This First)
@@ -759,8 +761,9 @@ This runs all example tests and uses Claude to review the skill against provider
 The automated review checks skill content and tests, but does **not** verify integration with repository infrastructure. Manually confirm:
 
 1. **README.md** — Provider added to Provider Skills table
-2. **scripts/test-agent-scenario.sh** — At least one scenario added (e.g. `{provider}-express`) in both `usage()` and `get_scenario_config()`
-3. **.github/workflows/test-examples.yml** — Provider added to all three test matrices (express, nextjs, fastapi)
+2. **providers.yaml** — Provider entry added with documentation URLs
+3. **scripts/test-agent-scenario.sh** — At least one scenario added (e.g. `{provider}-express`) in both `usage()` and `get_scenario_config()`
+4. **.github/workflows/test-examples.yml** — Provider added to all three test matrices (express, nextjs, fastapi)
 
 ### Step 3: Spot-Check Skill Content
 
@@ -784,6 +787,58 @@ cd skills/{provider}-webhooks/examples/fastapi && pytest test_webhook.py -v
 ```
 
 Ensure test scripts exit properly (e.g. `"test": "vitest run"` not `"vitest"`).
+
+## Provider Documentation Registry
+
+The file `providers.yaml` (at repo root) is the authoritative registry of all webhook providers and their official documentation URLs.
+
+**When to update:**
+- Adding a new provider skill — add entry with documentation URLs
+- Reviewing/updating skills — ensure documentation URLs are current
+- Provider changes their docs — update URLs
+
+**Usage:**
+
+```bash
+# Review all providers against their official docs
+./scripts/generate-skills.sh review --config providers.yaml
+
+# Generate a specific provider from this config
+./scripts/generate-skills.sh generate stripe --config providers.yaml
+```
+
+### Updating an Existing Provider Skill
+
+When updating an existing provider skill (e.g., provider changed their API, new events added, documentation URLs changed):
+
+1. **Update `providers.yaml`** with current documentation URLs and any notes about changes:
+
+```yaml
+providers:
+  - name: stripe
+    displayName: Stripe
+    docs:
+      webhooks: https://docs.stripe.com/webhooks
+      verification: https://docs.stripe.com/webhooks/signatures
+      events: https://docs.stripe.com/api/events/types
+    notes: >
+      Verify against latest Stripe API version. Check for new event types.
+```
+
+2. **Run the review command** to update the skill against the documentation:
+
+```bash
+# Update a single provider
+./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+
+# Update multiple providers
+./scripts/generate-skills.sh review stripe shopify paddle --config providers.yaml --create-pr
+
+# Update all providers (for periodic maintenance)
+./scripts/generate-skills.sh review --config providers.yaml --create-pr
+```
+
+3. **Review the generated PR** and verify changes are accurate
 
 ## Related Resources
 
