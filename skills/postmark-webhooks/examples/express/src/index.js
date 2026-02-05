@@ -132,10 +132,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'postmark-webhook-handler' });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Postmark webhook handler listening on port ${port}`);
-  console.log(`Webhook endpoint: POST /webhooks/postmark?token=<your-token>`);
-});
+// Start server only when run directly (not when imported for testing)
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Postmark webhook handler listening on port ${port}`);
+    console.log(`Webhook endpoint: POST /webhooks/postmark?token=<your-token>`);
+  });
+}
 
 module.exports = app;
