@@ -148,6 +148,19 @@ providers:
         - subscription.created
         - transaction.completed
 
+  - name: replicate
+    displayName: Replicate
+    docs:
+      webhooks: https://replicate.com/docs/webhooks
+    notes: >
+      ML platform for running AI models. Uses Standard Webhooks (Svix) format with headers:
+      webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+      HMAC-SHA256 with base64 encoding. Events: start, output, logs, completed.
+    testScenario:
+      events:
+        - prediction.completed
+        - prediction.output
+
   - name: resend
     displayName: Resend
     docs:
