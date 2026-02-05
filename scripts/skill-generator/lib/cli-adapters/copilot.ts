@@ -6,7 +6,8 @@
 
 import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
 
-const DEFAULT_MODEL = 'claude-opus-4.5';
+// Default model for the GitHub Copilot CLI; can be overridden via options.model
+const DEFAULT_MODEL = 'gpt-4o';
 
 export const copilotAdapter: CliAdapter = {
   name: 'copilot',

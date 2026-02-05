@@ -369,8 +369,8 @@ The generator supports a pluggable CLI adapter system. To add support for a new 
 
 ```typescript
 import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
-import { DEFAULT_MODEL } from './claude';
 
+const DEFAULT_MODEL = 'claude-opus-4-20250514';
 export const myToolAdapter: CliAdapter = {
   name: 'mytool',
   
