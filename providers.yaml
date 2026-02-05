@@ -161,6 +161,21 @@ providers:
         - email.delivered
         - email.bounced
 
+  - name: postmark
+    displayName: Postmark
+    docs:
+      webhooks: https://postmarkapp.com/developer/webhooks/webhooks-overview
+      events: https://postmarkapp.com/developer/webhooks/webhooks-overview
+    notes: >
+      Email delivery platform. Uses Basic Auth or token-based authentication in the webhook URL
+      (not signature verification). Configure webhook URL with credentials like
+      https://username:password@yourdomain.com/webhooks/postmark or use a token query parameter.
+      Events: Bounce, Delivery, Open, Click, SpamComplaint, SubscriptionChange.
+    testScenario:
+      events:
+        - Bounce
+        - Delivery
+
   - name: sendgrid
     displayName: SendGrid
     docs:
