@@ -9,13 +9,11 @@ Contributions to address these items are welcome.
 
 ### Critical
 
-- [ ] **skills/postmark-webhooks/SKILL.md**: The documentation correctly states that Postmark does NOT use signature verification, which aligns with the official documentation. However, the review checklist's focus on signature verification is misleading for this provider.
-  - Suggested fix: No fix needed - the implementation is correct. The review checklist should note that some providers don't use signature verification.
+None - Postmark correctly uses URL-based authentication instead of signature verification, which matches the official documentation.
 
 ### Major
 
-- [ ] **skills/postmark-webhooks/references/overview.md**: Missing 'Inbound' and 'SMTP API Error' webhook event types that are listed in Postmark's official documentation
-  - Suggested fix: Add documentation for 'Inbound' and 'SMTP API Error' webhook types to the overview and examples
+None - Inbound and SMTP API Error event types are documented in overview.md.
 
 ### Minor
 
