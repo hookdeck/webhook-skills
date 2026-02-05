@@ -118,11 +118,13 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 WooCommerce webhook server running on port ${PORT}`);
-  console.log(`📍 Webhook endpoint: http://localhost:${PORT}/webhooks/woocommerce`);
-  console.log('🔒 Make sure to set WOOCOMMERCE_WEBHOOK_SECRET in your environment');
-});
+// Start server only when run directly (not when imported for testing)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 WooCommerce webhook server running on port ${PORT}`);
+    console.log(`📍 Webhook endpoint: http://localhost:${PORT}/webhooks/woocommerce`);
+    console.log('🔒 Make sure to set WOOCOMMERCE_WEBHOOK_SECRET in your environment');
+  });
+}
 
 module.exports = { app, verifyWooCommerceWebhook };
