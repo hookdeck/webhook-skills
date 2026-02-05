@@ -2,7 +2,27 @@
  * Type definitions for the skill generator
  */
 
-export type Command = 'generate' | 'review';
+export type Command = 'generate' | 'review' | 'scenario' | 'list-providers';
+
+/**
+ * Test scenario configuration for agent testing
+ */
+export interface TestScenario {
+  events: string[];       // Events to mention in test prompt
+  prompt?: string;        // Custom prompt template (optional, uses default if not specified)
+  skillName?: string;     // Override skill name (e.g., for hookdeck-event-gateway)
+}
+
+/**
+ * Output of the scenario command - used by test-agent-scenario.sh
+ */
+export interface ScenarioConfig {
+  provider: string;       // Provider name (e.g., "stripe")
+  displayName: string;    // Display name (e.g., "Stripe")
+  framework: string;      // Framework (e.g., "express", "nextjs", "fastapi")
+  skillName: string;      // Skill directory name (e.g., "stripe-webhooks")
+  prompt: string;         // The full prompt to send to the agent
+}
 
 /**
  * Provider configuration (from CLI or config file)
@@ -18,6 +38,7 @@ export interface ProviderConfig {
     [key: string]: string | undefined; // Additional doc URLs (e.g., reference_impl)
   };
   notes?: string;         // Hints for the agent
+  testScenario?: TestScenario; // Configuration for agent testing
 }
 
 /**

@@ -470,12 +470,10 @@ Use this checklist when creating a new provider skill:
 
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
-- [ ] Update `providers.yaml` - Add provider entry with documentation URLs
-- [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
-- [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
+- [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
-- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ### Provider Research (Do This First)
 
@@ -540,9 +538,8 @@ Gather this information:
 6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
-   - `scripts/test-agent-scenario.sh` - Add test scenarios
-   - `.github/workflows/test-examples.yml` - Add provider to test matrices
-8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+   - `providers.yaml` - Add provider entry with `testScenario` field
+8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
 
@@ -714,28 +711,38 @@ cd skills/{provider}-webhooks/examples/express && npm test
 **Run agent integration test:**
 ```bash
 # Dry run (shows what would happen)
-./scripts/test-agent-scenario.sh {provider}-express --dry-run
+./scripts/test-agent-scenario.sh {provider} express --dry-run
 
 # Full test (requires Claude CLI)
-./scripts/test-agent-scenario.sh {provider}-express
+./scripts/test-agent-scenario.sh {provider} express
+
+# List available providers
+./scripts/test-agent-scenario.sh --help
 ```
 
 ### Adding Test Scenarios
 
-When adding a new provider skill, add scenarios to `scripts/test-agent-scenario.sh`:
+When adding a new provider skill, add `testScenario` to the provider entry in `providers.yaml`:
 
-```bash
-# In the usage() function, add:
-echo "  {provider}-express   - {Provider} webhook handling in Express"
-
-# In get_scenario_config(), add:
-{provider}-express)
-    PROVIDER="{provider}"
-    FRAMEWORK="express"
-    SKILL_NAME="{provider}-webhooks"
-    PROMPT="Add {Provider} webhook handling to my Express app. I want to handle {common_event} events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
-    ;;
+```yaml
+providers:
+  - name: {provider}
+    displayName: {Provider}
+    docs:
+      webhooks: https://...
+    notes: >
+      ...
+    testScenario:
+      events:
+        - event.type.one
+        - event.type.two
+      # Optional: custom prompt (uses default template if not specified)
+      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+      # Optional: override skill name (default is {name}-webhooks)
+      # skillName: custom-skill-name
 ```
+
+The test script reads scenarios from `providers.yaml` dynamically - no script modifications needed.
 
 ## Reviewing a Provider Skill or PR
 
@@ -761,9 +768,7 @@ This runs all example tests and uses Claude to review the skill against provider
 The automated review checks skill content and tests, but does **not** verify integration with repository infrastructure. Manually confirm:
 
 1. **README.md** — Provider added to Provider Skills table
-2. **providers.yaml** — Provider entry added with documentation URLs
-3. **scripts/test-agent-scenario.sh** — At least one scenario added (e.g. `{provider}-express`) in both `usage()` and `get_scenario_config()`
-4. **.github/workflows/test-examples.yml** — Provider added to all three test matrices (express, nextjs, fastapi)
+2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
 
 ### Step 3: Spot-Check Skill Content
 

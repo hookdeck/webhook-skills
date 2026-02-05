@@ -22,7 +22,8 @@ import type {
   OperationResult,
   Logger,
 } from './lib/types';
-import { mergeProviderConfigs, skillExists } from './lib/config';
+import { mergeProviderConfigs, skillExists, loadConfigFile } from './lib/config';
+import { getScenarioConfig, listProvidersFormatted, SUPPORTED_FRAMEWORKS } from './lib/scenario';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
 import { setCachedVersions } from './lib/cli';
@@ -828,6 +829,45 @@ async function handleReview(
   process.exit(hasUnfixedIssues ? 1 : 0);
 }
 
+/**
+ * Scenario command handler - outputs JSON config for test-agent-scenario.sh
+ */
+async function handleScenario(
+  provider: string,
+  framework: string,
+  options: { config: string }
+): Promise<void> {
+  const config = getScenarioConfig(provider, framework, options.config);
+  
+  if (!config) {
+    process.exit(1);
+  }
+  
+  // Output JSON for bash script to parse
+  console.log(JSON.stringify(config));
+}
+
+/**
+ * List providers command handler
+ */
+async function handleListProviders(
+  options: { config: string; json?: boolean }
+): Promise<void> {
+  if (options.json) {
+    const providers = loadConfigFile(options.config);
+    const list = Array.from(providers.values()).map(p => ({
+      name: p.name,
+      displayName: p.displayName,
+      hasTestScenario: !!p.testScenario,
+    }));
+    console.log(JSON.stringify(list, null, 2));
+  } else {
+    console.log('Available providers:\n');
+    console.log(listProvidersFormatted(options.config));
+    console.log(`\nSupported frameworks: ${SUPPORTED_FRAMEWORKS.join(', ')}`);
+  }
+}
+
 // CLI setup
 const program = new Command();
 
@@ -869,5 +909,20 @@ program
   .option('--working-dir <path>', 'Review skill in specified directory (skips skill existence check and worktree creation)')
   .option('--no-worktree', 'Review in current directory (shorthand for --working-dir .)')
   .action(handleReview);
+
+program
+  .command('scenario')
+  .description('Get scenario config for agent testing (outputs JSON)')
+  .argument('<provider>', 'Provider name (e.g., stripe, shopify)')
+  .argument('<framework>', `Framework (${SUPPORTED_FRAMEWORKS.join(', ')})`)
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .action(handleScenario);
+
+program
+  .command('list-providers')
+  .description('List available providers from config file')
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .option('--json', 'Output as JSON', false)
+  .action(handleListProviders);
 
 program.parse();

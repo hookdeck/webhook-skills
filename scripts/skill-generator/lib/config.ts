@@ -5,7 +5,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, isAbsolute } from 'path';
 import { parse as parseYaml } from 'yaml';
-import type { ProviderConfig } from './types';
+import type { ProviderConfig, TestScenario } from './types';
 
 // Root directory of the repository (two levels up from lib/)
 const ROOT_DIR = join(__dirname, '..', '..', '..');
@@ -136,6 +136,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         displayName: (config.displayName as string) || toDisplayName(name),
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
+        testScenario: config.testScenario as TestScenario | undefined,
       });
     }
   } else {
@@ -153,6 +154,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         displayName: (config.displayName as string) || toDisplayName(key),
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
+        testScenario: config.testScenario as TestScenario | undefined,
       });
     }
   }

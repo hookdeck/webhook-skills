@@ -221,16 +221,6 @@ validate_integration() {
     errors+=("providers.yaml not found at repository root")
   fi
   
-  # Check test-examples.yml has provider in matrices (or uses dynamic detection)
-  # If workflow uses dynamic detection (detect-changes job), skip hardcoded name check
-  if grep -q "detect-changes" "$ROOT_DIR/.github/workflows/test-examples.yml" || \
-     grep -q "ls -d skills/\*-webhooks" "$ROOT_DIR/.github/workflows/test-examples.yml"; then
-    # Workflow uses dynamic detection - no hardcoded check needed
-    :
-  elif ! grep -q "$provider" "$ROOT_DIR/.github/workflows/test-examples.yml"; then
-    errors+=("$provider not found in .github/workflows/test-examples.yml matrices")
-  fi
-  
   # Check test-agent-scenario.sh has at least one scenario
   if ! grep -q "$provider_name" "$ROOT_DIR/scripts/test-agent-scenario.sh"; then
     errors+=("No scenario for $provider_name in scripts/test-agent-scenario.sh")
@@ -335,8 +325,7 @@ if [ ${#FAILED_PROVIDERS[@]} -gt 0 ]; then
   log "  1. All required skill files (SKILL.md, references/, examples/)"
   log "  2. README.md - Add provider to Provider Skills table"
   log "  3. providers.yaml - Add provider entry with documentation URLs"
-  log "  4. .github/workflows/test-examples.yml - Add provider to all matrices"
-  log "  5. scripts/test-agent-scenario.sh - Add at least one test scenario"
+  log "  4. scripts/test-agent-scenario.sh - Add at least one test scenario"
   exit 1
 else
   log "${GREEN}All ${#PASSED_PROVIDERS[@]} provider(s) passed validation!${NC}"
