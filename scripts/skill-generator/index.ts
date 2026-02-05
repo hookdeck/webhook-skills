@@ -7,7 +7,7 @@
  */
 
 import { config } from 'dotenv';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import chalk from 'chalk';
 import pLimit from 'p-limit';
 import { mkdirSync, writeFileSync, appendFileSync, existsSync } from 'fs';
@@ -22,10 +22,12 @@ import type {
   OperationResult,
   Logger,
 } from './lib/types';
-import { mergeProviderConfigs, skillExists } from './lib/config';
+import { mergeProviderConfigs, skillExists, loadConfigFile } from './lib/config';
+import { getScenarioConfig, listProvidersFormatted, SUPPORTED_FRAMEWORKS } from './lib/scenario';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
-import { DEFAULT_MODEL, setCachedVersions } from './lib/claude';
+import { setCachedVersions } from './lib/cli';
+import { DEFAULT_CLI_TOOL, AVAILABLE_CLI_TOOLS } from './lib/cli-adapters';
 import { getLatestVersions } from './lib/versions';
 import {
   createWorktree,
@@ -143,14 +145,41 @@ async function handleGenerate(
     maxIterations: string;
     createPr: boolean | string;
     model: string;
+    cli: string;
+    workingDir?: string;  // Generate in this directory (skip worktree creation)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🚀 Skill Generator - Generate Mode\n'));
+  
+  // Validate mutually exclusive flags
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
+    console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
+    console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
+    process.exit(1);
+  }
+  
+  // Handle --no-worktree as shorthand for --working-dir .
+  if (options.worktree === false) {
+    options.workingDir = '.';
+  }
+  
+  // When using working directory mode, only single provider is supported
+  const useProvidedDir = !!options.workingDir;
   
   const providerConfigs = mergeProviderConfigs(providers, options.config);
   
   if (providerConfigs.length === 0) {
     console.log(chalk.red('No providers specified. Use --config or provide provider names.'));
+    process.exit(1);
+  }
+  
+  // Validate single provider when using working directory mode
+  if (useProvidedDir && providerConfigs.length > 1) {
+    const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
+    console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
+    console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
     process.exit(1);
   }
   
@@ -160,9 +189,13 @@ async function handleGenerate(
     : providerConfigs.length;
   
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
-  if (providerConfigs.length > 1) {
+  if (!useProvidedDir && providerConfigs.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
+  }
+  if (useProvidedDir) {
+    console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
   }
   console.log(chalk.blue(`Dry run: ${options.dryRun}`));
   console.log(chalk.gray(`\nNote: Generation can take 5-15 minutes per provider depending on model.\n`));
@@ -177,66 +210,124 @@ async function handleGenerate(
     maxIterations: parseInt(options.maxIterations, 10),
     createPr: normalizeCreatePr(options.createPr),
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!generateOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
-  // PHASE 1: Create all worktrees SEQUENTIALLY to avoid .git/config lock contention
-  console.log(chalk.gray('Creating worktrees...\n'));
-  const worktrees: Map<string, { path: string; branch: string; logger: Logger; logFile: string }> = new Map();
+  // Get repo info for PR creation
+  const repoInfo = await getRepoInfo(ROOT_DIR);
+  if (!repoInfo && generateOptions.createPr) {
+    console.log(chalk.red('Could not determine repository owner/name from git remote'));
+    process.exit(1);
+  }
   
-  for (const provider of providerConfigs) {
+  // Working directories map - may be user-provided directories or auto-created worktrees
+  const workDirs: Map<string, { path: string; branch: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
+  
+  if (useProvidedDir) {
+    // Use the provided working directory (no worktree creation)
+    const provider = providerConfigs[0];
     const logFile = join(resultsDir, `${provider.name}.log`);
     const logger = createLogger(provider.name, logFile);
-    const branchName = `feat/${provider.name}-webhooks`;
     
-    logger.info(`Creating worktree for ${provider.name}...`);
-    const worktreeResult = await createWorktree(ROOT_DIR, provider.name, branchName, {
-      logger,
-      baseBranch: generateOptions.baseBranch,
-      dryRun: generateOptions.dryRun,
-    });
+    // Resolve working directory path (relative paths are relative to repo root)
+    const { resolve, isAbsolute } = await import('path');
+    const resolvedWorkingDir = isAbsolute(options.workingDir!)
+      ? options.workingDir!
+      : resolve(ROOT_DIR, options.workingDir!);
     
-    if (!worktreeResult.success) {
-      logger.error(`Failed to create worktree: ${worktreeResult.error}`);
-      continue;
+    // Get current branch name from the directory (if it's a git repo)
+    const { simpleGit } = await import('simple-git');
+    const git = simpleGit(resolvedWorkingDir);
+    let branchName: string;
+    try {
+      const branchResult = await git.branch();
+      branchName = branchResult.current;
+    } catch {
+      branchName = `feat/${provider.name}-webhooks`;
     }
     
-    worktrees.set(provider.name, {
-      path: worktreeResult.path!,
+    workDirs.set(provider.name, {
+      path: resolvedWorkingDir,
       branch: branchName,
       logger,
       logFile,
+      isExternal: true,  // Don't clean up user-provided directories
     });
+    
+    logger.info(`Using directory: ${options.workingDir}`);
+    logger.info(`Current branch: ${branchName}`);
+  } else {
+    // Create worktrees for parallel execution (sequential creation to avoid .git/config lock contention)
+    console.log(chalk.gray('Creating worktrees...\n'));
+    
+    for (const provider of providerConfigs) {
+      const logFile = join(resultsDir, `${provider.name}.log`);
+      const logger = createLogger(provider.name, logFile);
+      const branchName = `feat/${provider.name}-webhooks`;
+      
+      logger.info(`Creating worktree for ${provider.name}...`);
+      const worktreeResult = await createWorktree(ROOT_DIR, provider.name, branchName, {
+        logger,
+        baseBranch: generateOptions.baseBranch,
+        dryRun: generateOptions.dryRun,
+      });
+      
+      if (!worktreeResult.success) {
+        logger.error(`Failed to create worktree: ${worktreeResult.error}`);
+        continue;
+      }
+      
+      workDirs.set(provider.name, {
+        path: worktreeResult.path!,
+        branch: branchName,
+        logger,
+        logFile,
+        isExternal: false,
+      });
+    }
   }
   
-  // PHASE 2: Run generation IN PARALLEL now that worktrees exist
+  // Run generation for each provider
   const limit = pLimit(generateOptions.parallel);
   
   const results = await Promise.all(
     providerConfigs.map(provider =>
       limit(async () => {
-        const worktree = worktrees.get(provider.name);
+        const workDir = workDirs.get(provider.name);
         
-        if (!worktree) {
-          // Worktree creation failed earlier
+        if (!workDir) {
+          // Working directory setup failed earlier
           return {
             provider: provider.name,
             command: 'generate',
             success: false,
-            error: 'Worktree creation failed',
+            error: 'Working directory setup failed',
             phases: {
               generation: { passed: false },
               testing: { passed: false },
@@ -250,7 +341,7 @@ async function handleGenerate(
           } as OperationResult;
         }
         
-        const { logger, logFile, path: worktreePath, branch: branchName } = worktree;
+        const { logger, logFile, path: workDirPath, branch: branchName } = workDir;
         
         logger.info(`Starting generation for ${provider.displayName || provider.name}`);
         
@@ -258,7 +349,7 @@ async function handleGenerate(
           rootDir: ROOT_DIR,
           logger,
           logFile,
-          worktreePath,
+          worktreePath: workDirPath,
           branchName,
           isParallel: providerConfigs.length > 1,
         });
@@ -312,10 +403,25 @@ async function handleReview(
     createPr: boolean | string;
     branchPrefix: string;
     model: string;
+    cli: string;
     workingDir?: string;  // Review in this directory (any git checkout, worktree, or local path)
+    worktree?: boolean;   // Set to false by --no-worktree flag
   }
 ): Promise<void> {
   console.log(chalk.bold('\n🔍 Skill Generator - Review Mode\n'));
+  
+  // Validate mutually exclusive flags
+  // Note: --no-worktree sets options.worktree = false (Commander.js negatable boolean pattern)
+  if (options.workingDir && options.worktree === false) {
+    console.log(chalk.red('Error: --working-dir and --no-worktree cannot be used together.'));
+    console.log(chalk.gray('Use --working-dir <path> to specify a directory, or --no-worktree to use the current directory.'));
+    process.exit(1);
+  }
+  
+  // Handle --no-worktree as shorthand for --working-dir .
+  if (options.worktree === false) {
+    options.workingDir = '.';
+  }
   
   // When --working-dir is specified, review in that directory instead of creating a worktree
   const useProvidedDir = !!options.workingDir;
@@ -330,12 +436,15 @@ async function handleReview(
   // When using provided directory, skip the skill existence check in main repo
   let existingProviders: typeof providerConfigs;
   if (useProvidedDir) {
+    // Validate single provider when using working directory mode
+    if (providerConfigs.length > 1) {
+      const flagUsed = options.worktree === false ? '--no-worktree' : '--working-dir';
+      console.log(chalk.red(`Error: ${flagUsed} only supports a single provider.`));
+      console.log(chalk.gray('For multiple providers, use the default worktree mode for parallel processing.'));
+      process.exit(1);
+    }
     // Trust that the skill exists in the provided directory
     existingProviders = providerConfigs;
-    if (providerConfigs.length > 1) {
-      console.log(chalk.yellow('Warning: --working-dir only supports single provider. Using first one.'));
-      existingProviders = [providerConfigs[0]];
-    }
     // Will resolve relative paths later when we have the path module
     console.log(chalk.blue(`Working directory: ${options.workingDir}${options.workingDir!.startsWith('/') ? '' : ' (relative to repo root)'}`));
   } else {
@@ -370,6 +479,7 @@ async function handleReview(
     : existingProviders.length;
   
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
+  console.log(chalk.blue(`CLI tool: ${options.cli}`));
   console.log(chalk.blue(`Model: ${options.model}`));
   if (!useProvidedDir && existingProviders.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
@@ -385,20 +495,33 @@ async function handleReview(
     createPr: normalizeCreatePr(options.createPr),
     branchPrefix: options.branchPrefix,
     model: options.model,
+    cliTool: options.cli,
   };
   
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts
-  console.log(chalk.blue('Querying package managers for latest stable versions...'));
-  try {
-    const versions = await getLatestVersions();
-    setCachedVersions(versions);
-    console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
-    console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
-  } catch (error) {
-    console.log(chalk.yellow('  Warning: Could not query package versions, using defaults\n'));
+  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  if (!reviewOptions.dryRun) {
+    console.log(chalk.blue('Querying package managers for latest stable versions...'));
+    const VERSIONS_TIMEOUT = 30000; // 30 seconds
+    try {
+      const versions = await Promise.race([
+        getLatestVersions(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
+        ),
+      ]);
+      setCachedVersions(versions);
+      console.log(chalk.green(`  npm: ${Object.entries(versions.npm).map(([k, v]) => `${k}@${v}`).join(', ')}`));
+      console.log(chalk.green(`  pip: ${Object.entries(versions.pip).map(([k, v]) => `${k}@${v}`).join(', ')}\n`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log(chalk.yellow(`  Warning: Could not query package versions: ${errorMessage}`));
+      console.log(chalk.yellow('  Using default versions. Ensure network access for accurate versions.\n'));
+    }
+  } else {
+    console.log(chalk.gray('Skipping version lookup (dry-run mode)\n'));
   }
   
   // Get repo info for PR creation
@@ -408,10 +531,11 @@ async function handleReview(
     process.exit(1);
   }
   
-  const worktrees: Map<string, { path: string; branch: string; worktreeId: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
+  // Working directories map - may be user-provided directories or auto-created worktrees
+  const workDirs: Map<string, { path: string; branch: string; worktreeId: string; logger: Logger; logFile: string; isExternal: boolean }> = new Map();
   
   if (useProvidedDir) {
-    // Use the provided working directory
+    // Use the provided working directory (no worktree creation)
     const provider = existingProviders[0];
     const logFile = join(resultsDir, `${provider.name}.log`);
     const logger = createLogger(provider.name, logFile);
@@ -433,7 +557,7 @@ async function handleReview(
       branchName = `${reviewOptions.branchPrefix}/${provider.name}-webhooks`;
     }
     
-    worktrees.set(provider.name, {
+    workDirs.set(provider.name, {
       path: resolvedWorkingDir,
       branch: branchName,
       worktreeId: 'external',
@@ -445,7 +569,7 @@ async function handleReview(
     logger.info(`Using directory: ${options.workingDir}`);
     logger.info(`Current branch: ${branchName}`);
   } else {
-    // PHASE 1: Create worktrees SEQUENTIALLY (or use existing ones from generate)
+    // Create worktrees for parallel execution (or use existing ones from generate)
     console.log(chalk.gray('Setting up worktrees...\n'));
     
     for (const provider of existingProviders) {
@@ -471,7 +595,7 @@ async function handleReview(
           branchName = `feat/${provider.name}-webhooks`;
         }
         
-        worktrees.set(provider.name, {
+        workDirs.set(provider.name, {
           path: existingWorktreePath,
           branch: branchName,
           worktreeId: provider.name, // worktree ID from generate
@@ -499,7 +623,7 @@ async function handleReview(
         continue;
       }
       
-      worktrees.set(provider.name, {
+      workDirs.set(provider.name, {
         path: worktreeResult.path!,
         branch: branchName,
         worktreeId,
@@ -510,21 +634,21 @@ async function handleReview(
     }
   }
   
-  // PHASE 2: Run reviews IN PARALLEL now that worktrees exist
+  // Run reviews for each provider
   const limit = pLimit(reviewOptions.parallel);
   
   const results = await Promise.all(
     existingProviders.map(provider =>
       limit(async () => {
-        const worktree = worktrees.get(provider.name);
+        const workDir = workDirs.get(provider.name);
         
-        if (!worktree) {
-          // Worktree creation failed earlier
+        if (!workDir) {
+          // Working directory setup failed earlier
           return {
             provider: provider.name,
             command: 'review',
             success: false,
-            error: 'Worktree creation failed',
+            error: 'Working directory setup failed',
             phases: {
               testing: { passed: false },
               review: { passed: false },
@@ -537,7 +661,7 @@ async function handleReview(
           } as OperationResult;
         }
         
-        const { logger, logFile, path: workingDir, branch: branchName, worktreeId, isExternal } = worktree;
+        const { logger, logFile, path: workingDir, branch: branchName, worktreeId, isExternal } = workDir;
         const startTime = Date.now();
         
         logger.info(`Starting review for ${provider.displayName || provider.name}`);
@@ -548,6 +672,7 @@ async function handleReview(
           dryRun: reviewOptions.dryRun,
           maxIterations: reviewOptions.maxIterations,
           model: reviewOptions.model,
+          cliTool: reviewOptions.cliTool,
           parallel: existingProviders.length > 1,
         });
         
@@ -704,20 +829,60 @@ async function handleReview(
   process.exit(hasUnfixedIssues ? 1 : 0);
 }
 
+/**
+ * Scenario command handler - outputs JSON config for test-agent-scenario.sh
+ */
+async function handleScenario(
+  provider: string,
+  framework: string,
+  options: { config: string }
+): Promise<void> {
+  const config = getScenarioConfig(provider, framework, options.config);
+  
+  if (!config) {
+    process.exit(1);
+  }
+  
+  // Output JSON for bash script to parse
+  console.log(JSON.stringify(config));
+}
+
+/**
+ * List providers command handler
+ */
+async function handleListProviders(
+  options: { config: string; json?: boolean }
+): Promise<void> {
+  if (options.json) {
+    const providers = loadConfigFile(options.config);
+    const list = Array.from(providers.values()).map(p => ({
+      name: p.name,
+      displayName: p.displayName,
+      hasTestScenario: !!p.testScenario,
+    }));
+    console.log(JSON.stringify(list, null, 2));
+  } else {
+    console.log('Available providers:\n');
+    console.log(listProvidersFormatted(options.config));
+    console.log(`\nSupported frameworks: ${SUPPORTED_FRAMEWORKS.join(', ')}`);
+  }
+}
+
 // CLI setup
 const program = new Command();
 
 program
   .name('skill-generator')
-  .description('Generate and review webhook skills using Claude CLI')
+  .description('Generate and review webhook skills using AI CLI tools')
   .version('1.0.0');
 
 program
   .command('generate')
   .description('Generate new webhook skills')
-  .argument('[providers...]', 'Provider names (e.g., elevenlabs, "openai=https://docs...")')
+  .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://github.com/elevenlabs/elevenlabs-js|Official SDK supports webhook verification)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
+  .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--base-branch <branch>', 'Branch to create from', 'main')
@@ -725,20 +890,39 @@ program
   .option('--skip-review', 'Skip the review/validation phase', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
+  .option('--working-dir <path>', 'Generate skill in specified directory (skips worktree creation)')
+  .option('--no-worktree', 'Generate in current directory (shorthand for --working-dir .)')
   .action(handleGenerate);
 
 program
   .command('review')
   .description('Review and improve existing webhook skills')
-  .argument('[providers...]', 'Provider names to review')
+  .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://.../elevenlabs-js|Prefer SDK verification in skill)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--model <model>', 'Claude model to use', DEFAULT_MODEL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
+  .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
   .option('--max-iterations <n>', 'Max review/fix cycles', '3')
   .option('--create-pr [type]', 'Push and create PR (true or "draft")', false)
   .option('--branch-prefix <prefix>', 'Prefix for improvement branches', 'improve')
   .option('--working-dir <path>', 'Review skill in specified directory (skips skill existence check and worktree creation)')
+  .option('--no-worktree', 'Review in current directory (shorthand for --working-dir .)')
   .action(handleReview);
+
+program
+  .command('scenario')
+  .description('Get scenario config for agent testing (outputs JSON)')
+  .argument('<provider>', 'Provider name (e.g., stripe, shopify)')
+  .argument('<framework>', `Framework (${SUPPORTED_FRAMEWORKS.join(', ')})`)
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .action(handleScenario);
+
+program
+  .command('list-providers')
+  .description('List available providers from config file')
+  .requiredOption('--config <file>', 'Load provider configs from YAML file')
+  .option('--json', 'Output as JSON', false)
+  .action(handleListProviders);
 
 program.parse();

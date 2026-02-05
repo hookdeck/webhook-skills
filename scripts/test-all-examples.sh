@@ -22,7 +22,7 @@ SKIPPED=0
 FAILED_TESTS=()
 
 # Providers to test
-PROVIDERS=("stripe-webhooks" "shopify-webhooks" "github-webhooks" "hookdeck-event-gateway")
+PROVIDERS=("stripe-webhooks" "shopify-webhooks" "github-webhooks" "hookdeck-event-gateway" "deepgram-webhooks")
 
 # Frameworks to test
 FRAMEWORKS=("express" "nextjs" "fastapi")

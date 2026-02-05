@@ -147,7 +147,8 @@ metadata:
 
 - Keep SKILL.md under 500 lines / < 5,000 tokens
 - Put detailed reference material in `references/` files
-- Use relative paths when referencing other files
+- **Links within the same skill:** Use relative paths (e.g. `references/verification.md`, `examples/express/`).
+- **Links to another skill:** Use absolute GitHub URLs so links resolve when only one skill is installed. Use the `main` branch: `https://github.com/hookdeck/webhook-skills/blob/main/skills/{skill-name}/…` for a file, or `https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}` for the skill root.
 
 ### File References from SKILL.md
 
@@ -248,7 +249,7 @@ When generating a new skill, search the `skills/` directory to find other existi
 - **`webhook-handler-patterns`** — For idempotency, error handling, retry logic
 - **`hookdeck-event-gateway`** — For production webhook infrastructure
 
-Use relative links (`../skill-name/`) with brief descriptions.
+Use **absolute GitHub URLs** for cross-skill links so they resolve when only one skill is installed: `https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}` with brief descriptions.
 
 ## Examples Structure
 
@@ -469,10 +470,10 @@ Use this checklist when creating a new provider skill:
 
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
-- [ ] Update `scripts/test-agent-scenario.sh` - Add test scenarios for the new provider
-- [ ] Update `.github/workflows/test-examples.yml` - Add provider to all three test matrices (express, nextjs, fastapi)
+- [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
 - [ ] Run example tests: `cd examples/express && npm test`
-- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+- [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
+- [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ### Provider Research (Do This First)
 
@@ -537,9 +538,8 @@ Gather this information:
 6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
-   - `scripts/test-agent-scenario.sh` - Add test scenarios
-   - `.github/workflows/test-examples.yml` - Add provider to test matrices
-8. Test with agent: `./scripts/test-agent-scenario.sh {provider}-express --dry-run`
+   - `providers.yaml` - Add provider entry with `testScenario` field
+8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
 
@@ -588,9 +588,9 @@ Every SKILL.md must include a Related Skills section at the end. This creates se
 ```markdown
 ## Related Skills
 
-- [other-provider-webhooks](../other-provider-webhooks/) - Brief description
-- [webhook-handler-patterns](../webhook-handler-patterns/) - Idempotency, error handling, retry logic
-- [hookdeck-event-gateway](../hookdeck-event-gateway/) - Production webhook infrastructure
+- [other-provider-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/other-provider-webhooks) - Brief description
+- [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) - Idempotency, error handling, retry logic
+- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) - Production webhook infrastructure
 ```
 
 Always include:
@@ -598,7 +598,16 @@ Always include:
 - **`webhook-handler-patterns`** — For cross-cutting concerns
 - **`hookdeck-event-gateway`** — For production infrastructure
 
-Use relative links (`../skill-name/`) so links work from any context.
+Use **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`) so links resolve when only one skill is installed.
+
+### Recommended: webhook-handler-patterns (for provider and infrastructure skills)
+
+Provider skills (e.g. stripe-webhooks, shopify-webhooks) and the hookdeck-event-gateway skill should include a **Recommended: webhook-handler-patterns** section before Related Skills. This tells users and agents to install the patterns skill alongside the provider skill, and links to the key references with absolute GitHub URLs so the content is reachable even when only the provider skill is installed:
+
+- [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md)
+- [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md)
+- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md)
 
 ### Naming Conventions for Discoverability
 
@@ -702,28 +711,139 @@ cd skills/{provider}-webhooks/examples/express && npm test
 **Run agent integration test:**
 ```bash
 # Dry run (shows what would happen)
-./scripts/test-agent-scenario.sh {provider}-express --dry-run
+./scripts/test-agent-scenario.sh {provider} express --dry-run
 
 # Full test (requires Claude CLI)
-./scripts/test-agent-scenario.sh {provider}-express
+./scripts/test-agent-scenario.sh {provider} express
+
+# List available providers
+./scripts/test-agent-scenario.sh --help
 ```
 
 ### Adding Test Scenarios
 
-When adding a new provider skill, add scenarios to `scripts/test-agent-scenario.sh`:
+When adding a new provider skill, add `testScenario` to the provider entry in `providers.yaml`:
+
+```yaml
+providers:
+  - name: {provider}
+    displayName: {Provider}
+    docs:
+      webhooks: https://...
+    notes: >
+      ...
+    testScenario:
+      events:
+        - event.type.one
+        - event.type.two
+      # Optional: custom prompt (uses default template if not specified)
+      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+      # Optional: override skill name (default is {name}-webhooks)
+      # skillName: custom-skill-name
+```
+
+The test script reads scenarios from `providers.yaml` dynamically - no script modifications needed.
+
+## Reviewing a Provider Skill or PR
+
+When reviewing a provider skill (e.g. from a pull request or before merging):
+
+### Step 1: Run Automated Review (Primary)
+
+First, checkout the PR branch and run the automated review:
 
 ```bash
-# In the usage() function, add:
-echo "  {provider}-express   - {Provider} webhook handling in Express"
+# Checkout the PR branch
+git fetch origin pull/<PR_NUMBER>/head:pr-<PR_NUMBER>
+git checkout pr-<PR_NUMBER>
 
-# In get_scenario_config(), add:
-{provider}-express)
-    PROVIDER="{provider}"
-    FRAMEWORK="express"
-    SKILL_NAME="{provider}-webhooks"
-    PROMPT="Add {Provider} webhook handling to my Express app. I want to handle {common_event} events. If you use any skills to help with this, add a comment in the code noting which skill(s) you referenced."
-    ;;
+# Run automated review (runs tests + AI review against provider docs)
+./scripts/generate-skills.sh review {provider} --no-worktree
 ```
+
+This runs all example tests and uses Claude to review the skill against provider documentation for accuracy. See [CONTRIBUTING.md](CONTRIBUTING.md) for acceptance thresholds (0 critical, ≤1 major, ≤2 minor issues).
+
+### Step 2: Verify Integration (Not Covered by Automation)
+
+The automated review checks skill content and tests, but does **not** verify integration with repository infrastructure. Manually confirm:
+
+1. **README.md** — Provider added to Provider Skills table
+2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
+
+### Step 3: Spot-Check Skill Content
+
+Verify SKILL.md has required sections:
+- Frontmatter with name, description, license, metadata
+- "When to Use This Skill" section
+- "Resources" or "Reference Materials" section
+- "Related Skills" with **absolute GitHub URLs** (`https://github.com/hookdeck/webhook-skills/tree/main/skills/{skill-name}`)
+- For provider skills: "Recommended: webhook-handler-patterns" section
+
+### Quick Commands
+
+```bash
+# Run tests for a specific skill
+cd skills/{provider}-webhooks/examples/express && npm test
+cd skills/{provider}-webhooks/examples/nextjs && npm test
+cd skills/{provider}-webhooks/examples/fastapi && pytest test_webhook.py -v
+
+# Run all example tests
+./scripts/test-all-examples.sh
+```
+
+Ensure test scripts exit properly (e.g. `"test": "vitest run"` not `"vitest"`).
+
+## Provider Documentation Registry
+
+The file `providers.yaml` (at repo root) is the authoritative registry of all webhook providers and their official documentation URLs.
+
+**When to update:**
+- Adding a new provider skill — add entry with documentation URLs
+- Reviewing/updating skills — ensure documentation URLs are current
+- Provider changes their docs — update URLs
+
+**Usage:**
+
+```bash
+# Review all providers against their official docs
+./scripts/generate-skills.sh review --config providers.yaml
+
+# Generate a specific provider from this config
+./scripts/generate-skills.sh generate stripe --config providers.yaml
+```
+
+### Updating an Existing Provider Skill
+
+When updating an existing provider skill (e.g., provider changed their API, new events added, documentation URLs changed):
+
+1. **Update `providers.yaml`** with current documentation URLs and any notes about changes:
+
+```yaml
+providers:
+  - name: stripe
+    displayName: Stripe
+    docs:
+      webhooks: https://docs.stripe.com/webhooks
+      verification: https://docs.stripe.com/webhooks/signatures
+      events: https://docs.stripe.com/api/events/types
+    notes: >
+      Verify against latest Stripe API version. Check for new event types.
+```
+
+2. **Run the review command** to update the skill against the documentation:
+
+```bash
+# Update a single provider
+./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+
+# Update multiple providers
+./scripts/generate-skills.sh review stripe shopify paddle --config providers.yaml --create-pr
+
+# Update all providers (for periodic maintenance)
+./scripts/generate-skills.sh review --config providers.yaml --create-pr
+```
+
+3. **Review the generated PR** and verify changes are accurate
 
 ## Related Resources
 

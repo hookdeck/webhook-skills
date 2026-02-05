@@ -5,14 +5,22 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, isAbsolute } from 'path';
 import { parse as parseYaml } from 'yaml';
-import type { ProviderConfig } from './types';
+import type { ProviderConfig, TestScenario } from './types';
 
 // Root directory of the repository (two levels up from lib/)
 const ROOT_DIR = join(__dirname, '..', '..', '..');
 
 /**
- * Parse a provider argument that may include a docs URL
- * Format: "provider" or "provider=https://docs.example.com"
+ * Parse a provider argument that may include a docs URL and optional notes
+ * Formats:
+ *   - "provider" — name only
+ *   - "provider=https://docs.example.com" — one URL (used as webhooks reference)
+ *   - "provider=https://docs.example.com|Optional context for the LLM" — URL + notes
+ *
+ * Pipe (|) is safe as delimiter: it is not allowed unencoded in URLs (RFC 3986; use %7C if needed).
+ *
+ * Notes are passed to the prompt as "Important context:" so you can e.g. say
+ * "Official SDK supports webhook verification; prefer documenting the SDK method."
  */
 export function parseProviderArg(arg: string): ProviderConfig {
   const equalIndex = arg.indexOf('=');
@@ -25,9 +33,12 @@ export function parseProviderArg(arg: string): ProviderConfig {
     };
   }
   
-  // Provider with docs URL
+  // Provider with docs URL (and optional notes after |)
   const name = arg.slice(0, equalIndex);
-  const docsUrl = arg.slice(equalIndex + 1);
+  const value = arg.slice(equalIndex + 1);
+  const pipeIndex = value.indexOf('|');
+  const docsUrl = pipeIndex === -1 ? value : value.slice(0, pipeIndex);
+  const notes = pipeIndex === -1 ? undefined : value.slice(pipeIndex + 1).trim() || undefined;
   
   return {
     name: normalizeProviderName(name),
@@ -35,6 +46,7 @@ export function parseProviderArg(arg: string): ProviderConfig {
     docs: {
       webhooks: docsUrl,
     },
+    ...(notes && { notes }),
   };
 }
 
@@ -124,6 +136,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         displayName: (config.displayName as string) || toDisplayName(name),
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
+        testScenario: config.testScenario as TestScenario | undefined,
       });
     }
   } else {
@@ -141,6 +154,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         displayName: (config.displayName as string) || toDisplayName(key),
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
+        testScenario: config.testScenario as TestScenario | undefined,
       });
     }
   }
