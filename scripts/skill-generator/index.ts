@@ -7,7 +7,7 @@
  */
 
 import { config } from 'dotenv';
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import chalk from 'chalk';
 import pLimit from 'p-limit';
 import { mkdirSync, writeFileSync, appendFileSync, existsSync } from 'fs';
@@ -841,7 +841,7 @@ program
   .description('Generate new webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://github.com/elevenlabs/elevenlabs-js|Official SDK supports webhook verification)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--cli <tool>', `CLI tool to use (${AVAILABLE_CLI_TOOLS.join(', ')})`, DEFAULT_CLI_TOOL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
   .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
@@ -859,7 +859,7 @@ program
   .description('Review and improve existing webhook skills')
   .argument('[providers...]', 'Provider names, or provider=url, or provider=url|notes (e.g. elevenlabs=https://.../elevenlabs-js|Prefer SDK verification in skill)')
   .option('--config <file>', 'Load provider configs from YAML file')
-  .option('--cli <tool>', `CLI tool to use (${AVAILABLE_CLI_TOOLS.join(', ')})`, DEFAULT_CLI_TOOL)
+  .addOption(new Option('--cli <tool>', 'CLI tool to use').choices(AVAILABLE_CLI_TOOLS).default(DEFAULT_CLI_TOOL))
   .option('--model <model>', "Model to use (defaults to CLI tool's default model)", undefined)
   .option('--parallel <n>', 'Max concurrent agents (default: all providers)')
   .option('--dry-run', 'Show what would be done without executing', false)
