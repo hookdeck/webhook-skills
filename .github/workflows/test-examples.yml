@@ -28,7 +28,7 @@ jobs:
             echo "run_all=true" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
             # Return all providers as JSON array
-            PROVIDERS=$(ls -d skills/*-webhooks skills/hookdeck-event-gateway 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            PROVIDERS=$(ls -d skills/*-webhooks 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n") | map(select(length > 0))')
             echo "providers=$PROVIDERS" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -45,7 +45,7 @@ jobs:
             grep -E '^skills/[^/]+/' | \
             sed 's|skills/\([^/]*\)/.*|\1|' | \
             sort -u | \
-            grep -E '(-webhooks|hookdeck-event-gateway)$' || true)
+            grep -E '(-webhooks)$' || true)
           
           if [ -z "$CHANGED_PROVIDERS" ]; then
             echo "No skill changes detected"

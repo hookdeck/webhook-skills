@@ -145,4 +145,4 @@ No account required. Provides local tunnel + web UI for inspecting requests.
 ## Related Skills
 
 - `webhook-handler-patterns` - Cross-cutting patterns (idempotency, retries, framework guides)
-- `hookdeck-event-gateway` - Production infrastructure (routing, replay, monitoring)
+- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) - Webhook infrastructure that replaces your queue — guaranteed delivery, automatic retries, replay, rate limiting, and observability for your webhook handlers
