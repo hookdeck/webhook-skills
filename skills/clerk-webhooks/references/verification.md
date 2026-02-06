@@ -1,5 +1,32 @@
 # Clerk Signature Verification
 
+## Next.js: Clerk SDK
+
+For Next.js App Router, use `verifyWebhook(request)` from `@clerk/backend/webhooks`. Pass the request directly; it uses `CLERK_WEBHOOK_SIGNING_SECRET`. See [Clerk webhook docs](https://clerk.com/docs/guides/development/webhooks/overview).
+
+## Express: standardwebhooks package
+
+Clerk uses the [Standard Webhooks](https://www.standardwebhooks.com/) protocol (Clerk sends `svix-id`, `svix-timestamp`, `svix-signature`; same format). Use the `standardwebhooks` npm package (not under the svix namespace):
+
+```bash
+npm install standardwebhooks
+```
+
+```javascript
+const { Webhook } = require('standardwebhooks');
+
+// Clerk sends svix-* headers; standardwebhooks expects webhook-* (same protocol)
+const headers = {
+  'webhook-id': req.headers['svix-id'],
+  'webhook-timestamp': req.headers['svix-timestamp'],
+  'webhook-signature': req.headers['svix-signature']
+};
+const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET); // accepts whsec_... format
+const event = wh.verify(req.body, headers); // throws on invalid
+```
+
+The manual implementation below works for FastAPI or when you need full control without adding a dependency.
+
 ## How It Works
 
 Clerk uses Svix to sign webhooks with HMAC-SHA256. Each webhook request includes three headers that work together to ensure authenticity and prevent replay attacks:
@@ -168,54 +195,9 @@ def verify_clerk_webhook(body: bytes, headers: dict) -> dict:
     return json.loads(body)
 ```
 
-## Using Svix Libraries (Alternative)
+## Standard Webhooks (Express / Node)
 
-Instead of manual verification, you can use Svix libraries:
-
-### Node.js
-
-```bash
-npm install svix
-```
-
-```javascript
-const { Webhook } = require('svix');
-
-const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
-
-try {
-  const event = webhook.verify(req.body, {
-    'svix-id': req.headers['svix-id'],
-    'svix-timestamp': req.headers['svix-timestamp'],
-    'svix-signature': req.headers['svix-signature']
-  });
-  // event is verified
-} catch (err) {
-  // Invalid signature
-}
-```
-
-### Python
-
-```bash
-pip install svix
-```
-
-```python
-from svix import Webhook
-
-webhook = Webhook(os.environ['CLERK_WEBHOOK_SECRET'])
-
-try:
-    event = webhook.verify(body, {
-        'svix-id': headers['svix-id'],
-        'svix-timestamp': headers['svix-timestamp'],
-        'svix-signature': headers['svix-signature']
-    })
-    # event is verified
-except Exception:
-    # Invalid signature
-```
+For Node/Express, use the [standardwebhooks](https://www.npmjs.com/package/standardwebhooks) package (Standard Webhooks spec; not published under the svix npm namespace). Clerk’s webhooks use the same protocol; map `svix-*` headers to `webhook-*` as shown in the Express section above.
 
 ## Common Gotchas
 

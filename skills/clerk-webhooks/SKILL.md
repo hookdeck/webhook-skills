@@ -24,88 +24,49 @@ metadata:
 
 ### Express Webhook Handler
 
+Clerk uses the [Standard Webhooks](https://www.standardwebhooks.com/) protocol (Clerk sends `svix-*` headers; same format). Use the `standardwebhooks` npm package:
+
 ```javascript
 const express = require('express');
-const crypto = require('crypto');
+const { Webhook } = require('standardwebhooks');
 
 const app = express();
 
-// CRITICAL: Use express.raw() for webhook endpoint - Clerk needs raw body
+// CRITICAL: Use express.raw() for webhook endpoint - verification needs raw body
 app.post('/webhooks/clerk',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    // Get Svix headers
+    const secret = process.env.CLERK_WEBHOOK_SECRET || process.env.CLERK_WEBHOOK_SIGNING_SECRET;
+    if (!secret || !secret.startsWith('whsec_')) {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
     const svixId = req.headers['svix-id'];
     const svixTimestamp = req.headers['svix-timestamp'];
     const svixSignature = req.headers['svix-signature'];
-
-    // Verify we have required headers
     if (!svixId || !svixTimestamp || !svixSignature) {
-      return res.status(400).json({ error: 'Missing required Svix headers' });
+      return res.status(400).json({ error: 'Missing required webhook headers' });
     }
-
-    // Manual signature verification (recommended approach)
-    const secret = process.env.CLERK_WEBHOOK_SECRET; // whsec_xxxxx from Clerk dashboard
-    const signedContent = `${svixId}.${svixTimestamp}.${req.body}`;
-
+    // standardwebhooks expects webhook-* header names; Clerk sends svix-* (same protocol)
+    const headers = {
+      'webhook-id': svixId,
+      'webhook-timestamp': svixTimestamp,
+      'webhook-signature': svixSignature
+    };
     try {
-      // Extract base64 secret after 'whsec_' prefix
-      const secretBytes = Buffer.from(secret.split('_')[1], 'base64');
-      const expectedSignature = crypto
-        .createHmac('sha256', secretBytes)
-        .update(signedContent)
-        .digest('base64');
-
-      // Svix can send multiple signatures, check each one
-      const signatures = svixSignature.split(' ').map(sig => sig.split(',')[1]);
-      const isValid = signatures.some(sig => {
-        try {
-          return crypto.timingSafeEqual(
-            Buffer.from(sig),
-            Buffer.from(expectedSignature)
-          );
-        } catch {
-          return false; // Different lengths = invalid
-        }
-      });
-
-      if (!isValid) {
-        return res.status(400).json({ error: 'Invalid signature' });
+      const wh = new Webhook(secret);
+      const event = wh.verify(req.body, headers);
+      if (!event) return res.status(400).json({ error: 'Invalid payload' });
+      switch (event.type) {
+        case 'user.created': console.log('User created:', event.data.id); break;
+        case 'user.updated': console.log('User updated:', event.data.id); break;
+        case 'session.created': console.log('Session created:', event.data.user_id); break;
+        case 'organization.created': console.log('Organization created:', event.data.id); break;
+        default: console.log('Unhandled:', event.type);
       }
-
-      // Check timestamp to prevent replay attacks (5-minute window)
-      const timestamp = parseInt(svixTimestamp, 10);
-      const currentTime = Math.floor(Date.now() / 1000);
-      if (currentTime - timestamp > 300) {
-        return res.status(400).json({ error: 'Timestamp too old' });
-      }
+      res.status(200).json({ success: true });
     } catch (err) {
-      console.error('Signature verification error:', err);
-      return res.status(400).json({ error: 'Invalid signature' });
+      res.status(400).json({ error: err.name === 'WebhookVerificationError' ? err.message : 'Webhook verification failed' });
     }
-
-    // Parse the verified webhook body
-    const event = JSON.parse(req.body.toString());
-
-    // Handle the event
-    switch (event.type) {
-      case 'user.created':
-        console.log('User created:', event.data.id);
-        break;
-      case 'user.updated':
-        console.log('User updated:', event.data.id);
-        break;
-      case 'session.created':
-        console.log('Session created:', event.data.user_id);
-        break;
-      case 'organization.created':
-        console.log('Organization created:', event.data.id);
-        break;
-      default:
-        console.log('Unhandled event:', event.type);
-    }
-
-    res.status(200).json({ success: true });
   }
 );
 ```
@@ -176,14 +137,21 @@ async def clerk_webhook(request: Request):
 | `organization.created` | New organization created |
 | `organization.updated` | Organization settings updated |
 | `organizationMembership.created` | User added to organization |
+| `organizationInvitation.created` | Invite sent to join organization |
 
-> **For full event reference**, see [Clerk Webhook Events](https://clerk.com/docs/integrations/webhooks/overview#event-types)
+> **For full event reference**, see [Clerk Webhook Events](https://clerk.com/docs/integrations/webhooks/overview#event-types) and [Dashboard → Webhooks → Event Catalog](https://dashboard.clerk.com/~/webhooks).
 
 ## Environment Variables
 
 ```bash
-CLERK_WEBHOOK_SECRET=whsec_xxxxx    # From webhook endpoint settings in Clerk Dashboard
+# Official name (used by @clerk/nextjs and Clerk docs)
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxx
+
+# Alternative name (used in this skill's examples)
+CLERK_WEBHOOK_SECRET=whsec_xxxxx
 ```
+
+From Clerk Dashboard → Webhooks → your endpoint → Signing Secret.
 
 ## Local Development
 
@@ -195,11 +163,14 @@ brew install hookdeck/hookdeck/hookdeck
 hookdeck listen 3000 --path /webhooks/clerk
 ```
 
+Use the tunnel URL in Clerk Dashboard when adding your endpoint. For production, set your live URL and copy the signing secret to production env vars.
+
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Clerk webhook concepts
 - [references/setup.md](references/setup.md) - Dashboard configuration
 - [references/verification.md](references/verification.md) - Signature verification details
+- [references/patterns.md](references/patterns.md) - Quick start, when to sync, key patterns, common pitfalls
 
 ## Attribution
 

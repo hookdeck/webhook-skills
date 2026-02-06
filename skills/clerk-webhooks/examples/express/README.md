@@ -1,6 +1,6 @@
 # Clerk Webhooks - Express Example
 
-Minimal example of receiving Clerk webhooks with signature verification.
+Minimal example of receiving Clerk webhooks with signature verification using the [standardwebhooks](https://www.npmjs.com/package/standardwebhooks) package (Standard Webhooks protocol).
 
 ## Prerequisites
 

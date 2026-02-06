@@ -101,7 +101,7 @@ describe('Clerk Webhook Handler', () => {
       .send(payload);
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Missing required Svix headers');
+    expect(response.body.error).toContain('Missing required');
   });
 
   test('rejects invalid signature', async () => {

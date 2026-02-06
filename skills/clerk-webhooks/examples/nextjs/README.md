@@ -1,6 +1,6 @@
 # Clerk Webhooks - Next.js Example
 
-Next.js App Router example for receiving Clerk webhooks with signature verification.
+Next.js App Router example for receiving Clerk webhooks using the Clerk SDK (`verifyWebhook` from `@clerk/backend/webhooks`).
 
 ## Prerequisites
 

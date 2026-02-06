@@ -9,9 +9,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/backend": "^1.21.0",
     "next": "^16.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "svix": "^1.84.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
