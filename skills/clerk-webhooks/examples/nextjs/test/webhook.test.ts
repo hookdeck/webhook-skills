@@ -21,6 +21,7 @@ import { NextRequest } from 'next/server';
 
 describe('Clerk Webhook Handler', () => {
   beforeAll(() => {
+    process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
     process.env.CLERK_WEBHOOK_SECRET = TEST_SECRET;
   });
 

@@ -60,9 +60,14 @@ After setting up your endpoint:
 Add to your `.env` file:
 
 ```bash
-# From Clerk Dashboard > Webhooks > Your Endpoint
+# Official name (used by @clerk/nextjs and Clerk docs)
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Alternative (used in some examples)
 CLERK_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+From Clerk Dashboard → Webhooks → your endpoint → Signing Secret.
 
 ## Production Considerations
 
