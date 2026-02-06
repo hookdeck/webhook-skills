@@ -38,7 +38,12 @@ npm test
 Use the test runner script to run all examples:
 
 ```bash
-./scripts/test-all-examples.sh
+# All skills with examples
+./scripts/test-examples.sh
+
+# Specific skill(s)
+./scripts/test-examples.sh stripe-webhooks
+./scripts/test-examples.sh stripe-webhooks github-webhooks
 ```
 
 ### CI Pipeline
