@@ -58,11 +58,13 @@ Framework-agnostic best practices for webhook handling, applicable across any we
 
 ### Webhook Infrastructure Skills
 
-Skills for setting up reliable webhook infrastructure with routing, replay, and monitoring.
+Skills for webhook infrastructure products — routing, queuing, delivery, and observability.
 
 | Skill | What It Does |
 |-------|--------------|
-| [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Set up Hookdeck Event Gateway for webhook routing, retry, replay, and monitoring |
+| [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability |
+| [`hookdeck-event-gateway-webhooks`](skills/hookdeck-event-gateway-webhooks/) | Verify `x-hookdeck-signature` and handle webhooks forwarded by the Hookdeck Event Gateway |
+| [`outpost`](skills/outpost/) | Send webhooks and events to user-preferred destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka) |
 
 ## Quick Start
 

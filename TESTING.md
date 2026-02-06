@@ -38,7 +38,12 @@ npm test
 Use the test runner script to run all examples:
 
 ```bash
-./scripts/test-all-examples.sh
+# All skills with examples
+./scripts/test-examples.sh
+
+# Specific skill(s)
+./scripts/test-examples.sh stripe-webhooks
+./scripts/test-examples.sh stripe-webhooks github-webhooks
 ```
 
 ### CI Pipeline
@@ -151,17 +156,17 @@ Validate that AI agents (Cursor, Claude, Copilot) can successfully use these ski
 
 ---
 
-#### Scenario 4: Hookdeck Event Gateway Setup
+#### Scenario 4: Hookdeck Event Gateway Webhooks Setup
 
 **Setup:**
 1. Existing Express app with webhook endpoint
-2. Install the skill: `npx skills add hookdeck/webhook-skills --skill hookdeck-event-gateway`
+2. Install the skill: `npx skills add hookdeck/webhook-skills --skill hookdeck-event-gateway-webhooks`
 
 **Prompt:**
 > "I'm receiving webhooks through Hookdeck. Add signature verification for Hookdeck's signature."
 
 **Expected Behaviors:**
-- [ ] Agent reads `hookdeck-event-gateway/SKILL.md`
+- [ ] Agent reads `hookdeck-event-gateway-webhooks/SKILL.md`
 - [ ] Agent references `references/verification.md`
 - [ ] Generated code verifies `x-hookdeck-signature` header
 - [ ] Generated code uses base64-encoded HMAC SHA-256

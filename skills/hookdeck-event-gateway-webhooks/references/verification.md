@@ -30,11 +30,13 @@ hookdeck destination get my-api
 const crypto = require('crypto');
 
 function verifyHookdeckSignature(rawBody, signature, secret) {
+  if (!signature || !secret) return false;
+
   const hash = crypto
     .createHmac('sha256', secret)
     .update(rawBody)
     .digest('base64');
-  
+
   try {
     return crypto.timingSafeEqual(
       Buffer.from(signature),
@@ -50,11 +52,11 @@ app.post('/webhooks',
   express.raw({ type: 'application/json' }),
   (req, res) => {
     const signature = req.headers['x-hookdeck-signature'];
-    
+
     if (!verifyHookdeckSignature(req.body, signature, process.env.HOOKDECK_WEBHOOK_SECRET)) {
       return res.status(401).send('Invalid signature');
     }
-    
+
     // Process webhook...
     res.json({ received: true });
   }
@@ -69,6 +71,9 @@ import hashlib
 import base64
 
 def verify_hookdeck_signature(raw_body: bytes, signature: str, secret: str) -> bool:
+    if not signature or not secret:
+        return False
+
     computed = base64.b64encode(
         hmac.new(
             secret.encode('utf-8'),
@@ -76,7 +81,7 @@ def verify_hookdeck_signature(raw_body: bytes, signature: str, secret: str) -> b
             hashlib.sha256
         ).digest()
     ).decode('utf-8')
-    
+
     return hmac.compare_digest(computed, signature)
 
 # FastAPI example
@@ -84,10 +89,10 @@ def verify_hookdeck_signature(raw_body: bytes, signature: str, secret: str) -> b
 async def webhook(request: Request):
     raw_body = await request.body()
     signature = request.headers.get("x-hookdeck-signature")
-    
+
     if not verify_hookdeck_signature(raw_body, signature, os.environ["HOOKDECK_WEBHOOK_SECRET"]):
         raise HTTPException(status_code=401, detail="Invalid signature")
-    
+
     # Process webhook...
     return {"received": True}
 ```
@@ -103,7 +108,7 @@ function verifyHookdeckSignature(body: string, signature: string, secret: string
     .createHmac('sha256', secret)
     .update(body)
     .digest('base64');
-  
+
   try {
     return crypto.timingSafeEqual(
       Buffer.from(signature),
@@ -117,53 +122,40 @@ function verifyHookdeckSignature(body: string, signature: string, secret: string
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('x-hookdeck-signature');
-  
+
   if (!signature || !verifyHookdeckSignature(body, signature, process.env.HOOKDECK_WEBHOOK_SECRET!)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
-  
+
   // Process webhook...
   return NextResponse.json({ received: true });
 }
 ```
 
-## Hookdeck Headers
-
-Hookdeck adds several headers to forwarded requests:
-
-| Header | Description |
-|--------|-------------|
-| `x-hookdeck-signature` | HMAC SHA-256 signature (base64) |
-| `x-hookdeck-event-id` | Unique event ID |
-| `x-hookdeck-source-id` | Source that received the webhook |
-| `x-hookdeck-destination-id` | Destination receiving the webhook |
-| `x-hookdeck-connection-id` | Connection routing the event |
-| `x-hookdeck-attempt-number` | Delivery attempt number |
-
 ### Using Event ID for Idempotency
 
 ```javascript
 app.post('/webhooks', async (req, res) => {
-  const eventId = req.headers['x-hookdeck-event-id'];
-  
+  const eventId = req.headers['x-hookdeck-eventid'];
+
   // Check if already processed
   const existing = await db.query(
     'SELECT 1 FROM processed_events WHERE hookdeck_event_id = $1',
     [eventId]
   );
-  
+
   if (existing.rows.length > 0) {
     console.log(`Event ${eventId} already processed`);
     return res.json({ received: true, duplicate: true });
   }
-  
+
   // Process and mark as done
   await processWebhook(req.body);
   await db.query(
     'INSERT INTO processed_events (hookdeck_event_id) VALUES ($1)',
     [eventId]
   );
-  
+
   res.json({ received: true });
 });
 ```
@@ -222,12 +214,12 @@ crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signature))
 app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-hookdeck-signature'];
   const secret = process.env.HOOKDECK_WEBHOOK_SECRET;
-  
+
   console.log('Signature received:', signature);
   console.log('Secret configured:', secret ? 'yes' : 'NO!');
   console.log('Body type:', typeof req.body);
   console.log('Body is Buffer:', Buffer.isBuffer(req.body));
-  
+
   const computed = crypto.createHmac('sha256', secret).update(req.body).digest('base64');
   console.log('Computed signature:', computed);
   console.log('Match:', computed === signature);
@@ -243,4 +235,5 @@ Ensure the secret matches exactly:
 
 ## Full Documentation
 
-- [Hookdeck Signature Verification](https://hookdeck.com/docs/signature-verification)
+- [Hookdeck Signature Verification](https://hookdeck.com/docs/authentication#hookdeck-webhook-signature-verification)
+- [Hookdeck Destination Authentication](https://hookdeck.com/docs/authentication#destination-authentication)

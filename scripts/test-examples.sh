@@ -1,7 +1,14 @@
 #!/bin/bash
 
-# Test All Webhook Skills Examples
-# This script runs tests for all example applications across providers and frameworks.
+# Test Webhook Skills Examples
+# Runs tests for example applications across skills and frameworks.
+#
+# Usage:
+#   ./scripts/test-examples.sh                  # Test all skills that have examples
+#   ./scripts/test-examples.sh stripe-webhooks   # Test one specific skill
+#   ./scripts/test-examples.sh stripe-webhooks github-webhooks  # Test multiple skills
+#
+# Discovery: Finds skills by looking for skills/*/examples/ directories.
 
 set -e
 
@@ -13,6 +20,7 @@ SKILLS_DIR="$ROOT_DIR/skills"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Track results
@@ -21,16 +29,107 @@ FAILED=0
 SKIPPED=0
 FAILED_TESTS=()
 
-# Providers to test
-PROVIDERS=("stripe-webhooks" "shopify-webhooks" "github-webhooks" "hookdeck-event-gateway" "deepgram-webhooks")
-
 # Frameworks to test
 FRAMEWORKS=("express" "nextjs" "fastapi")
+
+usage() {
+    echo "Usage: $0 [skill-name ...]"
+    echo ""
+    echo "Test webhook skill example applications."
+    echo ""
+    echo "  No arguments    Discover and test all skills that have examples/"
+    echo "  skill-name ...  Test only the specified skill(s)"
+    echo ""
+    echo "Examples:"
+    echo "  $0                                          # Test all"
+    echo "  $0 stripe-webhooks                          # Test one"
+    echo "  $0 stripe-webhooks github-webhooks           # Test multiple"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message"
+    echo ""
+
+    # Show available skills with examples
+    echo "Skills with examples:"
+    for dir in "$SKILLS_DIR"/*/examples; do
+        if [ -d "$dir" ]; then
+            local skill_name
+            skill_name=$(basename "$(dirname "$dir")")
+            # List which frameworks are available
+            local frameworks=()
+            for fw in "${FRAMEWORKS[@]}"; do
+                if [ -d "$dir/$fw" ]; then
+                    frameworks+=("$fw")
+                fi
+            done
+            echo "  $skill_name (${frameworks[*]})"
+        fi
+    done
+    exit 0
+}
+
+# Parse arguments
+REQUESTED_SKILLS=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage
+            ;;
+        -*)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo ""
+            usage
+            ;;
+        *)
+            REQUESTED_SKILLS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Discover skills with examples
+discover_skills() {
+    local skills=()
+    for dir in "$SKILLS_DIR"/*/examples; do
+        if [ -d "$dir" ]; then
+            skills+=("$(basename "$(dirname "$dir")")")
+        fi
+    done
+    # Sort alphabetically
+    IFS=$'\n' skills=($(sort <<<"${skills[*]}")); unset IFS
+    echo "${skills[@]}"
+}
+
+# Determine which skills to test
+if [ ${#REQUESTED_SKILLS[@]} -gt 0 ]; then
+    # Validate requested skills exist and have examples
+    SKILLS=()
+    for skill in "${REQUESTED_SKILLS[@]}"; do
+        if [ ! -d "$SKILLS_DIR/$skill" ]; then
+            echo -e "${RED}Error: Skill '$skill' not found in $SKILLS_DIR/${NC}"
+            exit 1
+        fi
+        if [ ! -d "$SKILLS_DIR/$skill/examples" ]; then
+            echo -e "${RED}Error: Skill '$skill' has no examples/ directory${NC}"
+            exit 1
+        fi
+        SKILLS+=("$skill")
+    done
+else
+    # Discover all skills with examples
+    read -ra SKILLS <<< "$(discover_skills)"
+fi
+
+if [ ${#SKILLS[@]} -eq 0 ]; then
+    echo -e "${YELLOW}No skills with examples found.${NC}"
+    exit 0
+fi
 
 echo "========================================"
 echo "  Webhook Skills Example Tests"
 echo "========================================"
 echo ""
+echo -e "Skills to test: ${BLUE}${#SKILLS[@]}${NC} (${SKILLS[*]})"
 
 # Function to run Node.js tests (Express/Next.js)
 run_node_tests() {
@@ -165,22 +264,17 @@ run_python_tests() {
     deactivate
 }
 
-# Run tests for each provider
-for provider in "${PROVIDERS[@]}"; do
-    provider_dir="$SKILLS_DIR/$provider"
-    
-    if [ ! -d "$provider_dir" ]; then
-        echo "Provider $provider not found, skipping..."
-        continue
-    fi
+# Run tests for each skill
+for skill in "${SKILLS[@]}"; do
+    skill_dir="$SKILLS_DIR/$skill"
     
     echo ""
-    echo "Testing $provider"
+    echo "Testing $skill"
     echo "----------------------------------------"
     
     for framework in "${FRAMEWORKS[@]}"; do
-        example_dir="$provider_dir/examples/$framework"
-        test_name="$provider/$framework"
+        example_dir="$skill_dir/examples/$framework"
+        test_name="$skill/$framework"
         
         if [ ! -d "$example_dir" ]; then
             echo -n "  Testing $test_name... "

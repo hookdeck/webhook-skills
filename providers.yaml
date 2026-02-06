@@ -301,7 +301,6 @@ providers:
       providers and forwards them to your app with an x-hookdeck-signature header.
       Uses HMAC-SHA256 with base64 encoding. Signed content format is the raw request body.
     testScenario:
-      skillName: hookdeck-event-gateway
       events:
         - webhooks via Event Gateway
       prompt: >

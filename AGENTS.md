@@ -15,7 +15,7 @@ webhook-skills/
 ├── TESTING.md                   # Testing documentation
 ├── LICENSE
 ├── scripts/
-│   ├── test-all-examples.sh     # Run all example tests
+│   ├── test-examples.sh          # Run example tests (all or specific skills)
 │   └── test-agent-scenario.sh   # Run agent integration tests
 ├── .github/
 │   └── workflows/
@@ -701,10 +701,14 @@ See [TESTING.md](TESTING.md) for comprehensive testing documentation.
 
 **Run example tests:**
 ```bash
-# All examples
-./scripts/test-all-examples.sh
+# All skills with examples
+./scripts/test-examples.sh
 
-# Single example
+# Specific skill(s)
+./scripts/test-examples.sh stripe-webhooks
+./scripts/test-examples.sh stripe-webhooks github-webhooks
+
+# Single example directly
 cd skills/{provider}-webhooks/examples/express && npm test
 ```
 
@@ -788,7 +792,7 @@ cd skills/{provider}-webhooks/examples/nextjs && npm test
 cd skills/{provider}-webhooks/examples/fastapi && pytest test_webhook.py -v
 
 # Run all example tests
-./scripts/test-all-examples.sh
+./scripts/test-examples.sh
 ```
 
 Ensure test scripts exit properly (e.g. `"test": "vitest run"` not `"vitest"`).
