@@ -1,0 +1,23 @@
+{
+  "name": "webflow-webhooks-express",
+  "version": "1.0.0",
+  "description": "Express webhook handler for Webflow",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "keywords": ["webflow", "webhooks", "express"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "nodemon": "^3.1.0"
+  }
+}

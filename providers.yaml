@@ -275,6 +275,21 @@ providers:
         - deployment.created
         - deployment.succeeded
 
+  - name: webflow
+    displayName: Webflow
+    docs:
+      webhooks: https://developers.webflow.com/data/docs/working-with-webhooks
+      verification: https://developers.webflow.com/data/docs/working-with-webhooks#validating-request-signatures
+    notes: >
+      Website builder and CMS platform. Uses x-webflow-signature and x-webflow-timestamp headers
+      with HMAC-SHA256 (hex encoded). Signed content format is timestamp:body. Only webhooks
+      created via OAuth apps or API include signature headers; dashboard-created webhooks do not.
+      Common events: form_submission, site_publish, ecomm_new_order, collection_item_created.
+    testScenario:
+      events:
+        - form_submission
+        - ecomm_new_order
+
   - name: woocommerce
     displayName: WooCommerce
     docs:

@@ -1,0 +1,28 @@
+{
+  "name": "webflow-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Next.js webhook handler for Webflow",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "keywords": ["webflow", "webhooks", "nextjs"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18",
+    "@vitejs/plugin-react": "^4.3.0",
+    "dotenv": "^16.3.1"
+  }
+}
