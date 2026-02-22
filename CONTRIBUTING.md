@@ -502,7 +502,7 @@ See [AGENTS.md](AGENTS.md) for detailed technical guidelines. Key points:
 "test": "vitest"       // ✗ Hangs in watch mode
 ```
 
-**Signature Verification:** Prefer manual verification over SDK methods — it's more reliable and educational.
+**Signature Verification:** Use the provider's official SDK when available; include manual verification as a fallback for frameworks the SDK doesn't support (e.g., FastAPI when only Node SDK exists).
 
 **Event Names:** Must match official documentation exactly. Common mistakes:
 - Underscores vs dots vs spaces (`spam_report` vs `spam.report` vs `spam report`)
