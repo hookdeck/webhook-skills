@@ -55,10 +55,11 @@ Run Outpost on your own infrastructure:
 
 For detailed Outpost skills:
 
-> Coming soon: `npx skills add hookdeck/skills`
->
-> In the meantime, see the [Outpost documentation](https://outpost.hookdeck.com/docs)
-> and the [GitHub repo](https://github.com/hookdeck/outpost).
+```bash
+npx skills add hookdeck/agent-skills --skill outpost
+```
+
+See [hookdeck/agent-skills](https://github.com/hookdeck/agent-skills) for the complete Outpost skill, the [Outpost documentation](https://outpost.hookdeck.com/docs), and the [GitHub repo](https://github.com/hookdeck/outpost).
 
 ## Resources
 
