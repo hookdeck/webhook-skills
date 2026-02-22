@@ -148,9 +148,11 @@ See [hookdeck-event-gateway-webhooks](https://github.com/hookdeck/webhook-skills
 
 For full Event Gateway product skills (connections, monitoring, API):
 
-> Coming soon: `npx skills add hookdeck/skills`
->
-> In the meantime, see [Hookdeck documentation](https://hookdeck.com/docs) for complete setup guides, [API reference](https://hookdeck.com/docs/api), and [CLI reference](https://hookdeck.com/docs/cli).
+```bash
+npx skills add hookdeck/agent-skills --skill event-gateway
+```
+
+See [hookdeck/agent-skills](https://github.com/hookdeck/agent-skills) for the complete Event Gateway skill, or the [Hookdeck documentation](https://hookdeck.com/docs) for setup guides, [API reference](https://hookdeck.com/docs/api), and [CLI reference](https://hookdeck.com/docs/cli).
 
 ## Recommended: webhook-handler-patterns
 

@@ -308,10 +308,11 @@ Server runs on http://localhost:3000
 - Be idiomatic to the framework and language (Express examples should look like Express code, FastAPI should be Pythonic, Next.js should follow Next.js conventions)
 - Include only the code needed to demonstrate webhook handling
 - Add inline comments explaining key concepts (signature verification, event parsing)
-- **Prefer manual signature verification** — SDK methods can have undocumented parameter names or change between versions; manual verification is more reliable and educational
-- If showing SDK verification, **always verify the exact method signature against official docs** — parameter names like `secret` vs `webhookSecret` or header key formats can cause silent failures
+- **Use the provider's official SDK for signature verification when available** — it's the recommended approach, stays aligned with provider changes, and handles edge cases correctly (e.g., secret rotation, multiple signatures)
+- **Include manual verification as a fallback** for frameworks or languages the SDK doesn't support (e.g., FastAPI when the provider only has a Node SDK)
+- **Always use raw body** for verification — whether using SDK or manual, the signed content is the raw request body
+- When using the SDK, **verify the exact method signature against official docs** — parameter names like `secret` vs `webhookSecret` or header key formats can cause silent failures
 - Show proper error handling (return appropriate status codes)
-- Keep dependencies minimal (avoid adding SDK just for verification if manual works)
 
 ### Dependency Version Guidelines
 
@@ -416,7 +417,13 @@ For the complete list of events, see [{Provider}'s webhook documentation]({url})
 
 ## Implementation
 
+### SDK Verification (when available)
+
 {Code showing verification with official SDK}
+
+### Manual Verification (fallback for unsupported frameworks)
+
+{Code for manual verification when SDK doesn't support the framework}
 
 ## Common Gotchas
 
@@ -490,12 +497,14 @@ Gather this information:
 - Header name(s): (e.g., X-Provider-Signature, Stripe-Signature)
 - Secret format: (e.g., whsec_xxx, starts with sk_)
 
-### SDK Verification Method (if using SDK)
+### SDK Verification Method (preferred when available)
 - Package name: (e.g., stripe, @octokit/webhooks)
 - Method signature: (exact parameters and their names)
 - Example: `provider.webhooks.verify({ payload, headers: {id, timestamp, signature}, webhookSecret })`
+- Which frameworks/languages does the SDK support? (Node.js only? Python? Both?)
 
-### Manual Verification (recommended for examples)
+### Manual Verification (fallback for unsupported frameworks)
+- Use when the provider's SDK doesn't support the framework (e.g., FastAPI when SDK is Node-only)
 - Signed content format: (e.g., "{timestamp}.{payload}", "{header}.{payload}")
 - Signature comparison: (timing-safe, base64 decode, etc.)
 
@@ -509,11 +518,9 @@ Gather this information:
 - (e.g., "Header names are lowercase in some frameworks")
 ```
 
-**Why manual verification is often better for examples:**
-- SDK APIs change and documentation may be outdated
-- Manual verification is more educational (shows exactly how it works)
-- Fewer dependencies (don't need full SDK just for verification)
-- Works consistently across all languages/frameworks
+**When to use SDK vs manual:**
+- **SDK (default):** Use when the provider offers a well-maintained SDK with webhook verification. It stays aligned with provider changes and handles edge cases.
+- **Manual (fallback):** Use when the SDK doesn't support the framework (e.g., Python/FastAPI when only Node SDK exists), or when no SDK exists. Document the signing algorithm clearly so implementers can verify manually.
 
 ### Step-by-Step Process
 
@@ -522,7 +529,7 @@ Gather this information:
 3. Add SKILL.md following the provider skill template:
    - Frontmatter with name, description, license, metadata
    - "When to Use This Skill" section
-   - "Essential Code" section with inline examples (show both SDK and manual verification)
+   - "Essential Code" section with inline examples (SDK for supported frameworks, manual for fallback)
    - "Common Event Types" table
    - "Environment Variables" section
    - "Local Development" section with Hookdeck CLI
@@ -531,9 +538,9 @@ Gather this information:
 4. Add reference files in `references/`:
    - `overview.md` - What the webhooks are, common events
    - `setup.md` - Dashboard configuration, signing secret
-   - `verification.md` - Signature verification details (include manual verification code)
+   - `verification.md` - Signature verification details (SDK preferred, manual fallback for unsupported frameworks)
 5. Create examples for Express, Next.js, and FastAPI in `examples/`
-   - **Prefer manual signature verification** over SDK methods (more reliable, educational, fewer dependencies)
+   - **Use the provider's SDK for verification** when it supports the framework; **include manual verification** for frameworks the SDK doesn't support
    - Include comprehensive tests for each example
 6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
 7. Update integration files:

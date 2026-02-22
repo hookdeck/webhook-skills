@@ -61,8 +61,8 @@ Read the AGENTS.md file in this repository to understand the full skill creation
 
 ## Important Guidelines
 
-1. **Prefer manual signature verification** over SDK methods - it's more reliable and educational
-2. **Use raw body** for signature verification - don't parse JSON before verifying
+1. **Use the provider's official SDK** for signature verification when it supports the framework; **include manual verification** as a fallback for frameworks the SDK doesn't support (e.g., FastAPI when only Node SDK exists)
+2. **Use raw body** for signature verification - don't parse JSON before verifying (SDK or manual)
 3. **Include comprehensive tests** that generate real signatures using the provider's algorithm
 4. **Be idiomatic** to each framework (Express middleware patterns, Next.js App Router, FastAPI dependencies)
 5. **Return appropriate HTTP status codes** (200 for success, 400 for invalid signature, etc.)
@@ -77,7 +77,7 @@ Read the AGENTS.md file in this repository to understand the full skill creation
 4. **Environment variable names** - Consistent across .env.example and code files
 
 **Check for these common mistakes:**
-- SKILL.md shows one verification approach, examples use a different one
+- Verification logic is inconsistent (e.g., SKILL.md and examples use different signed content format or algorithm)
 - overview.md lists different events than the code handles
 - setup.md describes headers that don't match the code
 
