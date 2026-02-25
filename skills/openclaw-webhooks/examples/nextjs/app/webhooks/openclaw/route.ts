@@ -83,5 +83,5 @@ export async function POST(request: NextRequest) {
 
   // TODO: Process the webhook payload
 
-  return NextResponse.json({ received: true });
+  return NextResponse.json({ received: true }, { status: 202 });
 }

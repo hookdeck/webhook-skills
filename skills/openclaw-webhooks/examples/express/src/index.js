@@ -90,7 +90,7 @@ app.post('/webhooks/openclaw',
     //   - Store in a database for later processing
     //   - Send a notification to another service
 
-    res.status(200).json({ received: true });
+    res.status(202).json({ received: true });
   }
 );
 

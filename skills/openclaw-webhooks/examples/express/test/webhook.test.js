@@ -12,7 +12,7 @@ describe('OpenClaw Webhook Handler', () => {
         .set('Authorization', `Bearer ${VALID_TOKEN}`)
         .send({ message: 'Test message', name: 'Test' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(202);
       expect(res.body.received).toBe(true);
     });
 
@@ -22,7 +22,7 @@ describe('OpenClaw Webhook Handler', () => {
         .set('x-openclaw-token', VALID_TOKEN)
         .send({ message: 'Test message', name: 'Test' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(202);
       expect(res.body.received).toBe(true);
     });
 
@@ -76,7 +76,7 @@ describe('OpenClaw Webhook Handler', () => {
           model: 'openai/gpt-5.2-mini'
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(202);
       expect(res.body.received).toBe(true);
     });
   });
