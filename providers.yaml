@@ -160,6 +160,23 @@ providers:
         - fine_tuning.job.succeeded
         - batch.completed
 
+  - name: openclaw
+    displayName: OpenClaw
+    docs:
+      webhooks: https://docs.openclaw.ai/automation/webhook
+      hooks: https://docs.openclaw.ai/automation/hooks
+      configuration: https://docs.openclaw.ai/gateway/configuration
+    notes: >
+      Open-source autonomous AI agent platform. Uses token-based authentication
+      (not HMAC signatures). Token sent via Authorization: Bearer <token> or
+      x-openclaw-token header. Two hook types: agent hooks (/hooks/agent) trigger
+      isolated agent turns, wake hooks (/hooks/wake) enqueue system events.
+      No official webhook verification SDK — use timing-safe string comparison.
+    testScenario:
+      events:
+        - agent hook
+        - wake hook
+
   - name: paddle
     displayName: Paddle
     docs:
