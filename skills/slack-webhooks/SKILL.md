@@ -193,12 +193,8 @@ SLACK_SIGNING_SECRET=your_signing_secret   # From Slack App → Basic Informatio
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (no account required)
-npm install -g hookdeck-cli
-# or: brew install hookdeck/hookdeck/hookdeck
-
-# Forward Slack events to your local server
-hookdeck listen 3000 --path /webhooks/slack
+# Forward Slack events to your local server (no account required)
+npx hookdeck-cli listen 3000 slack --path /webhooks/slack
 ```
 
 Then paste the Hookdeck URL into your Slack App's **Event Subscriptions → Request URL** field.

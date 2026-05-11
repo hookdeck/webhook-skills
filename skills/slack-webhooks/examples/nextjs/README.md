@@ -34,11 +34,8 @@ Server runs on http://localhost:3000
 ### Using Hookdeck CLI
 
 ```bash
-# Install Hookdeck CLI
-npm install -g hookdeck-cli
-
 # Forward Slack events to your local server (no account needed)
-hookdeck listen 3000 --path /webhooks/slack
+npx hookdeck-cli listen 3000 slack --path /webhooks/slack
 ```
 
 Paste the Hookdeck URL into your Slack App's **Event Subscriptions → Request URL** field.

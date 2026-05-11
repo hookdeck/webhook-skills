@@ -70,8 +70,7 @@ Use the Hookdeck CLI to forward Slack events to a local server — no account or
 ngrok tunnel required:
 
 ```bash
-npm install -g hookdeck-cli
-hookdeck listen 3000 --path /webhooks/slack
+npx hookdeck-cli listen 3000 slack --path /webhooks/slack
 ```
 
 Paste the URL Hookdeck prints into the **Request URL** field in your Slack App.
