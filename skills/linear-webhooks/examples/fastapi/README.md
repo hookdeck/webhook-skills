@@ -46,8 +46,7 @@ Tests generate real Linear-style HMAC-SHA256 signatures and exercise verificatio
 ### Send a real Linear webhook
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/linear
+npx hookdeck-cli listen 3000 linear --path /webhooks/linear
 ```
 
 Paste the printed URL into Linear → **Workspace settings → API → Webhooks**.

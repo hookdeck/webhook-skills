@@ -40,11 +40,8 @@ Runs Jest with [supertest](https://github.com/ladjs/supertest), generating real 
 ### Send a real Linear webhook
 
 ```bash
-# Install Hookdeck CLI
-brew install hookdeck/hookdeck/hookdeck
-
 # Forward webhooks to localhost
-hookdeck listen 3000 --path /webhooks/linear
+npx hookdeck-cli listen 3000 linear --path /webhooks/linear
 ```
 
 Paste the printed Hookdeck URL into Linear → **Workspace settings → API → Webhooks → Create new webhook**, then create or update an issue to trigger an event.

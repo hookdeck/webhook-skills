@@ -67,14 +67,8 @@ After creating the webhook, you can:
 To receive webhooks on your laptop without deploying, use the Hookdeck CLI:
 
 ```bash
-# macOS
-brew install hookdeck/hookdeck/hookdeck
-
-# Other platforms
-npm install -g hookdeck-cli
-
 # Forward to a local server on port 3000
-hookdeck listen 3000 --path /webhooks/linear
+npx hookdeck-cli listen 3000 linear --path /webhooks/linear
 ```
 
 Hookdeck prints a public URL — paste it as the **URL** when creating the webhook in Linear. No Hookdeck account is required.

@@ -187,11 +187,8 @@ LINEAR_WEBHOOK_SECRET=your_webhook_secret   # Shown once when the webhook is cre
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/linear
+npx hookdeck-cli listen 3000 linear --path /webhooks/linear
 ```
 
 Use the printed Hookdeck URL as the webhook URL when creating the webhook in Linear's API settings.
