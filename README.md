@@ -45,6 +45,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | Intercom | [`intercom-webhooks`](skills/intercom-webhooks/) | Verify Intercom `X-Hub-Signature` (HMAC-SHA1), handle conversation, contact, and ticket events |
 | Linear | [`linear-webhooks`](skills/linear-webhooks/) | Verify Linear webhook signatures (HMAC-SHA256), handle issue, comment, and project events |
 | Mailgun | [`mailgun-webhooks`](skills/mailgun-webhooks/) | Verify Mailgun webhook signatures (HMAC-SHA256), handle email delivered, failed, opened, clicked, unsubscribed, and complained events |
+| Notion | [`notion-webhooks`](skills/notion-webhooks/) | Verify Notion webhook signatures (HMAC-SHA256, `X-Notion-Signature`), complete handshake, handle page and comment events |
 | OpenAI | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
 | OpenClaw | [`openclaw-webhooks`](skills/openclaw-webhooks/) | Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads |
 | Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |

@@ -327,6 +327,26 @@ providers:
         - delivered
         - failed
 
+  - name: notion
+    displayName: Notion
+    docs:
+      webhooks: https://developers.notion.com/reference/webhooks
+    notes: >
+      Productivity workspace. Webhooks launched in the 2026-03-01 API release. Uses
+      X-Notion-Signature header with HMAC-SHA256, formatted as "sha256=<hex_digest>",
+      computed over the raw request body using your integration's verification_token
+      as the signing key. Subscription activation requires a one-time handshake: the
+      first delivery is a POST containing a verification_token in the body — extract
+      and store it (do NOT verify a signature on this first message), then use it as
+      the signing key for all subsequent signature verifications. Notion provides
+      code examples in JavaScript, Python, and Ruby. Common events:
+      page.content_updated, page.properties_updated, page.locked, page.moved,
+      comment.created, data_source.schema_updated, database.schema_updated.
+    testScenario:
+      events:
+        - page.content_updated
+        - comment.created
+
   - name: openai
     displayName: OpenAI
     docs:
