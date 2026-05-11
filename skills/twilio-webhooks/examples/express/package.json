@@ -1,0 +1,19 @@
+{
+  "name": "twilio-webhooks-express",
+  "version": "1.0.0",
+  "description": "Twilio webhook handler with Express using the Twilio Node SDK",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "twilio": "^5.4.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.0.0"
+  }
+}

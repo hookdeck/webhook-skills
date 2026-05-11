@@ -1,0 +1,7 @@
+fastapi>=0.136.1
+uvicorn>=0.30.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.9
+twilio>=9.0.0
+pytest>=9.0.3
+httpx>=0.28.1
