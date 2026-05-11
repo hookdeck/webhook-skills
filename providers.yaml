@@ -398,6 +398,32 @@ providers:
         - subscription.created
         - transaction.completed
 
+  - name: paypal
+    displayName: PayPal
+    docs:
+      webhooks: https://developer.paypal.com/api/rest/webhooks/
+      verification: https://developer.paypal.com/api/rest/webhooks/rest/
+      events: https://developer.paypal.com/api/rest/webhooks/event-names/
+    notes: >
+      Payments platform. Uses certificate-based RSA-SHA256 signature verification — not
+      HMAC. Required request headers: paypal-transmission-id, paypal-transmission-time,
+      paypal-transmission-sig (the signature), paypal-cert-url (public cert location,
+      must resolve to a paypal.com domain), and paypal-auth-algo (e.g. "SHA256withRSA").
+      Two verification paths:
+      (1) Recommended postback: POST the captured headers, your webhook_id, and the
+      raw event body to PayPal's /v1/notifications/verify-webhook-signature endpoint
+      (requires an OAuth access token). PayPal returns verification_status.
+      (2) Offline self-verify: download the cert from paypal-cert-url, compute CRC32
+      of the raw body, build the message
+      transmissionId|transmissionTime|webhookId|crc32(body), and verify the signature
+      against the cert's public key with RSA-SHA256. Common events:
+      PAYMENT.CAPTURE.COMPLETED, PAYMENT.SALE.COMPLETED, PAYMENT.CAPTURE.REFUNDED,
+      BILLING.SUBSCRIPTION.CREATED, CHECKOUT.ORDER.APPROVED.
+    testScenario:
+      events:
+        - PAYMENT.CAPTURE.COMPLETED
+        - BILLING.SUBSCRIPTION.CREATED
+
   - name: replicate
     displayName: Replicate
     docs:

@@ -49,6 +49,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | OpenAI | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
 | OpenClaw | [`openclaw-webhooks`](skills/openclaw-webhooks/) | Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads |
 | Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
+| PayPal | [`paypal-webhooks`](skills/paypal-webhooks/) | Verify PayPal webhook signatures (RSA-SHA256 with cert), handle payment, subscription, and order events |
 | Postmark | [`postmark-webhooks`](skills/postmark-webhooks/) | Authenticate Postmark webhooks (Basic Auth/Token), handle email delivery, bounce, open, click, and spam events |
 | Replicate | [`replicate-webhooks`](skills/replicate-webhooks/) | Verify Replicate webhook signatures, handle ML prediction lifecycle events |
 | Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
