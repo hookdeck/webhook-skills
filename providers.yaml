@@ -285,6 +285,25 @@ providers:
         - conversation.user.created
         - conversation.admin.replied
 
+  - name: linear
+    displayName: Linear
+    docs:
+      webhooks: https://linear.app/developers/webhooks
+    notes: >
+      Issue tracking platform. Uses Linear-Signature header with HMAC-SHA256 (hex
+      encoded) computed over the raw body using the webhook's signing secret (shown
+      once when the webhook is created in Linear settings). Additional headers:
+      Linear-Event identifies the entity type (Issue, Comment, Project, Cycle,
+      Issue SLA, Issue attachment, Issue label, Comment reaction, Document, Initiative,
+      Customer, User), Linear-Delivery is a UUID v4 for idempotency, plus
+      Content-Type: application/json and User-Agent: Linear-Webhook. Payload includes
+      a webhookTimestamp field — reject if it's more than 1 minute old. Payload action
+      values: create, update, remove.
+    testScenario:
+      events:
+        - Issue create
+        - Comment create
+
   - name: openai
     displayName: OpenAI
     docs:
