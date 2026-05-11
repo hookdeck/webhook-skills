@@ -39,6 +39,18 @@ export interface ProviderConfig {
   };
   notes?: string;         // Hints for the agent
   testScenario?: TestScenario; // Configuration for agent testing
+  /**
+   * Provider-specific SDK packages to track for version-staleness review.
+   * These get queried alongside the generic framework deps and appear in
+   * {{VERSIONS_TABLE}} for both generate and review prompts, letting the
+   * reviewer flag stale SDK pins in package.json / requirements.txt.
+   * Use the canonical package-manager names (e.g., "@paddle/paddle-node-sdk"
+   * for npm, "paddle-python-sdk" for pip).
+   */
+  sdks?: {
+    npm?: string[];
+    pip?: string[];
+  };
 }
 
 /**

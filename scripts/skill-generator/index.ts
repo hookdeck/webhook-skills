@@ -28,7 +28,7 @@ import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
 import { setCachedVersions } from './lib/cli';
 import { DEFAULT_CLI_TOOL, AVAILABLE_CLI_TOOLS } from './lib/cli-adapters';
-import { getLatestVersions } from './lib/versions';
+import { getLatestVersions, collectProviderSdks } from './lib/versions';
 import {
   createWorktree,
   removeWorktree,
@@ -216,13 +216,15 @@ async function handleGenerate(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  // Query latest package versions and cache them for prompts (skip in dry-run mode).
+  // Include per-provider SDKs declared via `sdks` in providers.yaml so the version
+  // table seen by the AI covers stale SDK pins, not just generic framework deps.
   if (!generateOptions.dryRun) {
     console.log(chalk.blue('Querying package managers for latest stable versions...'));
     const VERSIONS_TIMEOUT = 30000; // 30 seconds
     try {
       const versions = await Promise.race([
-        getLatestVersions(),
+        getLatestVersions(collectProviderSdks(providerConfigs)),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
         ),
@@ -501,13 +503,15 @@ async function handleReview(
   const { dir: resultsDir } = createResultsDir();
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
-  // Query latest package versions and cache them for prompts (skip in dry-run mode)
+  // Query latest package versions and cache them for prompts (skip in dry-run mode).
+  // Include per-provider SDKs declared via `sdks` in providers.yaml so the version
+  // table seen by the AI covers stale SDK pins, not just generic framework deps.
   if (!reviewOptions.dryRun) {
     console.log(chalk.blue('Querying package managers for latest stable versions...'));
     const VERSIONS_TIMEOUT = 30000; // 30 seconds
     try {
       const versions = await Promise.race([
-        getLatestVersions(),
+        getLatestVersions(collectProviderSdks(providerConfigs)),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Network timeout after 30s')), VERSIONS_TIMEOUT)
         ),

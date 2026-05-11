@@ -25,6 +25,12 @@
 #     events      - Array of event types to test with
 #     prompt      - Custom prompt template (uses default if not specified)
 #     skillName   - Override skill directory name (default: {name}-webhooks)
+#   sdks          - Provider-specific SDK packages to version-track (optional):
+#     npm         - Array of npm package names (e.g., ["@paddle/paddle-node-sdk"])
+#     pip         - Array of PyPI package names (e.g., ["paddle-python-sdk"])
+#     The generator queries these alongside the generic framework deps so the
+#     AI sees current SDK versions in the {{VERSIONS_TABLE}} and can flag
+#     stale pins in package.json/requirements.txt during review.
 #
 # When adding a new provider skill:
 #   1. Add provider entry here with documentation URLs and testScenario
@@ -186,7 +192,12 @@ providers:
     notes: >
       Payment and subscription platform. Uses Paddle-Signature header with HMAC-SHA256.
       Signature format includes timestamp (ts) and hash (h1). Secret starts with pdl_ntfset_.
-      Official SDKs available: @paddle/paddle-node-sdk, paddle-billing (Python).
+      Official SDKs: @paddle/paddle-node-sdk (Node), paddle-python-sdk (Python).
+    sdks:
+      npm:
+        - "@paddle/paddle-node-sdk"
+      pip:
+        - paddle-python-sdk
     testScenario:
       events:
         - subscription.created

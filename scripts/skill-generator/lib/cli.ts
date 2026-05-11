@@ -6,7 +6,7 @@ import { execa, type ExecaError } from 'execa';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { ProviderConfig, Logger, ReviewResult } from './types';
-import { type PackageVersions, formatVersionsTable } from './versions';
+import { type PackageVersions, formatVersionsTableForProvider } from './versions';
 import { getCliAdapter, DEFAULT_CLI_TOOL } from './cli-adapters';
 
 const PROMPTS_DIR = join(__dirname, '..', 'prompts');
@@ -95,10 +95,12 @@ export function buildPromptReplacements(provider: ProviderConfig): Record<string
     }
   }
   
-  // Build versions table from cached versions (or empty if not available)
+  // Build versions table from cached versions (or empty if not available).
+  // Scoped to generic framework deps + this provider's declared `sdks`,
+  // so the prompt doesn't dump every queried SDK across all providers.
   let versionsTable = '*Version lookup not available - use latest stable versions from npm/pip*';
   if (cachedVersions) {
-    versionsTable = formatVersionsTable(cachedVersions);
+    versionsTable = formatVersionsTableForProvider(cachedVersions, provider.sdks);
   }
   
   const replacements: Record<string, string> = {

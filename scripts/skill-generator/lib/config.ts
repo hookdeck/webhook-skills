@@ -137,6 +137,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
         testScenario: config.testScenario as TestScenario | undefined,
+        sdks: config.sdks as ProviderConfig['sdks'],
       });
     }
   } else {
@@ -145,16 +146,17 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
       if (typeof value !== 'object' || value === null) {
         continue;
       }
-      
+
       const config = value as Record<string, unknown>;
       const normalizedName = normalizeProviderName(key);
-      
+
       configs.set(normalizedName, {
         name: normalizedName,
         displayName: (config.displayName as string) || toDisplayName(key),
         docs: config.docs as ProviderConfig['docs'],
         notes: config.notes as string | undefined,
         testScenario: config.testScenario as TestScenario | undefined,
+        sdks: config.sdks as ProviderConfig['sdks'],
       });
     }
   }
