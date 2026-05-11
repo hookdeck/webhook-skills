@@ -141,12 +141,8 @@ The Auth Token is the signing key — **do not** use the Account SID for signatu
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (no account required)
-npm install -g hookdeck-cli
-# or: brew install hookdeck/hookdeck/hookdeck
-
 # Tunnel public traffic to your local webhook endpoint
-hookdeck listen 3000 --path /webhooks/twilio
+npx hookdeck-cli listen 3000 twilio --path /webhooks/twilio
 ```
 
 Use the public URL printed by the CLI as your Twilio Messaging/Voice/Status Callback webhook URL.

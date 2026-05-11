@@ -54,7 +54,7 @@ The tests generate real Twilio signatures (HMAC-SHA1 + base64) and exercise:
 1. Expose the local server with a public tunnel:
 
    ```bash
-   hookdeck listen 3000 --path /webhooks/twilio
+   npx hookdeck-cli listen 3000 twilio --path /webhooks/twilio
    # or: ngrok http 3000
    ```
 

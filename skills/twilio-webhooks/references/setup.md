@@ -73,7 +73,7 @@ You need a public HTTPS URL. Two common options:
 
 ```bash
 # Hookdeck CLI (no account required)
-hookdeck listen 3000 --path /webhooks/twilio
+npx hookdeck-cli listen 3000 twilio --path /webhooks/twilio
 
 # ngrok
 ngrok http 3000
