@@ -47,8 +47,7 @@ For local development, point the endpoint at a tunnel:
 
 ```bash
 # No account required
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/claude-managed-agents
+npx hookdeck-cli listen 3000 claude-managed-agents --path /webhooks/claude-managed-agents
 ```
 
 Use the public URL Hookdeck prints as the endpoint URL in Console.

@@ -36,8 +36,7 @@ Server runs on http://localhost:3000.
 ## Test with Hookdeck CLI
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/claude-managed-agents
+npx hookdeck-cli listen 3000 claude-managed-agents --path /webhooks/claude-managed-agents
 ```
 
 Paste the public URL Hookdeck prints into Console as the webhook endpoint URL.

@@ -42,8 +42,7 @@ Server runs on http://localhost:8000. Interactive docs at http://localhost:8000/
 ## Test with Hookdeck CLI
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 8000 --path /webhooks/claude-managed-agents
+npx hookdeck-cli listen 8000 claude-managed-agents --path /webhooks/claude-managed-agents
 ```
 
 Paste the public URL Hookdeck prints into Console as the webhook endpoint URL.

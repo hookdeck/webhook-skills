@@ -255,11 +255,8 @@ ANTHROPIC_API_KEY=sk-ant-xxxxx              # Required if you fetch the full obj
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/claude-managed-agents
+npx hookdeck-cli listen 3000 claude-managed-agents --path /webhooks/claude-managed-agents
 ```
 
 ## Reference Materials
