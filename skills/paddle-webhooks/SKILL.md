@@ -20,136 +20,54 @@ metadata:
 - Understanding Paddle event types and payloads
 - Handling subscription, transaction, or customer events
 
-## Essential Code (USE THIS)
+## Verification (core)
 
-### Express Webhook Handler
+Paddle signs every webhook with HMAC-SHA256 over `timestamp:rawBody`. The `Paddle-Signature` header is `ts=<unix>;h1=<hex>` (multiple `h1=` values appear during secret rotation). Pass the **raw** request body — don't `JSON.parse` first.
+
+The official `@paddle/paddle-node-sdk` exposes `paddle.webhooks.unmarshal(rawBody, secretKey, signature)` which verifies and parses in one call. For Python (or when not using the SDK), verify manually:
+
+Node:
 
 ```javascript
-const express = require('express');
 const crypto = require('crypto');
 
-const app = express();
-
-// CRITICAL: Use express.raw() for webhook endpoint - Paddle needs raw body
-app.post('/webhooks/paddle',
-  express.raw({ type: 'application/json' }),
-  async (req, res) => {
-    const signature = req.headers['paddle-signature'];
-    
-    if (!signature) {
-      return res.status(400).send('Missing Paddle-Signature header');
-    }
-
-    // Verify signature
-    const isValid = verifyPaddleSignature(
-      req.body.toString(),
-      signature,
-      process.env.PADDLE_WEBHOOK_SECRET  // From Paddle dashboard
-    );
-
-    if (!isValid) {
-      console.error('Paddle signature verification failed');
-      return res.status(400).send('Invalid signature');
-    }
-
-    const event = JSON.parse(req.body.toString());
-
-    // Handle the event
-    switch (event.event_type) {
-      case 'subscription.created':
-        console.log('Subscription created:', event.data.id);
-        break;
-      case 'subscription.canceled':
-        console.log('Subscription canceled:', event.data.id);
-        break;
-      case 'transaction.completed':
-        console.log('Transaction completed:', event.data.id);
-        break;
-      default:
-        console.log('Unhandled event:', event.event_type);
-    }
-
-    // IMPORTANT: Respond within 5 seconds
-    res.json({ received: true });
-  }
-);
-
-function verifyPaddleSignature(payload, signature, secret) {
-  const parts = signature.split(';');
+function verifyPaddleSignature(rawBody, signatureHeader, secret) {
+  const parts = signatureHeader.split(';');
   const ts = parts.find(p => p.startsWith('ts='))?.slice(3);
-  const signatures = parts
-    .filter(p => p.startsWith('h1='))
-    .map(p => p.slice(3));
+  const signatures = parts.filter(p => p.startsWith('h1=')).map(p => p.slice(3));
+  if (!ts || signatures.length === 0) return false;
 
-  if (!ts || signatures.length === 0) {
-    return false;
-  }
-
-  const signedPayload = `${ts}:${payload}`;
-  const expectedSignature = crypto
+  const expected = crypto
     .createHmac('sha256', secret)
-    .update(signedPayload)
+    .update(`${ts}:${rawBody}`)
     .digest('hex');
 
-  // Check if any signature matches (handles secret rotation)
   return signatures.some(sig =>
-    crypto.timingSafeEqual(
-      Buffer.from(sig),
-      Buffer.from(expectedSignature)
-    )
+    crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
   );
 }
 ```
 
-### Python (FastAPI) Webhook Handler
+Python:
 
 ```python
-import hmac
-import hashlib
-from fastapi import FastAPI, Request, HTTPException
+import hmac, hashlib
 
-app = FastAPI()
-webhook_secret = os.environ.get("PADDLE_WEBHOOK_SECRET")
-
-@app.post("/webhooks/paddle")
-async def paddle_webhook(request: Request):
-    payload = await request.body()
-    signature = request.headers.get("paddle-signature")
-    
-    if not signature:
-        raise HTTPException(status_code=400, detail="Missing signature")
-    
-    if not verify_paddle_signature(payload.decode(), signature, webhook_secret):
-        raise HTTPException(status_code=400, detail="Invalid signature")
-    
-    event = await request.json()
-    # Handle event...
-    return {"received": True}
-
-def verify_paddle_signature(payload, signature, secret):
-    parts = signature.split(';')
-    timestamp = None
-    signatures = []
-
-    for part in parts:
-        if part.startswith('ts='):
-            timestamp = part[3:]
-        elif part.startswith('h1='):
-            signatures.append(part[3:])
-
-    if not timestamp or not signatures:
+def verify_paddle_signature(raw_body: str, signature_header: str, secret: str) -> bool:
+    parts = signature_header.split(';')
+    ts = next((p[3:] for p in parts if p.startswith('ts=')), None)
+    signatures = [p[3:] for p in parts if p.startswith('h1=')]
+    if not ts or not signatures:
         return False
 
-    signed_payload = f"{timestamp}:{payload}"
     expected = hmac.new(
-        secret.encode(), signed_payload.encode(), hashlib.sha256
+        secret.encode(), f"{ts}:{raw_body}".encode(), hashlib.sha256
     ).hexdigest()
 
-    # Check if any signature matches (handles secret rotation)
     return any(hmac.compare_digest(sig, expected) for sig in signatures)
 ```
 
-> **For complete working examples with tests**, see:
+> **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/) - Full Express implementation
 > - [examples/nextjs/](examples/nextjs/) - Next.js App Router implementation  
 > - [examples/fastapi/](examples/fastapi/) - Python FastAPI implementation
@@ -179,8 +97,6 @@ PADDLE_WEBHOOK_SECRET=pdl_ntfset_xxxxx_xxxxx   # From notification destination s
 ## Local Development
 
 ```bash
-# Or via NPM
-
 # Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 paddle --path /webhooks/paddle
 ```

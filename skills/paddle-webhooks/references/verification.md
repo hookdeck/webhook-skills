@@ -20,7 +20,7 @@ The `h1` signature is the current version. There may be multiple `h1` signatures
 
 The official Paddle SDKs handle signature verification automatically:
 
-**Node.js (`@paddle/paddle-node-sdk` v3.5.0+):**
+**Node.js (`@paddle/paddle-node-sdk` v1.4.0+):**
 ```javascript
 import { Paddle, EventName } from "@paddle/paddle-node-sdk";
 
@@ -47,7 +47,7 @@ app.post('/webhooks/paddle', express.raw({ type: 'application/json' }), async (r
 });
 ```
 
-**Python (`paddle-billing` v1.13.0+):**
+**Python (`paddle-python-sdk` v1.14.0+, imported as `paddle_billing`):**
 
 The Python SDK uses a `Verifier` class for webhook signature verification. It supports Flask and Django natively:
 
