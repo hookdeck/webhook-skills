@@ -68,7 +68,7 @@ To deliver real Hugging Face webhooks to your local server:
 
 1. Use [Hookdeck CLI](https://hookdeck.com/docs/cli) (no account needed):
    ```bash
-   hookdeck listen 3000 --path /webhooks/huggingface
+   npx hookdeck-cli listen 3000 huggingface --path /webhooks/huggingface
    ```
 
 2. Paste the printed public URL into the **Target URL** field in Hugging Face webhook settings.

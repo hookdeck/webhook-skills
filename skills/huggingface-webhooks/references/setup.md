@@ -61,10 +61,7 @@ You need a public HTTPS URL. Two easy options:
 **Hookdeck CLI (recommended, no account needed):**
 
 ```bash
-npm install -g hookdeck-cli
-# or: brew install hookdeck/hookdeck/hookdeck
-
-hookdeck listen 3000 --path /webhooks/huggingface
+npx hookdeck-cli listen 3000 huggingface --path /webhooks/huggingface
 ```
 
 **Or use a quick capture-all service** while you build the verification:

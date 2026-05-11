@@ -189,11 +189,7 @@ Each Hugging Face webhook is limited to **1,000 triggers per 24 hours**. Activit
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (no account needed)
-brew install hookdeck/hookdeck/hookdeck
-# or: npm install -g hookdeck-cli
-
-hookdeck listen 3000 --path /webhooks/huggingface
+npx hookdeck-cli listen 3000 huggingface --path /webhooks/huggingface
 ```
 
 ## Reference Materials
