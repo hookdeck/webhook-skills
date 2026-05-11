@@ -31,7 +31,7 @@ Each delivery includes three headers:
 
 - `webhook-id` — unique message id (use for idempotency)
 - `webhook-timestamp` — Unix seconds (reject if > 5 minutes old)
-- `webhook-signature` — `v1,<base64-hmac-sha256>` over `webhook-id.webhook-timestamp.body`
+- `webhook-signature` — one or more space-separated `v1,<base64-hmac-sha256>` entries over `webhook-id.webhook-timestamp.body` (multiple entries appear during secret rotation)
 
 The signing secret is returned once when the webhook is created via the WebhookService API
 and is base64-encoded, prefixed with `whsec_`.
@@ -56,11 +56,6 @@ function verifyGeminiSignature(payload, webhookId, webhookTimestamp, webhookSign
     return false;
   }
 
-  const [version, signature] = webhookSignature.split(',');
-  if (version !== 'v1') {
-    return false;
-  }
-
   // Signed content: webhook_id.webhook_timestamp.raw_body
   const payloadStr = payload instanceof Buffer ? payload.toString('utf8') : payload;
   const signedContent = `${webhookId}.${webhookTimestamp}.${payloadStr}`;
@@ -73,15 +68,25 @@ function verifyGeminiSignature(payload, webhookId, webhookTimestamp, webhookSign
     .createHmac('sha256', secretBytes)
     .update(signedContent, 'utf8')
     .digest('base64');
+  const expectedBuf = Buffer.from(expectedSignature);
 
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch {
-    return false;
+  // Standard Webhooks allows space-separated entries during secret rotation:
+  // `v1,<sig1> v1,<sig2>`. Accept the message if any v1 entry matches.
+  for (const part of webhookSignature.split(' ')) {
+    const commaIdx = part.indexOf(',');
+    if (commaIdx === -1) continue;
+    const version = part.slice(0, commaIdx);
+    const signature = part.slice(commaIdx + 1);
+    if (version !== 'v1') continue;
+    const sigBuf = Buffer.from(signature);
+    if (sigBuf.length !== expectedBuf.length) continue;
+    try {
+      if (crypto.timingSafeEqual(sigBuf, expectedBuf)) return true;
+    } catch {
+      // length mismatch — try the next entry
+    }
   }
+  return false;
 }
 
 // CRITICAL: use express.raw() — signature is computed over the raw body
@@ -171,10 +176,6 @@ def verify_gemini_signature(
     if timestamp_diff > 300 or timestamp_diff < -300:
         return False
 
-    version, signature = webhook_signature.split(',', 1)
-    if version != 'v1':
-        return False
-
     signed_content = f"{webhook_id}.{webhook_timestamp}.{payload.decode('utf-8')}"
 
     secret_key = secret[6:] if secret.startswith('whsec_') else secret
@@ -184,7 +185,17 @@ def verify_gemini_signature(
         hmac.new(secret_bytes, signed_content.encode('utf-8'), hashlib.sha256).digest()
     ).decode('utf-8')
 
-    return hmac.compare_digest(signature, expected_signature)
+    # Standard Webhooks allows space-separated entries during secret rotation:
+    # `v1,<sig1> v1,<sig2>`. Accept the message if any v1 entry matches.
+    for part in webhook_signature.split(' '):
+        if ',' not in part:
+            continue
+        version, _, signature = part.partition(',')
+        if version != 'v1':
+            continue
+        if hmac.compare_digest(signature, expected_signature):
+            return True
+    return False
 
 
 @app.post("/webhooks/gemini")
@@ -254,12 +265,8 @@ GEMINI_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxx # Static webhook signing secret (whse
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (no account required)
-npm install -g hookdeck-cli
-# or: brew install hookdeck/hookdeck/hookdeck
-
-# Tunnel localhost to a public URL Gemini can reach
-hookdeck listen 3000 --path /webhooks/gemini
+# Tunnel localhost to a public URL Gemini can reach (no account required)
+npx hookdeck-cli listen 3000 gemini --path /webhooks/gemini
 ```
 
 ## Reference Materials

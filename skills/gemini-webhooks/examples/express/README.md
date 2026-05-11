@@ -37,8 +37,7 @@ Server runs on http://localhost:3000
 
 ```bash
 # No account required
-npm install -g hookdeck-cli
-hookdeck listen 3000 --path /webhooks/gemini
+npx hookdeck-cli listen 3000 gemini --path /webhooks/gemini
 ```
 
 Then register the public URL Hookdeck prints as your webhook endpoint with Gemini.

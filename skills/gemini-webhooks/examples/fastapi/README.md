@@ -44,8 +44,7 @@ API docs available at http://localhost:8000/docs
 ## Test with Hookdeck CLI
 
 ```bash
-npm install -g hookdeck-cli
-hookdeck listen 8000 --path /webhooks/gemini
+npx hookdeck-cli listen 8000 gemini --path /webhooks/gemini
 ```
 
 Register the Hookdeck-generated public URL with Gemini as your webhook endpoint.

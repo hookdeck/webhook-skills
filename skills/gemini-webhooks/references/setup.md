@@ -2,8 +2,7 @@
 
 ## Prerequisites
 
-- A Google AI Studio / Gemini API project with the Generative Language API enabled
-- A Gemini API key (or service-account credentials) with permission to manage webhooks
+- A Gemini API key from Google AI Studio (no extra IAM role is required to manage webhooks)
 - Your application's public webhook endpoint URL (HTTPS required in production)
 
 ## Static Webhooks (Project-Level)
@@ -13,17 +12,38 @@ event. They use a symmetric HMAC-SHA256 secret returned **only once** at creatio
 
 ### 1. Create a Webhook Endpoint
 
-Use the WebhookService API to register an endpoint, for example:
+Use the WebhookService API to register an endpoint. The cookbook treats the
+`google-genai` SDK as the primary path:
+
+```python
+from google import genai
+
+client = genai.Client()
+webhook = client.webhooks.create(
+    name="production",
+    uri="https://api.example.com/webhooks/gemini",
+    subscribed_events=[
+        "batch.succeeded",
+        "batch.failed",
+        "video.generated",
+        "interaction.completed",
+        "interaction.requires_action",
+    ],
+)
+print(webhook.new_signing_secret)  # whsec_... — save this, returned only once
+```
+
+Or via REST:
 
 ```bash
 curl -X POST \
-  "https://generativelanguage.googleapis.com/v1beta/webhooks" \
+  "https://generativelanguage.googleapis.com/v1/webhooks" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "displayName": "production",
-    "url": "https://api.example.com/webhooks/gemini",
-    "eventTypes": [
+    "name": "production",
+    "uri": "https://api.example.com/webhooks/gemini",
+    "subscribed_events": [
       "batch.succeeded",
       "batch.failed",
       "video.generated",
@@ -33,15 +53,19 @@ curl -X POST \
   }'
 ```
 
-The response contains the `signingSecret` — a `whsec_`-prefixed base64 string. **Save
-it immediately**: it is only returned once.
+The response contains `new_signing_secret` — a `whsec_`-prefixed base64 string. **Save
+it immediately**: it is only returned once. Subsequent reads only expose a
+`truncated_secret` preview inside `signing_secrets[]`.
 
 ```json
 {
-  "name": "webhooks/abc123",
-  "url": "https://api.example.com/webhooks/gemini",
-  "signingSecret": "whsec_xxxxxxxxxxxxxxxxxxxxxxxx",
-  "eventTypes": ["batch.succeeded", "..."]
+  "name": "production",
+  "uri": "https://api.example.com/webhooks/gemini",
+  "subscribed_events": ["batch.succeeded", "..."],
+  "new_signing_secret": "whsec_xxxxxxxxxxxxxxxxxxxxxxxx",
+  "signing_secrets": [
+    { "truncated_secret": "whsec_xxxx…", "create_time": "2026-05-04T12:00:00Z" }
+  ]
 }
 ```
 
@@ -50,14 +74,16 @@ Store the secret in your secret manager and expose it to your application as
 
 ### 2. Rotate the Signing Secret
 
-Call `rotateSigningSecret` on the webhook resource to generate a new secret. The old
-secret continues to validate for a short overlap window so you can roll the env var
-without downtime.
+Rotation is supported and Google publishes overlapping signatures during the cutover —
+the `webhook-signature` header carries `v1,<old> v1,<new>` so both validate
+simultaneously until you swap the env var. Consult the latest Gemini cookbook
+([quickstarts/Webhooks.ipynb](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Webhooks.ipynb))
+for the exact SDK call that re-issues a `new_signing_secret`.
 
-### 3. List, Update, Delete
+### 3. List, Get, Update, Ping, Delete
 
-Manage webhooks via the standard REST verbs on
-`https://generativelanguage.googleapis.com/v1beta/webhooks`.
+Manage webhooks via `client.webhooks.list / get / update / ping / delete` (or the
+matching REST verbs on `https://generativelanguage.googleapis.com/v1/webhooks`).
 
 ## Dynamic Webhooks (Per-Request)
 
@@ -95,7 +121,7 @@ For local development, use a tunnel:
 
 ```bash
 # Hookdeck CLI — no account required
-hookdeck listen 3000 --path /webhooks/gemini
+npx hookdeck-cli listen 3000 gemini --path /webhooks/gemini
 ```
 
 This gives you a public HTTPS URL, request inspection, and replay.
