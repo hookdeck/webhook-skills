@@ -29,39 +29,39 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 
 | Provider | Skill | What It Does |
 |----------|-------|--------------|
-| Chargebee | [`chargebee-webhooks`](skills/chargebee-webhooks/) | Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events |
-| Claude Managed Agents | [`claude-managed-agents-webhooks`](skills/claude-managed-agents-webhooks/) | Verify Anthropic Claude Managed Agents webhook signatures (`X-Webhook-Signature`), handle session lifecycle and outcome evaluation events |
-| Clerk | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
-| Cursor | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
-| Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
-| Discord | [`discord-webhooks`](skills/discord-webhooks/) | Verify Discord webhook event signatures (Ed25519), handle application and entitlement events |
-| ElevenLabs | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
-| FusionAuth | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
-| GitHub | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
-| GitLab | [`gitlab-webhooks`](skills/gitlab-webhooks/) | Verify GitLab webhook tokens, handle push, merge_request, issue, and pipeline events |
-| Google Gemini | [`gemini-webhooks`](skills/gemini-webhooks/) | Verify Gemini API webhook signatures (Standard Webhooks HMAC + JWKS modes), handle batch and long-running operation events |
-| HubSpot | [`hubspot-webhooks`](skills/hubspot-webhooks/) | Verify HubSpot v3 webhook signatures (HMAC-SHA256 with timestamp), handle contact, deal, and company events |
-| Hugging Face | [`huggingface-webhooks`](skills/huggingface-webhooks/) | Authenticate Hugging Face webhooks (`X-Webhook-Secret`), handle repo, discussion, and comment events |
-| Intercom | [`intercom-webhooks`](skills/intercom-webhooks/) | Verify Intercom `X-Hub-Signature` (HMAC-SHA1), handle conversation, contact, and ticket events |
-| Linear | [`linear-webhooks`](skills/linear-webhooks/) | Verify Linear webhook signatures (HMAC-SHA256), handle issue, comment, and project events |
-| Mailgun | [`mailgun-webhooks`](skills/mailgun-webhooks/) | Verify Mailgun webhook signatures (HMAC-SHA256), handle email delivered, failed, opened, clicked, unsubscribed, and complained events |
-| Notion | [`notion-webhooks`](skills/notion-webhooks/) | Verify Notion webhook signatures (HMAC-SHA256, `X-Notion-Signature`), complete handshake, handle page and comment events |
-| OpenAI | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
-| OpenClaw | [`openclaw-webhooks`](skills/openclaw-webhooks/) | Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads |
-| Paddle | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
-| PayPal | [`paypal-webhooks`](skills/paypal-webhooks/) | Verify PayPal webhook signatures (RSA-SHA256 with cert), handle payment, subscription, and order events |
-| Postmark | [`postmark-webhooks`](skills/postmark-webhooks/) | Authenticate Postmark webhooks (Basic Auth/Token), handle email delivery, bounce, open, click, and spam events |
-| Replicate | [`replicate-webhooks`](skills/replicate-webhooks/) | Verify Replicate webhook signatures, handle ML prediction lifecycle events |
-| Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
-| Scrapfly | [`scrapfly-webhooks`](skills/scrapfly-webhooks/) | Verify Scrapfly webhook signatures (HMAC-SHA256, uppercase/lowercase hex), dispatch scrape, extraction, and screenshot jobs |
-| SendGrid | [`sendgrid-webhooks`](skills/sendgrid-webhooks/) | Verify SendGrid webhook signatures (ECDSA), handle email delivery events |
-| Shopify | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
-| Slack | [`slack-webhooks`](skills/slack-webhooks/) | Verify Slack Events API signatures (HMAC-SHA256, `X-Slack-Signature`), handle message, app_mention, and reaction events |
-| Stripe | [`stripe-webhooks`](skills/stripe-webhooks/) | Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events |
-| Twilio | [`twilio-webhooks`](skills/twilio-webhooks/) | Verify Twilio webhook signatures (HMAC-SHA1, `X-Twilio-Signature`), handle SMS, voice, and status callback events |
-| Vercel | [`vercel-webhooks`](skills/vercel-webhooks/) | Verify Vercel webhook signatures (HMAC-SHA1), handle deployment and project events |
-| Webflow | [`webflow-webhooks`](skills/webflow-webhooks/) | Verify Webflow webhook signatures (HMAC-SHA256), handle form submission, ecommerce, and CMS events |
-| WooCommerce | [`woocommerce-webhooks`](skills/woocommerce-webhooks/) | Verify WooCommerce webhook signatures, handle order, product, and customer events |
+| [Chargebee](https://www.chargebee.com/docs/2.0/events_and_webhooks.html) | [`chargebee-webhooks`](skills/chargebee-webhooks/) | Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events |
+| [Claude Managed Agents](https://platform.claude.com/docs/en/managed-agents/webhooks) | [`claude-managed-agents-webhooks`](skills/claude-managed-agents-webhooks/) | Verify Anthropic Claude Managed Agents webhook signatures (`X-Webhook-Signature`), handle session lifecycle and outcome evaluation events |
+| [Clerk](https://clerk.com/docs/integrations/webhooks/overview) | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
+| [Cursor](https://docs.cursor.com/account/cloud-agent-webhooks) | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
+| [Deepgram](https://developers.deepgram.com/reference) | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
+| [Discord](https://docs.discord.com/developers/events/webhook-events) | [`discord-webhooks`](skills/discord-webhooks/) | Verify Discord webhook event signatures (Ed25519), handle application and entitlement events |
+| [ElevenLabs](https://elevenlabs.io/docs/overview/administration/webhooks) | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
+| [FusionAuth](https://fusionauth.io/docs/extend/events-and-webhooks/) | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
+| [GitHub](https://docs.github.com/en/webhooks) | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
+| [GitLab](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html) | [`gitlab-webhooks`](skills/gitlab-webhooks/) | Verify GitLab webhook tokens, handle push, merge_request, issue, and pipeline events |
+| [Google Gemini](https://ai.google.dev/gemini-api/docs/webhooks) | [`gemini-webhooks`](skills/gemini-webhooks/) | Verify Gemini API webhook signatures (Standard Webhooks HMAC + JWKS modes), handle batch and long-running operation events |
+| [HubSpot](https://developers.hubspot.com/docs/apps/legacy-apps/authentication/validating-requests) | [`hubspot-webhooks`](skills/hubspot-webhooks/) | Verify HubSpot v3 webhook signatures (HMAC-SHA256 with timestamp), handle contact, deal, and company events |
+| [Hugging Face](https://huggingface.co/docs/hub/webhooks) | [`huggingface-webhooks`](skills/huggingface-webhooks/) | Authenticate Hugging Face webhooks (`X-Webhook-Secret`), handle repo, discussion, and comment events |
+| [Intercom](https://developers.intercom.com/docs/webhooks) | [`intercom-webhooks`](skills/intercom-webhooks/) | Verify Intercom `X-Hub-Signature` (HMAC-SHA1), handle conversation, contact, and ticket events |
+| [Linear](https://linear.app/developers/webhooks) | [`linear-webhooks`](skills/linear-webhooks/) | Verify Linear webhook signatures (HMAC-SHA256), handle issue, comment, and project events |
+| [Mailgun](https://documentation.mailgun.com/docs/mailgun/user-manual/webhooks/webhooks) | [`mailgun-webhooks`](skills/mailgun-webhooks/) | Verify Mailgun webhook signatures (HMAC-SHA256), handle email delivered, failed, opened, clicked, unsubscribed, and complained events |
+| [Notion](https://developers.notion.com/reference/webhooks) | [`notion-webhooks`](skills/notion-webhooks/) | Verify Notion webhook signatures (HMAC-SHA256, `X-Notion-Signature`), complete handshake, handle page and comment events |
+| [OpenAI](https://platform.openai.com/docs/guides/webhooks) | [`openai-webhooks`](skills/openai-webhooks/) | Verify OpenAI webhooks for fine-tuning, batch, and realtime async events |
+| [OpenClaw](https://docs.openclaw.ai/automation/webhook) | [`openclaw-webhooks`](skills/openclaw-webhooks/) | Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads |
+| [Paddle](https://developer.paddle.com/webhooks/overview) | [`paddle-webhooks`](skills/paddle-webhooks/) | Verify Paddle webhook signatures, handle subscription and billing events |
+| [PayPal](https://developer.paypal.com/api/rest/webhooks/) | [`paypal-webhooks`](skills/paypal-webhooks/) | Verify PayPal webhook signatures (RSA-SHA256 with cert), handle payment, subscription, and order events |
+| [Postmark](https://postmarkapp.com/developer/webhooks/webhooks-overview) | [`postmark-webhooks`](skills/postmark-webhooks/) | Authenticate Postmark webhooks (Basic Auth/Token), handle email delivery, bounce, open, click, and spam events |
+| [Replicate](https://replicate.com/docs/webhooks) | [`replicate-webhooks`](skills/replicate-webhooks/) | Verify Replicate webhook signatures, handle ML prediction lifecycle events |
+| [Resend](https://resend.com/docs/webhooks) | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
+| [Scrapfly](https://scrapfly.io/docs/scrape-api/webhook) | [`scrapfly-webhooks`](skills/scrapfly-webhooks/) | Verify Scrapfly webhook signatures (HMAC-SHA256, uppercase/lowercase hex), dispatch scrape, extraction, and screenshot jobs |
+| [SendGrid](https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event) | [`sendgrid-webhooks`](skills/sendgrid-webhooks/) | Verify SendGrid webhook signatures (ECDSA), handle email delivery events |
+| [Shopify](https://shopify.dev/docs/apps/build/webhooks) | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
+| [Slack](https://docs.slack.dev/apis/events-api/) | [`slack-webhooks`](skills/slack-webhooks/) | Verify Slack Events API signatures (HMAC-SHA256, `X-Slack-Signature`), handle message, app_mention, and reaction events |
+| [Stripe](https://docs.stripe.com/webhooks) | [`stripe-webhooks`](skills/stripe-webhooks/) | Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events |
+| [Twilio](https://www.twilio.com/docs/usage/webhooks) | [`twilio-webhooks`](skills/twilio-webhooks/) | Verify Twilio webhook signatures (HMAC-SHA1, `X-Twilio-Signature`), handle SMS, voice, and status callback events |
+| [Vercel](https://vercel.com/docs/observability/webhooks) | [`vercel-webhooks`](skills/vercel-webhooks/) | Verify Vercel webhook signatures (HMAC-SHA1), handle deployment and project events |
+| [Webflow](https://developers.webflow.com/data/docs/working-with-webhooks) | [`webflow-webhooks`](skills/webflow-webhooks/) | Verify Webflow webhook signatures (HMAC-SHA256), handle form submission, ecommerce, and CMS events |
+| [WooCommerce](https://developer.woocommerce.com/docs/webhooks/) | [`woocommerce-webhooks`](skills/woocommerce-webhooks/) | Verify WooCommerce webhook signatures, handle order, product, and customer events |
 
 ### Webhook Handler Pattern Skills
 
@@ -75,11 +75,11 @@ Framework-agnostic best practices for webhook handling, applicable across any we
 
 Skills for webhook infrastructure products — routing, queuing, delivery, and observability.
 
-| Skill | What It Does |
-|-------|--------------|
-| [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability |
-| [`hookdeck-event-gateway-webhooks`](skills/hookdeck-event-gateway-webhooks/) | Verify `x-hookdeck-signature` and handle webhooks forwarded by the Hookdeck Event Gateway |
-| [`outpost`](skills/outpost/) | Send webhooks and events to user-preferred destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka) |
+| Product | Skill | What It Does |
+|---------|-------|--------------|
+| [Hookdeck Event Gateway](https://hookdeck.com/docs) | [`hookdeck-event-gateway`](skills/hookdeck-event-gateway/) | Webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability |
+| [Hookdeck Event Gateway (receiver)](https://hookdeck.com/docs/verification) | [`hookdeck-event-gateway-webhooks`](skills/hookdeck-event-gateway-webhooks/) | Verify `x-hookdeck-signature` and handle webhooks forwarded by the Hookdeck Event Gateway |
+| [Hookdeck Outpost](https://outpost.hookdeck.com/docs) | [`outpost`](skills/outpost/) | Send webhooks and events to user-preferred destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka) |
 
 ## Quick Start
 
