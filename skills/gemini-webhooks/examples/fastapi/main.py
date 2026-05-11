@@ -39,13 +39,6 @@ def verify_gemini_signature(
         print(f"Webhook timestamp too old or too far in the future: {timestamp_diff}s difference")
         return False
 
-    parts = webhook_signature.split(",", 1)
-    if len(parts) != 2:
-        return False
-    version, signature = parts
-    if version != "v1":
-        return False
-
     # Signed content: webhook_id.webhook_timestamp.raw_body
     signed_content = f"{webhook_id}.{webhook_timestamp}.{payload.decode('utf-8')}"
 
@@ -59,7 +52,17 @@ def verify_gemini_signature(
         hmac.new(secret_bytes, signed_content.encode("utf-8"), hashlib.sha256).digest()
     ).decode("utf-8")
 
-    return hmac.compare_digest(signature, expected_signature)
+    # Standard Webhooks allows space-separated entries during secret rotation:
+    # `v1,<sig1> v1,<sig2>`. Accept the message if any v1 entry matches.
+    for part in webhook_signature.split(" "):
+        if "," not in part:
+            continue
+        version, _, signature = part.partition(",")
+        if version != "v1":
+            continue
+        if hmac.compare_digest(signature, expected_signature):
+            return True
+    return False
 
 
 @app.post("/webhooks/gemini")
@@ -112,7 +115,8 @@ async def gemini_webhook(
 
     elif event_type == "video.generated":
         print(f"Video generated: {event_data.get('id')}")
-        print(f"Video file: {event_data.get('file_name') or event_data.get('output_file_uri')}")
+        print(f"Video URI: {event_data.get('output_file_uri')}")
+        print(f"File name: {event_data.get('file_name')}")
         # TODO: Fetch the rendered video, notify the user
 
     elif event_type == "interaction.completed":
