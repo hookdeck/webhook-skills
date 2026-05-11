@@ -33,6 +33,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | Clerk | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
 | Cursor | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
 | Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
+| Discord | [`discord-webhooks`](skills/discord-webhooks/) | Verify Discord webhook event signatures (Ed25519), handle application and entitlement events |
 | ElevenLabs | [`elevenlabs-webhooks`](skills/elevenlabs-webhooks/) | Verify ElevenLabs webhook signatures, handle call transcription events |
 | FusionAuth | [`fusionauth-webhooks`](skills/fusionauth-webhooks/) | Verify FusionAuth JWT webhook signatures, handle user, login, and registration events |
 | GitHub | [`github-webhooks`](skills/github-webhooks/) | Verify GitHub webhook signatures, handle push, pull_request, and issue events |
