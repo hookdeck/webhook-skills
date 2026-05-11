@@ -224,6 +224,30 @@ providers:
         - batch.succeeded
         - video.generated
 
+  - name: hubspot
+    displayName: HubSpot
+    docs:
+      webhooks: https://developers.hubspot.com/docs/apps/legacy-apps/authentication/validating-requests
+      changelog_v3: https://developers.hubspot.com/changelog/introducing-version-3-of-webhook-signatures
+    notes: >
+      CRM platform. Uses X-HubSpot-Signature-v3 header — HMAC-SHA256 then base64
+      encoded. Signed content for v3 is the UTF-8 concatenation of HTTP method +
+      request URI (with URL-decoded chars except '?') + raw request body +
+      X-HubSpot-Request-Timestamp value. Reject requests with timestamp older than
+      5 minutes. v1 and v2 (SHA-256 of clientSecret+body, no timestamp) are deprecated
+      — new integrations should use v3 only. Signing key is the App's Client Secret
+      (Application Secret). Common subscription types: contact.creation,
+      contact.propertyChange, contact.deletion, deal.creation, deal.propertyChange,
+      company.creation, ticket.creation. (Note: the v3 validation page is canonically
+      hosted under /docs/apps/legacy-apps/authentication/validating-requests — the
+      legacy-apps label refers to HubSpot's pre-2026 app platform, but v3 signature
+      verification itself is current. A v4 webhooks API is in beta on the new
+      developer platform but uses different mechanics; pin to v3 for stability.)
+    testScenario:
+      events:
+        - contact.creation
+        - deal.creation
+
   - name: huggingface
     displayName: Hugging Face
     docs:
