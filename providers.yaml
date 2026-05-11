@@ -146,6 +146,32 @@ providers:
         - push
         - merge_request
 
+  - name: gemini
+    displayName: Google Gemini
+    docs:
+      webhooks: https://ai.google.dev/gemini-api/docs/webhooks
+      cookbook: https://github.com/google-gemini/cookbook/blob/main/quickstarts/Webhooks.ipynb
+      announcement: https://blog.google/innovation-and-ai/technology/developers-tools/event-driven-webhooks/
+    notes: >
+      Google Gemini API event-driven webhooks (launched May 4, 2026) push notifications
+      when long-running operations (batch jobs, video generation, Interactions API
+      function-calling LROs) complete, replacing polling. Strictly follows the Standard
+      Webhooks (Svix) spec with headers: webhook-id, webhook-timestamp, webhook-signature.
+      Two signing modes:
+      (1) Static webhooks — symmetric HMAC-SHA256 over webhook-id.webhook-timestamp.body
+      using a shared secret returned once at creation (project-level integration). Use
+      the standardwebhooks library.
+      (2) Dynamic webhooks — asymmetric RS256 JWTs verified against Google's JWKS
+      endpoint at https://generativelanguage.googleapis.com/.well-known/jwks.json
+      (per-job binding, supports user_metadata for custom routing). Reject payloads
+      older than 5 minutes. At-least-once delivery with 24-hour exponential backoff
+      retries. Common events: batch.succeeded, batch.failed, video.generated,
+      interaction.completed, interaction.requires_action.
+    testScenario:
+      events:
+        - batch.succeeded
+        - video.generated
+
   - name: openai
     displayName: OpenAI
     docs:
