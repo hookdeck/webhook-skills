@@ -37,11 +37,8 @@ Server runs on http://localhost:3000
 ### Using Hookdeck CLI
 
 ```bash
-# Install Hookdeck CLI
-brew install hookdeck/hookdeck/hookdeck
-
 # Forward webhooks to localhost
-hookdeck listen 3000 --path /webhooks/intercom
+npx hookdeck-cli listen 3000 intercom --path /webhooks/intercom
 ```
 
 Then paste the printed URL as the **Endpoint URL** in your Intercom app's

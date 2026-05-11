@@ -66,9 +66,7 @@ handshake, the Developer Hub will show an error — check your server logs.
 For local webhook testing, use the Hookdeck CLI (no account required):
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-
-hookdeck listen 3000 --path /webhooks/intercom
+npx hookdeck-cli listen 3000 intercom --path /webhooks/intercom
 ```
 
 Use the URL it prints as the **Endpoint URL** in the Developer Hub.

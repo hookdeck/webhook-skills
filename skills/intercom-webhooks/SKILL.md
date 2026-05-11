@@ -202,11 +202,8 @@ INTERCOM_CLIENT_SECRET=your_app_client_secret
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (no account required)
-brew install hookdeck/hookdeck/hookdeck
-
-# Forward webhooks to localhost
-hookdeck listen 3000 --path /webhooks/intercom
+# Forward webhooks to localhost (no account required)
+npx hookdeck-cli listen 3000 intercom --path /webhooks/intercom
 ```
 
 Use the URL Hookdeck prints as the **Webhook URL** in Intercom's Developer Hub.
