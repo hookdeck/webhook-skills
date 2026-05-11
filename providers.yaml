@@ -45,6 +45,34 @@ providers:
         - subscription_created
         - payment_succeeded
 
+  - name: claude-managed-agents
+    displayName: Claude Managed Agents
+    docs:
+      webhooks: https://platform.claude.com/docs/en/managed-agents/webhooks
+      overview: https://platform.claude.com/docs/en/managed-agents/overview
+      cookbook: https://platform.claude.com/cookbook/managed-agents-cma-operate-in-production
+    notes: >
+      Anthropic Claude Managed Agents (CMA) webhooks notify your app of long-running
+      agent session state changes without holding an HTTP connection open. Uses
+      X-Webhook-Signature header with HMAC-SHA256. Signing secret is a 32-byte
+      whsec_-prefixed value generated at endpoint creation (shown only once).
+      Set ANTHROPIC_WEBHOOK_SIGNING_KEY env var. The official Anthropic SDK provides
+      client.beta.webhooks.unwrap() (Python/TS/Go/C#/Java/PHP/Ruby) which verifies the
+      signature, rejects payloads older than 5 minutes, and parses the event in one step.
+      Event payloads return only event type + id — fetch the full object via GET.
+      Endpoint must return 2xx; anything else (including 3xx) triggers retry.
+      Common events:
+      session.status_run_started, session.status_idled, session.status_rescheduled,
+      session.status_terminated, session.thread_created, session.thread_idled,
+      session.thread_terminated, session.outcome_evaluation_ended,
+      vault.created, vault.archived, vault.deleted,
+      vault_credential.created, vault_credential.archived, vault_credential.deleted,
+      vault_credential.refresh_failed.
+    testScenario:
+      events:
+        - session.status_idled
+        - session.outcome_evaluation_ended
+
   - name: clerk
     displayName: Clerk
     docs:

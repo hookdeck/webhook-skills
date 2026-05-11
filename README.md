@@ -30,6 +30,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | Provider | Skill | What It Does |
 |----------|-------|--------------|
 | Chargebee | [`chargebee-webhooks`](skills/chargebee-webhooks/) | Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events |
+| Claude Managed Agents | [`claude-managed-agents-webhooks`](skills/claude-managed-agents-webhooks/) | Verify Anthropic Claude Managed Agents webhook signatures (`X-Webhook-Signature`), handle session lifecycle and outcome evaluation events |
 | Clerk | [`clerk-webhooks`](skills/clerk-webhooks/) | Verify Clerk webhook signatures, handle user, session, and organization events |
 | Cursor | [`cursor-webhooks`](skills/cursor-webhooks/) | Verify Cursor Cloud Agent webhook signatures, handle agent status events |
 | Deepgram | [`deepgram-webhooks`](skills/deepgram-webhooks/) | Receive and verify Deepgram transcription callbacks |
