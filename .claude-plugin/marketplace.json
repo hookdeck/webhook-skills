@@ -1,5 +1,5 @@
 {
-  "name": "hookdeck-webhook-skills",
+  "name": "webhook-skills",
   "owner": {
     "name": "Hookdeck",
     "email": "phil@hookdeck.com"
@@ -12,10 +12,10 @@
     {
       "name": "chargebee-webhooks",
       "description": "Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events.",
-      "source": "./",
+      "source": "./skills/chargebee-webhooks",
       "strict": false,
       "skills": [
-        "./skills/chargebee-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -35,10 +35,10 @@
     {
       "name": "claude-managed-agents-webhooks",
       "description": "Verify Anthropic Claude Managed Agents webhook signatures (X-Webhook-Signature, Standard Webhooks), handle session lifecycle and outcome evaluation events.",
-      "source": "./",
+      "source": "./skills/claude-managed-agents-webhooks",
       "strict": false,
       "skills": [
-        "./skills/claude-managed-agents-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -59,10 +59,10 @@
     {
       "name": "clerk-webhooks",
       "description": "Verify Clerk webhook signatures (Standard Webhooks/Svix), handle user, session, and organization events.",
-      "source": "./",
+      "source": "./skills/clerk-webhooks",
       "strict": false,
       "skills": [
-        "./skills/clerk-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -82,10 +82,10 @@
     {
       "name": "cursor-webhooks",
       "description": "Verify Cursor Cloud Agent webhook signatures (HMAC-SHA256), handle agent status events.",
-      "source": "./",
+      "source": "./skills/cursor-webhooks",
       "strict": false,
       "skills": [
-        "./skills/cursor-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -105,10 +105,10 @@
     {
       "name": "deepgram-webhooks",
       "description": "Receive and verify Deepgram transcription callbacks (Basic Auth / dg-token).",
-      "source": "./",
+      "source": "./skills/deepgram-webhooks",
       "strict": false,
       "skills": [
-        "./skills/deepgram-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -128,10 +128,10 @@
     {
       "name": "discord-webhooks",
       "description": "Verify Discord webhook event signatures (Ed25519), handle application and entitlement events.",
-      "source": "./",
+      "source": "./skills/discord-webhooks",
       "strict": false,
       "skills": [
-        "./skills/discord-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -151,10 +151,10 @@
     {
       "name": "elevenlabs-webhooks",
       "description": "Verify ElevenLabs webhook signatures (Standard Webhooks/Svix), handle call transcription events.",
-      "source": "./",
+      "source": "./skills/elevenlabs-webhooks",
       "strict": false,
       "skills": [
-        "./skills/elevenlabs-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -174,10 +174,10 @@
     {
       "name": "fusionauth-webhooks",
       "description": "Verify FusionAuth JWT webhook signatures (RSA via JWKS), handle user, login, and registration events.",
-      "source": "./",
+      "source": "./skills/fusionauth-webhooks",
       "strict": false,
       "skills": [
-        "./skills/fusionauth-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -197,10 +197,10 @@
     {
       "name": "gemini-webhooks",
       "description": "Verify Google Gemini API webhook signatures (Standard Webhooks HMAC + dynamic RS256 JWKS modes), handle batch and long-running operation events.",
-      "source": "./",
+      "source": "./skills/gemini-webhooks",
       "strict": false,
       "skills": [
-        "./skills/gemini-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -222,10 +222,10 @@
     {
       "name": "github-webhooks",
       "description": "Verify GitHub webhook signatures (HMAC-SHA256, X-Hub-Signature-256), handle push, pull_request, and issue events.",
-      "source": "./",
+      "source": "./skills/github-webhooks",
       "strict": false,
       "skills": [
-        "./skills/github-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -245,10 +245,10 @@
     {
       "name": "gitlab-webhooks",
       "description": "Verify GitLab webhook tokens (X-Gitlab-Token), handle push, merge_request, issue, and pipeline events.",
-      "source": "./",
+      "source": "./skills/gitlab-webhooks",
       "strict": false,
       "skills": [
-        "./skills/gitlab-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -268,10 +268,10 @@
     {
       "name": "hubspot-webhooks",
       "description": "Verify HubSpot v3 webhook signatures (HMAC-SHA256 with method+uri+body+timestamp), handle contact, deal, and company events.",
-      "source": "./",
+      "source": "./skills/hubspot-webhooks",
       "strict": false,
       "skills": [
-        "./skills/hubspot-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -291,10 +291,10 @@
     {
       "name": "huggingface-webhooks",
       "description": "Authenticate Hugging Face webhooks (shared token via X-Webhook-Secret, not HMAC), handle repo, discussion, and comment events.",
-      "source": "./",
+      "source": "./skills/huggingface-webhooks",
       "strict": false,
       "skills": [
-        "./skills/huggingface-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -314,10 +314,10 @@
     {
       "name": "intercom-webhooks",
       "description": "Verify Intercom X-Hub-Signature webhooks (HMAC-SHA1), handle conversation, contact, and ticket events.",
-      "source": "./",
+      "source": "./skills/intercom-webhooks",
       "strict": false,
       "skills": [
-        "./skills/intercom-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -337,10 +337,10 @@
     {
       "name": "linear-webhooks",
       "description": "Verify Linear webhook signatures (HMAC-SHA256 with replay timestamp), handle issue, comment, and project events.",
-      "source": "./",
+      "source": "./skills/linear-webhooks",
       "strict": false,
       "skills": [
-        "./skills/linear-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -360,10 +360,10 @@
     {
       "name": "mailgun-webhooks",
       "description": "Verify Mailgun webhook signatures (HMAC-SHA256 in body-embedded signature object), handle email delivered, failed, opened, clicked, unsubscribed, and complained events.",
-      "source": "./",
+      "source": "./skills/mailgun-webhooks",
       "strict": false,
       "skills": [
-        "./skills/mailgun-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -383,10 +383,10 @@
     {
       "name": "notion-webhooks",
       "description": "Verify Notion webhook signatures (HMAC-SHA256 with verification_token handshake), handle page and comment events.",
-      "source": "./",
+      "source": "./skills/notion-webhooks",
       "strict": false,
       "skills": [
-        "./skills/notion-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -406,10 +406,10 @@
     {
       "name": "openai-webhooks",
       "description": "Verify OpenAI webhooks (Standard Webhooks/Svix) for fine-tuning, batch, and realtime async events.",
-      "source": "./",
+      "source": "./skills/openai-webhooks",
       "strict": false,
       "skills": [
-        "./skills/openai-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -430,10 +430,10 @@
     {
       "name": "openclaw-webhooks",
       "description": "Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads.",
-      "source": "./",
+      "source": "./skills/openclaw-webhooks",
       "strict": false,
       "skills": [
-        "./skills/openclaw-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -453,10 +453,10 @@
     {
       "name": "paddle-webhooks",
       "description": "Verify Paddle webhook signatures (HMAC-SHA256 with multi-signature rotation), handle subscription and billing events.",
-      "source": "./",
+      "source": "./skills/paddle-webhooks",
       "strict": false,
       "skills": [
-        "./skills/paddle-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -477,10 +477,10 @@
     {
       "name": "paypal-webhooks",
       "description": "Verify PayPal webhook signatures (RSA-SHA256 with cert), handle payment, subscription, and order events.",
-      "source": "./",
+      "source": "./skills/paypal-webhooks",
       "strict": false,
       "skills": [
-        "./skills/paypal-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -500,10 +500,10 @@
     {
       "name": "postmark-webhooks",
       "description": "Authenticate Postmark webhooks (Basic Auth / token), handle email delivery, bounce, open, click, and spam events.",
-      "source": "./",
+      "source": "./skills/postmark-webhooks",
       "strict": false,
       "skills": [
-        "./skills/postmark-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -523,10 +523,10 @@
     {
       "name": "replicate-webhooks",
       "description": "Verify Replicate webhook signatures (Standard Webhooks/Svix), handle ML prediction lifecycle events.",
-      "source": "./",
+      "source": "./skills/replicate-webhooks",
       "strict": false,
       "skills": [
-        "./skills/replicate-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -546,10 +546,10 @@
     {
       "name": "resend-webhooks",
       "description": "Verify Resend webhook signatures (Standard Webhooks/Svix), handle email delivery and bounce events.",
-      "source": "./",
+      "source": "./skills/resend-webhooks",
       "strict": false,
       "skills": [
-        "./skills/resend-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -569,10 +569,10 @@
     {
       "name": "scrapfly-webhooks",
       "description": "Verify Scrapfly webhook signatures (HMAC-SHA256, uppercase/lowercase hex), dispatch scrape, extraction, and screenshot jobs from one shared webhook URL.",
-      "source": "./",
+      "source": "./skills/scrapfly-webhooks",
       "strict": false,
       "skills": [
-        "./skills/scrapfly-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -592,10 +592,10 @@
     {
       "name": "sendgrid-webhooks",
       "description": "Verify SendGrid webhook signatures (ECDSA with public key), handle email delivery events.",
-      "source": "./",
+      "source": "./skills/sendgrid-webhooks",
       "strict": false,
       "skills": [
-        "./skills/sendgrid-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -615,10 +615,10 @@
     {
       "name": "shopify-webhooks",
       "description": "Verify Shopify HMAC signatures (SHA256, base64), handle order, product, and customer events.",
-      "source": "./",
+      "source": "./skills/shopify-webhooks",
       "strict": false,
       "skills": [
-        "./skills/shopify-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -638,10 +638,10 @@
     {
       "name": "slack-webhooks",
       "description": "Verify Slack Events API signatures (HMAC-SHA256 over v0:ts:body), handle message, app_mention, and reaction events.",
-      "source": "./",
+      "source": "./skills/slack-webhooks",
       "strict": false,
       "skills": [
-        "./skills/slack-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -661,10 +661,10 @@
     {
       "name": "stripe-webhooks",
       "description": "Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed, payment_intent.succeeded, customer.subscription.created, invoice.paid events.",
-      "source": "./",
+      "source": "./skills/stripe-webhooks",
       "strict": false,
       "skills": [
-        "./skills/stripe-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -685,10 +685,10 @@
     {
       "name": "twilio-webhooks",
       "description": "Verify Twilio webhook signatures (HMAC-SHA1, X-Twilio-Signature) for form-encoded and JSON variants, handle SMS, voice, and status callback events.",
-      "source": "./",
+      "source": "./skills/twilio-webhooks",
       "strict": false,
       "skills": [
-        "./skills/twilio-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -709,10 +709,10 @@
     {
       "name": "vercel-webhooks",
       "description": "Verify Vercel webhook signatures (HMAC-SHA1, x-vercel-signature), handle deployment and project events.",
-      "source": "./",
+      "source": "./skills/vercel-webhooks",
       "strict": false,
       "skills": [
-        "./skills/vercel-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -732,10 +732,10 @@
     {
       "name": "webflow-webhooks",
       "description": "Verify Webflow webhook signatures (HMAC-SHA256 with timestamp), handle form submission, ecommerce, and CMS events.",
-      "source": "./",
+      "source": "./skills/webflow-webhooks",
       "strict": false,
       "skills": [
-        "./skills/webflow-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -756,10 +756,10 @@
     {
       "name": "woocommerce-webhooks",
       "description": "Verify WooCommerce webhook signatures (HMAC-SHA256, base64), handle order, product, and customer events.",
-      "source": "./",
+      "source": "./skills/woocommerce-webhooks",
       "strict": false,
       "skills": [
-        "./skills/woocommerce-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -779,10 +779,10 @@
     {
       "name": "webhook-handler-patterns",
       "description": "Framework-agnostic webhook handler patterns: idempotency, error handling, retry logic, async processing for Express, Next.js, and FastAPI.",
-      "source": "./",
+      "source": "./skills/webhook-handler-patterns",
       "strict": false,
       "skills": [
-        "./skills/webhook-handler-patterns"
+        "./"
       ],
       "category": "development",
       "license": "MIT",
@@ -802,11 +802,11 @@
     },
     {
       "name": "hookdeck-event-gateway",
-      "description": "Hookdeck Event Gateway: webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability.",
-      "source": "./",
+      "description": "Hookdeck Event Gateway: webhook infrastructure that replaces your queue \u2014 guaranteed delivery, retries, rate limiting, replay, observability.",
+      "source": "./skills/hookdeck-event-gateway",
       "strict": false,
       "skills": [
-        "./skills/hookdeck-event-gateway"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -827,10 +827,10 @@
     {
       "name": "hookdeck-event-gateway-webhooks",
       "description": "Verify x-hookdeck-signature (HMAC-SHA256 base64) and handle webhooks forwarded by the Hookdeck Event Gateway.",
-      "source": "./",
+      "source": "./skills/hookdeck-event-gateway-webhooks",
       "strict": false,
       "skills": [
-        "./skills/hookdeck-event-gateway-webhooks"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
@@ -850,10 +850,10 @@
     {
       "name": "outpost",
       "description": "Send webhooks and events to user-preferred destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka).",
-      "source": "./",
+      "source": "./skills/outpost",
       "strict": false,
       "skills": [
-        "./skills/outpost"
+        "./"
       ],
       "category": "integration",
       "license": "MIT",
