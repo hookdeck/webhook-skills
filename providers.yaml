@@ -224,6 +224,26 @@ providers:
         - batch.succeeded
         - video.generated
 
+  - name: huggingface
+    displayName: Hugging Face
+    docs:
+      webhooks: https://huggingface.co/docs/hub/webhooks
+      verification: https://huggingface.co/docs/hub/webhooks#webhook-secret
+    notes: >
+      AI model hub. Webhooks notify on repository changes (models, datasets, Spaces),
+      discussions, Pull Requests, and comments. Uses a shared secret token sent in
+      the X-Webhook-Secret request header — verify with timing-safe string comparison
+      (NOT HMAC; the secret is sent verbatim). The secret can alternatively be passed
+      as a ?secret= query parameter on the handler URL. Configure in webhook settings.
+      Payload shape: top-level "event" object with "action" (create/update/delete/move)
+      and "scope" (repo, repo.content, repo.config, discussion, discussion.comment),
+      plus "repo", optional "discussion", "comment", "updatedRefs", "updatedConfig",
+      and "webhook" (with version). Rate limit: 1,000 triggers per 24 hours.
+    testScenario:
+      events:
+        - repo update (scope=repo, action=update)
+        - new discussion comment (scope=discussion.comment, action=create)
+
   - name: openai
     displayName: OpenAI
     docs:
