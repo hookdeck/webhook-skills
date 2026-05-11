@@ -78,7 +78,7 @@ the sandbox infrastructure with full signing.
 # In one terminal, start your server
 npm start
 # In another, expose it
-npx hookdeck-cli listen 3000 --path /webhooks/paypal
+npx hookdeck-cli listen 3000 paypal --path /webhooks/paypal
 ```
 
 Set the printed Hookdeck URL as your webhook URL in the PayPal dashboard.

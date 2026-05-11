@@ -237,12 +237,8 @@ PAYPAL_ENV=sandbox                          # sandbox | live
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-npm install -g hookdeck-cli
-# or: brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/paypal
+npx hookdeck-cli listen 3000 paypal --path /webhooks/paypal
 ```
 
 In the PayPal Developer Dashboard, point your webhook URL at the Hookdeck

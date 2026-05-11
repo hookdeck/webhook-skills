@@ -52,7 +52,7 @@ For real end-to-end testing against PayPal:
 # In one terminal
 npm start
 # In another, expose your local server
-npx hookdeck-cli listen 3000 --path /webhooks/paypal
+npx hookdeck-cli listen 3000 paypal --path /webhooks/paypal
 # Set the printed URL as your webhook URL in https://developer.paypal.com/dashboard/applications
 # Then fire test events from https://developer.paypal.com/dashboard/webhooksSimulator
 ```
