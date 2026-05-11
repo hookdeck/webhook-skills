@@ -304,6 +304,29 @@ providers:
         - Issue create
         - Comment create
 
+  - name: mailgun
+    displayName: Mailgun
+    docs:
+      webhooks: https://documentation.mailgun.com/docs/mailgun/user-manual/webhooks/webhooks
+      verification: https://documentation.mailgun.com/docs/mailgun/user-manual/webhooks/securing-webhooks
+      events: https://documentation.mailgun.com/docs/mailgun/user-manual/events/events
+    notes: >
+      Email delivery platform. Webhooks can be configured at account level (all domains) or
+      domain level (per-sending-domain); both use the same signature scheme and the same HTTP
+      Webhook Signing Key — one skill, not two. Signature is delivered INSIDE the request body
+      as a top-level "signature" object with three fields: timestamp (epoch seconds), token
+      (50-char random string), signature (hex). Verify by computing
+      HMAC-SHA256(signing_key, timestamp + token) — concatenate with NO separator — and
+      comparing the hex digest to signature.signature with timing-safe comparison. For
+      subaccounts, payloads may include a parent-signature field signed with the parent
+      account's key. Cache tokens for replay protection. Events: accepted, rejected, delivered,
+      failed (with severity: permanent or temporary), opened, clicked, unsubscribed, complained,
+      stored, list_member_uploaded.
+    testScenario:
+      events:
+        - delivered
+        - failed
+
   - name: openai
     displayName: OpenAI
     docs:
