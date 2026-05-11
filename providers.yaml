@@ -531,6 +531,27 @@ providers:
         - payment_intent.succeeded
         - checkout.session.completed
 
+  - name: twilio
+    displayName: Twilio
+    docs:
+      webhooks: https://www.twilio.com/docs/usage/webhooks
+      verification: https://www.twilio.com/docs/usage/webhooks/webhooks-security
+      events: https://www.twilio.com/docs/usage/webhooks/messaging-webhooks
+    notes: >
+      Communications platform (SMS, voice, WhatsApp). Uses X-Twilio-Signature header
+      with HMAC-SHA1 (base64 encoded). For application/x-www-form-urlencoded webhooks,
+      sign the full URL + each POST parameter name+value sorted alphabetically. For
+      JSON webhooks, append the SHA-256 hash of the raw body to the URL as a bodySHA256
+      query parameter and sign that URL only. Signing key is your Twilio Auth Token.
+      Official SDKs: twilio (Node) and twilio (Python) provide validateRequest /
+      RequestValidator. Common events: incoming SMS (Messaging webhook), incoming voice
+      call (Voice URL), message status callback (queued, sent, delivered, failed),
+      recording status.
+    testScenario:
+      events:
+        - incoming SMS
+        - message status callback
+
   - name: vercel
     displayName: Vercel
     docs:

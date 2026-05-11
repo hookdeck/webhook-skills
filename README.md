@@ -57,6 +57,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | Shopify | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
 | Slack | [`slack-webhooks`](skills/slack-webhooks/) | Verify Slack Events API signatures (HMAC-SHA256, `X-Slack-Signature`), handle message, app_mention, and reaction events |
 | Stripe | [`stripe-webhooks`](skills/stripe-webhooks/) | Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events |
+| Twilio | [`twilio-webhooks`](skills/twilio-webhooks/) | Verify Twilio webhook signatures (HMAC-SHA1, `X-Twilio-Signature`), handle SMS, voice, and status callback events |
 | Vercel | [`vercel-webhooks`](skills/vercel-webhooks/) | Verify Vercel webhook signatures (HMAC-SHA1), handle deployment and project events |
 | Webflow | [`webflow-webhooks`](skills/webflow-webhooks/) | Verify Webflow webhook signatures (HMAC-SHA256), handle form submission, ecommerce, and CMS events |
 | WooCommerce | [`woocommerce-webhooks`](skills/woocommerce-webhooks/) | Verify WooCommerce webhook signatures, handle order, product, and customer events |
