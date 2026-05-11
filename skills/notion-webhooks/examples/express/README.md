@@ -48,8 +48,7 @@ Server runs on http://localhost:3000.
 ### Using Hookdeck CLI
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/notion
+npx hookdeck-cli listen 3000 notion --path /webhooks/notion
 ```
 
 Use the printed public URL as the **Webhook URL** in your Notion integration.

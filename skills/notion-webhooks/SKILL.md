@@ -187,11 +187,8 @@ NOTION_VERIFICATION_TOKEN=secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing (Notion does NOT support localhost)
-brew install hookdeck/hookdeck/hookdeck
-
-# Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/notion
+# Start tunnel (no account needed, Notion does NOT support localhost)
+npx hookdeck-cli listen 3000 notion --path /webhooks/notion
 ```
 
 Use the public URL Hookdeck prints as the **Webhook URL** in the Notion

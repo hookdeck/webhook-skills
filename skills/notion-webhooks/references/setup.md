@@ -65,8 +65,7 @@ Notion will not deliver to `localhost`. Use Hookdeck to expose your local
 server:
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/notion
+npx hookdeck-cli listen 3000 notion --path /webhooks/notion
 ```
 
 Use the public URL Hookdeck prints as the **Webhook URL** in the Notion UI.
