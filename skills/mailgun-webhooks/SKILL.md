@@ -202,13 +202,8 @@ Optionally reject very stale timestamps (e.g., > 1 hour old), but stay lenient â
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-npm install -g hookdeck-cli
-# or
-brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/mailgun
+npx hookdeck-cli listen 3000 mailgun --path /webhooks/mailgun
 ```
 
 ## Reference Materials

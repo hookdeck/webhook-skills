@@ -87,13 +87,8 @@ Tracking can also be toggled per-message via the `o:tracking-opens` / `o:trackin
 Mailgun cannot deliver webhooks to `localhost`. Use a tunnel:
 
 ```bash
-# Install Hookdeck CLI (no account required)
-npm install -g hookdeck-cli
-# or:
-brew install hookdeck/hookdeck/hookdeck
-
-# Forward Mailgun webhooks to your local server
-hookdeck listen 3000 --path /webhooks/mailgun
+# Forward Mailgun webhooks to your local server (no account required)
+npx hookdeck-cli listen 3000 mailgun --path /webhooks/mailgun
 ```
 
 The CLI prints a public URL — paste it as the endpoint when creating the webhook in the Mailgun dashboard.

@@ -40,7 +40,7 @@ The tests generate Mailgun-style signatures (HMAC-SHA256 over `timestamp + token
 For end-to-end testing with the live Mailgun dashboard, tunnel localhost with:
 
 ```bash
-npx hookdeck-cli listen 3000 --path /webhooks/mailgun
+npx hookdeck-cli listen 3000 mailgun --path /webhooks/mailgun
 ```
 
 ## How It Works

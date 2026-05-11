@@ -35,7 +35,7 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/mailgun`
 
 1. Expose your local server publicly (Mailgun cannot reach `localhost`):
    ```bash
-   npx hookdeck-cli listen 3000 --path /webhooks/mailgun
+   npx hookdeck-cli listen 3000 mailgun --path /webhooks/mailgun
    ```
 2. In Mailgun dashboard, create a webhook pointing at the public URL the CLI prints.
 3. Click **Test webhook** — your server should log the event and respond `200`.
