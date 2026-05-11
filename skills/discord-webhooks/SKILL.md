@@ -207,11 +207,8 @@ When you register your webhook URL in the Discord Developer Portal, Discord send
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/discord
+npx hookdeck-cli listen 3000 discord --path /webhooks/discord
 ```
 
 Use the tunnel URL in Discord Developer Portal → your app → Webhooks → Endpoint URL.

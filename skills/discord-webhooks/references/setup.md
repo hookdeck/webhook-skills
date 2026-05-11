@@ -47,12 +47,8 @@ You'll only receive events you've explicitly subscribed to.
 Discord requires a public HTTPS URL. The easiest way to test locally:
 
 ```bash
-# Install Hookdeck CLI (no account required for basic tunneling)
-brew install hookdeck/hookdeck/hookdeck
-# or: npm install -g hookdeck-cli
-
 # Start a tunnel to your local server
-hookdeck listen 3000 --path /webhooks/discord
+npx hookdeck-cli listen 3000 discord --path /webhooks/discord
 ```
 
 Hookdeck prints a public URL — paste that into the Discord Developer Portal **Endpoint URL** field. The web UI also shows every request/response for debugging.

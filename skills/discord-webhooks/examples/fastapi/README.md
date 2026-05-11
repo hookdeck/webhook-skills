@@ -55,8 +55,7 @@ POST http://localhost:3000/webhooks/discord
 ## Local Testing with Hookdeck
 
 ```bash
-brew install hookdeck/hookdeck/hookdeck
-hookdeck listen 3000 --path /webhooks/discord
+npx hookdeck-cli listen 3000 discord --path /webhooks/discord
 ```
 
 Paste the public tunnel URL into Discord Developer Portal → your app → Webhooks → Endpoint URL.
