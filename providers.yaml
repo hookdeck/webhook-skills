@@ -268,6 +268,23 @@ providers:
         - repo update (scope=repo, action=update)
         - new discussion comment (scope=discussion.comment, action=create)
 
+  - name: intercom
+    displayName: Intercom
+    docs:
+      webhooks: https://developers.intercom.com/docs/webhooks
+      events: https://developers.intercom.com/docs/references/2.13/webhooks/webhook-models
+    notes: >
+      Customer messaging platform. Uses X-Hub-Signature header (Facebook-style)
+      with HMAC-SHA1 (40-byte hex). Signature format is sha1=<hex_digest>.
+      Computed over the raw JSON request body using the app's client_secret as
+      the key (from Developer Hub → Basic Information). Subscribe to topics
+      such as conversation.user.created, conversation.admin.replied,
+      contact.user.created, ticket.created, and ping (handshake).
+    testScenario:
+      events:
+        - conversation.user.created
+        - conversation.admin.replied
+
   - name: openai
     displayName: OpenAI
     docs:
