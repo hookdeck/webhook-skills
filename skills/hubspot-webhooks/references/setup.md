@@ -40,7 +40,7 @@ HubSpot does not have a separate test mode for webhooks. You can:
 For local testing, expose your local server with Hookdeck CLI:
 
 ```bash
-hookdeck listen 3000 --path /webhooks/hubspot
+npx hookdeck-cli listen 3000 hubspot --path /webhooks/hubspot
 ```
 
 Paste the printed Hookdeck URL into the **Target URL** field of your HubSpot app while developing.

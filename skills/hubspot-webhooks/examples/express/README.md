@@ -38,11 +38,8 @@ npm test
 ### Using Hookdeck CLI
 
 ```bash
-# Install Hookdeck CLI
-brew install hookdeck/hookdeck/hookdeck
-
 # Forward webhooks to localhost
-hookdeck listen 3000 --path /webhooks/hubspot
+npx hookdeck-cli listen 3000 hubspot --path /webhooks/hubspot
 ```
 
 Use the printed Hookdeck URL as the **Target URL** for your HubSpot app's webhook subscriptions.

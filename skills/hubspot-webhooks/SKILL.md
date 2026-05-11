@@ -192,11 +192,8 @@ New integrations should use v3 only. A v4 webhooks API is in beta on HubSpot's n
 ## Local Development
 
 ```bash
-# Install Hookdeck CLI for local webhook testing
-brew install hookdeck/hookdeck/hookdeck
-
 # Start tunnel (no account needed)
-hookdeck listen 3000 --path /webhooks/hubspot
+npx hookdeck-cli listen 3000 hubspot --path /webhooks/hubspot
 ```
 
 Then paste the Hookdeck URL into your HubSpot app's webhook settings as the target URL.
