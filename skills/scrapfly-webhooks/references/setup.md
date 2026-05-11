@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - A Scrapfly account ([sign up](https://scrapfly.io))
+- A **paid Scrapfly plan**. Webhooks are not available on the FREE plan — its webhook queue size is 0, so no deliveries are ever dispatched even after configuration. Any paid tier enables delivery.
 - A publicly reachable webhook endpoint URL (use [Hookdeck CLI](https://hookdeck.com/docs/cli) for local development)
 
 ## Create a Webhook in the Scrapfly Dashboard

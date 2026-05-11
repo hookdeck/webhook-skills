@@ -53,6 +53,7 @@ Skills for receiving and verifying webhooks from specific providers. Each includ
 | Postmark | [`postmark-webhooks`](skills/postmark-webhooks/) | Authenticate Postmark webhooks (Basic Auth/Token), handle email delivery, bounce, open, click, and spam events |
 | Replicate | [`replicate-webhooks`](skills/replicate-webhooks/) | Verify Replicate webhook signatures, handle ML prediction lifecycle events |
 | Resend | [`resend-webhooks`](skills/resend-webhooks/) | Verify Resend webhook signatures, handle email delivery and bounce events |
+| Scrapfly | [`scrapfly-webhooks`](skills/scrapfly-webhooks/) | Verify Scrapfly webhook signatures (HMAC-SHA256, uppercase/lowercase hex), dispatch scrape, extraction, and screenshot jobs |
 | SendGrid | [`sendgrid-webhooks`](skills/sendgrid-webhooks/) | Verify SendGrid webhook signatures (ECDSA), handle email delivery events |
 | Shopify | [`shopify-webhooks`](skills/shopify-webhooks/) | Verify Shopify HMAC signatures, handle order and product webhook events |
 | Slack | [`slack-webhooks`](skills/slack-webhooks/) | Verify Slack Events API signatures (HMAC-SHA256, `X-Slack-Signature`), handle message, app_mention, and reaction events |

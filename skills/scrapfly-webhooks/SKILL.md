@@ -95,7 +95,9 @@ app.post('/webhooks/scrapfly',
     // Route by resource type for scrape / extraction / screenshot APIs
     switch (resourceType) {
       case 'scrape':
-        console.log('Scrape result:', payload.result?.status_code, payload.context?.url);
+        // Scrape API places the fetched URL at result.url; the webhook overlay's
+        // context only carries `webhook` and `job` sub-objects.
+        console.log('Scrape result:', payload.result?.status_code, payload.result?.url);
         break;
       case 'extraction':
         console.log('Extraction result:', payload.result?.data);
@@ -177,7 +179,7 @@ Crawler API webhooks carry an `event` string in the body (also exposed as `X-Scr
 | `X-Scrapfly-Webhook-Name` | Name of the configured webhook |
 | `X-Scrapfly-Webhook-Resource-Type` | `scrape`, `extraction`, or `screenshot` |
 | `X-Scrapfly-Webhook-Job-Id` | Unique job identifier (use for reconciliation) |
-| `X-Scrapfly-Webhook-Env` | Environment (e.g. `production`) |
+| `X-Scrapfly-Webhook-Env` | Environment (`test` or `live`) |
 | `X-Scrapfly-Webhook-Project` | Project name |
 | `X-Scrapfly-Crawl-Event-Name` | Crawler API event name (e.g. `crawler_finished`) |
 

@@ -96,8 +96,15 @@ describe('Scrapfly Webhook Endpoint', () => {
 
     it('returns 200 for a valid scrape webhook', async () => {
       const body = JSON.stringify({
-        context: { url: 'https://web-scraping.dev/products' },
-        result: { status_code: 200, content: '<html></html>' },
+        result: {
+          url: 'https://web-scraping.dev/products',
+          status_code: 200,
+          content: '<html></html>',
+        },
+        context: {
+          webhook: { name: 'my-webhook', secret: 'test_scrapfly_signing_secret', consecutive_failed_count: 0 },
+          job: { uuid: '550e8400-e29b-41d4-a716-446655440000' },
+        },
       });
       const sig = generateScrapflySignature(Buffer.from(body), secret);
 

@@ -74,8 +74,19 @@ class TestScrapflyWebhook:
     def test_valid_scrape_webhook(self, client, secret):
         body = json.dumps(
             {
-                "context": {"url": "https://web-scraping.dev/products"},
-                "result": {"status_code": 200, "content": "<html></html>"},
+                "result": {
+                    "url": "https://web-scraping.dev/products",
+                    "status_code": 200,
+                    "content": "<html></html>",
+                },
+                "context": {
+                    "webhook": {
+                        "name": "my-webhook",
+                        "secret": secret,
+                        "consecutive_failed_count": 0,
+                    },
+                    "job": {"uuid": "550e8400-e29b-41d4-a716-446655440000"},
+                },
             }
         ).encode("utf-8")
         sig = generate_scrapfly_signature(body, secret)

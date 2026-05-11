@@ -465,6 +465,61 @@ providers:
         - Bounce
         - Delivery
 
+  - name: scrapfly
+    displayName: Scrapfly
+    docs:
+      scrape_webhook: https://scrapfly.io/docs/scrape-api/webhook
+      extraction_webhook: https://scrapfly.io/docs/extraction-api/webhook
+      screenshot_webhook: https://scrapfly.io/docs/screenshot-api/webhook
+      scrape_getting_started: https://scrapfly.io/docs/scrape-api/getting-started
+      extraction_getting_started: https://scrapfly.io/docs/extraction-api/getting-started
+      screenshot_getting_started: https://scrapfly.io/docs/screenshot-api/getting-started
+    notes: >
+      Web-scraping API platform with three products that share a single async-job +
+      webhook system: Scrape API, Extraction API, Screenshot API. One webhook URL
+      registered in the dashboard (https://scrapfly.io/dashboard/webhook) receives
+      deliveries from all three products. PAID PLAN REQUIRED (first paid tier).
+
+      No API exists for creating/updating/deleting webhooks programmatically. The
+      destination URL CANNOT be passed per-call. Instead, each API call references
+      an already-registered webhook by name via the `webhook_name` query parameter
+      (e.g. `…/scrape?…&webhook_name=samples-capture`).
+
+      Signature verification: HMAC-SHA256 over the RAW request body bytes (do not
+      JSON.parse and re-stringify — that changes the byte sequence). Compare against
+      either `X-Scrapfly-Webhook-Signature` (uppercase hex) or
+      `X-Scrapfly-Webhook-Signature-Lowercase` (lowercase hex) using constant-time
+      equality. The secret is per-webhook, displayed in the dashboard alongside the
+      webhook configuration (NOT the account API key).
+
+      Dispatch by `X-Scrapfly-Webhook-Resource-Type` header (one of `scrape`,
+      `extraction`, `screenshot`). Other headers: `X-Scrapfly-Webhook-Job-Id` (UUID,
+      use as idempotency key for at-least-once delivery), `X-Scrapfly-Webhook-Env`
+      (`test`|`live`), `X-Scrapfly-Webhook-Project`, `X-Scrapfly-Webhook-Name`,
+      `X-Scrapfly-Webhook-Id`, optional `X-Scrapfly-Log-Uuid`/`X-Scrapfly-Log-Url`.
+
+      No timestamp/replay envelope (unlike Stripe). Recommend idempotency by job-id;
+      do NOT invent a `t=…` window.
+
+      Payload = the full response body of the corresponding API plus a `context`
+      overlay: `context.webhook` (`{ name, secret, consecutive_failed_count, … }` —
+      WARN handlers: `secret` field exposes the signing secret in the payload, do
+      not log or echo) and `context.job` (`{ uuid, … }`). Product-specific shapes
+      documented in the getting-started pages above.
+
+      Delivery: retry 30s → 1min → 5min → 30min → 1h → 1d. A webhook is DISABLED
+      after 100 consecutive failures — handlers should return 2xx fast and surface
+      errors out-of-band.
+
+      No official SDK construct for verification (plain HMAC is correct). Do NOT
+      pull in a third-party HMAC library; use the stdlib (`crypto.createHmac` in
+      Node, `hmac` / `hashlib` in Python).
+    testScenario:
+      events:
+        - scrape
+        - extraction
+        - screenshot
+
   - name: sendgrid
     displayName: SendGrid
     docs:

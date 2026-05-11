@@ -85,9 +85,10 @@ async def scrapfly_webhook(
     resource_type = x_scrapfly_webhook_resource_type
 
     if resource_type == "scrape":
+        # Scrape API places the fetched URL at result.url. The webhook overlay's
+        # payload["context"] only carries `webhook` and `job` sub-objects.
         result = payload.get("result", {})
-        context = payload.get("context", {})
-        print(f"Scrape result: url={context.get('url')} status={result.get('status_code')}")
+        print(f"Scrape result: url={result.get('url')} status={result.get('status_code')}")
         # TODO: Persist HTML / extracted fields, enqueue parsing
     elif resource_type == "extraction":
         print(f"Extraction result: {payload.get('result', {}).get('data')}")

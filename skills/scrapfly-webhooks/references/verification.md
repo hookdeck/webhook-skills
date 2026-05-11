@@ -72,6 +72,19 @@ Notes:
 - Use `await request.body()` in FastAPI to get `bytes`. Do not call `await request.json()` before verifying.
 - `hmac.compare_digest` is the documented constant-time comparator.
 
+## Security: Do Not Log the Raw Payload
+
+Scrapfly echoes the webhook signing secret in the body at `context.webhook.secret`. This is unusual compared to other providers and easy to miss.
+
+- **Never** log the raw payload, dump it to stdout in production, or forward it to third-party tools (Sentry, Datadog, Slack, etc.) without redacting `context.webhook.secret` first.
+- If you persist webhooks for replay/debugging, strip or redact `context.webhook.secret` before storage.
+- Anyone with the secret can forge valid signatures for your endpoint.
+
+```javascript
+// Redact before logging / forwarding
+const safe = { ...payload, context: { ...payload.context, webhook: { ...payload.context?.webhook, secret: '[REDACTED]' } } };
+```
+
 ## Common Gotchas
 
 - **Parsed JSON breaks signatures.** Verify against the exact bytes Scrapfly sent. In Express, mount `express.raw({ type: '*/*' })` on the webhook route (not `express.json`). In Next.js App Router, read with `await request.text()`. In FastAPI, use `await request.body()`.

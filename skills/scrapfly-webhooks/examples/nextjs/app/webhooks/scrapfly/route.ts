@@ -75,8 +75,10 @@ export async function POST(request: NextRequest) {
 
   switch (resourceType) {
     case 'scrape':
+      // Scrape API places the fetched URL at result.url. The webhook overlay's
+      // payload.context only carries `webhook` and `job` sub-objects.
       console.log('Scrape result:', {
-        url: payload?.context?.url,
+        url: payload?.result?.url,
         status: payload?.result?.status_code,
       });
       break;

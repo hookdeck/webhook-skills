@@ -72,8 +72,10 @@ app.post('/webhooks/scrapfly',
     // Route by resource type for the Scrape / Extraction / Screenshot APIs.
     switch (resourceType) {
       case 'scrape':
+        // Scrape API places the fetched URL at result.url (see scrapfly.io/docs/scrape-api/getting-started).
+        // The webhook overlay's payload.context only carries `webhook` and `job` sub-objects.
         console.log('Scrape result:', {
-          url: payload?.context?.url,
+          url: payload?.result?.url,
           status: payload?.result?.status_code,
         });
         // TODO: Persist HTML / extracted fields, enqueue parsing, ...
