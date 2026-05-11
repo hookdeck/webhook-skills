@@ -8,12 +8,12 @@
     "test": "jest"
   },
   "dependencies": {
-    "@paddle/paddle-node-sdk": "^1.4.0",
+    "@paddle/paddle-node-sdk": "^3.8.0",
     "dotenv": "^16.3.0",
     "express": "^5.2.1"
   },
   "devDependencies": {
     "jest": "^30.2.0",
-    "supertest": "^6.3.0"
+    "supertest": "^7.0.0"
   }
 }

@@ -179,19 +179,7 @@ const signedPayload = `${timestamp}:${payload}`;
 const signedPayload = `${timestamp}.${payload}`;
 ```
 
-### 4. Replay Protection
-
-To prevent replay attacks, check the timestamp (`ts`) against the current time and reject events that are too old. The recommended tolerance is 5 seconds.
-
-```javascript
-function isTimestampValid(timestamp, toleranceSeconds = 5) {
-  const now = Math.floor(Date.now() / 1000);
-  const ts = parseInt(timestamp, 10);
-  return Math.abs(now - ts) <= toleranceSeconds; // Compare the difference in seconds to the tolerance
-}
-```
-
-### 5. Response Time
+### 4. Response Time
 
 Paddle requires a response within **5 seconds**. Respond before doing any processing, then handle the event asynchronously.
 

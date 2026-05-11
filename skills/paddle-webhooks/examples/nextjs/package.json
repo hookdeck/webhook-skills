@@ -9,15 +9,15 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@paddle/paddle-node-sdk": "^1.4.0",
-    "next": "^16.1.6",
+    "@paddle/paddle-node-sdk": "^3.8.0",
+    "next": "^16.2.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.0.18"
   }
 }
