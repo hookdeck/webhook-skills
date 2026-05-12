@@ -83,7 +83,7 @@ Skills for webhook infrastructure products — routing, queuing, delivery, and o
 
 ## Quick Start
 
-### Install Webhook Skills
+### Install with `npx skills` (any AI assistant)
 
 ```bash
 # List available webhook skills
@@ -95,6 +95,23 @@ npx skills add hookdeck/webhook-skills --skill stripe-webhooks
 # Install multiple webhook skills
 npx skills add hookdeck/webhook-skills --skill stripe-webhooks --skill shopify-webhooks
 ```
+
+### Install with `/plugin` (Claude Code)
+
+Claude Code distributes this repo as a [plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces). Add the marketplace once, then install either a single provider skill or the bundle of all 37 skills.
+
+```text
+# Add this marketplace
+/plugin marketplace add hookdeck/webhook-skills
+
+# Install one provider skill (each is ~200 KB)
+/plugin install stripe-webhooks@webhook-skills
+
+# Or install all 37 webhook skills as one bundle (~3 MB)
+/plugin install webhook-skills@webhook-skills
+```
+
+Plugin skills are namespaced with their plugin name, so the bundle exposes skills as `webhook-skills:stripe-webhooks`, `webhook-skills:shopify-webhooks`, etc., while a granular install exposes the same skill as `stripe-webhooks:stripe-webhooks`.
 
 ### Local Webhook Development
 
