@@ -1,0 +1,19 @@
+{
+  "name": "orb-webhooks-express",
+  "version": "1.0.0",
+  "description": "Orb webhook handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.0",
+    "express": "^5.2.1",
+    "orb-billing": "^5.48.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.0.0"
+  }
+}
