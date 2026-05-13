@@ -451,6 +451,31 @@
       ]
     },
     {
+      "name": "orb-webhooks",
+      "description": "Verify Orb webhook signatures (HMAC-SHA256 over `v1:{X-Orb-Timestamp}:{raw-body}`, hex with `v1=` prefix), handle customer, subscription, invoice, and data-export events from this usage-based billing platform.",
+      "source": "./skills/orb-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/orb-webhooks",
+      "keywords": [
+        "webhooks",
+        "orb",
+        "billing",
+        "usage-based-billing",
+        "subscriptions",
+        "invoices"
+      ]
+    },
+    {
       "name": "paddle-webhooks",
       "description": "Verify Paddle webhook signatures (HMAC-SHA256 with multi-signature rotation), handle subscription and billing events.",
       "source": "./skills/paddle-webhooks",
@@ -896,6 +921,7 @@
         "./skills/notion-webhooks",
         "./skills/openai-webhooks",
         "./skills/openclaw-webhooks",
+        "./skills/orb-webhooks",
         "./skills/paddle-webhooks",
         "./skills/paypal-webhooks",
         "./skills/postmark-webhooks",

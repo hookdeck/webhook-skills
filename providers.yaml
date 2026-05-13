@@ -378,6 +378,52 @@ providers:
         - agent hook
         - wake hook
 
+  - name: orb
+    displayName: Orb
+    docs:
+      webhooks: https://docs.withorb.com/integrations-and-exports/webhooks
+      summary_webhooks: https://docs.withorb.com/integrations-and-exports/summary-webhooks
+      api: https://docs.withorb.com/api-reference
+    notes: >
+      Usage-based billing platform (Orb / withorb.com). Uses HMAC-SHA256 in hex with
+      a `v1=` prefix in the `X-Orb-Signature` header (e.g. `X-Orb-Signature: v1=<hex>`).
+      Timestamp delivered separately in `X-Orb-Timestamp` (ISO 8601). Signed content
+      format is the literal string `v1:{X-Orb-Timestamp}:{raw-body}` — concatenate
+      version literal "v1", colon, ISO timestamp, colon, raw body bytes; HMAC-SHA256
+      with the per-endpoint signing secret (configured in Orb dashboard, one secret
+      per webhook endpoint, NOT the account API key). Always pass the raw request
+      body — don't JSON.parse and re-stringify before verifying.
+
+      No documented replay tolerance — Orb recommends comparing X-Orb-Timestamp to a
+      threshold the integrator picks. Recommend a 5-minute window in handlers plus
+      idempotency keyed on the event `id` field for at-least-once delivery safety.
+
+      Common events span customer lifecycle (`customer.created`,
+      `customer.credit_balance_dropped`, `customer.accounting_sync_succeeded`),
+      subscriptions (`subscription.created`, `subscription.started`,
+      `subscription.ended`, `subscription.plan_changed`, `subscription.edited`,
+      `subscription.usage_exceeded`), invoices (`invoice.issued`,
+      `invoice.payment_succeeded`, `invoice.payment_failed`, `invoice.edited`),
+      and data exports (`data_exports.transfer_success`).
+
+      "Summary webhooks" are an opt-in variant covering the same event types with
+      smaller payloads (line_items omitted from invoices; customer/plan minified
+      to identification fields only). Same signature scheme; consumers should fetch
+      full resources via API when detail is needed.
+
+      Official SDKs: orb-billing (npm + PyPI; same package name on both registries).
+      Neither SDK exposes a Stripe-style unwrap()/constructEvent() helper at the
+      time of writing — manual HMAC verification is the canonical path.
+    sdks:
+      npm:
+        - orb-billing
+      pip:
+        - orb-billing
+    testScenario:
+      events:
+        - invoice.payment_succeeded
+        - subscription.created
+
   - name: paddle
     displayName: Paddle
     docs:
