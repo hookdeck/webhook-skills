@@ -285,6 +285,60 @@ providers:
         - conversation.user.created
         - conversation.admin.replied
 
+  - name: knock
+    displayName: Knock
+    docs:
+      webhooks: https://docs.knock.app/developer-tools/outbound-webhooks/overview
+      events: https://docs.knock.app/developer-tools/outbound-webhooks/event-types
+      api: https://docs.knock.app/reference
+    notes: >
+      Notification infrastructure platform (Knock / knock.app). Outbound webhooks
+      fire on message lifecycle and resource change events. Uses HMAC-SHA256 with
+      base64 encoding in the `x-knock-signature` header, formatted as
+      `t=<timestamp>,s=<base64-signature>`.
+
+      CRITICAL: the timestamp is in MILLISECONDS, not seconds. Knock explicitly
+      deviates from Stripe's seconds-based scheme — anyone porting a Stripe
+      verifier will silently fail signature checks if they forget this. Surface
+      this prominently in the verification reference.
+
+      Signed content format: `{timestamp_ms}.{stringified_body}` (period
+      separator). HMAC-SHA256 over that string using the per-endpoint signing
+      secret (one secret per webhook in the dashboard — NOT the account API
+      key). Always pass the raw request body; do not JSON.parse and re-serialize
+      before verifying.
+
+      Replay protection: docs recommend rejecting payloads whose timestamp is
+      more than 5 minutes old. Apply this on top of the signature check.
+
+      No SDK helper. Confirmed: @knocklabs/node (npm, v1.32.0+) and knockapi
+      (PyPI, v1.25.0+) do not expose webhooks.unwrap()/constructEvent()/verify()
+      — the source contains no inbound webhook verification path. The official
+      JavaScript example uses crypto.createHmac directly. Manual HMAC-SHA256
+      verification is the canonical path; do not pull in a third-party library.
+
+      Event taxonomy (23 events across 6 categories):
+      - Message lifecycle (13): message.sent, message.delivered,
+        message.delivery_attempted, message.undelivered, message.bounced,
+        message.seen, message.unseen, message.read, message.unread,
+        message.archived, message.unarchived, message.interacted,
+        message.link_clicked
+      - Workflow (2): workflow.updated, workflow.committed
+      - Email layout (2): email_layout.updated, email_layout.committed
+      - Translation (2): translation.updated, translation.committed
+      - Source event action (2): source_event_action.updated,
+        source_event_action.committed
+      - Partial (2): partial.updated, partial.committed
+
+      Payload includes top-level `data` (typed by event — for message events
+      this is a Message object) plus optional `event_data` with additional
+      metadata. Retries: up to 8 attempts on any non-2xx response. At-least-once
+      delivery — recommend idempotency keyed on the event `id` field.
+    testScenario:
+      events:
+        - message.sent
+        - message.delivered
+
   - name: linear
     displayName: Linear
     docs:

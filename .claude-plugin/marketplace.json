@@ -335,6 +335,30 @@
       ]
     },
     {
+      "name": "knock-webhooks",
+      "description": "Verify Knock outbound webhook signatures (HMAC-SHA256 base64 over `{timestamp_ms}.{body}`, millisecond timestamps — explicit deviation from Stripe), handle message lifecycle and resource change events from Knock's notification infrastructure.",
+      "source": "./skills/knock-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/knock-webhooks",
+      "keywords": [
+        "webhooks",
+        "knock",
+        "notifications",
+        "messaging",
+        "infrastructure"
+      ]
+    },
+    {
       "name": "linear-webhooks",
       "description": "Verify Linear webhook signatures (HMAC-SHA256 with replay timestamp), handle issue, comment, and project events.",
       "source": "./skills/linear-webhooks",
@@ -916,6 +940,7 @@
         "./skills/hubspot-webhooks",
         "./skills/huggingface-webhooks",
         "./skills/intercom-webhooks",
+        "./skills/knock-webhooks",
         "./skills/linear-webhooks",
         "./skills/mailgun-webhooks",
         "./skills/notion-webhooks",
