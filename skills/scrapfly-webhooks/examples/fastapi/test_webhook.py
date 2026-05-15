@@ -105,12 +105,19 @@ class TestScrapflyWebhook:
         assert response.status_code == 200
         assert response.json() == {"received": True}
 
-    @pytest.mark.parametrize(
-        "resource_type",
-        ["scrape", "extraction", "screenshot"],
-    )
-    def test_resource_types(self, client, secret, resource_type):
-        body = json.dumps({"result": {"status_code": 200}}).encode("utf-8")
+    def test_extraction_payload_data_at_top_level(self, client, secret):
+        """Real extraction body shape: { content_type, data: {...} } — data lives
+        at payload.data, NOT payload.result.data."""
+        body = json.dumps(
+            {
+                "content_type": "application/json",
+                "data": {
+                    "price": "$19.99",
+                    "product_name": "Widget",
+                    "stock": "In stock",
+                },
+            }
+        ).encode("utf-8")
         sig = generate_scrapfly_signature(body, secret)
 
         response = client.post(
@@ -119,10 +126,47 @@ class TestScrapflyWebhook:
             headers={
                 "Content-Type": "application/json",
                 "X-Scrapfly-Webhook-Signature": sig,
-                "X-Scrapfly-Webhook-Resource-Type": resource_type,
+                "X-Scrapfly-Webhook-Resource-Type": "extraction",
             },
         )
         assert response.status_code == 200
+
+    def test_screenshot_binary_body(self, client, secret):
+        """Scrapfly Screenshot deliveries carry raw image bytes (JPEG / PNG /
+        WebP / GIF), NOT JSON — even though Content-Type says application/json
+        (upstream Scrapfly quirk). The handler must dispatch on the resource
+        type header BEFORE json.loads to avoid raising JSONDecodeError after
+        signature verification has already succeeded."""
+        binary_body = bytes(
+            [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]
+        )
+        sig = generate_scrapfly_signature(binary_body, secret)
+
+        response = client.post(
+            "/webhooks/scrapfly",
+            content=binary_body,
+            headers={
+                # Scrapfly lies here — header says JSON but the body is binary.
+                "Content-Type": "application/json",
+                "X-Scrapfly-Webhook-Signature": sig,
+                "X-Scrapfly-Webhook-Resource-Type": "screenshot",
+            },
+        )
+        assert response.status_code == 200
+
+    def test_screenshot_rejects_invalid_signature(self, client, secret):
+        binary_body = bytes([0xFF, 0xD8, 0xFF, 0xE0])
+
+        response = client.post(
+            "/webhooks/scrapfly",
+            content=binary_body,
+            headers={
+                "Content-Type": "application/json",
+                "X-Scrapfly-Webhook-Signature": "AABBCCDD",
+                "X-Scrapfly-Webhook-Resource-Type": "screenshot",
+            },
+        )
+        assert response.status_code == 401
 
     @pytest.mark.parametrize(
         "event",

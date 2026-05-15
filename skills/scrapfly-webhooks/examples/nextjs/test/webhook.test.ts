@@ -5,11 +5,11 @@ import { POST } from '../app/webhooks/scrapfly/route';
 
 const secret = process.env.SCRAPFLY_WEBHOOK_SECRET!;
 
-function generateScrapflySignature(rawBody: string, secret: string): string {
+function generateScrapflySignature(rawBody: string | Buffer | Uint8Array, secret: string): string {
   return createHmac('sha256', secret).update(rawBody).digest('hex').toUpperCase();
 }
 
-function makeRequest(body: string, headers: Record<string, string> = {}): NextRequest {
+function makeRequest(body: string | Buffer | Uint8Array, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest('http://localhost:3000/webhooks/scrapfly', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -72,17 +72,36 @@ describe('Scrapfly Webhook Endpoint (Next.js)', () => {
     expect(await res.json()).toEqual({ received: true });
   });
 
-  it.each([
-    'scrape',
-    'extraction',
-    'screenshot',
-  ])('returns 200 for resource type %s', async (resourceType) => {
-    const body = JSON.stringify({ result: { status_code: 200 } });
+  it('returns 200 for a valid extraction webhook (data lives at payload.data, not payload.result.data)', async () => {
+    // Real extraction body shape from a live capture:
+    //   { content_type, data: {...}, context: {...} }
+    const body = JSON.stringify({
+      content_type: 'application/json',
+      data: { price: '$19.99', product_name: 'Widget', stock: 'In stock' },
+    });
     const sig = generateScrapflySignature(body, secret);
 
     const res = await POST(makeRequest(body, {
       'X-Scrapfly-Webhook-Signature': sig,
-      'X-Scrapfly-Webhook-Resource-Type': resourceType,
+      'X-Scrapfly-Webhook-Resource-Type': 'extraction',
+    }));
+
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 200 for a screenshot webhook with a BINARY body (not JSON)', async () => {
+    // Scrapfly Screenshot deliveries carry raw image bytes (JPEG/PNG/WebP/GIF),
+    // NOT JSON — even though Content-Type says application/json (upstream
+    // Scrapfly quirk). The handler must dispatch on the resource type header
+    // BEFORE JSON.parse to avoid blowing up after signature verification.
+    const binaryBody = Buffer.from([
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+    ]);
+    const sig = generateScrapflySignature(binaryBody, secret);
+
+    const res = await POST(makeRequest(binaryBody, {
+      'X-Scrapfly-Webhook-Signature': sig,
+      'X-Scrapfly-Webhook-Resource-Type': 'screenshot',
     }));
 
     expect(res.status).toBe(200);

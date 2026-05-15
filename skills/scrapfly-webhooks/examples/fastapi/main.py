@@ -71,18 +71,36 @@ async def scrapfly_webhook(
         print("ERROR: Scrapfly webhook signature verification failed")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    try:
-        payload = json.loads(raw_body.decode("utf-8"))
-    except json.JSONDecodeError as exc:
-        print(f"ERROR: Failed to parse Scrapfly webhook payload: {exc}")
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
-
     print(
         f"Scrapfly webhook (id={x_scrapfly_webhook_id} "
         f"resource={x_scrapfly_webhook_resource_type} job={x_scrapfly_webhook_job_id})"
     )
 
     resource_type = x_scrapfly_webhook_resource_type
+
+    # Dispatch BEFORE JSON parsing — screenshot deliveries are raw image
+    # bytes (JPEG / PNG / WebP / GIF), NOT JSON, even though Scrapfly sends
+    # them with `Content-Type: application/json` (an upstream Scrapfly
+    # quirk — the header is unreliable on screenshot deliveries). Trying
+    # to json.loads a binary body raises JSONDecodeError after the signature
+    # has already verified.
+    if resource_type == "screenshot":
+        print(
+            f"Screenshot received: {len(raw_body)} bytes "
+            f"(binary, {x_scrapfly_webhook_job_id})"
+        )
+        # raw_body is the rendered image bytes. Persist it to storage
+        # (S3, disk, etc.) keyed on job_id / webhook_id. Do not call
+        # json.loads here. The synchronous Screenshot API response
+        # exposes metadata in headers like X-Scrapfly-Screenshot-Url;
+        # the webhook delivery only carries the image bytes.
+        return {"received": True}
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: Failed to parse Scrapfly webhook payload: {exc}")
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     if resource_type == "scrape":
         # Scrape API places the fetched URL at result.url. The webhook overlay's
@@ -91,11 +109,14 @@ async def scrapfly_webhook(
         print(f"Scrape result: url={result.get('url')} status={result.get('status_code')}")
         # TODO: Persist HTML / extracted fields, enqueue parsing
     elif resource_type == "extraction":
-        print(f"Extraction result: {payload.get('result', {}).get('data')}")
+        # Extraction body shape (from a real capture):
+        #   { content_type, data: { ... }, context: { webhook, job } }
+        # The extracted fields live at payload["data"], NOT payload["result"]["data"].
+        print(
+            f"Extraction result: content_type={payload.get('content_type')} "
+            f"data={payload.get('data')}"
+        )
         # TODO: Save structured data, trigger enrichment
-    elif resource_type == "screenshot":
-        print(f"Screenshot URL: {payload.get('result', {}).get('screenshot_url')}")
-        # TODO: Store image, generate thumbnail
     else:
         # Crawler API uses lifecycle events in the body.
         event = x_scrapfly_crawl_event_name or payload.get("event")

@@ -11,7 +11,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
  * Header:    X-Scrapfly-Webhook-Signature (uppercase hex)
  */
 function verifyScrapflySignature(
-  rawBody: string,
+  rawBody: Buffer,
   signatureHeader: string | null,
   secret: string
 ): boolean {
@@ -39,9 +39,10 @@ function verifyScrapflySignature(
 }
 
 export async function POST(request: NextRequest) {
-  // Read raw body as text — JSON.parse + re-stringify would change the bytes
-  // and break the signature.
-  const rawBody = await request.text();
+  // Read raw body as bytes — screenshot deliveries are raw image bytes
+  // (JPEG / PNG / WebP / GIF), not text. Using request.text() would
+  // decode the bytes as UTF-8 and corrupt the body for verification.
+  const rawBody = Buffer.from(await request.arrayBuffer());
 
   const signature = request.headers.get('x-scrapfly-webhook-signature');
   const resourceType = request.headers.get('x-scrapfly-webhook-resource-type');
@@ -63,15 +64,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
+  console.log(`Scrapfly webhook (id=${webhookId} resource=${resourceType} job=${jobId})`);
+
+  // Dispatch BEFORE JSON parsing — screenshot deliveries are raw image
+  // bytes (JPEG / PNG / WebP / GIF), NOT JSON, even though Scrapfly sends
+  // them with `Content-Type: application/json` (an upstream Scrapfly
+  // quirk — the header is unreliable on screenshot deliveries). Trying
+  // to JSON.parse a binary body throws SyntaxError after verification
+  // has already succeeded.
+  if (resourceType === 'screenshot') {
+    console.log(`Screenshot received: ${rawBody.length} bytes (binary, ${jobId})`);
+    // rawBody is the raw image bytes. Persist it to storage keyed on
+    // jobId / webhookId. Do not call JSON.parse here. The synchronous
+    // Screenshot API response exposes metadata in headers like
+    // X-Scrapfly-Screenshot-Url; the webhook delivery only carries the
+    // image bytes.
+    return NextResponse.json({ received: true });
+  }
+
   let payload: any;
   try {
-    payload = JSON.parse(rawBody);
+    payload = JSON.parse(rawBody.toString('utf8'));
   } catch (err) {
     console.error('Failed to parse Scrapfly webhook payload:', err);
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
-
-  console.log(`Scrapfly webhook (id=${webhookId} resource=${resourceType} job=${jobId})`);
 
   switch (resourceType) {
     case 'scrape':
@@ -84,11 +101,13 @@ export async function POST(request: NextRequest) {
       break;
 
     case 'extraction':
-      console.log('Extraction result:', payload?.result?.data);
-      break;
-
-    case 'screenshot':
-      console.log('Screenshot result URL:', payload?.result?.screenshot_url);
+      // Extraction body shape (from a real capture):
+      // { content_type, data: { ... }, context: { webhook, job } }
+      // The extracted fields live at payload.data, NOT payload.result.data.
+      console.log('Extraction result:', {
+        content_type: payload?.content_type,
+        data: payload?.data,
+      });
       break;
 
     default: {

@@ -23,6 +23,10 @@ metadata:
 - How do I handle Crawler API webhook events (`crawler_started`, `crawler_finished`, ...)?
 - Why is my Scrapfly webhook signature verification failing?
 
+## Prerequisites
+
+- **A paid Scrapfly plan.** Webhooks are not available on the FREE plan — its webhook queue size is 0, so no deliveries are ever dispatched even after configuration. The dashboard hides the webhook UI on the free tier. Any paid tier enables delivery. See [`references/setup.md`](references/setup.md) for the full plan-detection checklist.
+
 ## How Scrapfly Webhooks Work
 
 Scrapfly uses HMAC-SHA256 with **uppercase hex** encoding over the **raw request body**. There is no SDK for webhook verification — implementations follow Scrapfly's documented algorithm.
@@ -35,6 +39,8 @@ Key facts:
 - **No timestamp / replay window**: Scrapfly does not include a timestamp header; treat the signature as authenticity-only.
 - **Secret**: Use the value from the Scrapfly dashboard exactly as shown. Do not trim or base64-decode it.
 - **Routing**: Use `X-Scrapfly-Webhook-Resource-Type` (`scrape`, `extraction`, `screenshot`) to dispatch when one endpoint serves multiple products. Crawler events also carry `X-Scrapfly-Crawl-Event-Name` and an `event` field in the body.
+- **Screenshot is binary, not JSON**: Screenshot API deliveries carry raw image bytes (JPEG/PNG/WebP/GIF) even though Scrapfly sends them with `Content-Type: application/json` (the header is unreliable on screenshot deliveries — upstream Scrapfly quirk). **Dispatch on the resource type header before any JSON parsing.** HMAC verification still works fine over the binary body; only `JSON.parse` blows up.
+- **Hookdeck Event Gateway alternative**: If you're already routing webhooks through Hookdeck (the [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) skill recommends this), set the source type to `SCRAPFLY` on the gateway connection and Hookdeck verifies the Scrapfly signature at the edge. Your handler then only needs to verify Hookdeck's signature, not Scrapfly's directly.
 
 ## Essential Code (USE THIS)
 
@@ -87,12 +93,21 @@ app.post('/webhooks/scrapfly',
       return res.status(401).send('Invalid signature');
     }
 
-    // Parse only after verifying
-    const payload = JSON.parse(req.body.toString());
-
     console.log(`Scrapfly ${resourceType} webhook (job ${jobId}, id ${webhookId})`);
 
-    // Route by resource type for scrape / extraction / screenshot APIs
+    // CRITICAL: dispatch BEFORE JSON.parse — Screenshot API deliveries carry
+    // raw image bytes (JPEG/PNG/WebP/GIF), not JSON, even though Scrapfly
+    // sends them with `Content-Type: application/json` (an upstream quirk).
+    // JSON.parse would throw after the signature has already verified.
+    if (resourceType === 'screenshot') {
+      console.log(`Screenshot received: ${req.body.length} bytes (binary)`);
+      // req.body is the raw image. Persist it to storage and return 200.
+      return res.status(200).send('OK');
+    }
+
+    // Remaining resource types deliver JSON payloads.
+    const payload = JSON.parse(req.body.toString());
+
     switch (resourceType) {
       case 'scrape':
         // Scrape API places the fetched URL at result.url; the webhook overlay's
@@ -100,10 +115,9 @@ app.post('/webhooks/scrapfly',
         console.log('Scrape result:', payload.result?.status_code, payload.result?.url);
         break;
       case 'extraction':
-        console.log('Extraction result:', payload.result?.data);
-        break;
-      case 'screenshot':
-        console.log('Screenshot result:', payload.result?.screenshot_url);
+        // Extraction body shape: { content_type, data: {...}, context: {...} }.
+        // Extracted fields live at payload.data, NOT payload.result.data.
+        console.log('Extraction result:', payload.content_type, payload.data);
         break;
       default:
         // Crawler API uses event names in the body

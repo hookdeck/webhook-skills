@@ -121,8 +121,13 @@ describe('Scrapfly Webhook Endpoint', () => {
       expect(res.text).toBe('OK');
     });
 
-    it('returns 200 for a valid extraction webhook', async () => {
-      const body = JSON.stringify({ result: { data: { title: 'Test' } } });
+    it('returns 200 for a valid extraction webhook (data lives at payload.data, not payload.result.data)', async () => {
+      // Real extraction body shape from a live capture:
+      //   { content_type, data: {...}, context: {...} }
+      const body = JSON.stringify({
+        content_type: 'application/json',
+        data: { price: '$19.99', product_name: 'Widget', stock: 'In stock' },
+      });
       const sig = generateScrapflySignature(Buffer.from(body), secret);
 
       const res = await request(app)
@@ -135,20 +140,48 @@ describe('Scrapfly Webhook Endpoint', () => {
       expect(res.status).toBe(200);
     });
 
-    it('returns 200 for a valid screenshot webhook', async () => {
-      const body = JSON.stringify({
-        result: { screenshot_url: 'https://scrapfly.io/screenshots/abc.png' },
-      });
-      const sig = generateScrapflySignature(Buffer.from(body), secret);
+    it('returns 200 for a screenshot webhook with a BINARY body (not JSON)', async () => {
+      // Scrapfly Screenshot deliveries carry raw image bytes (JPEG/PNG/WebP/GIF),
+      // NOT JSON — even though Scrapfly lies in the Content-Type header by
+      // sending `application/json` for screenshot payloads (upstream quirk).
+      // The handler must dispatch on the resource type header BEFORE JSON.parse,
+      // otherwise the parse blows up after signature verification has already
+      // succeeded.
+      //
+      // Test note: we use `application/octet-stream` here so supertest doesn't
+      // auto-JSON-stringify the Buffer. The handler ignores Content-Type and
+      // reads the raw body via express.raw({ type: '*/*' }), so this is
+      // equivalent to the real on-wire scenario as far as the handler's
+      // dispatch logic is concerned.
+      //
+      // Minimal 1×1 JPEG (12 bytes — JFIF/SOI header is enough; we never
+      // decode the image, just verify the handler tolerates binary).
+      const binaryBody = Buffer.from([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+      ]);
+      const sig = generateScrapflySignature(binaryBody, secret);
 
       const res = await request(app)
         .post('/webhooks/scrapfly')
-        .set('Content-Type', 'application/json')
+        .set('Content-Type', 'application/octet-stream')
         .set('X-Scrapfly-Webhook-Signature', sig)
         .set('X-Scrapfly-Webhook-Resource-Type', 'screenshot')
-        .send(body);
+        .send(binaryBody);
 
       expect(res.status).toBe(200);
+    });
+
+    it('rejects a screenshot delivery with an invalid signature', async () => {
+      const binaryBody = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+
+      const res = await request(app)
+        .post('/webhooks/scrapfly')
+        .set('Content-Type', 'application/octet-stream')
+        .set('X-Scrapfly-Webhook-Signature', 'AABBCCDD')
+        .set('X-Scrapfly-Webhook-Resource-Type', 'screenshot')
+        .send(binaryBody);
+
+      expect(res.status).toBe(401);
     });
 
     const crawlerEvents = [
