@@ -14,7 +14,8 @@
 4. Fill in:
    - **Name** — A short identifier. You will pass this as `webhook_name=<name>` on API calls. Names are scoped per project + environment.
    - **URL** — Your endpoint, e.g. `https://your-app.example.com/webhooks/scrapfly`.
-   - (Optional) Environment / project scoping.
+   - **Content Type** — Pick `application/json` (the default; matches this skill's example handlers) or `application/msgpack`. Scrapfly sends this value verbatim on every delivery. It applies to Scrape and Extraction bodies; Screenshot deliveries are raw image bytes either way (see [references/verification.md](verification.md) for details). If you pick `application/msgpack`, swap the JSON parser in the scrape/extraction branches of your handler for a msgpack decoder.
+   - (Optional) **Concurrency Limit** and environment / project scoping.
 5. Save the webhook. Scrapfly will display a **signing secret** — copy it. The dashboard is the only place this secret is shown.
 
 ## Configure the Signing Secret in Your App

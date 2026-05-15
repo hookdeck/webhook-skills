@@ -79,11 +79,11 @@ async def scrapfly_webhook(
     resource_type = x_scrapfly_webhook_resource_type
 
     # Dispatch BEFORE JSON parsing — screenshot deliveries are raw image
-    # bytes (JPEG / PNG / WebP / GIF), NOT JSON, even though Scrapfly sends
-    # them with `Content-Type: application/json` (an upstream Scrapfly
-    # quirk — the header is unreliable on screenshot deliveries). Trying
-    # to json.loads a binary body raises JSONDecodeError after the signature
-    # has already verified.
+    # bytes (JPEG / PNG / WebP / GIF) regardless of the Content-Type you
+    # configured in the Scrapfly dashboard (json or msgpack — both apply
+    # verbatim to scrape/extraction deliveries, but screenshot bodies are
+    # binary either way). Trying to json.loads a binary body raises
+    # JSONDecodeError after the signature has already verified.
     if resource_type == "screenshot":
         print(
             f"Screenshot received: {len(raw_body)} bytes "
@@ -95,6 +95,11 @@ async def scrapfly_webhook(
         # exposes metadata in headers like X-Scrapfly-Screenshot-Url;
         # the webhook delivery only carries the image bytes.
         return {"received": True}
+
+    # Remaining resource types are serialised per your dashboard's
+    # Content-Type setting. This handler assumes `application/json`; if
+    # you configured `application/msgpack`, swap json.loads for a msgpack
+    # decoder (e.g. the `msgpack` package).
 
     try:
         payload = json.loads(raw_body.decode("utf-8"))

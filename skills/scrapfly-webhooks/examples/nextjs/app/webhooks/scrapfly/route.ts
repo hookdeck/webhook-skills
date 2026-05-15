@@ -67,11 +67,11 @@ export async function POST(request: NextRequest) {
   console.log(`Scrapfly webhook (id=${webhookId} resource=${resourceType} job=${jobId})`);
 
   // Dispatch BEFORE JSON parsing — screenshot deliveries are raw image
-  // bytes (JPEG / PNG / WebP / GIF), NOT JSON, even though Scrapfly sends
-  // them with `Content-Type: application/json` (an upstream Scrapfly
-  // quirk — the header is unreliable on screenshot deliveries). Trying
-  // to JSON.parse a binary body throws SyntaxError after verification
-  // has already succeeded.
+  // bytes (JPEG / PNG / WebP / GIF) regardless of the Content-Type you
+  // configured in the Scrapfly dashboard (json or msgpack — both apply
+  // verbatim to scrape/extraction deliveries, but screenshot bodies are
+  // binary either way). Trying to JSON.parse a binary body throws after
+  // verification has already succeeded.
   if (resourceType === 'screenshot') {
     console.log(`Screenshot received: ${rawBody.length} bytes (binary, ${jobId})`);
     // rawBody is the raw image bytes. Persist it to storage keyed on
@@ -81,6 +81,11 @@ export async function POST(request: NextRequest) {
     // image bytes.
     return NextResponse.json({ received: true });
   }
+
+  // Remaining resource types are serialised per your dashboard's
+  // Content-Type setting. This handler assumes `application/json`; if
+  // you configured `application/msgpack`, swap JSON.parse for a msgpack
+  // decoder (e.g. `@msgpack/msgpack`).
 
   let payload: any;
   try {

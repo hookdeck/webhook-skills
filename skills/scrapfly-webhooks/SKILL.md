@@ -39,7 +39,7 @@ Key facts:
 - **No timestamp / replay window**: Scrapfly does not include a timestamp header; treat the signature as authenticity-only.
 - **Secret**: Use the value from the Scrapfly dashboard exactly as shown. Do not trim or base64-decode it.
 - **Routing**: Use `X-Scrapfly-Webhook-Resource-Type` (`scrape`, `extraction`, `screenshot`) to dispatch when one endpoint serves multiple products. Crawler events also carry `X-Scrapfly-Crawl-Event-Name` and an `event` field in the body.
-- **Screenshot is binary, not JSON**: Screenshot API deliveries carry raw image bytes (JPEG/PNG/WebP/GIF) even though Scrapfly sends them with `Content-Type: application/json` (the header is unreliable on screenshot deliveries — upstream Scrapfly quirk). **Dispatch on the resource type header before any JSON parsing.** HMAC verification still works fine over the binary body; only `JSON.parse` blows up.
+- **Content-Type is whatever you configured in the dashboard, not what the body actually is.** Scrapfly's webhook config has a Content-Type dropdown (`application/json` or `application/msgpack`) and sends the chosen value on every delivery — but it doesn't change what's in the body for image deliveries. Screenshot API deliveries carry raw image bytes (JPEG/PNG/WebP/GIF) regardless of the configured Content-Type, so the header is unreliable for that resource type. **Dispatch on `X-Scrapfly-Webhook-Resource-Type`, not on `Content-Type`, and parse only after dispatching.** HMAC verification works fine over any body — only the parse step needs to know whether it's a JSON, msgpack, or binary body. This skill's example handlers assume the dashboard is configured to `application/json`; if you pick msgpack, swap `JSON.parse` / `json.loads` for a msgpack decoder.
 - **Hookdeck Event Gateway alternative**: If you're already routing webhooks through Hookdeck (the [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) skill recommends this), set the source type to `SCRAPFLY` on the gateway connection and Hookdeck verifies the Scrapfly signature at the edge. Your handler then only needs to verify Hookdeck's signature, not Scrapfly's directly.
 
 ## Essential Code (USE THIS)
@@ -96,9 +96,11 @@ app.post('/webhooks/scrapfly',
     console.log(`Scrapfly ${resourceType} webhook (job ${jobId}, id ${webhookId})`);
 
     // CRITICAL: dispatch BEFORE JSON.parse — Screenshot API deliveries carry
-    // raw image bytes (JPEG/PNG/WebP/GIF), not JSON, even though Scrapfly
-    // sends them with `Content-Type: application/json` (an upstream quirk).
-    // JSON.parse would throw after the signature has already verified.
+    // raw image bytes (JPEG/PNG/WebP/GIF) regardless of the Content-Type you
+    // configured in the Scrapfly dashboard. Content-Type is whatever you
+    // picked (application/json by default; application/msgpack is also an
+    // option). JSON.parse on a binary body throws after the signature
+    // has already verified.
     if (resourceType === 'screenshot') {
       console.log(`Screenshot received: ${req.body.length} bytes (binary)`);
       // req.body is the raw image. Persist it to storage and return 200.
