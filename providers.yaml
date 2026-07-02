@@ -768,6 +768,377 @@ providers:
         Create a {framework} webhook handler that receives webhooks forwarded through 
         Hookdeck Event Gateway. Hookdeck is a webhook proxy - it receives webhooks from 
         providers and forwards them to my app, adding an x-hookdeck-signature header for 
-        verification. I need to verify this signature using HMAC SHA-256 with base64 
-        encoding. If you use any skills to help with this, add a comment in the code 
+        verification. I need to verify this signature using HMAC SHA-256 with base64
+        encoding. If you use any skills to help with this, add a comment in the code
         noting which skill(s) you referenced.
+
+  # ---------------------------------------------------------------------------
+  # Payment / billing providers
+  # ---------------------------------------------------------------------------
+
+  - name: square
+    displayName: Square
+    docs:
+      webhooks: https://developer.squareup.com/docs/webhooks/overview
+      verification: https://developer.squareup.com/docs/webhooks/step3validate
+      events: https://developer.squareup.com/docs/webhooks/subscribe-events
+    notes: >
+      Payments and commerce platform. Verify with the x-square-hmacsha256-signature header:
+      HMAC-SHA256 (base64) computed over the concatenation of the notification URL and the
+      raw request body, using the webhook subscription's signature key. Compare with a
+      timing-safe equality check. The official Square SDK exposes
+      WebhooksHelper.verifySignature / isValidWebhookEventSignature. Common events:
+      payment.created, payment.updated, refund.created, invoice.payment_made, order.updated.
+    testScenario:
+      events:
+        - payment.created
+        - refund.created
+
+  - name: adyen
+    displayName: Adyen
+    docs:
+      webhooks: https://docs.adyen.com/development-resources/webhooks/
+      verification: https://docs.adyen.com/development-resources/webhooks/verify-hmac-signatures/
+    notes: >
+      Enterprise payments platform. Delivers "standard notifications" as a batch of
+      notificationItems (JSON). Verify each item's additionalData.hmacSignature: HMAC-SHA256
+      (base64) over a payload built from specific fields
+      (pspReference, originalReference, merchantAccountCode, merchantReference, amount value,
+      amount currency, eventCode, success) joined with ':'. The HMAC key is configured in the
+      Customer Area (hex string, must be hex-decoded before use). Endpoints are also typically
+      protected with Basic Auth. Respond with body "[accepted]". The @adyen/api-library SDK
+      provides hmacValidator.validateHMAC. Common events: AUTHORISATION, CAPTURE, REFUND, CANCELLATION.
+    sdks:
+      npm:
+        - "@adyen/api-library"
+    testScenario:
+      events:
+        - AUTHORISATION
+        - REFUND
+
+  - name: razorpay
+    displayName: Razorpay
+    docs:
+      webhooks: https://razorpay.com/docs/webhooks/
+      verification: https://razorpay.com/docs/webhooks/validate-test/
+    notes: >
+      India-focused payments platform. Verify with the X-Razorpay-Signature header:
+      HMAC-SHA256 (hex) over the raw request body using the webhook secret configured in the
+      Razorpay dashboard. Compare with a timing-safe equality check. The official
+      razorpay SDK exposes validateWebhookSignature. Common events:
+      payment.captured, payment.failed, order.paid, refund.processed, subscription.charged.
+    sdks:
+      npm:
+        - "razorpay"
+    testScenario:
+      events:
+        - payment.captured
+        - order.paid
+
+  - name: mollie
+    displayName: Mollie
+    docs:
+      webhooks: https://docs.mollie.com/docs/webhooks
+      overview: https://docs.mollie.com/reference/webhooks
+    notes: >
+      European payments platform. IMPORTANT: Mollie webhooks are NOT signed. The webhook is a
+      POST with a single application/x-www-form-urlencoded body parameter `id` (e.g. tr_xxxx).
+      You MUST NOT trust the payload — fetch the resource from the Mollie API
+      (GET /v2/payments/{id}) with your API key to read the authoritative status. Always return
+      200 quickly. Handle unknown/deleted ids gracefully. There is no HMAC to verify; the skill
+      should teach the fetch-to-confirm pattern instead of signature verification.
+    sdks:
+      npm:
+        - "@mollie/api-client"
+    testScenario:
+      events:
+        - payment status update
+      prompt: >
+        Create a {framework} webhook handler for Mollie. Mollie webhooks are unsigned and send
+        only a payment `id` as a form-encoded body parameter. The handler must fetch the payment
+        from the Mollie API to determine its real status rather than trusting the request body,
+        then return 200. If you use any skills to help with this, add a comment noting which
+        skill(s) you referenced.
+
+  - name: gocardless
+    displayName: GoCardless
+    docs:
+      webhooks: https://developer.gocardless.com/api-reference/#appendix-webhooks
+      verification: https://developer.gocardless.com/getting-started/api/staying-up-to-date-with-webhooks/
+    notes: >
+      Bank debit / recurring payments platform. Verify with the Webhook-Signature header:
+      HMAC-SHA256 (hex) over the raw request body using the webhook endpoint secret. Compare with
+      a timing-safe equality check. The payload contains an `events` array — process each event and
+      respond 2xx (204) once the whole batch is accepted; GoCardless retries the full batch on
+      failure, so handlers must be idempotent on event id. Common resource types: payments, mandates,
+      payouts, refunds, subscriptions. Common actions: paid, failed, confirmed, cancelled.
+    sdks:
+      npm:
+        - "gocardless-nodejs"
+    testScenario:
+      events:
+        - payments.confirmed
+        - payments.failed
+
+  - name: recurly
+    displayName: Recurly
+    docs:
+      webhooks: https://recurly.com/developers/guides/webhooks.html
+      events: https://recurly.com/developers/pages/webhooks.html
+    notes: >
+      Subscription management and billing platform. Recurly webhooks are historically NOT signed;
+      secure the endpoint with HTTP Basic Auth credentials configured in Recurly and/or an IP
+      allowlist, and verify over HTTPS. Payloads are XML by default (a <notification> root element,
+      e.g. <new_subscription_notification>), with JSON available on newer sites. The skill should
+      cover parsing the notification type, Basic Auth verification, and fetching the referenced
+      object from the Recurly API to confirm state. Common notifications:
+      new_subscription_notification, updated_subscription_notification,
+      successful_payment_notification, failed_payment_notification.
+    testScenario:
+      events:
+        - new_subscription_notification
+        - successful_payment_notification
+
+  - name: coinbase-commerce
+    displayName: Coinbase Commerce
+    docs:
+      webhooks: https://docs.cdp.coinbase.com/commerce-onchain/docs/webhooks
+      verification: https://docs.cdp.coinbase.com/commerce-onchain/docs/webhooks-security
+    notes: >
+      Cryptocurrency payments platform. Verify with the X-CC-Webhook-Signature header:
+      HMAC-SHA256 (hex) over the raw request body using the webhook shared secret from the
+      Coinbase Commerce dashboard. Compare with a timing-safe equality check. The event object is
+      nested under `event` in the body. Common events: charge:created, charge:confirmed,
+      charge:failed, charge:delayed, charge:pending, charge:resolved.
+    testScenario:
+      events:
+        - charge:confirmed
+        - charge:failed
+
+  # ---------------------------------------------------------------------------
+  # Dev / project management providers
+  # ---------------------------------------------------------------------------
+
+  - name: jira
+    displayName: Jira
+    docs:
+      webhooks: https://developer.atlassian.com/cloud/jira/platform/webhooks/
+      events: https://developer.atlassian.com/cloud/jira/platform/webhooks/#events
+    notes: >
+      Atlassian issue tracking and project management (Jira Cloud). Webhooks registered via the
+      REST API or Connect apps. Dynamic/OAuth2 webhooks registered with a secret are signed with an
+      X-Hub-Signature header: HMAC-SHA256 (hex, `sha256=` prefix) over the raw request body using
+      that secret. Webhooks created in the UI are not signed by default — those rely on HTTPS plus a
+      hard-to-guess URL, and can be filtered with a secret query parameter. Common events:
+      jira:issue_created, jira:issue_updated, jira:issue_deleted, comment_created, comment_updated.
+    testScenario:
+      events:
+        - jira:issue_created
+        - comment_created
+
+  - name: bitbucket
+    displayName: Bitbucket
+    docs:
+      webhooks: https://support.atlassian.com/bitbucket-cloud/docs/manage-webhooks/
+      events: https://support.atlassian.com/bitbucket-cloud/docs/event-payloads/
+    notes: >
+      Atlassian Git hosting (Bitbucket Cloud). The event type is delivered in the X-Event-Key header
+      and a delivery id in X-Request-UUID. Webhooks configured with a secret are signed with an
+      X-Hub-Signature header: HMAC-SHA256 (hex, `sha256=` prefix) over the raw request body using
+      that secret; verify with a timing-safe comparison. Webhooks without a secret are unsigned
+      (rely on HTTPS + secret URL). Common events: repo:push, pullrequest:created,
+      pullrequest:updated, pullrequest:fulfilled, pullrequest:rejected.
+    testScenario:
+      events:
+        - repo:push
+        - pullrequest:created
+
+  # ---------------------------------------------------------------------------
+  # Auth / identity providers
+  # ---------------------------------------------------------------------------
+
+  - name: auth0
+    displayName: Auth0
+    docs:
+      webhooks: https://auth0.com/docs/customize/log-streams/custom-log-streams
+      overview: https://auth0.com/docs/customize/log-streams
+    notes: >
+      Identity platform (by Okta). Auth0 delivers events to your endpoint via Custom Log Streams
+      (HTTP), which POST a JSON array of log-event records. There is no HMAC signature; instead you
+      configure a custom Authorization header (or another static header token) on the log stream and
+      verify that shared secret on each request (timing-safe compare), alongside HTTPS. The skill
+      should cover validating the configured authorization token, handling batched arrays of events,
+      and returning 2xx quickly (Auth0 retries on non-2xx). Common event types: `s` (success login),
+      `f` (failed login), `ss`/`fs` (signup), `sepft` (failed MFA).
+    testScenario:
+      events:
+        - successful login (s)
+        - failed login (f)
+      prompt: >
+        Create a {framework} webhook handler for Auth0 Custom Log Streams. Auth0 posts a JSON array
+        of log events and does not sign requests; instead verify a configured Authorization header
+        token using a timing-safe comparison, then process each event in the batch and return 2xx.
+        If you use any skills to help with this, add a comment noting which skill(s) you referenced.
+
+  - name: okta
+    displayName: Okta
+    docs:
+      webhooks: https://developer.okta.com/docs/concepts/event-hooks/
+      verification: https://developer.okta.com/docs/guides/event-hook-implementation/
+    notes: >
+      Identity platform. Okta Event Hooks POST a JSON payload of events to your endpoint. Two things
+      to implement: (1) the one-time verification handshake — Okta sends a GET with an
+      X-Okta-Verification-Challenge header and expects a JSON body {"verification":"<challenge>"};
+      (2) per-request authentication via a static secret you set as the Authorization header when
+      creating the hook — verify it with a timing-safe comparison. There is no HMAC signature.
+      Return 2xx quickly. Common events: user.lifecycle.create, user.session.start,
+      user.account.lock, group.user_membership.add.
+    testScenario:
+      events:
+        - user.lifecycle.create
+        - user.session.start
+      prompt: >
+        Create a {framework} webhook handler for Okta Event Hooks. It must (1) answer the one-time
+        GET verification challenge by echoing the X-Okta-Verification-Challenge value in a JSON
+        {"verification": ...} response, and (2) verify the configured Authorization header secret on
+        POST deliveries with a timing-safe comparison before processing the events array. If you use
+        any skills to help with this, add a comment noting which skill(s) you referenced.
+
+  - name: workos
+    displayName: WorkOS
+    docs:
+      webhooks: https://workos.com/docs/events/data-syncing/webhooks
+      verification: https://workos.com/docs/events/data-syncing/webhooks/validating-events
+    notes: >
+      Enterprise-readiness platform (SSO, Directory Sync, AuthKit). Verify with the WorkOS-Signature
+      header, which contains a timestamp and signature (`t=<ts>, v1=<sig>`). Compute HMAC-SHA256
+      (hex) over `{timestamp}.{raw body}` using the endpoint signing secret, compare timing-safe, and
+      reject if the timestamp is outside the tolerance window (default ~3 minutes) to prevent replay.
+      The official @workos-inc/node / workos SDKs expose webhooks.constructEvent /
+      verify_event which do this in one step. Common events: dsync.user.created,
+      dsync.group.user_added, connection.activated, user.created, session.created.
+    sdks:
+      npm:
+        - "@workos-inc/node"
+    testScenario:
+      events:
+        - dsync.user.created
+        - connection.activated
+
+  # ---------------------------------------------------------------------------
+  # Meetings / scheduling providers
+  # ---------------------------------------------------------------------------
+
+  - name: zoom
+    displayName: Zoom
+    docs:
+      webhooks: https://developers.zoom.us/docs/api/webhooks/
+      verification: https://developers.zoom.us/docs/api/webhooks/#verify-webhook-events
+    notes: >
+      Video communications platform. Verify with the x-zm-signature header: build the message
+      `v0:{x-zm-request-timestamp}:{raw body}`, compute HMAC-SHA256 (hex) with the app's Secret
+      Token, prefix with `v0=`, and compare timing-safe. IMPORTANT: also implement the one-time URL
+      validation handshake — when event == "endpoint.url_validation", respond 200 with
+      {plainToken, encryptedToken} where encryptedToken = HMAC-SHA256(plainToken, secretToken) in
+      hex. Return 2xx within 3 seconds. Common events: meeting.started, meeting.ended,
+      meeting.participant_joined, recording.completed.
+    testScenario:
+      events:
+        - meeting.started
+        - recording.completed
+      prompt: >
+        Create a {framework} webhook handler for Zoom. It must handle the endpoint.url_validation
+        challenge (return plainToken plus an HMAC-SHA256 encryptedToken) and verify normal events via
+        the x-zm-signature header computed over `v0:{timestamp}:{body}` with the Secret Token, using
+        a timing-safe comparison. If you use any skills to help with this, add a comment noting which
+        skill(s) you referenced.
+
+  - name: calendly
+    displayName: Calendly
+    docs:
+      webhooks: https://developer.calendly.com/api-docs/ZG9jOjQ2NDA2NA-webhook-signatures
+      overview: https://developer.calendly.com/api-docs
+    notes: >
+      Scheduling platform. Verify with the Calendly-Webhook-Signature header, which contains a
+      timestamp and signature (`t=<ts>,v1=<sig>`). Compute HMAC-SHA256 (hex) over
+      `{timestamp}.{raw body}` using the webhook subscription's signing key, compare timing-safe, and
+      reject stale timestamps (recommended tolerance ~3 minutes) to prevent replay. Return 2xx.
+      Common events: invitee.created, invitee.canceled, invitee_no_show.created,
+      routing_form_submission.created.
+    testScenario:
+      events:
+        - invitee.created
+        - invitee.canceled
+
+  # ---------------------------------------------------------------------------
+  # CRM / marketing providers
+  # ---------------------------------------------------------------------------
+
+  - name: salesforce
+    displayName: Salesforce
+    docs:
+      webhooks: https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_om_outboundmessaging.htm
+      overview: https://developer.salesforce.com/docs/atlas.en-us.platform_events.meta/platform_events/platform_events_intro.htm
+    notes: >
+      CRM platform. Salesforce has no classic HMAC webhook; the closest native push is Outbound
+      Messages (Flow/Workflow), which POST a SOAP/XML envelope to your endpoint. There is no
+      signature — authenticate by (1) validating the OrganizationId element in the message against
+      your known Salesforce org id, (2) restricting to Salesforce IP ranges and enforcing HTTPS, and
+      optionally (3) mutual TLS. The endpoint must return a SOAP <Ack>true</Ack> response or
+      Salesforce retries. The skill should parse the SOAP/XML body, validate OrganizationId, and
+      return the ack envelope. Mention Platform Events / Change Data Capture as the streaming
+      alternative. Common triggers: Account, Opportunity, Contact, Lead record changes.
+    testScenario:
+      events:
+        - Opportunity outbound message
+        - Account outbound message
+      prompt: >
+        Create a {framework} webhook handler for Salesforce Outbound Messages. Parse the SOAP/XML
+        POST body, authenticate by validating the OrganizationId element against a known org id (plus
+        HTTPS/IP allowlisting), process the notified records, and return the required SOAP
+        <Ack>true</Ack> response. If you use any skills to help with this, add a comment noting which
+        skill(s) you referenced.
+
+  - name: mailchimp
+    displayName: Mailchimp
+    docs:
+      webhooks: https://mailchimp.com/developer/marketing/guides/sync-audience-data-webhooks/
+      overview: https://mailchimp.com/developer/marketing/api/list-webhooks/
+    notes: >
+      Marketing / email automation platform. Mailchimp webhooks are NOT HMAC-signed. Two things to
+      implement: (1) Mailchimp sends a GET to the webhook URL to validate it — respond 200; (2)
+      secure POST deliveries by putting an unguessable secret in the webhook URL query string and
+      validating it on every request (timing-safe compare), over HTTPS. Payloads are
+      application/x-www-form-urlencoded with a `type` field and `data[...]` fields. Common types:
+      subscribe, unsubscribe, profile, cleaned, upemail, campaign.
+    testScenario:
+      events:
+        - subscribe
+        - unsubscribe
+      prompt: >
+        Create a {framework} webhook handler for Mailchimp. It must answer the GET validation
+        request with 200 and, for POST deliveries, validate an unguessable secret carried in the URL
+        query string (timing-safe) before parsing the form-encoded `type` and `data` fields. If you
+        use any skills to help with this, add a comment noting which skill(s) you referenced.
+
+  - name: klaviyo
+    displayName: Klaviyo
+    docs:
+      webhooks: https://developers.klaviyo.com/en/docs/webhooks
+      verification: https://developers.klaviyo.com/en/docs/webhooks#verify-a-webhook-signature
+    notes: >
+      Marketing automation / CDP platform. Klaviyo delivers webhooks (e.g. from a flow "Webhook"
+      action) and signs them: verify the signature header by computing HMAC-SHA256 over the raw
+      request body using the endpoint secret and comparing timing-safe (confirm the exact header name
+      and encoding against current Klaviyo docs during generation, as this feature is evolving).
+      Return 2xx quickly. Payload is JSON. Cover both the signed case and the recommendation to keep
+      the endpoint secret in the URL if signing is unavailable on the account.
+    testScenario:
+      events:
+        - webhook action payload
+      prompt: >
+        Create a {framework} webhook handler for Klaviyo. Verify the webhook signature by computing
+        HMAC-SHA256 over the raw body with the endpoint secret (confirm the exact header/encoding
+        against Klaviyo's current docs) using a timing-safe comparison, then process the JSON payload
+        and return 2xx. If you use any skills to help with this, add a comment noting which skill(s)
+        you referenced.
