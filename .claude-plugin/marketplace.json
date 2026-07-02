@@ -10,6 +10,97 @@
   },
   "plugins": [
     {
+      "name": "adyen-webhooks",
+      "description": "Verify Adyen webhook HMAC signatures (additionalData.hmacSignature, HMAC-SHA256), handle AUTHORISATION, CAPTURE, and REFUND notifications.",
+      "source": "./skills/adyen-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/adyen-webhooks",
+      "keywords": [
+        "webhooks",
+        "adyen",
+        "payments",
+        "billing"
+      ]
+    },
+    {
+      "name": "auth0-webhooks",
+      "description": "Authenticate Auth0 Custom Log Stream deliveries (Authorization token), handle batched login and signup log events.",
+      "source": "./skills/auth0-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/auth0-webhooks",
+      "keywords": [
+        "webhooks",
+        "auth0",
+        "auth",
+        "identity"
+      ]
+    },
+    {
+      "name": "bitbucket-webhooks",
+      "description": "Verify Bitbucket webhook signatures (X-Hub-Signature, HMAC-SHA256), handle repo push and pull request events.",
+      "source": "./skills/bitbucket-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/bitbucket-webhooks",
+      "keywords": [
+        "webhooks",
+        "bitbucket",
+        "atlassian",
+        "git"
+      ]
+    },
+    {
+      "name": "calendly-webhooks",
+      "description": "Verify Calendly webhook signatures (Calendly-Webhook-Signature, HMAC-SHA256 with timestamp), handle invitee.created and invitee.canceled events.",
+      "source": "./skills/calendly-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/calendly-webhooks",
+      "keywords": [
+        "webhooks",
+        "calendly",
+        "scheduling"
+      ]
+    },
+    {
       "name": "chargebee-webhooks",
       "description": "Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events.",
       "source": "./skills/chargebee-webhooks",
@@ -77,6 +168,29 @@
         "clerk",
         "auth",
         "users"
+      ]
+    },
+    {
+      "name": "coinbase-commerce-webhooks",
+      "description": "Verify Coinbase Commerce webhook signatures (X-CC-Webhook-Signature, HMAC-SHA256), handle charge lifecycle events.",
+      "source": "./skills/coinbase-commerce-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/coinbase-commerce-webhooks",
+      "keywords": [
+        "webhooks",
+        "coinbase-commerce",
+        "payments",
+        "crypto"
       ]
     },
     {
@@ -266,6 +380,29 @@
       ]
     },
     {
+      "name": "gocardless-webhooks",
+      "description": "Verify GoCardless webhook signatures (Webhook-Signature, HMAC-SHA256), handle batched payment, mandate, and payout events.",
+      "source": "./skills/gocardless-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/gocardless-webhooks",
+      "keywords": [
+        "webhooks",
+        "gocardless",
+        "payments",
+        "direct-debit"
+      ]
+    },
+    {
       "name": "hubspot-webhooks",
       "description": "Verify HubSpot v3 webhook signatures (HMAC-SHA256 with method+uri+body+timestamp), handle contact, deal, and company events.",
       "source": "./skills/hubspot-webhooks",
@@ -335,6 +472,52 @@
       ]
     },
     {
+      "name": "jira-webhooks",
+      "description": "Verify Jira webhook signatures (X-Hub-Signature, HMAC-SHA256), handle issue and comment events.",
+      "source": "./skills/jira-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/jira-webhooks",
+      "keywords": [
+        "webhooks",
+        "jira",
+        "atlassian",
+        "project-management"
+      ]
+    },
+    {
+      "name": "klaviyo-webhooks",
+      "description": "Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events.",
+      "source": "./skills/klaviyo-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/klaviyo-webhooks",
+      "keywords": [
+        "webhooks",
+        "klaviyo",
+        "marketing",
+        "email"
+      ]
+    },
+    {
       "name": "knock-webhooks",
       "description": "Verify Knock outbound webhook signatures (HMAC-SHA256 base64 over `{timestamp_ms}.{body}`, millisecond timestamps — explicit deviation from Stripe), handle message lifecycle and resource change events from Knock's notification infrastructure.",
       "source": "./skills/knock-webhooks",
@@ -382,6 +565,29 @@
       ]
     },
     {
+      "name": "mailchimp-webhooks",
+      "description": "Authenticate Mailchimp webhooks (URL secret and GET validation), handle subscribe, unsubscribe, and profile events.",
+      "source": "./skills/mailchimp-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/mailchimp-webhooks",
+      "keywords": [
+        "webhooks",
+        "mailchimp",
+        "marketing",
+        "email"
+      ]
+    },
+    {
       "name": "mailgun-webhooks",
       "description": "Verify Mailgun webhook signatures (HMAC-SHA256 in body-embedded signature object), handle email delivered, failed, opened, clicked, unsubscribed, and complained events.",
       "source": "./skills/mailgun-webhooks",
@@ -405,6 +611,29 @@
       ]
     },
     {
+      "name": "mollie-webhooks",
+      "description": "Handle unsigned Mollie webhooks with the fetch-to-confirm pattern, retrieving authoritative payment status from the Mollie API by id.",
+      "source": "./skills/mollie-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/mollie-webhooks",
+      "keywords": [
+        "webhooks",
+        "mollie",
+        "payments",
+        "billing"
+      ]
+    },
+    {
       "name": "notion-webhooks",
       "description": "Verify Notion webhook signatures (HMAC-SHA256 with verification_token handshake), handle page and comment events.",
       "source": "./skills/notion-webhooks",
@@ -425,6 +654,29 @@
         "notion",
         "docs",
         "knowledge"
+      ]
+    },
+    {
+      "name": "okta-webhooks",
+      "description": "Complete the Okta Event Hook verification challenge, authenticate deliveries, and handle user lifecycle and session events.",
+      "source": "./skills/okta-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/okta-webhooks",
+      "keywords": [
+        "webhooks",
+        "okta",
+        "auth",
+        "identity"
       ]
     },
     {
@@ -570,6 +822,52 @@
       ]
     },
     {
+      "name": "razorpay-webhooks",
+      "description": "Verify Razorpay webhook signatures (X-Razorpay-Signature, HMAC-SHA256), handle payment, order, and refund events.",
+      "source": "./skills/razorpay-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/razorpay-webhooks",
+      "keywords": [
+        "webhooks",
+        "razorpay",
+        "payments",
+        "billing"
+      ]
+    },
+    {
+      "name": "recurly-webhooks",
+      "description": "Authenticate Recurly webhooks (HTTP Basic Auth), parse XML notifications for subscription and payment events.",
+      "source": "./skills/recurly-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/recurly-webhooks",
+      "keywords": [
+        "webhooks",
+        "recurly",
+        "billing",
+        "subscriptions"
+      ]
+    },
+    {
       "name": "replicate-webhooks",
       "description": "Verify Replicate webhook signatures (Standard Webhooks/Svix), handle ML prediction lifecycle events.",
       "source": "./skills/replicate-webhooks",
@@ -613,6 +911,28 @@
         "resend",
         "email",
         "transactional"
+      ]
+    },
+    {
+      "name": "salesforce-webhooks",
+      "description": "Handle Salesforce Outbound Messages (SOAP/XML), validate OrganizationId, and return the required Ack response.",
+      "source": "./skills/salesforce-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/salesforce-webhooks",
+      "keywords": [
+        "webhooks",
+        "salesforce",
+        "crm"
       ]
     },
     {
@@ -705,6 +1025,30 @@
         "slack",
         "messaging",
         "events-api"
+      ]
+    },
+    {
+      "name": "square-webhooks",
+      "description": "Verify Square webhook signatures (x-square-hmacsha256-signature over notification URL + body, HMAC-SHA256), handle payment, refund, invoice, and order events.",
+      "source": "./skills/square-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/square-webhooks",
+      "keywords": [
+        "webhooks",
+        "square",
+        "payments",
+        "billing",
+        "commerce"
       ]
     },
     {
@@ -823,6 +1167,53 @@
         "woocommerce",
         "wordpress",
         "ecommerce"
+      ]
+    },
+    {
+      "name": "workos-webhooks",
+      "description": "Verify WorkOS webhook signatures (WorkOS-Signature, HMAC-SHA256 with timestamp), handle Directory Sync and authentication events.",
+      "source": "./skills/workos-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/workos-webhooks",
+      "keywords": [
+        "webhooks",
+        "workos",
+        "auth",
+        "identity",
+        "sso"
+      ]
+    },
+    {
+      "name": "zoom-webhooks",
+      "description": "Verify Zoom webhook signatures (x-zm-signature), complete the endpoint.url_validation handshake, and handle meeting and recording events.",
+      "source": "./skills/zoom-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/zoom-webhooks",
+      "keywords": [
+        "webhooks",
+        "zoom",
+        "meetings",
+        "video"
       ]
     },
     {
