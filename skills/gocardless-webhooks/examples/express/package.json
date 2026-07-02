@@ -1,0 +1,19 @@
+{
+  "name": "gocardless-webhooks-express",
+  "version": "1.0.0",
+  "description": "GoCardless webhook handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "gocardless-nodejs": "^8.4.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.1.1"
+  }
+}
