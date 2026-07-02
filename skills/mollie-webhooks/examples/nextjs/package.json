@@ -1,0 +1,23 @@
+{
+  "name": "mollie-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Mollie webhook handler with Next.js App Router and the fetch-to-confirm pattern",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mollie/api-client": "^4.6.0",
+    "next": "^16.2.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
