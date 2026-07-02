@@ -1,0 +1,18 @@
+{
+  "name": "mailchimp-webhooks-express",
+  "version": "1.0.0",
+  "description": "Mailchimp webhook handler with Express (URL-secret validation, no signature)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.0.0"
+  }
+}
