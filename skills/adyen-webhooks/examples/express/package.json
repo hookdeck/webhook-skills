@@ -1,0 +1,19 @@
+{
+  "name": "adyen-webhooks-express",
+  "version": "1.0.0",
+  "description": "Adyen webhook handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@adyen/api-library": "^31.0.0",
+    "dotenv": "^16.3.0",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^6.3.0"
+  }
+}
