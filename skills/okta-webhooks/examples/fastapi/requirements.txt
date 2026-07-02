@@ -1,0 +1,6 @@
+fastapi>=0.139.0
+uvicorn>=0.34.0
+python-dotenv>=1.0.1
+# Test dependencies
+pytest>=9.1.1
+httpx>=0.28.1
