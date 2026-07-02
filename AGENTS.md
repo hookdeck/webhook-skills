@@ -486,6 +486,7 @@ Use this checklist when creating a new provider skill:
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
 - [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
+- [ ] Register in the plugin manifest: `./scripts/generate-skills.sh sync-marketplace` (the generator does this automatically; run manually for hand-authored skills)
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
@@ -554,6 +555,7 @@ Gather this information:
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
    - `providers.yaml` - Add provider entry with `testScenario` field
+   - `.claude-plugin/marketplace.json` - Register the skill with `./scripts/generate-skills.sh sync-marketplace` (auto-run by the generator)
 8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
@@ -805,6 +807,7 @@ The automated review checks skill content and tests, but does **not** verify int
 
 1. **README.md** — Provider added to Provider Skills table
 2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
+3. **.claude-plugin/marketplace.json** — Skill registered as a plugin (verify with `./scripts/generate-skills.sh sync-marketplace --check`)
 
 ### Step 3: Spot-Check Skill Content
 

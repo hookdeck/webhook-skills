@@ -123,6 +123,13 @@ All providers and their official documentation URLs are tracked in `providers.ya
 3. Update the README.md Provider Skills table
 4. Add at least one scenario to `scripts/test-agent-scenario.sh`
 
+The generator registers the new skill in `.claude-plugin/marketplace.json` automatically. For a hand-authored skill, register it (or fix any drift) with:
+
+```bash
+./scripts/generate-skills.sh sync-marketplace          # add any missing plugin entries
+./scripts/generate-skills.sh sync-marketplace --check   # report drift only (used by CI)
+```
+
 **Validate locally before pushing:**
 
 ```bash
@@ -133,7 +140,7 @@ All providers and their official documentation URLs are tracked in `providers.ya
 ./scripts/validate-provider.sh --all
 ```
 
-The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs.
+The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs, and also checks that `.claude-plugin/marketplace.json` is in sync with `skills/`.
 
 ### Acceptance Thresholds
 

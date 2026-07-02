@@ -42,6 +42,7 @@ import {
   pathExistsInBranch,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
+import { syncManifest, findManifestDrift } from './lib/marketplace';
 
 const ROOT_DIR = join(__dirname, '..', '..');
 
@@ -872,6 +873,47 @@ async function handleListProviders(
   }
 }
 
+/**
+ * Sync marketplace command handler
+ *
+ * Keeps .claude-plugin/marketplace.json in sync with skills/. With --check it
+ * reports drift and exits non-zero (for CI); otherwise it adds any missing
+ * plugin entries without touching existing ones.
+ */
+async function handleSyncMarketplace(
+  options: { check?: boolean }
+): Promise<void> {
+  if (options.check) {
+    const { missing, orphans } = findManifestDrift();
+    if (missing.length === 0 && orphans.length === 0) {
+      console.log(chalk.green('✅ marketplace.json is in sync with skills/'));
+      return;
+    }
+    if (missing.length > 0) {
+      console.log(chalk.red(`❌ ${missing.length} skill(s) missing a marketplace.json entry:`));
+      for (const m of missing) console.log(chalk.red(`   - skills/${m}`));
+    }
+    if (orphans.length > 0) {
+      console.log(chalk.red(`❌ ${orphans.length} marketplace.json entr(ies) point to a missing skill:`));
+      for (const o of orphans) console.log(chalk.red(`   - skills/${o}`));
+    }
+    console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync-marketplace` to add missing entries.'));
+    process.exit(1);
+  }
+
+  const { added, orphans } = syncManifest();
+  if (added.length === 0) {
+    console.log(chalk.green('✅ marketplace.json already in sync — nothing to add'));
+  } else {
+    console.log(chalk.green(`✅ Added ${added.length} entr(ies) to marketplace.json:`));
+    for (const a of added) console.log(chalk.green(`   - skills/${a}`));
+  }
+  if (orphans.length > 0) {
+    console.log(chalk.yellow(`\n⚠️  ${orphans.length} entr(ies) reference a missing skill (not removed automatically):`));
+    for (const o of orphans) console.log(chalk.yellow(`   - skills/${o}`));
+  }
+}
+
 // CLI setup
 const program = new Command();
 
@@ -928,5 +970,11 @@ program
   .requiredOption('--config <file>', 'Load provider configs from YAML file')
   .option('--json', 'Output as JSON', false)
   .action(handleListProviders);
+
+program
+  .command('sync-marketplace')
+  .description('Sync .claude-plugin/marketplace.json with skills/ (adds missing entries)')
+  .option('--check', 'Report drift and exit non-zero without writing (for CI)', false)
+  .action(handleSyncMarketplace);
 
 program.parse();

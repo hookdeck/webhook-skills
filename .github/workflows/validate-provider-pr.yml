@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'skills/**'
+      - '.claude-plugin/**'
 
 jobs:
   validate:
@@ -40,3 +41,19 @@ jobs:
           else
             echo "Some validations failed. See job output for details." >> $GITHUB_STEP_SUMMARY
           fi
+
+  manifest:
+    name: Marketplace Manifest In Sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check marketplace.json is in sync with skills/
+        run: |
+          # Fails if any skill lacks a manifest entry or any entry is orphaned.
+          ./scripts/generate-skills.sh sync-marketplace --check

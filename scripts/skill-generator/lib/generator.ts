@@ -26,6 +26,7 @@ import {
   getRepoInfo,
 } from './git';
 import { createPullRequest } from './github';
+import { syncManifest } from './marketplace';
 
 /**
  * Run tests for a skill
@@ -279,8 +280,18 @@ export async function generateSkill(
     
     // Commit and push from worktree
     const skillPath = getSkillPath(provider);
-    
-    await addFiles(worktreePath, [skillPath], { logger, dryRun: options.dryRun });
+
+    // Register the new skill in the plugin manifest so it can't drift from skills/.
+    const filesToStage = [skillPath];
+    if (!options.dryRun) {
+      const { added } = syncManifest(worktreePath);
+      if (added.length > 0) {
+        logger.info(`Registered ${added.length} skill(s) in marketplace.json`);
+        filesToStage.push('.claude-plugin/marketplace.json');
+      }
+    }
+
+    await addFiles(worktreePath, filesToStage, { logger, dryRun: options.dryRun });
     await commit(worktreePath, `feat: add ${provider.name}-webhooks skill`, {
       logger,
       dryRun: options.dryRun,

@@ -233,13 +233,24 @@ validate_integration() {
   else
     errors+=("providers.yaml not found at repository root")
   fi
-  
+
+  # Check the plugin manifest has a registration for this skill.
+  # Entries reference the skill via "source": "./skills/<provider>".
+  local manifest="$ROOT_DIR/.claude-plugin/marketplace.json"
+  if [ -f "$manifest" ]; then
+    if ! grep -q "\"\\./skills/$provider\"" "$manifest"; then
+      errors+=("$provider not registered in .claude-plugin/marketplace.json (run: ./scripts/generate-skills.sh sync-marketplace)")
+    fi
+  else
+    errors+=(".claude-plugin/marketplace.json not found at repository root")
+  fi
+
   # Return errors
   if [ ${#errors[@]} -gt 0 ]; then
     printf '%s\n' "${errors[@]}"
     return 1
   fi
-  
+
   return 0
 }
 
