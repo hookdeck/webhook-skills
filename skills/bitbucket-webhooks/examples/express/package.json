@@ -1,0 +1,21 @@
+{
+  "name": "bitbucket-webhooks-express",
+  "version": "1.0.0",
+  "description": "Bitbucket webhook handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --forceExit"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
