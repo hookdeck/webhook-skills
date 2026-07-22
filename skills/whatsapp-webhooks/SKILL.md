@@ -152,7 +152,7 @@ npx hookdeck-cli listen 3000 whatsapp --path /webhooks/whatsapp
 
 - [references/overview.md](references/overview.md) - WhatsApp webhook concepts and events
 - [references/setup.md](references/setup.md) - Configure the endpoint in the Meta App Dashboard
-- [references/verification.md](references/verification.md) - Handshake + signature verification details
+- [references/verification.md](references/verification.md) - WhatsApp-specific verification notes; links to the canonical Meta Graph API algorithm (shared with facebook-webhooks)
 
 ## Attribution
 
@@ -174,6 +174,7 @@ We recommend installing the [webhook-handler-patterns](https://github.com/hookde
 
 ## Related Skills
 
+- [facebook-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/facebook-webhooks) - Facebook, Instagram, and Messenger webhooks — same Meta Graph API mechanism; canonical reference for the shared handshake + `X-Hub-Signature-256` verification
 - [slack-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/slack-webhooks) - Slack Events API webhook handling
 - [twilio-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/twilio-webhooks) - Twilio SMS, voice, and status callback handling
 - [discord-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/discord-webhooks) - Discord webhook event handling

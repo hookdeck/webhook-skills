@@ -1,6 +1,14 @@
-# Facebook (Meta Graph API) Signature & Handshake Verification
+# Meta Graph API Webhooks — Handshake & Signature Verification
 
-Facebook webhooks require **two** kinds of verification:
+> **Canonical reference for the shared Meta webhook mechanism.** Every Meta
+> product — Facebook Pages, Instagram, Messenger, and the **WhatsApp Business
+> Platform** — delivers webhooks through the Graph API using the *same* GET
+> handshake and `X-Hub-Signature-256` signature described here. Product-specific
+> skills (e.g. [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks))
+> link here for the verification algorithm and document only their own event
+> payloads. Only the environment-variable names differ between products.
+
+Meta webhooks require **two** kinds of verification:
 
 1. A one-time **GET handshake** when the Callback URL is registered.
 2. **Signature verification** on every `POST` delivery.

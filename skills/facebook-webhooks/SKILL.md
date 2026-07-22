@@ -18,6 +18,13 @@ Facebook webhooks are delivered through the **Meta Graph API** and are shared by
 Facebook Pages, Instagram, Messenger, WhatsApp, and other Meta products. They do
 **not** follow the Standard Webhooks spec.
 
+> **Using WhatsApp?** The WhatsApp Business Platform shares this exact Meta
+> mechanism but has its own events, payloads, and setup — use the dedicated
+> [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks)
+> skill. This skill covers Facebook Pages, Instagram, and Messenger. The shared
+> handshake + `X-Hub-Signature-256` algorithm is documented once, canonically, in
+> [references/verification.md](references/verification.md).
+
 ## When to Use This Skill
 
 - How do I receive Facebook (Meta Graph API) webhooks?
@@ -175,6 +182,7 @@ We recommend installing the [webhook-handler-patterns](https://github.com/hookde
 
 - [slack-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/slack-webhooks) - Slack event webhook handling
 - [discord-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/discord-webhooks) - Discord webhook handling
+- [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks) - WhatsApp Business Platform webhooks (same Meta Graph API mechanism, WhatsApp-specific events)
 - [github-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/github-webhooks) - GitHub webhooks (same X-Hub-Signature-256 scheme)
 - [stripe-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/stripe-webhooks) - Stripe payment webhook handling
 - [shopify-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/shopify-webhooks) - Shopify e-commerce webhook handling
