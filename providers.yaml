@@ -766,6 +766,35 @@ providers:
         - form_submission
         - ecomm_new_order
 
+  - name: whatsapp
+    displayName: WhatsApp
+    docs:
+      webhooks: https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/overview
+      verification: https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint/
+      events: https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/reference/messages
+    notes: >
+      Meta signs POST payloads with X-Hub-Signature-256: "sha256=" + lowercase hex
+      HMAC-SHA256 of the raw JSON request body, keyed with the app secret; compute over the
+      exact raw bytes received (Meta may escape unicode). Endpoint must also answer a GET
+      verification handshake: when hub.mode=subscribe and hub.verify_token matches, respond
+      200 with the hub.challenge value as the body. Does NOT follow the Standard Webhooks
+      spec. All payloads are wrapped as {object: "whatsapp_business_account", entry: [{id,
+      changes: [{value, field}]}]}; the "field" property names the subscription — inbound
+      user messages arrive in value.messages[], outbound status updates
+      (sent/delivered/read/failed) in value.statuses[], both under field "messages".
+      Configure in Meta App Dashboard > WhatsApp > Configuration, or via the Graph API
+      /subscriptions edge with object=whatsapp_business_account. Gotchas: requests may batch
+      up to 1000 updates; payloads up to 3 MB; failed deliveries retried with decreasing
+      frequency for up to 7 days and retries go to every subscribed app — dedupe by
+      message/event id; valid TLS cert required; some webhooks only fire in Live mode.
+      Events are subscription fields, not dotted event names.
+    testScenario:
+      events:
+        - messages
+        - message_template_status_update
+    sdks:
+      npm: [whatsapp]
+
   - name: woocommerce
     displayName: WooCommerce
     docs:

@@ -1168,6 +1168,27 @@
       ]
     },
     {
+      "name": "whatsapp-webhooks",
+      "description": "Receive and verify WhatsApp Business Platform (Cloud API) webhooks from Meta. Use when setting up WhatsApp webhook handlers, completing the GET verification handshake, debugging X-Hub-Signature-256 signature verification, or handling inbound message and message status (sent, delivered, read, failed) events under the whatsapp_business_account object.",
+      "source": "./skills/whatsapp-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks",
+      "keywords": [
+        "webhooks",
+        "whatsapp"
+      ]
+    },
+    {
       "name": "woocommerce-webhooks",
       "description": "Verify WooCommerce webhook signatures (HMAC-SHA256, base64), handle order, product, and customer events.",
       "source": "./skills/woocommerce-webhooks",
