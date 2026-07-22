@@ -286,6 +286,27 @@
       ]
     },
     {
+      "name": "facebook-webhooks",
+      "description": "Receive and verify Facebook (Meta Graph API) webhooks. Use when setting up Facebook webhook handlers, completing the GET verification handshake, debugging X-Hub-Signature-256 signature verification, or handling Page, Instagram, and Messenger events like feed, mention, comments, and messages.",
+      "source": "./skills/facebook-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/facebook-webhooks",
+      "keywords": [
+        "webhooks",
+        "facebook"
+      ]
+    },
+    {
       "name": "fusionauth-webhooks",
       "description": "Verify FusionAuth JWT webhook signatures (RSA via JWKS), handle user, login, and registration events.",
       "source": "./skills/fusionauth-webhooks",

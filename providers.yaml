@@ -154,6 +154,36 @@ providers:
         - voice.generation.completed
         - voice.clone.completed
 
+  - name: facebook
+    displayName: Facebook
+    docs:
+      webhooks: https://developers.facebook.com/docs/graph-api/webhooks
+      verification: https://developers.facebook.com/docs/graph-api/webhooks/getting-started
+      events: https://developers.facebook.com/docs/graph-api/webhooks/reference
+    notes: >
+      Verify POST deliveries via X-Hub-Signature-256 header: "sha256=" prefix followed by a
+      hex-encoded HMAC-SHA256 of the RAW request body keyed with the App Secret (legacy
+      X-Hub-Signature carries SHA1). Compute over the raw bytes before any JSON parsing —
+      Meta signs an escaped-unicode form of the payload, so re-serialized JSON will not match.
+      Endpoint registration requires a GET handshake: Meta sends hub.mode=subscribe,
+      hub.verify_token (must match the Verify Token set in App Dashboard > Webhooks), and
+      hub.challenge, which must be echoed back with 200. Does NOT follow the Standard
+      Webhooks spec. Payloads are JSON with {object, entry[]} and may batch up to 1000
+      updates per POST — handle each entry individually. Respond 200 OK quickly; failed
+      deliveries are retried immediately then with decreasing frequency for 36 hours, after
+      which they are dropped. Optional mTLS (Meta client cert CN
+      client.webhooks.fbclientcerts.com). Apps in Development mode only receive test
+      notifications; Page subscriptions also need pages_manage_metadata granted via
+      /{page-id}/subscribed_apps. Events are (object, field) pairs, not dotted names.
+    testScenario:
+      events:
+        - page.feed
+        - page.messages
+        - page.leadgen
+    sdks:
+      npm: [facebook-nodejs-business-sdk]
+      pip: [facebook-business]
+
   - name: fusionauth
     displayName: FusionAuth
     docs:
