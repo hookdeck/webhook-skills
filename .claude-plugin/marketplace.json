@@ -97,6 +97,27 @@
       ]
     },
     {
+      "name": "cloudinary-webhooks",
+      "description": "Receive and verify Cloudinary webhooks (notifications). Use when setting up a Cloudinary notification receiver, verifying the x-cld-signature and x-cld-timestamp headers with the official cloudinary SDK, debugging Cloudinary signature verification failures, or handling notification_type events like upload, eager, delete, rename, moderation, and resource_tags_changed.",
+      "source": "./skills/cloudinary-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/cloudinary-webhooks",
+      "keywords": [
+        "webhooks",
+        "cloudinary"
+      ]
+    },
+    {
       "name": "cloudsignal-webhooks",
       "description": "Receive and verify CloudSignal webhooks from Cloudprinter.com. Use when setting up a CloudSignal Webhooks v2.0 receiver, authenticating deliveries by the plaintext apikey field in the JSON body (there is NO HMAC signature header), or handling print order/item status signals like CloudprinterOrderValidated, ItemProduced, ItemShipped, ItemError, and ItemCanceled.",
       "source": "./skills/cloudsignal-webhooks",

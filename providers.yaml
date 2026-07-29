@@ -490,6 +490,39 @@ providers:
         - created
         - matter_closed
 
+  - name: cloudinary
+    displayName: Cloudinary
+    docs:
+      webhooks: https://cloudinary.com/documentation/notifications
+      verification: https://cloudinary.com/documentation/notification_signatures
+      sdk: https://github.com/cloudinary/cloudinary_npm
+    notes: >
+      Cloudinary sends webhook "notifications" (JSON) to a registered Notification URL.
+      Authentication uses TWO headers: `x-cld-signature` (hex digest) and
+      `x-cld-timestamp` (unix seconds). The signature is a PLAIN digest (NOT a keyed
+      HMAC, despite the docs loosely saying "HMAC-SHA1") computed as
+      hexdigest(ALGORITHM(raw_body + timestamp + api_secret)), where ALGORITHM is sha1
+      (Cloudinary default) or sha256 (opt-in account setting). The signing secret is the
+      ACCOUNT API Secret (Console → Settings → API Keys; the api_secret in
+      CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>) — there is NO
+      separate per-webhook signing secret. Set CLOUDINARY_API_SECRET (and
+      CLOUDINARY_SIGNATURE_ALGORITHM=sha256 if enabled). CRITICAL: verify the RAW body
+      byte-for-byte — do NOT JSON.parse then re-stringify before verifying. The body also
+      contains its own `timestamp` and `signature` fields, but authenticate using the
+      HEADERS, not the body fields. Prefer the official SDK: Node
+      cloudinary.utils.verifyNotificationSignature(body, Number(timestamp), signature,
+      valid_for=7200); Python cloudinary.utils.verify_notification_signature(body,
+      int(timestamp), signature, valid_for=7200). Both enforce a 7200s (2h) freshness
+      window on the timestamp — keep the default in a synchronous handler. Common
+      notification_type values: upload, eager, delete, rename, moderation,
+      resource_tags_changed, resource_context_changed, resource_metadata_changed,
+      access_control_changed, create_folder, delete_folder, move. Return HTTP 2xx to
+      acknowledge; a non-2xx makes Cloudinary retry.
+    testScenario:
+      events:
+        - upload
+        - moderation
+
   - name: cloudsignal
     displayName: CloudSignal (Cloudprinter.com)
     docs:

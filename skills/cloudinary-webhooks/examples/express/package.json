@@ -1,0 +1,19 @@
+{
+  "name": "cloudinary-webhooks-express",
+  "version": "1.0.0",
+  "description": "Cloudinary webhook (notification) handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.0.0"
+  }
+}
