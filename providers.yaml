@@ -511,7 +511,7 @@ providers:
       contains its own `timestamp` and `signature` fields, but authenticate using the
       HEADERS, not the body fields. Prefer the official SDK: Node
       cloudinary.utils.verifyNotificationSignature(body, Number(timestamp), signature,
-      valid_for=7200); Python cloudinary.utils.verify_notification_signature(body,
+      7200); Python cloudinary.utils.verify_notification_signature(body,
       int(timestamp), signature, valid_for=7200). Both enforce a 7200s (2h) freshness
       window on the timestamp — keep the default in a synchronous handler. Common
       notification_type values: upload, eager, delete, rename, moderation,

@@ -45,10 +45,13 @@ cloudinary.config({
 
 // rawBody = exact request body string; headers come from the request
 const signature = req.get('x-cld-signature');
-const timestamp = Number(req.get('x-cld-timestamp'));
+const timestamp = req.get('x-cld-timestamp');
+
+// Reject missing headers with 400 first — a 401 should mean "bad signature".
+if (!signature || !timestamp) return res.status(400).send('Missing signature headers');
 
 // verifyNotificationSignature(body, timestamp, signature, valid_for = 7200) -> boolean
-const valid = cloudinary.utils.verifyNotificationSignature(rawBody, timestamp, signature);
+const valid = cloudinary.utils.verifyNotificationSignature(rawBody, Number(timestamp), signature);
 if (!valid) return res.status(401).send('Invalid signature');
 ```
 
