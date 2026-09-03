@@ -1933,8 +1933,10 @@ providers:
       `data.meta` is an empty ARRAY `[]` when empty (not an object), which breaks naive typed
       deserialisation. `data.type` is the bare activity name (`sent`) without the `activity.`
       prefix. Delivery: respond within 3 seconds or the attempt fails; exponential backoff
-      retries for ~3 days then the webhook is auto-paused; 4xx other than 429 and DNS failures
-      are never retried. No delivery-id header, no source-IP allowlist, no X-MailerSend-*
+      retries for ~3 days. SEPARATELY, a webhook whose endpoint "stays down too long" is
+      auto-paused and must be re-enabled from the dashboard — the docs never tie that threshold
+      to the retry window, so do not assert they are the same deadline. 4xx other than 429 and
+      DNS failures are never retried. No delivery-id header, no source-IP allowlist, no X-MailerSend-*
       headers — dedupe on data.id. The official Node SDK ships MailerSendUtils.verifyWebHook
       but it is NOT exported from the package entry point and calls timingSafeEqual without a
       length guard (throws RangeError); the Python SDK has no verification helper — verify
