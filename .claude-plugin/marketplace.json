@@ -651,7 +651,7 @@
     },
     {
       "name": "alchemy-webhooks",
-      "description": "Receive and verify Alchemy Notify webhooks. Use when setting up Alchemy webhook handlers, debugging X-Alchemy-Signature verification, or handling onchain events like ADDRESS_ACTIVITY, MINED_TRANSACTION, DROPPED_TRANSACTION, NFT_ACTIVITY, NFT_METADATA_UPDATE, or GRAPHQL (Custom Webhook).",
+      "description": "Receive and verify Alchemy Notify webhooks. Use when setting up Alchemy webhook handlers, debugging X-Alchemy-Signature verification, or handling onchain events like ADDRESS_ACTIVITY, NFT_ACTIVITY, or GRAPHQL (Custom Webhook).",
       "source": "./skills/alchemy-webhooks",
       "strict": false,
       "skills": [

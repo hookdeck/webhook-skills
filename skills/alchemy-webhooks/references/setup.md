@@ -11,11 +11,13 @@
 1. Go to the Alchemy Dashboard → **Notify** tab.
 2. Click **Create Webhook** and choose a type:
    - **Address Activity** (`ADDRESS_ACTIVITY`)
-   - **Mined Transaction** (`MINED_TRANSACTION`)
-   - **Dropped Transaction** (`DROPPED_TRANSACTION`)
    - **NFT Activity** (`NFT_ACTIVITY`)
-   - **NFT Metadata Updates** (`NFT_METADATA_UPDATE`)
    - **Custom Webhook** (`GRAPHQL`)
+
+   These are the three categories the current docs list, and the three values the Notify API accepts
+   for `webhook_type`. **Mined Transaction**, **Dropped Transaction**, and **NFT Metadata Updates**
+   were previously offered here but are deprecated as of 2026-08-30 — see
+   [overview.md](overview.md#deprecated-types).
 3. Select the **chain and network** — webhooks are scoped per network.
 4. Enter your **Webhook URL** (e.g. `https://your-app.com/webhooks/alchemy`).
 5. For address/NFT webhooks, add the addresses or contracts to track.

@@ -3,8 +3,8 @@
 ## What Are Alchemy Webhooks?
 
 Alchemy **Notify** webhooks push real-time onchain notifications to your endpoint whenever activity you
-care about happens on a supported chain — an address receives funds, a transaction is mined or dropped,
-an NFT is transferred, or a custom GraphQL query matches new data. Instead of polling an RPC node, you
+care about happens on a supported chain — an address receives funds, an NFT is transferred, or a custom
+GraphQL query matches new data. Instead of polling an RPC node, you
 register a webhook once and Alchemy delivers an HTTP `POST` with a JSON payload as events occur.
 
 Webhooks are **scoped per chain/network** (e.g. `ETH_MAINNET`, `MATIC_MAINNET`). Each webhook has its
@@ -17,13 +17,34 @@ The top-level `type` field identifies the webhook. These are the exact strings A
 | Type | Triggered When | Common Use Cases |
 |------|----------------|------------------|
 | `ADDRESS_ACTIVITY` | ETH, ERC-20, ERC-721 and ERC-1155 transfers involving a tracked address (up to 100k addresses per webhook) | Wallet balance updates, deposit detection, accounting |
-| `MINED_TRANSACTION` | A transaction you submitted is mined into a block | Confirm sends, update order status, unlock features |
-| `DROPPED_TRANSACTION` | A submitted transaction is dropped from the mempool | Resubmit with higher gas, alert users, roll back UI |
 | `NFT_ACTIVITY` | ERC-721 / ERC-1155 transfers for tracked NFT contracts | Marketplace feeds, ownership tracking, mint alerts |
-| `NFT_METADATA_UPDATE` | Metadata for a tracked NFT is refreshed | Refresh cached media/attributes, re-index collections |
 | `GRAPHQL` | A **Custom Webhook** GraphQL query matches new onchain data | Arbitrary contract/event monitoring, DeFi triggers |
 
 > `GRAPHQL` is the `type` value for **Custom Webhooks** (defined with a GraphQL query in the dashboard).
+
+The current docs organise webhooks into three categories that line up with these types — **Custom**,
+**Address Activity**, and **NFT Activity** — and the Notify API
+[create-webhook](https://www.alchemy.com/docs/data/webhooks/webhooks-api-endpoints/notify-api-endpoints/create-webhook)
+endpoint accepts exactly these three strings for `webhook_type`.
+
+### Deprecated types
+
+| Type | Status | Payload it used to carry |
+|------|--------|--------------------------|
+| `MINED_TRANSACTION` | Deprecated 2026-08-30 | `event.network` + `event.transaction` (single tx object) |
+| `DROPPED_TRANSACTION` | Deprecated 2026-08-30 | `event.network` + `event.transaction` (single tx object) |
+| `NFT_METADATA_UPDATE` | Deprecated 2026-08-30 | `event.network`, `event.contractAddress`, `event.tokenId`, metadata fields |
+
+These three strings were documented as Notify webhook types when this skill was written, but as of
+2026-08-30 they no longer appear on any page of Alchemy's webhook documentation — including the
+overview, webhook-types, and per-webhook reference pages, and the Notify API `create-webhook` type
+enum. Alchemy published no deprecation notice, so the basis here is **observed absence** rather than a
+vendor announcement, and **no replacement mapping is claimed** — the payload column above records what
+these events looked like historically, not a successor event to migrate to.
+
+To watch a specific transaction reach the chain today, the documented paths are a Custom Webhook
+(`GRAPHQL`) with a query matching your transaction, or the `alchemy_minedTransactions` WebSocket
+subscription — which is a subscription API, not a webhook, and so out of scope for this skill.
 
 ## Event Payload Structure
 
@@ -63,9 +84,9 @@ Alchemy's current (V2) payload shares a common envelope across every type:
 The shape of `event` varies by `type`:
 
 - **`ADDRESS_ACTIVITY` / `NFT_ACTIVITY`** — `event.network` + `event.activity[]` (array of transfers).
-- **`MINED_TRANSACTION` / `DROPPED_TRANSACTION`** — `event.network` + `event.transaction` (single tx object).
-- **`NFT_METADATA_UPDATE`** — `event.network`, `event.contractAddress`, `event.tokenId`, metadata fields.
 - **`GRAPHQL`** — `event.data` containing the result of your Custom Webhook GraphQL query.
+
+(For the shapes the deprecated types carried, see the deprecated-types table above.)
 
 ## Delivery, Retries, and Security
 

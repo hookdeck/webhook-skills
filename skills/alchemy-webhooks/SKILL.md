@@ -3,8 +3,7 @@ name: alchemy-webhooks
 description: >
   Receive and verify Alchemy Notify webhooks. Use when setting up Alchemy webhook
   handlers, debugging X-Alchemy-Signature verification, or handling onchain events
-  like ADDRESS_ACTIVITY, MINED_TRANSACTION, DROPPED_TRANSACTION, NFT_ACTIVITY,
-  NFT_METADATA_UPDATE, or GRAPHQL (Custom Webhook).
+  like ADDRESS_ACTIVITY, NFT_ACTIVITY, or GRAPHQL (Custom Webhook).
 license: MIT
 metadata:
   author: hookdeck
@@ -18,7 +17,7 @@ metadata:
 
 - How do I receive Alchemy webhooks?
 - How do I verify Alchemy webhook signatures (the `X-Alchemy-Signature` header)?
-- How do I handle ADDRESS_ACTIVITY, MINED_TRANSACTION, or NFT_ACTIVITY events?
+- How do I handle ADDRESS_ACTIVITY, NFT_ACTIVITY, or GRAPHQL events?
 - Why is my Alchemy webhook signature verification failing?
 - How do I set up Alchemy Notify webhooks for onchain activity?
 
@@ -61,11 +60,28 @@ The webhook `type` field identifies the event. Alchemy webhooks are scoped per c
 | Type | Triggered When |
 |------|----------------|
 | `ADDRESS_ACTIVITY` | ETH/ERC-20/ERC-721/ERC-1155 transfers involving tracked addresses |
-| `MINED_TRANSACTION` | A tracked transaction is mined into a block |
-| `DROPPED_TRANSACTION` | A tracked transaction is dropped from the mempool |
 | `NFT_ACTIVITY` | ERC-721/ERC-1155 transfers for tracked NFT contracts |
-| `NFT_METADATA_UPDATE` | Metadata for a tracked NFT is refreshed |
 | `GRAPHQL` | A Custom Webhook GraphQL query matches new onchain data |
+
+These three are the values the Notify API's
+[create-webhook](https://www.alchemy.com/docs/data/webhooks/webhooks-api-endpoints/notify-api-endpoints/create-webhook)
+endpoint accepts for `webhook_type`, and the current docs group webhooks into the matching three
+categories: **Custom**, **Address Activity**, and **NFT Activity**.
+
+### Deprecated types
+
+| Type | Status |
+|------|--------|
+| `MINED_TRANSACTION` | Deprecated 2026-08-30 — no longer documented |
+| `DROPPED_TRANSACTION` | Deprecated 2026-08-30 — no longer documented |
+| `NFT_METADATA_UPDATE` | Deprecated 2026-08-30 — no longer documented |
+
+As of 2026-08-30 these three strings no longer appear anywhere on Alchemy's webhook documentation —
+not on the overview or webhook-types pages, and not in the Notify API `create-webhook` type enum.
+Alchemy has published no deprecation notice or replacement mapping, so this is recorded as
+**observed absence**, not a vendor-announced removal, and no successor event is claimed. The example
+handlers still keep their branches so existing webhooks created before this date keep working; do not
+build new integrations on them.
 
 > **For full event and payload reference**, see [references/overview.md](references/overview.md) and the
 > [Alchemy Webhooks docs](https://www.alchemy.com/docs/reference/webhooks-overview).

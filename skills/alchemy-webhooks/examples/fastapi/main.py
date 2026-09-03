@@ -67,10 +67,14 @@ async def alchemy_webhook(request: Request):
             )
         # TODO: credit balances, detect deposits, update accounting, etc.
 
+    # DEPRECATED 2026-08-30: no longer documented by Alchemy and not accepted by the
+    # Notify API's create-webhook endpoint. Kept so webhooks created before that date
+    # keep working; don't wire new integrations to it.
     elif event_type == "MINED_TRANSACTION":
         print(f"Mined tx on {event.get('network')}: {event.get('transaction', {}).get('hash')}")
         # TODO: confirm sends, advance order status, unlock features, etc.
 
+    # DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     elif event_type == "DROPPED_TRANSACTION":
         print(f"Dropped tx on {event.get('network')}: {event.get('transaction', {}).get('hash')}")
         # TODO: resubmit with higher gas, alert the user, roll back UI, etc.
@@ -85,6 +89,7 @@ async def alchemy_webhook(request: Request):
             )
         # TODO: update marketplace feed, track ownership, mint alerts, etc.
 
+    # DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     elif event_type == "NFT_METADATA_UPDATE":
         print(
             f"NFT metadata update on {event.get('network')}: "

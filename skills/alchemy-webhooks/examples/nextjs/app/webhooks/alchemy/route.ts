@@ -62,11 +62,15 @@ export async function POST(request: NextRequest) {
       // TODO: credit balances, detect deposits, update accounting, etc.
       break;
 
+    // DEPRECATED 2026-08-30: no longer documented by Alchemy and not accepted by the
+    // Notify API's create-webhook endpoint. Kept so webhooks created before that date
+    // keep working; don't wire new integrations to it.
     case 'MINED_TRANSACTION':
       console.log(`Mined tx on ${event?.network}: ${event?.transaction?.hash}`);
       // TODO: confirm sends, advance order status, unlock features, etc.
       break;
 
+    // DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     case 'DROPPED_TRANSACTION':
       console.log(`Dropped tx on ${event?.network}: ${event?.transaction?.hash}`);
       // TODO: resubmit with higher gas, alert the user, roll back UI, etc.
@@ -83,6 +87,7 @@ export async function POST(request: NextRequest) {
       // TODO: update marketplace feed, track ownership, mint alerts, etc.
       break;
 
+    // DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     case 'NFT_METADATA_UPDATE':
       console.log(
         `NFT metadata update on ${event?.network}: ${event?.contractAddress} #${event?.tokenId}`

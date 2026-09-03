@@ -3834,15 +3834,21 @@ providers:
       npm package (NotifyNamespace) manages webhook CRUD but does NOT provide signature verification —
       implement HMAC manually. Webhooks are scoped per chain/network. Retries use exponential backoff up
       to ~10 min (Free/PAYG) or ~1 hr (Enterprise). Optional IP allowlist: 54.236.136.17, 34.237.24.169.
-      Webhook type enum: ADDRESS_ACTIVITY, MINED_TRANSACTION, DROPPED_TRANSACTION, NFT_ACTIVITY,
-      NFT_METADATA_UPDATE, GRAPHQL (= Custom Webhook).
+      Webhook type enum: ADDRESS_ACTIVITY, NFT_ACTIVITY, GRAPHQL (= Custom Webhook) — these are the
+      three values the Notify API create-webhook endpoint accepts for webhook_type, and the docs group
+      webhooks into the three matching categories (Custom, Address Activity, NFT Activity).
+      DEPRECATED 2026-08-30: MINED_TRANSACTION, DROPPED_TRANSACTION and NFT_METADATA_UPDATE were
+      previously documented types but no longer appear on any Alchemy webhook doc page or in the
+      create-webhook type enum. Basis is observed absence, not a vendor deprecation notice; no
+      replacement mapping is claimed. Keep handler branches for them (pre-existing webhooks) but do not
+      present them as current.
     sdks:
       npm:
         - "alchemy-sdk"
     testScenario:
       events:
         - ADDRESS_ACTIVITY
-        - MINED_TRANSACTION
+        - NFT_ACTIVITY
 
   - name: razorpay
     displayName: Razorpay
