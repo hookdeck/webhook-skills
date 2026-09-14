@@ -28,19 +28,27 @@ export async function POST(request: Request) {
   // Read the RAW body — do not JSON.parse before verifying.
   const rawBody = await request.text();
 
-  let event: SvixEvent;
   try {
     const wh = new Webhook(secret);
-    event = wh.verify(rawBody, {
+    // As of svix 2.x verify() returns undefined, so the payload is parsed below.
+    wh.verify(rawBody, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
-    }) as SvixEvent;
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : '';
     const detail = /timestamp/i.test(msg) ? 'Timestamp too old' : 'Invalid signature';
     console.error('Webhook verification failed:', err);
     return NextResponse.json({ error: detail }, { status: 400 });
+  }
+
+  // Verified — only now is it safe to parse.
+  let event: SvixEvent;
+  try {
+    event = JSON.parse(rawBody) as SvixEvent;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   // Events are defined by the upstream sender; envelope is { type, data }.

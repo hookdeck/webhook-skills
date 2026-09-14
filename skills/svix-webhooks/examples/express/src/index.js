@@ -33,11 +33,11 @@ app.post('/webhooks/svix',
       return res.status(400).json({ error: 'Missing required webhook headers' });
     }
 
-    let event;
     try {
       const wh = new Webhook(secret);
-      // Pass the RAW body (Buffer) — never re-serialized JSON.
-      event = wh.verify(req.body, {
+      // Pass the RAW body (Buffer) — never re-serialized JSON. As of svix 2.x
+      // verify() returns undefined, so the payload is parsed separately below.
+      wh.verify(req.body, {
         'svix-id': svixId,
         'svix-timestamp': svixTimestamp,
         'svix-signature': svixSignature,
@@ -49,6 +49,14 @@ app.post('/webhooks/svix',
         ? 'Timestamp too old'
         : 'Invalid signature';
       return res.status(400).json({ error: detail });
+    }
+
+    // Verified — only now is it safe to parse.
+    let event;
+    try {
+      event = JSON.parse(req.body.toString('utf8'));
+    } catch {
+      return res.status(400).json({ error: 'Invalid JSON' });
     }
 
     // Events are defined by the upstream sender; envelope is { type, data }.

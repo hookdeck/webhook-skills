@@ -5,12 +5,12 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest --testTimeout=10000 --forceExit"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testTimeout=10000 --forceExit"
   },
   "dependencies": {
     "express": "^5.2.1",
     "dotenv": "^16.0.3",
-    "svix": "^1.98.0"
+    "svix": "^2.0.0"
   },
   "devDependencies": {
     "jest": "^30.4.2",

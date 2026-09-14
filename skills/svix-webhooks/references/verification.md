@@ -40,34 +40,44 @@ The official `svix` SDK exists for both Node and Python, so prefer it in all
 frameworks. It decodes the secret, enforces the timestamp window, checks every
 signature in constant time, and accepts both header name sets.
 
+> **svix 2.x**: `verify()` validates only — it no longer returns the parsed
+> payload (it returned it in 1.x). Parse the raw body yourself after it passes,
+> which is the order you want anyway: verify first, parse second. The 2.x Node
+> package is also ESM-only and requires Node >= 22; under Jest, run it with
+> `node --experimental-vm-modules node_modules/jest/bin/jest.js`.
+
 Node:
 
 ```javascript
 const { Webhook } = require('svix');
 
 const wh = new Webhook(process.env.SVIX_WEBHOOK_SECRET); // "whsec_..."
-const event = wh.verify(rawBody, {                       // rawBody: raw Buffer/string
+wh.verify(rawBody, {                                     // rawBody: raw Buffer/string
   'svix-id': req.headers['svix-id'],
   'svix-timestamp': req.headers['svix-timestamp'],
   'svix-signature': req.headers['svix-signature'],
 });
-// Throws WebhookVerificationError on failure; returns the parsed { type, data } object.
+// Throws WebhookVerificationError on failure; returns undefined as of svix 2.x.
+const event = JSON.parse(rawBody.toString('utf8'));
 ```
 
 Python:
 
 ```python
+import json
 from svix.webhooks import Webhook, WebhookVerificationError
 
 wh = Webhook(os.environ["SVIX_WEBHOOK_SECRET"])
 try:
-    event = wh.verify(body, {          # body: bytes of the raw request body
+    wh.verify(body, {                  # body: bytes of the raw request body
         "svix-id": headers["svix-id"],
         "svix-timestamp": headers["svix-timestamp"],
         "svix-signature": headers["svix-signature"],
     })
 except WebhookVerificationError:
     ...  # reject with 400
+
+event = json.loads(body)               # verify() returns None as of svix 2.x
 ```
 
 ### Manual Verification (fallback / no dependency)

@@ -51,27 +51,32 @@ Node:
 const { Webhook } = require('svix');
 
 const wh = new Webhook(process.env.SVIX_WEBHOOK_SECRET); // "whsec_..." — SDK decodes it
-const event = wh.verify(rawBody, {                       // rawBody: raw Buffer/string
+wh.verify(rawBody, {                                     // rawBody: raw Buffer/string
   'svix-id': req.headers['svix-id'],
   'svix-timestamp': req.headers['svix-timestamp'],
   'svix-signature': req.headers['svix-signature'],
 });
 // Throws WebhookVerificationError on a bad signature or a timestamp >5 min off.
 // The SDK also accepts webhook-id / webhook-timestamp / webhook-signature.
-// event => { type: 'invoice.paid', data: { ... } }
+// As of svix 2.x verify() returns undefined — parse the raw body once it passes.
+const event = JSON.parse(rawBody.toString('utf8')); // { type: 'invoice.paid', data: {...} }
 ```
 
 Python:
 
 ```python
+import json
 from svix.webhooks import Webhook, WebhookVerificationError
 
 wh = Webhook(os.environ["SVIX_WEBHOOK_SECRET"])
-event = wh.verify(raw_body, {                    # raw_body: bytes of the raw request body
+wh.verify(raw_body, {                            # raw_body: bytes of the raw request body
     "svix-id": headers["svix-id"],
     "svix-timestamp": headers["svix-timestamp"],
     "svix-signature": headers["svix-signature"],
-})  # raises WebhookVerificationError on failure; returns the parsed {type, data} dict
+})  # raises WebhookVerificationError on failure
+
+# As of svix 2.x verify() returns None — parse the raw body once it passes.
+event = json.loads(raw_body)                     # {"type": ..., "data": {...}}
 ```
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:

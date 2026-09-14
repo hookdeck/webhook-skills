@@ -1,6 +1,7 @@
 # Generated with: svix-webhooks skill
 # https://github.com/hookdeck/webhook-skills
 
+import json
 import os
 
 from fastapi import FastAPI, Request, HTTPException, Header
@@ -46,9 +47,10 @@ async def svix_webhook(
     body = await request.body()
     wh = Webhook(secret)
     try:
-        # The SDK enforces the 5-minute tolerance, checks every signature in
-        # constant time, and returns the parsed { type, data } payload.
-        event = wh.verify(
+        # The SDK enforces the 5-minute tolerance and checks every signature in
+        # constant time. As of svix 2.x it verifies only and returns None, so the
+        # payload is parsed separately below.
+        wh.verify(
             body,
             {
                 "svix-id": msg_id,
@@ -60,6 +62,14 @@ async def svix_webhook(
         detail = "Timestamp too old" if "timestamp" in str(err).lower() else "Invalid signature"
         print(f"Webhook verification failed: {err}")
         raise HTTPException(status_code=400, detail=detail)
+
+    # Verified — only now is it safe to parse.
+    try:
+        event = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # Events are defined by the upstream sender; envelope is { type, data }.
     event_type = event.get("type", "unknown")
