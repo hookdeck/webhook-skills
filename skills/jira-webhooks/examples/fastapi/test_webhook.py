@@ -54,6 +54,15 @@ class TestVerifyJiraWebhook:
 
         assert verify_jira_webhook(payload, bare_hex, self.secret) is False
 
+    def test_official_atlassian_test_vector(self):
+        # Official test vector from Atlassian's "Secure admin webhooks" docs:
+        # https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks
+        payload = "Hello World!".encode("utf-8")
+        signature = "sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"
+
+        assert verify_jira_webhook(payload, signature, "It's a Secret to Everybody") is True
+        assert verify_jira_webhook(payload, signature, "wrong secret") is False
+
     def test_tampered_payload_returns_false(self):
         original = b'{"webhookEvent":"jira:issue_created","key":"PROJ-1"}'
         signature = generate_jira_signature(original.decode(), self.secret)

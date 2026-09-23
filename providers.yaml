@@ -4159,12 +4159,23 @@ providers:
       webhooks: https://developer.atlassian.com/cloud/jira/platform/webhooks/
       events: https://developer.atlassian.com/cloud/jira/platform/webhooks/#events
     notes: >
-      Atlassian issue tracking and project management (Jira Cloud). Webhooks registered via the
-      REST API or Connect apps. Dynamic/OAuth2 webhooks registered with a secret are signed with an
-      X-Hub-Signature header: HMAC-SHA256 (hex, `sha256=` prefix) over the raw request body using
-      that secret. Webhooks created in the UI are not signed by default — those rely on HTTPS plus a
-      hard-to-guess URL, and can be filtered with a secret query parameter. Common events:
-      jira:issue_created, jira:issue_updated, jira:issue_deleted, comment_created, comment_updated.
+      Atlassian issue tracking and project management (Jira Cloud). Two security models, per the
+      "Secure admin webhooks" section of the webhooks doc. (1) ADMIN webhooks — created on the Jira
+      admin WebHooks page OR via POST /rest/webhooks/1.0/webhook — accept an optional `secret`; when
+      set, every delivery carries X-Hub-Signature (NOT X-Hub-Signature-256) in WebSub
+      `method=signature` form: `sha256=<hex>`, HMAC-SHA256 over the raw request body keyed with the
+      secret. No secret = unsigned. Official test vector (shared with Bitbucket): secret
+      "It's a Secret to Everybody", payload "Hello World!" ->
+      sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9. Jira says it "might
+      start using another method for the HMAC in the future", so parse the method rather than
+      assuming it. Imported admin webhooks with a secret may not deliver until the secret is rotated.
+      (2) APP webhooks do NOT use X-Hub-Signature: Connect apps (descriptor webhooks) are signed with
+      the app's sharedSecret as an Atlassian Connect JWT (HS256, qsh claim) in the Authorization
+      header; OAuth 2.0 (3LO) dynamic webhooks (POST /rest/api/3/webhook — no `secret` field) carry a
+      bearer JWT in the Authorization header signed with the app's client secret. The event type is
+      the body field `webhookEvent` (no event header). No handshake. Retries on 408/409/425/429/5xx
+      and timeouts. Common events: jira:issue_created, jira:issue_updated, jira:issue_deleted,
+      comment_created, comment_updated.
     testScenario:
       events:
         - jira:issue_created

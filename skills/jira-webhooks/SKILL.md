@@ -24,15 +24,17 @@ metadata:
 
 ## Verification (core)
 
-Jira Cloud signs the **raw** request body with HMAC-SHA256 keyed on the secret
-you set when registering a dynamic/OAuth 2.0 webhook, and sends the digest in the
-`X-Hub-Signature` header using the WebSub `method=signature` format — i.e.
-`sha256=<hex>`. Verify the raw body **before** parsing JSON and compare
-timing-safe.
+For **admin webhooks** (created on the Jira admin **WebHooks** page or via
+`POST /rest/webhooks/1.0/webhook`) saved with a `secret`, Jira Cloud signs the
+**raw** request body with HMAC-SHA256 keyed on that secret. It sends the digest in
+the `X-Hub-Signature` header (not `X-Hub-Signature-256`) using the WebSub
+`method=signature` format, i.e. `sha256=<hex>`. Verify the raw body **before**
+parsing JSON and compare timing-safe.
 
-> Only dynamic webhooks (registered via the REST API with a `secret`) are signed.
-> Webhooks created in the Jira UI are **not** signed — they rely on HTTPS plus a
-> hard-to-guess URL and an optional `?secret=` query parameter. See
+> Admin webhooks without a `secret` are unsigned. App webhooks use a different
+> scheme: Connect apps get a JWT signed with the app's `sharedSecret`, and
+> OAuth 2.0 dynamic webhooks (`POST /rest/api/3/webhook`) get a bearer JWT signed
+> with the app's client secret, both in the `Authorization` header. See
 > [references/verification.md](references/verification.md).
 
 Node:
@@ -91,13 +93,14 @@ under the `webhookEvent` field.
 
 | Header | Description |
 |--------|-------------|
-| `X-Hub-Signature` | HMAC SHA-256 signature, formatted `sha256=<hex>` (only on signed dynamic webhooks) |
+| `X-Hub-Signature` | HMAC SHA-256 signature, formatted `sha256=<hex>` (admin webhooks with a `secret`) |
+| `Authorization` | JWT on Connect and OAuth 2.0 app webhooks (not used by admin webhooks) |
 | `X-Atlassian-Webhook-Identifier` | Unique delivery identifier |
 
 ## Environment Variables
 
 ```bash
-JIRA_WEBHOOK_SECRET=your_webhook_secret   # The `secret` set when registering the dynamic webhook
+JIRA_WEBHOOK_SECRET=your_webhook_secret   # The `secret` set on the admin webhook
 ```
 
 ## Local Development
@@ -110,7 +113,7 @@ npx hookdeck-cli listen 3000 jira --path /webhooks/jira
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Jira webhook concepts and common events
-- [references/setup.md](references/setup.md) - Registering webhooks via REST API and UI
+- [references/setup.md](references/setup.md) - Registering admin webhooks (UI or REST) and app webhooks
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 
 ## Attribution

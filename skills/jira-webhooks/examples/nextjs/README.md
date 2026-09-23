@@ -19,7 +19,7 @@ Minimal example of receiving Jira Cloud webhooks with signature verification usi
    cp .env.example .env.local
    ```
 
-3. Add your Jira webhook secret to `.env.local` (the `secret` you set when registering the dynamic webhook)
+3. Add your Jira webhook secret to `.env.local` (the `secret` you set on the Jira admin webhook)
 
 ## Run
 
@@ -48,5 +48,8 @@ npx hookdeck-cli listen 3000 jira --path /webhooks/jira
 
 - `POST /webhooks/jira` - Receives and verifies Jira webhook events
 
-> **Note:** Only dynamic webhooks registered via the REST API with a `secret` are
-> signed with `X-Hub-Signature`. Webhooks created in the Jira UI are unsigned.
+> **Note:** Jira signs **admin webhooks** (created on the Jira admin WebHooks page
+> or via `POST /rest/webhooks/1.0/webhook`) with `X-Hub-Signature` when they have a
+> `secret`. Admin webhooks without a secret are unsigned. Connect and OAuth 2.0
+> app webhooks use an `Authorization` JWT instead, which this example does not
+> verify.

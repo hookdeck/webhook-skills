@@ -2,70 +2,90 @@
 
 ## Prerequisites
 
-- A Jira Cloud site, and either:
-  - **Jira admin access** (to create a webhook in the UI), or
-  - A **Connect or OAuth 2.0 (3LO) app** with the `manage:jira-webhook` scope (to register dynamic webhooks via the REST API)
-- Your application's publicly reachable HTTPS webhook endpoint URL
+- A Jira Cloud site with **Jira admin** access (admin webhooks are created in
+  Jira administration or with the admin webhooks REST API)
+- Your application's publicly reachable HTTPS webhook endpoint URL (port 80 is
+  not allowed)
 
-There are two ways to register a Jira webhook. Only the REST API method
-(**dynamic webhooks**) produces **signed** requests.
+The examples in this skill verify **admin webhooks** that have a `secret`. Those
+are the webhooks Jira signs with `X-Hub-Signature`. Webhooks owned by a Connect
+or OAuth 2.0 app use an `Authorization` JWT instead. See
+[App webhooks](#app-webhooks-connect--oauth-20) below and
+[verification.md](verification.md).
 
-## Option A — Dynamic webhook via REST API (signed, recommended)
+Generate a strong random secret first and store it in your app's environment as
+`JIRA_WEBHOOK_SECRET`. **You can't view or retrieve the secret after the webhook
+is saved. If you lose it, set a new one.**
 
-Dynamic webhooks are registered by Connect / OAuth 2.0 apps and are signed with
-HMAC-SHA256 when you provide a `secret`.
-
-1. Generate a strong random secret and store it in your app's environment as
-   `JIRA_WEBHOOK_SECRET`. **You cannot retrieve the secret after registration —
-   if you lose it, you must register a new webhook.**
-
-2. Register the webhook (OAuth 2.0 apps use a bearer token in the
-   `Authorization` header):
-
-   ```bash
-   curl -X POST \
-     'https://api.atlassian.com/ex/jira/{cloudid}/rest/api/3/webhook' \
-     -H 'Authorization: Bearer <access_token>' \
-     -H 'Content-Type: application/json' \
-     -d '{
-       "url": "https://your-app.example.com/webhooks/jira",
-       "webhooks": [
-         {
-           "jqlFilter": "project = PROJ",
-           "events": [
-             "jira:issue_created",
-             "jira:issue_updated",
-             "jira:issue_deleted",
-             "comment_created",
-             "comment_updated"
-           ]
-         }
-       ]
-     }'
-   ```
-
-   Provide the secret in the registration request so Jira signs deliveries.
-   Dynamic webhooks expire after 30 days unless refreshed with the
-   `PUT .../webhook/refresh` endpoint.
-
-3. Jira will now send `POST` requests to your URL with an
-   `X-Hub-Signature: sha256=<hex>` header. Verify it against your secret — see
-   [verification.md](verification.md).
-
-## Option B — Webhook via the Jira UI (unsigned)
+## Option A — Admin webhook in Jira administration (signed with a secret)
 
 1. Go to **Jira Settings → System → WebHooks** (`/plugins/servlet/webhooks`).
 2. Click **Create a WebHook**.
 3. Set the **Name** and **URL** (your HTTPS endpoint).
-4. Optionally add a **JQL** filter to scope which issues fire the webhook.
-5. Select the **events** to receive (Issue: created / updated / deleted,
+4. Enter your **secret**, or use **Generate secret** and copy the value into
+   `JIRA_WEBHOOK_SECRET`.
+5. Optionally add a **JQL** filter to scope which issues fire the webhook.
+6. Select the **events** to receive (Issue: created / updated / deleted,
    Comment: created / updated / deleted, etc.).
-6. Save.
+7. Save.
 
-> UI webhooks are **not signed**. To get a shared secret you can check, append a
-> hard-to-guess query parameter to the URL, e.g.
-> `https://your-app.example.com/webhooks/jira?secret=<random>`, and compare it in
-> your handler. Always use HTTPS.
+To add a secret to an existing webhook, or rotate it, edit the webhook. Any
+integration using the old secret must be updated.
+
+## Option B — Admin webhook via REST (`/rest/webhooks/1.0/webhook`)
+
+This registers the same kind of admin webhook, so it is signed the same way when
+you pass `secret`. Authenticate as a Jira admin (for example with your Atlassian
+account email and an API token):
+
+```bash
+curl -X POST \
+  'https://your-domain.atlassian.net/rest/webhooks/1.0/webhook' \
+  --user 'you@example.com:<api_token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "my app webhook",
+    "url": "https://your-app.example.com/webhooks/jira",
+    "events": [
+      "jira:issue_created",
+      "jira:issue_updated",
+      "jira:issue_deleted",
+      "comment_created",
+      "comment_updated"
+    ],
+    "filters": {
+      "issue-related-events-section": "project = PROJ"
+    },
+    "excludeBody": false,
+    "secret": "<your JIRA_WEBHOOK_SECRET>"
+  }'
+```
+
+The response includes `"isSigned": true` when a secret is set. To change the
+secret later, `PUT .../rest/webhooks/1.0/webhook/{webhookId}` with a new
+`secret`. Passing `null` or `""` removes it, and omitting the field leaves it
+unchanged.
+
+Jira will now send `POST` requests to your URL with an
+`X-Hub-Signature: sha256=<hex>` header. Verify it against your secret. See
+[verification.md](verification.md).
+
+> **Imported webhooks:** admin webhooks with a secret that were imported from
+> another site or instance may not be delivered until you rotate the secret.
+
+## App webhooks (Connect / OAuth 2.0)
+
+Apps can also receive webhooks, but these are **not** signed with
+`X-Hub-Signature` and this skill's examples don't verify them:
+
+- **Connect apps** declare webhooks in the app descriptor. Jira signs deliveries
+  with the app's `sharedSecret` as a Connect JWT in the `Authorization` header.
+- **OAuth 2.0 (3LO) apps** register dynamic webhooks with
+  `POST /rest/api/3/webhook` (scope `manage:jira-webhook`). That request has no
+  `secret` field. Deliveries carry a bearer JWT in the `Authorization` header,
+  signed with the app's client secret. Dynamic webhooks expire after 30 days
+  unless refreshed with the Extend webhook life API
+  (`PUT /rest/api/3/webhook/refresh`).
 
 ## Selecting Events
 

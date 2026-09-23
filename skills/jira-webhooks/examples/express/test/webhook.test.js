@@ -22,6 +22,16 @@ describe('Jira Webhook Endpoint', () => {
   const webhookSecret = process.env.JIRA_WEBHOOK_SECRET;
 
   describe('verifyJiraWebhook', () => {
+    // Official test vector from Atlassian's "Secure admin webhooks" docs:
+    // https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks
+    it('should pass the official Atlassian test vector', () => {
+      const payload = Buffer.from('Hello World!', 'utf8');
+      const signature = 'sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9';
+
+      expect(verifyJiraWebhook(payload, signature, "It's a Secret to Everybody")).toBe(true);
+      expect(verifyJiraWebhook(payload, signature, 'wrong secret')).toBe(false);
+    });
+
     it('should return true for valid signature', () => {
       const payload = Buffer.from('{"webhookEvent":"jira:issue_created"}');
       const signature = generateJiraSignature(payload, webhookSecret);

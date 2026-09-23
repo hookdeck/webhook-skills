@@ -2,27 +2,71 @@
 
 ## How It Works
 
-When you register a **dynamic webhook** (via `POST /rest/api/3/webhook`) with a
-`secret`, Jira Cloud uses that secret to compute an HMAC-SHA256 signature over the
-**raw request body** and sends it in the `X-Hub-Signature` header, formatted per
-the [WebSub](https://www.w3.org/TR/websub/#signing-content) standard as
-`method=signature`:
+Jira Cloud has two families of webhooks, and they are secured differently. Pick
+the verification path that matches how the webhook was registered.
+
+| How the webhook was registered | Security | Header |
+|---|---|---|
+| **Admin webhook** — Jira admin **WebHooks** page, or `POST /rest/webhooks/1.0/webhook` — with a `secret` | HMAC-SHA256 over the raw body | `X-Hub-Signature: sha256=<hex>` |
+| Admin webhook **without** a `secret` | Unsigned | — |
+| **Connect app** — webhook module in the app descriptor | Atlassian Connect JWT signed with the app's `sharedSecret` | `Authorization` |
+| **OAuth 2.0 (3LO) app** — dynamic webhook via `POST /rest/api/3/webhook` | Bearer JWT signed with the app's client secret | `Authorization` |
+
+This skill's examples implement the **admin-webhook** path.
+
+### Admin webhooks (`X-Hub-Signature`)
+
+Admin webhooks accept an optional `secret` — set it when creating or editing the
+webhook on the WebHooks page (the **Generate secret** button makes one for you),
+or pass `"secret"` in the `/rest/webhooks/1.0/webhook` request body. When a secret is set, Jira computes an
+HMAC over the **raw request body** keyed with that secret and sends it in the
+`X-Hub-Signature` header, formatted per
+[WebSub](https://www.w3.org/TR/websub/#signing-content) as `method=signature`:
 
 ```
 X-Hub-Signature: sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9
 ```
 
-- **Algorithm:** HMAC-SHA256
+- **Algorithm:** HMAC-SHA256 (the `method` part of the header)
 - **Encoding:** lowercase hex, prefixed with `sha256=`
-- **Signed content:** the exact raw bytes of the request body
+- **Signed content:** the exact raw bytes of the request body (UTF-8)
+- **Key:** the webhook's `secret`. It can't be viewed again after saving.
 
 To verify, recompute the HMAC over the raw body with your secret and compare it
 (timing-safe) against the hex portion of the header.
 
-> **Not all Jira webhooks are signed.** Webhooks created through the Jira UI are
-> **not** signed — they rely on HTTPS plus a hard-to-guess URL, optionally with a
-> `?secret=<random>` query parameter you compare yourself. The `X-Hub-Signature`
-> header is only present on dynamic webhooks registered with a `secret`.
+Admin webhooks registered **without** a secret are not signed. The REST
+response for such a webhook has `"isSigned": false`.
+
+**Official test vector** (from Atlassian's
+[Secure admin webhooks](https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks)
+docs; Bitbucket uses the same one):
+
+| Input | Value |
+|---|---|
+| secret | `It's a Secret to Everybody` |
+| payload | `Hello World!` |
+| method | `sha256` |
+| `X-Hub-Signature` | `sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9` |
+
+The example test suites assert this vector.
+
+### App webhooks (`Authorization` JWT)
+
+Webhooks that belong to an app are **not** signed with `X-Hub-Signature`:
+
+- **Connect apps** (webhooks declared in the app descriptor): Jira signs
+  deliveries with the app's `sharedSecret`, as an Atlassian Connect JWT in the
+  `Authorization` header (HS256, with a `qsh` query-string-hash claim). See
+  [Understanding JWT for Connect apps](https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/).
+  Atlassian is ending Connect support in favour of Forge.
+- **OAuth 2.0 (3LO) apps** (dynamic webhooks registered with
+  `POST /rest/api/3/webhook`, which has no `secret` field): deliveries carry a
+  bearer JWT in the `Authorization` header, signed with the app's **client
+  secret**. Verify it with a standard JWT library.
+
+Forge apps react to Jira events through product triggers, not HTTP webhooks
+delivered to an arbitrary URL.
 
 ## Implementation
 
@@ -73,9 +117,16 @@ def verify_jira_webhook(raw_body: bytes, signature_header: str, secret: str) -> 
   `sha256=<hex>`, not a bare hex string.
 - **There is no event-type header.** Dispatch on the `webhookEvent` field in the
   JSON body, not a header.
-- **UI webhooks are unsigned.** If `X-Hub-Signature` is absent, the webhook was
-  likely created in the UI — fall back to a `?secret=` query parameter check or a
-  network allowlist.
+- **No secret, no signature.** If `X-Hub-Signature` is absent, the admin webhook
+  was saved without a `secret` (or it is an app webhook, which uses an
+  `Authorization` JWT instead). Add a secret to the webhook rather than
+  accepting unsigned deliveries.
+- **Imported webhooks may stop delivering.** Admin webhooks with a secret that
+  were imported from another site or instance may not be delivered until you
+  rotate the secret.
+- **The method may change.** Jira notes it "might start using another method for
+  the HMAC in the future". The examples reject any method other than `sha256`,
+  so they fail closed rather than silently accepting an unverified delivery.
 - **Compare timing-safe.** Use `crypto.timingSafeEqual` / `hmac.compare_digest`
   and guard against buffer length mismatches.
 
@@ -84,6 +135,7 @@ def verify_jira_webhook(raw_body: bytes, signature_header: str, secret: str) -> 
 | Symptom | Likely Cause |
 |---------|--------------|
 | Always fails | Verifying re-serialized JSON instead of the raw body |
-| Header is `undefined`/`None` | Webhook created in UI (unsigned), or reading `x-hub-signature-256` instead of `x-hub-signature` |
+| Header is `undefined`/`None` | Admin webhook has no `secret` set, it's an app (Connect/OAuth) webhook that uses an `Authorization` JWT, or you're reading `x-hub-signature-256` instead of `x-hub-signature` |
+| Suddenly fails after a site import | Imported admin webhook with a secret — rotate the secret |
 | `timingSafeEqual` throws | Malformed hex in the header — catch and return `false` |
 | Works locally, fails in prod | A proxy/body parser mutated the body before your handler read it |

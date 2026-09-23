@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
+import { NextRequest } from 'next/server';
+import { POST } from '../app/webhooks/jira/route';
 
 // Set test environment variables
 beforeAll(() => {
@@ -42,8 +44,19 @@ function verifyJiraWebhook(body: string, signatureHeader: string | null, secret:
   }
 }
 
+// Official test vector from Atlassian's "Secure admin webhooks" docs:
+// https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks
+const VECTOR_SECRET = "It's a Secret to Everybody";
+const VECTOR_PAYLOAD = 'Hello World!';
+const VECTOR_SIGNATURE = 'sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9';
+
 describe('Jira Signature Verification', () => {
   const webhookSecret = 'test_jira_secret';
+
+  it('should pass the official Atlassian test vector', () => {
+    expect(verifyJiraWebhook(VECTOR_PAYLOAD, VECTOR_SIGNATURE, VECTOR_SECRET)).toBe(true);
+    expect(verifyJiraWebhook(VECTOR_PAYLOAD, VECTOR_SIGNATURE, 'wrong secret')).toBe(false);
+  });
 
   it('should validate correct signature', () => {
     const payload = JSON.stringify({
@@ -115,5 +128,36 @@ describe('Jira Signature Generation', () => {
     const sig2 = generateJiraSignature('{"key":"PROJ-2"}', secret);
 
     expect(sig1).not.toBe(sig2);
+  });
+});
+
+describe('POST /webhooks/jira route', () => {
+  function makeRequest(body: string, signature?: string): NextRequest {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (signature) headers['x-hub-signature'] = signature;
+    return new NextRequest('http://localhost/webhooks/jira', { method: 'POST', body, headers });
+  }
+
+  it('should verify the official Atlassian test vector in the route handler', async () => {
+    // The vector payload isn't JSON, so a verified request fails at JSON.parse.
+    // A 401 here would mean verification rejected it.
+    process.env.JIRA_WEBHOOK_SECRET = VECTOR_SECRET;
+    await expect(POST(makeRequest(VECTOR_PAYLOAD, VECTOR_SIGNATURE))).rejects.toThrow(SyntaxError);
+  });
+
+  it('should return 401 when X-Hub-Signature is missing', async () => {
+    process.env.JIRA_WEBHOOK_SECRET = 'test_jira_secret';
+    const res = await POST(makeRequest('{"webhookEvent":"jira:issue_created"}'));
+    expect(res.status).toBe(401);
+  });
+
+  it('should return 200 for a valid signed event', async () => {
+    process.env.JIRA_WEBHOOK_SECRET = 'test_jira_secret';
+    const body = JSON.stringify({
+      webhookEvent: 'jira:issue_created',
+      issue: { key: 'PROJ-1', fields: { summary: 'Test' } }
+    });
+    const res = await POST(makeRequest(body, generateJiraSignature(body, 'test_jira_secret')));
+    expect(res.status).toBe(200);
   });
 });

@@ -7,10 +7,13 @@ events happen in a Jira site — an issue is created, a comment is added, a work
 is logged, and so on. Instead of polling the Jira REST API, you register a
 webhook URL and Jira delivers a JSON payload to it as events occur.
 
-Webhooks are registered either through the Jira administration UI or, for Connect
-and OAuth 2.0 (3LO) apps, through the REST API (`POST /rest/api/3/webhook`), where
-they are called **dynamic webhooks**. Only dynamic webhooks registered with a
-`secret` are signed (see [verification.md](verification.md)).
+Jira's docs call webhooks created on the Jira administration **WebHooks** page or
+with `POST /rest/webhooks/1.0/webhook` **admin webhooks**. Admin webhooks saved
+with a `secret` are signed with an `X-Hub-Signature` HMAC. Webhooks that belong
+to an app are secured differently. Connect apps declare webhooks in their
+descriptor, and OAuth 2.0 (3LO) apps register **dynamic webhooks** with
+`POST /rest/api/3/webhook`. Both are authenticated with a JWT in the
+`Authorization` header. See [verification.md](verification.md).
 
 ## Common Event Types
 
