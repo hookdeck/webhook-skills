@@ -63,6 +63,12 @@ class TestVerifyJiraWebhook:
         assert verify_jira_webhook(payload, signature, "It's a Secret to Everybody") is True
         assert verify_jira_webhook(payload, signature, "wrong secret") is False
 
+    def test_method_other_than_sha256_returns_false(self):
+        payload = "Hello World!".encode("utf-8")
+        hex_digest = "a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9"
+
+        assert verify_jira_webhook(payload, f"sha512={hex_digest}", "It's a Secret to Everybody") is False
+
     def test_tampered_payload_returns_false(self):
         original = b'{"webhookEvent":"jira:issue_created","key":"PROJ-1"}'
         signature = generate_jira_signature(original.decode(), self.secret)

@@ -32,6 +32,13 @@ describe('Jira Webhook Endpoint', () => {
       expect(verifyJiraWebhook(payload, signature, 'wrong secret')).toBe(false);
     });
 
+    it('should return false for a method other than sha256', () => {
+      const payload = Buffer.from('Hello World!', 'utf8');
+      const hex = 'a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9';
+
+      expect(verifyJiraWebhook(payload, `sha512=${hex}`, "It's a Secret to Everybody")).toBe(false);
+    });
+
     it('should return true for valid signature', () => {
       const payload = Buffer.from('{"webhookEvent":"jira:issue_created"}');
       const signature = generateJiraSignature(payload, webhookSecret);

@@ -4159,23 +4159,27 @@ providers:
       webhooks: https://developer.atlassian.com/cloud/jira/platform/webhooks/
       events: https://developer.atlassian.com/cloud/jira/platform/webhooks/#events
     notes: >
-      Atlassian issue tracking and project management (Jira Cloud). Two security models, per the
-      "Secure admin webhooks" section of the webhooks doc. (1) ADMIN webhooks — created on the Jira
-      admin WebHooks page OR via POST /rest/webhooks/1.0/webhook — accept an optional `secret`; when
-      set, every delivery carries X-Hub-Signature (NOT X-Hub-Signature-256) in WebSub
-      `method=signature` form: `sha256=<hex>`, HMAC-SHA256 over the raw request body keyed with the
-      secret. No secret = unsigned. Official test vector (shared with Bitbucket): secret
-      "It's a Secret to Everybody", payload "Hello World!" ->
-      sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9. Jira says it "might
-      start using another method for the HMAC in the future", so parse the method rather than
-      assuming it. Imported admin webhooks with a secret may not deliver until the secret is rotated.
-      (2) APP webhooks do NOT use X-Hub-Signature: Connect apps (descriptor webhooks) are signed with
-      the app's sharedSecret as an Atlassian Connect JWT (HS256, qsh claim) in the Authorization
-      header; OAuth 2.0 (3LO) dynamic webhooks (POST /rest/api/3/webhook — no `secret` field) carry a
-      bearer JWT in the Authorization header signed with the app's client secret. The event type is
-      the body field `webhookEvent` (no event header). No handshake. Retries on 408/409/425/429/5xx
-      and timeouts. Common events: jira:issue_created, jira:issue_updated, jira:issue_deleted,
-      comment_created, comment_updated.
+      Atlassian issue tracking and project management (Jira Cloud). (1) ADMIN webhooks, which the
+      docs define as those "created in Jira Administration or registered by /rest/webhooks/1.0/webhook",
+      accept an optional `secret`. Per the "Secure admin webhooks" section, when it is set every
+      delivery carries X-Hub-Signature (NOT X-Hub-Signature-256) in WebSub `method=signature` form:
+      `sha256=<hex>`, an HMAC-SHA256 of the request body keyed with the secret. Verify it over the raw
+      bytes. No secret means unsigned (`isSigned` is true only when a secret is defined). Official
+      test vector (shared with Bitbucket): secret "It's a Secret to Everybody", payload "Hello World!"
+      gives sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e133263c9. Jira says it
+      "might start using another method for the HMAC in the future", so parse the method and fail
+      closed on an unknown one. Imported admin webhooks with a secret may not deliver until the secret
+      is rotated. (2) APP webhooks: the docs describe a JWT in the Authorization header, not
+      X-Hub-Signature. Connect descriptor webhooks are "signed with your app's sharedSecret" (verify
+      per the Connect JWT guide: HS256, plus a qsh check for server-to-server JWTs). OAuth 2.0 (3LO)
+      dynamic webhooks (POST /rest/api/3/webhook, whose body has no `secret` field) are "secured by
+      bearer authentication", with a JWT signed with the app's client secret. Connect apps can also
+      register dynamic webhooks, and the docs don't say how those are authenticated. Forge delivers
+      events to Forge functions or, via Forge Remote, to a manifest-declared remote with a Forge
+      Invocation Token, not X-Hub-Signature. The event type is the body field `webhookEvent` (there
+      is no event header). There is no handshake. Jira retries on 408/409/425/429/5xx and on timeouts.
+      Common events: jira:issue_created, jira:issue_updated, jira:issue_deleted, comment_created,
+      comment_updated.
     testScenario:
       events:
         - jira:issue_created

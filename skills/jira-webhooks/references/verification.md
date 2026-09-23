@@ -11,6 +11,13 @@ the verification path that matches how the webhook was registered.
 | Admin webhook **without** a `secret` | Unsigned | — |
 | **Connect app** — webhook module in the app descriptor | Atlassian Connect JWT signed with the app's `sharedSecret` | `Authorization` |
 | **OAuth 2.0 (3LO) app** — dynamic webhook via `POST /rest/api/3/webhook` | Bearer JWT signed with the app's client secret | `Authorization` |
+| **Connect app** — dynamic webhook via `POST /rest/api/3/webhook` | Not stated in the webhooks docs | — |
+
+The docs describe `X-Hub-Signature` only under **Secure admin webhooks**. The
+"REST API" that section refers to links to the admin endpoint
+(`/rest/webhooks/1.0/webhook`), not to `/rest/api/3/webhook`. That endpoint's
+request body has no `secret` field at all (see the
+[webhooks REST reference](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-webhooks/)).
 
 This skill's examples implement the **admin-webhook** path.
 
@@ -35,8 +42,8 @@ X-Hub-Signature: sha256=a4771c39fbe90f317c7824e83ddef3caae9cb3d976c214ace1f2937e
 To verify, recompute the HMAC over the raw body with your secret and compare it
 (timing-safe) against the hex portion of the header.
 
-Admin webhooks registered **without** a secret are not signed. The REST
-response for such a webhook has `"isSigned": false`.
+Admin webhooks registered **without** a secret are not signed. In the REST
+response, `isSigned` is `true` only when a secret is defined.
 
 **Official test vector** (from Atlassian's
 [Secure admin webhooks](https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks)
@@ -53,20 +60,28 @@ The example test suites assert this vector.
 
 ### App webhooks (`Authorization` JWT)
 
-Webhooks that belong to an app are **not** signed with `X-Hub-Signature`:
+For webhooks that belong to an app, the docs describe a JWT rather than
+`X-Hub-Signature`:
 
-- **Connect apps** (webhooks declared in the app descriptor): Jira signs
-  deliveries with the app's `sharedSecret`, as an Atlassian Connect JWT in the
-  `Authorization` header (HS256, with a `qsh` query-string-hash claim). See
-  [Understanding JWT for Connect apps](https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/).
-  Atlassian is ending Connect support in favour of Forge.
+- **Connect apps** (webhooks declared in the app descriptor): the webhooks page
+  says these are "signed with your app's sharedSecret". Connect apps receive
+  that JWT in the `Authorization` header. The
+  [Connect JWT guide](https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/)
+  covers verifying it: HS256 with the `sharedSecret`, plus a `qsh`
+  (query-string hash) check for server-to-server JWTs. The webhooks page
+  doesn't restate those details for webhooks specifically. Atlassian is ending
+  Connect support in favour of Forge.
 - **OAuth 2.0 (3LO) apps** (dynamic webhooks registered with
-  `POST /rest/api/3/webhook`, which has no `secret` field): deliveries carry a
-  bearer JWT in the `Authorization` header, signed with the app's **client
-  secret**. Verify it with a standard JWT library.
+  `POST /rest/api/3/webhook`): "secured by bearer authentication. The token is
+  present in the `Authorization` header and is signed with the app's client
+  secret." Verify it with a standard JWT library.
 
-Forge apps react to Jira events through product triggers, not HTTP webhooks
-delivered to an arbitrary URL.
+**Forge apps** don't use either scheme. Forge delivers Jira events to Forge
+functions, or, with
+[Forge Remote](https://developer.atlassian.com/platform/forge/remote/sending-product-events/),
+to a remote endpoint declared in the app manifest, with a Forge Invocation
+Token you verify as described in Atlassian's *Verifying remote requests*
+guide.
 
 ## Implementation
 

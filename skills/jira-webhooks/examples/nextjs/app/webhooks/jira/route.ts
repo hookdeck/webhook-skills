@@ -9,7 +9,7 @@ import crypto from 'crypto';
  * Jira Cloud signs the raw body with HMAC-SHA256 keyed on the webhook secret and
  * sends it in the X-Hub-Signature header as `sha256=<hex>` (WebSub format).
  */
-function verifyJiraWebhook(rawBody: string, signatureHeader: string | null, secret: string): boolean {
+export function verifyJiraWebhook(rawBody: string, signatureHeader: string | null, secret: string): boolean {
   // Split the WebSub `method=signature` header (e.g. `sha256=<hex>`)
   const [method, sig] = (signatureHeader || '').split('=');
   if (method !== 'sha256' || !sig) {

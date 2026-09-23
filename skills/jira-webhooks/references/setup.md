@@ -35,8 +35,9 @@ integration using the old secret must be updated.
 ## Option B — Admin webhook via REST (`/rest/webhooks/1.0/webhook`)
 
 This registers the same kind of admin webhook, so it is signed the same way when
-you pass `secret`. Authenticate as a Jira admin (for example with your Atlassian
-account email and an API token):
+you pass `secret`. Call it as a Jira admin. Atlassian's example uses basic auth
+(`--user username:password`); on Jira Cloud that means your Atlassian account
+email and an API token:
 
 ```bash
 curl -X POST \
@@ -81,11 +82,14 @@ Apps can also receive webhooks, but these are **not** signed with
 - **Connect apps** declare webhooks in the app descriptor. Jira signs deliveries
   with the app's `sharedSecret` as a Connect JWT in the `Authorization` header.
 - **OAuth 2.0 (3LO) apps** register dynamic webhooks with
-  `POST /rest/api/3/webhook` (scope `manage:jira-webhook`). That request has no
-  `secret` field. Deliveries carry a bearer JWT in the `Authorization` header,
-  signed with the app's client secret. Dynamic webhooks expire after 30 days
-  unless refreshed with the Extend webhook life API
-  (`PUT /rest/api/3/webhook/refresh`).
+  `POST /rest/api/3/webhook` (see the
+  [webhooks REST reference](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-webhooks/) for the
+  required scopes). That request has no `secret` field. Deliveries carry a
+  bearer JWT in the `Authorization` header, signed with the app's client
+  secret. Dynamic webhooks expire after 30 days unless refreshed with the
+  Extend webhook life API (`PUT /rest/api/3/webhook/refresh`).
+- Connect apps can also register dynamic webhooks through that endpoint. The
+  webhooks docs don't say how those deliveries are authenticated.
 
 ## Selecting Events
 

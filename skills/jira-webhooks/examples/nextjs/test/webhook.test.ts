@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
-import { POST } from '../app/webhooks/jira/route';
+import { POST, verifyJiraWebhook } from '../app/webhooks/jira/route';
 
 // Set test environment variables
 beforeAll(() => {
@@ -20,30 +20,6 @@ function generateJiraSignature(payload: string, secret: string): string {
   return `sha256=${signature}`;
 }
 
-/**
- * Verify Jira webhook signature (same logic as in route.ts).
- */
-function verifyJiraWebhook(body: string, signatureHeader: string | null, secret: string): boolean {
-  const [method, sig] = (signatureHeader || '').split('=');
-  if (method !== 'sha256' || !sig) {
-    return false;
-  }
-
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(body)
-    .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(sig, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    );
-  } catch {
-    return false;
-  }
-}
-
 // Official test vector from Atlassian's "Secure admin webhooks" docs:
 // https://developer.atlassian.com/cloud/jira/platform/webhooks/#secure-admin-webhooks
 const VECTOR_SECRET = "It's a Secret to Everybody";
@@ -56,6 +32,11 @@ describe('Jira Signature Verification', () => {
   it('should pass the official Atlassian test vector', () => {
     expect(verifyJiraWebhook(VECTOR_PAYLOAD, VECTOR_SIGNATURE, VECTOR_SECRET)).toBe(true);
     expect(verifyJiraWebhook(VECTOR_PAYLOAD, VECTOR_SIGNATURE, 'wrong secret')).toBe(false);
+  });
+
+  it('should reject a method other than sha256', () => {
+    const hex = VECTOR_SIGNATURE.slice('sha256='.length);
+    expect(verifyJiraWebhook(VECTOR_PAYLOAD, `sha512=${hex}`, VECTOR_SECRET)).toBe(false);
   });
 
   it('should validate correct signature', () => {
@@ -137,13 +118,6 @@ describe('POST /webhooks/jira route', () => {
     if (signature) headers['x-hub-signature'] = signature;
     return new NextRequest('http://localhost/webhooks/jira', { method: 'POST', body, headers });
   }
-
-  it('should verify the official Atlassian test vector in the route handler', async () => {
-    // The vector payload isn't JSON, so a verified request fails at JSON.parse.
-    // A 401 here would mean verification rejected it.
-    process.env.JIRA_WEBHOOK_SECRET = VECTOR_SECRET;
-    await expect(POST(makeRequest(VECTOR_PAYLOAD, VECTOR_SIGNATURE))).rejects.toThrow(SyntaxError);
-  });
 
   it('should return 401 when X-Hub-Signature is missing', async () => {
     process.env.JIRA_WEBHOOK_SECRET = 'test_jira_secret';

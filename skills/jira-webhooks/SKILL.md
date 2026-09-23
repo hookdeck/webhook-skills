@@ -32,7 +32,7 @@ the `X-Hub-Signature` header (not `X-Hub-Signature-256`) using the WebSub
 parsing JSON and compare timing-safe.
 
 > Admin webhooks without a `secret` are unsigned. App webhooks use a different
-> scheme: Connect apps get a JWT signed with the app's `sharedSecret`, and
+> scheme: Connect descriptor webhooks get a JWT signed with the app's `sharedSecret`, and
 > OAuth 2.0 dynamic webhooks (`POST /rest/api/3/webhook`) get a bearer JWT signed
 > with the app's client secret, both in the `Authorization` header. See
 > [references/verification.md](references/verification.md).
@@ -94,7 +94,7 @@ under the `webhookEvent` field.
 | Header | Description |
 |--------|-------------|
 | `X-Hub-Signature` | HMAC SHA-256 signature, formatted `sha256=<hex>` (admin webhooks with a `secret`) |
-| `Authorization` | JWT on Connect and OAuth 2.0 app webhooks (not used by admin webhooks) |
+| `Authorization` | JWT on Connect descriptor and OAuth 2.0 app webhooks (the docs describe it only for app webhooks) |
 | `X-Atlassian-Webhook-Identifier` | Unique delivery identifier |
 
 ## Environment Variables

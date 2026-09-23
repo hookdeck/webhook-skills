@@ -11,9 +11,9 @@ Jira's docs call webhooks created on the Jira administration **WebHooks** page o
 with `POST /rest/webhooks/1.0/webhook` **admin webhooks**. Admin webhooks saved
 with a `secret` are signed with an `X-Hub-Signature` HMAC. Webhooks that belong
 to an app are secured differently. Connect apps declare webhooks in their
-descriptor, and OAuth 2.0 (3LO) apps register **dynamic webhooks** with
-`POST /rest/api/3/webhook`. Both are authenticated with a JWT in the
-`Authorization` header. See [verification.md](verification.md).
+descriptor, and Connect and OAuth 2.0 (3LO) apps can register **dynamic
+webhooks** with `POST /rest/api/3/webhook`. The docs describe descriptor and
+OAuth 2.0 webhooks as authenticated with a JWT in the `Authorization` header. See [verification.md](verification.md).
 
 ## Common Event Types
 
