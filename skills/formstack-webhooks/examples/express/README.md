@@ -115,8 +115,9 @@ GET https://www.formstack.com/api/v2025/forms/{formId}/webhooks/openapi
 ```
 
 The API reference's example schema shows `FormID` and `UniqueID` (both strings) alongside
-the form's field keys. Nothing else is confirmed — there is no documented `Timestamp`,
-`FormName` or `SubmissionID`.
+the form's field keys, and real deliveries confirm both. When the WebHook has a Shared
+Secret, a `HandshakeKey` field carrying it follows them. There is no `Timestamp`, `FormName`
+or `SubmissionID`.
 
 > **Duplicate labels collapse.** With `field_names` (default) or
 > `api_friendly_field_names`, if two fields share a label only the **last** occurrence is
@@ -153,8 +154,7 @@ it explicitly.
 ### Sourcing note
 
 Formstack's current public documentation states the header name and the "HMAC Key" field but
-**never names the algorithm or the encoding**. SHA-256 + lowercase hex is what Hookdeck's
-`FORMSTACK` source integration implements — what your Hookdeck source will compare against,
-but a single-upstream interoperability fact rather than independent confirmation of what
-Formstack sends. If a hex comparison never matches, compute the
-**base64** form of the same HMAC-SHA256 and compare that before assuming your key is wrong.
+**never names the algorithm or the encoding**. HMAC-SHA256, lowercase hex, `sha256=`-prefixed
+is confirmed by two real deliveries captured on 2026-09-25. The test suite verifies both of
+them, with the signatures Formstack produced, so the verifier is checked against Formstack
+itself and not only against digests the tests computed.

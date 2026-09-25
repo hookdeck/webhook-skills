@@ -23,9 +23,11 @@ form builder. One HTTP POST per form submission.
 
 > **Scope.** This skill is about **Formstack Forms** only. It does **not** cover
 > Formstack Documents (formerly WebMerge, which has its own separate "Webhook Delivery"
-> feature posting Merge ID / File Name / File Contents / Fields), Formstack Sign
-> (formerly InsureSign), or the Salesforce-packaged products. Those are different
-> surfaces with different payloads.
+> feature), Formstack Sign (formerly InsureSign), or the Salesforce-packaged products.
+> Those are different surfaces with different payloads. A Documents delivery is easy to
+> tell apart: it posts `merge_id`, `handshake`, `file_name` and a base64 `file_contents`,
+> with a `WebMerge` user-agent and **no signature header**. A Forms delivery posts
+> `FormID` and `UniqueID` with a `FormstackWebhook/1.0` user-agent.
 
 > **`X-FS-Signature` is a shared header name, not a shared scheme.**
 > [FastSpring](https://github.com/hookdeck/webhook-skills/tree/main/skills/fastspring-webhooks)
@@ -79,7 +81,7 @@ function verifyFormstackWebhook(rawBody, signatureHeader, hmacKey) {
   // Fail closed: an unset key must never mean "accept anyway".
   if (!signatureHeader || !hmacKey) return false;
 
-  // The digest may arrive bare or `sha256=`-prefixed. Strip, trim, normalise case.
+  // Formstack sends `sha256=<hex>`. Strip the prefix (tolerating its absence), trim, lowercase.
   const received = signatureHeader.trim().replace(/^sha256=/i, '').trim().toLowerCase();
   const expected = crypto.createHmac('sha256', hmacKey).update(rawBody).digest('hex');
 
@@ -104,18 +106,16 @@ def verify_formstack_webhook(raw_body: bytes, signature_header, hmac_key) -> boo
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-**Honest sourcing.** Formstack's current public documentation states the header name and
-the "HMAC Key" field but **never names the algorithm or the encoding**. The developer page
-that did (`developers.formstack.com/v2.0/docs/webhook-setup`, still linked from the bottom
-of the help article) now 404s, and the current API reference confirms only that the
-`hmacSecret` and `customHmacHeader` fields exist. SHA-256 + lowercase hex +
-`x-fs-signature` is what **Hookdeck's `FORMSTACK` source integration** implements, which is
-what your Hookdeck source compares against — but that integration cites no vendor source for
-the digest format either, so it is a single-upstream interoperability fact, not independent
-confirmation and not a quoted vendor fact. If a hex comparison never matches, compute the
-**base64** form of the same HMAC-SHA256 and compare that before concluding your key is
-wrong. Details in
-[references/verification.md](references/verification.md).
+**Confirmed against real deliveries.** Formstack's current public documentation states the
+header name and the "HMAC Key" field but **never names the algorithm or the encoding** (the
+developer page that did now 404s). The scheme above is therefore confirmed by observation:
+two live WebHook deliveries captured on 2026-09-25 carried
+`X-FS-Signature: sha256=<64 lowercase hex chars>`, and recomputing HMAC-SHA256 over the raw
+urlencoded body with the WebHook's HMAC Key reproduced the digest exactly. The base64 form of
+the same MAC does not match. The second delivery was signed after the key was changed and
+verified only with the new key. This matches what Hookdeck's `FORMSTACK` source integration
+implements. The captured body and signature are a test vector in every example's test suite.
+Details in [references/verification.md](references/verification.md).
 
 ## The Raw Body Trap (read this before anything else)
 
@@ -182,9 +182,17 @@ strings) alongside the form's field keys:
 { "FormID": "1234567", "UniqueID": "9876543210", "Name": "Jane Smith", "Email": "jane@example.com" }
 ```
 
-Treat `FormID` as the routing key and `UniqueID` as the idempotency key, but read both
-defensively — no other envelope key is confirmed. There is **no** documented `Timestamp`,
-`FormName`, `SubmissionID` or `HandshakeKey` field; don't depend on one.
+Real deliveries confirm both, as strings, ahead of the field keys. A delivery from a form
+with no answer fields, captured on the wire, was exactly:
+
+```
+FormID=6606394&UniqueID=1500878955&HandshakeKey=test
+```
+
+`HandshakeKey` carries the WebHook's Shared Secret (see below). Both captures had one set, so
+whether the field is omitted or sent empty without one is unobserved. Treat `FormID` as
+the routing key and `UniqueID` as the idempotency key, and read every key defensively. There
+is **no** `Timestamp`, `FormName` or `SubmissionID` field; don't depend on one.
 
 ## Shared Secret (Handshake Key) — Weaker, Not a Signature
 
@@ -197,9 +205,12 @@ It is a **static bearer-style token with no per-request binding** — it proves 
 well as any constant does, and it is replayable and loggable. **Prefer the HMAC Key.** Use
 the shared secret only if your endpoint already requires such a token.
 
-This skill deliberately **does not** state the parameter or header name it arrives under, or
-its position in the payload: Formstack's current public documentation does not say, and
-guessing would be a fabrication. Capture one real delivery and look.
+**It arrives as a body field named `HandshakeKey`**, after `FormID` and `UniqueID`. Formstack's
+documentation does not name it; this is observed from real deliveries. A delivery made after
+the HMAC Key was changed still carried the unchanged Shared Secret in `HandshakeKey`, so the
+field carries the Shared Secret and **the HMAC Key is never sent**. Because it is in the body,
+it is inside the signed content and lands wherever you log request bodies. If you use it,
+compare it constant-time, and strip it before storing or forwarding the submission.
 
 ## Replay
 
@@ -237,10 +248,15 @@ Only what's documented:
   Formstack can change without notice — **never a substitute for the HMAC**.
 - `status.formstack.com` publishes incidents.
 
-**Not documented, so don't assert it:** retry counts, retry backoff, delivery timeouts, a
-delivery-id or request-id header, a user-agent string, or any signature-adjacent header
-beyond the HMAC header and `Content-Type`. Return 2xx quickly and process asynchronously
-regardless.
+**Observed on real deliveries, but not documented:** a `User-Agent` of
+`FormstackWebhook/1.0 (Form <FormID>)`, which names the form before you parse the body.
+Route on the `FormID` body field anyway, since the user-agent format is not a published
+contract. The other headers were `Content-Type`, `Content-Length`, the signature header and
+Datadog tracing headers (`tracestate`, `x-datadog-*`).
+
+**Not documented, and not observed, so don't assert it:** retry counts, retry backoff,
+delivery timeouts, or a delivery-id or request-id header. Return 2xx quickly and process
+asynchronously regardless.
 
 ## Setup in One Minute
 

@@ -41,8 +41,8 @@ function signatureHeaderName() {
 function verifyFormstackWebhook(rawBody, signatureHeader, hmacKey) {
   if (!signatureHeader || !hmacKey) return false;
 
-  // The digest may arrive bare (`<hex>`) or prefixed (`sha256=<hex>`). Strip an optional
-  // prefix case-insensitively, trim, and normalise case before comparing.
+  // Formstack sends `sha256=<hex>`. Strip the prefix case-insensitively (a bare digest is
+  // tolerated too), trim, and normalise case before comparing.
   const received = signatureHeader.trim().replace(/^sha256=/i, '').trim().toLowerCase();
   const expected = crypto.createHmac('sha256', hmacKey).update(rawBody).digest('hex');
 

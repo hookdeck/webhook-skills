@@ -13,7 +13,7 @@ WebHook's **HMAC Key**, and sends the digest as **lowercase hex** in a header �
 | Header | `X-FS-Signature` by default, **user-overridable** |
 | Key | The per-WebHook "HMAC Key" string |
 | Signed content | The **raw request body bytes**, and nothing else |
-| Prefix | May arrive bare (`<hex>`) or prefixed (`sha256=<hex>`) — tolerate both |
+| Prefix | `sha256=<hex>` on real deliveries. Strip it, and tolerate a bare digest too |
 | Standard Webhooks? | **No.** There is no `webhook-id`, `webhook-timestamp` or `webhook-signature` |
 
 **Nothing but the body is signed.** No timestamp, no nonce, no URL, no method, no field
@@ -21,8 +21,8 @@ concatenation.
 
 ## Where These Facts Come From — Read This
 
-Be honest about sourcing, because one of these facts is not in the vendor's current public
-docs.
+Be honest about sourcing, because the algorithm and encoding are not in the vendor's current
+public docs. They are confirmed by observation instead.
 
 **Documented by Formstack today:**
 
@@ -41,25 +41,45 @@ docs.
   `developers.formstack.com` documents only the webhook CRUD API, whose schema confirms the
   fields exist but not the digest format.
 
-**So where does SHA-256 + hex come from?** From **Hookdeck's own `FORMSTACK` source
-integration** — `server/integrations/index.ts` registers it as an alias of the generic HMAC
-controller with `sha256` / `x-fs-signature` / `hex`, and `sourceTypeSchemas.ts` exposes the
-header as an optional override with that default.
+**So where does SHA-256 + hex come from?** From **real deliveries.** Two live WebHook submit
+actions were captured through a Hookdeck source on 2026-09-25, on a form with URL Encoded Form
+Data (the default) and no answer fields. Each body was 52 bytes:
 
-**Be precise about how much that proves.** It is the right thing to implement, because it is
-what your Hookdeck source will compare against. It is *not* independent confirmation of what
-Formstack sends. That integration was added on 2026-09-01 and cites no vendor source for the
-digest format beyond the same help article quoted above, and its tests generate the expected
-digest with the same HMAC helper they verify with — so they prove the controller round-trips,
-not that Formstack emits hex. Treat SHA-256/hex as an **interoperability fact with a single
-upstream**, not a quoted vendor fact, and see
-[If hex never matches](#if-hex-never-matches-try-base64) below before concluding your key
-is wrong.
+```
+content-type: application/x-www-form-urlencoded; charset=utf-8
+user-agent: FormstackWebhook/1.0 (Form 6606394)
+x-fs-signature: sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970
 
-The same caveat applies to the `sha256=` prefix. Hookdeck's integration states that Formstack
-sends the digest prefixed, and its HMAC controller strips the prefix when present and compares
-the bare digest when it is not — which is why this skill accepts both forms. No vendor page
-confirms which one actually arrives, so accept both rather than asserting either.
+FormID=6606394&UniqueID=1500878955&HandshakeKey=test
+```
+
+With the HMAC Key `test1`, HMAC-SHA256 over those exact body bytes reproduces the header's
+digest as lowercase hex:
+
+```bash
+printf '%s' 'FormID=6606394&UniqueID=1500878955&HandshakeKey=test' \
+  | openssl dgst -sha256 -hmac test1 -r
+# 30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970
+```
+
+What the two captures settle:
+
+- **Algorithm and encoding.** HMAC-SHA256, lowercase hex. The base64 form of the same MAC
+  (`MN/38YC21p6rOXpdUXGUdN9JC3MFFMJT6LWDLTtRuXA=`) does not match.
+- **The prefix.** The header value is `sha256=` followed by the hex digest.
+- **The key.** The first delivery was signed with HMAC Key `test`. The key was then changed to
+  `test1`, and the second delivery verified with `test1` and not with `test`. The HMAC Key is
+  used directly as the HMAC key bytes, with no derivation.
+- **Signed content.** The raw urlencoded body and nothing else. There is no timestamp or nonce
+  header to include.
+
+This is also what **Hookdeck's own `FORMSTACK` source integration** implements, as an alias
+of its generic HMAC controller with `sha256` / `x-fs-signature` / `hex`, so a Hookdeck source
+verifies the same deliveries your handler does.
+
+The express, nextjs and fastapi test suites each verify the captured delivery above as a
+test vector, so a regression in the verifier fails against a real Formstack signature rather
+than one the tests generated themselves.
 
 ## Not FastSpring
 
@@ -106,7 +126,7 @@ function verifyFormstackWebhook(rawBody, signatureHeader, hmacKey) {
   // Fail closed: an unset key must never mean "accept anyway".
   if (!signatureHeader || !hmacKey) return false;
 
-  // The digest may arrive bare or `sha256=`-prefixed. Strip, trim, normalise case.
+  // Formstack sends `sha256=<hex>`. Strip the prefix (tolerating its absence), trim, lowercase.
   const received = signatureHeader.trim().replace(/^sha256=/i, '').trim().toLowerCase();
   const expected = crypto.createHmac('sha256', hmacKey).update(rawBody).digest('hex');
 
@@ -210,19 +230,17 @@ else:
 
 Do **not** use `await request.form()` before verifying.
 
-## Prefix Tolerance
+## Prefix Handling
 
-The digest may arrive bare or prefixed:
+Real deliveries send the digest prefixed:
 
 ```
-X-FS-Signature: 3f8a...c1
-X-FS-Signature: sha256=3f8a...c1
+X-FS-Signature: sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970
 ```
 
-Hookdeck's HMAC controller strips a `sha256=` prefix when present and compares the bare
-digest otherwise, so do the same: strip an optional leading `sha256=` **case-insensitively**,
-trim whitespace, then compare. A strict equality check against the raw header value rejects
-prefixed deliveries.
+Strip a leading `sha256=` **case-insensitively**, trim whitespace, then compare. Comparing the
+raw header value against a bare hex digest rejects every delivery. Tolerating a bare digest as
+well costs nothing, and Hookdeck's HMAC controller does the same.
 
 ## Constant-Time Comparison
 
@@ -256,40 +274,18 @@ Mitigate instead:
 | Digest never matches on JSON bodies | `JSON.parse` → `JSON.stringify` round-trip changed the bytes |
 | Every delivery rejected after a config change | Someone set "Custom HMAC Header"; your code hardcodes `x-fs-signature` |
 | No signature header at all | No HMAC Key is set on that WebHook. Set one — don't add an unsigned fallback |
-| Prefixed deliveries rejected | You compared the raw header instead of stripping `sha256=` |
+| Every delivery rejected, lengths 71 vs 64 | You compared the raw header instead of stripping `sha256=` |
 | `timingSafeEqual` throws | No length guard before the comparison |
 | Uppercase hex rejected | No case normalisation before comparing |
 | Wrong key entirely | You used the API client secret / access token / PAT. The HMAC Key is per-WebHook and separate |
 | Works on form A, fails on form B | Each WebHook has its own HMAC Key. There is no account-wide secret |
-
-## If Hex Never Matches, Try Base64
-
-Because the encoding is not stated in Formstack's current public documentation, run this
-check before assuming your key is wrong:
-
-```javascript
-const mac = crypto.createHmac('sha256', hmacKey).update(rawBody);
-console.log('hex   :', mac.copy().digest('hex'));
-console.log('base64:', mac.copy().digest('base64'));
-console.log('header:', signatureHeader);
-```
-
-```python
-digest = hmac.new(hmac_key.encode(), raw_body, hashlib.sha256).digest()
-print("hex   :", digest.hex())
-print("base64:", base64.b64encode(digest).decode())
-print("header:", signature_header)
-```
-
-If the **base64** form matches the header, Formstack is base64-encoding for you — switch
-your encoding and tell us, so this skill can be corrected.
 
 ## Debugging Verification Failures
 
 1. **Log the raw body as bytes**, not the parsed object. A parsed dict tells you nothing
    about the bytes that were signed.
 2. **Compare lengths.** A 64-character expected digest versus a 71-character header means
-   the header is `sha256=`-prefixed.
+   you did not strip the `sha256=` prefix.
 3. **Check the key by hand** against one captured delivery:
 
    ```bash

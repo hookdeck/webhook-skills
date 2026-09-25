@@ -315,3 +315,42 @@ class TestHealth:
 
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
+
+
+# Two real deliveries captured from a Formstack Forms WebHook on 2026-09-25, byte for
+# byte. These are the only vectors here that Formstack signed rather than this suite:
+# they pin the digest format (HMAC-SHA256, lowercase hex, `sha256=`-prefixed) to what
+# Formstack actually sends. The HMAC Key was `test` for the first and `test1` for the
+# second, while the Shared Secret stayed `test` -- which is why `HandshakeKey=test`
+# appears in both bodies.
+CAPTURED_DELIVERIES = [
+    (
+        "test",
+        b"FormID=6606394&UniqueID=1500877919&HandshakeKey=test",
+        "sha256=54bc5cf9f57b9a1083c7e53d734cb0586933146ba6b2150e888a827dfb468ea7",
+    ),
+    (
+        "test1",
+        b"FormID=6606394&UniqueID=1500878955&HandshakeKey=test",
+        "sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970",
+    ),
+]
+
+
+@pytest.mark.parametrize("hmac_key,body,signature", CAPTURED_DELIVERIES)
+def test_verifies_real_captured_delivery(hmac_key, body, signature):
+    assert verify_formstack_webhook(body, signature, hmac_key) is True
+
+
+def test_rejects_second_captured_delivery_under_first_key():
+    first_key = CAPTURED_DELIVERIES[0][0]
+    _, body, signature = CAPTURED_DELIVERIES[1]
+    assert verify_formstack_webhook(body, signature, first_key) is False
+
+
+def test_accepts_captured_delivery_end_to_end(monkeypatch):
+    hmac_key, body, signature = CAPTURED_DELIVERIES[1]
+    monkeypatch.setenv("FORMSTACK_HMAC_KEY", hmac_key)
+    res = post(body, signature, content_type="application/x-www-form-urlencoded; charset=utf-8")
+    assert res.status_code == 200
+    assert res.json() == {"received": True}

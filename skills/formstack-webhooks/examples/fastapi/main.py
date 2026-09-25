@@ -48,8 +48,8 @@ def verify_formstack_webhook(
     if not signature_header or not hmac_key:
         return False
 
-    # The digest may arrive bare (`<hex>`) or prefixed (`sha256=<hex>`). Strip an
-    # optional prefix case-insensitively, trim, and normalise case before comparing.
+    # Formstack sends `sha256=<hex>`. Strip the prefix case-insensitively (a bare digest
+    # is tolerated too), trim, and normalise case before comparing.
     received = re.sub(r"^sha256=", "", signature_header.strip(), flags=re.IGNORECASE)
     received = received.strip().lower()
 

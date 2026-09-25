@@ -17,7 +17,7 @@ format, secrets and Routing Logic.
 
 | Product | Why it's out of scope |
 |---|---|
-| **Formstack Documents** (formerly WebMerge) | Separate product with its own "Webhook Delivery" feature posting Merge ID / File Name / File Contents / Fields. Different payload entirely. |
+| **Formstack Documents** (formerly WebMerge) | Separate product with its own "Webhook Delivery" feature. A captured delivery posted `merge_id`, `handshake`, `file_name` and a base64 `file_contents`, with a `WebMerge` user-agent, no signature header, and from an IP not on the Forms allowlist. Different payload entirely. |
 | **Formstack Sign** (formerly InsureSign) | E-signature product, separate surface. |
 | **Formstack Forms/Documents for Salesforce** | Salesforce-packaged products, separate surface. |
 | **Typeform, Jotform, Formsite, Wufoo** | Different vendors. Never reuse their headers, payloads or event names here. |
@@ -125,13 +125,18 @@ That JSON mirrors the example in the v2025 API reference's own
 
 | Key | Status | Use |
 |---|---|---|
-| `FormID` | Shown in the API reference's example schema, as a **string** | Routing: which form produced this |
-| `UniqueID` | Shown in the API reference's example schema, as a **string** | Idempotency key |
+| `FormID` | In the API reference's example schema, and on every real delivery, as a **string** | Routing: which form produced this |
+| `UniqueID` | In the API reference's example schema, and on every real delivery, as a **string** | Idempotency key |
+| `HandshakeKey` | **Observed, not documented.** Carries the WebHook's Shared Secret. Seen only with one set, so its form without one is unknown | Optional static-token check. Strip before storing |
 
-**Nothing else is confirmed.** There is no documented `Timestamp`, `FormName`,
-`SubmissionID`, `HandshakeKey` or similar envelope key. Do not enumerate a fixed metadata
-list and do not require any of these to be present — read with a default and tolerate
-absence.
+A real delivery from a form with no answer fields, exactly as it arrived on the wire:
+
+```
+FormID=6606394&UniqueID=1500878955&HandshakeKey=test
+```
+
+**Nothing else was seen.** There is no `Timestamp`, `FormName`, `SubmissionID` or similar
+envelope key. Read every key with a default and tolerate absence.
 
 ## How to Know What Fields a Form Will Send
 
@@ -210,9 +215,17 @@ Documented:
   *managed* and fixes it to `POST`, so a Hookdeck source for Formstack will not accept
   another verb. Build the handler for POST only.
 
-Not documented — do not assert: retry counts, retry backoff, delivery timeouts, delivery-id
-or request-id headers, or a user-agent string. Return 2xx fast and process asynchronously
-anyway.
+Observed on real deliveries but not documented:
+
+- **User-Agent** `FormstackWebhook/1.0 (Form <FormID>)`. It names the form, but the format
+  is not a published contract, so route on the `FormID` body field.
+- **No other delivery headers** beyond `Content-Type`, `Content-Length`, the signature
+  header and Datadog tracing headers (`tracestate`, `x-datadog-*`). There is no delivery-id
+  or request-id header.
+- Deliveries arrived from `44.196.66.47` and `52.71.30.102`, both on the published list.
+
+Not documented and not observed — do not assert: retry counts, retry backoff or delivery
+timeouts. Return 2xx fast and process asynchronously anyway.
 
 ## Full Reference
 

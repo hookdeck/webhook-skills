@@ -329,3 +329,46 @@ describe('GET /webhooks/formstack', () => {
     expect(await res.json()).toEqual({ status: 'ok', endpoint: 'formstack-webhooks' });
   });
 });
+
+// Two real deliveries captured from a Formstack Forms WebHook on 2026-09-25, byte for
+// byte. These are the only vectors here that Formstack signed rather than this suite:
+// they pin the digest format (HMAC-SHA256, lowercase hex, `sha256=`-prefixed) to what
+// Formstack actually sends. The HMAC Key was `test` for the first and `test1` for the
+// second, while the Shared Secret stayed `test` — which is why `HandshakeKey=test`
+// appears in both bodies.
+const CAPTURED_DELIVERIES = [
+  {
+    hmacKey: 'test',
+    body: 'FormID=6606394&UniqueID=1500877919&HandshakeKey=test',
+    signature: 'sha256=54bc5cf9f57b9a1083c7e53d734cb0586933146ba6b2150e888a827dfb468ea7',
+  },
+  {
+    hmacKey: 'test1',
+    body: 'FormID=6606394&UniqueID=1500878955&HandshakeKey=test',
+    signature: 'sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970',
+  },
+];
+
+describe('real captured Formstack deliveries', () => {
+  it.each(CAPTURED_DELIVERIES)('verifies the delivery signed with HMAC Key $hmacKey', ({ hmacKey, body, signature }) => {
+    expect(verifyFormstackWebhook(body, signature, hmacKey)).toBe(true);
+  });
+
+  it('rejects the second delivery under the first key (the key change is visible)', () => {
+    const [first, second] = CAPTURED_DELIVERIES;
+    expect(verifyFormstackWebhook(second.body, second.signature, first.hmacKey)).toBe(false);
+  });
+
+  it('accepts the captured delivery end to end with its own content type', async () => {
+    const { hmacKey, body, signature } = CAPTURED_DELIVERIES[1];
+    const saved = process.env.FORMSTACK_HMAC_KEY;
+    process.env.FORMSTACK_HMAC_KEY = hmacKey;
+    try {
+      const res = await POST(buildRequest(body, signature, 'application/x-www-form-urlencoded; charset=utf-8'));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ received: true });
+    } finally {
+      process.env.FORMSTACK_HMAC_KEY = saved;
+    }
+  });
+});

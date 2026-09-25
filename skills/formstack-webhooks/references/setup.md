@@ -175,9 +175,12 @@ It is **bearer-style with no per-request binding** — it proves origin only as 
 constant can, it is replayable, and it ends up in logs. **Prefer the HMAC Key.** Don't build
 your primary verification path on it.
 
-**This skill does not state the parameter or header name it arrives under**, or where it
-sits in the payload: Formstack's current public documentation doesn't say, and inventing a
-name would be a fabrication. If you must consume it, capture one real delivery and look.
+**It arrives as a body field named `HandshakeKey`**, after `FormID` and `UniqueID`, in
+whichever content type the WebHook uses. Formstack's documentation doesn't name the field;
+this is observed from real deliveries. Changing the HMAC Key did not change the
+`HandshakeKey` value, so the field carries the Shared Secret, and the HMAC Key itself is
+never sent. Compare it constant-time, and strip it from the submission before you store or
+forward it.
 
 ## Firewall Allowlisting
 
