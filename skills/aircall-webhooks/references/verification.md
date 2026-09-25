@@ -21,6 +21,20 @@ identify from which Aircall account a Webhook event is sent from."*
 | Timestamp tolerance / replay window | No replay protection exists |
 | IP allowlist | Aircall publishes no static IPs |
 
+### What Aircall does send
+
+A live `contact.updated` delivery (September 2026) carried only these headers:
+
+| Header | Value |
+|--------|-------|
+| `content-type` | `application/json` |
+| `user-agent` | `axios/<version>` |
+| `aircall-origin` | `webhooks` |
+| `x-datadog-trace-id`, `x-datadog-parent-id`, `tracestate` | Tracing IDs that change per request |
+
+`aircall-origin` is undocumented. None of these headers is a credential, so don't
+authenticate on them. The only secret is the body `token`.
+
 Aircall's full server-rendered API reference contains **zero** occurrences of "hmac" or
 "sha256". The only two matches for "signature" anywhere in it are `X-Amz-Signature` inside
 an S3 presigned download URL in an *analytics export* payload — unrelated to webhook

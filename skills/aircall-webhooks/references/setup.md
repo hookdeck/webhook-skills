@@ -141,7 +141,8 @@ disabled**.
 
 A request is failed if your server responds outside the 2xx range **or** times out.
 
-1. Aircall retries a failed event up to **50 times**.
+1. Aircall retries a failed event up to **50 times**. (Its docs also say "50 consecutive
+   failures" and, in an older tutorial, "10 failed requests", so don't budget on 50.)
 2. If the problem persists, the webhook is **automatically disabled** and a notification
    appears on the Dashboard.
 3. Once disabled, Aircall keeps retrying the failed events for up to **12 hours**.

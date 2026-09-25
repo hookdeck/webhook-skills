@@ -144,7 +144,9 @@ events V2."
 - **Upsert on `call.id`** — many events fire for one call; key your records on `data.id`.
 - **Auto-disable**: a non-2xx or timeout is a failure; Aircall retries up to **50 times**,
   then disables the webhook. It keeps retrying failed events for **12 hours**; a success
-  in that window automatically re-enables it.
+  in that window automatically re-enables it. Aircall's docs disagree on the threshold
+  (50 retries, 50 consecutive failures, or 10 failed requests in an older tutorial), so
+  don't rely on the exact number.
 - **HTTPS required.** No IP allowlist — "Aircall does not provide a list of static IP
   addresses to whitelist."
 

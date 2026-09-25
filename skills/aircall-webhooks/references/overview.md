@@ -217,6 +217,14 @@ WhatsApp. Status updates carry `data.status`.
 These events only fire for numbers in **native** messaging mode. Numbers in **Proxy**
 mode deliver to a configured `callbackUrl` instead and do not fire message webhooks.
 
+Those Message Callbacks are a separate mechanism ("Callbacks are distinct from Aircall
+Webhooks") with a different envelope: the event name is in **`event_name`**, not `event`,
+`timestamp` is in **milliseconds**, and the only events are `message.received` and
+`message.updated`. There is **no automatic retry** on failure. The body still carries a
+`token` (the one returned when the number configuration was created). A handler that
+reads only `event` will not recognise callback traffic, so if one endpoint receives both,
+branch on which field is present.
+
 `group_message.*` payloads include `group_conversation_id` and a `participants` array of
 phone numbers.
 
@@ -273,6 +281,10 @@ your side too.
 - **5-second timeout.** Aircall's HTTP requests to external servers time out after 5
   seconds. Acknowledge with 200 immediately and process asynchronously.
 - **Failure = non-2xx or timeout.** Aircall retries a failed event up to **50 times**.
+  Aircall's own docs give three different thresholds: "retry the event up to 50 times"
+  (API reference), "disables the webhook after 50 consecutive failures" (best-practices
+  guide), and "after 10 failed requests" (older webhooks tutorial). Treat any sustained
+  failure as a risk of deactivation rather than counting on 50.
 - **Automatic deactivation.** If failures persist after all retries, the webhook is
   disabled and a notification appears on the Aircall Dashboard.
 - **Automatic re-enable.** Once disabled, Aircall keeps retrying failed events for up to
