@@ -1,0 +1,21 @@
+{
+  "name": "sendgrid-inbound-webhooks-express",
+  "version": "1.0.0",
+  "description": "Twilio SendGrid Inbound Parse webhook handler with Express — ECDSA P-256 verification over the raw multipart/form-data body",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

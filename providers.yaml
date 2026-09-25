@@ -2934,6 +2934,43 @@ providers:
         - delivered
         - bounce
 
+  - name: sendgrid-inbound
+    displayName: SendGrid Inbound Parse
+    skillName: sendgrid-inbound-webhooks
+    docs:
+      webhooks: https://www.twilio.com/docs/sendgrid/for-developers/parsing-email/setting-up-the-inbound-parse-webhook
+      verification: https://www.twilio.com/docs/sendgrid/for-developers/parsing-email/securing-your-parse-webhooks
+      events: https://www.twilio.com/docs/sendgrid/for-developers/parsing-email/inbound-email
+    notes: >
+      Twilio SendGrid Inbound Parse — INBOUND EMAIL, distinct from the SendGrid
+      Event Webhook covered by sendgrid-webhooks. Hookdeck source type
+      SENDGRID_INBOUND. One multipart/form-data POST per received email; there
+      are NO event types and no type/event discriminator field, so handlers
+      route on the recipient (envelope.to). Two body shapes, controlled by the
+      Parse Setting's send_raw flag: parsed form fields (headers, dkim,
+      content-ids, to, text, html, from, sender_ip, spam_report, envelope,
+      attachments, subject, spam_score, attachment-info, charsets, SPF) or a
+      single `email` field holding the raw MIME message. Signing is OPT-IN via
+      an API-created security policy (POST /v3/user/webhooks/security/policies,
+      then PATCH /v3/user/webhooks/parse/settings/{hostname}) — with no policy
+      attached the webhook is unsigned and no signature header arrives at all.
+      When signed: ECDSA P-256 / SHA-256 (NOT HMAC) over `timestamp + raw body
+      bytes`, base64 DER signature, headers X-Twilio-Email-Event-Webhook-
+      Signature and -Timestamp (the names say "Event-Webhook" on Inbound Parse
+      too). The public key is base64 DER SubjectPublicKeyInfo, not PEM. The
+      load-bearing gotcha, called out under a WARNING in the docs: the body is
+      multipart/form-data, so the raw bytes MUST be captured before any
+      multipart middleware runs — and must not be stringified, which corrupts
+      binary attachments. An OAuth policy is a second, independent path:
+      Authorization: Bearer <token>, rejected with a 4xx whose body contains
+      invalid_request / invalid_token / insufficient_scope (RFC 6750 3.1).
+      There is no source-IP allowlist; sender_ip is the email sender's IP,
+      i.e. data, not authentication.
+    testScenario:
+      events:
+        - inbound email (default format)
+        - inbound email (raw MIME format)
+
   - name: shipbob
     displayName: ShipBob
     docs:

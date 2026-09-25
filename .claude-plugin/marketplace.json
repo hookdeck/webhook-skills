@@ -459,6 +459,28 @@
       ]
     },
     {
+      "name": "sendgrid-inbound-webhooks",
+      "description": "Receive and verify Twilio SendGrid Inbound Parse webhooks — inbound email POSTed to your endpoint as multipart/form-data. Use when setting up a SendGrid Inbound Parse handler, parsing the headers/text/html/envelope/ attachment-info form fields or the raw MIME `email` field, debugging X-Twilio-Email-Event-Webhook-Signature ECDSA verification failures, handling the OAuth Bearer token path, or routing inbound mail on envelope.to. This is Inbound Parse (receiving email), NOT the SendGrid Event Webhook (delivered, bounce, open, click) — see sendgrid-webhooks for that.",
+      "source": "./skills/sendgrid-inbound-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/sendgrid-inbound-webhooks",
+      "keywords": [
+        "webhooks",
+        "sendgrid",
+        "inbound"
+      ]
+    },
+    {
       "name": "smile-webhooks",
       "description": "Receive and verify Smile API (getsmileapi.com) webhooks. Use when setting up a Smile webhook endpoint, verifying the Smile-Signature header (HMAC-SHA512 hex over the raw body), debugging Smile signature verification failures, or handling employment/income data events like ACCOUNT_CONNECTED, TASK_FINISHED, INCOMES_ADDED, EMPLOYMENTS_ADDED, IDENTITY_ADDED, and RECORD_COMPLETED. This is Smile API for Southeast Asian employment/income data — NOT Smile.io loyalty and NOT Smile Identity KYC.",
       "source": "./skills/smile-webhooks",
