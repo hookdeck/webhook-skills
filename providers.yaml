@@ -5406,3 +5406,132 @@ providers:
         - publish_post
         - publish_page
         - comment_post
+
+  - name: ordinal
+    displayName: Ordinal
+    docs:
+      webhooks: https://docs.tryordinal.com/integrations/webhooks/introduction
+      events: https://docs.tryordinal.com/integrations/webhooks/event-types
+      api: https://docs.tryordinal.com/
+    notes: >
+      IDENTITY: Ordinal is tryordinal.com — the social-media / LinkedIn content planning,
+      approval and scheduling platform for marketing teams. App at
+      https://app.tryordinal.com, docs at https://docs.tryordinal.com, REST API base
+      https://app.tryordinal.com/api/v1. Hookdeck's ORDINAL source type links to
+      docs.tryordinal.com/integrations/webhooks/introduction with icon_domain
+      https://www.tryordinal.com/, which fixes the identity. This is NOT Ordinals (the
+      Bitcoin inscription protocol / ord), NOT Ordinal Stats or Ordinal Labs, and NOT an
+      "ordinal numbers" npm package. There is NO official Ordinal npm or pip SDK — do not
+      add one to package.json / requirements.txt.
+
+      THERE IS NO SIGNATURE. DO NOT FABRICATE AN HMAC VERIFIER. Verified 2026-09-28 against
+      the rendered docs (introduction, event-types, every per-event page, and the
+      Create/Get/Update webhook API reference): there is no signature header, no signing
+      secret, no whsec_ key, no timestamp header, no HMAC, and no Svix / Standard Webhooks
+      headers. The Create webhook response returns only id, name, url, topics, createdAt —
+      no secret is ever issued. Do NOT invent X-Ordinal-Signature, Ordinal-Signature,
+      webhook-signature, or any crypto.createHmac / hmac.new path.
+
+      THE ONLY AUTHENTICATION MECHANISM IS STATIC CUSTOM HEADERS. The webhook object has an
+      optional `headers` field, documented verbatim as "Optional custom headers to include
+      in webhook requests" (a JSON object of header name -> value; Get returns
+      headers: object | null). The docs' example is {"X-Custom-Header": "value"}. Ordinal
+      adds these headers to every delivery, so the recommended pattern is: (1) generate a
+      long random secret yourself; (2) create/patch the webhook with
+      {"headers": {"X-Webhook-Secret": "<secret>"}} — the header NAME is the integrator's
+      choice and must be presented as NOT an Ordinal-defined header (examples use
+      x-webhook-secret via a configurable ORDINAL_WEBHOOK_SECRET_HEADER env var); (3) in the
+      handler compare the incoming header against ORDINAL_WEBHOOK_SECRET with a constant-time
+      compare (crypto.timingSafeEqual with a length guard / hmac.compare_digest on bytes),
+      returning 401 on mismatch or absence; (4) FAIL CLOSED — if ORDINAL_WEBHOOK_SECRET is
+      unset, reject (500) rather than accepting everything silently. State plainly that this
+      is a shared-secret CHANNEL check, not integrity protection: the value is static, so it
+      is only as good as TLS and secret hygiene. Rotate by PATCH /webhooks/{id} with new
+      `headers` (all fields optional).
+
+      NO RAW-BODY REQUIREMENT. Because nothing is signed over the body, parsing JSON before
+      authenticating is fine — say so explicitly and contrast it with signed providers
+      (Stripe/Shopify/GitHub) where a body parser before verification breaks the HMAC.
+      express.json() and await request.json() are safe on an Ordinal route.
+
+      BASIC AUTH VARIANT: an integrator could instead put
+      {"Authorization": "Basic <base64(user:pass)>"} in `headers`. HEDGE — the docs do not
+      say whether `Authorization` (or other reserved names) may be overridden via `headers`.
+      Present the custom X- header as the primary path and Basic Auth as an alternative "if
+      Ordinal accepts an Authorization custom header". Do not assert either way.
+
+      DASHBOARD: webhooks can also be managed at Settings -> Integrations -> Webhooks
+      (https://app.tryordinal.com/settings/integrations/webhooks). HEDGE — `headers` is
+      documented on the API; whether the dashboard form exposes custom headers is not
+      documented. Tell users to set headers via the API (POST /webhooks or
+      PATCH /webhooks/{id}) if the UI lacks it.
+
+      HOOKDECK: the ORDINAL source type has verification OPTIONAL and offers the generic
+      Basic Auth and API Key (header name + value) checks — these validate the static header
+      configured in Ordinal's `headers`. Hookdeck cannot do HMAC for Ordinal because there is
+      no body-dependent signature.
+
+      MANAGEMENT API (bearer API key, base https://app.tryordinal.com/api/v1):
+      GET /webhooks, POST /webhooks, GET /webhooks/{id}, PATCH /webhooks/{id},
+      DELETE /webhooks/{id}. POST body: name (required), url (required, uri), description
+      (optional), topics (required string[], min 1 — the event types), headers (optional
+      object). The Create response omits description, headers and createdBy; use Get for the
+      full object. API calls use Authorization: Bearer <api key> (workspace API key) — that
+      is the key for CALLING Ordinal, never something Ordinal sends to you, and never
+      something to compare an inbound delivery against.
+
+      ENVELOPE: every delivery is a JSON POST with exactly
+      {"type": "post.published", "data": { ... }, "createdAt": "2025-02-26T14:30:00.000Z"} —
+      type is the event type, data is the event-specific payload, createdAt is the ISO 8601
+      emit time. Respond with any 2xx to acknowledge (docs: "Your endpoint should respond
+      with a 2xx status code to acknowledge receipt"). There is NO top-level event id and NO
+      delivery-id header documented; for dedupe, HEDGE and derive a key yourself (e.g. type +
+      the resource id inside data + createdAt), labelled as a suggestion rather than a
+      documented id.
+
+      UNDOCUMENTED — say so, do not invent values: retry policy / number of attempts,
+      delivery timeout, ordering guarantees, source IP ranges, User-Agent, any
+      Ordinal-specific delivery headers, and any test/ping event. Do NOT fabricate an IP
+      allowlist, a retry schedule, or a `ping` event.
+
+      EVENTS — 20 topics. `data` has ONE key whose name depends on the family:
+      social profile (data.profile): social_profile.connected, social_profile.disconnected,
+      social_profile.reconnect_needed. Posts (data.post): post.created, post.scheduled,
+      post.rescheduled, post.unscheduled, post.published, post.publish_failed, post.archived,
+      post.permanently_deleted, post.content.edited (debounced per post — fires ~5 minutes
+      after edits; includes the latest content for all channels). Comments (data.comment):
+      post.comment.created, post.inline_comment.created (one event per comment, including
+      replies in a thread). Approvals (data.approval — for BOTH post.* and campaign.*):
+      post.approval.requested, post.approval.approved, campaign.approval.requested,
+      campaign.approval.approved. Invites (data.invite): invite.created (if the invitee
+      already has an account they are added directly and no email is sent), invite.accepted.
+      NOTE THE MIXED SEPARATORS — publish_failed, reconnect_needed, permanently_deleted and
+      inline_comment use underscores inside a dot-separated name. Use the exact strings;
+      post.publish.failed and post.publishFailed are wrong.
+
+      DOCUMENTED PAYLOADS (use verbatim in test vectors): post.published — data.post has id,
+      title, channel (SINGULAR), campaign (nullable: {id,name,startDate,endDate}), url (the
+      Ordinal app link), postUrl (the live channel link, nullable), profile
+      ({id,name,detail}), workspace ({id,slug,name}), publishedBy, publishedAt.
+      post.publish_failed — data.post has id, title, channel, error (e.g. "Token expired"),
+      campaign (nullable), url, profile, scheduledPublishAt, workspace, createdBy, failedAt.
+      post.created — data.post has id, title, status (e.g. "draft"), channels (ARRAY, e.g.
+      ["LinkedIn"] — plural, unlike post.published), campaign (nullable), url, labels[]
+      ({id,name,color,backgroundColor}), workspace, createdBy, createdAt, linkedIn (nullable:
+      {profile, copy, assets[]}), x (nullable: {profile, tweets:[{copy, assets}]}).
+      social_profile.connected — data.profile has id, name, detail, channel, profileImageUrl,
+      workspace, connectedBy, connectedAt. post.approval.requested — data.approval has post
+      {id,title,url}, campaign, workspace, createdApprovals[] ({id,isBlocking,message,
+      dueDate,createdAt,status:"Requested",user,requestedBy}), existingApprovals[];
+      campaign.approval.requested is the same shape with campaign instead of post.
+      post.comment.created — data.comment has id, message, post {id,title,url}, workspace,
+      createdBy, createdAt. invite.accepted — data.invite has id, email, createdAt,
+      acceptedAt, invitedBy, acceptedBy, workspace. For any event whose fields are not listed
+      here, link to its docs page
+      (https://docs.tryordinal.com/integrations/webhooks/<type with dots and underscores as
+      hyphens>, e.g. post-publish-failed) rather than inventing fields.
+    testScenario:
+      events:
+        - post.published
+        - post.publish_failed
+        - post.approval.requested

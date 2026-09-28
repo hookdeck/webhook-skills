@@ -353,6 +353,27 @@
       ]
     },
     {
+      "name": "ordinal-webhooks",
+      "description": "Receive Ordinal (tryordinal.com) webhooks — the social-media / LinkedIn content planning, approval and scheduling platform for marketing teams. Use when building an Ordinal webhook receiver, because Ordinal does NOT sign its deliveries: there is no HMAC, no signature header, no signing secret and no timestamp, so do not write a signature verifier. The only authentication is a STATIC custom header you configure yourself via the webhook's `headers` field (e.g. `X-Webhook-Secret`), compared in constant time. Use when handling `post.published`, `post.publish_failed`, `post.created`, `post.approval.requested`, `post.comment.created`, `social_profile.reconnect_needed` or `invite.accepted`, unwrapping the `{ type, data, createdAt }` envelope, or managing webhooks via `POST /api/v1/webhooks`. Not Bitcoin Ordinals/inscriptions, not Ordinal Labs.",
+      "source": "./skills/ordinal-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/ordinal-webhooks",
+      "keywords": [
+        "webhooks",
+        "ordinal"
+      ]
+    },
+    {
       "name": "paymob-webhooks",
       "description": "Receive and verify Paymob webhook callbacks (transaction callbacks). Use when setting up Paymob webhook handlers, debugging HMAC-SHA512 signature verification, or handling payment transaction states like success, refund, void, and auth/capture from the Transaction Processed Callback.",
       "source": "./skills/paymob-webhooks",
