@@ -231,10 +231,12 @@ def handle_event(event: Dict[str, Any], idempotency_key: str) -> None:
 
     # --- Comments (data.comment, NOT data.post) -----------------------------
     elif event_type == "post.comment.created":
-        # One event per comment, INCLUDING replies in a thread.
+        # Post-level comment.
         post = resource.get("post") or {}
         print(f"💬 Comment on \"{post.get('title')}\": {resource.get('message')}")
     elif event_type == "post.inline_comment.created":
+        # Text-anchored comment. One event per comment, INCLUDING replies in a
+        # thread (documented for inline comments); thread context is in `thread`.
         post = resource.get("post") or {}
         print(f"💬 Inline comment on \"{post.get('title')}\": {resource.get('message')}")
 

@@ -16,7 +16,7 @@ dance from a signed provider.
 ## Prerequisites
 
 - Node.js 18+
-- An Ordinal workspace and a workspace API key (Settings → API) to register the webhook
+- An Ordinal workspace and a workspace API key (Settings → Integrations → API, [app.tryordinal.com/settings/integrations/api](https://app.tryordinal.com/settings/integrations/api)) to register the webhook
 - A secret you generate yourself: `openssl rand -hex 32`
 
 ## Setup

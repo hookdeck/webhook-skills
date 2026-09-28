@@ -86,8 +86,10 @@ returns `undefined` — this is the single most common Ordinal handler bug.
 - **`post.content.edited` is debounced per post** and fires roughly **5 minutes after**
   edits. It includes the latest content for **all channels**, so treat it as "here is the
   current state", not "here is a diff".
-- **Comment events fire once per comment, including replies in a thread** — a reply is its
-  own `post.comment.created` / `post.inline_comment.created` event.
+- **`post.inline_comment.created` fires once per comment, including replies in a
+  thread** — each reply is its own event, with the thread in `data.comment.thread`. The
+  docs state this for inline comments only; they don't say whether replies to post-level
+  comments also emit `post.comment.created`.
 - **`invite.created`:** if the invitee already has an account they are added directly and
   **no email is sent**.
 

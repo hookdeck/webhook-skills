@@ -227,10 +227,12 @@ function handleEvent(event, idempotencyKey) {
 
     // --- Comments (data.comment, NOT data.post) -----------------------------
     case 'post.comment.created':
-      // One event per comment, INCLUDING replies in a thread.
+      // Post-level comment.
       console.log(`💬 Comment on "${resource.post && resource.post.title}": ${resource.message}`);
       break;
     case 'post.inline_comment.created':
+      // Text-anchored comment. One event per comment, INCLUDING replies in a
+      // thread (documented for inline comments); thread context is in `thread`.
       console.log(
         `💬 Inline comment on "${resource.post && resource.post.title}": ${resource.message}`
       );

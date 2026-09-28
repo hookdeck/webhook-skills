@@ -4,7 +4,7 @@
 
 - An Ordinal workspace at [app.tryordinal.com](https://app.tryordinal.com) with permission
   to manage integrations
-- A **workspace API key** if you are using the API (Settings → API, sent as
+- A **workspace API key** if you are using the API (Settings → Integrations → API, [app.tryordinal.com/settings/integrations/api](https://app.tryordinal.com/settings/integrations/api), sent as
   `Authorization: Bearer <api key>`)
 - A publicly reachable HTTPS endpoint (for local development, use the Hookdeck CLI below)
 
@@ -125,8 +125,10 @@ Because the secret is a value **you** put in `headers`, rotation is a `PATCH`:
 3. Confirm deliveries are arriving with the new value, then drop the old secret from your
    handler.
 
-There is no provider-side rotation window and no dual-secret support — the `headers` object
-is replaced wholesale, so step 1 is what prevents a gap.
+Ordinal documents no rotation window or dual-secret support, and doesn't say whether a
+`PATCH` merges into or replaces the existing `headers` object. Send the complete `headers`
+object you want (including any other custom headers you rely on), then `GET /webhooks/{id}`
+to confirm the result. Step 1 is what prevents a gap.
 
 ## Testing
 
