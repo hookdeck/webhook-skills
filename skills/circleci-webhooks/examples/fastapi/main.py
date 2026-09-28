@@ -87,9 +87,11 @@ def verify_circleci_signature(
     # -- no prefix to strip, no base64 decoding.
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
 
-    # compare_digest is constant-time and safe on differing lengths; both sides
-    # are hex, hence ASCII, so there is no TypeError risk.
-    return hmac.compare_digest(v1, expected)
+    # compare_digest is constant-time and safe on differing lengths. Compare
+    # BYTES, not str: `v1` is attacker-controlled (Starlette decodes headers as
+    # latin-1), and compare_digest raises TypeError on non-ASCII str input,
+    # which would turn a garbage header into a 500 that CircleCI retries.
+    return hmac.compare_digest(v1.encode("utf-8"), expected.encode("utf-8"))
 
 
 def extract_vcs_info(pipeline: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
@@ -117,23 +119,29 @@ def extract_vcs_info(pipeline: Optional[Dict[str, Any]] = None) -> Dict[str, Opt
             "repository_url": vcs.get("target_repository_url") or vcs.get("origin_repository_url"),
         }
 
-    # GitLab / GitHub App pipelines.
+    # GitLab / GitHub App pipelines. Field names below are the ones in
+    # CircleCI's documented GitLab sample: `git` carries {branch, tag, ref,
+    # checkout_sha, checkout_url}; commit title/author/web URL live in the
+    # `gitlab` map (the reference says that map is present for GitLab AND
+    # GitHub App triggers). `git.tag` is "" (not absent) on branch builds,
+    # hence `or None`.
     params = pipeline.get("trigger_parameters") or {}
     git = params.get("git") or {}
+    gitlab = params.get("gitlab") or {}
     circleci_params = params.get("circleci") or {}
-    provider = circleci_params.get("trigger_type")
-    if provider is None:
-        provider = "gitlab" if params.get("gitlab") else ("github" if params.get("github") else None)
 
     return {
         "source": "trigger_parameters",
-        "provider": provider,
-        "branch": git.get("branch"),
-        "tag": git.get("tag"),
-        "revision": git.get("checkout_sha") or git.get("revision"),
-        "subject": git.get("commit_message"),
-        "author_name": git.get("author_name"),
-        "repository_url": git.get("repo_url"),
+        "provider": circleci_params.get("trigger_type"),
+        "branch": git.get("branch") or gitlab.get("branch") or None,
+        "tag": git.get("tag") or None,
+        "revision": git.get("checkout_sha")
+        or gitlab.get("commit_sha")
+        or gitlab.get("checkout_sha")
+        or None,
+        "subject": gitlab.get("commit_title") or None,
+        "author_name": gitlab.get("commit_author_name") or None,
+        "repository_url": gitlab.get("web_url") or git.get("checkout_url") or None,
     }
 
 

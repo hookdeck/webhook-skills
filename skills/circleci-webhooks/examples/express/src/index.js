@@ -94,18 +94,23 @@ function extractVcsInfo(pipeline = {}) {
     };
   }
 
-  // GitLab / GitHub App pipelines.
+  // GitLab / GitHub App pipelines. Field names below are the ones in CircleCI's
+  // documented GitLab sample: `git` carries {branch, tag, ref, checkout_sha,
+  // checkout_url}; commit title/author/web URL live in the `gitlab` map (the
+  // reference says that map is present for GitLab AND GitHub App triggers).
+  // `git.tag` is "" (not absent) on branch builds, hence `||`.
   const params = pipeline.trigger_parameters ?? {};
   const git = params.git ?? {};
+  const gitlab = params.gitlab ?? {};
   return {
     source: 'trigger_parameters',
-    provider: params.circleci?.trigger_type ?? (params.gitlab ? 'gitlab' : params.github ? 'github' : null),
-    branch: git.branch ?? null,
-    tag: git.tag ?? null,
-    revision: git.checkout_sha ?? git.revision ?? null,
-    subject: git.commit_message ?? null,
-    authorName: git.author_name ?? null,
-    repositoryUrl: git.repo_url ?? null,
+    provider: params.circleci?.trigger_type ?? null,
+    branch: git.branch || gitlab.branch || null,
+    tag: git.tag || null,
+    revision: git.checkout_sha || gitlab.commit_sha || gitlab.checkout_sha || null,
+    subject: gitlab.commit_title || null,
+    authorName: gitlab.commit_author_name || null,
+    repositoryUrl: gitlab.web_url || git.checkout_url || null,
   };
 }
 

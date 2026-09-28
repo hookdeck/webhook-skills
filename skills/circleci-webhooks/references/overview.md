@@ -103,7 +103,7 @@ project's VCS integration:
 | Integration | Shape |
 |---|---|
 | **GitHub OAuth**, **Bitbucket Cloud** | `pipeline.vcs` — `{ provider_name, branch \| tag, revision, origin_repository_url, target_repository_url, commit{ subject, body, author{name,email}, authored_at, committer{name,email}, committed_at } }` |
-| **GitLab**, **GitHub App** | **no `pipeline.vcs`.** Instead `pipeline.trigger_parameters` with nested `circleci`, `git`, and `gitlab`/`github` maps |
+| **GitLab**, **GitHub App** | **no `pipeline.vcs`.** Instead `pipeline.trigger_parameters` with nested `circleci`, `git` (`branch`, `tag`, `ref`, `checkout_sha`, `checkout_url`) and `gitlab` (`commit_title`, `commit_message`, `commit_author_name`, `commit_sha`, `web_url`, ...) maps. The reference says the `gitlab` map is present for GitLab *and* GitHub App triggers; it only publishes a GitLab sample, so read these fields defensively |
 
 A handler that does `payload.pipeline.vcs.branch` will throw on GitLab and
 GitHub App pipelines. Read both shapes:
@@ -119,11 +119,12 @@ function extractVcsInfo(pipeline = {}) {
     };
   }
   const git = pipeline.trigger_parameters?.git ?? {};
+  const gitlab = pipeline.trigger_parameters?.gitlab ?? {};
   return {
-    branch: git.branch ?? null,
-    tag: git.tag ?? null,
-    revision: git.checkout_sha ?? git.revision ?? null,
-    subject: git.commit_message ?? null,
+    branch: git.branch || gitlab.branch || null,
+    tag: git.tag || null,                         // "" on branch builds
+    revision: git.checkout_sha || gitlab.commit_sha || null,
+    subject: gitlab.commit_title || null,         // commit text is in `gitlab`, not `git`
   };
 }
 ```

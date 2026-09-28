@@ -119,7 +119,9 @@ def verify_circleci_signature(raw_body: bytes, signature_header: str, secret: st
         return False
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(v1, expected)    # constant time, length-safe
+    # constant time, length-safe. Compare BYTES: with str arguments
+    # compare_digest raises TypeError on a non-ASCII (attacker-supplied) header.
+    return hmac.compare_digest(v1.encode("utf-8"), expected.encode("utf-8"))
 ```
 
 ```python
@@ -179,14 +181,16 @@ CircleCI signed; it only ever agrees by luck.
 Node's `crypto.timingSafeEqual` **throws** when the buffers differ in length. A
 truncated or garbage signature then becomes an uncaught 500, which CircleCI
 retries. Check `a.length === b.length` first, or wrap in `try`/`catch`. Python's
-`hmac.compare_digest` handles differing lengths safely.
+`hmac.compare_digest` handles differing lengths safely, but raises `TypeError`
+when given a `str` containing non-ASCII characters, so encode both sides to
+`bytes` before comparing.
 
 ### Inventing a timestamp or replay window
 
 There is **no `circleci-timestamp` header** and **no documented replay
 tolerance**. Some handlers reject on `happened_at` — don't. It is *event* time,
-not a signing input, and a legitimate retry hours later carries the original
-value. You'd silently drop real deliveries. Replay protection here is
+not a signing input, and a legitimate retry (CircleCI doesn't document when
+retries happen) carries the original value. You'd silently drop real deliveries. Replay protection here is
 **deduplication on the payload `id`**.
 
 ### Base64-decoding the secret

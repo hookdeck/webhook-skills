@@ -64,10 +64,12 @@ function verifyCircleCISignature(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;               // fail closed
 
   // Comma-separated `<version>=<signature>`; split each pair on the FIRST `=`.
-  const v1 = signatureHeader
-    .split(',')
-    .map((p) => { const i = p.indexOf('='); return [p.slice(0, i).trim(), p.slice(i + 1).trim()]; })
-    .find(([version]) => version === 'v1')?.[1];
+  let v1 = null;
+  for (const pair of String(signatureHeader).split(',')) {
+    const eq = pair.indexOf('=');
+    if (eq === -1) continue;                                   // malformed pair
+    if (pair.slice(0, eq).trim() === 'v1') { v1 = pair.slice(eq + 1).trim(); break; }
+  }
   if (!v1) return false;    // no v1 entry -> reject; do NOT try v2/v3
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
@@ -91,7 +93,8 @@ def verify_circleci_signature(raw_body: bytes, signature_header: str, secret: st
     if not v1:                                      # no v1 entry -> reject
         return False
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(v1, expected)        # constant time
+    # compare BYTES: str input raises TypeError on a non-ASCII (hostile) header
+    return hmac.compare_digest(v1.encode("utf-8"), expected.encode("utf-8"))
 ```
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

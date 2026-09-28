@@ -100,17 +100,43 @@ GITLAB_PIPELINE = {
     "id": "5678fe1d-d3a6-44fc-8886-8979558254c4",
     "number": 42,
     "created_at": "2026-09-28T10:00:00.000Z",
-    "trigger": {"type": "webhook"},
+    "trigger": {"type": "gitlab"},
+    # trigger_parameters verbatim from CircleCI's "workflow-completed for GitLab
+    # and GitHub App" sample in the outbound webhooks reference.
     "trigger_parameters": {
-        "circleci": {"trigger_type": "gitlab", "event_time": "2026-09-28T10:00:00.000Z"},
-        "git": {
-            "branch": "feature/gitlab",
-            "checkout_sha": "abc123def456abc123def456abc123def456abcd",
-            "commit_message": "Add GitLab support",
-            "author_name": "Committer Name",
-            "repo_url": "https://gitlab.com/acme/app",
+        "gitlab": {
+            "web_url": "https://gitlab.com/circleci/hello-world",
+            "commit_author_name": "Commit Author",
+            "user_id": "9534789",
+            "user_name": "User name",
+            "user_username": "username",
+            "branch": "main",
+            "commit_title": "Update README.md",
+            "commit_message": "Update README.md",
+            "repo_url": "git@gitlab.com:circleci/hello-world.git",
+            "user_avatar": "https://secure.gravatar.com/avatar",
+            "type": "push",
+            "project_id": "33852820",
+            "ref": "refs/heads/main",
+            "repo_name": "hello-world",
+            "commit_author_email": "committer.email@example.com",
+            "checkout_sha": "850a1519f25d14e968649cc420d1bd381715c05c",
+            "commit_timestamp": "2022-04-13T11:10:16+00:00",
+            "commit_sha": "850a1519f25d14e968649cc420d1bd381715c05c",
         },
-        "gitlab": {"project_id": "12345"},
+        "git": {
+            "tag": "",
+            "checkout_sha": "850a1519f25d14e968649cc420d1bd381715c05c",
+            "ref": "refs/heads/main",
+            "branch": "main",
+            "checkout_url": "git@gitlab.com:circleci/hello-world.git",
+        },
+        "circleci": {
+            "event_time": "2022-04-13T11:10:18.349Z",
+            "actor_id": "6a19122c-40e0-4d56-a875-aac6ccc27700",
+            "event_type": "push",
+            "trigger_type": "gitlab",
+        },
     },
 }
 
@@ -260,6 +286,28 @@ def test_does_not_raise_on_wrong_length_signature():
     assert verify_circleci_signature(body.encode(), "v1=short", TEST_SECRET) is False
 
 
+def test_non_ascii_signature_is_rejected_not_raised():
+    # Header values are attacker-controlled. hmac.compare_digest raises
+    # TypeError on a non-ASCII str, so the verifier must compare bytes.
+    body = json.dumps(WORKFLOW_COMPLETED)
+    assert verify_circleci_signature(body.encode(), "v1=\xe9", TEST_SECRET) is False
+
+
+def test_non_ascii_signature_header_returns_400_not_500():
+    # Starlette decodes raw header bytes as latin-1, so b"\xe9" arrives as "é".
+    body = json.dumps(WORKFLOW_COMPLETED)
+    response = client.post(
+        "/webhooks/circleci",
+        content=body.encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "circleci-event-type": "workflow-completed",
+            "circleci-signature": b"v1=\xe9",
+        },
+    )
+    assert response.status_code == 400
+
+
 def test_rejects_base64_digest():
     import base64
 
@@ -386,7 +434,7 @@ def test_rejects_trailing_newline_added_after_signing():
 
 def test_accepts_years_old_happened_at():
     # CircleCI's scheme signs no timestamp and documents no tolerance.
-    # happened_at is EVENT time; a legitimate retry hours later carries the
+    # happened_at is EVENT time; a legitimate (undocumented-timing) retry carries the
     # original value. Rejecting on it silently drops real deliveries.
     res = post(fresh_body(WORKFLOW_COMPLETED, happened_at="2019-01-01T00:00:00.000Z"))
     assert res.status_code == 200
@@ -431,9 +479,13 @@ def test_extracts_vcs_from_trigger_parameters():
 
     info = extract_vcs_info(GITLAB_PIPELINE)
     assert info["source"] == "trigger_parameters"
-    assert info["branch"] == "feature/gitlab"
-    assert info["revision"] == "abc123def456abc123def456abc123def456abcd"
-    assert info["subject"] == "Add GitLab support"
+    assert info["provider"] == "gitlab"
+    assert info["branch"] == "main"
+    assert info["tag"] is None  # documented as "" on branch builds
+    assert info["revision"] == "850a1519f25d14e968649cc420d1bd381715c05c"
+    assert info["subject"] == "Update README.md"
+    assert info["author_name"] == "Commit Author"
+    assert info["repository_url"] == "https://gitlab.com/circleci/hello-world"
 
 
 def test_extract_vcs_handles_empty_pipeline():

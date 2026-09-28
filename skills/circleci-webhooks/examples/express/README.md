@@ -87,7 +87,7 @@ npx hookdeck-cli listen 3000 circleci --path /webhooks/circleci
 
 No account, no install required — the CLI creates a guest account on first run
 and gives you a public HTTPS URL plus a web UI for inspecting requests. Paste the
-printed URL into **Project Settings → Webhooks → Receiver URL**, set the same
+printed URL into **Project Settings → Webhooks → URL**, set the same
 Secret token, save, then hit **Test Ping Event**.
 
 That button sends a **normal, fully-signed POST** — there is no unsigned

@@ -86,17 +86,43 @@ const GITLAB_PIPELINE: CircleCIPipeline = {
   id: '5678fe1d-d3a6-44fc-8886-8979558254c4',
   number: 42,
   created_at: '2026-09-28T10:00:00.000Z',
-  trigger: { type: 'webhook' },
+  trigger: { type: 'gitlab' },
+  // trigger_parameters verbatim from CircleCI's "workflow-completed for GitLab
+  // and GitHub App" sample in the outbound webhooks reference.
   trigger_parameters: {
-    circleci: { trigger_type: 'gitlab', event_time: '2026-09-28T10:00:00.000Z' },
-    git: {
-      branch: 'feature/gitlab',
-      checkout_sha: 'abc123def456abc123def456abc123def456abcd',
-      commit_message: 'Add GitLab support',
-      author_name: 'Committer Name',
-      repo_url: 'https://gitlab.com/acme/app',
+    gitlab: {
+      web_url: 'https://gitlab.com/circleci/hello-world',
+      commit_author_name: 'Commit Author',
+      user_id: '9534789',
+      user_name: 'User name',
+      user_username: 'username',
+      branch: 'main',
+      commit_title: 'Update README.md',
+      commit_message: 'Update README.md',
+      repo_url: 'git@gitlab.com:circleci/hello-world.git',
+      user_avatar: 'https://secure.gravatar.com/avatar',
+      type: 'push',
+      project_id: '33852820',
+      ref: 'refs/heads/main',
+      repo_name: 'hello-world',
+      commit_author_email: 'committer.email@example.com',
+      checkout_sha: '850a1519f25d14e968649cc420d1bd381715c05c',
+      commit_timestamp: '2022-04-13T11:10:16+00:00',
+      commit_sha: '850a1519f25d14e968649cc420d1bd381715c05c',
     },
-    gitlab: { project_id: '12345' },
+    git: {
+      tag: '',
+      checkout_sha: '850a1519f25d14e968649cc420d1bd381715c05c',
+      ref: 'refs/heads/main',
+      branch: 'main',
+      checkout_url: 'git@gitlab.com:circleci/hello-world.git',
+    },
+    circleci: {
+      event_time: '2022-04-13T11:10:18.349Z',
+      actor_id: '6a19122c-40e0-4d56-a875-aac6ccc27700',
+      event_type: 'push',
+      trigger_type: 'gitlab',
+    },
   },
 };
 
@@ -385,7 +411,7 @@ describe('raw body', () => {
 describe('no replay window', () => {
   it('accepts a delivery whose happened_at is years old', async () => {
     // CircleCI's scheme signs no timestamp and documents no tolerance.
-    // happened_at is EVENT time; a legitimate retry hours later carries the
+    // happened_at is EVENT time; a legitimate (undocumented-timing) retry carries the
     // original value. Rejecting on it silently drops real deliveries.
     const res = await post(
       freshBody(WORKFLOW_COMPLETED, { happened_at: '2019-01-01T00:00:00.000Z' })
@@ -435,9 +461,13 @@ describe('payload shapes', () => {
 
     const info = extractVcsInfo(GITLAB_PIPELINE);
     expect(info.source).toBe('trigger_parameters');
-    expect(info.branch).toBe('feature/gitlab');
-    expect(info.revision).toBe('abc123def456abc123def456abc123def456abcd');
-    expect(info.subject).toBe('Add GitLab support');
+    expect(info.provider).toBe('gitlab');
+    expect(info.branch).toBe('main');
+    expect(info.tag).toBeNull(); // documented as "" on branch builds
+    expect(info.revision).toBe('850a1519f25d14e968649cc420d1bd381715c05c');
+    expect(info.subject).toBe('Update README.md');
+    expect(info.authorName).toBe('Commit Author');
+    expect(info.repositoryUrl).toBe('https://gitlab.com/circleci/hello-world');
   });
 
   it('does not throw on a pipeline with neither vcs nor trigger_parameters', () => {

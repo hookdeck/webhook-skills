@@ -14,8 +14,9 @@ Each project is limited to **5 outbound webhooks**.
 
 ## Add a Webhook in the CircleCI App
 
-1. Open [app.circleci.com](https://app.circleci.com) and select your project.
-2. Click **Project Settings** (top right).
+1. In the [CircleCI web app](https://app.circleci.com), select your organization.
+2. Select **Projects** in the sidebar, find your project, select the ellipsis
+   (**…**), and choose **Project Settings**.
 3. Choose **Webhooks** in the sidebar.
 4. Click **Add Webhook**.
 5. Fill the form:
@@ -23,9 +24,9 @@ Each project is limited to **5 outbound webhooks**.
    | Field | What to enter |
    |---|---|
    | **Webhook name** | Anything descriptive — it appears in the payload as `webhook.name` |
-   | **Receiver URL** | Your HTTPS endpoint, e.g. `https://your-app.example.com/webhooks/circleci` |
+   | **URL** | Your HTTPS endpoint, e.g. `https://your-app.example.com/webhooks/circleci` |
    | **Secret token** | The HMAC signing secret. **Optional in the form** — set it anyway, see below |
-   | **Certificate verification** | Leave enabled (API field `verify-tls`). Disable only for a self-signed dev cert |
+   | **Certificate Validation** | Leave enabled (API field `verify-tls`). CircleCI: "Only leave this unchecked for testing purposes" |
    | **Events** | Tick `workflow-completed` and/or `job-completed`. At least one is required |
 
 6. Optionally hit **Test Ping Event** (see below).
@@ -128,7 +129,7 @@ npx hookdeck-cli listen 8000 circleci --path /webhooks/circleci
 
 No account required — the CLI creates a guest account on first run and gives you
 a public HTTPS URL plus a web UI for inspecting and replaying requests. Paste the
-printed URL into the webhook's **Receiver URL**, set the **Secret token** to your
+printed URL into the webhook's **URL** field, set the **Secret token** to your
 local `CIRCLECI_WEBHOOK_SECRET`, save, and click **Test Ping Event**.
 
 ### Sign a request by hand
@@ -173,10 +174,10 @@ delivery from a real workflow or job. To generate traffic on demand:
 
 ## Rotating the Secret
 
-Editing the Secret token takes effect immediately, and CircleCI sends **only
-one** `v1` signature per request — there is no overlap window and no
-multi-secret support. Zero-downtime rotation means accepting either secret in
-your handler for the changeover:
+CircleCI's docs describe **one** Secret token per webhook and don't document a
+rotation overlap window or multi-secret signing, so plan as if the change is
+immediate. Zero-downtime rotation then means accepting either secret in your
+handler for the changeover:
 
 1. Deploy a handler that accepts `CIRCLECI_WEBHOOK_SECRET` **or**
    `CIRCLECI_WEBHOOK_SECRET_PREVIOUS`.
@@ -189,8 +190,8 @@ your handler for the changeover:
 | Symptom | Likely cause |
 |---|---|
 | No `circleci-signature` header arrives | No Secret token configured on the webhook (it's optional in the UI) |
-| Webhook doesn't appear in the sidebar | Not an org admin |
-| "Add Webhook" is disabled | The project already has its **5-webhook** limit |
+| Can't add, edit or delete webhooks | Not an org admin (required for all three) |
+| Can't add another webhook | The project already has its **5-webhook** limit |
 | URL rejected | CircleCI requires **HTTPS** |
 | TLS errors on delivery | Cert not trusted; fix the cert rather than disabling `verify-tls` |
 | Nothing arrives after a build | Wrong event ticked — only `workflow-completed` and `job-completed` exist, and both fire at *terminal* state only |

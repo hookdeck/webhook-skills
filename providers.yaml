@@ -881,11 +881,17 @@ providers:
       origin/target_repository_url, provider_name) is present for GitHub OAuth and Bitbucket
       Cloud pipelines ONLY; GitLab / GitHub App pipelines carry pipeline.trigger_parameters
       {circleci, git, gitlab} instead and have NO `vcs`. Handlers reading branch/commit must
-      handle BOTH shapes.
-      Hookdeck source type CIRCLECI is being added in hookdeck/core#5669 (open at time of
-      writing) as an alias of the generic HMAC controller (algorithm sha256, header_key
-      circleci-signature, encoding hex) with a single webhook_secret_key field; not yet listed
-      at hookdeck.com/docs/sources.
+      handle BOTH shapes. In the documented GitLab sample, `git` holds only {tag, checkout_sha,
+      ref, branch, checkout_url} (tag is "" on branch builds); commit_title, commit_message,
+      commit_author_name, commit_sha, web_url and repo_url live in the `gitlab` map, NOT in
+      `git`. The reference says the `gitlab` map is present for GitLab and GitHub App triggers
+      but only publishes a GitLab sample.
+      Hookdeck source type CIRCLECI was added in hookdeck/core#5669 (merged 2026-09-28) as an
+      alias of the generic HMAC controller (algorithm sha256, header_key circleci-signature,
+      encoding hex) with a single webhook_secret_key field and external_docs_url
+      .../outbound-webhooks/#validate-webhooks. Core's generic HMAC parser accepts ANY
+      `v<N>=` value that matches HMAC-SHA256 hex of the body (so a v2-only header passes); the
+      skill deliberately checks only `v1`, per the docs' downgrade warning.
     testScenario:
       events:
         - workflow-completed
