@@ -37,7 +37,7 @@ rejects every delivery or only pretends to check:
 | A shared-secret comparison against something Docker Hub sends | Docker Hub sends no secret |
 | A source-IP allowlist | **Docker publishes none.** Any list you find is guesswork about Docker's egress and will break |
 | Standard Webhooks (`webhook-id` / `webhook-timestamp` / `webhook-signature`) | Docker Hub does not implement Standard Webhooks |
-| A `callback_url` round-trip as "validation" | The field is legacy and unsupported; the URL 404s. See [overview.md](overview.md#the-legacy-callback_url-field) |
+| A `callback_url` round-trip as "validation" | The field is legacy and unsupported; the URL was reported to 404 (docker/docs#23955). See [overview.md](overview.md#the-legacy-callback_url-field) |
 
 ## What to Do Instead
 
@@ -113,9 +113,12 @@ Authorization: Bearer <jwt>
 (operationId `GetRepositoryTag`, documented in the Docker Hub API reference.)
 
 **That bearer token is a JWT, not your PAT.** A personal or organization access
-token is *not* itself a bearer credential for `hub.docker.com` — sending
-`Authorization: Bearer dckr_pat_...` gets a `401`, which makes the confirmation
-strictly worse than sending no header at all. Exchange the credential first:
+token is *not* itself a bearer credential for `hub.docker.com`: the Hub API
+reference says *"You must use each authentication type with the Create access
+token route to obtain a bearer token"*. And a bad `Authorization` header is worse
+than none — on a public repository that returns `200` unauthenticated, an
+unrecognised bearer value gets a `401` (observed 2026-09-28). Exchange the
+credential first:
 
 ```
 POST https://hub.docker.com/v2/auth/token

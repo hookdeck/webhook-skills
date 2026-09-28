@@ -96,7 +96,8 @@ Then layer on the controls that actually matter for an unsigned source:
   rather than by tag. Auth: no header at all for a public repository; for a
   private one, a **JWT obtained from `POST /v2/auth/token`** with
   `{"identifier": "<username or org>", "secret": "<PAT or OAT>"}` — a raw PAT/OAT
-  is not itself a bearer token for the Hub API and returns `401`.
+  is not itself a bearer token for the Hub API, and an unrecognised bearer value
+  turns a public repo's `200` into a `401`.
 - **Validate the shape defensively** — require `push_data.tag` and
   `repository.repo_name` as non-empty strings, reject malformed bodies with 400.
 - **Allowlist expected repositories** (`DOCKER_HUB_ALLOWED_REPOS`) so someone

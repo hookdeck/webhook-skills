@@ -164,8 +164,9 @@ let cachedHubJwt: { token: string; expiresAt: number } | null = null;
 /**
  * Exchange a Docker Hub credential for the short-lived JWT the Hub API wants.
  *
- * A PAT/OAT is NOT itself a bearer token for hub.docker.com — sending
- * `Authorization: Bearer dckr_pat_...` gets a 401. It is the `secret` you POST
+ * A PAT/OAT is NOT itself a bearer token for hub.docker.com (per the Hub API
+ * reference), and an unrecognised bearer value gets a 401 even on a public repo.
+ * It is the `secret` you POST
  * to /v2/auth/token, which returns `access_token`: a short-lived JWT that IS the
  * bearer token. Cached here because it expires.
  */
@@ -294,7 +295,8 @@ export async function POST(
 
   // `callback_url` is a LEGACY field and is no longer supported. It still
   // appears in the documented example payload, so tolerate it — but never POST
-  // to it. Webhook chains are gone and the URL 404s.
+  // to it. Webhook chains are gone, and the URL was reported to
+  // 404 on GET and POST (docker/docs#23955).
 
   // 4. Re-confirm before acting. Off unless DOCKER_HUB_API_TOKEN is set. In
   //    production, push this (and your real processing) onto a queue or into
