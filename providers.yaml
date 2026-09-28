@@ -586,6 +586,132 @@ providers:
     sdks:
       npm: [asana]
       pip: [asana]
+  - name: aftership
+    displayName: AfterShip
+    docs:
+      webhooks: https://www.aftership.com/docs/tracking/webhook/webhook-overview
+      verification: https://www.aftership.com/docs/tracking/webhook/webhook-signature
+      events: https://www.aftership.com/docs/tracking/webhook/webhook-specifications
+      api: https://www.aftership.com/docs/tracking/webhook/webhook-outgoing-ips
+    notes: >
+      AfterShip (aftership.com), the post-purchase / shipment tracking platform. NOT
+      ShipStation, ShipBob, ShipHero or Shippo. The docs at www.aftership.com/docs are
+      Cloudflare-protected and JS-rendered — curl/WebFetch get a "Just a moment..."
+      shell (confirmed 403 again on 2026-09-28); everything here was read verbatim in a
+      real browser on 2026-09-28. FOUR products send webhooks: Tracking (flagship),
+      Shipping (formerly Postmen — admin is still admin.postmen.com, label URLs on
+      postmen.com), Returns, and Warranty. Hookdeck source type is AFTERSHIP (slug
+      aftership), added in hookdeck/core#5669 (merged 2026-09-28); external_docs_url is the Tracking
+      signature page and its config is the standard single webhook_secret_key. Core's
+      controller accepts a valid HMAC in ANY of the three product headers, so the
+      primary target is Tracking with the others as variants of one algorithm.
+      VERIFICATION — ONE algorithm, THREE header names. In every product: HMAC-SHA256,
+      key = the webhook secret string used as UTF-8 bytes (NOT base64-decoded, no
+      prefix), message = the RAW request body bytes, digest encoded as standard BASE64
+      (not hex, not base64url). NO timestamp is signed, there is NO timestamp header
+      and NO replay window — do NOT invent a timestamp/tolerance check. (1) Tracking:
+      header `aftership-hmac-sha256` (docs render it Aftership-Hmac-Sha256; HTTP
+      headers are case-insensitive and frameworks lowercase them), bare base64 digest.
+      Quoted: "Each webhook request includes a aftership-hmac-sha256 header. The
+      signature is a base64-encoded HMAC generated using sha256 algorithm with webhook
+      request body and webhook secret of your account." Node sample:
+      crypto.createHmac('sha256', secret).update(data).digest('base64'); Python sample:
+      hmac.new(bytes(secret,'utf-8'), bytes(data,'utf-8'), hashlib.sha256).digest()
+      then base64.b64encode. Secret: Settings > Webhooks at admin.aftership.com.
+      (2) Shipping (Postmen): header `am-webhook-signature`, and the docs' sample ends
+      `console.log('hmac-sha256=' + sign); // should be equal to am-webhook-signature
+      value` — the header value carries a `hmac-sha256=` PREFIX before the digest.
+      Implement: strip an optional leading `hmac-sha256=` then compare. Secret:
+      Settings > Webhooks at admin.postmen.com. NOTE the Shipping sample signs
+      JSON.stringify(webhookPayload) — a re-serialization; skills must sign the RAW
+      body instead (the safe superset) and say so. (3) Returns and Warranty: header
+      `as-signature-hmac-sha256`, bare base64 digest. Quoted (both pages, identical):
+      "You should grab the webhook signature value from the HTTP Header:
+      as-signature-hmac-sha256. You can recalculate the same signature by creating an
+      HMAC with SHA256, using the provided webhook secret and the HTTP request body."
+      Also: "Please be aware that the header and format are not the same as our
+      AfterShip product's webhooks." LEGACY Returns, quoted: "For some of the existing
+      organizations, the signature Header is am-webhook-signature and the header value
+      is in the form of hmac-sha256={signature}. This only applies to organizations
+      created before Oct 25, 2022" — i.e. legacy Returns uses the Shipping
+      header+prefix. IMPLEMENTATION SHAPE — one verifyAfterShipSignature(rawBody,
+      headers, secret) that checks, in order, aftership-hmac-sha256,
+      as-signature-hmac-sha256, am-webhook-signature (stripping an optional
+      hmac-sha256= prefix, harmless on the other two), computes
+      base64(HMAC-SHA256(secret, rawBody)), and compares in constant time (guard length
+      before crypto.timingSafeEqual which throws on length mismatch; Python
+      hmac.compare_digest). Missing header -> 401 (not a crash); missing secret env var
+      -> 500 fail-closed with a clear message, never fail-open. Use the raw body
+      (express.raw, await req.text() in Next.js App Router, await request.body() in
+      FastAPI) — never re-stringify parsed JSON. Env var: AFTERSHIP_WEBHOOK_SECRET.
+      EACH PRODUCT HAS ITS OWN SECRET (Tracking admin vs Postmen admin vs
+      Returns/Warranty config page) — recommend one endpoint (or one Hookdeck source)
+      per product; do NOT claim a single secret spans products. AfterShip's docs point to no SDK helper for webhook verification, and the Node
+      @aftership/tracking-sdk 17.0.0 has none (inspected; other SDKs not checked). OTHER AUTH (Tracking only,
+      extras alongside the HMAC, not replacements): up to 5 custom headers per webhook
+      URL (basic auth / bearer token / secret key), and OAuth 2.0 client credentials —
+      AfterShip calls your Token URL with grant_type=client_credentials, client_id,
+      client_secret (optional scope) and sends the returned access token in an
+      Authorization header on deliveries. HANDSHAKE — none. Tracking's admin has a
+      "Send test webhook" button that sends a normal delivery and requires a 2xx; no
+      challenge, no echo. DELIVERY/RETRIES (all products): respond 2xx; otherwise up to
+      14 attempts with exponential backoff, delay = 2^(retry) x 30s (30s, 60s, 120s ...
+      122880s), ~68 hours accumulated. Tracking webhook URL ports must be 80, 443 or
+      8080; up to 10 webhook URLs per org. SOURCE IPs — Tracking documents outgoing IPs
+      verbatim: 104.154.18.15, 34.122.118.39, 34.70.29.163, 34.70.81.106, 34.72.178.234
+      (https://www.aftership.com/docs/tracking/webhook/webhook-outgoing-ips).
+      Shipping/Returns/Warranty each have their OWN outgoing-IPs page — link to them, do
+      not copy the Tracking list onto them. TRACKING PAYLOAD (webhook-specifications,
+      version 2026-07): headers include Aftership-Hmac-Sha256, Content-Type:
+      application/json, User-Agent: AfterShipTrackingWebhook/4.0.0
+      (https://www.aftership.com), As-Webhook-Version: 2026-07. Body top-level fields:
+      event (event code), event_id (UUID v4, unique per event — use for idempotency),
+      is_tracking_first_tag (bool), msg (the full Tracking object: id, tracking_number,
+      slug, tag, subtag, subtag_message, checkpoints[], title, order_number,
+      aftership_estimated_delivery_date, etc.), ts (UTC UNIX seconds when the event
+      occurred; UNSIGNED metadata). TRACKING EVENT CODES — exactly three, from the
+      specifications table: tracking_update (shipment status updates: Info received, In
+      Transit, Out for Delivery, Available for pickup, Delivered, Failed attempt,
+      Expired, Exception — the actual status is in msg.tag / msg.subtag, so route on
+      THOSE, not on event); edd_revise (estimated delivery date updates);
+      tracking_pending_time (shipment pending for a user-defined threshold). Do NOT
+      invent other tracking event names (no tracking.delivered, no shipment.updated).
+      msg.tag values: Pending, InfoReceived, InTransit, OutForDelivery, AttemptFail,
+      Delivered, AvailableForPickup, Exception, Expired. TRACKING WEBHOOK VERSIONING:
+      each webhook URL picks a version (YYYY-MM, e.g. 2026-07, 2026-01, 2025-07,
+      2025-04, 2025-01); the version is sent in the as-webhook-version header and is
+      independent of the API version. Payload fields change between versions (2026-01
+      renamed checkpoint.zip -> checkpoint.postal_code). SHIPPING PAYLOAD: top-level
+      event_type, date_time, meta ({code, message, details} API envelope), data (API
+      response data). Events (event_type): calculate_rates (POST /rates done),
+      create_a_label (POST /labels done), cancel_a_label (POST /cancel-labels done),
+      manifest_a_label (POST /manifests done). RETURNS PAYLOAD: top-level id (UUID,
+      unique per event), version (e.g. 2026-07), event, created_at (ISO), modified
+      (event-specific diff), data (full snapshot of the return: id, rma_number,
+      approval_status, ...). Returns also sends as-webhook-version. Returns events:
+      return.submitted, return.approved, return.rejected, return.resolved,
+      return.expired, return.dropoff.created, return.dropoff.updated,
+      return.dropoff.shipment.updated, return.restock.created,
+      return.shipment.provided, return.shipments.provided, return.shipment.recorded,
+      return.shipment.updated, return.exchange.order.created, return.receiving.created.
+      (The docs also mention return.shipment.skipped and return.shipments.requested as
+      "Not available yet" — do not list them as live.) Docs say treat enum values as
+      open strings. WARRANTY EVENTS: warranty.created, warranty.approved,
+      warranty.processing, warranty.completed, warranty.canceled, warranty.rejected,
+      warranty.inbound_shipment.provided, warranty.inbound_shipment.updated,
+      warranty.outbound_shipment.provided, warranty.outbound_shipment.updated,
+      warranty.item_received. WARRANTY PAYLOAD differs from Returns (Warranty webhook
+      reference): top-level id, event, version, created_at, data ({warranty: {id}},
+      plus warranty_shipment on shipment events) and current_context (the full claim:
+      id, status under_review|approved|in_process|completed|rejected|canceled,
+      rma_number, items, order, receiving_status ...). There is NO `modified` and the
+      claim id is data.warranty.id / current_context.id, not data.id. Returns `id`
+      is documented as "UUID v4 format" but the docs' example is 32 hex chars with no
+      dashes. is_tracking_first_tag = first update sent under a given delivery tag.
+    testScenario:
+      events:
+        - tracking_update
+        - edd_revise
   - name: aircall
     displayName: Aircall
     docs:
@@ -894,6 +1020,91 @@ providers:
         - payments
         - paymentIntents
 
+  - name: circleci
+    displayName: CircleCI
+    docs:
+      webhooks: https://circleci.com/docs/guides/integration/outbound-webhooks/
+      verification: https://circleci.com/docs/guides/integration/outbound-webhooks/#validate-webhooks
+      events: https://circleci.com/docs/reference/outbound-webhooks-reference/
+      api: https://circleci.com/docs/api/v2/
+    notes: >
+      IDENTITY: CircleCI (circleci.com) is the CI/CD platform. This skill covers CircleCI
+      OUTBOUND webhooks (CircleCI -> your endpoint), sent when a workflow or job reaches a
+      terminal state. NOT Circle (circle.com, USDC / Circle Payments Network / Circle Mint),
+      which is the separate `circle-webhooks` skill and uses ECDSA X-Circle-Signature —
+      unrelated companies, never mix their headers, schemes or events. Also NOT CircleCI
+      *custom* webhooks (inbound: a third party POSTs to CircleCI to trigger a pipeline,
+      docs at /docs/guides/orchestrate/custom-webhooks/) — opposite direction, out of scope.
+      The webhook signing secret is NOT the CircleCI API token (Circle-Token).
+      VERIFICATION: header `circleci-signature` carries a COMMA-separated list of versioned
+      signatures, e.g. `v1=<64-char lowercase hex>,v2=...`. Split on ',', then each pair on the
+      FIRST '='; take the value keyed exactly `v1`. "Only check the latest signature type to
+      prevent downgrade attacks" — if there is no v1 entry, REJECT; never fall back to v2/v3
+      (their algorithm is unknown). Algorithm HMAC-SHA256, LOWERCASE HEX (not base64), over the
+      RAW request body bytes ONLY — no timestamp, no delivery id, no prefix, no delimiter. Key
+      is the webhook's "Secret token" (v2 API field `signing-secret`) used as UTF-8 bytes
+      DIRECTLY (docs' Python sample: hmac.new(bytes(secret,'utf-8'), bytes(body,'utf-8'),
+      'sha256').hexdigest()) — no prefix strip, no base64 decode. Compare in constant time
+      (length-guard before crypto.timingSafeEqual; hmac.compare_digest in Python). No official
+      SDK helper exists in any language — manual HMAC is the only path; do NOT invent an
+      npm/pip package. Documented known-answer vectors (all verified): body "hello world" /
+      secret "secret" -> 734cc62f32841568f45715aeb9f4d7891324e6d948e4c6c60c0621cdac48623a;
+      "lalala" / "another-secret" -> daa220016c8f29a8b214fbfc3671aeec2145cfb1e6790184ffb38b6d0425fa00;
+      "an-important-request-payload" / "hunter123" -> 9be2242094a9a8c00c64306f382a7f9d691de910b4a266f67bd314ef18ac49fa;
+      "foo" / "secret" -> 773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4.
+      NO TIMESTAMP HEADER and NO replay window exists — do NOT invent a tolerance or a
+      `circleci-timestamp` header; `happened_at` is event time, not a signing input, and
+      rejecting on it drops legitimate retries. Replay protection = dedupe on the payload `id`.
+      The Secret token is OPTIONAL in the web UI ("Secret token: N") though the v2 API marks
+      `signing-secret` required, and the headers table says the signature is sent "When present"
+      — so examples must require CIRCLECI_WEBHOOK_SECRET and FAIL CLOSED (500 if unset, 400 if
+      the header is missing), never silently accept unsigned requests.
+      HANDSHAKE: none — no challenge/echo. The UI's "Test Ping Event" button sends a normal
+      signed POST; docs say only "The test ping event has an abbreviated payload for ease of
+      testing". The ping's `type` value is NOT documented; a community implementation
+      (github.com/DavidS/circleci-hook) logged header `circleci-event-type: ping` with body
+      {"type":"ping","id":"...","happened_at":"...","webhook":{"id":"...","name":"..."}}.
+      Handle `ping` gracefully (just 200) but HEDGE it as community-observed, not documented.
+      HEADERS (documented): content-type application/json, user-agent CircleCI-Webhook/1.0,
+      circleci-event-type (the event type), circleci-signature. NO delivery-id header, NO
+      timestamp header. No source-IP allowlist is documented — do not fabricate one.
+      DELIVERY: HTTP POST JSON, expects 2xx within a 10-second timeout; non-2xx or timeout is
+      retried "at a later time" (retry count/schedule NOT documented — don't invent one).
+      "Webhook requests may be duplicated" — dedupe on the payload `id`. Payloads are "open
+      maps": new fields may be added without notice, so parse leniently. Max 5 outbound webhooks
+      per project; org admin required; HTTPS-only URL. Configured per project in Project Settings
+      -> Webhooks or via POST /api/v2/webhook with name, events, url, verify-tls, signing-secret,
+      scope {id, type:"project"}.
+      EVENTS: exactly two (API enum ["workflow-completed","job-completed"]). workflow-completed —
+      workflow.status in success|failed|error|canceled|unauthorized; sub-entities project,
+      organization, workflow, pipeline. job-completed — job.status in
+      success|failed|canceled|unauthorized (NO "error" for jobs); adds a `job` sub-entity, and
+      its `workflow` object has NO `status`. Do not invent other event types (no
+      workflow-started, job-started, pipeline-*).
+      ENVELOPE: top-level id (event id, dedupe key), type, happened_at (ISO 8601), webhook
+      {id,name}, plus project {id,name,slug}, organization {id,name}, workflow
+      {id,name,status?,created_at,stopped_at?,url}, pipeline {id,number,created_at,trigger{type},
+      trigger_parameters?,vcs?}, job {id,number,name,status,started_at,stopped_at?}.
+      CRITICAL PAYLOAD TRAP: pipeline.vcs (branch, revision, commit{subject,body,author,...},
+      origin/target_repository_url, provider_name) is present for GitHub OAuth and Bitbucket
+      Cloud pipelines ONLY; GitLab / GitHub App pipelines carry pipeline.trigger_parameters
+      {circleci, git, gitlab} instead and have NO `vcs`. Handlers reading branch/commit must
+      handle BOTH shapes. In the documented GitLab sample, `git` holds only {tag, checkout_sha,
+      ref, branch, checkout_url} (tag is "" on branch builds); commit_title, commit_message,
+      commit_author_name, commit_sha, web_url and repo_url live in the `gitlab` map, NOT in
+      `git`. The reference says the `gitlab` map is present for GitLab and GitHub App triggers
+      but only publishes a GitLab sample.
+      Hookdeck source type CIRCLECI was added in hookdeck/core#5669 (merged 2026-09-28) as an
+      alias of the generic HMAC controller (algorithm sha256, header_key circleci-signature,
+      encoding hex) with a single webhook_secret_key field and external_docs_url
+      .../outbound-webhooks/#validate-webhooks. Core's generic HMAC parser accepts ANY
+      `v<N>=` value that matches HMAC-SHA256 hex of the body (so a v2-only header passes); the
+      skill deliberately checks only `v1`, per the docs' downgrade warning.
+    testScenario:
+      events:
+        - workflow-completed
+        - job-completed
+
   - name: claude-managed-agents
     displayName: Claude Managed Agents
     docs:
@@ -1169,6 +1380,95 @@ providers:
     sdks:
       npm: [docusign-esign]
       pip: [docusign-esign]
+
+  - name: docker-hub
+    displayName: Docker Hub
+    docs:
+      webhooks: https://docs.docker.com/docker-hub/repos/manage/webhooks/
+      events: https://docs.docker.com/dhi/how-to/mirror/#automate-syncing-with-webhooks
+      api: https://docs.docker.com/reference/api/hub/latest/
+    notes: >
+      Docker Hub (hub.docker.com) REPOSITORY webhooks, configured per repository
+      (repository -> Webhooks tab -> name + destination URL -> Create). NOT Docker Build
+      Cloud, NOT Docker Scout integrations, NOT the self-hosted `distribution` registry's
+      `notifications:` endpoints (different envelope, supports custom headers), NOT GitHub
+      Container Registry `registry_package` webhooks, NOT Docker Engine events — do not
+      borrow payloads or auth from any of those. VERIFICATION: NONE. DOCKER HUB DOES NOT
+      SIGN WEBHOOKS. The docs document no signature header, no shared secret, no HMAC, no
+      timestamp, no token and no auth option; the create form takes exactly two inputs, a
+      name and a destination URL ("The URL must be 255 characters or fewer"). Do NOT write
+      an HMAC verifier, a signature-header check (there is no X-Docker-Signature /
+      X-Hub-Signature), a timestamp/replay window, or a shared-secret comparison. Do NOT
+      fabricate a source-IP allowlist — Docker publishes none. docker/docs#23955 (Jan 2026)
+      asked how to verify origin; the docs team answered only by marking callback_url
+      legacy. WHAT TO DO INSTEAD: (1) a long random token in the URL path
+      (/webhooks/docker-hub/<token>), compared in constant time against
+      DOCKER_HUB_WEBHOOK_TOKEN, FAILING CLOSED (500) when the env var is unset — it is a
+      bearer secret in a URL, so rotate it and keep it out of access logs; a path segment
+      and a ?token= query param are equally visible to Docker Hub, so don't overclaim the
+      path form. (2) Treat the payload as an untrusted HINT: before deploying/promoting/
+      pulling, re-confirm via GET
+      https://hub.docker.com/v2/namespaces/{namespace}/repositories/{repository}/tags/{tag}
+      (operationId GetRepositoryTag; no auth needed for public repos, otherwise a JWT
+      obtained from POST /v2/auth/token using a PAT/OAT as the secret — a raw PAT/OAT
+      sent as a bearer token returns 401), check tag_last_pushed / digest, and
+      pull by digest — keep this optional in examples, tests must not hit the network.
+      (3) Validate shape: require push_data.tag and repository.repo_name as non-empty
+      strings (400 otherwise); optionally allowlist repository.repo_name via
+      DOCKER_HUB_ALLOWED_REPOS (403). (4) Hookdeck source type DOCKER_HUB (label
+      "Docker Hub", slug docker-hub, managed POST) is "No verification (schema only)" —
+      there is nothing to verify; do NOT claim Hookdeck verifies a Docker Hub signature,
+      and do NOT claim Docker Hub can send Basic auth or custom headers. Hookdeck's own
+      outbound signature secures the Hookdeck->destination hop only. Docker Hub is not yet
+      in the hookdeck.com/docs/sources list (checked 2026-09-28) — do not claim a guide
+      page exists. CALLBACK_URL: LEGACY AND NO LONGER SUPPORTED — do NOT implement a
+      callback POST. Docker removed the "Validate a webhook callback" / webhook-chain
+      section in docker/docs#20565 (Aug 2024) and added the legacy note in
+      docker/docs#23955 / #23962 (Jan 2026); the URL 404s on GET and POST. The field still
+      appears in the documented example payload, so handlers must tolerate and ignore it,
+      and tests must assert no outbound request is made. HANDSHAKE: none — no challenge,
+      echo, verification request or test event. TRANSPORT: HTTP POST, JSON body. Delivery
+      history per webhook under Menu options -> View History. Retry policy, timeout and
+      request headers (User-Agent, Content-Type value) are NOT documented — say "not
+      documented" rather than stating numbers, and handle idempotently anyway (dedupe on
+      repo_name + tag + pushed_at). EVENTS: exactly ONE trigger and NO event-type field or
+      header — webhooks fire "in response to a push event in the repository" (the DHI page
+      phrases it "whenever a new image tag is pushed or updated"). There is no `event`,
+      `type`, `action` or X-...-Event to switch on — do NOT invent one. Route on
+      repository.repo_name + push_data.tag and branch on the presence of dhi_metadata.
+      PAYLOAD: the documented example is old (2014 values, registry.hub.docker.com URLs,
+      dockerfile / is_trusted from the retired Automated Builds era). Rely only on
+      push_data.tag, push_data.pusher, push_data.pushed_at, repository.repo_name,
+      repository.namespace, repository.name, repository.is_private, repository.repo_url;
+      treat every field as possibly absent/null and ignore unknown fields. pushed_at and
+      date_created are UNIX SECONDS (inferred from the 10-digit example; the docs never
+      state the unit). There is NO digest in push_data — look it up via GetRepositoryTag or
+      the registry. Do not assert undocumented fields such as push_data.images or
+      media_type. DHI_METADATA (docker/docs#26116, Sep 2026): pushes to a mirrored Docker
+      Hardened Image repository (org namespace, repo name prefixed `dhi-`) add a top-level
+      dhi_metadata object — "Docker Hub adds dhi_metadata only to pushes on mirrored DHI
+      repositories. Webhooks on other repositories deliver the standard payload." It is a
+      MAP KEYED BY ARCHITECTURE-SPECIFIC MANIFEST DIGEST (sha256:...), one entry per
+      platform with a changelog — "Match the digest key against the platform you care about
+      instead of assuming a single entry." Each entry: schema_version (int),
+      change_categories (vulnerability_fix | version_upgrade | other; can be several, empty
+      array = no changes), previous_version {tag, digest}, changes {vulnerabilities_fixed
+      [{cve_id, severity, package, fixed_in_version}], packages_updated [{name, type,
+      old_version, new_version}], packages_added / packages_removed [{name, type, version}],
+      environment_variables_changed [{change, key, from_value|to_value}], labels_changed
+      (same shape), configuration_changed}. "When a change type has no entries, its array is
+      present but empty." The data comes from a signed changelog attestation retrieved at
+      delivery time, but the WEBHOOK ITSELF IS STILL UNSIGNED — don't imply the embedded
+      dhi_metadata is verifiable as delivered. WHO CAN CREATE: personal repo — owner only
+      (collaborators can't); org repo — org owner/editor, or a team member with admin on the
+      repo; via the Hub API — a PAT with delete permissions or an OAT with
+      scope-webhook-edit or higher (the API reference does not document the webhook CRUD
+      endpoints themselves, so don't invent paths). No provider SDK is needed: no crypto
+      dependency and no Docker SDK.
+    testScenario:
+      events:
+        - push
+        - push-dhi
 
   - name: elevenlabs
     displayName: ElevenLabs
@@ -1869,6 +2169,38 @@ providers:
         envelope, and a 2xx (200 or 204) to acknowledge — any other status is a nack and
         Pub/Sub will redeliver. If you use any skills to help with this, add a comment
         noting which skill(s) you referenced.
+
+  - name: grafana
+    displayName: Grafana
+    docs:
+      webhooks: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+      verification: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#hmac-signature
+    notes: >
+      Grafana Alerting webhook contact point (Grafana-managed / unified alerting, the only
+      alerting system in Grafana 11+, and Grafana Cloud). NOT legacy dashboard alerting
+      (removed in Grafana 11), NOT Grafana OnCall/IRM outgoing webhooks, NOT Prometheus
+      Alertmanager. Signing is OPTIONAL (added in Grafana 11.6) and off until the contact
+      point's HMAC "Secret" is filled in. HMAC-SHA256, LOWERCASE HEX, BARE digest -- no
+      sha256= prefix, no t=/v1= structure. Signature header is user-configurable, default
+      X-Grafana-Alerting-Signature. Timestamp header is user-configurable with NO DEFAULT
+      NAME: unset means Grafana signs the raw body alone; set means it signs
+      timestamp + ":" + body (COLON, unix SECONDS). Secret is used as-is as UTF-8 bytes --
+      not base64-decoded, not a Grafana API key. Verify the RAW body: the Custom Payload
+      option can emit pretty-printed or non-JSON bodies. NO event types and NO event-type
+      header -- each request is one notification for an alert GROUP; dispatch on top-level
+      status (firing/resolved), state (alerting/ok), and alerts[].status. A firing group can
+      contain resolved alerts. NO delivery-id header. Self-hosted Grafana sends from its own
+      egress IPs; Grafana Cloud publishes shared source-IP lists (hosted-grafana /
+      hosted-alerts) -- defence in depth only, not a substitute for HMAC.
+      No handshake: the Test button sends a normal signed notification with a synthetic
+      alert (alertname TestAlert, instance Grafana). Other auth on the same contact point:
+      HTTP basic auth, Authorization header (scheme defaults to Bearer; mutually exclusive
+      with basic auth), and mTLS. Grafana documents no replay tolerance -- receivers pick
+      their own window.
+    testScenario:
+      events:
+        - firing
+        - resolved
 
   - name: greendot
     displayName: Green Dot
@@ -3140,6 +3472,77 @@ providers:
         - products/update
         - collect/delete
 
+  - name: snipcart
+    displayName: Snipcart
+    docs:
+      webhooks: https://docs.snipcart.com/v3/webhooks/introduction
+      verification: https://docs.snipcart.com/v3/setup/order-validation
+      events: https://docs.snipcart.com/v3/webhooks/order-events
+      api: https://docs.snipcart.com/v3/api-reference/authentication
+    notes: >
+      Snipcart (snipcart.com, owned by Duda) is an HTML/JS embeddable shopping cart. Target the
+      v3 docs (docs.snipcart.com/v3); API host is https://app.snipcart.com/api.
+      *** THERE IS NO SIGNATURE AND NO HMAC. *** No signature header, no shared webhook secret,
+      no timestamp header (full v3 sitemap checked 2026-09-28). Do NOT invent an
+      X-Snipcart-Signature header and do NOT write crypto.createHmac / hmac.new anywhere.
+      Instead every outbound request carries a one-time random token in the
+      X-Snipcart-RequestToken header (valid ONE HOUR for webhooks) which the receiver proves
+      genuine with a callback: GET https://app.snipcart.com/api/requestvalidation/{token}
+      authenticated with HTTP Basic, the SECRET API key as the username and a TRAILING COLON
+      (Authorization: Basic base64("<SECRET_API_KEY>:")), Accept: application/json. 200 = genuine;
+      404 = unknown, already validated, or expired; 401/403 = wrong/missing secret key (keys are
+      per-mode — a Test key cannot read Live data, so a Test-mode webhook likely needs a Test-mode
+      key; payload `mode` is "Test"|"Live"). Anything else, a network error or a timeout must FAIL
+      CLOSED. The token is attacker-controlled and goes into the URL path of a request carrying
+      the secret key, so format-check it against /^[A-Za-z0-9_-]{1,128}$/ BEFORE building the URL
+      (encodeURIComponent is NOT enough: `.`/`..` survive and resolve as dot segments, turning the
+      call into GET /api/ whose 200 would be misread as valid). Do not follow redirects
+      (redirect:'manual' / follow_redirects=False); ~5s timeout. Parse the body only after a 200.
+      The 200 body is undocumented beyond "carries the resource we asked for"; community
+      implementations read `token` and `resource` — an optional defense-in-depth check only, never
+      the default signal. Unset key => 500 configuration error, never fail open. Env var:
+      SNIPCART_SECRET_API_KEY (merchant dashboard account credentials / API keys — exact menu path undocumented; never the public front-end key).
+      Tokens are likely single-use (the docs state single-use for crawler tokens; webhook tokens
+      hedge) so validate synchronously on receipt, exactly once — with Hookdeck in front, do NOT
+      re-validate at the destination; verify x-hookdeck-signature instead. Response requirement:
+      "Your designated endpoint must respond with data in Content-Type application/json format and
+      a status code 200" — return a JSON body, 400 for unparsable body / missing eventName.
+      Envelope: eventName, mode ("Live"|"Test"), createdOn, content. NO event id and NO delivery id
+      — idempotency key on content.token (order token) + eventName (+ createdOn). Snipcart may add
+      payload fields at any time without notice; ignore unknown fields, no strict schema validation.
+      Order events: order.completed, order.status.changed and order.paymentStatus.changed (add
+      TOP-LEVEL from/to), order.trackingNumber.changed (adds TOP-LEVEL trackingNumber/trackingUrl),
+      order.refund.created, order.notification.created, order.withdrawal.created. Subscription
+      events keep a literal `v3/` PREFIX in the event name — do not strip it:
+      v3/subscription.invoice.payment.succeeded, v3/subscription.invoice.payment.failed (neither
+      fires for the FIRST payment, only recurring ones), v3/subscription.state.cancellationRequested,
+      v3/subscription.state.cancelled. Order statuses: InProgress, Processed, Disputed, Shipped,
+      Delivered, Pending, Cancelled, Dispatched. Payment statuses: Paid, Deferred, PaidDeferred,
+      ChargedBack, Refunded, Paidout, Pending, Failed, Expired, Cancelled, Open, Authorized.
+      SYNCHRONOUS webhooks (separate dashboard settings, response BODY consumed at checkout):
+      shippingrates.fetch (Store configurations -> Shipping -> Webhooks; respond 2XX
+      {"rates":[{"cost","description","userDefinedId","guaranteedDaysToDelivery"}]} or 2XX
+      {"errors":[{"key","message"}]}) and taxes.calculate (Store configurations -> Taxes ->
+      Providers -> Webhooks; request content is the live CART with UNIX-timestamp dates and a
+      numeric paymentMethod; respond 2XX {"taxes":[{"name","amount","rate","numberForInvoice",...}]},
+      amount in currency units not cents). Because Hookdeck cannot synchronously return a
+      destination's response to the client, those two must point DIRECTLY at the app; only the
+      async order/subscription events go through Hookdeck. Hookdeck has a SNIPCART source type
+      (hookdeck/core#5669, merged 2026-09-28; config takes a single api_key = the Snipcart secret
+      key for the webhook's mode; validates as above with the same token format check, no
+      redirects, 5s fail-closed timeout) — not yet listed at hookdeck.com/docs/sources on
+      2026-09-28, so say "recently added". General webhook URL: Store Configurations -> Webhooks; multiple URLs
+      separated by semicolons; the dashboard logs each request and has a manual "Send this hook
+      again" button. NOT DOCUMENTED, do not fabricate: retry policy/schedule, delivery timeout,
+      source-IP allowlist, event ids, HMAC. No official Snipcart SDK for webhook validation —
+      examples use Node built-ins (global fetch) and httpx; tests stub fetch / inject an
+      httpx.MockTransport.
+    testScenario:
+      events:
+        - order.completed
+        - order.paymentStatus.changed
+        - v3/subscription.invoice.payment.succeeded
+
   - name: slack
     displayName: Slack
     docs:
@@ -3184,6 +3587,34 @@ providers:
       events:
         - card_gate.order.updated
         - subscription.updated.v2
+
+  - name: sparkpost
+    displayName: SparkPost
+    docs:
+      webhooks: https://developers.sparkpost.com/api/webhooks/
+      verification: https://github.com/SparkPost/support-docs/blob/main/content/docs/tech-resources/webhook-authentication.md
+      relay_webhooks: https://developers.sparkpost.com/api/relay-webhooks/
+    notes: >
+      Email delivery platform (now owned by Bird, formerly MessageBird). Event webhooks
+      are NOT signed: no HMAC, no signature header, no secret. Auth is optional and set by
+      auth_type (none | basic | oauth2). basic sends Authorization: Basic
+      base64(user:pass) (password may be empty). oauth2: SparkPost POSTs
+      auth_request_details.body (client_id, client_secret, grant_type) to your token URL
+      and sends Authorization: Bearer {token}; a 400/401 response makes it fetch a new
+      token. Deprecated auth_token sends X-MessageSystems-Webhook-Token (relay webhooks
+      still use it). Body is a JSON ARRAY of {"msys": {"<class>": {...,"type": ...}}}
+      where class is message_event, track_event, gen_event, unsubscribe_event,
+      relay_event, ab_test_event or ingest_event. Create/validate sends [{"msys": {}}]
+      and requires HTTP 200. Dedupe on X-MessageSystems-Batch-ID and event_id. 10s
+      timeout, retries for 8h (12 attempts). Not Bird's new Standard Webhooks platform.
+      Hookdeck's SPARKPOST source supports Basic auth only.
+    testScenario:
+      events:
+        - delivery
+        - bounce
+        - click
+        - spam_complaint
+        - list_unsubscribe
 
   - name: statsig
     displayName: Statsig
@@ -5393,3 +5824,227 @@ providers:
         - change
         - profile_disconnected
         - profile_initial_sync_completed
+
+  - name: wordpress-com
+    displayName: WordPress.com
+    docs:
+      webhooks: https://wordpress.com/support/webhooks/
+      verification: https://wordpress.com/support/webhooks/
+      events: https://wordpress.com/support/webhooks/
+    notes: >
+      Automattic's HOSTED WordPress service and its NATIVE webhooks feature ("Use
+      WordPress.com Webhooks", last reviewed 2026-08-11). Hookdeck source type
+      WORDPRESS_COM (slug wordpress-com, hookdeck/core#5669): schema only,
+      http_method_managed_post, NO verification controller.
+
+      NOT WooCommerce (own signed scheme, X-WC-Webhook-Signature, HMAC-SHA256 base64 —
+      covered by woocommerce-webhooks; never borrow its headers or verifier), NOT
+      WordPress.org webhook plugins (the docs say verbatim "The Webhook settings
+      mentioned on this page do not apply to plugin-enabled sites"), NOT the
+      WordPress.com REST API, and NOT Jetpack Forms webhooks (a separate per-form
+      feature, also unsigned, worth one short section only).
+
+      CONFIGURED in the admin UI only — verbatim: "You can find this feature by adding
+      /wp-admin/options-general.php?page=webhooks to the end of your site's URL". Add
+      webhook -> choose an action, choose the fields, enter the URL. "Only admin-level
+      users can add or manage webhooks." Rows can be edited, deleted, activated or
+      deactivated. The docs describe no API for managing webhooks.
+
+      VERIFICATION: NONE — these webhooks are UNSIGNED. The docs describe no secret, no
+      signature header, no token, no auth option and no custom headers; the form has only
+      action, fields and URL. The feature derives from HookPress (mitcho/hookpress), whose
+      hookpress_generic_action() sets only user-agent, body and referer and calls
+      wp_remote_post — no signing anywhere. So: no HMAC/timestamp verifier, no invented
+      header (X-WordPress-Signature / X-WP-Signature / X-WPCOM-Signature do not exist), no
+      fabricated source-IP allowlist, no delivery-id/event-id/timestamp headers, no
+      handshake or challenge. The verification section is CHANNEL-LEVEL instead: a long
+      random token in the registered URL's query string
+      (?token=<random>, env WORDPRESS_COM_WEBHOOK_TOKEN) compared in CONSTANT TIME
+      (length-guard before crypto.timingSafeEqual; hmac.compare_digest on encoded bytes in
+      Python), 401 on missing/mismatch, and FAIL CLOSED with 500 when the env var is unset.
+      Hedge honestly: the docs neither mention nor forbid query strings in the URL — this is
+      the standard pattern for unsigned senders, not a WordPress.com feature, and the token
+      is visible to any site admin and may appear in logs. Plus HTTPS, plus treating the
+      payload as untrusted and re-fetching authoritative data
+      (GET https://public-api.wordpress.com/rest/v1.1/sites/{site}/posts/{ID}). With
+      Hookdeck the Source URL is the secret endpoint and the WordPress.com source performs
+      no signature check; the app should verify Hookdeck's own x-hookdeck-signature
+      (HMAC-SHA256, base64, raw body) — the ONE HMAC the skill may show, clearly labelled
+      as Hookdeck's.
+
+      PAYLOAD: verbatim — "The URL will receive an HTTP POST request when the selected
+      action fires. The post data will contain the selected fields and one additional field
+      called hook, that contains the action title." FLAT key/value pairs: no JSON envelope,
+      no type, no data object, no event id; the discriminator is the `hook` field.
+      ENCODING is not stated in the docs: the HookPress sender passes a PHP array as `body`
+      to wp_remote_post, which WordPress's HTTP API encodes with http_build_query, i.e.
+      application/x-www-form-urlencoded — so form-encoded is the expected format (INFERRED
+      from the HookPress lineage; WordPress.com's fork is closed source — hedge this).
+      Handlers parse express.urlencoded({ extended: true }), await request.formData() /
+      new URLSearchParams(await request.text()), or await request.form() (needs
+      python-multipart); ALSO accept application/json defensively but never claim JSON is
+      what WordPress.com sends. All values arrive as STRINGS (ID=123, comment_approved=1).
+      Array fields such as post_category may arrive bracket-encoded
+      (post_category[0]=1&post_category[1]=5). Only the ticked fields are sent — every
+      field is optional except `hook`. post_url is not a native WP_Post column (HookPress
+      adds it via get_permalink()) but is in the documented field list. post_password,
+      comment_author_email and comment_author_IP are sensitive — warn.
+
+      EVENTS — exactly three, documented verbatim: comment_post ("Runs just after a comment
+      is saved in the database"; fields comment_ID, comment_agent, comment_approved,
+      comment_author, comment_author_IP, comment_author_email, comment_author_url,
+      comment_content, comment_date, comment_date_gmt, comment_karma, comment_parent,
+      comment_post_ID, comment_type, user_id), publish_page and publish_post ("Runs when a
+      post/page is published, or if it is edited and its status is 'published'"; fields ID,
+      comment_count, comment_status, guid, menu_order, ping_status, pinged, post_author,
+      post_category, post_content, post_content_filtered, post_date, post_date_gmt,
+      post_excerpt, post_mime_type, post_modified, post_modified_gmt, post_name,
+      post_parent, post_password, post_status, post_title, post_type, post_url, to_ping).
+      Invent no others (no post_updated, delete_post, user_register, wp_insert_post); log an
+      unknown `hook` and acknowledge 2xx. comment_approved is a string: 1 approved, 0
+      pending, spam spam — don't publish comment_content blindly.
+
+      IDEMPOTENCY: publish_post/publish_page fire on the initial publish AND on every later
+      edit, so the same ID recurs, and there is no delivery-id header. Dedupe on
+      hook + ID + post_modified_gmt (when selected) or upsert by ID; comments key on
+      comment_ID.
+
+      DELIVERY: the docs document NO retries, NO timeout, NO delivery log and NO test/ping
+      button — invent none; say "assume no retries and design for missed events (reconcile
+      via the REST API)". HookPress sends synchronously during the WordPress action (hedge:
+      WordPress.com's implementation may differ), so answer 2xx fast and work
+      asynchronously.
+    testScenario:
+      events:
+        - publish_post
+        - publish_page
+        - comment_post
+
+  - name: ordinal
+    displayName: Ordinal
+    docs:
+      webhooks: https://docs.tryordinal.com/integrations/webhooks/introduction
+      events: https://docs.tryordinal.com/integrations/webhooks/event-types
+      api: https://docs.tryordinal.com/
+    notes: >
+      IDENTITY: Ordinal is tryordinal.com — the social-media / LinkedIn content planning,
+      approval and scheduling platform for marketing teams. App at
+      https://app.tryordinal.com, docs at https://docs.tryordinal.com, REST API base
+      https://app.tryordinal.com/api/v1. Hookdeck's ORDINAL source type links to
+      docs.tryordinal.com/integrations/webhooks/introduction with icon_domain
+      https://www.tryordinal.com/, which fixes the identity. This is NOT Ordinals (the
+      Bitcoin inscription protocol / ord), NOT Ordinal Stats or Ordinal Labs, and NOT an
+      "ordinal numbers" npm package. There is NO official Ordinal npm or pip SDK — do not
+      add one to package.json / requirements.txt.
+
+      THERE IS NO SIGNATURE. DO NOT FABRICATE AN HMAC VERIFIER. Verified 2026-09-28 against
+      the rendered docs (introduction, event-types, every per-event page, and the
+      Create/Get/Update webhook API reference): there is no signature header, no signing
+      secret, no whsec_ key, no timestamp header, no HMAC, and no Svix / Standard Webhooks
+      headers. The Create webhook response returns only id, name, url, topics, createdAt —
+      no secret is ever issued. Do NOT invent X-Ordinal-Signature, Ordinal-Signature,
+      webhook-signature, or any crypto.createHmac / hmac.new path.
+
+      THE ONLY AUTHENTICATION MECHANISM IS STATIC CUSTOM HEADERS. The webhook object has an
+      optional `headers` field, documented verbatim as "Optional custom headers to include
+      in webhook requests" (a JSON object of header name -> value; Get returns
+      headers: object | null). The docs' example is {"X-Custom-Header": "value"}. Ordinal
+      adds these headers to every delivery, so the recommended pattern is: (1) generate a
+      long random secret yourself; (2) create/patch the webhook with
+      {"headers": {"X-Webhook-Secret": "<secret>"}} — the header NAME is the integrator's
+      choice and must be presented as NOT an Ordinal-defined header (examples use
+      x-webhook-secret via a configurable ORDINAL_WEBHOOK_SECRET_HEADER env var); (3) in the
+      handler compare the incoming header against ORDINAL_WEBHOOK_SECRET with a constant-time
+      compare (crypto.timingSafeEqual with a length guard / hmac.compare_digest on bytes),
+      returning 401 on mismatch or absence; (4) FAIL CLOSED — if ORDINAL_WEBHOOK_SECRET is
+      unset, reject (500) rather than accepting everything silently. State plainly that this
+      is a shared-secret CHANNEL check, not integrity protection: the value is static, so it
+      is only as good as TLS and secret hygiene. Rotate by PATCH /webhooks/{id} with new
+      `headers` (all fields optional).
+
+      NO RAW-BODY REQUIREMENT. Because nothing is signed over the body, parsing JSON before
+      authenticating is fine — say so explicitly and contrast it with signed providers
+      (Stripe/Shopify/GitHub) where a body parser before verification breaks the HMAC.
+      express.json() and await request.json() are safe on an Ordinal route.
+
+      BASIC AUTH VARIANT: an integrator could instead put
+      {"Authorization": "Basic <base64(user:pass)>"} in `headers`. HEDGE — the docs do not
+      say whether `Authorization` (or other reserved names) may be overridden via `headers`.
+      Present the custom X- header as the primary path and Basic Auth as an alternative "if
+      Ordinal accepts an Authorization custom header". Do not assert either way.
+
+      DASHBOARD: webhooks can also be managed at Settings -> Integrations -> Webhooks
+      (https://app.tryordinal.com/settings/integrations/webhooks). HEDGE — `headers` is
+      documented on the API; whether the dashboard form exposes custom headers is not
+      documented. Tell users to set headers via the API (POST /webhooks or
+      PATCH /webhooks/{id}) if the UI lacks it.
+
+      HOOKDECK: the ORDINAL source type has verification OPTIONAL and offers the generic
+      Basic Auth and API Key (header name + value) checks — these validate the static header
+      configured in Ordinal's `headers`. Hookdeck cannot do HMAC for Ordinal because there is
+      no body-dependent signature.
+
+      MANAGEMENT API (bearer API key, base https://app.tryordinal.com/api/v1):
+      GET /webhooks, POST /webhooks, GET /webhooks/{id}, PATCH /webhooks/{id},
+      DELETE /webhooks/{id}. POST body: name (required), url (required, uri), description
+      (optional), topics (required string[], min 1 — the event types), headers (optional
+      object). The Create response omits description, headers and createdBy; use Get for the
+      full object. API calls use Authorization: Bearer <api key> (workspace API key) — that
+      is the key for CALLING Ordinal, never something Ordinal sends to you, and never
+      something to compare an inbound delivery against.
+
+      ENVELOPE: every delivery is a JSON POST with exactly
+      {"type": "post.published", "data": { ... }, "createdAt": "2025-02-26T14:30:00.000Z"} —
+      type is the event type, data is the event-specific payload, createdAt is the ISO 8601
+      emit time. Respond with any 2xx to acknowledge (docs: "Your endpoint should respond
+      with a 2xx status code to acknowledge receipt"). There is NO top-level event id and NO
+      delivery-id header documented; for dedupe, HEDGE and derive a key yourself (e.g. type +
+      the resource id inside data + createdAt), labelled as a suggestion rather than a
+      documented id.
+
+      UNDOCUMENTED — say so, do not invent values: retry policy / number of attempts,
+      delivery timeout, ordering guarantees, source IP ranges, User-Agent, any
+      Ordinal-specific delivery headers, and any test/ping event. Do NOT fabricate an IP
+      allowlist, a retry schedule, or a `ping` event.
+
+      EVENTS — 20 topics. `data` has ONE key whose name depends on the family:
+      social profile (data.profile): social_profile.connected, social_profile.disconnected,
+      social_profile.reconnect_needed. Posts (data.post): post.created, post.scheduled,
+      post.rescheduled, post.unscheduled, post.published, post.publish_failed, post.archived,
+      post.permanently_deleted, post.content.edited (debounced per post — fires ~5 minutes
+      after edits; includes the latest content for all channels). Comments (data.comment):
+      post.comment.created, post.inline_comment.created (one event per comment, including
+      replies in a thread). Approvals (data.approval — for BOTH post.* and campaign.*):
+      post.approval.requested, post.approval.approved, campaign.approval.requested,
+      campaign.approval.approved. Invites (data.invite): invite.created (if the invitee
+      already has an account they are added directly and no email is sent), invite.accepted.
+      NOTE THE MIXED SEPARATORS — publish_failed, reconnect_needed, permanently_deleted and
+      inline_comment use underscores inside a dot-separated name. Use the exact strings;
+      post.publish.failed and post.publishFailed are wrong.
+
+      DOCUMENTED PAYLOADS (use verbatim in test vectors): post.published — data.post has id,
+      title, channel (SINGULAR), campaign (nullable: {id,name,startDate,endDate}), url (the
+      Ordinal app link), postUrl (the live channel link, nullable), profile
+      ({id,name,detail}), workspace ({id,slug,name}), publishedBy, publishedAt.
+      post.publish_failed — data.post has id, title, channel, error (e.g. "Token expired"),
+      campaign (nullable), url, profile, scheduledPublishAt, workspace, createdBy, failedAt.
+      post.created — data.post has id, title, status (e.g. "draft"), channels (ARRAY, e.g.
+      ["LinkedIn"] — plural, unlike post.published), campaign (nullable), url, labels[]
+      ({id,name,color,backgroundColor}), workspace, createdBy, createdAt, linkedIn (nullable:
+      {profile, copy, assets[]}), x (nullable: {profile, tweets:[{copy, assets}]}).
+      social_profile.connected — data.profile has id, name, detail, channel, profileImageUrl,
+      workspace, connectedBy, connectedAt. post.approval.requested — data.approval has post
+      {id,title,url}, campaign, workspace, createdApprovals[] ({id,isBlocking,message,
+      dueDate,createdAt,status:"Requested",user,requestedBy}), existingApprovals[];
+      campaign.approval.requested is the same shape with campaign instead of post.
+      post.comment.created — data.comment has id, message, post {id,title,url}, workspace,
+      createdBy, createdAt. invite.accepted — data.invite has id, email, createdAt,
+      acceptedAt, invitedBy, acceptedBy, workspace. For any event whose fields are not listed
+      here, link to its docs page
+      (https://docs.tryordinal.com/integrations/webhooks/<type with dots and underscores as
+      hyphens>, e.g. post-publish-failed) rather than inventing fields.
+    testScenario:
+      events:
+        - post.published
+        - post.publish_failed
+        - post.approval.requested

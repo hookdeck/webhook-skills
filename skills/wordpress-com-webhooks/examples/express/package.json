@@ -1,0 +1,18 @@
+{
+  "name": "wordpress-com-webhooks-express",
+  "version": "1.0.0",
+  "description": "WordPress.com webhook handler with Express (unsigned, form-encoded, URL-token protected)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.2.2"
+  }
+}
