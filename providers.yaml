@@ -1788,6 +1788,36 @@ providers:
         Pub/Sub will redeliver. If you use any skills to help with this, add a comment
         noting which skill(s) you referenced.
 
+  - name: grafana
+    displayName: Grafana
+    docs:
+      webhooks: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+      verification: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#hmac-signature
+    notes: >
+      Grafana Alerting webhook contact point (Grafana-managed / unified alerting, the only
+      alerting system in Grafana 11+, and Grafana Cloud). NOT legacy dashboard alerting
+      (removed in Grafana 11), NOT Grafana OnCall/IRM outgoing webhooks, NOT Prometheus
+      Alertmanager. Signing is OPTIONAL (added in Grafana 11.6) and off until the contact
+      point's HMAC "Secret" is filled in. HMAC-SHA256, LOWERCASE HEX, BARE digest -- no
+      sha256= prefix, no t=/v1= structure. Signature header is user-configurable, default
+      X-Grafana-Alerting-Signature. Timestamp header is user-configurable with NO DEFAULT
+      NAME: unset means Grafana signs the raw body alone; set means it signs
+      timestamp + ":" + body (COLON, unix SECONDS). Secret is used as-is as UTF-8 bytes --
+      not base64-decoded, not a Grafana API key. Verify the RAW body: the Custom Payload
+      option can emit pretty-printed or non-JSON bodies. NO event types and NO event-type
+      header -- each request is one notification for an alert GROUP; dispatch on top-level
+      status (firing/resolved), state (alerting/ok), and alerts[].status. A firing group can
+      contain resolved alerts. NO delivery-id header and no documented source-IP allowlist.
+      No handshake: the Test button sends a normal signed notification with a synthetic
+      alert (alertname TestAlert, instance Grafana). Other auth on the same contact point:
+      HTTP basic auth, Authorization header (scheme defaults to Bearer; mutually exclusive
+      with basic auth), and mTLS. Grafana documents no replay tolerance -- receivers pick
+      their own window.
+    testScenario:
+      events:
+        - firing
+        - resolved
+
   - name: greendot
     displayName: Green Dot
     docs:

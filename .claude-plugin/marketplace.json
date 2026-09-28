@@ -311,6 +311,27 @@
       ]
     },
     {
+      "name": "grafana-webhooks",
+      "description": "Receive and verify Grafana Alerting webhook contact point notifications. Use when setting up a Grafana webhook receiver, debugging Grafana HMAC signature verification (X-Grafana-Alerting-Signature, HMAC-SHA256 hex over the raw body, optionally timestamp + \":\" + body), or handling firing and resolved alert notifications from Grafana-managed alerting or Grafana Cloud.",
+      "source": "./skills/grafana-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/grafana-webhooks",
+      "keywords": [
+        "webhooks",
+        "grafana"
+      ]
+    },
+    {
       "name": "mailersend-webhooks",
       "description": "Receive and verify MailerSend webhooks. Use when setting up MailerSend webhook handlers, debugging MailerSend signature verification with the `Signature` header (HMAC-SHA256 hex over the raw body), handling the `webhook.test` URL validation ping, or handling MailerSend activity events like activity.sent, activity.delivered, activity.hard_bounced, activity.opened, activity.clicked and activity.spam_complaint. Also covers MailerSend SMS webhooks (sms.sent, sms.delivered, sms.failed). MailerSend is the transactional email/SMS API — not MailerLite, Mailgun, Mailchimp or Resend.",
       "source": "./skills/mailersend-webhooks",
