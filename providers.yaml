@@ -3103,6 +3103,34 @@ providers:
         - card_gate.order.updated
         - subscription.updated.v2
 
+  - name: sparkpost
+    displayName: SparkPost
+    docs:
+      webhooks: https://developers.sparkpost.com/api/webhooks/
+      verification: https://github.com/SparkPost/support-docs/blob/main/content/docs/tech-resources/webhook-authentication.md
+      relay_webhooks: https://developers.sparkpost.com/api/relay-webhooks/
+    notes: >
+      Email delivery platform (now owned by Bird, formerly MessageBird). Event webhooks
+      are NOT signed: no HMAC, no signature header, no secret. Auth is optional and set by
+      auth_type (none | basic | oauth2). basic sends Authorization: Basic
+      base64(user:pass) (password may be empty). oauth2: SparkPost POSTs
+      auth_request_details.body (client_id, client_secret, grant_type) to your token URL
+      and sends Authorization: Bearer {token}; a 400/401 response makes it fetch a new
+      token. Deprecated auth_token sends X-MessageSystems-Webhook-Token (relay webhooks
+      still use it). Body is a JSON ARRAY of {"msys": {"<class>": {...,"type": ...}}}
+      where class is message_event, track_event, gen_event, unsubscribe_event,
+      relay_event, ab_test_event or ingest_event. Create/validate sends [{"msys": {}}]
+      and requires HTTP 200. Dedupe on X-MessageSystems-Batch-ID and event_id. 10s
+      timeout, retries for 8h (12 attempts). Not Bird's new Standard Webhooks platform.
+      Hookdeck's SPARKPOST source supports Basic auth only.
+    testScenario:
+      events:
+        - delivery
+        - bounce
+        - click
+        - spam_complaint
+        - list_unsubscribe
+
   - name: statsig
     displayName: Statsig
     docs:

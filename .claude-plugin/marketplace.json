@@ -480,6 +480,27 @@
       ]
     },
     {
+      "name": "sparkpost-webhooks",
+      "description": "Receive and authenticate SparkPost event webhooks. Use when setting up SparkPost webhook handlers, debugging SparkPost webhook authentication (Basic Auth, OAuth 2.0 Bearer tokens, or the deprecated X-MessageSystems-Webhook-Token header), parsing the batched `msys` payload, or handling email events like delivery, bounce, click, open, spam_complaint, delay, and list_unsubscribe. SparkPost event webhooks are NOT signed — there is no HMAC and no signature header.",
+      "source": "./skills/sparkpost-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/sparkpost-webhooks",
+      "keywords": [
+        "webhooks",
+        "sparkpost"
+      ]
+    },
+    {
       "name": "supabase-webhooks",
       "description": "Receive and verify Supabase webhooks. Use when setting up Supabase Database Webhooks (INSERT, UPDATE, DELETE table events sent via pg_net triggers) or Supabase Auth Hooks (send_email, send_sms, custom_access_token, before_user_created, mfa_verification_attempt, password_verification_attempt), debugging Standard Webhooks signature verification with the webhook-id, webhook-timestamp and webhook-signature headers, or handling the `v1,whsec_` secret format.",
       "source": "./skills/supabase-webhooks",
