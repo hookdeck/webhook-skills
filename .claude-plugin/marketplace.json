@@ -227,6 +227,28 @@
       ]
     },
     {
+      "name": "docker-hub-webhooks",
+      "description": "Receive Docker Hub repository webhooks. Use when building a Docker Hub push webhook receiver, because Docker Hub webhooks are UNSIGNED — there is no signature header, no shared secret, no HMAC, no timestamp and no auth option, so signature verification is impossible and must be replaced with a secret URL token plus a re-check against the Docker Hub API. Use when parsing the push_data.tag / push_data.pusher / repository.repo_name payload, when handling the dhi_metadata object on mirrored Docker Hardened Image repositories, when asking why there is no event type field to switch on, or when wondering what to do about the legacy callback_url field.",
+      "source": "./skills/docker-hub-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/docker-hub-webhooks",
+      "keywords": [
+        "webhooks",
+        "docker",
+        "hub"
+      ]
+    },
+    {
       "name": "ethoca-webhooks",
       "description": "Receive and verify Ethoca (Mastercard) Alerts webhooks. Use when setting up an Ethoca Alerts Push API receiver, securing the endpoint (mTLS, with optional onboarding-agreed HTTP Basic Auth; no HMAC signature), or handling fraud and dispute alert notifications.",
       "source": "./skills/ethoca-webhooks",

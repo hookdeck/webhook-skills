@@ -1088,6 +1088,95 @@ providers:
       npm: [docusign-esign]
       pip: [docusign-esign]
 
+  - name: docker-hub
+    displayName: Docker Hub
+    docs:
+      webhooks: https://docs.docker.com/docker-hub/repos/manage/webhooks/
+      events: https://docs.docker.com/dhi/how-to/mirror/#automate-syncing-with-webhooks
+      api: https://docs.docker.com/reference/api/hub/latest/
+    notes: >
+      Docker Hub (hub.docker.com) REPOSITORY webhooks, configured per repository
+      (repository -> Webhooks tab -> name + destination URL -> Create). NOT Docker Build
+      Cloud, NOT Docker Scout integrations, NOT the self-hosted `distribution` registry's
+      `notifications:` endpoints (different envelope, supports custom headers), NOT GitHub
+      Container Registry `registry_package` webhooks, NOT Docker Engine events — do not
+      borrow payloads or auth from any of those. VERIFICATION: NONE. DOCKER HUB DOES NOT
+      SIGN WEBHOOKS. The docs document no signature header, no shared secret, no HMAC, no
+      timestamp, no token and no auth option; the create form takes exactly two inputs, a
+      name and a destination URL ("The URL must be 255 characters or fewer"). Do NOT write
+      an HMAC verifier, a signature-header check (there is no X-Docker-Signature /
+      X-Hub-Signature), a timestamp/replay window, or a shared-secret comparison. Do NOT
+      fabricate a source-IP allowlist — Docker publishes none. docker/docs#23955 (Jan 2026)
+      asked how to verify origin; the docs team answered only by marking callback_url
+      legacy. WHAT TO DO INSTEAD: (1) a long random token in the URL path
+      (/webhooks/docker-hub/<token>), compared in constant time against
+      DOCKER_HUB_WEBHOOK_TOKEN, FAILING CLOSED (500) when the env var is unset — it is a
+      bearer secret in a URL, so rotate it and keep it out of access logs; a path segment
+      and a ?token= query param are equally visible to Docker Hub, so don't overclaim the
+      path form. (2) Treat the payload as an untrusted HINT: before deploying/promoting/
+      pulling, re-confirm via GET
+      https://hub.docker.com/v2/namespaces/{namespace}/repositories/{repository}/tags/{tag}
+      (operationId GetRepositoryTag; no auth needed for public repos, otherwise a JWT
+      obtained from POST /v2/auth/token using a PAT/OAT as the secret — a raw PAT/OAT
+      sent as a bearer token returns 401), check tag_last_pushed / digest, and
+      pull by digest — keep this optional in examples, tests must not hit the network.
+      (3) Validate shape: require push_data.tag and repository.repo_name as non-empty
+      strings (400 otherwise); optionally allowlist repository.repo_name via
+      DOCKER_HUB_ALLOWED_REPOS (403). (4) Hookdeck source type DOCKER_HUB (label
+      "Docker Hub", slug docker-hub, managed POST) is "No verification (schema only)" —
+      there is nothing to verify; do NOT claim Hookdeck verifies a Docker Hub signature,
+      and do NOT claim Docker Hub can send Basic auth or custom headers. Hookdeck's own
+      outbound signature secures the Hookdeck->destination hop only. Docker Hub is not yet
+      in the hookdeck.com/docs/sources list (checked 2026-09-28) — do not claim a guide
+      page exists. CALLBACK_URL: LEGACY AND NO LONGER SUPPORTED — do NOT implement a
+      callback POST. Docker removed the "Validate a webhook callback" / webhook-chain
+      section in docker/docs#20565 (Aug 2024) and added the legacy note in
+      docker/docs#23955 / #23962 (Jan 2026); the URL 404s on GET and POST. The field still
+      appears in the documented example payload, so handlers must tolerate and ignore it,
+      and tests must assert no outbound request is made. HANDSHAKE: none — no challenge,
+      echo, verification request or test event. TRANSPORT: HTTP POST, JSON body. Delivery
+      history per webhook under Menu options -> View History. Retry policy, timeout and
+      request headers (User-Agent, Content-Type value) are NOT documented — say "not
+      documented" rather than stating numbers, and handle idempotently anyway (dedupe on
+      repo_name + tag + pushed_at). EVENTS: exactly ONE trigger and NO event-type field or
+      header — webhooks fire "in response to a push event in the repository" (the DHI page
+      phrases it "whenever a new image tag is pushed or updated"). There is no `event`,
+      `type`, `action` or X-...-Event to switch on — do NOT invent one. Route on
+      repository.repo_name + push_data.tag and branch on the presence of dhi_metadata.
+      PAYLOAD: the documented example is old (2014 values, registry.hub.docker.com URLs,
+      dockerfile / is_trusted from the retired Automated Builds era). Rely only on
+      push_data.tag, push_data.pusher, push_data.pushed_at, repository.repo_name,
+      repository.namespace, repository.name, repository.is_private, repository.repo_url;
+      treat every field as possibly absent/null and ignore unknown fields. pushed_at and
+      date_created are UNIX SECONDS (inferred from the 10-digit example; the docs never
+      state the unit). There is NO digest in push_data — look it up via GetRepositoryTag or
+      the registry. Do not assert undocumented fields such as push_data.images or
+      media_type. DHI_METADATA (docker/docs#26116, Sep 2026): pushes to a mirrored Docker
+      Hardened Image repository (org namespace, repo name prefixed `dhi-`) add a top-level
+      dhi_metadata object — "Docker Hub adds dhi_metadata only to pushes on mirrored DHI
+      repositories. Webhooks on other repositories deliver the standard payload." It is a
+      MAP KEYED BY ARCHITECTURE-SPECIFIC MANIFEST DIGEST (sha256:...), one entry per
+      platform with a changelog — "Match the digest key against the platform you care about
+      instead of assuming a single entry." Each entry: schema_version (int),
+      change_categories (vulnerability_fix | version_upgrade | other; can be several, empty
+      array = no changes), previous_version {tag, digest}, changes {vulnerabilities_fixed
+      [{cve_id, severity, package, fixed_in_version}], packages_updated [{name, type,
+      old_version, new_version}], packages_added / packages_removed [{name, type, version}],
+      environment_variables_changed [{change, key, from_value|to_value}], labels_changed
+      (same shape), configuration_changed}. "When a change type has no entries, its array is
+      present but empty." The data comes from a signed changelog attestation retrieved at
+      delivery time, but the WEBHOOK ITSELF IS STILL UNSIGNED — don't imply the embedded
+      dhi_metadata is verifiable as delivered. WHO CAN CREATE: personal repo — owner only
+      (collaborators can't); org repo — org owner/editor, or a team member with admin on the
+      repo; via the Hub API — a PAT with delete permissions or an OAT with
+      scope-webhook-edit or higher (the API reference does not document the webhook CRUD
+      endpoints themselves, so don't invent paths). No provider SDK is needed: no crypto
+      dependency and no Docker SDK.
+    testScenario:
+      events:
+        - push
+        - push-dhi
+
   - name: elevenlabs
     displayName: ElevenLabs
     docs:
