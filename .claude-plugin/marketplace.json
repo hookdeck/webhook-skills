@@ -200,8 +200,9 @@
       "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/checkout-com-webhooks",
       "keywords": [
         "webhooks",
-        "checkout",
-        "com"
+        "checkout.com",
+        "payments",
+        "cko-signature"
       ]
     },
     {
