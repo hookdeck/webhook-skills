@@ -586,6 +586,125 @@ providers:
     sdks:
       npm: [asana]
       pip: [asana]
+  - name: aftership
+    displayName: AfterShip
+    docs:
+      webhooks: https://www.aftership.com/docs/tracking/webhook/webhook-overview
+      verification: https://www.aftership.com/docs/tracking/webhook/webhook-signature
+      events: https://www.aftership.com/docs/tracking/webhook/webhook-specifications
+      api: https://www.aftership.com/docs/tracking/webhook/webhook-outgoing-ips
+    notes: >
+      AfterShip (aftership.com), the post-purchase / shipment tracking platform. NOT
+      ShipStation, ShipBob, ShipHero or Shippo. The docs at www.aftership.com/docs are
+      Cloudflare-protected and JS-rendered — curl/WebFetch get a "Just a moment..."
+      shell (confirmed 403 again on 2026-09-28); everything here was read verbatim in a
+      real browser on 2026-09-28. FOUR products send webhooks: Tracking (flagship),
+      Shipping (formerly Postmen — admin is still admin.postmen.com, label URLs on
+      postmen.com), Returns, and Warranty. Hookdeck source type is AFTERSHIP (slug
+      aftership), added in hookdeck/core PR #5669; external_docs_url is the Tracking
+      signature page and its config is the standard single webhook_secret_key. Core's
+      controller accepts a valid HMAC in ANY of the three product headers, so the
+      primary target is Tracking with the others as variants of one algorithm.
+      VERIFICATION — ONE algorithm, THREE header names. In every product: HMAC-SHA256,
+      key = the webhook secret string used as UTF-8 bytes (NOT base64-decoded, no
+      prefix), message = the RAW request body bytes, digest encoded as standard BASE64
+      (not hex, not base64url). NO timestamp is signed, there is NO timestamp header
+      and NO replay window — do NOT invent a timestamp/tolerance check. (1) Tracking:
+      header `aftership-hmac-sha256` (docs render it Aftership-Hmac-Sha256; HTTP
+      headers are case-insensitive and frameworks lowercase them), bare base64 digest.
+      Quoted: "Each webhook request includes a aftership-hmac-sha256 header. The
+      signature is a base64-encoded HMAC generated using sha256 algorithm with webhook
+      request body and webhook secret of your account." Node sample:
+      crypto.createHmac('sha256', secret).update(data).digest('base64'); Python sample:
+      hmac.new(bytes(secret,'utf-8'), bytes(data,'utf-8'), hashlib.sha256).digest()
+      then base64.b64encode. Secret: Settings > Webhooks at admin.aftership.com.
+      (2) Shipping (Postmen): header `am-webhook-signature`, and the docs' sample ends
+      `console.log('hmac-sha256=' + sign); // should be equal to am-webhook-signature
+      value` — the header value carries a `hmac-sha256=` PREFIX before the digest.
+      Implement: strip an optional leading `hmac-sha256=` then compare. Secret:
+      Settings > Webhooks at admin.postmen.com. NOTE the Shipping sample signs
+      JSON.stringify(webhookPayload) — a re-serialization; skills must sign the RAW
+      body instead (the safe superset) and say so. (3) Returns and Warranty: header
+      `as-signature-hmac-sha256`, bare base64 digest. Quoted (both pages, identical):
+      "You should grab the webhook signature value from the HTTP Header:
+      as-signature-hmac-sha256. You can recalculate the same signature by creating an
+      HMAC with SHA256, using the provided webhook secret and the HTTP request body."
+      Also: "Please be aware that the header and format are not the same as our
+      AfterShip product's webhooks." LEGACY Returns, quoted: "For some of the existing
+      organizations, the signature Header is am-webhook-signature and the header value
+      is in the form of hmac-sha256={signature}. This only applies to organizations
+      created before Oct 25, 2022" — i.e. legacy Returns uses the Shipping
+      header+prefix. IMPLEMENTATION SHAPE — one verifyAfterShipSignature(rawBody,
+      headers, secret) that checks, in order, aftership-hmac-sha256,
+      as-signature-hmac-sha256, am-webhook-signature (stripping an optional
+      hmac-sha256= prefix, harmless on the other two), computes
+      base64(HMAC-SHA256(secret, rawBody)), and compares in constant time (guard length
+      before crypto.timingSafeEqual which throws on length mismatch; Python
+      hmac.compare_digest). Missing header -> 401 (not a crash); missing secret env var
+      -> 500 fail-closed with a clear message, never fail-open. Use the raw body
+      (express.raw, await req.text() in Next.js App Router, await request.body() in
+      FastAPI) — never re-stringify parsed JSON. Env var: AFTERSHIP_WEBHOOK_SECRET.
+      EACH PRODUCT HAS ITS OWN SECRET (Tracking admin vs Postmen admin vs
+      Returns/Warranty config page) — recommend one endpoint (or one Hookdeck source)
+      per product; do NOT claim a single secret spans products. There is NO AfterShip
+      SDK helper for webhook verification in any language. OTHER AUTH (Tracking only,
+      extras alongside the HMAC, not replacements): up to 5 custom headers per webhook
+      URL (basic auth / bearer token / secret key), and OAuth 2.0 client credentials —
+      AfterShip calls your Token URL with grant_type=client_credentials, client_id,
+      client_secret (optional scope) and sends the returned access token in an
+      Authorization header on deliveries. HANDSHAKE — none. Tracking's admin has a
+      "Send test webhook" button that sends a normal delivery and requires a 2xx; no
+      challenge, no echo. DELIVERY/RETRIES (all products): respond 2xx; otherwise up to
+      14 attempts with exponential backoff, delay = 2^(retry) x 30s (30s, 60s, 120s ...
+      122880s), ~68 hours accumulated. Tracking webhook URL ports must be 80, 443 or
+      8080; up to 10 webhook URLs per org. SOURCE IPs — Tracking documents outgoing IPs
+      verbatim: 104.154.18.15, 34.122.118.39, 34.70.29.163, 34.70.81.106, 34.72.178.234
+      (https://www.aftership.com/docs/tracking/webhook/webhook-outgoing-ips).
+      Shipping/Returns/Warranty each have their OWN outgoing-IPs page — link to them, do
+      not copy the Tracking list onto them. TRACKING PAYLOAD (webhook-specifications,
+      version 2026-07): headers include Aftership-Hmac-Sha256, Content-Type:
+      application/json, User-Agent: AfterShipTrackingWebhook/4.0.0
+      (https://www.aftership.com), As-Webhook-Version: 2026-07. Body top-level fields:
+      event (event code), event_id (UUID v4, unique per event — use for idempotency),
+      is_tracking_first_tag (bool), msg (the full Tracking object: id, tracking_number,
+      slug, tag, subtag, subtag_message, checkpoints[], title, order_number,
+      aftership_estimated_delivery_date, etc.), ts (UTC UNIX seconds when the event
+      occurred; UNSIGNED metadata). TRACKING EVENT CODES — exactly three, from the
+      specifications table: tracking_update (shipment status updates: Info received, In
+      Transit, Out for Delivery, Available for pickup, Delivered, Failed attempt,
+      Expired, Exception — the actual status is in msg.tag / msg.subtag, so route on
+      THOSE, not on event); edd_revise (estimated delivery date updates);
+      tracking_pending_time (shipment pending for a user-defined threshold). Do NOT
+      invent other tracking event names (no tracking.delivered, no shipment.updated).
+      msg.tag values: Pending, InfoReceived, InTransit, OutForDelivery, AttemptFail,
+      Delivered, AvailableForPickup, Exception, Expired. TRACKING WEBHOOK VERSIONING:
+      each webhook URL picks a version (YYYY-MM, e.g. 2026-07, 2026-01, 2025-07,
+      2025-04, 2025-01); the version is sent in the as-webhook-version header and is
+      independent of the API version. Payload fields change between versions (2026-01
+      renamed checkpoint.zip -> checkpoint.postal_code). SHIPPING PAYLOAD: top-level
+      event_type, date_time, meta ({code, message, details} API envelope), data (API
+      response data). Events (event_type): calculate_rates (POST /rates done),
+      create_a_label (POST /labels done), cancel_a_label (POST /cancel-labels done),
+      manifest_a_label (POST /manifests done). RETURNS PAYLOAD: top-level id (UUID,
+      unique per event), version (e.g. 2026-07), event, created_at (ISO), modified
+      (event-specific diff), data (full snapshot of the return: id, rma_number,
+      approval_status, ...). Returns also sends as-webhook-version. Returns events:
+      return.submitted, return.approved, return.rejected, return.resolved,
+      return.expired, return.dropoff.created, return.dropoff.updated,
+      return.dropoff.shipment.updated, return.restock.created,
+      return.shipment.provided, return.shipments.provided, return.shipment.recorded,
+      return.shipment.updated, return.exchange.order.created, return.receiving.created.
+      (The docs also mention return.shipment.skipped and return.shipments.requested as
+      "Not available yet" — do not list them as live.) Docs say treat enum values as
+      open strings. WARRANTY EVENTS: warranty.created, warranty.approved,
+      warranty.processing, warranty.completed, warranty.canceled, warranty.rejected,
+      warranty.inbound_shipment.provided, warranty.inbound_shipment.updated,
+      warranty.outbound_shipment.provided, warranty.outbound_shipment.updated,
+      warranty.item_received.
+    testScenario:
+      events:
+        - tracking_update
+        - edd_revise
   - name: aircall
     displayName: Aircall
     docs:

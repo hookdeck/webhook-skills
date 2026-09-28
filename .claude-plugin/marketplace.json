@@ -10,6 +10,27 @@
   },
   "plugins": [
     {
+      "name": "aftership-webhooks",
+      "description": "Receive and verify AfterShip webhooks. Use when setting up AfterShip webhook handlers, debugging AfterShip signature verification (aftership-hmac-sha256, as-signature-hmac-sha256, am-webhook-signature), or handling AfterShip Tracking events like tracking_update, edd_revise and tracking_pending_time, AfterShip Returns events like return.approved, AfterShip Warranty events like warranty.created, and AfterShip Shipping (Postmen) events like create_a_label.",
+      "source": "./skills/aftership-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/aftership-webhooks",
+      "keywords": [
+        "webhooks",
+        "aftership"
+      ]
+    },
+    {
       "name": "aiprise-webhooks",
       "description": "Receive and verify AiPrise webhooks (callbacks). Use when setting up AiPrise identity/KYC/KYB callback handlers, debugging X-HMAC-SIGNATURE verification, or handling verification results like APPROVED, DECLINED, REVIEW, and UNKNOWN.",
       "source": "./skills/aiprise-webhooks",
