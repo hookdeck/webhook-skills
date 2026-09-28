@@ -4,8 +4,11 @@
 
 A Grafana webhook contact point POSTs to a URL that is, by necessity, publicly
 reachable. Without verification anyone who learns the URL can fabricate an incident —
-or, worse, a false all-clear. Grafana documents **no source-IP allowlist** for
-alerting webhooks, so there is no network-level substitute.
+or, worse, a false all-clear. A self-hosted Grafana sends from whatever address your
+instance egresses from. Grafana Cloud does publish source-IP lists (see
+[overview.md](overview.md#where-requests-come-from)), but those are shared across
+every Grafana Cloud customer, so an IP allowlist is defence in depth, not a
+substitute for verifying the signature.
 
 HMAC signing is **optional** in Grafana: it is off until you fill in the contact
 point's HMAC **Secret**. Your receiver should still require it and fail closed.
@@ -121,8 +124,10 @@ def verify_grafana_signature(
         mac.update(f"{timestamp}:".encode("utf-8"))   # COLON separator
     mac.update(raw_body)                              # RAW bytes
 
-    # compare_digest is constant-time and safe on differing lengths.
-    return hmac.compare_digest(signature.strip().lower(), mac.hexdigest())
+    # compare_digest is constant-time and safe on differing lengths. Compare
+    # bytes: given two str values it raises TypeError on any non-ASCII character.
+    received = signature.strip().lower().encode("utf-8", errors="replace")
+    return hmac.compare_digest(received, mac.hexdigest().encode("ascii"))
 ```
 
 ## Replay Protection
@@ -156,7 +161,9 @@ weaker mode.
   Grafana.
 - **Secret is used as-is.** No base64 decode, no prefix removal.
 - **`timingSafeEqual` throws on unequal lengths** — guard with a length check, or wrap
-  in try/catch. Python's `hmac.compare_digest` handles this for you.
+  in try/catch. Python's `hmac.compare_digest` handles unequal lengths, but compare
+  **bytes**, not `str` — with two strings it raises `TypeError` on any non-ASCII
+  character, which a forged header can easily contain.
 - **Header names are configurable.** Don't hard-code `X-Grafana-Alerting-Signature` if
   your contact point sets a custom one, and remember the timestamp header has no
   default name at all.
@@ -178,7 +185,7 @@ weaker mode.
 | Signature matches in dev, fails in prod | A proxy is re-encoding or re-compressing the body | Verify before any body-transforming middleware |
 | `Input buffers must have the same byte length` | `timingSafeEqual` on differing lengths | Length-guard before comparing |
 | Works, then fails after a while | Timestamp tolerance too tight, or clock skew | Widen `GRAFANA_MAX_AGE_SECONDS`; sync clocks with NTP |
-| Test button works, real alerts don't | Nothing to do with signing — check your notification policy routes to this contact point |
+| Test button works, real alerts don't | Nothing to do with signing | Check that a notification policy routes to this contact point |
 
 ## Authentication Alternatives
 

@@ -7,9 +7,24 @@ contact point integration POSTs a JSON body to a URL you own whenever an alert g
 changes state.
 
 This is Grafana-managed alerting (also called "unified alerting") — the only alerting
-system in Grafana 11 and later, and what Grafana Cloud runs. Notifications come from
-your Grafana instance (or Grafana Cloud), not from a central Grafana service, so the
-source IP is whatever your instance egresses from.
+system in Grafana 11 and later, and what Grafana Cloud runs.
+
+### Where requests come from
+
+- **Self-hosted Grafana:** notifications come from your own instance, so the source
+  IP is whatever it egresses from.
+- **Grafana Cloud:** Grafana publishes source-IP lists on its
+  [allow-list page](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/).
+  Grafana-managed alerts are sent by Hosted Grafana
+  (`https://grafana.com/api/hosted-grafana/source-ips.txt`, DNS
+  `src-ips.hosted-grafana.grafana.net`); data source-managed alerts go through the
+  hosted Alertmanager and use the Hosted Alerts list
+  (`https://grafana.com/api/hosted-alerts/source-ips.txt`, DNS
+  `src-ips.hosted-alerts.grafana.net`).
+
+Those addresses are shared by every Grafana Cloud customer, so an IP allowlist only
+narrows who can reach you. It doesn't prove the request came from *your* stack, so
+verify the HMAC signature as well.
 
 ### What this skill does *not* cover
 
@@ -17,7 +32,7 @@ source IP is whatever your instance egresses from.
 |----------|--------------------|
 | Grafana **legacy dashboard alerting** webhook notifier | Removed in Grafana 11. Different payload (`ruleName`, `ruleId`, `evalMatches`, `dashboardId`, `panelId`) and no HMAC signing at all. |
 | Grafana **OnCall / Grafana IRM** outgoing webhooks | A separate product with its own payload templates and authentication. |
-| Prometheus **Alertmanager** `webhook_config` | The payload is a close relative — Grafana's is Alertmanager's plus extra fields — but Alertmanager itself has no HMAC signing. |
+| Prometheus **Alertmanager** `webhook_config` | The payload is a close relative — Grafana's carries Alertmanager's core fields plus `orgId`, `title`, `state` and `message`, with `version` `"1"` rather than Alertmanager's `"4"` — but Alertmanager itself has no HMAC signing. |
 
 ## There Are No Event Types
 

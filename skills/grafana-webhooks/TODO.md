@@ -9,8 +9,8 @@ Contributions to address these items are welcome.
 
 ### Minor
 
-- [ ] **skills/grafana-webhooks/examples/express/.env.example**: Dangling reference in the GRAFANA_TIMESTAMP_HEADER comment: it ends with "Grafana's provisioning docs use the name below as their example." but the line below is the empty `GRAFANA_TIMESTAMP_HEADER=`, so the example name `X-Grafana-Alerting-Signature-Timestamp` never actually appears. Same text is duplicated verbatim in examples/nextjs/.env.example and examples/fastapi/.env.example.
-  - Suggested fix: In all three .env.example files, change the last sentence to name the header inline, e.g. "Grafana's provisioning docs use `X-Grafana-Alerting-Signature-Timestamp` as their example name." and leave `GRAFANA_TIMESTAMP_HEADER=` empty (correct default).
+_None open._ The dangling timestamp-header reference in the three `.env.example`
+files was fixed before merge.
 
 ## Suggestions
 

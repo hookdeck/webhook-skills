@@ -70,7 +70,9 @@ def verify(raw_body: bytes, signature: str, timestamp: str | None, secret: str) 
     if timestamp:
         mac.update(f"{timestamp}:".encode("utf-8"))   # COLON separator, unix seconds
     mac.update(raw_body)                              # RAW bytes
-    return hmac.compare_digest(signature.lower(), mac.hexdigest())
+    # Compare bytes: compare_digest raises TypeError on non-ASCII str input
+    received = signature.strip().lower().encode("utf-8", errors="replace")
+    return hmac.compare_digest(received, mac.hexdigest().encode("ascii"))
 ```
 
 If you configure a timestamp header, also reject stale timestamps (a replay window is
@@ -147,7 +149,10 @@ verify the raw bytes.
 | `Content-Type` | `application/json` by default; overridable via **Extra Headers**. |
 
 There is **no delivery-id header** (`X-Grafana-Delivery`, `X-Grafana-Event` etc. do
-not exist — don't invent them) and **no documented source-IP allowlist**.
+not exist — don't invent them). Self-hosted Grafana sends from your own egress IPs;
+**Grafana Cloud** publishes source-IP lists (Hosted Grafana for Grafana-managed alerts:
+`https://grafana.com/api/hosted-grafana/source-ips.txt`). Those IPs are shared by all
+Grafana Cloud customers, so treat an allowlist as defence in depth, not verification.
 
 ## HTTP Behaviour
 

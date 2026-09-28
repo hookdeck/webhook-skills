@@ -216,6 +216,12 @@ class TestVerifyBodyOnly:
     def test_rejects_short_signature_without_raising(self):
         assert verify_grafana_signature(BODY, "abc", None, SECRET) is False
 
+    def test_rejects_non_ascii_signature_without_raising(self):
+        # hmac.compare_digest raises TypeError on non-ASCII str input, so the
+        # verifier must compare bytes. A forged header must be a clean False.
+        forged = "\u00ff" * 64
+        assert verify_grafana_signature(BODY, forged, None, SECRET) is False
+
     def test_rejects_base64_digest(self):
         import base64
 
@@ -396,6 +402,10 @@ class TestRouteBodyOnly:
         response = post(BODY, {DEFAULT_SIG_HEADER: "f" * 64})
         assert response.status_code == 400
         assert response.text == "Invalid signature"
+
+    def test_rejects_non_ascii_signature_header_with_400(self):
+        response = post(BODY, {DEFAULT_SIG_HEADER: ("\u00ff" * 64).encode("latin-1")})
+        assert response.status_code == 400
 
     def test_rejects_tampered_body(self):
         tampered = json.dumps(

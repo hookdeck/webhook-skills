@@ -128,9 +128,12 @@ def verify_grafana_signature(
     mac.update(raw_body)
     expected = mac.hexdigest()  # lowercase hex, bare
 
-    # compare_digest is constant-time and safe on differing lengths. Lowercasing
-    # the received value is harmless -- Grafana emits lowercase hex.
-    return hmac.compare_digest(signature.strip().lower(), expected)
+    # compare_digest is constant-time and safe on differing lengths. Compare
+    # BYTES: with two str arguments it raises TypeError on any non-ASCII
+    # character, and header values can carry arbitrary latin-1. Lowercasing the
+    # received value is harmless -- Grafana emits lowercase hex.
+    received = signature.strip().lower().encode("utf-8", errors="replace")
+    return hmac.compare_digest(received, expected.encode("ascii"))
 
 
 def idempotency_key(payload: Mapping[str, Any]) -> str:

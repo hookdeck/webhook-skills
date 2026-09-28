@@ -1807,7 +1807,9 @@ providers:
       option can emit pretty-printed or non-JSON bodies. NO event types and NO event-type
       header -- each request is one notification for an alert GROUP; dispatch on top-level
       status (firing/resolved), state (alerting/ok), and alerts[].status. A firing group can
-      contain resolved alerts. NO delivery-id header and no documented source-IP allowlist.
+      contain resolved alerts. NO delivery-id header. Self-hosted Grafana sends from its own
+      egress IPs; Grafana Cloud publishes shared source-IP lists (hosted-grafana /
+      hosted-alerts) -- defence in depth only, not a substitute for HMAC.
       No handshake: the Test button sends a normal signed notification with a synthetic
       alert (alertname TestAlert, instance Grafana). Other auth on the same contact point:
       HTTP basic auth, Authorization header (scheme defaults to Bearer; mutually exclusive
