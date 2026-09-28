@@ -162,6 +162,27 @@
       ]
     },
     {
+      "name": "circleci-webhooks",
+      "description": "Receive and verify CircleCI outbound webhooks. Use when setting up a CircleCI webhook handler, debugging `circleci-signature` verification, or handling the `workflow-completed` and `job-completed` events CircleCI sends when a workflow or job reaches a terminal state. CircleCI signs the raw body with HMAC-SHA256 and sends a hex digest in a comma-separated versioned list (`v1=<hex>`) — only the latest version (`v1`) should ever be checked. Not Circle (circle.com, USDC/Circle Mint, ECDSA `X-Circle-Signature`) — unrelated company. Not CircleCI custom webhooks, which are inbound pipeline triggers going the other direction.",
+      "source": "./skills/circleci-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/circleci-webhooks",
+      "keywords": [
+        "webhooks",
+        "circleci"
+      ]
+    },
+    {
       "name": "cloudinary-webhooks",
       "description": "Receive and verify Cloudinary webhooks (notifications). Use when setting up a Cloudinary notification receiver, verifying the x-cld-signature and x-cld-timestamp headers with the official cloudinary SDK, debugging Cloudinary signature verification failures, or handling notification_type events like upload, eager, delete, rename, moderation, and resource_tags_changed.",
       "source": "./skills/cloudinary-webhooks",

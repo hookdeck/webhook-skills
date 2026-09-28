@@ -812,6 +812,85 @@ providers:
         - payments
         - paymentIntents
 
+  - name: circleci
+    displayName: CircleCI
+    docs:
+      webhooks: https://circleci.com/docs/guides/integration/outbound-webhooks/
+      verification: https://circleci.com/docs/guides/integration/outbound-webhooks/#validate-webhooks
+      events: https://circleci.com/docs/reference/outbound-webhooks-reference/
+      api: https://circleci.com/docs/api/v2/
+    notes: >
+      IDENTITY: CircleCI (circleci.com) is the CI/CD platform. This skill covers CircleCI
+      OUTBOUND webhooks (CircleCI -> your endpoint), sent when a workflow or job reaches a
+      terminal state. NOT Circle (circle.com, USDC / Circle Payments Network / Circle Mint),
+      which is the separate `circle-webhooks` skill and uses ECDSA X-Circle-Signature —
+      unrelated companies, never mix their headers, schemes or events. Also NOT CircleCI
+      *custom* webhooks (inbound: a third party POSTs to CircleCI to trigger a pipeline,
+      docs at /docs/guides/orchestrate/custom-webhooks/) — opposite direction, out of scope.
+      The webhook signing secret is NOT the CircleCI API token (Circle-Token).
+      VERIFICATION: header `circleci-signature` carries a COMMA-separated list of versioned
+      signatures, e.g. `v1=<64-char lowercase hex>,v2=...`. Split on ',', then each pair on the
+      FIRST '='; take the value keyed exactly `v1`. "Only check the latest signature type to
+      prevent downgrade attacks" — if there is no v1 entry, REJECT; never fall back to v2/v3
+      (their algorithm is unknown). Algorithm HMAC-SHA256, LOWERCASE HEX (not base64), over the
+      RAW request body bytes ONLY — no timestamp, no delivery id, no prefix, no delimiter. Key
+      is the webhook's "Secret token" (v2 API field `signing-secret`) used as UTF-8 bytes
+      DIRECTLY (docs' Python sample: hmac.new(bytes(secret,'utf-8'), bytes(body,'utf-8'),
+      'sha256').hexdigest()) — no prefix strip, no base64 decode. Compare in constant time
+      (length-guard before crypto.timingSafeEqual; hmac.compare_digest in Python). No official
+      SDK helper exists in any language — manual HMAC is the only path; do NOT invent an
+      npm/pip package. Documented known-answer vectors (all verified): body "hello world" /
+      secret "secret" -> 734cc62f32841568f45715aeb9f4d7891324e6d948e4c6c60c0621cdac48623a;
+      "lalala" / "another-secret" -> daa220016c8f29a8b214fbfc3671aeec2145cfb1e6790184ffb38b6d0425fa00;
+      "an-important-request-payload" / "hunter123" -> 9be2242094a9a8c00c64306f382a7f9d691de910b4a266f67bd314ef18ac49fa;
+      "foo" / "secret" -> 773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4.
+      NO TIMESTAMP HEADER and NO replay window exists — do NOT invent a tolerance or a
+      `circleci-timestamp` header; `happened_at` is event time, not a signing input, and
+      rejecting on it drops legitimate retries. Replay protection = dedupe on the payload `id`.
+      The Secret token is OPTIONAL in the web UI ("Secret token: N") though the v2 API marks
+      `signing-secret` required, and the headers table says the signature is sent "When present"
+      — so examples must require CIRCLECI_WEBHOOK_SECRET and FAIL CLOSED (500 if unset, 400 if
+      the header is missing), never silently accept unsigned requests.
+      HANDSHAKE: none — no challenge/echo. The UI's "Test Ping Event" button sends a normal
+      signed POST; docs say only "The test ping event has an abbreviated payload for ease of
+      testing". The ping's `type` value is NOT documented; a community implementation
+      (github.com/DavidS/circleci-hook) logged header `circleci-event-type: ping` with body
+      {"type":"ping","id":"...","happened_at":"...","webhook":{"id":"...","name":"..."}}.
+      Handle `ping` gracefully (just 200) but HEDGE it as community-observed, not documented.
+      HEADERS (documented): content-type application/json, user-agent CircleCI-Webhook/1.0,
+      circleci-event-type (the event type), circleci-signature. NO delivery-id header, NO
+      timestamp header. No source-IP allowlist is documented — do not fabricate one.
+      DELIVERY: HTTP POST JSON, expects 2xx within a 10-second timeout; non-2xx or timeout is
+      retried "at a later time" (retry count/schedule NOT documented — don't invent one).
+      "Webhook requests may be duplicated" — dedupe on the payload `id`. Payloads are "open
+      maps": new fields may be added without notice, so parse leniently. Max 5 outbound webhooks
+      per project; org admin required; HTTPS-only URL. Configured per project in Project Settings
+      -> Webhooks or via POST /api/v2/webhook with name, events, url, verify-tls, signing-secret,
+      scope {id, type:"project"}.
+      EVENTS: exactly two (API enum ["workflow-completed","job-completed"]). workflow-completed —
+      workflow.status in success|failed|error|canceled|unauthorized; sub-entities project,
+      organization, workflow, pipeline. job-completed — job.status in
+      success|failed|canceled|unauthorized (NO "error" for jobs); adds a `job` sub-entity, and
+      its `workflow` object has NO `status`. Do not invent other event types (no
+      workflow-started, job-started, pipeline-*).
+      ENVELOPE: top-level id (event id, dedupe key), type, happened_at (ISO 8601), webhook
+      {id,name}, plus project {id,name,slug}, organization {id,name}, workflow
+      {id,name,status?,created_at,stopped_at?,url}, pipeline {id,number,created_at,trigger{type},
+      trigger_parameters?,vcs?}, job {id,number,name,status,started_at,stopped_at?}.
+      CRITICAL PAYLOAD TRAP: pipeline.vcs (branch, revision, commit{subject,body,author,...},
+      origin/target_repository_url, provider_name) is present for GitHub OAuth and Bitbucket
+      Cloud pipelines ONLY; GitLab / GitHub App pipelines carry pipeline.trigger_parameters
+      {circleci, git, gitlab} instead and have NO `vcs`. Handlers reading branch/commit must
+      handle BOTH shapes.
+      Hookdeck source type CIRCLECI is being added in hookdeck/core#5669 (open at time of
+      writing) as an alias of the generic HMAC controller (algorithm sha256, header_key
+      circleci-signature, encoding hex) with a single webhook_secret_key field; not yet listed
+      at hookdeck.com/docs/sources.
+    testScenario:
+      events:
+        - workflow-completed
+        - job-completed
+
   - name: claude-managed-agents
     displayName: Claude Managed Agents
     docs:

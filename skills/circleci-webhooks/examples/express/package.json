@@ -1,0 +1,21 @@
+{
+  "name": "circleci-webhooks-express",
+  "version": "1.0.0",
+  "description": "CircleCI outbound webhook handler with Express - HMAC-SHA256 hex over the raw body, circleci-signature v1",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
