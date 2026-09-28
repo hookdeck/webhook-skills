@@ -31,7 +31,7 @@ Docs: [Receive webhooks](https://www.checkout.com/docs/developer-resources/event
 8. **Select the events** to receive. Subscribe only to what you handle — see
    [overview.md](overview.md) for the common ones and the
    [Event types](https://www.checkout.com/docs/developer-resources/event-notifications/event-types)
-   page for all ~150.
+   page for all 140+.
 9. Save.
 
 Both keys are **optional and independent**. You can configure neither, either,
@@ -43,26 +43,26 @@ that proves the body wasn't tampered with.
 A webhook is a workflow action, so you can create one directly:
 
 ```bash
-curl -X POST https://api.checkout.com/workflows \
+curl -X POST "https://$CHECKOUT_PREFIX.api.checkout.com/workflows" \
   -H "Authorization: Bearer $CHECKOUT_SECRET_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Production webhook",
-    "active": true,
     "conditions": [
       {
         "type": "event",
-        "events": [
-          {
-            "source": "gateway",
-            "id": [
-              "payment_approved",
-              "payment_captured",
-              "payment_declined",
-              "payment_refunded"
-            ]
-          }
-        ]
+        "events": {
+          "gateway": [
+            "payment_approved",
+            "payment_captured",
+            "payment_declined",
+            "payment_refunded"
+          ],
+          "dispute": [
+            "dispute_received",
+            "dispute_evidence_required"
+          ]
+        }
       }
     ],
     "actions": [
@@ -85,8 +85,12 @@ curl -X POST https://api.checkout.com/workflows \
 - `actions[].headers.Authorization` → `CHECKOUT_WEBHOOK_AUTHORIZATION_KEY`
 - `signature.method` is `"HMACSHA256"` (as in Checkout.com's official SDK tests).
 
-Use the API host for your account's region/prefix — `api.checkout.com` for live,
-`api.sandbox.checkout.com` for sandbox.
+`conditions[].events` is an **object keyed by event source** (`gateway`,
+`dispute`, …), each holding an array of event types — the shape used in
+Checkout.com's own request example. The base URL's `{prefix}` is unique to your
+account: `https://{prefix}.api.checkout.com/workflows` for live,
+`https://{prefix}.api.sandbox.checkout.com/workflows` for sandbox (see
+Checkout.com's *API endpoints* page for how to find it).
 
 ## The Signature Key Is Not Your Secret API Key
 
@@ -109,8 +113,8 @@ Sandbox and live are **separate environments with separate Dashboards, separate
 API keys and separate webhook configurations**. Creating a webhook in sandbox
 does not create it in live.
 
-- Sandbox Dashboard: `https://dashboard.sandbox.checkout.com` / API `api.sandbox.checkout.com`
-- Live Dashboard: `https://dashboard.checkout.com` / API `api.checkout.com`
+- Sandbox Dashboard: `https://dashboard.sandbox.checkout.com` / API `{prefix}.api.sandbox.checkout.com`
+- Live Dashboard: `https://dashboard.checkout.com` / API `{prefix}.api.checkout.com`
 
 Configure and test in sandbox first, then repeat the setup in live and store the
 **live** signature key separately. Trigger real events in sandbox by creating

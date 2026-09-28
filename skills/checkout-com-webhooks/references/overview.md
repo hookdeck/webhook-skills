@@ -99,15 +99,15 @@ Event names are **snake_case strings with no dots**. There is no
 | `payment_captured` | Funds were captured | **Fulfil the order** |
 | `payment_capture_declined` | Capture attempt failed | Alert ops, retry capture |
 | `payment_capture_pending` | Capture is in flight | Wait |
-| `payment_paid` | An APM payment completed | Fulfil |
+| `payment_paid` | A bank payout completed successfully | Mark the payout paid |
 | `payment_refunded` | A refund succeeded | Credit the customer, update ledger |
 | `payment_refund_declined` | Refund failed | Alert ops |
 | `payment_refund_pending` | Refund in flight | Wait |
 | `payment_voided` | Authorization was voided | Release the order |
 | `payment_void_declined` | Void failed | Alert ops |
-| `payment_canceled` | Payment was canceled | Release the order |
-| `payment_expired` | Authorization expired before capture | Release inventory |
-| `payment_returned` | Funds were returned | Reverse the ledger entry |
+| `payment_canceled` | Customer canceled on the APM provider's platform | Release the order |
+| `payment_expired` | An APM payment expired (not 3DS expiries) | Release the order |
+| `payment_returned` | A Pay to Bank / APM payment was returned after success (e.g. ACH) | Reverse the ledger entry |
 | `payment_authorization_incremented` | Auth amount increased | Update the held amount |
 | `payment_authorization_increment_declined` | Increment failed | Cap the order value |
 | `card_verified` | Card verification (zero-auth) succeeded | Store the instrument |
@@ -119,26 +119,26 @@ Event names are **snake_case strings with no dots**. There is no
 |---|---|
 | `dispute_received` | A dispute (chargeback) was raised |
 | `dispute_evidence_required` | Evidence is needed before the deadline |
-| `dispute_evidence_submitted` | Your evidence reached the scheme |
+| `dispute_evidence_submitted` | You submitted evidence for the dispute |
 | `dispute_accepted` | You accepted the dispute |
 | `dispute_won` | The dispute resolved in your favour |
 | `dispute_lost` | The dispute resolved against you |
 | `dispute_expired` | The response window closed |
-| `dispute_canceled` | The dispute was withdrawn |
-| `dispute_resolved` | The dispute reached a final state |
+| `dispute_canceled` | The issuer canceled the dispute |
+| `dispute_resolved` | No action needed — you had already refunded the customer |
 
 ### Fraud and authentication
 
 | Event | Triggered when |
 |---|---|
-| `fraud_reported` | A transaction was reported as fraudulent (TC40/SAFE) |
+| `fraud_reported` | A payment was reported as fraudulent |
 | `authentication_approved` | 3DS authentication succeeded |
 | `authentication_failed` | 3DS authentication failed |
 
 ## Full Event Reference
 
 The [Event types](https://www.checkout.com/docs/developer-resources/event-notifications/event-types)
-page lists roughly **150** events, grouped: Authentication, Balances,
+page lists **140+** events, grouped: Authentication, Balances,
 Compliance, Disputes, Fraud, Gateway, Identities, Issuing, Network tokens,
 Platforms, Real-Time Account Updater, Reports, Settlements. Subscribe only to the events you
 actually handle — an unsubscribed event is one you never have to dispatch.

@@ -234,11 +234,11 @@ function handleEvent(event) {
       console.log(`⏳ Payment pending: ${data.id}`);
       break;
     case 'payment_paid':
-      // APM payments complete with payment_paid rather than a capture.
+      // Checkout.com: "Occurs when a bank payout is completed successfully."
       console.log(`💰 Payment paid: ${data.id} ${formatAmount(data.amount, data.currency)}`);
       break;
     case 'payment_expired':
-      console.log(`⌛ Authorization expired before capture: ${data.id}`);
+      console.log(`⌛ APM payment expired: ${data.id}`);
       break;
     case 'payment_canceled':
       console.log(`🚫 Payment canceled: ${data.id}`);
@@ -348,7 +348,7 @@ function handleEvent(event) {
       break;
 
     default:
-      // ~150 event types exist across Balances, Compliance, Identities,
+      // 140+ event types exist across Balances, Compliance, Identities,
       // Issuing, Network tokens, Platforms, Real-Time Account Updater,
       // Reports and Settlements.
       // Log unknown types rather than guessing their shape.

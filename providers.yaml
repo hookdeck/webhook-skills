@@ -795,11 +795,11 @@ providers:
       webhooks: https://www.checkout.com/docs/developer-resources/event-notifications/receive-webhooks
       verification: https://www.checkout.com/docs/developer-resources/event-notifications/receive-webhooks/configure-your-webhook-server#Validate_the_payload
       events: https://www.checkout.com/docs/developer-resources/event-notifications/event-types
-      api: https://www.checkout.com/docs/developer-resources/ip-addresses
+      ip_addresses: https://www.checkout.com/docs/developer-resources/ip-addresses
     notes: >
       IDENTITY: Checkout.com (checkout.com), the global payments processor — card acquiring,
       APMs, disputes, payouts, issuing, identity verification. Skill slug is `checkout-com` to
-      match Hookdeck's source type CHECKOUT_COM (hookdeck/core PR #5669; the console provider
+      match Hookdeck's source type CHECKOUT_COM (added in hookdeck/core#5669; the console provider
       key is `checkout`). NOT Checkout Page (checkoutpage.co), NOT CheckoutJoy, NOT 2Checkout /
       Verifone (a different company with an entirely different IPN/INS scheme), NOT Stripe
       Checkout, NOT Shopify checkout webhooks. Targets the current ("NAS" / Workflows) platform.
@@ -848,7 +848,7 @@ providers:
       dispute events; dispute events also carry `data.payment_id`.
 
       EVENTS: `type` values are snake_case with NO dots — never payment.captured, never
-      Stripe-style names. The Event types page lists ~150 across Authentication, Balances,
+      Stripe-style names. The Event types page lists 140+ across Authentication, Balances,
       Compliance, Disputes, Fraud, Gateway, Identities, Issuing, Network tokens, Platforms,
       Real-Time Account Updater, Reports, Settlements.
 

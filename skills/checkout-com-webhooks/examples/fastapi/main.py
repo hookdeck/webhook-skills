@@ -265,10 +265,10 @@ def handle_event(event: Dict[str, Any]) -> None:
     elif event_type == "payment_pending":
         logger.info("Payment pending: %s", data.get("id"))
     elif event_type == "payment_paid":
-        # APM payments complete with payment_paid rather than a capture.
+        # Checkout.com: "Occurs when a bank payout is completed successfully."
         logger.info("Payment paid: %s %s", data.get("id"), amount)
     elif event_type == "payment_expired":
-        logger.info("Authorization expired before capture: %s", data.get("id"))
+        logger.info("APM payment expired: %s", data.get("id"))
     elif event_type == "payment_canceled":
         logger.info("Payment canceled: %s", data.get("id"))
     elif event_type == "payment_returned":
@@ -347,7 +347,7 @@ def handle_event(event: Dict[str, Any]) -> None:
         logger.info("3DS authentication failed: %s", data.get("id"))
 
     else:
-        # ~150 event types exist across Balances, Compliance, Identities,
+        # 140+ event types exist across Balances, Compliance, Identities,
         # Issuing, Network tokens, Platforms, Real-Time Account Updater,
         # Reports and Settlements.
         # Log unknown types rather than guessing their shape.

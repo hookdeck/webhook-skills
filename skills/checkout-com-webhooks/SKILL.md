@@ -209,7 +209,7 @@ Stripe-style names.
 | Authentication | `authentication_approved`, `authentication_failed` |
 
 The [Event types](https://www.checkout.com/docs/developer-resources/event-notifications/event-types)
-page lists **~150** events across Authentication, Balances, Compliance,
+page lists **140+** events across Authentication, Balances, Compliance,
 Disputes, Fraud, Gateway, Identities, Issuing, Network tokens, Platforms,
 Real-Time Account Updater, Reports and Settlements. Subscribe only to what you handle.
 
