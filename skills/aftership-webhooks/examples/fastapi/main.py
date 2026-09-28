@@ -90,9 +90,10 @@ def verify_aftership_signature(
         hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     ).decode()
 
-    # compare_digest on str is constant time and, unlike Node's timingSafeEqual,
-    # handles differing lengths without raising.
-    valid = hmac.compare_digest(found["signature"], expected)
+    # Compare as bytes: compare_digest handles differing lengths without raising,
+    # but raises TypeError on a str containing non-ASCII characters (which a forged
+    # header can carry), so encode both sides first.
+    valid = hmac.compare_digest(found["signature"].encode("utf-8"), expected.encode("utf-8"))
 
     return {
         "valid": valid,
@@ -241,7 +242,7 @@ def handle_tracking_status(msg: Dict[str, Any], is_first_tag: Optional[bool]) ->
 
     elif tag == "InfoReceived":
         logger.info(
-            "🧾 Info received for %s%s", where, " (first status)" if is_first_tag else ""
+            "🧾 Info received for %s%s", where, " (first update under this tag)" if is_first_tag else ""
         )
 
     elif tag == "InTransit":
@@ -267,7 +268,7 @@ def handle_tracking_status(msg: Dict[str, Any], is_first_tag: Optional[bool]) ->
         # TODO: open a support ticket
 
     elif tag == "Expired":
-        logger.info("🗑️  Expired (no updates for a long period): %s", where)
+        logger.info("🗑️  Expired (no tracking info for 30 days): %s", where)
 
     else:
         # Treat tag values as open strings — new ones can appear.
@@ -397,9 +398,16 @@ def handle_returns_event(payload: Dict[str, Any]) -> None:
 
 
 def handle_warranty_event(payload: Dict[str, Any]) -> None:
-    """AfterShip Warranty — same envelope and same header as Returns."""
+    """AfterShip Warranty — same header as Returns, but its own envelope.
+
+    Envelope: id, event, version, created_at, ``data.warranty`` (the claim
+    reference) and ``current_context`` (the full claim resource). There is no
+    ``modified`` field.
+    """
     event = payload.get("event")
     data = payload.get("data") or {}
+    claim = payload.get("current_context") or {}
+    claim_id = (data.get("warranty") or {}).get("id") or claim.get("id") or "unknown"
     logger.info("🛡️  Warranty event %s (id=%s)", event, payload.get("id"))
 
     if event in (
@@ -410,7 +418,7 @@ def handle_warranty_event(payload: Dict[str, Any]) -> None:
         "warranty.canceled",
         "warranty.rejected",
     ):
-        logger.info("   claim %s → %s", data.get("id") or "unknown", event.split(".")[1])
+        logger.info("   claim %s → %s", claim_id, event.split(".")[1])
 
     elif event in (
         "warranty.inbound_shipment.provided",
@@ -419,11 +427,11 @@ def handle_warranty_event(payload: Dict[str, Any]) -> None:
         "warranty.outbound_shipment.updated",
     ):
         logger.info(
-            "   shipment update on claim %s (%s)", data.get("id") or "unknown", event
+            "   shipment update on claim %s (%s)", claim_id, event
         )
 
     elif event == "warranty.item_received":
-        logger.info("   item received for claim %s", data.get("id") or "unknown")
+        logger.info("   item received for claim %s", claim_id)
 
     else:
         logger.info('❓ Unhandled Warranty event "%s"', event)

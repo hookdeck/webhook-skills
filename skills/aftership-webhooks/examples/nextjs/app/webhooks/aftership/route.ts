@@ -57,14 +57,27 @@ export interface ReturnsWebhookPayload {
   created_at?: string;
   /** Event-specific diff of what changed. */
   modified?: Record<string, any>;
-  /** Full snapshot of the return / warranty object. */
+  /** Full snapshot of the return object. */
   data?: Record<string, any>;
+}
+
+export interface WarrantyWebhookPayload {
+  /** Unique per event — use as the idempotency key. */
+  id: string;
+  version?: string;
+  event: string;
+  created_at?: string;
+  /** `warranty` holds the claim reference; shipment events also carry `warranty_shipment`. */
+  data?: { warranty?: { id?: string }; warranty_shipment?: Record<string, any> };
+  /** The full claim resource (status, rma_number, items, order, ...). */
+  current_context?: { id?: string; status?: string; rma_number?: string } & Record<string, any>;
 }
 
 export type AfterShipWebhookPayload =
   | TrackingWebhookPayload
   | ShippingWebhookPayload
-  | ReturnsWebhookPayload;
+  | ReturnsWebhookPayload
+  | WarrantyWebhookPayload;
 
 /**
  * AfterShip signature headers, checked in this order.
@@ -222,14 +235,14 @@ function handleWebhook(payload: AfterShipWebhookPayload): void {
     return handleShippingEvent(payload as ShippingWebhookPayload);
   }
 
-  const event = (payload as TrackingWebhookPayload | ReturnsWebhookPayload).event;
+  const event = (payload as TrackingWebhookPayload | ReturnsWebhookPayload | WarrantyWebhookPayload).event;
   if (typeof event !== 'string') {
     console.log('❓ AfterShip payload with no recognisable event field');
     return;
   }
 
   if (event.startsWith('return.')) return handleReturnsEvent(payload as ReturnsWebhookPayload);
-  if (event.startsWith('warranty.')) return handleWarrantyEvent(payload as ReturnsWebhookPayload);
+  if (event.startsWith('warranty.')) return handleWarrantyEvent(payload as WarrantyWebhookPayload);
   return handleTrackingEvent(payload as TrackingWebhookPayload);
 }
 
@@ -288,7 +301,7 @@ function handleTrackingStatus(
       break;
 
     case 'InfoReceived':
-      console.log(`🧾 Info received for ${where}${isFirstTag ? ' (first status)' : ''}`);
+      console.log(`🧾 Info received for ${where}${isFirstTag ? ' (first update under this tag)' : ''}`);
       break;
 
     case 'InTransit':
@@ -320,7 +333,7 @@ function handleTrackingStatus(
       break;
 
     case 'Expired':
-      console.log(`🗑️  Expired (no updates for a long period): ${where}`);
+      console.log(`🗑️  Expired (no tracking info for 30 days): ${where}`);
       break;
 
     default:
@@ -446,10 +459,14 @@ function handleReturnsEvent(payload: ReturnsWebhookPayload): void {
   }
 }
 
-/** AfterShip Warranty — same envelope and same header as Returns. */
-function handleWarrantyEvent(payload: ReturnsWebhookPayload): void {
+/**
+ * AfterShip Warranty — same header as Returns, but its own envelope:
+ * id, event, version, created_at, data.warranty (the claim reference) and
+ * current_context (the full claim resource). There is no `modified` field.
+ */
+function handleWarrantyEvent(payload: WarrantyWebhookPayload): void {
   const { id, event } = payload;
-  const data = payload.data ?? {};
+  const claimId = payload.data?.warranty?.id ?? payload.current_context?.id ?? 'unknown';
   console.log(`🛡️  Warranty event ${event} (id=${id})`);
 
   switch (event) {
@@ -459,18 +476,18 @@ function handleWarrantyEvent(payload: ReturnsWebhookPayload): void {
     case 'warranty.completed':
     case 'warranty.canceled':
     case 'warranty.rejected':
-      console.log(`   claim ${data.id ?? 'unknown'} → ${event.split('.')[1]}`);
+      console.log(`   claim ${claimId} → ${event.split('.')[1]}`);
       break;
 
     case 'warranty.inbound_shipment.provided':
     case 'warranty.inbound_shipment.updated':
     case 'warranty.outbound_shipment.provided':
     case 'warranty.outbound_shipment.updated':
-      console.log(`   shipment update on claim ${data.id ?? 'unknown'} (${event})`);
+      console.log(`   shipment update on claim ${claimId} (${event})`);
       break;
 
     case 'warranty.item_received':
-      console.log(`   item received for claim ${data.id ?? 'unknown'}`);
+      console.log(`   item received for claim ${claimId}`);
       break;
 
     default:

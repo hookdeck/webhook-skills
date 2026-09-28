@@ -42,7 +42,7 @@ The delivery *status* lives in `msg.tag` (and the finer-grained `msg.subtag`), *
 | `Delivered` | Delivered |
 | `AvailableForPickup` | Waiting at a pickup point |
 | `Exception` | Returned to sender, customs hold, damage, etc. |
-| `Expired` | No tracking update for a long period |
+| `Expired` | No tracking information for 30 days since the shipment was added |
 
 `msg.subtag` narrows the tag (e.g. `InTransit_001` — "In Transit"), and
 `msg.subtag_message` is the human-readable form.
@@ -92,7 +92,7 @@ Body (trimmed):
 |-------|---------|
 | `event` | The event code (one of the three above) |
 | `event_id` | UUID v4, unique per event — **use this as your idempotency key** |
-| `is_tracking_first_tag` | Whether this is the first status the tracking has reported |
+| `is_tracking_first_tag` | Whether this is the first update sent under this delivery tag (e.g. the first `InTransit`), so you can notify only on key transitions |
 | `msg` | The full Tracking object — `id`, `tracking_number`, `slug` (carrier), `tag`, `subtag`, `subtag_message`, `checkpoints[]`, `title`, `order_number`, `aftership_estimated_delivery_date`, and more |
 | `ts` | UTC UNIX seconds when the event occurred (metadata only — it is **not** signed, so never use it for replay protection) |
 
@@ -100,7 +100,7 @@ Body (trimmed):
 
 Every Tracking webhook URL is pinned to a version in `YYYY-MM` form (`2026-07`, `2026-01`,
 `2025-07`, `2025-04`, `2025-01`, …). The version is echoed in the `as-webhook-version`
-response header on each delivery and is **independent of the API version**.
+request header on each delivery and is **independent of the API version**.
 
 Fields change between versions — for example `2026-01` renamed `checkpoint.zip` to
 `checkpoint.postal_code`. Read `as-webhook-version` in your handler if you support more
@@ -122,7 +122,7 @@ Payload shape:
 ```json
 {
   "event_type": "create_a_label",
-  "date_time": "2024-04-10T07:34:56.000Z",
+  "date_time": "2022-02-11T08:10:56+00:00",
   "meta": { "code": 200, "message": "OK", "details": [] },
   "data": { "id": "...", "status": "created", "files": { "label": { "url": "https://...postmen.com/..." } } }
 }
@@ -159,18 +159,18 @@ Returns payload shape:
 
 ```json
 {
-  "id": "0f0ec1d6-6f30-4c54-9f4a-6a9a7ff0a1e4",
+  "id": "3df04d0cdf3c492fad33a15f753fb960",
   "version": "2026-07",
   "event": "return.approved",
   "created_at": "2024-04-10T07:34:56.000Z",
-  "modified": { "approval_status": { "from": "requested", "to": "approved" } },
+  "modified": { "...": "event-specific — see the Returns webhook reference" },
   "data": { "id": "...", "rma_number": "RMA-1001", "approval_status": "approved" }
 }
 ```
 
 | Field | Meaning |
 |-------|---------|
-| `id` | UUID, unique per event — **use as the idempotency key** |
+| `id` | Unique per event (documented as "UUID v4 format"; the docs' example is 32 hex chars without dashes) — **use as the idempotency key** |
 | `version` | Webhook version, e.g. `2026-07` (also sent in the `as-webhook-version` header) |
 | `event` | The event name |
 | `created_at` | ISO 8601 timestamp |
@@ -196,8 +196,30 @@ without a version bump, so always have a default branch.
 | `warranty.outbound_shipment.updated` | An outbound shipment's tracking changes |
 | `warranty.item_received` | An item is received at the warehouse |
 
-Warranty uses the same envelope as Returns (`id`, `version`, `event`, `created_at`,
-`modified`, `data`) and the same `as-signature-hmac-sha256` header.
+Warranty uses the same `as-signature-hmac-sha256` header as Returns but its **own
+envelope** — there is no `modified`, and the claim is in `current_context`, not `data`.
+From the Warranty webhook reference example (trimmed):
+
+```json
+{
+  "id": "c82422a62a69b4fb17c1c4a35bfcd734b",
+  "event": "warranty.created",
+  "version": "2024-01",
+  "created_at": "2024-02-01T21:29:47.218678282Z",
+  "data": { "warranty": { "id": "102a899f79c82422c99b1fdc417e01010" } },
+  "current_context": {
+    "id": "102a899f79c82422c99b1fdc417e01010",
+    "rma_number": "AABBCCF1",
+    "status": "under_review"
+  }
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `id` | Unique per event — use as the idempotency key |
+| `data.warranty` | Reference to the claim; shipment events also carry `data.warranty_shipment` |
+| `current_context` | The full claim resource — `status` (`under_review`, `approved`, `in_process`, `completed`, `rejected`, `canceled`), `rma_number`, `items`, `order`, `receiving_status`, … |
 
 ## Delivery, Retries and Handshake
 

@@ -66,8 +66,8 @@ What the docs say, verbatim:
 
 ## Implementation
 
-There is **no AfterShip SDK webhook-verification helper** in any language, so every
-implementation is manual. AfterShip's own Node sample is:
+AfterShip's docs point to no SDK helper for webhook verification, and the official Node
+SDK (`@aftership/tracking-sdk` 17.0.0, inspected) has none, so implement it manually. AfterShip's own Node sample is:
 
 ```javascript
 crypto.createHmac('sha256', secret).update(data).digest('base64');
@@ -129,8 +129,9 @@ def verify_aftership_signature(raw_body: bytes, headers, secret: str) -> bool:
     expected = base64.b64encode(
         hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     ).decode()
-    # compare_digest on str is safe for differing lengths (unlike timingSafeEqual)
-    return hmac.compare_digest(received, expected)
+    # Bytes, not str: compare_digest raises TypeError on non-ASCII str input.
+    # It is safe for differing lengths (unlike Node's timingSafeEqual).
+    return hmac.compare_digest(received.encode(), expected.encode())
 ```
 
 `raw_body` comes from `await request.body()`.

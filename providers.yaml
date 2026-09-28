@@ -601,7 +601,7 @@ providers:
       real browser on 2026-09-28. FOUR products send webhooks: Tracking (flagship),
       Shipping (formerly Postmen — admin is still admin.postmen.com, label URLs on
       postmen.com), Returns, and Warranty. Hookdeck source type is AFTERSHIP (slug
-      aftership), added in hookdeck/core PR #5669; external_docs_url is the Tracking
+      aftership), added in hookdeck/core#5669 (merged 2026-09-28); external_docs_url is the Tracking
       signature page and its config is the standard single webhook_secret_key. Core's
       controller accepts a valid HMAC in ANY of the three product headers, so the
       primary target is Tracking with the others as variants of one algorithm.
@@ -646,8 +646,8 @@ providers:
       FastAPI) — never re-stringify parsed JSON. Env var: AFTERSHIP_WEBHOOK_SECRET.
       EACH PRODUCT HAS ITS OWN SECRET (Tracking admin vs Postmen admin vs
       Returns/Warranty config page) — recommend one endpoint (or one Hookdeck source)
-      per product; do NOT claim a single secret spans products. There is NO AfterShip
-      SDK helper for webhook verification in any language. OTHER AUTH (Tracking only,
+      per product; do NOT claim a single secret spans products. AfterShip's docs point to no SDK helper for webhook verification, and the Node
+      @aftership/tracking-sdk 17.0.0 has none (inspected; other SDKs not checked). OTHER AUTH (Tracking only,
       extras alongside the HMAC, not replacements): up to 5 custom headers per webhook
       URL (basic auth / bearer token / secret key), and OAuth 2.0 client credentials —
       AfterShip calls your Token URL with grant_type=client_credentials, client_id,
@@ -700,7 +700,14 @@ providers:
       warranty.processing, warranty.completed, warranty.canceled, warranty.rejected,
       warranty.inbound_shipment.provided, warranty.inbound_shipment.updated,
       warranty.outbound_shipment.provided, warranty.outbound_shipment.updated,
-      warranty.item_received.
+      warranty.item_received. WARRANTY PAYLOAD differs from Returns (Warranty webhook
+      reference): top-level id, event, version, created_at, data ({warranty: {id}},
+      plus warranty_shipment on shipment events) and current_context (the full claim:
+      id, status under_review|approved|in_process|completed|rejected|canceled,
+      rma_number, items, order, receiving_status ...). There is NO `modified` and the
+      claim id is data.warranty.id / current_context.id, not data.id. Returns `id`
+      is documented as "UUID v4 format" but the docs' example is 32 hex chars with no
+      dashes. is_tracking_first_tag = first update sent under a given delivery tag.
     testScenario:
       events:
         - tracking_update

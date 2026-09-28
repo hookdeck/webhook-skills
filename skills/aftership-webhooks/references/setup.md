@@ -83,8 +83,9 @@ AfterShip product's webhooks" — i.e. Returns does *not* use `aftership-hmac-sh
 
 ## AfterShip Warranty
 
-Identical to Returns: configure the webhook URL in the Warranty settings, copy its own
-secret, and expect `as-signature-hmac-sha256`.
+Configured like Returns: set the webhook URL in the Warranty settings, copy its own
+secret, and expect `as-signature-hmac-sha256` (bare base64). The payload envelope differs
+from Returns — see [overview.md](overview.md#warranty-events).
 
 ## Environment Variables
 

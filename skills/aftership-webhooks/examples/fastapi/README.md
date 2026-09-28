@@ -13,7 +13,7 @@ algorithm and differ only in the header they put the signature in:
 | Returns / Warranty | `as-signature-hmac-sha256` | bare base64 digest |
 | Shipping, legacy Returns | `am-webhook-signature` | `hmac-sha256=<base64 digest>` |
 
-AfterShip publishes no SDK helper for webhook verification in any language, so this
+AfterShip's docs point to no SDK helper for webhook verification, so this
 example implements the algorithm directly — it matches AfterShip's own Python sample
 (`hmac.new(bytes(secret, 'utf-8'), body, hashlib.sha256)` then `base64.b64encode`).
 

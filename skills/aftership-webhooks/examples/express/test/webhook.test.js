@@ -110,11 +110,12 @@ const TRACKING_PENDING_TIME = JSON.stringify({
 
 // AfterShip Returns envelope: id, version, event, created_at, modified, data.
 const RETURN_APPROVED = JSON.stringify({
-  id: '0f0ec1d6-6f30-4c54-9f4a-6a9a7ff0a1e4',
+  id: '3df04d0cdf3c492fad33a15f753fb960',
   version: '2026-07',
   event: 'return.approved',
   created_at: '2026-09-28T07:34:56.000Z',
-  modified: { approval_status: { from: 'requested', to: 'approved' } },
+  // `modified` is event-specific; this shape is illustrative, not documented.
+  modified: { approval_status: 'approved' },
   data: {
     id: 'ret_01HZX0000000000000000000',
     rma_number: 'RMA-1001',
@@ -122,13 +123,19 @@ const RETURN_APPROVED = JSON.stringify({
   },
 });
 
-// AfterShip Warranty uses the same envelope and the same header as Returns.
+// AfterShip Warranty: same header as Returns, own envelope (data.warranty + current_context).
+// Shape follows the Warranty webhook reference example.
 const WARRANTY_CREATED = JSON.stringify({
-  id: 'c2d3e4f5-a6b7-48c9-9d0e-1f2a3b4c5d6e',
-  version: '2026-07',
+  id: 'c82422a62a69b4fb17c1c4a35bfcd734b',
   event: 'warranty.created',
-  created_at: '2026-09-28T07:40:00.000Z',
-  data: { id: 'wty_01HZX0000000000000000000' },
+  version: '2024-01',
+  created_at: '2024-02-01T21:29:47.218678282Z',
+  data: { warranty: { id: '102a899f79c82422c99b1fdc417e01010' } },
+  current_context: {
+    id: '102a899f79c82422c99b1fdc417e01010',
+    rma_number: 'AABBCCF1',
+    status: 'under_review',
+  },
 });
 
 // AfterShip Shipping (Postmen): event_type, date_time, meta, data.

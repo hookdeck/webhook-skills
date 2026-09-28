@@ -85,7 +85,7 @@ def verify_aftership_signature(raw_body: bytes, headers, secret: str) -> bool:
     expected = base64.b64encode(
         hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     ).decode()
-    return hmac.compare_digest(received, expected)
+    return hmac.compare_digest(received.encode(), expected.encode())
 ```
 
 > **Use the raw body.** `express.raw({ type: 'application/json' })`, `await req.text()`
@@ -103,8 +103,9 @@ def verify_aftership_signature(raw_body: bytes, headers, secret: str) -> bool:
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
-There is **no AfterShip SDK method for webhook verification** in any language — the
-snippets above (mirrored in the examples) are the canonical implementation.
+AfterShip's docs give only these raw HMAC snippets, and the official Node SDK
+(`@aftership/tracking-sdk` 17.0.0) has no webhook-verification helper — so implement it
+manually as above (mirrored in the examples).
 
 ## Common Event Types
 
