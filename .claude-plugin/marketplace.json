@@ -606,6 +606,28 @@
       ]
     },
     {
+      "name": "wordpress-com-webhooks",
+      "description": "Receive WordPress.com webhooks (Settings -> Webhooks, the native /wp-admin/options-general.php?page=webhooks feature). Use when building a WordPress.com webhook receiver, because these deliveries are UNSIGNED: there is no HMAC, no signature header, no secret, no timestamp and no handshake, and the body is a FLAT application/x-www-form-urlencoded set of key/value pairs whose only discriminator is the `hook` field (`publish_post`, `publish_page`, `comment_post`). Use when wiring express.urlencoded / request.formData() / await request.form(), protecting an unsigned endpoint with a query-string token, or deduping repeated publish_post deliveries. NOT WooCommerce (X-WC-Webhook-Signature) and not a WordPress.org plugin.",
+      "source": "./skills/wordpress-com-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/wordpress-com-webhooks",
+      "keywords": [
+        "webhooks",
+        "wordpress",
+        "com"
+      ]
+    },
+    {
       "name": "zift-webhooks",
       "description": "Receive and acknowledge Zift (Zift Payments / payment gateway) webhook notifications. Use when setting up a Zift webhook receiver, understanding why there is no signature/HMAC header to verify, returning the required {\"notificationId\": ...} acknowledgement, or handling billing and processing events like billing.subscription-created, processing.chargeback, and processing.return.",
       "source": "./skills/zift-webhooks",

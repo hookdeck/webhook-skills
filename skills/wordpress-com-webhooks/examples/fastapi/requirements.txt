@@ -1,0 +1,8 @@
+fastapi>=0.141.1
+uvicorn>=0.30.0
+python-dotenv>=1.0.0
+# Required by Starlette's `await request.form()` to parse the
+# application/x-www-form-urlencoded body WordPress.com sends.
+python-multipart>=0.0.20
+httpx>=0.28.1
+pytest>=9.1.1

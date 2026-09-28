@@ -5311,3 +5311,98 @@ providers:
         - change
         - profile_disconnected
         - profile_initial_sync_completed
+
+  - name: wordpress-com
+    displayName: WordPress.com
+    docs:
+      webhooks: https://wordpress.com/support/webhooks/
+      verification: https://wordpress.com/support/webhooks/
+      events: https://wordpress.com/support/webhooks/
+    notes: >
+      Automattic's HOSTED WordPress service and its NATIVE webhooks feature ("Use
+      WordPress.com Webhooks", last reviewed 2026-08-11). Hookdeck source type
+      WORDPRESS_COM (slug wordpress-com, hookdeck/core#5669): schema only,
+      http_method_managed_post, NO verification controller.
+
+      NOT WooCommerce (own signed scheme, X-WC-Webhook-Signature, HMAC-SHA256 base64 —
+      covered by woocommerce-webhooks; never borrow its headers or verifier), NOT
+      WordPress.org webhook plugins (the docs say verbatim "The Webhook settings
+      mentioned on this page do not apply to plugin-enabled sites"), NOT the
+      WordPress.com REST API, and NOT Jetpack Forms webhooks (a separate per-form
+      feature, also unsigned, worth one short section only).
+
+      CONFIGURED in the admin UI only — verbatim: "You can find this feature by adding
+      /wp-admin/options-general.php?page=webhooks to the end of your site's URL". Add
+      webhook -> choose an action, choose the fields, enter the URL. "Only admin-level
+      users can add or manage webhooks." Rows can be edited, deleted, activated or
+      deactivated. The docs describe no API for managing webhooks.
+
+      VERIFICATION: NONE — these webhooks are UNSIGNED. The docs describe no secret, no
+      signature header, no token, no auth option and no custom headers; the form has only
+      action, fields and URL. The feature derives from HookPress (mitcho/hookpress), whose
+      hookpress_generic_action() sets only user-agent, body and referer and calls
+      wp_remote_post — no signing anywhere. So: no HMAC/timestamp verifier, no invented
+      header (X-WordPress-Signature / X-WP-Signature / X-WPCOM-Signature do not exist), no
+      fabricated source-IP allowlist, no delivery-id/event-id/timestamp headers, no
+      handshake or challenge. The verification section is CHANNEL-LEVEL instead: a long
+      random token in the registered URL's query string
+      (?token=<random>, env WORDPRESS_COM_WEBHOOK_TOKEN) compared in CONSTANT TIME
+      (length-guard before crypto.timingSafeEqual; hmac.compare_digest on encoded bytes in
+      Python), 401 on missing/mismatch, and FAIL CLOSED with 500 when the env var is unset.
+      Hedge honestly: the docs neither mention nor forbid query strings in the URL — this is
+      the standard pattern for unsigned senders, not a WordPress.com feature, and the token
+      is visible to any site admin and may appear in logs. Plus HTTPS, plus treating the
+      payload as untrusted and re-fetching authoritative data
+      (GET https://public-api.wordpress.com/rest/v1.1/sites/{site}/posts/{ID}). With
+      Hookdeck the Source URL is the secret endpoint and the WordPress.com source performs
+      no signature check; the app should verify Hookdeck's own x-hookdeck-signature
+      (HMAC-SHA256, base64, raw body) — the ONE HMAC the skill may show, clearly labelled
+      as Hookdeck's.
+
+      PAYLOAD: verbatim — "The URL will receive an HTTP POST request when the selected
+      action fires. The post data will contain the selected fields and one additional field
+      called hook, that contains the action title." FLAT key/value pairs: no JSON envelope,
+      no type, no data object, no event id; the discriminator is the `hook` field.
+      ENCODING is not stated in the docs: the HookPress sender passes a PHP array as `body`
+      to wp_remote_post, which WordPress's HTTP API encodes with http_build_query, i.e.
+      application/x-www-form-urlencoded — so form-encoded is the expected format (INFERRED
+      from the HookPress lineage; WordPress.com's fork is closed source — hedge this).
+      Handlers parse express.urlencoded({ extended: true }), await request.formData() /
+      new URLSearchParams(await request.text()), or await request.form() (needs
+      python-multipart); ALSO accept application/json defensively but never claim JSON is
+      what WordPress.com sends. All values arrive as STRINGS (ID=123, comment_approved=1).
+      Array fields such as post_category may arrive bracket-encoded
+      (post_category[0]=1&post_category[1]=5). Only the ticked fields are sent — every
+      field is optional except `hook`. post_url is not a native WP_Post column (HookPress
+      adds it via get_permalink()) but is in the documented field list. post_password,
+      comment_author_email and comment_author_IP are sensitive — warn.
+
+      EVENTS — exactly three, documented verbatim: comment_post ("Runs just after a comment
+      is saved in the database"; fields comment_ID, comment_agent, comment_approved,
+      comment_author, comment_author_IP, comment_author_email, comment_author_url,
+      comment_content, comment_date, comment_date_gmt, comment_karma, comment_parent,
+      comment_post_ID, comment_type, user_id), publish_page and publish_post ("Runs when a
+      post/page is published, or if it is edited and its status is 'published'"; fields ID,
+      comment_count, comment_status, guid, menu_order, ping_status, pinged, post_author,
+      post_category, post_content, post_content_filtered, post_date, post_date_gmt,
+      post_excerpt, post_mime_type, post_modified, post_modified_gmt, post_name,
+      post_parent, post_password, post_status, post_title, post_type, post_url, to_ping).
+      Invent no others (no post_updated, delete_post, user_register, wp_insert_post); log an
+      unknown `hook` and acknowledge 2xx. comment_approved is a string: 1 approved, 0
+      pending, spam spam — don't publish comment_content blindly.
+
+      IDEMPOTENCY: publish_post/publish_page fire on the initial publish AND on every later
+      edit, so the same ID recurs, and there is no delivery-id header. Dedupe on
+      hook + ID + post_modified_gmt (when selected) or upsert by ID; comments key on
+      comment_ID.
+
+      DELIVERY: the docs document NO retries, NO timeout, NO delivery log and NO test/ping
+      button — invent none; say "assume no retries and design for missed events (reconcile
+      via the REST API)". HookPress sends synchronously during the WordPress action (hedge:
+      WordPress.com's implementation may differ), so answer 2xx fast and work
+      asynchronously.
+    testScenario:
+      events:
+        - publish_post
+        - publish_page
+        - comment_post
