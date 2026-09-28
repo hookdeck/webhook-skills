@@ -3390,6 +3390,77 @@ providers:
         - products/update
         - collect/delete
 
+  - name: snipcart
+    displayName: Snipcart
+    docs:
+      webhooks: https://docs.snipcart.com/v3/webhooks/introduction
+      verification: https://docs.snipcart.com/v3/setup/order-validation
+      events: https://docs.snipcart.com/v3/webhooks/order-events
+      api: https://docs.snipcart.com/v3/api-reference/authentication
+    notes: >
+      Snipcart (snipcart.com, owned by Duda) is an HTML/JS embeddable shopping cart. Target the
+      v3 docs (docs.snipcart.com/v3); API host is https://app.snipcart.com/api.
+      *** THERE IS NO SIGNATURE AND NO HMAC. *** No signature header, no shared webhook secret,
+      no timestamp header (full v3 sitemap checked 2026-09-28). Do NOT invent an
+      X-Snipcart-Signature header and do NOT write crypto.createHmac / hmac.new anywhere.
+      Instead every outbound request carries a one-time random token in the
+      X-Snipcart-RequestToken header (valid ONE HOUR for webhooks) which the receiver proves
+      genuine with a callback: GET https://app.snipcart.com/api/requestvalidation/{token}
+      authenticated with HTTP Basic, the SECRET API key as the username and a TRAILING COLON
+      (Authorization: Basic base64("<SECRET_API_KEY>:")), Accept: application/json. 200 = genuine;
+      404 = unknown, already validated, or expired; 401/403 = wrong/missing secret key (keys are
+      per-mode — a Test key cannot read Live data, so a Test-mode webhook likely needs a Test-mode
+      key; payload `mode` is "Test"|"Live"). Anything else, a network error or a timeout must FAIL
+      CLOSED. The token is attacker-controlled and goes into the URL path of a request carrying
+      the secret key, so format-check it against /^[A-Za-z0-9_-]{1,128}$/ BEFORE building the URL
+      (encodeURIComponent is NOT enough: `.`/`..` survive and resolve as dot segments, turning the
+      call into GET /api/ whose 200 would be misread as valid). Do not follow redirects
+      (redirect:'manual' / follow_redirects=False); ~5s timeout. Parse the body only after a 200.
+      The 200 body is undocumented beyond "carries the resource we asked for"; community
+      implementations read `token` and `resource` — an optional defense-in-depth check only, never
+      the default signal. Unset key => 500 configuration error, never fail open. Env var:
+      SNIPCART_SECRET_API_KEY (merchant dashboard account credentials / API keys — exact menu path undocumented; never the public front-end key).
+      Tokens are likely single-use (the docs state single-use for crawler tokens; webhook tokens
+      hedge) so validate synchronously on receipt, exactly once — with Hookdeck in front, do NOT
+      re-validate at the destination; verify x-hookdeck-signature instead. Response requirement:
+      "Your designated endpoint must respond with data in Content-Type application/json format and
+      a status code 200" — return a JSON body, 400 for unparsable body / missing eventName.
+      Envelope: eventName, mode ("Live"|"Test"), createdOn, content. NO event id and NO delivery id
+      — idempotency key on content.token (order token) + eventName (+ createdOn). Snipcart may add
+      payload fields at any time without notice; ignore unknown fields, no strict schema validation.
+      Order events: order.completed, order.status.changed and order.paymentStatus.changed (add
+      TOP-LEVEL from/to), order.trackingNumber.changed (adds TOP-LEVEL trackingNumber/trackingUrl),
+      order.refund.created, order.notification.created, order.withdrawal.created. Subscription
+      events keep a literal `v3/` PREFIX in the event name — do not strip it:
+      v3/subscription.invoice.payment.succeeded, v3/subscription.invoice.payment.failed (neither
+      fires for the FIRST payment, only recurring ones), v3/subscription.state.cancellationRequested,
+      v3/subscription.state.cancelled. Order statuses: InProgress, Processed, Disputed, Shipped,
+      Delivered, Pending, Cancelled, Dispatched. Payment statuses: Paid, Deferred, PaidDeferred,
+      ChargedBack, Refunded, Paidout, Pending, Failed, Expired, Cancelled, Open, Authorized.
+      SYNCHRONOUS webhooks (separate dashboard settings, response BODY consumed at checkout):
+      shippingrates.fetch (Store configurations -> Shipping -> Webhooks; respond 2XX
+      {"rates":[{"cost","description","userDefinedId","guaranteedDaysToDelivery"}]} or 2XX
+      {"errors":[{"key","message"}]}) and taxes.calculate (Store configurations -> Taxes ->
+      Providers -> Webhooks; request content is the live CART with UNIX-timestamp dates and a
+      numeric paymentMethod; respond 2XX {"taxes":[{"name","amount","rate","numberForInvoice",...}]},
+      amount in currency units not cents). Because Hookdeck cannot synchronously return a
+      destination's response to the client, those two must point DIRECTLY at the app; only the
+      async order/subscription events go through Hookdeck. Hookdeck has a SNIPCART source type
+      (hookdeck/core#5669, merged 2026-09-28; config takes a single api_key = the Snipcart secret
+      key for the webhook's mode; validates as above with the same token format check, no
+      redirects, 5s fail-closed timeout) — not yet listed at hookdeck.com/docs/sources on
+      2026-09-28, so say "recently added". General webhook URL: Store Configurations -> Webhooks; multiple URLs
+      separated by semicolons; the dashboard logs each request and has a manual "Send this hook
+      again" button. NOT DOCUMENTED, do not fabricate: retry policy/schedule, delivery timeout,
+      source-IP allowlist, event ids, HMAC. No official Snipcart SDK for webhook validation —
+      examples use Node built-ins (global fetch) and httpx; tests stub fetch / inject an
+      httpx.MockTransport.
+    testScenario:
+      events:
+        - order.completed
+        - order.paymentStatus.changed
+        - v3/subscription.invoice.payment.succeeded
+
   - name: slack
     displayName: Slack
     docs:

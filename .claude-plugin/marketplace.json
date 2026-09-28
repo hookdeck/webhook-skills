@@ -586,6 +586,27 @@
       ]
     },
     {
+      "name": "snipcart-webhooks",
+      "description": "Receive and verify Snipcart webhooks (snipcart.com, the HTML/JS embeddable shopping cart). Use when setting up a Snipcart webhook handler, debugging the X-Snipcart-RequestToken callback validation, or handling events like order.completed, order.status.changed, order.paymentStatus.changed, order.refund.created, v3/subscription.invoice.payment.succeeded, or the synchronous shippingrates.fetch and taxes.calculate webhooks. Snipcart does NOT sign payloads — there is no HMAC and no signature header; authenticity is proved by calling Snipcart's request-validation API with your secret API key.",
+      "source": "./skills/snipcart-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/snipcart-webhooks",
+      "keywords": [
+        "webhooks",
+        "snipcart"
+      ]
+    },
+    {
       "name": "sparkpost-webhooks",
       "description": "Receive and authenticate SparkPost event webhooks. Use when setting up SparkPost webhook handlers, debugging SparkPost webhook authentication (Basic Auth, OAuth 2.0 Bearer tokens, or the deprecated X-MessageSystems-Webhook-Token header), parsing the batched `msys` payload, or handling email events like delivery, bounce, click, open, spam_complaint, delay, and list_unsubscribe. SparkPost event webhooks are NOT signed — there is no HMAC and no signature header.",
       "source": "./skills/sparkpost-webhooks",
