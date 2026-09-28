@@ -231,7 +231,9 @@ distinguishable in your logs.
 
 Checkout.com's **previous ("ABC") platform** configured webhooks through the old
 `/webhooks` endpoint and the Hub. Those docs are no longer published (the old
-URLs 404). The header name, algorithm and hex encoding are the same there.
+URLs 404). Checkout.com's Shopware 5 plugin reads the same `Cko-Signature` header and
+computes the same HMAC-SHA256 hex digest, so the header, algorithm and encoding
+appear unchanged (inferred from plugin source, not documented).
 
 **Inferred from Checkout.com's own Shopware 5 plugin source, not from current
 documentation:** that plugin accepts `Cko-Signature` if it matches

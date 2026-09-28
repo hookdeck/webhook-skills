@@ -207,8 +207,10 @@ async def checkout_webhook(
     # signature. Deduplication on this id is therefore your ONLY replay
     # protection.
     #
-    # Retain processed ids for at least 31 hours: retries run 5m, 10m, 15m,
-    # 30m, 1h, 4h, 12h, 12h after each previous attempt (~30 hours total).
+    # Retain processed ids for AT LEAST 31 hours: retries run 5m, 10m, 15m,
+    # 30m, 1h, 4h, 12h, 12h after each previous attempt (~30 hours total). That
+    # is a floor, not a ceiling -- manual resends can come later, so longer is
+    # safer.
     event_id = event.get("id")
 
     # THE TIMESTAMP FIELD NAME VARIES BY EVENT. payment_approved and
@@ -338,13 +340,25 @@ def handle_event(event: Dict[str, Any]) -> None:
 
     # --- Fraud --------------------------------------------------------------
     elif event_type == "fraud_reported":
-        logger.info("Fraud reported on payment %s", data.get("payment_id") or data.get("id"))
+        # The payment is nested at data.payment.id (its amount is an object,
+        # {currency, value}, not a minor-unit number).
+        logger.info("Fraud reported on payment %s", (data.get("payment") or {}).get("id"))
 
     # --- Authentication (3DS) -----------------------------------------------
     elif event_type == "authentication_approved":
-        logger.info("3DS authentication approved: %s", data.get("id"))
+        # Authentication events carry no data.id: use session_id (sid_...) and
+        # payment_id (pay_...).
+        logger.info(
+            "3DS authentication approved: %s (payment %s)",
+            data.get("session_id"),
+            data.get("payment_id"),
+        )
     elif event_type == "authentication_failed":
-        logger.info("3DS authentication failed: %s", data.get("id"))
+        logger.info(
+            "3DS authentication failed: %s (payment %s)",
+            data.get("session_id"),
+            data.get("payment_id"),
+        )
 
     else:
         # 140+ event types exist across Balances, Compliance, Identities,

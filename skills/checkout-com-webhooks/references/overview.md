@@ -98,7 +98,7 @@ Event names are **snake_case strings with no dots**. There is no
 | `payment_pending` | Payment is awaiting a next step | Hold the order |
 | `payment_captured` | Funds were captured | **Fulfil the order** |
 | `payment_capture_declined` | Capture attempt failed | Alert ops, retry capture |
-| `payment_capture_pending` | Capture is in flight | Wait |
+| `payment_capture_pending` | Customer approved the payment on their banking page; capture not final yet | Wait |
 | `payment_paid` | A bank payout completed successfully | Mark the payout paid |
 | `payment_refunded` | A refund succeeded | Credit the customer, update ledger |
 | `payment_refund_declined` | Refund failed | Alert ops |
@@ -153,7 +153,11 @@ id header, and no timestamp is signed, so `id` is also your only replay
 protection: a replayed request carries a valid `Cko-Signature` — it is a byte
 copy — and only deduplication stops it being processed twice.
 
-Keep processed ids for at least **31 hours** to cover the full retry window.
+Keep processed ids for at least **31 hours** to cover the automatic retry
+window. That is a floor, not a ceiling: since the id is your only replay
+protection, keeping ids longer (or permanently, keyed by `evt_…`) is safer.
+Webhooks can also be resent manually from the Dashboard or API at any time;
+whether a resend reuses the original `evt_…` id is not documented.
 
 ## Delivery and Retries
 

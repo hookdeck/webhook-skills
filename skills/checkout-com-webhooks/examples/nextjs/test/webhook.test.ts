@@ -24,7 +24,7 @@ function generateSignature(rawBody: string, key: string = SIGNATURE_KEY): string
   return crypto.createHmac('sha256', key).update(rawBody).digest('hex');
 }
 
-// The documented payment_approved envelope, verbatim from Checkout.com's docs.
+// The documented payment_approved envelope, trimmed from Checkout.com's documented example.
 const PAYMENT_APPROVED = {
   id: 'evt_caxmnvuvbe4elkbdx2imwbnjxu',
   type: 'payment_approved',
@@ -263,7 +263,7 @@ describe('event handling', () => {
   test('acknowledges an unknown event type with 200', async () => {
     const res = await post({
       id: 'evt_unknownunknownunknownunknow',
-      type: 'issuing_card_created',
+      type: 'not_a_real_event_type',
       version: '1.0.29',
       created_on: '2023-05-22T11:56:04.8821546Z',
       data: { id: 'crd_abc' },

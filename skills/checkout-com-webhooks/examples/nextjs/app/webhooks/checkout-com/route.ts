@@ -49,8 +49,12 @@ export interface CheckoutEvent {
     /** pay_… for payment events, dsp_… for dispute events. */
     id?: string;
     action_id?: string;
-    /** Dispute events only: the payment being disputed. */
+    /** Dispute and authentication events: the related payment (pay_…). */
     payment_id?: string;
+    /** fraud_reported: the payment is nested here, with an object amount. */
+    payment?: { id?: string; [key: string]: unknown };
+    /** Authentication events: the 3DS session (sid_…). They have no data.id. */
+    session_id?: string;
     reference?: string;
     /** MINOR currency unit: 20 USD-cents is $0.20. */
     amount?: number;
@@ -191,8 +195,9 @@ export async function POST(request: NextRequest) {
    * is signed, a byte-for-byte replay carries a genuinely valid signature.
    * Deduplication on this id is therefore your ONLY replay protection.
    *
-   * Retain processed ids for at least 31 hours: retries run 5m, 10m, 15m, 30m,
-   * 1h, 4h, 12h, 12h after each previous attempt (~30 hours total).
+   * Retain processed ids for AT LEAST 31 hours: retries run 5m, 10m, 15m, 30m,
+   * 1h, 4h, 12h, 12h after each previous attempt (~30 hours total). That is a
+   * floor, not a ceiling — manual resends can come later, so longer is safer.
    */
   const eventId = event.id;
 
@@ -348,15 +353,19 @@ async function handleEvent(event: CheckoutEvent) {
 
     // --- Fraud --------------------------------------------------------------
     case 'fraud_reported':
-      console.log(`🚨 Fraud reported on payment ${data.payment_id ?? data.id}`);
+      // The payment is nested at data.payment.id (its amount is an object,
+      // {currency, value}, not a minor-unit number).
+      console.log(`🚨 Fraud reported on payment ${data.payment?.id}`);
       break;
 
     // --- Authentication (3DS) -----------------------------------------------
     case 'authentication_approved':
-      console.log(`🔐 3DS authentication approved: ${data.id}`);
+      // Authentication events carry no data.id: use session_id (sid_…) and
+      // payment_id (pay_…).
+      console.log(`🔐 3DS authentication approved: ${data.session_id} (payment ${data.payment_id})`);
       break;
     case 'authentication_failed':
-      console.log(`🔓 3DS authentication failed: ${data.id}`);
+      console.log(`🔓 3DS authentication failed: ${data.session_id} (payment ${data.payment_id})`);
       break;
 
     default:

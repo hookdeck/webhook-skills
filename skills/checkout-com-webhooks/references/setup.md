@@ -7,7 +7,8 @@ Docs: [Receive webhooks](https://www.checkout.com/docs/developer-resources/event
 
 - A Checkout.com account on the current ("NAS" / Workflows) platform, with
   access to **Developers → Webhooks** in the Dashboard
-- Your application's webhook endpoint URL, reachable over **HTTPS**
+- Your application's webhook endpoint URL. The Dashboard accepts `https://` or
+  `http://`; use **HTTPS** in production
   (for local development, see [Local development](#local-development))
 
 ## Option A — Dashboard (recommended)
@@ -32,7 +33,10 @@ Docs: [Receive webhooks](https://www.checkout.com/docs/developer-resources/event
    [overview.md](overview.md) for the common ones and the
    [Event types](https://www.checkout.com/docs/developer-resources/event-notifications/event-types)
    page for all 140+.
-9. Save.
+9. **Select the entities or processing channels** you want to receive
+   webhooks for.
+10. Select **Create webhook**. Checkout.com starts sending subscribed events
+    immediately.
 
 Both keys are **optional and independent**. You can configure neither, either,
 or both. Configure at least the **signature key** — it is the only mechanism

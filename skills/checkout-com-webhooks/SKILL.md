@@ -220,7 +220,9 @@ Real-Time Account Updater, Reports and Settlements. Subscribe only to what you h
   return 2xx — do the work afterwards.
 - **Retries: up to 8, after the previous attempt** — 5 min, 10 min, 15 min,
   30 min, 1 hour, 4 hours, 12 hours, 12 hours (~30 hours total). Keep
-  processed `evt_…` ids for at least **31 hours**.
+  processed `evt_…` ids for at least **31 hours** — a floor for the automatic
+  retries, not a ceiling; longer is safer since the id is your only replay
+  protection.
 - **Delivery is at-least-once and ORDER IS NOT GUARANTEED.** Checkout.com:
   *"Checkout.com guarantees to send webhooks at least once, but the order in
   which we send them may vary."* `payment_captured` can arrive before
@@ -238,8 +240,10 @@ credential.
 ## Legacy (previous platform) accounts
 
 Checkout.com's **previous ("ABC") platform** configured webhooks via the old
-`/webhooks` endpoint and the Hub; its docs are no longer published. The header
-name, algorithm and hex encoding are the same there.
+`/webhooks` endpoint and the Hub; its docs are no longer published. Checkout.com's
+Shopware 5 plugin reads the same `Cko-Signature` header and computes the same
+HMAC-SHA256 hex digest, so the header, algorithm and encoding appear unchanged
+(inferred from plugin source, not documented).
 
 **Inferred from Checkout.com's own Shopware 5 plugin source, not from current
 docs:** that plugin accepts `Cko-Signature` if it matches HMAC-SHA256 of the raw
