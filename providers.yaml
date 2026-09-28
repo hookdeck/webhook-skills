@@ -789,6 +789,88 @@ providers:
         - subscription_created
         - payment_succeeded
 
+  - name: checkout-com
+    displayName: Checkout.com
+    docs:
+      webhooks: https://www.checkout.com/docs/developer-resources/event-notifications/receive-webhooks
+      verification: https://www.checkout.com/docs/developer-resources/event-notifications/receive-webhooks/configure-your-webhook-server#Validate_the_payload
+      events: https://www.checkout.com/docs/developer-resources/event-notifications/event-types
+      api: https://www.checkout.com/docs/developer-resources/ip-addresses
+    notes: >
+      IDENTITY: Checkout.com (checkout.com), the global payments processor — card acquiring,
+      APMs, disputes, payouts, issuing, identity verification. Skill slug is `checkout-com` to
+      match Hookdeck's source type CHECKOUT_COM (hookdeck/core PR #5669; the console provider
+      key is `checkout`). NOT Checkout Page (checkoutpage.co), NOT CheckoutJoy, NOT 2Checkout /
+      Verifone (a different company with an entirely different IPN/INS scheme), NOT Stripe
+      Checkout, NOT Shopify checkout webhooks. Targets the current ("NAS" / Workflows) platform.
+
+      VERIFICATION: TWO independent, OPTIONAL mechanisms configured per webhook. (1) PRIMARY —
+      `Cko-Signature`: HMAC-SHA256 of the RAW request body, HEX-encoded (Base16). A BARE digest:
+      no `sha256=` prefix, no `t=`/timestamp component, no version tag, exactly one signature.
+      Lowercase hex in practice (Checkout.com's own WooCommerce plugin compares PHP
+      hash_hmac('sha256', $raw, $key) with ===); lowercase the received value before comparing.
+      Key is the "signature key" (Dashboard → Developers → Webhooks → Create configuration →
+      Generate key, or actions[].signature.key with signature.method "HMACSHA256" on
+      POST /workflows) used AS-IS as a UTF-8 string — do NOT base64/hex-decode it. It is NOT the
+      sk_... secret API key on the current platform (unless the integrator chose to set it to
+      that, as Checkout.com's WooCommerce plugin does). (2) OPTIONAL — `Authorization`: the
+      configured key sent VERBATIM, with NO "Bearer "/"Basic " prefix. A static shared secret,
+      NOT a signature — it proves the sender knows the key but protects nothing about the body.
+      Treat it as a complement to Cko-Signature, never a replacement. Env vars:
+      CHECKOUT_WEBHOOK_SIGNATURE_KEY (required), CHECKOUT_WEBHOOK_AUTHORIZATION_KEY (optional).
+      Users can also add arbitrary extra static headers — mention, don't build for it.
+
+      CRITICAL GOTCHA — NO TIMESTAMP EXISTS. No `Cko-Timestamp` header, and no timestamp is
+      signed. Do NOT invent a replay-window/tolerance check (a Stripe-style `t=` parse rejects
+      every delivery). Replay protection = dedupe on the event `id` (evt_...). Constant-time
+      compare with a LENGTH GUARD before crypto.timingSafeEqual (it throws on mismatched
+      lengths); hmac.compare_digest in Python needs no guard. Missing header → 401. Unset
+      secret → fail CLOSED (500), never skip verification silently.
+
+      RAW BODY: "To avoid signature verification inconsistencies, perform the signature
+      calculation based on the raw payload body from the HTTP request." Deserializing and
+      re-serializing can change number precision and mangle ©, ®, ™.
+
+      LEGACY / PREVIOUS PLATFORM ("ABC"): docs no longer published (old URLs 404). Header name,
+      algorithm and hex encoding are the same. INFERRED FROM Checkout.com's own Shopware 5
+      plugin source (not from current docs): it accepts Cko-Signature matching HMAC-SHA256 of
+      the raw body keyed with EITHER the configured webhook signature key OR the account
+      private/secret key. State as one hedged note — "if verification fails on a
+      previous-platform account, try your secret key as the HMAC key" — and do NOT build a
+      second verifier.
+
+      ENVELOPE: { id: "evt_...", type, version ("1.0.29", an event SCHEMA version), data,
+      _links }; some events also carry `source` and `action_invocations` (workflow_id /
+      workflow_action_id / status). TIMESTAMP FIELD VARIES BY EVENT: payment_approved and
+      dispute_received use `created_on`, payment_captured uses `timestamp` — read
+      `created_on ?? timestamp`. `amount` is in the MINOR currency unit (20 USD = $0.20).
+      `data.id` is the payment (pay_...) for payment events and the dispute (dsp_...) for
+      dispute events; dispute events also carry `data.payment_id`.
+
+      EVENTS: `type` values are snake_case with NO dots — never payment.captured, never
+      Stripe-style names. The Event types page lists ~150 across Authentication, Balances,
+      Compliance, Disputes, Fraud, Gateway, Identities, Issuing, Network tokens, Platforms,
+      Real-Time Account Updater, Reports, Settlements.
+
+      DELIVERY: acknowledge within 10 SECONDS. Retries up to EIGHT times, measured from each
+      previous attempt: 5 min, 10 min, 15 min, 30 min, 1 hour, 4 hours, 12 hours, 12 hours
+      (~30 hours). At-least-once, and ORDER IS NOT GUARANTEED ("the sequence in which we send
+      them may vary") — payment_captured can precede payment_approved. NO handshake, challenge
+      or verification request exists; do NOT invent one.
+
+      SOURCE IPs: documented (Developer resources → IP addresses → "Receive webhook
+      notifications") but Checkout.com warns "the provided IP address lists are subject to
+      change" and "you may experience access issues if you do not keep your allowlists
+      updated". Link to the page; do NOT hardcode IPs.
+
+      SDKs: the official SDKs (checkout-sdk-node etc.) manage workflows but ship NO
+      webhook-signature verify helper. Do the HMAC manually with node:crypto / hmac + hashlib;
+      do NOT add checkout-sdk-node to the examples.
+    testScenario:
+      events:
+        - payment_approved
+        - payment_captured
+        - dispute_received
   - name: circle
     displayName: Circle
     docs:

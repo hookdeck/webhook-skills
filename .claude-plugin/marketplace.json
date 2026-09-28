@@ -162,6 +162,29 @@
       ]
     },
     {
+      "name": "checkout-com-webhooks",
+      "description": "Receive and verify Checkout.com webhooks (checkout.com — the global payments processor: card acquiring, APMs, disputes, payouts, issuing). Use when setting up a Checkout.com webhook handler, debugging Cko-Signature verification, or handling events like payment_approved, payment_captured, payment_declined, payment_refunded, dispute_received or fraud_reported. Checkout.com signs with HMAC-SHA256 over the RAW body, hex-encoded, in the Cko-Signature header, and can optionally send a static Authorization header key. Not Checkout Page (checkoutpage.com), not CheckoutJoy, not 2Checkout / Verifone, not Stripe Checkout, not Shopify checkout webhooks.",
+      "source": "./skills/checkout-com-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/checkout-com-webhooks",
+      "keywords": [
+        "webhooks",
+        "checkout.com",
+        "payments",
+        "cko-signature"
+      ]
+    },
+    {
       "name": "cloudinary-webhooks",
       "description": "Receive and verify Cloudinary webhooks (notifications). Use when setting up a Cloudinary notification receiver, verifying the x-cld-signature and x-cld-timestamp headers with the official cloudinary SDK, debugging Cloudinary signature verification failures, or handling notification_type events like upload, eager, delete, rename, moderation, and resource_tags_changed.",
       "source": "./skills/cloudinary-webhooks",
