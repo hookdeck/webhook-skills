@@ -1,0 +1,11 @@
+fastapi>=0.141.1
+uvicorn>=0.30.0
+python-dotenv>=1.0.0
+# Starlette needs python-multipart to parse multipart/form-data. Without it,
+# `await request.form()` raises. Note: parsing happens AFTER verification.
+python-multipart>=0.0.20
+# ECDSA P-256 verification. `cryptography` is the standard choice; its
+# load_der_public_key reads the base64 DER key SendGrid returns.
+cryptography>=44.0.0
+pytest>=9.1.1
+httpx>=0.28.1
