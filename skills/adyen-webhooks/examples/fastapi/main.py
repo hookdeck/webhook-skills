@@ -30,11 +30,6 @@ _SIGNED_FIELDS = (
 )
 
 
-def _escape(value) -> str:
-    """Escape backslash then colon in a field value, matching Adyen."""
-    return str(value).replace("\\", "\\\\").replace(":", "\\:")
-
-
 def calculate_hmac(item: dict, hex_key: str) -> str:
     """Compute the base64 HMAC-SHA256 signature for a NotificationRequestItem.
 
@@ -48,7 +43,8 @@ def calculate_hmac(item: dict, hex_key: str) -> str:
         "value": amount.get("value", ""),
         "currency": amount.get("currency", ""),
     }
-    signing_string = ":".join(_escape(values[field]) for field in _SIGNED_FIELDS)
+    # Values are joined as-is: Adyen does not escape ':' or backslashes in a value.
+    signing_string = ":".join(str(values[field]) for field in _SIGNED_FIELDS)
 
     key = binascii.unhexlify(hex_key)  # hex string -> raw bytes
     digest = hmac.new(key, signing_string.encode("utf-8"), hashlib.sha256).digest()

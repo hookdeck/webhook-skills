@@ -49,6 +49,19 @@ describe('Adyen Webhook Endpoint', () => {
       item.amount.value = 9999;
       expect(validator.validateHMAC(item, HMAC_KEY)).toBe(false);
     });
+
+    it('signs values verbatim, without escaping ":" or "\\"', () => {
+      // Pins the SDK behaviour the skill documents: the signing string is the
+      // raw values joined with ':' (no escaping) for a NotificationRequestItem.
+      const crypto = require('crypto');
+      const item = baseItem({ merchantReference: 'Order:42\\A' });
+      const data = '7914073381342284::TestMerchant:Order:42\\A:1130:EUR:AUTHORISATION:true';
+      const expected = crypto
+        .createHmac('sha256', Buffer.from(HMAC_KEY, 'hex'))
+        .update(data, 'utf8')
+        .digest('base64');
+      expect(validator.calculateHmac(item, HMAC_KEY)).toBe(expected);
+    });
   });
 
   describe('POST /webhooks/adyen', () => {

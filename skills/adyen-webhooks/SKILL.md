@@ -60,8 +60,8 @@ Adyen's HMAC is **not** computed over the raw request body. It is computed over 
 pspReference : originalReference : merchantAccountCode : merchantReference : amount.value : amount.currency : eventCode : success
 ```
 
-Each field value is escaped (`\` → `\\`, `:` → `\:`), empty fields become empty
-strings, and the HMAC key from the Customer Area is a **hex string that must be
+Values are joined exactly as they are, with **no escaping**; empty fields become
+empty strings, and the HMAC key from the Customer Area is a **hex string that must be
 hex-decoded** before use. The result is HMAC-SHA256, base64-encoded, and compared
 against `additionalData.hmacSignature`. Because the signature covers parsed fields,
 you parse the JSON first, then verify each item.
@@ -90,7 +90,7 @@ def calculate_hmac(item, hex_key):
               item.get("merchantAccountCode", ""), item.get("merchantReference", ""),
               a.get("value", ""), a.get("currency", ""),
               item.get("eventCode", ""), item.get("success", "")]
-    data = ":".join(str(f).replace("\\", "\\\\").replace(":", "\\:") for f in fields)
+    data = ":".join(str(f) for f in fields)  # joined as-is, no escaping
     key = binascii.unhexlify(hex_key)  # hex → bytes
     return base64.b64encode(hmac.new(key, data.encode("utf-8"), hashlib.sha256).digest()).decode()
 

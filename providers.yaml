@@ -4433,7 +4433,9 @@ providers:
       notificationItems (JSON). Verify each item's additionalData.hmacSignature: HMAC-SHA256
       (base64) over a payload built from specific fields
       (pspReference, originalReference, merchantAccountCode, merchantReference, amount value,
-      amount currency, eventCode, success) joined with ':'. The HMAC key is configured in the
+      amount currency, eventCode, success) joined with ':' exactly as-is (no escaping of ':'
+      or '\' inside values; the docs and every official Adyen library join the raw values).
+      The HMAC key is configured in the
       Customer Area (hex string, must be hex-decoded before use). Endpoints are also typically
       protected with Basic Auth. Respond with body "[accepted]". The @adyen/api-library SDK
       provides hmacValidator.validateHMAC. Common events: AUTHORISATION, CAPTURE, REFUND, CANCELLATION.

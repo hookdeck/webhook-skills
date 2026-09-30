@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { createHmac } from 'crypto';
 import { hmacValidator } from '@adyen/api-library';
 import { NextRequest } from 'next/server';
 
@@ -53,6 +54,16 @@ describe('Adyen HMAC verification (SDK)', () => {
     const item = sign(baseItem());
     item.amount.value = 9999;
     expect(validator.validateHMAC(item as never, HMAC_KEY)).toBe(false);
+  });
+
+  it('signs values verbatim, without escaping ":" or "\\"', () => {
+    // The signing string is the raw values joined with ':' (no escaping).
+    const item = baseItem({ merchantReference: 'Order:42\\A' });
+    const data = '7914073381342284::TestMerchant:Order:42\\A:1130:EUR:AUTHORISATION:true';
+    const expected = createHmac('sha256', Buffer.from(HMAC_KEY, 'hex'))
+      .update(data, 'utf8')
+      .digest('base64');
+    expect(validator.calculateHmac(item as never, HMAC_KEY)).toBe(expected);
   });
 });
 

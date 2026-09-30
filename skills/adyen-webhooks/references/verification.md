@@ -26,8 +26,10 @@ Rules:
 
 - **Empty / missing fields become an empty string** (e.g. an original
   `AUTHORISATION` has no `originalReference`, so it renders as two adjacent colons).
-- **Escape each value** before joining: replace `\` with `\\`, then `:` with `\:`.
-  This prevents a colon inside a value from being mistaken for a delimiter.
+- **Do not escape values.** Join them exactly as they are. Adyen's docs describe
+  no escaping, and its Node, Java, Python, PHP and Ruby libraries all build this
+  string with a plain `join(":")`. A `:` inside a value (most plausibly in
+  `merchantReference`) simply stays in the string.
 - `amount.value` is the integer minor-units value; `amount.currency` is the ISO
   code.
 
@@ -88,10 +90,8 @@ def calculate_hmac(item: dict, hex_key: str) -> str:
         item.get("eventCode", ""),
         item.get("success", ""),
     ]
-    # Escape backslash then colon in each value, then join with ':'
-    data = ":".join(
-        str(f).replace("\\", "\\\\").replace(":", "\\:") for f in fields
-    )
+    # Join the values with ':' exactly as they are (no escaping)
+    data = ":".join(str(f) for f in fields)
     key = binascii.unhexlify(hex_key)  # hex string -> raw bytes
     digest = hmac.new(key, data.encode("utf-8"), hashlib.sha256).digest()
     return base64.b64encode(digest).decode("utf-8")
@@ -122,9 +122,10 @@ for (const { NotificationRequestItem: item } of body.notificationItems) {
   Parsing the JSON before verification is correct and expected here.
 - **Hex-decode the key.** The Customer Area key is a hex string; using it as-is
   (UTF-8 bytes) produces a wrong signature. Decode hex → bytes first.
-- **Escape values.** Forgetting to escape `\` and `:` breaks signatures whenever a
-  field value contains a colon (e.g. some `reason` values). The signed fields
-  rarely contain colons, but always escape to match Adyen.
+- **Don't escape values.** Adding `\` / `:` escaping breaks signatures whenever a
+  signed field (e.g. `merchantReference`) contains a colon or backslash, because
+  Adyen signs the plain joined string. (The Node SDK's escaping branch applies only
+  to objects whose values are all strings, not to a `NotificationRequestItem`.)
 - **Empty fields are empty strings, not omitted.** `originalReference` is empty on
   original authorisations — keep the delimiter (`::`).
 - **`success` and `amount.value` are compared as strings.** The SDK/JSON gives

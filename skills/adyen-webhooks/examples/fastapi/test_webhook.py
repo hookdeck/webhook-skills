@@ -1,4 +1,6 @@
 import base64
+import hashlib
+import hmac
 import os
 
 import pytest
@@ -53,6 +55,14 @@ class TestCalculateHmac:
 
     def test_missing_signature_fails(self):
         assert is_valid_hmac(base_item(), HMAC_KEY) is False
+
+    def test_colon_and_backslash_in_value_are_not_escaped(self):
+        # Adyen's docs and official libraries join the raw values with ':'.
+        # A value containing ':' or '\\' must be signed verbatim, not escaped.
+        item = base_item(merchantReference="Order:42\\A")
+        data = "7914073381342284::TestMerchant:Order:42\\A:1130:EUR:AUTHORISATION:true"
+        digest = hmac.new(bytes.fromhex(HMAC_KEY), data.encode("utf-8"), hashlib.sha256).digest()
+        assert calculate_hmac(item, HMAC_KEY) == base64.b64encode(digest).decode("utf-8")
 
 
 class TestAdyenWebhook:
