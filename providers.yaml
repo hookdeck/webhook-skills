@@ -2416,7 +2416,9 @@ providers:
       Customer, User), Linear-Delivery is a UUID v4 for idempotency, plus
       Content-Type: application/json and User-Agent: Linear-Webhook. Payload includes
       a webhookTimestamp field — reject if it's more than 1 minute old. Payload action
-      values: create, update, remove.
+      values: create, update, remove. The official @linear/sdk ships a verify helper:
+      LinearWebhookClient from @linear/sdk/webhooks, verify(rawBody, signature) checks the
+      HMAC and webhookTimestamp (±60 s) and throws on failure. Do not claim there is no SDK helper.
     testScenario:
       events:
         - Issue create

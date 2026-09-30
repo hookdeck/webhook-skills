@@ -14,7 +14,20 @@ In addition, every payload includes a `webhookTimestamp` field (UNIX millisecond
 
 ## SDK Availability
 
-Linear's official `@linear/sdk` is focused on the GraphQL API and **does not ship a webhook verification helper**. Verify signatures manually in both Node.js and Python.
+Linear's official `@linear/sdk` (v97.0.0) ships a webhook helper, `LinearWebhookClient`, exported from `@linear/sdk/webhooks`:
+
+```javascript
+import { LinearWebhookClient } from '@linear/sdk/webhooks';
+
+const client = new LinearWebhookClient(process.env.LINEAR_WEBHOOK_SECRET);
+// rawBody must be the raw request Buffer. Throws on a bad signature,
+// or when webhookTimestamp is missing or more than 60 seconds off.
+client.verify(rawBody, req.headers['linear-signature']);
+```
+
+`verify()` computes the hex HMAC-SHA256 of the raw body, compares it timing-safely with `Linear-Signature`, and checks the signed `webhookTimestamp` body field. Its third argument (a timestamp) is deprecated and ignored, and the SDK source describes the `Linear-Timestamp` header as legacy. The older `LinearWebhooks` export from `@linear/sdk` is a deprecated alias. Source: [`packages/sdk/src/webhooks/client.ts`](https://github.com/linear/linear/blob/master/packages/sdk/src/webhooks/client.ts).
+
+There is no Python equivalent, and the examples here verify manually in every framework. The manual code below matches what the helper does.
 
 ## Implementation
 

@@ -27,7 +27,7 @@ metadata:
 
 ### Linear Signature Verification (JavaScript)
 
-Linear signs each webhook with **HMAC-SHA256** over the **raw request body**, hex-encoded, sent in the `Linear-Signature` header. Linear has no first-party Node SDK helper for verifying webhooks, so manual verification is the recommended approach.
+Linear signs each webhook with **HMAC-SHA256** over the **raw request body**, hex-encoded, sent in the `Linear-Signature` header. The official `@linear/sdk` ships a helper, `LinearWebhookClient` from `@linear/sdk/webhooks`, whose `verify(rawBody, signature)` checks the same HMAC and the body's `webhookTimestamp` (see [references/verification.md](references/verification.md)). The manual version below does the same work with no dependency and is what the examples use.
 
 ```javascript
 const crypto = require('crypto');
