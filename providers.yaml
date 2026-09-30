@@ -2039,9 +2039,19 @@ providers:
     docs:
       webhooks: https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
       events: https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html
+      verification: https://docs.gitlab.com/user/project/integrations/webhooks/#signing-tokens
     notes: >
-      Code hosting platform. Uses X-Gitlab-Token header for secret token verification
-      (simple string comparison, not HMAC). Use timing-safe comparison.
+      Code hosting platform. Two auth mechanisms, both configurable on one webhook.
+      (1) Signing token (recommended; GitLab 19.0+, GA 19.1): follows the Standard
+      Webhooks spec. HMAC-SHA256 over "{webhook-id}.{webhook-timestamp}.{raw body}",
+      key = signing token with the whsec_ prefix stripped then base64-decoded, sent as
+      webhook-signature: v1,<base64> (space-separated list; match any entry), timing-safe
+      compare. GitLab says to check webhook-timestamp is recent but gives no number; use
+      the Standard Webhooks library default of 5 minutes. (2) Secret token (legacy, "not
+      recommended for new webhooks"): plain-text X-Gitlab-Token, timing-safe string
+      compare. Examples should verify the signature when webhook-signature is present and
+      fall back to X-Gitlab-Token otherwise (GitLab's migration advice). Do not describe
+      GitLab as token-only or "not HMAC".
       Common events: push, merge_request, issue, pipeline, release.
     testScenario:
       events:

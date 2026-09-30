@@ -54,12 +54,15 @@ All GitLab webhook payloads include:
 
 GitLab includes these headers with every webhook request:
 
-- `X-Gitlab-Token` - Secret token for verification (if configured)
+- `webhook-id` - Unique message ID, the same across retries (equal to `Idempotency-Key`); part of the signed content
+- `webhook-timestamp` - Unix timestamp (seconds) of the request; part of the signed content
+- `webhook-signature` - `v1,<base64>` HMAC-SHA256 signature(s), space-separated (only when a signing token is configured)
+- `X-Gitlab-Token` - Legacy secret token, sent as plain text (only when a secret token is configured)
 - `X-Gitlab-Event` - Human-readable event type (e.g., "Push Hook")
 - `X-Gitlab-Instance` - Hostname of the GitLab instance
 - `X-Gitlab-Webhook-UUID` - Unique ID for the webhook configuration
 - `X-Gitlab-Event-UUID` - Unique ID for this specific event delivery
-- `Idempotency-Key` - Unique key for retried webhook deliveries
+- `Idempotency-Key` - Unique key, the same across retries (kept "for legacy reasons"; prefer `webhook-id`)
 
 ## Webhook Limits
 

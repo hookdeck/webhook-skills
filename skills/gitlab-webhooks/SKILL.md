@@ -2,7 +2,7 @@
 name: gitlab-webhooks
 description: >
   Receive and verify GitLab webhooks. Use when setting up GitLab webhook
-  handlers, debugging token verification, or handling repository events
+  handlers, debugging signature or token verification, or handling repository events
   like push, merge_request, issue, pipeline, or release.
 license: MIT
 metadata:
@@ -16,90 +16,81 @@ metadata:
 ## When to Use This Skill
 
 - Setting up GitLab webhook handlers
-- Debugging webhook token verification failures
+- Debugging webhook signature (signing token) or secret token verification failures
 - Understanding GitLab event types and payloads
 - Handling push, merge request, issue, or pipeline events
 
 ## Essential Code (USE THIS)
 
-### GitLab Token Verification (JavaScript)
+GitLab has two ways to authenticate a webhook, and both can be set on the same webhook:
+
+- **Signing token (recommended, GitLab 19.0+, GA in 19.1):** GitLab follows the
+  [Standard Webhooks](https://www.standardwebhooks.com/) spec. It signs
+  `{webhook-id}.{webhook-timestamp}.{raw body}` with HMAC-SHA256, using the signing
+  token with `whsec_` stripped and base64-decoded as the key, and sends
+  `webhook-signature: v1,<base64>` (a space-separated list; GitLab currently sends one).
+- **Secret token (legacy):** a plain-text value sent back in `X-Gitlab-Token`. GitLab
+  says it is "not recommended for new webhooks". Self-managed instances before 19.0
+  only have this option.
+
+### GitLab Signature Verification (JavaScript)
 
 ```javascript
-function verifyGitLabWebhook(tokenHeader, secret) {
-  if (!tokenHeader || !secret) return false;
+const crypto = require('crypto');
 
-  // GitLab uses simple token comparison (not HMAC)
-  // Use timing-safe comparison to prevent timing attacks
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(tokenHeader),
-      Buffer.from(secret)
-    );
-  } catch {
-    return false;
-  }
+// rawBody: Buffer of the exact request bytes (use express.raw, not express.json)
+function verifyGitLabSignature(rawBody, headers, signingToken) {
+  const id = headers['webhook-id'];
+  const ts = headers['webhook-timestamp'];
+  const sigHeader = headers['webhook-signature'];
+  if (!signingToken || !id || !ts || !sigHeader) return false;
+
+  // GitLab: check the timestamp is "recent" (5 min = Standard Webhooks library default)
+  if (Math.abs(Math.floor(Date.now() / 1000) - Number(ts)) > 300) return false;
+
+  const key = Buffer.from(signingToken.replace(/^whsec_/, ''), 'base64');
+  const digest = crypto.createHmac('sha256', key)
+    .update(`${id}.${ts}.`).update(rawBody).digest('base64');
+  const expected = Buffer.from(`v1,${digest}`);
+
+  return sigHeader.split(' ').some((sig) => {
+    const received = Buffer.from(sig);
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
 }
 ```
 
-### Express Webhook Handler
+### Legacy Secret Token (X-Gitlab-Token)
 
 ```javascript
-const express = require('express');
-const crypto = require('crypto');
-const app = express();
-
-// CRITICAL: Use express.json() - GitLab sends JSON payloads
-app.post('/webhooks/gitlab',
-  express.json(),
-  (req, res) => {
-    const token = req.headers['x-gitlab-token'];
-    const event = req.headers['x-gitlab-event'];
-    const eventUUID = req.headers['x-gitlab-event-uuid'];
-
-    // Verify token
-    if (!verifyGitLabWebhook(token, process.env.GITLAB_WEBHOOK_TOKEN)) {
-      console.error('GitLab token verification failed');
-      return res.status(401).send('Unauthorized');
-    }
-
-    console.log(`Received ${event} (UUID: ${eventUUID})`);
-
-    // Handle by event type
-    const objectKind = req.body.object_kind;
-    switch (objectKind) {
-      case 'push':
-        console.log(`Push to ${req.body.ref}:`, req.body.commits?.length, 'commits');
-        break;
-      case 'merge_request':
-        console.log(`MR !${req.body.object_attributes?.iid} ${req.body.object_attributes?.action}`);
-        break;
-      case 'issue':
-        console.log(`Issue #${req.body.object_attributes?.iid} ${req.body.object_attributes?.action}`);
-        break;
-      case 'pipeline':
-        console.log(`Pipeline ${req.body.object_attributes?.id} ${req.body.object_attributes?.status}`);
-        break;
-      default:
-        console.log('Received event:', objectKind || event);
-    }
-
-    res.json({ received: true });
-  }
-);
+function verifyGitLabToken(tokenHeader, secret) {
+  if (!tokenHeader || !secret) return false;
+  const a = Buffer.from(tokenHeader);
+  const b = Buffer.from(secret);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 ```
 
-### Python Token Verification (FastAPI)
+While migrating, GitLab suggests verifying the signature when `webhook-signature` is
+present and falling back to the secret token otherwise. The examples do exactly that; a
+request that carries a signature never falls back to the token.
+
+### Python Signature Verification (FastAPI)
 
 ```python
-import secrets
+import base64, hashlib, hmac, time
 
-def verify_gitlab_webhook(token_header: str, secret: str) -> bool:
-    if not token_header or not secret:
+def verify_gitlab_signature(raw_body: bytes, headers, signing_token: str) -> bool:
+    msg_id, ts = headers.get("webhook-id"), headers.get("webhook-timestamp")
+    sig_header = headers.get("webhook-signature")
+    if not (signing_token and msg_id and ts and sig_header):
         return False
-
-    # GitLab uses simple token comparison (not HMAC)
-    # Use timing-safe comparison to prevent timing attacks
-    return secrets.compare_digest(token_header, secret)
+    if abs(int(time.time()) - int(ts)) > 300:
+        return False
+    key = base64.b64decode(signing_token.removeprefix("whsec_"))
+    digest = hmac.new(key, f"{msg_id}.{ts}.".encode() + raw_body, hashlib.sha256).digest()
+    expected = "v1," + base64.b64encode(digest).decode()
+    return any(hmac.compare_digest(expected, s) for s in sig_header.split(" "))
 ```
 
 > **For complete working examples with tests**, see:
@@ -128,7 +119,10 @@ def verify_gitlab_webhook(token_header: str, secret: str) -> bool:
 
 | Header | Description |
 |--------|-------------|
-| `X-Gitlab-Token` | Secret token for authentication |
+| `webhook-signature` | `v1,<base64>` HMAC-SHA256 signature(s), space-separated. Sent only when a signing token is configured |
+| `webhook-id` | Unique message ID, the same across retries. Part of the signed content |
+| `webhook-timestamp` | Unix timestamp (seconds) of the request. Part of the signed content |
+| `X-Gitlab-Token` | Legacy secret token, sent as plain text. Sent only when a secret token is configured |
 | `X-Gitlab-Event` | Human-readable event name |
 | `X-Gitlab-Instance` | GitLab instance hostname |
 | `X-Gitlab-Webhook-UUID` | Unique webhook configuration ID |
@@ -137,7 +131,8 @@ def verify_gitlab_webhook(token_header: str, secret: str) -> bool:
 ## Environment Variables
 
 ```bash
-GITLAB_WEBHOOK_TOKEN=your_secret_token   # Set when creating webhook in GitLab
+GITLAB_WEBHOOK_SIGNING_TOKEN=whsec_...   # "Generate signing token" in GitLab (recommended)
+GITLAB_WEBHOOK_TOKEN=your_secret_token   # Legacy secret token (optional)
 ```
 
 ## Local Development
@@ -151,7 +146,7 @@ npx hookdeck-cli listen 3000 gitlab --path /webhooks/gitlab
 
 - [references/overview.md](references/overview.md) - GitLab webhook concepts
 - [references/setup.md](references/setup.md) - Configuration guide
-- [references/verification.md](references/verification.md) - Token verification details
+- [references/verification.md](references/verification.md) - Signature and token verification details
 
 ## Attribution
 

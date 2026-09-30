@@ -1,12 +1,12 @@
 # GitLab Webhooks - FastAPI Example
 
-Minimal example of receiving GitLab webhooks with token verification in FastAPI.
+Minimal example of receiving GitLab webhooks with signature verification in FastAPI.
 
 ## Prerequisites
 
 - Python 3.9+
 - GitLab project with webhook access
-- Secret token for webhook verification
+- A GitLab signing token (GitLab 19.0+), or a legacy secret token
 
 ## Setup
 
@@ -26,14 +26,15 @@ Minimal example of receiving GitLab webhooks with token verification in FastAPI.
    cp .env.example .env
    ```
 
-4. Generate a secret token:
-   ```bash
-   openssl rand -hex 32
-   ```
+4. In GitLab (Settings > Webhooks), select **Generate signing token** and copy it
+   (it is shown once and starts with `whsec_`). Add it to your `.env` file as
+   `GITLAB_WEBHOOK_SIGNING_TOKEN`. GitLab then signs each request with a Standard
+   Webhooks HMAC-SHA256 signature in the `webhook-signature` header.
 
-5. Add the token to both:
-   - Your `.env` file as `GITLAB_WEBHOOK_TOKEN`
-   - GitLab webhook settings as the "Secret token"
+5. Optional, legacy: if the webhook also uses a **Secret token** (sent as plain
+   text in `X-Gitlab-Token`), add the same value as `GITLAB_WEBHOOK_TOKEN`. The
+   example checks the signature when `webhook-signature` is present and falls back
+   to the secret token otherwise, as GitLab recommends while migrating.
 
 ## Run
 
@@ -84,8 +85,10 @@ Add more event handlers as needed in `main.py`.
 
 ## Security
 
-- Token verification uses timing-safe comparison
-- Returns 401 for invalid tokens
+- Verifies the `webhook-signature` HMAC-SHA256 over the raw body, with a
+  timing-safe comparison and a 5-minute `webhook-timestamp` window
+- Legacy `X-Gitlab-Token` comparison is also timing-safe
+- Returns 401 for invalid signatures or tokens
 - Logs all received events
 - No sensitive data logged
 - Uses Pydantic for data validation

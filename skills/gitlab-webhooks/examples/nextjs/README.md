@@ -1,12 +1,12 @@
 # GitLab Webhooks - Next.js Example
 
-Minimal example of receiving GitLab webhooks with token verification in Next.js App Router.
+Minimal example of receiving GitLab webhooks with signature verification in Next.js App Router.
 
 ## Prerequisites
 
 - Node.js 18+
 - GitLab project with webhook access
-- Secret token for webhook verification
+- A GitLab signing token (GitLab 19.0+), or a legacy secret token
 
 ## Setup
 
@@ -20,14 +20,15 @@ Minimal example of receiving GitLab webhooks with token verification in Next.js 
    cp .env.example .env.local
    ```
 
-3. Generate a secret token:
-   ```bash
-   openssl rand -hex 32
-   ```
+3. In GitLab (Settings > Webhooks), select **Generate signing token** and copy it
+   (it is shown once and starts with `whsec_`). Add it to your `.env.local` file as
+   `GITLAB_WEBHOOK_SIGNING_TOKEN`. GitLab then signs each request with a Standard
+   Webhooks HMAC-SHA256 signature in the `webhook-signature` header.
 
-4. Add the token to both:
-   - Your `.env.local` file as `GITLAB_WEBHOOK_TOKEN`
-   - GitLab webhook settings as the "Secret token"
+4. Optional, legacy: if the webhook also uses a **Secret token** (sent as plain
+   text in `X-Gitlab-Token`), add the same value as `GITLAB_WEBHOOK_TOKEN`. The
+   example checks the signature when `webhook-signature` is present and falls back
+   to the secret token otherwise, as GitLab recommends while migrating.
 
 ## Run
 
@@ -85,12 +86,14 @@ This example is ready for deployment to Vercel:
 npx vercel
 ```
 
-Set the `GITLAB_WEBHOOK_TOKEN` environment variable in your Vercel project settings.
+Set `GITLAB_WEBHOOK_SIGNING_TOKEN` (and `GITLAB_WEBHOOK_TOKEN` if you still use the legacy secret token) in your Vercel project settings.
 
 ## Security
 
-- Token verification uses timing-safe comparison
-- Returns 401 for invalid tokens
+- Verifies the `webhook-signature` HMAC-SHA256 over the raw body, with a
+  timing-safe comparison and a 5-minute `webhook-timestamp` window
+- Legacy `X-Gitlab-Token` comparison is also timing-safe
+- Returns 401 for invalid signatures or tokens
 - Logs all received events
 - No sensitive data logged
 - Uses TypeScript for type safety

@@ -108,13 +108,67 @@ function isPipelineEvent(payload: any): payload is PipelineEvent {
   return payload.object_kind === 'pipeline';
 }
 
-// GitLab token verification
-function verifyGitLabWebhook(tokenHeader: string | null, secret: string | undefined): boolean {
+// GitLab (19.0+) offers two ways to authenticate a webhook, and both can be
+// configured on the same webhook:
+// - Signing token (recommended): Standard Webhooks HMAC-SHA256 signature in
+//   the webhook-signature header.
+// - Secret token (legacy, "not recommended" by GitLab): the plain-text token
+//   sent back in the X-Gitlab-Token header.
+// https://docs.gitlab.com/user/project/integrations/webhooks/#signing-tokens
+
+// GitLab says to check that webhook-timestamp is "recent" but gives no window.
+// The Standard Webhooks spec asks for "some allowable tolerance"; 5 minutes is
+// the default in the Standard Webhooks reference libraries.
+const TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
+
+// Signed content is "{webhook-id}.{webhook-timestamp}.{raw body}". The key is
+// the signing token with the whsec_ prefix stripped, then base64-decoded.
+function computeGitLabSignature(
+  signingToken: string,
+  webhookId: string,
+  webhookTimestamp: string,
+  rawBody: Buffer
+): string {
+  const key = Buffer.from(signingToken.replace(/^whsec_/, ''), 'base64');
+  const digest = crypto
+    .createHmac('sha256', key)
+    .update(`${webhookId}.${webhookTimestamp}.`)
+    .update(rawBody)
+    .digest('base64');
+  return `v1,${digest}`;
+}
+
+function verifyGitLabSignature(rawBody: Buffer, headers: Headers, signingToken: string): boolean {
+  const webhookId = headers.get('webhook-id');
+  const webhookTimestamp = headers.get('webhook-timestamp');
+  const signatureHeader = headers.get('webhook-signature');
+  if (!signingToken || !webhookId || !webhookTimestamp || !signatureHeader) {
+    return false;
+  }
+
+  // Reject stale or future timestamps to limit replay
+  const timestamp = Number(webhookTimestamp);
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isInteger(timestamp) || Math.abs(now - timestamp) > TIMESTAMP_TOLERANCE_SECONDS) {
+    return false;
+  }
+
+  const expected = Buffer.from(
+    computeGitLabSignature(signingToken, webhookId, webhookTimestamp, rawBody)
+  );
+  // The header is a space-separated list of "v1,<base64>" signatures
+  return signatureHeader.split(' ').some((signature) => {
+    const received = Buffer.from(signature);
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
+}
+
+// Legacy secret token: compare X-Gitlab-Token with the configured token
+function verifyGitLabToken(tokenHeader: string | null, secret: string | undefined): boolean {
   if (!tokenHeader || !secret) {
     return false;
   }
 
-  // GitLab uses simple token comparison (not HMAC)
   // Use timing-safe comparison to prevent timing attacks
   try {
     return crypto.timingSafeEqual(
@@ -128,16 +182,29 @@ function verifyGitLabWebhook(tokenHeader: string | null, secret: string | undefi
   }
 }
 
+// GitLab's migration advice: verify the signature when webhook-signature is
+// present, and fall back to the secret token otherwise. A request that carries
+// a signature must pass the signature check; it never falls back.
+function verifyGitLabWebhook(rawBody: Buffer, headers: Headers): boolean {
+  const signingToken = process.env.GITLAB_WEBHOOK_SIGNING_TOKEN;
+  if (signingToken && headers.get('webhook-signature')) {
+    return verifyGitLabSignature(rawBody, headers, signingToken);
+  }
+  return verifyGitLabToken(headers.get('x-gitlab-token'), process.env.GITLAB_WEBHOOK_TOKEN);
+}
+
 export async function POST(request: NextRequest) {
+  // Raw body: the signature covers the exact bytes GitLab sent
+  const rawBody = Buffer.from(await request.arrayBuffer());
+
   // Get headers directly from request
-  const token = request.headers.get('x-gitlab-token');
   const event = request.headers.get('x-gitlab-event');
   const instance = request.headers.get('x-gitlab-instance');
   const webhookUUID = request.headers.get('x-gitlab-webhook-uuid');
   const eventUUID = request.headers.get('x-gitlab-event-uuid');
 
-  // Verify token
-  if (!verifyGitLabWebhook(token, process.env.GITLAB_WEBHOOK_TOKEN)) {
+  // Verify signature (or legacy token) before parsing
+  if (!verifyGitLabWebhook(rawBody, request.headers)) {
     console.error(`GitLab webhook verification failed from ${instance}`);
     return new NextResponse('Unauthorized', { status: 401 });
   }
@@ -149,7 +216,7 @@ export async function POST(request: NextRequest) {
   // Parse body
   let payload: GitLabWebhookBase;
   try {
-    payload = await request.json();
+    payload = JSON.parse(rawBody.toString('utf8'));
   } catch (error) {
     console.error('Failed to parse JSON:', error);
     return new NextResponse('Invalid JSON', { status: 400 });

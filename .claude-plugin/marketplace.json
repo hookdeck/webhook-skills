@@ -1767,7 +1767,7 @@
     },
     {
       "name": "gitlab-webhooks",
-      "description": "Verify GitLab webhook tokens (X-Gitlab-Token), handle push, merge_request, issue, and pipeline events.",
+      "description": "Verify GitLab webhook signatures (signing token, Standard Webhooks HMAC-SHA256) or legacy X-Gitlab-Token, handle push, merge_request, issue, and pipeline events.",
       "source": "./skills/gitlab-webhooks",
       "strict": false,
       "skills": [

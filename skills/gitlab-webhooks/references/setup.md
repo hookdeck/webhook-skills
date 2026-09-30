@@ -4,11 +4,35 @@
 
 - GitLab project with Maintainer or Owner access
 - Your application's webhook endpoint URL (e.g., `https://api.example.com/webhooks/gitlab`)
-- (Optional) A secret token for webhook verification
+- GitLab 19.0 or later for signing tokens (GitLab.com has them; generally available in 19.1)
 
-## Get Your Secret Token
+## Choose How GitLab Authenticates Requests
 
-Unlike other providers that generate tokens, GitLab lets you create your own:
+GitLab offers two options, and you can configure both on the same webhook:
+
+- **Signing token (recommended).** GitLab signs every request with an HMAC-SHA256
+  signature following the [Standard Webhooks](https://www.standardwebhooks.com/) spec
+  (`webhook-id`, `webhook-timestamp`, `webhook-signature` headers). Store it as
+  `GITLAB_WEBHOOK_SIGNING_TOKEN`.
+- **Secret token (legacy).** GitLab sends the token back as plain text in
+  `X-Gitlab-Token`. GitLab's docs say it is "not recommended for new webhooks". Store it
+  as `GITLAB_WEBHOOK_TOKEN`.
+
+## Get Your Signing Token
+
+In the webhook form, select **Generate signing token** and copy the value. GitLab shows it
+only once, and it is never returned by the API. It has the form `whsec_<base64>`.
+
+When creating the webhook through the API instead, pass your own `signing_token`, which
+must be `whsec_` followed by the base64 of a 32-byte key:
+
+```bash
+echo "whsec_$(openssl rand -base64 32)"
+```
+
+## Get Your Secret Token (legacy)
+
+If you still need the secret token, GitLab lets you create your own:
 
 1. Generate a secure random token:
    ```bash
@@ -32,7 +56,8 @@ Unlike other providers that generate tokens, GitLab lets you create your own:
 2. Go to **Settings** → **Webhooks** (in the left sidebar)
 3. Fill in the webhook form:
    - **URL**: Your webhook endpoint (e.g., `https://api.example.com/webhooks/gitlab`)
-   - **Secret token**: Paste the token you generated
+   - **Signing token** (recommended): Select **Generate signing token** and copy it
+   - **Secret token** (legacy, optional): Paste the token you generated
    - **Trigger**: Select events you want to receive:
      - ✓ Push events
      - ✓ Tag push events
@@ -55,7 +80,7 @@ curl -X POST "https://gitlab.com/api/v4/projects/{project_id}/hooks" \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://api.example.com/webhooks/gitlab",
-    "token": "your_secret_token",
+    "signing_token": "whsec_<base64 of a 32-byte key>",
     "push_events": true,
     "issues_events": true,
     "merge_requests_events": true,
@@ -115,7 +140,10 @@ If your webhook fails repeatedly, GitLab will disable it:
 
 ### Common Issues
 
-- **401 Unauthorized**: Token mismatch - verify `GITLAB_WEBHOOK_TOKEN` matches
+- **401 Unauthorized**: Signature or token mismatch. Check that `GITLAB_WEBHOOK_SIGNING_TOKEN`
+  is the full `whsec_...` value, that you verify the raw body (not re-serialized JSON), and
+  that your server clock is correct (`webhook-timestamp` must be within 5 minutes). For the
+  legacy path, check that `GITLAB_WEBHOOK_TOKEN` matches the secret token.
 - **Timeout**: Endpoint must respond within 10 seconds
 - **SSL errors**: Ensure valid SSL certificate or disable verification (not recommended)
 - **4xx/5xx responses**: GitLab expects 2xx status codes

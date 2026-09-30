@@ -4,8 +4,12 @@
 from fastapi import FastAPI, Request, Header, HTTPException
 from fastapi.responses import JSONResponse
 from typing import Optional, Dict, Any
+import base64
+import hashlib
+import hmac
 import secrets
 import os
+import time
 import logging
 from dotenv import load_dotenv
 
@@ -19,15 +23,69 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(title="GitLab Webhook Handler")
 
-# GitLab token verification
-def verify_gitlab_webhook(token_header: Optional[str], secret: Optional[str]) -> bool:
-    """Verify GitLab webhook token using timing-safe comparison"""
+# GitLab (19.0+) offers two ways to authenticate a webhook, and both can be
+# configured on the same webhook:
+# - Signing token (recommended): Standard Webhooks HMAC-SHA256 signature in
+#   the webhook-signature header.
+# - Secret token (legacy, "not recommended" by GitLab): the plain-text token
+#   sent back in the X-Gitlab-Token header.
+# https://docs.gitlab.com/user/project/integrations/webhooks/#signing-tokens
+
+# GitLab says to check that webhook-timestamp is "recent" but gives no window.
+# The Standard Webhooks spec asks for "some allowable tolerance"; 5 minutes is
+# the default in the Standard Webhooks reference libraries.
+TIMESTAMP_TOLERANCE_SECONDS = 5 * 60
+
+
+def compute_gitlab_signature(
+    signing_token: str, webhook_id: str, webhook_timestamp: str, raw_body: bytes
+) -> str:
+    """Signed content is "{webhook-id}.{webhook-timestamp}.{raw body}". The key is
+    the signing token with the whsec_ prefix stripped, then base64-decoded."""
+    key = base64.b64decode(signing_token.removeprefix("whsec_"))
+    message = f"{webhook_id}.{webhook_timestamp}.".encode("utf-8") + raw_body
+    digest = hmac.new(key, message, hashlib.sha256).digest()
+    return "v1," + base64.b64encode(digest).decode("utf-8")
+
+
+def verify_gitlab_signature(raw_body: bytes, headers, signing_token: Optional[str]) -> bool:
+    """Verify a GitLab signing-token (Standard Webhooks) signature."""
+    webhook_id = headers.get("webhook-id")
+    webhook_timestamp = headers.get("webhook-timestamp")
+    signature_header = headers.get("webhook-signature")
+    if not (signing_token and webhook_id and webhook_timestamp and signature_header):
+        return False
+
+    # Reject stale or future timestamps to limit replay
+    try:
+        timestamp = int(webhook_timestamp)
+    except ValueError:
+        return False
+    if abs(int(time.time()) - timestamp) > TIMESTAMP_TOLERANCE_SECONDS:
+        return False
+
+    expected = compute_gitlab_signature(signing_token, webhook_id, webhook_timestamp, raw_body)
+    # The header is a space-separated list of "v1,<base64>" signatures
+    return any(hmac.compare_digest(expected, sig) for sig in signature_header.split(" "))
+
+
+def verify_gitlab_token(token_header: Optional[str], secret: Optional[str]) -> bool:
+    """Legacy secret token: compare X-Gitlab-Token using timing-safe comparison"""
     if not token_header or not secret:
         return False
 
-    # GitLab uses simple token comparison (not HMAC)
     # Use timing-safe comparison to prevent timing attacks
     return secrets.compare_digest(token_header, secret)
+
+
+def verify_gitlab_webhook(raw_body: bytes, headers) -> bool:
+    """GitLab's migration advice: verify the signature when webhook-signature is
+    present, and fall back to the secret token otherwise. A request that carries
+    a signature must pass the signature check; it never falls back."""
+    signing_token = os.getenv("GITLAB_WEBHOOK_SIGNING_TOKEN")
+    if signing_token and headers.get("webhook-signature"):
+        return verify_gitlab_signature(raw_body, headers, signing_token)
+    return verify_gitlab_token(headers.get("x-gitlab-token"), os.getenv("GITLAB_WEBHOOK_TOKEN"))
 
 
 # Health check endpoint
@@ -40,14 +98,16 @@ async def health():
 @app.post("/webhooks/gitlab")
 async def handle_gitlab_webhook(
     request: Request,
-    x_gitlab_token: Optional[str] = Header(None),
     x_gitlab_event: Optional[str] = Header(None),
     x_gitlab_instance: Optional[str] = Header(None),
     x_gitlab_webhook_uuid: Optional[str] = Header(None),
     x_gitlab_event_uuid: Optional[str] = Header(None),
 ):
-    # Verify token
-    if not verify_gitlab_webhook(x_gitlab_token, os.getenv("GITLAB_WEBHOOK_TOKEN")):
+    # Raw body: the signature covers the exact bytes GitLab sent
+    raw_body = await request.body()
+
+    # Verify signature (or legacy token) before parsing
+    if not verify_gitlab_webhook(raw_body, request.headers):
         logger.error(f"GitLab webhook verification failed from {x_gitlab_instance}")
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -195,7 +255,7 @@ if __name__ == "__main__":
     logger.info(f"GitLab webhook server starting on port {port}")
     logger.info(f"Webhook endpoint: POST http://localhost:{port}/webhooks/gitlab")
 
-    if not os.getenv("GITLAB_WEBHOOK_TOKEN"):
-        logger.warning("⚠️  Warning: GITLAB_WEBHOOK_TOKEN not set")
+    if not os.getenv("GITLAB_WEBHOOK_SIGNING_TOKEN") and not os.getenv("GITLAB_WEBHOOK_TOKEN"):
+        logger.warning("⚠️  Warning: set GITLAB_WEBHOOK_SIGNING_TOKEN (or legacy GITLAB_WEBHOOK_TOKEN)")
 
     uvicorn.run(app, host="0.0.0.0", port=port)

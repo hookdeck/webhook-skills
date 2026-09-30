@@ -1,11 +1,23 @@
+import base64
+import hashlib
+import hmac
+import json
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 import os
 
-# Set test token
+# Test token (legacy secret token, sent as X-Gitlab-Token)
 TEST_TOKEN = "test_gitlab_webhook_token_1234567890"
 os.environ["GITLAB_WEBHOOK_TOKEN"] = TEST_TOKEN
 
+# Signing token: 'whsec_' + base64 key. This is the key from the Standard
+# Webhooks reference library's published "sign function works" test vector.
+SIGNING_TOKEN = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+os.environ["GITLAB_WEBHOOK_SIGNING_TOKEN"] = SIGNING_TOKEN
+
+import main
 from main import app
 
 client = TestClient(app)
@@ -414,3 +426,83 @@ class TestGitLabWebhookHandler:
         )
         assert response.status_code == 401
         assert response.json() == {"error": "Unauthorized"}
+
+
+def sign(webhook_id: str, timestamp: int, body: str, token: str = SIGNING_TOKEN) -> str:
+    """Generate a real GitLab (Standard Webhooks) signature, independently of the app."""
+    key = base64.b64decode(token.removeprefix("whsec_"))
+    digest = hmac.new(key, f"{webhook_id}.{timestamp}.{body}".encode("utf-8"), hashlib.sha256).digest()
+    return "v1," + base64.b64encode(digest).decode("utf-8")
+
+
+def post_signed(body: str, webhook_id="msg_test_123", timestamp=None, signature=None, extra_headers=None):
+    ts = timestamp if timestamp is not None else int(time.time())
+    headers = {
+        "Content-Type": "application/json",
+        "webhook-id": webhook_id,
+        "webhook-timestamp": str(ts),
+        "webhook-signature": signature if signature is not None else sign(webhook_id, ts, body),
+        **(extra_headers or {}),
+    }
+    return client.post("/webhooks/gitlab", content=body.encode("utf-8"), headers=headers)
+
+
+class TestGitLabSigningToken:
+    def test_published_standard_webhooks_vector(self, monkeypatch):
+        # Vector from standard-webhooks libraries/javascript/src/webhook.test.ts
+        monkeypatch.setattr(main.time, "time", lambda: 1614265330)
+        response = post_signed(
+            '{"test": 2432232314}',
+            webhook_id="msg_p5jXN8AQM9LWM0D4loKWxJek",
+            timestamp=1614265330,
+            signature="v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=",
+        )
+        assert response.status_code == 200
+
+    def test_valid_signature_without_gitlab_token(self):
+        body = json.dumps({"object_kind": "push", "project": {"path_with_namespace": "ns/p"}})
+        response = post_signed(body)
+        assert response.status_code == 200
+        assert response.json()["event"] == "push"
+
+    def test_one_of_several_signatures_matches(self):
+        body = json.dumps({"object_kind": "push"})
+        ts = int(time.time())
+        signature = f"v1,bm90IHRoZSByaWdodCBzaWduYXR1cmU= {sign('msg_test_123', ts, body)}"
+        assert post_signed(body, timestamp=ts, signature=signature).status_code == 200
+
+    def test_tampered_body(self):
+        ts = int(time.time())
+        signature = sign("msg_test_123", ts, json.dumps({"object_kind": "push"}))
+        response = post_signed(json.dumps({"object_kind": "tag_push"}), timestamp=ts, signature=signature)
+        assert response.status_code == 401
+
+    def test_wrong_signing_token(self):
+        body = json.dumps({"object_kind": "push"})
+        ts = int(time.time())
+        other = "whsec_" + base64.b64encode(b"other_key").decode()
+        response = post_signed(body, timestamp=ts, signature=sign("msg_test_123", ts, body, other))
+        assert response.status_code == 401
+
+    def test_stale_timestamp(self):
+        body = json.dumps({"object_kind": "push"})
+        assert post_signed(body, timestamp=int(time.time()) - 10 * 60).status_code == 401
+
+    def test_invalid_signature_does_not_fall_back_to_token(self):
+        body = json.dumps({"object_kind": "push"})
+        response = post_signed(body, signature="v1,aW52YWxpZA==", extra_headers={"X-Gitlab-Token": TEST_TOKEN})
+        assert response.status_code == 401
+
+    def test_missing_webhook_id(self):
+        body = json.dumps({"object_kind": "push"})
+        ts = int(time.time())
+        response = client.post(
+            "/webhooks/gitlab",
+            content=body.encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "webhook-timestamp": str(ts),
+                "webhook-signature": sign("msg_test_123", ts, body),
+            },
+        )
+        assert response.status_code == 401

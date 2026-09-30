@@ -1,10 +1,45 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
+import crypto from 'crypto';
 import { POST, GET } from '../app/webhooks/gitlab/route';
 import { NextRequest } from 'next/server';
 
-// Test token
+// Test token (legacy secret token, sent as X-Gitlab-Token)
 const TEST_TOKEN = 'test_gitlab_webhook_token_1234567890';
 process.env.GITLAB_WEBHOOK_TOKEN = TEST_TOKEN;
+
+// Signing token: 'whsec_' + base64 key. This is the key from the Standard
+// Webhooks reference library's published "sign function works" test vector.
+const SIGNING_TOKEN = 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw';
+process.env.GITLAB_WEBHOOK_SIGNING_TOKEN = SIGNING_TOKEN;
+
+// Generate a real GitLab (Standard Webhooks) signature, independently of the route
+function sign(webhookId: string, timestamp: number, body: string, token = SIGNING_TOKEN): string {
+  const key = Buffer.from(token.replace(/^whsec_/, ''), 'base64');
+  const digest = crypto
+    .createHmac('sha256', key)
+    .update(`${webhookId}.${timestamp}.${body}`)
+    .digest('base64');
+  return `v1,${digest}`;
+}
+
+function signedRequest(
+  body: string,
+  opts: { webhookId?: string; timestamp?: number; signature?: string; extraHeaders?: Record<string, string> } = {}
+): NextRequest {
+  const webhookId = opts.webhookId ?? 'msg_test_123';
+  const ts = opts.timestamp ?? Math.floor(Date.now() / 1000);
+  return new NextRequest('http://localhost:3000/webhooks/gitlab', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'webhook-id': webhookId,
+      'webhook-timestamp': String(ts),
+      'webhook-signature': opts.signature ?? sign(webhookId, ts, body),
+      ...(opts.extraHeaders ?? {}),
+    },
+    body,
+  });
+}
 
 // Helper to create a NextRequest with headers and body
 function createRequest(
@@ -450,5 +485,88 @@ describe('GitLab Webhook Handler', () => {
         expect(await response.text()).toBe('Invalid JSON');
       });
     });
+  });
+});
+
+describe('GitLab signing token (Standard Webhooks)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('accepts the published Standard Webhooks test vector', async () => {
+    // Vector from standard-webhooks libraries/javascript/src/webhook.test.ts
+    vi.spyOn(Date, 'now').mockReturnValue(1614265330 * 1000);
+    const response = await POST(
+      signedRequest('{"test": 2432232314}', {
+        webhookId: 'msg_p5jXN8AQM9LWM0D4loKWxJek',
+        timestamp: 1614265330,
+        signature: 'v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=',
+      })
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it('accepts a valid signature without any X-Gitlab-Token', async () => {
+    const body = JSON.stringify({ object_kind: 'push', project: { path_with_namespace: 'ns/p' } });
+    const response = await POST(signedRequest(body));
+    expect(response.status).toBe(200);
+    expect((await response.json()).event).toBe('push');
+  });
+
+  it('accepts when one of several space-separated signatures matches', async () => {
+    const body = JSON.stringify({ object_kind: 'push' });
+    const ts = Math.floor(Date.now() / 1000);
+    const signature = `v1,bm90IHRoZSByaWdodCBzaWduYXR1cmU= ${sign('msg_test_123', ts, body)}`;
+    const response = await POST(signedRequest(body, { timestamp: ts, signature }));
+    expect(response.status).toBe(200);
+  });
+
+  it('rejects a tampered body', async () => {
+    const ts = Math.floor(Date.now() / 1000);
+    const signature = sign('msg_test_123', ts, JSON.stringify({ object_kind: 'push' }));
+    const response = await POST(
+      signedRequest(JSON.stringify({ object_kind: 'tag_push' }), { timestamp: ts, signature })
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects a signature made with a different signing token', async () => {
+    const body = JSON.stringify({ object_kind: 'push' });
+    const ts = Math.floor(Date.now() / 1000);
+    const signature = sign('msg_test_123', ts, body, 'whsec_' + Buffer.from('other_key').toString('base64'));
+    const response = await POST(signedRequest(body, { timestamp: ts, signature }));
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects a stale timestamp even when the signature matches', async () => {
+    const body = JSON.stringify({ object_kind: 'push' });
+    const ts = Math.floor(Date.now() / 1000) - 10 * 60;
+    const response = await POST(signedRequest(body, { timestamp: ts }));
+    expect(response.status).toBe(401);
+  });
+
+  it('does not fall back to X-Gitlab-Token when a signature is present but invalid', async () => {
+    const body = JSON.stringify({ object_kind: 'push' });
+    const response = await POST(
+      signedRequest(body, { signature: 'v1,aW52YWxpZA==', extraHeaders: { 'X-Gitlab-Token': TEST_TOKEN } })
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects a signature when webhook-id is missing', async () => {
+    const body = JSON.stringify({ object_kind: 'push' });
+    const ts = Math.floor(Date.now() / 1000);
+    const response = await POST(
+      new NextRequest('http://localhost:3000/webhooks/gitlab', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'webhook-timestamp': String(ts),
+          'webhook-signature': sign('msg_test_123', ts, body),
+        },
+        body,
+      })
+    );
+    expect(response.status).toBe(401);
   });
 });
