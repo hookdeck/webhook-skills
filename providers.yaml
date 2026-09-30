@@ -4412,7 +4412,10 @@ providers:
       Payments and commerce platform. Verify with the x-square-hmacsha256-signature header:
       HMAC-SHA256 (base64) computed over the concatenation of the notification URL and the
       raw request body, using the webhook subscription's signature key. Compare with a
-      timing-safe equality check. The official Square SDK exposes
+      timing-safe equality check. Square's docs document only this header; an
+      x-square-signature (HMAC-SHA1) header has been seen on live deliveries but is
+      undocumented, so don't describe it as deprecated/legacy on Square's authority and
+      never verify with it. The official Square SDK exposes
       WebhooksHelper.verifySignature / isValidWebhookEventSignature. Common events:
       payment.created, payment.updated, refund.created, invoice.payment_made, order.updated.
     testScenario:

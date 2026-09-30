@@ -86,7 +86,7 @@ A Square webhook delivery carries these headers (observed live, 2026-08):
 | Header | Purpose |
 |--------|---------|
 | `x-square-hmacsha256-signature` | HMAC-SHA256 (base64) signature — **verify this one** |
-| `x-square-signature` | Legacy HMAC-SHA1 (base64) signature — still sent, deprecated |
+| `x-square-signature` | HMAC-SHA1 (base64) signature seen on a live delivery; **not in Square's docs**, so don't rely on it |
 | `square-environment` | `Sandbox` or `Production` |
 | `square-subscription-id` | The webhook subscription that produced the delivery |
 | `square-version` | The API version pinned on the subscription (e.g. `2026-07-15`) |

@@ -34,9 +34,9 @@ first.
 
 > **Top pitfall:** the HMAC key is the subscription's **Signature Key** (short,
 > e.g. `qfjakbt2uWB8DKAMECF-EA`), used verbatim — **not** an OAuth access token
-> (`EAAA…`), which produces no match. Square also still sends a deprecated
-> `x-square-signature` (HMAC-SHA1) header alongside the SHA-256 one; verify the
-> **SHA-256** header.
+> (`EAAA…`), which produces no match. Square's docs document only the
+> **SHA-256** header; verify that one. A live sandbox delivery (2026-08) also
+> carried an undocumented `x-square-signature` (HMAC-SHA1) header; don't rely on it.
 
 Node (official Square SDK — recommended):
 

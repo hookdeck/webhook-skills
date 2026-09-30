@@ -33,13 +33,16 @@ header value using a constant-time (timing-safe) comparison.
 > verification. The signature key is used verbatim as the HMAC key (matching
 > the SDK); base64-decoding it first does not match.
 
-### The legacy `x-square-signature` (SHA-1) header
+### The undocumented `x-square-signature` (SHA-1) header
 
-Square **still delivers** a second, deprecated header alongside the SHA-256 one:
-`x-square-signature`, an HMAC-**SHA1** (base64) over the same `notificationUrl +
-rawBody` content. Confirmed present on `square-version: 2026-07-15`. Do not rely
-on it — **verify the SHA-256 `x-square-hmacsha256-signature` header** — but do
-not be surprised to see it on incoming requests.
+Square's current webhook docs document only `x-square-hmacsha256-signature`; they
+don't mention `x-square-signature` at all (as current, deprecated or legacy). A
+live sandbox delivery in 2026-08 (`square-version: 2026-07-15`) nevertheless
+carried a second header, `x-square-signature`, an HMAC-**SHA1** (base64) over the
+same `notificationUrl + rawBody` content. Whether Square still sends it, or will
+keep sending it, isn't documented. Do not rely on it — **verify the SHA-256
+`x-square-hmacsha256-signature` header** — but do not be surprised to see it on
+incoming requests.
 
 ## Implementation
 
