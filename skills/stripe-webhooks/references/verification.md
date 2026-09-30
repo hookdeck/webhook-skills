@@ -12,7 +12,7 @@ Example header:
 Stripe-Signature: t=1614556800,v1=abc123...,v0=def456...
 ```
 
-The `v1` signature is the current version. Ignore `v0` (legacy).
+`v1` is the only valid live signature scheme. For test events, Stripe also adds a fake `v0` signature to aid testing. Ignore `v0`: it is not a legacy scheme and must never be accepted as proof of authenticity.
 
 ## Implementation
 

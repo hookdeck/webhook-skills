@@ -3655,7 +3655,8 @@ providers:
     notes: >
       Payment platform. Uses Stripe-Signature header with HMAC-SHA256 (hex encoded).
       Signature format includes timestamp (t) and signature (v1). Secret starts with whsec_.
-      Always use raw request body for verification. Common events: checkout.session.completed,
+      v1 is the only valid live scheme; test events also carry a fake v0 signature, which is
+      not a legacy scheme and must be ignored. Always use raw request body for verification. Common events: checkout.session.completed,
       payment_intent.succeeded, customer.subscription.created.
     testScenario:
       events:
