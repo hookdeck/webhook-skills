@@ -19,7 +19,18 @@ You must also reject any request whose `X-HubSpot-Request-Timestamp` is older th
 
 ## Implementation
 
-HubSpot does not ship an SDK helper for webhook verification, so all implementations are manual.
+### SDK helpers
+
+HubSpot's official client libraries include a signature helper that supports v1, v2 and v3 and, for v3, rejects a timestamp older than 5 minutes (it raises rather than returning `false`):
+
+| Library | Helper |
+|---|---|
+| Node `@hubspot/api-client` (14.0.1) | `Signature.isValid({ signature, clientSecret, requestBody, signatureVersion: 'v3', url, method, timestamp })` |
+| Python `hubspot-api-client` (12.0.0) | `hubspot.utils.signature.Signature.is_valid(signature, client_secret, request_body, http_uri, http_method, signature_version="v3", timestamp)` |
+| PHP `hubspot/api-client` (14.1.0) | `\HubSpot\Utils\Signature::isValid(...)` |
+| Ruby `hubspot-api-client` (20.0.0) | `Hubspot::Helpers::Signature.new.is_valid(...)` |
+
+Two things to know before relying on them. You still have to pass the URL exactly as HubSpot signed it (the helpers don't URL-decode it for you). And the Node helper compares with `===` rather than a timing-safe comparison. The manual implementations below handle both, and are what the examples use.
 
 ### Node.js
 

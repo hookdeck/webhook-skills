@@ -2300,7 +2300,9 @@ providers:
       X-HubSpot-Request-Timestamp value. Reject requests with timestamp older than
       5 minutes. v1 and v2 (SHA-256 of clientSecret+body, no timestamp) are deprecated
       — new integrations should use v3 only. Signing key is the App's Client Secret
-      (Application Secret). Common subscription types: contact.creation,
+      (Application Secret). HubSpot's official SDKs ship a helper (Signature.isValid in
+      Node/PHP, Signature.is_valid in Python/Ruby) supporting v1/v2/v3; do not claim there is
+      no SDK helper. Common subscription types: contact.creation,
       contact.propertyChange, contact.deletion, deal.creation, deal.propertyChange,
       company.creation, ticket.creation. (Note: the v3 validation page is canonically
       hosted under /docs/apps/legacy-apps/authentication/validating-requests — the

@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-HubSpot does not provide an SDK helper for webhook signature verification, so verification is implemented manually with HMAC-SHA256 and base64 across all frameworks.
+HubSpot's official SDKs ship a signature helper: `Signature.isValid` in Node (`@hubspot/api-client`) and PHP, `Signature.is_valid` in Python and Ruby. The examples here verify manually with HMAC-SHA256 and base64 so the signed string and the timing-safe comparison are explicit; see [references/verification.md](references/verification.md) for the SDK route.
 
 ### HubSpot Signature Verification (JavaScript)
 
