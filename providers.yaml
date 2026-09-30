@@ -2343,7 +2343,9 @@ providers:
       Customer messaging platform. Uses X-Hub-Signature header (Facebook-style)
       with HMAC-SHA1 (40-byte hex). Signature format is sha1=<hex_digest>.
       Computed over the raw JSON request body using the app's client_secret as
-      the key (from Developer Hub → Basic Information). Subscribe to topics
+      the key (from Developer Hub → Basic Information). X-Hub-Signature is the only
+      webhook signature header; X-Body-Signature belongs to Canvas Kit requests
+      (HMAC-SHA256) and is not an alternate webhook header. Subscribe to topics
       such as conversation.user.created, conversation.admin.replied,
       contact.user.created, ticket.created, and ping (handshake).
     testScenario:

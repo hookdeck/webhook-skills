@@ -70,9 +70,12 @@ Key fields:
 | Header | Description |
 |--------|-------------|
 | `X-Hub-Signature` | `sha1=<hex>` HMAC-SHA1 signature of the raw body |
-| `X-Body-Signature` | (Some accounts) alternate name for the same value |
 | `Content-Type` | Always `application/json` |
 | `User-Agent` | Identifies Intercom as the sender |
+
+`X-Hub-Signature` is the only signature header on webhook notifications. You may see
+`X-Body-Signature` in Intercom's docs: that header signs **Canvas Kit** requests (a hex
+HMAC-SHA256), a different product. It is not an alternate name for the webhook signature.
 
 ## The `ping` Handshake
 
