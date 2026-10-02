@@ -351,8 +351,13 @@ function handleEvent(token: string, event: SentryWebhookEvent): void {
       break;
     case 'seer.pr_created':
     case 'seer.pr_ready_for_review': {
-      const pr = (data.pull_requests || [])[0];
-      console.log(`🤖 Seer ${event.action}: #${pr?.pr_number} ${pr?.pr_url}`);
+      // {pull_request: {pr_number, pr_url, pr_id}, repo_name, provider} —
+      // the PR fields are NESTED under `pull_request`.
+      const entry = (data.pull_requests || [])[0];
+      const pr = entry?.pull_request;
+      console.log(
+        `🤖 Seer ${event.action}: #${pr?.pr_number} ${pr?.pr_url} (${entry?.repo_name})`
+      );
       break;
     }
 

@@ -321,8 +321,17 @@ def handle_event(token: str, event: Dict[str, Any]) -> None:
         )
 
     elif token in ("seer.pr_created", "seer.pr_ready_for_review"):
+        # Each entry is {"pull_request": {"pr_number", "pr_url", "pr_id"},
+        # "repo_name", "provider"} -- the PR fields are NESTED.
         prs = data.get("pull_requests") or [{}]
-        logger.info("Seer %s: #%s %s", action, prs[0].get("pr_number"), prs[0].get("pr_url"))
+        pr = prs[0].get("pull_request") or {}
+        logger.info(
+            "Seer %s: #%s %s (%s)",
+            action,
+            pr.get("pr_number"),
+            pr.get("pr_url"),
+            prs[0].get("repo_name"),
+        )
     elif token.startswith("seer."):
         # run_id + group_id correlate every event in one Seer run.
         logger.info("Seer %s: run %s on issue %s", action, data.get("run_id"), data.get("group_id"))

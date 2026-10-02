@@ -588,6 +588,27 @@
       ]
     },
     {
+      "name": "sentry-webhooks",
+      "description": "Receive and verify Sentry webhooks (sentry.io — the error-monitoring and application-performance platform). Use when setting up a Sentry Integration Platform webhook handler for an internal or public integration, debugging Sentry-Hook-Signature verification, or handling events like issue.created, issue.resolved, event_alert.triggered, metric_alert.critical, error.created, comment.created, seer.pr_created or preprod_artifact.size_analysis_completed. Sentry signs with HMAC-SHA256 over the RAW body, lowercase hex, keyed with the integration's Client Secret, and sends the digest as Sentry-Hook-Signature (or Sentry-App-Signature on UI-component requests). The resource is only in the Sentry-Hook-Resource header — the body has no event/type field. Not Sentry Insurance (sentry.com), not @sentry/* SDK event ingest.",
+      "source": "./skills/sentry-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/sentry-webhooks",
+      "keywords": [
+        "webhooks",
+        "sentry"
+      ]
+    },
+    {
       "name": "smile-webhooks",
       "description": "Receive and verify Smile API (getsmileapi.com) webhooks. Use when setting up a Smile webhook endpoint, verifying the Smile-Signature header (HMAC-SHA512 hex over the raw body), debugging Smile signature verification failures, or handling employment/income data events like ACCOUNT_CONNECTED, TASK_FINISHED, INCOMES_ADDED, EMPLOYMENTS_ADDED, IDENTITY_ADDED, and RECORD_COMPLETED. This is Smile API for Southeast Asian employment/income data — NOT Smile.io loyalty and NOT Smile Identity KYC.",
       "source": "./skills/smile-webhooks",

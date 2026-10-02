@@ -410,10 +410,14 @@ function handleEvent(token, event, meta) {
     }
     case 'seer.pr_created':
     case 'seer.pr_ready_for_review': {
-      const pr = (data.pull_requests || [])[0];
+      // Each entry is {pull_request: {pr_number, pr_url, pr_id}, repo_name,
+      // provider} — the PR fields are NESTED under `pull_request`, while
+      // repo_name and provider sit on the outer object.
+      const entry = (data.pull_requests || [])[0];
+      const pr = entry?.pull_request;
       console.log(
         `🤖 Seer PR ${token === 'seer.pr_created' ? 'created' : 'ready for review'}: ` +
-          `#${pr?.pr_number} ${pr?.pr_url} (${pr?.repo_name} via ${pr?.provider})`
+          `#${pr?.pr_number} ${pr?.pr_url} (${entry?.repo_name} via ${entry?.provider})`
       );
       break;
     }
@@ -443,7 +447,7 @@ function handleEvent(token, event, meta) {
       } else {
         console.log(
           `📱 Build ${data.buildId} ready to distribute ` +
-            `(${data.projectSlug}, branch ${data.gitInfo?.branch})`
+            `(${data.projectSlug}, head ${data.gitInfo?.headRef})`
         );
       }
       break;

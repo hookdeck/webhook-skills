@@ -6070,3 +6070,332 @@ providers:
         - post.published
         - post.publish_failed
         - post.approval.requested
+  - name: sentry
+    displayName: Sentry
+    docs:
+      webhooks: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/
+      verification: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/#sentry-hook-signature
+      overview: https://docs.sentry.io/organization/integrations/integration-platform/
+      internal_integration: https://docs.sentry.io/organization/integrations/integration-platform/internal-integration/
+      public_integration: https://docs.sentry.io/organization/integrations/integration-platform/public-integration/
+      installation_webhook: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/installation/
+      issue_alerts: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/issue-alerts/
+      metric_alerts: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/metric-alerts/
+      activity_alerts: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/activity-alerts/
+      issues: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/issues/
+      comments: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/comments/
+      errors: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/errors/
+      seer: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/seer/
+      preprod_artifacts: https://docs.sentry.io/organization/integrations/integration-platform/webhooks/preprod-artifacts/
+      reference_app: https://github.com/getsentry/integration-platform-example
+    notes: |
+      IDENTITY — Sentry (sentry.io, getsentry/sentry), the error-monitoring and
+      application-performance platform. This skill covers Sentry's
+      **Integration Platform webhooks**, the webhooks emitted by a Sentry
+      *internal integration* (org-scoped, the common case) or *public
+      integration* configured under Settings → Developer Settings. Self-hosted
+      Sentry runs the same code, so the scheme is identical on a self-hosted
+      host; only the domain changes.
+
+      Not to be confused with: Sentry Insurance (sentry.com), the Sentry
+      login/identity products, or `@sentry/*` SDK ingest (events POSTed *to*
+      Sentry at `/api/{project}/store/`, which is a different direction and a
+      different auth model — DSN keys, not HMAC).
+
+      HOOKDECK SOURCE TYPE — there is **no `SENTRY` source type in Hookdeck as
+      of 2026-10-01** (verified by fetching https://hookdeck.com/docs/sources
+      and grepping: every "sentry" hit on that page is Sentry's own JS
+      debug-id shim on Hookdeck's docs site, not a source entry). So there is
+      no Hookdeck-side config to disambiguate a variant against; the scheme
+      below is resolved directly from Sentry's own server code. A Hookdeck
+      source for Sentry would be a single-secret HMAC config (the integration's
+      Client Secret).
+
+      VERIFICATION — HMAC-SHA256, hex, over the RAW request body, keyed with
+      the integration's **Client Secret**.
+
+      Primary source is Sentry's own server code, not just the docs:
+      `src/sentry/sentry_apps/models/sentry_app.py` (`SentryApp.build_signature`):
+
+        def build_signature(self, body) -> str:
+            secret = self.application.client_secret
+            return hmac.new(
+                key=secret.encode("utf-8"), msg=body.encode("utf-8"), digestmod=sha256
+            ).hexdigest()
+
+      and `src/sentry/sentry_apps/api/serializers/app_platform_event.py`, which
+      builds the body once and signs that exact string:
+
+        @property
+        def body(self) -> str:
+            ...
+            return json.dumps(body)
+
+        @cached_property
+        def sentry_headers(self) -> dict[str, str]:
+            return {
+                "Content-Type": "application/json",
+                "Request-ID": uuid4().hex,
+                "Sentry-Hook-Resource": self.resource,
+                "Sentry-Hook-Timestamp": str(int(time())),
+                "Sentry-Hook-Signature": self.install.sentry_app.build_signature(self.body),
+            }
+
+      - Algorithm: HMAC-SHA256. Encoding: **lowercase hex** (`.hexdigest()`),
+        NOT base64. No prefix, no `v1=`, no comma-separated list — the header
+        value is the bare 64-character hex digest.
+      - Key source: the integration's **Client Secret**, used as raw UTF-8
+        bytes exactly as displayed in Sentry (Settings → Developer Settings →
+        your integration → Client Secret). No decoding, no prefix stripping.
+        It is NOT the auth token, NOT the DSN, NOT the Client ID.
+      - Signed content: the **raw request body bytes**, nothing else. The
+        timestamp header is NOT part of the signed string — do not concatenate
+        it, and do not implement a signature over `timestamp + "." + body`.
+      - Headers Sentry sends on every integration-platform delivery:
+        * `Content-Type: application/json`
+        * `Request-ID` — per-request uuid4 hex; use it as the idempotency /
+          dedupe key, since the payload body has no delivery id
+        * `Sentry-Hook-Resource` — which resource fired (see list below)
+        * `Sentry-Hook-Timestamp` — UNIX **SECONDS** (`str(int(time()))`)
+        * `Sentry-Hook-Signature` — the hex digest
+        Header names are case-insensitive over HTTP; Sentry's docs show them
+        title-cased (`Sentry-Hook-Signature`) and Node/Flask lowercase them.
+
+      - **ACCEPT `Sentry-App-Signature` AS WELL.** This is load-bearing and
+        easy to mistake for a fabrication: Sentry's UI-component external
+        requests (`select_options.requested`, `external_issue.created`,
+        `external_issue.linked`, `alert_rule_action.requested`) sign with the
+        same `build_signature` but send the header as `Sentry-App-Signature`
+        (verified in `src/sentry/sentry_apps/external_requests/select_requester.py`,
+        `issue_link_requester.py`, `alert_rule_action_requester.py`). Sentry's
+        own reference app checks both header names on one endpoint, commented
+        verbatim: "HACK: The signature header may be one of these two values".
+        The skill's verifier should try `sentry-hook-signature` and fall back
+        to `sentry-app-signature`, comparing both in constant time.
+
+      - **RAW BODY IS MANDATORY — the docs' own snippets are subtly wrong.**
+        The documented JS snippet is
+        `hmac.update(JSON.stringify(request.body), "utf8")` and the Python one
+        is `body = json.dumps(request.body)`. Both re-serialize a parsed body.
+        The documented **Python** snippet never matches: stdlib `json.dumps`
+        defaults to `", "` / `": "` separators while Sentry signs compact JSON,
+        so it diverges on any payload with more than one key. The **JS**
+        snippet coincides with Sentry's bytes only for ASCII-only payloads,
+        because Sentry serializes with simplejson configured
+        `separators=(",", ":")` (compact, matching `JSON.stringify`) — see
+        `_default_encoder` in `src/sentry/utils/json.py` — but that encoder
+        leaves simplejson's `ensure_ascii=True` default in place, so Sentry
+        emits `\uXXXX` escapes for any non-ASCII character while
+        `JSON.stringify` emits the literal UTF-8 character. An issue title, a
+        comment, or a username containing an accent or an emoji therefore
+        produces a different byte string and the re-serializing snippet
+        rejects a perfectly valid delivery. Float and large-int formatting can
+        diverge too. **Every example in the skill must verify against the raw
+        body** (`express.raw()` / `req.rawBody`, `await request.text()`,
+        `await request.body()` / `request.get_data()`), and the skill should
+        say explicitly that the published snippets' re-serialization is a
+        latent bug rather than silently diverging from the docs.
+
+      - **EMPTY-BODY DELIVERIES ARE REAL.** Some Sentry requests arrive with an
+        empty body (`b''`) and `Content-Type: application/json`; the signature
+        is then the HMAC of the empty string. `select_options.requested` signs
+        `""` outright (`build_signature("")`). Two consequences the skill must
+        handle: (a) a JSON body parser must not 400 on the empty body —
+        Sentry's reference app notes "Flask will throw a 400 Bad Request ...
+        because Sentry sends an empty body"; (b) `express.json()` turns an
+        empty body into `{}`, and signing `"{}"` fails — Sentry's own TS
+        example special-cases it (`stringifiedBody === '{}' ? '' : ...`). Using
+        the raw body avoids both, which is another reason raw-body is the
+        rule.
+
+      - **NO TIMESTAMP/REPLAY CHECK IS POSSIBLE on the signature.** Because
+        `Sentry-Hook-Timestamp` is not signed, an attacker who replays a
+        captured body+signature can forge the timestamp freely. A tolerance
+        check on the header is still worth doing as a cheap replay dampener,
+        but the skill must say plainly that it is *not* cryptographically
+        bound, and dedupe on `Request-ID` is the real protection. Do not
+        describe Sentry as having Stripe-style signed-timestamp replay
+        protection.
+
+      - NO SOURCE-IP ALLOWLIST is published for sentry.io webhook egress. Do
+        not invent one. (Sentry documents inbound ingest IPs for its own
+        relays; that is a different direction and must not be presented as a
+        webhook-sender allowlist.)
+
+      - NO HANDSHAKE / CHALLENGE. There is no echo-the-token or validation
+        request. For a public integration the first traffic is
+        `installation.created`; for an internal integration, webhooks simply
+        start flowing once a URL and resources are configured.
+
+      OTHER SENTRY WEBHOOK SURFACES — mention, do NOT conflate, and do not
+      force the scheme above onto them:
+        1. **Service hooks** (legacy, feature-flagged `projects:servicehooks`):
+           headers `X-ServiceHook-Signature`, `X-ServiceHook-Timestamp`,
+           `X-ServiceHook-GUID`; HMAC-SHA256 hex over the payload, keyed with
+           the *service hook's own* `secret`, not the integration Client Secret
+           (`src/sentry/sentry_apps/models/servicehook.py`,
+           `src/sentry/sentry_apps/tasks/service_hooks.py`). Events
+           `event.created` / `event.alert`; payload is
+           `{"project": {...}, "group": {...}, "event": {...}}`. Same primitive,
+           different header and different key — a one-paragraph note is enough.
+        2. **Legacy "WebHooks" plugin** (project Settings → Legacy
+           Integrations → WebHooks, `webhooks:enabled` project option):
+           **completely unsigned**, flat payload
+           `{id, project, project_name, project_slug, logger, level, culprit,
+           message, url, triggering_rules, event}` (`LegacyWebhookPayload` in
+           `src/sentry/sentry_apps/services/legacy_webhook/service.py`). It is
+           no longer in the docs. The skill must say there is nothing to verify
+           on this path — do not present an HMAC verifier for it — and point
+           readers at an internal integration if they need authenticity.
+
+      ENVELOPE — every integration-platform delivery is a flat JSON object with
+      four common keys (quoted from the Request Structure section and confirmed
+      by `AppPlatformEventBody`):
+        {
+          "action": "created",
+          "installation": { "uuid": "a8e5d37a-696c-4c54-adb5-b3f28d64c7de" },
+          "data": { ... resource-specific ... },
+          "actor": { "type": "user", "id": 1, "name": "Meredith Heller" }
+        }
+      - `action` is the verb; the **resource is only in the
+        `Sentry-Hook-Resource` header, not in the body.** This is the single
+        most important routing fact about Sentry: there is no `type` or
+        `event` field in the payload, so a handler must switch on
+        `header + "." + body.action` (e.g. `issue` + `created` →
+        `issue.created`) to recover the event token. Any example that routes on
+        a body field alone is wrong.
+      - `installation.uuid` maps the delivery to an installation.
+      - `actor` is `{type: "user"|"application", id, name}`. When Sentry itself
+        triggers the action, it is literally
+        `{"type": "application", "id": "sentry", "name": "Sentry"}` (note `id`
+        is the string `"sentry"`, not a number — `actor.id` is `str | int`,
+        so do not type it as a number). When another integration acts, `id` is
+        that app's uuid.
+      - An optional top-level `"text"` key (a human-readable
+        `"Sentry {resource}.{action}: {url}"` summary) is added for some alert
+        deliveries (`include_text_summary`). Treat it as optional.
+      - `data` shape varies by resource and is also customizable via UI
+        components, so handlers must treat `data` defensively.
+
+      RESOURCES (`Sentry-Hook-Resource` header values) and their actions —
+      authoritative list from `SentryAppEventType` /
+      `src/sentry/sentry_apps/utils/webhooks.py`, cross-checked against the
+      docs:
+        * `installation`      → `created`, `deleted`
+        * `issue`             → `created`, `resolved`, `assigned`,
+                                `unresolved`, `ignored`
+                                (the docs call this one `archived`; the wire
+                                token is `issue.ignored` with
+                                `issue.archived` kept as an equivalent alias
+                                for subscriptions stored before the rename —
+                                handle both, never drop either)
+        * `error`             → `created` (Business plan and above only)
+        * `comment`           → `created`, `updated`, `deleted`
+        * `event_alert`       → `triggered` (this is the **issue alert**
+                                resource — the header says `event_alert`, which
+                                does not match the docs' page title; a handler
+                                keyed on "issue_alert" will never fire)
+        * `activity_alert`    → `triggered`
+        * `metric_alert`      → `critical`, `warning`, `resolved`, and `open`
+                                (`metric_alert.open` exists in
+                                `SentryAppEventType` / `MetricAlertActionType`
+                                but is NOT in the docs' list of three — include
+                                it, flagged as present in the server enum and
+                                undocumented)
+        * `seer`              → `root_cause_started`, `root_cause_completed`,
+                                `solution_started`, `solution_completed`,
+                                `coding_started`, `coding_completed`,
+                                `pr_created`, plus `pr_ready_for_review`,
+                                `iteration_started`, `iteration_completed`
+                                (the last three are in the server enum; the
+                                docs page lists only the first seven — include
+                                them, flagged as newer/undocumented)
+        * `preprod_artifact`  → `size_analysis_completed`,
+                                `build_distribution_completed`
+      Event tokens are `resource.action` (`issue.created`,
+      `event_alert.triggered`, `seer.pr_created`,
+      `preprod_artifact.size_analysis_completed`). Subscriptions in the Sentry
+      UI are selected **per resource**, not per event, and a resource
+      subscription expands to all of that resource's events.
+      Separately, the UI-component external requests
+      (`select_options.requested`, `external_issue.created`,
+      `external_issue.linked`, `alert_rule_action.requested`) are
+      request/response calls Sentry makes to the integration, not
+      subscribable webhooks — mention them only as the reason the
+      `Sentry-App-Signature` header exists.
+
+      PAYLOAD POINTERS worth surfacing in the skill:
+        * issue alerts: `data.event` is a full Sentry event (exception,
+          stacktrace, tags as an array of `[key, value]` PAIRS — not an
+          object), plus `data.event.issue_id`, `data.event.web_url`,
+          `data.triggered_rule`, and `data.issue_alert.settings` for alert-action
+          UI components. The docs note stack frames are ordered oldest →
+          most recent.
+        * issues: `data.issue.status` is `resolved` | `unresolved` | `ignored`,
+          with `substatus` one of `archived_until_escalating`,
+          `archived_until_condition_met`, `archived_forever`, `escalating`,
+          `ongoing`, `regressed`, `new`; `statusDetails` carries
+          `inRelease`/`inNextRelease`/`inCommit`/`ignoreCount`/`ignoreWindow`/
+          `ignoreUserCount`/`ignoreUserWindow`/`ignoreDuration`.
+          `issueCategory` includes `error`, `outage` (uptime/cron monitors) and
+          feedback; `issueType` is more specific (e.g.
+          `uptime_domain_failure`, `monitor_check_in_failure`).
+          `issue.created` webhooks currently fire for the `OUTAGE`, `ERROR`
+          and `FEEDBACK` categories.
+        * metric alerts: `data.metric_alert` is the incident,
+          `data.metric_alert.alert_rule` the rule, plus `data.description_text`,
+          `data.description_title`, `data.web_url`.
+        * activity alerts: `data.activity.type` is a `seer_*` activity
+          (`seer_root_cause_started` … `seer_pr_iteration_completed`) with a
+          type-dependent `data.activity.details`, plus `data.issue` and
+          `data.alert.{title,url,web_url,settings}`.
+        * seer: `data.run_id` + `data.group_id` correlate a run; completed
+          events carry `root_cause` / `solution` / `code_changes` (keyed by
+          `owner/name` repo, each change `{diff, path, type: M|A|D, added,
+          removed}`) / pull-request details.
+        * errors: `data.error` is the full event and **`issue_id` lives inside
+          `data.error`** (alongside `url`, `web_url`, `issue_url`). The errors
+          doc page's attribute list claims `data['event']['issue_id']`, but its
+          own payload sample has no `data.event` key at all — verified against
+          the sample 2026-10-02. Do not read `data.event.issue_id` on
+          `error.created`.
+        * seer `pr_created` / `pr_ready_for_review`: `data.pull_requests` is an
+          array of `{pull_request: {pr_number, pr_url, pr_id}, repo_name,
+          provider}` — the PR fields are NESTED under `pull_request`, while
+          `repo_name` and `provider` sit on the outer object. A flat
+          `pr.pr_number` reads undefined.
+        * preprod artifacts: camelCase keys here (`buildId`, `organizationSlug`,
+          `projectSlug`, `appInfo`, `gitInfo` (whose branch fields are
+          `headRef` / `baseRef` — there is no `gitInfo.branch`),
+          `downloadSize`, `installSize`,
+          `errorCode`, `errorMessage`) with `state` of `COMPLETED` | `FAILED` —
+          note the casing break from the snake_case used elsewhere, and that a
+          `*_completed` action can still mean failure, so branch on `state`
+          rather than on the action name.
+        * comments: `data.comment` (the text), `data.comment_id`,
+          `data.issue_id`, `data.project_slug`, `data.timestamp`.
+
+      DELIVERY — **respond within 1 second**; the docs state anything slower
+      "is considered a timeout" (the server-side budget is an adjustable
+      `sentry-apps.webhook.timeout.sec` option with a hard timeout alarm, so
+      treat 1s as the contract and ack immediately, queueing work). Sentry does
+      **not** retry a failed integration-platform webhook — there is no
+      documented retry schedule, and repeated failures instead trip a
+      circuit breaker per integration and can **disable the webhook**, with an
+      email to the integration owner (`_notify_webhook_disabled` /
+      `SentryAppWebhookDisabled` in
+      `src/sentry/utils/sentry_apps/webhooks.py`). So a dropped delivery is
+      genuinely lost: the skill should recommend acking fast, processing
+      asynchronously, and backfilling via the Sentry API rather than relying on
+      redelivery. Past deliveries are inspectable under the integration's
+      Dashboard / webhook requests view, which records the status code.
+    testScenario:
+      events:
+        - issue.created
+        - issue.resolved
+        - event_alert.triggered
+        - error.created
+        - metric_alert.critical
+        - comment.created
+        - installation.created
+        - seer.root_cause_completed

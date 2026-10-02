@@ -243,7 +243,9 @@ Together these two correlate every event in a run. Completed events add:
 - `solution` — `one_line_summary`, `steps` (each `{title, description}`)
 - `code_changes` — **keyed by repository `owner/name`**; each value a list of
   file-level changes `{diff, path, type: "M" | "A" | "D", added, removed}`
-- `pull_requests` — array of `{pr_number, pr_url, pr_id, repo_name, provider}`
+- `pull_requests` — array of `{pull_request: {pr_number, pr_url, pr_id}, repo_name, provider}`
+  (the PR fields are **nested** under `pull_request`; `repo_name` and
+  `provider` sit on the outer object)
 
 ### `preprod_artifact.*`
 
