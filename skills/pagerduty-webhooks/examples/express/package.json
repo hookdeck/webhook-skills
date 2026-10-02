@@ -1,0 +1,21 @@
+{
+  "name": "pagerduty-webhooks-express",
+  "version": "1.0.0",
+  "description": "PagerDuty V3 webhook handler with Express — verifies the X-PagerDuty-Signature HMAC-SHA256 hex digest, including multi-signature secret rotation",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

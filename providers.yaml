@@ -3093,6 +3093,131 @@ providers:
     sdks:
       npm: ["@polar-sh/sdk"]
       pip: ["polar-sdk"]
+  - name: polytomic
+    displayName: Polytomic
+    docs:
+      webhooks: https://docs.polytomic.com/docs/webhooks-connections
+      verification: https://docs.polytomic.com/docs/webhooks-connections
+      events: https://docs.polytomic.com/docs/webhooks-connections
+    notes: >
+      IDENTITY: Polytomic (polytomic.com), the data-movement platform (models, Model Syncs,
+      Bulk Syncs, reverse ETL between warehouses, SaaS apps and databases). Docs are a ReadMe
+      hub; every page is also retrievable as markdown by appending `.md`.
+
+      VARIANT: Polytomic has exactly ONE outbound-HTTP surface — the Webhook connection used
+      as a sync DESTINATION ("Webhooks — Destination", the only webhook page in
+      docs.polytomic.com/llms.txt). You add a Webhook connection, point a Model Sync at it,
+      and Polytomic POSTs batches of changed records on the sync's schedule. There is no
+      event-subscription UI, no per-event-type toggles and no platform-events API. Frame the
+      skill as "receive Polytomic sync record batches", not "subscribe to Polytomic events".
+
+      VERIFICATION: THERE IS NO SIGNATURE. NO HMAC, no digest, no signing secret, no
+      signature header and no X-Polytomic-* header of any kind. The ONLY authentication is a
+      STATIC SHARED BEARER TOKEN. Verbatim: "This should be a 'Bearer' token matching the
+      same value that was provided as the 'Secret' during connection setup. For now, this is
+      the only request authorization and is a static value." Strip exactly one leading
+      "Bearer " prefix (case-insensitive on the scheme per RFC 7235), then compare to the
+      stored secret with crypto.timingSafeEqual / hmac.compare_digest (length-guard first;
+      timingSafeEqual throws on unequal lengths). Fail CLOSED with 500 if the secret env var
+      is unset; 401 on mismatch. crypto.createHmac / hashlib must NOT appear in the verify
+      path. Polytomic publishes no SDK webhook verifier in any language, so manual comparison
+      is THE implementation, not an SDK fallback.
+
+      THE TRAP: `Polytomic-Signature-Timestamp` IS NOT A SIGNATURE despite its name. It
+      carries only an RFC 3339 / ISO 8601 UTC timestamp (documented example
+      "2021-06-01T22:55:36Z") — NOT a Unix epoch integer and NOT a digest. Parse with
+      new Date(value) / datetime.fromisoformat (normalise the trailing "Z" to "+00:00" for
+      Python 3.9/3.10), NEVER parseInt/int. The docs endorse a freshness window ("reject
+      requests older than you expect (more than a few minutes old)") — implement it as an
+      OPTIONAL configurable tolerance, default ~300s, and state plainly that it is a
+      staleness check only and proves nothing about authenticity, because the timestamp is
+      not covered by any signature. Do NOT fabricate an HMAC over timestamp+body.
+
+      DO NOT VERIFY THE TOKEN AS A JWT. The documented sample value decodes to a real HS256
+      JWT with claims {"aud":"webhook","jti":"<uuid>","iss":"https://app.polytomic-local.com:8443/"}
+      (iss is the issuing Polytomic instance; the example is a local dev host). But it is
+      signed with a key Polytomic does not give you, carries no `exp`, and the docs call it
+      "a static value". Treat the whole bearer string as an OPAQUE SECRET and compare
+      byte-for-byte. jwt.verify/jwt.decode or aud/iss/exp checks either crash or add a false
+      sense of security. May be mentioned in prose, hedged as "observed in the documented
+      example" — the docs never describe the token's internal format.
+
+      HEADERS (complete documented list, docs' casing): Content-Type: application/json
+      ("Polytomic delivers its webhooks payloads as json only. This header will always be
+      present."); Polytomic-Signature-Timestamp (RFC 3339 UTC); Authorization: Bearer
+      <secret>; User-Agent (documented example "Polytomic/rel2021.05.25" — illustrative only,
+      the release suffix changes, never authenticate on it); Content-Length. The docs' sample
+      request also shows `Accept-Encoding: gzip` while the prose says "Polytomic delivers
+      payloads as a gzipped response" — these are IN TENSION (Accept-Encoding on a request is
+      a request header), and it is the one internally inconsistent claim on the page. Report
+      the operational consequence rather than asserting a header name: the body may arrive
+      gzip-compressed, most frameworks/proxies decompress transparently, and capturing the
+      raw body yourself may require inflating it. Hedge it; there is no live capture to
+      settle it.
+
+      EVENTS: exactly ONE documented event type, `sync.records`. Verbatim: "This is an event
+      type to help you distinguish new and future hooks. You should only process webhooks you
+      know about—for right now, that is just the sync.records event." Route on the top-level
+      `event` field and make the DEFAULT BRANCH IGNORE UNKNOWN EVENTS WITH A 200 — the docs
+      anticipate future types, and a 4xx marks the sync run failed. DO NOT INVENT event names
+      (no sync.started, sync.completed, sync.failed, record.created).
+
+      PAYLOAD ENVELOPE: {"event":"sync.records","object":{"id":"1ea8f90a-b22e-4218-86d5-c3c109e1fbb7",
+      "name":"Webhook HTTP Endpoint sync","records":[{"hash":"b7421c6c57bd49f7","fields":
+      {"email":"nathan@polytomic.com","last_login":"2020-12-02T00:00:00Z"}}],"metadata":{}}}.
+      `object` is "an envelope that will contain the payload, regardless of event" and is
+      always present. `object.id` is the UUID of the SYNC, matching the id in the Polytomic UI
+      URL bar. `object.name` is the sync's name, "useful for discriminating against data
+      coming in from different endpoints". `object.records` is "a list of the records changed
+      since the last payload" — THE PAYLOAD IS A BATCH, NOT A SINGLE RECORD; every handler
+      example must loop; default batch size 100 ("Webhook batch size (default: 100)") and
+      user-configurable, so never assume 1 and tolerate large batches.
+      `object.records[].hash` is "a computed hash of the record's fields key/values pairs,
+      which may be useful for deduplicating incoming data" — use as an idempotency key; do
+      NOT describe its algorithm or length (the docs don't; b7421c6c57bd49f7 is just an
+      example); never use it for authentication. `object.records[].fields` "contains each of
+      the fields you selected to be delivered" — THE KEYS ARE USER-DEFINED by the sync
+      configuration; email/last_login are that customer's choices, not a Polytomic schema, so
+      do not typed-model them as a fixed shape and show defensive access.
+      `object.metadata` is "Any key-value pairs of metadata defined in the sync
+      configuration" (Advanced settings → Metadata, default null) — it may be an object, null
+      OR ABSENT; handle all three.
+
+      RESPONSE CONTRACT: verbatim "On receipt of the payload, your API should return 200 OK.
+      Any 4xx or 5xx error will cause the sync to appear as a failure." There is NO documented
+      automatic retry policy and NO retry schedule — do not claim exponential backoff or a
+      retry count. A non-2xx marks the sync run failed in Polytomic's sync history; recovery
+      is operational (fix the endpoint, re-run or wait for the next schedule). Because failure
+      is sync-level, acknowledge fast (200) and process the batch asynchronously.
+
+      SETUP (verbatim): Connections → Add Connection → Webhook; enter the delivery URL;
+      "Polytomic will give you a secret key that you will be able to use to verify incoming
+      payloads with. Hovering over the secret key field will reveal its value." NO handshake,
+      challenge or validation request is documented on webhook creation.
+
+      ADVANCED SETTINGS that change delivery semantics: "Always do a full sync" (default
+      false — Model Syncs are differential by default, so `records` normally holds only
+      changes; on means every run re-delivers everything); "Skip backfill on first sync"
+      (default false — the FIRST run delivers the entire source, the single most common cause
+      of an unexpectedly huge first batch); "Capture webhook requests and responses" (default
+      true — request/response log in the Polytomic sync history view, the debugging surface to
+      point readers at); "Webhook batch size" (default 100); "Metadata" (default null).
+
+      SOURCE IPs: the webhooks page links to https://docs.polytomic.com/docs/whitelist-ips —
+      54.190.82.25, 44.232.40.21, 35.155.106.54, 54.200.67.134, 44.224.213.129, 54.149.95.139.
+      Caveat honestly: that page frames the list as the IPs for "integrating Polytomic with
+      databases, data warehouses, and cloud storage" and the webhooks page merely links to it
+      for webhook traffic — present it as "the allowlist Polytomic points you at", a firewall
+      convenience and NOT an authentication mechanism, and note it does not apply to
+      self-hosted/on-premise Polytomic deployments (stated on that page).
+
+      DO NOT FABRICATE: no signature algorithm, no signing secret separate from the bearer
+      secret, no X-Polytomic-* headers, no event types beyond sync.records, no fixed `fields`
+      schema, no retry policy, no documented payload size limit, no handshake/challenge, no
+      HMAC. Hedge or omit anything not sourceable to the two doc URLs above.
+    testScenario:
+      events:
+        - sync.records
   - name: picqer
     displayName: Picqer
     docs:
@@ -6407,3 +6532,314 @@ providers:
         - comment.created
         - installation.created
         - seer.root_cause_completed
+  - name: pagerduty
+    displayName: PagerDuty
+    docs:
+      webhooks: https://docs.pagerduty.com/developer/webhooks-overview
+      verification: https://docs.pagerduty.com/developer/verifying-webhook-signatures
+      behavior: https://docs.pagerduty.com/developer/webhook-behavior
+      ips: https://docs.pagerduty.com/developer/webhook-ips
+      mutual_tls: https://docs.pagerduty.com/developer/mutual-tls
+      certificates: https://docs.pagerduty.com/developer/webhook-tls-certificates
+      subscriptions_api: https://docs.pagerduty.com/developer/api/reference/rest/webhooks/create-webhook-subscription
+      signing_source: https://github.com/PagerDuty/go-pagerduty/blob/master/webhookv3/webhookv3.go
+    notes: |
+      IDENTITY — This skill covers **PagerDuty V3 webhook subscriptions**
+      (outbound webhooks created via the `/webhook_subscriptions` REST API, the
+      current and only supported generation). Docs are server-rendered at
+      docs.pagerduty.com/developer/* and every page has a `.md` twin (append
+      `.md` to the path) — use those for verbatim quotes. Do NOT conflate with:
+        * **V1 webhook extensions** — End-Of-Support Nov 2021, End-Of-Life
+          Oct 2022 (no longer function). Different payload (`messages[]` array).
+          One line: "not covered, EOL".
+        * **V2 webhook extensions** — End-Of-Support 31 Oct 2022, still
+          functioning (no EOL date set), but receiving no fixes or features.
+          Payload is a `messages[]` array with `event` strings like
+          `incident.trigger` (singular, no `d`) — deliberately different from
+          V3's `incident.triggered`. Mention in one short "legacy" note; do NOT
+          mix V2 event names into the V3 event list, and do NOT implement a V2
+          verifier (V2 extensions are not signed with X-PagerDuty-Signature).
+        * **PagerDuty Events API v1/v2** (events.pagerduty.com) — these are
+          INBOUND to PagerDuty (you send alerts/change events to PagerDuty).
+          Opposite direction, not webhooks. One line only.
+        * **Custom Incident Actions / generic "Generic Webhooks"** — same
+          delivery pipeline, different timeout (see HTTP below).
+        * Lookalikes to keep distinct: PagerTree, Pagerly, OpsGenie,
+          incident.io. Unrelated companies.
+
+      VERIFICATION — HMAC-SHA256 over the RAW request body, lowercase
+      hexadecimal (Base16) digest, carried in the `X-PagerDuty-Signature`
+      header. REQUIRED/always present on V3 deliveries. There is NO timestamp
+      and NO nonce in the signed content, so there is NO replay window to
+      check — do not invent one, and do not add a tolerance/stale-time check.
+
+      Header format — the header may contain **MULTIPLE** signatures,
+      comma-separated, each prefixed with its version. Verbatim from the docs:
+
+          X-PagerDuty-Signature: v1=f03de6f61df6e454f3620c4d6aca17ad072d3f8bbb2760eac3b2ad391b5e8073,v1=130dcacb53a94d983a37cf2acba98e805a1c37185309ba56fdcccbcf00d6dd8b
+
+      (The docs render that example across lines for readability and say
+      explicitly: "the actual header value is sent as a single string without
+      any new lines".) Multiple signatures exist to allow ZERO-DOWNTIME SECRET
+      ROTATION: during rotation the same body is signed once per active secret
+      and the results concatenated. The current and only signature version is
+      `v1`.
+
+      Verification algorithm (docs' own pseudo-algorithm, three steps):
+        1. Read `X-PagerDuty-Signature`; split on `,`; keep only entries that
+           start with `v1=` and strip that prefix. **Ignore unknown versions**
+           rather than failing — this is how a future `v2=` rolls out without
+           breaking receivers.
+        2. digest = hex( HMAC-SHA256(key = subscription secret, msg = raw body) )
+        3. Accept if **at least one** of the extracted signatures equals the
+           computed digest, compared in CONSTANT TIME.
+
+      Primary source for exact behaviour is PagerDuty's own Go client,
+      `webhookv3/webhookv3.go` (constants `webhookSignaturePrefix = "v1="`,
+      `webhookSignatureHeader = "X-PagerDuty-Signature"`):
+        - splits the header on `","` with **no whitespace trimming** and
+          requires the literal `v1=` prefix — i.e. PagerDuty emits no space
+          after the commas. Our verifiers MAY trim each element defensively
+          (harmless), but must not depend on a space being present.
+        - hex-DECODES each candidate and compares raw bytes with `hmac.Equal`;
+          a candidate that is not valid hex is skipped, not fatal.
+        - returns a distinct "malformed header" error when the header is
+          absent/unparseable (recommend HTTP 400, so PagerDuty does not retry)
+          vs. "no valid signatures" (recommend HTTP 403). Mirror that
+          distinction in the examples: 400 for missing/malformed header or
+          empty body, 401/403 for a signature mismatch. Both are 4xx, which
+          PagerDuty treats as PERMANENT (no retry) — which is what you want for
+          a forged request.
+        - caps the body read at 2 MB. PagerDuty itself drops any webhook over
+          256 KB, so a 256 KB–2 MB cap in the example is reasonable; if the
+          examples set a body-size limit it must be at least 256 KB (a 100 KB
+          limit would reject legitimate large incident payloads — see Size
+          Limit below).
+
+      Key source — the secret is generated by PagerDuty when the webhook
+      subscription is CREATED and returned in the create-subscription API
+      response (`delivery_method.secret`). It is shown at creation time; it is
+      not an API key / REST token / Events API routing key. Used as-is as UTF-8
+      bytes (the docs' Python sample does `key.encode("ASCII")` — ASCII is a
+      subset of UTF-8 and PagerDuty's secrets are ASCII, so `encode()` /
+      `Buffer.from(secret)` is equivalent; prefer UTF-8).
+
+      Body handling — sign/verify the UNALTERED raw body. Docs, verbatim:
+      "Verifying PagerDuty webhook signatures requires the unaltered raw body
+      of the request sent to you. Ensure that any frameworks or middleware you
+      are using have not manipulated or formatted the request body." And:
+      "PagerDuty webhook payloads support unicode characters. If your
+      implementation is converting the request body from string to bytes [or
+      vice-versa], ensure that you are using the proper UTF-8 character
+      encoding." So: `express.raw({type: 'application/json'})`,
+      `await request.text()` in Next.js, `await request.body()` in FastAPI —
+      never re-serialise parsed JSON, and never decode the body as latin-1.
+
+      Unset secret — fail CLOSED (500 with a clear message, or refuse to boot).
+      Never skip verification when `PAGERDUTY_WEBHOOK_SECRET` is missing.
+
+      PYTHON: `hmac.compare_digest` on BYTES (a forged header can carry
+      non-ASCII, and two `str` args raise TypeError on non-ASCII input).
+      NODE: `crypto.timingSafeEqual` throws on length mismatch — guard lengths
+      (or compare fixed-length 32-byte hex-decoded buffers) first.
+
+      HANDSHAKE — **none**. There is no challenge/echo/validation request, no
+      `X-Hook-Secret`-style handshake, and no subscription-confirmation POST.
+      The secret arrives in the API response, not over the wire. Do not
+      fabricate a handshake endpoint.
+
+      TEST DELIVERY (verified 2026-10-01 against PagerDuty's own OpenAPI schema,
+      PagerDuty/api-schema reference/REST/openapiv3.json) —
+      `POST /webhook_subscriptions/{id}/ping` (operationId
+      `testWebhookSubscription`, scope `webhook_subscriptions.write`) returns
+      202 and, verbatim: "Fires a test event against the webhook subscription.
+      If properly configured, this will deliver the `pagey.ping` webhook event
+      to the destination." `pagey.ping` is NOT in the subscribable Event Types
+      table, so it cannot be requested in a subscription's `events` array — it
+      only arrives from this endpoint, which means a receiver's default/unknown
+      event branch must tolerate it. It is a normal delivery to the
+      subscription's URL; PagerDuty does not separately document whether the
+      ping is signed, so hedge any claim that it is.
+      The same schema confirms the full webhook path set —
+      `/webhook_subscriptions`, `/webhook_subscriptions/{id}`,
+      `/webhook_subscriptions/{id}/enable`, `/webhook_subscriptions/{id}/ping`,
+      `/webhook_subscriptions/oauth_clients`,
+      `/webhook_subscriptions/oauth_clients/{id}` — i.e. there is **no
+      customer-facing secret-rotate endpoint**. Multi-signature headers come
+      from PagerDuty-side rotation; a receiver that loses its secret needs a
+      replacement subscription.
+
+      OTHER SECURITY LAYERS (document, do not conflate with signature
+      verification — only the signature protects payload integrity):
+      - **Mutual TLS (PagerDuty's own recommendation)**: PagerDuty presents a
+        client certificate on request. Trust the DigiCert Global Root G2, set
+        verify depth 2 (PagerDuty's leaf is signed by an intermediate,
+        "DigiCert Global G2 TLS RSA SHA256 2020 CA1"), and check the client
+        cert Subject CN is `webhooks.pagerduty.com` (US) /
+        `webhooks.eu.pagerduty.com` (EU). Client certs are rotated YEARLY, so
+        pin the ROOT, not the leaf. PagerDuty also verifies YOUR server cert:
+        it must chain to a CA in Mozilla's included-CA list (self-signed =
+        dropped), the chain must be presented IN ORDER (out-of-order chains are
+        rejected), and PagerDuty's delivery system supports **TLS v1.2 only**.
+        Give the nginx/Apache config snippets from the docs; this is config,
+        not app code.
+      - **OAuth 2.0 client credentials**: a subscription can be associated with
+        an OAuth client so deliveries carry a bearer token. Retry nuances: an
+        invalid/deleted OAuth client is a TEMPORARY error; a 401 makes
+        PagerDuty refresh the token and retry immediately; a second 401 after a
+        successful refresh is PERMANENT (dropped).
+      - **IP safelists** — PagerDuty DOES publish per-region lists (defence in
+        depth only, shared across all customers, subject to change; fetch them
+        at runtime rather than hardcoding, and say so):
+          US: https://docs.pagerduty.com/ip-safelists/webhooks-us-service-region
+              (JSON: .../webhooks-us-service-region-json)
+          EU: https://docs.pagerduty.com/ip-safelists/webhooks-eu-service-region
+              (JSON: .../webhooks-eu-service-region-json)
+        US at time of writing: 44.242.69.192, 52.89.71.166, 54.213.187.133,
+        35.86.21.47, 52.88.94.18, 44.238.89.29, 54.241.68.46, 54.176.72.216,
+        54.177.81.67, 13.56.49.27, 34.210.57.30, 34.210.242.134, 52.34.208.156.
+        EU: 18.192.91.93, 18.158.120.237, 18.194.177.30, 18.158.199.216,
+        3.126.25.87, 18.197.187.16, 54.76.3.62, 54.170.2.90, 52.213.188.110,
+        54.195.179.238, 34.250.91.200, 54.76.225.71. These are the webhook +
+        workflow-action egress IPs and are DIFFERENT from the REST API IPs
+        (/developer/rest-api-ips) — don't mix the lists up.
+      - **Basic auth in the URL** (`https://user:pass@host`) is supported;
+        special characters must be percent-encoded. Mention, don't recommend.
+
+      HTTP / DELIVERY SEMANTICS:
+      - POST, `Content-Type: application/json`, one event per request.
+      - **Timeout**: a 2xx within **5 seconds** for generic webhooks,
+        **16 seconds** for webhooks generated from Custom Incident Actions.
+        Docs recommend returning `202 Accepted` immediately and processing
+        asynchronously — this should shape the examples' structure (verify,
+        enqueue, respond 202) and be called out in the skill prose.
+      - **Retries** (up to **48 hours**, then dropped) on: no response/timeout,
+        5xx, 429, connection failure, EXPIRED TLS cert, DNS failure.
+        **No retry** on: any other 4xx, other TLS errors, or a 401 after a
+        successful OAuth refresh. So a signature rejection must be 4xx.
+      - **Head-of-line blocking**: while a webhook is being retried,
+        subsequent webhooks for the same subscription + resource id are QUEUED.
+      - **Temporary disablement**: after **3 consecutive dropped** webhooks the
+        subscription is disabled for **24 hours** and its queued webhooks are
+        dropped; re-enable from the webhooks dashboard ("Needs Attention") or
+        via the "Enable a webhook subscription" REST endpoint.
+      - **Ordering**: guaranteed per extension/subscription + incident, in
+        generation order.
+      - **At-least-once delivery** — duplicates are possible. De-duplicate on
+        the **`X-Webhook-Id`** header: unique per webhook, REPEATED across
+        delivery attempts of that webhook. (`event.id` in the body is the event
+        id and also usable; prefer the documented `X-Webhook-Id`.) Do NOT
+        invent other headers — there is no documented `X-PagerDuty-Event`,
+        no delivery-timestamp header, and no documented User-Agent value for
+        V3; if the skill mentions a User-Agent at all, hedge it.
+      - **No batching**: a V3 payload contains exactly ONE event by design.
+        (V1/V2 had a `messages` array but still only one event in practice.)
+      - **Size limit**: delivery + ordering guaranteed up to **55 KB**
+        (56320 bytes). Over that, PagerDuty tries to omit event details — the
+        affected fields are on the FIRST `log_entry`'s `channel` object:
+        `details`, `cef_details.details`, `body` — replaced with an omission
+        message, with `channel.details_omitted` / `cef_details.details_omitted`
+        / `body_omitted` flipped `false` → `true`. Between 55 KB and 256 KB
+        delivery is best-effort (may be dropped or out of order). Over
+        **256 KB** always dropped.
+      - **Regions**: US (`api.pagerduty.com`, sender CN
+        `webhooks.pagerduty.com`) and EU (`api.eu.pagerduty.com`, sender CN
+        `webhooks.eu.pagerduty.com`). Same signing scheme in both.
+      - Any publicly reachable host/port, http or https (https strongly
+        preferred); a custom port is appended with `:port`.
+      - `custom_headers` on the subscription are delivered verbatim to the
+        endpoint (redacted in GET API responses, NOT redacted on delivery) —
+        a shared-secret header is possible but is NOT a substitute for the
+        signature.
+
+      ENVELOPE — a single `event` object; `event.data` varies by
+      `event.event_type`:
+        event.id              string   unique event id
+        event.event_type      string   e.g. "incident.priority_updated"
+        event.resource_type   string   root resource (`incident` or `service`);
+                                       may differ from `data.type`
+        event.occurred_at     string   ISO 8601 datetime
+        event.agent           object|null  Resource Reference for who/what
+                                       initiated it; null often = automation
+        event.client          object|null  e.g. {"name": "PagerDuty"}
+        event.data            object   type-specific payload, carries its own
+                                       `type` discriminator
+      Route on `event.event_type`; use `event.data.type` to pick the data
+      schema. Use the docs' example payloads verbatim in fixtures (e.g. the
+      `incident.priority_updated` example with event id
+      `5ac64822-4adc-4fda-ade0-410becf0de4f`, incident `PGR0VU2`,
+      occurred_at `2020-10-02T18:45:22.169Z`, title "A little bump in the
+      road"; and the `service.updated` example with event id
+      `01BRB6ZP4M6T8ZG4X6BP63ZB9O`, service `PF9KMXH`, `agent: null`,
+      `client: null`). Note `agent` and `client` CAN be null — handlers must
+      not assume `event.agent.id` exists.
+
+      EVENT TYPES (complete V3 list from the docs' Event Types table, with the
+      `data.type` each one carries; "Additional event types may be added to
+      this list over time", and PagerDuty may also ship unannounced Early
+      Access events — https://docs.pagerduty.com/developer/early-access-webhooks
+      — so the handler must have a default/unknown branch and must not throw on
+      an unrecognised event_type):
+        incident.acknowledged                 -> incident
+        incident.annotated                    -> incident_note
+        incident.conference_bridge.updated    -> incident_conference_bridge
+        incident.custom_field_values.updated  -> incident_field_values
+        incident.delegated                    -> incident   (reassigned to another escalation policy)
+        incident.escalated                    -> incident   (escalated within the same level)
+        incident.incident_type.changed        -> incident
+        incident.priority_updated             -> incident
+        incident.reassigned                   -> incident   (reassigned to another user)
+        incident.reopened                     -> incident
+        incident.resolved                     -> incident
+        incident.responder.added              -> incident_responder
+        incident.responder.replied            -> incident_responder
+        incident.role.assigned                -> incident_role_assignment  (assigned OR unassigned)
+        incident.service_updated              -> incident   (note: underscore, NOT `incident.service.updated`)
+        incident.status_update_published      -> incident_status_update
+        incident.task.completed               -> incident_task
+        incident.task.created                 -> incident_task
+        incident.task.updated                 -> incident_task
+        incident.triggered                    -> incident
+        incident.unacknowledged               -> incident
+        incident.action_invocation.created    -> incident_action_invocation
+        incident.action_invocation.terminated -> incident_action_invocation
+        incident.action_invocation.updated    -> incident_action_invocation
+        incident.workflow.started             -> incident_workflow_instance
+        incident.workflow.completed           -> incident_workflow_instance
+        service.created                       -> service
+        service.custom_field_values.updated   -> service_field_values
+        service.deleted                       -> service
+        service.updated                       -> service
+      Scoped-OAuth read scopes: `incidents.read` for all `incident.*` except
+      `incident.workflow.*` which needs `incident_workflows.read`;
+      `services.read` for `service.*`.
+      Naming traps to get right: `incident.service_updated` (underscore) vs
+      `service.updated`; `incident.role.assigned` covers unassignment too;
+      `incident.annotated` (not `incident.note.created`).
+
+      EVENT DATA TYPES documented in the docs' "Event Data Types" section —
+      use them for the payload reference: incident, incident_conference_bridge,
+      incident_field_values, incident_note, incident_role_assignment,
+      incident_status_update, incident_responder, incident_task,
+      incident_workflow_instance, service, service_field_values,
+      incident_action_invocation. Key `incident` fields: id, type, self,
+      html_url, number, status (`triggered`|`acknowledged`|`resolved`),
+      incident_key, created_at, reopened_at, title, incident_type{name},
+      service{...}, assignees[], escalation_policy{}, teams[], priority{} (can
+      be null when no priority is set), urgency (`high`|`low`),
+      conference_bridge{conference_number, conference_url}, resolve_reason.
+
+      SETUP — create a subscription via
+      `POST https://api.pagerduty.com/webhook_subscriptions` with
+      `delivery_method: {type: "http_delivery_method", url, custom_headers?}`,
+      an `events` array (a subset of the list above), and a `filter` of type
+      `service_reference`, `team_reference` or `account_reference`. Incident
+      events are scoped to incidents belonging to the filtered object. Capture
+      `delivery_method.secret` from the response — that is the signing key.
+    testScenario:
+      events:
+        - incident.triggered
+        - incident.acknowledged
+        - incident.resolved
+        - incident.priority_updated
+        - service.updated

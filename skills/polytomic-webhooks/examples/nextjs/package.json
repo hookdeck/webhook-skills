@@ -1,0 +1,22 @@
+{
+  "name": "polytomic-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Polytomic sync record batch webhook handler with Next.js App Router (no signature — static bearer token)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^16.3.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

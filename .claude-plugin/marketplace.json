@@ -482,6 +482,27 @@
       ]
     },
     {
+      "name": "pagerduty-webhooks",
+      "description": "Receive and verify PagerDuty V3 webhooks (outbound webhook subscriptions created via the /webhook_subscriptions REST API). Use when setting up a PagerDuty webhook handler, debugging X-PagerDuty-Signature verification, or handling events like incident.triggered, incident.acknowledged, incident.resolved, incident.reassigned, incident.priority_updated, incident.annotated, incident.responder.added or service.updated. PagerDuty signs with HMAC-SHA256 over the RAW body, lowercase hex (Base16), in the X-PagerDuty-Signature header, which can carry MULTIPLE comma-separated `v1=` signatures for zero-downtime secret rotation. There is no timestamp and no replay window. Not PagerDuty Events API v1/v2 (that is inbound to PagerDuty), not V1/V2 webhook extensions, not PagerTree, not Pagerly, not Opsgenie, not incident.io.",
+      "source": "./skills/pagerduty-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/pagerduty-webhooks",
+      "keywords": [
+        "webhooks",
+        "pagerduty"
+      ]
+    },
+    {
       "name": "paymob-webhooks",
       "description": "Receive and verify Paymob webhook callbacks (transaction callbacks). Use when setting up Paymob webhook handlers, debugging HMAC-SHA512 signature verification, or handling payment transaction states like success, refund, void, and auth/capture from the Transaction Processed Callback.",
       "source": "./skills/paymob-webhooks",
@@ -522,6 +543,27 @@
         "webhooks",
         "paypro",
         "global"
+      ]
+    },
+    {
+      "name": "polytomic-webhooks",
+      "description": "Receive and authenticate Polytomic webhooks. Use when building a Polytomic Webhook *destination* receiver, because Polytomic does NOT sign its payloads — there is NO signature, NO HMAC and NO signing secret, and the only authentication is a static shared bearer token compared against the connection Secret. Use when the `Polytomic-Signature-Timestamp` header misleads you into writing an HMAC verifier (it carries only an RFC 3339 timestamp, not a digest), when handling the single `sync.records` event, when looping over the `object.records[]` batch and its `hash` / user-defined `fields` keys, when deciding what `object.metadata` may be, or when a non-2xx response makes a Polytomic Model Sync appear as a failure.",
+      "source": "./skills/polytomic-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/polytomic-webhooks",
+      "keywords": [
+        "webhooks",
+        "polytomic"
       ]
     },
     {
