@@ -161,11 +161,21 @@ to the 1-second contract.
 
 ## Hookdeck
 
-There is **no `SENTRY` source type in Hookdeck** as of 2026-10-01, so there is
-no provider-specific preset to pick. A Hookdeck source for Sentry is a
-**single-secret HMAC config**: HMAC-SHA256, hex encoding, signature header
-`Sentry-Hook-Signature`, secret = the integration's Client Secret, signed
-content = the raw body.
+A `SENTRY` source type is being added to Hookdeck
+([hookdeck/core#5771](https://github.com/hookdeck/core/pull/5771), open at the
+time of writing). It is an alias on the generic HMAC controller with exactly
+the config this skill describes: **HMAC-SHA256, hex encoding, signature header
+`sentry-hook-signature`, a single secret** (the dashboard labels it *Client
+Secret*), signed content = the raw body. Until it ships, pick the generic HMAC
+source type and set those values yourself.
+
+It covers `Sentry-Hook-Signature` only. The UI-component external requests that
+carry `Sentry-App-Signature` are synchronous request/response calls Sentry
+makes to the component's own path — select-options and issue-link requests
+expect a JSON reply that Sentry validates — so a Hookdeck source cannot
+usefully sit in front of them. If you want the fire-and-forget
+`alert_rule_action.requested` through Hookdeck, use a generic HMAC source with
+`sentry-app-signature` as the header.
 
 For local development:
 

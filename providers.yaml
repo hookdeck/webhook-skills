@@ -6102,8 +6102,16 @@ providers:
       Sentry at `/api/{project}/store/`, which is a different direction and a
       different auth model — DSN keys, not HMAC).
 
-      HOOKDECK SOURCE TYPE — there is **no `SENTRY` source type in Hookdeck as
-      of 2026-10-01** (verified by fetching https://hookdeck.com/docs/sources
+      HOOKDECK SOURCE TYPE — a `SENTRY` source type is being added in
+      hookdeck/core#5771 (open as of 2026-10-02): an HMAC alias with
+      `algorithm: sha256`, `header_key: sentry-hook-signature`,
+      `encoding: hex`, single secret labelled "Client Secret" — i.e. exactly
+      the scheme below. It deliberately covers `Sentry-Hook-Signature` only;
+      the `Sentry-App-Signature` UI-component requests are synchronous
+      request/response calls (select-options and issue-link requests expect a
+      JSON reply Sentry validates), so a Hookdeck source cannot usefully
+      proxy them. Before that PR there was **no `SENTRY` source type as of
+      2026-10-01** (verified by fetching https://hookdeck.com/docs/sources
       and grepping: every "sentry" hit on that page is Sentry's own JS
       debug-id shim on Hookdeck's docs site, not a source entry). So there is
       no Hookdeck-side config to disambiguate a variant against; the scheme

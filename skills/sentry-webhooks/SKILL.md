@@ -334,9 +334,14 @@ what you want when debugging). Paste the printed URL into your integration's
 **Webhook URL** in *Settings → Developer Settings*, then resolve or comment on
 an issue to get a real, signed delivery. (Use `8000` for the FastAPI example.)
 
-> **Note:** There is **no `SENTRY` source type in Hookdeck** as of 2026-10-01,
-> so `sentry` above is just a source name. A Hookdeck source for Sentry is a
-> single-secret HMAC config using the integration's Client Secret.
+> **Note:** A `SENTRY` source type is being added to Hookdeck
+> ([hookdeck/core#5771](https://github.com/hookdeck/core/pull/5771), open at
+> the time of writing) as an HMAC alias: HMAC-SHA256, hex, signature header
+> `sentry-hook-signature`, and a single secret labelled *Client Secret*. Until
+> it ships, `sentry` above is just a source name and you configure the same
+> thing by hand. Either way the source type verifies
+> `Sentry-Hook-Signature` only — the `Sentry-App-Signature` requests below are
+> synchronous request/response calls, so they are out of its scope.
 
 ## Reference Materials
 
