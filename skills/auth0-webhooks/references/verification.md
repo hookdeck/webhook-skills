@@ -66,8 +66,8 @@ def verify_auth0_token(header_value: str | None, expected_token: str | None) -> 
   against unequal lengths.
 - **Return `2xx` fast.** Auth0 retries on non-`2xx`. Authenticate, accept the
   batch, respond, then process asynchronously.
-- **The body is an array.** Iterate every record — a single request can carry
-  many events. Read `event.data.type` for the event code.
+- **The body is an array** (with the JSON Array content format). Iterate
+  every record — a single request can carry many events. Read `event.data.type` for the event code.
 - **HTTPS only.** A static bearer token over plain HTTP is trivially
   interceptable.
 

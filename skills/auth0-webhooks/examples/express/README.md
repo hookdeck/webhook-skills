@@ -56,7 +56,8 @@ login or signup in your tenant and watch the event arrive.
 
 ## How It Works
 
-1. Auth0 batches log events and `POST`s them as a **JSON array**.
+1. Auth0 `POST`s log events as a **JSON array** (set the log stream's
+   **Content Format** to **JSON Array**).
 2. The handler compares the `Authorization` header to `AUTH0_LOG_STREAM_TOKEN`
    with a timing-safe comparison (`401` if it doesn't match).
 3. It responds `200` immediately (Auth0 retries on non-`2xx`), then processes

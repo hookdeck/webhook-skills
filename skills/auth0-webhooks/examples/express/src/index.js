@@ -64,7 +64,8 @@ function handleEvent(event) {
   }
 }
 
-// Auth0 posts a JSON array of log records. Parsing JSON is fine here because
+// With Content Format = JSON Array, Auth0 posts a JSON array of log records.
+// Parsing JSON is fine here because
 // verification uses the Authorization header, not a body signature.
 app.post('/webhooks/auth0', express.json(), (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -77,7 +78,7 @@ app.post('/webhooks/auth0', express.json(), (req, res) => {
     return res.status(401).send('Invalid Authorization token');
   }
 
-  // Auth0 batches events — the body is an array (be defensive about a single object).
+  // JSON Array content format: the body is an array (be defensive about a single object).
   const events = Array.isArray(req.body) ? req.body : [req.body];
 
   // Acknowledge fast; Auth0 retries on any non-2xx response.

@@ -29,9 +29,12 @@ Store it in your app as `AUTH0_LOG_STREAM_TOKEN`.
 4. Configure the delivery settings:
    - **Payload URL** — your endpoint, e.g. `https://your-app.com/webhooks/auth0`
    - **Content Type** — `application/json`
-   - **Content Format** — **JSON Lines** delivers batched arrays; select the
-     format your handler expects. The examples in this skill parse a JSON
-     **array** of records.
+   - **Content Format** — select **JSON Array**. Auth0 offers JSON lines,
+     arrays, or objects; JSON Array sends a single JSON array of log records,
+     which the examples in this skill parse. **JSON Lines** sends
+     newline-delimited JSON objects, which a standard JSON body parser rejects.
+     Auth0's docs don't spell out the JSON Object body; the examples treat a
+     non-array body as a single record.
    - **Authorization Token** — paste the value of your `AUTH0_LOG_STREAM_TOKEN`.
      Auth0 sends this **verbatim** as the `Authorization` request header.
 5. Click **Save**.
@@ -50,8 +53,8 @@ the stream configuration.
 ## Verify Delivery
 
 After saving, Auth0 begins streaming events. Trigger a login or signup in your
-tenant and confirm your endpoint receives a `POST` with a JSON array body and a
-matching `Authorization` header. Auth0's stream **Health** view shows recent
+tenant and confirm your endpoint receives a `POST` with a JSON array body (with
+the JSON Array content format) and a matching `Authorization` header. Auth0's stream **Health** view shows recent
 delivery successes and failures.
 
 ## Retries

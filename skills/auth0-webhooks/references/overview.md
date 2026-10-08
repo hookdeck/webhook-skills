@@ -3,14 +3,17 @@
 ## What Are Auth0 Webhooks?
 
 Auth0 (an Okta company) doesn't ship a traditional per-event webhook product.
-Instead, it exposes tenant activity through **Log Streams**. A **Custom Log
-Stream (Webhook / HTTP)** streams your tenant's log events to an HTTPS endpoint
-you control by sending HTTP `POST` requests.
+This skill covers tenant activity exposed through **Log Streams**. (Auth0's
+separate [Event Streams](https://auth0.com/docs/customize/events/create-an-event-stream)
+deliver CloudEvents-format lifecycle events such as `user.created` and are not
+covered here.) A **Custom Log Stream (Webhook / HTTP)** streams your tenant's
+log events to an HTTPS endpoint you control by sending HTTP `POST` requests.
 
 Key characteristics:
 
-- **Batched delivery** — each request body is a **JSON array** of one or more
-  log records (Auth0 buffers events and delivers them in batches).
+- **Content Format** — you choose JSON lines, arrays, or objects on the
+  stream. With **JSON Array** each request body is a JSON array of one or
+  more log records; with **JSON Lines** it is newline-delimited JSON objects.
 - **Near real-time** — events are streamed shortly after they occur.
 - **No signature** — requests are not HMAC-signed. You authenticate them with a
   static **Authorization** token you configure on the stream (see
@@ -35,11 +38,12 @@ inside each record.
 | `slo` | A user logs out successfully | Session accounting |
 
 Auth0 also emits MFA, password-change, breached-password, and rate-limit codes.
-See the full list under "Full Event Reference" below.
+See the reference links under "Full Event Reference" below.
 
 ## Event Payload Structure
 
-The request body is an array. Each element is a log record shaped like:
+With the JSON Array content format, the request body is an array. Each
+element is a log record shaped like:
 
 ```json
 [

@@ -5,7 +5,7 @@ description: >
   Use when setting up an Auth0 log stream HTTP endpoint, validating the
   configured Authorization token, or handling batched authentication log
   events like s (success login), f (failed login), ss (signup), and sepft
-  (token exchange / MFA).
+  (password-grant token exchange).
 license: MIT
 metadata:
   author: hookdeck
@@ -16,8 +16,9 @@ metadata:
 # Auth0 Webhooks
 
 Auth0 (by Okta) does not send classic per-event webhooks. Instead you create a
-**Custom Log Stream (HTTP)** that batches tenant log events and POSTs them to
-your endpoint as a **JSON array** of log records.
+**Custom Log Stream (HTTP)** that POSTs tenant log events to your endpoint.
+Set the stream's **Content Format** to **JSON Array** and each request body is
+a JSON array of log records, which is what the examples here parse.
 
 ## When to Use This Skill
 
@@ -48,8 +49,8 @@ function verifyAuth0Token(headerValue, expectedToken) {
 }
 ```
 
-Then process the payload — a JSON **array** of log records — and return `2xx`
-quickly. Auth0 **retries on any non-2xx** response, so acknowledge first and do
+Then process the payload (a JSON **array** of log records with the JSON Array
+content format) and return `2xx` quickly. Auth0 **retries on any non-2xx** response, so acknowledge first and do
 slow work asynchronously.
 
 > **For complete handlers with route wiring, batch iteration, event dispatch, and tests**, see:

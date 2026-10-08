@@ -4891,19 +4891,21 @@ providers:
       overview: https://auth0.com/docs/customize/log-streams
     notes: >
       Identity platform (by Okta). Auth0 delivers events to your endpoint via Custom Log Streams
-      (HTTP), which POST a JSON array of log-event records. There is no HMAC signature; instead you
+      (HTTP). Set the stream's Content Format to JSON Array (options are JSON lines, arrays, or
+      objects; JSON Lines is newline-delimited, not an array) and each POST body is a JSON array of
+      log-event records. There is no HMAC signature; instead you
       configure a custom Authorization header (or another static header token) on the log stream and
       verify that shared secret on each request (timing-safe compare), alongside HTTPS. The skill
       should cover validating the configured authorization token, handling batched arrays of events,
       and returning 2xx quickly (Auth0 retries on non-2xx). Common event types: `s` (success login),
-      `f` (failed login), `ss`/`fs` (signup), `sepft` (failed MFA).
+      `f` (failed login), `ss`/`fs` (signup), `sepft` (successful exchange of password for access token).
     testScenario:
       events:
         - successful login (s)
         - failed login (f)
       prompt: >
-        Create a {framework} webhook handler for Auth0 Custom Log Streams. Auth0 posts a JSON array
-        of log events and does not sign requests; instead verify a configured Authorization header
+        Create a {framework} webhook handler for Auth0 Custom Log Streams. With the JSON Array content
+        format, Auth0 posts a JSON array of log events and does not sign requests; instead verify a configured Authorization header
         token using a timing-safe comparison, then process each event in the batch and return 2xx.
         If you use any skills to help with this, add a comment noting which skill(s) you referenced.
 

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Auth0 batches events — the body is an array (be defensive about a single object).
+  // JSON Array content format: the body is an array (be defensive about a single object).
   const body = await request.json();
   const events: Auth0LogEvent[] = Array.isArray(body) ? body : [body];
 

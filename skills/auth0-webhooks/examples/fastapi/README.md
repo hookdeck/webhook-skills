@@ -53,7 +53,8 @@ Use the printed URL as the **Payload URL** of your Auth0 log stream.
 
 ## How It Works
 
-1. Auth0 batches log events and `POST`s them as a **JSON array**.
+1. Auth0 `POST`s log events as a **JSON array** (set the log stream's
+   **Content Format** to **JSON Array**).
 2. The handler compares the `Authorization` header to `AUTH0_LOG_STREAM_TOKEN`
    with a constant-time comparison (`401` if it doesn't match).
 3. It processes each record by its `data.type` code and returns `200` (Auth0

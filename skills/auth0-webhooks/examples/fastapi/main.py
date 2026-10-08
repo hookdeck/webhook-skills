@@ -60,7 +60,7 @@ async def auth0_webhook(request: Request, authorization: str | None = Header(def
     if not verify_auth0_token(authorization, AUTH0_LOG_STREAM_TOKEN):
         raise HTTPException(status_code=401, detail="Invalid Authorization token")
 
-    # Auth0 batches events — the body is an array (be defensive about a single object).
+    # JSON Array content format: the body is an array (be defensive about a single object).
     body = await request.json()
     events = body if isinstance(body, list) else [body]
 
