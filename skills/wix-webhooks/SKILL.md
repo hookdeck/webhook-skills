@@ -29,7 +29,8 @@ Wix delivers each webhook as an **HTTP POST whose entire request body is a signe
 
 - Get your public key from the **app dashboard → Custom Apps → your app → Webhooks → "Get Public Key"** (also under **View ID & keys**). It is per-app; there is no global JWKS endpoint.
 - Verify against the **raw, unparsed body**. Re-serializing the JSON breaks the signature.
-- The decoded JWT is a nested envelope: outer `{ data, iat, exp }` → `data` is a JSON **string** → parse it to `{ eventType, instanceId, data }` → parse the inner `data` string to get the entity/event payload.
+- The decoded JWT is a nested envelope: outer `{ data, iat, exp }` → `data` is a JSON **string** → parse it to `{ eventType, instanceId, data }` → parse the inner `data` string to get `{ id, entityFqdn, slug, entityId, eventTime, createdEvent | updatedEvent | deletedEvent | actionEvent }`.
+- **The two layers name the event differently.** The dotted string `wix.ecom.v1.order_created` lives on the middle envelope as `eventType`. The inner payload has no `eventType` — it names the same event as the pair `entityFqdn: "wix.ecom.v1.order"` + `slug: "created"`. Wix's own reference pages show the inner form, so match on `eventType` at the middle layer (or let the SDK dispatch), not on a dotted string inside the inner payload.
 
 ## Verification (core)
 
@@ -75,7 +76,9 @@ def verify_and_decode(raw_body: bytes, public_key: str) -> dict:
 
 ## Common Event Types
 
-Event type strings follow `wix.<product>.<version>.<entity>_<action>`. Configure each one on the **Webhooks** page of your app dashboard.
+Event type strings follow `wix.<product>.<version>.<entity>_<action>` and appear as `eventType` on the middle envelope. Configure each one on the **Webhooks** page of your app dashboard.
+
+Wix's reference pages document the same events by their inner-payload pair instead — `entityFqdn: "wix.ecom.v1.order"` plus `slug: "created"`/`"approved"`/`"updated"`/`"canceled"`/`"fulfilled"`/`"payment_status_updated"`. Both forms describe one event; the table below gives the `eventType` value, which is what `@wix/sdk` keys handler dispatch on.
 
 | Event Type | Triggered When |
 |------------|----------------|

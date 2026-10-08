@@ -64,7 +64,7 @@ def create_wix_webhook(
         "slug": slug,
         "entityId": entity_id,
         "eventTime": "2026-07-22T10:00:00.000Z",
-        "createdEvent": {"entity": {"_id": entity_id, "number": "10001"}},
+        "createdEvent": {"entity": {"id": entity_id, "number": "10001"}},
     }
     envelope = {
         "instanceId": instance_id,

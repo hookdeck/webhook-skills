@@ -49,7 +49,7 @@ JWT payload (outer)
 Every verified webhook always includes:
 
 - **`instanceId`** — identifies the site (app instance) where the event occurred.
-- **`eventType`** — a description of the event, e.g. `wix.ecom.v1.order_canceled`.
+- **`eventType`** — a description of the event, e.g. `wix.ecom.v1.order_canceled`. It sits on the **middle** envelope only. The inner payload has no `eventType`; it names the same event as `entityFqdn` + `slug` (`wix.ecom.v1.order` + `canceled`), which is the form Wix's reference pages and example payloads use. Verified against the live `wix.ecom.v1` order reference pages, 2026-10-08.
 
 The rest of the data depends on the event.
 

@@ -30,7 +30,7 @@ function createWixWebhook({ eventType, instanceId = 'inst-1', eventId, entityId 
     slug,
     entityId,
     eventTime: new Date(now * 1000).toISOString(),
-    createdEvent: { entity: { _id: entityId, number: '10001' } },
+    createdEvent: { entity: { id: entityId, number: '10001' } },
   };
   const envelope = { instanceId, eventType, data: JSON.stringify(innerPayload) };
   const jwtPayload = { data: JSON.stringify(envelope), iat: now, exp: now + 300 };
