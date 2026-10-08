@@ -7,10 +7,10 @@
 
 ## Create the Endpoint
 
-1. In the [Knock dashboard](https://dashboard.knock.app/), open **Developers → Webhooks**.
-2. Click **Create endpoint** (or **Add endpoint**).
+1. In the [Knock dashboard](https://dashboard.knock.app/), switch to the **environment** the webhook should belong to (e.g. Development or Production). A webhook is created in the environment you're currently in and only fires for that environment; to use it elsewhere, create it again there.
+2. Open **Webhooks** in the sidebar under **Platform**, then click **Create webhook**.
 3. Enter your endpoint URL — for production, this is your service URL (e.g. `https://api.example.com/webhooks/knock`). For local development, paste the Hookdeck CLI URL.
-4. Select the **environment** (e.g. Development, Staging, Production). Webhooks are scoped per environment.
+4. Optionally add a description.
 5. Subscribe to the event types you want to receive. Common starter sets:
    - **Delivery monitoring:** `message.sent`, `message.delivered`, `message.undelivered`, `message.bounced`
    - **Engagement analytics:** `message.seen`, `message.read`, `message.link_clicked`, `message.interacted`
@@ -44,6 +44,7 @@ Knock has separate environments (Development / Staging / Production). Best pract
 
 ## Retries and Delivery Guarantees
 
-- Knock retries up to **8 times** on any non-2xx response.
-- Delivery is **at-least-once** — design your handler to be idempotent on the top-level event `id`.
-- Retry backoff is exponential; see [Knock's outbound webhooks documentation](https://docs.knock.app/developer-tools/outbound-webhooks/overview) for current schedule.
+- Knock retries non-2xx responses **a handful of times over a few hours**. The exact number of attempts and the intervals are not fixed and can change; see [Knock's outbound webhooks documentation](https://docs.knock.app/developer-tools/outbound-webhooks/overview).
+- Knock **never retries** `301`, `302`, `303`, `400`, `401`, `402`, `403`, `404`, or `405`. Return a `5xx` for transient failures you want retried.
+- On a `429` with a well-formed `Retry-After` header, Knock does its best to respect that header.
+- Delivery is **at-least-once**. The payload has no event-level `id`, so make your handler idempotent on a key built from `type`, the entity in `data` (`data.id` for message events), and `created_at`.

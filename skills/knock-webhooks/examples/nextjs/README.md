@@ -5,7 +5,7 @@ Minimal example of receiving Knock outbound webhooks with `x-knock-signature` ve
 ## Prerequisites
 
 - Node.js 18+
-- A Knock webhook endpoint with its per-endpoint signing secret (Developers → Webhooks → endpoint detail)
+- A Knock webhook endpoint with its per-endpoint signing secret (Platform → Webhooks → webhook detail page)
 
 ## Setup
 

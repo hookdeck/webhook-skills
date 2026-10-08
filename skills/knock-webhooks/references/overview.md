@@ -12,9 +12,9 @@ Webhook endpoints are public URLs. Knock signs every request with HMAC-SHA256 an
 
 ## Event Taxonomy
 
-Knock publishes 23 event types across 6 categories.
+Knock publishes 27 event types across 7 categories.
 
-### Message lifecycle (13 events)
+### Message lifecycle (14 events)
 
 These fire as a notification moves through delivery and recipient interaction:
 
@@ -22,9 +22,10 @@ These fire as a notification moves through delivery and recipient interaction:
 |-------|----------------|------------------|
 | `message.sent` | Knock sent the message to a downstream channel | Audit log, send analytics |
 | `message.delivered` | Channel confirmed delivery to the recipient | Mark as delivered in your DB |
-| `message.delivery_attempted` | A delivery attempt was made (success or failure) | Track per-attempt diagnostics |
-| `message.undelivered` | Channel failed to deliver after retries | Surface failure to operators |
+| `message.delivery_attempted` | A delivery attempt failed and may be retried (`event_data` has `attempt`, `max_attempts`, `retryable`) | Track per-attempt diagnostics |
+| `message.undelivered` | Delivery failed permanently and will not be retried (`event_data.failure_reason` is `fatal_error` or `retries_exhausted`) | Surface failure to operators |
 | `message.bounced` | Recipient address bounced (typically email) | Suppress further sends to address |
+| `message.complaint` | Recipient reported a delivered email as spam (select email providers only) | Suppress further sends to address |
 | `message.seen` | Recipient saw the message in feed/inbox | Engagement analytics |
 | `message.unseen` | "Seen" state was reverted | Mirror UI state changes |
 | `message.read` | Recipient marked as read | Conversation/threading state |
@@ -33,6 +34,14 @@ These fire as a notification moves through delivery and recipient interaction:
 | `message.unarchived` | "Archived" state was reverted | Sync archived state |
 | `message.interacted` | Recipient interacted with the message | Track CTAs, custom actions |
 | `message.link_clicked` | Recipient clicked a tracked link | Click-through analytics |
+
+### Workflow recipient run events (3)
+
+| Event | Triggered When |
+|-------|----------------|
+| `workflow_recipient_run.started` | A workflow run for a single recipient began execution |
+| `workflow_recipient_run.completed` | A workflow run for a single recipient completed |
+| `workflow_recipient_run.error` | An error occurred during a workflow run for a single recipient |
 
 ### Workflow events (2)
 
@@ -71,35 +80,32 @@ These fire as a notification moves through delivery and recipient interaction:
 
 ## Event Payload Structure
 
-All Knock webhook events share this shape:
+All Knock webhook events share this base shape (from Knock's documented sample payload):
 
 ```json
 {
-  "id": "01H...",
-  "type": "message.delivered",
-  "created_at": "2026-05-14T12:34:56.789Z",
+  "__typename": "Event",
+  "type": "message.undelivered",
+  "created_at": "2026-01-31T17:12:59.958652Z",
   "data": {
-    "id": "msg_2fG...",
-    "channel_id": "...",
-    "recipient": { "id": "user_123" },
-    "workflow": "comment-created",
-    "status": "delivered"
-    // ...full Message object for message.* events
+    // The entity the event references, e.g. the full Message object for message.* events
   },
   "event_data": {
-    // event-specific metadata; null when not applicable
-    // examples: failure reason for undelivered, URL for link_clicked,
-    // commit id for workflow.committed
+    "__typename": "EventData",
+    "failure_reason": "fatal_error",
+    "failure_details": "The message could not be delivered to the provider."
   }
 }
 ```
 
-The shape of `data` depends on the event category — message events contain a Message object, workflow events contain a Workflow object, and so on.
+The shape of `data` depends on the event category — message events contain a Message object, workflow recipient run events a WorkflowRecipientRun, workflow events a Workflow, and so on. `event_data` is `null` for event types that carry no extra context.
+
+There is **no event-level `id`** in the envelope. Each request also carries an `x-knock-event` header (the same value as `type`) and an `x-knock-environment-id` header (the environment the webhook belongs to).
 
 ## Delivery Semantics
 
-- **At-least-once:** Knock may deliver the same event more than once. Use the top-level `id` field as your idempotency key.
-- **Retries:** Up to 8 retry attempts on any non-2xx response. Return `200` (or any 2xx) as soon as the signature is verified and the event is durably enqueued — do downstream work asynchronously.
+- **At-least-once:** Knock may deliver the same event more than once. The payload has no event-level `id`, so build an idempotency key from `type`, the entity in `data` (`data.id` for message events), and `created_at`.
+- **Retries:** Knock retries non-2xx responses "a handful of times" over a few hours; the exact count and intervals are not fixed. It **never** retries `301`, `302`, `303`, `400`, `401`, `402`, `403`, `404`, or `405`, and on a `429` it tries to respect a well-formed `Retry-After` header. Return `200` (or any 2xx) as soon as the signature is verified and the event is durably enqueued — do downstream work asynchronously, since a timeout also triggers a retry.
 - **Ordering:** Not guaranteed. Use `created_at` if you need to reconcile state.
 
 ## Full Event Reference

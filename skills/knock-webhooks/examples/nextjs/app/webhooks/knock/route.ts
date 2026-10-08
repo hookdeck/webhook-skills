@@ -65,7 +65,7 @@ export function verifyKnockSignature(
 }
 
 interface KnockEvent {
-  id: string;
+  __typename?: string;
   type: string;
   created_at?: string;
   data?: Record<string, unknown>;
@@ -102,8 +102,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Knock delivers at-least-once and retries up to 8 times — use event.id
-  // as the idempotency key in real handlers.
+  // Knock delivers at-least-once and retries non-2xx responses. The payload has
+  // no event-level id, so in real handlers build an idempotency key from
+  // type + data.id (or data.key) + created_at.
   switch (event.type) {
     case 'message.sent':
       console.log('Message sent:', event.data?.id);
@@ -119,6 +120,9 @@ export async function POST(request: NextRequest) {
       break;
     case 'message.bounced':
       console.log('Message bounced:', event.data?.id);
+      break;
+    case 'message.complaint':
+      console.log('Message complaint:', event.data?.id);
       break;
     case 'message.seen':
       console.log('Message seen:', event.data?.id);
@@ -143,6 +147,14 @@ export async function POST(request: NextRequest) {
       break;
     case 'message.link_clicked':
       console.log('Link clicked:', event.data?.id, event.event_data?.url);
+      break;
+    case 'workflow_recipient_run.started':
+    case 'workflow_recipient_run.completed':
+    case 'workflow_recipient_run.error':
+      console.log(
+        `Workflow recipient run ${event.type.split('.')[1]}:`,
+        event.data?.id
+      );
       break;
     case 'workflow.updated':
     case 'workflow.committed':

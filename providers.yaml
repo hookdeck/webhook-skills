@@ -2395,12 +2395,14 @@ providers:
       JavaScript example uses crypto.createHmac directly. Manual HMAC-SHA256
       verification is the canonical path; do not pull in a third-party library.
 
-      Event taxonomy (23 events across 6 categories):
-      - Message lifecycle (13): message.sent, message.delivered,
+      Event taxonomy (27 events across 7 categories):
+      - Message lifecycle (14): message.sent, message.delivered,
         message.delivery_attempted, message.undelivered, message.bounced,
-        message.seen, message.unseen, message.read, message.unread,
+        message.complaint, message.seen, message.unseen, message.read, message.unread,
         message.archived, message.unarchived, message.interacted,
         message.link_clicked
+      - Workflow recipient run (3): workflow_recipient_run.started,
+        workflow_recipient_run.completed, workflow_recipient_run.error
       - Workflow (2): workflow.updated, workflow.committed
       - Email layout (2): email_layout.updated, email_layout.committed
       - Translation (2): translation.updated, translation.committed
@@ -2408,10 +2410,16 @@ providers:
         source_event_action.committed
       - Partial (2): partial.updated, partial.committed
 
-      Payload includes top-level `data` (typed by event — for message events
-      this is a Message object) plus optional `event_data` with additional
-      metadata. Retries: up to 8 attempts on any non-2xx response. At-least-once
-      delivery — recommend idempotency keyed on the event `id` field.
+      Payload base shape is `{ __typename: "Event", type, created_at, data,
+      event_data }` — there is NO top-level event `id`. `data` is typed by event
+      (a Message object for message events); `event_data` is null when the event
+      carries no extra context. Headers also include `x-knock-event` (mirrors
+      `type`) and `x-knock-environment-id`. Retries: "a handful of times" over a
+      few hours on non-2xx (count/intervals not fixed); never retries 301-303 or
+      400-405; respects Retry-After on 429. At-least-once delivery — recommend an
+      idempotency key built from type + data.id (or data.key) + created_at.
+      Dashboard: Platform > Webhooks > Create webhook; webhooks are created in
+      the current environment only.
     testScenario:
       events:
         - message.sent

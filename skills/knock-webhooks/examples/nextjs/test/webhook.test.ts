@@ -42,7 +42,7 @@ function buildRequest(payload: string, header: string | null): NextRequest {
 
 describe('verifyKnockSignature', () => {
   it('accepts a valid signature', () => {
-    const payload = JSON.stringify({ id: 'evt_1', type: 'message.sent' });
+    const payload = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_1' } });
     const header = generateKnockSignature(payload, SECRET);
     expect(verifyKnockSignature(payload, header, SECRET)).toEqual({ valid: true });
   });
@@ -62,7 +62,7 @@ describe('verifyKnockSignature', () => {
   });
 
   it('rejects an expired timestamp', () => {
-    const payload = JSON.stringify({ id: 'evt_1', type: 'message.sent' });
+    const payload = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_1' } });
     const oldTs = Date.now() - 10 * 60 * 1000;
     const header = generateKnockSignature(payload, SECRET, oldTs);
     expect(verifyKnockSignature(payload, header, SECRET)).toMatchObject({
@@ -72,9 +72,9 @@ describe('verifyKnockSignature', () => {
   });
 
   it('rejects a tampered payload', () => {
-    const original = JSON.stringify({ id: 'evt_1', type: 'message.sent' });
+    const original = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_1' } });
     const header = generateKnockSignature(original, SECRET);
-    const tampered = JSON.stringify({ id: 'evt_2', type: 'message.sent' });
+    const tampered = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_2' } });
     expect(verifyKnockSignature(tampered, header, SECRET)).toMatchObject({
       valid: false,
       error: 'Invalid signature',
@@ -82,7 +82,7 @@ describe('verifyKnockSignature', () => {
   });
 
   it('rejects a Stripe-style seconds-based signature (regression: ms vs s)', () => {
-    const payload = JSON.stringify({ id: 'evt_1', type: 'message.sent' });
+    const payload = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_1' } });
     const tsSeconds = Math.floor(Date.now() / 1000).toString();
     const sig = crypto
       .createHmac('sha256', SECRET)
@@ -106,16 +106,16 @@ describe('POST /webhooks/knock', () => {
   });
 
   it('returns 400 for a tampered payload', async () => {
-    const original = JSON.stringify({ id: 'evt_1', type: 'message.sent' });
+    const original = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_1' } });
     const header = generateKnockSignature(original, SECRET);
-    const tampered = JSON.stringify({ id: 'evt_x', type: 'message.sent' });
+    const tampered = JSON.stringify({ __typename: 'Event', type: 'message.sent', data: { id: 'msg_x' } });
     const res = await POST(buildRequest(tampered, header));
     expect(res.status).toBe(400);
   });
 
   it('returns 200 for a valid signature', async () => {
     const payload = JSON.stringify({
-      id: 'evt_valid',
+      __typename: 'Event',
       type: 'message.delivered',
       data: { id: 'msg_valid' },
     });
@@ -133,6 +133,7 @@ describe('POST /webhooks/knock', () => {
       'message.delivery_attempted',
       'message.undelivered',
       'message.bounced',
+      'message.complaint',
       'message.seen',
       'message.unseen',
       'message.read',
@@ -141,6 +142,9 @@ describe('POST /webhooks/knock', () => {
       'message.unarchived',
       'message.interacted',
       'message.link_clicked',
+      'workflow_recipient_run.started',
+      'workflow_recipient_run.completed',
+      'workflow_recipient_run.error',
       'workflow.updated',
       'workflow.committed',
       'email_layout.updated',
@@ -156,7 +160,7 @@ describe('POST /webhooks/knock', () => {
 
     for (const type of eventTypes) {
       const payload = JSON.stringify({
-        id: `evt_${type.replace(/\./g, '_')}`,
+        __typename: 'Event',
         type,
         data: { id: 'res_1', key: 'k', locale_code: 'en' },
         event_data: { url: 'https://example.com' },

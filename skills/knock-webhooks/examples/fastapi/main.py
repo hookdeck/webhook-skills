@@ -83,8 +83,9 @@ async def knock_webhook(request: Request):
     data = event.get("data") or {}
     event_data = event.get("event_data") or {}
 
-    # Knock delivers at-least-once and retries up to 8 times — use event["id"]
-    # as the idempotency key in real handlers.
+    # Knock delivers at-least-once and retries non-2xx responses. The payload has
+    # no event-level id, so in real handlers build an idempotency key from
+    # type + data["id"] (or data["key"]) + created_at.
     if event_type == "message.sent":
         print(f"Message sent: {data.get('id')}")
     elif event_type == "message.delivered":
@@ -95,6 +96,8 @@ async def knock_webhook(request: Request):
         print(f"Message undelivered: {data.get('id')}")
     elif event_type == "message.bounced":
         print(f"Message bounced: {data.get('id')}")
+    elif event_type == "message.complaint":
+        print(f"Message complaint: {data.get('id')}")
     elif event_type == "message.seen":
         print(f"Message seen: {data.get('id')}")
     elif event_type == "message.unseen":
@@ -111,6 +114,12 @@ async def knock_webhook(request: Request):
         print(f"Message interacted: {data.get('id')}")
     elif event_type == "message.link_clicked":
         print(f"Link clicked: {data.get('id')} -> {event_data.get('url')}")
+    elif event_type in (
+        "workflow_recipient_run.started",
+        "workflow_recipient_run.completed",
+        "workflow_recipient_run.error",
+    ):
+        print(f"Workflow recipient run {event_type.split('.')[1]}: {data.get('id')}")
     elif event_type in ("workflow.updated", "workflow.committed"):
         print(f"Workflow {event_type.split('.')[1]}: {data.get('key')}")
     elif event_type in ("email_layout.updated", "email_layout.committed"):

@@ -59,7 +59,7 @@ class TestKnockWebhook:
         assert "Malformed" in response.json()["detail"]
 
     def test_invalid_signature_returns_400(self):
-        payload = json.dumps({"id": "evt_1", "type": "message.sent"})
+        payload = json.dumps({"__typename": "Event", "type": "message.sent", "data": {"id": "msg_1"}})
         ts = str(int(time.time() * 1000))
         response = client.post(
             "/webhooks/knock",
@@ -73,9 +73,9 @@ class TestKnockWebhook:
         assert "Invalid signature" in response.json()["detail"]
 
     def test_tampered_payload_returns_400(self):
-        original = json.dumps({"id": "evt_orig", "type": "message.sent"})
+        original = json.dumps({"__typename": "Event", "type": "message.sent", "data": {"id": "msg_orig"}})
         header = generate_knock_signature(original, SECRET)
-        tampered = json.dumps({"id": "evt_orig", "type": "message.read"})
+        tampered = json.dumps({"__typename": "Event", "type": "message.read", "data": {"id": "msg_orig"}})
 
         response = client.post(
             "/webhooks/knock",
@@ -89,7 +89,7 @@ class TestKnockWebhook:
         assert "Invalid signature" in response.json()["detail"]
 
     def test_expired_timestamp_returns_400(self):
-        payload = json.dumps({"id": "evt_old", "type": "message.sent"})
+        payload = json.dumps({"__typename": "Event", "type": "message.sent", "data": {"id": "msg_old"}})
         # 10 minutes ago, in milliseconds
         old_ts = int(time.time() * 1000) - 10 * 60 * 1000
         header = generate_knock_signature(payload, SECRET, old_ts)
@@ -107,7 +107,7 @@ class TestKnockWebhook:
 
     def test_stripe_seconds_signature_rejected(self):
         """Regression: a Stripe-style seconds-based signature must NOT validate."""
-        payload = json.dumps({"id": "evt_seconds", "type": "message.sent"})
+        payload = json.dumps({"__typename": "Event", "type": "message.sent", "data": {"id": "msg_seconds"}})
         ts_seconds = str(int(time.time()))
         signature = base64.b64encode(
             hmac.new(
@@ -133,7 +133,7 @@ class TestKnockWebhook:
     def test_valid_signature_returns_200(self):
         payload = json.dumps(
             {
-                "id": "evt_valid",
+                "__typename": "Event",
                 "type": "message.delivered",
                 "data": {"id": "msg_valid"},
             }
@@ -158,6 +158,7 @@ class TestKnockWebhook:
             "message.delivery_attempted",
             "message.undelivered",
             "message.bounced",
+            "message.complaint",
             "message.seen",
             "message.unseen",
             "message.read",
@@ -166,6 +167,9 @@ class TestKnockWebhook:
             "message.unarchived",
             "message.interacted",
             "message.link_clicked",
+            "workflow_recipient_run.started",
+            "workflow_recipient_run.completed",
+            "workflow_recipient_run.error",
             "workflow.updated",
             "workflow.committed",
             "email_layout.updated",
@@ -182,7 +186,7 @@ class TestKnockWebhook:
         for event_type in event_types:
             payload = json.dumps(
                 {
-                    "id": f"evt_{event_type.replace('.', '_')}",
+                    "__typename": "Event",
                     "type": event_type,
                     "data": {
                         "id": "res_1",

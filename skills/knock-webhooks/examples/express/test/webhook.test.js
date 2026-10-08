@@ -49,7 +49,7 @@ describe('Knock webhook endpoint', () => {
 
     it('returns 400 for an invalid signature', async () => {
       const payload = JSON.stringify({
-        id: 'evt_invalid',
+        __typename: 'Event',
         type: 'message.sent',
         data: { id: 'msg_1' },
       });
@@ -68,13 +68,13 @@ describe('Knock webhook endpoint', () => {
 
     it('returns 400 for a tampered payload', async () => {
       const original = JSON.stringify({
-        id: 'evt_orig',
+        __typename: 'Event',
         type: 'message.sent',
         data: { id: 'msg_orig' },
       });
       const header = generateKnockSignature(original, secret);
       const tampered = JSON.stringify({
-        id: 'evt_orig',
+        __typename: 'Event',
         type: 'message.sent',
         data: { id: 'msg_TAMPERED' },
       });
@@ -91,7 +91,7 @@ describe('Knock webhook endpoint', () => {
 
     it('returns 400 for an expired timestamp', async () => {
       const payload = JSON.stringify({
-        id: 'evt_old',
+        __typename: 'Event',
         type: 'message.sent',
         data: { id: 'msg_old' },
       });
@@ -112,7 +112,7 @@ describe('Knock webhook endpoint', () => {
     it('rejects a Stripe-style seconds-based signature (regression: ms vs s)', async () => {
       // Same algorithm but timestamp in SECONDS — would pass on Stripe, must fail on Knock.
       const payload = JSON.stringify({
-        id: 'evt_seconds',
+        __typename: 'Event',
         type: 'message.sent',
         data: { id: 'msg_seconds' },
       });
@@ -136,7 +136,7 @@ describe('Knock webhook endpoint', () => {
 
     it('returns 200 for a valid signature', async () => {
       const payload = JSON.stringify({
-        id: 'evt_valid',
+        __typename: 'Event',
         type: 'message.delivered',
         created_at: new Date().toISOString(),
         data: { id: 'msg_valid' },
@@ -160,6 +160,7 @@ describe('Knock webhook endpoint', () => {
         'message.delivery_attempted',
         'message.undelivered',
         'message.bounced',
+        'message.complaint',
         'message.seen',
         'message.unseen',
         'message.read',
@@ -168,6 +169,9 @@ describe('Knock webhook endpoint', () => {
         'message.unarchived',
         'message.interacted',
         'message.link_clicked',
+        'workflow_recipient_run.started',
+        'workflow_recipient_run.completed',
+        'workflow_recipient_run.error',
         'workflow.updated',
         'workflow.committed',
         'email_layout.updated',
@@ -183,7 +187,7 @@ describe('Knock webhook endpoint', () => {
 
       for (const type of eventTypes) {
         const payload = JSON.stringify({
-          id: `evt_${type.replace(/\./g, '_')}`,
+          __typename: 'Event',
           type,
           data: { id: 'res_1', key: 'k', locale_code: 'en' },
           event_data: { url: 'https://example.com' },
