@@ -13,7 +13,7 @@
 3. Create or select an API key
 4. Note both:
    - **API Key**: Used for authentication when making requests
-   - **API Key ID**: Shown in console, used to verify `dg-token` header
+   - **API Key ID**: Shown in console, optionally used to check the `dg-token` header when it is present
 
 ## Configure Your Webhook Endpoint
 
@@ -45,9 +45,9 @@ curl -X POST \
   "https://api.deepgram.com/v1/listen?callback=https://your-domain.com/webhooks/deepgram&punctuate=true&diarize=true"
 ```
 
-### 3. Using Basic Auth (Optional)
+### 3. Using Basic Auth (Recommended)
 
-For additional security, embed credentials in your callback URL:
+Embed credentials in your callback URL. Deepgram sends them as an `Authorization: Basic` header, and this is the check your handler should rely on (the `dg-token` header is not sent on every callback). Percent-encode any special characters in the username or password:
 
 ```bash
 # Format: https://username:password@domain/path
@@ -92,22 +92,17 @@ You should receive:
 
 ## Adding Metadata
 
-Include custom metadata that will be returned in the webhook:
+Attach your own key-value pairs with the `extra` query parameter (repeat it for multiple pairs; 2048 characters per pair). They are returned in `metadata.extra` of the callback body:
 
 ```bash
 curl -X POST \
   --header "Authorization: Token YOUR_API_KEY" \
   --header "Content-Type: audio/wav" \
   --data-binary @audio.wav \
-  "https://api.deepgram.com/v1/listen?callback=https://your-domain.com/webhooks/deepgram" \
-  --data '{
-    "metadata": {
-      "user_id": "123",
-      "session_id": "abc-def",
-      "custom_field": "value"
-    }
-  }'
+  "https://api.deepgram.com/v1/listen?callback=https://your-domain.com/webhooks/deepgram&extra=user_id:123&extra=session_id:abc-def"
 ```
+
+The callback then contains `"metadata": { "extra": { "user_id": "123", "session_id": "abc-def" }, ... }`.
 
 ## Webhook Method Configuration
 
@@ -121,21 +116,23 @@ curl -X POST \
   "https://api.deepgram.com/v1/listen?callback=https://your-domain.com/webhooks/deepgram&callback_method=put"
 ```
 
+If you do this, register a `PUT` route for your webhook path; the examples in this skill only handle `POST`.
+
 ## Monitoring and Debugging
 
-### Check Request Status
+### Look Up a Request
 
-Use the request_id to check transcription status:
+There is no `GET /v1/listen/{request_id}` endpoint. To inspect a past request (including its `callback` URL and response code), use the Management API's [Get a Project Request](https://developers.deepgram.com/reference/manage/requests/get) endpoint:
 
 ```bash
 curl -X GET \
   --header "Authorization: Token YOUR_API_KEY" \
-  "https://api.deepgram.com/v1/listen/YOUR_REQUEST_ID"
+  "https://api.deepgram.com/v1/projects/YOUR_PROJECT_ID/requests/YOUR_REQUEST_ID"
 ```
 
 ### Common Issues
 
 1. **Webhook not received**: Check port restrictions (must be 80, 443, 8080, or 8443)
-2. **Authentication failures**: Verify your API Key ID matches the `dg-token` header
+2. **Authentication failures**: Verify the Basic Auth credentials in your callback URL match your handler's configuration (percent-encode special characters). Don't require `dg-token`: it is not sent on every callback
 3. **Repeated webhooks**: Ensure you return 200-299 status; Deepgram retries on errors
 4. **Timeout errors**: Deepgram waits for response; process asynchronously if needed

@@ -1,30 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 
-// Verify Deepgram webhook authentication
-function verifyDeepgramWebhook(request: NextRequest): boolean {
-  const dgToken = request.headers.get('dg-token');
-  const expectedToken = process.env.DEEPGRAM_API_KEY_ID;
+// Timing-safe string comparison (length-checked first, since
+// crypto.timingSafeEqual throws on buffers of different length)
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
 
-  if (!dgToken || !expectedToken) {
-    return false;
-  }
-
-  return dgToken === expectedToken;
+// Primary check: Basic Auth credentials embedded in the callback URL
+// (https://user:pass@your-domain.com/webhooks/deepgram), which Deepgram
+// sends as an Authorization: Basic header
+function verifyBasicAuth(authHeader: string | null): boolean {
+  const username = process.env.DEEPGRAM_CALLBACK_USERNAME;
+  const password = process.env.DEEPGRAM_CALLBACK_PASSWORD;
+  if (!username || !password) return false; // fail closed if unconfigured
+  if (!authHeader || !authHeader.startsWith('Basic ')) return false;
+  const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+  const sep = decoded.indexOf(':'); // password may itself contain ':'
+  if (sep === -1) return false;
+  return safeEqual(decoded.slice(0, sep), username) && safeEqual(decoded.slice(sep + 1), password);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook authentication
-    if (!verifyDeepgramWebhook(request)) {
-      const dgToken = request.headers.get('dg-token');
+    if (!verifyBasicAuth(request.headers.get('authorization'))) {
+      return NextResponse.json(
+        { error: 'Invalid Basic Auth credentials' },
+        { status: 401 }
+      );
+    }
 
-      if (!dgToken) {
-        return NextResponse.json(
-          { error: 'Missing dg-token header' },
-          { status: 401 }
-        );
-      }
-
+    // Supplementary check: Deepgram does not send dg-token on every callback,
+    // so compare it only when it is present (and an API Key ID is configured)
+    const dgToken = request.headers.get('dg-token');
+    const expectedKeyId = process.env.DEEPGRAM_API_KEY_ID;
+    if (dgToken && expectedKeyId && !safeEqual(dgToken, expectedKeyId)) {
       return NextResponse.json(
         { error: 'Invalid dg-token' },
         { status: 403 }
@@ -45,10 +57,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract key information from the transcription
-    const requestId = payload.request_id;
-    const created = payload.created;
-    const duration = payload.duration;
+    // The callback body is the /v1/listen response: { metadata, results }
+    const requestId = payload.metadata?.request_id;
+    const created = payload.metadata?.created;
+    const duration = payload.metadata?.duration;
+    const extra = payload.metadata?.extra; // values passed with extra=KEY:VALUE
 
     // Get the transcript from the first channel and alternative
     const transcript = payload.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
@@ -58,6 +71,7 @@ export async function POST(request: NextRequest) {
       requestId,
       created,
       duration,
+      extra,
       transcript: transcript.substring(0, 100) + '...', // Log first 100 chars
       confidence
     });

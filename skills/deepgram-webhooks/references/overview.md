@@ -9,7 +9,7 @@ Deepgram webhooks (called "callbacks" in their documentation) enable asynchronou
 1. **Submit Request**: Send audio to Deepgram API with a `callback` parameter
 2. **Immediate Response**: Receive a `request_id` immediately
 3. **Asynchronous Processing**: Deepgram processes your audio
-4. **Webhook Delivery**: Transcription results are POSTed to your callback URL
+4. **Webhook Delivery**: Transcription results are POSTed to your callback URL (or PUT, with `callback_method=put`)
 
 ## Common Use Cases
 
@@ -23,45 +23,47 @@ Deepgram webhooks (called "callbacks" in their documentation) enable asynchronou
 
 ## Webhook Payload Structure
 
-The webhook payload contains the complete transcription response:
+The callback body is the same response a synchronous `/v1/listen` request returns: a `metadata` object and a `results` object. There is no top-level `request_id` and no event-type field; the request ID lives in `metadata.request_id`. This example is the pre-recorded response from Deepgram's [API reference](https://developers.deepgram.com/reference/speech-to-text/listen-pre-recorded) (trimmed to two words):
 
 ```json
 {
-  "request_id": "uuid-string",
-  "created": "2024-01-20T10:30:00.000Z",
-  "duration": 120.5,
-  "channels": 1,
-  "model_info": {
-    "name": "general",
-    "version": "2024-01-09.29447",
-    "arch": "nova-2"
+  "metadata": {
+    "request_id": "a847f427-4ad5-4d67-9b95-db801e58251c",
+    "sha256": "154e291ecfa8be6ab8343560bcc109008fa7853eb5372533e8efdefc9b504c33",
+    "created": "2024-05-12T18:57:13.426Z",
+    "duration": 25.933313,
+    "channels": 1,
+    "models": [
+      "30089e05-99d1-4376-b32e-c263170674af"
+    ],
+    "model_info": {
+      "30089e05-99d1-4376-b32e-c263170674af": {
+        "name": "2-general-nova",
+        "version": "2024-01-09.29447",
+        "arch": "nova-2"
+      }
+    }
   },
   "results": {
     "channels": [
       {
         "alternatives": [
           {
-            "transcript": "Your transcribed text appears here...",
-            "confidence": 0.98765,
+            "transcript": "Yeah, as as much as, it's worth having a talk to the neighbors.",
+            "confidence": 0.9840088,
             "words": [
-              {
-                "word": "Your",
-                "start": 0.0,
-                "end": 0.24,
-                "confidence": 0.99
-              }
-              // ... more word timings if requested
+              { "word": "yeah", "start": 0.08, "end": 0.32, "confidence": 0.9975586 },
+              { "word": "as", "start": 0.32, "end": 0.48, "confidence": 0.9862061 }
             ]
           }
         ]
       }
     ]
-  },
-  "metadata": {
-    // Any metadata you included in the request
   }
 }
 ```
+
+If you pass `extra=KEY:VALUE` on the request, the pairs come back in `metadata.extra` (for example `"extra": { "job_id": "4821" }`).
 
 ## Features Available in Callbacks
 

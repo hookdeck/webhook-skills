@@ -3,95 +3,103 @@ import { POST } from '../app/webhooks/deepgram/route';
 import { NextRequest } from 'next/server';
 
 describe('Deepgram Webhook Handler', () => {
+  const callbackUsername = 'dg_user';
+  const callbackPassword = 'dg:pass-123'; // contains ':' on purpose
   const validApiKeyId = 'test_api_key_id_12345';
+  const basicAuth = (user: string, pass: string) =>
+    'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
+  const validAuth = basicAuth(callbackUsername, callbackPassword);
+
+  // Shape from Deepgram's pre-recorded /v1/listen response example:
+  // https://developers.deepgram.com/reference/speech-to-text/listen-pre-recorded
   const validPayload = {
-    request_id: 'req_123456789',
-    created: '2024-01-20T10:30:00.000Z',
-    duration: 30.5,
-    channels: 1,
-    model_info: {
-      name: 'general',
-      version: '2024-01-09.29447',
-      arch: 'nova-2'
+    metadata: {
+      request_id: 'a847f427-4ad5-4d67-9b95-db801e58251c',
+      sha256: '154e291ecfa8be6ab8343560bcc109008fa7853eb5372533e8efdefc9b504c33',
+      created: '2024-05-12T18:57:13.426Z',
+      duration: 25.933313,
+      channels: 1,
+      models: ['30089e05-99d1-4376-b32e-c263170674af'],
+      model_info: {
+        '30089e05-99d1-4376-b32e-c263170674af': {
+          name: '2-general-nova',
+          version: '2024-01-09.29447',
+          arch: 'nova-2'
+        }
+      }
     },
     results: {
       channels: [
         {
           alternatives: [
             {
-              transcript: 'This is a test transcription from Deepgram.',
-              confidence: 0.98765,
+              transcript: "Yeah, as as much as, it's worth having a talk to the neighbors.",
+              confidence: 0.9840088,
               words: [
                 {
-                  word: 'This',
-                  start: 0.0,
-                  end: 0.24,
-                  confidence: 0.99
+                  word: 'yeah',
+                  start: 0.08,
+                  end: 0.32,
+                  confidence: 0.9975586
                 }
               ]
             }
           ]
         }
       ]
-    },
-    metadata: {
-      transaction_key: 'test_transaction',
-      request_time: 1.234,
-      created_time: '2024-01-20T10:30:00.000Z'
     }
   };
 
-  // Mock environment variable
+  const makeRequest = (body: unknown, headers: Record<string, string> = {}) =>
+    new NextRequest('http://localhost/webhooks/deepgram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: typeof body === 'string' ? body : JSON.stringify(body)
+    });
+
+  // Mock environment variables
   beforeAll(() => {
+    vi.stubEnv('DEEPGRAM_CALLBACK_USERNAME', callbackUsername);
+    vi.stubEnv('DEEPGRAM_CALLBACK_PASSWORD', callbackPassword);
     vi.stubEnv('DEEPGRAM_API_KEY_ID', validApiKeyId);
   });
 
   describe('POST /webhooks/deepgram', () => {
-    it('should accept valid webhook with correct dg-token', async () => {
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(validPayload)
-      });
-
-      const response = await POST(request);
+    it('should accept valid Basic Auth without a dg-token header', async () => {
+      const response = await POST(makeRequest(validPayload, { Authorization: validAuth }));
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('status', 'success');
-      expect(data).toHaveProperty('requestId', 'req_123456789');
+      expect(data).toHaveProperty('requestId', 'a847f427-4ad5-4d67-9b95-db801e58251c');
     });
 
-    it('should reject webhook with missing dg-token', async () => {
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(validPayload)
-      });
+    it('should accept valid Basic Auth with a matching dg-token', async () => {
+      const response = await POST(
+        makeRequest(validPayload, { Authorization: validAuth, 'dg-token': validApiKeyId })
+      );
+      expect(response.status).toBe(200);
+    });
 
-      const response = await POST(request);
+    it('should reject webhook with missing Authorization header', async () => {
+      const response = await POST(makeRequest(validPayload, { 'dg-token': validApiKeyId }));
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data).toHaveProperty('error', 'Missing dg-token header');
+      expect(data).toHaveProperty('error', 'Invalid Basic Auth credentials');
     });
 
-    it('should reject webhook with invalid dg-token', async () => {
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': 'invalid_token',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(validPayload)
-      });
+    it('should reject webhook with wrong Basic Auth password', async () => {
+      const response = await POST(
+        makeRequest(validPayload, { Authorization: basicAuth(callbackUsername, 'wrong') })
+      );
+      expect(response.status).toBe(401);
+    });
 
-      const response = await POST(request);
+    it('should reject webhook with a mismatched dg-token', async () => {
+      const response = await POST(
+        makeRequest(validPayload, { Authorization: validAuth, 'dg-token': 'invalid_token' })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -100,34 +108,18 @@ describe('Deepgram Webhook Handler', () => {
 
     it('should handle webhook with minimal payload', async () => {
       const minimalPayload = {
-        request_id: 'req_minimal',
-        created: '2024-01-20T10:30:00.000Z',
-        duration: 10.0,
-        channels: 1,
+        metadata: {
+          request_id: 'req_minimal',
+          created: '2024-01-20T10:30:00.000Z',
+          duration: 10.0,
+          channels: 1
+        },
         results: {
-          channels: [
-            {
-              alternatives: [
-                {
-                  transcript: 'Short test.',
-                  confidence: 0.95
-                }
-              ]
-            }
-          ]
+          channels: [{ alternatives: [{ transcript: 'Short test.', confidence: 0.95 }] }]
         }
       };
 
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(minimalPayload)
-      });
-
-      const response = await POST(request);
+      const response = await POST(makeRequest(minimalPayload, { Authorization: validAuth }));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -138,44 +130,15 @@ describe('Deepgram Webhook Handler', () => {
     it('should handle webhook with empty transcript', async () => {
       const emptyTranscriptPayload = {
         ...validPayload,
-        results: {
-          channels: [
-            {
-              alternatives: [
-                {
-                  transcript: '',
-                  confidence: 0.0
-                }
-              ]
-            }
-          ]
-        }
+        results: { channels: [{ alternatives: [{ transcript: '', confidence: 0.0 }] }] }
       };
 
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(emptyTranscriptPayload)
-      });
-
-      const response = await POST(request);
+      const response = await POST(makeRequest(emptyTranscriptPayload, { Authorization: validAuth }));
       expect(response.status).toBe(200);
     });
 
     it('should reject invalid JSON payload', async () => {
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: 'invalid json'
-      });
-
-      const response = await POST(request);
+      const response = await POST(makeRequest('invalid json', { Authorization: validAuth }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -185,62 +148,29 @@ describe('Deepgram Webhook Handler', () => {
     it('should handle multi-channel transcription', async () => {
       const multiChannelPayload = {
         ...validPayload,
-        channels: 2,
+        metadata: { ...validPayload.metadata, channels: 2 },
         results: {
           channels: [
-            {
-              alternatives: [
-                {
-                  transcript: 'Channel 1 transcription.',
-                  confidence: 0.98
-                }
-              ]
-            },
-            {
-              alternatives: [
-                {
-                  transcript: 'Channel 2 transcription.',
-                  confidence: 0.97
-                }
-              ]
-            }
+            { alternatives: [{ transcript: 'Channel 1 transcription.', confidence: 0.98 }] },
+            { alternatives: [{ transcript: 'Channel 2 transcription.', confidence: 0.97 }] }
           ]
         }
       };
 
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(multiChannelPayload)
-      });
-
-      const response = await POST(request);
+      const response = await POST(makeRequest(multiChannelPayload, { Authorization: validAuth }));
       expect(response.status).toBe(200);
     });
 
-    it('should handle webhook with custom metadata', async () => {
-      const metadataPayload = {
+    it('should handle webhook with extra metadata', async () => {
+      const extraPayload = {
         ...validPayload,
         metadata: {
-          user_id: '12345',
-          session_id: 'session-abc',
-          custom_field: 'custom_value'
+          ...validPayload.metadata,
+          extra: { user_id: '12345', session_id: 'session-abc' }
         }
       };
 
-      const request = new NextRequest('http://localhost/webhooks/deepgram', {
-        method: 'POST',
-        headers: {
-          'dg-token': validApiKeyId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(metadataPayload)
-      });
-
-      const response = await POST(request);
+      const response = await POST(makeRequest(extraPayload, { Authorization: validAuth }));
       expect(response.status).toBe(200);
     });
   });

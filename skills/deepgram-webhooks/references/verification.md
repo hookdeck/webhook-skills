@@ -2,40 +2,54 @@
 
 ## Authentication Methods
 
-Deepgram provides two methods to authenticate webhook callbacks:
+Deepgram does not sign callbacks. Its [callback docs](https://developers.deepgram.com/docs/callback) describe two ways to authenticate them:
 
-### 1. dg-token Header (Recommended)
+### 1. Basic Authentication (Recommended)
 
-Every webhook request from Deepgram includes a `dg-token` header containing the API Key Identifier that was used to make the original transcription request.
+Embed credentials directly in your callback URL. Deepgram sends them to your endpoint as a standard `Authorization: Basic` header, so your handler can check them on every callback.
 
 ```javascript
-// Verify dg-token header
-function verifyDeepgramWebhook(req) {
-  const dgToken = req.headers['dg-token'];
+// When making the request (percent-encode special characters in the credentials)
+const callbackUrl = `https://username:password@your-domain.com/webhooks/deepgram`;
+```
 
-  if (!dgToken) {
-    throw new Error('Missing dg-token header');
-  }
+```javascript
+const crypto = require('crypto');
 
-  // Compare with your stored API Key ID
-  if (dgToken !== process.env.DEEPGRAM_API_KEY_ID) {
-    throw new Error('Invalid dg-token');
-  }
+function safeEqual(a, b) {
+  const ab = Buffer.from(a || '', 'utf8');
+  const bb = Buffer.from(b || '', 'utf8');
+  return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
+}
 
-  return true;
+// Verify the Authorization: Basic header
+function verifyBasicAuth(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Basic ')) return false;
+  const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+  const sep = decoded.indexOf(':'); // password may itself contain ':'
+  if (sep === -1) return false;
+  return (
+    safeEqual(decoded.slice(0, sep), process.env.DEEPGRAM_CALLBACK_USERNAME) &&
+    safeEqual(decoded.slice(sep + 1), process.env.DEEPGRAM_CALLBACK_PASSWORD)
+  );
 }
 ```
 
-### 2. Basic Authentication
+### 2. dg-token Header (Supplementary)
 
-Embed credentials directly in your callback URL:
+The callback request may include a `dg-token` header. When present, it is set to the API Key Identifier of the API key used to submit the original request. Deepgram's docs say:
+
+> The `dg-token` header is not guaranteed on every callback request, so this method is less reliable than Basic Auth or Extra Metadata. Use `dg-token` as a supplementary check rather than your only means of authentication.
+
+So never reject a callback just because `dg-token` is missing. Compare it only when it is present:
 
 ```javascript
-// When making the request
-const callbackUrl = `https://username:password@your-domain.com/webhooks/deepgram`;
-
-// In your webhook handler (Express example)
-app.use('/webhooks/deepgram', express.basicAuth('username', 'password'));
+function verifyDgTokenIfPresent(dgToken) {
+  if (!dgToken) return true; // not sent on every callback
+  const expected = process.env.DEEPGRAM_API_KEY_ID;
+  if (!expected) return true; // supplementary check not configured
+  return safeEqual(dgToken, expected);
+}
 ```
 
 ## Implementation Examples
@@ -44,19 +58,15 @@ app.use('/webhooks/deepgram', express.basicAuth('username', 'password'));
 
 ```javascript
 const verifyDeepgramWebhook = (req, res, next) => {
-  try {
-    const dgToken = req.headers['dg-token'];
-    const expectedToken = process.env.DEEPGRAM_API_KEY_ID;
-
-    if (!dgToken || dgToken !== expectedToken) {
-      return res.status(403).json({ error: 'Invalid webhook authentication' });
-    }
-
-    next();
-  } catch (error) {
-    console.error('Webhook verification failed:', error);
-    res.status(403).json({ error: 'Webhook verification failed' });
+  if (!verifyBasicAuth(req.headers['authorization'])) {
+    return res.status(401).json({ error: 'Invalid Basic Auth credentials' });
   }
+
+  if (!verifyDgTokenIfPresent(req.headers['dg-token'])) {
+    return res.status(403).json({ error: 'Invalid dg-token' });
+  }
+
+  next();
 };
 
 // Use the middleware
@@ -64,9 +74,9 @@ app.post('/webhooks/deepgram',
   express.raw({ type: 'application/json' }),
   verifyDeepgramWebhook,
   (req, res) => {
-    // Process webhook
+    // Process webhook: the body is { metadata, results }
     const payload = JSON.parse(req.body);
-    console.log('Verified webhook received:', payload.request_id);
+    console.log('Verified webhook received:', payload.metadata?.request_id);
     res.status(200).send('OK');
   }
 );
@@ -76,16 +86,19 @@ app.post('/webhooks/deepgram',
 
 ```typescript
 export async function POST(request: Request) {
-  // Verify dg-token
-  const dgToken = request.headers.get('dg-token');
+  // Primary check: Basic Auth (see verifyBasicAuth above)
+  if (!verifyBasicAuth(request.headers.get('authorization'))) {
+    return new Response('Unauthorized', { status: 401 });
+  }
 
-  if (!dgToken || dgToken !== process.env.DEEPGRAM_API_KEY_ID) {
-    return new Response('Unauthorized', { status: 403 });
+  // Supplementary check: dg-token, only when present
+  if (!verifyDgTokenIfPresent(request.headers.get('dg-token'))) {
+    return new Response('Invalid dg-token', { status: 403 });
   }
 
   // Process webhook
   const payload = await request.json();
-  console.log('Verified webhook received:', payload.request_id);
+  console.log('Verified webhook received:', payload.metadata?.request_id);
 
   return new Response('OK', { status: 200 });
 }
@@ -94,15 +107,41 @@ export async function POST(request: Request) {
 ### FastAPI Dependency
 
 ```python
-from fastapi import Header, HTTPException, Depends
+import base64
+import binascii
 import os
+import secrets
+from typing import Optional
 
-async def verify_deepgram_webhook(dg_token: str = Header(None, alias="dg-token")):
+from fastapi import Header, HTTPException, Depends
+
+
+def _safe_equal(a: str, b: str) -> bool:
+    return secrets.compare_digest(a.encode(), b.encode())
+
+
+async def verify_deepgram_webhook(
+    authorization: Optional[str] = Header(None),
+    dg_token: Optional[str] = Header(None, alias="dg-token"),
+):
     """Verify Deepgram webhook authentication"""
-    expected_token = os.environ.get("DEEPGRAM_API_KEY_ID")
+    username = os.environ.get("DEEPGRAM_CALLBACK_USERNAME", "")
+    password = os.environ.get("DEEPGRAM_CALLBACK_PASSWORD", "")
 
-    if not dg_token or dg_token != expected_token:
-        raise HTTPException(status_code=403, detail="Invalid webhook authentication")
+    if not authorization or not authorization.startswith("Basic "):
+        raise HTTPException(status_code=401, detail="Missing Basic Auth credentials")
+    try:
+        decoded = base64.b64decode(authorization[6:], validate=True).decode()
+    except (binascii.Error, UnicodeDecodeError):
+        raise HTTPException(status_code=401, detail="Invalid Basic Auth credentials")
+    user, sep, pwd = decoded.partition(":")
+    if not sep or not (_safe_equal(user, username) and _safe_equal(pwd, password)):
+        raise HTTPException(status_code=401, detail="Invalid Basic Auth credentials")
+
+    # dg-token is not sent on every callback: check it only when present
+    expected_key_id = os.environ.get("DEEPGRAM_API_KEY_ID")
+    if dg_token and expected_key_id and not _safe_equal(dg_token, expected_key_id):
+        raise HTTPException(status_code=403, detail="Invalid dg-token")
 
     return True
 
@@ -112,7 +151,7 @@ async def handle_deepgram_webhook(
     payload: dict,
     authenticated: bool = Depends(verify_deepgram_webhook)
 ):
-    print(f"Verified webhook received: {payload.get('request_id')}")
+    print(f"Verified webhook received: {payload.get('metadata', {}).get('request_id')}")
     return {"status": "ok"}
 ```
 
@@ -128,37 +167,27 @@ Unlike many webhook providers, Deepgram does **not** use cryptographic signature
 
 ### Best Practices
 
-1. **Always use HTTPS**: Ensures webhook data is encrypted in transit
-2. **Validate the dg-token**: Compare against your known API Key ID
-3. **Store tokens securely**: Keep API Key IDs in environment variables
-4. **Implement idempotency**: Track `request_id` to prevent duplicate processing
-5. **Add rate limiting**: Protect against potential abuse
-6. **Log authentication failures**: Monitor for suspicious activity
+1. **Always use HTTPS**: Ensures webhook data and the Basic Auth credentials are encrypted in transit
+2. **Require Basic Auth**: Reject any callback without matching credentials, using a timing-safe comparison
+3. **Treat dg-token as supplementary**: Check it when present, but don't require it
+4. **Store secrets securely**: Keep the callback credentials and API Key ID in environment variables, and keep callback URLs (which contain the credentials) out of shared logs
+5. **Implement idempotency**: Track `metadata.request_id` to prevent duplicate processing
+6. **Add rate limiting**: Protect against potential abuse
+7. **Log authentication failures**: Monitor for suspicious activity
 
 ### Additional Security Layers
 
-Consider adding your own security measures:
+Because there is no signature, you can also confirm that a callback belongs to work you actually submitted. Store the `request_id` returned when you make the request, and check `metadata.request_id` (or a value you passed with `extra`) against it:
 
 ```javascript
-// Add request timestamp validation
-app.post('/webhooks/deepgram', (req, res) => {
-  const dgToken = req.headers['dg-token'];
-  const requestTime = req.headers['x-request-time'];
+app.post('/webhooks/deepgram', express.json(), async (req, res) => {
+  // ...Basic Auth check first...
 
-  // Verify token
-  if (dgToken !== process.env.DEEPGRAM_API_KEY_ID) {
-    return res.status(403).send('Invalid token');
-  }
+  const requestId = req.body?.metadata?.request_id;
+  const job = await db.jobs.findByDeepgramRequestId(requestId); // your own store
 
-  // Optional: Add timestamp validation
-  if (requestTime) {
-    const now = Date.now();
-    const requestTimestamp = parseInt(requestTime);
-    const MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
-
-    if (Math.abs(now - requestTimestamp) > MAX_AGE_MS) {
-      return res.status(403).send('Request too old');
-    }
+  if (!job) {
+    return res.status(404).send('Unknown request_id');
   }
 
   // Process webhook
@@ -170,25 +199,24 @@ app.post('/webhooks/deepgram', (req, res) => {
 
 ### Common Problems
 
-1. **Missing dg-token header**
-   - Ensure you're checking the correct header name
-   - Headers might be lowercase in some frameworks
+1. **Missing Authorization header**
+   - Check the callback URL you sent to Deepgram includes `username:password@`
+   - Percent-encode special characters in the username or password
 
-2. **Token mismatch**
+2. **dg-token missing**
+   - Expected on some callbacks: Deepgram does not guarantee the header. Don't treat its absence as a failure
+
+3. **dg-token mismatch**
    - Verify you're using the API Key ID (from console), not the API Key itself
    - Check for whitespace or encoding issues
-
-3. **Basic Auth not working**
-   - Ensure URL encoding for special characters
-   - Verify your framework supports Basic Auth parsing
 
 ### Debug Logging
 
 ```javascript
 app.post('/webhooks/deepgram', (req, res) => {
-  console.log('Webhook headers:', req.headers);
+  console.log('Authorization header present:', Boolean(req.headers['authorization']));
   console.log('dg-token:', req.headers['dg-token']);
-  console.log('Expected:', process.env.DEEPGRAM_API_KEY_ID);
+  console.log('Expected API Key ID:', process.env.DEEPGRAM_API_KEY_ID);
 
   // Rest of verification logic
 });
@@ -198,7 +226,7 @@ app.post('/webhooks/deepgram', (req, res) => {
 
 While Deepgram's webhook authentication is simpler than signature-based verification, it's important to:
 
-1. Always verify the `dg-token` header
-2. Use HTTPS for all webhook endpoints
-3. Implement proper error handling and logging
-4. Consider additional security measures based on your requirements
+1. Always verify the Basic Auth credentials embedded in your callback URL
+2. Check the `dg-token` header only as a supplementary signal, when it is present
+3. Use HTTPS for all webhook endpoints
+4. Implement proper error handling and logging

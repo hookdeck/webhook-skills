@@ -1292,17 +1292,26 @@ providers:
   - name: deepgram
     displayName: Deepgram
     docs:
-      webhooks: https://developers.deepgram.com/reference
+      webhooks: https://developers.deepgram.com/docs/callback
+      verification: https://developers.deepgram.com/docs/callback
     notes: >
-      Speech-to-text transcription platform. Uses callback URLs with optional
-      Basic Auth or token-based verification via dg-token header.
-      Not traditional webhooks - these are transcription completion callbacks.
+      Speech-to-text transcription platform. Not traditional webhooks - these are
+      per-request transcription completion callbacks (callback= query param on
+      /v1/listen). Unsigned. Primary auth is Basic Auth credentials embedded in
+      the callback URL (sent as Authorization: Basic). The dg-token header (API
+      Key Identifier) "is not guaranteed on every callback request" per the docs,
+      so it is a supplementary check only when present - never required.
+      Callback body is the /v1/listen response { metadata, results } with
+      request_id at metadata.request_id (no top-level request_id, no event-type
+      field); extra=KEY:VALUE pairs come back in metadata.extra. There is no
+      GET /v1/listen/{request_id}; request lookup is the Management API
+      GET /v1/projects/{project_id}/requests/{request_id}.
     testScenario:
       events:
         - transcription callback
       prompt: >
         Add Deepgram webhook handling to my {framework} app. I want to receive 
-        transcription callbacks and verify the dg-token header. If you use any 
+        transcription callbacks and verify the Basic Auth credentials in the callback URL. If you use any 
         skills to help with this, add a comment in the code noting which skill(s) 
         you referenced.
 
