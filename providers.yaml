@@ -4683,27 +4683,43 @@ providers:
   - name: mollie
     displayName: Mollie
     docs:
-      webhooks: https://docs.mollie.com/docs/webhooks
+      webhooks: https://docs.mollie.com/reference/webhooks-new
+      verification: https://docs.mollie.com/reference/webhooks-new#manual-signature-verification
       overview: https://docs.mollie.com/reference/webhooks
     notes: >
-      European payments platform. IMPORTANT: Mollie webhooks are NOT signed. The webhook is a
-      POST with a single application/x-www-form-urlencoded body parameter `id` (e.g. tr_xxxx).
-      You MUST NOT trust the payload — fetch the resource from the Mollie API
-      (GET /v2/payments/{id}) with your API key to read the authoritative status. Always return
-      200 quickly. Handle unknown/deleted ids gracefully. There is no HMAC to verify; the skill
-      should teach the fetch-to-confirm pattern instead of signature verification.
+      European payments platform with TWO webhook systems; cover both. (1) Classic webhooks
+      (a `webhookUrl` set per payment/order/subscription/payment link) are NOT signed: a POST
+      with a single application/x-www-form-urlencoded body parameter `id` (e.g. tr_xxxx). Do
+      not trust the payload — fetch the resource (GET /v2/payments/{id}) with your API key to
+      read the authoritative status. Always return 200 quickly, including for unknown/deleted
+      ids. (2) Next-gen webhooks (subscriptions created in Dashboard > Developers > Webhooks or
+      POST /v2/webhooks with eventTypes) POST a JSON event (resource "event", id, type,
+      entityId, createdAt, _links, optional _embedded.entity) signed with
+      `X-Mollie-Signature: sha256=<hex>`: HMAC-SHA256 of the unaltered raw body keyed with the
+      webhook signing secret (UTF-8). Strip the `sha256=` prefix and compare timing-safe.
+      For 24h after a secret rotation the header is sent twice (one per secret); Node joins
+      repeated headers with ", " so split and accept any match. Mollie recommends separate
+      URLs for the two systems; only next-gen carries X-Mollie-Signature. Docs conflict on
+      whether the signing secret is user-provided or Mollie-generated (the Create webhook API
+      returns `webhookSecret`); do not assert either. Event types: payment.*,
+      payment-link.paid, sales-invoice.*, payout.*, balance-transaction.created,
+      business-account-transfer.* are global; refund.*, chargeback.*, capture.*, dispute.*,
+      file.*, connect-balance-transfer.*, unmatched-credit-transfer.* are beta.
     sdks:
       npm:
         - "@mollie/api-client"
     testScenario:
       events:
         - payment status update
+        - payment.paid
       prompt: >
-        Create a {framework} webhook handler for Mollie. Mollie webhooks are unsigned and send
-        only a payment `id` as a form-encoded body parameter. The handler must fetch the payment
-        from the Mollie API to determine its real status rather than trusting the request body,
-        then return 200. If you use any skills to help with this, add a comment noting which
-        skill(s) you referenced.
+        Create a {framework} webhook handler for Mollie that supports both webhook systems:
+        classic webhooks (unsigned, form-encoded `id` only; fetch the payment from the Mollie
+        API to determine its real status rather than trusting the body, then return 200) and
+        next-gen webhooks (verify the X-Mollie-Signature `sha256=` HMAC-SHA256 of the raw body
+        with the webhook signing secret, accepting either of two signatures during rotation).
+        If you use any skills to help with this, add a comment noting which skill(s) you
+        referenced.
 
   - name: gocardless
     displayName: GoCardless

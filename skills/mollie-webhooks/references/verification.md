@@ -1,13 +1,26 @@
-# Mollie Webhook "Verification" — The Fetch-to-Confirm Pattern
+# Mollie Webhook Verification
+
+Mollie has two webhook systems, and they are secured differently:
+
+- **Classic webhooks** (a `webhookUrl` set per payment) are **unsigned**. You
+  confirm them by fetching the resource from the API: the fetch-to-confirm
+  pattern below.
+- **Next-gen webhooks** (subscriptions created in the Dashboard or with
+  `POST /v2/webhooks`) are **signed** with an `X-Mollie-Signature` header. See
+  [Next-gen webhooks: signature verification](#next-gen-webhooks-signature-verification).
+
+Tell them apart by the header: only next-gen deliveries carry
+`X-Mollie-Signature`. Mollie recommends a separate URL for each system.
+
+# Classic Webhooks: The Fetch-to-Confirm Pattern
 
 ## Why There Is No Signature to Verify
 
 Most webhook providers sign their payloads with an HMAC so you can prove the
-request came from them. **Mollie does not.** There is:
+request came from them. **Classic Mollie webhooks do not.** There is:
 
-- **No** signature header (no `X-Mollie-Signature`, no `webhook-signature`).
+- **No** signature header.
 - **No** HMAC or shared webhook secret.
-- **No** Standard Webhooks headers (`webhook-id` / `webhook-timestamp` / `webhook-signature`).
 - **No** recommended IP allowlist — Mollie's webhook source IPs change over time.
 
 Instead, the webhook body contains **only an id** and **no status**:
@@ -63,8 +76,8 @@ async function fetchPayment(id) {
 
 ### Python / FastAPI (manual REST fetch)
 
-Mollie's official SDKs are Node and PHP, so for Python fetch the REST API directly
-with `httpx`. Authenticate with the API key as a Bearer token.
+This fetches the REST API directly with `httpx` (Mollie also publishes an official
+Python library, `mollie-api-py`). Authenticate with the API key as a Bearer token.
 
 ```python
 import os, httpx
@@ -80,7 +93,7 @@ async def fetch_payment(payment_id: str, client: httpx.AsyncClient) -> dict | No
     return r.json()
 ```
 
-## Response Codes
+## Response Codes (classic)
 
 | Situation | Respond | Why |
 |-----------|---------|-----|
@@ -90,7 +103,7 @@ async def fetch_payment(payment_id: str, client: httpx.AsyncClient) -> dict | No
 | `id` unknown to **your** system | `200` | Acknowledge; do not error |
 | Mollie API unreachable / 5xx while fetching | `500` | Let Mollie retry later |
 
-## Common Gotchas
+## Common Gotchas (classic)
 
 - **The body is `application/x-www-form-urlencoded`, not JSON.** Parse it with
   `express.urlencoded()` / `request.form()` — not a JSON parser.
@@ -106,7 +119,7 @@ async def fetch_payment(payment_id: str, client: httpx.AsyncClient) -> dict | No
   responding, or hand off to a queue, so you return `200` well within Mollie's
   timeout.
 
-## Debugging
+## Debugging (classic)
 
 - **Getting retried forever?** You are returning a non-200. Return `200` after a
   successful fetch (and for `404`s).
@@ -114,3 +127,106 @@ async def fetch_payment(payment_id: str, client: httpx.AsyncClient) -> dict | No
   created by a different Mollie account.
 - **Body parses as empty / `id` is undefined?** You are JSON-parsing a
   form-urlencoded body. Use the urlencoded parser.
+
+# Next-gen Webhooks: Signature Verification
+
+## The Scheme
+
+From Mollie's [manual signature verification](https://docs.mollie.com/reference/webhooks-new#manual-signature-verification)
+steps:
+
+- **Header:** `X-Mollie-Signature: sha256=<signature>`
+- **Algorithm:** HMAC-SHA256, hex-encoded
+- **Signed content:** "the unaltered `POST` body of the webhook request"
+- **Key:** the webhook subscription's signing secret (used as a UTF-8 string)
+
+To verify:
+
+1. Remove the `sha256=` prefix from the header value.
+2. Compute HMAC-SHA256 of the **raw** request body with the signing secret.
+3. Compare the two with a timing-safe comparison. Reject the request if they
+   don't match.
+
+Mollie's TypeScript SDK (`mollie-api-typescript`) implements exactly this in its
+`SignatureValidator` helper.
+
+## Secret Rotation: Two Signatures
+
+After you rotate the signing secret, "each event will contain two signature
+headers for the next 24 hours":
+
+```http
+X-Mollie-Signature: sha256=4a4c6f3ed4d15fee87ad44e07a7fa9b8
+X-Mollie-Signature: sha256=a8994a2b90c785deeae0f7b0c6ae475f
+```
+
+Node (`req.headers`) and the Fetch API (`request.headers.get`) join repeated
+headers into one comma-separated string; Starlette exposes them through
+`request.headers.getlist()`. Split on `,` and accept the request if **any**
+value matches. Checking only the first value breaks verification for 24 hours
+after every rotation.
+
+## Implementation
+
+### Node.js
+
+```javascript
+const crypto = require('crypto');
+
+function verifyMollieSignature(rawBody, signatureHeader, secret) {
+  if (!signatureHeader || !secret) return false;
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  return signatureHeader.split(',').some((value) => {
+    const provided = value.trim().replace(/^sha256=/, '');
+    const a = Buffer.from(provided);
+    const b = Buffer.from(expected);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  });
+}
+
+// Express: the raw body parser keeps req.body as the exact bytes Mollie signed.
+app.post('/webhooks/mollie/events', express.raw({ type: '*/*' }), (req, res) => {
+  if (!verifyMollieSignature(req.body, req.headers['x-mollie-signature'], process.env.MOLLIE_WEBHOOK_SECRET)) {
+    return res.status(400).send('Invalid signature');
+  }
+  const event = JSON.parse(req.body);
+  // event.type, event.entityId, event._embedded?.entity
+  res.status(200).send('OK');
+});
+```
+
+### Python
+
+```python
+import hashlib
+import hmac
+
+
+def verify_mollie_signature(raw_body: bytes, signature_headers: list[str], secret: str) -> bool:
+    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    for header in signature_headers:
+        for value in header.split(","):
+            provided = value.strip().removeprefix("sha256=")
+            if hmac.compare_digest(provided.encode(), expected.encode()):
+                return True
+    return False
+
+# FastAPI:
+#   raw = await request.body()
+#   ok = verify_mollie_signature(raw, request.headers.getlist("x-mollie-signature"), secret)
+```
+
+## Common Gotchas (next-gen)
+
+- **Verify the raw body.** Parsing JSON and re-serializing it changes the bytes
+  and breaks the HMAC. Use `express.raw()`, `await request.text()` (Next.js) or
+  `await request.body()` (FastAPI), and parse only after verifying.
+- **Strip `sha256=`.** The header value is `sha256=<hex>`; compare only the hex.
+  (The sample code on Mollie's best-practices page compares the whole header
+  value against the bare hex digest, which never matches. Follow the manual
+  verification steps instead.)
+- **Handle two signatures** during a rotation (see above).
+- **Never fail open.** If `MOLLIE_WEBHOOK_SECRET` is unset, reject the request
+  rather than skipping verification.
+- **Act fast.** Return `200` within 15 seconds; Mollie retries up to 10 times
+  over about 26 hours, and marks a webhook `blocked` after repeated failures.

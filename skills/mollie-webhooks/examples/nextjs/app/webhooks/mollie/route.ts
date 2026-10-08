@@ -4,9 +4,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMollieClient, type MollieClient } from '@mollie/api-client';
 
-// Mollie webhooks are NOT signed. Mollie POSTs an application/x-www-form-urlencoded
-// body with a single `id` (e.g. tr_xxx) and NO status. We fetch the payment from
-// the Mollie API to read its authoritative status — the "fetch-to-confirm" pattern.
+// Classic Mollie webhooks (set per payment via `webhookUrl`) are NOT signed. Mollie
+// POSTs an application/x-www-form-urlencoded body with a single `id` (e.g. tr_xxx)
+// and NO status. We fetch the payment from the Mollie API to read its authoritative
+// status — the "fetch-to-confirm" pattern. Signed next-gen webhooks are handled by
+// app/webhooks/mollie/events/route.ts.
 
 let client: MollieClient | undefined;
 

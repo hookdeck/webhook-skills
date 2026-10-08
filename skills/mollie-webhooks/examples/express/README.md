@@ -1,17 +1,27 @@
 # Mollie Webhooks - Express Example
 
-Minimal example of receiving Mollie webhooks with Express using the
-**fetch-to-confirm** pattern.
+Minimal example of receiving both kinds of Mollie webhooks with Express:
 
-Mollie webhooks are **not signed**. Mollie POSTs an
+- **Classic webhooks** (`POST /webhooks/mollie`): unsigned, confirmed with the
+  **fetch-to-confirm** pattern.
+- **Next-gen webhooks** (`POST /webhooks/mollie/events`): signed JSON events,
+  verified with the `X-Mollie-Signature` header.
+
+Classic Mollie webhooks are **not signed**. Mollie POSTs an
 `application/x-www-form-urlencoded` body with a single `id` (e.g. `tr_xxx`) and no
 status. This handler fetches the payment from the Mollie API with your API key and
 acts on the authoritative status it returns.
+
+Next-gen webhooks carry `X-Mollie-Signature: sha256=<hex>`, an HMAC-SHA256 of the
+raw request body keyed with the webhook's signing secret. The handler verifies it
+before parsing the JSON, and accepts either of the two signatures Mollie sends
+for 24 hours after a secret rotation.
 
 ## Prerequisites
 
 - Node.js 18+
 - A Mollie account and API key (`test_…` or `live_…`)
+- For next-gen webhooks: a webhook subscription and its signing secret
 
 ## Setup
 
@@ -25,9 +35,10 @@ acts on the authoritative status it returns.
    cp .env.example .env
    ```
 
-3. Add your Mollie API key to `.env`:
+3. Add your Mollie API key (classic) and webhook signing secret (next-gen) to `.env`:
    ```bash
    MOLLIE_API_KEY=test_xxxxx
+   MOLLIE_WEBHOOK_SECRET=your_webhook_signing_secret
    ```
 
 ## Run
@@ -36,8 +47,10 @@ acts on the authoritative status it returns.
 npm start
 ```
 
-Server runs on http://localhost:3000 and the webhook endpoint is
-`POST http://localhost:3000/webhooks/mollie`.
+Server runs on http://localhost:3000 with two webhook endpoints:
+
+- `POST http://localhost:3000/webhooks/mollie`: classic webhooks
+- `POST http://localhost:3000/webhooks/mollie/events`: next-gen webhooks
 
 ## Receive Webhooks Locally
 
@@ -63,6 +76,14 @@ await mollie.payments.create({
 Complete the test checkout and choose a result (paid/failed/expired) to trigger
 the webhook.
 
+For next-gen webhooks, tunnel to the events route and use the printed URL as the
+URL of a test-mode webhook subscription (Dashboard **Developers → Webhooks**, or
+`POST /v2/webhooks` with `testmode: true`):
+
+```bash
+npx hookdeck-cli listen 3000 mollie-events --path /webhooks/mollie/events
+```
+
 ## Test
 
 ```bash
@@ -71,9 +92,14 @@ npm test
 
 The tests inject a fake payment fetcher, so they run without hitting the Mollie
 API. They cover: missing id (400), unknown id (200), a failed fetch (500 so Mollie
-retries), and dispatch for every payment status.
+retries), and dispatch for every payment status. Next-gen tests sign events with
+a test secret and cover a valid signature (200), missing or wrong signature and
+tampered body (400), two signatures during a secret rotation (200), and an unset
+secret (500).
 
 ## How It Works
+
+**Classic** (`/webhooks/mollie`):
 
 1. Mollie POSTs `id=tr_xxx` (form-urlencoded, unsigned).
 2. The handler reads `id` and calls `GET /v2/payments/{id}` via
@@ -81,3 +107,11 @@ retries), and dispatch for every payment status.
 3. It dispatches on the fetched `payment.status` and returns `200`.
 4. Unknown ids return `200`; a transient fetch failure returns `500` so Mollie
    retries (for ~26 hours).
+
+**Next-gen** (`/webhooks/mollie/events`):
+
+1. Mollie POSTs a JSON event with `X-Mollie-Signature: sha256=<hex>`.
+2. The handler computes HMAC-SHA256 of the raw body with `MOLLIE_WEBHOOK_SECRET`
+   and compares it (timing-safe) with each signature in the header.
+3. On a match it parses the event, dispatches on `type` (using `entityId` to find
+   the object), and returns `200`. Otherwise it returns `400`.

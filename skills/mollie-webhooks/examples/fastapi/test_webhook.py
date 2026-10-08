@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import json
 import os
 
 os.environ.setdefault("MOLLIE_API_KEY", "test_dummy")
@@ -119,3 +122,95 @@ async def test_fetch_payment_raises_on_500():
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+# --- Next-gen webhooks: signed JSON events on /webhooks/mollie/events ---
+
+SECRET = "test_signing_secret"
+
+# Mollie's documented next-gen event example (payment-link.paid, simple payload).
+EVENT = json.dumps(
+    {
+        "resource": "event",
+        "id": "event_GvJ8WHrp5isUdRub9CJyH",
+        "type": "payment-link.paid",
+        "entityId": "pl_qng5gbbv8NAZ5gpM5ZYgx",
+        "createdAt": "2024-12-16T15:59:04.0Z",
+        "_links": {
+            "self": {
+                "href": "https://api.mollie.com/v2/events/event_GvJ8WHrp5isUdRub9CJyH",
+                "type": "application/hal+json",
+            }
+        },
+    }
+).encode()
+
+
+def sign(body: bytes, secret: str = SECRET) -> str:
+    return "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+
+def post_event(body: bytes, signatures=()):
+    headers = [("content-type", "application/json")]
+    headers += [("x-mollie-signature", s) for s in signatures]
+    return client.post("/webhooks/mollie/events", content=body, headers=headers)
+
+
+@pytest.fixture
+def webhook_secret(monkeypatch):
+    monkeypatch.setenv("MOLLIE_WEBHOOK_SECRET", SECRET)
+
+
+def test_verify_accepts_valid_signature():
+    assert main.verify_mollie_signature(EVENT, [sign(EVENT)], SECRET)
+
+
+def test_verify_rejects_wrong_secret():
+    assert not main.verify_mollie_signature(EVENT, [sign(EVENT, "other")], SECRET)
+
+
+def test_verify_accepts_comma_joined_rotation_header():
+    header = f"{sign(EVENT, 'old_secret')}, {sign(EVENT)}"
+    assert main.verify_mollie_signature(EVENT, [header], SECRET)
+
+
+def test_verify_rejects_missing_header_or_secret():
+    assert not main.verify_mollie_signature(EVENT, [], SECRET)
+    assert not main.verify_mollie_signature(EVENT, [sign(EVENT)], "")
+
+
+def test_event_valid_signature_returns_200(webhook_secret):
+    res = post_event(EVENT, [sign(EVENT)])
+    assert res.status_code == 200
+    assert res.text == "OK"
+
+
+def test_event_missing_signature_returns_400(webhook_secret):
+    assert post_event(EVENT).status_code == 400
+
+
+def test_event_wrong_secret_returns_400(webhook_secret):
+    assert post_event(EVENT, [sign(EVENT, "wrong_secret")]).status_code == 400
+
+
+def test_event_tampered_body_returns_400(webhook_secret):
+    tampered = EVENT.replace(b"payment-link.paid", b"payment.paid")
+    assert post_event(tampered, [sign(EVENT)]).status_code == 400
+
+
+def test_event_two_signature_headers_during_rotation(webhook_secret):
+    res = post_event(EVENT, [sign(EVENT, "old_secret"), sign(EVENT)])
+    assert res.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "event_type", ["payment.paid", "payment.failed", "payout.completed", "some.future_event"]
+)
+def test_event_handles_each_type(webhook_secret, event_type):
+    body = json.dumps({**json.loads(EVENT), "type": event_type, "entityId": "tr_abc123"}).encode()
+    assert post_event(body, [sign(body)]).status_code == 200
+
+
+def test_event_without_secret_returns_500(monkeypatch):
+    monkeypatch.delenv("MOLLIE_WEBHOOK_SECRET", raising=False)
+    assert post_event(EVENT, [sign(EVENT)]).status_code == 500
