@@ -2408,6 +2408,29 @@
       ]
     },
     {
+      "name": "onfleet-webhooks",
+      "description": "Answer Onfleet's unsigned GET ?check= URL validation handshake, verify X-Onfleet-Signature (HMAC-SHA512 over the raw body, keyed with the hex-decoded org secret), and handle task, worker and route-plan triggers.",
+      "source": "./skills/onfleet-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/onfleet-webhooks",
+      "keywords": [
+        "webhooks",
+        "onfleet",
+        "delivery",
+        "logistics"
+      ]
+    },
+    {
       "name": "openai-webhooks",
       "description": "Verify OpenAI webhooks (Standard Webhooks/Svix) for fine-tuning, batch, and realtime async events.",
       "source": "./skills/openai-webhooks",
