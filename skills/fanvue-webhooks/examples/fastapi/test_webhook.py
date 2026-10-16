@@ -159,6 +159,12 @@ class TestVerifyFanvueSignature:
         header = signature_header(self.body, secrets=["old_secret", SECRET])
         assert verify_fanvue_signature(self.body.encode(), header, SECRET) == (True, None)
 
+    def test_accepts_uppercase_hex(self):
+        # Hookdeck's own FANVUE verifier lowercases MACs before comparing.
+        t = int(time.time())
+        header = f"t={t},v0={sign(self.body, SECRET, t).upper()}"
+        assert verify_fanvue_signature(self.body.encode(), header, SECRET) == (True, None)
+
     @pytest.mark.parametrize(
         "header_fn",
         [

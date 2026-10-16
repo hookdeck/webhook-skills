@@ -37,7 +37,7 @@ export function parseSignatureHeader(header: string): ParsedSignatureHeader {
       timestamp = value;
       timestampCount += 1;
     } else if (key === 'v0' && value) {
-      macs.push(value);
+      macs.push(value.toLowerCase());
     }
   }
 

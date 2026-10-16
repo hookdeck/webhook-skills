@@ -48,7 +48,7 @@ def parse_signature_header(header: str) -> tuple[str | None, int, list[str]]:
             timestamp = value
             timestamp_count += 1
         elif key == "v0" and value:
-            macs.append(value)
+            macs.append(value.lower())
 
     return timestamp, timestamp_count, macs
 

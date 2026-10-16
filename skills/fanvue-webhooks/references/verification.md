@@ -55,7 +55,7 @@ function parseSignatureHeader(header) {
       timestamp = value;
       timestampCount += 1;
     } else if (key === 'v0' && value) {
-      macs.push(value);
+      macs.push(value.toLowerCase());
     }
   }
 
@@ -107,7 +107,7 @@ def verify_fanvue_signature(raw_body: bytes, header: str | None, secret: str) ->
         if key == "t":
             timestamp, timestamp_count = value, timestamp_count + 1
         elif key == "v0" and value:
-            macs.append(value)
+            macs.append(value.lower())
 
     if timestamp_count != 1 or not timestamp or not _DECIMAL.fullmatch(timestamp) or not macs:
         return False

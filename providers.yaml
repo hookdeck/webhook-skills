@@ -7046,6 +7046,22 @@ providers:
       All facts below are quoted or paraphrased from the pages above, fetched
       2026-10-16.
 
+      CROSS-CHECKED AGAINST HOOKDECK'S OWN IMPLEMENTATION (2026-10-16):
+      hookdeck/core `server/integrations/platforms/fanvue.ts` (+ its test
+      suite) and hookdeck/http-ingestion
+      `cloudflare/src/integrations/fanvue.ts` implement exactly the scheme
+      below: stateful parser where a bare field continues the previous key,
+      `t` must appear once and be plain decimal (a bare field after `t=`
+      counts as a repeat), 300s window either side, secret's UTF-8 bytes used
+      verbatim with no `whsec_` decode, any MAC matching accepts,
+      `X-Fanvue-Topic` ignored. One leniency the docs don't state: both
+      lowercase received MACs before comparing, so uppercase hex verifies —
+      the skill's examples do the same. Neither exempts the unsigned
+      `fanvue.webhook.verification` probe (a missing signature header is a
+      401 at the edge), so a Hookdeck FANVUE source with verification on will
+      fail `POST /webhooks/subscriptions`; Events-tab registration is
+      unaffected. That is a Hookdeck product gap, not a skill instruction.
+
       VERIFICATION — single scheme, HMAC-SHA256, hex, timestamp-prefixed
       signed payload, with a DUAL-MAC rotation quirk that is the single most
       load-bearing detail.
