@@ -7493,3 +7493,153 @@ providers:
         - creator.payment.succeeded
         - creator.subscription.activated
         - checkout_link.payment.succeeded
+  - name: whatnot
+    displayName: Whatnot
+    docs:
+      webhooks: https://developers.whatnot.com/docs/webhooks/overview
+      verification: https://developers.whatnot.com/docs/webhooks/overview#validating-the-webhook
+      product_sold: https://developers.whatnot.com/docs/webhooks/product-sold
+      bulk_operation: https://developers.whatnot.com/docs/webhooks/bulk-operation
+      listing_created: https://developers.whatnot.com/docs/webhooks/listing-created
+      listing_updated: https://developers.whatnot.com/docs/webhooks/listing-updated
+      order_created: https://developers.whatnot.com/docs/webhooks/order-created
+      order_updated: https://developers.whatnot.com/docs/webhooks/order-updated
+      livestream_created: https://developers.whatnot.com/docs/webhooks/livestream-created
+      livestream_stopped: https://developers.whatnot.com/docs/webhooks/livestream-stopped
+      livestream_product_added: https://developers.whatnot.com/docs/webhooks/livestream-product-added
+      livestream_product_removed: https://developers.whatnot.com/docs/webhooks/livestream-product-removed
+      shipment_label_created: https://developers.whatnot.com/docs/webhooks/shipment-label-created
+    notes: |
+      IDENTITY — Whatnot (whatnot.com), the live-shopping / livestream
+      auction marketplace. This skill covers the webhooks of the **Whatnot
+      Seller API** (developers.whatnot.com, a GraphQL API in "development
+      preview"). Hookdeck's `WHATNOT` source type links to exactly
+      https://developers.whatnot.com/docs/webhooks/overview, so there is no
+      variant ambiguity.
+
+      DOCS ARE A JS-RENDERED SPA — every code block (envelope, headers,
+      Python sample, payloads) is rendered client-side and is ABSENT from the
+      raw HTML. Everything below was read from the rendered page in a
+      browser on 2026-10-16. Do not conclude "no example exists" from a raw
+      fetch.
+
+      VERIFICATION — HMAC-SHA256 over the RAW request body, **lowercase hex**
+      digest, no prefix, no timestamp, no signed-content concatenation.
+        - Header: `X-Whatnot-Webhook-Signature: <HMAC SHA256 signature>`
+        - Key: the app's **webhook secret key**, which "will be provided to
+          you by a Whatnot representative" (there is no dashboard to copy it
+          from). Use env var WHATNOT_WEBHOOK_SECRET.
+        - Whatnot's own Python sample (verbatim from the rendered docs):
+
+            def validate_webhook(raw_request_body, signature, secret):
+                calculated_signature = hmac.new(
+                  bytes(secret, 'utf-8'),
+                  bytes(raw_request_body, 'utf-8'),
+                  hashlib.sha256
+                ).hexdigest()
+                return calculated_signature == signature
+
+          Note the sample uses `==`; the skill must use a constant-time
+          compare (crypto.timingSafeEqual with a length check /
+          hmac.compare_digest) and should say it improves on the sample.
+        - CROSS-CHECK — hookdeck/core implements WHATNOT with the generic
+          HMAC controller: `server/integrations/index.ts` →
+          `{ controller: 'HMAC', configs: { algorithm: 'sha256',
+          header_key: 'x-whatnot-webhook-signature', encoding: 'hex' } }`,
+          no `prefix_data_with_timestamp`. `sourceTypeSchemas.ts` gives it
+          `generic_features.handled_hmac` + `http_method_managed_post`. That
+          is the same scheme, independently. Core compares hex
+          case-insensitively; doing the same (lower-casing the received
+          header) is harmless and fine.
+        - There is NO timestamp header and no replay protection documented.
+          Do NOT invent a timestamp tolerance check. The envelope has a
+          `timestamp` field, but it is not part of any signed string; the
+          skill may mention it as an optional application-level staleness
+          check, clearly labelled as the skill's suggestion, not Whatnot's.
+        - No handshake / validation challenge. No source IP allowlist is
+          documented — do not invent one.
+
+      OTHER HEADERS — the docs list exactly one more Whatnot header:
+        `X-Whatnot-Seller-Id: <Seller ID>` — identifies which seller the
+        event belongs to (useful for multi-seller apps). Do not invent any
+        other X-Whatnot-* headers (no event-type header, no delivery-id
+        header); the topic lives in the body.
+
+      DELIVERY — HTTP POST. Respond with HTTP 200 OK. Any other status is
+      retried "up to 5 times over the next approximate 10 minutes". (Retries
+      can therefore deliver the same event id more than once — dedupe on
+      envelope `id`.) Note: the docs say 200 specifically, so return 200,
+      not 202/204.
+
+      SUBSCRIBING — no API or dashboard: "During the preview period, please
+      reach out to <the email address on the overview page> ... include your App ID, the URL that
+      will receive POST requests, and the topic to subscribe to." The email
+      address is Cloudflare-obfuscated in the HTML; do not guess it — say
+      "contact Whatnot (the address on the overview page)".
+
+      ENVELOPE (verbatim, rendered docs):
+        {
+          "id": "<Event ID: UUID>",
+          "timestamp": "<Event Timestamp: ISO 8601 UTC>",
+          "topic": "<Event Topic>",
+          "object": { "...": "<Object type specific to topic>" }
+        }
+      Route on `topic`. The topic-specific payload is under `object`.
+
+      MONEY — monetary fields are `{ "amount": "12.34", "currency": "USD" }`
+      (string amount, ISO 4217 currency). Never parse to float in examples.
+
+      CUSTOMER DATA — `shipping_address`, `tracking_info`, `label_url` are
+      only populated for apps granted the `read_customers` scope; otherwise
+      omitted or null. Handlers must null-check them.
+
+      TOPICS (all 11 documented; exact strings, slash-separated):
+        product/sold                — { product_id, listing_id, order_id,
+                                        external_id, variant_id (nullable),
+                                        variant_external_id (nullable),
+                                        quantity, product_created_by_client_app_id (nullable) }
+        bulk_operation/finished     — { id, status } (status is a
+                                        BulkOperationStatus from the GraphQL schema)
+        listing/created             — { product_id (nullable), listing_id,
+        listing/updated               external_id (nullable), quantity,
+                                        transaction_type ("AUCTION" | "BUY_IT_NOW"),
+                                        listing_status, condition, category_name,
+                                        category_id (all nullable) } — same shape
+        order/created               — { product_id, listing_id, external_id (nullable),
+        order/updated                 order_id, quantity, subtotal, shipping_price,
+                                        taxation, customs (nullable), total  [all Money],
+                                        items: [{ product_id, listing_id, price, quantity,
+                                        subtotal, variant_id, variant_external_id }],
+                                        product_created_by_client_app_id (nullable),
+                                        shipping_address { address_line1, address_line2,
+                                        city, state, postal_code, country } (read_customers, else null),
+                                        tracking_info { tracking_code, courier, label_url }
+                                        (read_customers, else null),
+                                        cancelled_at (nullable) } — same shape
+        livestream/created          — { livestream_id, title, starts_at (nullable) }
+        livestream/stopped          — { livestream_id } (ends OR is cancelled)
+        livestream/product_added    — { product_id, livestream_id, listing_id,
+        livestream/product_removed    product_external_id (nullable) } — same shape
+        shipment/label_created      — BETA ("may change without notice; not
+                                        recommended for production use").
+                                        { shipment_id, reason ("label_generated" |
+                                        "label_regenerated"), tracking_code, courier,
+                                        label_url (read_customers, else null),
+                                        label_generated_at (ISO 8601 UTC) }
+      All IDs in payloads are Global IDs (GraphQL node IDs) unless noted.
+      The docs show placeholder values only — sample payloads in tests are
+      illustrative and must say so; do not present made-up ID formats as
+      Whatnot's real format.
+
+      "Development preview": the docs say more topics may be added over time.
+      Handlers should log-and-200 unknown topics rather than erroring (an
+      error would just trigger 5 retries).
+
+      DEPENDENCIES — no official Whatnot SDK for webhook verification; use
+      node:crypto / Web Crypto / Python hmac+hashlib only. Do not add any
+      whatnot package to package.json or requirements.txt.
+    testScenario:
+      events:
+        - order/created
+        - product/sold
+        - livestream/stopped

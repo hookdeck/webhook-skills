@@ -927,6 +927,27 @@
       ]
     },
     {
+      "name": "whatnot-webhooks",
+      "description": "Receive and verify Whatnot webhooks (whatnot.com — the live-shopping and livestream-auction marketplace). Use when building a Whatnot Seller API app that handles webhook topics like order/created, order/updated, product/sold, listing/created, livestream/stopped or bulk_operation/finished, or when debugging X-Whatnot-Webhook-Signature verification. Whatnot signs with HMAC-SHA256 over the RAW request body, lowercase hex, keyed with the app's webhook secret key (issued by a Whatnot representative). No timestamp, no prefix. The topic is in the JSON body (`topic`), the payload under `object`.",
+      "source": "./skills/whatnot-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/whatnot-webhooks",
+      "keywords": [
+        "webhooks",
+        "whatnot"
+      ]
+    },
+    {
       "name": "wordpress-com-webhooks",
       "description": "Receive WordPress.com webhooks (Settings -> Webhooks, the native /wp-admin/options-general.php?page=webhooks feature). Use when building a WordPress.com webhook receiver, because these deliveries are UNSIGNED: there is no HMAC, no signature header, no secret, no timestamp and no handshake, and the body is a FLAT application/x-www-form-urlencoded set of key/value pairs whose only discriminator is the `hook` field (`publish_post`, `publish_page`, `comment_post`). Use when wiring express.urlencoded / request.formData() / await request.form(), protecting an unsigned endpoint with a query-string token, or deduping repeated publish_post deliveries. NOT WooCommerce (X-WC-Webhook-Signature) and not a WordPress.org plugin.",
       "source": "./skills/wordpress-com-webhooks",
