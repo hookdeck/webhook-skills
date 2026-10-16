@@ -335,6 +335,27 @@
       ]
     },
     {
+      "name": "fanvue-webhooks",
+      "description": "Receive and verify Fanvue webhooks. Use when setting up Fanvue webhook handlers, debugging X-Fanvue-Signature verification (HMAC-SHA256 hex over \"<t>.<raw body>\", two MACs during secret rotation), answering the unsigned fanvue.webhook.verification probe, or handling events like creator.payment.succeeded, creator.subscription.activated, creator.message.received, checkout_link.payment.succeeded, payout.paid or app.payment.succeeded.",
+      "source": "./skills/fanvue-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/fanvue-webhooks",
+      "keywords": [
+        "webhooks",
+        "fanvue"
+      ]
+    },
+    {
       "name": "faundit-webhooks",
       "description": "Receive and verify Faundit webhooks. Use when setting up Faundit lost-and-found / returns webhook handlers, debugging signature verification, or handling the item-status and request-status events (statuses like delivered, finished, expired).",
       "source": "./skills/faundit-webhooks",

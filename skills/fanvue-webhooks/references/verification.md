@@ -180,7 +180,10 @@ and accept any match.
 ### 3. Altering the secret
 
 Use the secret exactly as Fanvue gives it. Don't strip the `whsec_` prefix and
-don't hex- or base64-decode it: the whole string is the HMAC key.
+don't hex- or base64-decode it: the whole string is the HMAC key. The docs don't
+spell this out in prose, but Fanvue's own Node and Python samples pass
+`FANVUE_WEBHOOK_SECRET` straight into `createHmac` / `hmac.new` with no decode
+step — unlike Svix-style `whsec_` secrets, which must be base64-decoded.
 
 ### 4. Rejecting the probe
 
