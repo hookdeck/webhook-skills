@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Onfleet Webhook Handler")
 
-HEX_PATTERN = re.compile(r"^[0-9a-fA-F]+$")
+HEX_PATTERN = re.compile(r"[0-9a-fA-F]+")  # use fullmatch: "$" also matches before a trailing newline
 
 
 def verify_onfleet_signature(
@@ -59,7 +59,7 @@ def verify_onfleet_signature(
 def is_valid_hex_secret(secret: Optional[str]) -> bool:
     """bytes.fromhex skips whitespace and raises on odd lengths, so a mis-pasted
     secret would either be silently altered or crash the request. Check it."""
-    return isinstance(secret, str) and len(secret) % 2 == 0 and bool(HEX_PATTERN.match(secret))
+    return isinstance(secret, str) and len(secret) % 2 == 0 and bool(HEX_PATTERN.fullmatch(secret))
 
 
 def handle_onfleet_event(event: Dict[str, Any]) -> None:
