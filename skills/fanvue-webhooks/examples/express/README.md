@@ -1,0 +1,54 @@
+# Fanvue Webhooks - Express Example
+
+Minimal example of receiving Fanvue webhooks with `X-Fanvue-Signature` verification, including the unsigned verification probe and the two-MAC header sent during secret rotation.
+
+## Prerequisites
+
+- Node.js 18+
+- A Fanvue app in the Developer Area and its webhook signing secret (see [setup](../../references/setup.md))
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Add your Fanvue signing secret to `.env` as `FANVUE_WEBHOOK_SECRET`, exactly as Fanvue shows it (keep any `whsec_` prefix).
+
+## Run
+
+```bash
+npm start
+```
+
+Server runs on http://localhost:3000.
+
+## Test
+
+### Run unit tests
+
+```bash
+npm test
+```
+
+The tests sign payloads with the real algorithm (HMAC-SHA256 hex over `<t>.<raw body>`) and cover the probe, rotation MACs, malformed headers, stale timestamps, tampered and re-serialised bodies, and every live event type.
+
+### Forward live events with the Hookdeck CLI
+
+```bash
+# No account required — first run prints a public URL
+npx hookdeck-cli listen 3000 fanvue --path /webhooks/fanvue
+```
+
+Use the printed URL as the endpoint on your app's **Events** tab, then click **Test** on the row. A test delivery carries a real signature, so a `200` proves the check end to end. The Events tab disables `localhost` URLs, so you need the public tunnel URL.
+
+## Endpoint
+
+- `POST /webhooks/fanvue` — answers the `fanvue.webhook.verification` probe, verifies `X-Fanvue-Signature` (401 on failure), and routes on the body's `type`.
+- `GET /health` — liveness probe.
