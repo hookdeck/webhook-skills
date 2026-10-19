@@ -2,9 +2,10 @@
 
 ## What Are Revolut Webhooks?
 
-Revolut Merchant webhooks notify your application about the lifecycle of orders
-and payments in real time — for example when an order is authorised, completed,
-cancelled, or when a payment is declined. Instead of polling the Merchant API,
+Revolut Merchant webhooks notify your application in real time about the
+lifecycle of orders and payments — and of subscriptions, payouts, and disputes —
+for example when an order is authorised, completed, cancelled, or when a payment
+is declined. Instead of polling the Merchant API,
 you register an HTTPS endpoint and Revolut sends a `POST` request to it whenever
 a subscribed event occurs.
 
@@ -64,5 +65,24 @@ full order. Fetch the order from the Merchant API when you need details.
 
 ## Full Event Reference
 
-For the complete list of events and payloads, see
-[Revolut's webhook documentation](https://developer.revolut.com/docs/guides/merchant/monitor-and-observe/webhooks/using-webhooks).
+The table above covers the order and payment events most integrations subscribe
+to. The complete set a webhook may be registered for is the `events` enum on the
+Merchant API's [Create a webhook](https://developer.revolut.com/docs/merchant/create-webhook)
+operation — 23 event types, grouped by the object whose status changed:
+
+| Object | Event types |
+|--------|-------------|
+| `Order` | `ORDER_COMPLETED`, `ORDER_AUTHORISED`, `ORDER_CANCELLED`, `ORDER_FAILED`, `ORDER_INCREMENTAL_AUTHORISATION_AUTHORISED`, `ORDER_INCREMENTAL_AUTHORISATION_DECLINED`, `ORDER_INCREMENTAL_AUTHORISATION_FAILED` |
+| `Payment` | `ORDER_PAYMENT_AUTHENTICATION_CHALLENGED`, `ORDER_PAYMENT_AUTHENTICATED`, `ORDER_PAYMENT_AUTHORISATION_STARTED`, `ORDER_PAYMENT_DECLINED`, `ORDER_PAYMENT_FAILED` |
+| `Subscription` | `SUBSCRIPTION_INITIATED`, `SUBSCRIPTION_FINISHED`, `SUBSCRIPTION_CANCELLED`, `SUBSCRIPTION_OVERDUE` |
+| `Payout` | `PAYOUT_INITIATED`, `PAYOUT_COMPLETED`, `PAYOUT_FAILED` |
+| `Dispute` | `DISPUTE_ACTION_REQUIRED`, `DISPUTE_UNDER_REVIEW`, `DISPUTE_WON`, `DISPUTE_LOST` |
+
+Revolut documents these as names only — the reference does not describe each
+one's trigger, and the payload fields for the subscription, payout, and dispute
+families are not documented alongside the enum. Log the raw body for an event
+family before writing a handler against it, and keep a `default` branch so an
+unsubscribed or newly added type can't break the route.
+
+For webhook concepts and the signature scheme, see
+[Revolut's webhook guide](https://developer.revolut.com/docs/guides/merchant/monitor-and-observe/webhooks/using-webhooks).

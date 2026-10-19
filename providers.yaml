@@ -3444,7 +3444,17 @@ providers:
       more attempts at 10-minute intervals. Business API has a separate webhook system
       using the same v1 signature scheme. Use the raw request body — re-serialized JSON
       breaks verification. No official npm/pip SDK with webhook helpers
-      (@revolut/checkout is a frontend widget).
+      (@revolut/checkout is a frontend widget). Events: the authoritative list is the
+      "events" enum on the Create/Update a webhook operations — 23 types across Order
+      (7), Payment (5), Subscription (4), Payout (3), Dispute (4); names only, no
+      per-event trigger descriptions or payload schemas for the subscription/payout/
+      dispute families. DOC SURFACE: developer.revolut.com now runs Revpress and
+      bot-walls (403) its HTML guide pages, and the API reference is a SPA whose
+      per-operation enums are NOT in a render of /docs/api/merchant — fetch the
+      generated markdown twin instead, e.g.
+      /docs/api/merchant/operations/create-webhook.md (verified live 2026-10-19,
+      last-modified 2026-10-12). The HTML route for that same path 404s; the
+      human-facing page is /docs/merchant/create-webhook.
     testScenario:
       events:
         - ORDER_COMPLETED

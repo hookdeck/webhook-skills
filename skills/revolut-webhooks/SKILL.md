@@ -85,7 +85,14 @@ Payload shape (order events):
 }
 ```
 
-> **For the full event reference**, see [Revolut webhooks documentation](https://developer.revolut.com/docs/guides/merchant/monitor-and-observe/webhooks/using-webhooks).
+These are the order and payment events most integrations subscribe to. Revolut
+documents 23 event types in total, spanning `Order`, `Payment`, `Subscription`
+(`SUBSCRIPTION_INITIATED`, …), `Payout`, and `Dispute` objects — the authoritative
+list is the `events` enum on the Merchant API's
+[Create a webhook](https://developer.revolut.com/docs/merchant/create-webhook)
+operation, and it is reproduced in full in
+[references/overview.md](references/overview.md). Always keep a `default` branch
+in your dispatch so an unhandled type can't break the route.
 
 ## Environment Variables
 

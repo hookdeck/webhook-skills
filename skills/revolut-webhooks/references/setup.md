@@ -40,6 +40,12 @@ curl -X POST https://sandbox-merchant.revolut.com/api/webhooks \
   }'
 ```
 
+`events` is typed as an array of enum, so use the documented names verbatim. The
+six above are a common starting subset; the full 23-type list is in
+[overview.md](overview.md#full-event-reference), mirroring the enum on the
+[Create a webhook](https://developer.revolut.com/docs/merchant/create-webhook)
+operation.
+
 The response includes the webhook `id` and a **`signing_secret`** that starts
 with `wsk_`:
 
