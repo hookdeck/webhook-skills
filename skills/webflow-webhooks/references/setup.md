@@ -75,7 +75,11 @@ Different webhook types require different API scopes:
 | `collection_item_*` | `cms:read` |
 | `page_*` events | `pages:read` |
 | `site_publish` | `sites:read` |
-| `user_account_*` | `users:read` |
+| `comment_created` | `comments:read` |
+
+The `user_account_*` events this skill previously listed are deprecated as of
+2026-10-17 — they are not valid Data API v2 `triggerType` values, so there is no
+scope to request for them. See [overview.md](./overview.md#deprecated-event-types).
 
 ## Managing Webhooks
 

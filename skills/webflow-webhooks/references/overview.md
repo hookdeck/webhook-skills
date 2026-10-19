@@ -16,13 +16,31 @@ Webflow webhooks are HTTP callbacks that notify your application when events occ
 | `ecomm_new_order` | New ecommerce order placed | Order processing, inventory management, fulfillment |
 | `ecomm_order_changed` | Order status/details change | Update shipping, customer notifications |
 | `ecomm_inventory_changed` | Product inventory changes | Sync with external inventory systems |
-| `user_account_added` | New user account created | Welcome emails, user provisioning |
-| `user_account_updated` | User account details change | Sync user data, audit trail |
-| `user_account_deleted` | User account deleted | Cleanup, GDPR compliance |
 | `collection_item_created` | CMS item created | Content syndication, search indexing |
 | `collection_item_changed` | CMS item updated | Update external systems, clear caches |
 | `collection_item_deleted` | CMS item deleted | Remove from external systems |
+| `collection_item_published` | CMS item published | Invalidate caches, publish downstream content |
 | `collection_item_unpublished` | CMS item unpublished | Update content visibility |
+| `comment_created` | A comment is added to a page | Notify editors, route review workflows |
+
+### Deprecated event types
+
+| Event | Status |
+|-------|--------|
+| `user_account_added` | Deprecated 2026-10-17 — not a valid Data API v2 `triggerType` |
+| `user_account_updated` | Deprecated 2026-10-17 — not a valid Data API v2 `triggerType` |
+| `user_account_deleted` | Deprecated 2026-10-17 — not a valid Data API v2 `triggerType` |
+
+Earlier versions of this skill listed three `user_account_*` events. As of
+2026-10-17 they are not accepted `triggerType` values: they are absent from
+[All Events](https://developers.webflow.com/data/reference/all-events), their
+per-event reference pages (`/data/reference/webhooks/events/user-account-*`)
+return 404, and they are not in the `TriggerType` enum of Webflow's official
+`webflow-api` npm SDK (checked at both v3.3.4 and v1.3.0). They are kept listed
+here, marked deprecated, so existing integrations can recognise the names — do
+not register webhooks for them. If you need Webflow Users (Memberships) data,
+check the current Data API reference for a supported endpoint; this skill does
+not document one.
 
 ## Event Payload Structure
 

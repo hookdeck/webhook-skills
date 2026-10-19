@@ -152,9 +152,9 @@ export async function POST(request: NextRequest) {
         // Add cache clearing or build trigger logic here
         break;
 
-      case 'user_account_added':
-        console.log('New user account:', {
-          userId: event.payload.userId
+      case 'collection_item_published':
+        console.log('CMS item published:', {
+          id: event.payload._id
         });
         break;
 

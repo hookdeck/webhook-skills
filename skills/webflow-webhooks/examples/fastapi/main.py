@@ -127,8 +127,8 @@ async def handle_webhook(raw_body: bytes = Depends(validate_webhook_signature)):
         print("Site published")
         # Add cache clearing or build trigger logic here
 
-    elif trigger_type == 'user_account_added':
-        print(f"New user account: {payload.get('userId')}")
+    elif trigger_type == 'collection_item_published':
+        print(f"CMS item published: {payload.get('_id')}")
 
     else:
         print(f"Unhandled event type: {trigger_type}")

@@ -96,9 +96,9 @@ class TestWebflowWebhook:
                 "payload": {}
             },
             {
-                "triggerType": "user_account_added",
+                "triggerType": "collection_item_published",
                 "payload": {
-                    "userId": "user123"
+                    "_id": "item123"
                 }
             }
         ]

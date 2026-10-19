@@ -108,6 +108,13 @@ app.post('/webhooks/webflow', express.raw({ type: 'application/json' }), (req, r
 | `collection_item_created` | CMS item created | Content syndication |
 | `collection_item_changed` | CMS item updated | Update external systems |
 | `collection_item_deleted` | CMS item deleted | Remove from external systems |
+| `collection_item_published` | CMS item published | Invalidate caches, publish downstream |
+
+Webflow documents 13 event types on
+[All Events](https://developers.webflow.com/data/reference/all-events); its
+official `webflow-api` SDK `TriggerType` enum carries those plus
+`collection_item_published`. The `user_account_*` events are deprecated — see
+[references/overview.md](references/overview.md#deprecated-event-types).
 
 ## Environment Variables
 
