@@ -675,6 +675,27 @@
       ]
     },
     {
+      "name": "reducto-webhooks",
+      "description": "Receive and verify Reducto webhooks for async document parsing jobs. Use when setting up Reducto webhook handlers, debugging Svix signature verification (svix-id, svix-timestamp, svix-signature), or handling async.update job notifications with status Completed or Failed from /parse_async, /extract_async, /split_async, or /pipeline_async.",
+      "source": "./skills/reducto-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/reducto-webhooks",
+      "keywords": [
+        "webhooks",
+        "reducto"
+      ]
+    },
+    {
       "name": "sentry-webhooks",
       "description": "Receive and verify Sentry webhooks (sentry.io — the error-monitoring and application-performance platform). Use when setting up a Sentry Integration Platform webhook handler for an internal or public integration, debugging Sentry-Hook-Signature verification, or handling events like issue.created, issue.resolved, event_alert.triggered, metric_alert.critical, error.created, comment.created, seer.pr_created or preprod_artifact.size_analysis_completed. Sentry signs with HMAC-SHA256 over the RAW body, lowercase hex, keyed with the integration's Client Secret, and sends the digest as Sentry-Hook-Signature (or Sentry-App-Signature on UI-component requests). The resource is only in the Sentry-Hook-Resource header — the body has no event/type field. Not Sentry Insurance (sentry.com), not @sentry/* SDK event ingest.",
       "source": "./skills/sentry-webhooks",
