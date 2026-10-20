@@ -804,6 +804,27 @@
       ]
     },
     {
+      "name": "render-webhooks",
+      "description": "Receive and verify Render webhooks (render.com cloud hosting). Use when setting up a Render workspace webhook endpoint, debugging Standard Webhooks signature verification (webhook-id, webhook-timestamp, webhook-signature), handling the thin payload and fetching details from the Render API, or reacting to service events like deploy_started, deploy_ended, build_ended, server_failed, cron_job_run_ended, autoscaling_ended and postgres_unavailable.",
+      "source": "./skills/render-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/render-webhooks",
+      "keywords": [
+        "webhooks",
+        "render"
+      ]
+    },
+    {
       "name": "sentry-webhooks",
       "description": "Receive and verify Sentry webhooks (sentry.io — the error-monitoring and application-performance platform). Use when setting up a Sentry Integration Platform webhook handler for an internal or public integration, debugging Sentry-Hook-Signature verification, or handling events like issue.created, issue.resolved, event_alert.triggered, metric_alert.critical, error.created, comment.created, seer.pr_created or preprod_artifact.size_analysis_completed. Sentry signs with HMAC-SHA256 over the RAW body, lowercase hex, keyed with the integration's Client Secret, and sends the digest as Sentry-Hook-Signature (or Sentry-App-Signature on UI-component requests). The resource is only in the Sentry-Hook-Resource header — the body has no event/type field. Not Sentry Insurance (sentry.com), not @sentry/* SDK event ingest.",
       "source": "./skills/sentry-webhooks",
