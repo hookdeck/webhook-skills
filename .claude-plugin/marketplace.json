@@ -227,6 +227,27 @@
       ]
     },
     {
+      "name": "clickup-webhooks",
+      "description": "Receive and verify ClickUp webhooks. Use when setting up ClickUp webhook handlers, debugging X-Signature verification, or handling ClickUp events like taskCreated, taskUpdated, taskStatusUpdated, or taskCommentPosted.",
+      "source": "./skills/clickup-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/clickup-webhooks",
+      "keywords": [
+        "webhooks",
+        "clickup"
+      ]
+    },
+    {
       "name": "cloudinary-webhooks",
       "description": "Receive and verify Cloudinary webhooks (notifications). Use when setting up a Cloudinary notification receiver, verifying the x-cld-signature and x-cld-timestamp headers with the official cloudinary SDK, debugging Cloudinary signature verification failures, or handling notification_type events like upload, eager, delete, rename, moderation, and resource_tags_changed.",
       "source": "./skills/cloudinary-webhooks",
