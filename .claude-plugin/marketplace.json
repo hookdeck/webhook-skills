@@ -117,6 +117,29 @@
       ]
     },
     {
+      "name": "attio-webhooks",
+      "description": "Receive and verify Attio CRM webhooks. Use when setting up Attio webhook handlers, debugging Attio-Signature verification, deduplicating with the Idempotency-Key header, or handling Attio events like record.created, record.updated, list-entry.created, note.created, and task.created.",
+      "source": "./skills/attio-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/attio-webhooks",
+      "keywords": [
+        "webhooks",
+        "attio",
+        "crm",
+        "hmac"
+      ]
+    },
+    {
       "name": "azure-event-grid-webhooks",
       "description": "Receive and validate Azure Event Grid webhook deliveries. Use when setting up an Event Grid WebHook event handler, implementing the Microsoft.EventGrid.SubscriptionValidationEvent handshake (echo data.validationCode as validationResponse with HTTP 200), implementing the CloudEvents v1.0 HTTP OPTIONS abuse-protection preflight (WebHook-Request-Origin / WebHook-Allowed-Origin), checking the aeg-subscription-name / aeg-event-type / aeg-delivery-count headers, authenticating deliveries with a static delivery-property header or a Microsoft Entra ID bearer token, parsing Event Grid schema arrays vs CloudEvents objects, or handling events like Microsoft.Storage.BlobCreated. Event Grid does NOT sign the request body — there is no HMAC signature.",
       "source": "./skills/azure-event-grid-webhooks",
