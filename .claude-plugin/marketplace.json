@@ -572,6 +572,27 @@
       ]
     },
     {
+      "name": "mux-webhooks",
+      "description": "Receive and verify Mux webhooks. Use when setting up Mux Video webhook handlers, debugging mux-signature verification, or handling video events like video.asset.ready, video.asset.errored, video.upload.asset_created, or video.live_stream.active.",
+      "source": "./skills/mux-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/mux-webhooks",
+      "keywords": [
+        "webhooks",
+        "mux"
+      ]
+    },
+    {
       "name": "nmi-webhooks",
       "description": "Receive and verify NMI (Network Merchants) webhooks. Use when setting up NMI webhook handlers, debugging Webhook-Signature verification, or handling transaction events like transaction.sale.success, transaction.auth.success, transaction.refund.success, and transaction.void.success. Note: NMI does NOT use Standard Webhooks — the Webhook-Signature header is \"t=<nonce>,s=<sig>\" (comma-separated) where t is a NONCE (not a Unix timestamp), and the signature is HMAC-SHA256 over \"<nonce>.<raw_body>\", lowercase hex.",
       "source": "./skills/nmi-webhooks",

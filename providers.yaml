@@ -7760,8 +7760,8 @@ providers:
     notes: >
       Video API. Header mux-signature: t=<timestamp>,v1=<signature>. Signature = HMAC-SHA256 hex of
       "<timestamp>.<raw body>" with the endpoint's signing secret (different per endpoint).
-      Default tolerance 5 minutes. Official SDKs (@mux/mux-node webhooks.verifySignature /
-      unwrap) can be shown as an alternative.
+      Default tolerance 5 minutes. Official Node SDK @mux/ts (renamed from the deprecated
+      @mux/mux-node) provides webhooks.verifySignature / unwrap; mux-python has no webhook helper.
     testScenario:
       events:
         - video.asset.ready
