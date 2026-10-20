@@ -759,6 +759,27 @@
       ]
     },
     {
+      "name": "sumsub-webhooks",
+      "description": "Receive and verify Sumsub webhooks. Use when setting up Sumsub KYC / identity verification webhook handlers, debugging x-payload-digest signature verification (hex HMAC of the raw body, algorithm from x-payload-digest-alg: HMAC_SHA256_HEX, HMAC_SHA512_HEX or legacy HMAC_SHA1_HEX), or handling events like applicantReviewed, applicantPending, applicantCreated, applicantOnHold and applicantActionReviewed.",
+      "source": "./skills/sumsub-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/sumsub-webhooks",
+      "keywords": [
+        "webhooks",
+        "sumsub"
+      ]
+    },
+    {
       "name": "supabase-webhooks",
       "description": "Receive and verify Supabase webhooks. Use when setting up Supabase Database Webhooks (INSERT, UPDATE, DELETE table events sent via pg_net triggers) or Supabase Auth Hooks (send_email, send_sms, custom_access_token, before_user_created, mfa_verification_attempt, password_verification_attempt), debugging Standard Webhooks signature verification with the webhook-id, webhook-timestamp and webhook-signature headers, or handling the `v1,whsec_` secret format.",
       "source": "./skills/supabase-webhooks",
