@@ -206,6 +206,28 @@
       ]
     },
     {
+      "name": "cal-com-webhooks",
+      "description": "Receive and verify Cal.com webhooks. Use when setting up Cal.com webhook handlers, debugging x-cal-signature-256 signature verification, or handling scheduling events like BOOKING_CREATED, BOOKING_RESCHEDULED, BOOKING_CANCELLED, BOOKING_PAID, and MEETING_ENDED.",
+      "source": "./skills/cal-com-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/cal-com-webhooks",
+      "keywords": [
+        "webhooks",
+        "cal",
+        "com"
+      ]
+    },
+    {
       "name": "checkout-com-webhooks",
       "description": "Receive and verify Checkout.com webhooks (checkout.com — the global payments processor: card acquiring, APMs, disputes, payouts, issuing). Use when setting up a Checkout.com webhook handler, debugging Cko-Signature verification, or handling events like payment_approved, payment_captured, payment_declined, payment_refunded, dispute_received or fraud_reported. Checkout.com signs with HMAC-SHA256 over the RAW body, hex-encoded, in the Cko-Signature header, and can optionally send a static Authorization header key. Not Checkout Page (checkoutpage.com), not CheckoutJoy, not 2Checkout / Verifone, not Stripe Checkout, not Shopify checkout webhooks.",
       "source": "./skills/checkout-com-webhooks",
