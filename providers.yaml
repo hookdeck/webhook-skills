@@ -7657,3 +7657,160 @@ providers:
         - order/created
         - product/sold
         - livestream/stopped
+
+  # ---------------------------------------------------------------------------
+  # Verified-sources pilot batch (matches hookdeck/core source types)
+  # ---------------------------------------------------------------------------
+
+  - name: quickbooks
+    displayName: QuickBooks Online
+    docs:
+      webhooks: https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks
+      verification: https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/managing-webhooks-notifications
+    notes: >
+      Intuit QuickBooks Online accounting webhooks. Verify the intuit-signature header: HMAC-SHA256
+      of the raw request body keyed with the app's Verifier Token (Developer dashboard > app >
+      Webhooks), base64-encoded, compared timing-safe. During 2026 Intuit moved the notification
+      payload to the CloudEvents format; the signature scheme is unchanged. Check the docs for the
+      current payload shape and event type names and support both if the old eventNotifications
+      shape is still documented. Return 200 quickly; Intuit retries failures.
+
+  - name: attio
+    displayName: Attio
+    docs:
+      webhooks: https://docs.attio.com/rest-api/guides/webhooks
+    notes: >
+      CRM. Attio signs every webhook with the webhook's secret (shown in developer settings and
+      returned when the webhook is created via API). Header Attio-Signature (duplicated as
+      X-Attio-Signature) = HMAC-SHA256 of the raw request body, hex-encoded. Attio sends an
+      Idempotency-Key header that is stable across retries; use it to deduplicate.
+    testScenario:
+      events:
+        - record.created
+        - record.updated
+
+  - name: line
+    displayName: LINE Messaging API
+    docs:
+      webhooks: https://developers.line.biz/en/docs/messaging-api/receiving-messages/
+      verification: https://developers.line.biz/en/docs/messaging-api/verify-webhook-signature/
+    notes: >
+      LINE Messaging API bot webhooks. Verify the x-line-signature header: HMAC-SHA256 of the raw
+      request body keyed with the channel secret (LINE Developers Console > channel > Basic
+      settings), base64-encoded. Do not re-serialize the body before verifying. The "Verify" button
+      in the console sends a webhook with an empty events array, which must also return 200.
+    testScenario:
+      events:
+        - message
+        - follow
+
+  - name: clickup
+    displayName: ClickUp
+    docs:
+      webhooks: https://developer.clickup.com/docs/webhooks
+      verification: https://developer.clickup.com/docs/webhooksignature
+    notes: >
+      Project management. The webhook.secret is returned in the create-webhook API response.
+      Header X-Signature = HMAC-SHA256 of the raw request body with that secret, always hex.
+    testScenario:
+      events:
+        - taskCreated
+        - taskUpdated
+
+  - name: cal-com
+    displayName: Cal.com
+    docs:
+      webhooks: https://cal.com/docs/developing/guides/automation/webhooks
+    notes: >
+      Scheduling. When a secret is set on the webhook, Cal.com sends x-cal-signature-256 =
+      HMAC-SHA256 of the raw request body, hex. Custom payload templates change the body but it is
+      still signed as sent. Common triggers: BOOKING_CREATED, BOOKING_RESCHEDULED,
+      BOOKING_CANCELLED, BOOKING_PAID, MEETING_ENDED.
+    testScenario:
+      events:
+        - BOOKING_CREATED
+        - BOOKING_CANCELLED
+
+  - name: sumsub
+    displayName: Sumsub
+    docs:
+      webhooks: https://docs.sumsub.com/docs/webhook-manager
+      verification: https://docs.sumsub.com/docs/webhook-manager#verify-webhook-sender
+    notes: >
+      Identity verification / KYC. Sumsub sends x-payload-digest = HMAC of the raw body with the
+      webhook's secret key, hex. The algorithm is per webhook and is announced in
+      x-payload-digest-alg: HMAC_SHA256_HEX (default), HMAC_SHA512_HEX, or HMAC_SHA1_HEX (legacy;
+      older webhooks silently fall back to it). Verification must read the alg header and pick the
+      hash accordingly. Common types: applicantReviewed, applicantPending, applicantCreated.
+    testScenario:
+      events:
+        - applicantReviewed
+        - applicantPending
+
+  - name: mux
+    displayName: Mux
+    docs:
+      webhooks: https://www.mux.com/docs/core/listen-for-webhooks
+      verification: https://www.mux.com/docs/core/verify-webhook-signatures
+    notes: >
+      Video API. Header mux-signature: t=<timestamp>,v1=<signature>. Signature = HMAC-SHA256 hex of
+      "<timestamp>.<raw body>" with the endpoint's signing secret (different per endpoint).
+      Default tolerance 5 minutes. Official SDKs (@mux/mux-node webhooks.verifySignature /
+      unwrap) can be shown as an alternative.
+    testScenario:
+      events:
+        - video.asset.ready
+        - video.asset.errored
+
+  - name: shippo
+    displayName: Shippo
+    docs:
+      webhooks: https://docs.goshippo.com/docs/Tracking/Webhooks
+      verification: https://docs.goshippo.com/docs/Tracking/WebhookSecurity
+    notes: >
+      Shipping. HMAC is not self-serve: the customer requests it from their account manager and
+      Shippo provisions the secret. Header Shippo-Auth-Signature: t=<timestamp>,v1=<signature>,
+      signature = HMAC-SHA256 hex of "<timestamp>.<raw body>". Without HMAC, Shippo supports IP
+      allowlisting or a self-generated token in the URL; mention these as fallbacks.
+    testScenario:
+      events:
+        - track_updated
+        - transaction_created
+
+  - name: render
+    displayName: Render
+    docs:
+      webhooks: https://render.com/docs/webhooks
+    notes: >
+      Cloud hosting. Render webhooks follow the Standard Webhooks spec: headers webhook-id,
+      webhook-timestamp, webhook-signature; signature = base64 HMAC-SHA256 over
+      "<id>.<timestamp>.<raw body>". Use the standardwebhooks library. Events include
+      deploy_started, deploy_ended, build_ended, server_failed.
+    testScenario:
+      events:
+        - deploy_ended
+        - server_failed
+
+  - name: etsy
+    displayName: Etsy
+    docs:
+      webhooks: https://developers.etsy.com/documentation/essentials/webhooks/
+    notes: >
+      Marketplace. Etsy webhooks follow the Standard Webhooks spec: webhook-id, webhook-timestamp,
+      webhook-signature headers; signed content "<id>.<timestamp>.<raw body>"; secret is whsec_
+      prefixed base64 (strip prefix, base64-decode). Events include order.paid, order.shipped,
+      order.canceled, listing.updated, inventory.updated.
+    testScenario:
+      events:
+        - order.paid
+        - order.shipped
+
+  - name: reducto
+    displayName: Reducto
+    docs:
+      webhooks: https://docs.reducto.ai/workflows/svix-webhooks
+    notes: >
+      Document parsing API. Reducto delivers webhooks via Svix: svix-id, svix-timestamp,
+      svix-signature headers, whsec_ signing secret from the Svix dashboard (Reducto Studio >
+      Webhooks). Use the svix library (Webhook.verify) or the Standard Webhooks algorithm. Jobs
+      report completion/failure status.
