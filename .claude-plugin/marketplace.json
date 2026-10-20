@@ -825,6 +825,27 @@
       ]
     },
     {
+      "name": "shippo-webhooks",
+      "description": "Receive and verify Shippo webhooks. Use when setting up Shippo webhook handlers, debugging Shippo-Auth-Signature HMAC verification, securing endpoints with a URL token or IP allowlist, or handling shipping events like track_updated, transaction_created, transaction_updated, batch_created, batch_purchased, or automations_label_resolved.",
+      "source": "./skills/shippo-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/shippo-webhooks",
+      "keywords": [
+        "webhooks",
+        "shippo"
+      ]
+    },
+    {
       "name": "smile-webhooks",
       "description": "Receive and verify Smile API (getsmileapi.com) webhooks. Use when setting up a Smile webhook endpoint, verifying the Smile-Signature header (HMAC-SHA512 hex over the raw body), debugging Smile signature verification failures, or handling employment/income data events like ACCOUNT_CONNECTED, TASK_FINISHED, INCOMES_ADDED, EMPLOYMENTS_ADDED, IDENTITY_ADDED, and RECORD_COMPLETED. This is Smile API for Southeast Asian employment/income data — NOT Smile.io loyalty and NOT Smile Identity KYC.",
       "source": "./skills/smile-webhooks",
