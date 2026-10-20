@@ -7674,6 +7674,11 @@ providers:
       payload to the CloudEvents format; the signature scheme is unchanged. Check the docs for the
       current payload shape and event type names and support both if the old eventNotifications
       shape is still documented. Return 200 quickly; Intuit retries failures.
+    testScenario:
+      events:
+        - qbo.invoice.created.v1
+        - qbo.customer.updated.v1
+        - qbo.payment.created.v1
 
   - name: attio
     displayName: Attio

@@ -633,6 +633,27 @@
       ]
     },
     {
+      "name": "quickbooks-webhooks",
+      "description": "Receive and verify QuickBooks Online (Intuit) webhooks. Use when setting up QuickBooks webhook handlers, debugging intuit-signature verification with the Verifier Token, migrating from the legacy eventNotifications payload to the CloudEvents format, or handling accounting events like qbo.invoice.created.v1, qbo.customer.updated.v1, and qbo.customer.merged.v1.",
+      "source": "./skills/quickbooks-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/quickbooks-webhooks",
+      "keywords": [
+        "webhooks",
+        "quickbooks"
+      ]
+    },
+    {
       "name": "quo-webhooks",
       "description": "Receive and verify Quo webhooks (quo.com — the business phone / VoIP platform formerly known as OpenPhone). Use when setting up a Quo webhook handler, debugging signature verification, or handling call and message events like message.received, call.completed, call.summary.completed, call.transcript.completed, contact.updated or task.created. Quo has TWO signature schemes: the current versioned API (Quo-Api-Version 2026-03-30) uses Standard Webhooks / Svix-style webhook-id + webhook-timestamp + webhook-signature headers, while the legacy v1 API still sends the OpenPhone-era openphone-signature header (hmac;1;timestamp;signature). Not Quoter (CPQ, MD5 `hash` form field), not Quora, not Twilio.",
       "source": "./skills/quo-webhooks",
