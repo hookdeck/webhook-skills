@@ -1,0 +1,61 @@
+# Shippo Webhooks - Next.js Example
+
+Minimal example of receiving Shippo webhooks with `Shippo-Auth-Signature` HMAC verification, plus a URL-token fallback for accounts that don't have HMAC yet.
+
+## Prerequisites
+
+- Node.js 18+
+- A Shippo account with a webhook, and either:
+  - an **HMAC secret** provisioned by Shippo (ask your account manager for "HMAC Webhook Setup"; it can take up to 10 business days), or
+  - a **self-generated token** appended to your webhook URL as `?token=…`
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set one or both in `.env`:
+   - `SHIPPO_WEBHOOK_SECRET`: when set, every request needs a valid `Shippo-Auth-Signature` header
+   - `SHIPPO_WEBHOOK_TOKEN`: when set, every request needs a matching `?token=` query parameter
+
+## Run
+
+```bash
+npm run dev
+```
+
+Server runs on http://localhost:3000, and the webhook endpoint is `POST /webhooks/shippo`.
+
+## Test
+
+```bash
+npm test
+```
+
+The tests sign payloads with Shippo's algorithm, `hex(HMAC-SHA256(secret, "{t}.{raw body}"))`, and cover valid, tampered, stale, and malformed signatures, the token mode, and every event type.
+
+## How Verification Works
+
+1. The handler reads the **raw** request body (`await request.text()`). It doesn't parse JSON before verifying.
+2. It parses `t` and `v1` from `Shippo-Auth-Signature: t=<timestamp>,v1=<hex>`.
+3. It computes `HMAC-SHA256(secret, "{t}.{body}")` as hex and compares it timing-safely.
+4. It rejects timestamps more than 5 minutes old. This is our default; Shippo doesn't document a window.
+
+Handled events: `track_updated`, `transaction_created`, `transaction_updated`, `batch_created`, `batch_purchased`, `automations_label_resolved`.
+
+## Local Testing with Hookdeck
+
+Use the Hookdeck CLI to receive webhooks locally (no account required):
+
+```bash
+npx hookdeck-cli listen 3000 shippo --path /webhooks/shippo
+```
+
+Add the printed URL (plus `?token=…` if you use a token) as a webhook in Shippo under **Settings → API → Webhooks**, then use the dashboard's test button to send a sample payload.
