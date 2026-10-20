@@ -425,6 +425,27 @@
       ]
     },
     {
+      "name": "etsy-webhooks",
+      "description": "Receive and verify Etsy webhooks. Use when setting up Etsy webhook handlers, debugging Etsy signature verification (Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature), or handling Etsy shop events like order.paid, order.shipped, order.canceled, listing.updated, or inventory.updated.",
+      "source": "./skills/etsy-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/etsy-webhooks",
+      "keywords": [
+        "webhooks",
+        "etsy"
+      ]
+    },
+    {
       "name": "fanvue-webhooks",
       "description": "Receive and verify Fanvue webhooks. Use when setting up Fanvue webhook handlers, debugging X-Fanvue-Signature verification (HMAC-SHA256 hex over \"<t>.<raw body>\", two MACs during secret rotation), answering the unsigned fanvue.webhook.verification probe, or handling events like creator.payment.succeeded, creator.subscription.activated, creator.message.received, checkout_link.payment.succeeded, payout.paid or app.payment.succeeded.",
       "source": "./skills/fanvue-webhooks",
