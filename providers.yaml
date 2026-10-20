@@ -7819,3 +7819,10 @@ providers:
       svix-signature headers, whsec_ signing secret from the Svix dashboard (Reducto Studio >
       Webhooks). Use the svix library (Webhook.verify) or the Standard Webhooks algorithm. Jobs
       report completion/failure status.
+    testScenario:
+      events:
+        - async.update
+      prompt: >
+        Add a Reducto webhook endpoint to my {framework} app. Verify the Svix
+        signature and handle async.update notifications for jobs whose status
+        is Completed or Failed.
