@@ -6,6 +6,11 @@ on:
     paths:
       - 'skills/**'
       - '.claude-plugin/**'
+      # The sync check reads README.md and runs the generator's sync code
+      - 'README.md'
+      - 'providers.yaml'
+      - 'scripts/**'
+      - '.github/workflows/validate-provider-pr.yml'
 
 jobs:
   validate:
