@@ -31,6 +31,9 @@ function verifyOpenClawWebhook(authorizationHeader, webhookToken) {
  * Handle a verified OpenClaw payload.
  * - Finished event (primary webhook delivery): { action: "finished", jobId, runId, status, ... }
  * - Failure alert (delivery.failureDestination in webhook mode): { jobId, jobName, message, runAtMs }
+ * Field names come from OpenClaw's source (commit 5dc91d6), not its docs:
+ *   https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76
+ *   https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468
  */
 function handleOpenClawPayload(payload) {
   if (payload.action === 'finished') {

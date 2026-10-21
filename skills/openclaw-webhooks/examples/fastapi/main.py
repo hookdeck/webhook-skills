@@ -32,6 +32,10 @@ def verify_openclaw_webhook(authorization_header: Optional[str], webhook_token: 
 def handle_openclaw_payload(payload: Dict[str, Any]) -> str:
     """Finished event: {"action": "finished", "jobId", "runId", "status", ...}.
     Failure alert (delivery.failureDestination in webhook mode): {"jobId", "jobName", "message", "runAtMs"}.
+
+    Field names come from OpenClaw's source (commit 5dc91d6), not its docs:
+    https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76
+    https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468
     """
     if payload.get("action") == "finished":
         name = (payload.get("job") or {}).get("name") or payload.get("jobId")

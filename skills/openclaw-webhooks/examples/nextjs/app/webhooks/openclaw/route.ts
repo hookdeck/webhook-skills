@@ -4,6 +4,10 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+// Payload fields come from OpenClaw's source (commit 5dc91d6), not its docs:
+//   https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76
+//   https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468
+
 // Finished event: OpenClaw POSTs it after an automation run when delivery mode is "webhook"
 interface OpenClawFinishedEvent {
   action: 'finished';

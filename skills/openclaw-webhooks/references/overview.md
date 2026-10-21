@@ -26,9 +26,11 @@ Set webhook mode with `openclaw automations create ... --webhook <url>` or `open
 3. Your endpoint verifies the header, handles the event, and returns 2xx
 4. OpenClaw records the delivery as **Delivered**, **Not delivered** (HTTP rejection) or **Unknown** (response lost or timed out; not retried)
 
-A successful run with an empty summary skips the POST. Failed runs always send.
+A successful run with an empty summary skips the POST. Failed runs always send. (The docs state the empty-summary skip; the "failed runs always send" rule is [this condition](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L579) in the source.)
 
 ### Finished Event
+
+> **Source, not docs.** OpenClaw's docs only say "POST finished event payload to a URL" and don't list its fields. The fields below come from OpenClaw's source at commit `5dc91d6`: the [`CronEvent` type](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76) (`src/cron/service/state.ts`), [`buildCronFinishedWebhookPayload`](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L226-L244), which drops `summary` and `diagnostics` on error events, and the [POST with `Authorization: Bearer`](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L279-L287) (both in `src/gateway/server-cron-notifications.ts`). Field names can change between releases, so read them defensively.
 
 ```json
 {
@@ -50,6 +52,8 @@ On a failed run, `status` is `error`, `completionStatus` is `failed`, `error` ho
 ### Failure Alerts
 
 A job's `delivery.failureDestination` can also use webhook mode. Alerts go there with the same `Authorization` header and this body:
+
+> **Source, not docs.** The failure-alert body isn't in OpenClaw's docs. It comes from the [failure-alert webhook call](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468) in `src/gateway/server-cron-notifications.ts` at commit `5dc91d6`.
 
 ```json
 {
@@ -156,4 +160,11 @@ Only `text` is required. `mode` defaults to `now`.
 - [Manage automations](https://docs.openclaw.ai/automation/cron-jobs/managing-jobs)
 - [Delivery modes](https://docs.openclaw.ai/automation/cron-jobs/delivery)
 - [Inbound webhooks](https://docs.openclaw.ai/automation/cron-jobs/webhooks)
+
+Payload fields (from source, commit `5dc91d6`, not documented):
+
+- [`CronEvent` type, src/cron/service/state.ts](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76)
+- [Finished-event webhook payload, src/gateway/server-cron-notifications.ts](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L226-L244)
+- [Webhook POST and Authorization header, src/gateway/server-cron-notifications.ts](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L279-L287)
+- [Failure-alert webhook body, src/gateway/server-cron-notifications.ts](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468)
 - [OpenClaw Gateway Configuration](https://docs.openclaw.ai)

@@ -86,6 +86,8 @@ def verify_openclaw_webhook(authorization_header: str | None, webhook_token: str
 
 [Delivery modes](https://docs.openclaw.ai/automation/cron-jobs/delivery): "`webhook` | POST finished event payload to a URL". The payload is the run's finished event:
 
+> **Source, not docs.** OpenClaw's docs only say "POST finished event payload to a URL" and don't list its fields. The fields below come from OpenClaw's source at commit `5dc91d6`: the [`CronEvent` type](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/cron/service/state.ts#L53-L76) (`src/cron/service/state.ts`), [`buildCronFinishedWebhookPayload`](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L226-L244), which drops `summary` and `diagnostics` on error events, and the [POST with `Authorization: Bearer`](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L279-L287) (both in `src/gateway/server-cron-notifications.ts`). Field names can change between releases, so read them defensively.
+
 ```json
 {
   "jobId": "job_123",
@@ -112,7 +114,7 @@ def verify_openclaw_webhook(authorization_header: str | None, webhook_token: str
 | `error` | Error text on failed runs |
 | `nextRunAtMs` | Next scheduled run, when there is one |
 
-A successful run with an empty summary skips the POST; failed runs always send. If the job's `delivery.failureDestination` uses webhook mode, failure alerts go there with the same token and a smaller body: `{ "jobId", "jobName", "message", "runAtMs" }`.
+A successful run with an empty summary skips the POST; failed runs always send. If the job's `delivery.failureDestination` uses webhook mode, failure alerts go there with the same token and a smaller body: `{ "jobId", "jobName", "message", "runAtMs" }` (also from [source](https://github.com/openclaw/openclaw/blob/5dc91d677c85706878087ccd6e003dbddc75fe45/src/gateway/server-cron-notifications.ts#L463-L468), not the docs).
 
 ### Delivery Behavior
 
