@@ -119,16 +119,35 @@ providers:
 All providers and their official documentation URLs are tracked in `providers.yaml` at the repository root. When adding a new provider:
 
 1. Add the provider entry to `providers.yaml` with documentation URLs
-2. Generate the skill using the config: `./scripts/generate-skills.sh generate {provider} --config providers.yaml`
-3. Update the README.md Provider Skills table
-4. Add at least one scenario to `scripts/test-agent-scenario.sh`
+2. Add a `testScenario` to the entry (CI requires it)
+3. Generate the skill using the config: `./scripts/generate-skills.sh generate {provider} --config providers.yaml`
 
-The generator registers the new skill in `.claude-plugin/marketplace.json` automatically. For a hand-authored skill, register it (or fix any drift) with:
+The generator registers the new skill in `.claude-plugin/marketplace.json` and adds a README.md Provider Skills row if the agent didn't write one. A seeded row takes its description from the first sentence of SKILL.md, so it's worth refining. For a hand-authored skill, add both (or fix any drift) with:
 
 ```bash
-./scripts/generate-skills.sh sync-marketplace          # add any missing plugin entries
-./scripts/generate-skills.sh sync-marketplace --check   # report drift only (used by CI)
+./scripts/generate-skills.sh sync          # add missing README rows + marketplace entries
+./scripts/generate-skills.sh sync --check  # report drift only (used by CI)
 ```
+
+`sync-readme` and `sync-marketplace` run either half on its own. Both only add entries; existing rows and entries are never rewritten.
+
+### Generating a Batch of Providers
+
+Each provider is generated on its own `feat/<provider>-webhooks` branch, and every branch adds to the same three files: `README.md`, `providers.yaml` and `.claude-plugin/marketplace.json`. When you merge a batch of branches together, providers that sit next to each other alphabetically will conflict in those files.
+
+To keep conflicts to a minimum:
+
+1. Add all of the batch's `providers.yaml` entries, with `testScenario`, in one commit before generating, and push that commit. Then generate the batch with `--base-branch <that branch>`, so no branch needs to touch `providers.yaml`.
+2. If `README.md` or `marketplace.json` conflicts during a merge, keep either side and re-run sync. It re-adds whatever the conflict dropped:
+
+   ```bash
+   git checkout --ours README.md .claude-plugin/marketplace.json
+   ./scripts/generate-skills.sh sync
+   git add README.md .claude-plugin/marketplace.json && git commit --no-edit
+   ```
+
+   With `--ours`, the incoming branch's agent-written README row is replaced by a seeded one. Copy the row across from `git show <branch>:README.md` if you want to keep it.
+3. Before pushing, run `./scripts/generate-skills.sh sync --check` and `./scripts/validate-provider.sh <skill>` for each skill.
 
 **Validate locally before pushing:**
 
@@ -140,7 +159,7 @@ The generator registers the new skill in `.claude-plugin/marketplace.json` autom
 ./scripts/validate-provider.sh --all
 ```
 
-The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs, and also checks that `.claude-plugin/marketplace.json` is in sync with `skills/`.
+The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs, and also checks that `.claude-plugin/marketplace.json` and the README.md Provider Skills table are in sync with `skills/`.
 
 ### Acceptance Thresholds
 
@@ -374,7 +393,7 @@ rm -rf .worktrees && git worktree prune
 | `--no-worktree` | Generate in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Push and create PR (`true` or `draft`) | No PR |
 | `--parallel <n>` | Max concurrent generations | All providers |
-| `--model <model>` | Model to use | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | The CLI tool's own default |
 | `--max-iterations <n>` | Max test/fix cycles | 3 |
 | `--base-branch <branch>` | Branch to create from | main |
 | `--skip-tests` | Skip test execution | false |
@@ -398,7 +417,7 @@ rm -rf .worktrees && git worktree prune
 | `--create-pr [type]` | Create PR with fixes | No PR |
 | `--max-iterations <n>` | Max fix cycles | 3 |
 | `--parallel <n>` | Max concurrent reviews | All providers |
-| `--model <model>` | Model to use | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | The CLI tool's own default |
 | `--branch-prefix <prefix>` | Branch name prefix | improve |
 | `--config <file>` | YAML config file | — |
 | `--dry-run` | Preview without executing | false |

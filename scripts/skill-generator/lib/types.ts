@@ -111,6 +111,7 @@ export interface OperationResult {
   prUrl?: string;
   phases: {
     generation?: PhaseResult;
+    validation?: PhaseResult;  // scripts/validate-provider.sh (same checks as CI)
     testing: PhaseResult;
     review: PhaseResult;
     iterations: number;
@@ -130,7 +131,14 @@ export type IssueSeverity = 'critical' | 'major' | 'minor';
 /**
  * Categories for review issues
  */
-export type IssueCategory = 'verification' | 'events' | 'documentation' | 'code' | 'consistency';
+export type IssueCategory =
+  | 'structure'
+  | 'verification'
+  | 'events'
+  | 'documentation'
+  | 'code'
+  | 'consistency'
+  | 'dependencies';
 
 /**
  * A single issue found during review

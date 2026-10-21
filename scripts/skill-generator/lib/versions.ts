@@ -14,8 +14,21 @@ export interface PackageVersions {
  * Generic framework deps queried for every run. Per-provider SDK packages
  * (declared via `sdks` in providers.yaml) are merged in at query time.
  */
-export const NPM_PACKAGES = ['next', 'express', 'vitest', 'jest', 'typescript'];
-export const PIP_PACKAGES = ['fastapi', 'pytest', 'httpx'];
+export const NPM_PACKAGES = [
+  'next',
+  'react',
+  'react-dom',
+  'express',
+  'dotenv',
+  'vitest',
+  'jest',
+  'supertest',
+  'typescript',
+  '@types/node',
+  '@types/react',
+  '@types/react-dom',
+];
+export const PIP_PACKAGES = ['fastapi', 'uvicorn', 'python-dotenv', 'pytest', 'httpx'];
 
 /**
  * Get latest stable version from npm

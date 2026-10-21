@@ -59,6 +59,14 @@ Read the AGENTS.md file in this repository to understand the full skill creation
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/main.py`
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/test_webhook.py`
 
+### Integration Files
+
+- `providers.yaml` - make sure the `{{PROVIDER_KEBAB}}` entry exists with its docs URLs and a `testScenario` listing 2-3 real event names. CI fails without `testScenario`.
+- `README.md` - add a row to the Provider Webhook Skills table, in alphabetical order, in the same style as the rows around it (header names, algorithm, key events).
+- `.claude-plugin/marketplace.json` - leave it alone; the generator registers the skill.
+
+The generator runs `scripts/validate-provider.sh {{PROVIDER_KEBAB}}-webhooks` (the same check CI runs) after you finish and fills in a README row if one is missing, but a row you write will be more useful than the seeded one.
+
 ## Important Guidelines
 
 1. **Use the provider's official SDK** for signature verification when it supports the framework; **include manual verification** as a fallback for frameworks the SDK doesn't support (e.g., FastAPI when only Node SDK exists)

@@ -55,7 +55,8 @@ jobs:
           # test-examples.yml for why npm 10 breaks installs).
           node-version: '24'
 
-      - name: Check marketplace.json is in sync with skills/
+      - name: Check marketplace.json and README.md are in sync with skills/
         run: |
-          # Fails if any skill lacks a manifest entry or any entry is orphaned.
-          ./scripts/generate-skills.sh sync-marketplace --check
+          # Fails if any skill lacks a manifest entry, any entry is orphaned,
+          # or any provider skill has no README.md row.
+          ./scripts/generate-skills.sh sync --check

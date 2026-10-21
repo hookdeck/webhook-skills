@@ -38,11 +38,14 @@ import {
   getRepoInfo,
   cleanupAllWorktrees,
   hasUnpushedCommits,
+  hasUncommittedChanges,
   getWorktreePath,
   pathExistsInBranch,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
 import { syncManifest, findManifestDrift } from './lib/marketplace';
+import { syncReadme, findMissingReadmeRows } from './lib/readme';
+import { buildCommitMessage } from './lib/generator';
 
 const ROOT_DIR = join(__dirname, '..', '..');
 
@@ -191,7 +194,7 @@ async function handleGenerate(
   
   console.log(chalk.blue(`Providers (${providerConfigs.length}): ${providerConfigs.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`CLI tool: ${options.cli}`));
-  console.log(chalk.blue(`Model: ${options.model}`));
+  console.log(chalk.blue(`Model: ${options.model ?? 'CLI default'}`));
   if (!useProvidedDir && providerConfigs.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
   }
@@ -483,7 +486,7 @@ async function handleReview(
   
   console.log(chalk.blue(`Providers: ${existingProviders.map(p => p.name).join(', ')}`));
   console.log(chalk.blue(`CLI tool: ${options.cli}`));
-  console.log(chalk.blue(`Model: ${options.model}`));
+  console.log(chalk.blue(`Model: ${options.model ?? 'CLI default'}`));
   if (!useProvidedDir && existingProviders.length > 1) {
     console.log(chalk.blue(`Parallel: ${parallelCount}`));
   }
@@ -687,6 +690,7 @@ async function handleReview(
           success: reviewResult.success,
           branch: branchName,
           phases: {
+            validation: reviewResult.validation,
             testing: reviewResult.testing,
             review: reviewResult.review,
             iterations: reviewResult.iterations,
@@ -697,9 +701,12 @@ async function handleReview(
           logFile,
         };
         
-        // Commit changes if any fixes were made
-        if (reviewResult.issuesFixed > 0) {
-          const skillPath = `skills/${provider.name}-webhooks`;
+        // Commit if fixes were made, or if the skill has uncommitted work
+        // (e.g. resuming a generate run whose worktree was kept after failure)
+        const skillPath = `skills/${provider.name}-webhooks`;
+        const integrationPaths = [skillPath, 'README.md', 'providers.yaml', '.claude-plugin/marketplace.json'];
+        const hasPendingWork = await hasUncommittedChanges(workingDir, integrationPaths);
+        if (reviewResult.issuesFixed > 0 || hasPendingWork) {
           
           // Check if this is a new skill (feat) or existing skill (fix)
           // We check against 'main' branch to determine if this is a new addition
@@ -712,20 +719,23 @@ async function handleReview(
           
           const commitPrefix = isNewSkill ? 'feat' : 'fix';
           const commitVerb = isNewSkill ? 'add' : 'improve';
-          const commitMessage = `${commitPrefix}: ${commitVerb} ${provider.name}-webhooks skill`;
+          const commitSubject = `${commitPrefix}: ${commitVerb} ${provider.name}-webhooks skill`;
           
           // Stage integration files too (README row, providers.yaml entry,
           // marketplace registration) — validate-provider.sh requires them,
           // and git add is a no-op for unmodified paths.
-          await addFiles(
+          await addFiles(workingDir, integrationPaths, { logger, dryRun: reviewOptions.dryRun });
+          await commit(
             workingDir,
-            [skillPath, 'README.md', 'providers.yaml', '.claude-plugin/marketplace.json'],
+            buildCommitMessage(commitSubject, {
+              ...result.phases,
+              issuesFound: reviewResult.issuesFound,
+              issuesFixed: reviewResult.issuesFixed,
+              model: reviewOptions.model,
+              cliTool: reviewOptions.cliTool,
+            }),
             { logger, dryRun: reviewOptions.dryRun }
           );
-          await commit(workingDir, commitMessage, {
-            logger,
-            dryRun: reviewOptions.dryRun,
-          });
           
           // Only push and create PR if review was fully successful
           if (reviewOptions.createPr && repoInfo && reviewResult.success) {
@@ -739,7 +749,7 @@ async function handleReview(
             const pr = await createPullRequest({
               owner: repoInfo.owner,
               repo: repoInfo.repo,
-              title: commitMessage,
+              title: commitSubject,
               body: prBody,
               head: branchName,
               draft: isDraft,
@@ -921,6 +931,71 @@ async function handleSyncMarketplace(
   }
 }
 
+/**
+ * Sync README command handler
+ *
+ * Adds a Provider Webhook Skills row for any provider skill README.md doesn't
+ * link to yet. With --check it reports missing rows and exits non-zero.
+ */
+async function handleSyncReadme(
+  options: { check?: boolean }
+): Promise<void> {
+  if (options.check) {
+    const missing = findMissingReadmeRows();
+    if (missing.length === 0) {
+      console.log(chalk.green('✅ README.md lists every provider skill'));
+      return;
+    }
+    console.log(chalk.red(`❌ ${missing.length} provider skill(s) missing a README.md row:`));
+    for (const m of missing) console.log(chalk.red(`   - skills/${m}`));
+    console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync-readme` to add missing rows.'));
+    process.exit(1);
+  }
+
+  const { added } = syncReadme();
+  if (added.length === 0) {
+    console.log(chalk.green('✅ README.md already in sync — nothing to add'));
+  } else {
+    console.log(chalk.green(`✅ Added ${added.length} README.md row(s):`));
+    for (const a of added) console.log(chalk.green(`   - skills/${a}`));
+    console.log(chalk.gray('Rows are seeded from providers.yaml and SKILL.md; refine the description if needed.'));
+  }
+}
+
+/**
+ * Sync command handler — README.md rows + marketplace.json entries.
+ *
+ * Both syncs only add, so this is also how to resolve a merge conflict in
+ * either file: keep one side (`git checkout --ours <file>`), then re-run sync.
+ */
+async function handleSync(
+  options: { check?: boolean }
+): Promise<void> {
+  if (options.check) {
+    const { missing, orphans } = findManifestDrift();
+    const missingRows = findMissingReadmeRows();
+    let failed = false;
+    if (missing.length > 0 || orphans.length > 0) {
+      failed = true;
+      for (const m of missing) console.log(chalk.red(`❌ marketplace.json missing: skills/${m}`));
+      for (const o of orphans) console.log(chalk.red(`❌ marketplace.json entry points to a missing skill: skills/${o}`));
+    }
+    for (const m of missingRows) {
+      failed = true;
+      console.log(chalk.red(`❌ README.md missing row: skills/${m}`));
+    }
+    if (failed) {
+      console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync` to add missing entries.'));
+      process.exit(1);
+    }
+    console.log(chalk.green('✅ README.md and marketplace.json are in sync with skills/'));
+    return;
+  }
+
+  await handleSyncMarketplace({});
+  await handleSyncReadme({});
+}
+
 // CLI setup
 const program = new Command();
 
@@ -983,5 +1058,17 @@ program
   .description('Sync .claude-plugin/marketplace.json with skills/ (adds missing entries)')
   .option('--check', 'Report drift and exit non-zero without writing (for CI)', false)
   .action(handleSyncMarketplace);
+
+program
+  .command('sync-readme')
+  .description('Add missing Provider Webhook Skills rows to README.md')
+  .option('--check', 'Report missing rows and exit non-zero without writing (for CI)', false)
+  .action(handleSyncReadme);
+
+program
+  .command('sync')
+  .description('Sync README.md rows and marketplace.json entries with skills/ (adds missing entries)')
+  .option('--check', 'Report drift and exit non-zero without writing (for CI)', false)
+  .action(handleSync);
 
 program.parse();

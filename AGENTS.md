@@ -252,8 +252,8 @@ No account required — the CLI creates a guest account on first run and provide
 
 **Related Skills** — Cross-references to other skills in the repository. **CRITICAL for discoverability.**
 
-When generating a new skill, search the `skills/` directory to find other existing skills and link to them. Always include:
-- **Other provider webhook skills** — Creates semantic clustering for discovery
+When generating a new skill, search the `skills/` directory to find other existing skills and link to the most relevant ones. Always include:
+- **5–10 related provider webhook skills** — same category (e.g. payments, CRM, shipping) or same signature scheme (e.g. other Standard Webhooks providers). Creates semantic clustering for discovery
 - **`webhook-handler-patterns`** — For idempotency, error handling, retry logic
 - **`hookdeck-event-gateway`** — For production webhook infrastructure
 
@@ -486,7 +486,7 @@ Use this checklist when creating a new provider skill:
 #### Integration
 - [ ] Update `README.md` - Add skill to Provider Skills table
 - [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
-- [ ] Register in the plugin manifest: `./scripts/generate-skills.sh sync-marketplace` (the generator does this automatically; run manually for hand-authored skills)
+- [ ] Register in the plugin manifest and README: `./scripts/generate-skills.sh sync` (the generator does this automatically; run manually for hand-authored skills)
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
@@ -555,7 +555,7 @@ Gather this information:
 7. Update integration files:
    - `README.md` - Add skill to Provider Skills table
    - `providers.yaml` - Add provider entry with `testScenario` field
-   - `.claude-plugin/marketplace.json` - Register the skill with `./scripts/generate-skills.sh sync-marketplace` (auto-run by the generator)
+   - `.claude-plugin/marketplace.json` - Register the skill with `./scripts/generate-skills.sh sync` (auto-run by the generator, which also seeds a README row if one is missing)
 8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
@@ -600,7 +600,7 @@ Include:
 
 Every SKILL.md must include a Related Skills section at the end. This creates semantic clustering that helps retrieval systems.
 
-**When generating a skill, search the `skills/` directory** to discover existing skills and link to all of them:
+**When generating a skill, search the `skills/` directory** to discover existing skills and link to the most closely related ones:
 
 ```markdown
 ## Related Skills
@@ -611,7 +611,7 @@ Every SKILL.md must include a Related Skills section at the end. This creates se
 ```
 
 Always include:
-- **All other provider skills** found in `skills/` (creates semantic clustering)
+- **5–10 related provider skills** from `skills/`, chosen by category or signature scheme (creates semantic clustering). With hundreds of provider skills, linking all of them adds noise rather than signal
 - **`webhook-handler-patterns`** — For cross-cutting concerns
 - **`hookdeck-event-gateway`** — For production infrastructure
 
@@ -780,7 +780,7 @@ IS_SANDBOX=1 ./scripts/generate-skills.sh generate {provider} --config providers
 IS_SANDBOX=1 ./scripts/generate-skills.sh review --config providers.yaml --create-pr=draft
 ```
 
-Always pair `IS_SANDBOX=1` with an explicit `--model` (e.g. `--model claude-opus-4-7`) — the adapter's default is pinned to an older Opus build.
+Without `--model`, the generator uses the CLI tool's own default model. Pass `--model` to pin a specific one for a run.
 
 ## Reviewing a Provider Skill or PR
 
@@ -801,13 +801,13 @@ git checkout pr-<PR_NUMBER>
 
 This runs all example tests and uses Claude to review the skill against provider documentation for accuracy. See [CONTRIBUTING.md](CONTRIBUTING.md) for acceptance thresholds (0 critical, ≤1 major, ≤2 minor issues).
 
-### Step 2: Verify Integration (Not Covered by Automation)
+### Step 2: Verify Integration
 
-The automated review checks skill content and tests, but does **not** verify integration with repository infrastructure. Manually confirm:
+The automated review checks skill content and tests, and runs `scripts/validate-provider.sh` (which checks the integration files exist). Still confirm the entries are right, not just present:
 
 1. **README.md** — Provider added to Provider Skills table
 2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
-3. **.claude-plugin/marketplace.json** — Skill registered as a plugin (verify with `./scripts/generate-skills.sh sync-marketplace --check`)
+3. **.claude-plugin/marketplace.json** — Skill registered as a plugin (verify with `./scripts/generate-skills.sh sync --check`)
 
 ### Step 3: Spot-Check Skill Content
 
