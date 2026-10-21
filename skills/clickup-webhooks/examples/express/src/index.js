@@ -37,7 +37,7 @@ function verifyClickUpWebhook(rawBody, signature, secret) {
 
 // ClickUp webhook endpoint - express.raw keeps the body as a Buffer for verification
 app.post('/webhooks/clickup',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const signature = req.get('x-signature');
 

@@ -55,7 +55,7 @@ app.get('/health', (req, res) => {
 
 // Etsy webhook endpoint
 // IMPORTANT: express.raw() keeps the exact bytes Etsy signed
-app.post('/webhooks/etsy', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/etsy', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.ETSY_WEBHOOK_SECRET;
   if (!secret || !secret.startsWith('whsec_')) {
     console.error('ETSY_WEBHOOK_SECRET is missing or not a whsec_ secret');

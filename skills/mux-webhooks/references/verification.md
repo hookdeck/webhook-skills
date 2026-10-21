@@ -111,7 +111,7 @@ function verifyMuxSignature(rawBody, header, secret, toleranceSec = 300) {
 
 ## Common Gotchas
 
-- **Raw body only.** The signature covers the exact bytes Mux sent. Parsing JSON and re-serializing it changes whitespace and key order and breaks verification. In Express use `express.raw({ type: 'application/json' })` on the webhook route; in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
+- **Raw body only.** The signature covers the exact bytes Mux sent. Parsing JSON and re-serializing it changes whitespace and key order and breaks verification. In Express use `express.raw({ type: '*/*' })` on the webhook route; in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
 - **Secret per endpoint.** Each webhook URL has its own signing secret. Using the secret from another endpoint, another environment, or the Mux CLI's forwarding secret against real deliveries fails every time.
 - **API-created secrets are shown once.** If you created the webhook with the API and lost `signing_secret`, delete and recreate the webhook.
 - **Timestamp is in seconds**, not milliseconds.

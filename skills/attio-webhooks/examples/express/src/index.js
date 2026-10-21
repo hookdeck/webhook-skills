@@ -104,7 +104,7 @@ function handleEvent(event) {
 }
 
 // Attio webhook endpoint - must use the raw body for signature verification
-app.post('/webhooks/attio', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/attio', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.ATTIO_WEBHOOK_SECRET;
   if (!secret) {
     console.error('ATTIO_WEBHOOK_SECRET is not set');

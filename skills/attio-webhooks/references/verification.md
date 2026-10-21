@@ -40,7 +40,7 @@ function verifyAttioSignature(rawBody, signature, secret) {
 }
 
 // Express: read the raw body, then verify
-app.post('/webhooks/attio', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/attio', express.raw({ type: '*/*' }), (req, res) => {
   const signature = req.get('attio-signature') ?? req.get('x-attio-signature');
   if (!verifyAttioSignature(req.body, signature, process.env.ATTIO_WEBHOOK_SECRET)) {
     return res.status(400).send('Invalid signature');

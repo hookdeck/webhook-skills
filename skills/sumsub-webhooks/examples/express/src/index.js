@@ -49,7 +49,7 @@ function verifySumsubWebhook(rawBody, digest, digestAlg, secret) {
 
 // Sumsub webhook endpoint - must use the raw body for digest verification
 app.post('/webhooks/sumsub',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.SUMSUB_WEBHOOK_SECRET;
     if (!secret) {

@@ -11,7 +11,7 @@ const app = express();
 
 // Mux webhook endpoint - must use raw body for signature verification
 app.post('/webhooks/mux',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   async (req, res) => {
     if (!req.headers['mux-signature']) {
       return res.status(400).send('Missing mux-signature header');

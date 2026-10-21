@@ -98,7 +98,7 @@ function verifyReducto(rawBody, headers, secret) {
 
 ## Common Gotchas
 
-- **Raw body.** Pass the exact bytes received. In Express use `express.raw({ type: 'application/json' })`; in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
+- **Raw body.** Pass the exact bytes received. In Express use `express.raw({ type: '*/*' })`; in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
 - **Secret decoding.** The HMAC key is the base64-decoded part after `whsec_`, not the literal string. The SDK does this for you.
 - **Timestamp tolerance.** Messages more than 5 minutes off are rejected. Check server clock drift.
 - **Multiple signatures.** During secret rotation `svix-signature` contains several entries; any match is valid.

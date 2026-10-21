@@ -42,7 +42,7 @@ function verifyClickUpWebhook(rawBody, signature, secret) {
 }
 ```
 
-Express: mount `express.raw({ type: 'application/json' })` on the webhook route so `req.body` is a `Buffer`.
+Express: mount `express.raw({ type: '*/*' })` on the webhook route so `req.body` is a `Buffer`.
 Next.js App Router: read `await request.text()` before parsing.
 
 ### Python (FastAPI)

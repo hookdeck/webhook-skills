@@ -16,7 +16,7 @@ app.get('/health', (req, res) => {
 // Reducto webhook endpoint (Reducto delivers via Svix)
 // IMPORTANT: use express.raw() so we verify the exact raw body bytes.
 app.post('/webhooks/reducto',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.REDUCTO_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

@@ -93,7 +93,7 @@ def verify_line_signature(raw_body: bytes, signature: str, channel_secret: str) 
 
 | Framework | Raw body |
 |-----------|----------|
-| Express | `express.raw({ type: 'application/json' })` on the webhook route → `req.body` is a `Buffer` |
+| Express | `express.raw({ type: '*/*' })` on the webhook route → `req.body` is a `Buffer` |
 | Next.js (App Router) | `Buffer.from(await request.arrayBuffer())` (or `await request.text()`), Node.js runtime |
 | FastAPI | `await request.body()` → `bytes` |
 

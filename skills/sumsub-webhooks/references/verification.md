@@ -52,7 +52,7 @@ function verifySumsubWebhook(rawBody, digest, digestAlg, secret) {
 }
 ```
 
-- **Express**: mount `express.raw({ type: 'application/json' })` on the route so `req.body` is a `Buffer`.
+- **Express**: mount `express.raw({ type: '*/*' })` on the route so `req.body` is a `Buffer`.
 - **Next.js App Router**: `Buffer.from(await request.arrayBuffer())`, and read headers with `request.headers.get('x-payload-digest')`.
 
 ### Python (FastAPI)

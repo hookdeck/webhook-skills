@@ -65,7 +65,7 @@ curl -X POST http://localhost:3000/webhooks/line \
 
 ## How it works
 
-- `express.raw({ type: 'application/json' })` keeps the body as a `Buffer` for this route only — no `express.json()` before verification.
+- `express.raw({ type: '*/*' })` keeps the body as a `Buffer` for this route only — no `express.json()` before verification.
 - The signature is verified with `validateSignature(rawBody, channelSecret, signature)` from `@line/bot-sdk` before the JSON is parsed.
 - Missing or invalid signatures return `400`; verified requests return `200`, including the empty-`events` request sent by the console **Verify** button.
 - Each request carries an `events` array. The handler dispatches on `event.type` (`message`, `messageEdited`, `unsend`, `follow`, `unfollow`, `join`, `leave`, `memberJoined`, `memberLeft`, `postback`, `videoPlayComplete`, `beacon`, `accountLink`, `membership`). Use `webhookEventId` to dedupe redelivered events.

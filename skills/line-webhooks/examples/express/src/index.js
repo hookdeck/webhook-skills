@@ -103,7 +103,7 @@ function handleEvent(event) {
 }
 
 // LINE webhook endpoint - express.raw keeps the body as a Buffer for verification
-app.post('/webhooks/line', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/line', express.raw({ type: '*/*' }), (req, res) => {
   const signature = req.headers['x-line-signature'];
 
   if (!signature) {
