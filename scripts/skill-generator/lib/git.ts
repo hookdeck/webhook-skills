@@ -2,7 +2,7 @@
  * Git operations using simple-git library with worktree support for parallel execution
  */
 
-import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+import { simpleGit, SimpleGit, SimpleGitOptions } from 'simple-git';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import type { Logger } from './types';
