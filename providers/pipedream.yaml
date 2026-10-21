@@ -1,0 +1,22 @@
+name: pipedream
+displayName: Pipedream Connect
+docs:
+  webhooks: https://pipedream.com/docs/connect/webhooks
+  verification: https://pipedream.com/docs/connect/webhooks
+notes: >
+  Pipedream Connect (embedded integrations). CAVEAT to state in the verification section:
+  Pipedream only documents Connect TRIGGER webhooks as signed; connection webhooks
+  (CONNECTION_SUCCESS / CONNECTION_ERROR sent to a Connect token's webhook_uri) and plain
+  workflow HTTP requests are not documented as signed. Trigger webhooks carry
+  x-pd-signature: t=<timestamp>,v1=<hex>, HMAC-SHA256 over "<timestamp>.<raw body>" with the
+  signing key (UTF-8) shown once when the webhook URL is saved (project-level or
+  trigger-level). Reject stale timestamps to prevent replay.
+testScenario:
+  events:
+    - trigger event
+  prompt: >
+    Add a Pipedream Connect trigger webhook endpoint to my {framework} app. Verify the
+    x-pd-signature header and handle events emitted by deployed triggers.
+catalog:
+  summary: 'Verify Pipedream Connect trigger webhook signatures (`x-pd-signature: t=<unix>,v1=<hex>`, HMAC-SHA256 over `<t>.<raw body>`, 5-minute replay window), and handle the unsigned `CONNECTION_SUCCESS` / `CONNECTION_ERROR` connection webhooks'
+  displayName: Pipedream

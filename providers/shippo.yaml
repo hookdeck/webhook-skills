@@ -1,0 +1,16 @@
+name: shippo
+displayName: Shippo
+docs:
+  webhooks: https://docs.goshippo.com/docs/Tracking/Webhooks
+  verification: https://docs.goshippo.com/docs/Tracking/WebhookSecurity
+notes: >
+  Shipping. HMAC is not self-serve: the customer requests it from their account manager and
+  Shippo provisions the secret. Header Shippo-Auth-Signature: t=<timestamp>,v1=<signature>,
+  signature = HMAC-SHA256 hex of "<timestamp>.<raw body>". Without HMAC, Shippo supports IP
+  allowlisting or a self-generated token in the URL; mention these as fallbacks.
+testScenario:
+  events:
+    - track_updated
+    - transaction_created
+catalog:
+  summary: Verify Shippo webhook signatures (`Shippo-Auth-Signature`, `t=…,v1=…` hex HMAC-SHA256 over `{t}.{body}`; HMAC provisioned by Shippo on request) with a URL-token fallback, handle track_updated, transaction_created/updated, batch, and automations_label_resolved events

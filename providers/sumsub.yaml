@@ -1,0 +1,17 @@
+name: sumsub
+displayName: Sumsub
+docs:
+  webhooks: https://docs.sumsub.com/docs/webhook-manager
+  verification: https://docs.sumsub.com/docs/webhook-manager#verify-webhook-sender
+notes: >
+  Identity verification / KYC. Sumsub sends x-payload-digest = HMAC of the raw body with the
+  webhook's secret key, hex. The algorithm is per webhook and is announced in
+  x-payload-digest-alg: HMAC_SHA256_HEX (default), HMAC_SHA512_HEX, or HMAC_SHA1_HEX (legacy;
+  older webhooks silently fall back to it). Verification must read the alg header and pick the
+  hash accordingly. Common types: applicantReviewed, applicantPending, applicantCreated.
+testScenario:
+  events:
+    - applicantReviewed
+    - applicantPending
+catalog:
+  summary: 'Verify Sumsub webhook digests (`x-payload-digest`, HMAC hex of the raw body with the algorithm named in `x-payload-digest-alg`: SHA256, SHA512 or legacy SHA1), handle applicantReviewed, applicantPending and applicantCreated events'

@@ -1,0 +1,33 @@
+name: fireblocks
+displayName: Fireblocks
+docs:
+  webhooks: https://developers.fireblocks.com/reference/webhooks-v2
+  verification: https://developers.fireblocks.com/reference/validating-webhooks
+  events: https://developers.fireblocks.com/reference/webhooks-structures-eventtypes-transaction
+notes: >
+  Two signature schemes exist. Legacy (webhooks v1): "Fireblocks-Signature" header,
+  base64-encoded RSA PKCS#1 v1.5 signature over the SHA-512 hash of the raw request
+  body, verified against a static per-environment RSA public key published in the docs
+  (separate PEM keys for US, EU/EU2, and sandbox). New (webhooks v2):
+  "Fireblocks-Webhook-Signature" header carrying a detached JWS (RS512); the kid maps to
+  auto-rotated keys at regional JWKS endpoints (e.g.
+  https://keys.fireblocks.io/.well-known/jwks.json, cache max-age 3600). Both headers
+  were sent during the migration period; v1 deprecation was slated for March 2026 —
+  RE-VERIFY current state before shipping. Does NOT follow the Standard Webhooks spec.
+  Verify against raw body bytes. Configure in Console (Developer Center) or via the
+  Webhooks v2 API; v2 adds event subscriptions and resend of events up to 30 days.
+  Retries: expects HTTP 200; 5xx/429/408 retried with exponential backoff at
+  10/30/120/300/900/1800/3600/7200/14400s, max 10 attempts. Official SDKs cover webhook
+  management but do not ship signature-verification helpers — docs provide
+  TypeScript/Python/Go/Java verification snippets. v2 event names are dotted lowercase
+  (transaction.created, transaction.status.updated); v1 names are uppercase
+  (TRANSACTION_CREATED).
+testScenario:
+  events:
+    - transaction.created
+    - transaction.status.updated
+sdks:
+  npm: ["@fireblocks/ts-sdk", "fireblocks-sdk"]
+  pip: ["fireblocks", "fireblocks-sdk"]
+catalog:
+  summary: Verify Fireblocks webhook v2 signatures (detached JWS RS512 via JWKS), handle transaction lifecycle events

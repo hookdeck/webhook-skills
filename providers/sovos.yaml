@@ -1,0 +1,17 @@
+name: sovos
+displayName: Sovos
+docs:
+  webhooks: https://docs.sovos.com/en/e-invoicing/indirect-tax-api/how-indirect-tax-api-works/using-webhooks-for-event-notifications
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+notes: >
+  Tax compliance, e-invoicing / Indirect Tax API only (other Sovos products are out of scope).
+  Sovos partners with Svix: verify with the Svix library or manually (svix-id,
+  svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>"; key is
+  the base64 part after whsec_). Sovos does not name the header prefix or secret format
+  itself; they come from Svix's linked guide. The Svix Consumer App Portal shows delivery logs
+  and the signing secret. Payloads carry eventType, e.g. document.received.
+testScenario:
+  events:
+    - document.received
+catalog:
+  summary: Verify Sovos e-invoicing (Indirect Tax API) webhooks delivered via Svix (`svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64 over `{id}.{timestamp}.{raw_body}`, `whsec_` secret from the Consumer App Portal), dispatch on `eventType` for document.received, document.completed, workflow.completed, and system.error

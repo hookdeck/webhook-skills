@@ -1,0 +1,19 @@
+name: quickbooks
+displayName: QuickBooks Online
+docs:
+  webhooks: https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks
+  verification: https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/managing-webhooks-notifications
+notes: >
+  Intuit QuickBooks Online accounting webhooks. Verify the intuit-signature header: HMAC-SHA256
+  of the raw request body keyed with the app's Verifier Token (Developer dashboard > app >
+  Webhooks), base64-encoded, compared timing-safe. During 2026 Intuit moved the notification
+  payload to the CloudEvents format; the signature scheme is unchanged. Check the docs for the
+  current payload shape and event type names and support both if the old eventNotifications
+  shape is still documented. Return 200 quickly; Intuit retries failures.
+testScenario:
+  events:
+    - qbo.invoice.created.v1
+    - qbo.customer.updated.v1
+    - qbo.payment.created.v1
+catalog:
+  summary: Verify QuickBooks Online webhook signatures (`intuit-signature`, HMAC-SHA256 base64 keyed with the Verifier Token), handle CloudEvents (`qbo.invoice.created.v1`) and legacy `eventNotifications` payloads across multiple realms

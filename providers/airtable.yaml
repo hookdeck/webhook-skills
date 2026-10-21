@@ -1,0 +1,33 @@
+name: airtable
+displayName: Airtable
+docs:
+  webhooks: https://airtable.com/developers/web/api/webhooks-overview
+  verification: https://airtable.com/developers/web/api/webhooks-overview#webhook-notification-delivery
+notes: >
+  Thin-ping model: the notification POST contains only base.id, webhook.id, and
+  timestamp — no change data. You must call GET
+  /v0/bases/{baseId}/webhooks/{webhookId}/payloads with a persisted cursor
+  (monotonic transaction number; response returns cursor + mightHaveMore, max limit
+  50) to fetch actual changes. Verify via X-Airtable-Content-MAC header:
+  "hmac-sha256=" + hex(HMAC-SHA256(base64decode(macSecretBase64), raw body));
+  macSecretBase64 is returned ONCE at creation (POST /v0/bases/{baseId}/webhooks
+  with notificationUrl + specification: dataTypes [tableData|tableFields|
+  tableMetadata], changeTypes [add|remove|update], fromSources, recordChangeScope,
+  include options). Does NOT follow the Standard Webhooks spec. Gotchas: PAT- and
+  OAuth-created webhooks expire after 7 days (extend via the refresh endpoint or by
+  listing payloads); payloads are deleted server-side after 1 week regardless;
+  failed pings retry up to 13 times with exponential backoff (~1 day) then
+  notifications are disabled and must be re-enabled; ping must get 200/204 with
+  empty body within 25s; webhook API shares the 5 req/s per-base rate limit
+  (429 → wait 30s). npm airtable (official) covers the records API only — the
+  Webhooks API must be called directly; pyairtable (community) supports webhook
+  CRUD, payloads, and notification validation.
+testScenario:
+  events:
+    - tableData/add (record created)
+    - tableData/update (cell values changed)
+sdks:
+  npm: [airtable]
+  pip: [pyairtable]
+catalog:
+  summary: Verify Airtable webhook pings (`X-Airtable-Content-MAC`, HMAC-SHA256), fetch payloads with a cursor, manage 7-day webhook expiry

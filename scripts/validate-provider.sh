@@ -10,7 +10,7 @@
 #   ./scripts/validate-provider.sh --detect-new         # Detect and validate new providers (for CI)
 #
 # Options:
-#   --skip-integration   Skip integration checks (README, providers.yaml, etc.)
+#   --skip-integration   Skip integration checks (providers/<name>.yaml)
 #   --quiet              Only output errors
 #   --json               Output results as JSON
 
@@ -53,7 +53,7 @@ usage() {
   echo "Options:"
   echo "  --all               Validate all providers in skills/"
   echo "  --detect-new        Detect new providers vs main branch (for CI)"
-  echo "  --skip-integration  Skip integration checks (README, providers.yaml, etc.)"
+  echo "  --skip-integration  Skip integration checks (providers/<name>.yaml)"
   echo "  --quiet             Only output errors"
   echo "  --json              Output results as JSON"
   echo "  -h, --help          Show this help message"
@@ -202,47 +202,33 @@ validate_required_files() {
 }
 
 # Validate integration files
+# A provider PR owns skills/<provider>-webhooks/ and providers/<name>.yaml.
+# README.md and .claude-plugin/marketplace.json are generated from these after
+# merge (./scripts/generate-skills.sh sync), so they are not checked here.
 validate_integration() {
   local provider=$1
   local provider_name="${provider%-webhooks}"
+  local provider_file="$ROOT_DIR/providers/$provider_name.yaml"
   local errors=()
-  
-  # Check README.md has entry in Provider Skills table
-  if ! grep -q "\[$provider\]" "$ROOT_DIR/README.md" && ! grep -q "\`$provider\`" "$ROOT_DIR/README.md"; then
-    errors+=("$provider not found in README.md Provider Skills table")
-  fi
-  
-  # Check providers.yaml has entry with testScenario
-  # test-agent-scenario.sh now reads scenarios dynamically from providers.yaml
-  if [ -f "$ROOT_DIR/providers.yaml" ]; then
-    if ! grep -q "name: $provider_name" "$ROOT_DIR/providers.yaml"; then
-      errors+=("$provider_name not found in providers.yaml")
-    else
-      # Check that the provider has a testScenario defined
-      # Use awk to find the provider block and check for testScenario
-      local has_test_scenario
-      has_test_scenario=$(awk -v provider="$provider_name" '
-        /^  - name:/ { in_provider = ($3 == provider) }
-        in_provider && /testScenario:/ { print "yes"; exit }
-        /^  - name:/ && !($3 == provider) { in_provider = 0 }
-      ' "$ROOT_DIR/providers.yaml")
-      if [ "$has_test_scenario" != "yes" ]; then
-        errors+=("No testScenario for $provider_name in providers.yaml")
-      fi
-    fi
-  else
-    errors+=("providers.yaml not found at repository root")
-  fi
 
-  # Check the plugin manifest has a registration for this skill.
-  # Entries reference the skill via "source": "./skills/<provider>".
-  local manifest="$ROOT_DIR/.claude-plugin/marketplace.json"
-  if [ -f "$manifest" ]; then
-    if ! grep -q "\"\\./skills/$provider\"" "$manifest"; then
-      errors+=("$provider not registered in .claude-plugin/marketplace.json (run: ./scripts/generate-skills.sh sync-marketplace)")
-    fi
+  if [ ! -f "$provider_file" ]; then
+    errors+=("providers/$provider_name.yaml not found (one file per provider; see providers/stripe.yaml)")
   else
-    errors+=(".claude-plugin/marketplace.json not found at repository root")
+    # testScenario is read by test-agent-scenario.sh
+    if ! grep -q "^testScenario:" "$provider_file"; then
+      errors+=("No testScenario in providers/$provider_name.yaml")
+    fi
+    # catalog.summary becomes the README provider table row (unless catalog.readme is false)
+    local has_summary
+    has_summary=$(awk '
+      /^catalog:/ { in_catalog = 1; next }
+      in_catalog && /^[^ #]/ { in_catalog = 0 }
+      in_catalog && /^  summary: *[^ ]/ { print "yes"; exit }
+      in_catalog && /^  readme: *false/ { print "yes"; exit }
+    ' "$provider_file")
+    if [ "$has_summary" != "yes" ]; then
+      errors+=("No catalog.summary in providers/$provider_name.yaml (the README \"What It Does\" text)")
+    fi
   fi
 
   # Return errors
@@ -340,10 +326,10 @@ if [ ${#FAILED_PROVIDERS[@]} -gt 0 ]; then
     log "  - $provider"
   done
   echo ""
-  log "Please ensure you have updated:"
+  log "Please ensure you have added:"
   log "  1. All required skill files (SKILL.md, references/, examples/)"
-  log "  2. README.md - Add provider to Provider Skills table"
-  log "  3. providers.yaml - Add provider entry with documentation URLs and testScenario"
+  log "  2. providers/<name>.yaml - docs URLs, testScenario and catalog.summary"
+  log "README.md and marketplace.json are generated after merge; no need to edit them."
   exit 1
 else
   log "${GREEN}All ${#PASSED_PROVIDERS[@]} provider(s) passed validation!${NC}"

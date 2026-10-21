@@ -1,0 +1,21 @@
+name: sendoso
+displayName: Sendoso
+docs:
+  webhooks: https://developer.sendoso.com/webhooks/introduction
+  verification: https://developer.sendoso.com/webhooks/security
+notes: >
+  Corporate gifting / direct mail. Webhooks are opt-in: ask Sendoso support
+  (developers@sendoso.com) to enable them, then use the webhooks portal URL from the
+  integrations page to subscribe endpoints. Svix delivery: svix-id, svix-timestamp,
+  svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>" keyed with the base64
+  part of the whsec_ endpoint secret. Sendoso publishes source IPs (US list). Event names are
+  listed in the webhooks portal; check docs for current names (send and delivery status
+  changes).
+testScenario:
+  events:
+    - send status
+  prompt: >
+    Add a Sendoso webhook endpoint to my {framework} app. Verify the Svix signature and
+    handle send and delivery status updates.
+catalog:
+  summary: Verify Sendoso Svix signatures (`svix-id`, `svix-timestamp`, `svix-signature`, per-endpoint `whsec_` secret), handle corporate gifting send status events like `send.shipped`, `send.delivered` and `send.redeemed` (payload carries `send_gid` and `status_changed_at` only)

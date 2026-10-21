@@ -1,0 +1,30 @@
+name: twitch
+displayName: Twitch
+docs:
+  webhooks: https://dev.twitch.tv/docs/eventsub/handling-webhook-events/
+  verification: https://dev.twitch.tv/docs/eventsub/handling-webhook-events/#verifying-the-event-message
+  events: https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
+notes: >
+  Verify via Twitch-Eventsub-Message-Signature = "sha256=" + hex HMAC-SHA256(secret,
+  Twitch-Eventsub-Message-Id + Twitch-Eventsub-Message-Timestamp + raw body);
+  timing-safe compare, reject with 4xx on mismatch. Secret is set per subscription
+  (10-100 ASCII chars) when creating via POST /helix/eventsub/subscriptions with an
+  app access token (user tokens rejected for webhook transport); callback must be
+  HTTPS on port 443. Twitch-Eventsub-Message-Type is notification |
+  webhook_callback_verification | revocation: for webhook_callback_verification
+  respond 200 with the raw challenge string (text/plain, not JSON-wrapped); for
+  revocation (user_removed, authorization_revoked, notification_failures_exceeded,
+  version_removed) return 2xx. Respond within a few seconds or the subscription gets
+  revoked after repeated failures; at-least-once delivery — dedupe on message ID and
+  reject timestamps older than 10 minutes. Subscriptions have a cost model
+  (max_total_cost, typically 10000; user-authorized subs cost 0). channel.follow
+  requires version 2 with a moderator_user_id condition; channel.update is v2. Does
+  NOT follow the Standard Webhooks spec. No official SDK; twurple (npm) and
+  twitchAPI (pip) are community libraries.
+testScenario:
+  events:
+    - stream.online
+    - channel.follow
+    - channel.subscribe
+catalog:
+  summary: Verify Twitch EventSub signatures (`Twitch-Eventsub-Message-Signature`, HMAC-SHA256), answer challenges, handle stream and channel events

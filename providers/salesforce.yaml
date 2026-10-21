@@ -1,0 +1,32 @@
+name: salesforce
+displayName: Salesforce
+docs:
+  webhooks: https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_om_outboundmessaging.htm
+  overview: https://developer.salesforce.com/docs/atlas.en-us.platform_events.meta/platform_events/platform_events_intro.htm
+notes: >
+  CRM platform. Salesforce has no classic HMAC webhook; the closest native push is Outbound
+  Messages (Flow/Workflow), which POST a SOAP/XML envelope to your endpoint. There is no
+  signature — authenticate by (1) validating the OrganizationId element in the message against
+  your known Salesforce org id, (2) restricting to Salesforce IP ranges and enforcing HTTPS, and
+  optionally (3) mutual TLS. The endpoint must return a SOAP <Ack>true</Ack> response or
+  Salesforce retries. The skill should parse the SOAP/XML body, validate OrganizationId, and
+  return the ack envelope. Mention Platform Events / Change Data Capture as the streaming
+  alternative. Common triggers: Account, Opportunity, Contact, Lead record changes.
+testScenario:
+  events:
+    - Opportunity outbound message
+    - Account outbound message
+  prompt: >
+    Create a {framework} webhook handler for Salesforce Outbound Messages. Parse the SOAP/XML
+    POST body, authenticate by validating the OrganizationId element against a known org id (plus
+    HTTPS/IP allowlisting), process the notified records, and return the required SOAP
+    <Ack>true</Ack> response. If you use any skills to help with this, add a comment noting which
+    skill(s) you referenced.
+catalog:
+  summary: Handle Salesforce Outbound Messages (SOAP/XML), validate OrganizationId, return the required Ack response
+  marketplace:
+    description: Handle Salesforce Outbound Messages (SOAP/XML), validate OrganizationId, and return the required Ack response.
+    keywords:
+    - webhooks
+    - salesforce
+    - crm

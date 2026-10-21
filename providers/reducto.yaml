@@ -1,0 +1,18 @@
+name: reducto
+displayName: Reducto
+docs:
+  webhooks: https://docs.reducto.ai/workflows/svix-webhooks
+notes: >
+  Document parsing API. Reducto delivers webhooks via Svix: svix-id, svix-timestamp,
+  svix-signature headers, whsec_ signing secret from the Svix dashboard (Reducto Studio >
+  Webhooks). Use the svix library (Webhook.verify) or the Standard Webhooks algorithm. Jobs
+  report completion/failure status.
+testScenario:
+  events:
+    - async.update
+  prompt: >
+    Add a Reducto webhook endpoint to my {framework} app. Verify the Svix
+    signature and handle async.update notifications for jobs whose status
+    is Completed or Failed.
+catalog:
+  summary: 'Verify Reducto async job webhooks (delivered via Svix: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256, `whsec_` secret), handle `async.update` notifications with job `status` `Completed` or `Failed`'

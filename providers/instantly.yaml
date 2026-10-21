@@ -1,0 +1,16 @@
+name: instantly
+displayName: Instantly
+docs:
+  webhooks: https://help.instantly.ai/en/articles/6261906-webhooks
+  verification: https://developer.instantly.ai/api-reference/webhook/create-webhook
+notes: >
+  Cold email platform. No signature. Webhooks accept optional custom headers (UI or API v2
+  headers object, e.g. Authorization: Basic ... or a custom secret header); compare
+  constant-time. Payload event_type values include email_sent, email_opened, reply_received,
+  email_bounced, lead_interested, lead_unsubscribed.
+testScenario:
+  events:
+    - reply_received
+    - email_sent
+catalog:
+  summary: 'Authenticate Instantly cold email webhooks — no signature; constant-time compare of the custom header you attach to the webhook (`Authorization: Basic ...` or a secret header), handle `email_sent`, `reply_received`, `email_bounced`, `lead_interested`, lead status and custom label events'

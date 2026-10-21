@@ -1,0 +1,14 @@
+name: clickup
+displayName: ClickUp
+docs:
+  webhooks: https://developer.clickup.com/docs/webhooks
+  verification: https://developer.clickup.com/docs/webhooksignature
+notes: >
+  Project management. The webhook.secret is returned in the create-webhook API response.
+  Header X-Signature = HMAC-SHA256 of the raw request body with that secret, always hex.
+testScenario:
+  events:
+    - taskCreated
+    - taskUpdated
+catalog:
+  summary: Verify ClickUp webhook signatures (`X-Signature`, HMAC-SHA256 hex over the raw body with the per-webhook `webhook.secret`), handle taskCreated, taskUpdated, taskStatusUpdated, and taskCommentPosted events

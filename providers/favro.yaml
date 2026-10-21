@@ -1,0 +1,32 @@
+name: favro
+displayName: Favro
+docs:
+  webhooks: https://favro.com/developer/
+  verification: https://favro.com/developer/#webhook-signatures
+notes: >
+  Planning / collaboration (Kanban) platform. Does NOT use the Standard Webhooks spec.
+  The signature is in the X-Favro-Webhook header (NOT X-Favro-Backend-Identifier, an
+  unrelated internal header). Value = base64(HMAC-SHA1(key = webhook secret,
+  msg = payloadId + the URL exactly as provided at webhook creation)). The signed
+  message is payloadId (a base64 string in the body) concatenated with the target URL —
+  NOT the raw request body — and the algorithm is SHA1, base64-encoded (not SHA256/hex).
+  *** SCHEME QUOTED VERBATIM from favro.com/developer (Jul 2026): "The header is a base64
+  digest of an HMAC-SHA1 hash. The hashed content is the concatenation of the payloadId
+  and the URL exactly as it was provided during webhook creation. The key used to sign
+  this text is the secret you entered when setting up the webhook." ***
+  Store the registered URL (FAVRO_WEBHOOK_URL) byte-identically or every signature fails —
+  the #1 gotcha. Webhooks are created per board/widget via POST create-webhook (name,
+  widgetCommonId, postToUrl, secret) or via Favro UI automations. On creation Favro sends
+  a Ping the endpoint must accept (2xx) to validate setup; the ping carries a payloadId and
+  is signed with the same scheme: {"payloadId":"<base64=>","action":"ping","hookId":"<id>",
+  "hook":{"url":"<postToUrl>"}}. Payloads carry an `action` field; the object type is
+  inferred from the card/comment object present (handlers dispatch on <type>.<action>):
+  card created/committed/moved/updated/deleted, comment created/updated/deleted.
+  UI-automation-triggered webhooks send partial data with no pre-update state. Retry
+  behavior is not documented. No official SDK (community Node @bscotch/bravo implements it).
+testScenario:
+  events:
+    - card.created
+    - card.moved
+catalog:
+  summary: Verify Favro `X-Favro-Webhook` signatures (base64 HMAC-SHA1 over `payloadId` + the registered URL, NOT the body), accept the setup ping, handle `card.created`, `card.committed`, `card.moved`, `card.updated`, `card.deleted`, and `comment.*` events

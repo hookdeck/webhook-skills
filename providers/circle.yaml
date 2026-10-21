@@ -1,0 +1,26 @@
+name: circle
+displayName: Circle
+docs:
+  webhooks: https://developers.circle.com/cpn/guides/webhooks/setup-webhook-notifications
+  verification: https://developers.circle.com/cpn/guides/webhooks/verify-webhook-signatures
+  events: https://developers.circle.com/circle-mint/references/webhook-notifications
+notes: >
+  Circle Payments Network (CPN) / Circle Mint. v2 notifications are signed with an
+  asymmetric ECDSA key (ECDSA_SHA_256) — not HMAC and not the Standard Webhooks spec.
+  Each POST carries X-Circle-Signature (base64 signature) and X-Circle-Key-Id (public
+  key UUID). Fetch the matching public key via GET /v2/cpn/notifications/publicKey/{keyId}
+  (returns algorithm ECDSA_SHA_256 + base64 DER/SPKI key) using the CIRCLE_API_KEY as a
+  Bearer token, then verify the signature over the RAW request body. Cache the public key
+  by keyId. On subscription create/update Circle validates the endpoint with a HEAD request
+  (return 200 to HEAD and POST); non-200 triggers retries. Events are identified by a
+  notificationType body field (payments, paymentIntents, transfers, payouts, ...), NOT the
+  transactions.inbound/outbound of the separate W3S / Programmable Wallets product. Optional
+  egress IP allowlist: 35.169.154.32, 3.90.127.28, 3.230.111.7, 54.88.227.75.
+testScenario:
+  events:
+    - payments
+    - paymentIntents
+catalog:
+  summary: Verify Circle CPN/Mint webhook signatures (`X-Circle-Signature`, ECDSA_SHA_256), handle payments, paymentIntents, transfers, and payouts notifications
+  marketplace:
+    description: Receive and verify Circle (Circle Payments Network / Circle Mint) webhooks. Use when setting up Circle webhook handlers, debugging ECDSA signature verification (X-Circle-Signature, X-Circle-Key-Id), or handling notifications like payments, paymentIntents, transfers, and payouts.

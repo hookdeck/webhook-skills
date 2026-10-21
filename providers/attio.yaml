@@ -1,0 +1,21 @@
+name: attio
+displayName: Attio
+docs:
+  webhooks: https://docs.attio.com/rest-api/guides/webhooks
+notes: >
+  CRM. Attio signs every webhook with the webhook's secret (shown in developer settings and
+  returned when the webhook is created via API). Header Attio-Signature (duplicated as
+  X-Attio-Signature) = HMAC-SHA256 of the raw request body, hex-encoded. Attio sends an
+  Idempotency-Key header that is stable across retries; use it to deduplicate.
+testScenario:
+  events:
+    - record.created
+    - record.updated
+catalog:
+  summary: Verify Attio CRM webhook signatures (`Attio-Signature`, HMAC-SHA256 hex over the raw body), deduplicate on `Idempotency-Key`, handle record.created, record.updated, list-entry.created, list-entry.updated, note.created, and task.created events
+  marketplace:
+    keywords:
+    - webhooks
+    - attio
+    - crm
+    - hmac

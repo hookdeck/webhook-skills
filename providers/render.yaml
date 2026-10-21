@@ -1,0 +1,15 @@
+name: render
+displayName: Render
+docs:
+  webhooks: https://render.com/docs/webhooks
+notes: >
+  Cloud hosting. Render webhooks follow the Standard Webhooks spec: headers webhook-id,
+  webhook-timestamp, webhook-signature; signature = base64 HMAC-SHA256 over
+  "<id>.<timestamp>.<raw body>". Use the standardwebhooks library. Events include
+  deploy_started, deploy_ended, build_ended, server_failed.
+testScenario:
+  events:
+    - deploy_ended
+    - server_failed
+catalog:
+  summary: Verify Render Standard Webhooks signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`), handle deploy, build, outage, cron job and Postgres events like deploy_ended and server_failed

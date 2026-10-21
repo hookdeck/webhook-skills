@@ -1,0 +1,26 @@
+name: shipbob
+displayName: ShipBob
+docs:
+  webhooks: https://developer.shipbob.com/2026-01/webhooks
+  verification: https://developer.shipbob.com/2026-01/webhooks#verifying-signatures
+notes: >
+  Fulfillment platform. Uses the Standard Webhooks (Svix) scheme: headers
+  webhook-id, webhook-timestamp, webhook-signature; HMAC-SHA256 over
+  "{webhook-id}.{webhook-timestamp}.{body}", base64-encoded. Signing secret is
+  whsec_<base64> — strip the whsec_ prefix and base64-decode the remainder for
+  the raw HMAC key. webhook-signature holds space-delimited "v1,<sig>" entries;
+  match the v1 entry with a timing-safe compare against the RAW body. The event
+  topic arrives in the x-webhook-topic header (dotted names like order.shipped;
+  legacy 1.0/2.0 used shipbob-topic with underscores). Subscribe via
+  POST /2026-01/webhook with {topics: [...], url}; requires webhooks_write plus
+  the read scope per topic (orders_read/fulfillments_read, returns_read,
+  receiving_read, billing_read). No official SDK; Node uses the standardwebhooks
+  package, Python verifies manually. Common topics: order.shipped,
+  order.shipment.delivered, order.shipment.tracking.updated, return.created,
+  wro.created, billing.charge.created.
+testScenario:
+  events:
+    - order.shipped
+    - order.shipment.delivered
+catalog:
+  summary: Verify ShipBob webhook signatures (Standard Webhooks/Svix, `webhook-signature`), dispatch on `x-webhook-topic`, handle order.shipped, delivery, return, and WRO events

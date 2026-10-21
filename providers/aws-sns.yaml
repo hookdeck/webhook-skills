@@ -1,0 +1,31 @@
+name: aws-sns
+displayName: AWS SNS
+docs:
+  webhooks: https://docs.aws.amazon.com/sns/latest/dg/SendMessageToHttp.prepare.html
+  verification: https://docs.aws.amazon.com/sns/latest/dg/sns-verify-signature-of-message-verify-message-signature.html
+notes: >
+  SNS POSTs a JSON envelope (Type, MessageId, TopicArn, Message, Timestamp,
+  Signature, SignatureVersion, SigningCertURL, plus Subject/UnsubscribeURL for
+  Notification and SubscribeURL/Token for confirmations); the x-amz-sns-message-type
+  header carries the type. Verify by building a "Key\nValue\n" string from
+  byte-sorted fields (Notification: Message, MessageId, Subject?, Timestamp,
+  TopicArn, Type; confirmations: Message, MessageId, SubscribeURL, Timestamp, Token,
+  TopicArn, Type), then RSA-verify the base64 Signature with the cert fetched over
+  HTTPS from SigningCertURL, which MUST be an sns.*.amazonaws.com URL.
+  SignatureVersion 1 = SHA1 (default), 2 = SHA256 (opt-in via SetTopicAttributes).
+  Subscriptions require a handshake: GET the SubscribeURL (or call
+  ConfirmSubscription with Token) from the SubscriptionConfirmation message. NOT
+  Standard Webhooks. Gotchas: respond 2xx within ~15s or SNS retries (default HTTP/S
+  policy ~50 retries across 4 backoff phases, customizable; DLQ via RedrivePolicy);
+  Content-Type is text/plain by default; raw message delivery mode
+  (RawMessageDelivery=true, x-amz-sns-rawdelivery: true) strips the envelope
+  entirely — no Signature to verify. sns-validator (npm, AWS-official) predates
+  SignatureVersion 2 — check SHA256 support before recommending.
+testScenario:
+  events:
+    - Notification
+    - SubscriptionConfirmation
+sdks:
+  npm: [sns-validator]
+catalog:
+  summary: Verify AWS SNS message signatures (RSA with SigningCertURL), confirm subscriptions, handle Notification envelopes

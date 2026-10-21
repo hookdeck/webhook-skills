@@ -1,0 +1,29 @@
+name: ebay
+displayName: eBay
+docs:
+  webhooks: https://developer.ebay.com/api-docs/commerce/notification/overview.html
+  verification: https://developer.ebay.com/marketplace-account-deletion
+  events: https://developer.ebay.com/api-docs/commerce/notification/resources/topic/methods/getTopics
+notes: >
+  eBay Notification API (Commerce). Does NOT use HMAC and does NOT follow Standard
+  Webhooks. Two mechanisms: (1) Endpoint challenge on destination save — eBay sends
+  GET <endpoint>?challenge_code=... and you must return HTTP 200 with JSON
+  {"challengeResponse": "<hex>"} where hex = SHA-256(challengeCode + verificationToken
+  + endpoint); the concatenation order is mandatory and endpoint must be the exact URL
+  eBay calls. verificationToken is 32-80 chars, [A-Za-z0-9_-]. (2) Per-notification
+  ECDSA signature — the x-ebay-signature header is Base64-encoded JSON {alg, kid,
+  signature, digest}; use kid to fetch the public key via getPublicKey
+  (GET /commerce/notification/v1/public_key/{kid}, needs an OAuth app token), then
+  verify the Base64 ECDSA signature (digest SHA-1) over the RAW request body. Cache the
+  public key ~1 hour keyed by kid. Ack with a 2xx (204) within the retry window or the
+  app keyset can be disabled. Official Node SDK: event-notification-nodejs-sdk
+  (EventNotificationSDK.process / validateEndpoint). Topic arrives at metadata.topic;
+  the required topic is MARKETPLACE_ACCOUNT_DELETION (configure in Developer Portal →
+  Application Keys → Alerts and Notifications), other topics via the Notification API
+  (topics + destinations + subscriptions).
+testScenario:
+  events:
+    - MARKETPLACE_ACCOUNT_DELETION
+    - ITEM_PRICE_REVISION
+catalog:
+  summary: Complete the eBay endpoint challenge, verify the `x-ebay-signature` (ECDSA via `getPublicKey`), handle MARKETPLACE_ACCOUNT_DELETION notifications

@@ -1,0 +1,34 @@
+name: bridge-xyz
+displayName: Bridge
+docs:
+  webhooks: https://apidocs.bridge.xyz/get-started/introduction/quick-start/setting-up-webhooks
+  verification: https://apidocs.bridge.xyz/platform/additional-information/webhooks/signature
+notes: >
+  Stablecoin orchestration platform (customers/KYC, transfers, virtual accounts, cards).
+  Webhooks are signed with RSA-SHA256, NOT HMAC and NOT Standard Webhooks. The
+  X-Webhook-Signature header is "t=<timestamp_ms>,v0=<base64_signature>". Verify by
+  building "<timestamp>.<raw_body>", SHA256-hashing it to a digest, then RSA-SHA256
+  verifying that digest with the endpoint's public key. Quirk: the digest is hashed
+  AGAIN inside the RSA-SHA256 verify (Bridge's reference implementation feeds the digest,
+  not the raw string, into the verifier) — replicate it exactly. The public key is
+  returned PER-WEBHOOK as the `public_key` PEM field in the create/update/enable API
+  response, not a single global key. Webhooks are created via POST /v0/webhooks with an
+  `event_categories` array (category-based subscription, e.g. ["customer","kyc_link",
+  "transfer"]) and start disabled — enable with PUT status=active. Auth for the API is the
+  `Api-Key` header. Event names are "<category>.<action>". Reject events older than ~10
+  minutes and return a non-2xx (docs use 400) to trigger retries. No official SDK, so all
+  frameworks verify manually. Use the raw, unparsed request body.
+testScenario:
+  events:
+    - customer.updated
+    - transfer.updated
+  prompt: >
+    Create a {framework} webhook handler for Bridge (bridge.xyz). Verify the
+    X-Webhook-Signature header ("t=<ms>,v0=<base64>") by building "<timestamp>.<raw_body>",
+    SHA256-hashing it to a digest, then RSA-SHA256 verifying that digest against the
+    endpoint's per-webhook public key (note: the digest is hashed again inside the verify).
+    Reject events older than ~10 minutes, return 400 on failure, and dispatch on the
+    "<category>.<action>" event type. If you use any skills to help with this, add a comment
+    noting which skill(s) you referenced.
+catalog:
+  summary: Verify Bridge (bridge.xyz) webhook signatures (`X-Webhook-Signature`, RSA-SHA256 with a per-endpoint public key), handle customer, kyc_link, transfer, and virtual_account events

@@ -1,0 +1,26 @@
+name: telnyx
+displayName: Telnyx
+docs:
+  webhooks: https://developers.telnyx.com/docs/messaging/messages/receiving-webhooks
+  verification: https://support.telnyx.com/en/articles/4334722-how-to-leverage-webhooks
+  events: https://developers.telnyx.com/docs/messaging/messages/receiving-webhooks
+notes: >
+  Communications platform (SMS, MMS, voice, Verify). Webhook API v2 signs every event
+  with an Ed25519 public-key signature (NOT HMAC and NOT the Standard Webhooks spec).
+  Two headers: telnyx-signature-ed25519 (base64 signature) and telnyx-timestamp (unix
+  seconds). Reconstruct the signed message as "{telnyx-timestamp}|{raw_body}" and verify
+  against the base64 Ed25519 signature using your account public key from Mission Control
+  > Account Settings > Keys & Credentials > Public Key (per-account, not per-profile).
+  Use the exact raw body; re-serializing JSON breaks verification. Enforce a 300s (5 min)
+  timestamp tolerance to block replays. Endpoints must return 2xx within 2000ms or Telnyx
+  retries with backoff then fails over to the failover URL. NOTE: the pinned telnyx SDKs
+  (Node telnyx@7, Python telnyx) expose client.webhooks.unwrap() but wire it to the
+  standardwebhooks library, which does NOT match Telnyx's Ed25519 scheme — verify manually
+  with tweetnacl (Node) / PyNaCl (Python). Common events: message.received, message.sent,
+  message.finalized.
+testScenario:
+  events:
+    - message.sent
+    - message.finalized
+catalog:
+  summary: Verify Telnyx Webhook API v2 signatures (Ed25519, `telnyx-signature-ed25519` + `telnyx-timestamp`), handle message.received, message.sent, and message.finalized events

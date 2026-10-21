@@ -1,0 +1,21 @@
+name: crusoe
+displayName: Crusoe Cloud
+docs:
+  webhooks: https://docs.crusoecloud.com/notifications/overview
+notes: >
+  AI cloud provider. Webhooks are a channel of Crusoe Cloud's Notifications service (resource
+  health, Command Center infrastructure failures, budget alerts, org and Managed AI events),
+  configured in the Svix dashboard reached from the Crusoe console. Crusoe does not publish
+  verification docs; headers (svix-id, svix-timestamp, svix-signature), algorithm
+  (HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>") and the whsec_ secret format are
+  Svix defaults. Say clearly that they are inferred from Svix, not quoted from Crusoe. Payload
+  structure varies by event type; parse defensively.
+testScenario:
+  events:
+    - resource health
+    - budget alert
+  prompt: >
+    Add a Crusoe Cloud notifications webhook endpoint to my {framework} app. Verify the Svix
+    signature and handle resource health and budget alert notifications.
+catalog:
+  summary: 'Verify Crusoe Cloud notification webhook signatures (delivered via Svix: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64), handle `resource.automated_remediation`, resource health, budget alert, organization, and Managed AI notifications'

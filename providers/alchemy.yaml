@@ -1,0 +1,32 @@
+name: alchemy
+displayName: Alchemy
+docs:
+  webhooks: https://www.alchemy.com/docs/reference/webhooks-overview
+  verification: https://www.alchemy.com/docs/reference/notify-api-quickstart#webhook-signature--security
+notes: >
+  Web3 developer platform. Alchemy Notify webhooks push real-time onchain events. Verify with the
+  X-Alchemy-Signature header: HMAC-SHA256 (hex) over the RAW request body (never the JSON-reparsed
+  body), keyed with the per-webhook signing key (copied from the top-right of the webhook's detail
+  page in the Notify dashboard, or fetched via the Notify API). Single header, no webhook-id/timestamp
+  — NOT Standard Webhooks compliant. Compare with a timing-safe equality check. The signing key is
+  per-webhook, distinct from the app Auth Token used for the Notify API / alchemy-sdk. The alchemy-sdk
+  npm package (NotifyNamespace) manages webhook CRUD but does NOT provide signature verification —
+  implement HMAC manually. Webhooks are scoped per chain/network. Retries use exponential backoff up
+  to ~10 min (Free/PAYG) or ~1 hr (Enterprise). Optional IP allowlist: 54.236.136.17, 34.237.24.169.
+  Webhook type enum: ADDRESS_ACTIVITY, NFT_ACTIVITY, GRAPHQL (= Custom Webhook) — these are the
+  three values the Notify API create-webhook endpoint accepts for webhook_type, and the docs group
+  webhooks into the three matching categories (Custom, Address Activity, NFT Activity).
+  DEPRECATED 2026-08-30: MINED_TRANSACTION, DROPPED_TRANSACTION and NFT_METADATA_UPDATE were
+  previously documented types but no longer appear on any Alchemy webhook doc page or in the
+  create-webhook type enum. Basis is observed absence, not a vendor deprecation notice; no
+  replacement mapping is claimed. Keep handler branches for them (pre-existing webhooks) but do not
+  present them as current.
+sdks:
+  npm:
+    - "alchemy-sdk"
+testScenario:
+  events:
+    - ADDRESS_ACTIVITY
+    - NFT_ACTIVITY
+catalog:
+  summary: Verify Alchemy Notify webhook signatures (`X-Alchemy-Signature`, HMAC-SHA256 hex over the raw body), handle ADDRESS_ACTIVITY, NFT_ACTIVITY, and GRAPHQL events

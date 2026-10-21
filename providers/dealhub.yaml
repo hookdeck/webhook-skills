@@ -1,0 +1,18 @@
+name: dealhub
+displayName: DealHub
+docs:
+  webhooks: https://developers.dealhub.io/docs/webhooks-overview
+  verification: https://developers.dealhub.io/docs/how-to-configure-webhooks
+notes: >
+  CPQ / quote-to-revenue. No signature. Three auth options: Token, Basic, None (or a SAS token
+  in the URL). CAVEAT to state in the verification section: DealHub sends the credential as
+  the FULL Authorization header value, "Bearer <TOKEN>" in Token mode or "Basic <CREDENTIALS>"
+  in Basic mode; compare the whole value constant-time. Quote events include draftQuote,
+  primaryQuote; there are also version, user and async (productsUpload) events with an action
+  field.
+testScenario:
+  events:
+    - draftQuote
+    - primaryQuote
+catalog:
+  summary: 'Authenticate DealHub webhooks (no signature: constant-time compare of the full `Authorization` value, `Bearer <TOKEN>` or `Basic <CREDENTIALS>`), handle draftQuote, primaryQuote, quoteWon, version, user and productsUpload events'

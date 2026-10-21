@@ -1,0 +1,31 @@
+name: shiphero
+displayName: ShipHero
+docs:
+  webhooks: https://developer.shiphero.com/webhooks/
+  verification: https://developer.shiphero.com/webhooks/#webhook_verification
+notes: >
+  Warehouse management / fulfillment platform. Signs each webhook with
+  HMAC-SHA256 over the RAW JSON request body, base64-encoded, sent in the
+  x-shiphero-hmac-sha256 header. The key is the app's shared_signature_secret,
+  returned ONCE by the webhook_create GraphQL mutation. Verify by recomputing
+  base64(HMAC-SHA256(rawBody, secret)) and constant-time comparing (plain HMAC
+  of the raw body — NOT payload-concatenated-with-account-id). NOT Standard
+  Webhooks compliant (no webhook-id/webhook-timestamp/webhook-signature). There
+  is no topic header — dispatch on the payload's webhook_type field. Register
+  one webhook per event type via webhook_create (name = exact Title Case
+  webhook type string, url, shop_name); ShipHero does NOT queue events while a
+  webhook is disabled (they are discarded). Delivery: ~10s timeout (20s for
+  Generate Label), up to 5 retries per trigger, no delivery SLA; also sends
+  X-Shiphero-Message-ID for dedup. Expects a 2xx with body
+  {"code":"200","Status":"Success"}. Webhook type names (Title Case): Order
+  Allocated, Shipment Update, Inventory Update, Inventory Change, Order
+  Canceled, Order Deallocated, Order Packed Out, PO Update, Return Update, Tote
+  Complete, Tote Cleared, Package Added, Capture Payment, Generate Label, Print
+  Barcode, Automation Rules, Shipment ASN, Work Order Status Update. No official
+  SDKs — verify manually in every framework.
+testScenario:
+  events:
+    - Order Allocated
+    - Shipment Update
+catalog:
+  summary: Verify ShipHero webhook signatures (`x-shiphero-hmac-sha256`, base64 HMAC-SHA256 of the raw body), dispatch on the payload `webhook_type` field, handle Order Allocated, Shipment Update, Inventory Update, and Return Update events

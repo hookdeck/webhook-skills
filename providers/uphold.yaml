@@ -1,0 +1,18 @@
+name: uphold
+displayName: Uphold
+docs:
+  webhooks: https://developer.uphold.com/rest-apis/webhooks
+  verification: https://developer.uphold.com/rest-apis/webhooks
+notes: >
+  Digital money platform, Uphold Enterprise REST APIs (Core API). Delivered by Svix but
+  white-labelled: headers Webhook-Id, Webhook-Timestamp, Webhook-Signature (webhook- prefix,
+  not svix-). Signature = base64 HMAC-SHA256 over "<id>.<timestamp>.<raw body>" keyed with
+  the base64 part of the whsec_ endpoint secret from the Svix-hosted Webhooks Portal (Uphold
+  defers to Svix's verification guide). The legacy Uphold API webhooks are a separate older
+  scheme; do not cover them. Events include core.user.created, core.transaction.status-changed.
+testScenario:
+  events:
+    - core.user.created
+    - core.transaction.status-changed
+catalog:
+  summary: Verify Uphold Enterprise webhook signatures (Svix scheme with `Webhook-Id`/`Webhook-Timestamp`/`Webhook-Signature` headers, HMAC-SHA256 base64 keyed with the decoded `whsec_` secret), handle core.user.created, core.transaction.status-changed, core.account.balance-changed and KYC/KYB status events

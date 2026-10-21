@@ -246,9 +246,14 @@ export async function getCurrentBranch(worktreePath: string): Promise<string | u
 /**
  * Check if there are uncommitted changes
  */
-export async function hasUncommittedChanges(worktreePath: string): Promise<boolean> {
+export async function hasUncommittedChanges(worktreePath: string, paths?: string[]): Promise<boolean> {
   try {
     const git = createGit(worktreePath);
+    if (paths && paths.length > 0) {
+      // Scope to the given paths (includes untracked files)
+      const output = await git.raw(['status', '--porcelain', '--', ...paths]);
+      return output.trim().length > 0;
+    }
     const status = await git.status();
     return !status.isClean();
   } catch {
@@ -361,9 +366,10 @@ export async function pathExistsInBranch(
   
   try {
     const git = createGit(rootDir);
-    // git ls-tree returns exit code 0 if path exists, non-zero otherwise
-    await git.raw(['ls-tree', '-r', branch, '--', path]);
-    return true;
+    // git ls-tree exits 0 for a missing path too (it just prints nothing),
+    // so check the output; it only throws when the branch itself is unknown
+    const output = await git.raw(['ls-tree', '-r', branch, '--', path]);
+    return output.trim().length > 0;
   } catch {
     // Path doesn't exist in that branch
     return false;

@@ -1,0 +1,19 @@
+name: guesty
+displayName: Guesty
+docs:
+  webhooks: https://open-api-docs.guesty.com/docs/webhooks
+  verification: https://open-api-docs.guesty.com/docs/webhooks#validate-webhooks
+notes: >
+  Property management for short-term rentals. Webhooks are delivered by Svix; retrieve the
+  per-endpoint secret with GET /webhooks-v2/secret (or the webhooks developer dashboard) and
+  verify with the Svix library or Svix's manual algorithm: svix-id, svix-timestamp,
+  svix-signature, HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>", whsec_ secret
+  (Guesty does not print the secret format; say it is the Svix default). Deduplicate on
+  svix-id and meta.eventId. Subscriptions are API-only; recreating one can issue a new secret.
+  Events include reservation.new, reservation.updated, listing.updated.
+testScenario:
+  events:
+    - reservation.new
+    - reservation.updated
+catalog:
+  summary: 'Verify Guesty webhook signatures (delivered by Svix: `svix-signature`, HMAC-SHA256 over `id.timestamp.body`), handle `reservation.created.v2`, `reservation.updated.v2`, legacy `reservation.new`/`reservation.updated`, and `listing.*` events'

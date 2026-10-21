@@ -1,0 +1,15 @@
+name: etsy
+displayName: Etsy
+docs:
+  webhooks: https://developers.etsy.com/documentation/essentials/webhooks/
+notes: >
+  Marketplace. Etsy webhooks follow the Standard Webhooks spec: webhook-id, webhook-timestamp,
+  webhook-signature headers; signed content "<id>.<timestamp>.<raw body>"; secret is whsec_
+  prefixed base64 (strip prefix, base64-decode). Events include order.paid, order.shipped,
+  order.canceled, listing.updated, inventory.updated.
+testScenario:
+  events:
+    - order.paid
+    - order.shipped
+catalog:
+  summary: Verify Etsy Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 over `{webhook-id}.{webhook-timestamp}.{body}` with a `whsec_` secret), handle order.paid, order.shipped, order.canceled, listing.updated, and inventory.out_of_stock events

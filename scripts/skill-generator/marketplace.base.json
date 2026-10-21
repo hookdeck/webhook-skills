@@ -1,0 +1,140 @@
+{
+  "name": "webhook-skills",
+  "owner": {
+    "name": "Hookdeck",
+    "email": "phil@hookdeck.com"
+  },
+  "metadata": {
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "webhook-handler-patterns",
+      "description": "Framework-agnostic webhook handler patterns: idempotency, error handling, retry logic, async processing for Express, Next.js, and FastAPI.",
+      "source": "./skills/webhook-handler-patterns",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "development",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns",
+      "keywords": [
+        "webhooks",
+        "patterns",
+        "idempotency",
+        "retry",
+        "error-handling"
+      ]
+    },
+    {
+      "name": "hookdeck-event-gateway",
+      "description": "Hookdeck Event Gateway: webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability.",
+      "source": "./skills/hookdeck-event-gateway",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway",
+      "keywords": [
+        "webhooks",
+        "hookdeck",
+        "infrastructure",
+        "queue",
+        "reliability"
+      ]
+    },
+    {
+      "name": "outpost",
+      "description": "Send webhooks and events to user-preferred destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka).",
+      "source": "./skills/outpost",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/outpost",
+      "keywords": [
+        "webhooks",
+        "outpost",
+        "infrastructure",
+        "fan-out",
+        "events"
+      ]
+    },
+    {
+      "name": "webhook-dx-audit",
+      "description": "Audit the developer experience of any platform that sends outbound webhooks or event destinations (HTTP, SQS, RabbitMQ, Pub/Sub, EventBridge, Kafka) to its customers, and produce a scored review with prioritized recommendations across signing, retries, event catalog, observability, local dev, and agent readiness.",
+      "source": "./skills/webhook-dx-audit",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "development",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-dx-audit",
+      "keywords": [
+        "webhooks",
+        "event-destinations",
+        "audit",
+        "developer-experience",
+        "review",
+        "evaluation"
+      ]
+    },
+    {
+      "name": "webhook-skills",
+      "description": "Bundle of all webhook integration skills in this repo: {providerCount} provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all {skillCount} skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "source": "./",
+      "strict": false,
+      "skills": "{allSkills}",
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills",
+      "keywords": [
+        "webhooks",
+        "bundle",
+        "signature-verification",
+        "idempotency",
+        "stripe",
+        "shopify",
+        "github",
+        "slack",
+        "twilio",
+        "paypal",
+        "express",
+        "nextjs",
+        "fastapi"
+      ]
+    }
+  ]
+}

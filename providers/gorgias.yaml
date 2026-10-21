@@ -1,0 +1,22 @@
+name: gorgias
+displayName: Gorgias
+docs:
+  webhooks: https://docs.gorgias.com/en-US/http-integrations-81822
+  verification: https://docs.gorgias.com/en-US/http-integrations-81822
+notes: >
+  E-commerce helpdesk. HTTP integrations fire on ticket events (ticket created, ticket
+  updated, ticket message created) with a user-defined body template; method can be POST, PUT
+  or DELETE. No signature: add a header such as Authorization: Bearer <secret> or a custom
+  header, and compare it constant-time. OAuth2 mode sends a token fetched from your own token
+  URL (validate as you would any OAuth token). Gorgias retries only for OAuth2 integrations;
+  header-auth requests are not retried.
+testScenario:
+  events:
+    - ticket-created
+    - ticket-updated
+  prompt: >
+    Add an endpoint to my {framework} app that receives Gorgias HTTP integration requests.
+    Authenticate them with a shared secret header and handle ticket created and ticket
+    updated events.
+catalog:
+  summary: 'Authenticate Gorgias HTTP integration requests (shared-secret `Authorization: Bearer` header, NO signature), handle ticket triggers like `ticket-created`, `ticket-updated` and `ticket-message-created` via an `event` field in the user-defined body template'

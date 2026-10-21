@@ -1,0 +1,42 @@
+name: praxis
+displayName: Praxis
+docs:
+  webhooks: https://docs.praxis.tech/reference/webhooks
+  verification: https://docs.praxis.tech/docs/authentication
+notes: >
+  Praxis Tech ("Cashier") payment orchestration. NOT Standard Webhooks and NOT an HMAC. Every
+  outbound webhook is signed with a SHA-384 hex digest (96 lowercase hex chars) in the lowercase
+  gt-authentication header. Verification: take a FIXED, per-webhook-type list of field VALUES in
+  the documented order, concatenate them into one string, append the Merchant Secret, then
+  hash('sha384', concatenated + merchant_secret) and compare (timing-safe) to gt-authentication.
+  Field sets differ per type. Payment Notification (no event-name field; identified by
+  transaction.transaction_status = initialized/pending/approved/rejected/error): merchant_id,
+  application_key, timestamp, customer.customer_token, session.order_id, transaction.tid,
+  transaction.currency, transaction.amount, transaction.conversion_rate,
+  transaction.processed_currency, transaction.processed_amount + secret. Subscription Notification
+  (has an explicit event field): event, merchant_id, application_key, cid, plan_id,
+  subscription_id, subscription_status, timestamp + secret. GOTCHA: the general API-request
+  signature sorts keys alphabetically (ksort) then values+secret+sha384, but WEBHOOKS use the
+  explicit documented field order per type — do NOT alphabetize webhook fields. Amounts arrive as
+  STRINGS ("10.00") — do not re-serialize them as numbers or the digest breaks. Because the
+  signature covers field values (not the raw body), you must parse JSON first to rebuild the
+  signed string. The endpoint MUST reply HTTP 200 with a {"status":0,...} body AND sign the ACK:
+  response fields status+timestamp, hash('sha384', status+timestamp+merchant_secret), sent in the
+  external-request-signature response header. No official server SDK (only a browser Cashier JS
+  SDK) — verification is manual on every platform.
+testScenario:
+  events:
+    - approved
+    - PaymentSucceeded
+  prompt: >
+    Create a {framework} webhook handler for Praxis (Cashier) payment orchestration. Verify the
+    gt-authentication header: concatenate the documented per-type field VALUES in order (do NOT
+    alphabetize), append the Merchant Secret, hash with SHA-384 (hex), and compare timing-safely.
+    A Subscription Notification carries an event field; a Payment Notification does not (dispatch
+    on transaction.transaction_status). Parse JSON before verifying (the signature covers field
+    values, not the raw body), keep amounts as strings, return 400 on a bad or missing signature,
+    and acknowledge with HTTP 200 + a {"status":0,"timestamp":...} body signed via the
+    external-request-signature header (sha384 of status+timestamp+secret). If you use any skills
+    to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Praxis (Cashier) webhook signatures (`gt-authentication`, SHA-384 hex over ordered field values + Merchant Secret — not HMAC, not Standard Webhooks), sign the acknowledgement (`external-request-signature`), handle Payment Notification `transaction_status` (`pending`, `approved`, `rejected`, `error`) and Subscription Notification `event`s

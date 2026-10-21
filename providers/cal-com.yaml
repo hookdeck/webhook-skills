@@ -1,0 +1,15 @@
+name: cal-com
+displayName: Cal.com
+docs:
+  webhooks: https://cal.com/docs/developing/guides/automation/webhooks
+notes: >
+  Scheduling. When a secret is set on the webhook, Cal.com sends x-cal-signature-256 =
+  HMAC-SHA256 of the raw request body, hex. Custom payload templates change the body but it is
+  still signed as sent. Common triggers: BOOKING_CREATED, BOOKING_RESCHEDULED,
+  BOOKING_CANCELLED, BOOKING_PAID, MEETING_ENDED.
+testScenario:
+  events:
+    - BOOKING_CREATED
+    - BOOKING_CANCELLED
+catalog:
+  summary: Verify Cal.com webhook signatures (`x-cal-signature-256`, HMAC-SHA256 hex over the raw body), handle BOOKING_CREATED, BOOKING_RESCHEDULED, BOOKING_CANCELLED, BOOKING_PAID, and MEETING_ENDED events

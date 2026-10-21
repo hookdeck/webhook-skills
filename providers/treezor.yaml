@@ -1,0 +1,36 @@
+name: treezor
+displayName: Treezor
+docs:
+  webhooks: https://docs.treezor.com/guide/webhooks/introduction.html
+  verification: https://docs.treezor.com/guide/webhooks/integrity-checks.html
+notes: >
+  European Banking-as-a-Service (BaaS) platform with a heavy SCA/KYC event surface.
+  Custom HMAC scheme — NOT Standard Webhooks (Svix) — and the signature is a BODY
+  FIELD, not an HTTP header. Each webhook JSON body carries object_payload plus
+  object_payload_signature. Verify by computing HMAC-SHA256 over the CANONICALIZED
+  object_payload using the Treezor-provided webhook_secret, then base64-encoding,
+  and comparing (timing-safe) to object_payload_signature. GOTCHA: the payload must
+  be canonicalized first to match PHP's default json_encode — compact separators,
+  forward slashes escaped (/ -> \/), and non-ASCII escaped to lowercase \uXXXX
+  (é -> é). This is signed over the re-serialized object_payload, NOT the raw
+  request body. Webhooks are delivered with a text/plain MIME type (JSON parsers
+  keyed on application/json will skip them — read raw text and JSON.parse yourself).
+  Return 200 on success; return a 5xx to trigger retries (every minute, up to 30
+  attempts). Delivery is chronological but NOT order-guaranteed, and duplicates are
+  possible (same webhook_id) — dedupe on webhook_id, compare webhook_created_at.
+  Subscribe via API on a DIFFERENT host: POST /settings/hooks on
+  https://webhook.api.treezor.co (prod) / https://webhook.sandbox.treezor.co
+  (sandbox); manage events via /settings/hooks/{uuid}/events. Subscriptions start
+  PENDING and may require Treezor activation. The webhook_secret is provided by the
+  Treezor Account Manager (no self-service dashboard); Sandbox and Production use
+  different secrets. Event names are object.action (payin.create, payout.update,
+  cardtransaction.create, wallet.create, user.kycreview, ...; some camelCase /
+  multi-segment objects like sca.wallet.create, qes.created). No official SDKs —
+  verify manually. Set TREEZOR_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - payin.create
+    - cardtransaction.create
+    - user.kycreview
+catalog:
+  summary: Verify Treezor BaaS webhook signatures (`object_payload_signature` body field, HMAC-SHA256 base64 over the canonicalized `object_payload`, not the raw body), handle banking events like payin.create, cardtransaction.create, and user.kycreview

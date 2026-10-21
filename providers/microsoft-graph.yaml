@@ -1,0 +1,35 @@
+name: microsoft-graph
+displayName: Microsoft Graph
+docs:
+  webhooks: https://learn.microsoft.com/en-us/graph/webhooks
+  verification: https://learn.microsoft.com/en-us/graph/change-notifications-delivery-webhooks
+  events: https://learn.microsoft.com/en-us/graph/api/resources/subscription?view=graph-rest-1.0
+notes: >
+  No HMAC signatures and does NOT follow the Standard Webhooks spec; three-part
+  validation model: (1) endpoint validation — on subscription create, Graph POSTs
+  ?validationToken={token} and you must echo the URL-decoded token back as text/plain
+  with HTTP 200 within 10 seconds; (2) clientState — opaque shared secret set at
+  subscription time, echoed in every notification, reject mismatches; (3) for rich
+  notifications (includeResourceData: true), each POST carries a validationTokens array
+  of JWTs — validate via Microsoft identity platform OIDC keys, audience = your app ID,
+  caller appid = 0bf30f3b-4a52-48df-9a82-234910c4a086; resource data is AES-encrypted
+  (CBC/PKCS7) with an RSA-wrapped dataKey plus HMAC-SHA256 dataSignature, requiring
+  encryptionCertificate at subscribe time. Subscriptions via POST
+  https://graph.microsoft.com/v1.0/subscriptions with changeType
+  (created/updated/deleted, comma-combinable), resource, notificationUrl,
+  expirationDateTime. Short max lifetimes force renewal via PATCH: presence 1 hour,
+  Teams messages 3 days, Outlook ~7 days (~1 day with resource data), driveItem and
+  SharePoint list ~30 days, user/group ~29 days. Must return 2xx within 3 seconds
+  (202 recommended, process async) or Graph retries up to 4 hours. Handle lifecycle
+  notifications on a separate lifecycleNotificationUrl: reauthorizationRequired,
+  subscriptionRemoved, missed (resync via delta query). SDKs manage subscriptions only —
+  no official verification helper.
+testScenario:
+  events:
+    - "changeType: created,updated on resource /me/mailFolders('inbox')/messages"
+    - "changeType: updated,deleted on resource /users"
+sdks:
+  npm: ["@microsoft/microsoft-graph-client"]
+  pip: ["msgraph-sdk"]
+catalog:
+  summary: Validate Microsoft Graph change notifications (validationToken handshake, clientState, rich-notification JWTs), manage subscription lifecycle

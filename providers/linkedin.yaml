@@ -1,0 +1,33 @@
+name: linkedin
+displayName: LinkedIn
+docs:
+  webhooks: https://learn.microsoft.com/en-us/linkedin/shared/api-guide/developer-webhooks
+  verification: https://learn.microsoft.com/en-us/linkedin/shared/api-guide/webhook-validation
+notes: >
+  Two-part verification, both HMAC-SHA256 keyed with the app clientSecret. (1) Endpoint
+  validation: LinkedIn GETs your URL with ?challengeCode=<uuid>; respond within 3s with
+  JSON {challengeCode, challengeResponse} where challengeResponse =
+  hex(HMACSHA256(challengeCode, clientSecret)). Endpoints are re-validated every 2 hours
+  and blocked after 3 consecutive failures (unblock via portal or the developerWebhooks
+  revalidateWebhook action). (2) Per-request X-LI-Signature header =
+  hex(HMACSHA256("hmacsha256=" + raw JSON body, clientSecret)) — the "hmacsha256="
+  prefix is only in the string-to-sign, not the header; raw body + constant-time
+  compare. Does NOT follow the Standard Webhooks spec. Webhooks exist per-product,
+  gated behind partner programs: Lead Sync (POST /rest/leadNotifications; payload type
+  LEAD_ACTION; requires r_marketing_leadgen_automation + Lead Sync program), Community
+  Management (PUT /rest/eventSubscriptions, eventType
+  ORGANIZATION_SOCIAL_ACTION_NOTIFICATIONS; requires rw_organization_admin), and Talent
+  (Apply Connect job status + resync). Gotchas: HTTPS only, ngrok explicitly
+  unsupported; duplicates expected — dedupe on notificationId; redelivery every 5
+  minutes for up to 8 hours (documented for org social actions), missed notifications
+  retrievable via pull API for 60 days; from 2026-03-16 unvalidated Lead Sync webhooks
+  stop receiving notifications.
+testScenario:
+  events:
+    - LEAD_ACTION
+    - ORGANIZATION_SOCIAL_ACTION_NOTIFICATIONS
+sdks:
+  npm: [linkedin-api-client]
+  pip: [linkedin-api-client]
+catalog:
+  summary: Verify LinkedIn webhook signatures (`X-LI-Signature`, HMAC-SHA256) and the challengeCode validation, handle Lead Sync and organization events

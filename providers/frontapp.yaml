@@ -1,0 +1,25 @@
+name: frontapp
+displayName: Front
+docs:
+  webhooks: https://dev.frontapp.com/docs/webhooks-1
+  verification: https://dev.frontapp.com/docs/application-webhooks
+  events: https://dev.frontapp.com/reference/events
+notes: >
+  Shared inbox / customer communication platform. Front has TWO webhook systems.
+  Application webhooks (partner / Core API apps — the modern system this skill targets)
+  sign with X-Front-Signature = base64(HMAC-SHA256(key = app signing key,
+  msg = X-Front-Request-Timestamp value + ":" + RAW request body)). Always use the raw
+  body. On subscription Front sends a validation request with an X-Front-Challenge header;
+  echo the value within 10s as a 200 (text/plain, form challenge=<v>, or JSON
+  {"challenge":"<v>"}). Retries up to 3x on 408/429/500/timeout, then auto-disables. NOT
+  Standard Webhooks. The older "rule webhooks" (settings > rule action) differ: HMAC-SHA1
+  (base64) over the body only, keyed with the Webhooks app "API Secret", 5s timeout, no
+  retries — do not conflate the two. Event name is in the top-level `type` field:
+  inbound, outbound, move, assign, archive, tag, comment, message_bounce_error, etc. No
+  official server SDK (front-sdk npm / py-front pip are community projects).
+testScenario:
+  events:
+    - inbound
+    - assign
+catalog:
+  summary: Verify Front application webhook signatures (`X-Front-Signature`, HMAC-SHA256 over timestamp + body), complete the `X-Front-Challenge` handshake, handle inbound, outbound, move, assign, and tag events

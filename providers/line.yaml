@@ -1,0 +1,17 @@
+name: line
+displayName: LINE Messaging API
+docs:
+  webhooks: https://developers.line.biz/en/docs/messaging-api/receiving-messages/
+  verification: https://developers.line.biz/en/docs/messaging-api/verify-webhook-signature/
+notes: >
+  LINE Messaging API bot webhooks. Verify the x-line-signature header: HMAC-SHA256 of the raw
+  request body keyed with the channel secret (LINE Developers Console > channel > Basic
+  settings), base64-encoded. Do not re-serialize the body before verifying. The "Verify" button
+  in the console sends a webhook with an empty events array, which must also return 200.
+testScenario:
+  events:
+    - message
+    - follow
+catalog:
+  summary: Verify LINE Messaging API webhook signatures (`x-line-signature`, base64 HMAC-SHA256 of the raw body keyed on the channel secret) with the official SDK, answer the console Verify request (empty `events`), handle message, follow, unfollow, postback, join, memberJoined, and unsend events
+  displayName: LINE

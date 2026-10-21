@@ -1,0 +1,327 @@
+name: azure-event-grid
+displayName: Azure Event Grid
+docs:
+  webhooks: https://learn.microsoft.com/en-us/azure/event-grid/handler-webhooks
+  verification: https://learn.microsoft.com/en-us/azure/event-grid/end-point-validation-event-grid-events-schema
+  events: https://learn.microsoft.com/en-us/azure/event-grid/event-schema
+  api: https://learn.microsoft.com/en-us/azure/event-grid/delivery-and-retry
+notes: >
+  Microsoft Azure Event Grid — a managed pub/sub eventing service, NOT a
+  single-vendor webhook signer. This is the "push delivery to a WebHook event
+  handler" model of Event Grid Basic (custom topics, system topics, domains,
+  partner topics). Do not confuse it with Event Grid Namespaces pull delivery
+  or the MQTT broker, and do not confuse it with Azure Service Bus / Event Hubs.
+
+
+  *** CRITICAL — THERE IS NO SIGNATURE. DO NOT FABRICATE AN HMAC VERIFIER. ***
+  Event Grid does NOT sign the request body. There is no X-Signature header, no
+  HMAC, no shared signing secret, no timestamp-signature pair, and no asymmetric
+  signature of any kind. Any verify() that calls crypto.createHmac / hmac.new
+  over the body for Azure Event Grid is fabricated and must not be shipped. The
+  security model is (a) an ownership-proving handshake at subscription time and
+  (b) caller authentication on the delivery channel, described below.
+
+
+  HOOKDECK SOURCE CONFIG CONTEXT: Hookdeck's OpenAPI schema
+  (components.schemas.SourceConfigAzureEventGridAuth) offers a oneOf over HMAC /
+  Basic Auth / API Key / empty. That is a configurable-auth source, not evidence
+  that Event Grid emits a vendor signature — Event Grid lets YOU attach up to 10
+  arbitrary static HTTP headers to deliveries (see "delivery properties" below),
+  so the API-Key and Basic-Auth options map onto a header/credential you choose.
+  Nothing in Azure computes an HMAC over the payload.
+
+  CONFIRMED AGAINST HOOKDECK CORE (server/integrations/sourceTypeSchemas.ts,
+  AZURE_EVENT_GRID entry). Core's own comment reads: "Event Grid does not sign
+  deliveries itself, but subscribers can attach static credentials via secret
+  query parameters or custom delivery headers ... so expose the same auth methods
+  as the generic HTTP/WEBHOOK types." Core sets `VERIFICATION:
+  generic_http.VERIFICATION` — i.e. the HMAC/basic/API-key/none oneOf in the
+  OpenAPI is the GENERIC HTTP auth block reused, not an Event Grid scheme — and
+  `HANDSHAKE: { required: true, advanced: false }`, so the handshake is a required
+  feature of this source, which is why it is the centre of this skill. Core's
+  `external_docs_url` is
+  https://learn.microsoft.com/en-us/azure/event-grid/end-point-validation-cloud-events-schema
+  — the CloudEvents OPTIONS variant. Do NOT over-read this as core choosing
+  the CloudEvents flavour: Microsoft's own security-authentication page uses
+  that same URL as its generic "Webhook event delivery" link (the older
+  /webhook-event-delivery path redirects to it), so core most likely copied
+  Microsoft's canonical link rather than selecting a variant. Cover both
+  handshakes with equal weight and let the delivery schema decide which fires.
+  Core labels it "Azure Event Grid", category `platform`, icon `azure_event_grid`.
+
+
+  === 1. VERIFICATION MECHANISM A — SUBSCRIPTION VALIDATION HANDSHAKE
+  (Event Grid schema mode; this is the primary thing the skill must implement) ===
+
+  When an event subscription is created or updated, Event Grid POSTs a validation
+  event to the endpoint before it will deliver anything.
+
+  - Request carries the header `aeg-event-type: SubscriptionValidation`.
+  - Body is a JSON ARRAY containing exactly the one validation event. Verbatim
+    from the docs: "The array contains only the validation event. Other events
+    are sent in a separate request after you echo back the validation code."
+  - `eventType` is exactly `Microsoft.EventGrid.SubscriptionValidationEvent`.
+  - `data.validationCode` is a randomly generated string (a GUID in the docs'
+    example). `data.validationUrl` is a URL for the manual handshake.
+  - Documented example event (verbatim from the docs):
+      [{"id":"2d1781af-3a4c-4d7c-bd0c-e34b19da4e66",
+        "topic":"/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "subject":"",
+        "data":{"validationCode":"512d38b6-c7b8-40c8-89fe-f46f9e9622b6",
+                "validationUrl":"https://rp-eastus2.eventgrid.azure.net:553/eventsubscriptions/myeventsub/validate?id=...&t=...&apiVersion=2018-05-01-preview&token=..."},
+        "eventType":"Microsoft.EventGrid.SubscriptionValidationEvent",
+        "eventTime":"2022-10-28T04:23:35.1981776Z",
+        "metadataVersion":"1","dataVersion":"1"}]
+  - RESPONSE THE ENDPOINT MUST RETURN (synchronous handshake), verbatim:
+      {"validationResponse": "512d38b6-c7b8-40c8-89fe-f46f9e9622b6"}
+    i.e. a single JSON object (NOT an array) echoing data.validationCode.
+  - The field name in the canonical Azure TypeSpec model
+    (SubscriptionValidationResponse in
+    specification/eventgrid/data-plane/EventGridSystemEvents/Microsoft.EventGrid/EventGrid.tsp)
+    is camelCase `validationResponse`. Microsoft's own C#/JS samples on the
+    receive-events page emit PascalCase `ValidationResponse`. Use the documented
+    camelCase form; mention the PascalCase samples exist rather than asserting
+    anything about case-sensitivity that the docs do not state.
+  - Status code: MUST be **HTTP 200 OK**. Docs verbatim: "**HTTP 202 Accepted**
+    isn't recognized as a valid Event Grid subscription validation response."
+  - The HTTP request must complete within 30 seconds; otherwise it is cancelled
+    and reattempted after 5 seconds, and repeated failure is a handshake error.
+  - IDENTITY GUARD (the actual security value of the handshake): the docs say to
+    "check for the `aeg-subscription-name` header in the request to ascertain
+    that it's an event subscription that you recognize". If it is NOT a
+    subscription you expect, do NOT return 200 and do NOT echo the code —
+    withholding the response is how you fail the validation deliberately.
+  - Asynchronous / manual handshake: if you return 200 but do not echo the code
+    synchronously, the subscription moves to provisioning state
+    `AwaitingManualAction`; GET the `validationUrl` within **10 minutes** to
+    complete it, otherwise the state becomes `Failed` and the subscription must
+    be recreated. The validation URL uses **port 553** — firewalls that block
+    553 break the manual handshake.
+  - Self-signed TLS certificates are NOT supported for validation; a CA-signed
+    certificate is required.
+
+  === 2. VERIFICATION MECHANISM B — CLOUDEVENTS v1.0 ABUSE-PROTECTION PREFLIGHT
+  (CloudEvents schema mode — a DIFFERENT handshake, not an extra one) ===
+
+  Verbatim: "When you use the CloudEvents schema for output, Event Grid uses the
+  CloudEvents v1.0 abuse protection in place of the Event Grid validation event
+  mechanism." So in CloudEvents mode there is NO SubscriptionValidationEvent —
+  the skill must implement both paths and say which applies when.
+
+  - The validation request uses the **HTTP OPTIONS** method against the exact
+    endpoint URI being registered.
+  - Request header `WebHook-Request-Origin` MUST be present, carrying a DNS name
+    identifying the sender (e.g. `eventemitter.example.com`).
+  - To consent, the endpoint MUST reply with `WebHook-Allowed-Origin` — its
+    value MUST be either the origin from `WebHook-Request-Origin` or a single
+    `*`. The docs also name `WebHook-Allowed-Rate` (permitted requests/minute)
+    as part of the grant. The OPTIONS response SHOULD include an `Allow` header
+    indicating POST is permitted.
+  - The handshake explicitly "can't rely on status codes" — consent is signalled
+    by the headers, not by 200. An endpoint that doesn't support OPTIONS SHOULD
+    return 405.
+  - After the grant, the sender MUST send the `Origin` request header on each
+    delivery with the value matching the allowed origin.
+  - The docs are explicit that this handshake "doesn't aim to establish an
+    authentication or authorization context" — it only proves the endpoint
+    expects traffic. Say so; do not oversell it as verification.
+
+  === 3. CHANNEL AUTHENTICATION (this is what actually authenticates deliveries) ===
+
+  (a) Static delivery properties / custom headers. You can set up to 10 custom
+  HTTP headers per event subscription; each header value must be <= 4096 bytes.
+  Values can be static or dynamic (JsonPath over the incoming event; only string,
+  number and boolean JSON values are supported). Static headers can be flagged
+  "Is secret?" in the portal. Configured via
+  `az eventgrid event-subscription create --delivery-attribute-mapping <name> static <value> <isSecret>`.
+  The docs' own (explicitly non-normative) example sets
+  `Authorization: BEARER SlAV32hkKG...` as a static header — usable only when you
+  are NOT protecting the webhook with Microsoft Entra ID. THIS IS THE PRACTICAL
+  SHARED-SECRET PATH: the receiver compares the header to a configured value.
+  Compare it with a constant-time comparison (crypto.timingSafeEqual /
+  hmac.compare_digest), length-check first, and fail closed when the expected
+  secret env var is unset — never fail open. Do NOT use the `aeg-` prefix for
+  custom header names; it is reserved for Event Grid system properties. Note:
+  "Non-conformant values in well-known headers cause the header to be dropped
+  during event delivery to webhook destinations, but not during webhook
+  validation" — so a malformed custom Authorization value can silently vanish on
+  deliveries while the handshake still passes.
+
+  (b) Microsoft Entra ID (formerly Azure AD) protected endpoints. Configured per
+  event subscription with `--azure-active-directory-tenant-id` and
+  `--azure-active-directory-application-id-or-uri` (portal: Additional features >
+  Use Microsoft Entra authentication). Docs verbatim: "Event Grid is now passing
+  the Microsoft Entra bearer token to the webhook client in every message. You
+  need to validate the authorization token in your webhook." The token arrives in
+  the standard `Authorization` header as a bearer token; the receiver validates it
+  as a JWT against its own Entra application (audience = the configured
+  application ID or Application ID URI, issuer = the configured tenant). The role
+  assigned to the Event Grid service principal is named
+  `AzureEventGridSecureWebhookSubscriber`. Since March 30 2021 the subscription
+  writer's service principal must be an owner of, or hold a role on, the
+  destination application service principal.
+  HEDGE: the docs state the bearer token is passed and must be validated, but do
+  not print a sample `Authorization` header or the token's claim set. Present the
+  JWT validation example as the standard Entra pattern (use a real JWKS-validating
+  library such as jsonwebtoken + jwks-rsa, or PyJWT + PyJWKClient) rather than
+  asserting undocumented claim values. Do not invent an audience GUID.
+
+  (c) Client secret as a QUERY PARAMETER — a first-class, documented option.
+  From learn.microsoft.com/en-us/azure/event-grid/security-authentication, which
+  lists "Client secret as a query parameter" as a supported authentication method
+  for the Webhook handler alongside Entra bearer tokens: "You can also secure your
+  webhook endpoint by adding query parameters to the webhook destination URL
+  specified as part of creating an Event Subscription. Set one of the query
+  parameters to be a client secret such as an access token or a shared secret.
+  Event Grid service includes all the query parameters in every event delivery
+  request to the webhook. The webhook service can retrieve and validate the
+  secret." Operational notes from the same page: query params are stored encrypted,
+  are not accessible to service operators, are not logged in service logs or
+  traces, and are NOT returned when you read event-subscription properties unless
+  you pass `--include-full-endpoint-url`. ROTATION: "If you update the client
+  secret, you also need to update the event subscription. To avoid delivery
+  failures during this secret rotation, make the webhook accept both old and new
+  secrets for a limited duration before updating the event subscription with the
+  new secret." Compare query-param secrets in constant time, same as headers.
+  The same page also states: "Use a validation handshake mechanism regardless of
+  the method you use" and "Azure Event Grid only supports **HTTPS** webhook
+  endpoints.
+
+  There is NO documented source-IP allowlist for Event Grid webhook delivery. Do
+  not invent one. (Azure publishes service tags for inbound-to-Azure scenarios;
+  that is a different thing and should not be presented as an Event Grid webhook
+  egress allowlist.)
+
+  === 4. HEADERS ON DELIVERIES ===
+
+  Documented `aeg-*` message header properties (from the shared message-headers
+  include used by the Event Grid handler docs):
+    aeg-subscription-name  — name of the event subscription
+    aeg-delivery-count     — number of attempts made for the event
+    aeg-event-type         — one of: SubscriptionValidation | Notification | SubscriptionDeletion
+    aeg-metadata-version   — Event Grid schema: metadata version; CloudEvents schema: the spec version
+    aeg-data-version       — Event Grid schema: data version; not applicable for CloudEvents schema
+    aeg-output-event-id    — ID of the Event Grid event
+  The validation doc independently confirms `aeg-event-type` and
+  `aeg-subscription-name` are present on webhook requests. `aeg-delivery-count` is
+  the natural retry/duplicate signal for idempotency.
+
+  Content-Type, verbatim from the CloudEvents doc: "For CloudEvents schema, that
+  header value is `application/cloudevents+json; charset=utf-8`. For Event Grid
+  schema, that header value is `application/json; charset=utf-8`."
+
+  === 5. PAYLOAD SHAPES ===
+
+  Event Grid schema — delivered as a JSON ARRAY. Verbatim: "Event Grid sends the
+  events to subscribers in an array that has a single event." Top-level fields:
+    topic (string, full resource path to the event source; Event Grid stamps it)
+    subject (string, publisher-defined path to the event subject)
+    eventType (string, one of the registered event types for the source)
+    eventTime (string, provider UTC time)
+    id (string, unique identifier)
+    data (object, unique to each publisher)
+    dataVersion (string, publisher-defined; stamped empty if omitted)
+    metadataVersion (string, currently only "1")
+  Documented complete example (Blob Storage), abbreviated field set shown here in
+  full in the docs: eventType "Microsoft.Storage.BlobCreated", data containing
+  api, clientRequestId, requestId, eTag, contentType, contentLength, blobType,
+  accessTier, url, sequencer, storageDiagnostics.batchId.
+
+  CloudEvents v1.0 schema — delivered as a single JSON OBJECT (structured mode),
+  attributes: specversion ("1.0"), type, source, id, time, subject,
+  datacontenttype, data. Documented Blob Storage example uses
+  type "Microsoft.Storage.BlobCreated" and source
+  "/subscriptions/{subscription-id}/resourceGroups/{rg}/providers/Microsoft.Storage/storageAccounts/{sa}".
+  NOTE the shape difference from Event Grid schema (object vs array) — a handler
+  must cope with both, and the skill should show a normaliser.
+
+  === 6. EVENT TYPES ===
+
+  Event Grid is a pub/sub broker: MOST event types belong to the publishing Azure
+  service or to a custom topic whose publisher defines them, NOT to Event Grid
+  itself. Present them that way — as examples of what flows through, clearly
+  attributed to their publisher — and do not present a closed list as
+  "Azure Event Grid's events".
+
+  Emitted by the Microsoft.EventGrid resource provider itself (confirmed in the
+  canonical Azure TypeSpec, EventGrid.tsp):
+    Microsoft.EventGrid.SubscriptionValidationEvent   data: validationCode, validationUrl
+    Microsoft.EventGrid.SubscriptionDeletedEvent      data: eventSubscriptionId (Azure resource ID of the deleted event subscription)
+    Microsoft.EventGrid.MQTTClientCreatedOrUpdated    (Event Grid Namespaces / MQTT broker system topic)
+    Microsoft.EventGrid.MQTTClientDeleted
+    Microsoft.EventGrid.MQTTClientSessionConnected
+    Microsoft.EventGrid.MQTTClientSessionDisconnected
+
+  Representative publisher event types (attribute each to its service):
+    Microsoft.Storage.BlobCreated, Microsoft.Storage.BlobDeleted (Azure Blob Storage)
+    Microsoft.Resources.ResourceWriteSuccess, .ResourceWriteFailure,
+    .ResourceWriteCancel, .ResourceDeleteSuccess, .ResourceDeleteFailure,
+    .ResourceDeleteCancel, .ResourceActionSuccess, .ResourceActionFailure,
+    .ResourceActionCancel (Azure subscription / resource group source)
+
+  === 7. DELIVERY SEMANTICS (verbatim from delivery-and-retry) ===
+
+  - HTTPS only: "Event Grid supports only HTTPS webhook endpoints."
+  - At-least-once delivery. "Event Grid doesn't guarantee order for event
+    delivery, so subscribers might receive events out of order." Duplicates are
+    possible — dedupe on the event `id`.
+  - SUCCESS status codes — "Event Grid considers **only** the following HTTP
+    response codes as successful deliveries": 200 OK, 201 Created, 202 Accepted,
+    203 Non-Authoritative Information, 204 No Content. Everything outside 200-204
+    is a failure. (Note the contrast with the validation handshake, where 202 is
+    explicitly NOT accepted.)
+  - NOT RETRIED for webhook endpoints: 400 Bad Request, 401 Unauthorized,
+    403 Forbidden, 413 Request Entity Too Large. (The retry-behaviour table also
+    lists 401 and 404 as "Retry after 5 minutes or more for Azure Resources
+    Endpoints" — that row is scoped to Azure resource endpoints, not webhooks;
+    the webhook no-retry row is the one above. Note this tension rather than
+    picking one silently.) 408 → retry after 2 minutes or more; 503 → retry after
+    30 seconds or more; all others → retry after 10 seconds or more.
+  - Timeout: "Event Grid waits 30 seconds for a response after delivering a
+    message." Exceeding it queues the message for retry — so ACK fast and process
+    asynchronously.
+  - Exponential backoff schedule: 10s, 30s, 1m, 5m, 10m, 30m, 1h, 3h, 6h, then
+    every 12h up to 24h, with small randomisation, best effort.
+  - Retry policy: max attempts 1-30 (default 30); event TTL 1-1440 minutes
+    (default 1440). Whichever expires first stops delivery.
+  - Batching is OFF by default — "the payload is an array with a single event".
+    Max events per batch 1-5000, preferred batch size 1-1024 KB. Batching is
+    all-or-none: no partial success. A handler MUST therefore loop over the array.
+  - Size limits: 1 MB per event and per array; over-size gets 413 Payload Too
+    Large. Operations are charged in 64 KB increments.
+  - Dead-lettering is off by default; enable it with a storage account container.
+    400 and 413 are scheduled for dead-lettering immediately. Dead-lettered events
+    gain deadLetterReason, deliveryAttempts, lastDeliveryOutcome, publishTime,
+    lastDeliveryAttemptTime (lowercased in CloudEvents form).
+  - Delayed delivery / probation: consistently failing endpoints get deliveries
+    delayed, in some cases for hours.
+
+  === 8. WHAT THE SKILL MUST GET RIGHT ===
+
+  1. No fabricated HMAC/signature verifier. Grep the generated verify path: it
+     must contain no crypto.createHmac / hmac.new over the request body.
+  2. Handle BOTH handshakes: the Event Grid-schema SubscriptionValidationEvent
+     echo AND the CloudEvents-schema HTTP OPTIONS preflight, in the same handler,
+     and explain which fires when.
+  3. Return 200 (not 202) for the validation response, within 30 seconds.
+  4. Gate the handshake on `aeg-subscription-name` so an attacker who learns the
+     URL can't self-validate a subscription against it.
+  5. Parse the Event Grid-schema body as an ARRAY (loop it), and the
+     CloudEvents-schema body as a single OBJECT; normalise both.
+  6. Constant-time compare for any shared-secret delivery-property header, with
+     fail-closed behaviour when the secret env var is unset.
+  7. Idempotency on event `id`; use `aeg-delivery-count` to spot retries.
+  8. Don't invent source IPs, signature headers, or Entra claim values.
+testScenario:
+  events:
+    - Microsoft.EventGrid.SubscriptionValidationEvent
+    - Microsoft.Storage.BlobCreated
+    - Microsoft.EventGrid.SubscriptionDeletedEvent
+sdks:
+  npm:
+    - "@azure/eventgrid"
+  pip:
+    - azure-eventgrid
+catalog:
+  summary: Receive Azure Event Grid deliveries, which carry **no payload signature at all** — trust comes from the ownership handshake (`Microsoft.EventGrid.SubscriptionValidationEvent` echoed as `validationResponse` with HTTP 200, or the CloudEvents v1.0 `OPTIONS` abuse-protection preflight) plus channel auth via a static delivery-property header, a query-parameter client secret, or a Microsoft Entra ID bearer token; guard on `aeg-subscription-name` and parse Event Grid arrays vs CloudEvents objects
+  docsUrl: https://learn.microsoft.com/en-us/azure/event-grid/end-point-validation-event-grid-events-schema

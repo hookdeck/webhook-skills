@@ -1,0 +1,18 @@
+name: vanta
+displayName: Vanta
+docs:
+  webhooks: https://developer.vanta.com/docs/webhooks
+  verification: https://developer.vanta.com/docs/webhooks
+notes: >
+  Compliance automation. Webhooks are powered by Svix: svix-id, svix-timestamp, svix-signature
+  headers; signed content "{svix-id}.{svix-timestamp}.{raw body}", HMAC-SHA256 with the
+  decoded secret, base64, compared against each space-delimited "v1,<sig>" entry. Signing
+  secret starts with whsec_ (Settings > Webhooks > endpoint > Signing Secret). Events include
+  v1.questionnaire.status-changed, v1.vendor.decision.created,
+  v1.trust-center.access-request.approved.
+testScenario:
+  events:
+    - v1.vendor.decision.created
+    - v1.questionnaire.status-changed
+catalog:
+  summary: 'Verify Vanta webhook signatures (Svix: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64) with the official `svix` SDK, handle questionnaire, vendor decision, Trust Center access request, and audit evidence events'

@@ -1,0 +1,18 @@
+name: segment
+displayName: Segment
+docs:
+  webhooks: https://www.twilio.com/docs/segment/connections/destinations/catalog/actions-webhook
+  verification: https://www.twilio.com/docs/segment/connections/destinations/catalog/actions-webhook
+notes: >
+  Twilio Segment CDP, Webhooks (Actions) destination and classic Webhooks destination (docs
+  now live on twilio.com/docs/segment). Signing is optional: if a shared secret is set,
+  Segment sends X-Signature = HMAC-SHA1 of the raw request body, hex. CAVEAT to state in the
+  verification section: when batching is enabled, Segment signs only the FIRST event in the
+  batch, not the whole batch body, so a raw-body HMAC check fails for batched deliveries.
+  Payloads are Segment spec calls with type track, identify, page, screen, group, alias.
+testScenario:
+  events:
+    - track
+    - identify
+catalog:
+  summary: Verify Segment Webhooks (Actions) signatures (`X-Signature`, HMAC-SHA1 hex; batches sign only the first event), handle track, identify, page, screen, group, and alias calls

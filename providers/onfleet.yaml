@@ -1,0 +1,47 @@
+name: onfleet
+displayName: Onfleet
+docs:
+  webhooks: https://docs.onfleet.com/reference/webhooks
+  verification: https://docs.onfleet.com/reference/secrets
+  validation: https://docs.onfleet.com/reference/validation
+  payloads: https://docs.onfleet.com/reference/webhook-payload-examples
+notes: >
+  Last-mile delivery management platform. Two things to implement: (1) the URL validation
+  handshake — at webhook creation Onfleet sends an UNSIGNED GET with a ?check=<random_string>
+  query parameter and expects HTTP 200 with that exact string as a plain-text body (204 is
+  explicitly rejected, and the webhook is not created if this fails); (2) per-delivery
+  signature verification on POST via the X-Onfleet-Signature header. The signature is
+  HMAC-SHA512 over the RAW REQUEST BODY, lowercase hex digest (128 chars), keyed with the
+  organisation-wide webhook secret HEX-DECODED to bytes — Buffer.from(secret, 'hex') /
+  bytes.fromhex(secret), NOT the secret string. Using the string as the key, or SHA-256
+  instead of SHA-512, yields a well-formed digest that never matches. Nothing else is signed:
+  no timestamp header, no t=/v1= prefix, so there is no replay window to enforce — make
+  handlers idempotent. One secret covers every webhook in the org (Configuration -> API &
+  Webhook -> Show Secret); it is not the API key. One webhook targets exactly one trigger, so
+  several webhooks point at the same URL and discriminate on the flat payload's triggerName
+  (string) or triggerId (number). Fields irrelevant to a trigger arrive as null rather than
+  absent, and data can be {} — use defensive access. All times are ms epoch except etaSeconds,
+  which is fractional seconds. Ack within 10s (timed-out deliveries retry every 30s; 300
+  consecutive failures DISABLES the webhook). Common triggers: taskCreated, taskStarted,
+  taskCompleted, taskFailed, taskUpdated, workerDuty, routePlanCompleted.
+testScenario:
+  events:
+    - taskCreated
+    - taskCompleted
+    - workerDuty
+  prompt: >
+    Create a {framework} webhook handler for Onfleet. It must (1) answer the unsigned GET URL
+    validation request by echoing the ?check= query value back as a plain-text HTTP 200 body,
+    and (2) verify the X-Onfleet-Signature header on POST deliveries as an HMAC-SHA512 hex
+    digest of the raw request body, keyed with the hex-DECODED webhook secret, compared in
+    constant time, before processing the event. Route on triggerName. If you use any skills to
+    help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Answer the unsigned `GET ?check=` URL validation handshake, verify `X-Onfleet-Signature` (HMAC-SHA512 over the raw body, keyed with the hex-decoded org secret), handle task, worker and route-plan triggers
+  marketplace:
+    description: Answer Onfleet's unsigned GET ?check= URL validation handshake, verify X-Onfleet-Signature (HMAC-SHA512 over the raw body, keyed with the hex-decoded org secret), and handle task, worker and route-plan triggers.
+    keywords:
+    - webhooks
+    - onfleet
+    - delivery
+    - logistics

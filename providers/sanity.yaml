@@ -1,0 +1,26 @@
+name: sanity
+displayName: Sanity
+docs:
+  webhooks: https://www.sanity.io/docs/webhooks
+  verification: https://github.com/sanity-io/webhook-toolkit
+notes: >
+  GROQ-powered webhooks fire on document create/update/delete in the Content Lake;
+  there are no fixed event names — triggers are defined per-webhook with a GROQ filter
+  (incl. delta::changedAny/changedOnly, before()/after()) and the payload is
+  user-defined via a GROQ projection (defaults to the full document). Configured at
+  sanity.io/manage. Signature: sanity-webhook-signature header, Stripe-style
+  "t=<ms-timestamp>,v1=<sig>", HMAC-SHA256 over "<timestamp>.<rawBody>" with the
+  webhook secret, base64url-encoded (no padding) — NOT Standard Webhooks compliant.
+  Verify against the raw body. Delivery: 1 concurrent request, 2 retries at 30s
+  intervals, 30s timeout; use the idempotency-key header for dedup; webhooks ignore
+  draft and version events by default; no strict delivery guarantee — don't rely solely
+  on webhooks. Official helper: @sanity/webhook (isValidSignature, assertValidSignature,
+  requireSignedRequest middleware; v4 needs Node 18+). No official pip package.
+testScenario:
+  events:
+    - document created (GROQ filter _type == "post", create trigger)
+    - document updated (delta::changedAny(title))
+sdks:
+  npm: ["@sanity/webhook"]
+catalog:
+  summary: Verify Sanity GROQ-powered webhook signatures (`sanity-webhook-signature`, HMAC-SHA256 base64url), handle document change events

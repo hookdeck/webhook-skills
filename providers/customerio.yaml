@@ -1,0 +1,27 @@
+name: customerio
+displayName: Customer.io
+docs:
+  webhooks: https://docs.customer.io/integrations/data-out/connections/webhooks/
+  verification: https://docs.customer.io/integrations/api/webhooks/
+notes: >
+  Verify with X-CIO-Signature: build the string "v0:<X-CIO-Timestamp>:<raw body>"
+  (version always v0), HMAC-SHA256 with the webhook signing key (shown on the
+  Reporting Webhooks integration page in account settings), hex digest compare.
+  Requires the raw, unmodified body. Does NOT follow the Standard Webhooks spec
+  (Slack-style scheme). Payloads carry no single event-name string: each POST is ONE
+  event object with event_id, object_type (customer|email|push|sms|in_app|slack|
+  webhook), metric (sent, delivered, opened, clicked, bounced, dropped, spammed,
+  failed, converted, unsubscribed, ...), timestamp (unix), and data — identify events
+  by the object_type + metric pair, not a dotted name. Endpoint must 2xx within 4
+  seconds or Customer.io retries with exponential backoff for 7 days and backlogs
+  subsequent events (ordering pressure); 400/401/403/404/429/5xx-class errors add a
+  1-hour delay. Setup: Journeys > Data & Integrations > Integrations > Reporting
+  Webhooks; events opt-in per subscription. No official SDK provides verification
+  helpers (customerio-node / customerio pip are API clients only).
+testScenario:
+  events:
+    - "object_type: email, metric: delivered"
+    - "object_type: email, metric: opened"
+    - "object_type: customer, metric: unsubscribed"
+catalog:
+  summary: Verify Customer.io reporting webhook signatures (`X-CIO-Signature`, v0 HMAC-SHA256 with timestamp), handle object_type + metric events

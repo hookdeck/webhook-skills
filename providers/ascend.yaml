@@ -1,0 +1,27 @@
+name: ascend
+displayName: Ascend
+docs:
+  webhooks: https://developers.useascend.com/docs/webhooks
+  verification: https://developers.useascend.com/docs/webhooks
+notes: >
+  Insurance payments / premium financing platform. Custom Stripe-style
+  HMAC-SHA256 scheme — NOT Svix, NOT Standard Webhooks. Signature is in the
+  X-Ascend-Signature header formatted "t=<timestamp>,v1=<hex_hmac>". The
+  signed string is "<timestamp>:<raw_request_body>" (COLON separator, not
+  Stripe's dot). The same timestamp also arrives in X-Ascend-Request-Timestamp.
+  Compute HMAC-SHA256 over that string with the webhook secret, hex-encode,
+  constant-time compare. Use the RAW body — re-serializing breaks the match.
+  Payload shape is { id, type, data } where `data` IS the resource object
+  (no Stripe-style data.object wrapper). Endpoints must return HTTP 200.
+  Webhook registration is MANUAL (email developers@useascend.com with org,
+  environment, events, and endpoint URL — no self-serve dashboard). Only
+  invoice.paid is documented with a sample payload; payout and refund
+  categories exist. Retry behaviour and timestamp tolerance are not
+  documented — make handlers idempotent on the event id. No official SDKs,
+  so verify manually in every framework.
+testScenario:
+  events:
+    - invoice.paid
+    - payout.paid
+catalog:
+  summary: Verify Ascend insurance-payment webhook signatures (`X-Ascend-Signature`, HMAC-SHA256 hex over `<timestamp>:<raw_body>`), handle invoice.paid, invoice.voided, payout.paid, and refund.paid events
