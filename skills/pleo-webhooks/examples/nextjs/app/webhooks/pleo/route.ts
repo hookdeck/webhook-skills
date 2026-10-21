@@ -16,7 +16,7 @@ import { Webhook } from 'standardwebhooks';
 // The secret comes from GET /v1/subscriptions/{id}/secret (data.secretKey).
 // ---------------------------------------------------------------------------
 
-export interface PleoEvent {
+interface PleoEvent {
   data: Record<string, any>; // the resource as it was when the event fired
   eventId: string;
   eventType: string; // versioned, e.g. "v1.export-job.created"

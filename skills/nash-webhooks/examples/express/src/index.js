@@ -1,7 +1,7 @@
 // Generated with: nash-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const express = require('express');
 
 // svix 2.x is ESM-only, so load it with a dynamic import (cached after the

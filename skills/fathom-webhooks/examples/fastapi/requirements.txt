@@ -1,4 +1,4 @@
-fastapi>=0.156.5
+fastapi>=0.156.8
 uvicorn>=0.54.0
 python-dotenv>=1.2.4
 fathom-python==0.0.43

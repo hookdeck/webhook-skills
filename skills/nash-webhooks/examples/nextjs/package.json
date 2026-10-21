@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "next": "^16.4.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "svix": "^2.8.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "@types/react": "^19.0.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
   },

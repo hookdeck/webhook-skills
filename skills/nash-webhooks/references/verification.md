@@ -22,7 +22,7 @@ endpoint > Signing Secret**.
 Node.js (`npm install svix`):
 
 ```javascript
-const { Webhook } = require('svix');
+import { Webhook } from 'svix'; // ESM; from CommonJS use `const { Webhook } = await import('svix')`
 
 const wh = new Webhook(process.env.NASH_WEBHOOK_SECRET);
 // rawBody must be the exact request body. Throws WebhookVerificationError on failure.

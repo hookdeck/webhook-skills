@@ -1,10 +1,12 @@
 // Generated with: openmeter-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
 import { Webhook, WebhookVerificationError } from 'svix';
 import { pathToFileURL } from 'node:url';
+
+dotenv.config({ quiet: true });
 
 const app = express();
 

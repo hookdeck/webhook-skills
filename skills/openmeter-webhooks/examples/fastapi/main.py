@@ -74,6 +74,7 @@ async def openmeter_webhook(
                 "feature": (data.get("feature") or {}).get("key"),
                 "threshold": data.get("threshold"),
                 "usage": (data.get("value") or {}).get("usage"),
+                "has_access": (data.get("value") or {}).get("hasAccess"),
             },
         )
         # TODO: notify the customer, or block access at 100%

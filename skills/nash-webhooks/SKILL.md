@@ -50,7 +50,9 @@ Secret**. Nash recommends the Svix SDKs; they also enforce a 5-minute timestamp 
 ## Verification (core)
 
 ```javascript
-const { Webhook } = require('svix'); // pip install svix: from svix.webhooks import Webhook
+// svix 2.x is ESM-only: use import (or `await import('svix')` from CommonJS).
+// Python: pip install svix; from svix.webhooks import Webhook
+import { Webhook } from 'svix';
 
 // rawBody: the exact request body string/bytes, read BEFORE any JSON parsing.
 function verifyNashWebhook(rawBody, headers, secret = process.env.NASH_WEBHOOK_SECRET) {
