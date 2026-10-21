@@ -8324,3 +8324,764 @@ providers:
       events:
         - delivered
         - hard_bounce
+
+  # ---------------------------------------------------------------------------
+  # Verified-sources batch 2 (matches hookdeck/core source types)
+  # ---------------------------------------------------------------------------
+
+  - name: onfido
+    displayName: Onfido
+    docs:
+      webhooks: https://documentation.onfido.com/api/latest/#webhooks
+      verification: https://documentation.onfido.com/api/manual-webhook-signature-verification/
+    notes: >
+      Identity verification (Onfido, now Entrust Identity Verification). Header X-SHA2-Signature =
+      HMAC-SHA256 of the raw request body, lowercase hex, keyed with the webhook's token (returned in
+      the token field when the webhook is registered, also shown on Dashboard > Webhook Management),
+      used as a raw UTF-8 string. Use the raw body; parsed JSON may be reordered. Payload is
+      {"payload": {"resource_type", "action", "object": {...}}}; actions include check.completed,
+      report.completed, workflow_run.completed.
+    testScenario:
+      events:
+        - check.completed
+        - workflow_run.completed
+
+  - name: dwolla
+    displayName: Dwolla
+    docs:
+      webhooks: https://developers.dwolla.com/docs/balance/webhooks
+      verification: https://developers.dwolla.com/docs/balance/webhooks
+    notes: >
+      Bank payments API. Header X-Request-Signature-SHA-256 = HMAC-SHA256 of the raw request body,
+      hex, keyed with the secret you supplied when creating the webhook subscription (raw string).
+      Dwolla does not support IP allowlisting as a validation method. Payload has topic (e.g.
+      customer_created, customer_transfer_completed, transfer_completed), resourceId and _links.
+    testScenario:
+      events:
+        - customer_created
+        - customer_transfer_completed
+
+  - name: didit
+    displayName: Didit
+    docs:
+      webhooks: https://docs.didit.me/integration/webhooks
+      verification: https://docs.didit.me/integration/webhooks
+    notes: >
+      Identity verification. Every webhook is signed with HMAC-SHA256 keyed with the destination's
+      secret_shared_key (raw string). Three headers are sent: X-Signature (hex HMAC of the exact raw
+      body bytes), X-Signature-V2 (hex HMAC of re-serialized sorted JSON) and X-Signature-Simple
+      (deprecated). Hookdeck verifies X-Signature over the raw body, so the skill should verify
+      X-Signature against the raw body as the primary path and mention V2 only as an alternative.
+      X-Timestamp (unix seconds) is sent separately and is not part of the X-Signature input; reject
+      if older than 300s. Events: status.updated, data.updated.
+    testScenario:
+      events:
+        - status.updated
+        - data.updated
+
+  - name: pusher
+    displayName: Pusher Channels
+    docs:
+      webhooks: https://pusher.com/docs/channels/server_api/webhooks/
+      verification: https://pusher.com/docs/channels/server_api/webhooks/
+    notes: >
+      Pusher Channels webhooks (not Pusher Beams). X-Pusher-Signature = HMAC-SHA256 hex digest of
+      the raw POST body keyed with the app secret of the key named in X-Pusher-Key (the oldest
+      active token). Body is {"time_ms": ..., "events": [{"name": "channel_occupied", ...}]}; event
+      names: channel_occupied, channel_vacated, member_added, member_removed, client_event,
+      cache_miss, subscription_count.
+    testScenario:
+      events:
+        - channel_occupied
+        - member_added
+
+  - name: launchdarkly
+    displayName: LaunchDarkly
+    docs:
+      webhooks: https://launchdarkly.com/docs/home/infrastructure/webhooks
+      verification: https://launchdarkly.com/docs/home/infrastructure/webhooks
+    notes: >
+      Feature flags. Signing is optional: when a secret is defined on the webhook (auto-generated or
+      user-supplied), X-LD-Signature = HMAC-SHA256 hex digest of the raw payload keyed with that
+      secret. Tell users to set a secret, or deliveries are unsigned. Payload is an audit log entry
+      with kind (flag, segment, project, environment, ...), name, titleVerb and accesses.
+    testScenario:
+      events:
+        - flag
+        - segment
+
+  - name: veriff
+    displayName: Veriff
+    docs:
+      webhooks: https://devdocs.veriff.com/docs/webhooks-guide
+      verification: https://devdocs.veriff.com/docs/hmac-authentication-and-endpoint-security
+    notes: >
+      Identity verification. Header X-HMAC-SIGNATURE = HMAC-SHA256 of the raw request body, lowercase
+      hex, keyed with the integration's shared secret key (raw string). Also sends X-AUTH-CLIENT (the
+      integration API key) and vrf-integration-id; only x-hmac-signature proves authenticity. Webhook
+      types: decision webhook (verification.status approved/declined/resubmission_requested/expired/
+      abandoned) and event webhook (action started/submitted). Docs test vector: secret
+      abcdef12-abcd-abcd-abcd-abcdef012345 over the compact JSON of the docs' mock payload gives
+      01fa3ded011bfce75672c99877a6cc1cf7aeaeda0ccb6b43fc21b60f595063c2.
+    testScenario:
+      events:
+        - decision
+        - submitted
+
+  - name: zernio
+    displayName: Zernio
+    docs:
+      webhooks: https://docs.zernio.com/webhooks
+      verification: https://docs.zernio.com/webhooks#signatures
+    notes: >
+      Social media scheduling API (formerly Late, getlate.dev). Deliveries are signed only when the
+      endpoint has a secret, which you supply (Zernio never generates one). X-Zernio-Signature =
+      lowercase hex HMAC-SHA256 of the raw request body keyed with that secret; X-Late-Signature is
+      a legacy alias with the same value. Check the docs for the event names.
+    testScenario:
+      events:
+        - post.published
+        - post.failed
+
+  - name: mongodb-atlas
+    displayName: MongoDB Atlas
+    docs:
+      webhooks: https://www.mongodb.com/docs/atlas/tutorial/webhook-integration/
+      verification: https://www.mongodb.com/docs/atlas/tutorial/webhook-integration/#verify-webhook-requests
+    notes: >
+      MongoDB Atlas alert webhooks (Project Integrations > Webhook Settings); Atlas Triggers and App
+      Functions are out of scope. When a Webhook Secret is set, X-MMS-Signature = base64-encoded
+      HMAC-SHA1 of the raw request body keyed with the secret (raw string); without a secret the
+      header is absent. Payload is an alert with id, eventTypeName (e.g.
+      OUTSIDE_METRIC_THRESHOLD, HOST_DOWN), status (OPEN, CLOSED) and metricName.
+    testScenario:
+      events:
+        - OUTSIDE_METRIC_THRESHOLD
+        - HOST_DOWN
+
+  - name: tailscale
+    displayName: Tailscale
+    docs:
+      webhooks: https://tailscale.com/kb/1213/webhooks
+      verification: https://tailscale.com/kb/1213/webhooks
+      example: https://github.com/tailscale/tailscale/blob/main/docs/webhooks/example.go
+    notes: >
+      Header Tailscale-Webhook-Signature: t=<unix>,v1=<hex>. v1 = hex HMAC-SHA256 over
+      "<t>.<raw body>" keyed with the webhook secret as a raw UTF-8 string (shown once at creation,
+      e.g. tskey-webhook-xxxxx). Only scheme v1 exists. Reject stale timestamps (5 minutes). Body is a
+      JSON array of events with type, e.g. nodeCreated, nodeNeedsApproval, nodeApproved,
+      nodeKeyExpiringInOneDay, nodeDeleted, policyUpdate, userCreated, test.
+    testScenario:
+      events:
+        - nodeCreated
+        - policyUpdate
+
+  - name: heroku
+    displayName: Heroku
+    docs:
+      webhooks: https://devcenter.heroku.com/articles/app-webhooks
+      verification: https://devcenter.heroku.com/articles/app-webhooks
+    notes: >
+      App webhooks. Header Heroku-Webhook-Hmac-SHA256 = base64 HMAC-SHA256 of the raw body keyed with
+      the webhook secret (chosen with --secret or generated by the CLI and shown once; raw string).
+      Payload has resource (api:build, api:release, dyno, api:formation, api:addon-attachment, ...),
+      action (create, update, destroy) and data. Optional --authorization header is an extra.
+    testScenario:
+      events:
+        - api:release
+        - api:build
+
+  - name: maxio
+    displayName: Maxio (Chargify)
+    docs:
+      webhooks: https://support.maxio.com/hc/en-us/articles/24266136649869-Webhooks-Configuration-and-Testing
+      verification: https://support.maxio.com/hc/en-us/articles/24266136649869-Webhooks-Configuration-and-Testing
+    notes: >
+      Subscription billing (formerly Chargify). Bodies are application/x-www-form-urlencoded
+      (payload[...]=...&event=...). Header X-Chargify-Webhook-Signature-Hmac-Sha-256 = hex
+      HMAC-SHA256 of the raw form body keyed with the Site Shared Key (raw string). Verify the raw
+      body before parsing the form. Docs test vector: key 123, body
+      payload[chargify]=testing&event=test gives
+      19826d51b9f866b26eda1f154de192593360f8d0bcb63df8a28540a5dcf733f1. Events: signup_success,
+      payment_success, subscription_state_change, renewal_success, payment_failure, test.
+    testScenario:
+      events:
+        - signup_success
+        - payment_success
+
+  - name: rutter
+    displayName: Rutter
+    docs:
+      webhooks: https://docs.rutter.com/implementation-guides/webhooks
+      verification: https://docs.rutter.com/implementation-guides/webhooks#verifying-signatures
+    notes: >
+      Unified commerce/accounting API. X-Rutter-Signature = "sha256=" + base64 HMAC-SHA256 of the raw
+      payload keyed with the organization's client secret (raw string). X-Rutter-Signatures is a
+      comma-separated list of all active signatures (two during secret rotation). Payload has type
+      and code (e.g. CONNECTION INITIAL_UPDATE, CONNECTION DISCONNECTED, ORDER ORDER_CREATED).
+    testScenario:
+      events:
+        - INITIAL_UPDATE
+        - DISCONNECTED
+
+  - name: bolt
+    displayName: Bolt
+    docs:
+      webhooks: https://help.boltapp.com/developers/webhooks/
+      verification: https://help.boltapp.com/api-reference/guides/verify-webhooks/
+    notes: >
+      Bolt checkout (boltapp.com), not Bolt ride-hailing or bolt.new. X-Bolt-Hmac-Sha256 = base64
+      HMAC-SHA256 of the raw request body keyed with the Signing Secret (Merchant Dashboard >
+      Administration > API; raw string). Transaction webhooks carry type (payment, capture, credit,
+      void, auth, pending, rejected_irreversible).
+    testScenario:
+      events:
+        - payment
+        - capture
+
+  - name: signal-sciences
+    displayName: Signal Sciences (Fastly Next-Gen WAF)
+    docs:
+      webhooks: https://docs.fastly.com/en/ngwaf/generic-webhooks
+      verification: https://docs.fastly.com/en/ngwaf/generic-webhooks
+    notes: >
+      Fastly Next-Gen WAF (formerly Signal Sciences) generic webhook integration. X-SigSci-Signature =
+      hex HMAC-SHA256 of the raw JSON body keyed with the signing key generated for the integration
+      (Reveal/Rotate in the console; raw string). No timestamp. Payload has type (e.g. flag,
+      agentAlert, newSite, enableSite, siteMemberInvite) and payload.
+    testScenario:
+      events:
+        - flag
+        - agentAlert
+
+  - name: maintainx
+    displayName: MaintainX
+    docs:
+      webhooks: https://help.getmaintainx.com/build/webhooks
+      verification: https://help.getmaintainx.com/build/webhooks
+    notes: >
+      Maintenance management. Two headers: x-maintainx-webhook-body-signature: t=<unix>,v1=<hex> and
+      x-maintainx-webhook-uri-signature (same format, signs the full URI). Hookdeck verifies the body
+      signature: v1 = hex HMAC-SHA256 over "<t>.<raw body>" keyed with the endpoint secret (Integrations
+      settings > Copy secret; raw string). The skill should verify the body signature (the URI
+      signature is optional extra). Events include NEW_WORK_ORDER, WORK_ORDER_CHANGE,
+      WORK_ORDER_STATUS_CHANGE, NEW_WORK_REQUEST, ASSET_STATUS_CHANGE.
+    testScenario:
+      events:
+        - NEW_WORK_ORDER
+        - WORK_ORDER_STATUS_CHANGE
+
+  - name: callrail
+    displayName: CallRail
+    docs:
+      webhooks: https://apidocs.callrail.com/#webhooks
+      verification: https://apidocs.callrail.com/#webhooks
+    notes: >
+      Call tracking. Header Signature = base64 HMAC-SHA1 of the raw request payload keyed with the
+      company's signing token (Webhooks configuration page; raw string). Docs test vector: key
+      072e77e426f92738a72fe23c4d1953b4 over the docs' JSON body gives UZAHbUdfm3GqL7qzilGozGzWV64=.
+      Replay protection is a timestamp field inside the body. Webhook types: pre-call, post-call,
+      call modified, text message sent/received, form submission.
+    testScenario:
+      events:
+        - post_call
+        - text_message_received
+
+  - name: lemon-squeezy
+    displayName: Lemon Squeezy
+    docs:
+      webhooks: https://docs.lemonsqueezy.com/help/webhooks
+      verification: https://docs.lemonsqueezy.com/help/webhooks/signing-requests
+      events: https://docs.lemonsqueezy.com/help/webhooks/event-types
+    notes: >
+      Merchant of record. X-Signature = hex HMAC-SHA256 of the raw body keyed with the signing secret
+      you enter when creating the webhook (6-40 chars; raw string). X-Event-Name carries the event
+      (also meta.event_name). Events: order_created, order_refunded, subscription_created,
+      subscription_updated, subscription_cancelled, subscription_payment_success,
+      license_key_created.
+    testScenario:
+      events:
+        - order_created
+        - subscription_created
+
+  - name: modern-treasury
+    displayName: Modern Treasury
+    docs:
+      webhooks: https://docs.moderntreasury.com/platform/reference/webhooks
+      verification: https://docs.moderntreasury.com/platform/reference/verifying-webhooks
+    notes: >
+      Payment operations. X-Signature = hex HMAC-SHA256 of the raw body keyed with the webhook key
+      (Developer Settings; raw string). X-Topic and X-Event-Type headers carry the topic (e.g.
+      payment_order, expected_payment) and event (e.g. completed, failed, reconciled); body has
+      event and data.
+    testScenario:
+      events:
+        - payment_order.completed
+        - payment_order.failed
+
+  - name: castle
+    displayName: Castle
+    docs:
+      webhooks: https://docs.castle.io/docs/webhooks
+      verification: https://docs.castle.io/docs/webhooks#check-the-signature
+    notes: >
+      Fraud/account security. X-Castle-Signature = base64 HMAC-SHA256 of the raw JSON body keyed with
+      the account's API secret (not a per-webhook secret). Payload has type, e.g. $review.opened,
+      $review.escalated, $incident.confirmed, $profile.updated.
+    testScenario:
+      events:
+        - $review.opened
+        - $incident.confirmed
+
+  - name: hibob
+    displayName: HiBob
+    docs:
+      webhooks: https://apidocs.hibob.com/reference/getting-started-webhooks
+      verification: https://apidocs.hibob.com/reference/getting-started-webhooks#how-does-bob-calculate-the-signature
+    notes: >
+      HR platform (Bob). Header Bob-Signature = base64 HMAC-SHA512 of the raw request body keyed with
+      the secret shown in the Bob webhook configuration (raw string). Events: employee.created,
+      employee.updated, employee.joined, employee.left, timeoff.request.created, ...
+    testScenario:
+      events:
+        - employee.created
+        - employee.updated
+
+  - name: motive
+    displayName: Motive
+    docs:
+      webhooks: https://developer.gomotive.com/docs/webhooks-v2
+      verification: https://developer.gomotive.com/docs/overview-company-webhooks
+    notes: >
+      Fleet management (formerly KeepTruckin). X-KT-Webhook-Signature = hex HMAC-SHA1 of the raw JSON
+      payload keyed with the webhook's shared secret (raw string). Docs test vector: secret
+      d9d36bea41c44ae49d1bfc4a48ba2abe over ["fault_code_closed"] gives
+      f04a8386a21a6cba0447024e83b3f0983352bb72 (the docs' bash/Ruby samples wrongly use the
+      signature as the key). Enabling a webhook sends a test request that needs a 200/201. Actions
+      include vehicle_location_updated, driver_created, user_updated, fault_code_opened,
+      fault_code_closed.
+    testScenario:
+      events:
+        - vehicle_location_updated
+        - fault_code_opened
+
+  - name: dbt-cloud
+    displayName: dbt Cloud
+    docs:
+      webhooks: https://docs.getdbt.com/docs/deploy/webhooks
+      verification: https://docs.getdbt.com/docs/deploy/webhooks#validate-a-webhook
+    notes: >
+      The Authorization header carries the bare lowercase hex HMAC-SHA256 of the raw request body
+      (no scheme, no "Bearer") keyed with the webhook's hmac_secret (returned on create; raw string).
+      Events: job.run.started, job.run.completed, job.run.errored.
+    testScenario:
+      events:
+        - job.run.completed
+        - job.run.errored
+
+  - name: fivetran
+    displayName: Fivetran
+    docs:
+      webhooks: https://fivetran.com/docs/rest-api/webhooks
+      verification: https://github.com/fivetran/fivetran-webhook-example-python-flask
+    notes: >
+      Data pipelines. Payloads are signed only if a secret was specified when creating the webhook
+      via the REST API. X-Fivetran-Signature-256 = HMAC-SHA256 hex of the raw body keyed with the
+      secret (raw string); the official example compares uppercase hex, so compare
+      case-insensitively. Webhook creation/activation sends one test POST that needs a 2xx. Events:
+      sync_start, sync_end, status, connection_successful, connection_failure, transformation_run_succeeded.
+    testScenario:
+      events:
+        - sync_end
+        - sync_start
+
+  - name: webex
+    displayName: Webex
+    docs:
+      webhooks: https://developer.webex.com/docs/webhooks
+      verification: https://developer.webex.com/blog/using-a-webhook-secret
+    notes: >
+      Webex (formerly Cisco Spark). When the webhook is created with a secret (optional API field),
+      X-Spark-Signature = hex HMAC-SHA1 of the raw body keyed with the secret (raw string). This is
+      sent for every webhook type and is what Hookdeck verifies; X-Webex-Signature (SHA-256/512) is
+      only on some types. Payload has resource (messages, memberships, rooms, meetings,
+      attachmentActions) and event (created, updated, deleted); messages webhooks carry only the id.
+    testScenario:
+      events:
+        - messages.created
+        - memberships.created
+
+  - name: ramp
+    displayName: Ramp
+    docs:
+      webhooks: https://docs.ramp.com/developer-api/v1/guides/webhooks
+      verification: https://docs.ramp.com/developer-api/v1/guides/webhooks#verifying-webhook-signatures
+    notes: >
+      Corporate cards/spend management. X-Ramp-Signature = hex HMAC-SHA256 of the raw request body
+      keyed with the secret returned when the subscription is created (raw string). New
+      subscriptions get a signed POST {"type": "webhooks.verification", "challenge": ...}; return
+      2xx and submit the challenge to POST /developer/v1/webhooks/{id}/verify to activate. Events
+      include transactions.authorized, transactions.cleared, reimbursements.created.
+    testScenario:
+      events:
+        - transactions.cleared
+        - webhooks.verification
+
+  - name: buildkite
+    displayName: Buildkite
+    docs:
+      webhooks: https://buildkite.com/docs/apis/webhooks/pipelines
+      verification: https://buildkite.com/docs/apis/webhooks/pipelines#webhook-signature
+    notes: >
+      CI/CD. The webhook Token is sent either as plain text in X-Buildkite-Token (default) or as
+      X-Buildkite-Signature: timestamp=<unix>,signature=<hex HMAC-SHA256 of "<timestamp>.<body>">.
+      Hookdeck verifies token mode only (X-Buildkite-Token compared to the token), so the skill
+      should lead with token mode (constant-time compare) and document signature mode as the
+      alternative. X-Buildkite-Event names the event: ping, build.scheduled, build.running,
+      build.finished, job.started, job.finished, agent.connected.
+    testScenario:
+      events:
+        - build.finished
+        - ping
+
+  - name: dropbox
+    displayName: Dropbox
+    docs:
+      webhooks: https://www.dropbox.com/developers/reference/webhooks
+      verification: https://www.dropbox.com/developers/reference/webhooks
+    notes: >
+      Dropbox API app webhooks (not Dropbox Sign). Verification request: GET ?challenge=<value>;
+      echo the value with Content-Type text/plain and X-Content-Type-Options: nosniff. Notifications:
+      POST with X-Dropbox-Signature = hex HMAC-SHA256 of the raw body keyed with the app secret.
+      Body is {"list_folder": {"accounts": [...]}, "delta": {"users": [...]}}; respond quickly and
+      fetch changes with /files/list_folder/continue.
+    testScenario:
+      events:
+        - list_folder
+        - challenge
+
+  - name: stytch
+    displayName: Stytch
+    docs:
+      webhooks: https://stytch.com/docs/workspace-management/webhooks
+      verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+    notes: >
+      Auth platform. Stytch webhooks are delivered by Svix (Stytch's docs point to Svix's verification
+      guide): svix-id, svix-timestamp, svix-signature ("v1,<base64>" space-delimited list); signed
+      content "{svix-id}.{svix-timestamp}.{raw body}", HMAC-SHA256 keyed with the base64-decoded part
+      of the whsec_ secret. Header names and secret format come from Svix's guide. Event types follow
+      <source>.<object>.<action>, e.g. direct.user.create, direct.member.update.
+    testScenario:
+      events:
+        - direct.user.create
+        - direct.user.update
+
+  - name: daytona
+    displayName: Daytona
+    docs:
+      webhooks: https://www.daytona.io/docs/en/webhooks
+      verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+      source: https://github.com/daytonaio/daytona/blob/main/apps/api/src/webhook/README.md
+    notes: >
+      Sandbox infrastructure for AI code. Daytona's public webhook page documents no signature, but
+      its source shows delivery through Svix (dashboard reads the Svix endpoint secret). So verify as
+      Svix: svix-id, svix-timestamp, svix-signature; signed content "{id}.{timestamp}.{raw body}",
+      HMAC-SHA256 with the base64-decoded whsec_ secret. Say the scheme comes from Svix, not
+      Daytona's docs. Events include sandbox.created, sandbox.state.updated, snapshot.created,
+      volume.created.
+    testScenario:
+      events:
+        - sandbox.created
+        - sandbox.state.updated
+
+  - name: gopuff
+    displayName: Gopuff
+    docs:
+      webhooks: https://devportaldocs.poweredbygopuff.com/#/webhooks/introduction
+      verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+    notes: >
+      Powered by Gopuff partner API. Endpoints are registered in the Svix App Portal, so webhooks are
+      Svix-signed: svix-id, svix-timestamp, svix-signature; signed content
+      "{id}.{timestamp}.{raw body}", HMAC-SHA256 with the base64-decoded whsec_ secret. Gopuff's
+      pages have no signature section; say the scheme comes from Svix. Check the docs for event
+      names (order lifecycle events).
+    testScenario:
+      events:
+        - order.created
+        - order.updated
+
+  - name: whop
+    displayName: Whop
+    docs:
+      webhooks: https://docs.whop.com/developer/guides/webhooks
+      verification: https://docs.whop.com/developer/guides/webhooks
+    notes: >
+      Digital products marketplace. Standard Webhooks: webhook-id, webhook-timestamp,
+      webhook-signature "v1,<base64>"; signed content "{id}.{timestamp}.{raw body}" with
+      HMAC-SHA256. The secret is a ws_ string used as the literal UTF-8 HMAC key: do not strip the
+      prefix and do not base64-decode it (with the standardwebhooks library, pass
+      base64(utf8(secret)) as Whop's SDK does). Legacy v2/v5 webhooks are not Standard Webhooks
+      signed. Events: payment.succeeded, payment.failed, membership.activated,
+      membership.deactivated, refund.created.
+    testScenario:
+      events:
+        - payment.succeeded
+        - membership.activated
+
+  - name: cloudflare
+    displayName: Cloudflare
+    docs:
+      webhooks: https://developers.cloudflare.com/notifications/get-started/configure-webhooks/
+      verification: https://developers.cloudflare.com/notifications/get-started/configure-webhooks/
+    notes: >
+      Cloudflare Notifications generic webhooks (not Workers). No signature: the secret you enter
+      when creating the webhook is sent verbatim in the cf-webhook-auth header; reject requests where
+      it is missing or differs (constant-time compare). Payload has name, text, data, alert_type,
+      account_id, policy_id, ts.
+    testScenario:
+      events:
+        - alert
+        - test
+      prompt: >
+        Add an endpoint to my {framework} app that receives Cloudflare Notifications webhooks.
+        Authenticate them with the cf-webhook-auth secret and handle the alert payload.
+
+  - name: snowflake
+    displayName: Snowflake
+    docs:
+      webhooks: https://docs.snowflake.com/en/user-guide/notifications/webhook-notifications
+      verification: https://docs.snowflake.com/en/sql-reference/sql/create-notification-integration-webhooks
+    notes: >
+      Snowflake webhook notification integrations (CREATE NOTIFICATION INTEGRATION TYPE=WEBHOOK, sent
+      with SYSTEM$SEND_SNOWFLAKE_NOTIFICATION). No signature: you define WEBHOOK_HEADERS and use the
+      SNOWFLAKE_WEBHOOK_SECRET placeholder in a header value (e.g. 'X-Webhook-Secret' =
+      'SNOWFLAKE_WEBHOOK_SECRET'). Verify that header with a constant-time compare. The body is the
+      user's WEBHOOK_BODY_TEMPLATE (SNOWFLAKE_WEBHOOK_MESSAGE placeholder).
+    testScenario:
+      events:
+        - notification
+      prompt: >
+        Add an endpoint to my {framework} app that receives Snowflake webhook notifications.
+        Authenticate them with a shared secret header and handle the JSON payload.
+
+  - name: marketo
+    displayName: Marketo
+    docs:
+      webhooks: https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/webhooks/webhooks
+      verification: https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/webhooks/webhooks
+    notes: >
+      Adobe Marketo Engage webhooks called from Smart Campaign flow steps. URL, method, payload
+      template and headers are user-defined. No signature: add a custom header (Webhooks Actions >
+      Set Custom Header, e.g. X-Webhook-Secret) and compare it constant-time. Payload is whatever the
+      template sends using lead tokens.
+    testScenario:
+      events:
+        - lead webhook
+      prompt: >
+        Add an endpoint to my {framework} app that receives Marketo webhooks from a Smart Campaign.
+        Authenticate them with a shared secret header and handle the JSON payload.
+
+  - name: ninjaone
+    displayName: NinjaOne
+    docs:
+      webhooks: https://app.ninjarmm.com/apidocs/NinjaRMM-API-v2.json
+      verification: https://app.ninjarmm.com/apidocs/NinjaRMM-API-v2.json
+    notes: >
+      RMM platform. No signature. Only API-configured webhooks (PUT /v2/webhook with a headers array
+      of name/value) can carry a custom header such as X-Webhook-Secret or Authorization; console
+      notification-channel webhooks take a URL only and cannot be authenticated. Compare the header
+      constant-time. Payloads are activity/condition events (activityType, statusCode, ...).
+    testScenario:
+      events:
+        - CONDITION
+      prompt: >
+        Add an endpoint to my {framework} app that receives NinjaOne webhooks. Authenticate them with
+        a shared secret header and handle the activity payload.
+
+  - name: mailjet
+    displayName: Mailjet
+    docs:
+      webhooks: https://dev.mailjet.com/email/guides/webhooks/
+      verification: https://dev.mailjet.com/email/guides/webhooks/
+    notes: >
+      Email event webhooks. No signature or custom header option. Secure with Basic auth credentials
+      in the URL (https://user:pass@host/path), which arrive as Authorization: Basic; decode and
+      compare username and password constant-time. Events: sent, open, click, bounce, spam, blocked,
+      unsub; events may be grouped into an array.
+    testScenario:
+      events:
+        - open
+        - bounce
+
+  - name: gravity-forms
+    displayName: Gravity Forms
+    docs:
+      webhooks: https://docs.gravityforms.com/triggering-webhooks-form-submissions/
+      verification: https://docs.gravityforms.com/triggering-webhooks-form-submissions/
+    notes: >
+      WordPress forms plugin, Webhooks Add-On. No signature. Add a Request Header on the webhook feed
+      (custom value, e.g. X-Webhook-Secret) and compare it constant-time. Body is the entry (all
+      fields or selected fields) as JSON or form data.
+    testScenario:
+      events:
+        - form submission
+      prompt: >
+        Add an endpoint to my {framework} app that receives Gravity Forms webhooks. Authenticate them
+        with a shared secret header and handle the entry payload.
+
+  - name: zoominfo
+    displayName: ZoomInfo
+    docs:
+      webhooks: https://tech-docs-library.zoominfo.com/webhooks-implementation-guide.pdf
+      verification: https://tech-docs-library.zoominfo.com/webhooks-implementation-guide.pdf
+    notes: >
+      B2B data. No signature. ZoomInfo generates a verification token when the webhook is created
+      (can be regenerated) and sends it in the x-zoominfo-token header; compare it constant-time. The
+      Validate step posts a sample payload before the token exists. Payloads are record change
+      events (contact/company create/update/delete).
+    testScenario:
+      events:
+        - contact update
+      prompt: >
+        Add an endpoint to my {framework} app that receives ZoomInfo webhooks. Verify the
+        x-zoominfo-token header and handle the payload.
+
+  - name: unipile
+    displayName: Unipile
+    docs:
+      webhooks: https://developer.unipile.com/docs/webhooks-2
+      verification: https://developer.unipile.com/docs/webhooks-2
+    notes: >
+      Unified messaging/email/LinkedIn API. No signature. Webhooks created via the API accept a
+      headers array, e.g. {"key": "Unipile-Auth", "value": "<secret>"}; compare it constant-time.
+      Events include message_received, message_read, mail_received, account status (OK,
+      CREDENTIALS, ...).
+    testScenario:
+      events:
+        - message_received
+        - mail_received
+
+  - name: mailparser
+    displayName: Mailparser
+    docs:
+      webhooks: https://help.mailparser.io/hc/en-us/articles/16253409612564-How-do-advanced-webhooks-work
+      verification: https://help.mailparser.io/hc/en-us/articles/16253409612564-How-do-advanced-webhooks-work
+    notes: >
+      Email parsing. No signature in Mailparser's docs (ignore third-party claims of an HMAC header).
+      Advanced webhooks take Additional Headers (one per line), e.g. X-Webhook-Secret: <secret> or
+      Authorization: Basic ...; compare constant-time. Payload is the parsed data fields as JSON.
+    testScenario:
+      events:
+        - parsed email
+      prompt: >
+        Add an endpoint to my {framework} app that receives Mailparser webhooks. Authenticate them
+        with a shared secret header and handle the parsed data.
+
+  - name: helius
+    displayName: Helius
+    docs:
+      webhooks: https://www.helius.dev/docs/webhooks
+      verification: https://www.helius.dev/docs/api-reference/webhooks
+    notes: >
+      Solana RPC/webhooks. No signature. The optional authHeader value set on the webhook (e.g.
+      "Bearer your-secret-token") is sent verbatim as the Authorization header; compare the whole
+      value constant-time. The payload "signature" field is the Solana transaction signature, not a
+      webhook signature. Payload is an array of (enhanced) transactions with type, e.g. NFT_SALE,
+      SWAP, TRANSFER.
+    testScenario:
+      events:
+        - TRANSFER
+        - SWAP
+
+  - name: databricks
+    displayName: Databricks
+    docs:
+      webhooks: https://docs.databricks.com/aws/en/admin/workspace-settings/notification-destinations
+      verification: https://docs.databricks.com/aws/en/admin/workspace-settings/notification-destinations
+    notes: >
+      Workspace notification destinations of type Webhook. No signature; use the HTTP Basic auth
+      option (username/password), decode and compare constant-time. The OAuth (Beta) mode is
+      separate and out of scope. Job payloads have event_type jobs.on_start, jobs.on_success,
+      jobs.on_failure, jobs.on_duration_warning_threshold_exceeded; SQL alerts send their own
+      payload.
+    testScenario:
+      events:
+        - jobs.on_success
+        - jobs.on_failure
+
+  - name: mixpanel
+    displayName: Mixpanel
+    docs:
+      webhooks: https://docs.mixpanel.com/docs/cohort-sync/webhooks
+      verification: https://docs.mixpanel.com/docs/cohort-sync/webhooks
+    notes: >
+      Cohort sync webhooks. No signature; optionally enable Basic Authentication for the webhook
+      connection, decode Authorization: Basic and compare constant-time. Payload has action
+      (members, add_members, remove_members) and parameters (mixpanel_cohort_id, members, ...). Real
+      Time Event Streams (private beta) use a custom header or Bearer token instead; mention only.
+    testScenario:
+      events:
+        - add_members
+        - remove_members
+
+  - name: appsflyer
+    displayName: AppsFlyer
+    docs:
+      webhooks: https://support.appsflyer.com/hc/en-us/articles/207034356-Push-API-streaming-raw-data
+      verification: https://support.appsflyer.com/hc/en-us/articles/207034356-Push-API-streaming-raw-data
+    notes: >
+      AppsFlyer Push API (raw data streaming). No signature. Configure a custom authorization header
+      (token name and value per app ID) and compare it constant-time. Choose POST (GET puts data in
+      the query string). Payload is a raw-data record with event_name (install, in-app event names),
+      appsflyer_id, app_id, event_time.
+    testScenario:
+      events:
+        - install
+        - af_purchase
+
+  - name: asaas
+    displayName: Asaas
+    docs:
+      webhooks: https://docs.asaas.com/docs/about-webhooks
+      verification: https://docs.asaas.com/docs/receba-eventos-do-asaas-no-seu-endpoint-de-webhook
+    notes: >
+      Brazilian payments. No signature. The webhook authToken you set (32-255 chars; not your Asaas
+      API key) is sent in the asaas-access-token header; compare constant-time. Payload has event
+      (PAYMENT_CREATED, PAYMENT_RECEIVED, PAYMENT_CONFIRMED, PAYMENT_OVERDUE, ...) and payment.
+    testScenario:
+      events:
+        - PAYMENT_RECEIVED
+        - PAYMENT_CREATED
+
+  - name: microsoft-dynamics
+    displayName: Microsoft Dynamics 365 (Dataverse)
+    docs:
+      webhooks: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/use-webhooks
+      verification: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-web-hook
+    notes: >
+      Dataverse webhooks registered with the Plug-in Registration Tool. No signature. Use the
+      HttpHeader authentication option (key/value pairs, e.g. X-Webhook-Secret) and compare
+      constant-time; WebhookKey and HttpQueryString put the secret in the query string and are not
+      covered by Hookdeck. Body is a RemoteExecutionContext JSON with MessageName (Create, Update,
+      Delete), PrimaryEntityName and InputParameters.
+    testScenario:
+      events:
+        - Create
+        - Update
+
+  - name: drata
+    displayName: Drata
+    docs:
+      webhooks: https://help.drata.com/en/articles/12876602-create-workflow-for-control
+      verification: https://help.drata.com/en/articles/11751113-automate-actions-with-drata-s-workflows
+    notes: >
+      Compliance automation. Drata workflow "Send webhook" actions POST to your endpoint. No public
+      signing secret (Drata sends through Svix but does not document svix headers or a whsec_
+      secret), so authenticate with a custom header (e.g. X-Webhook-Secret) and compare
+      constant-time. Body carries control/trigger properties from the workflow.
+    testScenario:
+      events:
+        - workflow webhook
+      prompt: >
+        Add an endpoint to my {framework} app that receives Drata workflow webhooks. Authenticate them
+        with a shared secret header and handle the JSON payload.
