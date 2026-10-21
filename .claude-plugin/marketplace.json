@@ -3283,7 +3283,7 @@
     },
     {
       "name": "openclaw-webhooks",
-      "description": "Verify OpenClaw Gateway webhook tokens, handle agent hook and wake event payloads.",
+      "description": "Verify OpenClaw automation (cron) webhooks sent with Authorization: Bearer <webhookToken>, handle finished-run events and failure alerts, and call the Gateway's inbound hooks.",
       "source": "./skills/openclaw-webhooks",
       "strict": false,
       "skills": [

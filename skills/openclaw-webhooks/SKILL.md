@@ -1,13 +1,14 @@
 ---
 name: openclaw-webhooks
 description: >
-  Receive and verify OpenClaw Gateway webhooks. Use when handling webhook
-  events from OpenClaw AI agents, processing agent hook calls, wake events,
-  or building integrations that respond to OpenClaw agent activity.
+  Receive and verify OpenClaw automation (cron) webhooks. Use when handling
+  the finished-run POSTs OpenClaw sends with Authorization: Bearer
+  <webhookToken>, processing automation results or failure alerts, or calling
+  an OpenClaw Gateway's inbound /hooks/agent and /hooks/wake endpoints.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.2.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
@@ -15,40 +16,32 @@ metadata:
 
 ## When to Use This Skill
 
-- Receiving webhook calls from an OpenClaw Gateway
-- Verifying `Authorization: Bearer <token>` or `x-openclaw-token` headers
-- Handling `/hooks/agent` and `/hooks/wake` event payloads
-- Building external services that react to OpenClaw agent activity
+- Receiving the webhook OpenClaw POSTs when an automation (cron job) finishes (`--webhook <url>`)
+- Verifying the `Authorization: Bearer <webhookToken>` header on those POSTs
+- Handling finished-run events and failure alerts from OpenClaw automations
+- Calling an OpenClaw Gateway's inbound hooks (`/hooks/agent`, `/hooks/wake`) from your service (see [Calling OpenClaw's Inbound Hooks](#calling-openclaws-inbound-hooks))
 
-## Essential Code (USE THIS)
+## Receiving Webhooks from OpenClaw
 
-### OpenClaw Token Verification (JavaScript)
+OpenClaw automations (cron jobs) can deliver their output to a URL. From [Manage automations](https://docs.openclaw.ai/automation/cron-jobs/managing-jobs):
+
+> Use `--webhook <url>` on `automations add|create` or `automations edit` to POST the finished run payload to an HTTP endpoint
+
+> `webhookToken` is sent as `Authorization: Bearer <token>` on automation webhook POSTs.
+
+The body is JSON and is **not signed**, so the `Authorization` header is the whole check. Compare the **entire header value** with `Bearer <webhookToken>` in constant time. That's also what Hookdeck's OpenClaw source does: you enter `Bearer <webhookToken>` as its API key. OpenClaw only sends the header when `cron.webhookToken` is set, so always set it.
+
+### Token Verification (JavaScript)
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyOpenClawWebhook(authHeader, xTokenHeader, secret) {
-  // OpenClaw sends the token in one of two headers:
-  //   Authorization: Bearer <token>
-  //   x-openclaw-token: <token>
-  const token = extractToken(authHeader, xTokenHeader);
-  if (!token || !secret) return false;
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(token),
-      Buffer.from(secret)
-    );
-  } catch {
-    return false;
-  }
-}
-
-function extractToken(authHeader, xTokenHeader) {
-  if (xTokenHeader) return xTokenHeader;
-  if (authHeader && authHeader.startsWith('Bearer '))
-    return authHeader.slice(7);
-  return null;
+// Compare the whole Authorization value with "Bearer <webhookToken>"
+function verifyOpenClawWebhook(authorizationHeader, webhookToken) {
+  if (!authorizationHeader || !webhookToken) return false;
+  const received = Buffer.from(authorizationHeader, 'utf8');
+  const expected = Buffer.from(`Bearer ${webhookToken}`, 'utf8');
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 ```
 
@@ -58,39 +51,30 @@ function extractToken(authHeader, xTokenHeader) {
 const express = require('express');
 const app = express();
 
-app.post('/webhooks/openclaw',
-  express.json(),
-  (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const xToken = req.headers['x-openclaw-token'];
-
-    if (!verifyOpenClawWebhook(authHeader, xToken, process.env.OPENCLAW_HOOK_TOKEN)) {
-      console.error('OpenClaw token verification failed');
-      return res.status(401).send('Invalid token');
-    }
-
-    const { message, name, wakeMode, agentId, sessionKey } = req.body;
-
-    console.log(`[${name || 'OpenClaw'}] ${message}`);
-
-    // Respond quickly - OpenClaw expects 200 or 202
-    res.status(200).json({ received: true });
+// express.raw keeps the exact bytes; parse JSON only after the token check
+app.post('/webhooks/openclaw', express.raw({ type: '*/*' }), (req, res) => {
+  if (!verifyOpenClawWebhook(req.get('authorization'), process.env.OPENCLAW_WEBHOOK_TOKEN)) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
-);
+
+  const event = JSON.parse(req.body.toString('utf8'));
+  if (event.action === 'finished') {
+    console.log(`Automation ${event.job?.name || event.jobId}: ${event.status}`, event.summary || event.error);
+  }
+
+  res.status(200).json({ received: true }); // any 2xx counts as delivered
+});
 ```
 
-### Python Token Verification (FastAPI)
+### Token Verification (Python)
 
 ```python
 import hmac
 
-def verify_openclaw_webhook(auth_header: str | None, x_token: str | None, secret: str) -> bool:
-    token = x_token
-    if not token and auth_header and auth_header.startswith("Bearer "):
-        token = auth_header[7:]
-    if not token or not secret:
+def verify_openclaw_webhook(authorization_header: str | None, webhook_token: str) -> bool:
+    if not authorization_header or not webhook_token:
         return False
-    return hmac.compare_digest(token, secret)
+    return hmac.compare_digest(authorization_header.encode(), f"Bearer {webhook_token}".encode())
 ```
 
 > **For complete working examples with tests**, see:
@@ -98,16 +82,61 @@ def verify_openclaw_webhook(auth_header: str | None, x_token: str | None, secret
 > - [examples/nextjs/](examples/nextjs/) - Next.js App Router implementation
 > - [examples/fastapi/](examples/fastapi/) - Python FastAPI implementation
 
-## Webhook Endpoints
+### Finished Event Payload
 
-OpenClaw Gateway exposes two webhook endpoints. Your external service receives POSTs from the Gateway (or a relay like Hookdeck) on a URL you choose.
+[Delivery modes](https://docs.openclaw.ai/automation/cron-jobs/delivery): "`webhook` | POST finished event payload to a URL". The payload is the run's finished event:
+
+```json
+{
+  "jobId": "job_123",
+  "action": "finished",
+  "runId": "run_abc",
+  "runAtMs": 1767268800000,
+  "durationMs": 4200,
+  "status": "ok",
+  "completionStatus": "succeeded",
+  "summary": "Three deploys today, all green.",
+  "job": { "id": "job_123", "name": "Deploy digest" },
+  "nextRunAtMs": 1767355200000
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `action` | Always `finished` for this delivery |
+| `jobId`, `job` | The job ID and a snapshot of the job |
+| `runId`, `runAtMs`, `durationMs` | The run's ID, start time (ms) and duration |
+| `status` | Execution status, e.g. `ok` or `error` |
+| `completionStatus` | e.g. `succeeded` or `failed` (a run can be `status: "ok"` with `completionStatus: "failed"`) |
+| `summary` | The run's output. Omitted on error events |
+| `error` | Error text on failed runs |
+| `nextRunAtMs` | Next scheduled run, when there is one |
+
+A successful run with an empty summary skips the POST; failed runs always send. If the job's `delivery.failureDestination` uses webhook mode, failure alerts go there with the same token and a smaller body: `{ "jobId", "jobName", "message", "runAtMs" }`.
+
+### Delivery Behavior
+
+- Any HTTP 2xx records the delivery. Other responses record **Not delivered**.
+- If the response is lost or times out, delivery stays **Unknown**, and OpenClaw doesn't retry it. Put Hookdeck in front if you need retries; dedupe on `runId` (or `jobId` + `runAtMs`).
+- Outbound webhooks use a strict SSRF policy. Public URLs (such as a Hookdeck source URL) work as-is. Private or local receivers need `cron.webhookSsrfPolicy.allowedHostnames`.
+
+## Calling OpenClaw's Inbound Hooks
+
+The other direction: your service (or a Hookdeck destination) sends events **to** an OpenClaw Gateway. From [Inbound webhooks](https://docs.openclaw.ai/automation/cron-jobs/webhooks), every request must include the hook token via `Authorization: Bearer <token>` (recommended) or `x-openclaw-token: <token>`, and query-string `?token=...` is rejected. The Gateway does the verification; your job is to send the right token (`hooks.token`, not `cron.webhookToken` or the Gateway auth token).
 
 | Endpoint | Purpose | Response |
 |----------|---------|----------|
 | `POST /hooks/agent` | Trigger an isolated agent turn | `202 Accepted` |
 | `POST /hooks/wake` | Enqueue a system event | `200 OK` |
 
-## Agent Hook Payload
+```bash
+curl -X POST http://127.0.0.1:18789/hooks/agent \
+  -H 'Authorization: Bearer <hooks.token>' \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "Summarize inbox", "name": "Email"}'
+```
+
+### Agent Hook Payload
 
 ```json
 {
@@ -139,7 +168,7 @@ OpenClaw Gateway exposes two webhook endpoints. Your external service receives P
 | `thinking` | No | Thinking level: `low`, `medium`, `high` |
 | `timeoutSeconds` | No | Max duration for the agent run |
 
-## Wake Hook Payload
+### Wake Hook Payload
 
 ```json
 {
@@ -153,18 +182,7 @@ OpenClaw Gateway exposes two webhook endpoints. Your external service receives P
 | `text` | Yes | Description of the event |
 | `mode` | No | `now` (default) or `next-heartbeat` |
 
-## Authentication Headers
-
-OpenClaw supports two header styles. Pick one:
-
-| Header | Format |
-|--------|--------|
-| `Authorization` | `Bearer <token>` (recommended) |
-| `x-openclaw-token` | `<token>` |
-
-Query-string tokens (`?token=...`) are rejected with `400`.
-
-## Response Codes
+### Gateway Response Codes
 
 | Code | Meaning |
 |------|---------|
@@ -178,7 +196,7 @@ Query-string tokens (`?token=...`) are rejected with `400`.
 ## Environment Variables
 
 ```bash
-OPENCLAW_HOOK_TOKEN=your_shared_secret   # Must match hooks.token in Gateway config
+OPENCLAW_WEBHOOK_TOKEN=your_webhook_token   # Must match cron.webhookToken in the Gateway config
 ```
 
 ## Local Development
@@ -188,11 +206,13 @@ OPENCLAW_HOOK_TOKEN=your_shared_secret   # Must match hooks.token in Gateway con
 npx hookdeck-cli listen 3000 openclaw --path /webhooks/openclaw
 ```
 
+Then point an automation at the tunnel URL: `openclaw automations edit <jobId> --webhook <url>`.
+
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - OpenClaw webhook concepts and architecture
-- [references/setup.md](references/setup.md) - Gateway configuration guide
-- [references/verification.md](references/verification.md) - Token verification details
+- [references/overview.md](references/overview.md) - Automation webhooks, inbound hooks, payloads
+- [references/setup.md](references/setup.md) - Gateway and automation configuration
+- [references/verification.md](references/verification.md) - Token verification details and gotchas
 
 ## Attribution
 

@@ -1,112 +1,146 @@
 const request = require('supertest');
-const { app } = require('../src/index');
 
-const VALID_TOKEN = 'test-secret-token';
-process.env.OPENCLAW_HOOK_TOKEN = VALID_TOKEN;
+// cron.webhookToken from the Gateway config; OpenClaw sends it as "Bearer <token>"
+const WEBHOOK_TOKEN = 'test-openclaw-webhook-token';
+process.env.OPENCLAW_WEBHOOK_TOKEN = WEBHOOK_TOKEN;
 
-describe('OpenClaw Webhook Handler', () => {
-  describe('POST /webhooks/openclaw', () => {
-    it('should accept valid agent hook with Bearer token', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({ message: 'Test message', name: 'Test' });
+const { app, verifyOpenClawWebhook } = require('../src/index');
 
-      expect(res.status).toBe(202);
-      expect(res.body.received).toBe(true);
-    });
+// Finished event, as OpenClaw POSTs it after an automation run
+const finishedOk = JSON.stringify({
+  jobId: 'job_123',
+  action: 'finished',
+  runId: 'run_abc',
+  runAtMs: 1767268800000,
+  durationMs: 4200,
+  status: 'ok',
+  completionStatus: 'succeeded',
+  summary: 'Three deploys today, all green.',
+  job: { id: 'job_123', name: 'Deploy digest' },
+  nextRunAtMs: 1767355200000,
+});
 
-    it('should accept valid agent hook with x-openclaw-token', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .set('x-openclaw-token', VALID_TOKEN)
-        .send({ message: 'Test message', name: 'Test' });
+// Error events omit the summary
+const finishedError = JSON.stringify({
+  jobId: 'job_123',
+  action: 'finished',
+  runId: 'run_def',
+  runAtMs: 1767268800000,
+  status: 'error',
+  completionStatus: 'failed',
+  error: 'Provider request timed out',
+  job: { id: 'job_123', name: 'Deploy digest' },
+});
 
-      expect(res.status).toBe(202);
-      expect(res.body.received).toBe(true);
-    });
+// Failure alert sent to delivery.failureDestination in webhook mode
+const failureAlert = JSON.stringify({
+  jobId: 'job_123',
+  jobName: 'Deploy digest',
+  message: 'Automation "Deploy digest" failed 2 times in a row.',
+  runAtMs: 1767268800000,
+});
 
-    it('should reject invalid token', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .set('Authorization', 'Bearer wrong-token')
-        .send({ message: 'Test message' });
+function post(body, authorization) {
+  const r = request(app).post('/webhooks/openclaw').set('Content-Type', 'application/json');
+  if (authorization !== undefined) r.set('Authorization', authorization);
+  return r.send(body);
+}
 
-      expect(res.status).toBe(401);
-    });
-
-    it('should reject missing token', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .send({ message: 'Test message' });
-
-      expect(res.status).toBe(401);
-    });
-
-    it('should reject query-string token', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw?token=test')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({ message: 'Test message' });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should reject missing message', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({ name: 'Test' });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should handle full payload with optional fields', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({
-          message: 'Summarize inbox',
-          name: 'Email',
-          agentId: 'hooks',
-          sessionKey: 'hook:email:1',
-          wakeMode: 'now',
-          deliver: true,
-          channel: 'slack',
-          model: 'openai/gpt-5.2-mini'
-        });
-
-      expect(res.status).toBe(202);
-      expect(res.body.received).toBe(true);
-    });
+describe('verifyOpenClawWebhook', () => {
+  it('accepts the exact Bearer value', () => {
+    expect(verifyOpenClawWebhook(`Bearer ${WEBHOOK_TOKEN}`, WEBHOOK_TOKEN)).toBe(true);
   });
 
-  describe('POST /webhooks/openclaw/wake', () => {
-    it('should accept valid wake hook', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw/wake')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({ text: 'Wake up!', mode: 'now' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.received).toBe(true);
-    });
-
-    it('should reject missing text', async () => {
-      const res = await request(app)
-        .post('/webhooks/openclaw/wake')
-        .set('Authorization', `Bearer ${VALID_TOKEN}`)
-        .send({ mode: 'now' });
-
-      expect(res.status).toBe(400);
-    });
+  it('rejects a wrong token', () => {
+    expect(verifyOpenClawWebhook('Bearer wrong-token', WEBHOOK_TOKEN)).toBe(false);
   });
 
-  describe('GET /health', () => {
-    it('should return ok', async () => {
-      const res = await request(app).get('/health');
-      expect(res.status).toBe(200);
-      expect(res.body.status).toBe('ok');
-    });
+  it('rejects the bare token without the Bearer prefix', () => {
+    expect(verifyOpenClawWebhook(WEBHOOK_TOKEN, WEBHOOK_TOKEN)).toBe(false);
+  });
+
+  it('compares the whole value (scheme case and extra spaces matter)', () => {
+    expect(verifyOpenClawWebhook(`bearer ${WEBHOOK_TOKEN}`, WEBHOOK_TOKEN)).toBe(false);
+    expect(verifyOpenClawWebhook(`Bearer  ${WEBHOOK_TOKEN}`, WEBHOOK_TOKEN)).toBe(false);
+  });
+
+  it('rejects a missing header or token', () => {
+    expect(verifyOpenClawWebhook(undefined, WEBHOOK_TOKEN)).toBe(false);
+    expect(verifyOpenClawWebhook(`Bearer ${WEBHOOK_TOKEN}`, '')).toBe(false);
+  });
+});
+
+describe('POST /webhooks/openclaw', () => {
+  let logSpy;
+  let errorSpy;
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
+    process.env.OPENCLAW_WEBHOOK_TOKEN = WEBHOOK_TOKEN;
+  });
+
+  it('accepts a successful finished event', async () => {
+    const res = await post(finishedOk, `Bearer ${WEBHOOK_TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true, kind: 'finished' });
+  });
+
+  it('accepts a failed finished event', async () => {
+    const res = await post(finishedError, `Bearer ${WEBHOOK_TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.kind).toBe('finished');
+  });
+
+  it('accepts a failure alert', async () => {
+    const res = await post(failureAlert, `Bearer ${WEBHOOK_TOKEN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.kind).toBe('failure_alert');
+  });
+
+  it('verifies regardless of content type', async () => {
+    const res = await request(app)
+      .post('/webhooks/openclaw')
+      .set('Content-Type', 'text/plain')
+      .set('Authorization', `Bearer ${WEBHOOK_TOKEN}`)
+      .send(finishedOk);
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects a wrong token', async () => {
+    const res = await post(finishedOk, 'Bearer wrong-token');
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a missing Authorization header', async () => {
+    const res = await post(finishedOk);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects the token sent without the Bearer prefix', async () => {
+    const res = await post(finishedOk, WEBHOOK_TOKEN);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects invalid JSON after a valid token', async () => {
+    const res = await post('not json', `Bearer ${WEBHOOK_TOKEN}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 500 when the token is not configured', async () => {
+    delete process.env.OPENCLAW_WEBHOOK_TOKEN;
+    const res = await post(finishedOk, `Bearer ${WEBHOOK_TOKEN}`);
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('GET /health', () => {
+  it('returns ok', async () => {
+    const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ok');
   });
 });
