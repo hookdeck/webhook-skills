@@ -1,0 +1,19 @@
+name: wetravel
+displayName: WeTravel
+docs:
+  webhooks: https://developer.wetravel.com/v3/docs/webhooks
+notes: >
+  Group travel booking and payments. CAVEAT to state in the verification section: WeTravel
+  publishes no verification docs. Webhooks are managed in a Svix App Portal ("Manage
+  Webhooks" in WeTravel settings, which shows a masked Signing Secret), so Svix delivery is
+  inferred: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+  "<id>.<timestamp>.<raw body>"; whsec_ secret. Recommend the svix library and accept either
+  svix-* or webhook-* headers. Webhooks need an API key first; only the main account can
+  manage them. Events include booking.created, booking.updated, payment.created,
+  transaction.created, trip.published.
+testScenario:
+  events:
+    - booking.created
+    - payment.created
+catalog:
+  summary: Verify WeTravel group-travel webhooks, delivered through a Svix App Portal (`svix-id`/`svix-timestamp`/`svix-signature` or `webhook-*`, HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}`, `whsec_` secret; inferred, as WeTravel publishes no verification docs), handle booking.created, booking.updated, payment.created, transaction.created, trip.published, and lead.created events

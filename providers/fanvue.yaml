@@ -1,0 +1,403 @@
+name: fanvue
+displayName: Fanvue
+docs:
+  webhooks: https://api.fanvue.com/docs/webhooks/index
+  verification: https://api.fanvue.com/docs/webhooks/signature-verification
+  event_catalog: https://api.fanvue.com/docs/webhooks/event-catalog
+  delivery: https://api.fanvue.com/docs/webhooks/delivery-and-idempotency
+  subscribing: https://api.fanvue.com/docs/webhooks/subscribing
+  sdk: https://api.fanvue.com/docs/app-store/sdk/webhooks
+notes: |
+  IDENTITY — Fanvue (fanvue.com) is the UK-based creator subscription
+  platform (an OnlyFans-style fan subscription / creator monetisation
+  product). Its developer platform is at https://api.fanvue.com/docs,
+  hosted on Mintlify; every page has a machine-readable `.md` twin
+  (append `.md` to the path) and there is an index at
+  https://api.fanvue.com/docs/llms.txt. Hookdeck's own source type
+  `FANVUE` links to
+  https://api.fanvue.com/docs/webhooks/signature-verification
+  (confirmed on hookdeck.com/docs/sources, 2026-10-16), so the scheme
+  below is exactly the one the Hookdeck source targets.
+
+  NOT to be confused with: Fanvue the creator platform vs any "fan"-named
+  e-commerce/ticketing product (Fanatics, Fancy, Fanfix, Fansly). There is
+  no other Hookdeck source type with a similar name. Nothing here is
+  Vue.js-related despite the name.
+
+  All facts below are quoted or paraphrased from the pages above, fetched
+  2026-10-16.
+
+  CROSS-CHECKED AGAINST HOOKDECK'S OWN IMPLEMENTATION (2026-10-16):
+  hookdeck/core `server/integrations/platforms/fanvue.ts` (+ its test
+  suite) and hookdeck/http-ingestion
+  `cloudflare/src/integrations/fanvue.ts` implement exactly the scheme
+  below: stateful parser where a bare field continues the previous key,
+  `t` must appear once and be plain decimal (a bare field after `t=`
+  counts as a repeat), 300s window either side, secret's UTF-8 bytes used
+  verbatim with no `whsec_` decode, any MAC matching accepts,
+  `X-Fanvue-Topic` ignored. One leniency the docs don't state: both
+  lowercase received MACs before comparing, so uppercase hex verifies —
+  the skill's examples do the same. Neither exempts the unsigned
+  `fanvue.webhook.verification` probe (a missing signature header is a
+  401 at the edge), so a Hookdeck FANVUE source with verification on will
+  fail `POST /webhooks/subscriptions`; Events-tab registration is
+  unaffected. That is a Hookdeck product gap, not a skill instruction.
+
+  VERIFICATION — single scheme, HMAC-SHA256, hex, timestamp-prefixed
+  signed payload, with a DUAL-MAC rotation quirk that is the single most
+  load-bearing detail.
+
+  - Header: `X-Fanvue-Signature`. Documented format, verbatim:
+        X-Fanvue-Signature: t=<timestamp>,v0=<signature>
+    * `t`  — "Unix timestamp in seconds, recording when Fanvue signed the
+             request"
+    * `v0` — "HMAC-SHA256 of `<t>.<raw body>`, hex encoded"
+  - Algorithm: HMAC-SHA256. Encoding: LOWERCASE HEX (not base64).
+  - Signed content: the literal string `{t}` + "." + `{raw request body}`.
+    Verify against the RAW bytes. Docs: "Use the exact bytes Fanvue sent.
+    Parsing the JSON and re-serialising it changes the bytes, and the
+    signature won't match." Use `express.raw({type:'application/json'})`
+    (or the `verify` callback) in Express, `await request.text()` in
+    Next.js route handlers, `await request.body()` in FastAPI.
+  - ROTATION / MULTIPLE MACS (do not drop this): quoted verbatim —
+    "During a signing-secret rotation the header carries two MACs:
+    `t=<timestamp>,v0=<old>,<new>`. The second MAC arrives as a bare field
+    with no `=`, continuing the `v0` list. Compare against every MAC and
+    accept when any one matches. If you read only the first, you reject
+    every delivery signed with the newer secret for the length of the
+    overlap."
+    So the parser MUST be stateful: split the header on `,`; when a field
+    contains `=`, update the current key from the part before it; when it
+    does NOT contain `=`, the value continues the PREVIOUS key's list.
+    Fanvue's own reference parser (both Node and Python, reproduced on the
+    verification page) does exactly this by keeping a `key` variable
+    outside the loop and using `field.slice(separator + 1)` — note that
+    with `separator === -1` that expression yields the whole bare field,
+    which is how a bare MAC joins the `v0` list. Do NOT "simplify" this
+    into a `split('=')` keyed parse: that silently drops the rotation MAC.
+  - Validation rules from the docs' Steps block: "Reject the request when
+    `t` is missing, repeated or not a plain decimal number, or when no MAC
+    is present." A `/^[0-9]+$/` test on `t` is in the vendor sample.
+  - Replay window: `t` IS a real unix-seconds timestamp, so a tolerance
+    check is correct here. The vendor samples use
+    `TOLERANCE_SECONDS = 300` and compare `Math.abs(now - t)` (i.e. both
+    directions, future-skew included).
+  - Constant-time compare: the vendor Node sample guards length before
+    `crypto.timingSafeEqual` (which throws on mismatched lengths) and
+    accepts if ANY MAC matches; the Python sample uses
+    `hmac.compare_digest`. Keep both behaviours.
+  - On failure: "respond `401` and don't process the payload." On success:
+    persist, return 2xx, then process asynchronously.
+  - KEY SOURCE — there are TWO secret provenances, and they do not share a
+    secret. Both are plain UTF-8 strings used directly as the HMAC key (no
+    base64-decode, no prefix stripping):
+      * Endpoint registered via the Developer Area **Events** tab or
+        `webhooks.destinations` in the App Manifest → ONE per-app signing
+        secret shared by every endpoint on the app, revealed any time by
+        **View signing secret**.
+      * Endpoint registered via `POST /webhooks/subscriptions` → a
+        per-subscription secret returned ONCE as `signingSecret` in the
+        create response, shaped `whsec_` followed by 64 hex characters,
+        e.g.
+        "whsec_3b1f8a0c2d4e6f8091a2b3c4d5e6f70819a2b3c4d5e6f70819a2b3c4d5e6f708".
+        It is never readable back; losing it means
+        `DELETE /webhooks/subscriptions/{id}` and creating a new one.
+    IMPORTANT: unlike Svix-style `whsec_` secrets, Fanvue's docs give NO
+    instruction to strip the `whsec_` prefix or base64-decode it, and the
+    vendor samples pass `process.env.FANVUE_WEBHOOK_SECRET` straight into
+    `createHmac`. Use the secret string AS GIVEN, verbatim, including the
+    `whsec_` prefix. Do not add a strip/decode step.
+  - `X-Fanvue-Topic` header: present on deliveries, but quoted verbatim —
+    "The signature covers `<t>.<raw body>` only, so that header is
+    unauthenticated. Derive the topic from the signed body (`type` on the
+    envelope, field presence on legacy events), never from the header."
+    The skill MUST route on the body, and should say why.
+  - NO source-IP allowlist is documented anywhere. Do not fabricate one.
+  - Builder SDK (optional mention only, names verified on the SDK page):
+    package `@fanvue/builder-sdk`, exposing `createFanvueCrypto`,
+    `webhookSignatureContractFromEnv`,
+    `createWebhookReceiverHandler` (from
+    `@fanvue/builder-sdk/nextjs/embedded-app`); the verification page also
+    names the helpers `verifyWebhookHmac`, `fanvueSignatureContract()` and
+    `parseFanvueSignatureHeader`. The skill's own examples must be
+    dependency-free manual HMAC so the crypto is visible; mention the SDK
+    as an alternative, and do NOT add `@fanvue/builder-sdk` to any
+    package.json (it is not needed and may not be public).
+
+  HANDSHAKE / VERIFICATION PROBE — this is real and must be implemented.
+  Before `POST /webhooks/subscriptions` creates a subscription, Fanvue
+  sends ONE UNSIGNED request to the URL:
+      { "type": "fanvue.webhook.verification",
+        "timestamp": "2026-06-09T08:39:33.139Z" }
+  Rules table, verbatim: any `2xx` passes and any other status fails the
+  subscribe call; redirects are NOT followed (a `3xx` fails the call, so
+  submit the final URL); timeout 8 seconds; "Signature: None. The probe
+  carries no `X-Fanvue-Signature` header."
+  The Events tab does NOT probe. Docs call out the trap: "a receiver that
+  answers `401` to every unsigned request works when registered from the
+  Events tab and fails when registered through the API. Return `2xx` to a
+  body whose `type` is `fanvue.webhook.verification` before you verify
+  signatures, and return `401` to every other unsigned request."
+  So handler order is: parse raw body → if `type ===
+  "fanvue.webhook.verification"` return 200 immediately → else require and
+  verify `X-Fanvue-Signature` → 401 on failure. This probe-before-verify
+  ordering is deliberate and correct; a reviewer may flag it as an
+  unauthenticated bypass — it is documented, and the probe body carries no
+  event data. Keep the branch narrow (exact `type` match, no event
+  processing on that path).
+
+  ENVELOPE — "Every Creator, Checkout and App event arrives in the same
+  envelope":
+    {
+      "id": "f1a2b3c4-1111-4a2b-9c3d-aaaaaaaaaaaa",
+      "type": "creator.payment.succeeded",
+      "timestamp": "2026-06-09T08:39:33.139Z",
+      "data": { "object": "payment", "...": "resource fields" }
+    }
+  - `id` — event id, "Identical on every retry of the same event, so it is
+    the deduplication key".
+  - `type` — the topic. "Route your handler on this field, never on a
+    header."
+  - `timestamp` — ISO 8601 time the delivery was built; "A retry carries a
+    new `timestamp` and the same `id`."
+  - `data` — the resource; `data.object` names the resource type
+    (`payment`, `subscription`, `refund`, `dispute`, `message`, `payout`,
+    …). Fields inside `data` are snake_case.
+  - LEGACY events have NO envelope: "Their body is the event's own
+    camelCase fields with an `eventId` field appended, and nothing in the
+    body names the topic." Hedge: the per-event legacy payload examples in
+    the docs (e.g. follow.new) show the camelCase fields and a `timestamp`
+    but do NOT show the `eventId` field, so the skill should read
+    `event.id ?? event.eventId` (as the vendor's own receiver comment
+    does) and treat `eventId` as documented-but-not-shown rather than
+    asserting its presence in a sample payload.
+  - Because legacy bodies don't name their topic, a handler receiving both
+    generations must branch on the presence of `type`/`data` (envelope) vs
+    flat camelCase keys like `recipientUuid`/`sender`.
+
+  Verbatim legacy example (`follow.new`), the shape to use for any legacy
+  sample in the skill:
+    {
+      "recipientUuid": "f4b2a184-2b4a-4a04-9b70-3c0e0a1caa12",
+      "sender": { "avatarUrl": "...", "displayName": "Test User",
+                  "handle": "test-user",
+                  "uuid": "5939ae62-3eb5-4433-954f-f78c7b4282f3" },
+      "trackingLinkId": "spring-promo",
+      "trackingLinkUrl": "spring-promo",
+      "trackingLinkMetadata": { "source": "instagram" },
+      "timestamp": "2025-11-06T10:32:49.880Z"
+    }
+
+  Verbatim current example (`creator.follow.created`) — this is the event
+  the Events tab **Test** action sends, with `TEST-` prefixed ids inside
+  `data`:
+    {
+      "id": "f1a2b3c4-7777-4a2b-9c3d-aaaaaaaaaaaa",
+      "type": "creator.follow.created",
+      "timestamp": "2026-06-09T08:39:33.139Z",
+      "data": {
+        "object": "follow",
+        "id": null,
+        "created_at": "2026-06-09T08:39:33.139Z",
+        "follower": { "uuid": "fan-uuid", "email": null,
+                      "handle": "janed", "display_name": "Jane D" },
+        "creator": { "uuid": "creator-uuid" },
+        "metadata": {},
+        "tracking": { "link_url": "https://fanvue.com/creator-handle?fvc=summer-campaign",
+                      "metadata": { "campaign": "summer", "source": "x" } }
+      }
+    }
+  On `creator.follow.created`: `data.id` is ALWAYS null (follows have no
+  external id — identity is the (follower, creator) pair),
+  `follower.email` is ALWAYS null, `metadata` is ALWAYS `{}`, and
+  `tracking` is null when the follower has no attribution.
+
+  Verbatim current example (`creator.payment.succeeded`, paid message):
+    {
+      "id": "f1a2b3c4-1111-4a2b-9c3d-aaaaaaaaaaaa",
+      "type": "creator.payment.succeeded",
+      "timestamp": "2026-06-09T08:39:33.139Z",
+      "data": {
+        "object": "payment", "id": "FV-12345", "status": "succeeded",
+        "source": "message", "billing_reason": "one_time",
+        "gross": 1999, "net": 1799,
+        "fees": { "fanvue_fee": 200, "transaction_fee": 0 },
+        "currency": "USD", "paid_in_full": true,
+        "client_reference_id": null, "transaction_id": null,
+        "post_uuid": null,
+        "message_uuid": "2f7c5e8a-6d36-4e3a-98d9-9f1b3b0a1a10",
+        "message_type": "SINGLE_RECIPIENT", "tip_context": null,
+        "created_at": "2026-06-09T08:39:33.139Z",
+        "paid_at": "2026-06-09T08:39:33.139Z", "subscription": null,
+        "purchaser": { "uuid": "fan-uuid", "email": null,
+                       "handle": "janed", "display_name": "Jane D" },
+        "creator": { "uuid": "creator-uuid" }, "metadata": {},
+        "tracking": { "link_url": "...", "metadata": { "campaign": "summer", "source": "x" } }
+      }
+    }
+  Money fields (`gross`, `net`, `fees.*`) are MINOR UNITS (1999 = $19.99).
+  A subscription renewal charge is the same `type` with
+  `source: "subscription"` and `billing_reason: "subscription_renewal"`.
+
+  EVENT FAMILIES — four, from the overview table:
+    * Creator (`creator.*`) — a creator's platform activity. Fans out to
+      every app the creator authorised with the topic's scope that has a
+      destination for the topic.
+    * Checkout (`checkout_link.*`, `payout.*`) — checkout-link sales and
+      creator payouts.
+    * App (`app.*`) — your app's own sales and priced actions in its
+      experiences. NOT available through `POST /webhooks/subscriptions`.
+    * Legacy — flat names, deprecated, same fan-out as Creator.
+  Exception worth noting: `creator.experience_subscription.*` reach only
+  the app that owns the experience plus the creator's own destinations.
+
+  EVENTS — full catalogue (type → data.object → family → scope → status),
+  taken verbatim from the Event catalogue page. LIVE unless marked:
+    creator.payment.succeeded                           payment                     Creator read:creator
+    creator.payment.pending                             payment                     Creator read:creator  RESERVED (validates in a manifest, never emitted)
+    creator.payment.failed                              payment                     Creator read:creator  RESERVED
+    creator.reward.created                              reward                      Creator read:creator
+    creator.reward.reversed                             reward                      Creator read:creator
+    creator.subscription.activated                      subscription                Creator read:creator
+    creator.subscription.renewed                        subscription                Creator read:creator
+    creator.subscription.deactivated                    subscription                Creator read:creator
+    creator.subscription.cancel_at_period_end_changed   subscription                Creator read:creator
+    creator.experience_subscription.activated           experience_subscription     Creator read:experience
+    creator.experience_subscription.deactivated         experience_subscription     Creator read:experience
+    creator.message.received                            message                     Creator read:chat
+    creator.message.sent                                message                     Creator read:chat
+    creator.message.mass_sent                           mass_message                Creator read:chat
+    creator.message.read                                fan_message_read            Creator read:chat
+    creator.message.read_by_fan                         creator_message_read        Creator read:chat
+    creator.message.deleted                             message                     Creator read:chat
+    creator.message.reaction                            reaction                    Creator read:chat
+    creator.chat.marked_unread                          chat_unread_marker          Creator read:chat
+    creator.follow.created                              follow                      Creator read:creator
+    creator.post.liked                                  post                        Creator read:post
+    creator.post.commented                              post                        Creator read:post
+    creator.refund.created                              refund                      Creator read:creator
+    creator.dispute.flagged                             dispute                     Creator read:creator
+    creator.dispute.created                             dispute                     Creator read:creator
+    creator.fan.status_changed                          fan_status                  Creator read:chat
+    creator.fan.presence_changed                        fan_status                  Creator read:chat
+    checkout_link.payment.pending                       payment                     Checkout read:creator
+    checkout_link.payment.succeeded                     payment                     Checkout read:creator
+    checkout_link.payment.failed                        payment                     Checkout read:creator
+    checkout_link.subscription.activated                subscription                Checkout read:creator
+    checkout_link.subscription.deactivated              subscription                Checkout read:creator
+    checkout_link.subscription.cancel_at_period_end_changed subscription            Checkout read:creator
+    checkout_link.refund.created                        refund                      Checkout read:creator
+    checkout_link.refund.requested                      refund_request              Checkout read:creator
+    checkout_link.refund.rejected                       refund_request              Checkout read:creator  RESERVED
+    checkout_link.refund.failed                         refund_request              Checkout read:creator  RESERVED
+    checkout_link.dispute.flagged                       dispute                     Checkout read:creator
+    checkout_link.dispute.created                       dispute                     Checkout read:creator
+    checkout_link.installment.paid                      installment                 Checkout read:creator
+    checkout_link.installment.failed                    installment                 Checkout read:creator
+    checkout_link.plan.completed                        plan                        Checkout read:creator
+    payout.paid                                         payout                      Checkout read:creator  (API + Manifest only)
+    payout.failed                                       payout                      Checkout read:creator  (API + Manifest only)
+    app.payment.pending                                 payment                     App     read:self
+    app.payment.succeeded                               payment                     App     read:self
+    app.payment.failed                                  payment                     App     read:self
+    app.subscription.activated                          subscription                App     read:self
+    app.subscription.cancel_at_period_end_changed       subscription                App     read:self
+    app.subscription.deactivated                        subscription                App     read:self  RESERVED (never emitted)
+    app.refund.created                                  refund                      App     read:self
+    app.payment.refunded                                refund                      App     read:self  DEPRECATED, alias of app.refund.created
+    app.dispute.flagged                                 dispute                     App     read:self
+    app.dispute.created                                 dispute                     App     read:self
+    app.experience.action.payment.pending               experience_action_payment   App     read:self
+    app.experience.action.payment.succeeded             experience_action_payment   App     read:self
+    app.experience.action.payment.failed                experience_action_payment   App     read:self
+    app.experience.action.refund.created                experience_action_refund    App     read:self
+    app.experience.action.dispute.flagged               experience_action_dispute   App     read:self
+    app.experience.action.dispute.created               experience_action_dispute   App     read:self
+  LEGACY (deprecated, flat body, still firing during the migration
+  window — list them, with their replacement, never omit them):
+    follow.new            → creator.follow.created
+    purchase.new          → creator.payment.succeeded
+    tip.new               → creator.payment.succeeded with source: "tip"
+    subscription.new      → creator.subscription.activated
+    subscription.renewed  → creator.subscription.renewed
+    subscription.cancelled→ creator.subscription.cancel_at_period_end_changed
+    subscription.expired  → creator.subscription.deactivated
+    message.received      → creator.message.received
+    message.read          → creator.message.read
+  Plus three RESERVED legacy names that validate in `webhooks.destinations`
+  and are never delivered: `message.reaction`, `post.like`, `post.comment`
+  (their replacements are creator.message.reaction, creator.post.liked,
+  creator.post.commented).
+  Docs warn: "Subscribe to a legacy event or to its `creator.*`
+  replacement, never both, or you count each occurrence twice." And
+  `POST /webhooks/test` rejects the nine legacy events with a 400.
+  Also: `fanvue.webhook.verification` is the probe body's `type` — it is
+  NOT a subscribable event; don't list it in an event table as one.
+
+  SUBSCRIPTION PATHS — three, each with its own secret (see KEY SOURCE):
+  the Developer Area **Events** tab, `webhooks.destinations` in
+  `app-manifest.json`, and `POST /webhooks/subscriptions` with a creator's
+  access token (the path Zapier uses on the creator's behalf). The Events
+  tab **Test** action refuses to send until the app owner has authorised
+  the app with the event's scope, and a test delivery carries a REAL
+  signature (so a passing test proves the check end to end). Test payload
+  ids inside `data` are `TEST-` prefixed.
+
+  DELIVERY / RETRIES / IDEMPOTENCY:
+  - At least once, NO guaranteed ordering, `Content-Type: application/json`,
+    any 2xx is success; anything else or a timeout is a failure and is
+    retried "with backoff" (the docs do NOT publish an attempt schedule or
+    a delivery timeout for normal events — only the 8s probe timeout — so
+    do not invent numbers).
+  - Once retries are exhausted the event is NOT delivered again and there
+    is no manual replay: "Treat a sustained failure as data loss and
+    reconcile from the API."
+  - Auto-disable: a persistently failing destination is disabled and stops
+    receiving events; the app owner is notified in the Developer Area and
+    re-enables it with the toggle in the **Events & endpoints** list.
+    Subscriptions created via `POST /webhooks/subscriptions` get NO
+    notification and `GET /webhooks/subscriptions` has no enabled flag, so
+    detect silence yourself, delete the subscription and create a new one.
+    Events missed while disabled are NOT backfilled.
+  - Docs tip worth repeating: "Return `2xx` for events you don't recognise
+    rather than `4xx`. Rejecting unknown event types counts as a failure
+    and walks an otherwise healthy endpoint towards auto-disable." So the
+    example handlers' default branch must answer 2xx, not 400.
+  - Idempotency key: top-level `id` on envelope events, `eventId` on
+    legacy ones — `const key = event.id ?? event.eventId`. The id is a
+    deterministic hash of the event's identifying inputs, so retries share
+    it and distinct events differ. THREE documented exceptions:
+      * legacy `message.read` reuses ONE `eventId` for every receipt in a
+        conversation (it hashes creator+fan+type only) → key on
+        `${event.eventId}:${event.timestamp}`.
+      * `app.subscription.*` ids hash subscription id + topic, so a
+        repeated transition reuses the earlier id and the second is
+        dropped → pair the id with `timestamp`, or read state from
+        `GET /apps/{appUuid}/subscription-status`.
+      * `creator.message.read`, `creator.message.read_by_fan`,
+        `creator.chat.marked_unread`, `creator.subscription.*` and
+        `creator.experience_subscription.*` are explicitly NOT affected —
+        id alone is a valid key there. Do not "fix" those into composite
+        keys.
+
+  OTHER DOCUMENTED TRAPS worth a line each in the skill:
+  - A mass message is delivered on `creator.message.mass_sent` and NEVER
+    on `creator.message.sent`, so subscribing to `sent` alone misses every
+    broadcast.
+  - `creator.chat.marked_unread` reports conversation state, not message
+    state — don't revert read ticks on it. Its clear half is
+    `creator.message.read`.
+  - `creator.follow.created` fires on EVERY follow; legacy `follow.new`
+    sits behind the follow-notification throttle, so the two don't fire
+    one-for-one.
+  - `creator.*` events FAN OUT: if two apps hold `read:creator` for the
+    same creator, both receive `creator.payment.succeeded`.
+testScenario:
+  events:
+    - creator.follow.created
+    - creator.payment.succeeded
+    - creator.subscription.activated
+    - checkout_link.payment.succeeded
+catalog:
+  summary: 'Verify Fanvue creator-platform webhook signatures (`X-Fanvue-Signature: t=<unix>,v0=<hex>`, HMAC-SHA256 hex over `<t>.<raw body>`, with a bare second MAC during secret rotation that must also be accepted), answer the unsigned `fanvue.webhook.verification` probe, and handle the `creator.*`, `checkout_link.*`, `payout.*` and `app.*` event families plus the deprecated flat legacy events'
+  docsUrl: https://api.fanvue.com/docs/webhooks

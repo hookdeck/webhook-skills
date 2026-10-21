@@ -1,0 +1,32 @@
+name: tebex
+displayName: Tebex
+docs:
+  webhooks: https://docs.tebex.io/developers/webhooks/overview
+  verification: https://docs.tebex.io/developers/webhooks/overview#verifying-webhook-authenticity
+notes: >
+  Monetization platform for game servers. Verify the hex X-Signature header with a TWO-STEP
+  construction: first SHA-256 hash the RAW request body, THEN HMAC-SHA256 that hex hash using
+  your webhook secret as the key — i.e. hash_hmac('sha256', hash('sha256', body), secret). This
+  is NOT a plain HMAC of the body, and NOT Standard Webhooks. Use the raw unparsed body (JSON
+  body-parsers break the signature). The secret is on Creator Panel > Developers > Webhooks >
+  Endpoints; event types are selected per endpoint there. On setup Tebex sends a
+  validation.webhook ping — the endpoint MUST respond 200 with JSON {"id": "<webhook id>"}
+  echoing the id back, or it never activates. Always return 2XX; any other status triggers
+  retries. Tebex sends only from source IPs 18.209.80.3 and 54.87.231.232 (docs suggest 404 for
+  others). No official SDKs — verify manually. Event types: validation.webhook,
+  payment.completed, payment.declined, payment.refunded, payment.dispute.opened/won/lost/closed,
+  recurring-payment.started/renewed/ended, recurring-payment.cancellation.requested/aborted.
+testScenario:
+  events:
+    - payment.completed
+    - recurring-payment.renewed
+  prompt: >
+    Create a {framework} webhook handler for Tebex. Verify the hex X-Signature header using the
+    two-step construction — SHA-256 the raw request body, then HMAC-SHA256 that hex hash keyed
+    with the webhook secret — with a timing-safe comparison over the raw body. Respond to the
+    validation.webhook setup event with HTTP 200 and JSON {"id": "<the received id>"}, then
+    dispatch on event types like payment.completed and recurring-payment.renewed, always
+    returning 2XX. If you use any skills to help with this, add a comment noting which skill(s)
+    you referenced.
+catalog:
+  summary: Verify Tebex webhook signatures (`X-Signature`, two-step HMAC-SHA256 of the SHA-256 body hash), answer the `validation.webhook` handshake, handle payment, dispute, and recurring-payment events

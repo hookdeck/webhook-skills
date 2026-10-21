@@ -1,0 +1,28 @@
+name: courier
+displayName: Courier
+docs:
+  webhooks: https://www.courier.com/docs/platform/workspaces/outbound-webhooks
+  verification: https://www.courier.com/docs/guides/getting-started/outbound-webhooks/
+notes: >
+  Notification infrastructure platform (email, SMS, push, chat, in-app). Configure
+  outbound webhooks at Settings → General → + Outbound Webhook; the webhook provides a
+  signing secret. Courier signs every delivery with the courier-signature header, format
+  "t=<timestamp>,signature=<hex_digest>", HMAC-SHA256. The signed content is
+  "${timestamp}.${rawBody}" (timestamp + "." + the RAW request body) — verify with a
+  constant-time hex compare and validate the timestamp (epoch MILLISECONDS) tolerance.
+  NOT Standard Webhooks. There is no webhook-verification SDK (@trycourier/courier and
+  trycourier are for sending), so verify manually. Payload envelope is
+  { "type": "<event>", "data": {...} } with COLON-delimited event names. IMPORTANT:
+  Courier does NOT emit per-status message events (no message:delivered / message:opened /
+  message:clicked) — a single message:updated event carries status + timestamps in data.
+  Full set: message:updated, notification:submitted, notification:submission_canceled,
+  notification:published, audiences:updated, audiences:user:matched,
+  audiences:user:unmatched, audiences:calculated. Respond 200 quickly and do heavy work
+  async. Webhooks are environment-scoped (test vs production); retry behavior is not
+  documented.
+testScenario:
+  events:
+    - message:updated
+    - notification:submitted
+catalog:
+  summary: Verify Courier outbound webhook signatures (`courier-signature`, HMAC-SHA256 with timestamp), handle message:updated, notification:submitted, and audiences events

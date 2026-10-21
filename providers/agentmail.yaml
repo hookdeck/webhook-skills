@@ -1,0 +1,18 @@
+name: agentmail
+displayName: AgentMail
+docs:
+  webhooks: https://docs.agentmail.to/webhook-verification
+  verification: https://docs.agentmail.to/webhook-verification
+notes: >
+  Email inboxes for AI agents. AgentMail uses Svix: svix-id, svix-timestamp, svix-signature
+  ("v1,<base64>" space-delimited); HMAC-SHA256 over "<id>.<timestamp>.<raw body>"; secret
+  starts with whsec_. svix-id differs per webhook level (org/pod/inbox), so AgentMail
+  recommends deduplicating on the payload event_id rather than svix-id. Events include
+  message.received, message.sent, message.delivered, message.bounced, domain.verified.
+testScenario:
+  events:
+    - message.received
+    - message.bounced
+catalog:
+  summary: Verify AgentMail (Svix) webhook signatures, handle inbound email (`message.received`), delivery, bounce and complaint events
+  docsUrl: https://docs.agentmail.to/webhooks-overview

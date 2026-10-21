@@ -1,0 +1,28 @@
+name: gocardless
+displayName: GoCardless
+docs:
+  webhooks: https://developer.gocardless.com/api-reference/#appendix-webhooks
+  verification: https://developer.gocardless.com/getting-started/api/staying-up-to-date-with-webhooks/
+notes: >
+  Bank debit / recurring payments platform. Verify with the Webhook-Signature header:
+  HMAC-SHA256 (hex) over the raw request body using the webhook endpoint secret. Compare with
+  a timing-safe equality check. The payload contains an `events` array — process each event and
+  respond 2xx (204) once the whole batch is accepted; GoCardless retries the full batch on
+  failure, so handlers must be idempotent on event id. Common resource types: payments, mandates,
+  payouts, refunds, subscriptions. Common actions: paid, failed, confirmed, cancelled.
+sdks:
+  npm:
+    - "gocardless-nodejs"
+testScenario:
+  events:
+    - payments.confirmed
+    - payments.failed
+catalog:
+  summary: Verify GoCardless webhook signatures (`Webhook-Signature`, HMAC-SHA256), handle batched payment, mandate, and payout events
+  marketplace:
+    description: Verify GoCardless webhook signatures (Webhook-Signature, HMAC-SHA256), handle batched payment, mandate, and payout events.
+    keywords:
+    - webhooks
+    - gocardless
+    - payments
+    - direct-debit

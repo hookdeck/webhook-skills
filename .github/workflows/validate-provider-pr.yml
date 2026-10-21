@@ -6,6 +6,11 @@ on:
     paths:
       - 'skills/**'
       - '.claude-plugin/**'
+      # The catalog check reads providers/ and runs the generator's sync code
+      - 'providers/**'
+      - 'README.md'
+      - 'scripts/**'
+      - '.github/workflows/validate-provider-pr.yml'
 
 jobs:
   validate:
@@ -42,6 +47,7 @@ jobs:
             echo "Some validations failed. See job output for details." >> $GITHUB_STEP_SUMMARY
           fi
 
+  # Job name kept so existing required-check settings still match
   manifest:
     name: Marketplace Manifest In Sync
     runs-on: ubuntu-latest
@@ -55,7 +61,10 @@ jobs:
           # test-examples.yml for why npm 10 breaks installs).
           node-version: '24'
 
-      - name: Check marketplace.json is in sync with skills/
+      - name: Check the catalog sources are complete
         run: |
-          # Fails if any skill lacks a manifest entry or any entry is orphaned.
-          ./scripts/generate-skills.sh sync-marketplace --check
+          # PRs don't need to update README.md or marketplace.json: the Sync
+          # Catalog workflow regenerates them after merge. This only checks it
+          # can: every skill has a providers/<name>.yaml (or a curated plugin
+          # in marketplace.base.json) and every provider has catalog.summary.
+          ./scripts/generate-skills.sh sync --validate

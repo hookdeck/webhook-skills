@@ -1,0 +1,24 @@
+name: attentive
+displayName: Attentive
+docs:
+  webhooks: https://docs.attentive.com/docs/create-and-manage-webhooks
+  verification: https://docs.attentive.com/docs/webhook-authentication/
+notes: >
+  HMAC-SHA256 over the raw request body, hex-encoded, sent in the
+  x-attentive-hmac-sha256 header; secret is a per-webhook signing key ("client
+  secret") shown in the dashboard webhook settings. Does NOT follow the Standard
+  Webhooks spec — no timestamp in the signature, so no built-in replay protection.
+  Compute over the exact raw body and compare with constant-time comparison.
+  Configure in the Attentive dashboard (custom app > Webhooks tab, "Universal" type)
+  or via the Webhooks API ("Subscription" type, POST /webhooks). Payloads are JSON
+  with type, timestamp (Unix ms), company, and subscriber objects. Retries with
+  exponential backoff for up to 3 days on non-2xx; endpoints failing for multiple
+  consecutive days are auto-disabled; event order is not guaranteed. Delivery
+  timeout is undocumented. No official server-side npm/pip SDK.
+testScenario:
+  events:
+    - sms.subscribed
+    - sms.sent
+    - email.opened
+catalog:
+  summary: Verify Attentive webhook signatures (`x-attentive-hmac-sha256`, HMAC-SHA256 hex), handle SMS and email subscriber events

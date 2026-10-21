@@ -1,0 +1,20 @@
+name: retell
+displayName: Retell AI
+docs:
+  webhooks: https://docs.retellai.com/features/webhook-overview
+  verification: https://docs.retellai.com/features/secure-webhook
+notes: >
+  Voice AI platform. Signs with HMAC-SHA256 using the Retell API key (the one
+  with the webhook badge) as the secret — NOT Standard Webhooks/Svix. Signature
+  is in the X-Retell-Signature header, formatted "v={unix_ms_timestamp},d={hex_digest}";
+  the digest is HMAC-SHA256 over raw_body + timestamp. Verify against the RAW body.
+  Python SDK exposes client.verify(body, api_key, signature) with a ~5 min timestamp
+  window; the Node SDK has no verify helper, so Node verifies manually. Retries up to
+  3 times if no 2xx within 10s — dedupe on event + call_id. Optional IP allowlist: 100.20.5.228.
+testScenario:
+  events:
+    - call_started
+    - call_ended
+    - call_analyzed
+catalog:
+  summary: Verify Retell webhook signatures (`X-Retell-Signature`, HMAC-SHA256), handle voice call events like call_started, call_ended, call_analyzed

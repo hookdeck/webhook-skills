@@ -1,0 +1,26 @@
+name: fastspring
+displayName: FastSpring
+docs:
+  webhooks: https://developer.fastspring.com/reference/webhooks-overview
+  verification: https://developer.fastspring.com/reference/message-security
+notes: >
+  Ecommerce / subscription commerce platform. Signs webhooks with HMAC-SHA256 over
+  the EXACT raw request body, base64-encoded, delivered in the X-FS-Signature header.
+  The signing key is the per-webhook "HMAC SHA256 Secret" set in the dashboard
+  (Developer Tools > Webhooks > Configuration); signing is only active when that secret
+  is set (no secret => no X-FS-Signature header). Verify by recomputing
+  base64(HMAC-SHA256(raw_body, secret)) and constant-time comparing — do NOT
+  parse/re-serialize the body first. NOT the Standard Webhooks spec. Each POST is a JSON
+  object with an "events" array that BATCHES multiple events per request, so iterate
+  events[] and verify the signature ONCE against the whole raw body. Each event has id,
+  type, live, processed, created, data. Automatic retries reuse the same event id (dedupe
+  on it); manual retries get new ids. FastSpring auto-retries until the endpoint returns
+  HTTP 200 (HTTPS required). Optional source IP 107.23.30.83. No official webhook SDK —
+  verify HMAC manually in every framework. Set FASTSPRING_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - order.completed
+    - subscription.activated
+    - subscription.charge.completed
+catalog:
+  summary: Verify FastSpring webhook signatures (`X-FS-Signature`, HMAC-SHA256 base64 over the raw body), iterate the batched `events` array, handle order.completed, subscription.activated, subscription.charge.completed, and subscription.canceled events

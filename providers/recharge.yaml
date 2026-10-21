@@ -1,0 +1,35 @@
+name: recharge
+displayName: Recharge
+docs:
+  webhooks: https://docs.getrecharge.com/docs/webhooks-overview
+  verification: https://docs.getrecharge.com/docs/webhooks-overview#validating-webhooks
+  events: https://developer.rechargepayments.com/2021-11/webhooks_endpoints/webhooks_available
+notes: >
+  Two signature schemes, both keyed with the API Client Secret (NOT the API token;
+  Dashboard -> Integrations -> API Tokens -> Edit token page). (1) RECOMMENDED
+  timestamp-bound scheme (verified live 2021-11 API reference, July 2026): headers
+  X-Recharge-Webhook-Timestamp (epoch seconds) and X-Recharge-Webhook-Signature
+  ("t=<epoch>,v1=<hex>"); signing input "<timestamp>.<raw_body>"; HMAC-SHA256, hex,
+  constant-time compare vs v1; reject if abs(now - t) > 172800s (48h). (2) LEGACY
+  X-Recharge-Hmac-Sha256, still sent on every delivery: NOT a true HMAC — plain
+  SHA-256 of client_secret + raw_body (secret first), hex. Raw body must be
+  byte-exact for both schemes ("validation will fail even if one space is lost").
+  Does NOT follow the Standard Webhooks spec. No topic header is documented —
+  dispatch on the payload's single top-level resource key, or register one endpoint
+  path per topic. Webhooks are created via the Admin API (POST
+  https://api.rechargeapps.com/webhooks with address + topic, optional
+  included_objects); API versions 2021-01 and 2021-11 share the same token and topic
+  names. The paid-charge topic is charge/paid (charge/success is legacy, though
+  order/success IS current). Respond 200 within 5 seconds; no response, 408, 429, or
+  5xx counts as failure. Recharge retries 20 times over 48 hours, then DELETES the
+  webhook subscription. No webhook-relevant official SDK
+  (@rechargeapps/storefront-client covers the Storefront API only).
+testScenario:
+  events:
+    - subscription/created
+    - charge/paid
+    - order/created
+catalog:
+  summary: Verify Recharge webhooks (`X-Recharge-Hmac-Sha256`, plain SHA-256 of `secret + body`, not HMAC), handle charge, subscription, and order events
+  marketplace:
+    description: Receive and verify Recharge (subscription commerce) webhooks. Use when setting up Recharge webhook handlers, debugging X-Recharge-Hmac-Sha256 signature verification, or handling subscription events like charge/paid, charge/failed, subscription/created, subscription/cancelled, and order/created.

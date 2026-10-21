@@ -1,0 +1,34 @@
+name: neon
+displayName: Neon
+docs:
+  webhooks: https://neon.com/docs/auth/guides/webhooks
+  verification: https://neon.com/docs/auth/guides/webhooks#signature-verification
+notes: >
+  Neon Auth webhooks. IMPORTANT: NOT Svix and NOT HMAC — do not force-fit an HMAC template or
+  the svix package. Neon signs each webhook with asymmetric EdDSA (Ed25519) as a detached JWS,
+  so there is NO shared secret: verify with the public key from
+  ${NEON_AUTH_URL}/.well-known/jwks.json, selecting the key by the X-Neon-Signature-Kid header
+  (cache keys by kid). Headers: X-Neon-Signature (detached JWS "header..signature" with an EMPTY
+  middle section), X-Neon-Signature-Kid, X-Neon-Timestamp (Unix ms), X-Neon-Event-Type,
+  X-Neon-Event-Id (idempotency), X-Neon-Delivery-Attempt (1-3). CRITICAL gotcha: the signing
+  input uses DOUBLE base64url encoding — signingInput = header + "." +
+  base64url(timestamp + "." + base64url(rawBody)); a naive "{timestamp}.{body}" reconstruction
+  fails. Verify against the RAW body bytes and enforce a timestamp tolerance (e.g. 5 min).
+  Events: send.otp (blocking), send.magic_link (blocking), user.before_create (blocking),
+  user.created (non-blocking), phone_number.verified (non-blocking). Blocking events pause the
+  auth flow until a 2xx — respond fast. No off-the-shelf verification SDK: use node:crypto (Node)
+  or cryptography/PyJWT (Python).
+testScenario:
+  events:
+    - user.created
+    - user.before_create
+  prompt: >
+    Create a {framework} webhook handler for Neon Auth. Verify the EdDSA (Ed25519) detached JWS
+    signature: parse X-Neon-Signature ("header..signature"), fetch the public key from
+    ${NEON_AUTH_URL}/.well-known/jwks.json by X-Neon-Signature-Kid, reconstruct the signing input
+    with DOUBLE base64url encoding (header + "." + base64url(X-Neon-Timestamp + "." +
+    base64url(rawBody))), and verify against the raw body. Enforce a timestamp tolerance, then
+    dispatch on X-Neon-Event-Type (e.g. user.created) and return 2xx. Do NOT use svix or HMAC.
+    If you use any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Neon Auth webhook signatures (EdDSA / Ed25519 detached JWS via JWKS, `X-Neon-Signature`), handle user.created, user.before_create, send.otp, send.magic_link, and phone_number.verified events

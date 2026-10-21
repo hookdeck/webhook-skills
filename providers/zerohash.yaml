@@ -1,0 +1,35 @@
+name: zerohash
+displayName: Zero Hash
+docs:
+  webhooks: https://docs.zerohash.com/changelog/webhooks-tradestatus-balanceupdates
+  verification: https://docs.zerohash.com/reference/webhook-security
+notes: >
+  B2B crypto settlement infrastructure. Webhook subscriptions are NOT self-service — a
+  Zero Hash representative configures the destination URL and provisions the HMAC shared
+  secret (or an RSA public key). Signing is HMAC-SHA256, HEX-encoded, and is DIFFERENT from
+  Zero Hash's REST API auth (the X-SCX-* / timestamp+method+path+body base64 scheme) — do
+  not reuse REST auth code. Recommended (replay-protected) scheme: x-zh-hook-signature =
+  to_hex(hmac_sha256(payload + timestamp, secret)) where the signed content is the raw body
+  concatenated with x-zh-hook-timestamp (UNIX milliseconds), NO delimiter; reject if the
+  timestamp is not within ±5 minutes. Legacy scheme: x-zh-hook-signature-256 =
+  to_hex(hmac_sha256(payload, secret)) with no timestamp. RSA-SHA256 variants
+  (x-zh-hook-rsa-signature / x-zh-hook-rsa-signature-256) verify with a Zero Hash public key
+  (zh-public-key), distinct from any API key. The event type is carried in the
+  x-zh-hook-payload-type header (trade_status_changed, account_balance.changed), not the body;
+  x-zh-hook-notification-id is a per-notification id for idempotency. Verify against the RAW
+  body, timing-safe. Not Standard Webhooks. No official webhook SDK — verify manually.
+  Source IP allowlist: 18.189.25.175/32, 3.18.218.32/32, 3.22.145.85/32.
+testScenario:
+  events:
+    - trade_status_changed
+    - account_balance.changed
+catalog:
+  summary: Verify Zero Hash webhook signatures (`x-zh-hook-signature`, HMAC-SHA256 hex over `payload + timestamp` with replay protection; legacy `x-zh-hook-signature-256`), handle `trade_status_changed` and `account_balance.changed` events
+  marketplace:
+    description: Verify Zero Hash webhook signatures (x-zh-hook-signature, HMAC-SHA256 hex over payload + timestamp with replay protection; legacy x-zh-hook-signature-256), and handle trade_status_changed and account_balance.changed events.
+    keywords:
+    - webhooks
+    - zerohash
+    - crypto
+    - settlement
+    - payments

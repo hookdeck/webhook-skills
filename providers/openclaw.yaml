@@ -1,0 +1,28 @@
+name: openclaw
+displayName: OpenClaw
+docs:
+  webhooks: https://docs.openclaw.ai/automation/cron-jobs/delivery
+  verification: https://docs.openclaw.ai/automation/cron-jobs/managing-jobs
+  hooks: https://docs.openclaw.ai/automation/cron-jobs/webhooks
+notes: >
+  Open-source autonomous AI agent platform. Automations (cron jobs) in webhook
+  delivery mode POST the finished run event as JSON. Not signed: cron.webhookToken
+  is sent as Authorization: Bearer <token>, and Hookdeck's OPENCLAW source
+  compares the whole header value, so verify with a constant-time compare
+  against "Bearer <webhookToken>". Failure alerts in webhook mode use the same
+  token. Secondary: the Gateway's inbound /hooks/agent and /hooks/wake endpoints,
+  which the Gateway verifies (hooks.token via Authorization: Bearer or
+  x-openclaw-token).
+testScenario:
+  events:
+    - finished (status ok)
+    - finished (status error)
+catalog:
+  summary: 'Verify OpenClaw automation webhooks (`Authorization: Bearer <webhookToken>`), handle finished-run events and failure alerts'
+  marketplace:
+    description: 'Verify OpenClaw automation (cron) webhooks sent with Authorization: Bearer <webhookToken>, handle finished-run events and failure alerts, and call the Gateway''s inbound hooks.'
+    keywords:
+    - webhooks
+    - openclaw
+    - agents
+    - ai

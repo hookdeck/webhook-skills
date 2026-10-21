@@ -1,0 +1,18 @@
+name: yoco
+displayName: Yoco
+docs:
+  webhooks: https://developer.yoco.com/docs/api/webhooks
+  verification: https://developer.yoco.com/docs/api/webhooks/verifying-events
+notes: >
+  South African payments. Both the Checkout API and the newer Yoco API use Standard
+  Webhooks: webhook-id, webhook-timestamp, webhook-signature; signed content
+  "<webhook-id>.<webhook-timestamp>.<raw body>", HMAC-SHA256, base64; remove the whsec_
+  prefix and base64-decode the rest to get the key. Yoco recommends a 3-minute timestamp
+  tolerance. The secret is returned only when the subscription is created via API. Events
+  include payment.succeeded, payment.created, payment.refunded.
+testScenario:
+  events:
+    - payment.succeeded
+    - payment.refunded
+catalog:
+  summary: Verify Yoco Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 with a `whsec_` secret and 3-minute timestamp window) for the Yoco API and Checkout API, handle `payment.created`, `payment.refunded`, `order.completed`, and `payment.succeeded` events

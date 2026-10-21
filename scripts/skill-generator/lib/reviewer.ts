@@ -12,7 +12,7 @@ import type {
   ReviewIssue,
 } from './types';
 import { runReviewSkill, runFixIssues } from './cli';
-import { runTests } from './generator';
+import { runTests, runValidation } from './generator';
 
 /**
  * Thresholds for accepting a skill
@@ -38,6 +38,7 @@ export interface ReviewAndIterateOptions {
 
 export interface ReviewAndIterateResult {
   success: boolean;
+  validation: PhaseResult;
   testing: PhaseResult;
   review: PhaseResult;
   iterations: number;
@@ -169,14 +170,52 @@ export async function reviewAndIterate(
   }
   
   let iteration = 0;
+  let iterationsRun = 0;  // `iteration` isn't incremented on a successful break
   let totalIssuesFound = 0;
   let totalIssuesFixed = 0;
+  let validationResult: PhaseResult = { passed: false, details: 'Not run' };
   let testingResult: PhaseResult = { passed: true, details: 'Skipped' };
   let reviewResult: PhaseResult = { passed: true, details: 'Skipped' };
   let lastReviewIssues: ReviewIssue[] = [];
   
   while (iteration < maxIterations) {
     logger.info(`--- Iteration ${iteration + 1}/${maxIterations} ---`);
+    iterationsRun = iteration + 1;
+    
+    // Phase 0: Deterministic checks (the same ones CI runs on provider PRs):
+    // required files, plus providers/<name>.yaml with testScenario and
+    // catalog.summary.
+    const validation = await runValidation(provider, { workingDir, logger, dryRun });
+    validationResult = {
+      passed: validation.passed,
+      details: validation.passed ? 'Passed' : `Failed: ${validation.errors.join('; ')}`,
+    };
+    
+    if (!validation.passed) {
+      logger.warn(`Validation failed: ${validation.errors.join('; ')}`);
+      const validationIssues: ReviewIssue[] = validation.errors.map(error => ({
+        severity: 'critical' as const,
+        category: 'structure' as const,
+        file: error.includes('providers/') ? `providers/${provider.name}.yaml` : `skills/${provider.name}-webhooks/`,
+        description: `validate-provider.sh: ${error}`,
+        suggestedFix: 'See AGENTS.md "Contributing a New Provider Skill" checklist. CI runs scripts/validate-provider.sh on every provider PR.',
+      }));
+      totalIssuesFound += validationIssues.length;
+      
+      await runFixIssues(provider, JSON.stringify(validationIssues, null, 2), {
+        workingDir,
+        logger,
+        dryRun,
+        model,
+        cliTool,
+        parallel,
+        existingTodo,
+      });
+      
+      totalIssuesFixed += validationIssues.length; // Assume fixed, will verify next iteration
+      iteration++;
+      continue;
+    }
     
     // Phase 1: Run tests
     if (!skipTests) {
@@ -251,7 +290,9 @@ export async function reviewAndIterate(
         
         const issuesSummary = `${criticalIssues.length} critical, ${majorIssues.length} major, ${minorIssues.length} minor`;
         
-        if (review.reviewResult.approved) {
+        // Approval only short-circuits when there is nothing left to fix; an
+        // "approved" verdict that still lists issues goes through the thresholds.
+        if (review.reviewResult.approved && lastReviewIssues.length === 0) {
           reviewResult = {
             passed: true,
             details: `Approved with ${review.reviewResult.suggestions.length} suggestions`,
@@ -302,13 +343,13 @@ export async function reviewAndIterate(
         
         totalIssuesFixed += lastReviewIssues.length; // Assume fixed, will verify next iteration
       } else {
-        // Couldn't parse review result - assume approved with warning
+        // Couldn't parse the verdict. Fail closed: an unreadable review is not
+        // an approval. Retry on the next iteration.
         reviewResult = {
-          passed: true,
-          details: 'Review completed but could not parse structured result',
+          passed: false,
+          details: 'Review ran but its JSON verdict could not be parsed',
         };
-        logger.warn('Could not parse review result - assuming approved');
-        break;
+        logger.warn('Could not parse review result - treating as not approved and retrying');
       }
     } else {
       // Review skipped
@@ -319,7 +360,7 @@ export async function reviewAndIterate(
   }
   
   // Check if we exhausted iterations without success
-  const success = testingResult.passed && reviewResult.passed;
+  const success = validationResult.passed && testingResult.passed && reviewResult.passed;
   
   if (!success && iteration >= maxIterations) {
     logger.error(`Exhausted ${maxIterations} iterations without success`);
@@ -334,9 +375,10 @@ export async function reviewAndIterate(
   
   return {
     success,
+    validation: validationResult,
     testing: testingResult,
     review: reviewResult,
-    iterations: iteration,
+    iterations: iterationsRun,
     issuesFound: totalIssuesFound,
     issuesFixed: totalIssuesFixed,
     remainingIssues: lastReviewIssues,

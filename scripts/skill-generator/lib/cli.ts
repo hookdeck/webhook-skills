@@ -276,11 +276,16 @@ export async function runReviewSkill(
   const prompt = loadPrompt('review-skill.md', replacements);
   
   const result = await runCLI(prompt, options);
-  
+
   if (!result.success) {
     return result;
   }
-  
+
+  // Nothing ran, so there is no verdict to parse; let the dry run walk the happy path
+  if (options.dryRun) {
+    return { ...result, reviewResult: { approved: true, issues: [], suggestions: [] } };
+  }
+
   // Try to parse the review result from CLI output
   const reviewResult = parseReviewResult(result.output);
   
@@ -320,27 +325,68 @@ ${options.existingTodo}
 }
 
 /**
- * Parse review result from Claude's output
- * Looks for JSON in the output that matches the ReviewResult structure
+ * Find the end of the balanced {...} span starting at `start`, tracking
+ * string state so braces inside JSON strings are ignored. Returns -1 if the
+ * span never closes.
  */
-function parseReviewResult(output: string): ReviewResult | undefined {
-  // Try to find JSON in the output
-  const jsonMatch = output.match(/\{[\s\S]*"approved"[\s\S]*"issues"[\s\S]*\}/);
-  
-  if (!jsonMatch) {
-    return undefined;
-  }
-  
-  try {
-    const parsed = JSON.parse(jsonMatch[0]) as ReviewResult;
-    
-    // Validate structure
-    if (typeof parsed.approved !== 'boolean' || !Array.isArray(parsed.issues)) {
-      return undefined;
+function findObjectEnd(text: string, start: number): number {
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
     }
-    
-    return parsed;
-  } catch {
-    return undefined;
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
   }
+  return -1;
+}
+
+/**
+ * Parse review result from the CLI's output
+ *
+ * Reviewer replies usually contain prose with braces before the verdict
+ * (e.g. "signs `{timestamp}.{body}`"), so a single greedy match from the first
+ * `{` is not safe. Instead, try every balanced {...} span and keep the LAST one
+ * that parses as a ReviewResult — the verdict is the end of the reply.
+ * Returns undefined if no valid result is found; callers must treat that as a
+ * failed review, never as an approval.
+ */
+export function parseReviewResult(output: string): ReviewResult | undefined {
+  let result: ReviewResult | undefined;
+
+  for (let start = output.indexOf('{'); start !== -1; start = output.indexOf('{', start + 1)) {
+    const end = findObjectEnd(output, start);
+    if (end === -1) continue;
+
+    const candidate = output.slice(start, end + 1);
+    if (!candidate.includes('"approved"')) continue;
+
+    try {
+      const parsed = JSON.parse(candidate) as ReviewResult;
+      if (typeof parsed.approved !== 'boolean' || !Array.isArray(parsed.issues)) {
+        continue;
+      }
+      result = {
+        approved: parsed.approved,
+        issues: parsed.issues,
+        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+      };
+      // Skip past this object so nested spans inside it aren't re-tried
+      start = end;
+    } catch {
+      // Not JSON (e.g. a `{placeholder}` in prose) — keep scanning
+    }
+  }
+
+  return result;
 }

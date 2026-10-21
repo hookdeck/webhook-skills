@@ -1,0 +1,23 @@
+name: github
+displayName: GitHub
+docs:
+  webhooks: https://docs.github.com/en/webhooks
+  events: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+  verification: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+notes: >
+  Code hosting platform. Uses X-Hub-Signature-256 header with HMAC-SHA256 (hex encoded).
+  Signature format is sha256=<hex_digest>. Always use timing-safe comparison.
+  Common events: push, pull_request, issues, release.
+testScenario:
+  events:
+    - push
+    - pull_request
+catalog:
+  summary: Verify GitHub webhook signatures, handle push, pull_request, and issue events
+  marketplace:
+    description: Verify GitHub webhook signatures (HMAC-SHA256, X-Hub-Signature-256), handle push, pull_request, and issue events.
+    keywords:
+    - webhooks
+    - github
+    - git
+    - ci

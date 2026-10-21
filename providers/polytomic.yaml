@@ -1,0 +1,127 @@
+name: polytomic
+displayName: Polytomic
+docs:
+  webhooks: https://docs.polytomic.com/docs/webhooks-connections
+  verification: https://docs.polytomic.com/docs/webhooks-connections
+  events: https://docs.polytomic.com/docs/webhooks-connections
+notes: >
+  IDENTITY: Polytomic (polytomic.com), the data-movement platform (models, Model Syncs,
+  Bulk Syncs, reverse ETL between warehouses, SaaS apps and databases). Docs are a ReadMe
+  hub; every page is also retrievable as markdown by appending `.md`.
+
+  VARIANT: Polytomic has exactly ONE outbound-HTTP surface — the Webhook connection used
+  as a sync DESTINATION ("Webhooks — Destination", the only webhook page in
+  docs.polytomic.com/llms.txt). You add a Webhook connection, point a Model Sync at it,
+  and Polytomic POSTs batches of changed records on the sync's schedule. There is no
+  event-subscription UI, no per-event-type toggles and no platform-events API. Frame the
+  skill as "receive Polytomic sync record batches", not "subscribe to Polytomic events".
+
+  VERIFICATION: THERE IS NO SIGNATURE. NO HMAC, no digest, no signing secret, no
+  signature header and no X-Polytomic-* header of any kind. The ONLY authentication is a
+  STATIC SHARED BEARER TOKEN. Verbatim: "This should be a 'Bearer' token matching the
+  same value that was provided as the 'Secret' during connection setup. For now, this is
+  the only request authorization and is a static value." Strip exactly one leading
+  "Bearer " prefix (case-insensitive on the scheme per RFC 7235), then compare to the
+  stored secret with crypto.timingSafeEqual / hmac.compare_digest (length-guard first;
+  timingSafeEqual throws on unequal lengths). Fail CLOSED with 500 if the secret env var
+  is unset; 401 on mismatch. crypto.createHmac / hashlib must NOT appear in the verify
+  path. Polytomic publishes no SDK webhook verifier in any language, so manual comparison
+  is THE implementation, not an SDK fallback.
+
+  THE TRAP: `Polytomic-Signature-Timestamp` IS NOT A SIGNATURE despite its name. It
+  carries only an RFC 3339 / ISO 8601 UTC timestamp (documented example
+  "2021-06-01T22:55:36Z") — NOT a Unix epoch integer and NOT a digest. Parse with
+  new Date(value) / datetime.fromisoformat (normalise the trailing "Z" to "+00:00" for
+  Python 3.9/3.10), NEVER parseInt/int. The docs endorse a freshness window ("reject
+  requests older than you expect (more than a few minutes old)") — implement it as an
+  OPTIONAL configurable tolerance, default ~300s, and state plainly that it is a
+  staleness check only and proves nothing about authenticity, because the timestamp is
+  not covered by any signature. Do NOT fabricate an HMAC over timestamp+body.
+
+  DO NOT VERIFY THE TOKEN AS A JWT. The documented sample value decodes to a real HS256
+  JWT with claims {"aud":"webhook","jti":"<uuid>","iss":"https://app.polytomic-local.com:8443/"}
+  (iss is the issuing Polytomic instance; the example is a local dev host). But it is
+  signed with a key Polytomic does not give you, carries no `exp`, and the docs call it
+  "a static value". Treat the whole bearer string as an OPAQUE SECRET and compare
+  byte-for-byte. jwt.verify/jwt.decode or aud/iss/exp checks either crash or add a false
+  sense of security. May be mentioned in prose, hedged as "observed in the documented
+  example" — the docs never describe the token's internal format.
+
+  HEADERS (complete documented list, docs' casing): Content-Type: application/json
+  ("Polytomic delivers its webhooks payloads as json only. This header will always be
+  present."); Polytomic-Signature-Timestamp (RFC 3339 UTC); Authorization: Bearer
+  <secret>; User-Agent (documented example "Polytomic/rel2021.05.25" — illustrative only,
+  the release suffix changes, never authenticate on it); Content-Length. The docs' sample
+  request also shows `Accept-Encoding: gzip` while the prose says "Polytomic delivers
+  payloads as a gzipped response" — these are IN TENSION (Accept-Encoding on a request is
+  a request header), and it is the one internally inconsistent claim on the page. Report
+  the operational consequence rather than asserting a header name: the body may arrive
+  gzip-compressed, most frameworks/proxies decompress transparently, and capturing the
+  raw body yourself may require inflating it. Hedge it; there is no live capture to
+  settle it.
+
+  EVENTS: exactly ONE documented event type, `sync.records`. Verbatim: "This is an event
+  type to help you distinguish new and future hooks. You should only process webhooks you
+  know about—for right now, that is just the sync.records event." Route on the top-level
+  `event` field and make the DEFAULT BRANCH IGNORE UNKNOWN EVENTS WITH A 200 — the docs
+  anticipate future types, and a 4xx marks the sync run failed. DO NOT INVENT event names
+  (no sync.started, sync.completed, sync.failed, record.created).
+
+  PAYLOAD ENVELOPE: {"event":"sync.records","object":{"id":"1ea8f90a-b22e-4218-86d5-c3c109e1fbb7",
+  "name":"Webhook HTTP Endpoint sync","records":[{"hash":"b7421c6c57bd49f7","fields":
+  {"email":"nathan@polytomic.com","last_login":"2020-12-02T00:00:00Z"}}],"metadata":{}}}.
+  `object` is "an envelope that will contain the payload, regardless of event" and is
+  always present. `object.id` is the UUID of the SYNC, matching the id in the Polytomic UI
+  URL bar. `object.name` is the sync's name, "useful for discriminating against data
+  coming in from different endpoints". `object.records` is "a list of the records changed
+  since the last payload" — THE PAYLOAD IS A BATCH, NOT A SINGLE RECORD; every handler
+  example must loop; default batch size 100 ("Webhook batch size (default: 100)") and
+  user-configurable, so never assume 1 and tolerate large batches.
+  `object.records[].hash` is "a computed hash of the record's fields key/values pairs,
+  which may be useful for deduplicating incoming data" — use as an idempotency key; do
+  NOT describe its algorithm or length (the docs don't; b7421c6c57bd49f7 is just an
+  example); never use it for authentication. `object.records[].fields` "contains each of
+  the fields you selected to be delivered" — THE KEYS ARE USER-DEFINED by the sync
+  configuration; email/last_login are that customer's choices, not a Polytomic schema, so
+  do not typed-model them as a fixed shape and show defensive access.
+  `object.metadata` is "Any key-value pairs of metadata defined in the sync
+  configuration" (Advanced settings → Metadata, default null) — it may be an object, null
+  OR ABSENT; handle all three.
+
+  RESPONSE CONTRACT: verbatim "On receipt of the payload, your API should return 200 OK.
+  Any 4xx or 5xx error will cause the sync to appear as a failure." There is NO documented
+  automatic retry policy and NO retry schedule — do not claim exponential backoff or a
+  retry count. A non-2xx marks the sync run failed in Polytomic's sync history; recovery
+  is operational (fix the endpoint, re-run or wait for the next schedule). Because failure
+  is sync-level, acknowledge fast (200) and process the batch asynchronously.
+
+  SETUP (verbatim): Connections → Add Connection → Webhook; enter the delivery URL;
+  "Polytomic will give you a secret key that you will be able to use to verify incoming
+  payloads with. Hovering over the secret key field will reveal its value." NO handshake,
+  challenge or validation request is documented on webhook creation.
+
+  ADVANCED SETTINGS that change delivery semantics: "Always do a full sync" (default
+  false — Model Syncs are differential by default, so `records` normally holds only
+  changes; on means every run re-delivers everything); "Skip backfill on first sync"
+  (default false — the FIRST run delivers the entire source, the single most common cause
+  of an unexpectedly huge first batch); "Capture webhook requests and responses" (default
+  true — request/response log in the Polytomic sync history view, the debugging surface to
+  point readers at); "Webhook batch size" (default 100); "Metadata" (default null).
+
+  SOURCE IPs: the webhooks page links to https://docs.polytomic.com/docs/whitelist-ips —
+  54.190.82.25, 44.232.40.21, 35.155.106.54, 54.200.67.134, 44.224.213.129, 54.149.95.139.
+  Caveat honestly: that page frames the list as the IPs for "integrating Polytomic with
+  databases, data warehouses, and cloud storage" and the webhooks page merely links to it
+  for webhook traffic — present it as "the allowlist Polytomic points you at", a firewall
+  convenience and NOT an authentication mechanism, and note it does not apply to
+  self-hosted/on-premise Polytomic deployments (stated on that page).
+
+  DO NOT FABRICATE: no signature algorithm, no signing secret separate from the bearer
+  secret, no X-Polytomic-* headers, no event types beyond sync.records, no fixed `fields`
+  schema, no retry policy, no documented payload size limit, no handshake/challenge, no
+  HMAC. Hedge or omit anything not sourceable to the two doc URLs above.
+testScenario:
+  events:
+    - sync.records
+catalog:
+  summary: Authenticate Polytomic webhooks (static shared bearer token in `Authorization` — NO signature, NO HMAC; `Polytomic-Signature-Timestamp` is an RFC 3339 timestamp, not a digest), handle the single `sync.records` event and loop over the `object.records[]` batch

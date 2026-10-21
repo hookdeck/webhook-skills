@@ -1,0 +1,21 @@
+name: chargebee
+displayName: Chargebee
+docs:
+  webhooks: https://www.chargebee.com/docs/2.0/events_and_webhooks.html
+  events: https://apidocs.chargebee.com/docs/api/events#event_types
+notes: >
+  Subscription billing platform. Uses Basic Auth for webhook verification (not HMAC).
+  Username and password are configured in Chargebee webhook settings.
+testScenario:
+  events:
+    - subscription_created
+    - payment_succeeded
+catalog:
+  summary: Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events
+  marketplace:
+    description: Receive and verify Chargebee webhooks (Basic Auth), handle subscription billing events.
+    keywords:
+    - webhooks
+    - chargebee
+    - billing
+    - subscriptions

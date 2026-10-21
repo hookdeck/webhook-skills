@@ -1,0 +1,42 @@
+name: wechat
+displayName: WeChat Pay
+docs:
+  webhooks: https://pay.weixin.qq.com/doc/global/v3/en/4012356564
+  verification: https://pay.weixin.qq.com/doc/global/v3/en/4012357149
+notes: >
+  WeChat Pay APIv3 (Global/English endpoint). Notifications are signed asymmetrically
+  (SHA256withRSA), NOT HMAC and NOT Standard Webhooks. Verify with the WeChat Pay platform
+  public key selected by the Wechatpay-Serial header, over the message
+  "{timestamp}\n{nonce}\n{body}\n" (each line terminated by \n, body = raw bytes); the
+  signature (Wechatpay-Signature) is Base64. Headers: Wechatpay-Signature, Wechatpay-Timestamp,
+  Wechatpay-Nonce, Wechatpay-Serial. Enforce a 5-minute timestamp tolerance. The notification
+  "resource" is SEPARATELY encrypted: resource_type "encrypt-resource",
+  algorithm AEAD_AES_256_GCM, with ciphertext (Base64, 16-byte auth tag appended), nonce
+  (12-byte IV), and associated_data. Decrypt resource.ciphertext with the 32-byte APIv3 key
+  using AES-256-GCM to recover the transaction/refund JSON — the SIGNED body is the ciphertext
+  envelope, so verify first, then decrypt. Config: notify_url is set per API request (not a
+  dashboard); the platform cert/public key is downloaded and rotated by serial via
+  GET /v3/certificates (itself AES-GCM encrypted), with new certs published ~24h ahead — key
+  your store by Wechatpay-Serial. Acknowledge with HTTP 200/204 and body
+  {"code":"SUCCESS","message":"OK"}; retries run ~15s..6h over ~24h, so handle idempotently and
+  re-verify the order amount before fulfilling. The Global endpoint defines ONLY
+  TRANSACTION.SUCCESS, REFUND.SUCCESS, and REFUND.CLOSED — do NOT document the mainland-China-only
+  REFUND.ABNORMAL. Official SDKs (wechatpay-node-v3, wechatpay-axios-plugin, wechatpayv3) exist,
+  but manual verification with standard crypto libraries is used in the examples for transparency
+  and testability.
+testScenario:
+  events:
+    - TRANSACTION.SUCCESS
+    - REFUND.SUCCESS
+  prompt: >
+    Create a {framework} webhook handler for WeChat Pay (APIv3, Global/English endpoint). Verify
+    the Wechatpay-Signature header: reconstruct the message "{timestamp}\n{nonce}\n{body}\n" from
+    Wechatpay-Timestamp, Wechatpay-Nonce, and the RAW body, Base64-decode the signature, and
+    verify SHA256withRSA against the WeChat Pay platform public key matched by Wechatpay-Serial.
+    Enforce a 5-minute timestamp tolerance. Then decrypt the encrypted resource
+    (AEAD_AES_256_GCM) with the 32-byte APIv3 key to recover the JSON, dispatch on event_type
+    (TRANSACTION.SUCCESS, REFUND.SUCCESS, REFUND.CLOSED), and acknowledge with HTTP 200 and body
+    {"code":"SUCCESS","message":"OK"}. Do NOT use HMAC or the Standard Webhooks spec. If you use
+    any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify WeChat Pay APIv3 notification signatures (`Wechatpay-Signature`, SHA256withRSA over `{timestamp}\n{nonce}\n{body}\n` with the platform public key), decrypt the AEAD_AES_256_GCM `resource`, handle TRANSACTION.SUCCESS, REFUND.SUCCESS, and REFUND.CLOSED events

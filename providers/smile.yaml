@@ -1,0 +1,39 @@
+name: smile
+displayName: Smile API
+docs:
+  webhooks: https://docs.getsmileapi.com/reference/webhooks
+  verification: https://docs.getsmileapi.com/reference/webhooks#validating-payloads
+notes: >
+  Smile API (getsmileapi.com) — employment/income and financial-data aggregator for Southeast
+  Asia (Philippines-focused). NOT Smile.io (loyalty) and NOT Smile Identity (KYC). Signature
+  header is `Smile-Signature` (no X- prefix). Value = HMAC-SHA512 (NOT SHA256) hex digest of the
+  ENTIRE raw, unmodified request body, keyed with the per-endpoint "secret" (1-64 chars) set at
+  webhook registration — digest the raw body with no leading/trailing whitespace, NOT re-serialized
+  JSON. This is NOT Standard Webhooks and has no timestamp in the signed content. Compare
+  timing-safe and reject with 400. Event names are UPPER_SNAKE_CASE in the payload `type` field;
+  the unique event id is the `id` field. ~35 event types (many with _ADDED/_UPDATED variants):
+  USER_CREATED, TASK_STARTED, TASK_FINISHED, ACCOUNT_CREATED, ACCOUNT_CONNECTED,
+  ACCOUNT_DISCONNECTED, ACCOUNT_FAILED, ACCOUNT_SYNC_TASK_FINISHED, ARCHIVE_STARTED/ANALYZED/
+  REVOKED/FAILED, INVITE_INVITED, INVITE_LINKED, IDENTITY_ADDED, RATING_ADDED, TRANSACTIONS_ADDED,
+  DOCUMENTS_ADDED/UPDATED, EMPLOYMENTS_ADDED/UPDATED, INCOMES_ADDED/UPDATED, EINCOMES_ADDED/UPDATED,
+  CONTRIBUTIONS_ADDED/UPDATED, LIABILITIES_ADDED/UPDATED, INSIGHT_ADDED, LINK_ADDED, RECORD_CREATED,
+  RECORD_COMPLETED, VERIFICATION_STARTED/COMPLETED. ALL_EVENTS subscribes to everything. Delivery
+  is at-least-once: non-2xx retried up to 2 times a few dozen seconds apart — dedupe on the event
+  `id`. Optional includePayload flag inlines full data (max 300 list items) for TASK_FINISHED /
+  ACCOUNT_SYNC_TASK_FINISHED. Webhooks created via portal.getsmileapi.com/webhooks or POST
+  /webhooks; deliveries originate from static IP 18.142.61.230 (HTTPS only). No official SDK —
+  verification is manual (node:crypto / Python hmac+hashlib).
+testScenario:
+  events:
+    - ACCOUNT_CONNECTED
+    - TASK_FINISHED
+  prompt: >
+    Create a {framework} webhook handler for Smile API (getsmileapi.com, SE Asia employment/income
+    data — not Smile.io and not Smile Identity). Verify the `Smile-Signature` header: HMAC-SHA512
+    hex over the RAW request body keyed with the per-endpoint webhook secret, with a timing-safe
+    comparison, rejecting invalid signatures with 400. Parse JSON only after the signature check
+    passes, dispatch on the payload `type` field for events like ACCOUNT_CONNECTED and
+    TASK_FINISHED, dedupe on the event `id`, and return 2xx. If you use any skills to help with
+    this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Smile API (getsmileapi.com, SE Asia employment/income data — not Smile.io or Smile Identity) webhook signatures (`Smile-Signature`, HMAC-SHA512 hex over the raw body), dedupe on the event `id`, handle `ACCOUNT_CONNECTED`, `TASK_FINISHED`, `INCOMES_ADDED`, `EMPLOYMENTS_ADDED`, `IDENTITY_ADDED`, and `RECORD_COMPLETED` events

@@ -59,6 +59,18 @@ Read the AGENTS.md file in this repository to understand the full skill creation
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/main.py`
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/test_webhook.py`
 
+### Provider File
+
+Create or update `providers/{{PROVIDER_KEBAB}}.yaml` (see `providers/stripe.yaml` for the shape). CI fails without:
+
+- `docs.webhooks` (and `verification` / `events` URLs if they exist)
+- `testScenario.events` listing 2-3 real event names
+- `catalog.summary` - one line for the README provider table, in the same style as other providers' summaries: what gets verified (header names, algorithm) and the key events it handles. For example: ``Verify Stripe webhook signatures (`Stripe-Signature`, HMAC-SHA256), handle checkout.session.completed and payment_intent.succeeded events``
+
+Do **not** edit `README.md` or `.claude-plugin/marketplace.json`. Both are generated from `providers/` and `skills/` after merge (`./scripts/generate-skills.sh sync`).
+
+The generator runs `scripts/validate-provider.sh {{PROVIDER_KEBAB}}-webhooks` (the same check CI runs) after you finish.
+
 ## Important Guidelines
 
 1. **Use the provider's official SDK** for signature verification when it supports the framework; **include manual verification** as a fallback for frameworks the SDK doesn't support (e.g., FastAPI when only Node SDK exists)

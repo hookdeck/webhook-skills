@@ -1,0 +1,55 @@
+name: community
+displayName: Community
+docs:
+  webhooks: https://developer.community.com/reference/webhooks-introduction
+  verification: https://developer.community.com/reference/webhooks-introduction
+  events: https://developer.community.com/reference/webhooks-introduction
+notes: >
+  IDENTITY: community.com — the SMS / conversational-messaging platform for brands
+  and creators, developer hub developer.community.com (ReadMe-hosted; append .md to
+  any page URL for markdown). NOT a generic community-forum product, NOT
+  Circle/Discourse/Bettermode, and NOT Salesforce Experience Cloud (formerly
+  Community Cloud). VERIFICATION: HMAC-SHA256, lowercase hex, Stripe-style header.
+  Every payload carries community-signature: t=<unix_seconds>,v1=<64_hex_chars>.
+  The signed content is the concatenation of the timestamp, a literal "." character,
+  and the RAW request body — HMAC_SHA256(secret, f"{t}.{raw_body}"). The HMAC key is
+  the per-webhook "signature secret" shown in the Dashboard when the webhook is
+  created or edited (Settings > Integrations > Webhooks); it is NOT account-wide and
+  NOT the community_api-prefixed Async REST API bearer token. Parse the header by
+  splitting on "," then "=" (no assumed field order, no whole-value regex); treat
+  scheme versions other than v1 as unsupported. Use a constant-time comparison. The
+  docs specify NO tolerance window for t, so any replay/staleness check is the
+  implementer's own hardening choice, not a documented requirement — and it must be
+  wider than an hour since retries span that long. Transport safeguards Community
+  documents: HTTPS-only endpoints and SSL certificates verified as valid and for the
+  correct host. There is NO source-IP allowlist and NO handshake/challenge step.
+  There is no official Community SDK for webhook verification in any language.
+  ENVELOPE: top-level id (UUID), type, object ("member" or "message"), created
+  (ISO-8601 with microseconds), api_version (e.g. "2024-02-12"), and data. All five
+  documented sample payloads nest the event data at data.object, while the prose on
+  the same page says data.member / data.message — follow the samples and fall back
+  defensively. EVENTS (complete documented set, five types): message.inbound,
+  message.outbound (some messages filtered out — help/start/stop, tapbacks),
+  member.created, member.updated, member.deleted. PAYLOADS: member objects carry id,
+  active, timestamp, client_id, communication_channel, communication_channel_id, and
+  optional personal data (email, given_name, surname, city, country, country_code,
+  state_or_province, state_or_province_abbreviation, postal_code, date_of_birth,
+  gender_identity, geolocation). member.deleted is SPARSE — only id, active:false,
+  timestamp, client_id, communication_channel and an emptied
+  communication_channel_id — so never assume personal-data fields are present.
+  Message objects carry id, text, media_list, outbound_message_type, and a nested
+  member object. outbound_message_type is not_set on inbound; documented outbound
+  values are DM, Campaign, Fan_Onboarding, Opt_In, Opt_Out, Keyword_Response,
+  Seat_Onboarding, Help_Response, Automated, External, External_Customer_Support —
+  the sample shows lowercase "automated", so compare case-insensitively. DELIVERY:
+  at-least-once; deduplicate by storing the webhook or object id for at least an
+  hour. Endpoints must return 2xx within 15 seconds (body ignored); failures retry 5
+  times with increasing backoff for up to an hour, and persistently failing webhooks
+  are emailed about and may be disabled. ACCESS: plan/permission-gated, configurable
+  only in the Community Dashboard (no API to create webhooks).
+testScenario:
+  events:
+    - message.inbound
+    - member.created
+catalog:
+  summary: Verify Community (community.com SMS platform) webhook signatures (`community-signature`, HMAC-SHA256 hex over `{t}.{raw_body}`), handle message.inbound, message.outbound, member.created, member.updated, and member.deleted events

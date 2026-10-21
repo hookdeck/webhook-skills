@@ -1,0 +1,29 @@
+name: paddle
+displayName: Paddle
+docs:
+  webhooks: https://developer.paddle.com/webhooks/overview
+  verification: https://developer.paddle.com/webhooks/signature-verification
+  api: https://developer.paddle.com/api-reference/overview
+notes: >
+  Payment and subscription platform. Uses Paddle-Signature header with HMAC-SHA256.
+  Signature format includes timestamp (ts) and hash (h1). Secret starts with pdl_ntfset_.
+  Official SDKs: @paddle/paddle-node-sdk (Node), paddle-python-sdk (Python).
+sdks:
+  npm:
+    - "@paddle/paddle-node-sdk"
+  pip:
+    - paddle-python-sdk
+testScenario:
+  events:
+    - subscription.created
+    - transaction.completed
+catalog:
+  summary: Verify Paddle webhook signatures, handle subscription and billing events
+  marketplace:
+    description: Verify Paddle webhook signatures (HMAC-SHA256 with multi-signature rotation), handle subscription and billing events.
+    keywords:
+    - webhooks
+    - paddle
+    - billing
+    - payments
+    - subscriptions

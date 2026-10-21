@@ -1,0 +1,22 @@
+name: stitch
+displayName: Stitch
+docs:
+  webhooks: https://docs.stitch.money/webhooks/using_webhooks
+  verification: https://docs.stitch.money/webhooks/using_webhooks
+notes: >
+  Stitch (stitch.money), the South African payments company; NOT Stitch Data (the ETL tool).
+  Webhooks are delivered by Svix; a signing secret is issued per subscription (returned when
+  creating a subscription via API). svix-id, svix-timestamp, svix-signature headers; signed
+  content "${svix_id}.${svix_timestamp}.${body}", HMAC-SHA256, base64; key is the base64
+  portion after the whsec_ prefix. The svix-signature header may contain several
+  space-delimited "v1,<sig>" entries (docs also show a v2 entry); compare against v1 entries.
+  The legacy GraphQL webhooks are a separate older mechanism. Check the Event Types page for
+  current names (payment and disbursement status events).
+testScenario:
+  events:
+    - payment
+  prompt: >
+    Add a Stitch (stitch.money) webhook endpoint to my {framework} app. Verify the Svix
+    signature and handle payment and disbursement status events.
+catalog:
+  summary: Verify Stitch (stitch.money) webhooks delivered via Svix (`svix-signature`, HMAC-SHA256 over `id.timestamp.body`), handle payment, payment.confirmation, transaction, payment-consent-request, collection, refund, and disbursement status events

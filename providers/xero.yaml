@@ -1,0 +1,32 @@
+name: xero
+displayName: Xero
+docs:
+  webhooks: https://developer.xero.com/documentation/guides/webhooks/overview/
+  verification: https://developer.xero.com/documentation/guides/webhooks/configuring-your-server/
+notes: >
+  Accounting platform. Verify the x-xero-signature header: compute HMAC-SHA256 over the RAW
+  request body using the app's webhook signing key, base64-encode it, and compare timing-safe.
+  This is Xero's own scheme, not Standard Webhooks. IMPORTANT: on endpoint setup Xero runs an
+  "Intent to Receive" (ITR) validation — POST validation payloads for which the endpoint MUST
+  return HTTP 200 when the signature matches and HTTP 401 (not 400) when it does not, within a
+  few seconds, before the webhook activates. Payloads are thin: an events array where each event
+  carries resourceUrl, resourceId, eventDateUtc, eventType (CREATE/UPDATE), eventCategory
+  (CONTACT/INVOICE/CREDITNOTE/SUBSCRIPTION), tenantId, tenantType; call resourceUrl (authenticated)
+  to fetch the record. Xero batches events and retries with backoff, so handle duplicates
+  idempotently. Capture the raw unparsed body before JSON parsing (parsing breaks the HMAC). One
+  signing key per app in the developer portal. Official SDKs (xero-node, xero-python) do NOT ship
+  a webhook-signature helper — verify manually.
+testScenario:
+  events:
+    - CONTACT/CREATE
+    - INVOICE/UPDATE
+  prompt: >
+    Create a {framework} webhook handler for Xero. Verify the x-xero-signature header by computing
+    HMAC-SHA256 over the raw request body with the webhook signing key, base64-encoded, using a
+    timing-safe comparison. It MUST pass Xero's Intent to Receive (ITR) validation by returning
+    200 for a valid signature and 401 (not 400) for an invalid one. Then parse the events array
+    and dispatch on eventCategory/eventType (e.g. CONTACT/CREATE, INVOICE/UPDATE), handling
+    duplicates idempotently. If you use any skills to help with this, add a comment noting which
+    skill(s) you referenced.
+catalog:
+  summary: Verify Xero webhook signatures (`x-xero-signature`, HMAC-SHA256 base64), pass Intent to Receive (ITR) with 200/401, handle CONTACT, INVOICE, CREDITNOTE, and SUBSCRIPTION events

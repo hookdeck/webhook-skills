@@ -1,0 +1,24 @@
+name: coinbase-commerce
+displayName: Coinbase Commerce
+docs:
+  webhooks: https://docs.cdp.coinbase.com/commerce-onchain/docs/webhooks
+  verification: https://docs.cdp.coinbase.com/commerce-onchain/docs/webhooks-security
+notes: >
+  Cryptocurrency payments platform. Verify with the X-CC-Webhook-Signature header:
+  HMAC-SHA256 (hex) over the raw request body using the webhook shared secret from the
+  Coinbase Commerce dashboard. Compare with a timing-safe equality check. The event object is
+  nested under `event` in the body. Common events: charge:created, charge:confirmed,
+  charge:failed, charge:delayed, charge:pending, charge:resolved.
+testScenario:
+  events:
+    - charge:confirmed
+    - charge:failed
+catalog:
+  summary: Verify Coinbase Commerce webhook signatures (`X-CC-Webhook-Signature`, HMAC-SHA256), handle charge lifecycle events
+  marketplace:
+    description: Verify Coinbase Commerce webhook signatures (X-CC-Webhook-Signature, HMAC-SHA256), handle charge lifecycle events.
+    keywords:
+    - webhooks
+    - coinbase-commerce
+    - payments
+    - crypto

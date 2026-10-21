@@ -1,0 +1,18 @@
+name: green-api
+displayName: GREEN-API
+docs:
+  webhooks: https://green-api.com/en/docs/api/receiving/technology-webhook-endpoint/
+  verification: https://green-api.com/en/docs/api/receiving/technology-webhook-endpoint/
+notes: >
+  WhatsApp API gateway (green-api.com). No HMAC. CAVEAT to state in the verification section:
+  if webhookUrlToken is set, GREEN-API sends it as the FULL Authorization header value, i.e.
+  "Bearer <token>" (default) or "Basic <token>"; compare the whole header value (including
+  the scheme) with a constant-time compare. Payload typeWebhook values include
+  incomingMessageReceived, outgoingMessageStatus, outgoingAPIMessageReceived,
+  stateInstanceChanged.
+testScenario:
+  events:
+    - incomingMessageReceived
+    - outgoingMessageStatus
+catalog:
+  summary: Authenticate GREEN-API (WhatsApp API gateway) Webhook Endpoint notifications — no HMAC; compare the full `Authorization` header (`Bearer <token>` or `Basic <token>` from `webhookUrlToken`) in constant time, dispatch on `typeWebhook` (`incomingMessageReceived`, `outgoingMessageStatus`, `outgoingAPIMessageReceived`, `stateInstanceChanged`)

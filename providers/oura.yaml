@@ -1,0 +1,37 @@
+name: oura
+displayName: Oura
+docs:
+  webhooks: https://cloud.ouraring.com/v2/docs#tag/Webhook-Subscription-Routes
+  verification: https://cloud.ouraring.com/v2/docs#tag/Webhook-Subscription-Routes
+  api: https://cloud.ouraring.com/v2/docs
+notes: >
+  Oura Ring health data platform. Custom scheme (NOT Standard Webhooks) with
+  two-part security. (1) Subscription handshake: on create/update/renew Oura sends
+  a GET to callback_url with query params `verification_token` and `challenge`; the
+  endpoint checks the token matches and responds 200 with JSON
+  `{"challenge": "<value>"}`. (2) Per-event: POST events carry headers
+  `x-oura-signature` and `x-oura-timestamp`. Verify
+  HMAC-SHA256(key=client_secret, msg=timestamp + rawBody), hex digest UPPERCASE,
+  compared to `x-oura-signature`. Oura's docs show `timestamp + JSON.stringify(body)`;
+  use the raw request body instead — it is byte-identical and avoids cross-language
+  JSON serialization differences (Python `json.dumps` inserts spaces).
+
+  Subscriptions managed via POST/GET/PUT/DELETE `/v2/webhook/subscription` (+ PUT
+  `/v2/webhook/subscription/renew/{id}`), authed with `x-client-id` + `x-client-secret`
+  headers. Create body requires `callback_url`, `verification_token`, `event_type`,
+  `data_type` — one subscription per data_type+event_type combo. Payloads are thin
+  (`event_type`, `data_type`, `object_id`, `event_time`, `user_id`); fetch the full
+  record via API using `object_id`. Subscriptions have an `expiration_time` and must
+  be renewed. Respond 2xx within 10s; 10 retries on 4xx/5xx/timeout; respond 410 to
+  auto-cancel.
+
+  data_type enum (17): tag, enhanced_tag, workout, session, sleep, daily_sleep,
+  daily_readiness, daily_activity, daily_spo2, sleep_time, rest_mode_period,
+  ring_configuration, daily_stress, daily_cardiovascular_age, daily_resilience,
+  vo2_max, meal. event_type: create, update, delete. No official SDK.
+testScenario:
+  events:
+    - sleep
+    - daily_readiness
+catalog:
+  summary: Complete the Oura subscription handshake, verify `x-oura-signature` (HMAC-SHA256 over `timestamp + body`, UPPERCASE), handle sleep, daily_readiness, daily_activity, and workout events

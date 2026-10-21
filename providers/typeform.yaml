@@ -1,0 +1,25 @@
+name: typeform
+displayName: Typeform
+docs:
+  webhooks: https://www.typeform.com/developers/webhooks/
+  verification: https://www.typeform.com/developers/webhooks/secure-your-webhooks/
+notes: >
+  Signature: Typeform-Signature header = "sha256=" + base64(HMAC-SHA256(raw body,
+  secret)). Note base64 encoding (not hex) — a common gotcha; verification requires the
+  raw, unparsed request body. Secret is set per-webhook via the UI (form Connect >
+  Webhooks > Edit > Add a Secret) or the Webhooks API (PUT
+  /forms/{form_id}/webhooks/{tag} with url, enabled, secret, verify_ssl, event_types).
+  Does NOT follow the Standard Webhooks spec. Payload has event_type, event_id, and a
+  form_response object with an answers array (unanswered/logic-skipped fields omitted).
+  Retries: 410/404 disables immediately; 429/408/503/423 retried every 2-3 min for 10
+  hours; other failures retried ~5 times with growing intervals; auto-disabled at 100%
+  failure rate over 24h. Endpoint must be https (no self-signed certs).
+  form_response_partial requires the partial-submit-points form feature (may be
+  plan-gated).
+testScenario:
+  events:
+    - form_response
+sdks:
+  npm: ["@typeform/api-client"]
+catalog:
+  summary: Verify Typeform webhook signatures (`Typeform-Signature`, HMAC-SHA256 base64), handle form_response events

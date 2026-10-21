@@ -1,0 +1,26 @@
+name: ashby
+displayName: Ashby
+docs:
+  webhooks: https://developers.ashbyhq.com/docs/setting-up-webhooks
+  verification: https://developers.ashbyhq.com/docs/authenticating-webhooks
+notes: >
+  Recruiting / applicant tracking system (ATS). Custom HMAC scheme (NOT Standard
+  Webhooks / Svix). Signature is sent in the Ashby-Signature header as
+  "sha256=<hex>" — HMAC-SHA256 of the RAW request body (whole JSON string, before
+  parsing) keyed with the per-webhook secret token, hex-encoded. Verify with a
+  constant-time compare of the hex after the "sha256=" prefix. Secret token is
+  optional but strongly encouraged, configured per-webhook in Admin > Integrations
+  > Webhooks (one endpoint URL + one event type + one secret per webhook). Every
+  payload is { "action": "<eventName>", "data": {...} }; the action string equals
+  the event name (camelCase, no dot notation, e.g. interviewScheduleCreate). A ping
+  event is sent on create/edit; if the endpoint returns >=400 the webhook is
+  auto-disabled until manually re-enabled. Requests carry an Ashby-Webhook
+  user-agent header (do NOT use for auth). Some events fan out (e.g. candidateHire
+  also fires applicationUpdate + candidateStageChange). No official SDK — verify
+  manually. Set ASHBY_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - applicationSubmit
+    - candidateHire
+catalog:
+  summary: Verify Ashby webhook signatures (`Ashby-Signature`, HMAC-SHA256 hex over the raw body), handle recruiting events like applicationSubmit, candidateHire, candidateStageChange, and interviewScheduleCreate

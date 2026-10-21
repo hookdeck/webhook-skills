@@ -1,0 +1,31 @@
+name: utila
+displayName: Utila
+docs:
+  webhooks: https://docs.utila.io/reference/webhooks
+  verification: https://docs.utila.io/reference/webhooks
+  events: https://docs.utila.io/reference/webhooks
+notes: >
+  Utila is a digital-asset operations platform. Webhooks are configured per vault
+  in the Console (Vault Settings -> Webhooks). Verification is ASYMMETRIC, not HMAC:
+  Utila signs each delivery with an RSA-4096 PRIVATE key using SHA-512 + PSS padding,
+  base64-encoded, sent in the x-utila-signature header. Verify with Utila's PEM-encoded
+  RSA-4096 PUBLIC key from the Console — there is NO shared secret. Verify over the RAW
+  body. NOT Standard Webhooks (no webhook-id/webhook-timestamp). No timestamp header, so
+  no built-in replay protection — dedupe on the event id. Endpoint must return HTTP 200;
+  failed deliveries retry with exponential back-off for up to 24h then are discarded.
+  Payloads are THIN (id, vault, type, resourceType, resource, optional details) — fetch
+  full detail via the Utila API/Stream using the resource path. Event names are
+  SCREAMING_SNAKE_CASE, exactly five: TRANSACTION_CREATED, TRANSACTION_STATE_UPDATED,
+  WALLET_CREATED, WALLET_ADDRESS_CREATED, TRANSACTION_AML_SCREENING_RESULT_READY. The
+  npm @utila/api package is documented but does not currently resolve on the public
+  registry (documented-but-not-installable); no pip SDK — verify manually with platform
+  crypto (Node crypto, Python cryptography).
+testScenario:
+  events:
+    - TRANSACTION_CREATED
+    - TRANSACTION_STATE_UPDATED
+    - WALLET_ADDRESS_CREATED
+catalog:
+  summary: Verify Utila webhook signatures (`x-utila-signature`, asymmetric RSA-4096 + SHA-512 + PSS, no shared secret), handle TRANSACTION_CREATED, TRANSACTION_STATE_UPDATED, WALLET_CREATED, WALLET_ADDRESS_CREATED, and TRANSACTION_AML_SCREENING_RESULT_READY events
+  marketplace:
+    description: Receive and verify Utila webhooks. Use when setting up Utila webhook handlers, debugging x-utila-signature RSA/PSS verification, or handling digital-asset events like TRANSACTION_CREATED, TRANSACTION_STATE_UPDATED, WALLET_CREATED, WALLET_ADDRESS_CREATED, and TRANSACTION_AML_SCREENING_RESULT_READY.

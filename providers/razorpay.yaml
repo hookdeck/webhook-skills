@@ -1,0 +1,27 @@
+name: razorpay
+displayName: Razorpay
+docs:
+  webhooks: https://razorpay.com/docs/webhooks/
+  verification: https://razorpay.com/docs/webhooks/validate-test/
+notes: >
+  India-focused payments platform. Verify with the X-Razorpay-Signature header:
+  HMAC-SHA256 (hex) over the raw request body using the webhook secret configured in the
+  Razorpay dashboard. Compare with a timing-safe equality check. The official
+  razorpay SDK exposes validateWebhookSignature. Common events:
+  payment.captured, payment.failed, order.paid, refund.processed, subscription.charged.
+sdks:
+  npm:
+    - "razorpay"
+testScenario:
+  events:
+    - payment.captured
+    - order.paid
+catalog:
+  summary: Verify Razorpay webhook signatures (`X-Razorpay-Signature`, HMAC-SHA256), handle payment and order events
+  marketplace:
+    description: Verify Razorpay webhook signatures (X-Razorpay-Signature, HMAC-SHA256), handle payment, order, and refund events.
+    keywords:
+    - webhooks
+    - razorpay
+    - payments
+    - billing

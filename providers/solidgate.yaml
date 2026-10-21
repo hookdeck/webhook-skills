@@ -1,0 +1,25 @@
+name: solidgate
+displayName: Solidgate
+docs:
+  webhooks: https://docs.solidgate.com/payments/integrate/webhooks/
+  verification: https://docs.solidgate.com/payments/integrate/webhooks/#security
+notes: >
+  Payment orchestrator. NOT Standard Webhooks. Two headers: "merchant" = webhook
+  public key (prefix wh_pk_) and "signature" = the HMAC. Construct the signed
+  message as publicKey + rawBody + publicKey, compute HMAC-SHA512 with the webhook
+  secret key (wh_sk_), take the lowercase HEX digest, then base64-encode that HEX
+  STRING (the double-encode quirk: base64 of the hex text, NOT the raw digest
+  bytes — matches the official SDKs). Use the exact raw JSON body (no
+  re-serialization) or verification fails. Webhook keys (wh_pk_/wh_sk_) are a
+  separate pair from API keys, set in Hub > Developers; endpoints/events under
+  Developers > Channels. Event type is in the solidgate-event-type header;
+  solidgate-event-id is for idempotency. Return 2xx within 30s; retries 8 times at
+  15m, 30m, 1h, 2h, 4h, 8h, 16h, 24h. Common events: card_gate.order.updated,
+  card_gate.chargeback.received, card_gate.fraud_alert.received,
+  subscription.updated.v2 (the .v2 suffix is real), alt_gate.order.updated.
+testScenario:
+  events:
+    - card_gate.order.updated
+    - subscription.updated.v2
+catalog:
+  summary: Verify Solidgate webhook signatures (`merchant` + `signature` headers, HMAC-SHA512 with base64-of-hex double-encode), handle card_gate.order.updated, subscription.updated.v2, and chargeback events

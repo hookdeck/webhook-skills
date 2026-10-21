@@ -1,0 +1,30 @@
+name: twitter
+displayName: Twitter/X
+docs:
+  webhooks: https://docs.x.com/x-api/webhooks/introduction
+  verification: https://docs.x.com/x-api/webhooks/quickstart
+  events: https://docs.x.com/x-api/account-activity/introduction
+notes: >
+  HMAC-SHA256 over the raw request body using the app's consumer secret (API secret key)
+  as the HMAC key; signature is base64-encoded, prefixed with "sha256=", and sent in the
+  x-twitter-webhooks-signature header. Compare with constant-time comparison. Does NOT
+  follow the Standard Webhooks spec and there is no timestamp in the scheme, so no replay
+  protection. Challenge-Response Check (CRC): X sends GET <webhook_url>?crc_token=... at
+  registration, roughly hourly, and on demand (PUT /2/webhooks/:webhook_id triggers one);
+  you must reply within the timeout with JSON {"response_token": "sha256=" +
+  base64(HMAC-SHA256(consumer_secret, crc_token))} or the webhook is marked invalid and
+  delivery stops. Use the consumer secret, not the bearer/access token. Webhooks are
+  configured via the V2 Webhooks API (POST/GET/DELETE /2/webhooks with OAuth2 App-Only
+  bearer auth); per-user subscriptions via POST
+  /2/account_activity/webhooks/:webhook_id/subscriptions/all (OAuth 1.0a user context).
+  Endpoint must be public HTTPS with no port in the URL and respond within 10 seconds.
+  Requires an approved developer account; Account Activity API tiers: Pay-Per-Use
+  (1 webhook, 3 subscriptions) or Enterprise (5+ webhooks, 5000+ subscriptions).
+  Retry-on-failure behavior is not documented for v2 — treat delivery as at-most-once.
+testScenario:
+  events:
+    - tweet_create_events
+    - favorite_events
+    - direct_message_events
+catalog:
+  summary: Verify Twitter/X Account Activity webhook signatures (`x-twitter-webhooks-signature`, HMAC-SHA256) and answer CRC challenges, handle tweet, favorite, and DM events

@@ -1,0 +1,25 @@
+name: wix
+displayName: Wix
+docs:
+  webhooks: https://dev.wix.com/docs/build-apps/develop-your-app/api-integrations/events-and-webhooks/about-webhooks
+  verification: https://dev.wix.com/docs/build-apps/develop-your-app/access/authentication/verify-requests-received-from-wix
+  events: https://dev.wix.com/docs/api-reference
+notes: >
+  Website builder and app platform (self-hosted / self-managed apps). Each webhook's
+  entire request body is a JWT signed by Wix with RS256 — there are NO signature headers
+  and it is NOT Standard Webhooks. Verify the JWT with your app's per-app RSA PUBLIC KEY
+  from the app dashboard (Webhooks > Get Public Key, or View ID & keys); there is no global
+  JWKS. Verify against the raw, unparsed body. The official @wix/sdk verifies and decodes
+  via client.webhooks.process() (AppStrategy with appId + publicKey); no official Python SDK,
+  so verify manually with PyJWT. Decoded JWT is nested: outer { data, iat, exp } -> data is a
+  JSON string { eventType, instanceId, data } -> inner data is a JSON string with the event
+  payload (id, entityId, ...). Initial delivery timeout ~1250 ms then up to 12 retries over
+  hours, so events arrive out of order and duplicated — dedupe on the event id and return 200
+  fast. Common events: wix.ecom.v1.order_created, wix.ecom.v1.order_approved,
+  wix.ecom.v1.order_updated, wix.ecom.v1.order_canceled.
+testScenario:
+  events:
+    - wix.ecom.v1.order_created
+    - wix.ecom.v1.order_canceled
+catalog:
+  summary: Verify Wix webhook JWTs (RS256 with your app's public key) for self-hosted apps, handle wix.ecom.v1.order_created, order_approved, order_updated, and order_canceled events

@@ -1,0 +1,20 @@
+name: google-workspace
+displayName: Google Workspace
+docs:
+  webhooks: https://developers.google.com/workspace/drive/api/guides/push
+  verification: https://developers.google.com/workspace/drive/api/guides/push
+notes: >
+  Google Workspace push notifications (Drive and Calendar watch channels; Admin SDK uses the
+  same channel mechanism). No signature. Set a token (max 256 chars) in the watch request;
+  Google returns it in the X-Goog-Channel-Token header on every notification (only present if
+  defined); compare it constant-time. Notifications have an empty body; read
+  X-Goog-Channel-ID, X-Goog-Resource-ID, X-Goog-Resource-State (sync, add, update, remove,
+  trash, change), X-Goog-Message-Number, X-Goog-Changed. Answer the initial sync message with
+  200. Channels expire and must be renewed. Gmail users.watch uses Cloud Pub/Sub instead; out of
+  scope.
+testScenario:
+  events:
+    - sync
+    - update
+catalog:
+  summary: Verify Google Drive, Calendar, and Admin SDK push notifications (`X-Goog-Channel-Token` channel token), handle `X-Goog-Resource-State` changes, and renew expiring watch channels

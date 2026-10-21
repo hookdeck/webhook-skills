@@ -1,0 +1,38 @@
+name: pylon
+displayName: Pylon
+docs:
+  webhooks: https://getpylon.com/developers/guides/using-webhooks/
+  verification: https://getpylon.com/developers/guides/using-webhooks/#event-signatures
+notes: >
+  B2B customer support platform. No official SDK — verify manually. Signs each delivery
+  with HMAC-SHA256: the Pylon-Webhook-Signature header is "hs256=<hex-digest>" where the
+  digest is HMAC-SHA256 over concat(Pylon-Webhook-Timestamp, ".", raw body), keyed with the
+  destination's signing secret (shown ONCE at destination creation). Companion headers:
+  Pylon-Webhook-Timestamp (unix seconds) and Pylon-Webhook-Version (e.g. 2021-07). Verify
+  against the RAW body — do not re-serialize; include the "timestamp." prefix in the signed
+  content; keep/compare the "hs256=" prefix; compare timing-safe. NOT Standard Webhooks
+  (custom hs256= prefix and Pylon-Webhook-* headers). A legacy support-article scheme uses
+  X-Pylon-Signature (hex HMAC-SHA256 of the raw body only, no timestamp) — mention as legacy,
+  do not implement as the main path. Retries: up to 5 attempts with exponential backoff, final
+  ~31h after event creation; a destination flips to "inactive" after 7 days with no successful
+  deliveries — process idempotently. IMPORTANT: event-type names are UNCONFIRMED — the canonical
+  list is auth-gated at app.getpylon.com/docs/api#event-types. issue.created / issue.updated are
+  known to exist but the token format is not publicly verified; present event names as
+  illustrative and tell readers to confirm against their own destination configuration.
+testScenario:
+  events:
+    - issue.created
+    - issue.updated
+  prompt: >
+    Create a {framework} webhook handler for Pylon. Verify the Pylon-Webhook-Signature header:
+    compute "hs256=" + hex HMAC-SHA256 over Pylon-Webhook-Timestamp + "." + the raw request body
+    using the destination signing secret, and compare timing-safe. Verify against the raw body
+    (do not parse first). Return 400 for a missing/invalid signature and 200 once verified, then
+    dispatch on the payload's event-type field (e.g. issue.created, issue.updated) — treat the
+    event names as illustrative and note they must be confirmed against the Pylon destination
+    configuration. If you use any skills to help with this, add a comment noting which skill(s)
+    you referenced.
+catalog:
+  summary: Verify Pylon webhook signatures (`Pylon-Webhook-Signature`, `hs256=` HMAC-SHA256 over `timestamp.body`), handle B2B support issue events like `issue.created` and `issue.updated`
+  marketplace:
+    description: Receive and verify Pylon webhooks. Use when setting up Pylon webhook handlers, debugging Pylon signature verification (Pylon-Webhook-Signature, hs256= HMAC-SHA256 over timestamp.body), or handling B2B support events like issue.created and issue.updated.

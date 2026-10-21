@@ -1,0 +1,32 @@
+name: zoom
+displayName: Zoom
+docs:
+  webhooks: https://developers.zoom.us/docs/api/webhooks/
+  verification: https://developers.zoom.us/docs/api/webhooks/#verify-webhook-events
+notes: >
+  Video communications platform. Verify with the x-zm-signature header: build the message
+  `v0:{x-zm-request-timestamp}:{raw body}`, compute HMAC-SHA256 (hex) with the app's Secret
+  Token, prefix with `v0=`, and compare timing-safe. IMPORTANT: also implement the one-time URL
+  validation handshake — when event == "endpoint.url_validation", respond 200 with
+  {plainToken, encryptedToken} where encryptedToken = HMAC-SHA256(plainToken, secretToken) in
+  hex. Return 2xx within 3 seconds. Common events: meeting.started, meeting.ended,
+  meeting.participant_joined, recording.completed.
+testScenario:
+  events:
+    - meeting.started
+    - recording.completed
+  prompt: >
+    Create a {framework} webhook handler for Zoom. It must handle the endpoint.url_validation
+    challenge (return plainToken plus an HMAC-SHA256 encryptedToken) and verify normal events via
+    the x-zm-signature header computed over `v0:{timestamp}:{body}` with the Secret Token, using
+    a timing-safe comparison. If you use any skills to help with this, add a comment noting which
+    skill(s) you referenced.
+catalog:
+  summary: Verify Zoom webhook signatures (`x-zm-signature`), complete the URL validation handshake, handle meeting and recording events
+  marketplace:
+    description: Verify Zoom webhook signatures (x-zm-signature), complete the endpoint.url_validation handshake, and handle meeting and recording events.
+    keywords:
+    - webhooks
+    - zoom
+    - meetings
+    - video

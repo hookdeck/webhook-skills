@@ -1,0 +1,30 @@
+name: vercel-log-drains
+displayName: Vercel Log Drains
+docs:
+  webhooks: https://vercel.com/docs/drains/reference/logs
+  verification: https://vercel.com/docs/drains/security
+notes: >
+  HTTP log drain deliveries (not Vercel webhooks): POST over HTTPS, logs batched per
+  request as a JSON array or NDJSON (syslog no longer offered). Verification:
+  x-vercel-signature header = HMAC-SHA1 hex digest of the raw request body using the
+  drain's signature secret (auto-generated, editable under Team Settings > Drains) —
+  SHA1, not SHA256. NOT Standard Webhooks. Endpoint handshake: when a drain is
+  created/tested, the endpoint must return 200 OK with an x-vercel-verify response
+  header echoing the verification token; the initial verification request is NOT
+  signed. Log sources: static, lambda, edge, build, external, firewall (plus redirect
+  in delivered payloads); environments production/preview; per-drain sampling rules.
+  Pro/Enterprise plans only; usage-billed. Vercel emails and flags the drain as
+  errored if >80% of deliveries fail or >50 failures in an hour; no per-batch retry
+  schedule is documented. Configure via dashboard (Team Settings > Drains, "Logs"
+  data type) or REST API POST /v1/drains with delivery {encoding: json|ndjson,
+  secret, headers}; legacy /v1/log-drains and /v2/integrations/log-drains are
+  deprecated. Optional gzip compression and custom auth headers. Message fields may
+  truncate over 256 KB; statusCode -1 means the lambda crashed.
+testScenario:
+  events:
+    - lambda source, ndjson format (batched runtime function logs)
+    - build source, json array format (build step stdout logs)
+sdks:
+  npm: ["@vercel/sdk"]
+catalog:
+  summary: Verify Vercel Log Drain deliveries (`x-vercel-signature`, HMAC-SHA1) and the x-vercel-verify handshake, handle batched json/ndjson log events

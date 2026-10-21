@@ -1,0 +1,28 @@
+name: flexport
+displayName: Flexport
+docs:
+  webhooks: https://apidocs.flexport.com/v2/tag/Webhook-Endpoints/
+  verification: https://developers.flexport.com/faq/webhooks/
+  events: https://apidocs.flexport.com/v2/tag/Webhook-Endpoints/
+notes: >
+  Freight forwarding and logistics platform (classic Flexport v2 API). Signs each
+  delivery with an HMAC of the RAW request body keyed on a per-endpoint secret token,
+  sent in two GitHub/X-Hub-style headers: X-Hub-Signature-256 (HMAC-SHA256, "sha256="
+  + hex digest, RECOMMENDED) and X-Hub-Signature (HMAC-SHA1, "sha1=" + hex, legacy,
+  being deprecated). Compute over the raw bytes before JSON parsing; use timing-safe
+  compare. NOT the Standard Webhooks spec. The payload is a Flexport Event object;
+  dispatch on the `type` field, a milestone identifier in /object#event format
+  (e.g. /shipment#created, /shipment_leg#departed) — NOT object.event. The affected
+  object is under `data` (resource, shipment, location, containers, exception).
+  Endpoints and their secret token are configured in the account Settings UI (no
+  public POST /webhook_endpoints). Endpoint must return HTTP 200 (respond fast, process
+  async; Flexport retries otherwise). Some milestones are "available upon request".
+  No official SDK — verify manually. NOTE: the newer Logistics API
+  (docs.logistics-api.flexport.com) is a separate product with its own
+  POST /logistics/api/{version}/webhooks, Order.*/Shipment.* events, and envelope.
+testScenario:
+  events:
+    - /shipment#created
+    - /shipment_leg#departed
+catalog:
+  summary: Verify Flexport webhook signatures (`X-Hub-Signature-256`, HMAC-SHA256), handle freight milestone events like `/shipment#created` and `/shipment_leg#departed`

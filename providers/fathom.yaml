@@ -1,0 +1,23 @@
+name: fathom
+displayName: Fathom
+docs:
+  webhooks: https://developers.fathom.ai/webhooks
+  verification: https://developers.fathom.ai/webhooks
+notes: >
+  AI meeting notetaker (fathom.video / fathom.ai). Standard Webhooks: webhook-id,
+  webhook-timestamp (seconds), webhook-signature (space-delimited "v1,<base64>" list).
+  Signed content "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64; key is the base64-decoded
+  portion of the webhook_secret after the whsec_ prefix. One secret per webhook, returned
+  when the webhook is created in Settings or via the API. Webhooks fire after a recorded
+  meeting's content is ready and deliver the Meeting object (optionally summary, transcript,
+  action items); there is no event-type field to dispatch on. Not Fathom Analytics
+  (usefathom.com), a different product.
+testScenario:
+  events:
+    - new meeting content ready
+  prompt: >
+    Add a Fathom webhook endpoint to my {framework} app. Verify the webhook signature and
+    handle the meeting payload Fathom sends after a recording is processed (title,
+    transcript, summary and action items).
+catalog:
+  summary: 'Verify Fathom AI notetaker webhooks (Standard Webhooks: `webhook-id` / `webhook-timestamp` / `webhook-signature`, base64 HMAC-SHA256 over `id.timestamp.body` keyed with the decoded `whsec_` secret) via the `fathom-typescript` / `fathom-python` SDKs, and handle the single "new meeting content ready" payload (summary, transcript, action items)'
