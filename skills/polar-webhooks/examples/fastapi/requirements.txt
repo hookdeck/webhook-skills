@@ -1,6 +1,6 @@
 fastapi>=0.139.2
 uvicorn>=0.30.0
-polar-sdk>=0.32.0
+polar-sdk>=1.0.2
 python-dotenv>=1.0.0
 pytest>=9.1.1
 httpx>=0.28.1

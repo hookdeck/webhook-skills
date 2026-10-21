@@ -48,7 +48,8 @@
       "organization_id": "00000000-0000-0000-0000-000000000000",
       "deleted_at": "2024-01-01T00:00:00Z",
       "avatar_url": "sample",
-      "email": "buyer@example.com"
+      "email": "buyer@example.com",
+      "first_user_event_at": null
     },
     "product": {
       "metadata": {},
@@ -98,12 +99,15 @@
       "discount_id": "00000000-0000-0000-0000-000000000000",
       "checkout_id": "00000000-0000-0000-0000-000000000000",
       "customer_cancellation_reason": null,
-      "customer_cancellation_comment": "sample"
+      "customer_cancellation_comment": "sample",
+      "units": null
     },
     "items": [],
     "description": "sample",
     "refundable_amount": 0,
-    "refundable_tax_amount": 0
+    "refundable_tax_amount": 0,
+    "units": null
   },
-  "timestamp": "2024-01-01T00:00:00Z"
+  "timestamp": "2024-01-01T00:00:00Z",
+  "api_version": "2026-10"
 }

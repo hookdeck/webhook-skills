@@ -63,20 +63,35 @@ try {
 }
 ```
 
-**Python (`polar-sdk`):**
+**Python (`polar-sdk` 1.x):**
+
+Webhook models are versioned by Polar API version; import from the module matching your
+endpoint's API version (`polar.v2026_10` here).
 
 ```python
-from polar_sdk.webhooks import validate_event, WebhookVerificationError
+from polar.v2026_10.webhooks import (
+    validate_event,
+    PolarWebhookError,
+    PolarWebhookUnknownTypeError,
+    PolarWebhookVerificationError,
+)
 
 try:
     event = validate_event(
-        body=raw_body,                          # bytes of the raw HTTP body
-        headers=request.headers,
-        secret=os.environ["POLAR_WEBHOOK_SECRET"],
+        raw_body,                               # bytes of the raw HTTP body
+        dict(request.headers),
+        os.environ["POLAR_WEBHOOK_SECRET"],
     )
-except WebhookVerificationError:
+except PolarWebhookVerificationError:
     ...  # invalid signature
+except PolarWebhookUnknownTypeError:
+    ...  # authentic, but an event type this API version doesn't model -> acknowledge with 2xx
+except PolarWebhookError:
+    ...  # authentic, but the payload doesn't parse
 ```
+
+`polar-sdk` 0.x used `from polar_sdk.webhooks import validate_event, WebhookVerificationError`;
+1.0 renamed the package to `polar` and the exceptions to `PolarWebhook*Error`.
 
 ### Manual Verification (fallback)
 

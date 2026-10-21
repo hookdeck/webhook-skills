@@ -46,15 +46,15 @@ try {
 }
 ```
 
-Python (`polar-sdk`):
+Python (`polar-sdk` 1.x, which exposes webhook models per API version):
 
 ```python
-from polar_sdk.webhooks import validate_event, WebhookVerificationError
+from polar.v2026_10.webhooks import validate_event, PolarWebhookVerificationError
 
 try:
-    event = validate_event(body=raw_body, headers=request.headers,
-                           secret=os.environ["POLAR_WEBHOOK_SECRET"])
-except WebhookVerificationError:
+    event = validate_event(raw_body, dict(request.headers),
+                           os.environ["POLAR_WEBHOOK_SECRET"])
+except PolarWebhookVerificationError:
     ...  # invalid signature -> respond 400/403
 ```
 

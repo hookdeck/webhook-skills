@@ -59,15 +59,17 @@ polar listen http://localhost:8000/
 ## How verification works
 
 The handler reads the raw body via `await request.body()` and calls
-`validate_event(body=..., headers=dict(request.headers), secret=...)` from `polar_sdk.webhooks`.
-It verifies the `webhook-id` / `webhook-timestamp` / `webhook-signature` headers (HMAC-SHA256,
-base64) and returns a typed event. Pass the secret **as-is** — the SDK base64-encodes it.
+`validate_event(body, dict(request.headers), secret)` from `polar.v2026_10.webhooks`
+(`polar-sdk` 1.x, versioned by Polar API version). It verifies the `webhook-id` /
+`webhook-timestamp` / `webhook-signature` headers (HMAC-SHA256, base64) and returns a typed
+event. Pass the secret **as-is**.
 
-- `WebhookVerificationError` → the signature is invalid → return **400**.
-- `WebhookUnknownTypeError` → the signature is valid but the event type is newer than this SDK
-  version → acknowledge with a **2xx** so Polar doesn't retry and auto-disable the endpoint.
+- `PolarWebhookVerificationError` → the signature is invalid → return **400**.
+- `PolarWebhookUnknownTypeError` → the signature is valid but this API version doesn't model the
+  event type → acknowledge with a **2xx** so Polar doesn't retry and auto-disable the endpoint.
+- `PolarWebhookError` (any other) → authentic but the payload doesn't parse → return **400**.
 
-> Note: the discriminator is exposed on the parsed model as `event.TYPE` (aliased from the JSON
-> `type` field), and `event.data` is the resource (an `Order`, `Subscription`, etc.).
+> Note: `event.type` is the event name (e.g. `order.paid`) and `event.data` is the resource (an
+> `Order`, `Subscription`, etc.).
 
 See [../../references/verification.md](../../references/verification.md) for details.
