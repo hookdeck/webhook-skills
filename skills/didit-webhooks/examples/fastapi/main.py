@@ -4,6 +4,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 from typing import Optional, Tuple
@@ -15,7 +16,11 @@ load_dotenv()
 
 app = FastAPI()
 
-DEFAULT_TOLERANCE_SECONDS = 300
+# X-Timestamp window, off by default (0). Didit recommends 300 seconds, but a gateway such as
+# Hookdeck re-sends retries and replays with the original X-Timestamp, so a default window
+# would reject them. Set DIDIT_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
+DEFAULT_TOLERANCE_SECONDS = 0
+_warned_invalid_tolerance = False
 
 
 def verify_didit_signature(
@@ -31,7 +36,8 @@ def verify_didit_signature(
     X-Signature = hex HMAC-SHA256 of the exact raw request body, keyed with the
     destination's secret_shared_key (raw string). X-Timestamp (unix seconds) is a
     separate header and is NOT part of the signed input; Didit's docs say to
-    reject anything older than 300 seconds. tolerance_seconds=0 disables that check.
+    reject anything older than 300 seconds. That check is opt-in here: tolerance_seconds=0
+    (the default) disables it.
     """
     if not signature:
         return False, "Missing X-Signature header"
@@ -54,11 +60,23 @@ def verify_didit_signature(
 
 
 def tolerance_from_env() -> int:
-    raw = os.getenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", "")
-    try:
-        return int(raw)
-    except ValueError:
+    """A value that isn't a whole number of seconds is treated as 0 (check off), with a warning."""
+    global _warned_invalid_tolerance
+    raw = (os.getenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS") or "").strip()
+    if not raw:
         return DEFAULT_TOLERANCE_SECONDS
+    if not (raw.isascii() and raw.isdigit()):
+        if not _warned_invalid_tolerance:
+            logging.getLogger(__name__).warning(
+                "DIDIT_TIMESTAMP_TOLERANCE_SECONDS=%r is not a whole number of seconds; the timestamp check is off",
+                raw,
+            )
+            _warned_invalid_tolerance = True
+        return 0
+    return int(raw)
+
+
+tolerance_from_env()  # surface an invalid value at startup
 
 
 async def verified_body(request: Request) -> bytes:

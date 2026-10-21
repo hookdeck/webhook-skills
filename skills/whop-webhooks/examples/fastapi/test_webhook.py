@@ -83,7 +83,26 @@ def test_rejects_missing_headers():
     assert res.status_code == 400
 
 
-def test_rejects_old_timestamp():
+def test_accepts_old_timestamp_by_default(monkeypatch):
+    # Retries and replays keep the original timestamp, so the window is off by default
+    monkeypatch.delenv("WHOP_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+    old = int(time.time()) - 3600
     body = event("payment.succeeded")
-    res = client.post("/webhooks/whop", content=body, headers=sign(body, timestamp=int(time.time()) - 600))
+    res = client.post("/webhooks/whop", content=body, headers=sign(body, timestamp=old))
+    assert res.status_code == 200
+
+
+def test_rejects_old_timestamp_when_window_set(monkeypatch):
+    monkeypatch.setenv("WHOP_TIMESTAMP_TOLERANCE_SECONDS", "300")
+    old = int(time.time()) - 3600
+    body = event("payment.succeeded")
+    res = client.post("/webhooks/whop", content=body, headers=sign(body, timestamp=old))
     assert res.status_code == 400
+
+
+def test_non_numeric_window_treated_as_zero(monkeypatch):
+    monkeypatch.setenv("WHOP_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+    old = int(time.time()) - 3600
+    body = event("payment.succeeded")
+    res = client.post("/webhooks/whop", content=body, headers=sign(body, timestamp=old))
+    assert res.status_code == 200

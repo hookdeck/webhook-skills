@@ -76,10 +76,27 @@ def test_tampered_body_rejected():
     assert res.status_code == 400
 
 
-def test_old_timestamp_rejected():
-    res = post(MEMBER_UPDATE, sign(MEMBER_UPDATE, timestamp=int(time.time()) - 3600))
+def test_accepts_old_timestamp_by_default(monkeypatch):
+    # Retries and replays keep the original timestamp, so the window is off by default
+    monkeypatch.delenv("STYTCH_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+    old = int(time.time()) - 3600
+    res = post(MEMBER_UPDATE, sign(MEMBER_UPDATE, timestamp=old))
+    assert res.status_code == 200
+
+
+def test_rejects_old_timestamp_when_window_set(monkeypatch):
+    monkeypatch.setenv("STYTCH_TIMESTAMP_TOLERANCE_SECONDS", "300")
+    old = int(time.time()) - 3600
+    res = post(MEMBER_UPDATE, sign(MEMBER_UPDATE, timestamp=old))
     assert res.status_code == 400
     assert res.json()["detail"] == "Timestamp too old"
+
+
+def test_non_numeric_window_treated_as_zero(monkeypatch):
+    monkeypatch.setenv("STYTCH_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+    old = int(time.time()) - 3600
+    res = post(MEMBER_UPDATE, sign(MEMBER_UPDATE, timestamp=old))
+    assert res.status_code == 200
 
 
 def test_missing_headers_rejected():

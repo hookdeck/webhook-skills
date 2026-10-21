@@ -8,7 +8,10 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const DEFAULT_TOLERANCE_SECONDS = 300;
+// X-Timestamp window, off by default (0). Didit recommends 300 seconds, but a gateway such as
+// Hookdeck re-sends retries and replays with the original X-Timestamp, so a default window
+// would reject them. Set DIDIT_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
+const DEFAULT_TOLERANCE_SECONDS = 0;
 
 /**
  * Verify a Didit webhook.
@@ -16,7 +19,7 @@ const DEFAULT_TOLERANCE_SECONDS = 300;
  * Didit sends X-Signature = hex HMAC-SHA256 of the exact raw request bytes,
  * keyed with the destination's secret_shared_key (used as a raw string).
  * X-Timestamp (unix seconds) is a separate header and is NOT part of the signed
- * input; Didit's docs say to reject anything older than 300 seconds.
+ * input; Didit's docs say to reject anything older than 300 seconds. That check is opt-in here.
  *
  * @param {Buffer|string} rawBody  Raw request body, before any JSON parsing
  * @param {string|undefined} signature  X-Signature header
@@ -57,11 +60,21 @@ function verifyDiditSignature(
   return { valid: true };
 }
 
+// A value that isn't a whole number of seconds is treated as 0 (check off), with a warning.
+let warnedInvalidTolerance = false;
 function toleranceFromEnv(env = process.env) {
-  const raw = env.DIDIT_TIMESTAMP_TOLERANCE_SECONDS;
-  const parsed = raw === undefined || raw === '' ? NaN : Number.parseInt(raw, 10);
-  return Number.isNaN(parsed) ? DEFAULT_TOLERANCE_SECONDS : parsed;
+  const raw = (env.DIDIT_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
+  if (raw === '') return DEFAULT_TOLERANCE_SECONDS;
+  if (!/^\d+$/.test(raw)) {
+    if (!warnedInvalidTolerance) {
+      console.warn(`DIDIT_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
+      warnedInvalidTolerance = true;
+    }
+    return 0;
+  }
+  return Number(raw);
 }
+toleranceFromEnv(); // surface an invalid value at startup
 
 // Health check endpoint
 app.get('/health', (req, res) => {

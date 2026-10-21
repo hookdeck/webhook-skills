@@ -42,9 +42,37 @@ describe('verifyTailscaleWebhook', () => {
     expect(verifyTailscaleWebhook(body + ' ', sign(body), SECRET)).toBe(false);
   });
 
-  test('rejects stale timestamp', () => {
+  test('accepts an old timestamp by default (retries keep the original t)', () => {
+    delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+    const old = Math.floor(Date.now() / 1000) - 86400;
+    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(true);
+  });
+
+  test('rejects an old timestamp with an explicit tolerance', () => {
     const old = Math.floor(Date.now() / 1000) - 600;
-    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(false);
+    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET, 300)).toBe(false);
+  });
+
+  test('rejects an old timestamp when TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS is set', () => {
+    process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const old = Math.floor(Date.now() / 1000) - 600;
+      expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(false);
+    } finally {
+      delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+    }
+  });
+
+  test('treats a non-numeric TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', () => {
+    process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const old = Math.floor(Date.now() / 1000) - 600;
+      expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(true);
+    } finally {
+      delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+      warn.mockRestore();
+    }
   });
 
   test('stale timestamp passes with a wider tolerance', () => {

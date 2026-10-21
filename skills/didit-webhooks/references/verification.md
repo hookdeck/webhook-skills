@@ -10,7 +10,7 @@ Every webhook is signed with HMAC-SHA256 keyed with the destination's `secret_sh
 | `X-Signature-V2` | Sorted-key, compact, Unicode-preserved JSON (`ensure_ascii=False`) | Survives middleware that re-encodes the body |
 | `X-Signature-Simple` | `"{timestamp}:{session_id}:{status}:{webhook_type}"` | **Deprecated.** Covers the envelope only, not `decision` |
 
-`X-Timestamp` (unix seconds) is a separate header and is **not** part of any `X-Signature` input. Reject if `abs(now - X-Timestamp) > 300`. Didit refreshes it on each retry, so the pair always lines up.
+`X-Timestamp` (unix seconds) is a separate header and is **not** part of any `X-Signature` input. Didit recommends rejecting requests where `abs(now - X-Timestamp) > 300`, and refreshes it on each of its own retries. A gateway such as Hookdeck re-sends the original header on its retries and replays, so the examples leave the check off by default; set `DIDIT_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to opt in. A value that isn't a whole number is treated as `0`, with a warning at startup.
 
 This skill uses `X-Signature` over the raw body as the primary path, which is also what Hookdeck's Didit source verifies.
 
@@ -23,8 +23,10 @@ Didit has no webhook verification SDK. Verify manually.
 ```javascript
 const crypto = require('crypto');
 
-function verify(rawBody, signature, timestamp, secret, now = Math.floor(Date.now() / 1000)) {
-  if (!signature || Math.abs(now - parseInt(timestamp, 10)) > 300) return false;
+// toleranceSec = 0 (default) skips the X-Timestamp check; a positive value opts in
+function verify(rawBody, signature, timestamp, secret, toleranceSec = 0, now = Math.floor(Date.now() / 1000)) {
+  if (!signature) return false;
+  if (toleranceSec > 0 && !(Math.abs(now - Number(timestamp)) <= toleranceSec)) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const a = Buffer.from(signature), b = Buffer.from(expected);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -38,8 +40,11 @@ Express: `app.post('/webhooks/didit', express.raw({ type: '*/*' }), handler)`. N
 ```python
 import hmac, hashlib, time
 
-def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool:
-    if not signature or not timestamp.isdigit() or abs(time.time() - int(timestamp)) > 300:
+def verify(raw_body: bytes, signature: str, timestamp: str, secret: str, tolerance: int = 0) -> bool:
+    # tolerance = 0 (default) skips the X-Timestamp check; a positive value opts in
+    if not signature:
+        return False
+    if tolerance > 0 and (not timestamp or not timestamp.isdigit() or abs(time.time() - int(timestamp)) > tolerance):
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
@@ -64,8 +69,8 @@ If you can only verify `X-Signature-Simple`, treat everything outside `timestamp
 
 - **Raw body.** `express.json()` or `request.json()` before verifying changes the bytes, and `X-Signature` fails
 - **Unicode escapes.** `X-Signature` covers Didit's `ensure_ascii=True` output (`é`), so never re-serialize before checking it
-- **Timestamp isn't signed.** Check it separately. Set `DIDIT_TIMESTAMP_TOLERANCE_SECONDS=0` to skip it
-- **Replays through a gateway.** A gateway such as Hookdeck re-sends the stored request with its original headers, so a retry or replay after the window has passed carries a stale `X-Timestamp` and fails a 300 second check (only Didit's own retries get a fresh one). Raise or disable the tolerance if you replay
+- **Timestamp isn't signed.** Anyone who can replay a request can also change `X-Timestamp`, so the window adds little. The examples skip it unless `DIDIT_TIMESTAMP_TOLERANCE_SECONDS` is positive
+- **Replays through a gateway.** A gateway such as Hookdeck re-sends the stored request with its original headers, so a retry or replay after the window has passed carries a stale `X-Timestamp` and fails a 300 second check (only Didit's own retries get a fresh one). That's why the check is off by default
 - **Secret is per destination.** A different destination has a different `secret_shared_key`
 - **Hex digest.** Compare hex strings, not base64, and guard the length before `timingSafeEqual`
 - **Idempotency.** Key on `event_id`, which is reused across retries and destinations

@@ -49,4 +49,4 @@ Use the Hookdeck URL as the webhook **Endpoint** in MaintainX, then create a wor
 
 ## How Verification Works
 
-The `x-maintainx-webhook-body-signature` header is `t=<unix>,v1=<hex>`. `v1` is HMAC-SHA256 (hex) over `{t}.{raw body}` keyed with the webhook secret. The handler reads `await request.body()` so the bytes stay unparsed, compares with `hmac.compare_digest`, and rejects timestamps older than 5 minutes. MaintainX has no Python SDK helper, so verification is manual.
+The `x-maintainx-webhook-body-signature` header is `t=<unix>,v1=<hex>`. `v1` is HMAC-SHA256 (hex) over `{t}.{raw body}` keyed with the webhook secret. The handler reads `await request.body()` so the bytes stay unparsed, compares with `hmac.compare_digest`, and leaves the timestamp check off by default because retries and replays keep the original timestamp. Set `MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (MaintainX suggests `300`) to turn it on. MaintainX has no Python SDK helper, so verification is manual.

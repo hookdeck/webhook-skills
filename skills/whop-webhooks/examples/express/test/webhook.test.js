@@ -77,10 +77,36 @@ describe('Whop webhook endpoint', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects a timestamp older than 5 minutes', async () => {
+  it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+    const old = Math.floor(Date.now() / 1000) - 3600;
     const body = event('payment.succeeded');
-    const headers = sign(body, { timestamp: Math.floor(Date.now() / 1000) - 600 });
-    const res = await request(app).post('/webhooks/whop').set(headers).send(body);
-    expect(res.status).toBe(400);
+    const res = await request(app).post('/webhooks/whop').set(sign(body, { timestamp: old })).send(body);
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects an old timestamp when WHOP_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+    process.env.WHOP_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const old = Math.floor(Date.now() / 1000) - 3600;
+      const body = event('payment.succeeded');
+      const res = await request(app).post('/webhooks/whop').set(sign(body, { timestamp: old })).send(body);
+      expect(res.status).toBe(400);
+    } finally {
+      delete process.env.WHOP_TIMESTAMP_TOLERANCE_SECONDS;
+    }
+  });
+
+  it('treats a non-numeric WHOP_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+    process.env.WHOP_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const old = Math.floor(Date.now() / 1000) - 3600;
+      const body = event('payment.succeeded');
+      const res = await request(app).post('/webhooks/whop').set(sign(body, { timestamp: old })).send(body);
+      expect(res.status).toBe(200);
+    } finally {
+      delete process.env.WHOP_TIMESTAMP_TOLERANCE_SECONDS;
+      warn.mockRestore();
+    }
   });
 });

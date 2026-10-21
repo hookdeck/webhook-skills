@@ -1,6 +1,6 @@
 # Stytch Webhooks - FastAPI Example
 
-Minimal example of receiving Stytch webhooks (delivered by Svix) with signature verification.
+Minimal example of receiving Stytch webhooks (delivered by Svix) with signature verification. It verifies manually rather than with the `svix` SDK, because the SDK always enforces a 5-minute timestamp window and Hookdeck retries and replays keep the original timestamp. Set `STYTCH_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to turn the window on.
 
 ## Prerequisites
 

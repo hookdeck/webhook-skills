@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import crypto from 'node:crypto';
 import request from 'supertest';
 
@@ -70,11 +71,35 @@ describe('Stytch webhook', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects an old timestamp', async () => {
+  it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
     const old = Math.floor(Date.now() / 1000) - 3600;
     const res = await post(memberUpdate, sign(memberUpdate, { timestamp: old }));
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Timestamp too old');
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects an old timestamp when STYTCH_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+    process.env.STYTCH_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const old = Math.floor(Date.now() / 1000) - 3600;
+      const res = await post(memberUpdate, sign(memberUpdate, { timestamp: old }));
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Timestamp too old');
+    } finally {
+      delete process.env.STYTCH_TIMESTAMP_TOLERANCE_SECONDS;
+    }
+  });
+
+  it('treats a non-numeric STYTCH_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+    process.env.STYTCH_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const old = Math.floor(Date.now() / 1000) - 3600;
+      const res = await post(memberUpdate, sign(memberUpdate, { timestamp: old }));
+      expect(res.status).toBe(200);
+    } finally {
+      delete process.env.STYTCH_TIMESTAMP_TOLERANCE_SECONDS;
+      warn.mockRestore();
+    }
   });
 
   it('rejects missing headers', async () => {

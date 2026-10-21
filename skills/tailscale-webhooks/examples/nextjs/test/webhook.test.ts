@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { verifyTailscaleWebhook } from '../lib/tailscale';
@@ -52,9 +52,37 @@ describe('verifyTailscaleWebhook', () => {
     expect(verifyTailscaleWebhook(body + ' ', sign(body), SECRET)).toBe(false);
   });
 
-  it('rejects stale timestamp', () => {
+  it('accepts an old timestamp by default (retries keep the original t)', () => {
+    delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+    const old = Math.floor(Date.now() / 1000) - 86400;
+    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(true);
+  });
+
+  it('rejects an old timestamp with an explicit tolerance', () => {
     const old = Math.floor(Date.now() / 1000) - 600;
-    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(false);
+    expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET, 300)).toBe(false);
+  });
+
+  it('rejects an old timestamp when TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS is set', () => {
+    process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const old = Math.floor(Date.now() / 1000) - 600;
+      expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(false);
+    } finally {
+      delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+    }
+  });
+
+  it('treats a non-numeric TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', () => {
+    process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const old = Math.floor(Date.now() / 1000) - 600;
+      expect(verifyTailscaleWebhook(body, sign(body, SECRET, old), SECRET)).toBe(true);
+    } finally {
+      delete process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS;
+      warn.mockRestore();
+    }
   });
 
   it('rejects malformed headers', () => {

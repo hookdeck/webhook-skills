@@ -31,16 +31,20 @@ Verify the **body signature**: `v1` is a hex `HMAC-SHA256` over
 Integrations > Copy secret**, used as a raw string). The URI signature uses the
 same format over the full URI and is an optional extra. MaintainX has no SDK
 verification helper, so verify manually against the **raw** body (don't
-`JSON.parse` first). The docs recommend rejecting timestamps older than 5 minutes.
+`JSON.parse` first). The docs recommend rejecting timestamps older than 5 minutes,
+but retries and replays (including Hookdeck's) carry the original timestamp, so the
+examples make that window opt-in (`MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS`, default `0`).
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyMaintainxSignature(rawBody, header, secret, toleranceSec = 300) {
+// toleranceSec = 0 (default) skips the timestamp window; a positive value opts in
+function verifyMaintainxSignature(rawBody, header, secret, toleranceSec = 0) {
   const parts = Object.fromEntries(header.split(',').map((p) => p.split('=')));
   const { t: timestamp, v1: signature } = parts;
   if (!timestamp || !signature) return false;
-  if (Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
+  if (!/^\d+$/.test(timestamp)) return false;
+  if (toleranceSec > 0 && Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -80,6 +84,8 @@ subscription's type).
 ```bash
 # Secret from MaintainX Settings > Integrations > Webhooks > Copy secret
 MAINTAINX_WEBHOOK_SECRET=your_webhook_secret_here
+# Optional replay window in seconds; 0 (default) is off, a positive value opts in
+MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS=0
 ```
 
 ## Local Development

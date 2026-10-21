@@ -48,5 +48,5 @@ Then, in Business Console > API & Webhooks, use **Try Webhook** to send a sample
 ## How verification works
 
 - `X-Signature` is the hex HMAC-SHA256 of the exact raw request body, keyed with `secret_shared_key`
-- `X-Timestamp` (unix seconds) is a separate header, not part of the signed input; requests older than 300 seconds are rejected (override with `DIDIT_TIMESTAMP_TOLERANCE_SECONDS`, `0` disables)
+- `X-Timestamp` (unix seconds) is a separate header, not part of the signed input; the age check is off by default because Hookdeck retries and replays keep the original `X-Timestamp`; set `DIDIT_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (Didit recommends `300`) to turn it on
 - The route uses `express.raw({ type: '*/*' })` so the body is not parsed before verification

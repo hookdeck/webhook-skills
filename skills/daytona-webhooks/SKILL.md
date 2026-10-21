@@ -37,27 +37,37 @@ metadata:
 | `svix-timestamp` | Unix seconds when the attempt was sent |
 | `svix-signature` | Space-delimited list of `v1,<base64>` signatures |
 
-Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the secret after `whsec_`. The official `svix` library (npm and PyPI) also enforces a 5-minute timestamp tolerance and compares in constant time.
+Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the secret after `whsec_`. Compare in constant time against every `v1,` entry.
 
 ```javascript
-import { Webhook } from 'svix'; // svix 2.x is ESM-only
+import crypto from 'node:crypto';
 
-// rawBody: the exact bytes received (express.raw() / request.text()), NOT re-serialised JSON
-function verifyDaytonaWebhook(rawBody, headers) {
-  const secret = process.env.DAYTONA_WEBHOOK_SECRET; // whsec_...
-  if (!secret) throw new Error('DAYTONA_WEBHOOK_SECRET not set'); // fail closed → 500
-  new Webhook(secret).verify(rawBody, {
-    'svix-id': headers['svix-id'],
-    'svix-timestamp': headers['svix-timestamp'],
-    'svix-signature': headers['svix-signature'],
-  }); // throws WebhookVerificationError → 400
-  return JSON.parse(rawBody.toString('utf8')); // svix 2.x verify() returns nothing
+// rawBody: the exact bytes received (express.raw() / request.text()), NOT re-serialised JSON.
+// toleranceSec = 0 (default) skips the timestamp window, because Hookdeck retries and replays
+// keep the original svix-timestamp. A positive value opts in.
+function verifyDaytonaWebhook(rawBody, headers, secret, toleranceSec = 0) {
+  const id = headers['svix-id'];
+  const ts = headers['svix-timestamp'];
+  const sigs = headers['svix-signature'];
+  if (!id || !/^\d+$/.test(ts ?? '') || !sigs) throw new Error('Missing or malformed svix-* headers');
+  if (toleranceSec > 0 && Math.abs(Date.now() / 1000 - Number(ts)) > toleranceSec) {
+    throw new Error('Timestamp outside tolerance');
+  }
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64'); // decode; don't use the string as-is
+  const expected = crypto.createHmac('sha256', key).update(`${id}.${ts}.`).update(rawBody).digest();
+  const ok = sigs.split(' ').some((entry) => {
+    const [version, sig] = entry.split(',');
+    const given = Buffer.from(sig ?? '', 'base64');
+    return version === 'v1' && given.length === expected.length && crypto.timingSafeEqual(given, expected);
+  });
+  if (!ok) throw new Error('Invalid signature');
+  return JSON.parse(rawBody.toString('utf8'));
 }
 ```
 
-Python: `from svix.webhooks import Webhook`, then `Webhook(secret).verify(raw_body, headers)` followed by `json.loads(raw_body)`.
+**Why not the `svix` SDK?** `new Webhook(secret).verify(...)` (npm) and `Webhook(secret).verify(...)` (PyPI) check the same signature, but they always enforce a 5-minute timestamp window with no way to turn it off. Hookdeck retries and replays carry the original `svix-timestamp`, so the SDK rejects them. The examples verify manually and make the window opt-in with `DAYTONA_TIMESTAMP_TOLERANCE_SECONDS` (default `0`; a positive number of seconds turns it on; anything that isn't a whole number is treated as `0`, with a warning at startup). If you never retry or replay late, the SDK is fine.
 
-Manual verification (no SDK) is in [references/verification.md](references/verification.md).
+The Python version is in [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -89,6 +99,7 @@ The payload has no event ID, so deduplicate on `svix-id`, which stays the same w
 
 ```bash
 DAYTONA_WEBHOOK_SECRET=whsec_your_endpoint_secret   # Svix endpoint signing secret
+DAYTONA_TIMESTAMP_TOLERANCE_SECONDS=0       # Optional replay window; a positive value opts in
 ```
 
 ## Local Development

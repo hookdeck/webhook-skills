@@ -14,8 +14,24 @@ const PORT = process.env.PORT || 3000;
 //   HMAC-SHA256 of "<timestamp>.<raw body>" keyed with the token
 // https://buildkite.com/docs/apis/webhooks/pipelines
 
-// Buildkite suggests rejecting old timestamps (e.g. 5 minutes) to defend against replay.
-const TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
+// Optional replay window in seconds. Off by default (0): retries and replays, including
+// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Set BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
+// treated as 0, with a warning.
+let warnedInvalidTolerance = false;
+function timestampToleranceSeconds() {
+  const raw = (process.env.BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
+  if (raw === '') return 0;
+  if (!/^\d+$/.test(raw)) {
+    if (!warnedInvalidTolerance) {
+      console.warn(`BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
+      warnedInvalidTolerance = true;
+    }
+    return 0;
+  }
+  return Number(raw);
+}
+timestampToleranceSeconds(); // surface an invalid value at startup
 
 function safeEqual(a, b) {
   const x = Buffer.from(a);
@@ -41,8 +57,11 @@ function verifyBuildkite(rawBody, headers, token) {
     if (!timestamp || !signature) return false;
 
     const ts = Number(timestamp);
-    const now = Math.floor(Date.now() / 1000);
-    if (!Number.isInteger(ts) || Math.abs(now - ts) > TIMESTAMP_TOLERANCE_SECONDS) {
+    if (!Number.isInteger(ts)) return false;
+    // Buildkite suggests a short window (e.g. 5 minutes). It's opt-in here: off unless
+    // BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS > 0.
+    const tolerance = timestampToleranceSeconds();
+    if (tolerance > 0 && Math.abs(Math.floor(Date.now() / 1000) - ts) > tolerance) {
       return false;
     }
 

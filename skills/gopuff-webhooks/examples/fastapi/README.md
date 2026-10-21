@@ -1,6 +1,6 @@
 # Gopuff Webhooks - FastAPI Example
 
-Minimal example of receiving Gopuff (Powered by Gopuff partner API) webhooks with Svix signature verification, using the official [`svix`](https://pypi.org/project/svix/) SDK.
+Minimal example of receiving Gopuff (Powered by Gopuff partner API) webhooks with Svix signature verification. It verifies manually rather than with the [`svix`](https://pypi.org/project/svix/) SDK, because the SDK always enforces a 5-minute timestamp window and Hookdeck retries and replays keep the original timestamp. Set `GOPUFF_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to turn the window on.
 
 ## Prerequisites
 

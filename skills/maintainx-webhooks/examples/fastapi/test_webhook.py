@@ -87,9 +87,27 @@ class TestInvalidRequests:
         body = json.dumps(EVENTS["NEW_WORK_ORDER"]).encode()
         assert post(body, "garbage").status_code == 400
 
-    def test_rejects_stale_timestamp(self):
+    def test_accepts_old_timestamp_by_default(self, monkeypatch):
+        # Retries and replays keep the original timestamp, so the window is off by default
+        monkeypatch.delenv("MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        old = int(time.time()) - 3600
         body = json.dumps(EVENTS["NEW_WORK_ORDER"]).encode()
-        assert post(body, sign(body, timestamp=int(time.time()) - 3600)).status_code == 400
+        res = post(body, sign(body, timestamp=old))
+        assert res.status_code == 200
+
+    def test_rejects_old_timestamp_when_window_set(self, monkeypatch):
+        monkeypatch.setenv("MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS", "300")
+        old = int(time.time()) - 3600
+        body = json.dumps(EVENTS["NEW_WORK_ORDER"]).encode()
+        res = post(body, sign(body, timestamp=old))
+        assert res.status_code == 400
+
+    def test_non_numeric_window_treated_as_zero(self, monkeypatch):
+        monkeypatch.setenv("MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+        old = int(time.time()) - 3600
+        body = json.dumps(EVENTS["NEW_WORK_ORDER"]).encode()
+        res = post(body, sign(body, timestamp=old))
+        assert res.status_code == 200
 
     def test_rejects_non_numeric_timestamp(self):
         body = b"{}"

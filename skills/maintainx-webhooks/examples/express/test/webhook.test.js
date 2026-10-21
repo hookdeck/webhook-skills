@@ -77,11 +77,37 @@ describe('MaintainX webhook', () => {
       expect(res.status).toBe(400);
     });
 
-    test('rejects a stale timestamp', async () => {
-      const body = JSON.stringify(events.NEW_WORK_ORDER);
+    test('accepts an old timestamp by default (retries and replays keep the original)', async () => {
       const old = Math.floor(Date.now() / 1000) - 3600;
+      const body = JSON.stringify(events.NEW_WORK_ORDER);
       const res = await post(body, sign(body, SECRET, old));
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
+    });
+
+    test('rejects an old timestamp when MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+      process.env.MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS = '300';
+      try {
+        const old = Math.floor(Date.now() / 1000) - 3600;
+        const body = JSON.stringify(events.NEW_WORK_ORDER);
+        const res = await post(body, sign(body, SECRET, old));
+        expect(res.status).toBe(400);
+      } finally {
+        delete process.env.MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS;
+      }
+    });
+
+    test('treats a non-numeric MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+      process.env.MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const old = Math.floor(Date.now() / 1000) - 3600;
+        const body = JSON.stringify(events.NEW_WORK_ORDER);
+        const res = await post(body, sign(body, SECRET, old));
+        expect(res.status).toBe(200);
+      } finally {
+        delete process.env.MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS;
+        warn.mockRestore();
+      }
     });
 
     test('rejects a non-hex signature of the wrong length', async () => {

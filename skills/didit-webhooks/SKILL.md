@@ -23,15 +23,17 @@ metadata:
 
 ## Verification (core)
 
-Didit signs every webhook with HMAC-SHA256, keyed with the destination's `secret_shared_key` (used as a raw string). `X-Signature` is the **hex** digest of the **exact raw request body**. `X-Timestamp` (unix seconds) is sent separately and is **not** part of the signed input; reject requests where `abs(now - X-Timestamp) > 300`.
+Didit signs every webhook with HMAC-SHA256, keyed with the destination's `secret_shared_key` (used as a raw string). `X-Signature` is the **hex** digest of the **exact raw request body**. `X-Timestamp` (unix seconds) is sent separately and is **not** part of the signed input. Didit recommends rejecting requests where `abs(now - X-Timestamp) > 300`, but Hookdeck retries and replays keep the original header, so the examples make that check opt-in (`DIDIT_TIMESTAMP_TOLERANCE_SECONDS`, default `0`).
 
 Node:
 
 ```javascript
 const crypto = require('crypto');
 
-function verify(rawBody, signature, timestamp, secret, now = Math.floor(Date.now() / 1000)) {
-  if (!signature || Math.abs(now - parseInt(timestamp, 10)) > 300) return false;
+// toleranceSec = 0 (default) skips the X-Timestamp check; a positive value opts in
+function verify(rawBody, signature, timestamp, secret, toleranceSec = 0, now = Math.floor(Date.now() / 1000)) {
+  if (!signature) return false;
+  if (toleranceSec > 0 && !(Math.abs(now - Number(timestamp)) <= toleranceSec)) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   const a = Buffer.from(signature), b = Buffer.from(expected);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -43,8 +45,11 @@ Python:
 ```python
 import hmac, hashlib, time
 
-def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool:
-    if not signature or not timestamp.isdigit() or abs(time.time() - int(timestamp)) > 300:
+def verify(raw_body: bytes, signature: str, timestamp: str, secret: str, tolerance: int = 0) -> bool:
+    # tolerance = 0 (default) skips the X-Timestamp check; a positive value opts in
+    if not signature:
+        return False
+    if tolerance > 0 and (not timestamp or not timestamp.isdigit() or abs(time.time() - int(timestamp)) > tolerance):
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
@@ -81,7 +86,7 @@ Didit also delivers entity, transaction, Travel Rule and Investigator events (fo
 
 ```bash
 DIDIT_WEBHOOK_SECRET=your_secret_shared_key   # Returned once when the destination is created
-# DIDIT_TIMESTAMP_TOLERANCE_SECONDS=300       # Optional; 0 disables the timestamp check
+DIDIT_TIMESTAMP_TOLERANCE_SECONDS=0           # Optional; a positive value turns on the timestamp check
 ```
 
 ## Local Development

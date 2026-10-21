@@ -1,7 +1,7 @@
 {
   "name": "daytona-webhooks-express",
   "version": "1.0.0",
-  "description": "Daytona webhook handler with Express and Svix signature verification",
+  "description": "Daytona webhook handler with Express and Svix signature verification (manual)",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "dotenv": "^18.0.8",
-    "express": "^5.3.0",
-    "svix": "^2.8.0"
+    "express": "^5.3.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.5.2",

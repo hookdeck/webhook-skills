@@ -1,6 +1,6 @@
 # Whop Webhooks - Express Example
 
-Minimal example of receiving Whop webhooks with signature verification using the official `@whop/sdk` helper.
+Minimal example of receiving Whop webhooks with Standard Webhooks signature verification. It verifies manually rather than with the Whop SDK helper, because the helper always enforces a 5-minute timestamp window and Hookdeck retries and replays keep the original timestamp. Set `WHOP_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to turn the window on.
 
 ## Prerequisites
 

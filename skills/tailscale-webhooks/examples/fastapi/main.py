@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 
@@ -13,12 +14,37 @@ load_dotenv()
 
 app = FastAPI()
 
+# Optional replay window in seconds. Off by default (0): retries and replays, including
+# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Set TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
+# treated as 0, with a warning.
+_warned_invalid_tolerance = False
+
+
+def timestamp_tolerance_seconds() -> int:
+    global _warned_invalid_tolerance
+    raw = (os.getenv("TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS") or "").strip()
+    if not raw:
+        return 0
+    if not (raw.isascii() and raw.isdigit()):
+        if not _warned_invalid_tolerance:
+            logging.getLogger(__name__).warning(
+                "TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS=%r is not a whole number of seconds; the timestamp check is off",
+                raw,
+            )
+            _warned_invalid_tolerance = True
+        return 0
+    return int(raw)
+
+
+timestamp_tolerance_seconds()  # surface an invalid value at startup
+
 
 def verify_tailscale_webhook(
     raw_body: bytes,
     header: str | None,
     secret: str,
-    tolerance: int = 300,
+    tolerance: int | None = None,
     now: float | None = None,
 ) -> bool:
     """Verify a Tailscale webhook signature.
@@ -31,11 +57,14 @@ def verify_tailscale_webhook(
     pairs = [p.strip().split("=", 1) for p in header.split(",") if "=" in p]
     t = next((v for k, v in pairs if k == "t"), None)
     signatures = [v for k, v in pairs if k == "v1"]
-    if not t or not t.isdigit() or not signatures:
+    if not t or not (t.isascii() and t.isdigit()) or not signatures:
         return False
 
-    # Replay protection
-    if abs((time.time() if now is None else now) - int(t)) > tolerance:
+    # Tailscale suggests a 5-minute window, but its own hourly retries (and Hookdeck's)
+    # carry the original `t`, so the window is opt-in (tolerance > 0).
+    if tolerance is None:
+        tolerance = timestamp_tolerance_seconds()
+    if tolerance > 0 and abs((time.time() if now is None else now) - int(t)) > tolerance:
         return False
 
     expected = hmac.new(

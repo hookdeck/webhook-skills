@@ -135,12 +135,30 @@ def test_tampered_body():
     assert post(order_v2("Finished"), headers).status_code == 400
 
 
-def test_old_timestamp():
+def test_accepts_old_timestamp_by_default(monkeypatch):
+    # Retries and replays keep the original timestamp, so the window is off by default
+    monkeypatch.delenv("GOPUFF_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+    old = str(int(time.time()) - 3600)
     p = order_v2("Packed")
-    old = str(int(time.time()) - 600)
+    r = post(p, signed(p, ts=old))
+    assert r.status_code == 200
+
+
+def test_rejects_old_timestamp_when_window_set(monkeypatch):
+    monkeypatch.setenv("GOPUFF_TIMESTAMP_TOLERANCE_SECONDS", "300")
+    old = str(int(time.time()) - 3600)
+    p = order_v2("Packed")
     r = post(p, signed(p, ts=old))
     assert r.status_code == 400
     assert r.json()["detail"] == "Timestamp too old"
+
+
+def test_non_numeric_window_treated_as_zero(monkeypatch):
+    monkeypatch.setenv("GOPUFF_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+    old = str(int(time.time()) - 3600)
+    p = order_v2("Packed")
+    r = post(p, signed(p, ts=old))
+    assert r.status_code == 200
 
 
 def test_signed_non_json_body():

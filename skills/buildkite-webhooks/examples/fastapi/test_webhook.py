@@ -62,9 +62,24 @@ class TestSignatureMode:
         res = post(FINISHED, {"X-Buildkite-Signature": sign(FINISHED, token="other_token")})
         assert res.status_code == 400
 
-    def test_rejects_stale_timestamp(self):
-        res = post(FINISHED, {"X-Buildkite-Signature": sign(FINISHED, timestamp=int(time.time()) - 3600)})
+    def test_accepts_old_timestamp_by_default(self, monkeypatch):
+        # Retries and replays keep the original timestamp, so the window is off by default
+        monkeypatch.delenv("BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        old = int(time.time()) - 3600
+        res = post(FINISHED, {"X-Buildkite-Signature": sign(FINISHED, timestamp=old)})
+        assert res.status_code == 200
+
+    def test_rejects_old_timestamp_when_window_set(self, monkeypatch):
+        monkeypatch.setenv("BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS", "300")
+        old = int(time.time()) - 3600
+        res = post(FINISHED, {"X-Buildkite-Signature": sign(FINISHED, timestamp=old)})
         assert res.status_code == 400
+
+    def test_non_numeric_window_treated_as_zero(self, monkeypatch):
+        monkeypatch.setenv("BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+        old = int(time.time()) - 3600
+        res = post(FINISHED, {"X-Buildkite-Signature": sign(FINISHED, timestamp=old)})
+        assert res.status_code == 200
 
     def test_rejects_malformed_header(self):
         assert post(FINISHED, {"X-Buildkite-Signature": "garbage"}).status_code == 400

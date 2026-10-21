@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import request from 'supertest';
 import crypto from 'node:crypto';
 
@@ -102,12 +103,38 @@ describe('Gopuff webhook handler', () => {
     expect(res.status).toBe(400);
   });
 
-  test('rejects an old timestamp', async () => {
+  test('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+    const old = (Math.floor(Date.now() / 1000) - 3600).toString();
     const p = orderV2('Packed');
-    const old = (Math.floor(Date.now() / 1000) - 600).toString();
     const res = await post(p, signedHeaders(p, old));
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Timestamp too old');
+    expect(res.status).toBe(200);
+  });
+
+  test('rejects an old timestamp when GOPUFF_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+    process.env.GOPUFF_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const old = (Math.floor(Date.now() / 1000) - 3600).toString();
+      const p = orderV2('Packed');
+      const res = await post(p, signedHeaders(p, old));
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Timestamp too old');
+    } finally {
+      delete process.env.GOPUFF_TIMESTAMP_TOLERANCE_SECONDS;
+    }
+  });
+
+  test('treats a non-numeric GOPUFF_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+    process.env.GOPUFF_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const old = (Math.floor(Date.now() / 1000) - 3600).toString();
+      const p = orderV2('Packed');
+      const res = await post(p, signedHeaders(p, old));
+      expect(res.status).toBe(200);
+    } finally {
+      delete process.env.GOPUFF_TIMESTAMP_TOLERANCE_SECONDS;
+      warn.mockRestore();
+    }
   });
 
   test('rejects signed non-JSON body', async () => {

@@ -107,16 +107,19 @@ class TestVerifyDiditSignature:
 
 
 class TestToleranceFromEnv:
-    def test_default(self):
-        assert tolerance_from_env() == 300
+    def test_default(self, monkeypatch):
+        monkeypatch.delenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        assert tolerance_from_env() == 0
 
     def test_configured(self, monkeypatch):
         monkeypatch.setenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", "60")
         assert tolerance_from_env() == 60
 
-    def test_garbage_falls_back(self, monkeypatch):
+    def test_garbage_treated_as_zero(self, monkeypatch):
         monkeypatch.setenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", "abc")
-        assert tolerance_from_env() == 300
+        assert tolerance_from_env() == 0
+        monkeypatch.setenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", "5min")
+        assert tolerance_from_env() == 0
 
 
 class TestWebhookEndpoint:
@@ -157,7 +160,14 @@ class TestWebhookEndpoint:
     def test_rejects_missing_signature(self):
         assert post(session_event("status.updated", "Approved"), signature=None).status_code == 400
 
-    def test_rejects_stale_timestamp(self):
+    def test_accepts_old_timestamp_by_default(self, monkeypatch):
+        # Hookdeck retries and replays keep the original X-Timestamp
+        monkeypatch.delenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        body = session_event("status.updated", "Approved")
+        assert post(body, timestamp=str(int(time.time()) - 86400)).status_code == 200
+
+    def test_rejects_stale_timestamp_when_window_set(self, monkeypatch):
+        monkeypatch.setenv("DIDIT_TIMESTAMP_TOLERANCE_SECONDS", "300")
         body = session_event("status.updated", "Approved")
         assert post(body, timestamp=str(int(time.time()) - 600)).status_code == 400
 

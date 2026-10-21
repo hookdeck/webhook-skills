@@ -13,7 +13,7 @@ To verify the body signature:
 2. Build the signed string `{t}.{raw body}`.
 3. Compute `HMAC-SHA256` with the webhook's secret as the key and hex-encode it.
 4. Compare to `v1` with a timing-safe comparison.
-5. Reject if `|now - t|` exceeds your tolerance (MaintainX recommends 5 minutes).
+5. Optionally reject if `|now - t|` exceeds a tolerance (MaintainX recommends 5 minutes). The examples leave this off by default because retries and replays carry the original timestamp; set `MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to opt in. A value that isn't a whole number is treated as `0`, with a warning at startup.
 
 The secret comes from **Settings > Integrations > Copy secret** and is used as a raw string. MaintainX publishes no verification SDK, so the examples verify manually.
 
@@ -24,11 +24,13 @@ The secret comes from **Settings > Integrations > Copy secret** and is used as a
 ```javascript
 const crypto = require('crypto');
 
-function verifyMaintainxSignature(rawBody, header, secret, toleranceSec = 300) {
+// toleranceSec = 0 (default) skips the timestamp window; a positive value opts in
+function verifyMaintainxSignature(rawBody, header, secret, toleranceSec = 0) {
   const parts = Object.fromEntries(header.split(',').map((p) => p.split('=')));
   const { t: timestamp, v1: signature } = parts;
   if (!timestamp || !signature) return false;
-  if (Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
+  if (!/^\d+$/.test(timestamp)) return false;
+  if (toleranceSec > 0 && Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -48,15 +50,13 @@ Python equivalent:
 ```python
 import hashlib, hmac, time
 
-def verify_maintainx_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify_maintainx_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
+    # tolerance = 0 (default) skips the timestamp window; a positive value opts in
     parts = dict(p.split("=", 1) for p in header.split(",") if "=" in p)
     timestamp, signature = parts.get("t"), parts.get("v1")
-    if not timestamp or not signature:
+    if not timestamp or not signature or not (timestamp.isascii() and timestamp.isdigit()):
         return False
-    try:
-        if abs(time.time() - int(timestamp)) > tolerance:
-            return False
-    except ValueError:
+    if tolerance > 0 and abs(time.time() - int(timestamp)) > tolerance:
         return False
     expected = hmac.new(secret.encode(), timestamp.encode() + b"." + raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
@@ -68,7 +68,7 @@ def verify_maintainx_signature(raw_body: bytes, header: str, secret: str, tolera
 - **Header names are lowercase** in Node and Starlette (`x-maintainx-webhook-body-signature`).
 - **Secret is a raw string.** Don't base64-decode it or strip a prefix.
 - **Verify the body header, not the URI header.** The URI signature signs the URL instead of the payload, so it won't match the body.
-- **Retries and the timestamp window.** If you re-deliver or replay an old request (for example from a queue), the original timestamp will fail a 5-minute window. Apply the window only on the initial receipt.
+- **Retries and the timestamp window.** A retry or replay (for example from Hookdeck or a queue) keeps the original timestamp, so it fails a 5-minute window. That's why the examples leave the window off unless you set it.
 - **Several `v` schemes.** Only `v1` is currently valid. Ignore other prefixes.
 
 ## Debugging Verification Failures

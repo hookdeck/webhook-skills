@@ -106,9 +106,27 @@ class TestInvalidRequests:
         headers = signed_headers(raw)
         assert post(json.dumps(json.loads(raw), indent=2), headers).status_code == 400
 
-    def test_rejects_old_timestamp(self):
+    def test_accepts_old_timestamp_by_default(self, monkeypatch):
+        # Retries and replays keep the original timestamp, so the window is off by default
+        monkeypatch.delenv("DAYTONA_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        old = now() - 3600
         raw = body("sandbox.created")
-        assert post(raw, signed_headers(raw, timestamp=now() - 3600)).status_code == 400
+        res = post(raw, signed_headers(raw, timestamp=old))
+        assert res.status_code == 200
+
+    def test_rejects_old_timestamp_when_window_set(self, monkeypatch):
+        monkeypatch.setenv("DAYTONA_TIMESTAMP_TOLERANCE_SECONDS", "300")
+        old = now() - 3600
+        raw = body("sandbox.created")
+        res = post(raw, signed_headers(raw, timestamp=old))
+        assert res.status_code == 400
+
+    def test_non_numeric_window_treated_as_zero(self, monkeypatch):
+        monkeypatch.setenv("DAYTONA_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+        old = now() - 3600
+        raw = body("sandbox.created")
+        res = post(raw, signed_headers(raw, timestamp=old))
+        assert res.status_code == 200
 
     def test_rejects_malformed_signature(self):
         raw = body("sandbox.created")

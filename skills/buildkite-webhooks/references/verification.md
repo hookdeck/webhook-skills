@@ -32,14 +32,14 @@ Parse the header by splitting on `,` and then splitting each part on the first `
 
 ## Replay Protection
 
-Buildkite recommends checking the timestamp after verifying the signature and accepting it only within a short window (e.g. 5 minutes). The examples enforce 300 seconds for signature mode (`TIMESTAMP_TOLERANCE_SECONDS`). Token mode has no timestamp, so use idempotency (see webhook-handler-patterns) to absorb replays.
+Buildkite recommends checking the timestamp after verifying the signature and accepting it only within a short window (e.g. 5 minutes). The examples **don't check it by default**: retries and replays (including Hookdeck's) carry the original timestamp, so a window would reject a late redelivery. To opt in, set `BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`). A value that isn't a whole number is treated as `0`, with a warning at startup. Token mode has no timestamp either way, so use idempotency (see webhook-handler-patterns) to absorb replays.
 
 ## Common Gotchas
 
 - **Raw body:** the signature covers the exact bytes. Do not parse JSON before verifying (`express.raw`, `request.text()`, `await request.body()`).
 - **Don't fall back:** if `X-Buildkite-Signature` is present, do not accept a matching token instead.
 - **Header names are case-insensitive**; Node lowercases them.
-- **Retries and the window:** if your receiver is down and Buildkite retries later, a strict window can reject a legitimate delivery. Pick a window to suit your availability.
+- **Retries and the window:** if your receiver is down and Buildkite or Hookdeck retries later, a strict window rejects a legitimate delivery. That's why the window is off by default; if you turn it on, pick a size that suits your availability.
 
 ## Debugging Verification Failures
 

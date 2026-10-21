@@ -27,18 +27,14 @@ metadata:
 Whop uses [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks): headers `webhook-id`, `webhook-timestamp`, `webhook-signature` (`v1,<base64>`), HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{raw body}`. The `ws_...` signing secret is the **literal UTF-8 HMAC key**: do not strip `ws_` and do not base64-decode it.
 
 ```javascript
-// Official SDK: one call verifies the signature and 5-minute timestamp, returns the parsed body
-const { unwrapWebhook } = require('@whop/sdk/helpers');
-const event = unwrapWebhook(rawBodyString, { headers: req.headers, key: process.env.WHOP_WEBHOOK_SECRET });
-```
-
-```javascript
-// Manual fallback (no SDK)
+// Manual verification (what the examples do).
+// toleranceSec = 0 (default) skips the timestamp window, because Hookdeck retries and replays
+// keep the original webhook-timestamp. A positive value opts in.
 const crypto = require('crypto');
-function verifyWhop(rawBody, headers, secret) {
+function verifyWhop(rawBody, headers, secret, toleranceSec = 0) {
   const { 'webhook-id': id, 'webhook-timestamp': ts, 'webhook-signature': sigHeader } = headers;
-  if (!id || !ts || !sigHeader) return false;
-  if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false; // replay protection
+  if (!id || !/^\d+$/.test(ts ?? '') || !sigHeader) return false;
+  if (toleranceSec > 0 && Math.abs(Date.now() / 1000 - Number(ts)) > toleranceSec) return false;
   const expected = crypto.createHmac('sha256', secret).update(`${id}.${ts}.${rawBody}`).digest('base64');
   return sigHeader.split(' ').some((part) => {
     const [version, sig] = part.split(',');
@@ -49,7 +45,9 @@ function verifyWhop(rawBody, headers, secret) {
 }
 ```
 
-Python SDK: `from whop_sdk.lib.verify_webhook import unwrap` then `unwrap(raw_body, headers=dict(request.headers), key=secret)`. If you use the generic `standardwebhooks` library directly, pass `base64(utf8(secret))` as the key, because it base64-decodes its input (the Whop SDKs do this for you).
+**Why not the SDK helper?** `unwrapWebhook()` (`@whop/sdk/helpers`) and `unwrap()` (`whop_sdk`) check the same signature, but they always enforce a 5-minute timestamp window with no way to turn it off. Hookdeck retries and replays carry the original `webhook-timestamp`, so the SDK rejects them. The examples verify manually and make the window opt-in with `WHOP_TIMESTAMP_TOLERANCE_SECONDS` (default `0`; a positive number of seconds turns it on; anything that isn't a whole number is treated as `0`, with a warning at startup). If you never retry or replay late, the SDK is fine.
+
+SDK usage, if the fixed window is acceptable: `unwrapWebhook(rawBodyString, { headers, key: secret })` from `@whop/sdk/helpers`, or `from whop_sdk.lib.verify_webhook import unwrap` then `unwrap(raw_body, headers=dict(request.headers), key=secret)`. If you use the generic `standardwebhooks` library directly, pass `base64(utf8(secret))` as the key, because it base64-decodes its input (the Whop SDKs do this for you).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -69,7 +67,7 @@ Event names use `resource.action`. See [references/overview.md](references/overv
 
 - Use the **raw body**; parsing JSON first changes the bytes and breaks the signature.
 - Pass the secret exactly as Whop issued it (`ws_...`). Stripping the prefix or base64-decoding it fails verification.
-- Timestamps more than 5 minutes off are rejected. Retries reuse the same `webhook-id`, so deduplicate on it.
+- The SDK helper rejects timestamps more than 5 minutes off, which also rejects Hookdeck retries and replays (they keep the original timestamp). The examples only check the window when `WHOP_TIMESTAMP_TOLERANCE_SECONDS` is set. Retries reuse the same `webhook-id`, so deduplicate on it.
 - Respond `2xx` within 5 seconds; redirects count as failures. Endpoints that keep failing are disabled after 72 hours.
 - Legacy `v2`/`v5` webhook formats are not Standard Webhooks signed; use `api_version: v1`.
 
@@ -78,6 +76,7 @@ Event names use `resource.action`. See [references/overview.md](references/overv
 ```bash
 # Developer tab -> Secret column (or `webhook_secret` from POST /api/v1/webhooks, shown once)
 WHOP_WEBHOOK_SECRET=ws_your_signing_secret_here
+WHOP_TIMESTAMP_TOLERANCE_SECONDS=0   # Optional replay window; a positive value opts in
 ```
 
 ## Local Development

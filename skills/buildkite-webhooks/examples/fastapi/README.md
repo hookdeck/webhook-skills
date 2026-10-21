@@ -30,7 +30,7 @@ uvicorn main:app --reload --port 8000
 
 Server runs on http://localhost:8000
 
-The handler accepts either `X-Buildkite-Token` (default token mode) or `X-Buildkite-Signature` (HMAC-SHA256 of `<timestamp>.<raw body>`; timestamps older than 5 minutes are rejected).
+The handler accepts either `X-Buildkite-Token` (default token mode) or `X-Buildkite-Signature` (HMAC-SHA256 of `<timestamp>.<raw body>`; the timestamp check is off by default because retries and replays keep the original timestamp; set `BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones).
 
 ## Test
 

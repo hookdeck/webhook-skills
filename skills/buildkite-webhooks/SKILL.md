@@ -51,7 +51,7 @@ function verifyBuildkite(rawBody, headers, token) {
     // "timestamp=1619071700,signature=<hex>"
     const parts = Object.fromEntries(sigHeader.split(',').map((kv) => kv.trim().split(/=(.*)/s).slice(0, 2)));
     if (!parts.timestamp || !parts.signature) return false;
-    // Optional replay window: reject if |now - timestamp| > 300 seconds
+    // Optional replay window, off by default: retries and replays keep the original timestamp
     const expected = crypto.createHmac('sha256', token)
       .update(`${parts.timestamp}.`).update(rawBody).digest('hex');
     return safeEqual(parts.signature, expected);
@@ -115,6 +115,7 @@ Others: `build.skipped`, `job.scheduled`, `job.activated`, `job.promised_exit_st
 
 ```bash
 BUILDKITE_WEBHOOK_TOKEN=your_webhook_token   # "Token" field of the webhook in Notification Services
+BUILDKITE_TIMESTAMP_TOLERANCE_SECONDS=0   # optional; a positive value opts in to the replay window
 ```
 
 ## Local Development

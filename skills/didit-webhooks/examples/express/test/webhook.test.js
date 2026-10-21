@@ -91,12 +91,15 @@ describe('verifyDiditSignature', () => {
 });
 
 describe('toleranceFromEnv', () => {
-  test('defaults to 300', () => expect(toleranceFromEnv({})).toBe(300));
+  test('defaults to 0 (check off)', () => expect(toleranceFromEnv({})).toBe(0));
   test('reads a configured value', () => {
     expect(toleranceFromEnv({ DIDIT_TIMESTAMP_TOLERANCE_SECONDS: '60' })).toBe(60);
   });
-  test('falls back on garbage', () => {
-    expect(toleranceFromEnv({ DIDIT_TIMESTAMP_TOLERANCE_SECONDS: 'abc' })).toBe(300);
+  test('treats garbage as 0 (check off), with a warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(toleranceFromEnv({ DIDIT_TIMESTAMP_TOLERANCE_SECONDS: 'abc' })).toBe(0);
+    expect(toleranceFromEnv({ DIDIT_TIMESTAMP_TOLERANCE_SECONDS: '5min' })).toBe(0);
+    warn.mockRestore();
   });
 });
 
@@ -152,10 +155,21 @@ describe('POST /webhooks/didit', () => {
     expect(res.status).toBe(400);
   });
 
-  test('rejects a stale X-Timestamp even with a valid signature', async () => {
+  test('accepts an old X-Timestamp by default (Hookdeck retries and replays keep it)', async () => {
     const body = sessionEvent('status.updated', 'Approved');
-    const res = await post(body, { timestamp: String(nowSeconds() - 600) });
-    expect(res.status).toBe(400);
+    const res = await post(body, { timestamp: String(nowSeconds() - 86400) });
+    expect(res.status).toBe(200);
+  });
+
+  test('rejects a stale X-Timestamp when DIDIT_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+    process.env.DIDIT_TIMESTAMP_TOLERANCE_SECONDS = '300';
+    try {
+      const body = sessionEvent('status.updated', 'Approved');
+      const res = await post(body, { timestamp: String(nowSeconds() - 600) });
+      expect(res.status).toBe(400);
+    } finally {
+      delete process.env.DIDIT_TIMESTAMP_TOLERANCE_SECONDS;
+    }
   });
 
   test('returns 400 for a signed but non-JSON body', async () => {

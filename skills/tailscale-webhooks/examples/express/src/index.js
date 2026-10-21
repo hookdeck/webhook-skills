@@ -6,6 +6,25 @@ const crypto = require('crypto');
 
 const app = express();
 
+// Optional replay window in seconds. Off by default (0): retries and replays, including
+// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Set TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
+// treated as 0, with a warning.
+let warnedInvalidTolerance = false;
+function timestampToleranceSeconds() {
+  const raw = (process.env.TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
+  if (raw === '') return 0;
+  if (!/^\d+$/.test(raw)) {
+    if (!warnedInvalidTolerance) {
+      console.warn(`TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
+      warnedInvalidTolerance = true;
+    }
+    return 0;
+  }
+  return Number(raw);
+}
+timestampToleranceSeconds(); // surface an invalid value at startup
+
 /**
  * Verify a Tailscale webhook signature.
  *
@@ -15,7 +34,7 @@ const app = express();
  * @param {Buffer|string} rawBody - Raw request body (do NOT re-stringify parsed JSON)
  * @param {string} header - `Tailscale-Webhook-Signature` header value
  * @param {string} secret - Webhook secret (e.g. tskey-webhook-xxxxx)
- * @param {number} toleranceSeconds - Max age of `t` (Tailscale suggests 5 minutes)
+ * @param {number} toleranceSeconds - Max age of `t`; 0 turns the check off (default from env)
  * @param {number} nowSeconds - Current time in seconds (injectable for tests)
  * @returns {boolean} Whether the signature is valid and fresh
  */
@@ -23,7 +42,7 @@ function verifyTailscaleWebhook(
   rawBody,
   header,
   secret,
-  toleranceSeconds = 300,
+  toleranceSeconds = timestampToleranceSeconds(),
   nowSeconds = Date.now() / 1000
 ) {
   if (!header || !secret) return false;
@@ -32,8 +51,9 @@ function verifyTailscaleWebhook(
   const signatures = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t || !/^\d+$/.test(t) || signatures.length === 0) return false;
 
-  // Replay protection
-  if (Math.abs(nowSeconds - Number(t)) > toleranceSeconds) return false;
+  // Tailscale suggests a 5-minute window, but its own hourly retries (and Hookdeck's)
+  // carry the original `t`, so the window is opt-in (toleranceSeconds > 0).
+  if (toleranceSeconds > 0 && Math.abs(nowSeconds - Number(t)) > toleranceSeconds) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)

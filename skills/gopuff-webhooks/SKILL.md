@@ -31,11 +31,14 @@ Each request carries `svix-id`, `svix-timestamp` (Unix seconds) and `svix-signat
 ```javascript
 import crypto from 'node:crypto';
 
-function verify(rawBody, { id, timestamp, signature }, secret) {
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false; // 5 min tolerance
+// toleranceSec = 0 (default) skips the timestamp window, because Hookdeck retries and replays
+// keep the original svix-timestamp. A positive value opts in.
+function verify(rawBody, { id, timestamp, signature }, secret, toleranceSec = 0) {
+  if (!/^\d+$/.test(timestamp ?? '')) return false;
+  if (toleranceSec > 0 && Math.abs(Date.now() / 1000 - Number(timestamp)) > toleranceSec) return false;
   const key = Buffer.from(secret.split('_')[1], 'base64'); // decode after "whsec_"
   const expected = crypto.createHmac('sha256', key)
-    .update(`${id}.${timestamp}.${rawBody}`).digest();
+    .update(`${id}.${timestamp}.`).update(rawBody).digest();
   return signature.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
     const got = Buffer.from(sig ?? '', 'base64');
@@ -45,7 +48,9 @@ function verify(rawBody, { id, timestamp, signature }, secret) {
 }
 ```
 
-The examples use the official `svix` SDK (`new Webhook(secret).verify(rawBody, headers)`), which does the same and also accepts the white-labeled `webhook-*` headers.
+The examples verify the same way and also accept the white-labeled `webhook-*` headers.
+
+**Why not the `svix` SDK?** `new Webhook(secret).verify(...)` (npm) and `Webhook(secret).verify(...)` (PyPI) check the same signature, but they always enforce a 5-minute timestamp window with no way to turn it off. Hookdeck retries and replays carry the original `svix-timestamp`, so the SDK rejects them. The examples verify manually and make the window opt-in with `GOPUFF_TIMESTAMP_TOLERANCE_SECONDS` (default `0`; a positive number of seconds turns it on; anything that isn't a whole number is treated as `0`, with a warning at startup). If you never retry or replay late, the SDK is fine.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -67,6 +72,7 @@ Order statuses: `Pending` (no event sent), `Packing_Now`, `Packed`, `Delivery`, 
 
 ```bash
 GOPUFF_WEBHOOK_SECRET=whsec_xxxxx   # Svix App Portal > Endpoints > Signing Secret
+GOPUFF_TIMESTAMP_TOLERANCE_SECONDS=0   # Optional replay window; a positive value opts in
 ```
 
 ## Local Development

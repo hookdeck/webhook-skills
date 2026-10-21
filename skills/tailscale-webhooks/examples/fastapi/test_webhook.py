@@ -51,9 +51,25 @@ class TestVerify:
     def test_tampered_body(self):
         assert not verify_tailscale_webhook((self.body + " ").encode(), sign(self.body), SECRET)
 
-    def test_stale_timestamp(self):
+    def test_old_timestamp_accepted_by_default(self, monkeypatch):
+        # Retries (Tailscale's hourly ones, Hookdeck's) keep the original t
+        monkeypatch.delenv("TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        old = int(time.time()) - 86400
+        assert verify_tailscale_webhook(self.body.encode(), sign(self.body, t=old), SECRET)
+
+    def test_old_timestamp_rejected_with_explicit_tolerance(self):
+        old = int(time.time()) - 600
+        assert not verify_tailscale_webhook(self.body.encode(), sign(self.body, t=old), SECRET, tolerance=300)
+
+    def test_old_timestamp_rejected_when_window_set(self, monkeypatch):
+        monkeypatch.setenv("TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS", "300")
         old = int(time.time()) - 600
         assert not verify_tailscale_webhook(self.body.encode(), sign(self.body, t=old), SECRET)
+
+    def test_non_numeric_window_treated_as_zero(self, monkeypatch):
+        monkeypatch.setenv("TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+        old = int(time.time()) - 600
+        assert verify_tailscale_webhook(self.body.encode(), sign(self.body, t=old), SECRET)
 
     def test_stale_timestamp_with_wider_tolerance(self):
         old = int(time.time()) - 600

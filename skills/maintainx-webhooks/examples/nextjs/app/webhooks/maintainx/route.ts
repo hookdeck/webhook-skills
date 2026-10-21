@@ -3,8 +3,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-// MaintainX recommends rejecting timestamps older than 5 minutes (seconds)
-const TOLERANCE_SECONDS = 300;
+// Optional replay window in seconds. Off by default (0): retries and replays, including
+// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Set MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
+// treated as 0, with a warning.
+let warnedInvalidTolerance = false;
+function timestampToleranceSeconds(): number {
+  const raw = (process.env.MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
+  if (raw === '') return 0;
+  if (!/^\d+$/.test(raw)) {
+    if (!warnedInvalidTolerance) {
+      console.warn(`MAINTAINX_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
+      warnedInvalidTolerance = true;
+    }
+    return 0;
+  }
+  return Number(raw);
+}
+timestampToleranceSeconds(); // surface an invalid value at startup
 
 /**
  * Verify a MaintainX webhook signature.
@@ -16,7 +32,7 @@ function verifyMaintainxSignature(
   rawBody: string,
   header: string | null,
   secret: string | undefined,
-  toleranceSec: number = TOLERANCE_SECONDS
+  toleranceSec: number = timestampToleranceSeconds()
 ): boolean {
   if (!header || !secret) return false;
 
@@ -28,9 +44,12 @@ function verifyMaintainxSignature(
   const signature = parts.v1;
   if (!timestamp || !signature) return false;
 
-  // Replay protection: reject stale timestamps
+  if (!/^\d+$/.test(timestamp)) return false;
+
+  // MaintainX recommends a 5-minute window. It's opt-in here (toleranceSec > 0) because
+  // retries and replays carry the original timestamp.
   const now = Math.floor(Date.now() / 1000);
-  if (!(Math.abs(now - Number(timestamp)) <= toleranceSec)) return false;
+  if (toleranceSec > 0 && Math.abs(now - Number(timestamp)) > toleranceSec) return false;
 
   // Signed content is "{t}.{raw body}" — use the raw body, not parsed JSON
   const expected = crypto

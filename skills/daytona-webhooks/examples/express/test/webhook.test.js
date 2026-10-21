@@ -112,10 +112,37 @@ describe('Daytona webhook handler', () => {
       expect(res.status).toBe(400);
     });
 
-    it('rejects an old timestamp', async () => {
+    it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+      const old = now() - 3600;
       const raw = body('sandbox.created');
-      const res = await post(raw, signedHeaders(raw, { timestamp: now() - 3600 }));
-      expect(res.status).toBe(400);
+      const res = await post(raw, signedHeaders(raw, { timestamp: old }));
+      expect(res.status).toBe(200);
+    });
+
+    it('rejects an old timestamp when DAYTONA_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+      process.env.DAYTONA_TIMESTAMP_TOLERANCE_SECONDS = '300';
+      try {
+        const old = now() - 3600;
+        const raw = body('sandbox.created');
+        const res = await post(raw, signedHeaders(raw, { timestamp: old }));
+        expect(res.status).toBe(400);
+      } finally {
+        delete process.env.DAYTONA_TIMESTAMP_TOLERANCE_SECONDS;
+      }
+    });
+
+    it('treats a non-numeric DAYTONA_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+      process.env.DAYTONA_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const old = now() - 3600;
+        const raw = body('sandbox.created');
+        const res = await post(raw, signedHeaders(raw, { timestamp: old }));
+        expect(res.status).toBe(200);
+      } finally {
+        delete process.env.DAYTONA_TIMESTAMP_TOLERANCE_SECONDS;
+        warn.mockRestore();
+      }
     });
 
     it('rejects a malformed signature', async () => {

@@ -27,18 +27,21 @@ metadata:
 Tailscale sends a `Tailscale-Webhook-Signature` header of the form `t=<unix seconds>,v1=<hex>`.
 `v1` is the hex HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the webhook secret as a raw UTF-8
 string (e.g. `tskey-webhook-xxxxx`, case-sensitive, shown once at creation). `v1` is the only
-scheme. Docs suggest rejecting timestamps more than 5 minutes old. Always sign over the **raw body**.
+scheme. Docs suggest rejecting timestamps more than 5 minutes old, but retries (Tailscale's hourly ones and
+Hookdeck's) keep the original `t`, so the window is opt-in here (`TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS`, default `0`).
+Always sign over the **raw body**.
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyTailscaleWebhook(rawBody, header, secret, toleranceSeconds = 300) {
+// toleranceSeconds = 0 (default) skips the timestamp window; a positive value opts in
+function verifyTailscaleWebhook(rawBody, header, secret, toleranceSeconds = 0) {
   if (!header) return false;
   const parts = header.split(',').map((p) => p.split('='));
   const t = parts.find(([k]) => k === 't')?.[1];
   const sigs = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t || !/^\d+$/.test(t) || sigs.length === 0) return false;
-  if (Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false; // stale/replay
+  if (toleranceSeconds > 0 && Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false; // opt-in replay window
   const expected = crypto.createHmac('sha256', secret).update(`${t}.`).update(rawBody).digest('hex');
   return sigs.some((sig) => {
     try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)); }
@@ -72,6 +75,7 @@ More types (`nodeKeyExpired`, `userRoleUpdated`, `webhookUpdated`, ...) are list
 
 ```bash
 TAILSCALE_WEBHOOK_SECRET=tskey-webhook-xxxxx   # Shown once when the endpoint is created
+TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS=0       # Optional replay window; a positive value opts in
 ```
 
 ## Local Development

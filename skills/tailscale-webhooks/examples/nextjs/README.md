@@ -49,4 +49,4 @@ Use the tunnel URL as the **Webhook URL** on the Webhooks page of the Tailscale 
 
 ## How verification works
 
-The `Tailscale-Webhook-Signature` header is `t=<unix>,v1=<hex>`. The route reads the raw body with `request.text()`, computes `hex(HMAC-SHA256(secret, "<t>.<rawBody>"))` (see `lib/tailscale.ts`), compares it timing-safely with `v1`, and rejects timestamps more than 5 minutes old. The body is a JSON array of events. See [../../references/verification.md](../../references/verification.md).
+The `Tailscale-Webhook-Signature` header is `t=<unix>,v1=<hex>`. The route reads the raw body with `request.text()`, computes `hex(HMAC-SHA256(secret, "<t>.<rawBody>"))` (see `lib/tailscale.ts`), compares it timing-safely with `v1`, and leaves the timestamp check off by default, because Tailscale's hourly retries and Hookdeck's retries and replays keep the original `t`. Set `TAILSCALE_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (Tailscale suggests `300`) to turn it on. The body is a JSON array of events. See [../../references/verification.md](../../references/verification.md).
