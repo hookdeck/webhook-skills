@@ -78,8 +78,9 @@ for name, p in parsed.items():
     cat = {}
     row = rows.get(skill)
     if row:
-        assert row['name'] == p.get('displayName'), f'{skill}: README name {row["name"]!r} != displayName'
         cat['summary'] = row['summary']
+        if row['name'] != p.get('displayName'):
+            cat['displayName'] = row['name']
         if row['url'] != (p.get('docs') or {}).get('webhooks'):
             cat['docsUrl'] = row['url']
     else:

@@ -1,0 +1,20 @@
+name: recall-ai
+displayName: Recall.ai
+docs:
+  webhooks: https://docs.recall.ai/reference/webhooks-overview
+  verification: https://docs.recall.ai/docs/authenticating-requests-from-recallai
+notes: >
+  Meeting bot / recording API. Standard Webhooks: once the user creates a workspace
+  verification secret (Developers > API Keys & Secrets), every request carries webhook-id,
+  webhook-timestamp and webhook-signature ("v1,<base64>", space-delimited list). Signature =
+  base64 HMAC-SHA256 over "<webhook-id>.<webhook-timestamp>.<raw body>" keyed with the
+  base64-decoded part of the whsec_ secret. Accounts created before 2025-12-15 instead get
+  svix-id / svix-timestamp / svix-signature headers with a per-endpoint Svix secret (same
+  algorithm); the skill should accept either header prefix. Regional dashboards exist
+  (us-east-1, us-west-2, eu-central-1, ap-northeast-1).
+testScenario:
+  events:
+    - bot.done
+    - transcript.done
+catalog:
+  summary: Verify Recall.ai webhook signatures (Standard Webhooks `webhook-*` headers or legacy `svix-*`, base64 HMAC-SHA256 with a `whsec_` secret), handle bot status, recording, transcript, calendar and real-time participant events

@@ -138,6 +138,7 @@ Optional `catalog` fields:
 | Field | Use |
 |-------|-----|
 | `summary` | README "What It Does" cell (required unless `readme: false`) |
+| `displayName` | README provider name, when it should differ from the top-level `displayName` (e.g. `Telegram` vs `Telegram Bot API`) |
 | `docsUrl` | README provider link, when it should differ from `docs.webhooks` |
 | `readme: false` | Leave the skill out of the generated provider table (it's listed in a hand-written README section) |
 | `marketplace.description` / `keywords` / `category` | Override the marketplace defaults (SKILL.md description, `["webhooks", <provider>]`, `integration`) |

@@ -1,0 +1,19 @@
+name: openmeter
+displayName: OpenMeter
+docs:
+  webhooks: https://openmeter.io/docs/integrations/notifications/webhooks
+  verification: https://openmeter.io/docs/integrations/notifications/webhooks
+notes: >
+  Usage metering and billing (now part of Kong). OpenMeter delivers notifications with the
+  stock svix library: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+  "<id>.<timestamp>.<raw body>". Auto-generated secrets are whsec_ + base64(32 random bytes).
+  Users may set a custom signingSecret (pattern ^(whsec_)?[a-zA-Z0-9+/=]{32,100}$); CAVEAT to
+  state in the verification section: when you set a custom secret, keep the whsec_ prefix so
+  Svix/Standard Webhooks libraries and Hookdeck decode it correctly. Events include
+  entitlements.balance.threshold, entitlements.reset, invoice.created.
+testScenario:
+  events:
+    - entitlements.balance.threshold
+    - entitlements.reset
+catalog:
+  summary: Verify OpenMeter (Kong) notification webhooks delivered via Svix (`svix-id`, `svix-timestamp`, `svix-signature`; HMAC-SHA256 over `{id}.{timestamp}.{body}`), handle `entitlements.balance.threshold`, `entitlements.reset`, `invoice.created` and `invoice.updated`

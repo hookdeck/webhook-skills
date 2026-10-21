@@ -1,0 +1,19 @@
+{
+  "name": "nango-webhooks-express",
+  "version": "1.0.0",
+  "description": "Nango webhook handler with Express",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@nangohq/node": "^0.71.13",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
+  }
+}

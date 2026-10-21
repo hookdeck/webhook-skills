@@ -1,0 +1,27 @@
+name: browserbase
+displayName: Browserbase
+docs:
+  webhooks: https://docs.browserbase.com/platform/webhooks/overview
+  verification: https://docs.browserbase.com/platform/webhooks/verifying-deliveries
+  setup: https://docs.browserbase.com/platform/webhooks/registering-endpoints
+  events: https://docs.browserbase.com/platform/webhooks/overview#event-types
+notes: >
+  Headless browser platform. Docs are Mintlify (append .md to any page). Deliveries
+  follow the Standard Webhooks spec: webhook-id, webhook-timestamp, webhook-signature;
+  HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>" with the whsec_ signing secret
+  (shown only on create or rotate, dashboard or API; POST /v1/webhooks with X-BB-API-Key).
+  Docs recommend the standardwebhooks npm/pip library; no Browserbase-specific verify
+  helper. Rotation keeps the previous secret verifying 24h unless revokeImmediately.
+  Envelope {id, type, resourceId, data}; id stable across retries (dedupe key); keys
+  additive; per-type data fields undocumented. Retries if no 2xx within 15 seconds
+  (immediately, 5s, 5m, 30m, 2h, 5h, 10h, 10h; 8 attempts); 3xx is a failure; endpoint
+  disabled after 5 days of failures; unordered. Events: functions.invocations.pending,
+  functions.invocations.running, functions.invocations.completed,
+  functions.invocations.failed, functions.builds.running, functions.builds.completed,
+  functions.builds.failed.
+testScenario:
+  events:
+    - functions.invocations.completed
+    - functions.invocations.failed
+catalog:
+  summary: Verify Browserbase Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 over `{id}.{timestamp}.{body}` with the `whsec_` secret shown only on create/rotate), handle Functions invocation and build events (`functions.invocations.completed`, `functions.invocations.failed`, `functions.builds.failed`)

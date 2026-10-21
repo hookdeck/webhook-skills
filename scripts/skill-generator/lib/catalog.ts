@@ -170,8 +170,12 @@ export function validateCatalog(rootDir: string = ROOT_DIR): string[] {
   return errors;
 }
 
+function readmeName(provider: ProviderConfig): string {
+  return provider.catalog?.displayName || provider.displayName || provider.name;
+}
+
 function sortedProviderRows(providers: ProviderSkill[]): ProviderSkill[] {
-  const key = (p: ProviderSkill) => (p.provider.displayName || p.provider.name).toLowerCase();
+  const key = (p: ProviderSkill) => readmeName(p.provider).toLowerCase();
   return providers
     .filter(inReadme)
     .sort((a, b) => (key(a) === key(b) ? (a.skillDir < b.skillDir ? -1 : 1) : key(a) < key(b) ? -1 : 1));
@@ -180,7 +184,7 @@ function sortedProviderRows(providers: ProviderSkill[]): ProviderSkill[] {
 /** The generated README provider table (between the markers). */
 export function buildReadmeTable(rootDir: string = ROOT_DIR): string[] {
   const rows = sortedProviderRows(loadProviders(rootDir)).map(({ provider, skillDir }) => {
-    const name = provider.displayName || provider.name;
+    const name = readmeName(provider);
     const url = provider.catalog?.docsUrl || provider.docs?.webhooks;
     const providerCell = url ? `[${name}](${url})` : name;
     const summary = (provider.catalog?.summary ?? '').replace(/\s+/g, ' ').trim();

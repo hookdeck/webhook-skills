@@ -1,0 +1,19 @@
+name: azure-logic-apps
+displayName: Azure Logic Apps
+docs:
+  webhooks: https://learn.microsoft.com/en-us/azure/connectors/connectors-native-http
+  verification: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app
+notes: >
+  Covers receiving outbound calls from a Logic Apps (or Power Automate) HTTP action. No
+  signature. Use Basic authentication (base64 username:password in Authorization) or Raw
+  authentication / a custom header with a shared secret; verify with a constant-time
+  compare. Entra ID OAuth, managed identity and client certificate auth are out of scope for
+  a shared-secret check (mention them). Payload is whatever the workflow sends.
+testScenario:
+  events:
+    - workflow call
+  prompt: >
+    Add an endpoint to my {framework} app that receives HTTP action calls from an Azure
+    Logic App. Authenticate them with Basic authentication and handle the JSON payload.
+catalog:
+  summary: 'Receive calls from a Logic Apps or Power Automate HTTP action, which are **not signed**: authenticate with Basic auth (`Authorization: Basic base64(username:password)`), Raw authentication or a shared-secret header using a constant-time compare; no event types, the payload is whatever the workflow sends'

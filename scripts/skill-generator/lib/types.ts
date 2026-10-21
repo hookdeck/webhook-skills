@@ -66,6 +66,8 @@ export interface ProviderConfig {
 export interface CatalogConfig {
   /** README "What It Does" cell. Required unless `readme: false`. */
   summary?: string;
+  /** README provider name, when it should differ from displayName (e.g. "Telegram" vs "Telegram Bot API") */
+  displayName?: string;
   /** README provider link, when it should differ from docs.webhooks */
   docsUrl?: string;
   /** false = not in the generated provider table (listed in a hand-written README section) */

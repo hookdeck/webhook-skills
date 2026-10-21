@@ -1,0 +1,19 @@
+name: taskrabbit
+displayName: TaskRabbit
+docs:
+  webhooks: https://developer.taskrabbit.com/docs/webhooks-1
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+notes: >
+  TaskRabbit Partner API (requires partner onboarding). Webhooks are delivered via Svix;
+  endpoints and subscriptions are configured in the Svix Partner Dashboard. Verify with the
+  Svix library or manually: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+  "<id>.<timestamp>.<raw body>"; whsec_ secret unique per endpoint (format from Svix's guide,
+  TaskRabbit does not show one). Events include project.completed, project.canceled,
+  project.rescheduled.
+testScenario:
+  events:
+    - project.completed
+    - project.canceled
+catalog:
+  summary: Verify Taskrabbit Partner API webhooks delivered via Svix (`svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64, `whsec_` secret from the Svix Partner Dashboard), handle project.completed, project.canceled, and project.rescheduled events
+  displayName: Taskrabbit
