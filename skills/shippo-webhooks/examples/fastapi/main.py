@@ -15,8 +15,10 @@ load_dotenv()
 
 app = FastAPI()
 
-# Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default)
-TIMESTAMP_TOLERANCE_SECONDS = 300
+# Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default).
+# Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=0 to turn the check off, e.g. when retries or replays
+# arrive later than the window (Hookdeck re-delivers the original signature).
+TIMESTAMP_TOLERANCE_SECONDS = int(os.getenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", "300"))
 
 
 def verify_shippo_signature(raw_body: bytes, header: str, secret: str) -> Optional[str]:
@@ -40,7 +42,7 @@ def verify_shippo_signature(raw_body: bytes, header: str, secret: str) -> Option
         return "Malformed Shippo-Auth-Signature header"
 
     # Replay protection
-    if abs(int(time.time()) - int(timestamp)) > TIMESTAMP_TOLERANCE_SECONDS:
+    if TIMESTAMP_TOLERANCE_SECONDS > 0 and abs(int(time.time()) - int(timestamp)) > TIMESTAMP_TOLERANCE_SECONDS:
         return "Timestamp outside tolerance"
 
     signed_payload = f"{timestamp}.".encode() + raw_body

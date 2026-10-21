@@ -127,6 +127,12 @@ Shippo doesn't document a tolerance window. The examples reject timestamps more
 than **5 minutes** from the current time, a common default that still allows
 Shippo's two quick retries. Keep server clocks in sync (NTP).
 
+The window is set with `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` (default `300`; `0`
+turns the check off). Retries and replays carry the original timestamp, so a
+redelivery that arrives later than the window (for example a Hookdeck retry or
+manual replay) is rejected. Widen or disable the window if you rely on late
+redelivery.
+
 ## How to Debug Verification Failures
 
 1. Log the raw header and body length (never the secret).

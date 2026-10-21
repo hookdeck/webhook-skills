@@ -46,7 +46,7 @@ The tests sign payloads with Shippo's algorithm, `hex(HMAC-SHA256(secret, "{t}.{
 1. The handler reads the **raw** request body (`express.raw()`). It doesn't parse JSON before verifying.
 2. It parses `t` and `v1` from `Shippo-Auth-Signature: t=<timestamp>,v1=<hex>`.
 3. It computes `HMAC-SHA256(secret, "{t}.{body}")` as hex and compares it timing-safely.
-4. It rejects timestamps more than 5 minutes old. This is our default; Shippo doesn't document a window.
+4. It rejects timestamps more than 5 minutes old. This is our default; Shippo doesn't document a window. Set `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` to change it, or `0` to turn it off.
 
 Handled events: `track_updated`, `transaction_created`, `transaction_updated`, `batch_created`, `batch_purchased`, `automations_label_resolved`.
 

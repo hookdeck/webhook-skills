@@ -44,15 +44,19 @@ against the **raw** request body (don't `JSON.parse` first).
 ```javascript
 const crypto = require('crypto');
 
+// toleranceSec = 0 turns the replay check off (Shippo doesn't document a window)
 function verifyShippoSignature(rawBody, header, secret, toleranceSec = 300) {
-  const parts = header.split(',').map((p) => p.trim().split('='));
+  const parts = header.split(',').map((part) => {
+    const i = part.indexOf('=');
+    return i === -1 ? [part.trim(), ''] : [part.slice(0, i).trim(), part.slice(i + 1).trim()];
+  });
   const t = parts.find(([k]) => k === 't')?.[1];
   const sigs = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
-  if (!t || sigs.length === 0) return false;
-  // Replay protection (our recommendation; Shippo doesn't document a tolerance)
-  if (Math.abs(Date.now() / 1000 - Number(t)) > toleranceSec) return false;
+  if (!t || !/^\d+$/.test(t) || sigs.length === 0) return false;
+  const age = Math.abs(Math.floor(Date.now() / 1000) - Number(t));
+  if (toleranceSec > 0 && age > toleranceSec) return false;
   const expected = crypto.createHmac('sha256', secret)
-    .update(`${t}.${rawBody}`).digest('hex');
+    .update(`${t}.`).update(rawBody).digest('hex');
   return sigs.some((sig) => sig.length === expected.length &&
     crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)));
 }

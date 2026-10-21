@@ -8,8 +8,10 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default)
-const TIMESTAMP_TOLERANCE_SECONDS = 300;
+// Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default).
+// Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=0 to turn the check off, e.g. when retries or replays
+// arrive later than the window (Hookdeck re-delivers the original signature).
+const TIMESTAMP_TOLERANCE_SECONDS = Number(process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS ?? 300);
 
 /**
  * Verify the Shippo-Auth-Signature header.
@@ -30,7 +32,7 @@ function verifyShippoSignature(rawBody, header, secret) {
 
   // Replay protection
   const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
-  if (age > TIMESTAMP_TOLERANCE_SECONDS) {
+  if (TIMESTAMP_TOLERANCE_SECONDS > 0 && age > TIMESTAMP_TOLERANCE_SECONDS) {
     return { valid: false, error: 'Timestamp outside tolerance' };
   }
 
