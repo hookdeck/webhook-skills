@@ -1,0 +1,73 @@
+# Brevo Webhooks - Next.js Example
+
+Minimal example of receiving Brevo (formerly Sendinblue) webhooks with
+authentication and event handling.
+
+> **Brevo does not sign webhook payloads.** There is no signature header to
+> verify. Instead, this example checks the `Authorization` header that Brevo
+> sends when the webhook is created with Basic auth credentials in the URL or
+> with a bearer token, comparing credentials timing-safe. Add Brevo's IP
+> allowlist at your firewall or proxy for defense in depth.
+
+## Prerequisites
+
+- Node.js 20+
+- Brevo account with access to webhooks (Transactional or Marketing)
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set the credentials that match your Brevo webhook:
+   - **Basic auth**: `BREVO_WEBHOOK_USERNAME` and `BREVO_WEBHOOK_PASSWORD`, and create the
+     webhook with URL `https://username:password@your-domain.com/webhooks/brevo`
+   - **Bearer token**: `BREVO_WEBHOOK_TOKEN`, and create the webhook with
+     `"auth": {"type": "bearer", "token": "<token>"}`
+
+   If neither is set, the endpoint returns `500` (fails closed).
+
+## Run
+
+```bash
+npm run dev
+```
+
+Server runs on http://localhost:3000
+
+## Test
+
+Run the unit tests:
+
+```bash
+npm test
+```
+
+### Receive webhooks locally
+
+```bash
+npx hookdeck-cli listen 3000 brevo --path /webhooks/brevo
+```
+
+Use the Hookdeck URL as your Brevo notify URL (add `username:password@` after
+`https://` for Basic auth), then send a transactional email to trigger events.
+
+Send a request manually:
+
+```bash
+curl -X POST http://localhost:3000/webhooks/brevo \
+  -u "your_webhook_username:your_webhook_password" \
+  -H "Content-Type: application/json" \
+  -d '{"event":"delivered","email":"example@domain.com","id":26224,"message-id":"<abc@domain.com>","ts_event":1604933654}'
+```
+
+## Endpoint
+
+- `POST /webhooks/brevo` (`app/webhooks/brevo/route.ts`) - Authenticates the request, accepts single or batched events, dispatches on `event`

@@ -1,0 +1,6 @@
+fastapi>=0.156.5
+uvicorn>=0.54.0
+standardwebhooks>=1.1.0
+python-dotenv>=1.2.4
+pytest>=9.1.1
+httpx>=0.28.1

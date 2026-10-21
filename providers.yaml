@@ -7710,6 +7710,7 @@ providers:
     docs:
       webhooks: https://developers.pleo.io/reference/webhooks/overview-webhooks
       verification: https://developers.pleo.io/reference/webhooks/webhooks-authentication-authorisation
+      events: https://developers.pleo.io/reference/webhooks/webhook-events
     notes: >
       Spend management. Pleo delivers through Svix with Standard Webhooks headers webhook-id,
       webhook-timestamp, webhook-signature ("v1,<base64>", space-delimited). Pleo's own docs do
@@ -7728,12 +7729,22 @@ providers:
     docs:
       webhooks: https://docs.browserbase.com/platform/webhooks/overview
       verification: https://docs.browserbase.com/platform/webhooks/verifying-deliveries
+      setup: https://docs.browserbase.com/platform/webhooks/registering-endpoints
+      events: https://docs.browserbase.com/platform/webhooks/overview#event-types
     notes: >
-      Headless browser platform. Deliveries follow the Standard Webhooks spec: webhook-id,
-      webhook-timestamp, webhook-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>"
-      with the whsec_ signing secret (shown only on create or rotate, dashboard or API). Retries
-      if no 2xx within 15 seconds. Events include functions.invocations.completed,
-      functions.invocations.failed, functions.builds.completed.
+      Headless browser platform. Docs are Mintlify (append .md to any page). Deliveries
+      follow the Standard Webhooks spec: webhook-id, webhook-timestamp, webhook-signature;
+      HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>" with the whsec_ signing secret
+      (shown only on create or rotate, dashboard or API; POST /v1/webhooks with X-BB-API-Key).
+      Docs recommend the standardwebhooks npm/pip library; no Browserbase-specific verify
+      helper. Rotation keeps the previous secret verifying 24h unless revokeImmediately.
+      Envelope {id, type, resourceId, data}; id stable across retries (dedupe key); keys
+      additive; per-type data fields undocumented. Retries if no 2xx within 15 seconds
+      (immediately, 5s, 5m, 30m, 2h, 5h, 10h, 10h; 8 attempts); 3xx is a failure; endpoint
+      disabled after 5 days of failures; unordered. Events: functions.invocations.pending,
+      functions.invocations.running, functions.invocations.completed,
+      functions.invocations.failed, functions.builds.running, functions.builds.completed,
+      functions.builds.failed.
     testScenario:
       events:
         - functions.invocations.completed
@@ -7883,6 +7894,7 @@ providers:
     docs:
       webhooks: https://docs.loop.com/developers/webhooks
       verification: https://docs.loop.com/developers/webhooks#webhook-signature-verification
+      events: https://docs.loop.com/developers/webhook-event-types
     notes: >
       Loop (loop.com), freight audit and logistics payments. Webhooks are delivered by Svix:
       svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw
