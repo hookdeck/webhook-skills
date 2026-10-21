@@ -1,0 +1,171 @@
+// Generated with: daytona-webhooks skill
+// https://github.com/hookdeck/webhook-skills
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import crypto from 'crypto';
+import { POST } from '../app/webhooks/daytona/route';
+
+// Svix secrets are "whsec_" + base64(key bytes). The HMAC key is the
+// base64-DECODED part after "whsec_".
+const SECRET = 'whsec_' + Buffer.from('daytona-test-signing-key-0123456').toString('base64');
+const OTHER_SECRET = 'whsec_' + Buffer.from('some-other-endpoint-signing-key0').toString('base64');
+
+process.env.DAYTONA_WEBHOOK_SECRET = SECRET;
+
+/** Sign like Svix: HMAC-SHA256 over `${id}.${timestamp}.${body}`, base64. */
+function sign(rawBody: string, id: string, timestamp: string, secret = SECRET): string {
+  const key = Buffer.from(secret.slice('whsec_'.length), 'base64');
+  const sig = crypto.createHmac('sha256', key).update(`${id}.${timestamp}.${rawBody}`).digest('base64');
+  return `v1,${sig}`;
+}
+
+const now = () => Math.floor(Date.now() / 1000);
+
+interface SignOptions {
+  id?: string;
+  timestamp?: number | string;
+  secret?: string;
+  signature?: string;
+}
+
+function signedHeaders(rawBody: string, opts: SignOptions = {}): Record<string, string> {
+  const id = opts.id || `msg_${crypto.randomUUID().replace(/-/g, '')}`;
+  const ts = String(opts.timestamp ?? now());
+  return {
+    'Content-Type': 'application/json',
+    'svix-id': id,
+    'svix-timestamp': ts,
+    'svix-signature': opts.signature ?? sign(rawBody, id, ts, opts.secret),
+  };
+}
+
+async function post(rawBody: string, headers: Record<string, string>) {
+  const res = await POST(
+    new Request('http://localhost:3000/webhooks/daytona', { method: 'POST', headers, body: rawBody })
+  );
+  return { status: res.status, body: await res.json() };
+}
+
+const TS = '2025-12-19T10:30:00.000Z';
+const events: Record<string, Record<string, string>> = {
+  'sandbox.created': { id: 'sandbox123', organizationId: 'org123', state: 'started', sandboxClass: 'container', createdAt: TS },
+  'sandbox.state.updated': { id: 'sandbox123', organizationId: 'org123', oldState: 'started', newState: 'stopped', updatedAt: TS },
+  'snapshot.created': { id: 'snapshot123', name: 'my-snapshot', organizationId: 'org123', state: 'active', createdAt: TS },
+  'snapshot.state.updated': { id: 'snapshot123', name: 'my-snapshot', organizationId: 'org123', oldState: 'building', newState: 'active', updatedAt: TS },
+  'snapshot.removed': { id: 'snapshot123', name: 'my-snapshot', organizationId: 'org123', removedAt: TS },
+  'volume.created': { id: 'vol-12345678', name: 'my-volume', organizationId: 'org123', state: 'ready', createdAt: TS },
+  'volume.state.updated': { id: 'vol-12345678', name: 'my-volume', organizationId: 'org123', oldState: 'creating', newState: 'ready', updatedAt: TS },
+};
+
+const body = (event: string) => JSON.stringify({ event, timestamp: TS, ...events[event] });
+
+describe('Daytona webhook handler', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('valid signatures', () => {
+    it.each(Object.keys(events))('accepts %s', async (event) => {
+      const raw = body(event);
+      const res = await post(raw, signedHeaders(raw));
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ received: true });
+      expect(logSpy).toHaveBeenCalled();
+    });
+
+    it('accepts when one of several space-delimited signatures matches', async () => {
+      const raw = body('sandbox.created');
+      const id = 'msg_multi';
+      const ts = String(now());
+      const signature = `v1,${Buffer.from('bogus').toString('base64')} ${sign(raw, id, ts)}`;
+      const res = await post(raw, signedHeaders(raw, { id, timestamp: ts, signature }));
+      expect(res.status).toBe(200);
+    });
+
+    it('logs unhandled event types without failing', async () => {
+      const raw = JSON.stringify({ event: 'sandbox.deleted', timestamp: TS });
+      const res = await post(raw, signedHeaders(raw));
+      expect(res.status).toBe(200);
+      expect(logSpy).toHaveBeenCalledWith('Unhandled Daytona event: sandbox.deleted');
+    });
+  });
+
+  describe('invalid requests', () => {
+    it('rejects a signature from the wrong secret', async () => {
+      const raw = body('sandbox.created');
+      const res = await post(raw, signedHeaders(raw, { secret: OTHER_SECRET }));
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects a tampered body', async () => {
+      const raw = body('sandbox.created');
+      const headers = signedHeaders(raw);
+      const res = await post(raw.replace('sandbox123', 'sandbox999'), headers);
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects a body that was re-serialised (pretty-printed)', async () => {
+      const raw = body('sandbox.created');
+      const headers = signedHeaders(raw);
+      const res = await post(JSON.stringify(JSON.parse(raw), null, 2), headers);
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects an old timestamp', async () => {
+      const raw = body('sandbox.created');
+      const res = await post(raw, signedHeaders(raw, { timestamp: now() - 3600 }));
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects a malformed signature', async () => {
+      const raw = body('sandbox.created');
+      const res = await post(raw, signedHeaders(raw, { signature: 'v1,not-a-real-signature' }));
+      expect(res.status).toBe(400);
+    });
+
+    it.each(['svix-id', 'svix-timestamp', 'svix-signature'])('rejects a missing %s header', async (name) => {
+      const raw = body('sandbox.created');
+      const headers = signedHeaders(raw);
+      delete headers[name];
+      const res = await post(raw, headers);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/Missing/);
+    });
+  });
+
+  describe('deduplication', () => {
+    it('acknowledges a repeated svix-id without reprocessing', async () => {
+      const raw = body('snapshot.created');
+      const headers = signedHeaders(raw, { id: 'msg_dupe_1' });
+      const first = await post(raw, headers);
+      expect(first.body).toEqual({ received: true });
+      logSpy.mockClear();
+      const second = await post(raw, headers);
+      expect(second.status).toBe(200);
+      expect(second.body).toEqual({ received: true, duplicate: true });
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('configuration', () => {
+    it('fails closed when the secret is not configured', async () => {
+      const raw = body('sandbox.created');
+      const headers = signedHeaders(raw);
+      delete process.env.DAYTONA_WEBHOOK_SECRET;
+      try {
+        const res = await post(raw, headers);
+        expect(res.status).toBe(500);
+      } finally {
+        process.env.DAYTONA_WEBHOOK_SECRET = SECRET;
+      }
+    });
+  });
+
+});

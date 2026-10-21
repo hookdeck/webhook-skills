@@ -8518,11 +8518,12 @@ providers:
       Unified commerce/accounting API. X-Rutter-Signature = "sha256=" + base64 HMAC-SHA256 of the raw
       payload keyed with the organization's client secret (raw string). X-Rutter-Signatures is a
       comma-separated list of all active signatures (two during secret rotation). Payload has type
-      and code (e.g. CONNECTION INITIAL_UPDATE, CONNECTION DISCONNECTED, ORDER ORDER_CREATED).
+      and code (e.g. CONNECTION INITIAL_UPDATE, CONNECTION CONNECTION_NEEDS_UPDATE, ORDER
+      ORDER_CREATED, INVOICE INVOICE_UPDATED); route on code.
     testScenario:
       events:
         - INITIAL_UPDATE
-        - DISCONNECTED
+        - CONNECTION_NEEDS_UPDATE
 
   - name: bolt
     displayName: Bolt
@@ -8547,8 +8548,8 @@ providers:
     notes: >
       Fastly Next-Gen WAF (formerly Signal Sciences) generic webhook integration. X-SigSci-Signature =
       hex HMAC-SHA256 of the raw JSON body keyed with the signing key generated for the integration
-      (Reveal/Rotate in the console; raw string). No timestamp. Payload has type (e.g. flag,
-      agentAlert, newSite, enableSite, siteMemberInvite) and payload.
+      (Reveal/Rotate in the console; raw string). No timestamp. Payload has created, type (activity
+      type, e.g. flag, expireFlag, agentAlert, loggingModeChanged, ruleCreated) and payload.
     testScenario:
       events:
         - flag
@@ -8580,12 +8581,12 @@ providers:
       Call tracking. Header Signature = base64 HMAC-SHA1 of the raw request payload keyed with the
       company's signing token (Webhooks configuration page; raw string). Docs test vector: key
       072e77e426f92738a72fe23c4d1953b4 over the docs' JSON body gives UZAHbUdfm3GqL7qzilGozGzWV64=.
-      Replay protection is a timestamp field inside the body. Webhook types: pre-call, post-call,
-      call modified, text message sent/received, form submission.
+      Replay protection is a timestamp field inside the body. Webhook types: pre_call, post_call,
+      call_modified, sms_received, sms_sent, form_captured.
     testScenario:
       events:
         - post_call
-        - text_message_received
+        - sms_received
 
   - name: lemon-squeezy
     displayName: Lemon Squeezy
@@ -8626,12 +8627,12 @@ providers:
       verification: https://docs.castle.io/docs/webhooks#check-the-signature
     notes: >
       Fraud/account security. X-Castle-Signature = base64 HMAC-SHA256 of the raw JSON body keyed with
-      the account's API secret (not a per-webhook secret). Payload has type, e.g. $review.opened,
-      $review.escalated, $incident.confirmed, $profile.updated.
+      the account's API secret (not a per-webhook secret). Payload has type: $policy.matched,
+      $list_item.created, $list_item.archived, $list_item.unarchived.
     testScenario:
       events:
-        - $review.opened
-        - $incident.confirmed
+        - $policy.matched
+        - $list_item.created
 
   - name: hibob
     displayName: HiBob
@@ -8689,7 +8690,7 @@ providers:
       via the REST API. X-Fivetran-Signature-256 = HMAC-SHA256 hex of the raw body keyed with the
       secret (raw string); the official example compares uppercase hex, so compare
       case-insensitively. Webhook creation/activation sends one test POST that needs a 2xx. Events:
-      sync_start, sync_end, status, connection_successful, connection_failure, transformation_run_succeeded.
+      sync_start, sync_end, status, connection_successful, connection_failure, transformation_succeeded.
     testScenario:
       events:
         - sync_end
@@ -8803,12 +8804,12 @@ providers:
       Powered by Gopuff partner API. Endpoints are registered in the Svix App Portal, so webhooks are
       Svix-signed: svix-id, svix-timestamp, svix-signature; signed content
       "{id}.{timestamp}.{raw body}", HMAC-SHA256 with the base64-decoded whsec_ secret. Gopuff's
-      pages have no signature section; say the scheme comes from Svix. Check the docs for event
-      names (order lifecycle events).
+      pages have no signature section; say the scheme comes from Svix. Event types: order.status.v2
+      (recommended), order.status (legacy), order.delivered.
     testScenario:
       events:
-        - order.created
-        - order.updated
+        - order.status.v2
+        - order.delivered
 
   - name: whop
     displayName: Whop
@@ -8845,24 +8846,6 @@ providers:
       prompt: >
         Add an endpoint to my {framework} app that receives Cloudflare Notifications webhooks.
         Authenticate them with the cf-webhook-auth secret and handle the alert payload.
-
-  - name: snowflake
-    displayName: Snowflake
-    docs:
-      webhooks: https://docs.snowflake.com/en/user-guide/notifications/webhook-notifications
-      verification: https://docs.snowflake.com/en/sql-reference/sql/create-notification-integration-webhooks
-    notes: >
-      Snowflake webhook notification integrations (CREATE NOTIFICATION INTEGRATION TYPE=WEBHOOK, sent
-      with SYSTEM$SEND_SNOWFLAKE_NOTIFICATION). No signature: you define WEBHOOK_HEADERS and use the
-      SNOWFLAKE_WEBHOOK_SECRET placeholder in a header value (e.g. 'X-Webhook-Secret' =
-      'SNOWFLAKE_WEBHOOK_SECRET'). Verify that header with a constant-time compare. The body is the
-      user's WEBHOOK_BODY_TEMPLATE (SNOWFLAKE_WEBHOOK_MESSAGE placeholder).
-    testScenario:
-      events:
-        - notification
-      prompt: >
-        Add an endpoint to my {framework} app that receives Snowflake webhook notifications.
-        Authenticate them with a shared secret header and handle the JSON payload.
 
   - name: marketo
     displayName: Marketo
@@ -8937,11 +8920,12 @@ providers:
     notes: >
       B2B data. No signature. ZoomInfo generates a verification token when the webhook is created
       (can be regenerated) and sends it in the x-zoominfo-token header; compare it constant-time. The
-      Validate step posts a sample payload before the token exists. Payloads are record change
-      events (contact/company create/update/delete).
+      Validate step posts a sample payload before the token exists. Subscriptions are object type
+      (Contact, Company) plus event type; Update is the only supported event type.
     testScenario:
       events:
         - contact update
+        - company update
       prompt: >
         Add an endpoint to my {framework} app that receives ZoomInfo webhooks. Verify the
         x-zoominfo-token header and handle the payload.
@@ -9008,21 +8992,6 @@ providers:
       events:
         - jobs.on_success
         - jobs.on_failure
-
-  - name: mixpanel
-    displayName: Mixpanel
-    docs:
-      webhooks: https://docs.mixpanel.com/docs/cohort-sync/webhooks
-      verification: https://docs.mixpanel.com/docs/cohort-sync/webhooks
-    notes: >
-      Cohort sync webhooks. No signature; optionally enable Basic Authentication for the webhook
-      connection, decode Authorization: Basic and compare constant-time. Payload has action
-      (members, add_members, remove_members) and parameters (mixpanel_cohort_id, members, ...). Real
-      Time Event Streams (private beta) use a custom header or Bearer token instead; mention only.
-    testScenario:
-      events:
-        - add_members
-        - remove_members
 
   - name: appsflyer
     displayName: AppsFlyer

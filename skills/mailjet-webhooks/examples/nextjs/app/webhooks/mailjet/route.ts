@@ -1,0 +1,93 @@
+// Generated with: mailjet-webhooks skill
+// https://github.com/hookdeck/webhook-skills
+import { createHash, timingSafeEqual } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+
+// Compare via SHA-256 digests so unequal lengths don't throw or leak length
+function safeEqual(a: string, b: string): boolean {
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
+
+// Mailjet has no signature: it sends the user:pass from the webhook URL
+// as an `Authorization: Basic ...` header.
+function verifyBasicAuth(header: string | null, username: string, password: string): boolean {
+  if (!header || !/^Basic /i.test(header)) return false;
+
+  const decoded = Buffer.from(header.slice(6).trim(), 'base64').toString('utf8');
+  const idx = decoded.indexOf(':'); // password may itself contain ':'
+  if (idx < 0) return false;
+
+  // Evaluate both comparisons (no short-circuit) so timing doesn't reveal which failed
+  const userOk = safeEqual(decoded.slice(0, idx), username);
+  const passOk = safeEqual(decoded.slice(idx + 1), password);
+  return userOk && passOk;
+}
+
+type MailjetEvent = { event: string; email?: string; [key: string]: unknown };
+
+function handleEvent(event: MailjetEvent) {
+  switch (event.event) {
+    case 'sent':
+      console.log(`Sent to ${event.email}: ${event.smtp_reply}`);
+      break;
+    case 'open':
+      console.log(`Opened by ${event.email}`);
+      break;
+    case 'click':
+      console.log(`Clicked ${event.url} by ${event.email}`);
+      break;
+    case 'bounce':
+      // hard_bounce=true means a permanent failure
+      console.log(`Bounce (${event.hard_bounce ? 'hard' : 'soft'}) for ${event.email}: ${event.error}`);
+      break;
+    case 'blocked':
+      console.log(`Blocked for ${event.email}: ${event.error}`);
+      break;
+    case 'spam':
+      console.log(`Spam complaint from ${event.email} (source: ${event.source})`);
+      break;
+    case 'unsub':
+      console.log(`Unsubscribed ${event.email} from list ${event.mj_list_id}`);
+      break;
+    default:
+      console.log(`Unhandled Mailjet event: ${event.event}`);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const username = process.env.MAILJET_WEBHOOK_USERNAME;
+  const password = process.env.MAILJET_WEBHOOK_PASSWORD;
+  if (!username || !password) {
+    console.error('MAILJET_WEBHOOK_USERNAME / MAILJET_WEBHOOK_PASSWORD not set');
+    return NextResponse.json({ error: 'Webhook credentials not configured' }, { status: 500 });
+  }
+
+  if (!verifyBasicAuth(request.headers.get('authorization'), username, password)) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="mailjet"' } }
+    );
+  }
+
+  // Read the raw text, then parse after authenticating
+  let payload: unknown;
+  try {
+    payload = JSON.parse(await request.text());
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  // With grouped events (version 2) Mailjet posts an array; otherwise one object
+  const events = Array.isArray(payload) ? payload : [payload];
+  const valid = events.every(
+    (e) => e && typeof e === 'object' && typeof (e as MailjetEvent).event === 'string'
+  );
+  if (!valid) {
+    return NextResponse.json({ error: 'Invalid event payload' }, { status: 400 });
+  }
+
+  (events as MailjetEvent[]).forEach(handleEvent);
+  return NextResponse.json({ received: events.length }, { status: 200 });
+}
