@@ -1,0 +1,41 @@
+name: revolut
+displayName: Revolut
+docs:
+  webhooks: https://developer.revolut.com/docs/guides/merchant/monitor-and-observe/webhooks/using-webhooks
+  verification: https://developer.revolut.com/docs/guides/merchant/monitor-and-observe/webhooks/verify-the-payload-signature
+  events: https://developer.revolut.com/docs/merchant/create-webhook
+notes: >
+  Verification: HMAC-SHA256, hex-encoded, sent in Revolut-Signature header as
+  "v1=<hex>"; signed payload is "v1.{Revolut-Request-Timestamp}.{raw body}"
+  (period-separated), keyed with the webhook signing secret (wsk_... prefix,
+  returned on webhook creation/retrieval, rotatable via
+  POST .../webhooks/{webhook_id}/rotate-signing-secret). Revolut-Signature may
+  contain multiple comma-separated signatures during rotation — accept if any
+  matches. Docs recommend a 5-minute timestamp tolerance vs UTC; NOTE the timestamp
+  example (1683650202360) is milliseconds though docs say "UNIX timestamp". Does NOT
+  follow the Standard Webhooks spec. Webhooks are configured via API only (Merchant
+  API webhooks endpoints with Revolut-Api-Version header; legacy POST
+  /api/1.0/webhooks deprecated; max 10 webhook URLs). Hosts: merchant.revolut.com
+  (prod) / sandbox-merchant.revolut.com (sandbox); source IPs documented (prod
+  35.246.21.235, 34.89.70.170; sandbox 35.242.130.242, 35.242.162.241). Retries: 3
+  more attempts at 10-minute intervals. Business API has a separate webhook system
+  using the same v1 signature scheme. Use the raw request body — re-serialized JSON
+  breaks verification. No official npm/pip SDK with webhook helpers
+  (@revolut/checkout is a frontend widget). Events: the authoritative list is the
+  "events" enum on the Create/Update a webhook operations — 23 types across Order
+  (7), Payment (5), Subscription (4), Payout (3), Dispute (4); names only, no
+  per-event trigger descriptions or payload schemas for the subscription/payout/
+  dispute families. DOC SURFACE: developer.revolut.com now runs Revpress and
+  bot-walls (403) its HTML guide pages, and the API reference is a SPA whose
+  per-operation enums are NOT in a render of /docs/api/merchant — fetch the
+  generated markdown twin instead, e.g.
+  /docs/api/merchant/operations/create-webhook.md (verified live 2026-10-19,
+  last-modified 2026-10-12). The HTML route for that same path 404s; the
+  human-facing page is /docs/merchant/create-webhook.
+testScenario:
+  events:
+    - ORDER_COMPLETED
+    - ORDER_AUTHORISED
+    - ORDER_PAYMENT_DECLINED
+catalog:
+  summary: Verify Revolut Merchant API webhook signatures (`Revolut-Signature`, HMAC-SHA256 over v1.{timestamp}.{body}), handle order events

@@ -1,0 +1,18 @@
+name: nango
+displayName: Nango
+docs:
+  webhooks: https://nango.dev/docs/guides/platform/webhooks-from-nango
+  verification: https://nango.dev/docs/guides/platform/webhooks-from-nango
+notes: >
+  Unified API / integrations platform. Header X-Nango-Hmac-Sha256 = HMAC-SHA256 of the raw
+  request body, hex, keyed with the webhook signing key (Environment Settings > Webhooks >
+  Signing key; NOT the environment API key), used as a raw UTF-8 string. A legacy
+  X-Nango-Signature header (plain SHA-256) is still sent; ignore it. On key rotation Nango may
+  sign with the old or new key for up to 5 minutes. Webhook types: auth (connection
+  created/failed), sync (sync completed/failed), forward (forwarded provider webhooks).
+testScenario:
+  events:
+    - auth
+    - sync
+catalog:
+  summary: 'Verify Nango integrations-platform webhooks (`X-Nango-Hmac-Sha256`: hex HMAC-SHA256 of the raw body, keyed with the environment webhook signing key, not the API key) with the `@nangohq/node` SDK or manually, and handle `auth` (connection creation, override, refresh, deletion), `sync`, `forward` and `async_action` webhooks'

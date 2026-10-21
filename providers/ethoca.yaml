@@ -1,0 +1,41 @@
+name: ethoca
+displayName: Ethoca
+docs:
+  webhooks: https://developer.mastercard.com/ethoca-alerts-for-merchants/documentation/api-reference/push-api-ref/
+  verification: https://developer.mastercard.com/ethoca-alerts-for-merchants/documentation/api-basics/
+notes: >
+  Ethoca (a Mastercard company) delivers early fraud and dispute Alerts to merchants. The
+  Alerts Push API HTTPS-POSTs JSON to an endpoint registered MANUALLY by the Ethoca Customer
+  Delivery Team (no self-serve UI); a legacy pull/queue model also exists. CRITICAL: there is
+  NO per-message HMAC/signature header on Push API alerts — do NOT invent an X-Ethoca-Signature
+  and this is NOT Standard Webhooks. Trust is established by (1) mutual TLS / MSSL — Ethoca
+  presents a client certificate chaining to the Entrust CA, enforced at the TLS terminator /
+  load balancer — and (2) HTTP Basic Auth: Ethoca sends Authorization: Basic
+  base64(username:password) on every POST using credentials agreed during onboarding. An IP
+  allowlist of Ethoca egress ranges is a recommended third layer. The handler verifies the Basic
+  Auth credentials with a timing-safe comparison (split the decoded value on the FIRST colon —
+  passwords may contain ':'); there is no body signature, so ordinary JSON parsing is safe.
+  Set ETHOCA_WEBHOOK_USERNAME and ETHOCA_WEBHOOK_PASSWORD. Two alert categories carried in the
+  `alertType` field: fraud and dispute — the exact literal enum values are NOT published publicly
+  and have historically been numeric, so normalize (e.g. {"1":"fraud","2":"dispute"}) against the
+  onboarding schema. Respond 200 to acknowledge; report outcomes separately via the OUTBOUND
+  Outcome API, which uses OAuth 1.0a signed with a PKCS#12 (.p12) keystore and the
+  mastercard-oauth1-signer helper (npm + pip) — a different scheme from the inbound Basic Auth.
+  Do NOT conflate with the sibling product Ethoca Consumer Clarity, which uses an
+  "Authorization: ETHOCA-SHA1 KeyRef=<id>,Signature=<base64url>" HMAC header. No Ethoca-specific
+  webhook SDK exists.
+testScenario:
+  events:
+    - fraud
+    - dispute
+  prompt: >
+    Create a {framework} webhook handler for Ethoca (Mastercard) Alerts Push API. There is NO
+    HMAC/signature header — authenticate each delivery by verifying the HTTP Basic Auth
+    credentials (Authorization: Basic base64(username:password)) with a timing-safe comparison,
+    splitting the decoded value on the first colon, and return 401 on failure. Note in comments
+    that transport security is mutual TLS (MSSL, Entrust CA) configured at the load balancer.
+    Parse the JSON alert and dispatch on `alertType` for the fraud and dispute categories,
+    returning 200 to acknowledge. If you use any skills to help with this, add a comment noting
+    which skill(s) you referenced.
+catalog:
+  summary: Receive Ethoca (Mastercard) Alerts Push API webhooks — no HMAC signature; authenticity is mutual TLS (MSSL, Entrust CA) plus HTTP Basic Auth — dispatch fraud and dispute alerts on `alertType`

@@ -1,0 +1,19 @@
+name: zapier
+displayName: Zapier
+docs:
+  webhooks: https://help.zapier.com/hc/en-us/articles/8496326446989-Send-webhooks-in-Zaps
+  verification: https://help.zapier.com/hc/en-us/articles/8496326446989-Send-webhooks-in-Zaps
+notes: >
+  Covers receiving requests from the "Webhooks by Zapier" action (POST/PUT/Custom Request).
+  No signature: add a custom header (e.g. X-Webhook-Secret) in the Headers section, or use the
+  Basic Auth field (user|password); verify with a constant-time compare. Payload is
+  user-defined (form or JSON). Mention briefly that Zapier white-label connection webhooks
+  are a separate product signed with Standard Webhooks (webhook-* headers, whsec_ secret).
+testScenario:
+  events:
+    - zap action
+  prompt: >
+    Add an endpoint to my {framework} app that receives requests from a Webhooks by Zapier
+    action. Authenticate them with a shared secret header and handle the JSON payload.
+catalog:
+  summary: Receive requests from the Webhooks by Zapier action (POST, PUT, Custom Request) — no signature; authenticate with an `X-Webhook-Secret` header or Basic Auth compared in constant time, and parse the user-defined Form, JSON or raw payload

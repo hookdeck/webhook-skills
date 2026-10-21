@@ -1,0 +1,28 @@
+name: shipstation
+displayName: ShipStation
+docs:
+  webhooks: https://help.shipstation.com/hc/en-us/articles/360025856252-ShipStation-Webhooks
+  verification: https://www.shipengine.com/docs/webhooks/#validating-webhooks
+notes: >
+  ShipStation V1 webhooks (ssapi.shipstation.com) send THIN payloads: just
+  resource_url + resource_type; you must GET the resource_url with Basic auth (API
+  key/secret) to fetch data, subject to the V1 rate limit of 40 req/min per key
+  (429 + X-Rate-Limit-Reset). V1 offers NO signature verification (no secret/HMAC)
+  — endpoint URL secrecy plus fetching via the authed resource_url is the trust
+  model. Not Standard Webhooks. Subscribe via POST /webhooks/subscribe (target_url,
+  event, optional store_id, friendly_name) or UI (Settings > Integrations >
+  Webhooks). V1 events (complete list of 6): ORDER_NOTIFY, ITEM_ORDER_NOTIFY,
+  SHIP_NOTIFY, ITEM_SHIP_NOTIFY, FULFILLMENT_SHIPPED, FULFILLMENT_REJECTED. V1
+  retry behavior is undocumented. The newer ShipStation API V2
+  (docs.shipstation.com, api.shipstation.com/v2) is ShipEngine-based: different
+  events (batch, track, rate, report_complete...) and RSA-SHA256 signature headers
+  (x-shipengine-rsa-sha256-key-id/-signature, x-shipengine-timestamp, JWKS at
+  https://api.shipengine.com/jwks); ShipEngine retries 2x ~30 min apart after a 10s
+  ack window. Skill should target V1 (the Hookdeck source) and note V2. No official
+  npm/pip SDKs (shipengine packages target ShipEngine).
+testScenario:
+  events:
+    - ORDER_NOTIFY
+    - SHIP_NOTIFY
+catalog:
+  summary: Handle ShipStation V1 thin-payload webhooks (fetch resource_url with Basic auth), cover ORDER_NOTIFY and SHIP_NOTIFY events

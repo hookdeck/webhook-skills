@@ -1,0 +1,28 @@
+name: tiktok-shop
+displayName: TikTok Shop
+docs:
+  webhooks: https://partner.tiktokshop.com/docv2/page/tts-webhooks-overview
+  verification: https://partner.tiktokshop.com/docv2/page/configuration-guide
+notes: >
+  Signature arrives in the HTTP Authorization header (no "Bearer" prefix) as a
+  lowercase-hex HMAC-SHA256: sign base = app_key + raw_request_body, key = app_secret.
+  Verify against the raw body exactly as received; this scheme is distinct from TikTok
+  Shop's API request signing and does NOT follow the Standard Webhooks spec (no
+  timestamp in the signature, so no replay protection). Configure per shop in Partner
+  Center (App & Service > app > Basic Information > Developing > Webhook URL / Event
+  subscriptions) or via Events API PUT/GET/DELETE
+  https://open-api.tiktokglobalshop.com/event/202309/webhooks. Endpoint must be HTTPS on
+  a domain (no IP, no custom port), TLS 1.2+, and return HTTP 200 with empty body within
+  3 seconds; 401 signals rejected signature. Delivery is at-least-once with 4 retries
+  after failure (2 min, 30 min, 3 h, 12 h) then gives up — dedupe on
+  tts_notification_id; docs recommend polling reconciliation. Payload metadata: type
+  (numeric — unreliable, branch on subscribed event_type instead), tts_notification_id,
+  shop_id, timestamp, data. NOTE: partner docs are a client-side React app — plain HTTP
+  fetches get an empty shell; use a JS-rendering browser.
+testScenario:
+  events:
+    - ORDER_STATUS_CHANGE
+    - PACKAGE_UPDATE
+    - PRODUCT_STATUS_CHANGE
+catalog:
+  summary: Verify TikTok Shop webhook signatures (`Authorization` header, HMAC-SHA256 over app_key + body), handle order, package, and product events

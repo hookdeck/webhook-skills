@@ -1,0 +1,40 @@
+name: volume
+displayName: Volume
+docs:
+  webhooks: https://docs.getvolume.com/payments/payment-resources/webhooks
+  verification: https://docs.getvolume.com/payments/payment-resources/webhooks
+  reference_consumer: https://github.com/getvolume/volume-webhook-node-consumer
+notes: |
+  IDENTITY — Volume (getvolume.com, API host volumepay.io), the UK open
+  banking pay-by-bank payments provider. NOT a crypto/trading "volume",
+  not Volume.com, not an audio product. Hookdeck source type VOLUME.
+
+  VERIFICATION — asymmetric RSA, NOT HMAC; there is no shared secret.
+  Header `Authorization: SHA256withRSA <standard base64 signature>`.
+  RSA PKCS#1 v1.5 + SHA-256 (Java SHA256withRSA) over the RAW body bytes,
+  nothing else signed. PSS rejects every real delivery. Public key (RSA-2048,
+  served as bare base64 SPKI with no BEGIN/END lines):
+    sandbox: https://api.sandbox.volumepay.io/.well-known/signature/pem
+    live:    https://api.volumepay.io/.well-known/signature/pem
+  Cache the key (~1h), fail closed when it can't be fetched.
+  Verified 2026-10-08: the docs' two sandbox-signed curl calls (COMPLETED,
+  FAILED) verify against the key the SANDBOX URL serves (begins
+  MIIBIjAN...AQEAsGNLZsbc2TJL...) and fail against the live key (begins
+  ...AQEAzVEMT+v6...). The research brief had labelled the live key as the
+  sandbox key; the examples embed the correct one.
+
+  DELIVERY — HTTP PUT, application/json, resent until a 200. Discriminator
+  is body field paymentStatus, final statuses only: COMPLETED, SETTLED
+  (virtual accounts only, operational), FAILED. COMPLETED then SETTLED can
+  arrive for the same payment: dedupe on paymentId + paymentStatus.
+  paymentRequest.amount is major units. Docs require reconciling amount,
+  currency and merchantPaymentId against the merchant's own record.
+  Static IPs (supplementary only): sandbox 52.30.246.188; live
+  52.56.123.234, 18.175.86.214, 3.11.7.150.
+testScenario:
+  events:
+    - COMPLETED
+    - SETTLED
+    - FAILED
+catalog:
+  summary: 'Verify Volume pay-by-bank webhooks (`Authorization: SHA256withRSA <base64>`, an RSA PKCS#1 v1.5 / SHA-256 signature over the RAW body checked against Volume''s sandbox/live public key, no shared secret), accept `PUT` deliveries, and handle `COMPLETED`, `SETTLED` and `FAILED` payment statuses'

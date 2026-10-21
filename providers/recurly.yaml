@@ -1,0 +1,27 @@
+name: recurly
+displayName: Recurly
+docs:
+  webhooks: https://recurly.com/developers/guides/webhooks.html
+  events: https://recurly.com/developers/pages/webhooks.html
+notes: >
+  Subscription management and billing platform. Recurly webhooks are historically NOT signed;
+  secure the endpoint with HTTP Basic Auth credentials configured in Recurly and/or an IP
+  allowlist, and verify over HTTPS. Payloads are XML by default (a <notification> root element,
+  e.g. <new_subscription_notification>), with JSON available on newer sites. The skill should
+  cover parsing the notification type, Basic Auth verification, and fetching the referenced
+  object from the Recurly API to confirm state. Common notifications:
+  new_subscription_notification, updated_subscription_notification,
+  successful_payment_notification, failed_payment_notification.
+testScenario:
+  events:
+    - new_subscription_notification
+    - successful_payment_notification
+catalog:
+  summary: Authenticate Recurly webhooks (Basic Auth), parse XML notifications for subscription and payment events
+  marketplace:
+    description: Authenticate Recurly webhooks (HTTP Basic Auth), parse XML notifications for subscription and payment events.
+    keywords:
+    - webhooks
+    - recurly
+    - billing
+    - subscriptions

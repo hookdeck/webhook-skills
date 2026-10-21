@@ -1,0 +1,31 @@
+name: polar
+displayName: Polar
+docs:
+  webhooks: https://polar.sh/docs/integrate/webhooks/endpoints
+  verification: https://polar.sh/docs/integrate/webhooks/delivery
+  events: https://polar.sh/docs/integrate/webhooks/events
+notes: >
+  Follows the Standard Webhooks spec: HMAC-SHA256 signature over
+  "{webhook-id}.{webhook-timestamp}.{body}" delivered via webhook-id, webhook-timestamp,
+  and webhook-signature headers. Gotcha: the webhook secret is expected to be
+  base64-encoded before signing — the official SDKs handle this, but custom/
+  standard-webhooks verifiers must base64-encode the dashboard secret first (Polar
+  secrets are user-set or randomly generated, NOT whsec_-prefixed). Verify against the
+  raw request body (e.g. express.raw). SDK helpers: validateEvent /
+  WebhookVerificationError from "@polar-sh/sdk/webhooks" (Node) and validate_event from
+  polar_sdk.webhooks (Python). Endpoints configured in organization settings with
+  per-event subscription and a Raw/Discord/Slack format choice — only "Raw" sends the
+  JSON payload for verification. Delivery: 10s request timeout (respond fast, ideally
+  <2s), up to 10 retries with exponential backoff, auto-disabled after 10 consecutive
+  failures (manual re-enable). Sandbox environment and "polar listen" CLI tunnel
+  available for local testing.
+testScenario:
+  events:
+    - order.created
+    - subscription.active
+    - checkout.updated
+sdks:
+  npm: ["@polar-sh/sdk"]
+  pip: ["polar-sdk"]
+catalog:
+  summary: Verify Polar webhook signatures (Standard Webhooks), handle order, subscription, and checkout events

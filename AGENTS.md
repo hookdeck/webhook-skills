@@ -484,9 +484,8 @@ Use this checklist when creating a new provider skill:
 - [ ] `examples/fastapi/test_webhook.py`
 
 #### Integration
-- [ ] Update `README.md` - Add skill to Provider Skills table
-- [ ] Update `providers.yaml` - Add provider entry with documentation URLs and `testScenario`
-- [ ] Register in the plugin manifest and README: `./scripts/generate-skills.sh sync` (the generator does this automatically; run manually for hand-authored skills)
+- [ ] Add `providers/{provider}.yaml` - documentation URLs, `testScenario`, and `catalog.summary` (the README "What It Does" line). See `providers/stripe.yaml`
+- [ ] Do **not** edit README.md's provider table or `.claude-plugin/marketplace.json` - both are generated from `providers/` and `skills/` after merge (`./scripts/generate-skills.sh sync`)
 - [ ] Run example tests: `cd examples/express && npm test`
 - [ ] Run validation: `./scripts/validate-provider.sh {provider}-webhooks`
 - [ ] Run agent test: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
@@ -552,10 +551,7 @@ Gather this information:
    - **Use the provider's SDK for verification** when it supports the framework; **include manual verification** for frameworks the SDK doesn't support
    - Include comprehensive tests for each example
 6. Run example tests locally: `cd examples/express && npm test` (repeat for each framework)
-7. Update integration files:
-   - `README.md` - Add skill to Provider Skills table
-   - `providers.yaml` - Add provider entry with `testScenario` field
-   - `.claude-plugin/marketplace.json` - Register the skill with `./scripts/generate-skills.sh sync` (auto-run by the generator, which also seeds a README row if one is missing)
+7. Add `providers/{provider}.yaml` with documentation URLs, `testScenario` and `catalog.summary`. README.md and `.claude-plugin/marketplace.json` are generated from it after merge; check the result locally with `./scripts/generate-skills.sh sync`
 8. Test with agent: `./scripts/test-agent-scenario.sh {provider} express --dry-run`
 
 ## Skill Discoverability
@@ -743,27 +739,28 @@ cd skills/{provider}-webhooks/examples/express && npm test
 
 ### Adding Test Scenarios
 
-When adding a new provider skill, add `testScenario` to the provider entry in `providers.yaml`:
+When adding a new provider skill, add `testScenario` to its `providers/{provider}.yaml`:
 
 ```yaml
-providers:
-  - name: {provider}
-    displayName: {Provider}
-    docs:
-      webhooks: https://...
-    notes: >
-      ...
-    testScenario:
-      events:
-        - event.type.one
-        - event.type.two
-      # Optional: custom prompt (uses default template if not specified)
-      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
-      # Optional: override skill name (default is {name}-webhooks)
-      # skillName: custom-skill-name
+name: {provider}
+displayName: {Provider}
+docs:
+  webhooks: https://...
+notes: >
+  ...
+testScenario:
+  events:
+    - event.type.one
+    - event.type.two
+  # Optional: custom prompt (uses default template if not specified)
+  # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+  # Optional: override skill name (default is {name}-webhooks)
+  # skillName: custom-skill-name
+catalog:
+  summary: Verify {Provider} webhook signatures (`X-{Provider}-Signature`, HMAC-SHA256), handle event.type.one and event.type.two events
 ```
 
-The test script reads scenarios from `providers.yaml` dynamically - no script modifications needed.
+The test script reads scenarios from `providers/` dynamically - no script modifications needed.
 
 ## Running the Generator in Sandboxed Environments
 
@@ -776,8 +773,8 @@ When invoking `./scripts/generate-skills.sh generate` or `review` from a sandbox
 Acknowledge the sandbox by exporting `IS_SANDBOX=1` for the generator invocation. The env var is inherited by the `claude` child processes and unblocks the flag:
 
 ```bash
-IS_SANDBOX=1 ./scripts/generate-skills.sh generate {provider} --config providers.yaml
-IS_SANDBOX=1 ./scripts/generate-skills.sh review --config providers.yaml --create-pr=draft
+IS_SANDBOX=1 ./scripts/generate-skills.sh generate {provider} --config providers
+IS_SANDBOX=1 ./scripts/generate-skills.sh review --config providers --create-pr=draft
 ```
 
 Without `--model`, the generator uses the CLI tool's own default model. Pass `--model` to pin a specific one for a run.
@@ -803,11 +800,10 @@ This runs all example tests and uses Claude to review the skill against provider
 
 ### Step 2: Verify Integration
 
-The automated review checks skill content and tests, and runs `scripts/validate-provider.sh` (which checks the integration files exist). Still confirm the entries are right, not just present:
+The automated review checks skill content and tests, and runs `scripts/validate-provider.sh` (which checks `providers/{provider}.yaml` exists with `testScenario` and `catalog.summary`). Still confirm the entries are right, not just present:
 
-1. **README.md** — Provider added to Provider Skills table
-2. **providers.yaml** — Provider entry added with documentation URLs and `testScenario` field
-3. **.claude-plugin/marketplace.json** — Skill registered as a plugin (verify with `./scripts/generate-skills.sh sync --check`)
+1. **providers/{provider}.yaml** — documentation URLs, `testScenario` events that exist, and a `catalog.summary` that matches the skill
+2. **README.md / marketplace.json** — not edited in the PR (they're regenerated after merge). `./scripts/generate-skills.sh sync` shows locally what the row and entry will look like
 
 ### Step 3: Spot-Check Skill Content
 
@@ -834,7 +830,7 @@ Ensure test scripts exit properly (e.g. `"test": "vitest run"` not `"vitest"`).
 
 ## Provider Documentation Registry
 
-The file `providers.yaml` (at repo root) is the authoritative registry of all webhook providers and their official documentation URLs.
+The `providers/` directory (one `<name>.yaml` per provider) is the authoritative registry of all webhook providers: their official documentation URLs, generator notes, agent test scenarios, and the `catalog` text that README.md's provider table and `.claude-plugin/marketplace.json` are generated from.
 
 **When to update:**
 - Adding a new provider skill — add entry with documentation URLs
@@ -845,41 +841,41 @@ The file `providers.yaml` (at repo root) is the authoritative registry of all we
 
 ```bash
 # Review all providers against their official docs
-./scripts/generate-skills.sh review --config providers.yaml
+./scripts/generate-skills.sh review --config providers
 
 # Generate a specific provider from this config
-./scripts/generate-skills.sh generate stripe --config providers.yaml
+./scripts/generate-skills.sh generate stripe --config providers
 ```
 
 ### Updating an Existing Provider Skill
 
 When updating an existing provider skill (e.g., provider changed their API, new events added, documentation URLs changed):
 
-1. **Update `providers.yaml`** with current documentation URLs and any notes about changes:
+1. **Update `providers/{provider}.yaml`** with current documentation URLs and any notes about changes:
 
 ```yaml
-providers:
-  - name: stripe
-    displayName: Stripe
-    docs:
-      webhooks: https://docs.stripe.com/webhooks
-      verification: https://docs.stripe.com/webhooks/signatures
-      events: https://docs.stripe.com/api/events/types
-    notes: >
-      Verify against latest Stripe API version. Check for new event types.
+# providers/stripe.yaml
+name: stripe
+displayName: Stripe
+docs:
+  webhooks: https://docs.stripe.com/webhooks
+  verification: https://docs.stripe.com/webhooks/signatures
+  events: https://docs.stripe.com/api/events/types
+notes: >
+  Verify against latest Stripe API version. Check for new event types.
 ```
 
 2. **Run the review command** to update the skill against the documentation:
 
 ```bash
 # Update a single provider
-./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+./scripts/generate-skills.sh review stripe --config providers --create-pr
 
 # Update multiple providers
-./scripts/generate-skills.sh review stripe shopify paddle --config providers.yaml --create-pr
+./scripts/generate-skills.sh review stripe shopify paddle --config providers --create-pr
 
 # Update all providers (for periodic maintenance)
-./scripts/generate-skills.sh review --config providers.yaml --create-pr
+./scripts/generate-skills.sh review --config providers --create-pr
 ```
 
 3. **Review the generated PR** and verify changes are accurate

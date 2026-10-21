@@ -1,0 +1,32 @@
+name: adyen
+displayName: Adyen
+docs:
+  webhooks: https://docs.adyen.com/development-resources/webhooks/
+  verification: https://docs.adyen.com/development-resources/webhooks/verify-hmac-signatures/
+notes: >
+  Enterprise payments platform. Delivers "standard notifications" as a batch of
+  notificationItems (JSON). Verify each item's additionalData.hmacSignature: HMAC-SHA256
+  (base64) over a payload built from specific fields
+  (pspReference, originalReference, merchantAccountCode, merchantReference, amount value,
+  amount currency, eventCode, success) joined with ':' exactly as-is (no escaping of ':'
+  or '\' inside values; the docs and every official Adyen library join the raw values).
+  The HMAC key is configured in the
+  Customer Area (hex string, must be hex-decoded before use). Endpoints are also typically
+  protected with Basic Auth. Respond with body "[accepted]". The @adyen/api-library SDK
+  provides hmacValidator.validateHMAC. Common events: AUTHORISATION, CAPTURE, REFUND, CANCELLATION.
+sdks:
+  npm:
+    - "@adyen/api-library"
+testScenario:
+  events:
+    - AUTHORISATION
+    - REFUND
+catalog:
+  summary: Verify Adyen webhook HMAC signatures (`additionalData.hmacSignature`), handle AUTHORISATION, CAPTURE, and REFUND notifications
+  marketplace:
+    description: Verify Adyen webhook HMAC signatures (additionalData.hmacSignature, HMAC-SHA256), handle AUTHORISATION, CAPTURE, and REFUND notifications.
+    keywords:
+    - webhooks
+    - adyen
+    - payments
+    - billing

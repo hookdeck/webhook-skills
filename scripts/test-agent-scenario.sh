@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 TEST_DIR="/tmp/webhook-skills-agent-test"
 RESULTS_DIR="$ROOT_DIR/test-results"
-CONFIG_FILE="$ROOT_DIR/providers.yaml"
+CONFIG_FILE="$ROOT_DIR/providers"  # one <name>.yaml per provider
 
 # Colors
 RED='\033[0;31m'
@@ -122,7 +122,7 @@ usage() {
     "$SCRIPT_DIR/generate-skills.sh" list-providers --config "$CONFIG_FILE" 2>/dev/null || {
         echo "Available providers:"
         echo -e "${YELLOW}  (Could not load providers from config)${NC}"
-        echo "  Run from repository root or check that providers.yaml exists"
+        echo "  Run from repository root or check that providers/ exists"
     }
     echo ""
     echo "Options:"
@@ -132,7 +132,7 @@ usage() {
     exit 1
 }
 
-# Get scenario config from providers.yaml via generate-skills.sh
+# Get scenario config from providers/<name>.yaml via generate-skills.sh
 get_scenario_config() {
     local provider=$1
     local framework=$2
@@ -233,7 +233,7 @@ case $FRAMEWORK_ARG in
         ;;
 esac
 
-# Get scenario configuration from providers.yaml
+# Get scenario configuration from providers/<name>.yaml
 if ! get_scenario_config "$PROVIDER_ARG" "$FRAMEWORK_ARG"; then
     exit 1
 fi

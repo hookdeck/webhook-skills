@@ -1,0 +1,19 @@
+name: revenuecat
+displayName: RevenueCat
+docs:
+  webhooks: https://www.revenuecat.com/docs/integrations/webhooks
+  verification: https://www.revenuecat.com/docs/integrations/webhooks
+notes: >
+  In-app subscription platform. CAVEAT to state in the verification section: HMAC signing is
+  opt-in (toggle "HMAC webhook signing" on the integration; the secret is shown once at
+  creation or rotation); otherwise RevenueCat only sends the static Authorization header
+  value you configure in the dashboard, which must be compared constant-time. When signing is
+  on: X-RevenueCat-Webhook-Signature: t=<unix_timestamp>,v1=<hmac_sha256_hex>, computed over
+  "<timestamp>.<raw body>" with the signing secret as a UTF-8 key. Events (event.type):
+  INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE, PRODUCT_CHANGE, TEST.
+testScenario:
+  events:
+    - INITIAL_PURCHASE
+    - RENEWAL
+catalog:
+  summary: Verify RevenueCat webhooks (opt-in HMAC signature or static Authorization header), handle in-app subscription events like INITIAL_PURCHASE, RENEWAL and EXPIRATION

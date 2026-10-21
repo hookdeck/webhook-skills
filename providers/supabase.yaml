@@ -1,0 +1,73 @@
+name: supabase
+displayName: Supabase
+docs:
+  webhooks: https://supabase.com/docs/guides/database/webhooks
+  verification: https://supabase.com/docs/guides/auth/auth-hooks
+  events: https://supabase.com/docs/guides/auth/auth-hooks
+notes: >
+  Open-source Postgres backend platform (database, auth, storage, edge
+  functions). NOT a Hookdeck first-class source type — use a generic
+  WEBHOOK/HTTP source. Do not confuse with Supabase Realtime/Queues
+  (websocket/in-database, not webhooks), Firebase, or Neon. Supabase emits
+  outbound HTTP through TWO surfaces with DIFFERENT security models; the
+  skill must cover both and must not conflate them.
+  (A) DATABASE WEBHOOKS — a wrapper around Postgres triggers calling the
+  pg_net extension asynchronously. Created in Dashboard > Integrations >
+  Webhooks or in SQL via supabase_functions.http_request(url, method,
+  headers_json, params_json, timeout_ms); method is POST or GET. Events are
+  the three table events only: INSERT, UPDATE, DELETE, all fired AFTER the
+  row change. Payload top-level fields are exactly {type, table, schema,
+  record, old_record}; type is the UPPERCASE discriminator; INSERT has
+  old_record null, DELETE has record null; record/old_record mirror the
+  user-defined table columns. CRITICAL: there is NO signature, NO HMAC, NO
+  signing secret and NO Supabase-specific verification header for this
+  surface — do NOT fabricate an x-supabase-signature header or an HMAC
+  verifier. Authentication is whatever the developer puts in the headers
+  JSON (normally Authorization: Bearer <token>), compared in constant time
+  on the receiver. No documented delivery id and no documented retry policy;
+  pg_net is fire-and-forget within timeout_ms and delivery history is
+  queryable in the database's net schema. Idempotency is the receiver's
+  responsibility (dedupe on a primary key in record).
+  (B) AUTH HOOKS (HTTP Hooks) — signed, following the Standard Webhooks spec
+  exactly: headers webhook-id, webhook-timestamp (integer UNIX seconds) and
+  webhook-signature (SPACE-DELIMITED list of v1,<base64sig> entries to allow
+  zero-downtime rotation; accept if ANY matches). Secret is issued as
+  "v1,whsec_<base64-secret>"; strip the leading "v1,whsec_" and
+  base64-DECODE the remainder to raw bytes for the HMAC key — using the
+  base64 string itself is the classic bug and rejects every real delivery.
+  Signed content is "{webhook-id}.{webhook-timestamp}.{raw_body}" over the
+  EXACT raw bytes; signature is standard (not base64url) base64 of
+  HMAC-SHA256; timestamp tolerance is 5 minutes in EITHER direction;
+  constant-time compare. Reference libraries: npm standardwebhooks, PyPI
+  standardwebhooks; Supabase's own example imports standardwebhooks@1.0.0
+  and does .replace('v1,whsec_', ''). Config env var names are plural (e.g.
+  SEND_SMS_HOOK_SECRETS) for pipe-delimited rotating secrets. Six hooks:
+  before_user_created (Free, Pro) { metadata: {uuid, time, name,
+  ip_address}, user }; custom_access_token (Free, Pro) { user_id, claims,
+  authentication_method }; send_sms (Free, Pro) { user, sms: { otp } };
+  send_email (Free, Pro) { user, email_data: { token, token_hash,
+  redirect_to, email_action_type, site_url, token_new, token_hash_new,
+  old_email, old_phone, provider, factor_type } }; mfa_verification_attempt
+  (Teams/Enterprise) { factor_id, user_id, valid }; and
+  password_verification_attempt (Teams/Enterprise) { user_id, valid }. The
+  "list of available Hooks" table lower on the auth-hooks page omits
+  before_user_created, but the plan table at the top includes it and it has
+  its own docs page — six is correct. Auth Hooks are REQUEST/RESPONSE, not
+  fire-and-forget: the response body changes auth behaviour (mfa/password:
+  { decision: "reject" | "continue", message, should_logout_user };
+  custom_access_token: return the claims for the JWT; send_email/send_sms:
+  you send the message and return {}; before_user_created: {} allows,
+  an error object rejects signup). Errors are responses >= 400; retry-able
+  ones (429, 503) get up to THREE retries with a two-second back-off inside
+  a 5-second total budget for the whole invocation, so the handler must be
+  fast. Errors from a Postgres Hook (pg-functions://postgres/<schema>/<fn>)
+  are NOT retry-able, and that variant sends no HTTP at all.
+  Do NOT assert any source-IP allowlist or user-agent value — Supabase
+  documents none for either surface.
+testScenario:
+  events:
+    - INSERT
+    - UPDATE
+    - DELETE
+catalog:
+  summary: 'Handle both Supabase surfaces: Database Webhooks (`INSERT`/`UPDATE`/`DELETE` via `pg_net` triggers, **unsigned** — authenticate with a developer-configured shared-secret header) and Auth Hooks (Standard Webhooks HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{raw_body}`, `v1,whsec_` secret), covering send_email, send_sms, custom_access_token, before_user_created, mfa_verification_attempt, and password_verification_attempt'

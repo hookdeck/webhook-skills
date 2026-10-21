@@ -1,0 +1,26 @@
+name: nuvemshop
+displayName: Nuvemshop
+docs:
+  webhooks: https://tiendanube.github.io/api-documentation/resources/webhook
+  verification: https://tiendanube.github.io/api-documentation/resources/webhook
+  events: https://tiendanube.github.io/api-documentation/resources/webhook
+notes: >
+  LATAM e-commerce platform (branded Tiendanube in Spanish markets). Signs each request with
+  HMAC-SHA256 over the raw request body using the app's client secret (the OAuth app secret),
+  sent hex-encoded in the x-linkedstore-hmac-sha256 header. Compute the HMAC on the exact raw
+  bytes before JSON parsing and compare in constant time. NOT the Standard Webhooks spec — a
+  custom single-header scheme with no timestamp. Events use resource/action format
+  (order/created, order/paid, order/cancelled, product/updated, app/uninstalled, ...). Webhooks
+  are created per-app via POST /webhooks with { event, url } (HTTPS required, no localhost/
+  tiendanube/nuvemshop domains); one subscription per event. Payloads are thin: only store_id,
+  event, and a resource id — fetch full data via the REST API scoped by store_id. Endpoint must
+  return 2XX within 3s; retries fire immediately after timeout, then ~5/10/15 min, then
+  exponential backoff (x1.4) up to 18 attempts over 48h; a 2XX stops further retries. No official
+  SDK (community only).
+testScenario:
+  events:
+    - order/created
+    - order/paid
+    - product/updated
+catalog:
+  summary: Verify Nuvemshop (Tiendanube) webhook signatures (HMAC-SHA256 hex over raw body, `x-linkedstore-hmac-sha256`), handle `order/created`, `order/paid`, `product/updated`, and `app/uninstalled` events

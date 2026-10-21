@@ -1,0 +1,41 @@
+name: microsoft-sharepoint
+displayName: Microsoft SharePoint
+docs:
+  webhooks: https://learn.microsoft.com/en-us/sharepoint/dev/apis/webhooks/overview-sharepoint-webhooks
+  verification: https://learn.microsoft.com/en-us/sharepoint/dev/apis/webhooks/lists/create-subscription
+  events: https://learn.microsoft.com/en-us/sharepoint/dev/apis/webhooks/lists/overview-sharepoint-list-webhooks
+notes: >
+  No HMAC / no request signatures and NOT Standard Webhooks. Two-part model:
+  (a) Validation handshake — when a subscription is created (or its notificationUrl
+  changes), SharePoint POSTs ?validationtoken={token} with an empty body; the endpoint
+  must echo that exact token back as an HTTP 200 text/plain body within ~5 seconds or
+  creation fails. (b) Optional clientState — a string set at subscription time that
+  SharePoint echoes in the clientState field of every notification; compare timing-safe
+  as a shared-secret sanity check (the only per-message identity signal, not a signature).
+  Notifications are THIN and batched under a "value" array: subscriptionId, clientState,
+  expirationDateTime, resource (list GUID), tenantId, siteUrl, webId — NO change details.
+  Call the list GetChanges API with a stored change token to learn what changed
+  (ChangeType: Add/Update/DeleteObject/Rename/Restore/Move, i.e. ItemAdded/ItemUpdated/etc.).
+  Create via POST /_api/web/lists('{list-guid}')/subscriptions with { resource,
+  notificationUrl, expirationDateTime, clientState? }; expiration max 180 days, renew via
+  PATCH before it lapses. Scope is list-item / document-library events only. SharePoint
+  retries 5x at 5-min intervals on non-2xx. SDKs (@pnp/sp, PnP) manage subscriptions and
+  GetChanges only — there is no inbound verification helper, so verify manually.
+testScenario:
+  events:
+    - ItemAdded
+    - ItemUpdated
+  prompt: >
+    Create a {framework} webhook handler for Microsoft SharePoint list webhooks. There is
+    NO signature — first answer the validation handshake by echoing the validationtoken
+    query-string parameter back as an HTTP 200 text/plain body (before any body parsing,
+    within ~5 seconds). Then parse the thin batched notification payload (value array) and
+    timing-safe compare each notification's clientState to your stored SHAREPOINT_CLIENT_STATE
+    secret, rejecting mismatches with 400. Notifications carry no change details, so note that
+    you would call the list GetChanges API with a stored change token to resolve ItemAdded/
+    ItemUpdated/ItemDeleted changes. Do NOT use HMAC or Standard Webhooks. If you use any
+    skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Answer the SharePoint `validationtoken` handshake, validate `clientState` (no HMAC), handle thin list notifications and resolve changes via GetChanges (ItemAdded, ItemUpdated, ItemDeleted)
+  marketplace:
+    description: Receive and verify Microsoft SharePoint list and document-library webhooks. Use when setting up a SharePoint webhook subscription handler, completing the validationtoken handshake, validating the clientState shared secret (no HMAC, not Standard Webhooks), handling thin batched notifications, or resolving list-item changes (ItemAdded, ItemUpdated, ItemDeleted) via the GetChanges API.

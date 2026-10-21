@@ -1,0 +1,29 @@
+name: paymob
+displayName: Paymob
+docs:
+  webhooks: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac
+  verification: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback
+notes: >
+  MENA payments platform. NOT Standard Webhooks and NOT signed over the raw body.
+  Paymob computes HMAC-SHA512 over a fixed, ordered concatenation of 20 selected
+  transaction fields (no separators), hex-encoded, delivered as the `hmac` QUERY
+  parameter (?hmac=<hex>) — there is no signature header. Field order:
+  amount_cents, created_at, currency, error_occured, has_parent_transaction,
+  obj.id, integration_id, is_3d_secure, is_auth, is_capture, is_refunded,
+  is_standalone_payment, is_voided, order.id, owner, pending, source_data.pan,
+  source_data.sub_type, source_data.type, success. Booleans concatenate as
+  lowercase "true"/"false". HMAC secret comes from Dashboard → Settings →
+  Account Info → HMAC. Two callback kinds per integration: Transaction Processed
+  Callback (server-to-server POST, JSON, nested keys obj.id/order.id/source_data.*)
+  and Transaction Response Callback (client redirect GET, flattened query params
+  id/order_id/source_data_pan/...). Single callback `type` value "TRANSACTION" —
+  no discrete event names; read state from booleans success/error_occured/pending/
+  is_refunded/is_voided/is_capture/is_auth. No usable first-party SDK verifier;
+  roll your own HMAC. Gotchas: SHA512 (not 256), hex (not base64), exact field
+  ordering, POST vs GET key-path differences.
+testScenario:
+  events:
+    - TRANSACTION.success
+    - TRANSACTION.refunded
+catalog:
+  summary: Verify Paymob transaction callbacks (HMAC-SHA512 hex over 20 ordered fields, delivered as the `?hmac=` query param — not a header, not the raw body), read transaction state from `success`/`is_refunded`/`is_voided`/`is_capture` booleans

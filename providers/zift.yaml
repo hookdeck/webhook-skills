@@ -1,0 +1,50 @@
+name: zift
+displayName: Zift
+docs:
+  webhooks: https://api.zift.io/#webhooks
+  verification: https://api.zift.io/#webhooks
+notes: >
+  Zift (a payments platform / gateway) delivers billing and processing notifications
+  as plain HTTPS POST + JSON to an endpoint registered OUT-OF-BAND (email Zift support
+  the HTTPS endpoint URL and desired events; webhooks are set at the integrator/reseller
+  level, NOT per-merchant — there is no self-serve dashboard UI). CRITICAL: there is NO
+  signature/HMAC header, NO signing secret, and NO Basic/token auth on delivery — this is
+  confirmed from the full rendered docs, not just "couldn't find it". Do NOT invent an
+  X-Zift-Signature and this is NOT Standard Webhooks. Authenticity relies only on HTTPS +
+  endpoint-URL secrecy (recommend IP allowlisting Zift's egress ranges at the load
+  balancer). A tunnel/gateway (e.g. Hookdeck's ZIFT source) cannot cryptographically
+  verify these — treat as unverified/passthrough. Because there is no body signature,
+  ordinary JSON parsing is safe. The ONE protocol requirement is the ACKNOWLEDGEMENT: to
+  ack a delivery the endpoint MUST return a JSON body echoing the received notificationId,
+  e.g. {"notificationId": 272638} — Zift accepts an int OR a string, so pass the value
+  straight through to preserve its type. Returning "OK"/empty/{"received":true} is NOT an
+  ack and triggers retries at +5min, +15min, +60min, +24h, then status "Failed" (no further
+  redelivery) — so make handling idempotent (dedupe on notificationId). Payload envelope:
+  notificationId, eventCode (dotted category.entity-action, e.g. "billing.subscription-created"),
+  eventDate (epoch-MILLISECONDS), dataType (names the shape of data), data{}. Two event
+  families keyed by the eventCode prefix — billing.* and processing.* — dispatch on the
+  prefix (robust) then branch on the specific code. Only billing.subscription-created is
+  documented verbatim; other eventCodes are derived from the setup TRIGGER names (billing:
+  subscription~create, payment-option~create, allocation~create, payment~process; processing:
+  chargeback, return, reversal, NOC) using the category.entity-action pattern — confirm exact
+  literals with Zift support at onboarding. processing.return and processing.noc carry ACH
+  detail (return reason codes; NOC token/routing/account-type changes). No official Zift
+  webhook SDKs.
+testScenario:
+  events:
+    - billing.subscription-created
+    - processing.chargeback
+  prompt: >
+    Create a {framework} webhook handler for Zift. There is NO HMAC/signature header and
+    NO signing secret — do NOT invent an X-Zift-Signature or a Standard Webhooks check.
+    Parse the JSON body (notificationId, eventCode, eventDate, dataType, data) and ACKNOWLEDGE
+    the delivery by returning a JSON body echoing the received notificationId, e.g.
+    {"notificationId": 272638} — accept an int OR a string and pass it straight through so the
+    echoed type matches. Returning "OK"/empty is NOT an ack and causes retries. Dispatch on the
+    eventCode prefix (billing.* vs processing.*) then branch on the specific code such as
+    billing.subscription-created and processing.chargeback; make handling idempotent (dedupe on
+    notificationId). Return 400 when notificationId is missing (cannot ack) and 200 with the
+    acknowledgement body on success. If you use any skills to help with this, add a comment
+    noting which skill(s) you referenced.
+catalog:
+  summary: 'Receive Zift payment notifications — no HMAC signature; acknowledge each delivery by echoing `{"notificationId": ...}` — dispatch `billing.*` and `processing.*` events like `billing.subscription-created`, `processing.chargeback`, and `processing.return`'

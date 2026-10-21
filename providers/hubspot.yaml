@@ -1,0 +1,34 @@
+name: hubspot
+displayName: HubSpot
+docs:
+  webhooks: https://developers.hubspot.com/docs/apps/legacy-apps/authentication/validating-requests
+  changelog_v3: https://developers.hubspot.com/changelog/introducing-version-3-of-webhook-signatures
+notes: >
+  CRM platform. Uses X-HubSpot-Signature-v3 header — HMAC-SHA256 then base64
+  encoded. Signed content for v3 is the UTF-8 concatenation of HTTP method +
+  request URI (with URL-decoded chars except '?') + raw request body +
+  X-HubSpot-Request-Timestamp value. Reject requests with timestamp older than
+  5 minutes. v1 and v2 (SHA-256 of clientSecret+body, no timestamp) are deprecated
+  — new integrations should use v3 only. Signing key is the App's Client Secret
+  (Application Secret). HubSpot's official SDKs ship a helper (Signature.isValid in
+  Node/PHP, Signature.is_valid in Python/Ruby) supporting v1/v2/v3; do not claim there is
+  no SDK helper. Common subscription types: contact.creation,
+  contact.propertyChange, contact.deletion, deal.creation, deal.propertyChange,
+  company.creation, ticket.creation. (Note: the v3 validation page is canonically
+  hosted under /docs/apps/legacy-apps/authentication/validating-requests — the
+  legacy-apps label refers to HubSpot's pre-2026 app platform, but v3 signature
+  verification itself is current. A v4 webhooks API is in beta on the new
+  developer platform but uses different mechanics; pin to v3 for stability.)
+testScenario:
+  events:
+    - contact.creation
+    - deal.creation
+catalog:
+  summary: Verify HubSpot v3 webhook signatures (HMAC-SHA256 with timestamp), handle contact, deal, and company events
+  marketplace:
+    description: Verify HubSpot v3 webhook signatures (HMAC-SHA256 with method+uri+body+timestamp), handle contact, deal, and company events.
+    keywords:
+    - webhooks
+    - hubspot
+    - crm
+    - marketing

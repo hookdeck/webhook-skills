@@ -1,0 +1,46 @@
+name: deck
+displayName: Deck
+docs:
+  webhooks: https://docs.deck.co/events/destinations-and-deliveries
+  verification: https://docs.deck.co/events/destinations-and-deliveries#verifying-webhook-signatures
+  events: https://docs.deck.co/events/events-reference
+notes: >
+  Deck (deck.co) is the API for computer-use agents that log in to websites on
+  a user's behalf - NOT deck.gl, slide decks or Stream Deck. Docs are Mintlify
+  (append .md to any page). Webhook destinations are signed with Standard
+  Webhooks (webhook-id, webhook-timestamp, webhook-signature "v1,<base64>";
+  signed content "{id}.{timestamp}.{raw body}"; key = base64-decode of the
+  secret after "whsec_"). Deck's docs say to use the official standardwebhooks
+  npm/pip SDK; there is no Deck-specific webhook SDK. The signing secret is
+  OPTIONAL and CALLER-PROVIDED (webhook.secret on POST /v2/event-destinations),
+  write-only and unretrievable - users must generate "whsec_" + base64(random
+  bytes) themselves; handlers must fail closed when it is unset. Previous
+  secret stays valid 24h after rotation (verify against both). New
+  destinations start pending_verification and go active (event_destination.activated)
+  after a 2xx - no documented challenge/handshake. Envelope {id evt_, object,
+  type, data, created_at, request_id?}; empty values are "" strings;
+  workflow_run.* uses workflow_run_id (no id) and null result/trigger_id.
+  task_run.interaction_required carries data.interaction (mfa /
+  account_selection / security_question), answered via
+  POST /v2/task-runs/{id}/interaction {"input": {...}} within 5 minutes.
+  test.ping (data {"ok": true}) is not subscribable and never retried.
+  2xx within 5s; up to 10 retries, exponential base 2 from 30s; no
+  auto-disable; at-least-once (dedupe on event id); out-of-order (use
+  created_at). Static IPs 34.139.110.242, 35.237.129.153, 34.24.255.163
+  (previous 136.107.35.242, 34.86.136.110, 136.107.63.48 until 2026-10-28).
+  Native "hookdeck" destination type also exists (hookdeck.token).
+testScenario:
+  events:
+    - task_run.completed
+    - task_run.failed
+    - task_run.interaction_required
+    - credential.verified
+catalog:
+  summary: Verify Deck (deck.co) Standard Webhooks signatures with a caller-generated `whsec_` secret, handle task run, credential, workflow run and interaction (MFA) events
+  marketplace:
+    keywords:
+    - webhooks
+    - deck
+    - standard-webhooks
+    - computer-use
+    - agents

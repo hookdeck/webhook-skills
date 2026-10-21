@@ -1,0 +1,32 @@
+name: paystack
+displayName: Paystack
+docs:
+  webhooks: https://paystack.com/docs/payments/webhooks/
+  verification: https://paystack.com/docs/payments/webhooks/#verify-event-origin
+  events: https://paystack.com/docs/payments/webhooks/#supported-events
+notes: >
+  Verify via x-paystack-signature header: HMAC-SHA512 (not SHA256) of the event
+  payload signed with your Paystack secret key, hex-encoded. Official docs example
+  hashes JSON.stringify(req.body); in practice hash the raw request body bytes to
+  avoid re-serialization mismatches. Does NOT follow the Standard Webhooks spec (no
+  timestamp, no replay-window guidance). Configure the webhook URL in Dashboard >
+  Settings > API Keys & Webhooks (test and live modes configured separately);
+  optionally whitelist Paystack source IPs: 52.31.139.75, 52.49.173.169,
+  52.214.14.220 (same for test and live). Respond 200 immediately and defer work;
+  non-200 triggers retries — live: every 3 minutes for the first 4 tries, then
+  hourly for up to 72 hours; test: hourly for 10 hours; request timeout 30 seconds.
+  Retries mean duplicate deliveries — dedupe on event + data.id/reference (no
+  idempotency header documented). Events are JSON with top-level "event"
+  (dot-separated name) and "data". Official SDKs (@paystack/paystack-sdk npm,
+  paystack-sdk pip) are general API clients, minimally maintained, no verification
+  helpers.
+testScenario:
+  events:
+    - charge.success
+    - transfer.success
+    - subscription.create
+sdks:
+  npm: ["@paystack/paystack-sdk"]
+  pip: ["paystack-sdk"]
+catalog:
+  summary: Verify Paystack webhook signatures (`x-paystack-signature`, HMAC-SHA512), handle charge, transfer, and subscription events

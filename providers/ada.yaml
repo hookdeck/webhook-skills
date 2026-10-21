@@ -1,0 +1,17 @@
+name: ada
+displayName: Ada
+docs:
+  webhooks: https://docs.ada.cx/reference/webhooks/overview
+  verification: https://docs.ada.cx/reference/webhooks/overview#signing-secrets
+notes: >
+  Ada (ada.cx) AI customer service platform. Webhooks are delivered by Svix (channel tags,
+  Svix source IPs): svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+  "<id>.<timestamp>.<raw body>" keyed with the base64 part of the endpoint's whsec_ signing
+  secret (GET webhook secret returns e.g. "whsec_C2FV..."). Each endpoint has its own secret.
+  Events include v1.conversation.created, v1.conversation.ended, v1.conversation.message.
+testScenario:
+  events:
+    - v1.conversation.created
+    - v1.conversation.ended
+catalog:
+  summary: Verify Ada (ada.cx) AI customer service webhooks delivered via Svix (`svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}`, per-endpoint `whsec_` secret), handle conversation, end-user, audit log and proactive call events

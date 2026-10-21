@@ -1,0 +1,39 @@
+name: quoter
+displayName: Quoter
+docs:
+  webhooks: https://help.quoter.com/hc/en-us/articles/32085971955355-Integrate-with-Webhooks
+  verification: https://help.quoter.com/hc/en-us/articles/32085971955355-Integrate-with-Webhooks
+notes: >
+  Quoter (sales quoting / CPQ) fires webhooks when a Quote, Person, or Payment object is
+  created or updated. Configured under Settings > Integrations (target URL, "Applies To"
+  object type, JSON or XML format, optional Hash Key). CRITICAL: the verification is a WEAK
+  legacy MD5 shared-secret scheme — NOT HMAC-SHA256 and NOT Standard Webhooks — and the hash
+  key is OPTIONAL, so a webhook can run with NO verification at all (flag this). Deliveries are
+  POSTed as application/x-www-form-urlencoded with exactly three fields: hash, timestamp, and
+  data. The `data` field is a JSON (or XML) STRING; `timestamp` is GMT UNIX seconds. Verify by
+  computing md5(HASH_KEY + timestamp + data) and comparing (timing-safe) to the `hash` field —
+  the signature is a FORM FIELD named `hash`, NOT an HTTP header (do NOT invent an
+  X-Quoter-Signature). Optionally reject requests where now - timestamp > 300s. GOTCHA: hash the
+  `data` string EXACTLY as received — never JSON.parse then re-stringify before hashing, or the
+  MD5 will not match. There are NO dotted event names (no quote.published/won/lost); you
+  subscribe an OBJECT TYPE (Quote, Person, or Payment) that fires on create OR update. The
+  request does not identify the object type, so configure a distinct target URL per object type
+  and pass a hint like ?object=quote for the handler to dispatch on. There is NO official Quoter
+  SDK, so verify manually in every framework. Retry behavior is not documented — process
+  idempotently keyed on the record id. Set QUOTER_HASH_KEY.
+testScenario:
+  events:
+    - quote
+    - payment
+  prompt: >
+    Create a {framework} webhook handler for Quoter. Quoter POSTs
+    application/x-www-form-urlencoded with three fields: hash, timestamp, and data (data is a
+    JSON string). Verify by computing md5(QUOTER_HASH_KEY + timestamp + data) and comparing it
+    timing-safe to the `hash` FORM FIELD (this is a weak MD5 scheme, NOT HMAC and NOT Standard
+    Webhooks; there is no signature header). Hash the raw `data` string exactly as received —
+    do not re-serialize it. Reject requests older than 300 seconds and return 400 for an invalid
+    hash. There are no dotted event names — read the object type (quote, person, or payment)
+    from the ?object= query parameter and dispatch on it, returning 200 on success. If you use
+    any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Quoter webhooks (weak MD5 `hash` form field over `HASH_KEY + timestamp + data`, NOT HMAC and NOT Standard Webhooks — the hash key is optional), parse the `x-www-form-urlencoded` `hash`/`timestamp`/`data` payload, dispatch Quote, Person, and Payment create/update deliveries by `?object=`

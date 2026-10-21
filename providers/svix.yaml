@@ -1,0 +1,28 @@
+name: svix
+displayName: Svix
+docs:
+  webhooks: https://docs.svix.com/receiving/introduction
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+notes: >
+  Svix is webhook infrastructure used by many upstream services; "SVIX" verification
+  applies to any provider delivering webhooks via Svix. Requests carry svix-id,
+  svix-timestamp, and svix-signature headers. Signature =
+  base64(HMAC-SHA256(key, "{svix-id}.{svix-timestamp}.{raw_body}")) where key is the
+  base64-DECODED portion of the secret after the "whsec_" prefix. svix-signature may
+  hold multiple space-delimited "v1,<sig>" entries for secret rotation — match ANY;
+  strip the "v1," prefix before constant-time compare. Svix libraries reject timestamps
+  more than 5 minutes off (past or future); verify against the raw request body only.
+  Scheme is the basis of the Standard Webhooks spec; some senders use interchangeable
+  webhook-id / webhook-timestamp / webhook-signature header names (Professional/
+  Enterprise-tier option) — accept both. Event types/payloads are defined by the
+  upstream service (browsable in that sender's Svix App Portal); common envelope
+  convention is {"type": "<event.name>", "data": {...}} but not enforced.
+testScenario:
+  events:
+    - generic.event.created
+    - generic.event.updated
+sdks:
+  npm: [svix]
+  pip: [svix]
+catalog:
+  summary: Verify Svix-delivered webhook signatures (`svix-signature`/`webhook-signature`, HMAC-SHA256) for any provider that sends webhooks via Svix

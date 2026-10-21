@@ -1,0 +1,23 @@
+name: commercelayer
+displayName: Commerce Layer
+docs:
+  webhooks: https://docs.commercelayer.io/core/real-time-webhooks
+  verification: https://docs.commercelayer.io/core/callbacks-security
+notes: >
+  Headless commerce platform. Webhooks are created via POST /api/webhooks with a
+  topic ({resource}.{trigger}, e.g. orders.place), a callback_url, and optional
+  include_resources; the create response returns a shared_secret used to sign
+  callbacks. Verify with the X-CommerceLayer-Signature header: base64 HMAC-SHA256 over
+  the RAW request body using the shared_secret (compare timing-safe). The triggering
+  topic is in the X-CommerceLayer-Topic header. Payload is JSON:API, matching the REST
+  API resource format. Not Standard Webhooks. Endpoints must return 2xx within 5
+  seconds; failures retry up to 10 times and after 30 consecutive failures the circuit
+  breaker disables the webhook until manually reset. Common events: orders.place,
+  orders.approve, orders.pay, orders.refund, shipments.ship, shipments.deliver,
+  customers.create.
+testScenario:
+  events:
+    - orders.place
+    - shipments.ship
+catalog:
+  summary: Verify Commerce Layer webhook signatures (`X-CommerceLayer-Signature`, HMAC-SHA256 base64), handle orders.place, orders.pay, and shipments.ship events

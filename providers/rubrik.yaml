@@ -1,0 +1,20 @@
+name: rubrik
+displayName: Rubrik
+docs:
+  webhooks: https://developer.rubrik.com/Rubrik-Security-Cloud-API/Observability/Events/
+  verification: https://developer.rubrik.com/Rubrik-Security-Cloud-API/API-Reference/types/enums/AuthenticationTypeV2/
+notes: >
+  Rubrik Security Cloud event webhooks (data security / backup). No signature.
+  AuthenticationTypeV2: BASIC (username/password), BEARER (Authorization: Bearer <token>),
+  CUSTOM_HEADER (you choose header key and value), OAUTH2, URL token. Recommend CUSTOM_HEADER
+  or BEARER with a constant-time compare (Basic also works). Payloads are templated; the
+  default event payload includes id, type (Event), objectName, objectType, status (e.g.
+  Failure, Success), severity and message.
+testScenario:
+  events:
+    - event
+  prompt: >
+    Add a Rubrik Security Cloud webhook endpoint to my {framework} app. Authenticate it with
+    a custom secret header and handle backup failure and success events.
+catalog:
+  summary: 'Authenticate Rubrik Security Cloud webhooks (unsigned: custom header, Bearer token, or Basic auth), parse the default PD-CEF payload or custom templates, handle backup Failure/Success and Anomaly events'

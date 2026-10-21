@@ -83,7 +83,7 @@ export function getScenarioConfig(
   
   // Check if provider has testScenario configured
   if (!provider.testScenario) {
-    console.error(`Provider '${providerName}' does not have testScenario configured in providers.yaml`);
+    console.error(`Provider '${providerName}' does not have testScenario configured in providers/${normalizedName}.yaml`);
     return null;
   }
   

@@ -1,0 +1,36 @@
+name: bunny-stream
+displayName: Bunny Stream
+docs:
+  webhooks: https://docs.bunny.net/stream/webhooks
+  verification: https://docs.bunny.net/stream/webhooks#signature-validation
+notes: >
+  Bunny.net's video hosting/encoding product (distinct from Bunny's general platform webhooks).
+  Signing is HMAC-SHA256 over the EXACT raw request body, keyed on the video library's Read-Only
+  API key (UTF-8), output as lowercase hex in the X-BunnyStream-Signature header. Two extra
+  informational headers accompany it: X-BunnyStream-Signature-Version (v1) and
+  X-BunnyStream-Signature-Algorithm (hmac-sha256). Verify against the UNPARSED raw body (do not
+  re-serialize — whitespace/key-order changes break the digest) with a constant-time hex compare.
+  This is a CUSTOM scheme, NOT Standard Webhooks (no webhook-id/webhook-timestamp/webhook-signature
+  and no timestamp in the signed content). IMPORTANT: do not confuse with Bunny's general-platform
+  webhooks (docs.bunny.com/.../webhook-security) which use HMAC-SHA1 + x-bunny-signature. The
+  payload is thin: {"VideoLibraryId": int, "VideoGuid": guid, "Status": int} — the event type is
+  the numeric Status, not an event-name string. Fetch full metadata via the Stream API
+  (GET /library/{libraryId}/videos/{videoGuid}) using VideoGuid, after verifying. Status enum:
+  0 Queued, 1 Processing, 2 Encoding, 3 Finished (encoding done), 4 ResolutionFinished, 5 Failed,
+  6 PresignedUploadStarted, 7 PresignedUploadFinished, 8 PresignedUploadFailed, 9 CaptionsGenerated,
+  10 TitleOrDescriptionGenerated. Webhook URL is configured per video library in the Stream
+  dashboard; the signing secret IS the library's Read-Only API key. Retry behavior is not
+  documented — make handlers idempotent. No official SDK (community only) — verify manually.
+testScenario:
+  events:
+    - "Status 3 (Finished)"
+    - "Status 5 (Failed)"
+  prompt: >
+    Create a {framework} webhook handler for Bunny Stream. Verify the X-BunnyStream-Signature
+    header — HMAC-SHA256 of the raw request body keyed on the video library's Read-Only API key,
+    lowercase hex — with a timing-safe comparison over the unparsed raw body. Parse the thin
+    payload {VideoLibraryId, VideoGuid, Status} and dispatch on the numeric Status, handling
+    3 (Finished / encoding done) and 5 (Failed). If you use any skills to help with this, add a
+    comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Bunny Stream webhook signatures (`X-BunnyStream-Signature`, HMAC-SHA256 hex over the raw body, keyed on the library Read-Only API key), handle video encoding events by numeric `Status` (3 Finished, 5 Failed, 9 CaptionsGenerated, 10 TitleOrDescriptionGenerated)

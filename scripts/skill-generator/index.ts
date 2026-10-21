@@ -22,7 +22,7 @@ import type {
   OperationResult,
   Logger,
 } from './lib/types';
-import { mergeProviderConfigs, skillExists, loadConfigFile } from './lib/config';
+import { mergeProviderConfigs, skillExists, loadConfigFile, getProviderPaths } from './lib/config';
 import { getScenarioConfig, listProvidersFormatted, SUPPORTED_FRAMEWORKS } from './lib/scenario';
 import { generateSkill } from './lib/generator';
 import { reviewExistingSkill } from './lib/reviewer';
@@ -43,8 +43,7 @@ import {
   pathExistsInBranch,
 } from './lib/git';
 import { createPullRequest, verifyToken } from './lib/github';
-import { syncManifest, findManifestDrift } from './lib/marketplace';
-import { syncReadme, findMissingReadmeRows } from './lib/readme';
+import { syncCatalog, findCatalogDrift, validateCatalog } from './lib/catalog';
 import { buildCommitMessage } from './lib/generator';
 
 const ROOT_DIR = join(__dirname, '..', '..');
@@ -221,7 +220,7 @@ async function handleGenerate(
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
   // Query latest package versions and cache them for prompts (skip in dry-run mode).
-  // Include per-provider SDKs declared via `sdks` in providers.yaml so the version
+  // Include per-provider SDKs declared via `sdks` in providers/*.yaml so the version
   // table seen by the AI covers stale SDK pins, not just generic framework deps.
   if (!generateOptions.dryRun) {
     console.log(chalk.blue('Querying package managers for latest stable versions...'));
@@ -508,7 +507,7 @@ async function handleReview(
   console.log(chalk.gray(`Results directory: ${resultsDir}\n`));
   
   // Query latest package versions and cache them for prompts (skip in dry-run mode).
-  // Include per-provider SDKs declared via `sdks` in providers.yaml so the version
+  // Include per-provider SDKs declared via `sdks` in providers/*.yaml so the version
   // table seen by the AI covers stale SDK pins, not just generic framework deps.
   if (!reviewOptions.dryRun) {
     console.log(chalk.blue('Querying package managers for latest stable versions...'));
@@ -704,8 +703,8 @@ async function handleReview(
         // Commit if fixes were made, or if the skill has uncommitted work
         // (e.g. resuming a generate run whose worktree was kept after failure)
         const skillPath = `skills/${provider.name}-webhooks`;
-        const integrationPaths = [skillPath, 'README.md', 'providers.yaml', '.claude-plugin/marketplace.json'];
-        const hasPendingWork = await hasUncommittedChanges(workingDir, integrationPaths);
+        const providerPaths = getProviderPaths(provider);
+        const hasPendingWork = await hasUncommittedChanges(workingDir, providerPaths);
         if (reviewResult.issuesFixed > 0 || hasPendingWork) {
           
           // Check if this is a new skill (feat) or existing skill (fix)
@@ -721,10 +720,9 @@ async function handleReview(
           const commitVerb = isNewSkill ? 'add' : 'improve';
           const commitSubject = `${commitPrefix}: ${commitVerb} ${provider.name}-webhooks skill`;
           
-          // Stage integration files too (README row, providers.yaml entry,
-          // marketplace registration) — validate-provider.sh requires them,
-          // and git add is a no-op for unmodified paths.
-          await addFiles(workingDir, integrationPaths, { logger, dryRun: reviewOptions.dryRun });
+          // Stage only the provider's own paths; README.md and marketplace.json
+          // are regenerated after merge (lib/catalog.ts)
+          await addFiles(workingDir, providerPaths, { logger, dryRun: reviewOptions.dryRun });
           await commit(
             workingDir,
             buildCommitMessage(commitSubject, {
@@ -891,109 +889,52 @@ async function handleListProviders(
 }
 
 /**
- * Sync marketplace command handler
+ * Sync command handler — regenerates README.md's provider table and
+ * .claude-plugin/marketplace.json from providers/*.yaml, SKILL.md frontmatter
+ * and marketplace.base.json (see lib/catalog.ts).
  *
- * Keeps .claude-plugin/marketplace.json in sync with skills/. With --check it
- * reports drift and exits non-zero (for CI); otherwise it adds any missing
- * plugin entries without touching existing ones.
+ * --check     fail if either generated file is out of date (nothing written)
+ * --validate  fail only if the sources are incomplete, e.g. a skill with no
+ *             providers/<name>.yaml or a provider without catalog.summary.
+ *             This is the PR check: PRs don't need to regenerate the files,
+ *             the Sync Catalog workflow does that after merge.
  */
-async function handleSyncMarketplace(
-  options: { check?: boolean }
-): Promise<void> {
-  if (options.check) {
-    const { missing, orphans } = findManifestDrift();
-    if (missing.length === 0 && orphans.length === 0) {
-      console.log(chalk.green('✅ marketplace.json is in sync with skills/'));
-      return;
-    }
-    if (missing.length > 0) {
-      console.log(chalk.red(`❌ ${missing.length} skill(s) missing a marketplace.json entry:`));
-      for (const m of missing) console.log(chalk.red(`   - skills/${m}`));
-    }
-    if (orphans.length > 0) {
-      console.log(chalk.red(`❌ ${orphans.length} marketplace.json entr(ies) point to a missing skill:`));
-      for (const o of orphans) console.log(chalk.red(`   - skills/${o}`));
-    }
-    console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync-marketplace` to add missing entries.'));
-    process.exit(1);
-  }
+function runSync(options: { check?: boolean; validate?: boolean }, only?: 'readme' | 'marketplace'): void {
+  const what = only === 'readme' ? 'README.md' : only === 'marketplace' ? 'marketplace.json' : 'README.md and marketplace.json';
 
-  const { added, orphans } = syncManifest();
-  if (added.length === 0) {
-    console.log(chalk.green('✅ marketplace.json already in sync — nothing to add'));
-  } else {
-    console.log(chalk.green(`✅ Added ${added.length} entr(ies) to marketplace.json:`));
-    for (const a of added) console.log(chalk.green(`   - skills/${a}`));
-  }
-  if (orphans.length > 0) {
-    console.log(chalk.yellow(`\n⚠️  ${orphans.length} entr(ies) reference a missing skill (not removed automatically):`));
-    for (const o of orphans) console.log(chalk.yellow(`   - skills/${o}`));
-  }
-}
-
-/**
- * Sync README command handler
- *
- * Adds a Provider Webhook Skills row for any provider skill README.md doesn't
- * link to yet. With --check it reports missing rows and exits non-zero.
- */
-async function handleSyncReadme(
-  options: { check?: boolean }
-): Promise<void> {
-  if (options.check) {
-    const missing = findMissingReadmeRows();
-    if (missing.length === 0) {
-      console.log(chalk.green('✅ README.md lists every provider skill'));
-      return;
-    }
-    console.log(chalk.red(`❌ ${missing.length} provider skill(s) missing a README.md row:`));
-    for (const m of missing) console.log(chalk.red(`   - skills/${m}`));
-    console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync-readme` to add missing rows.'));
-    process.exit(1);
-  }
-
-  const { added } = syncReadme();
-  if (added.length === 0) {
-    console.log(chalk.green('✅ README.md already in sync — nothing to add'));
-  } else {
-    console.log(chalk.green(`✅ Added ${added.length} README.md row(s):`));
-    for (const a of added) console.log(chalk.green(`   - skills/${a}`));
-    console.log(chalk.gray('Rows are seeded from providers.yaml and SKILL.md; refine the description if needed.'));
-  }
-}
-
-/**
- * Sync command handler — README.md rows + marketplace.json entries.
- *
- * Both syncs only add, so this is also how to resolve a merge conflict in
- * either file: keep one side (`git checkout --ours <file>`), then re-run sync.
- */
-async function handleSync(
-  options: { check?: boolean }
-): Promise<void> {
-  if (options.check) {
-    const { missing, orphans } = findManifestDrift();
-    const missingRows = findMissingReadmeRows();
-    let failed = false;
-    if (missing.length > 0 || orphans.length > 0) {
-      failed = true;
-      for (const m of missing) console.log(chalk.red(`❌ marketplace.json missing: skills/${m}`));
-      for (const o of orphans) console.log(chalk.red(`❌ marketplace.json entry points to a missing skill: skills/${o}`));
-    }
-    for (const m of missingRows) {
-      failed = true;
-      console.log(chalk.red(`❌ README.md missing row: skills/${m}`));
-    }
-    if (failed) {
-      console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync` to add missing entries.'));
+  if (options.validate) {
+    const errors = validateCatalog();
+    if (errors.length > 0) {
+      console.log(chalk.red(`❌ ${errors.length} catalog problem(s):`));
+      for (const e of errors) console.log(chalk.red(`   - ${e}`));
       process.exit(1);
     }
-    console.log(chalk.green('✅ README.md and marketplace.json are in sync with skills/'));
+    console.log(chalk.green('✅ Catalog sources are complete'));
     return;
   }
 
-  await handleSyncMarketplace({});
-  await handleSyncReadme({});
+  try {
+    if (options.check) {
+      const drift = findCatalogDrift(undefined, only);
+      if (drift.length === 0) {
+        console.log(chalk.green(`✅ ${what} up to date`));
+        return;
+      }
+      console.log(chalk.red(`❌ Out of date: ${drift.join(', ')}`));
+      console.log(chalk.gray('\nRun `./scripts/generate-skills.sh sync` to regenerate.'));
+      process.exit(1);
+    }
+
+    const changed = syncCatalog(undefined, { only });
+    if (changed.length === 0) {
+      console.log(chalk.green(`✅ ${what} already up to date`));
+    } else {
+      console.log(chalk.green(`✅ Regenerated: ${changed.join(', ')}`));
+    }
+  } catch (error) {
+    console.log(chalk.red((error as Error).message));
+    process.exit(1);
+  }
 }
 
 // CLI setup
@@ -1054,21 +995,22 @@ program
   .action(handleListProviders);
 
 program
-  .command('sync-marketplace')
-  .description('Sync .claude-plugin/marketplace.json with skills/ (adds missing entries)')
-  .option('--check', 'Report drift and exit non-zero without writing (for CI)', false)
-  .action(handleSyncMarketplace);
+  .command('sync')
+  .description('Regenerate the README.md provider table and marketplace.json from providers/ and skills/')
+  .option('--check', 'Fail if either file is out of date, without writing', false)
+  .option('--validate', 'Only check the sources are complete (used by PR CI)', false)
+  .action((options) => runSync(options));
 
 program
   .command('sync-readme')
-  .description('Add missing Provider Webhook Skills rows to README.md')
-  .option('--check', 'Report missing rows and exit non-zero without writing (for CI)', false)
-  .action(handleSyncReadme);
+  .description('Regenerate only the README.md provider table')
+  .option('--check', 'Fail if it is out of date, without writing', false)
+  .action((options) => runSync(options, 'readme'));
 
 program
-  .command('sync')
-  .description('Sync README.md rows and marketplace.json entries with skills/ (adds missing entries)')
-  .option('--check', 'Report drift and exit non-zero without writing (for CI)', false)
-  .action(handleSync);
+  .command('sync-marketplace')
+  .description('Regenerate only .claude-plugin/marketplace.json')
+  .option('--check', 'Fail if it is out of date, without writing', false)
+  .action((options) => runSync(options, 'marketplace'));
 
 program.parse();

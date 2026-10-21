@@ -1,0 +1,43 @@
+name: vapi
+displayName: Vapi
+docs:
+  webhooks: https://docs.vapi.ai/server-url
+  verification: https://docs.vapi.ai/server-url/server-authentication
+  events: https://docs.vapi.ai/server-url/events
+notes: >
+  Voice-AI agent platform. Its webhook endpoint is the "Server URL" and is
+  BIDIRECTIONAL. CRITICAL: there is NO fixed signature scheme — auth is opt-in and
+  per-endpoint via dashboard "Custom Credentials" (referenced by credentialId on the
+  server object). By default a Server URL has NO auth. Four credential types: (1)
+  Bearer Token — Authorization: Bearer <token>, a LITERAL shared-secret compare, not
+  an HMAC; (2) legacy X-Vapi-Secret header — same shared secret, reproduces the old
+  inline server.secret field; (3) OAuth 2.0 client-credentials — Vapi presents a token
+  it fetched from your token endpoint; (4) HMAC — FULLY user-configurable (algorithm,
+  signature header name, optional timestamp header, payload format all chosen by the
+  customer; docs pin NO defaults). Do NOT hardcode an HMAC header/algorithm/signed-string
+  as "the" Vapi scheme — that is fabrication. The skill's primary example is the
+  shared-secret path (VAPI_WEBHOOK_SECRET; read Authorization Bearer or X-Vapi-Secret,
+  timing-safe compare). No official SDK verify helper; a `verifyVapiSignature` name in a
+  CLI tutorial is an unimplemented placeholder — do not use it. No documented source-IP
+  allowlist. ENVELOPE: every POST is { "message": { "type": "<type>", "call": {...}, ... } }
+  — the event type is NESTED at message.type, NOT top-level. (A CLI tutorial page shows a
+  flatter top-level `type`/`transcript` shape with names like call-started — informal
+  example code, NOT the wire format; trust /server-url/events.) FOUR message types REQUIRE
+  a JSON RESPONSE BODY (not just 200): assistant-request (respond assistantId | assistant |
+  destination | error; HARD ~7.5s timeout), tool-calls (respond { results: [{name, toolCallId,
+  result}] }, one per toolCallList entry), transfer-destination-request (respond
+  { destination, message }), knowledge-base-request (respond { documents: [{content, similarity,
+  uuid}] }). All other types (status-update, end-of-call-report, hang, conversation-update,
+  transcript, speech-update, model-output, transfer-update, user-interrupted,
+  language-change-detected, phone-call-control, chat.*/session.*) are informational — a bare
+  200 is enough. voice-request (raw PCM response) and call.endpointing.request go to separate
+  dedicated URLs, not the main Server URL. Server URL priority (most specific wins, one URL
+  per event): Custom Tool > Assistant > Phone Number > Account-wide.
+testScenario:
+  events:
+    - assistant-request
+    - tool-calls
+    - status-update
+    - end-of-call-report
+catalog:
+  summary: 'Authenticate Vapi "Server URL" webhooks with a shared secret (`Authorization: Bearer` or legacy `X-Vapi-Secret`, timing-safe compare — Vapi has no fixed HMAC scheme; OAuth 2.0 and a configurable HMAC are also supported), dispatch on the nested `message.type`, and return the required JSON body for the request/response types `assistant-request`, `tool-calls`, `transfer-destination-request`, and `knowledge-base-request`'

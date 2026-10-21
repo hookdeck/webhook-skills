@@ -1,0 +1,29 @@
+name: slack
+displayName: Slack
+docs:
+  webhooks: https://docs.slack.dev/apis/events-api/
+  verification: https://docs.slack.dev/authentication/verifying-requests-from-slack
+  events: https://docs.slack.dev/reference/events
+notes: >
+  Communications platform. Slack Events API uses X-Slack-Signature header
+  formatted as "v0=<hex_sha256>" plus an X-Slack-Request-Timestamp header. Signed
+  content is the literal UTF-8 string: "v0:" + timestamp + ":" + raw_body (the
+  version, timestamp, and raw body joined by colons). Signing key is the Signing
+  Secret from your Slack App's Basic Information page. Reject if timestamp
+  differs from local time by more than 5 minutes (replay protection). The
+  url_verification challenge must be echoed back during initial endpoint setup.
+  Common events: message, app_mention, reaction_added, team_join,
+  member_joined_channel, app_home_opened.
+testScenario:
+  events:
+    - app_mention
+    - message
+catalog:
+  summary: Verify Slack Events API signatures (HMAC-SHA256, `X-Slack-Signature`), handle message, app_mention, and reaction events
+  marketplace:
+    description: Verify Slack Events API signatures (HMAC-SHA256 over v0:ts:body), handle message, app_mention, and reaction events.
+    keywords:
+    - webhooks
+    - slack
+    - messaging
+    - events-api

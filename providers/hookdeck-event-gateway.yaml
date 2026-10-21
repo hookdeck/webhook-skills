@@ -1,0 +1,28 @@
+name: hookdeck-event-gateway
+displayName: Hookdeck Event Gateway
+docs:
+  webhooks: https://hookdeck.com/docs/verification
+  setup: https://hookdeck.com/docs/receive-webhooks
+notes: >
+  Webhook infrastructure platform. Hookdeck Event Gateway receives webhooks from 
+  providers and forwards them to your app with an x-hookdeck-signature header.
+  Uses HMAC-SHA256 with base64 encoding. Signed content format is the raw request body.
+testScenario:
+  events:
+    - webhooks via Event Gateway
+  prompt: >
+    Create a {framework} webhook handler that receives webhooks forwarded through 
+    Hookdeck Event Gateway. Hookdeck is a webhook proxy - it receives webhooks from 
+    providers and forwards them to my app, adding an x-hookdeck-signature header for 
+    verification. I need to verify this signature using HMAC SHA-256 with base64
+    encoding. If you use any skills to help with this, add a comment in the code
+    noting which skill(s) you referenced.
+catalog:
+  readme: false
+  marketplace:
+    description: Verify x-hookdeck-signature (HMAC-SHA256 base64) and handle webhooks forwarded by the Hookdeck Event Gateway.
+    keywords:
+    - webhooks
+    - hookdeck
+    - infrastructure
+    - verification

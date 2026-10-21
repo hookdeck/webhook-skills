@@ -1,0 +1,21 @@
+name: resend
+displayName: Resend
+docs:
+  webhooks: https://resend.com/docs/webhooks
+notes: >
+  Email API platform. Uses Standard Webhooks (Svix) format with headers:
+  webhook-id, webhook-timestamp, webhook-signature. Secret format is whsec_<base64>.
+  HMAC-SHA256 with base64 encoding. Events: email.sent, email.delivered, email.bounced.
+testScenario:
+  events:
+    - email.delivered
+    - email.bounced
+catalog:
+  summary: Verify Resend webhook signatures, handle email delivery and bounce events
+  marketplace:
+    description: Verify Resend webhook signatures (Standard Webhooks/Svix), handle email delivery and bounce events.
+    keywords:
+    - webhooks
+    - resend
+    - email
+    - transactional

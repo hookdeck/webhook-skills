@@ -1,0 +1,32 @@
+name: alipay
+displayName: Alipay
+docs:
+  webhooks: https://docs.antom.com/ac/cashierpay/notifications
+  verification: https://docs.alipayplus.com/alipayplus/alipayplus/api_acq_tile/signature
+notes: >
+  Alipay's global products — Antom (Cashier Payment / AMS) and Alipay+ — deliver
+  asynchronous notifications signed with an asymmetric RSA256 (SHA256withRSA) scheme,
+  NOT HMAC and NOT Standard Webhooks. Each request carries Signature
+  ("algorithm=RSA256,keyVersion=<n>,signature=<sig>"), Client-Id, and Request-Time headers.
+  The signed content is exactly two lines: "<HTTP-METHOD> <URI>\n<Client-Id>.<Request-Time>.<RawBody>"
+  (method + path on line one; client id, request time, and the raw body joined by single
+  periods on line two). Verify with SHA256withRSA against Antom/Alipay+'s public key from the
+  Dashboard. Encoding gotcha: the signature is base64URL encoded (URL-safe alphabet) and is
+  often additionally percent-encoded on the wire — URL-decode, normalize, then base64-decode.
+  Unusually, the acknowledgement is itself signed: respond HTTP 200 with body
+  {"result":{"resultCode":"SUCCESS","resultStatus":"S","resultMessage":"Success"}} plus
+  Client-Id, Response-Time, and a Signature built the same way over
+  "<HTTP-METHOD> <URI>\n<Client-Id>.<Response-Time>.<Body>" using YOUR merchant private key.
+  Use the raw unparsed body throughout. Notify URL is set per-call via
+  paymentNotifyUrl / refundNotifyUrl. On a missing/invalid ack Antom retries ~8 times over 24h.
+  Notifications distinguish via a notifyType field (PAYMENT_RESULT, CAPTURE_RESULT, REFUND_RESULT,
+  AUTHORIZATION_RESULT, DISPUTE_CREATED/DISPUTE_JUDGED) plus result.resultStatus (S/F/U) — there is
+  no "type" field. The legacy openapi/MAPI scheme (openapi.alipay.com, global.alipay.com:
+  form-encoded params with sign & sign_type=RSA2, reply "success") is a distinct older vintage
+  and is not what this skill implements.
+testScenario:
+  events:
+    - PAYMENT_RESULT
+    - REFUND_RESULT
+catalog:
+  summary: Verify Alipay (Antom / Alipay+) webhook signatures (`Signature` header, RSA256 / SHA256withRSA, base64URL over `<METHOD> <URI>\n<Client-Id>.<Request-Time>.<body>`), sign the acknowledgement response, handle notifyPayment, notifyCapture, notifyRefund, notifyAuthorization, and notifyDispute events

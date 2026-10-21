@@ -1,0 +1,36 @@
+name: akeneo
+displayName: Akeneo
+docs:
+  webhooks: https://api.akeneo.com/events-documentation/overview.html
+  verification: https://api.akeneo.com/events-documentation/security.html
+notes: >
+  Product Information Management (PIM) system. This is Akeneo PIM's "Events API"
+  (marked Deprecated in favor of the newer CloudEvents-based Event Platform, but
+  still the webhook scheme Hookdeck targets; available on PIM 5.0+ / SaaS). Enable
+  per connection in Connect > Connection settings > Event subscription: ONE single
+  Request URL receives ALL event types, so route/dispatch server-side by the
+  `action` field. Signature = hex HMAC-SHA256 of (timestamp + "." + raw_body) using
+  the connection secret: hash_hmac('sha256', timestamp . '.' . body, secret). Sent
+  in headers x-akeneo-request-signature and x-akeneo-request-timestamp (unix
+  seconds). Verify with a timing-safe compare against the RAW body; reject if
+  time() - timestamp > 300 (5 min) for replay protection. NOT Standard Webhooks.
+  Payloads are BATCHED as an "events" array (up to 10 per request); each item has
+  action, event_id, event_datetime, author, author_type, pim_source, data.resource.
+  Ack fast (<500ms, 2xx) and process async — no retries, events dropped after ~2h,
+  up to ~40k events/hr, delivery order not guaranteed. Only product and
+  product-model events exist here (product.created/updated/removed,
+  product_model.created/updated/removed); category events are NOT in this API (only
+  in the newer Event Platform). No official SDK — verify manually. Set
+  AKENEO_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - product.created
+    - product_model.updated
+catalog:
+  summary: Verify Akeneo PIM Events API webhook signatures (`x-akeneo-request-signature`, HMAC-SHA256 hex over `timestamp.body`), handle batched product and product-model events like product.created, product.updated, product.removed, product_model.created, product_model.updated, and product_model.removed
+  marketplace:
+    keywords:
+    - webhooks
+    - akeneo
+    - pim
+    - ecommerce

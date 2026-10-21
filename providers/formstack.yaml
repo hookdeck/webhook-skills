@@ -1,0 +1,135 @@
+name: formstack
+displayName: Formstack
+docs:
+  webhooks: https://help.formstack.com/hc/en-us/articles/44592535914387-WebHook-Submit-Actions
+  verification: https://help.formstack.com/hc/en-us/articles/44592535914387-WebHook-Submit-Actions
+  events: https://help.formstack.com/hc/en-us/articles/44592535914387-WebHook-Submit-Actions
+notes: >
+  IDENTITY: Formstack FORMS (formstack.com online form builder) and specifically its
+  "WebHook Submit Action" / "Send Data to an External URL". NOT Formstack Documents
+  (formerly WebMerge — separate "Webhook Delivery" feature; a captured delivery posted
+  merge_id / handshake / file_name / base64 file_contents with a WebMerge user-agent and NO
+  signature header), NOT Formstack Sign (formerly InsureSign), NOT the Salesforce
+  packages. Also keep distinct from Typeform, Jotform, Formsite and Wufoo.
+
+  LOAD-BEARING LOOKALIKE: the signature header is X-FS-Signature — the SAME header name
+  FastSpring (fastspring.com, unrelated e-commerce company, already in this repo as
+  fastspring-webhooks) uses. FastSpring encodes BASE64 and wraps its payload in an
+  events[] array. Formstack does NEITHER. Never copy from the fastspring skill.
+
+  VERIFICATION: HMAC-SHA256 over the RAW request body bytes, keyed with the per-WebHook
+  "HMAC Key", rendered as LOWERCASE HEX. Nothing else is signed (no timestamp, nonce, URL
+  or method). Signing is OPTIONAL and OFF BY DEFAULT — Formstack sends no signature at
+  all unless the form owner sets an HMAC Key (Form Settings > Emails & Actions > Advanced
+  Settings > Add Webhook, or `hmacSecret` via the v2025 API). Skills MUST fail closed:
+  missing/empty secret or absent header => reject; never "no secret configured, accept
+  anyway". Header name is X-FS-Signature by DEFAULT and USER-OVERRIDABLE via the
+  "Custom HMAC Header" field — the help article states verbatim: "If left blank,
+  X-FS-Signature will be used as the HMAC header." (shipped Feb 2025). Read the header
+  name from an env var defaulting to `x-fs-signature`, lowercased. Real deliveries send
+  `sha256=<hex>` — strip the prefix case-insensitively (tolerate a bare digest), trim,
+  normalise case, then compare constant-time with a length guard first.
+
+  CONFIRMED BY LIVE CAPTURE (2026-09-25): Formstack's CURRENT public docs state the
+  header name and the HMAC Key field but NEVER name the algorithm or encoding
+  (developers.formstack.com/v2.0/docs/webhook-setup, still linked from the help article,
+  404s). Two real WebHook deliveries were captured and recomputed: HMAC-SHA256 over the
+  raw urlencoded body, LOWERCASE HEX, header value `sha256=<hex>`, keyed with the HMAC
+  Key used directly. The base64 form does NOT match. The second delivery was signed after
+  the key changed and verified only with the new key. This matches Hookdeck's FORMSTACK
+  source integration. Test vector (HMAC Key `test1`): body
+  `FormID=6606394&UniqueID=1500878955&HandshakeKey=test`, header
+  `sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3b51b970`. The HMAC Key
+  is NOT the V2 API client secret / access token / PAT, and there is NO account-wide
+  webhook secret — each WebHook on each form has its own.
+
+  RAW BODY IS CRITICAL: content type is per-WebHook, `application/x-www-form-urlencoded`
+  (DEFAULT) or `application/json`. The digest covers the RAW urlencoded bytes, NOT a
+  re-encoded parsed dict — re-encoding reorders keys and re-escapes characters (`+` vs
+  `%20`) and will never match. Express: express.urlencoded({extended:true, verify}) AND
+  express.json({verify}) so both content types are covered; Next.js: await req.text()
+  then parse manually; FastAPI: await request.body() then parse. Surface this
+  prominently — it is the most likely failure mode.
+
+  NO EVENT TAXONOMY: a WebHook fires on exactly ONE thing, a form submission. There is
+  no event-type header, no event-type body field, no event names and no subscription
+  model. DO NOT invent form.submitted / submission.created / form_submission. The only
+  filtering is Routing Logic, a per-WebHook conditional filter on the submitted answers
+  (API `logic`: action show|hide, conditional all|any, checks[] of {field, condition
+  equals|notequals|greaterthan|lessthan, option}). Handlers key off FormID, not an event
+  type, and must tolerate unknown keys.
+
+  PAYLOAD IS PER-FORM: a FLAT map of field key -> value where the KEYS ARE THE FORM'S OWN
+  FIELD LABELS, so the schema differs per form and cannot be hard-coded. GET
+  /forms/{formId}/webhooks/openapi returns a generated OpenAPI schema for THAT form's
+  payload — mention it. Key format via `postDataFieldKeys`: field_names (default),
+  field_ids, api_friendly_field_names, internal_labels, internal_labels_api_friendly;
+  legacy boolean `useFieldIds`. DOCUMENTED FOOTGUN: with field_names or
+  api_friendly_field_names, duplicate labels COLLAPSE — only the LAST occurrence is sent.
+  Use field IDs when labels may repeat. Other switches: includeSubfieldNames (Name =>
+  first/last), includeFieldType (appends field_type), standardizeValues, fileTransferType
+  (downloadLink default | signedUrl | base64encode — base64encode makes bodies very
+  large). Metadata: the API reference's example webhook schema shows FormID and UniqueID
+  (both strings) alongside the form's field keys — present those as the example shows
+  them and as the sensible idempotency key. Live captures confirm FormID and UniqueID as
+  strings, first on the wire, followed by HandshakeKey when a Shared Secret is set. DO NOT
+  enumerate a fixed metadata list or assert Timestamp / FormName / SubmissionID. Read
+  defensively.
+
+  SHARED SECRET: a SEPARATE, weaker mechanism — the "WebHook Shared Secret", which the
+  help centre also calls a Handshake Key ("an additional value you can send to your
+  WebHook Endpoint that you may use to verify that the data is trustworthy, or at the
+  very least that the data is being sent from Formstack"), exposed as `sharedSecret`.
+  OBSERVED (live capture, not documented): it arrives as a BODY field named `HandshakeKey`
+  after FormID and UniqueID, inside the signed content. Changing the HMAC Key left
+  HandshakeKey unchanged, so it carries the Shared Secret and the HMAC Key is never sent.
+  Describe it as a static bearer-style token with no
+  per-request binding and prefer HMAC signing. Never build the primary path around it.
+
+  REPLAY: no timestamp and no nonce in the signed content, so a captured delivery is
+  replayable indefinitely. Say so rather than inventing a staleness window; recommend
+  idempotency keyed on UniqueID (falling back to a hash of the raw body) plus HTTPS-only.
+
+  SOURCE IPs (verbatim in the help article's troubleshooting section, for firewall
+  allowlisting): 52.71.30.102, 3.227.148.190, 44.196.66.47, 54.69.216.81, 52.37.95.20,
+  52.24.103.36. Safe to include but frame as a firewall aid Formstack can change without
+  notice — never as verification.
+
+  DELIVERY: only `errorEmails` (comma-separated addresses notified on failure) and the
+  rule that an HMAC Key plus at least one error email is REQUIRED before Formstack sends
+  full credit-card data (plus `customerApprovedPciCompliant`) are documented. DO NOT
+  ASSERT retry counts, backoff, timeouts, or delivery-id/request-id headers. OBSERVED on
+  live captures (undocumented): User-Agent `FormstackWebhook/1.0 (Form <FormID>)`; no
+  other headers beyond Content-Type, Content-Length, the signature header and Datadog
+  tracing headers; source IPs 44.196.66.47 and 52.71.30.102, both on the published list. Endpoints
+  should still return 2xx fast and process async. status.formstack.com publishes
+  incidents.
+
+  SETUP: UI — Form Settings > Emails & Actions > Advance Settings > Add Webhook.
+  API (v2025, base https://www.formstack.com/api/v2025) — POST/GET/PUT/DELETE
+  /forms/{formId}/webhooks[/{webhookId}] with name, url, contentType, fileTransferType,
+  postDataFieldKeys, useFieldIds, sharedSecret, hmacSecret, customHmacHeader, errorEmails,
+  includeFieldType, includeSubfieldNames, standardizeValues, customerApprovedPciCompliant,
+  logic. That API authenticates with OAuth2 / a Personal Access Token — NOT the webhook
+  HMAC key. Keep the two clearly separate.
+
+  NO SDK: verification is stdlib crypto / hmac only. Do NOT add any Formstack package to
+  package.json or requirements.txt — no official webhook-verification library exists and
+  inventing a dependency breaks install. Set FORMSTACK_HMAC_KEY and
+  FORMSTACK_SIGNATURE_HEADER (default x-fs-signature) env vars.
+testScenario:
+  events:
+    - form submission
+  prompt: >
+    Set up a Formstack Forms webhook receiver in {framework} at /webhooks/formstack that
+    verifies the X-FS-Signature header (HMAC-SHA256 over the raw request body, lowercase
+    hex, keyed with the WebHook's HMAC Key) before doing anything else. Read the header
+    name from an env var defaulting to x-fs-signature, since the "Custom HMAC Header"
+    field can override it, and tolerate an optional `sha256=` prefix. Capture the RAW
+    body before parsing and support BOTH application/x-www-form-urlencoded (the default)
+    and application/json. Formstack has no event types — dispatch on the FormID field and
+    deduplicate on UniqueID. Fail closed if no secret is configured. Return 400 for an
+    invalid signature and 200 on success. If you use any skills to help with this, add a
+    comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Formstack Forms WebHook submit action signatures (`X-FS-Signature`, HMAC-SHA256 lowercase hex over the raw body, optional `sha256=` prefix, user-overridable header name), handle urlencoded and JSON submission payloads, and route on `FormID` — Formstack has no event types, only form submissions

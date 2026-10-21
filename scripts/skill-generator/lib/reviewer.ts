@@ -12,7 +12,7 @@ import type {
   ReviewIssue,
 } from './types';
 import { runReviewSkill, runFixIssues } from './cli';
-import { runTests, runValidation, syncIntegrationFiles } from './generator';
+import { runTests, runValidation } from './generator';
 
 /**
  * Thresholds for accepting a skill
@@ -182,11 +182,9 @@ export async function reviewAndIterate(
     logger.info(`--- Iteration ${iteration + 1}/${maxIterations} ---`);
     iterationsRun = iteration + 1;
     
-    // Phase 0: Deterministic checks (the same ones CI runs on provider PRs).
-    // Add any missing README row / marketplace entry first, then validate, so
-    // the AI is only asked to fix what tooling can't (e.g. a missing file or a
-    // providers.yaml entry without testScenario).
-    syncIntegrationFiles(workingDir, { logger, dryRun });
+    // Phase 0: Deterministic checks (the same ones CI runs on provider PRs):
+    // required files, plus providers/<name>.yaml with testScenario and
+    // catalog.summary.
     const validation = await runValidation(provider, { workingDir, logger, dryRun });
     validationResult = {
       passed: validation.passed,
@@ -198,7 +196,7 @@ export async function reviewAndIterate(
       const validationIssues: ReviewIssue[] = validation.errors.map(error => ({
         severity: 'critical' as const,
         category: 'structure' as const,
-        file: error.includes('providers.yaml') ? 'providers.yaml' : `skills/${provider.name}-webhooks/`,
+        file: error.includes('providers/') ? `providers/${provider.name}.yaml` : `skills/${provider.name}-webhooks/`,
         description: `validate-provider.sh: ${error}`,
         suggestedFix: 'See AGENTS.md "Contributing a New Provider Skill" checklist. CI runs scripts/validate-provider.sh on every provider PR.',
       }));

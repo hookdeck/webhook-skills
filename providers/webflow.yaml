@@ -1,0 +1,28 @@
+name: webflow
+displayName: Webflow
+docs:
+  webhooks: https://developers.webflow.com/data/docs/working-with-webhooks
+  verification: https://developers.webflow.com/data/docs/working-with-webhooks#validating-request-signatures
+notes: >
+  Website builder and CMS platform. Uses x-webflow-signature and x-webflow-timestamp headers
+  with HMAC-SHA256 (hex encoded). Signed content format is timestamp:body. Only webhooks
+  created via OAuth apps or API include signature headers; dashboard-created webhooks do not.
+  Common events: form_submission, site_publish, ecomm_new_order, collection_item_created.
+  Event list: all-events documents 13 triggerTypes; the official webflow-api SDK TriggerType
+  enum adds collection_item_published (14 total). There are NO user_account_* triggerTypes --
+  absent from all-events, their per-event reference pages 404, and absent from the SDK enum at
+  v3.3.4 and v1.3.0. Do not generate them (verified 2026-10-19).
+testScenario:
+  events:
+    - form_submission
+    - ecomm_new_order
+catalog:
+  summary: Verify Webflow webhook signatures (HMAC-SHA256), handle form submission, ecommerce, and CMS events
+  marketplace:
+    description: Verify Webflow webhook signatures (HMAC-SHA256 with timestamp), handle form submission, ecommerce, and CMS events.
+    keywords:
+    - webhooks
+    - webflow
+    - cms
+    - ecommerce
+    - forms

@@ -1,0 +1,22 @@
+name: sendgrid
+displayName: SendGrid
+docs:
+  webhooks: https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/event
+  verification: https://www.twilio.com/docs/sendgrid/for-developers/tracking-events/getting-started-event-webhook-security-features
+notes: >
+  Email delivery platform. Uses ECDSA signatures with public key verification.
+  Signature in X-Twilio-Email-Event-Webhook-Signature header. Timestamp in
+  X-Twilio-Email-Event-Webhook-Timestamp header. Verify using SendGrid's public key.
+testScenario:
+  events:
+    - delivered
+    - bounce
+catalog:
+  summary: Verify SendGrid webhook signatures (ECDSA), handle email delivery events
+  marketplace:
+    description: Verify SendGrid webhook signatures (ECDSA with public key), handle email delivery events.
+    keywords:
+    - webhooks
+    - sendgrid
+    - email
+    - transactional
