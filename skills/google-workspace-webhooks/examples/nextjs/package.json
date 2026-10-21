@@ -1,0 +1,22 @@
+{
+  "name": "google-workspace-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Google Workspace push notification (Drive, Calendar, Admin SDK) handler with Next.js App Router",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

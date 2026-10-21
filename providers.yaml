@@ -7657,3 +7657,670 @@ providers:
         - order/created
         - product/sold
         - livestream/stopped
+
+  # ---------------------------------------------------------------------------
+  # Verified-sources batch 1 (matches hookdeck/core source types)
+  # ---------------------------------------------------------------------------
+
+  # --- Standard Webhooks, webhook-* headers ---
+
+  - name: recall-ai
+    displayName: Recall.ai
+    docs:
+      webhooks: https://docs.recall.ai/reference/webhooks-overview
+      verification: https://docs.recall.ai/docs/authenticating-requests-from-recallai
+    notes: >
+      Meeting bot / recording API. Standard Webhooks: once the user creates a workspace
+      verification secret (Developers > API Keys & Secrets), every request carries webhook-id,
+      webhook-timestamp and webhook-signature ("v1,<base64>", space-delimited list). Signature =
+      base64 HMAC-SHA256 over "<webhook-id>.<webhook-timestamp>.<raw body>" keyed with the
+      base64-decoded part of the whsec_ secret. Accounts created before 2025-12-15 instead get
+      svix-id / svix-timestamp / svix-signature headers with a per-endpoint Svix secret (same
+      algorithm); the skill should accept either header prefix. Regional dashboards exist
+      (us-east-1, us-west-2, eu-central-1, ap-northeast-1).
+    testScenario:
+      events:
+        - bot.done
+        - transcript.done
+
+  - name: fathom
+    displayName: Fathom
+    docs:
+      webhooks: https://developers.fathom.ai/webhooks
+      verification: https://developers.fathom.ai/webhooks
+    notes: >
+      AI meeting notetaker (fathom.video / fathom.ai). Standard Webhooks: webhook-id,
+      webhook-timestamp (seconds), webhook-signature (space-delimited "v1,<base64>" list).
+      Signed content "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64; key is the base64-decoded
+      portion of the webhook_secret after the whsec_ prefix. One secret per webhook, returned
+      when the webhook is created in Settings or via the API. Webhooks fire after a recorded
+      meeting's content is ready and deliver the Meeting object (optionally summary, transcript,
+      action items); there is no event-type field to dispatch on. Not Fathom Analytics
+      (usefathom.com), a different product.
+    testScenario:
+      events:
+        - new meeting content ready
+      prompt: >
+        Add a Fathom webhook endpoint to my {framework} app. Verify the webhook signature and
+        handle the meeting payload Fathom sends after a recording is processed (title,
+        transcript, summary and action items).
+
+  - name: pleo
+    displayName: Pleo
+    docs:
+      webhooks: https://developers.pleo.io/reference/webhooks/overview-webhooks
+      verification: https://developers.pleo.io/reference/webhooks/webhooks-authentication-authorisation
+      events: https://developers.pleo.io/reference/webhooks/webhook-events
+    notes: >
+      Spend management. Pleo delivers through Svix with Standard Webhooks headers webhook-id,
+      webhook-timestamp, webhook-signature ("v1,<base64>", space-delimited). Pleo's own docs do
+      not spell out the signed content or hash; HMAC-SHA256 base64 over
+      "<id>.<timestamp>.<raw body>" is the Svix/Standard Webhooks scheme (say it is inferred from
+      Svix delivery). Secret is whsec_-prefixed (e.g. whsec_C2FV...), read via
+      GET /v1/subscriptions/{id}/secret; subscriptions are created with the Subscriptions API.
+      Pleo also offers Basic auth and custom-header auth as fallbacks. Event types are versioned,
+      e.g. v1.export-job.created.
+    testScenario:
+      events:
+        - v1.export-job.created
+
+  - name: browserbase
+    displayName: Browserbase
+    docs:
+      webhooks: https://docs.browserbase.com/platform/webhooks/overview
+      verification: https://docs.browserbase.com/platform/webhooks/verifying-deliveries
+      setup: https://docs.browserbase.com/platform/webhooks/registering-endpoints
+      events: https://docs.browserbase.com/platform/webhooks/overview#event-types
+    notes: >
+      Headless browser platform. Docs are Mintlify (append .md to any page). Deliveries
+      follow the Standard Webhooks spec: webhook-id, webhook-timestamp, webhook-signature;
+      HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>" with the whsec_ signing secret
+      (shown only on create or rotate, dashboard or API; POST /v1/webhooks with X-BB-API-Key).
+      Docs recommend the standardwebhooks npm/pip library; no Browserbase-specific verify
+      helper. Rotation keeps the previous secret verifying 24h unless revokeImmediately.
+      Envelope {id, type, resourceId, data}; id stable across retries (dedupe key); keys
+      additive; per-type data fields undocumented. Retries if no 2xx within 15 seconds
+      (immediately, 5s, 5m, 30m, 2h, 5h, 10h, 10h; 8 attempts); 3xx is a failure; endpoint
+      disabled after 5 days of failures; unordered. Events: functions.invocations.pending,
+      functions.invocations.running, functions.invocations.completed,
+      functions.invocations.failed, functions.builds.running, functions.builds.completed,
+      functions.builds.failed.
+    testScenario:
+      events:
+        - functions.invocations.completed
+        - functions.invocations.failed
+
+  - name: yoco
+    displayName: Yoco
+    docs:
+      webhooks: https://developer.yoco.com/docs/api/webhooks
+      verification: https://developer.yoco.com/docs/api/webhooks/verifying-events
+    notes: >
+      South African payments. Both the Checkout API and the newer Yoco API use Standard
+      Webhooks: webhook-id, webhook-timestamp, webhook-signature; signed content
+      "<webhook-id>.<webhook-timestamp>.<raw body>", HMAC-SHA256, base64; remove the whsec_
+      prefix and base64-decode the rest to get the key. Yoco recommends a 3-minute timestamp
+      tolerance. The secret is returned only when the subscription is created via API. Events
+      include payment.succeeded, payment.created, payment.refunded.
+    testScenario:
+      events:
+        - payment.succeeded
+        - payment.refunded
+
+  - name: uphold
+    displayName: Uphold
+    docs:
+      webhooks: https://developer.uphold.com/rest-apis/webhooks
+      verification: https://developer.uphold.com/rest-apis/webhooks
+    notes: >
+      Digital money platform, Uphold Enterprise REST APIs (Core API). Delivered by Svix but
+      white-labelled: headers Webhook-Id, Webhook-Timestamp, Webhook-Signature (webhook- prefix,
+      not svix-). Signature = base64 HMAC-SHA256 over "<id>.<timestamp>.<raw body>" keyed with
+      the base64 part of the whsec_ endpoint secret from the Svix-hosted Webhooks Portal (Uphold
+      defers to Svix's verification guide). The legacy Uphold API webhooks are a separate older
+      scheme; do not cover them. Events include core.user.created, core.transaction.status-changed.
+    testScenario:
+      events:
+        - core.user.created
+        - core.transaction.status-changed
+
+  # --- Standard Webhooks via Svix, svix-* headers ---
+
+  - name: nash
+    displayName: Nash
+    docs:
+      webhooks: https://docs.usenash.com/reference/webhooks
+      verification: https://docs.usenash.com/reference/webhooks
+    notes: >
+      Delivery orchestration (usenash.com, now nash.ai). Nash sends webhooks with Svix: headers
+      svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>"
+      keyed with the base64 part of the endpoint's whsec_ signing secret (Nash Portal > Settings >
+      Webhook Management > endpoint > Signing Secret). Use the svix library or the manual
+      algorithm. Events include task.created, task.canceled_by_provider, shift.dispatched.
+    testScenario:
+      events:
+        - task.created
+        - task.canceled_by_provider
+
+  - name: vanta
+    displayName: Vanta
+    docs:
+      webhooks: https://developer.vanta.com/docs/webhooks
+      verification: https://developer.vanta.com/docs/webhooks
+    notes: >
+      Compliance automation. Webhooks are powered by Svix: svix-id, svix-timestamp, svix-signature
+      headers; signed content "{svix-id}.{svix-timestamp}.{raw body}", HMAC-SHA256 with the
+      decoded secret, base64, compared against each space-delimited "v1,<sig>" entry. Signing
+      secret starts with whsec_ (Settings > Webhooks > endpoint > Signing Secret). Events include
+      v1.questionnaire.status-changed, v1.vendor.decision.created,
+      v1.trust-center.access-request.approved.
+    testScenario:
+      events:
+        - v1.vendor.decision.created
+        - v1.questionnaire.status-changed
+
+  - name: guesty
+    displayName: Guesty
+    docs:
+      webhooks: https://open-api-docs.guesty.com/docs/webhooks
+      verification: https://open-api-docs.guesty.com/docs/webhooks#validate-webhooks
+    notes: >
+      Property management for short-term rentals. Webhooks are delivered by Svix; retrieve the
+      per-endpoint secret with GET /webhooks-v2/secret (or the webhooks developer dashboard) and
+      verify with the Svix library or Svix's manual algorithm: svix-id, svix-timestamp,
+      svix-signature, HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>", whsec_ secret
+      (Guesty does not print the secret format; say it is the Svix default). Deduplicate on
+      svix-id and meta.eventId. Subscriptions are API-only; recreating one can issue a new secret.
+      Events include reservation.new, reservation.updated, listing.updated.
+    testScenario:
+      events:
+        - reservation.new
+        - reservation.updated
+
+  - name: ada
+    displayName: Ada
+    docs:
+      webhooks: https://docs.ada.cx/reference/webhooks/overview
+      verification: https://docs.ada.cx/reference/webhooks/overview#signing-secrets
+    notes: >
+      Ada (ada.cx) AI customer service platform. Webhooks are delivered by Svix (channel tags,
+      Svix source IPs): svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+      "<id>.<timestamp>.<raw body>" keyed with the base64 part of the endpoint's whsec_ signing
+      secret (GET webhook secret returns e.g. "whsec_C2FV..."). Each endpoint has its own secret.
+      Events include v1.conversation.created, v1.conversation.ended, v1.conversation.message.
+    testScenario:
+      events:
+        - v1.conversation.created
+        - v1.conversation.ended
+
+  - name: agentmail
+    displayName: AgentMail
+    docs:
+      webhooks: https://docs.agentmail.to/webhook-verification
+      verification: https://docs.agentmail.to/webhook-verification
+    notes: >
+      Email inboxes for AI agents. AgentMail uses Svix: svix-id, svix-timestamp, svix-signature
+      ("v1,<base64>" space-delimited); HMAC-SHA256 over "<id>.<timestamp>.<raw body>"; secret
+      starts with whsec_. svix-id differs per webhook level (org/pod/inbox), so AgentMail
+      recommends deduplicating on the payload event_id rather than svix-id. Events include
+      message.received, message.sent, message.delivered, message.bounced, domain.verified.
+    testScenario:
+      events:
+        - message.received
+        - message.bounced
+
+  - name: crusoe
+    displayName: Crusoe Cloud
+    docs:
+      webhooks: https://docs.crusoecloud.com/notifications/overview
+    notes: >
+      AI cloud provider. Webhooks are a channel of Crusoe Cloud's Notifications service (resource
+      health, Command Center infrastructure failures, budget alerts, org and Managed AI events),
+      configured in the Svix dashboard reached from the Crusoe console. Crusoe does not publish
+      verification docs; headers (svix-id, svix-timestamp, svix-signature), algorithm
+      (HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>") and the whsec_ secret format are
+      Svix defaults. Say clearly that they are inferred from Svix, not quoted from Crusoe. Payload
+      structure varies by event type; parse defensively.
+    testScenario:
+      events:
+        - resource health
+        - budget alert
+      prompt: >
+        Add a Crusoe Cloud notifications webhook endpoint to my {framework} app. Verify the Svix
+        signature and handle resource health and budget alert notifications.
+
+  - name: loop
+    displayName: Loop
+    docs:
+      webhooks: https://docs.loop.com/developers/webhooks
+      verification: https://docs.loop.com/developers/webhooks#webhook-signature-verification
+      events: https://docs.loop.com/developers/webhook-event-types
+    notes: >
+      Loop (loop.com), freight audit and logistics payments. Webhooks are delivered by Svix:
+      svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw
+      body>" with the whsec_ secret (docs example whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw); sign the
+      raw string body. Loop recommends deduplicating on the payload eventId, not svix-id. See the
+      Webhook event types page for the list; a test event is test-event.created. Not Loop Returns
+      or Loop Subscriptions (Shopify apps), different companies.
+    testScenario:
+      events:
+        - test-event.created
+
+  - name: openmeter
+    displayName: OpenMeter
+    docs:
+      webhooks: https://openmeter.io/docs/integrations/notifications/webhooks
+      verification: https://openmeter.io/docs/integrations/notifications/webhooks
+    notes: >
+      Usage metering and billing (now part of Kong). OpenMeter delivers notifications with the
+      stock svix library: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+      "<id>.<timestamp>.<raw body>". Auto-generated secrets are whsec_ + base64(32 random bytes).
+      Users may set a custom signingSecret (pattern ^(whsec_)?[a-zA-Z0-9+/=]{32,100}$); CAVEAT to
+      state in the verification section: when you set a custom secret, keep the whsec_ prefix so
+      Svix/Standard Webhooks libraries and Hookdeck decode it correctly. Events include
+      entitlements.balance.threshold, entitlements.reset, invoice.created.
+    testScenario:
+      events:
+        - entitlements.balance.threshold
+        - entitlements.reset
+
+  - name: sendoso
+    displayName: Sendoso
+    docs:
+      webhooks: https://developer.sendoso.com/webhooks/introduction
+      verification: https://developer.sendoso.com/webhooks/security
+    notes: >
+      Corporate gifting / direct mail. Webhooks are opt-in: ask Sendoso support
+      (developers@sendoso.com) to enable them, then use the webhooks portal URL from the
+      integrations page to subscribe endpoints. Svix delivery: svix-id, svix-timestamp,
+      svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>" keyed with the base64
+      part of the whsec_ endpoint secret. Sendoso publishes source IPs (US list). Event names are
+      listed in the webhooks portal; check docs for current names (send and delivery status
+      changes).
+    testScenario:
+      events:
+        - send status
+      prompt: >
+        Add a Sendoso webhook endpoint to my {framework} app. Verify the Svix signature and
+        handle send and delivery status updates.
+
+  - name: sovos
+    displayName: Sovos
+    docs:
+      webhooks: https://docs.sovos.com/en/e-invoicing/indirect-tax-api/how-indirect-tax-api-works/using-webhooks-for-event-notifications
+      verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+    notes: >
+      Tax compliance, e-invoicing / Indirect Tax API only (other Sovos products are out of scope).
+      Sovos partners with Svix: verify with the Svix library or manually (svix-id,
+      svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>"; key is
+      the base64 part after whsec_). Sovos does not name the header prefix or secret format
+      itself; they come from Svix's linked guide. The Svix Consumer App Portal shows delivery logs
+      and the signing secret. Payloads carry eventType, e.g. document.received.
+    testScenario:
+      events:
+        - document.received
+
+  - name: stitch
+    displayName: Stitch
+    docs:
+      webhooks: https://docs.stitch.money/webhooks/using_webhooks
+      verification: https://docs.stitch.money/webhooks/using_webhooks
+    notes: >
+      Stitch (stitch.money), the South African payments company; NOT Stitch Data (the ETL tool).
+      Webhooks are delivered by Svix; a signing secret is issued per subscription (returned when
+      creating a subscription via API). svix-id, svix-timestamp, svix-signature headers; signed
+      content "${svix_id}.${svix_timestamp}.${body}", HMAC-SHA256, base64; key is the base64
+      portion after the whsec_ prefix. The svix-signature header may contain several
+      space-delimited "v1,<sig>" entries (docs also show a v2 entry); compare against v1 entries.
+      The legacy GraphQL webhooks are a separate older mechanism. Check the Event Types page for
+      current names (payment and disbursement status events).
+    testScenario:
+      events:
+        - payment
+      prompt: >
+        Add a Stitch (stitch.money) webhook endpoint to my {framework} app. Verify the Svix
+        signature and handle payment and disbursement status events.
+
+  - name: taskrabbit
+    displayName: TaskRabbit
+    docs:
+      webhooks: https://developer.taskrabbit.com/docs/webhooks-1
+      verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+    notes: >
+      TaskRabbit Partner API (requires partner onboarding). Webhooks are delivered via Svix;
+      endpoints and subscriptions are configured in the Svix Partner Dashboard. Verify with the
+      Svix library or manually: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+      "<id>.<timestamp>.<raw body>"; whsec_ secret unique per endpoint (format from Svix's guide,
+      TaskRabbit does not show one). Events include project.completed, project.canceled,
+      project.rescheduled.
+    testScenario:
+      events:
+        - project.completed
+        - project.canceled
+
+  - name: wetravel
+    displayName: WeTravel
+    docs:
+      webhooks: https://developer.wetravel.com/v3/docs/webhooks
+    notes: >
+      Group travel booking and payments. CAVEAT to state in the verification section: WeTravel
+      publishes no verification docs. Webhooks are managed in a Svix App Portal ("Manage
+      Webhooks" in WeTravel settings, which shows a masked Signing Secret), so Svix delivery is
+      inferred: svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over
+      "<id>.<timestamp>.<raw body>"; whsec_ secret. Recommend the svix library and accept either
+      svix-* or webhook-* headers. Webhooks need an API key first; only the main account can
+      manage them. Events include booking.created, booking.updated, payment.created,
+      transaction.created, trip.published.
+    testScenario:
+      events:
+        - booking.created
+        - payment.created
+
+  # --- HMAC ---
+
+  - name: nango
+    displayName: Nango
+    docs:
+      webhooks: https://nango.dev/docs/guides/platform/webhooks-from-nango
+      verification: https://nango.dev/docs/guides/platform/webhooks-from-nango
+    notes: >
+      Unified API / integrations platform. Header X-Nango-Hmac-Sha256 = HMAC-SHA256 of the raw
+      request body, hex, keyed with the webhook signing key (Environment Settings > Webhooks >
+      Signing key; NOT the environment API key), used as a raw UTF-8 string. A legacy
+      X-Nango-Signature header (plain SHA-256) is still sent; ignore it. On key rotation Nango may
+      sign with the old or new key for up to 5 minutes. Webhook types: auth (connection
+      created/failed), sync (sync completed/failed), forward (forwarded provider webhooks).
+    testScenario:
+      events:
+        - auth
+        - sync
+
+  - name: segment
+    displayName: Segment
+    docs:
+      webhooks: https://www.twilio.com/docs/segment/connections/destinations/catalog/actions-webhook
+      verification: https://www.twilio.com/docs/segment/connections/destinations/catalog/actions-webhook
+    notes: >
+      Twilio Segment CDP, Webhooks (Actions) destination and classic Webhooks destination (docs
+      now live on twilio.com/docs/segment). Signing is optional: if a shared secret is set,
+      Segment sends X-Signature = HMAC-SHA1 of the raw request body, hex. CAVEAT to state in the
+      verification section: when batching is enabled, Segment signs only the FIRST event in the
+      batch, not the whole batch body, so a raw-body HMAC check fails for batched deliveries.
+      Payloads are Segment spec calls with type track, identify, page, screen, group, alias.
+    testScenario:
+      events:
+        - track
+        - identify
+
+  - name: revenuecat
+    displayName: RevenueCat
+    docs:
+      webhooks: https://www.revenuecat.com/docs/integrations/webhooks
+      verification: https://www.revenuecat.com/docs/integrations/webhooks
+    notes: >
+      In-app subscription platform. CAVEAT to state in the verification section: HMAC signing is
+      opt-in (toggle "HMAC webhook signing" on the integration; the secret is shown once at
+      creation or rotation); otherwise RevenueCat only sends the static Authorization header
+      value you configure in the dashboard, which must be compared constant-time. When signing is
+      on: X-RevenueCat-Webhook-Signature: t=<unix_timestamp>,v1=<hmac_sha256_hex>, computed over
+      "<timestamp>.<raw body>" with the signing secret as a UTF-8 key. Events (event.type):
+      INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE, PRODUCT_CHANGE, TEST.
+    testScenario:
+      events:
+        - INITIAL_PURCHASE
+        - RENEWAL
+
+  - name: pipedream
+    displayName: Pipedream Connect
+    docs:
+      webhooks: https://pipedream.com/docs/connect/webhooks
+      verification: https://pipedream.com/docs/connect/webhooks
+    notes: >
+      Pipedream Connect (embedded integrations). CAVEAT to state in the verification section:
+      Pipedream only documents Connect TRIGGER webhooks as signed; connection webhooks
+      (CONNECTION_SUCCESS / CONNECTION_ERROR sent to a Connect token's webhook_uri) and plain
+      workflow HTTP requests are not documented as signed. Trigger webhooks carry
+      x-pd-signature: t=<timestamp>,v1=<hex>, HMAC-SHA256 over "<timestamp>.<raw body>" with the
+      signing key (UTF-8) shown once when the webhook URL is saved (project-level or
+      trigger-level). Reject stale timestamps to prevent replay.
+    testScenario:
+      events:
+        - trigger event
+      prompt: >
+        Add a Pipedream Connect trigger webhook endpoint to my {framework} app. Verify the
+        x-pd-signature header and handle events emitted by deployed triggers.
+
+  # --- Shared secret header / Basic auth (no HMAC) ---
+
+  - name: telegram
+    displayName: Telegram Bot API
+    docs:
+      webhooks: https://core.telegram.org/bots/webhooks
+      verification: https://core.telegram.org/bots/api#setwebhook
+    notes: >
+      Telegram bot webhooks (setWebhook). No signature or HMAC. Pass secret_token (1-256 chars,
+      A-Z a-z 0-9 _ -) to setWebhook and Telegram sends it in the X-Telegram-Bot-Api-Secret-Token
+      header on every request; compare it to the expected value with a constant-time compare.
+      Optional IP allowlist 149.154.160.0/20 and 91.108.4.0/22. Payload is an Update object; route
+      on which field is present: message, edited_message, callback_query, inline_query,
+      my_chat_member.
+    testScenario:
+      events:
+        - message
+        - callback_query
+
+  - name: google-workspace
+    displayName: Google Workspace
+    docs:
+      webhooks: https://developers.google.com/workspace/drive/api/guides/push
+      verification: https://developers.google.com/workspace/drive/api/guides/push
+    notes: >
+      Google Workspace push notifications (Drive and Calendar watch channels; Admin SDK uses the
+      same channel mechanism). No signature. Set a token (max 256 chars) in the watch request;
+      Google returns it in the X-Goog-Channel-Token header on every notification (only present if
+      defined); compare it constant-time. Notifications have an empty body; read
+      X-Goog-Channel-ID, X-Goog-Resource-ID, X-Goog-Resource-State (sync, add, update, remove,
+      trash, change), X-Goog-Message-Number, X-Goog-Changed. Answer the initial sync message with
+      200. Channels expire and must be renewed. Gmail users.watch uses Cloud Pub/Sub instead; out of
+      scope.
+    testScenario:
+      events:
+        - sync
+        - update
+
+  - name: green-api
+    displayName: GREEN-API
+    docs:
+      webhooks: https://green-api.com/en/docs/api/receiving/technology-webhook-endpoint/
+      verification: https://green-api.com/en/docs/api/receiving/technology-webhook-endpoint/
+    notes: >
+      WhatsApp API gateway (green-api.com). No HMAC. CAVEAT to state in the verification section:
+      if webhookUrlToken is set, GREEN-API sends it as the FULL Authorization header value, i.e.
+      "Bearer <token>" (default) or "Basic <token>"; compare the whole header value (including
+      the scheme) with a constant-time compare. Payload typeWebhook values include
+      incomingMessageReceived, outgoingMessageStatus, outgoingAPIMessageReceived,
+      stateInstanceChanged.
+    testScenario:
+      events:
+        - incomingMessageReceived
+        - outgoingMessageStatus
+
+  - name: dealhub
+    displayName: DealHub
+    docs:
+      webhooks: https://developers.dealhub.io/docs/webhooks-overview
+      verification: https://developers.dealhub.io/docs/how-to-configure-webhooks
+    notes: >
+      CPQ / quote-to-revenue. No signature. Three auth options: Token, Basic, None (or a SAS token
+      in the URL). CAVEAT to state in the verification section: DealHub sends the credential as
+      the FULL Authorization header value, "Bearer <TOKEN>" in Token mode or "Basic <CREDENTIALS>"
+      in Basic mode; compare the whole value constant-time. Quote events include draftQuote,
+      primaryQuote; there are also version, user and async (productsUpload) events with an action
+      field.
+    testScenario:
+      events:
+        - draftQuote
+        - primaryQuote
+
+  - name: n8n
+    displayName: n8n
+    docs:
+      webhooks: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+      verification: https://docs.n8n.io/integrations/builtin/credentials/httprequest/
+    notes: >
+      Workflow automation; the skill covers receiving requests sent by n8n's HTTP Request node.
+      n8n does not sign requests. Authenticate with a shared secret: Header auth credential (you
+      choose header name and value, e.g. X-Webhook-Secret) or Bearer auth (Authorization: Bearer
+      <token>); compare the header against the expected value with a constant-time compare.
+      Generic Basic auth is also supported (decode and compare username/password constant-time).
+      Payload is whatever the workflow sends; suggest including an event field.
+    testScenario:
+      events:
+        - workflow event
+      prompt: >
+        Add an endpoint to my {framework} app that receives requests from an n8n HTTP Request
+        node. Authenticate them with a shared secret header and handle the JSON payload.
+
+  - name: zapier
+    displayName: Zapier
+    docs:
+      webhooks: https://help.zapier.com/hc/en-us/articles/8496326446989-Send-webhooks-in-Zaps
+      verification: https://help.zapier.com/hc/en-us/articles/8496326446989-Send-webhooks-in-Zaps
+    notes: >
+      Covers receiving requests from the "Webhooks by Zapier" action (POST/PUT/Custom Request).
+      No signature: add a custom header (e.g. X-Webhook-Secret) in the Headers section, or use the
+      Basic Auth field (user|password); verify with a constant-time compare. Payload is
+      user-defined (form or JSON). Mention briefly that Zapier white-label connection webhooks
+      are a separate product signed with Standard Webhooks (webhook-* headers, whsec_ secret).
+    testScenario:
+      events:
+        - zap action
+      prompt: >
+        Add an endpoint to my {framework} app that receives requests from a Webhooks by Zapier
+        action. Authenticate them with a shared secret header and handle the JSON payload.
+
+  - name: gorgias
+    displayName: Gorgias
+    docs:
+      webhooks: https://docs.gorgias.com/en-US/http-integrations-81822
+      verification: https://docs.gorgias.com/en-US/http-integrations-81822
+    notes: >
+      E-commerce helpdesk. HTTP integrations fire on ticket events (ticket created, ticket
+      updated, ticket message created) with a user-defined body template; method can be POST, PUT
+      or DELETE. No signature: add a header such as Authorization: Bearer <secret> or a custom
+      header, and compare it constant-time. OAuth2 mode sends a token fetched from your own token
+      URL (validate as you would any OAuth token). Gorgias retries only for OAuth2 integrations;
+      header-auth requests are not retried.
+    testScenario:
+      events:
+        - ticket-created
+        - ticket-updated
+      prompt: >
+        Add an endpoint to my {framework} app that receives Gorgias HTTP integration requests.
+        Authenticate them with a shared secret header and handle ticket created and ticket
+        updated events.
+
+  - name: freshdesk
+    displayName: Freshdesk
+    docs:
+      webhooks: https://support.freshdesk.com/support/solutions/articles/132589-using-webhooks-in-automation-rules
+      verification: https://support.freshdesk.com/support/solutions/articles/132589-using-webhooks-in-automation-rules
+    notes: >
+      Customer support. Webhooks are a "Trigger webhook" action inside automation rules (ticket
+      creation, ticket updates, time triggers); payload is user-authored with placeholders like
+      {{ticket.id}}. No signature. Use "Add custom headers" (X-Sample-CustomHeader1: VALUE format,
+      names case-insensitive) to send a shared secret and compare it constant-time. The "Requires
+      authentication" toggle's wire format is undocumented; recommend the custom header instead.
+    testScenario:
+      events:
+        - ticket created
+        - ticket updated
+      prompt: >
+        Add an endpoint to my {framework} app that receives Freshdesk automation webhooks.
+        Authenticate them with a shared secret custom header and handle ticket created and
+        ticket updated payloads.
+
+  - name: fillout
+    displayName: Fillout
+    docs:
+      webhooks: https://www.fillout.com/help/webhook
+      verification: https://www.fillout.com/help/webhook
+    notes: >
+      Form builder. Webhooks fire on form submission. No signature. Optional custom headers are
+      the verification mechanism, typically Authorization: Bearer <secret_token>; compare the
+      whole header value constant-time. Payload contains the submission (submissionId,
+      submissionTime, questions, urlParameters, etc.).
+    testScenario:
+      events:
+        - form submission
+      prompt: >
+        Add a Fillout webhook endpoint to my {framework} app. Authenticate it with a bearer
+        token header and handle form submissions.
+
+  - name: instantly
+    displayName: Instantly
+    docs:
+      webhooks: https://help.instantly.ai/en/articles/6261906-webhooks
+      verification: https://developer.instantly.ai/api-reference/webhook/create-webhook
+    notes: >
+      Cold email platform. No signature. Webhooks accept optional custom headers (UI or API v2
+      headers object, e.g. Authorization: Basic ... or a custom secret header); compare
+      constant-time. Payload event_type values include email_sent, email_opened, reply_received,
+      email_bounced, lead_interested, lead_unsubscribed.
+    testScenario:
+      events:
+        - reply_received
+        - email_sent
+
+  - name: rubrik
+    displayName: Rubrik
+    docs:
+      webhooks: https://developer.rubrik.com/Rubrik-Security-Cloud-API/Observability/Events/
+      verification: https://developer.rubrik.com/Rubrik-Security-Cloud-API/API-Reference/types/enums/AuthenticationTypeV2/
+    notes: >
+      Rubrik Security Cloud event webhooks (data security / backup). No signature.
+      AuthenticationTypeV2: BASIC (username/password), BEARER (Authorization: Bearer <token>),
+      CUSTOM_HEADER (you choose header key and value), OAUTH2, URL token. Recommend CUSTOM_HEADER
+      or BEARER with a constant-time compare (Basic also works). Payloads are templated; the
+      default event payload includes id, type (Event), objectName, objectType, status (e.g.
+      Failure, Success), severity and message.
+    testScenario:
+      events:
+        - event
+      prompt: >
+        Add a Rubrik Security Cloud webhook endpoint to my {framework} app. Authenticate it with
+        a custom secret header and handle backup failure and success events.
+
+  - name: azure-logic-apps
+    displayName: Azure Logic Apps
+    docs:
+      webhooks: https://learn.microsoft.com/en-us/azure/connectors/connectors-native-http
+      verification: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app
+    notes: >
+      Covers receiving outbound calls from a Logic Apps (or Power Automate) HTTP action. No
+      signature. Use Basic authentication (base64 username:password in Authorization) or Raw
+      authentication / a custom header with a shared secret; verify with a constant-time
+      compare. Entra ID OAuth, managed identity and client certificate auth are out of scope for
+      a shared-secret check (mention them). Payload is whatever the workflow sends.
+    testScenario:
+      events:
+        - workflow call
+      prompt: >
+        Add an endpoint to my {framework} app that receives HTTP action calls from an Azure
+        Logic App. Authenticate them with Basic authentication and handle the JSON payload.
+
+  - name: brevo
+    displayName: Brevo
+    docs:
+      webhooks: https://developers.brevo.com/docs/how-to-use-webhooks
+      verification: https://developers.brevo.com/docs/secured-webhooks
+    notes: >
+      Email/SMS marketing (formerly Sendinblue). No payload signature. Secure webhooks with Basic
+      auth (credentials in the notify URL, https://user:pass@host/, sent as Authorization: Basic),
+      a bearer token (auth: {type: bearer, token}) or custom headers, plus Brevo's IP allowlist;
+      compare credentials constant-time. Transactional events include delivered, opened, click,
+      hard_bounce, soft_bounce, spam, unsubscribed; marketing and contact events also exist.
+    testScenario:
+      events:
+        - delivered
+        - hard_bounce
