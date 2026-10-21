@@ -44,8 +44,9 @@ against the **raw** request body (don't `JSON.parse` first).
 ```javascript
 const crypto = require('crypto');
 
-// toleranceSec = 0 turns the replay check off (Shippo doesn't document a window)
-function verifyShippoSignature(rawBody, header, secret, toleranceSec = 300) {
+// Replay check is off by default (toleranceSec = 0): retries and replays carry the
+// original timestamp. Pass a positive toleranceSec to opt in.
+function verifyShippoSignature(rawBody, header, secret, toleranceSec = 0) {
   const parts = header.split(',').map((part) => {
     const i = part.indexOf('=');
     return i === -1 ? [part.trim(), ''] : [part.slice(0, i).trim(), part.slice(i + 1).trim()];

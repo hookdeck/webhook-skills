@@ -45,6 +45,7 @@ describe('Shippo webhook handler', () => {
     beforeEach(() => {
       process.env.SHIPPO_WEBHOOK_SECRET = TEST_SECRET;
       delete process.env.SHIPPO_WEBHOOK_TOKEN;
+      delete process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS;
     });
 
     test('accepts a valid signature', async () => {
@@ -73,7 +74,23 @@ describe('Shippo webhook handler', () => {
       expect(res.body.error).toBe('Invalid signature');
     });
 
-    test('rejects a stale timestamp', async () => {
+    test('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+      const old = Math.floor(Date.now() / 1000) - 86400;
+      const res = await post(trackPayload, { signature: generateSignature(trackPayload, TEST_SECRET, old) });
+      expect(res.status).toBe(200);
+    });
+
+    test('treats a non-numeric SHIPPO_TIMESTAMP_TOLERANCE_SECONDS as 0 (check off)', async () => {
+      process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS = 'five minutes';
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const old = Math.floor(Date.now() / 1000) - 86400;
+      const res = await post(trackPayload, { signature: generateSignature(trackPayload, TEST_SECRET, old) });
+      expect(res.status).toBe(200);
+      warn.mockRestore();
+    });
+
+    test('rejects an old timestamp when SHIPPO_TIMESTAMP_TOLERANCE_SECONDS is set', async () => {
+      process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS = '300';
       const old = Math.floor(Date.now() / 1000) - 600;
       const res = await post(trackPayload, { signature: generateSignature(trackPayload, TEST_SECRET, old) });
       expect(res.status).toBe(400);

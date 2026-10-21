@@ -77,7 +77,21 @@ class TestHmacMode:
         response = post(TRACK_PAYLOAD.replace("DELIVERED", "RETURNED"), signature)
         assert response.status_code == 400
 
-    def test_stale_timestamp(self, hmac_mode):
+    def test_old_timestamp_accepted_by_default(self, hmac_mode, monkeypatch):
+        # Retries and replays keep the original timestamp, so the window is off by default
+        monkeypatch.delenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", raising=False)
+        old = int(time.time()) - 86400
+        response = post(TRACK_PAYLOAD, generate_signature(TRACK_PAYLOAD, TEST_SECRET, old))
+        assert response.status_code == 200
+
+    def test_non_numeric_window_treated_as_zero(self, hmac_mode, monkeypatch):
+        monkeypatch.setenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", "five minutes")
+        old = int(time.time()) - 86400
+        response = post(TRACK_PAYLOAD, generate_signature(TRACK_PAYLOAD, TEST_SECRET, old))
+        assert response.status_code == 200
+
+    def test_old_timestamp_rejected_when_window_set(self, hmac_mode, monkeypatch):
+        monkeypatch.setenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", "300")
         old = int(time.time()) - 600
         response = post(TRACK_PAYLOAD, generate_signature(TRACK_PAYLOAD, TEST_SECRET, old))
         assert response.status_code == 400

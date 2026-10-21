@@ -4,6 +4,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 from typing import Optional
@@ -15,10 +16,33 @@ load_dotenv()
 
 app = FastAPI()
 
-# Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default).
-# Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=0 to turn the check off, e.g. when retries or replays
-# arrive later than the window (Hookdeck re-delivers the original signature).
-TIMESTAMP_TOLERANCE_SECONDS = int(os.getenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS", "300"))
+logger = logging.getLogger(__name__)
+
+# Optional replay window in seconds. Off by default (0): retries and replays, including
+# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
+# A value that isn't a whole number of seconds is treated as 0 (check off), with a warning.
+_warned_invalid_tolerance = False
+
+
+def timestamp_tolerance_seconds() -> int:
+    global _warned_invalid_tolerance
+    raw = (os.getenv("SHIPPO_TIMESTAMP_TOLERANCE_SECONDS") or "").strip()
+    if not raw:
+        return 0
+    if not (raw.isascii() and raw.isdigit()):
+        if not _warned_invalid_tolerance:
+            logger.warning(
+                "SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=%r is not a whole number of seconds; "
+                "the timestamp check is off",
+                raw,
+            )
+            _warned_invalid_tolerance = True
+        return 0
+    return int(raw)
+
+
+timestamp_tolerance_seconds()  # surface an invalid value at startup
 
 
 def verify_shippo_signature(raw_body: bytes, header: str, secret: str) -> Optional[str]:
@@ -41,8 +65,9 @@ def verify_shippo_signature(raw_body: bytes, header: str, secret: str) -> Option
     if not timestamp or not timestamp.isdigit() or not signatures:
         return "Malformed Shippo-Auth-Signature header"
 
-    # Replay protection
-    if TIMESTAMP_TOLERANCE_SECONDS > 0 and abs(int(time.time()) - int(timestamp)) > TIMESTAMP_TOLERANCE_SECONDS:
+    # Optional replay protection (off unless SHIPPO_TIMESTAMP_TOLERANCE_SECONDS > 0)
+    tolerance = timestamp_tolerance_seconds()
+    if tolerance > 0 and abs(int(time.time()) - int(timestamp)) > tolerance:
         return "Timestamp outside tolerance"
 
     signed_payload = f"{timestamp}.".encode() + raw_body

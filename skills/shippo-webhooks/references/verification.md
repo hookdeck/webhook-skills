@@ -20,7 +20,7 @@ To verify:
 2. Build the signed payload: `"{t}.{raw request body}"`.
 3. Compute `HMAC-SHA256(secret, signed_payload)` and hex-encode it.
 4. Compare it with `v1` using a **timing-safe** comparison.
-5. Optionally reject stale timestamps (replay protection).
+5. Optionally reject old timestamps (replay protection). This is off by default.
 
 This is the same format as Stripe's `Stripe-Signature` header. It is **not**
 Standard Webhooks.
@@ -37,7 +37,7 @@ verification helper, so verify manually as shown below.
 ```javascript
 const crypto = require('crypto');
 
-function verifyShippoSignature(rawBody, header, secret, toleranceSec = 300) {
+function verifyShippoSignature(rawBody, header, secret, toleranceSec = 0) {
   const parts = header.split(',').map((p) => {
     const i = p.indexOf('=');
     return [p.slice(0, i).trim(), p.slice(i + 1).trim()];
@@ -46,7 +46,8 @@ function verifyShippoSignature(rawBody, header, secret, toleranceSec = 300) {
   const signatures = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!timestamp || !/^\d+$/.test(timestamp) || signatures.length === 0) return false;
 
-  if (Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
+  // Off by default; a positive toleranceSec opts in
+  if (toleranceSec > 0 && Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSec) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -68,7 +69,7 @@ function verifyShippoSignature(rawBody, header, secret, toleranceSec = 300) {
 ```python
 import hashlib, hmac, time
 
-def verify_shippo_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify_shippo_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
     timestamp, signatures = None, []
     for part in header.split(","):
         key, _, value = part.strip().partition("=")
@@ -78,7 +79,8 @@ def verify_shippo_signature(raw_body: bytes, header: str, secret: str, tolerance
             signatures.append(value)
     if not timestamp or not timestamp.isdigit() or not signatures:
         return False
-    if abs(time.time() - int(timestamp)) > tolerance:
+    # Off by default; a positive tolerance opts in
+    if tolerance > 0 and abs(time.time() - int(timestamp)) > tolerance:
         return False
     signed = f"{timestamp}.".encode() + raw_body
     expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
@@ -123,15 +125,16 @@ ok = hmac.compare_digest(request.query_params.get("token", ""), expected)
 
 ## Timestamp Tolerance
 
-Shippo doesn't document a tolerance window. The examples reject timestamps more
-than **5 minutes** from the current time, a common default that still allows
-Shippo's two quick retries. Keep server clocks in sync (NTP).
+Shippo doesn't document a tolerance window. The examples **don't check the
+timestamp by default**: retries and replays carry the original timestamp, so a
+window would reject a redelivery that arrives late (for example a Hookdeck retry
+or manual replay).
 
-The window is set with `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` (default `300`; `0`
-turns the check off). Retries and replays carry the original timestamp, so a
-redelivery that arrives later than the window (for example a Hookdeck retry or
-manual replay) is rejected. Widen or disable the window if you rely on late
-redelivery.
+To opt in, set `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of
+seconds (for example `300`). Timestamps further than that from the current time
+are then rejected. A value that isn't a whole number of seconds is treated as
+`0` (check off), and the examples log a warning at startup. Keep server clocks
+in sync (NTP) if you turn it on.
 
 ## How to Debug Verification Failures
 

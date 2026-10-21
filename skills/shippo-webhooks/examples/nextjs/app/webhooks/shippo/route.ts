@@ -6,10 +6,24 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Reject signatures older than this (Shippo doesn't document a window; 5 minutes is our default).
-// Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=0 to turn the check off, e.g. when retries or replays
-// arrive later than the window (Hookdeck re-delivers the original signature).
-const TIMESTAMP_TOLERANCE_SECONDS = Number(process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS ?? 300);
+// Optional replay window in seconds. Off by default (0): retries and replays, including
+// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
+// A value that isn't a whole number of seconds is treated as 0 (check off), with a warning.
+let warnedInvalidTolerance = false;
+function timestampToleranceSeconds(): number {
+  const raw = (process.env.SHIPPO_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
+  if (raw === '') return 0;
+  if (!/^\d+$/.test(raw)) {
+    if (!warnedInvalidTolerance) {
+      console.warn(`SHIPPO_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
+      warnedInvalidTolerance = true;
+    }
+    return 0;
+  }
+  return Number(raw);
+}
+timestampToleranceSeconds(); // surface an invalid value at startup
 
 type VerifyResult = { valid: true } | { valid: false; error: string };
 
@@ -36,9 +50,10 @@ function verifyShippoSignature(rawBody: string, header: string, secret: string):
     return { valid: false, error: 'Malformed Shippo-Auth-Signature header' };
   }
 
-  // Replay protection
+  // Optional replay protection (off unless SHIPPO_TIMESTAMP_TOLERANCE_SECONDS > 0)
+  const tolerance = timestampToleranceSeconds();
   const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
-  if (TIMESTAMP_TOLERANCE_SECONDS > 0 && age > TIMESTAMP_TOLERANCE_SECONDS) {
+  if (tolerance > 0 && age > tolerance) {
     return { valid: false, error: 'Timestamp outside tolerance' };
   }
 
