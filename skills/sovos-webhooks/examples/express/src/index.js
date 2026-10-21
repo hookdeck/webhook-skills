@@ -17,7 +17,7 @@ app.get('/health', (req, res) => {
 // Sovos delivers Indirect Tax API notifications through Svix.
 // IMPORTANT: express.raw() keeps the exact bytes Svix signed.
 app.post('/webhooks/sovos',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.SOVOS_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

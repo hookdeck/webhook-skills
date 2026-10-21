@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 
 // IMPORTANT: express.raw() keeps the exact bytes Svix signed.
 app.post('/webhooks/crusoe',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.CRUSOE_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

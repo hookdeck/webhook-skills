@@ -38,7 +38,7 @@ function handleMeeting(meeting, webhookId) {
 
 // Fathom webhook endpoint - must use the raw body for signature verification
 app.post('/webhooks/fathom',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.FATHOM_WEBHOOK_SECRET;
     if (!secret) {

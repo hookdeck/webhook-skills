@@ -121,7 +121,7 @@ function handleEvent(event) {
 
 // AgentMail webhook endpoint — express.raw() keeps the exact bytes for the HMAC.
 // express.json() before verification would break the signature.
-app.post('/webhooks/agentmail', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/agentmail', express.raw({ type: '*/*' }), (req, res) => {
   // Fail closed: never accept unverified deliveries because a secret is missing.
   if (!process.env.AGENTMAIL_WEBHOOK_SECRET) {
     console.error('AGENTMAIL_WEBHOOK_SECRET is not set — rejecting delivery');

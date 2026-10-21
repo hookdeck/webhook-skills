@@ -97,7 +97,7 @@ function handleSegmentEvent(event) {
 
 // Segment webhook endpoint - must use the raw body for signature verification
 app.post('/webhooks/segment',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.SEGMENT_SHARED_SECRET;
     if (!secret) {

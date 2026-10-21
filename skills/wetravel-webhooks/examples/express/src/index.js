@@ -18,7 +18,7 @@ app.get('/health', (req, res) => {
 // WeTravel webhook endpoint
 // IMPORTANT: use express.raw() so we verify the exact raw body bytes.
 app.post('/webhooks/wetravel',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.WETRAVEL_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

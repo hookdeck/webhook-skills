@@ -150,7 +150,7 @@ whitespace and key order, which breaks the signature. Capture the raw body:
 
 ```javascript
 // Express: raw middleware on the webhook route only
-app.post('/webhooks/taskrabbit', express.raw({ type: 'application/json' }), handler);
+app.post('/webhooks/taskrabbit', express.raw({ type: '*/*' }), handler);
 ```
 
 ```typescript

@@ -28,7 +28,7 @@ app.get('/health', (req, res) => {
 
 // IMPORTANT: express.raw() keeps the exact bytes Svix signed.
 app.post('/webhooks/stitch',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.STITCH_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

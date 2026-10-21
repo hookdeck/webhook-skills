@@ -11,7 +11,7 @@ const app = express();
 // OpenMeter webhook endpoint - express.raw() keeps the exact bytes OpenMeter signed
 app.post(
   '/webhooks/openmeter',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.OPENMETER_WEBHOOK_SECRET;
     if (!secret) {

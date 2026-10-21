@@ -118,7 +118,7 @@ def verify_fathom_webhook(secret: str, headers, raw_body: bytes) -> bool:
 ## Common Gotchas
 
 - **Raw body.** Verify the exact bytes received. In Express use
-  `express.raw({ type: 'application/json' })` on the route. In Next.js App Router use
+  `express.raw({ type: '*/*' })` on the route. In Next.js App Router use
   `await request.text()`. In FastAPI use `await request.body()`. Parsing then
   re-stringifying JSON changes whitespace and key order and breaks the signature.
 - **Decode the secret.** The HMAC key is the base64-decoded string after `whsec_`, not

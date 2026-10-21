@@ -18,7 +18,7 @@ app.get('/health', (req, res) => {
 // Taskrabbit delivers webhooks via Svix, so we verify with the official svix SDK.
 // IMPORTANT: use express.raw() so we verify the exact raw body bytes.
 app.post('/webhooks/taskrabbit',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.TASKRABBIT_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

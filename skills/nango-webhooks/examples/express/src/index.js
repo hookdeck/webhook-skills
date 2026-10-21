@@ -79,7 +79,7 @@ function handleForward(webhook) {
   console.log(`Forwarded ${webhook.from} webhook for connection ${webhook.connectionId ?? '(unattributed)'}`);
 }
 
-app.post('/webhooks/nango', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/nango', express.raw({ type: '*/*' }), (req, res) => {
   if (!process.env.NANGO_WEBHOOK_SIGNING_KEY || !process.env.NANGO_API_KEY) {
     console.error('NANGO_WEBHOOK_SIGNING_KEY and NANGO_API_KEY must be set');
     return res.status(500).json({ error: 'Webhook verification not configured' });

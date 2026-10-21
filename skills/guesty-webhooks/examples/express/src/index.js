@@ -19,7 +19,7 @@ app.get('/health', (req, res) => {
 // Guesty webhook endpoint (delivered and signed by Svix)
 // IMPORTANT: use express.raw() so we verify the exact raw body bytes.
 app.post('/webhooks/guesty',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   (req, res) => {
     const secret = process.env.GUESTY_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('whsec_')) {

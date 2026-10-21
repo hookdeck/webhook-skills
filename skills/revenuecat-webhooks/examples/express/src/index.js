@@ -155,7 +155,7 @@ function handleEvent(event) {
 }
 
 // RevenueCat webhook endpoint. express.raw keeps the exact bytes RevenueCat signed.
-app.post('/webhooks/revenuecat', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/revenuecat', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.REVENUECAT_WEBHOOK_SECRET;
   const expectedAuth = process.env.REVENUECAT_WEBHOOK_AUTH;
 

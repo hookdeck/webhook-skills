@@ -39,7 +39,7 @@ wh.verify(rawBody, {
 const event = JSON.parse(rawBody.toString('utf8'));
 ```
 
-- Express: `express.raw({ type: 'application/json' })` on the route, then pass `req.body` (a Buffer).
+- Express: `express.raw({ type: '*/*' })` on the route, then pass `req.body` (a Buffer).
 - Next.js App Router: `const rawBody = await request.text()`.
 
 ### Python (`svix` on PyPI)

@@ -29,7 +29,7 @@ const nango = new Nango({
   webhookSigningKey: process.env.NANGO_WEBHOOK_SIGNING_KEY, // used for verification
 });
 
-app.post('/webhooks/nango', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/nango', express.raw({ type: '*/*' }), (req, res) => {
   const rawBody = req.body.toString('utf8');
   if (!nango.verifyIncomingWebhookRequest(rawBody, req.headers)) {
     return res.status(400).send('Invalid signature');
