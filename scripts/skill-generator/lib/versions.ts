@@ -12,7 +12,7 @@ export interface PackageVersions {
 
 /**
  * Generic framework deps queried for every run. Per-provider SDK packages
- * (declared via `sdks` in providers.yaml) are merged in at query time.
+ * (declared via `sdks` in providers/<name>.yaml) are merged in at query time.
  */
 export const NPM_PACKAGES = [
   'next',
@@ -73,7 +73,7 @@ async function getPipVersion(pkg: string): Promise<string | null> {
  * Query all package versions in parallel.
  *
  * `extras` lets callers add provider-specific SDK packages (declared via the
- * `sdks` field in providers.yaml) on top of the generic framework deps. They
+ * `sdks` field in providers/<name>.yaml) on top of the generic framework deps. They
  * get queried in the same parallel batch and end up in the same
  * `PackageVersions` object; per-provider prompts then filter the global map
  * down to the relevant subset via `formatVersionsTableForProvider`.

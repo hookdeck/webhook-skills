@@ -1,0 +1,33 @@
+name: airwallex
+displayName: Airwallex
+docs:
+  webhooks: https://www.airwallex.com/docs/developer-tools/webhooks/webhooks-overview
+  verification: https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events
+  events: https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events/online-payments
+notes: >
+  Payments / financial platform. Custom HMAC scheme (NOT Standard Webhooks / Svix).
+  Two headers: x-timestamp (Unix ms) and x-signature (HMAC-SHA256 hex digest).
+  Compute HMAC-SHA256 over value_to_digest = x-timestamp + raw_request_body
+  (timestamp string concatenated with the RAW, unmodified JSON body, in that order),
+  keyed with the endpoint's unique secret, and constant-time compare the hex against
+  x-signature. Verify BEFORE parsing. Each webhook URL has its OWN secret (Web app >
+  Settings > Developer > Webhooks); for test events the secret arrives in the
+  client-secret-key header. Compare x-timestamp to now for replay protection (docs
+  describe the check but give no fixed window; 5 min is a sensible default — remember
+  it's MILLISECONDS). Endpoints must be HTTPS; Airwallex publishes source IPs to
+  allowlist (don't rely on IP for auth). Payload envelope: { id, name, account_id,
+  data: { object }, created_at } — the event type is in `name` (NOT `type`), the
+  resource in data.object. Event types are dot-namespaced: payment_intent.*,
+  payment_attempt.*, refund.*, payment_consent.*, payment_dispute.*. Note: refund
+  events are refund.received/accepted/settled/failed (NO refund.processed); disputes
+  use payment_dispute.* (NOT dispute.*). Retries with exponential back-off over ~3
+  days on any non-2xx/timeout; same event `id` on retry — dedupe on it. The
+  @airwallex/node-sdk has NO webhook-verification helper (only API resources /
+  webhook management), so verify manually in every framework. Set
+  AIRWALLEX_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - payment_intent.succeeded
+    - refund.settled
+catalog:
+  summary: Verify Airwallex webhook signatures (`x-signature` / `x-timestamp`, HMAC-SHA256 hex over timestamp + raw body), handle payment_intent, payment_attempt, refund, payment_consent, and payment_dispute events

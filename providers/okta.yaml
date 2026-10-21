@@ -1,0 +1,32 @@
+name: okta
+displayName: Okta
+docs:
+  webhooks: https://developer.okta.com/docs/concepts/event-hooks/
+  verification: https://developer.okta.com/docs/guides/event-hook-implementation/
+notes: >
+  Identity platform. Okta Event Hooks POST a JSON payload of events to your endpoint. Two things
+  to implement: (1) the one-time verification handshake — Okta sends a GET with an
+  X-Okta-Verification-Challenge header and expects a JSON body {"verification":"<challenge>"};
+  (2) per-request authentication via a static secret you set as the Authorization header when
+  creating the hook — verify it with a timing-safe comparison. There is no HMAC signature.
+  Return 2xx quickly. Common events: user.lifecycle.create, user.session.start,
+  user.account.lock, group.user_membership.add.
+testScenario:
+  events:
+    - user.lifecycle.create
+    - user.session.start
+  prompt: >
+    Create a {framework} webhook handler for Okta Event Hooks. It must (1) answer the one-time
+    GET verification challenge by echoing the X-Okta-Verification-Challenge value in a JSON
+    {"verification": ...} response, and (2) verify the configured Authorization header secret on
+    POST deliveries with a timing-safe comparison before processing the events array. If you use
+    any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Complete the Okta Event Hook verification challenge, authenticate deliveries, handle user lifecycle and session events
+  marketplace:
+    description: Complete the Okta Event Hook verification challenge, authenticate deliveries, and handle user lifecycle and session events.
+    keywords:
+    - webhooks
+    - okta
+    - auth
+    - identity

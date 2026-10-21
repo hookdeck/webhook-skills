@@ -1,0 +1,30 @@
+name: tiktok
+displayName: TikTok
+docs:
+  webhooks: https://developers.tiktok.com/doc/webhooks-overview
+  verification: https://developers.tiktok.com/doc/webhooks-verification
+  events: https://developers.tiktok.com/doc/webhooks-events
+notes: >
+  TikTok for Developers webhooks (Login Kit / Content Posting / Data Portability) —
+  NOT TikTok Shop, which is a separate partner portal with a different signature scheme
+  (see the tiktok-shop provider). Events POST as JSON over HTTPS to the callback URL
+  registered in the developer app. Signature is in the TikTok-Signature header with value
+  format "t=<unix_ts>,s=<sig>". Signature = HMAC-SHA256 hex over signed_payload =
+  "<timestamp>" + "." + raw_request_body, keyed with the app's client_secret (there is no
+  separate webhook secret). Verify against the RAW body and reject stale timestamps to
+  prevent replay (no explicit tolerance window documented — 5 min is a sane default). This
+  is NOT the Standard Webhooks spec, though structurally similar. Payload fields:
+  client_key, event, create_time (int64 epoch seconds), user_openid (absent on
+  portability.download.ready), content (a serialized JSON string — parse separately).
+  Delivery is best-effort at-least-once with retries up to 72h (exponential backoff);
+  endpoints must be idempotent. Only four events exist (verified): authorization.removed,
+  video.upload.failed, video.publish.completed (NOT .complete; there is no
+  video.publish.failed), portability.download.ready. Configure the HTTPS callback URL and
+  subscribed events in the developer portal; no official webhook SDK, so verify manually.
+testScenario:
+  events:
+    - authorization.removed
+    - video.publish.completed
+    - portability.download.ready
+catalog:
+  summary: Verify TikTok for Developers webhook signatures (`TikTok-Signature`, HMAC-SHA256 hex over `<timestamp>.<body>`), handle authorization.removed, video.upload.failed, video.publish.completed, and portability.download.ready events

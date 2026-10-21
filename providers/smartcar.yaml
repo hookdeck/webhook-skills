@@ -1,0 +1,33 @@
+name: smartcar
+displayName: Smartcar
+docs:
+  webhooks: https://smartcar.com/docs/integrations/webhooks/overview
+  verification: https://smartcar.com/docs/integrations/webhooks/payload-verification
+  callbackVerification: https://smartcar.com/docs/integrations/webhooks/callback-verification
+notes: >
+  Connected-car API platform. Smartcar signs every webhook with a hex-encoded HMAC-SHA256 of the
+  RAW request body in the `SC-Signature` header, keyed with the Application Management Token (AMT)
+  from the Dashboard — compute over the raw bytes before JSON parsing, compare timing-safe, and
+  reject with 401. This is Smartcar's own scheme, NOT Standard Webhooks. On setup Smartcar POSTs a
+  one-time VERIFY event whose `data.challenge` must be answered within 15s: reply 200 with JSON
+  {"challenge": "<hex>"} where the hex is HMAC-SHA256(challenge) keyed with the same AMT, or the
+  webhook never activates. eventType values: VERIFY, VEHICLE_STATE (monitored signal changed),
+  VEHICLE_ERROR (retrieval failed; a follow-up fires with errors[].state RESOLVED). Legacy v2
+  scheduled/eventBased webhooks are deprecated. Delivery expects any 2xx within 15s; non-2xx,
+  timeouts, and TLS errors retry with exponential backoff; no strict ordering — dedupe on eventId
+  (meta.deliveryId changes per attempt). Official SDKs verify: Node verifyPayload(amt, signature,
+  body) / hashChallenge(amt, challenge); Python verify_payload / hash_challenge.
+testScenario:
+  events:
+    - VEHICLE_STATE
+    - VEHICLE_ERROR
+  prompt: >
+    Create a {framework} webhook handler for Smartcar. Answer the one-time VERIFY event by
+    responding 200 with {"challenge": "<hex>"} where the hex is HMAC-SHA256 of data.challenge
+    keyed with the Application Management Token. For VEHICLE_STATE and VEHICLE_ERROR events,
+    verify the `SC-Signature` header (hex HMAC-SHA256 of the raw body, same token) with a
+    timing-safe comparison and reject invalid signatures with 401, then process the JSON payload
+    and return 2xx. If you use any skills to help with this, add a comment noting which skill(s)
+    you referenced.
+catalog:
+  summary: Verify Smartcar webhook signatures (`SC-Signature`, hex HMAC-SHA256 keyed with the Application Management Token), answer the VERIFY challenge, handle VEHICLE_STATE and VEHICLE_ERROR events

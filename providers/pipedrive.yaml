@@ -1,0 +1,32 @@
+name: pipedrive
+displayName: Pipedrive
+docs:
+  webhooks: https://pipedrive.readme.io/docs/guide-for-webhooks-v2
+  verification: https://developers.pipedrive.com/docs/api/v1/Webhooks
+notes: >
+  CRM platform. Webhooks are NOT signed — no HMAC, no signature header, not
+  Standard Webhooks compliant. Security is HTTP Basic Auth only: set
+  http_auth_user / http_auth_password when creating the webhook and Pipedrive
+  sends them in the Authorization header of every delivery; verify with a
+  timing-safe comparison. HTTPS required (self-signed certs unsupported).
+  Event types are "action.entity" (e.g. create.deal, change.person,
+  delete.activity) — build the string from meta.action + meta.entity in the
+  payload. Actions: create, change, delete, * (wildcard). Entities: activity,
+  deal, lead, note, organization, person, pipeline, product, stage, user
+  (v2 added lead), plus board, deal_product, phase, project, task. Create via
+  POST /v1/webhooks with event_action + event_object + version=2.0 (default).
+  Payload has meta, data (current state), previous (changed fields on change,
+  last state on delete, null on create). Retries at 3/30/150s (max 4 attempts,
+  any 2XX = success); 10 first-attempt failures -> 30-min suspension; no
+  successful delivery for 3 consecutive days auto-deletes the webhook. Node
+  SDK "pipedrive" is an API client (WebhooksApi.addWebhook) — it does NOT
+  verify deliveries.
+sdks:
+  npm:
+    - pipedrive
+testScenario:
+  events:
+    - create.deal
+    - change.person
+catalog:
+  summary: Authenticate Pipedrive webhooks (HTTP Basic Auth — no signature), handle `create.deal`, `change.person`, and `delete.activity` events

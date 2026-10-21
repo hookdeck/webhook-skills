@@ -1,0 +1,104 @@
+name: google-pubsub
+displayName: Google Cloud Pub/Sub
+docs:
+  webhooks: https://cloud.google.com/pubsub/docs/push
+  verification: https://cloud.google.com/pubsub/docs/authenticate-push-subscriptions
+  subscriptionProperties: https://cloud.google.com/pubsub/docs/subscription-properties
+sdks:
+  npm: ["google-auth-library"]
+  pip: ["google-auth"]
+notes: >
+  Pub/Sub push subscriptions, NOT a signed-webhook provider. CRITICAL: there is NO
+  signing secret and NO HMAC header of any kind — no X-Goog-Signature, not Standard
+  Webhooks. Do not fabricate one. Envelope (Content-Type: application/json):
+  {"message": {"attributes": {...optional string map}, "data": "<base64>",
+  "messageId": "<string>", "publishTime": "<RFC3339>"}, "subscription":
+  "projects/<project>/subscriptions/<sub>"}; "data" MAY be absent (attribute-only
+  messages), orderingKey and deliveryAttempt appear only when enabled. Pub/Sub
+  defines NO business event catalog — like SNS, event semantics live entirely in
+  whatever the publisher put in data/attributes, so do NOT invent event names;
+  route on a publisher-chosen attribute such as attributes.eventType.
+  TWO auth postures, both must be covered honestly:
+  (1) DEFAULT (no subscription auth) — Pub/Sub sends no proof of origin at all and
+  no header worth checking. Only endpoint-side defenses exist: an unguessable token
+  in the push endpoint URL as a query parameter checked server-side, and/or platform
+  ingress restriction. That URL-token pattern is a shared-secret convention rather
+  than a signature scheme, but it is NOT undocumented — Google's own App Engine
+  sample uses it under the name PUBSUB_VERIFICATION_TOKEN, comparing
+  request.args.get("token") (python-docs-samples appengine/standard_python3/pubsub,
+  linked from the authenticate-push-subscriptions doc). Describe it that way rather
+  than as a DIY invention.
+  (2) OIDC (recommended; what Hookdeck's GOOGLE_PUBSUB source type documents) —
+  subscription created with --push-auth-service-account and optional
+  --push-auth-token-audience (audience DEFAULTS to the full push endpoint URL when
+  unset). Every push then carries "Authorization: Bearer <JWT>", a Google-signed
+  RS256 OpenID Connect ID token. Verify: signature against Google's public keys
+  (JWKS https://www.googleapis.com/oauth2/v3/certs; google-auth's
+  verify_oauth2_token uses the x509 form at /oauth2/v1/certs), iss ==
+  "https://accounts.google.com", aud == the subscription's audience, email == the
+  expected push service account, and email_verified == true. Use the official
+  libraries — Node "google-auth-library" (OAuth2Client#verifyIdToken({idToken,
+  audience})), Python "google-auth" (id_token.verify_oauth2_token(token,
+  google.auth.transport.requests.Request(), audience)) — they handle key
+  fetch/cache, signature, aud and exp, and check iss against BOTH accepted forms
+  ("accounts.google.com" and "https://accounts.google.com" — NOT googleapis.com;
+  verified in google-auth _GOOGLE_ISSUERS and google-auth-library's issuers list),
+  but you MUST check email/email_verified yourself. ACCEPT BOTH issuer forms
+  rather than pinning one. Three comparisons must be lenient or valid deliveries
+  get rejected: iss (both forms), the "Bearer" scheme (case-insensitive per
+  RFC 9110 s11.1), and the service account email (case-insensitive — normalize
+  both sides). JWT permits aud to be a string OR an array (RFC 7519) and defensive
+  implementations accept both, but Google's documented Pub/Sub token shows a single
+  string and no Pub/Sub doc says an array is sent — do not assert the array form as
+  a Pub/Sub behaviour.
+  Verified firsthand against google-auth-library 11.0.2 and google-auth 2.56.3,
+  and cross-checked against Hookdeck's own GOOGLE_PUBSUB controller in
+  hookdeck/core (server/integrations/platforms/google-pubsub.ts), whose test
+  suite asserts all three leniencies explicitly.
+  HOOKDECK SOURCE CONFIG (server/integrations/sourceTypeSchemas.ts): VERIFICATION
+  is required:true with exactly two required fields, audience and
+  service_account_email — Hookdeck supports ONLY the OIDC posture for this source
+  type, with no unauthenticated or URL-token option. Core verifies signature +
+  iss/aud/email/email_verified but DELIBERATELY SKIPS exp, because it re-verifies
+  stored requests on retry and expiry would fail a request that was valid on
+  arrival. That rationale is gateway-specific: a direct receiver sees each request
+  once and SHOULD let the library enforce exp. Do not copy the skip into a skill.
+  Gotchas: the JWT does NOT sign the body — it authenticates the caller, so unlike
+  HMAC providers there is NO raw-body requirement; tokens may be up to an hour old
+  and are reused across pushes (not a nonce); aud mismatch is the #1 cause of 401s;
+  ack with 102/200/201/202/204 within the ack deadline (default 10s, configurable up
+  to 600s) or Pub/Sub redelivers, with push backoff of 100ms–60s across the whole
+  subscription; delivery is at-least-once so dedupe on messageId; the "subscription"
+  field works as a coarse allowlist; the Pub/Sub emulator sends NO auth at all, so
+  local/emulator testing always exercises the unauthenticated path; unwrapped
+  delivery mode removes the message envelope entirely.
+testScenario:
+  events:
+    - order.created
+  prompt: >
+    Create a {framework} webhook handler for a Google Cloud Pub/Sub push
+    subscription. There is NO signing secret and NO HMAC header — do NOT invent an
+    X-Goog-Signature or a Standard Webhooks check. Verify the OIDC JWT in the
+    "Authorization: Bearer" header using the official Google auth library
+    (google-auth-library for Node, google-auth for Python): check the RS256
+    signature against Google's public keys, aud == PUBSUB_AUDIENCE, iss ==
+    "https://accounts.google.com", email == PUBSUB_SERVICE_ACCOUNT_EMAIL, and
+    email_verified == true. Then parse the push envelope {"message": {"data":
+    "<base64>", "attributes": {...}, "messageId", "publishTime"}, "subscription"},
+    base64-decoding message.data and handling the case where it is ABSENT
+    (attribute-only messages). Pub/Sub defines no event names — route on a
+    publisher-set attribute such as attributes.eventType (e.g. order.created), and
+    make handling idempotent by deduping on messageId since delivery is
+    at-least-once. Return 401 for an invalid or missing token, 400 for a malformed
+    envelope, and a 2xx (200 or 204) to acknowledge — any other status is a nack and
+    Pub/Sub will redeliver. If you use any skills to help with this, add a comment
+    noting which skill(s) you referenced.
+catalog:
+  summary: 'Verify Google Cloud Pub/Sub push subscriptions — there is no signing secret or HMAC header; validate the Google-signed OIDC `Authorization: Bearer` JWT (`iss`, `aud`, `email`, `email_verified`), parse the `message.data` / `attributes` envelope, and ack within the deadline'
+  marketplace:
+    description: 'Receive and verify Google Cloud Pub/Sub push subscription webhooks. Use when setting up a Pub/Sub push endpoint, verifying the OIDC Authorization: Bearer JWT that Pub/Sub attaches to authenticated push subscriptions (iss, aud, email, email_verified), parsing the push envelope (message.data base64, message.attributes, messageId, publishTime, subscription), securing an unauthenticated push endpoint, or debugging redelivery and ack deadline issues.'
+    keywords:
+    - webhooks
+    - google-cloud
+    - pubsub
+    - oidc

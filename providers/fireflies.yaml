@@ -1,0 +1,43 @@
+name: fireflies
+displayName: Fireflies
+docs:
+  webhooks: https://docs.fireflies.ai/graphql-api/webhooks-v2
+  verification: https://docs.fireflies.ai/graphql-api/webhooks-v2
+notes: >
+  AI meeting assistant (transcription/summaries). This skill targets Webhooks
+  V2, the current scheme — Fireflies steers new webhook creation to V2 and
+  marks the V1 configuration page as deprecated. V2: verify via the
+  X-Hub-Signature header, formatted "sha256=<hex>" — a hex-encoded
+  HMAC-SHA256 of the RAW request body (docs state raw body explicitly) keyed
+  with the signing secret configured at webhook setup; strip/expect the
+  "sha256=" prefix and compare timing-safe. The signing secret is OPTIONAL:
+  when unset, NO X-Hub-Signature header is sent at all (confirmed on a live
+  delivery), so handlers must decide explicitly whether to accept unsigned
+  requests. No Standard Webhooks support and no official SDK, so verification
+  is manual in every framework. The event name is carried in the JSON body as
+  event, NOT in a header. V2 payload is JSON snake_case:
+  {event, timestamp (unix MILLISECONDS), meeting_id, client_reference_id?};
+  meeting_id equals the transcript ID. Events: meeting.transcribed,
+  meeting.summarized, meeting.bot_joined — subscribed per webhook, only
+  subscribed events are delivered. Configure an HTTPS URL, optional signing
+  secret, and event selection on the Webhooks V2 page, or pass a per-upload
+  webhook URL in the uploadAudio mutation. Endpoint must return 2xx within
+  10s; retries exist but the schedule is undocumented — make handlers
+  idempotent on meeting_id scoped by event. Observed but NOT documented on a
+  live delivery: user-agent Fireflies-Webhook/2.0 (docs still say 1.0) and an
+  x-webhook-delivery-id header. LEGACY V1 (kept documented in the skill):
+  lowercase x-hub-signature carrying a BARE hex digest with NO "sha256="
+  prefix, camelCase payload {meetingId, eventType, clientReferenceId?} with
+  the single event "Transcription completed", required 16-32 char secret set
+  in Settings > Developer Settings. V1's docs never confirm whether the raw
+  bytes or a re-serialized JSON.stringify body is signed — that hedge applies
+  to V1 only.
+testScenario:
+  events:
+    - meeting.transcribed
+    - meeting.summarized
+    - meeting.bot_joined
+catalog:
+  summary: Verify Fireflies.ai Webhooks V2 signatures (`X-Hub-Signature`, `sha256=` + HMAC-SHA256 hex over the raw body), handle `meeting.transcribed` / `meeting.summarized` / `meeting.bot_joined`; legacy V1 documented
+  marketplace:
+    description: Receive and verify Fireflies.ai webhooks. Use when setting up Fireflies webhook handlers, debugging x-hub-signature verification, or handling the "Transcription completed" event when a meeting transcript is ready.

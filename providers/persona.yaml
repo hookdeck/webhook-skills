@@ -1,0 +1,30 @@
+name: persona
+displayName: Persona
+docs:
+  webhooks: https://docs.withpersona.com/webhooks
+  verification: https://docs.withpersona.com/webhooks-best-practices#checking-signatures
+  events: https://docs.withpersona.com/events
+notes: >
+  Verify via Persona-Signature header (casing varies): "t=<unix_ts>,v1=<hex>",
+  HMAC-SHA256 over "{t}.{raw body}" keyed with the webhook secret (wbhsec_...
+  prefix, per-webhook, revealed in Dashboard > Webhooks). During secret rotation the
+  header carries two space-separated t/v1 pairs — accept if ANY v1 matches; use
+  timing-safe compare and the raw body. Stripe-style scheme; does NOT follow the
+  Standard Webhooks spec. Payloads are JSON:API envelopes: event name at
+  data.attributes.name, full affected object at data.attributes.payload.data (same
+  schema as API responses); each webhook is pinned to a configurable API version.
+  Retries: 5s response timeout, then up to 7 more attempts with exponential backoff;
+  200/201/202/204 count as success. Ordering not guaranteed and duplicates possible
+  — process idempotently, order by data.attributes.created-at; events retained 30
+  days with manual Dashboard redelivery. No documented timestamp tolerance — replay
+  checking is up to the consumer. Event subscription is per-event-type at webhook
+  creation; report events use slash form (report/<type>.<action>). IP allowlisting
+  available. No official server-side SDK (npm persona is the frontend embedded
+  inquiry SDK).
+testScenario:
+  events:
+    - inquiry.completed
+    - inquiry.approved
+    - verification.passed
+catalog:
+  summary: Verify Persona webhook signatures (`Persona-Signature`, t=/v1= HMAC-SHA256 pairs), handle inquiry and verification events

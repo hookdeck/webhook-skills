@@ -1,0 +1,23 @@
+name: shopify
+displayName: Shopify
+docs:
+  webhooks: https://shopify.dev/docs/apps/build/webhooks
+  events: https://shopify.dev/docs/api/admin-rest/current/resources/webhook
+  verification: https://shopify.dev/docs/apps/build/webhooks/subscribe/https#step-5-verify-the-webhook
+notes: >
+  E-commerce platform. Uses X-Shopify-Hmac-SHA256 header with HMAC-SHA256 (base64 encoded).
+  Secret is the API secret key from Shopify Partners dashboard.
+  Common events: orders/create, orders/paid, products/update.
+testScenario:
+  events:
+    - orders/create
+    - orders/paid
+catalog:
+  summary: Verify Shopify HMAC signatures, handle order and product webhook events
+  marketplace:
+    description: Verify Shopify HMAC signatures (SHA256, base64), handle order, product, and customer events.
+    keywords:
+    - webhooks
+    - shopify
+    - ecommerce
+    - orders

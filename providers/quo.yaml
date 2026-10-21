@@ -1,0 +1,133 @@
+name: quo
+displayName: Quo
+docs:
+  webhooks: https://support.quo.com/core-concepts/integrations/webhooks
+  verification: https://www.quo.com/docs/2026-03-30/webhooks-signature-validation
+  events: https://www.quo.com/docs/2026-03-30/webhooks-event-payloads
+  api: https://www.quo.com/docs/2026-03-30/webhooks-overview
+notes: >
+  IDENTITY: Quo (quo.com) is the business phone / VoIP platform FORMERLY KNOWN AS
+  OPENPHONE. The support docs say so verbatim: "Send real-time notifications of Quo,
+  formerly OpenPhone, events to your applications". That rebrand is why the legacy
+  signature header is still literally `openphone-signature`, why the public API JSON is
+  still served from openphone-public-api-prod.s3.us-west-2.amazonaws.com, and why older
+  community material says "OpenPhone webhooks". API host is https://api.quo.com; docs at
+  www.quo.com/docs and support.quo.com. Hookdeck source type is QUO, whose source config
+  takes a single `webhook_secret_key` string (SourceConfigQuoAuth), which fits either
+  scheme below.
+
+  NOT QUOTER. Quoter (help.quoter.com, Hookdeck source type QUOTER, skill
+  quoter-webhooks) is an unrelated CPQ / sales-quoting company that verifies with a weak
+  MD5 `hash` FORM FIELD (not a header). Two different companies, two entirely different
+  schemes. Also not Quora, not the Quo card/loyalty app, not Twilio.
+
+  TWO SIGNATURE SCHEMES — implement and document BOTH; do NOT collapse them. Which one
+  an endpoint receives is decided by how the subscription was created.
+
+  SCHEME A (current, Quo-Api-Version: 2026-03-30) is Svix/Standard-Webhooks compatible:
+  headers webhook-id, webhook-timestamp, webhook-signature. HMAC-SHA256 over
+  `{webhook-id}.{webhook-timestamp}.{raw-body}`, STANDARD base64 (not base64url, not
+  hex). webhook-timestamp is UNIX SECONDS, so a real 5-minute tolerance check is correct.
+  webhook-signature is a SPACE-separated list of `v1,<base64sig>` entries — split on
+  spaces, then on the comma; accept if ANY v1 entry matches, constant-time with a length
+  guard. The key is the `key` field from POST /webhooks, formatted `whsec_<base64>`:
+  strip the `whsec_` prefix and base64-DECODE the remainder. Passing the prefixed string
+  into createHmac/hmac.new is a bug (only the Svix SDK accepts it as-is). PATHS: the
+  versioned management endpoints carry NO `/v1` prefix — the version is the
+  `Quo-Api-Version` header, not a path segment. Verified against the embedded OpenAPI
+  (2026-09-23): POST/GET /webhooks, GET|PATCH|DELETE /webhooks/{webhookId}, rotate is
+  POST /webhooks/{webhookId}/rotate (NOT /signing-secret/rotate), deliveries are
+  GET /webhooks/{webhookId}/events[/{deliveryId}] and
+  POST /webhooks/{webhookId}/events/{deliveryId}/retry. Auth is a bare API key in the
+  `Authorization` header (no Bearer). `/v1/...` paths belong to Scheme B.
+
+  SCHEME B (legacy v1 endpoints) is the OpenPhone-era scheme, still live. Header
+  `openphone-signature` — NOT renamed in the rebrand; do NOT invent a `quo-signature`.
+  Value is `<scheme>;<version>;<timestamp>;<signature>`, 4 SEMICOLON-separated fields,
+  scheme always `hmac`, version always `1`. Documented example verbatim:
+  'hmac;1;1639710054089;mw1K4fvh5m9XzsGon4C5N3KvL0bkmPZSAyb/9Vms2Qo='. HMAC-SHA256 over
+  `{timestamp}.{raw-body}` (TWO parts — no webhook id), base64. The per-webhook signing
+  secret comes from the app (webhook details -> ellipses -> "Reveal signing secret"), is
+  BASE64 with NO prefix, must be base64-decoded, and is NOT the Quo API key.
+  Multi-signature future-proofing here splits on COMMAS (Scheme A uses SPACES).
+
+  TIMESTAMP UNITS DIFFER. Scheme A is seconds. Scheme B's documented example
+  (1639710054089) is 13 digits = UNIX MILLISECONDS, but the docs never state the unit in
+  words — treat ms as INFERRED, implement the tolerance check unit-agnostically (detect
+  13-digit vs 10-digit), and say so. Treating ms as seconds puts every delivery ~52,000
+  years in the future and drops all traffic.
+
+  RAW BODY. Quo's own two legacy samples DISAGREE: the Node sample signs
+  `timestamp + '.' + JSON.stringify(req.body)` (a re-serialization) while the Python
+  sample signs `timestamp.encode() + b'.' + request.data` (the raw body). They agree only
+  because Quo sends compact JSON. ALWAYS use the raw body — the versioned docs say "If
+  your middleware parses or rewrites the JSON body first, verification will fail".
+
+  NODE KEY-DECODING QUIRK. Quo's legacy Node sample does
+  `Buffer.from(signingKey,'base64').toString('binary')` and passes that latin1 STRING to
+  createHmac; Node re-encodes it as UTF-8, corrupting any key byte >= 0x80. Use
+  `Buffer.from(signingKey, 'base64')` (a Buffer) — matches the Python sample and is
+  byte-identical for the ASCII-decoding keys Quo issues. Note this explicitly; do NOT
+  reproduce the `.toString('binary')` form.
+
+  NO SDK. Quo publishes none. Its docs recommend Svix (npm i svix / pip install svix) for
+  Scheme A and it works there unchanged, but Svix CANNOT verify Scheme B. Prefer a manual
+  dependency-free HMAC path covering both, and mention Svix as the Scheme-A alternative.
+  Note svix 2.x verify() validates only (returns undefined/None) — parse after verifying —
+  and the Node 2.x package is ESM-only (engines node >=22), which Jest needs a flag for.
+
+  NO HANDSHAKE and NO SOURCE-IP ALLOWLIST. There is no challenge/echo/validation request.
+  "Send Test Request" (and POST /webhooks/{webhookId}/events/test) sends a NORMAL, FULLY-SIGNED
+  sample payload of a chosen event type. Do NOT invent a `webhook.test` type or an
+  unsigned ping. Do not fabricate IP ranges.
+
+  ENVELOPES DIFFER BY GENERATION. Current (apiVersion "2026-03-30"):
+  {id, apiVersion, createdAt, type, data:{resource, context:{orgId}, links:{quo}}}.
+  Legacy (apiVersion "v2", or "v3" for AI events): same top level plus object:"event",
+  but a single data.object. Legacy uses `body`/`from`/`to`; current uses `resource.text`
+  and `context.senderIdentifier`/`context.recipientIdentifiers`. Branch on apiVersion, or
+  better on data.resource vs data.object.
+
+  DEDUPLICATION. The envelope `id` identifies the EVENT, not the delivery — every endpoint
+  subscribed to it gets the SAME id. Deduplicate on the `webhook-id` HEADER, unique per
+  delivery and stable across retries. Store processed ids for at least 28 hours.
+
+  CONTEXT ENUMS. context.contacts.lookupStatus is matched | none | unavailable;
+  context.participants.resolution is available | unavailable. In BOTH cases `unavailable`
+  means UNKNOWN, not empty — handlers routinely misread it as "no contacts".
+
+  EVENTS (28, from the 2026-03-30 payload reference, each with its own schema):
+  message.received, message.delivered, message.failed, message.undelivered, call.ringing,
+  call.menu.selected, call.answered, call.completed, call.forwarded, call.missed,
+  call.recording.completed, call.summary.completed, call.transcript.completed,
+  call.voicemail.completed, contact.updated, contact.deleted, task.created, task.updated,
+  task.deleted, task.completed, task.reopened, task.assigned, task.unassigned,
+  task.overdue, task.linked, task.unlinked, task.duedate.updated, task.duedate.removed.
+  The legacy support-docs list is a SUBSET plus two differently-named task events:
+  task.due_date_changed and task.due_date_removed (underscored) where the versioned
+  reference has task.duedate.updated / task.duedate.removed. Mention the legacy aliases
+  rather than dropping them. The create-webhook `events` enum ALSO accepts
+  integration.created / integration.updated / integration.deleted, which have NO
+  documented payload — hedge, do not describe their shape.
+
+  SUBSCRIPTIONS. message.* and call.* take a resourceIds filter of phone-number ids
+  (^PN.*$) or ["*"] (the default if omitted); contact.* is always org-wide. At least one
+  event per webhook. Max 50 webhooks per workspace.
+
+  DELIVERY. Respond 2xx within 10 seconds. Retries on any non-2xx: 8 attempts —
+  immediate, +5s, +5m, +30m, +2h, +5h, +10h, +10h — giving up ~27h35m after the first
+  attempt. Ordering is NOT guaranteed, including within one resource (a
+  call.transcript.completed can precede the matching call.summary.completed). Compare
+  data.resource.updatedAt against stored state and ignore stale events rather than
+  driving a state machine off arrival order.
+
+  ENV VARS: QUO_WEBHOOK_KEY (Scheme A, whsec_...) and QUO_LEGACY_SIGNING_SECRET
+  (Scheme B, bare base64).
+testScenario:
+  events:
+    - message.received
+    - call.completed
+    - call.summary.completed
+    - contact.updated
+catalog:
+  summary: Verify Quo (formerly OpenPhone) webhooks across BOTH of its signature schemes — the current Standard Webhooks style `webhook-id`/`webhook-timestamp`/`webhook-signature` (HMAC-SHA256 base64 over `{id}.{timestamp}.{raw-body}`, `whsec_` key) and the legacy `openphone-signature` (`hmac;1;<ms-timestamp>;<base64>` over `{timestamp}.{raw-body}`) — branch on the `data.resource` vs `data.object` envelope, and handle `message.received`, `call.completed`, `call.summary.completed`, `contact.updated` and `task.*` events. Not Quoter

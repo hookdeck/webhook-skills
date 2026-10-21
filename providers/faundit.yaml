@@ -1,0 +1,39 @@
+name: faundit
+displayName: Faundit
+docs:
+  webhooks: https://faundit.gitbook.io/faundit-api-v2/webhooks
+  verification: https://faundit.gitbook.io/faundit-api-v2/webhooks
+notes: >
+  Lost-and-found / returns platform. Signs webhooks with HMAC-SHA256, hex-encoded.
+  NOT the Standard Webhooks spec. The current (v1) scheme sends header
+  X-Faundit-Signature-Next computed over "v1:<timestamp>:<body>", where <timestamp>
+  is the X-Faundit-Timestamp header value and <body> is the RAW, unparsed request
+  body (payload integrity). A deprecated v0 scheme sends header X-Faundit-Signature
+  over "v0:<timestamp>" only (no body integrity — avoid). Verify by recomputing
+  hex(HMAC-SHA256(secret, "v1:" + timestamp + ":" + raw_body)) and constant-time
+  comparing against X-Faundit-Signature-Next; use the raw body before JSON parsing and
+  prefer the -Next header. The signing secret is NOT self-service — request it from
+  tech@faundit.com. Only TWO event types exist: item-status and request-status; the
+  granular statuses (item: contact-missing, waiting-response, wrong-owner,
+  pickup-by-guest, left-behind, finished, shipment-paid, pickup-scheduled, in-route,
+  delivered, deleted, expired, anonymized; request: registered, not-found, resolved,
+  deleted, expired, anonymized) are the data.status payload field, NOT separate events.
+  Payload envelope: { "event-type", "data": { id, timestamp, status, locationID } }.
+  API v2 renamed Members/faundit_memberID to Locations/locationID (legacy IDs still
+  accepted). No official SDKs — verify HMAC manually in every framework. Set
+  FAUNDIT_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - item-status
+    - request-status
+  prompt: >
+    Create a {framework} webhook handler for Faundit. Verify the
+    X-Faundit-Signature-Next header (recompute hex HMAC-SHA256 over
+    "v1:<X-Faundit-Timestamp>:<raw body>" with the signing secret and constant-time
+    compare) using the raw, unparsed body. After verifying, dispatch on the top-level
+    event-type field (item-status or request-status) and branch on data.status such as
+    delivered, finished, expired, registered, and resolved. Return 400 for an invalid
+    signature and 200 on success. If you use any skills to help with this, add a comment
+    noting which skill(s) you referenced.
+catalog:
+  summary: Verify Faundit lost-and-found / returns webhook signatures (`X-Faundit-Signature-Next`, HMAC-SHA256 hex over `v1:<timestamp>:<body>` with the `X-Faundit-Timestamp` header; deprecated v0 `X-Faundit-Signature` signs `v0:<timestamp>` only), handle the `item-status` and `request-status` events whose granular status (delivered, finished, expired, registered, resolved, …) is the `data.status` field

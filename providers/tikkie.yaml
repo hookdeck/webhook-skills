@@ -1,0 +1,101 @@
+name: tikkie
+displayName: Tikkie
+docs:
+  webhooks: https://developer.abnamro.com/api-products/tikkie-v233/reference-documentation
+  verification: https://developer.abnamro.com/api-products/tikkie-v233/reference-documentation
+  tutorial: https://developer.abnamro.com/api-products/tikkie/tutorial
+  openapi: https://developer.abnamro.com/system/files/api-ref-files/2026-09/TikkieAPI_v2.3.yaml
+notes: |
+  IDENTITY — Tikkie is ABN AMRO's (Dutch bank) payment-request product. This skill
+  covers the **Tikkie API v2 (2.3.x)** notification subscriptions, hosted at
+  `https://api.abnamro.com/v2/tikkie` (production) and
+  `https://api-sandbox.abnamro.com/v2/tikkie` (sandbox). Every API call carries an
+  `API-Key` header (consumer key from the ABN AMRO developer portal app) and an
+  `X-App-Token` header (UUID app token from the Tikkie Business Portal).
+  NOT to be confused with ABN AMRO's separate **Business Account Notification API**
+  (bank-account transaction webhooks, a different product) and NOT the retired
+  Tikkie v1 API (the old "Tikkie Fast Checkout"/platform API). Do not mix schemes.
+
+  Hookdeck's source type `TIKKIE` links to
+  https://developer.abnamro.com/api-products/tikkie-v233/reference-documentation.
+
+  *** CRITICAL — THERE IS NO SIGNATURE. DO NOT FABRICATE A VERIFIER. ***
+  Confirmed from the official OpenAPI spec (TikkieAPI_v2.3.yaml, fetched 2026-10-08):
+  the notification callbacks define only a JSON request body and a `2XX`
+  "Acknowledgement that a notification is received." response. There is no
+  signature header, no shared secret, no HMAC, no timestamp header, no
+  asymmetric signature and no documented source-IP allowlist. Any
+  crypto.createHmac / hmac.new / crypto.verify over the body for Tikkie is fabricated.
+  Also CONFIRMED AGAINST HOOKDECK CORE (server/integrations/sourceTypeSchemas.ts,
+  TIKKIE entry): no VERIFICATION feature and no verification controller — only
+  `http_method_managed_post`. The core commit that added it says verbatim:
+  "Tikkie (ABN AMRO) payment notification webhooks carry no signature, so the source
+  type is listed without a verification controller".
+
+  SECURITY MODEL the skill should teach instead (be honest these are mitigations,
+  not cryptographic proof):
+  1. Check `subscriptionId` in every notification equals the `subscriptionId`
+     returned (201) when you created the subscription — store it from the subscribe
+     response. Reject with a 4xx on mismatch. This
+     is a weak check (the id is not secret-grade), so ALSO:
+  2. Treat the notification as a trigger only: the payload carries only tokens, never
+     amounts or status. Re-fetch the authoritative record from the Tikkie API with
+     your API-Key + X-App-Token before fulfilling anything:
+       PAYMENT -> GET /paymentrequests/{paymentRequestToken}/payments/{paymentToken}
+       REFUND  -> GET /paymentrequests/{paymentRequestToken}/payments/{paymentToken}/refunds/{refundToken}
+       BUNDLE  -> GET /transactionbundles/{bundleId}
+     A forged notification with made-up tokens then just 404s.
+  3. Optionally use a hard-to-guess callback URL (e.g. a random path segment) — do
+     NOT claim Tikkie documents query-string secrets; the spec only says `url` must
+     be a valid URL (errors URL_MISSING, URL_INVALID, URL_DISALLOWED "It is prohibited
+     to use this `url` for webhooks").
+  The example handlers should implement 1 (configurable via env
+  TIKKIE_SUBSCRIPTION_ID; if unset, log a warning and skip the check rather than
+  crash) and stub/illustrate 2 with a fetch to the Tikkie API (do not make tests
+  hit the network — mock it or make it opt-in).
+
+  SUBSCRIBING (two independent subscriptions; only ONE of each can be active — a
+  repeat POST overwrites the existing one):
+  - POST /paymentrequestssubscription  body {"url": "https://..."} -> 201
+    {"subscriptionId": "<uuid>"}. Needs "payment request permission" on the app
+    token. Delivers PAYMENT and REFUND notifications. DELETE same path -> 204.
+  - POST /transactionssubscription  body {"url": "https://..."} -> 201
+    {"subscriptionId": "<uuid>"}. Needs "transaction bundle permission". Delivers
+    BUNDLE notifications (bundled payout files available). DELETE -> 204.
+  Delivery: HTTP POST, Content-Type application/json. Respond with any 2XX.
+  Retries: verbatim "best-effort approach ... retry mechanism with a maximum of
+  three attempts. However, you should not rely solely on notifications and are
+  encouraged to have a GET implemented" — so recommend reconciliation polling.
+  Handlers must be idempotent (retries can duplicate).
+  Sandbox: POST /sandboxapps (API-Key only) creates a sandbox app token.
+
+  PAYLOADS (verbatim examples from the spec; discriminator field is
+  `notificationType`, enum PAYMENT | REFUND | BUNDLE — there is NO event-type header):
+  PAYMENT:
+    {"subscriptionId":"6289db02-d422-4e93-b65c-30fa973bd341","notificationType":"PAYMENT",
+     "paymentRequestToken":"qzdnzr8hnVWTgXXcFRLUMc","paymentToken":"21ef7413-cc3c-4c80-9272-6710fada28e4"}
+  REFUND:
+    {"subscriptionId":"6289db02-d422-4e93-b65c-30fa973bd341","notificationType":"REFUND",
+     "paymentRequestToken":"qzdnzr8hnVWTgXXcFRLUMc","paymentToken":"21ef7413-cc3c-4c80-9272-6710fada28e4",
+     "refundToken":"abcdzr8hnVWTgXXcFRLUMc"}
+  BUNDLE:
+    {"subscriptionId":"5505d055-89e9-48b7-913d-8414d9f8d3cd","notificationType":"BUNDLE",
+     "bundleId":"af8fa035-3275-44fc-9a9b-a38c02efa114"}
+  Required fields: subscriptionId + notificationType always; paymentRequestToken +
+  paymentToken for PAYMENT/REFUND; refundToken for REFUND; bundleId for BUNDLE.
+  Do not invent other fields (no amount, status, timestamp or id fields in the
+  notification). The fetched Payment object has paymentToken, tikkieId,
+  counterPartyName, counterPartyAccountNumber, amountInCents, description,
+  createdDateTime, refunds[]; Refund has refundToken, amountInCents, description,
+  referenceId, createdDateTime, status (PENDING | PAID).
+  Ignore unknown fields / unknown notificationType values gracefully (log + 2xx).
+
+  Hookdeck: Tikkie POSTs only; Hookdeck has no signature to verify for this source,
+  so the subscriptionId + re-fetch guidance applies equally behind Hookdeck.
+testScenario:
+  events:
+    - PAYMENT
+    - REFUND
+    - BUNDLE
+catalog:
+  summary: Receive Tikkie API v2 (ABN AMRO) notifications, which carry **no signature, secret, or HMAC**. Check `subscriptionId` against the id returned by `POST /paymentrequestssubscription` / `/transactionssubscription`, re-fetch the record with `API-Key` + `X-App-Token`, and dispatch `notificationType` `PAYMENT`, `REFUND`, and `BUNDLE`

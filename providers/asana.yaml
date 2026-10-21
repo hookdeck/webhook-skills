@@ -1,0 +1,30 @@
+name: asana
+displayName: Asana
+docs:
+  webhooks: https://developers.asana.com/docs/webhooks-guide
+  verification: https://developers.asana.com/docs/webhooks-guide#security
+notes: >
+  Verification: X-Hook-Signature header = HMAC-SHA256 hex of the raw request body,
+  keyed with the X-Hook-Secret received during the handshake. Handshake: on webhook
+  creation (POST /webhooks with resource + target; filters REQUIRED for workspace/
+  team/portfolio/goal resources), Asana POSTs to the target with an X-Hook-Secret
+  header; the server must echo the same X-Hook-Secret back as a response header with
+  200 while the create request is in flight — store the secret per-webhook for later
+  signature checks. NOT Standard Webhooks. Payload is a batch: {"events": [...]},
+  each event compact (action/resource/parent/user/created_at) with actions: added,
+  changed, removed, deleted, undeleted — full details require a follow-up API fetch.
+  Heartbeats: empty {"events": []} deliveries at handshake and every 8 hours; no
+  successful heartbeat for 24h => webhook deleted. Delivery: ~1 min average (up to
+  ~10 min); non-2xx or >10s response is a failed delivery, retried with exponential
+  backoff for 24h, then the webhook is deleted; at-most-once, no replay. Responding
+  410 signals Asana to delete the webhook. Limits: 1,000 webhooks per resource,
+  10,000 per token.
+testScenario:
+  events:
+    - changed on task (parent: project)
+    - added on story (comment added to task)
+sdks:
+  npm: [asana]
+  pip: [asana]
+catalog:
+  summary: Complete the Asana X-Hook-Secret handshake, verify X-Hook-Signature (HMAC-SHA256), handle batched compact events and heartbeats

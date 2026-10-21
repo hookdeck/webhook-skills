@@ -1,0 +1,27 @@
+name: strava
+displayName: Strava
+docs:
+  webhooks: https://developers.strava.com/docs/webhooks/
+  verification: https://developers.strava.com/docs/webhooks/
+  events: https://developers.strava.com/docs/webhooks/
+notes: >
+  Fitness activity platform (Webhook Events API / push subscriptions). Events are
+  NOT cryptographically signed — there is no per-event signature or HMAC header.
+  Authenticity is established once at subscription time via a GET handshake: POST to
+  https://www.strava.com/api/v3/push_subscriptions with client_id, client_secret,
+  callback_url, and a self-chosen verify_token; Strava immediately GETs the
+  callback_url with hub.mode=subscribe, hub.challenge=<random>, and
+  hub.verify_token=<your token>. Confirm hub.verify_token matches and respond within
+  2 seconds with HTTP 200 and JSON body {"hub.challenge":"<echoed value>"} (exact key
+  name, with the dot). Event POSTs carry object_type (activity|athlete), aspect_type
+  (create|update|delete), object_id, owner_id, subscription_id, event_time, and
+  updates. Only ONE subscription per API application. Payloads are thin (object_id
+  only) — fetch full data via the REST API. Ack every event with 200 within 2s or
+  Strava retries (up to 3 total attempts). No official SDK (all client libraries are
+  community). Not Standard Webhooks.
+testScenario:
+  events:
+    - activity create
+    - athlete deauthorization
+catalog:
+  summary: Complete the Strava subscription validation handshake (`hub.challenge`/`hub.verify_token`), handle activity and athlete deauthorization events

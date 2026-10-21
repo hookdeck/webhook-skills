@@ -1,0 +1,23 @@
+name: fusionauth
+displayName: FusionAuth
+docs:
+  webhooks: https://fusionauth.io/docs/extend/events-and-webhooks/
+  events: https://fusionauth.io/docs/extend/events-and-webhooks/events/
+  verification: https://fusionauth.io/docs/extend/events-and-webhooks/signing
+notes: >
+  Identity and access management platform. Uses JWT-based signature verification.
+  Signatures are RSA-signed JWTs in the X-FusionAuth-Signature header.
+  Verify using FusionAuth's public key from /.well-known/jwks.json endpoint.
+testScenario:
+  events:
+    - user.create
+    - user.login.success
+catalog:
+  summary: Verify FusionAuth JWT webhook signatures, handle user, login, and registration events
+  marketplace:
+    description: Verify FusionAuth JWT webhook signatures (RSA via JWKS), handle user, login, and registration events.
+    keywords:
+    - webhooks
+    - fusionauth
+    - auth
+    - jwt

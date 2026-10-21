@@ -51,6 +51,31 @@ export interface ProviderConfig {
     npm?: string[];
     pip?: string[];
   };
+  /**
+   * Catalog text for the generated README.md provider table and
+   * .claude-plugin/marketplace.json (see lib/catalog.ts). Lives here rather
+   * than in those files so a new provider only touches skills/<skill>/ and
+   * providers/<name>.yaml, and batches of providers never conflict.
+   */
+  catalog?: CatalogConfig;
+}
+
+/**
+ * Per-provider catalog text (providers/<name>.yaml → catalog)
+ */
+export interface CatalogConfig {
+  /** README "What It Does" cell. Required unless `readme: false`. */
+  summary?: string;
+  /** README provider link, when it should differ from docs.webhooks */
+  docsUrl?: string;
+  /** false = not in the generated provider table (listed in a hand-written README section) */
+  readme?: boolean;
+  /** marketplace.json overrides; defaults come from SKILL.md frontmatter */
+  marketplace?: {
+    description?: string;
+    keywords?: string[];
+    category?: string;
+  };
 }
 
 /**

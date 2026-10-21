@@ -1,0 +1,20 @@
+name: tally
+displayName: Tally
+docs:
+  webhooks: https://tally.so/help/webhooks
+  verification: https://tally.so/help/webhooks
+notes: >
+  Form builder. Webhooks are free on all plans and fire a single event type,
+  FORM_RESPONSE, on each form submission. Signing is OPTIONAL: when a signing
+  secret is set (per-webhook, in the form's Integrations tab, or via the API
+  signingSecret field), requests carry a Tally-Signature header (case-insensitive)
+  whose value is base64(HMAC-SHA256(signingSecret, rawJsonBody)). No timestamp
+  scheme; NOT Standard Webhooks. Always HMAC the raw request body, not re-serialized
+  JSON. If no secret is set, requests are unsigned — handlers must handle that case.
+  Endpoint must return 2XX within 10s; retries 5m -> 30m -> 1h -> 6h -> 1d. No official SDK.
+  Answers live in data.fields. No official SDK.
+testScenario:
+  events:
+    - FORM_RESPONSE
+catalog:
+  summary: Verify Tally webhook signatures (`Tally-Signature`, HMAC-SHA256 base64, optional signing secret), handle FORM_RESPONSE submission events

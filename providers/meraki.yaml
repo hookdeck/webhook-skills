@@ -1,0 +1,28 @@
+name: meraki
+displayName: Cisco Meraki
+docs:
+  webhooks: https://developer.cisco.com/meraki/webhooks/
+  verification: https://developer.cisco.com/meraki/webhooks/introduction/#shared-secret
+  events: https://developer.cisco.com/meraki/webhooks/
+notes: >
+  Cisco Meraki Dashboard webhook alerts. Does NOT use an HMAC signature header and does NOT
+  follow the Standard Webhooks spec. Verification is a plaintext "sharedSecret" field carried
+  INSIDE the JSON request body: compare payload.sharedSecret against the shared secret set on
+  the HTTP server (Dashboard > Network-wide > Alerts > Webhooks / HTTP servers) with a
+  timing-safe string compare. The secret is optional and unencrypted — TLS (HTTPS, CA-trusted
+  cert; no self-signed) is the real transport protection. Payloads carry alertType (human
+  label) plus alertTypeId (stable machine id) — dispatch on alertTypeId. Common ids:
+  motion_alert ("Motion detected"), settings_changed ("Settings changed"), sensor_alert
+  ("Sensor change detected"), stopped_reporting ("APs went down"). Other fields: version,
+  sharedSecret, sentAt, occurredAt, organizationId, networkId, deviceSerial, alertId,
+  alertData. Custom payload templates use the Liquid template language and can reshape the
+  body/headers — don't assume the default schema when templates are enabled. Delivery ~90s
+  post-event; receiver auto-disables after >100 failed attempts in 24h; "Send test" posts a
+  sample. Live alert list via GET /organizations/{organizationId}/webhooks/alertTypes. The
+  Meraki SDKs are Dashboard-API clients only — none verify webhooks (there is no signature).
+testScenario:
+  events:
+    - motion_alert
+    - sensor_alert
+catalog:
+  summary: Verify Meraki Dashboard webhook alerts via the body `sharedSecret` (no HMAC header), handle motion_alert, settings_changed, sensor_alert, and stopped_reporting events

@@ -1,0 +1,34 @@
+name: synctera
+displayName: Synctera
+docs:
+  webhooks: https://docs.synctera.com/docs/webhooks-guide
+  verification: https://docs.synctera.com/docs/webhooks-guide
+  events: https://docs.synctera.com/v1/reference/listevents-1
+notes: >
+  Banking-as-a-Service (BaaS) platform. Custom HMAC scheme — NOT Standard
+  Webhooks (no webhook-id/webhook-timestamp/webhook-signature). Two HTTP
+  headers: Synctera-Signature (the signature) and Request-Timestamp (POSIX
+  seconds). Verify by computing HMAC-SHA256(secret, "{Request-Timestamp}.{raw_body}")
+  and hex-encoding; the "." is a LITERAL separator between the timestamp and
+  the RAW body. GOTCHA: the signing secret is NOT the API key — generate it via
+  POST /v0/webhook_secrets (empty body) and store the returned "secret". During
+  secret rotation (rolling secret), Synctera-Signature may contain TWO
+  "."-delimited signature strings — check the body against EACH and accept if
+  either matches. Reject if Request-Timestamp is >5 minutes from now (replay
+  protection); timestamp is in SECONDS, not milliseconds. Verify against the RAW
+  body — do not JSON.parse first. Create endpoints via POST /v0/webhooks (url,
+  enabled_events[], is_enabled, description, metadata). Event names use
+  <resource>.[<sub-resource>.]<action> (ACCOUNT.UPDATED, CARD.CREATED,
+  TRANSACTION.CREATED, TRANSACTION.UPDATED, DISPUTE.CREATED, ...) and support
+  wildcards like CUSTOMER.* (auto-subscribes to future events under the
+  resource). Respond 200 within 5s or it retries (exponential backoff up to
+  ~55h); events retained 60 days. Test with POST /v0/webhooks/trigger. Only
+  official client is Go (github.com/synctera/client-libraries-go) — no npm/pip,
+  so Node.js and Python verify manually. Set SYNCTERA_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - ACCOUNT.UPDATED
+    - CARD.CREATED
+    - TRANSACTION.CREATED
+catalog:
+  summary: Verify Synctera BaaS webhooks (custom HMAC-SHA256 hex over `{Request-Timestamp}.{raw_body}`, `Synctera-Signature` + `Request-Timestamp` headers, secret from POST /v0/webhook_secrets, rolling secret support), handle ACCOUNT.UPDATED, CARD.CREATED, TRANSACTION.CREATED, and DISPUTE.CREATED events

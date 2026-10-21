@@ -1,0 +1,31 @@
+name: ringcentral
+displayName: RingCentral
+docs:
+  webhooks: https://developers.ringcentral.com/guide/notifications/webhooks/creating-webhooks
+  verification: https://developers.ringcentral.com/guide/notifications/webhooks/receiving
+notes: >
+  Cloud communications (voice, SMS, messaging) platform. RingCentral webhooks are NOT
+  HMAC-signed and do NOT follow the Standard Webhooks spec. Two mechanisms: (1) Validation-Token
+  handshake (mandatory) — on subscription create/renew RingCentral sends a request with a
+  Validation-Token request header; echo the exact value back in a Validation-Token response
+  header and return 200 fast. (2) Verification-Token (optional) — an arbitrary string set via the
+  subscription's verificationToken field, returned as a Verification-Token header on every
+  notification; compare timing-safe. Create with POST /restapi/v1.0/subscription (body:
+  eventFilters, deliveryMode { transportType: WebHook, address: <https-url>, verificationToken },
+  expiresIn). Address must be HTTPS. Respond fast with 200 or the endpoint gets blacklisted
+  (auto-reconciled ~every 15 min once healthy). Events are identified by the event filter path in
+  the notification's `event` field, e.g. /restapi/v1.0/account/~/extension/~/message-store,
+  /restapi/v1.0/account/~/extension/~/presence, /restapi/v1.0/account/~/telephony/sessions.
+testScenario:
+  events:
+    - /restapi/v1.0/account/~/extension/~/message-store
+    - /restapi/v1.0/account/~/telephony/sessions
+  prompt: >
+    Create a {framework} webhook handler for RingCentral. It must first complete the
+    Validation-Token handshake (echo the Validation-Token request header back in a
+    Validation-Token response header and return 200), then for notifications optionally verify the
+    Verification-Token header (timing-safe) before dispatching on the event filter in the `event`
+    field. RingCentral has no HMAC signature. If you use any skills to help with this, add a
+    comment noting which skill(s) you referenced.
+catalog:
+  summary: Complete the RingCentral Validation-Token handshake, check the optional Verification-Token header, handle message-store, presence, and telephony session events

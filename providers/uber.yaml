@@ -1,0 +1,29 @@
+name: uber
+displayName: Uber
+docs:
+  webhooks: https://developer.uber.com/docs/eats/guides/webhooks
+  verification: https://developer.uber.com/docs/eats/guides/webhooks#webhook-security
+  events: https://developer.uber.com/docs/eats/guides/webhooks
+notes: >
+  Uber Eats webhooks are signed with the X-Uber-Signature header: a lowercased
+  hex HMAC-SHA256 of the raw request body, keyed with the app's CLIENT SECRET
+  (not a dedicated webhook secret). Verify against the exact raw body bytes
+  before parsing. The event type is in the JSON body's event_type field (no
+  event-type header). Configure one Primary Webhook URL per integration in the
+  Developer Dashboard (Webhooks tab; Basic Auth or OAuth). Respond HTTP 200 with
+  an empty body to ack; retries fire on 500/502/503/504, timeouts, and network
+  errors with backoff (10s, 30s, 60s, 120s, then exponential, up to ~7 attempts).
+  No official webhook SDK. NOTE: Uber Direct (Deliveries) webhooks differ — they
+  use x-uber-signature / x-postmates-signature keyed with a dedicated per-webhook
+  Signing Key (not the client secret), created in the Uber Direct Dashboard. Not
+  Standard Webhooks. Common events: orders.notification, orders.cancel,
+  orders.failure, orders.release, orders.scheduled.notification,
+  order.fulfillment_issues.resolved, store.provisioned, store.deprovisioned,
+  store.status.changed.
+testScenario:
+  events:
+    - orders.notification
+    - orders.cancel
+    - store.provisioned
+catalog:
+  summary: Verify Uber Eats webhook signatures (HMAC-SHA256 hex, `X-Uber-Signature`, keyed with client secret), handle orders.notification, orders.cancel, and store events

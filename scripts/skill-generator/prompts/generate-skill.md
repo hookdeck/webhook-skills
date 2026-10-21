@@ -59,13 +59,17 @@ Read the AGENTS.md file in this repository to understand the full skill creation
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/main.py`
 - `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/test_webhook.py`
 
-### Integration Files
+### Provider File
 
-- `providers.yaml` - make sure the `{{PROVIDER_KEBAB}}` entry exists with its docs URLs and a `testScenario` listing 2-3 real event names. CI fails without `testScenario`.
-- `README.md` - add a row to the Provider Webhook Skills table, in alphabetical order, in the same style as the rows around it (header names, algorithm, key events).
-- `.claude-plugin/marketplace.json` - leave it alone; the generator registers the skill.
+Create or update `providers/{{PROVIDER_KEBAB}}.yaml` (see `providers/stripe.yaml` for the shape). CI fails without:
 
-The generator runs `scripts/validate-provider.sh {{PROVIDER_KEBAB}}-webhooks` (the same check CI runs) after you finish and fills in a README row if one is missing, but a row you write will be more useful than the seeded one.
+- `docs.webhooks` (and `verification` / `events` URLs if they exist)
+- `testScenario.events` listing 2-3 real event names
+- `catalog.summary` - one line for the README provider table, in the same style as other providers' summaries: what gets verified (header names, algorithm) and the key events it handles. For example: ``Verify Stripe webhook signatures (`Stripe-Signature`, HMAC-SHA256), handle checkout.session.completed and payment_intent.succeeded events``
+
+Do **not** edit `README.md` or `.claude-plugin/marketplace.json`. Both are generated from `providers/` and `skills/` after merge (`./scripts/generate-skills.sh sync`).
+
+The generator runs `scripts/validate-provider.sh {{PROVIDER_KEBAB}}-webhooks` (the same check CI runs) after you finish.
 
 ## Important Guidelines
 

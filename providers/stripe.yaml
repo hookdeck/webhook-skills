@@ -1,0 +1,26 @@
+name: stripe
+displayName: Stripe
+docs:
+  webhooks: https://docs.stripe.com/webhooks
+  verification: https://docs.stripe.com/webhooks/signatures
+  events: https://docs.stripe.com/api/events/types
+notes: >
+  Payment platform. Uses Stripe-Signature header with HMAC-SHA256 (hex encoded).
+  Signature format includes timestamp (t) and signature (v1). Secret starts with whsec_.
+  v1 is the only valid live scheme; test events also carry a fake v0 signature, which is
+  not a legacy scheme and must be ignored. Always use raw request body for verification. Common events: checkout.session.completed,
+  payment_intent.succeeded, customer.subscription.created.
+testScenario:
+  events:
+    - payment_intent.succeeded
+    - checkout.session.completed
+catalog:
+  summary: Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed events
+  marketplace:
+    description: Verify Stripe webhook signatures, parse payment event payloads, handle checkout.session.completed, payment_intent.succeeded, customer.subscription.created, invoice.paid events.
+    keywords:
+    - webhooks
+    - stripe
+    - payments
+    - billing
+    - subscriptions

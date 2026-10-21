@@ -1,0 +1,25 @@
+name: trello
+displayName: Trello
+docs:
+  webhooks: https://developer.atlassian.com/cloud/trello/guides/rest-api/webhooks/
+  verification: https://developer.atlassian.com/cloud/trello/guides/rest-api/webhooks/#webhook-signatures
+notes: >
+  Signature: x-trello-webhook header = base64(HMAC-SHA1(rawBody + callbackURL,
+  OAuth application secret)). Gotchas: SHA1 (not SHA256), and the callbackURL is
+  concatenated to the body EXACTLY as provided at webhook creation before hashing.
+  The secret is the API "OAuth1.0 secret" from the Power-Up admin page. Does NOT
+  follow the Standard Webhooks spec. Webhooks are created via API only (POST
+  /1/tokens/{token}/webhooks with idModel + callbackURL); at creation Trello sends
+  an HTTP HEAD request to the callbackURL and creation fails unless it returns 200
+  (invalid SSL cert also fails; missing cert does not). Delivery failures retry 3
+  times with backoff (30s, 60s, 120s); a webhook is auto-disabled after ~30 days of
+  consecutive failures (>1000 failures). Payloads contain action (with action.type),
+  model (the watched object), and webhook objects. No official npm/pip SDK (official
+  offerings are browser-side only).
+testScenario:
+  events:
+    - createCard
+    - updateCard
+    - commentCard
+catalog:
+  summary: Verify Trello webhook signatures (`x-trello-webhook`, HMAC-SHA1 over body + callbackURL), answer the HEAD check, handle board and card actions

@@ -1,0 +1,29 @@
+name: bigcommerce
+displayName: BigCommerce
+docs:
+  webhooks: https://docs.bigcommerce.com/developer/docs/integrations/webhooks/overview
+  verification: https://docs.bigcommerce.com/developer/docs/integrations/webhooks/https
+  events: https://docs.bigcommerce.com/developer/docs/integrations/webhooks/event-reference/events
+notes: >
+  Webhooks are created via API only (POST /stores/{store_hash}/v3/hooks; also V2 and a
+  GraphQL Admin API variant with data filters) — not via the store dashboard. Two
+  verification options: (1) optional custom headers set at creation ({"headers":
+  {"username": "...", "value": "..."}}) echoed on every callback for basic-auth-style
+  checks, and (2) signature verification now documented per the Standard Webhooks spec —
+  docs advise Standard Webhooks libraries, verifying with the app's base64-encoded client
+  secret and checking the timestamp against replay. Payload is thin: data carries only
+  resource type and id (plus store_id, scope, hash, producer, created_at) — call back to
+  the REST API to fetch the resource. Respond HTTP 200 immediately; failures retry over
+  ~48h (60s up to daily) after which the hook is deactivated and the app owner emailed.
+  A per-domain blocklist kicks in for 3 minutes if success ratio drops below 90% in a
+  2-minute sliding window. HTTPS on port 443 only; new hooks can take up to 1 minute to
+  activate.
+testScenario:
+  events:
+    - store/order/created
+    - store/product/inventory/updated
+    - store/cart/abandoned
+sdks:
+  pip: [bigcommerce]
+catalog:
+  summary: Verify BigCommerce webhook callbacks (Standard Webhooks or custom headers), handle store/order and product events with API fetch-back

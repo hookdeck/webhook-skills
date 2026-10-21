@@ -1,0 +1,30 @@
+name: workos
+displayName: WorkOS
+docs:
+  webhooks: https://workos.com/docs/events/data-syncing/webhooks
+  verification: https://workos.com/docs/events/data-syncing/webhooks/validating-events
+notes: >
+  Enterprise-readiness platform (SSO, Directory Sync, AuthKit). Verify with the WorkOS-Signature
+  header, which contains a timestamp and signature (`t=<ts>, v1=<sig>`). Compute HMAC-SHA256
+  (hex) over `{timestamp}.{raw body}` using the endpoint signing secret, compare timing-safe, and
+  reject if the timestamp is outside the tolerance window (default ~3 minutes) to prevent replay.
+  The official @workos-inc/node / workos SDKs expose webhooks.constructEvent /
+  verify_event which do this in one step. Common events: dsync.user.created,
+  dsync.group.user_added, connection.activated, user.created, session.created.
+sdks:
+  npm:
+    - "@workos-inc/node"
+testScenario:
+  events:
+    - dsync.user.created
+    - connection.activated
+catalog:
+  summary: Verify WorkOS webhook signatures (`WorkOS-Signature`, HMAC-SHA256 with timestamp), handle Directory Sync and auth events
+  marketplace:
+    description: Verify WorkOS webhook signatures (WorkOS-Signature, HMAC-SHA256 with timestamp), handle Directory Sync and authentication events.
+    keywords:
+    - webhooks
+    - workos
+    - auth
+    - identity
+    - sso

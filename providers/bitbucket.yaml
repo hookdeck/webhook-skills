@@ -1,0 +1,25 @@
+name: bitbucket
+displayName: Bitbucket
+docs:
+  webhooks: https://support.atlassian.com/bitbucket-cloud/docs/manage-webhooks/
+  events: https://support.atlassian.com/bitbucket-cloud/docs/event-payloads/
+notes: >
+  Atlassian Git hosting (Bitbucket Cloud). The event type is delivered in the X-Event-Key header
+  and a delivery id in X-Request-UUID. Webhooks configured with a secret are signed with an
+  X-Hub-Signature header: HMAC-SHA256 (hex, `sha256=` prefix) over the raw request body using
+  that secret; verify with a timing-safe comparison. Webhooks without a secret are unsigned
+  (rely on HTTPS + secret URL). Common events: repo:push, pullrequest:created,
+  pullrequest:updated, pullrequest:fulfilled, pullrequest:rejected.
+testScenario:
+  events:
+    - repo:push
+    - pullrequest:created
+catalog:
+  summary: Verify Bitbucket webhook signatures (`X-Hub-Signature`, HMAC-SHA256), handle repo push and pull request events
+  marketplace:
+    description: Verify Bitbucket webhook signatures (X-Hub-Signature, HMAC-SHA256), handle repo push and pull request events.
+    keywords:
+    - webhooks
+    - bitbucket
+    - atlassian
+    - git

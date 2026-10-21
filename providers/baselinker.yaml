@@ -1,0 +1,74 @@
+name: baselinker
+displayName: BaseLinker
+docs:
+  api: https://api.baselinker.com/
+  events: https://base.com/en-EN/help/knowledgebase/automatic-actions-system-events-for-orders/
+notes: >
+  Polish multichannel e-commerce / warehouse and order-management platform (rebranded
+  Base.com) integrating marketplaces, stores and couriers. THIS IS NOT A NORMAL WEBHOOK
+  SOURCE — three things must be reflected in every example. (1) TRANSPORT IS HTTP HEAD,
+  NOT POST. A HEAD request has NO BODY by definition: never read req.body /
+  await request.json() / await request.body() — the body is always empty and parsing it
+  throws or yields null. Express needs app.head(...) (app.get() also answers HEAD, but be
+  explicit); Next.js needs an exported HEAD route handler; FastAPI needs @app.head(...).
+  No JSON body parser on the route. Hookdeck seeds a Baselinker Source's
+  allowed_http_methods to ["HEAD"] when the type is chosen — an UNMANAGED default that
+  seeds the initial selection only, stays editable, and is not re-applied on later
+  updates. (2) THE ENTIRE PAYLOAD IS IN THE QUERY STRING — req.query (Express),
+  request.nextUrl.searchParams (Next.js), typed query args / request.query_params
+  (FastAPI). Query values are ALWAYS STRINGS: coerce numerics explicitly (Number(order_id)
+  / int(order_id)) and never assume a param is present. (3) THERE IS NO SIGNATURE
+  VERIFICATION. NONE. Do NOT invent an HMAC verifier, a signature header, a
+  timestamp/replay check, or a shared secret — there is nothing to verify with. Hookdeck's
+  SourceConfigBaselinkerAuth is {properties: {}, additionalProperties: false} (accepts no
+  secret at all), whereas every HMAC source there carries webhook_secret_key; BaseLinker
+  sits in the zero-property auth cohort with AWS SNS, Microsoft Graph, Microsoft
+  SharePoint, Monday, Strava, Tikkie, Ethoca and Zift. There is also NO
+  handshake/challenge/ack step: unlike Trello (which uses HEAD as a verification probe), a
+  Baselinker HEAD request resolves no challenge controller and goes straight to ingestion.
+  Security guidance must be honest — endpoint-URL secrecy, network controls, or a shared
+  token the user themselves appends to the endpoint URL as a query param — and say plainly
+  that the platform provides no cryptographic authentication. RESPONDING: a HEAD response
+  MUST NOT carry a body (RFC 9110 section 9.3.2) — reply with a bare 200 and no payload
+  (res.sendStatus(200) / new Response(null, {status: 200}) / Response(status_code=200)),
+  never res.json(...). Because of that rule Hookdeck returns the request id in the
+  x-hookdeck-request-id RESPONSE header (exposed via Access-Control-Expose-Headers) rather
+  than in a body — that is how a delivery is correlated with its dashboard entry. PAYLOAD
+  SHAPE — HEDGE HONESTLY: BaseLinker publishes NO webhook documentation whatsoever. Its
+  public API (api.baselinker.com, ~195 methods) is strictly request/response over
+  connector.php with change tracking by polling (getJournalList,
+  getOrderReturnJournalList, getInventoryProductLogs), and neither the English nor the
+  Polish help centre documents an outbound webhook or a "send HTTP request" automatic
+  action. The only query params actually observed are order_id (e.g. 42) and state (e.g.
+  packed), from Hookdeck's own ingestion fixtures — present these as OBSERVED EXAMPLES,
+  explicitly not as a documented or exhaustive parameter list. Do not fabricate additional
+  param names, and do not claim an event-type discriminator exists. NOTE X-BLToken is
+  BaseLinker's REQUEST auth header (client -> BaseLinker API for outbound calls such as
+  getOrders, 100 req/min). It is NOT a webhook signature and must never be presented as
+  one. For context on what state changes exist, BaseLinker's Automatic Actions system
+  events cover order fetched / paid / confirmed, status set, shipment created or deleted,
+  courier parcel status changed, invoices and receipts issued, returns
+  created/accepted/completed/rejected, PickPack collecting and packing, and marketplace
+  cancellations — these are panel UI labels, NOT confirmed wire values, and must be
+  referenced only as background, never as event-name constants.
+testScenario:
+  events:
+    - order_id
+    - state
+  prompt: >
+    Create a {framework} webhook handler for BaseLinker (Base.com). CRITICAL: BaseLinker
+    only ever sends HTTP HEAD requests, which have NO BODY — do NOT read req.body /
+    await request.json() / await request.body(), and do NOT mount a JSON body parser.
+    Register the route for HEAD explicitly (app.head in Express, an exported HEAD function
+    in Next.js, @app.head in FastAPI). The ENTIRE payload is in the QUERY STRING; the only
+    observed params are order_id (e.g. 42) and state (e.g. packed) — treat them as observed
+    examples, not a documented list, guard for absence, and coerce order_id explicitly
+    because query values are always strings. There is NO signature verification: do NOT
+    invent an HMAC check, a signature header, a timestamp/replay window, or a shared
+    secret, and do NOT treat X-BLToken (the outbound API request header) as a signature.
+    Respond with a bare 200 and NO body — a HEAD response must not carry one — so never
+    res.json(...) / NextResponse.json(...) / return a dict. If you use any skills to help
+    with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: 'Receive BaseLinker (Base.com) order callbacks, which arrive as bodyless HTTP **HEAD** requests with the whole payload in the query string (observed: `order_id`, `state`) — there is **no signature, secret, or handshake** to verify, so respond with a bare bodyless 200 and fetch detail via `getOrders` (`X-BLToken`)'
+  docsUrl: https://api.baselinker.com/
