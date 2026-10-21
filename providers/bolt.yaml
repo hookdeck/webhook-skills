@@ -1,0 +1,16 @@
+name: bolt
+displayName: Bolt
+docs:
+  webhooks: https://help.boltapp.com/developers/webhooks/
+  verification: https://help.boltapp.com/api-reference/guides/verify-webhooks/
+notes: >
+  Bolt checkout (boltapp.com), not Bolt ride-hailing or bolt.new. X-Bolt-Hmac-Sha256 = base64
+  HMAC-SHA256 of the raw request body keyed with the Signing Secret (Merchant Dashboard >
+  Administration > API; raw string). Transaction webhooks carry type (payment, capture, credit,
+  void, auth, pending, rejected_irreversible).
+testScenario:
+  events:
+    - payment
+    - capture
+catalog:
+  summary: Verify Bolt checkout (boltapp.com) webhook signatures (`X-Bolt-Hmac-Sha256`, base64 HMAC-SHA256 of the raw body keyed with the Signing Secret), handle payment, auth, capture, credit, void, pending, and rejected_irreversible transaction events

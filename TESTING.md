@@ -356,22 +356,22 @@ The repository includes a script to automate agent test scenarios:
 
 ### Configuration
 
-Test prompts and events are configured in `providers.yaml` at the repository root:
+Test prompts and events are configured in each provider's `providers/<name>.yaml`:
 
 ```yaml
-providers:
-  - name: stripe
-    displayName: Stripe
-    # ... docs, notes ...
-    testScenario:
-      events:
-        - payment_intent.succeeded
-        - checkout.session.completed
-      # Optional custom prompt (uses default if not specified)
-      # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
+# providers/stripe.yaml
+name: stripe
+displayName: Stripe
+# ... docs, notes ...
+testScenario:
+  events:
+    - payment_intent.succeeded
+    - checkout.session.completed
+  # Optional custom prompt (uses default if not specified)
+  # prompt: "Custom prompt with {Provider}, {framework}, {events} placeholders"
 ```
 
-To add a new test scenario, add the `testScenario` field to the provider in `providers.yaml`.
+To add a new test scenario, add the `testScenario` field to the provider's file in `providers/`.
 
 ---
 

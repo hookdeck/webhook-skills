@@ -1,0 +1,24 @@
+name: calendly
+displayName: Calendly
+docs:
+  webhooks: https://developer.calendly.com/api-docs/ZG9jOjQ2NDA2NA-webhook-signatures
+  overview: https://developer.calendly.com/api-docs
+notes: >
+  Scheduling platform. Verify with the Calendly-Webhook-Signature header, which contains a
+  timestamp and signature (`t=<ts>,v1=<sig>`). Compute HMAC-SHA256 (hex) over
+  `{timestamp}.{raw body}` using the webhook subscription's signing key, compare timing-safe, and
+  reject stale timestamps (recommended tolerance ~3 minutes) to prevent replay. Return 2xx.
+  Common events: invitee.created, invitee.canceled, invitee_no_show.created,
+  routing_form_submission.created.
+testScenario:
+  events:
+    - invitee.created
+    - invitee.canceled
+catalog:
+  summary: Verify Calendly webhook signatures (`Calendly-Webhook-Signature`, HMAC-SHA256 with timestamp), handle invitee.created and invitee.canceled events
+  marketplace:
+    description: Verify Calendly webhook signatures (Calendly-Webhook-Signature, HMAC-SHA256 with timestamp), handle invitee.created and invitee.canceled events.
+    keywords:
+    - webhooks
+    - calendly
+    - scheduling

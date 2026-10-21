@@ -1,0 +1,28 @@
+name: aiprise
+displayName: AiPrise
+docs:
+  webhooks: https://docs.aiprise.com/docs/callbacks-authentication
+  verification: https://docs.aiprise.com/docs/callbacks-authentication
+notes: >
+  Identity verification platform (KYC/KYB). Notifies your server via signed
+  "callbacks". Signature = lowercase hex HMAC-SHA256 of the RAW request body,
+  sent in the X-HMAC-SIGNATURE header. The HMAC key is your AiPrise API private
+  key DIRECTLY (e.g. abcdef12-pqrs-...) — there is NO separate signing/endpoint
+  secret. NOT Standard Webhooks (no webhook-id/timestamp/signature headers).
+  Verify against the exact raw body bytes (unparsed UTF-8); re-serializing the
+  JSON breaks the signature. Callback URLs are set at the template level
+  (Dashboard > View Templates > {TemplateID}) or overridden per request via
+  callback_url (verification result) and events_callback_url (business-profile
+  change events); request-level wins. There is no rich typed-event system — the
+  outcome IS aiprise_summary.verification_result = APPROVED | DECLINED | REVIEW
+  | UNKNOWN, plus a process status (COMPLETED, PENDING, FAILED, ...). Correlate
+  via verification_session_id and optional client_reference_id. Official SDKs
+  (aiprise-web-sdk, aiprise-types, aiprise-react-native-sdk) are client-side /
+  mobile only — no server verification SDK, so verify manually. Retry behaviour
+  is not documented; make handlers idempotent on verification_session_id.
+testScenario:
+  events:
+    - APPROVED
+    - DECLINED
+catalog:
+  summary: Verify AiPrise identity/KYC/KYB callback signatures (`X-HMAC-SIGNATURE`, HMAC-SHA256 hex keyed with your API private key), handle APPROVED, DECLINED, REVIEW, and UNKNOWN verification results

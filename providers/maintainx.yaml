@@ -1,0 +1,18 @@
+name: maintainx
+displayName: MaintainX
+docs:
+  webhooks: https://help.getmaintainx.com/build/webhooks
+  verification: https://help.getmaintainx.com/build/webhooks
+notes: >
+  Maintenance management. Two headers: x-maintainx-webhook-body-signature: t=<unix>,v1=<hex> and
+  x-maintainx-webhook-uri-signature (same format, signs the full URI). Hookdeck verifies the body
+  signature: v1 = hex HMAC-SHA256 over "<t>.<raw body>" keyed with the endpoint secret (Integrations
+  settings > Copy secret; raw string). The skill should verify the body signature (the URI
+  signature is optional extra). Events include NEW_WORK_ORDER, WORK_ORDER_CHANGE,
+  WORK_ORDER_STATUS_CHANGE, NEW_WORK_REQUEST, ASSET_STATUS_CHANGE.
+testScenario:
+  events:
+    - NEW_WORK_ORDER
+    - WORK_ORDER_STATUS_CHANGE
+catalog:
+  summary: Verify MaintainX webhook signatures (`x-maintainx-webhook-body-signature`, HMAC-SHA256 over `t.body`), handle NEW_WORK_ORDER, WORK_ORDER_STATUS_CHANGE, NEW_WORK_REQUEST, and ASSET_STATUS_CHANGE events

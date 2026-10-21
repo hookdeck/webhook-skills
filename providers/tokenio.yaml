@@ -1,0 +1,30 @@
+name: tokenio
+displayName: Token.io
+docs:
+  webhooks: https://docs.token.io/products/tpp/integration-considerations/webhooks
+  verification: https://docs.token.io/products/tpp/integration-considerations/webhooks
+notes: >
+  Open banking / account-to-account (A2A) payments platform. Uses an ASYMMETRIC
+  Ed25519 signature — NOT HMAC and NOT Standard Webhooks/JWS. Two headers arrive on
+  every delivery: token-signature (the Ed25519 signature of the EXACT raw POST body,
+  base64url) and token-event (the event type, e.g. PAYMENT_STATUS_CHANGED — a separate
+  header, not a body field). Verify with your member's Ed25519 PUBLIC key from the Token
+  Dashboard (Settings > Member Information), which is base64url with no padding (the raw
+  32-byte key = the `x` value of an OKP/Ed25519 JWK). There is NO shared secret. The
+  signed message is the raw body bytes — capture them before JSON parsing; any
+  re-serialization (key reorder/whitespace) breaks verification. Node verifies with
+  built-in crypto (createPublicKey JWK + crypto.verify(null, ...)); Python with the
+  cryptography package (Ed25519PublicKey.from_public_bytes + verify). Subscribe with
+  PUT /webhook/config {"config":{"type":[...],"url":"..."}}; read via GET, remove via
+  DELETE; ONE config per member/account (a second PUT replaces it). Endpoint MUST return
+  200; non-200 retried with exponential backoff (~10, 30, 70, 150 min) for up to 72h
+  (~10 attempts) — handle idempotently. PAYMENT_STATUS_CHANGED carries a `payment` object
+  with normalized status (INITIATION_PROCESSING, INITIATION_COMPLETED, INITIATION_REJECTED,
+  SUCCESS) plus raw ISO 20022 bankPaymentStatus. Official npm SDK `token-io` is a broad API
+  client (use it to subscribe), NOT a webhook verifier — verify manually. No pip SDK.
+testScenario:
+  events:
+    - PAYMENT_STATUS_CHANGED
+    - REFUND_STATUS_CHANGED
+catalog:
+  summary: Verify Token.io open banking webhook signatures (asymmetric Ed25519, `token-signature` over the raw body, `token-event` for the type), subscribe via `PUT /webhook/config`, handle `PAYMENT_STATUS_CHANGED`, `REFUND_STATUS_CHANGED`, `VRP_STATUS_CHANGED`, and `VIRTUAL_ACCOUNT_CREDIT_RECEIVED` events

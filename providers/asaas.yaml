@@ -1,0 +1,15 @@
+name: asaas
+displayName: Asaas
+docs:
+  webhooks: https://docs.asaas.com/docs/about-webhooks
+  verification: https://docs.asaas.com/docs/receba-eventos-do-asaas-no-seu-endpoint-de-webhook
+notes: >
+  Brazilian payments. No signature. The webhook authToken you set (32-255 chars; not your Asaas
+  API key) is sent in the asaas-access-token header; compare constant-time. Payload has event
+  (PAYMENT_CREATED, PAYMENT_RECEIVED, PAYMENT_CONFIRMED, PAYMENT_OVERDUE, ...) and payment.
+testScenario:
+  events:
+    - PAYMENT_RECEIVED
+    - PAYMENT_CREATED
+catalog:
+  summary: Authenticate Asaas (Brazilian payments) webhooks with the `asaas-access-token` header (no signature, constant-time authToken compare), dedupe on event `id`, handle PAYMENT_CREATED, PAYMENT_CONFIRMED, PAYMENT_RECEIVED, and PAYMENT_OVERDUE events

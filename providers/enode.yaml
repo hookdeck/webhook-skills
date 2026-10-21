@@ -1,0 +1,44 @@
+name: enode
+displayName: Enode
+docs:
+  webhooks: https://developers.enode.com/docs/webhooks
+  verification: https://developers.enode.com/docs/webhooks
+  events: https://developers.enode.com/api/reference#webhooks
+notes: >
+  Unified API for EVs, chargers, home batteries, HVAC, solar inverters and smart meters.
+  Signs each delivery with HMAC-SHA1 (NOT SHA256) — the signature is in the x-enode-signature
+  header formatted "sha1=<hex-digest>" (lowercase hex) computed over the RAW UTF-8 JSON body
+  keyed with the per-webhook secret. Does NOT follow the Standard Webhooks (Svix) spec — no
+  webhook-id/webhook-timestamp headers, no timestamp in the signed content. IMPORTANT: the
+  secret is a pseudorandom value of at least 128 bits that YOU generate and supply in the
+  `secret` field when creating the webhook (POST /webhooks with url, secret, events array,
+  optional authentication headerName/headerValue) — Enode never returns it. The request body is
+  a JSON ARRAY of event objects, each with `event`, `createdAt`, and `version` — iterate the
+  array rather than treating it as a single object. Event names are colon-delimited
+  (user:vehicle:updated, user:charger:updated, user:battery:updated, user:vehicle:discovered,
+  user:credentials:invalidated, system:heartbeat, enode:webhook:test, ...). The x-enode-delivery
+  header carries a unique delivery ID. Gotchas: MUST verify against the raw body (parsing breaks
+  the HMAC); deliveries time out after 5s; production retries over 24h with increasing intervals
+  then deletes pending events and marks the webhook inactive; sandbox marks inactive after ~5 min
+  of failures. Reactivate via the Test (POST /webhooks/{id}/test) or Update (PUT /webhooks/{id})
+  endpoints. No official SDKs — verify manually. Set ENODE_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - user:vehicle:updated
+    - user:charger:updated
+  prompt: >
+    Create a {framework} webhook handler for Enode. Verify the x-enode-signature header by
+    computing HMAC-SHA1 (not SHA256) over the RAW request body with the per-webhook secret,
+    hex-encoded, and comparing the value after the "sha1=" prefix using a timing-safe comparison.
+    The body is a JSON array of events — iterate it and dispatch on each event's colon-delimited
+    `event` name (e.g. user:vehicle:updated, user:charger:updated), returning 200 quickly. If you
+    use any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Enode webhook signatures (`x-enode-signature`, HMAC-SHA1 hex over the raw body), handle EV and energy events like `user:vehicle:updated`, `user:charger:updated`, and `user:battery:updated`
+  marketplace:
+    description: Verify Enode webhook signatures (x-enode-signature, HMAC-SHA1 hex over the raw body), handle EV and energy events like user:vehicle:updated, user:charger:updated, and user:battery:updated.
+    keywords:
+    - webhooks
+    - enode
+    - ev
+    - energy

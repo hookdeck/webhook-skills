@@ -1,0 +1,16 @@
+name: unipile
+displayName: Unipile
+docs:
+  webhooks: https://developer.unipile.com/docs/webhooks-2
+  verification: https://developer.unipile.com/docs/webhooks-2
+notes: >
+  Unified messaging/email/LinkedIn API. No signature. Webhooks created via the API accept a
+  headers array, e.g. {"key": "Unipile-Auth", "value": "<secret>"}; compare it constant-time.
+  Events include message_received, message_read, mail_received, account status (OK,
+  CREDENTIALS, ...).
+testScenario:
+  events:
+    - message_received
+    - mail_received
+catalog:
+  summary: Receive Unipile webhooks (unsigned), authenticate them with a shared-secret header such as `Unipile-Auth` compared in constant time, handle message_received, mail_received and account status payloads

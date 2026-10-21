@@ -1,0 +1,41 @@
+name: clio
+displayName: Clio
+docs:
+  webhooks: https://docs.developers.clio.com/api-reference/#tag/Webhooks
+  verification: https://docs.developers.clio.com/api-reference/#tag/Webhooks
+notes: >
+  Legal practice management (Clio Manage). Plain REST API, no official server
+  SDK. Two-step security: (1) On creation or URL change, Clio POSTs an
+  activation handshake carrying an X-Hook-Secret header with a generated
+  shared secret; the endpoint must echo the same X-Hook-Secret back with 200
+  (or PUT /api/v4/webhooks/:id/activate). The webhook is disabled until the
+  handshake succeeds. (2) Each event delivery is signed: Clio computes
+  HMAC-SHA256(shared_secret, raw_body), HEX-encodes it (no prefix), and sends
+  it in the X-Hook-Signature header. Verify against the RAW body with a
+  constant-time compare. Event name is in the payload at meta.event (plus
+  meta.webhook_id); models are activity, bill, calendar_entry,
+  clio_payments_payment, communication, contact, document, folder, matter,
+  task. IMPORTANT: webhooks EXPIRE — 3 days by default, max 31 days via
+  expires_at; renew before expiry. HTTPS-only URLs.
+  *** VERIFIED against a live EU delivery (Jul 2026): X-Hook-Signature is
+  lowercase hex, 64 chars — confirmed by recomputing HMAC-SHA256 over the raw
+  body with the webhook's shared_secret and matching the header exactly. Clio's
+  docs never state the encoding, so handlers may accept base64 as a safety net,
+  but hex is what real deliveries use. ***
+  *** REGIONAL HOSTS ARE MANDATORY: an app exists only in its registration
+  region, and calling /oauth/token on the wrong host returns invalid_client,
+  which masquerades as a bad client secret and sends you hunting in the wrong
+  place. An app created at eu.developers.clio.com must use eu.app.clio.com for
+  OAuth AND API; likewise ca./au. ***
+  *** HANDSHAKE MAY AUTO-COMPLETE: the docs say a webhook stays disabled until
+  the X-Hook-Secret handshake succeeds, but an EU test saw it flip pending ->
+  enabled within ~90s and begin delivering with no handshake request ever
+  arriving. Implement the echo (it is the documented path and how you receive
+  the secret) but do not block on it; shared_secret can also be read back via
+  GET /api/v4/webhooks/:id.json?fields=shared_secret. ***
+testScenario:
+  events:
+    - created
+    - matter_closed
+catalog:
+  summary: Complete the Clio `X-Hook-Secret` handshake and verify `X-Hook-Signature` (HMAC-SHA256 hex), handle matter, contact, activity, and bill events

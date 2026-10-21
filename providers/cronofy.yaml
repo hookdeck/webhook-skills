@@ -1,0 +1,182 @@
+name: cronofy
+displayName: Cronofy
+docs:
+  webhooks: https://docs.cronofy.com/developers/api/push-notifications/
+  verification: https://docs.cronofy.com/developers/push-notifications/authentication/
+  events: https://docs.cronofy.com/developers/api/push-notifications/
+  api: https://docs.cronofy.com/developers/api/
+notes: >
+  Cronofy is a calendar API / scheduling infrastructure platform (cronofy.com,
+  docs.cronofy.com). DO NOT confuse it with Calendly (calendly.com), which is a
+  DIFFERENT company and already has its own `calendly-webhooks` skill in this
+  repo — the two share a category (calendar scheduling) and a similar name but
+  nothing else: different signing scheme, different headers, different payloads.
+  Never cite Calendly headers, event names, or docs in this skill.
+
+  SURFACE (variant resolved): Hookdeck's CRONOFY source type links directly to
+  https://docs.cronofy.com/developers/push-notifications/authentication/ —
+  verified 2026-08-27 from the hookdeck.com/docs/sources listing. So this skill
+  targets Cronofy PUSH NOTIFICATIONS (notification channels), not Smart Invites,
+  not Real-Time Scheduling, not the Embedded Scheduler. Cronofy's docs state
+  "HMACs are generated in the same way for all callback events", so the same
+  verification code also covers Cronofy's other callback surfaces (Event
+  Triggers, Smart Invite callbacks, Meeting Agent callback notifications) — say
+  so, but keep the skill's examples and event list centred on push notifications.
+
+  VERIFICATION SCHEME (confirmed verbatim against the docs, and the docs' own
+  test vectors were reproduced locally on 2026-08-27):
+  Header name: `Cronofy-HMAC-SHA256` (case-insensitive on the wire; Node
+  lowercases it to `cronofy-hmac-sha256` in req.headers).
+  Algorithm: HMAC-SHA256.
+  Key: your Cronofy application's CLIENT SECRET (the OAuth client secret,
+  prefixed `CRN_`). There is NO separate webhook signing secret. Not the client
+  ID, not an access token.
+  Signed content: the RAW request body bytes, exactly as received, unparsed.
+  Re-serializing the JSON breaks the digest. There is NO timestamp, NO nonce,
+  NO channel id, NO URL and NO method mixed into the signed string — body only.
+  Encoding: standard base64 (NOT base64url, NOT hex). Includes `+`, `/` and `=`
+  padding — the docs' own second example digest is `BmQmWVuZ70ILWjr1CAt5oC7YOolgnku4WZtlrKfx/6k=`,
+  which contains a `/`, so a base64url implementation is wrong.
+
+  MULTI-SECRET HEADER — THE LOAD-BEARING QUIRK. The header value is a
+  COMMA-SEPARATED LIST of base64 digests, one per ACTIVE client secret, because
+  Cronofy supports secret rotation (an application can have two active secrets at
+  once). Docs: "Check that the signature value exists in the comma-separated list
+  of HMACs passed in the Cronofy-HMAC-SHA256 header." Verification MUST split the
+  header on "," and pass if ANY element matches the computed digest. A naive
+  `header === computed` comparison will reject every delivery made while a secret
+  rotation is in flight. Trim whitespace around each element defensively. Compare
+  each candidate in constant time (crypto.timingSafeEqual / hmac.compare_digest),
+  guarding the length check first so timingSafeEqual does not throw on a
+  length mismatch. Do NOT short-circuit out of the loop in a way that leaks
+  timing beyond what a per-candidate constant-time compare already gives.
+
+  DOC TEST VECTORS (verified reproducing locally — use these as unit-test
+  fixtures, they are published by Cronofy and safe to embed):
+  secret  = CRN_NggYusqPGLxwjw5FHOJYOqSrTPNXy8WQf14OID
+  body    = {"example":"well-known"}
+  digest  = 5DxentQi5YSXODEzTVv06sRwJ3pULIz1KrYv20qxEK0=
+  second secret CRN_nGlYDFXwfSXgB9rvGNBJyfE454GGPtWIbNuPwr over the same body
+  gives BmQmWVuZ70ILWjr1CAt5oC7YOolgnku4WZtlrKfx/6k=, and the multi-secret
+  header is the two joined with a comma and no space.
+
+  Cronofy explicitly sends NO other authentication credentials with the
+  notification. The docs suggest embedding a token in the callback_url itself as
+  an optional extra layer (callback_url may differ per channel). Mention that as
+  defence in depth; it is not a signature.
+
+  The docs describe the header as one that "can optionally be used to verify"
+  — treat verification as REQUIRED in the skill anyway; an unauthenticated POST
+  endpoint is the whole reason the header exists.
+
+  TRANSPORT / DELIVERY:
+  Method POST. Content-Type: `application/json; charset=utf-8`.
+  Response must be 2xx AND returned within 5 SECONDS, or the delivery is treated
+  as failed. Cronofy retries for 24 HOURS; if nothing succeeds in that window the
+  channel is closed automatically and no further notifications are sent. This
+  makes ack-fast-then-process-async the correct pattern and worth calling out
+  prominently — a slow handler does not just drop one event, it eventually kills
+  the channel. (Event Triggers, the separate beta surface, use a 7-second
+  timeout instead of 5 — do not generalize the 5s figure to that surface.)
+  Cronofy does NOT send push notifications for changes caused by your own API
+  calls, so do not build reconciliation logic that assumes echo-back.
+
+  PAYLOAD ENVELOPE (verbatim from the API reference):
+  {
+    "notification": {
+      "type": "change",
+      "changes_since": "2026-08-26T09:24:16Z"
+    },
+    "channel": {
+      "channel_id": "chn_54cf7c7cb4ad4c1027000001",
+      "callback_url": "{CALLBACK_URL}",
+      "filters": {
+        "calendar_ids": ["cal_n23kjnwrw2_sakdnawerd3"],
+        "only_managed": false
+      }
+    }
+  }
+  The discriminator is `notification.type` — a top-level BODY FIELD, not a
+  header. There is no event-type header at all. `notification.changes_since` is
+  ONLY present on `change` notifications; other types carry `notification.type`
+  plus the `channel` object. `channel.filters` reflects any non-default filters
+  set on the channel, so it may be absent/empty.
+
+  EVENT TYPES (documented list, verbatim names):
+    verification                     - sent right after a channel is created, to
+                                       test the callback URL is valid. This is
+                                       the closest thing to a handshake: just
+                                       return 2xx. There is NO token to echo and
+                                       NO challenge value to reflect — do not
+                                       invent one.
+    change                           - something changed in the user's events;
+                                       carries changes_since, which you pass as
+                                       `last_modified` to Read Events to fetch
+                                       the delta. The payload does NOT contain
+                                       the changed events themselves — this is a
+                                       thin/ping notification, always followed by
+                                       an API read. Say this explicitly; it is
+                                       the single most misunderstood thing about
+                                       Cronofy push notifications.
+    profile_disconnected             - one or more of the user's calendar
+                                       profiles disconnected; the user must
+                                       reauthorize. Only fires when Cronofy next
+                                       tries to access the profile, not at the
+                                       moment of disconnection. Current state via
+                                       UserInfo, under ["cronofy.data"]["profiles"].
+    conferencing_profile_disconnected - same, for conferencing profiles; state
+                                       under ["cronofy.data"]["conferencing_profiles"].
+    profile_initial_sync_completed   - initial calendar sync finished; worth a
+                                       follow-up sync. NOT sent if the initial
+                                       sync completed before the channel existed.
+    gdpr_requested                   - the account invoked GDPR right-to-be-
+                                       forgotten and wants their data removed.
+
+  IMPORTANT: the docs sentence says "There are currently five types" and then
+  lists SIX. The prose count is stale; the enumerated list is authoritative. Use
+  all six names above and do NOT repeat the "five" figure. Cronofy explicitly
+  instructs: "your code should be tolerant of others, by ignoring them, so if
+  more are introduced in future your integration will not fail" — the handler
+  MUST have a default branch that ignores unknown types and still returns 2xx.
+
+  SETUP: notification channels are created per-account via
+  POST {data_center_url}/v1/channels with an OAuth access token, supplying
+  callback_url and optional filters (calendar_ids, only_managed). Channels can be
+  listed and closed via the same API. There is NO dashboard-configured global
+  webhook URL — the callback URL is a property of the channel, which is why it
+  can vary per channel.
+
+  DATA CENTERS: Cronofy is multi-region and the API host differs per data
+  center: api.cronofy.com (US), api-uk.cronofy.com (UK), api-de.cronofy.com (DE),
+  api-au.cronofy.com (AU), api-ca.cronofy.com (CA), api-sg.cronofy.com (SG).
+  Channel creation and the follow-up Read Events call must hit the SAME data
+  center the account belongs to. This matters for the change-notification
+  follow-up read and should be surfaced.
+
+  DO NOT ASSERT (nothing in the docs supports these — hedge or omit):
+  - Any source IP allowlist / CIDR ranges for Cronofy's senders.
+  - Any header other than Cronofy-HMAC-SHA256 and Content-Type. There is no
+    Cronofy-Signature, no X-Cronofy-*, no delivery-id / request-id header, and no
+    timestamp header. Do not invent one.
+  - Any replay-protection mechanism. Because there is no timestamp and no nonce
+    in the signed content, Cronofy push notifications are REPLAYABLE by design.
+    Say so honestly and recommend idempotency keyed on channel_id +
+    changes_since (or on the downstream Read Events result) rather than
+    pretending a timestamp check is possible.
+  - Payload fields beyond notification.type, notification.changes_since,
+    channel.channel_id, channel.callback_url, channel.filters.calendar_ids and
+    channel.filters.only_managed.
+
+  Official API libraries exist and include a verify helper (cronofy-ruby,
+  cronofy-node, cronofy-python, etc.), and Cronofy publishes worked examples at
+  github.com/cronofy/notification-hmac-examples (node, php, ruby). Do NOT add an
+  SDK to package.json/requirements.txt just to verify a signature — stdlib
+  crypto/hmac is sufficient and is what the examples show.
+testScenario:
+  events:
+    - verification
+    - change
+    - profile_disconnected
+    - profile_initial_sync_completed
+catalog:
+  summary: Verify Cronofy push notifications (`Cronofy-HMAC-SHA256`, a comma-separated list of base64 HMAC-SHA256 digests over the raw body keyed with the app client secret, any match wins), handle verification, change, profile_disconnected, conferencing_profile_disconnected, profile_initial_sync_completed, and gdpr_requested notifications

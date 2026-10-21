@@ -1,0 +1,30 @@
+name: mailchimp
+displayName: Mailchimp
+docs:
+  webhooks: https://mailchimp.com/developer/marketing/guides/sync-audience-data-webhooks/
+  overview: https://mailchimp.com/developer/marketing/api/list-webhooks/
+notes: >
+  Marketing / email automation platform. Mailchimp webhooks are NOT HMAC-signed. Two things to
+  implement: (1) Mailchimp sends a GET to the webhook URL to validate it — respond 200; (2)
+  secure POST deliveries by putting an unguessable secret in the webhook URL query string and
+  validating it on every request (timing-safe compare), over HTTPS. Payloads are
+  application/x-www-form-urlencoded with a `type` field and `data[...]` fields. Common types:
+  subscribe, unsubscribe, profile, cleaned, upemail, campaign.
+testScenario:
+  events:
+    - subscribe
+    - unsubscribe
+  prompt: >
+    Create a {framework} webhook handler for Mailchimp. It must answer the GET validation
+    request with 200 and, for POST deliveries, validate an unguessable secret carried in the URL
+    query string (timing-safe) before parsing the form-encoded `type` and `data` fields. If you
+    use any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Authenticate Mailchimp webhooks (URL secret + GET validation), handle subscribe, unsubscribe, and profile events
+  marketplace:
+    description: Authenticate Mailchimp webhooks (URL secret and GET validation), handle subscribe, unsubscribe, and profile events.
+    keywords:
+    - webhooks
+    - mailchimp
+    - marketing
+    - email

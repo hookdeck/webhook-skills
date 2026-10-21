@@ -1,0 +1,16 @@
+name: signal-sciences
+displayName: Signal Sciences (Fastly Next-Gen WAF)
+docs:
+  webhooks: https://docs.fastly.com/en/ngwaf/generic-webhooks
+  verification: https://docs.fastly.com/en/ngwaf/generic-webhooks
+notes: >
+  Fastly Next-Gen WAF (formerly Signal Sciences) generic webhook integration. X-SigSci-Signature =
+  hex HMAC-SHA256 of the raw JSON body keyed with the signing key generated for the integration
+  (Reveal/Rotate in the console; raw string). No timestamp. Payload has created, type (activity
+  type, e.g. flag, expireFlag, agentAlert, loggingModeChanged, ruleCreated) and payload.
+testScenario:
+  events:
+    - flag
+    - agentAlert
+catalog:
+  summary: Verify Signal Sciences generic webhook signatures (hex HMAC-SHA256 of the raw body in `X-SigSci-Signature`, no timestamp), handle `flag`, `expireFlag`, `agentAlert`, `loggingModeChanged`, and `ruleCreated` events

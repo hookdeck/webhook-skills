@@ -1,0 +1,17 @@
+name: rutter
+displayName: Rutter
+docs:
+  webhooks: https://docs.rutter.com/implementation-guides/webhooks
+  verification: https://docs.rutter.com/implementation-guides/webhooks#verifying-signatures
+notes: >
+  Unified commerce/accounting API. X-Rutter-Signature = "sha256=" + base64 HMAC-SHA256 of the raw
+  payload keyed with the organization's client secret (raw string). X-Rutter-Signatures is a
+  comma-separated list of all active signatures (two during secret rotation). Payload has type
+  and code (e.g. CONNECTION INITIAL_UPDATE, CONNECTION CONNECTION_NEEDS_UPDATE, ORDER
+  ORDER_CREATED, INVOICE INVOICE_UPDATED); route on code.
+testScenario:
+  events:
+    - INITIAL_UPDATE
+    - CONNECTION_NEEDS_UPDATE
+catalog:
+  summary: Verify Rutter (unified commerce and accounting API) webhook signatures (`X-Rutter-Signature` / `X-Rutter-Signatures`, `sha256=` + base64 HMAC-SHA256 over the raw body keyed with the client secret, any-match across the list during secret rotation), handle events routed on `code` such as INITIAL_UPDATE, CONNECTION_NEEDS_UPDATE, ORDER_CREATED and INVOICE_UPDATED

@@ -1,0 +1,29 @@
+name: linear
+displayName: Linear
+docs:
+  webhooks: https://linear.app/developers/webhooks
+notes: >
+  Issue tracking platform. Uses Linear-Signature header with HMAC-SHA256 (hex
+  encoded) computed over the raw body using the webhook's signing secret (shown
+  once when the webhook is created in Linear settings). Additional headers:
+  Linear-Event identifies the entity type (Issue, Comment, Project, Cycle,
+  Issue SLA, Issue attachment, Issue label, Comment reaction, Document, Initiative,
+  Customer, User), Linear-Delivery is a UUID v4 for idempotency, plus
+  Content-Type: application/json and User-Agent: Linear-Webhook. Payload includes
+  a webhookTimestamp field — reject if it's more than 1 minute old. Payload action
+  values: create, update, remove. The official @linear/sdk ships a verify helper:
+  LinearWebhookClient from @linear/sdk/webhooks, verify(rawBody, signature) checks the
+  HMAC and webhookTimestamp (±60 s) and throws on failure. Do not claim there is no SDK helper.
+testScenario:
+  events:
+    - Issue create
+    - Comment create
+catalog:
+  summary: Verify Linear webhook signatures (HMAC-SHA256), handle issue, comment, and project events
+  marketplace:
+    description: Verify Linear webhook signatures (HMAC-SHA256 with replay timestamp), handle issue, comment, and project events.
+    keywords:
+    - webhooks
+    - linear
+    - issues
+    - project-management

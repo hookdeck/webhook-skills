@@ -1,0 +1,17 @@
+name: ramp
+displayName: Ramp
+docs:
+  webhooks: https://docs.ramp.com/developer-api/v1/guides/webhooks
+  verification: https://docs.ramp.com/developer-api/v1/guides/webhooks#verifying-webhook-signatures
+notes: >
+  Corporate cards/spend management. X-Ramp-Signature = hex HMAC-SHA256 of the raw request body
+  keyed with the secret returned when the subscription is created (raw string). New
+  subscriptions get a signed POST {"type": "webhooks.verification", "challenge": ...}; return
+  2xx and submit the challenge to POST /developer/v1/webhooks/{id}/verify to activate. Events
+  include transactions.authorized, transactions.cleared, reimbursements.created.
+testScenario:
+  events:
+    - transactions.cleared
+    - webhooks.verification
+catalog:
+  summary: Verify Ramp webhook signatures (`X-Ramp-Signature`, hex HMAC-SHA256 of the raw body), answer the `webhooks.verification` challenge, handle transaction, bill, and reimbursement events like transactions.authorized, transactions.cleared, reimbursements.ready_for_review

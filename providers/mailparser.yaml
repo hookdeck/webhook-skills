@@ -1,0 +1,17 @@
+name: mailparser
+displayName: Mailparser
+docs:
+  webhooks: https://help.mailparser.io/hc/en-us/articles/16253409612564-How-do-advanced-webhooks-work
+  verification: https://help.mailparser.io/hc/en-us/articles/16253409612564-How-do-advanced-webhooks-work
+notes: >
+  Email parsing. No signature in Mailparser's docs (ignore third-party claims of an HMAC header).
+  Advanced webhooks take Additional Headers (one per line), e.g. X-Webhook-Secret: <secret> or
+  Authorization: Basic ...; compare constant-time. Payload is the parsed data fields as JSON.
+testScenario:
+  events:
+    - parsed email
+  prompt: >
+    Add an endpoint to my {framework} app that receives Mailparser webhooks. Authenticate them
+    with a shared secret header and handle the parsed data.
+catalog:
+  summary: 'Authenticate Mailparser Advanced Webhooks — no signature; constant-time compare of the Additional Header you attach (`X-Webhook-Secret` or `Authorization: Basic ...`), handle the parsed email data JSON and per-row table requests'

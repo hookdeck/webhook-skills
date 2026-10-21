@@ -1,0 +1,20 @@
+name: maxio
+displayName: Maxio (Chargify)
+docs:
+  webhooks: https://support.maxio.com/hc/en-us/articles/24266136649869-Webhooks-Configuration-and-Testing
+  verification: https://support.maxio.com/hc/en-us/articles/24266136649869-Webhooks-Configuration-and-Testing
+notes: >
+  Subscription billing (formerly Chargify). Bodies are application/x-www-form-urlencoded
+  (payload[...]=...&event=...). Header X-Chargify-Webhook-Signature-Hmac-Sha-256 = hex
+  HMAC-SHA256 of the raw form body keyed with the Site Shared Key (raw string). Verify the raw
+  body before parsing the form. Docs test vector: key 123, body
+  payload[chargify]=testing&event=test gives
+  19826d51b9f866b26eda1f154de192593360f8d0bcb63df8a28540a5dcf733f1. Events: signup_success,
+  payment_success, subscription_state_change, renewal_success, payment_failure, test.
+testScenario:
+  events:
+    - signup_success
+    - payment_success
+catalog:
+  summary: Verify Maxio (formerly Chargify) webhook signatures (`X-Chargify-Webhook-Signature-Hmac-Sha-256`, HMAC-SHA256 hex over the raw form-encoded body, keyed with the Site Shared Key), parse the `payload[...]&event=...` body, handle signup_success, payment_success, payment_failure, renewal_success, and subscription_state_change events
+  displayName: Maxio

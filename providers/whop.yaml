@@ -1,0 +1,19 @@
+name: whop
+displayName: Whop
+docs:
+  webhooks: https://docs.whop.com/developer/guides/webhooks
+  verification: https://docs.whop.com/developer/guides/webhooks
+notes: >
+  Digital products marketplace. Standard Webhooks: webhook-id, webhook-timestamp,
+  webhook-signature "v1,<base64>"; signed content "{id}.{timestamp}.{raw body}" with
+  HMAC-SHA256. The secret is a ws_ string used as the literal UTF-8 HMAC key: do not strip the
+  prefix and do not base64-decode it (with the standardwebhooks library, pass
+  base64(utf8(secret)) as Whop's SDK does). Legacy v2/v5 webhooks are not Standard Webhooks
+  signed. Events: payment.succeeded, payment.failed, membership.activated,
+  membership.deactivated, refund.created.
+testScenario:
+  events:
+    - payment.succeeded
+    - membership.activated
+catalog:
+  summary: 'Verify Whop webhook signatures (Standard Webhooks: `webhook-id`/`webhook-timestamp`/`webhook-signature` `v1,<base64>`, HMAC-SHA256 over `{id}.{timestamp}.{raw body}`, `ws_` secret used as the literal key) with the official Whop SDK, handle payment.succeeded, payment.failed, membership.activated, membership.deactivated, and refund.created events'

@@ -1,0 +1,17 @@
+name: mongodb-atlas
+displayName: MongoDB Atlas
+docs:
+  webhooks: https://www.mongodb.com/docs/atlas/tutorial/webhook-integration/
+  verification: https://www.mongodb.com/docs/atlas/tutorial/webhook-integration/#verify-webhook-requests
+notes: >
+  MongoDB Atlas alert webhooks (Project Integrations > Webhook Settings); Atlas Triggers and App
+  Functions are out of scope. When a Webhook Secret is set, X-MMS-Signature = base64-encoded
+  HMAC-SHA1 of the raw request body keyed with the secret (raw string); without a secret the
+  header is absent. Payload is an alert with id, eventTypeName (e.g.
+  OUTSIDE_METRIC_THRESHOLD, HOST_DOWN), status (OPEN, CLOSED) and metricName.
+testScenario:
+  events:
+    - OUTSIDE_METRIC_THRESHOLD
+    - HOST_DOWN
+catalog:
+  summary: Verify MongoDB Atlas alert webhooks (`X-MMS-Signature`, base64 HMAC-SHA1 of the raw body, only sent when a Webhook Secret is set), handle OUTSIDE_METRIC_THRESHOLD and HOST_DOWN alerts with OPEN/CLOSED status

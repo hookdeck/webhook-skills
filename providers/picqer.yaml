@@ -1,0 +1,25 @@
+name: picqer
+displayName: Picqer
+docs:
+  webhooks: https://picqer.com/en/api/webhooks
+  verification: https://picqer.com/en/api/webhooks#validating-webhooks
+notes: >
+  Signature: HMAC-SHA256 of the entire raw request body using the optional per-hook
+  `secret` set at registration, base64-encoded (not hex), sent in the X-Picqer-Signature
+  header (constant-time compare; raw body required). Secret is OPTIONAL at hook creation
+  — if omitted, no signature verification is possible; flag this in skill docs. Does NOT
+  follow the Standard Webhooks spec. Hooks are created via POST /api/v1/hooks (fields:
+  name, event, address, optional secret); DELETE deactivates (not deletes),
+  POST /hooks/{id}/reactivate re-enables. Endpoint must respond 200/201/202 within 10s;
+  failures retried 15 times over ~17 hours, and a hook is auto-deactivated after 5
+  complete failures within 24h. API auth is HTTP Basic (API key as username); rate limit
+  normally 500 req/min (dynamic), 429 + Picqer error code 28 on excess. Official SDK is
+  PHP-only (picqer/api-client on Packagist); no official npm or pip package.
+testScenario:
+  events:
+    - orders.created
+    - orders.status_changed
+    - picklists.closed
+    - picklists.shipments.created
+catalog:
+  summary: Verify Picqer webhook signatures (`X-Picqer-Signature`, HMAC-SHA256 base64), handle order, picklist, and stock events

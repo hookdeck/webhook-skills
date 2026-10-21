@@ -1,0 +1,40 @@
+name: exact-online
+displayName: Exact Online
+docs:
+  webhooks: https://support.exactonline.com/community/s/article/All-All-DNO-Content-webhooksc?language=en_GB
+  verification: https://support.exactonline.com/community/s/article/All-All-DNO-Content-webhookstut?language=en_GB
+notes: >
+  Cloud accounting/ERP platform. Does NOT use the Standard Webhooks spec and sends
+  NO signature header — the signature is the HashCode field INSIDE the JSON body:
+  {"Content":{...},"HashCode":"<hex>"}. Verify by computing HMAC-SHA256 over the raw
+  JSON of the Content node (the exact substring between {"Content": and ,"HashCode":,
+  braces included — do NOT re-serialize the parsed object), keyed with the app's
+  Webhook secret from the App Center (NOT the OAuth client secret), hex-encoded and
+  UPPERCASED, then compare timing-safe to HashCode. Subscribe with an OAuth2 bearer via
+  POST /api/v1/{division}/webhooks/WebhookSubscriptions passing Topic + CallbackURL;
+  one subscription per topic per app per division. Payloads are thin — Content carries
+  only Topic, Action (Create/Update/Delete), Key (entity GUID), Division, ClientId — so
+  call the REST API to fetch the full record. Return 2xx quickly; Exact retries failures.
+  GoodsDeliveries supports near-instant delivery via the IsInstant flag. No official SDK.
+  *** SIGNING SCHEME VERIFIED (Jul 2026, live Accounts/Update delivery): HMAC-SHA256 over
+  the raw substring between {"Content": and ,"HashCode":, hex, UPPERCASED, reproduced the
+  delivered HashCode exactly. Lowercase hex and base64 both failed, so uppercasing is
+  required. Caveat: Exact sends compact JSON, so raw-substring and re-serialized-compact
+  forms were byte-identical for that delivery and both matched — keep the raw substring,
+  it is the only form that survives whitespace or key reordering. ***
+  *** CALLBACK VALIDATION: ~1s after the subscription is created Exact sends an EMPTY POST
+  (content-length: 0) to the callback. Handlers MUST acknowledge it with 2xx rather than
+  running verification and 401ing, or the subscription can be left unvalidated. ***
+  *** DELIVERY IS BATCHED: subscriptions default to IsInstant false and a change observed
+  with EventCreatedOn 17:20:55 arrived several minutes later. Drive freshness logic off
+  Content.EventCreatedOn, not receipt time. ***
+  Content also carries ExactOnlineEndpoint (a ready-made API URL for the changed record —
+  use it instead of hand-building the fetch URL) and EventCreatedOn.
+  Confirmed topics: Accounts, Items, StockPositions, FinancialTransactions,
+  GoodsDeliveries, Contacts (docs list ~30 topics).
+testScenario:
+  events:
+    - Accounts
+    - Items
+catalog:
+  summary: Verify Exact Online `HashCode` body signatures (HMAC-SHA256 over the `Content` node, hex, uppercased), subscribe to topics, handle `Accounts`, `Items`, `StockPositions`, `GoodsDeliveries` events

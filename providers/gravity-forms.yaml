@@ -1,0 +1,17 @@
+name: gravity-forms
+displayName: Gravity Forms
+docs:
+  webhooks: https://docs.gravityforms.com/triggering-webhooks-form-submissions/
+  verification: https://docs.gravityforms.com/triggering-webhooks-form-submissions/
+notes: >
+  WordPress forms plugin, Webhooks Add-On. No signature. Add a Request Header on the webhook feed
+  (custom value, e.g. X-Webhook-Secret) and compare it constant-time. Body is the entry (all
+  fields or selected fields) as JSON or form data.
+testScenario:
+  events:
+    - form submission
+  prompt: >
+    Add an endpoint to my {framework} app that receives Gravity Forms webhooks. Authenticate them
+    with a shared secret header and handle the entry payload.
+catalog:
+  summary: Authenticate Gravity Forms Webhooks Add-On requests (unsigned; constant-time compare of a custom `X-Webhook-Secret` Request Header set on the feed), parse the form entry (field IDs like `1` and `3.3`, `id`, `form_id`) sent as JSON or urlencoded form data — Gravity Forms has no event types, only form submissions

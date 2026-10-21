@@ -1,0 +1,20 @@
+name: pleo
+displayName: Pleo
+docs:
+  webhooks: https://developers.pleo.io/reference/webhooks/overview-webhooks
+  verification: https://developers.pleo.io/reference/webhooks/webhooks-authentication-authorisation
+  events: https://developers.pleo.io/reference/webhooks/webhook-events
+notes: >
+  Spend management. Pleo delivers through Svix with Standard Webhooks headers webhook-id,
+  webhook-timestamp, webhook-signature ("v1,<base64>", space-delimited). Pleo's own docs do
+  not spell out the signed content or hash; HMAC-SHA256 base64 over
+  "<id>.<timestamp>.<raw body>" is the Svix/Standard Webhooks scheme (say it is inferred from
+  Svix delivery). Secret is whsec_-prefixed (e.g. whsec_C2FV...), read via
+  GET /v1/subscriptions/{id}/secret; subscriptions are created with the Subscriptions API.
+  Pleo also offers Basic auth and custom-header auth as fallbacks. Event types are versioned,
+  e.g. v1.export-job.created.
+testScenario:
+  events:
+    - v1.export-job.created
+catalog:
+  summary: Verify Pleo webhooks (Standard Webhooks via Svix, `webhook-signature` HMAC-SHA256), handle `v1.export-job.created` and `v1.vendor.created` events

@@ -1,0 +1,17 @@
+name: fivetran
+displayName: Fivetran
+docs:
+  webhooks: https://fivetran.com/docs/rest-api/webhooks
+  verification: https://github.com/fivetran/fivetran-webhook-example-python-flask
+notes: >
+  Data pipelines. Payloads are signed only if a secret was specified when creating the webhook
+  via the REST API. X-Fivetran-Signature-256 = HMAC-SHA256 hex of the raw body keyed with the
+  secret (raw string); the official example compares uppercase hex, so compare
+  case-insensitively. Webhook creation/activation sends one test POST that needs a 2xx. Events:
+  sync_start, sync_end, status, connection_successful, connection_failure, transformation_succeeded.
+testScenario:
+  events:
+    - sync_end
+    - sync_start
+catalog:
+  summary: Verify Fivetran data pipeline webhook signatures (`X-Fivetran-Signature-256`, HMAC-SHA256 hex of the raw body keyed with the webhook `secret`, compared case-insensitively; signed only if a secret was set), handle sync_start, sync_end, connection_failure, transformation_succeeded events

@@ -1,0 +1,17 @@
+name: nash
+displayName: Nash
+docs:
+  webhooks: https://docs.usenash.com/reference/webhooks
+  verification: https://docs.usenash.com/reference/webhooks
+notes: >
+  Delivery orchestration (usenash.com, now nash.ai). Nash sends webhooks with Svix: headers
+  svix-id, svix-timestamp, svix-signature; HMAC-SHA256 base64 over "<id>.<timestamp>.<raw body>"
+  keyed with the base64 part of the endpoint's whsec_ signing secret (Nash Portal > Settings >
+  Webhook Management > endpoint > Signing Secret). Use the svix library or the manual
+  algorithm. Events include task.created, task.canceled_by_provider, shift.dispatched.
+testScenario:
+  events:
+    - task.created
+    - task.canceled_by_provider
+catalog:
+  summary: Receive and verify Nash (usenash.com) delivery orchestration webhooks, sent through Svix (`svix-id`, `svix-timestamp`, `svix-signature`; HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}` keyed with the `whsec_` secret), and dispatch the `{ type, event, data }` payload for `task.created`, `task.canceled_by_provider`, `delivery.dropoff_complete`, `courier_location.updated` and `shift.dispatched`

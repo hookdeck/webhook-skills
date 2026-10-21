@@ -1,0 +1,81 @@
+name: aircall
+displayName: Aircall
+docs:
+  webhooks: https://developer.aircall.io/docs/webhooks-overview
+  verification: https://developer.aircall.io/docs/setup-webhooks
+  events: https://developers.aircall.io/api-references
+notes: >
+  NOT HMAC — Aircall has NO signature header and NO cryptographic signature.
+  Verification is a plain shared-secret comparison: every event body includes a
+  top-level `token` string equal to the token issued at webhook creation; compare it
+  against the stored token with a timing-safe compare (crypto.timingSafeEqual /
+  secrets.compare_digest). Aircall's own docs use a loose `token !== env` check and
+  loosely call it "verifying webhook signatures" in a code comment — do not let that
+  phrasing pull toward an HMAC template. Confirmed 2026-08-14: the full server-rendered
+  API reference contains zero occurrences of "hmac" or "sha256"; the only two hits for
+  "signature" are X-Amz-Signature inside an S3 presigned URL in an analytics-export
+  payload. Third-party blogs claiming an X-Aircall-Signature HMAC header are WRONG.
+  Corroboration: Hookdeck's Aircall source config (SourceConfigWebhookAuthAircall)
+  takes exactly one field, webhook_secret_key. Getting the token: POST /v1/webhooks
+  (Basic Auth api_id:api_token, or OAuth2 Bearer — API auth is a DIFFERENT secret from
+  the webhook token) returns { webhook: { webhook_id (UUID), token, url, active,
+  events, ... } }; store webhook.token. Dashboard-created webhooks do not surface the
+  token in the UI — retrieve via GET /v1/webhooks/{webhook_id}. Envelope (confirmed
+  verbatim from the "Webhook attributes" table): five top-level fields — resource
+  (String; documented values number/user/contact/call, with message, integration,
+  conversation_intelligence, ai_voice_agent and analytics appearing in published
+  samples for newer families), event (String), timestamp (Integer; UNIX UTC when the
+  payload was built), token (String), data (Object). The shorter { event, token, data }
+  seen in guide samples is partial destructuring, not the wire format. `timestamp` is
+  UNSIGNED metadata and MUST NOT be used as a replay/staleness control — there is no
+  replay protection, so do not add a timestamp-tolerance check. Because the secret is
+  a body field, the raw body is NOT required — parsing before verifying is safe here.
+  Delivery (confirmed verbatim): requests time out after 5 seconds, so respond 200
+  immediately and process asynchronously; "An event will be delivered at least once,
+  if generated, but events might not be delivered in a specific sequence/order" —
+  handlers MUST be idempotent and MUST NOT assume ordering; Aircall says explicitly to
+  upsert on call.id since multiple events fire per call. Auto-deactivation: a non-2xx
+  or timeout is a failed request; Aircall retries up to 50 times, then DISABLES the
+  webhook (dashboard notification); it keeps retrying failed events for up to 12 hours
+  and a success in that window automatically RE-ENABLES it. HTTPS is mandatory (valid
+  SSL cert, url must start with https). No IP allowlist — "Aircall does not provide a
+  list of static IP addresses to whitelist." Events (67 total, extracted 2026-08-14
+  from the server-rendered API reference): Call (19) — call.created,
+  call.ringing_on_agent, call.agent_declined, call.answered, call.transferred,
+  call.external_transferred, call.unsuccessful_transfer, call.hungup, call.ended,
+  call.hold, call.unhold, call.ivr_option_selected, call.comm_assets_generated,
+  call.voicemail_left, call.assigned, call.archived, call.tagged, call.untagged,
+  call.commented. User V2 (PREFERRED, 8) — user.created.v2, user.deleted.v2,
+  user.connected.v2, user.disconnected.v2, user.opened.v2, user.closed.v2,
+  user.wut_start.v2, user.wut_end.v2. User V1 (DEPRECATED, 8) — same names without
+  .v2; docs say "This version of User events V1 will be deprecated soon. Please
+  migrate to User events V2." ("wut" = wrap-up time.) Number (4) — number.created,
+  number.opened, number.closed, number.deleted. Contact (3) — contact.created,
+  contact.updated, contact.deleted (contact payloads use UTC strings for created_at /
+  updated_at). Messaging (6, native mode only — numbers in Proxy mode deliver to a
+  configured callbackUrl instead) — message.sent, message.received,
+  message.status_updated, group_message.sent, group_message.received,
+  group_message.status_updated; data.channel is null for SMS/MMS and "whatsapp" for
+  WhatsApp, and status updates carry data.status. Conversation Intelligence (12, some
+  require the AI Assist add-on) — transcription.created, summary.created,
+  topics.created, sentiment.created, action_item.created, playbook_result.created,
+  playbook_result.updated, realtime_transcription.utterances_received,
+  custom_summary.result_created, custom_summary.result_updated,
+  call_evaluation.created, call_evaluation.updated. AI Voice Agent (4) —
+  ai_voice_agent.started, ai_voice_agent.ended, ai_voice_agent.escalated,
+  ai_voice_agent.summary. Analytics (2) — analytics.report_created,
+  analytics.report_failed. Integration (1) — integration.deleted (OAuth-created
+  webhooks only). Subscribing: POST /v1/webhooks takes custom_name, url and an optional
+  events array — omitting events subscribes to ALL events; on PUT, omitting events also
+  resets to ALL unless events_action=add|remove is passed. Max 100 webhooks per company.
+  Note user.closed / user.closed.v2 fires TWICE when substatus is enabled (first with
+  availability_status only, then with the substatus) — not duplicates.
+testScenario:
+  events:
+    - call.created
+    - call.ended
+sdks:
+  npm: []
+  pip: []
+catalog:
+  summary: Verify Aircall webhooks by timing-safe comparison of the `token` field in the JSON body (no signature header, no HMAC), handle cloud phone events like call.created, call.answered, call.ended, message.received, contact.updated, and user.connected.v2

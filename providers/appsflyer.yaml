@@ -1,0 +1,16 @@
+name: appsflyer
+displayName: AppsFlyer
+docs:
+  webhooks: https://support.appsflyer.com/hc/en-us/articles/207034356-Push-API-streaming-raw-data
+  verification: https://support.appsflyer.com/hc/en-us/articles/207034356-Push-API-streaming-raw-data
+notes: >
+  AppsFlyer Push API (raw data streaming). No signature. Configure a custom authorization header
+  (token name and value per app ID) and compare it constant-time. Choose POST (GET puts data in
+  the query string). Payload is a raw-data record with event_name (install, in-app event names),
+  appsflyer_id, app_id, event_time.
+testScenario:
+  events:
+    - install
+    - af_purchase
+catalog:
+  summary: 'Authenticate AppsFlyer Push API (raw data) webhooks (no signature: constant-time compare of the custom authorization header you configure per app ID), handle install and in-app events such as af_purchase'

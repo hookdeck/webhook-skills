@@ -7,19 +7,17 @@
 
 import type { CliAdapter, CliAdapterOptions, CliCommandConfig } from './types';
 
-const DEFAULT_MODEL = 'claude-opus-4-20250514';
-
 export const claudeAdapter: CliAdapter = {
   name: 'claude',
   
   buildCommand(options: CliAdapterOptions): CliCommandConfig {
-    const model = options.model ?? DEFAULT_MODEL;
-    
+    // No pinned default: a hardcoded model ID goes stale. Without --model the
+    // CLI uses its own current default; pass --model to choose explicitly.
     return {
       command: 'claude',
       args: [
         '-p',
-        '--model', model,
+        ...(options.model ? ['--model', options.model] : []),
         '--dangerously-skip-permissions',
       ],
     };

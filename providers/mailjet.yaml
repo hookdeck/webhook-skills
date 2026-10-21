@@ -1,0 +1,16 @@
+name: mailjet
+displayName: Mailjet
+docs:
+  webhooks: https://dev.mailjet.com/email/guides/webhooks/
+  verification: https://dev.mailjet.com/email/guides/webhooks/
+notes: >
+  Email event webhooks. No signature or custom header option. Secure with Basic auth credentials
+  in the URL (https://user:pass@host/path), which arrive as Authorization: Basic; decode and
+  compare username and password constant-time. Events: sent, open, click, bounce, spam, blocked,
+  unsub; events may be grouped into an array.
+testScenario:
+  events:
+    - open
+    - bounce
+catalog:
+  summary: 'Authenticate Mailjet email event webhooks (no signature; Basic auth credentials in the webhook URL arrive as `Authorization: Basic`, compared in constant time), handle `sent`, `open`, `click`, `bounce`, `blocked`, `spam`, and `unsub` events, including grouped event arrays'

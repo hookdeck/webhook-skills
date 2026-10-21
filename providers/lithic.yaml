@@ -1,0 +1,41 @@
+name: lithic
+displayName: Lithic
+docs:
+  webhooks: https://docs.lithic.com/docs/events-api
+  verification: https://docs.lithic.com/docs/events-api#verifying-webhooks
+  events: https://docs.lithic.com/docs/types-of-events
+notes: >
+  Card issuing and money-movement platform. Webhooks implement the Standard
+  Webhooks spec (powered by Svix). Each delivery carries webhook-id,
+  webhook-timestamp, and webhook-signature headers (svix-* aliases are also
+  sent). Signature is HMAC-SHA256, base64-encoded, over the string
+  `{webhook-id}.{webhook-timestamp}.{rawBody}`; the signing secret is
+  per-subscription and prefixed whsec_ (base64-decode the part after the
+  prefix to form the HMAC key). The signature header is a space-delimited
+  list of `v1,<base64sig>` entries. Reject timestamps outside a ~5-minute
+  tolerance. Always verify the raw request body — don't JSON.parse and
+  re-stringify first.
+
+  The official SDKs verify AND parse in one call:
+  lithic.webhooks.unwrap(rawBody, headers, secret) (Node) and
+  client.webhooks.unwrap(body, headers, secret=...) (Python; needs the
+  optional standardwebhooks package via `pip install "lithic[webhooks]"`).
+  verifySignature/verify_signature verify without parsing. Event objects
+  carry an `event_type` field in resource.action form (e.g. card.created,
+  card_transaction.updated, payment_transaction.created, dispute.updated).
+  Subscriptions are per-event-type and secrets rotate in the Lithic
+  dashboard; failed deliveries retry with backoff and auto-disable after 5
+  continuous days of failures.
+
+  Official SDKs: lithic (npm + PyPI; same package name on both registries).
+sdks:
+  npm:
+    - lithic
+  pip:
+    - lithic
+testScenario:
+  events:
+    - card.created
+    - payment_transaction.created
+catalog:
+  summary: Verify Lithic webhooks (Standard Webhooks / Svix, `webhook-signature` HMAC-SHA256) with the official SDK, handle card, transaction, payment, and dispute events

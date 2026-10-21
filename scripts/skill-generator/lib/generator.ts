@@ -13,20 +13,81 @@ import type {
   TestResults,
   TestResult,
 } from './types';
-import { getSkillPath, skillExists } from './config';
+import { getSkillPath, getProviderPaths, skillExists } from './config';
 import { runGenerateSkill } from './cli';
 import { reviewAndIterate } from './reviewer';
 import {
   createWorktree,
-  removeWorktree,
-  getWorktreePath,
   addFiles,
   commit,
   push,
   getRepoInfo,
 } from './git';
 import { createPullRequest } from './github';
-import { syncManifest } from './marketplace';
+
+/**
+ * Run the same structural + integration checks CI runs on provider PRs
+ * (scripts/validate-provider.sh), so a skill that would fail CI is fixed
+ * before it is committed.
+ */
+export async function runValidation(
+  provider: ProviderConfig,
+  options: { workingDir: string; logger: Logger; dryRun?: boolean }
+): Promise<{ passed: boolean; errors: string[] }> {
+  const { workingDir, logger, dryRun } = options;
+  const skillName = `${provider.name}-webhooks`;
+
+  if (dryRun) {
+    logger.info(`[DRY RUN] Would run validate-provider.sh ${skillName}`);
+    return { passed: true, errors: [] };
+  }
+
+  const script = join(workingDir, 'scripts', 'validate-provider.sh');
+  const result = await execa('bash', [script, skillName], {
+    cwd: workingDir,
+    reject: false,
+    timeout: 60000,
+  });
+
+  if (result.exitCode === 0) {
+    return { passed: true, errors: [] };
+  }
+
+  // validate_provider prints each failure as "  - <error>"
+  const errors = `${result.stdout}\n${result.stderr}`
+    .split('\n')
+    .map((line) => line.match(/^\s+- (.+)$/)?.[1])
+    .filter((e): e is string => !!e && e !== skillName);
+  return { passed: false, errors: errors.length > 0 ? errors : [result.stdout || result.stderr] };
+}
+
+/**
+ * Commit message with the run's results in the body, so the evidence survives
+ * when per-provider branches are merged into a batch PR.
+ */
+export function buildCommitMessage(
+  subject: string,
+  details: {
+    validation?: { passed: boolean; details?: string };
+    testing: { passed: boolean; details?: string };
+    review: { passed: boolean; details?: string };
+    iterations: number;
+    issuesFound: number;
+    issuesFixed: number;
+    model?: string;
+    cliTool?: string;
+  }
+): string {
+  return [
+    subject,
+    '',
+    `Generated with scripts/generate-skills.sh (${details.cliTool ?? 'claude'}, model: ${details.model ?? 'CLI default'})`,
+    `Tests: ${details.testing.details ?? (details.testing.passed ? 'passed' : 'failed')}`,
+    `Review: ${details.review.details ?? (details.review.passed ? 'passed' : 'failed')}`,
+    `Validation: ${details.validation?.details ?? 'not run'}`,
+    `Iterations: ${details.iterations}, issues found: ${details.issuesFound}, issues sent for fixing: ${details.issuesFixed}`,
+  ].join('\n');
+}
 
 /**
  * Run tests for a skill
@@ -264,6 +325,7 @@ export async function generateSkill(
         parallel: context.isParallel,
       });
       
+      result.phases.validation = reviewResult.validation;
       result.phases.testing = reviewResult.testing;
       result.phases.review = reviewResult.review;
       result.phases.iterations = reviewResult.iterations;
@@ -274,39 +336,35 @@ export async function generateSkill(
         throw new Error('Tests or review failed after max iterations');
       }
     } else {
+      // No fix loop, but still run the CI checks so the result is honest
+      const validation = await runValidation(provider, { workingDir: worktreePath!, logger, dryRun: options.dryRun });
+      result.phases.validation = {
+        passed: validation.passed,
+        details: validation.passed ? 'Passed' : `Failed: ${validation.errors.join('; ')}`,
+      };
       result.phases.testing = { passed: true, details: 'Skipped' };
       result.phases.review = { passed: true, details: 'Skipped' };
-    }
-    
-    // Commit and push from worktree
-    const skillPath = getSkillPath(provider);
-
-    // Register the new skill in the plugin manifest so it can't drift from skills/.
-    if (!options.dryRun) {
-      const { added } = syncManifest(worktreePath);
-      if (added.length > 0) {
-        logger.info(`Registered ${added.length} skill(s) in marketplace.json`);
+      if (!validation.passed) {
+        throw new Error(`validate-provider.sh failed: ${validation.errors.join('; ')}`);
       }
     }
-
-    // Stage the integration files alongside the skill. The AI updates
-    // README.md and providers.yaml per CONTRIBUTING/AGENTS conventions, and
-    // marketplace.json may already be registered by the AI (in which case
-    // syncManifest reports nothing added) — validate-provider.sh requires all
-    // three, so a commit without them produces a PR that always fails CI.
-    // git add is a no-op for unmodified paths.
-    const filesToStage = [
-      skillPath,
-      'README.md',
-      'providers.yaml',
-      '.claude-plugin/marketplace.json',
-    ];
-
-    await addFiles(worktreePath, filesToStage, { logger, dryRun: options.dryRun });
-    await commit(worktreePath, `feat: add ${provider.name}-webhooks skill`, {
-      logger,
-      dryRun: options.dryRun,
-    });
+    
+    // Commit only the provider's own paths: skills/<skill>/ and
+    // providers/<name>.yaml. README.md and marketplace.json are regenerated by
+    // the Sync Catalog workflow after merge, so branches in a batch never
+    // conflict. git add is a no-op for unmodified paths.
+    await addFiles(worktreePath, getProviderPaths(provider), { logger, dryRun: options.dryRun });
+    await commit(
+      worktreePath,
+      buildCommitMessage(`feat: add ${provider.name}-webhooks skill`, {
+        ...result.phases,
+        issuesFound: result.issuesFound,
+        issuesFixed: result.issuesFixed,
+        model,
+        cliTool,
+      }),
+      { logger, dryRun: options.dryRun }
+    );
     
     if (options.createPr && repoInfo) {
       await push(worktreePath, branchName, { logger, dryRun: options.dryRun });
@@ -342,15 +400,11 @@ export async function generateSkill(
     logger.error(`Generation failed: ${err.message}`);
     result.error = err.message;
   } finally {
-    // Clean up worktree (optional - could keep for debugging)
-    // Don't clean up externally-provided worktrees - caller manages those
-    if (worktreePath && !options.dryRun && !worktreeProvidedExternally) {
-      // Don't auto-cleanup on success so user can inspect
-      // Only cleanup on failure
-      if (!result.success) {
-        logger.info('Cleaning up worktree after failure...');
-        await removeWorktree(rootDir, provider.name, { logger, dryRun: options.dryRun });
-      }
+    // Keep the worktree on failure too: generation is expensive, and the
+    // review command picks up an existing worktree so the run can be resumed.
+    if (!result.success && worktreePath && !options.dryRun && result.phases.generation?.passed) {
+      logger.info(`Worktree kept for inspection: ${worktreePath}`);
+      logger.info(`Resume with: ./scripts/generate-skills.sh review ${provider.name} --config providers`);
     }
   }
   
@@ -381,14 +435,17 @@ function buildPrBody(provider: ProviderConfig, result: OperationResult): string 
     lines.push(``, `## Documentation Reference`, ``, `- ${provider.docs.webhooks}`);
   }
   
+  // Report what actually ran, not a fixed checklist: a skipped review or a
+  // skipped test phase must not read as verified.
+  const tested = result.phases.testing.passed && result.phases.testing.details !== 'Skipped';
+  const reviewed = result.phases.review.passed && result.phases.review.details !== 'Skipped';
   lines.push(
     ``,
     `## Automated Verification`,
     ``,
-    `The following were verified by the automated review process:`,
-    `- [x] Signature verification implementation matches provider docs`,
-    `- [x] Documentation accuracy checked against provider API`,
-    `- [x] All example tests pass (Express, Next.js, FastAPI)`,
+    `- [${tested ? 'x' : ' '}] Example tests (Express, Next.js, FastAPI): ${result.phases.testing.details ?? 'not run'}`,
+    `- [${reviewed ? 'x' : ' '}] AI review against provider docs: ${result.phases.review.details ?? 'not run'}`,
+    `- [${result.phases.validation?.passed ? 'x' : ' '}] \`validate-provider.sh\` (required files, providers/ entry with testScenario and catalog.summary): ${result.phases.validation?.details ?? 'not run'}`,
     ``,
     `## Manual Testing (Optional)`,
     ``,

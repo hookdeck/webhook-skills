@@ -1,0 +1,18 @@
+name: microsoft-dynamics
+displayName: Microsoft Dynamics 365 (Dataverse)
+docs:
+  webhooks: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/use-webhooks
+  verification: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-web-hook
+notes: >
+  Dataverse webhooks registered with the Plug-in Registration Tool. No signature. Use the
+  HttpHeader authentication option (key/value pairs, e.g. X-Webhook-Secret) and compare
+  constant-time; WebhookKey and HttpQueryString put the secret in the query string and are not
+  covered by Hookdeck. Body is a RemoteExecutionContext JSON with MessageName (Create, Update,
+  Delete), PrimaryEntityName and InputParameters.
+testScenario:
+  events:
+    - Create
+    - Update
+catalog:
+  summary: 'Authenticate Dataverse webhooks, which are **not signed**: register the HttpHeader authentication option (e.g. `X-Webhook-Secret`) and compare it in constant time, avoid WebhookKey/HttpQueryString (secret in the URL); parse the `RemoteExecutionContext` body and handle `Create`, `Update` and `Delete` messages by `MessageName` and `PrimaryEntityName`'
+  displayName: Microsoft Dynamics 365

@@ -2,7 +2,7 @@
  * Configuration parsing for provider configs from CLI and YAML files
  */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join, isAbsolute } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type { ProviderConfig, TestScenario } from './types';
@@ -92,21 +92,63 @@ export function toDisplayName(name: string): string {
     .join('');
 }
 
+/** The provider registry: one providers/<name>.yaml file per provider */
+export const PROVIDERS_DIR = 'providers';
+
+function toProviderConfig(name: string, config: Record<string, unknown>): ProviderConfig {
+  const normalizedName = normalizeProviderName(name);
+  return {
+    name: normalizedName,
+    displayName: (config.displayName as string) || toDisplayName(name),
+    docs: config.docs as ProviderConfig['docs'],
+    notes: config.notes as string | undefined,
+    testScenario: config.testScenario as TestScenario | undefined,
+    sdks: config.sdks as ProviderConfig['sdks'],
+    catalog: config.catalog as ProviderConfig['catalog'],
+  };
+}
+
 /**
- * Load provider configs from a YAML file
+ * Load provider configs from the providers/ directory (one <name>.yaml per
+ * provider), or from a single YAML file (e.g. providers.example.yaml)
  */
 export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
   // Resolve relative paths from repo root
-  const resolvedPath = isAbsolute(filePath) ? filePath : join(ROOT_DIR, filePath);
+  let resolvedPath = isAbsolute(filePath) ? filePath : join(ROOT_DIR, filePath);
+  
+  // providers.yaml was split into providers/<name>.yaml; keep the old path working
+  if (!existsSync(resolvedPath) && /(^|\/)providers\.yaml$/.test(filePath)) {
+    const dir = join(resolvedPath, '..', PROVIDERS_DIR);
+    if (existsSync(dir)) {
+      console.warn(`providers.yaml was split into ${PROVIDERS_DIR}/<name>.yaml; using ${PROVIDERS_DIR}/`);
+      resolvedPath = dir;
+    }
+  }
   
   if (!existsSync(resolvedPath)) {
     throw new Error(`Config file not found: ${filePath} (resolved to: ${resolvedPath})`);
   }
   
+  const configs = new Map<string, ProviderConfig>();
+  
+  if (statSync(resolvedPath).isDirectory()) {
+    for (const file of readdirSync(resolvedPath).filter(f => f.endsWith('.yaml')).sort()) {
+      const config = parseYaml(readFileSync(join(resolvedPath, file), 'utf-8')) as Record<string, unknown> | null;
+      const name = config?.name as string | undefined;
+      if (!config || !name) {
+        console.warn(`Skipping ${file}: no provider name`);
+        continue;
+      }
+      if (`${normalizeProviderName(name)}.yaml` !== file) {
+        throw new Error(`${PROVIDERS_DIR}/${file}: file name must match its name field (${name})`);
+      }
+      configs.set(normalizeProviderName(name), toProviderConfig(name, config));
+    }
+    return configs;
+  }
+  
   const content = readFileSync(resolvedPath, 'utf-8');
   const parsed = parseYaml(content) as Record<string, unknown>;
-  
-  const configs = new Map<string, ProviderConfig>();
   
   // Handle both formats:
   // 1. providers: [array] - array under 'providers' key
@@ -129,16 +171,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         continue;
       }
       
-      const normalizedName = normalizeProviderName(name);
-      
-      configs.set(normalizedName, {
-        name: normalizedName,
-        displayName: (config.displayName as string) || toDisplayName(name),
-        docs: config.docs as ProviderConfig['docs'],
-        notes: config.notes as string | undefined,
-        testScenario: config.testScenario as TestScenario | undefined,
-        sdks: config.sdks as ProviderConfig['sdks'],
-      });
+      configs.set(normalizeProviderName(name), toProviderConfig(name, config));
     }
   } else {
     // Format: { chargebee: { ... }, openai: { ... } }
@@ -147,17 +180,7 @@ export function loadConfigFile(filePath: string): Map<string, ProviderConfig> {
         continue;
       }
 
-      const config = value as Record<string, unknown>;
-      const normalizedName = normalizeProviderName(key);
-
-      configs.set(normalizedName, {
-        name: normalizedName,
-        displayName: (config.displayName as string) || toDisplayName(key),
-        docs: config.docs as ProviderConfig['docs'],
-        notes: config.notes as string | undefined,
-        testScenario: config.testScenario as TestScenario | undefined,
-        sdks: config.sdks as ProviderConfig['sdks'],
-      });
+      configs.set(normalizeProviderName(key), toProviderConfig(key, value as Record<string, unknown>));
     }
   }
   
@@ -210,6 +233,15 @@ export function mergeProviderConfigs(
  */
 export function getSkillPath(provider: ProviderConfig): string {
   return `skills/${provider.name}-webhooks`;
+}
+
+/**
+ * Paths a provider PR owns: its skill directory and its providers/ file.
+ * README.md and marketplace.json are generated after merge (lib/catalog.ts),
+ * so generated branches never touch shared files and never conflict.
+ */
+export function getProviderPaths(provider: ProviderConfig): string[] {
+  return [getSkillPath(provider), `${PROVIDERS_DIR}/${provider.name}.yaml`];
 }
 
 /**

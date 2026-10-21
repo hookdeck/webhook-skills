@@ -1,0 +1,18 @@
+name: fillout
+displayName: Fillout
+docs:
+  webhooks: https://www.fillout.com/help/webhook
+  verification: https://www.fillout.com/help/webhook
+notes: >
+  Form builder. Webhooks fire on form submission. No signature. Optional custom headers are
+  the verification mechanism, typically Authorization: Bearer <secret_token>; compare the
+  whole header value constant-time. Payload contains the submission (submissionId,
+  submissionTime, questions, urlParameters, etc.).
+testScenario:
+  events:
+    - form submission
+  prompt: >
+    Add a Fillout webhook endpoint to my {framework} app. Authenticate it with a bearer
+    token header and handle form submissions.
+catalog:
+  summary: 'Authenticate Fillout form submission webhooks (unsigned; constant-time compare of the custom `Authorization: Bearer <token>` header set in Advanced mode), parse the submission (`submissionId`, `questions`, `calculations`, `urlParameters`, `scheduling`) or an Advanced mode mapped body — Fillout has no event types, only form submissions'

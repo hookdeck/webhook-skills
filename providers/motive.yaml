@@ -1,0 +1,20 @@
+name: motive
+displayName: Motive
+docs:
+  webhooks: https://developer.gomotive.com/docs/webhooks-v2
+  verification: https://developer.gomotive.com/docs/overview-company-webhooks
+notes: >
+  Fleet management (formerly KeepTruckin). X-KT-Webhook-Signature = hex HMAC-SHA1 of the raw JSON
+  payload keyed with the webhook's shared secret (raw string). Docs test vector: secret
+  d9d36bea41c44ae49d1bfc4a48ba2abe over ["fault_code_closed"] gives
+  f04a8386a21a6cba0447024e83b3f0983352bb72 (the docs' bash/Ruby samples wrongly use the
+  signature as the key). Enabling a webhook sends a test request that needs a 200/201. Actions
+  include vehicle_location_updated, driver_created, user_updated, fault_code_opened,
+  fault_code_closed.
+testScenario:
+  events:
+    - vehicle_location_updated
+    - fault_code_opened
+catalog:
+  summary: Verify Motive (formerly KeepTruckin) fleet webhooks (`X-KT-Webhook-Signature`, hex HMAC-SHA1 of the raw body keyed with the shared secret), pass the activation test request, handle `vehicle_location_updated`, `fault_code_opened`, `fault_code_closed`, and `user_upserted` actions
+  docsUrl: https://developer.gomotive.com/docs/overview-company-webhooks

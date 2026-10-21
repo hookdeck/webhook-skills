@@ -1,0 +1,17 @@
+name: dropbox
+displayName: Dropbox
+docs:
+  webhooks: https://www.dropbox.com/developers/reference/webhooks
+  verification: https://www.dropbox.com/developers/reference/webhooks
+notes: >
+  Dropbox API app webhooks (not Dropbox Sign). Verification request: GET ?challenge=<value>;
+  echo the value with Content-Type text/plain and X-Content-Type-Options: nosniff. Notifications:
+  POST with X-Dropbox-Signature = hex HMAC-SHA256 of the raw body keyed with the app secret.
+  Body is {"list_folder": {"accounts": [...]}, "delta": {"users": [...]}}; respond quickly and
+  fetch changes with /files/list_folder/continue.
+testScenario:
+  events:
+    - list_folder
+    - challenge
+catalog:
+  summary: Verify Dropbox API webhook signatures (`X-Dropbox-Signature`, HMAC-SHA256 hex), answer the `challenge` verification request, handle `list_folder` change notifications

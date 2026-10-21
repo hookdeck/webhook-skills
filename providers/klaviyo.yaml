@@ -1,0 +1,30 @@
+name: klaviyo
+displayName: Klaviyo
+docs:
+  webhooks: https://developers.klaviyo.com/en/docs/webhooks
+  verification: https://developers.klaviyo.com/en/docs/webhooks#verify-a-webhook-signature
+notes: >
+  Marketing automation / CDP platform. Klaviyo delivers webhooks (e.g. from a flow "Webhook"
+  action) and signs them: verify the signature header by computing HMAC-SHA256 over the raw
+  request body using the endpoint secret and comparing timing-safe (confirm the exact header name
+  and encoding against current Klaviyo docs during generation, as this feature is evolving).
+  Return 2xx quickly. Payload is JSON. Cover both the signed case and the recommendation to keep
+  the endpoint secret in the URL if signing is unavailable on the account.
+testScenario:
+  events:
+    - webhook action payload
+  prompt: >
+    Create a {framework} webhook handler for Klaviyo. Verify the webhook signature by computing
+    HMAC-SHA256 over the raw body with the endpoint secret (confirm the exact header/encoding
+    against Klaviyo's current docs) using a timing-safe comparison, then process the JSON payload
+    and return 2xx. If you use any skills to help with this, add a comment noting which skill(s)
+    you referenced.
+catalog:
+  summary: Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events
+  marketplace:
+    description: Verify Klaviyo webhook signatures (HMAC-SHA256), handle flow-triggered webhook events.
+    keywords:
+    - webhooks
+    - klaviyo
+    - marketing
+    - email

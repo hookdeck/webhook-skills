@@ -1,0 +1,17 @@
+name: pusher
+displayName: Pusher Channels
+docs:
+  webhooks: https://pusher.com/docs/channels/server_api/webhooks/
+  verification: https://pusher.com/docs/channels/server_api/webhooks/
+notes: >
+  Pusher Channels webhooks (not Pusher Beams). X-Pusher-Signature = HMAC-SHA256 hex digest of
+  the raw POST body keyed with the app secret of the key named in X-Pusher-Key (the oldest
+  active token). Body is {"time_ms": ..., "events": [{"name": "channel_occupied", ...}]}; event
+  names: channel_occupied, channel_vacated, member_added, member_removed, client_event,
+  cache_miss, subscription_count.
+testScenario:
+  events:
+    - channel_occupied
+    - member_added
+catalog:
+  summary: Verify Pusher Channels webhook signatures (`X-Pusher-Signature`, HMAC-SHA256 hex digest of the raw body keyed with the app secret of the key named in `X-Pusher-Key`), handle batched `channel_occupied`, `channel_vacated`, `member_added`, `member_removed`, `client_event`, `cache_miss`, and `subscription_count` events

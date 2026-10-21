@@ -1,0 +1,17 @@
+name: callrail
+displayName: CallRail
+docs:
+  webhooks: https://apidocs.callrail.com/#webhooks
+  verification: https://apidocs.callrail.com/#webhooks
+notes: >
+  Call tracking. Header Signature = base64 HMAC-SHA1 of the raw request payload keyed with the
+  company's signing token (Webhooks configuration page; raw string). Docs test vector: key
+  072e77e426f92738a72fe23c4d1953b4 over the docs' JSON body gives UZAHbUdfm3GqL7qzilGozGzWV64=.
+  Replay protection is a timestamp field inside the body. Webhook types: pre_call, post_call,
+  call_modified, sms_received, sms_sent, form_captured.
+testScenario:
+  events:
+    - post_call
+    - sms_received
+catalog:
+  summary: Verify CallRail webhook signatures (`Signature`, base64 HMAC-SHA1 of the raw body with the company signing key), handle pre-call, post-call, call modified, text message sent/received, and form submission webhooks

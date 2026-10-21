@@ -1,0 +1,31 @@
+name: docusign
+displayName: DocuSign
+docs:
+  webhooks: https://developers.docusign.com/platform/webhooks/connect/
+  verification: https://developers.docusign.com/platform/webhooks/connect/validate/
+  events: https://developers.docusign.com/platform/webhooks/connect/event-triggers/
+notes: >
+  DocuSign Connect signs webhooks with HMAC-SHA256 over the raw request body,
+  base64-encoded, sent in X-DocuSign-Signature-1..N headers (one per active secret,
+  up to 100 keys; x-authorization-digest names the algorithm; only one header needs
+  to match). Does NOT follow the Standard Webhooks spec. Alternative/additional
+  security: HTTP Basic auth on the listener URL, mutual TLS, and X.509 message
+  signing. Configure in eSignature Admin (Settings > Connect) as account-level
+  configurations, or per-envelope via the eventNotification API; use JSON with
+  deliveryMode SIM (Send Individual Messages) and eventData version restv2.1 —
+  legacy XML SIM was retired May 2023. Gotchas: verify against the exact raw body;
+  envelope documents/recipient data only included if eventData.include options are
+  enabled; failed deliveries (HTTP >= 400) retried with exponential backoff starting
+  ~5 minutes and doubling for up to 15 days, with manual republish via API/admin
+  Failures log. SDKs manage Connect configs and eventNotification but provide no
+  signature-verification helper.
+testScenario:
+  events:
+    - envelope-sent
+    - envelope-completed
+    - recipient-completed
+sdks:
+  npm: [docusign-esign]
+  pip: [docusign-esign]
+catalog:
+  summary: Verify DocuSign Connect signatures (`X-DocuSign-Signature-N`, HMAC-SHA256 base64), handle envelope and recipient events

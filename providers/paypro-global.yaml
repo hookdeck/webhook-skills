@@ -1,0 +1,47 @@
+name: paypro-global
+displayName: PayPro Global
+docs:
+  webhooks: https://developers.payproglobal.com/docs/integrate-with-paypro-global/webhook-ipn/
+  verification: https://developers.payproglobal.com/docs/integrate-with-paypro-global/webhook-ipn/
+notes: >
+  PayPro Global (merchant-of-record billing) calls its webhooks IPN (Instant Payment
+  Notification). Deliveries are HTTP POST with an application/x-www-form-urlencoded body
+  (NOT JSON) to an IPN URL set per product (Store Settings -> Product Setup) or store-wide
+  (Store Settings -> Notifications). Verification is bespoke — NOT an HMAC header and NOT
+  Standard Webhooks — with three independent layers: (1) an IP allowlist of fixed PayPro
+  Global source IPs (IPv4 198.199.123.239, 157.230.8.40; IPv6 2604:a880:400:d0::1843:7001,
+  2604:a880:400:d1::b6c:c001); (2) the SIGNATURE field = SHA256 (hex) over seven field
+  values concatenated in this EXACT order: ORDER_ID + ORDER_STATUS + ORDER_TOTAL_AMOUNT +
+  CUSTOMER_EMAIL + VALIDATION_KEY + TEST_MODE + IPN_TYPE_NAME; (3) the HASH field = MD5 of
+  ORDER_ID + SecretKey for real orders, or MD5("1") for test orders (TEST_MODE=1). CRITICAL:
+  SecretKey (for HASH) and VALIDATION_KEY (for SIGNATURE) are TWO DIFFERENT keys, both under
+  Store Settings -> General Settings -> Integration — swapping them is the most common bug.
+  The SIGNATURE covers specific field VALUES, not the raw body, so parsing the form first is
+  correct (unlike HMAC-over-raw-body providers). Recompute server-side and constant-time
+  compare (normalize hex to lowercase). The event name is in IPN_TYPE_NAME — note the
+  non-standard spelling SubscriptionChargeSucceed (not "Succeeded"). Events include
+  OrderCharged, OrderRefunded, OrderPartiallyRefunded, OrderChargedBack, OrderChargedBackWon,
+  OrderDeclined, OrderOnWaiting, SubscriptionChargeSucceed, SubscriptionChargeFailed,
+  SubscriptionSuspended, SubscriptionRenewed, SubscriptionTerminated, SubscriptionFinished,
+  SubscriptionPaymentInfoChanged, TrialCharge, LicenseRequested, InstantLeadNotification.
+  Respond 200 to acknowledge; non-200 responses are retried every 30 minutes for up to 3
+  attempts, so handle idempotently. No official SDK exists — the npm/pip "paypro" packages
+  belong to the unrelated PayPro B.V. / paypro.nl. Set PAYPRO_VALIDATION_KEY and
+  PAYPRO_SECRET_KEY.
+testScenario:
+  events:
+    - OrderCharged
+    - SubscriptionChargeSucceed
+  prompt: >
+    Create a {framework} webhook handler for PayPro Global IPN. Deliveries are
+    application/x-www-form-urlencoded (NOT JSON). Verify the SIGNATURE field: recompute
+    SHA256 over ORDER_ID + ORDER_STATUS + ORDER_TOTAL_AMOUNT + CUSTOMER_EMAIL +
+    VALIDATION_KEY + TEST_MODE + IPN_TYPE_NAME (exact order) and constant-time compare
+    against the SIGNATURE field. Optionally also verify the HASH field = MD5(ORDER_ID +
+    SecretKey), or MD5("1") for test orders (TEST_MODE=1); note SecretKey and VALIDATION_KEY
+    are two different keys. Dispatch on IPN_TYPE_NAME (e.g. OrderCharged,
+    SubscriptionChargeSucceed), return 400 for an invalid signature and 200 to acknowledge.
+    If you use any skills to help with this, add a comment noting which skill(s) you
+    referenced.
+catalog:
+  summary: 'Verify PayPro Global IPN webhooks (form-encoded): `SIGNATURE` (SHA256 over `ORDER_ID`+`ORDER_STATUS`+`ORDER_TOTAL_AMOUNT`+`CUSTOMER_EMAIL`+`VALIDATION_KEY`+`TEST_MODE`+`IPN_TYPE_NAME`) and `HASH` (MD5 of `ORDER_ID`+`SecretKey`), handle `OrderCharged`, `OrderRefunded`, and `SubscriptionChargeSucceed` events'

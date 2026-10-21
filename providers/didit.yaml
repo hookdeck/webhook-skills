@@ -1,0 +1,19 @@
+name: didit
+displayName: Didit
+docs:
+  webhooks: https://docs.didit.me/integration/webhooks
+  verification: https://docs.didit.me/integration/webhooks
+notes: >
+  Identity verification. Every webhook is signed with HMAC-SHA256 keyed with the destination's
+  secret_shared_key (raw string). Three headers are sent: X-Signature (hex HMAC of the exact raw
+  body bytes), X-Signature-V2 (hex HMAC of re-serialized sorted JSON) and X-Signature-Simple
+  (deprecated). Hookdeck verifies X-Signature over the raw body, so the skill should verify
+  X-Signature against the raw body as the primary path and mention V2 only as an alternative.
+  X-Timestamp (unix seconds) is sent separately and is not part of the X-Signature input; reject
+  if older than 300s. Events: status.updated, data.updated.
+testScenario:
+  events:
+    - status.updated
+    - data.updated
+catalog:
+  summary: Verify Didit identity verification webhook signatures (`X-Signature`, HMAC-SHA256 hex of the raw body keyed with the destination's `secret_shared_key`, plus `X-Timestamp` window), handle status.updated and data.updated events

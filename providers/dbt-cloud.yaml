@@ -1,0 +1,15 @@
+name: dbt-cloud
+displayName: dbt Cloud
+docs:
+  webhooks: https://docs.getdbt.com/docs/deploy/webhooks
+  verification: https://docs.getdbt.com/docs/deploy/webhooks#validate-a-webhook
+notes: >
+  The Authorization header carries the bare lowercase hex HMAC-SHA256 of the raw request body
+  (no scheme, no "Bearer") keyed with the webhook's hmac_secret (returned on create; raw string).
+  Events: job.run.started, job.run.completed, job.run.errored.
+testScenario:
+  events:
+    - job.run.completed
+    - job.run.errored
+catalog:
+  summary: Verify dbt Cloud webhooks (`Authorization` header carries the bare hex HMAC-SHA256 of the raw body, no prefix), handle job.run.started, job.run.completed and job.run.errored events

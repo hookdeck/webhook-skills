@@ -1,0 +1,36 @@
+name: bridge-api
+displayName: Bridge API
+docs:
+  webhooks: https://docs.bridgeapi.io/docs/webhooks
+  verification: https://docs.bridgeapi.io/docs/secure-your-webhooks
+notes: >
+  Bridge API (bridgeapi.io) — the open-banking / account-aggregation platform by
+  Bridge (formerly Bankin'), NOT bridge.xyz. Webhooks are signed with HMAC-SHA256,
+  NOT Standard Webhooks. The BridgeApi-Signature header carries one or more
+  comma-separated, scheme-prefixed values "v1=<UPPERCASE_HEX>". Verify by extracting
+  the v1= signature(s) (ignore other schemes to prevent downgrade attacks), computing
+  HMAC-SHA256 over the RAW request body with the webhook's signing secret as key, and
+  constant-time comparing (hex decode is case-insensitive). The secret is auto-generated
+  per webhook and shown once at creation/rotation; after a rotation the old secret stays
+  valid 24h, so up to 2 active v1 signatures can appear — accept if ANY matches. Configure
+  in the Bridge dashboard (admins only): callback URL, name, events; max 10 webhooks per
+  app; a "Send a test" button emits TEST_EVENT. Event names are lowercase resource.action
+  carried in the body `type` field (no event header): user.deleted, item.created,
+  item.refreshed, item.account.created/updated/deleted, payment.transaction.created/updated,
+  payment.link.updated. Retries for 1-2 days with exponential backoff on non-200/slow.
+  Expect webhooks for already-deleted users/items — handle defensively. Fixed source IPs
+  63.32.31.5, 52.215.247.62, 34.249.92.209 (use X-Forwarded-For behind a proxy); keep
+  response bodies under 10 KB. No official SDK — verify manually in every framework. Set
+  BRIDGE_WEBHOOK_SECRET env var.
+testScenario:
+  events:
+    - item.refreshed
+    - payment.transaction.updated
+catalog:
+  summary: Verify Bridge API (bridgeapi.io, open-banking by Bridge/Bankin') webhook signatures (`BridgeApi-Signature`, HMAC-SHA256 hex with `v1=` scheme), handle item, item.account, payment.transaction, and user.deleted events
+  marketplace:
+    description: Receive and verify Bridge API (bridgeapi.io) webhooks, the open-banking aggregator by Bridge/Bankin' (NOT bridge.xyz). Use when setting up Bridge API webhook handlers, debugging BridgeApi-Signature HMAC-SHA256 verification, or handling events like item.created, item.refreshed, item.account.updated, payment.transaction.created, and user.deleted.
+    keywords:
+    - webhooks
+    - bridge
+    - open-banking

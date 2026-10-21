@@ -1,0 +1,17 @@
+name: databricks
+displayName: Databricks
+docs:
+  webhooks: https://docs.databricks.com/aws/en/admin/workspace-settings/notification-destinations
+  verification: https://docs.databricks.com/aws/en/admin/workspace-settings/notification-destinations
+notes: >
+  Workspace notification destinations of type Webhook. No signature; use the HTTP Basic auth
+  option (username/password), decode and compare constant-time. The OAuth (Beta) mode is
+  separate and out of scope. Job payloads have event_type jobs.on_start, jobs.on_success,
+  jobs.on_failure, jobs.on_duration_warning_threshold_exceeded; SQL alerts send their own
+  payload.
+testScenario:
+  events:
+    - jobs.on_success
+    - jobs.on_failure
+catalog:
+  summary: 'Authenticate Databricks webhook notification destinations (unsigned: HTTP Basic auth username/password, `Authorization` header), handle jobs.on_start, jobs.on_success, jobs.on_failure, jobs.on_duration_warning_threshold_exceeded, and SQL alert_state_change events'

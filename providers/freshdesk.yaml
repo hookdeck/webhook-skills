@@ -1,0 +1,21 @@
+name: freshdesk
+displayName: Freshdesk
+docs:
+  webhooks: https://support.freshdesk.com/support/solutions/articles/132589-using-webhooks-in-automation-rules
+  verification: https://support.freshdesk.com/support/solutions/articles/132589-using-webhooks-in-automation-rules
+notes: >
+  Customer support. Webhooks are a "Trigger webhook" action inside automation rules (ticket
+  creation, ticket updates, time triggers); payload is user-authored with placeholders like
+  {{ticket.id}}. No signature. Use "Add custom headers" (X-Sample-CustomHeader1: VALUE format,
+  names case-insensitive) to send a shared secret and compare it constant-time. The "Requires
+  authentication" toggle's wire format is undocumented; recommend the custom header instead.
+testScenario:
+  events:
+    - ticket created
+    - ticket updated
+  prompt: >
+    Add an endpoint to my {framework} app that receives Freshdesk automation webhooks.
+    Authenticate them with a shared secret custom header and handle ticket created and
+    ticket updated payloads.
+catalog:
+  summary: Receive Freshdesk automation-rule webhooks (Trigger Webhook action; unsigned), authenticate them with a shared-secret custom header compared in constant time, handle ticket_created and ticket_updated payloads

@@ -1,0 +1,18 @@
+name: drata
+displayName: Drata
+docs:
+  webhooks: https://help.drata.com/en/articles/12876602-create-workflow-for-control
+  verification: https://help.drata.com/en/articles/11751113-automate-actions-with-drata-s-workflows
+notes: >
+  Compliance automation. Drata workflow "Send webhook" actions POST to your endpoint. No public
+  signing secret (Drata sends through Svix but does not document svix headers or a whsec_
+  secret), so authenticate with a custom header (e.g. X-Webhook-Secret) and compare
+  constant-time. Body carries control/trigger properties from the workflow.
+testScenario:
+  events:
+    - workflow webhook
+  prompt: >
+    Add an endpoint to my {framework} app that receives Drata workflow webhooks. Authenticate them
+    with a shared secret header and handle the JSON payload.
+catalog:
+  summary: 'Authenticate Drata workflow "Send webhook" deliveries (no documented signature: constant-time compare of a shared-secret custom header such as `X-Webhook-Secret`), handle CONTROL_EVIDENCE_LINKED, CONTROL_READINESS_CHANGED_TO_NOT_READY, CONTROL_TEST_CHANGED_TO_FAIL and other control `event_type` values'

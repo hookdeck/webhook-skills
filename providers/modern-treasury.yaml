@@ -1,0 +1,16 @@
+name: modern-treasury
+displayName: Modern Treasury
+docs:
+  webhooks: https://docs.moderntreasury.com/platform/reference/webhooks
+  verification: https://docs.moderntreasury.com/platform/reference/verifying-webhooks
+notes: >
+  Payment operations. X-Signature = hex HMAC-SHA256 of the raw body keyed with the webhook key
+  (Developer Settings; raw string). X-Topic and X-Event-Type headers carry the topic (e.g.
+  payment_order, expected_payment) and event (e.g. completed, failed, reconciled); body has
+  event and data.
+testScenario:
+  events:
+    - payment_order.completed
+    - payment_order.failed
+catalog:
+  summary: Verify Modern Treasury webhook signatures (`X-Signature`, hex HMAC-SHA256 of the raw body keyed with the webhook key), route on the `X-Topic` header plus body `event`, deduplicate on `X-Webhook-ID`, and handle payment_order.completed, payment_order.failed, payment_order.reconciled, expected_payment.reconciled, and incoming_payment_detail.completed events

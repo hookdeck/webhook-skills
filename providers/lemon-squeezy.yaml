@@ -1,0 +1,18 @@
+name: lemon-squeezy
+displayName: Lemon Squeezy
+docs:
+  webhooks: https://docs.lemonsqueezy.com/help/webhooks
+  verification: https://docs.lemonsqueezy.com/help/webhooks/signing-requests
+  events: https://docs.lemonsqueezy.com/help/webhooks/event-types
+notes: >
+  Merchant of record. X-Signature = hex HMAC-SHA256 of the raw body keyed with the signing secret
+  you enter when creating the webhook (6-40 chars; raw string). X-Event-Name carries the event
+  (also meta.event_name). Events: order_created, order_refunded, subscription_created,
+  subscription_updated, subscription_cancelled, subscription_payment_success,
+  license_key_created.
+testScenario:
+  events:
+    - order_created
+    - subscription_created
+catalog:
+  summary: Verify Lemon Squeezy webhook signatures (`X-Signature`, hex HMAC-SHA256 of the raw body, keyed with the signing secret you set), handle order_created, subscription_created, subscription_payment_success, and license_key_created events routed on `X-Event-Name`

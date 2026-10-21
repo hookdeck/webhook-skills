@@ -1,0 +1,16 @@
+name: zernio
+displayName: Zernio
+docs:
+  webhooks: https://docs.zernio.com/webhooks
+  verification: https://docs.zernio.com/webhooks#signatures
+notes: >
+  Social media scheduling API (formerly Late, getlate.dev). Deliveries are signed only when the
+  endpoint has a secret, which you supply (Zernio never generates one). X-Zernio-Signature =
+  lowercase hex HMAC-SHA256 of the raw request body keyed with that secret; X-Late-Signature is
+  a legacy alias with the same value. Check the docs for the event names.
+testScenario:
+  events:
+    - post.published
+    - post.failed
+catalog:
+  summary: Verify Zernio (formerly Late) social media API webhook signatures (`X-Zernio-Signature`, legacy `X-Late-Signature`; lowercase hex HMAC-SHA256 of the raw body keyed with your own endpoint secret), handle post.published, post.failed, message.received, and account.disconnected events

@@ -1,0 +1,15 @@
+name: hibob
+displayName: HiBob
+docs:
+  webhooks: https://apidocs.hibob.com/reference/getting-started-webhooks
+  verification: https://apidocs.hibob.com/reference/getting-started-webhooks#how-does-bob-calculate-the-signature
+notes: >
+  HR platform (Bob). Header Bob-Signature = base64 HMAC-SHA512 of the raw request body keyed with
+  the secret shown in the Bob webhook configuration (raw string). Events: employee.created,
+  employee.updated, employee.joined, employee.left, timeoff.request.created, ...
+testScenario:
+  events:
+    - employee.created
+    - employee.updated
+catalog:
+  summary: Verify HiBob (Bob) `Bob-Signature` (base64 HMAC-SHA512 of the raw body), answer the Ping test, handle employee and time off events

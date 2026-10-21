@@ -1,0 +1,16 @@
+name: dwolla
+displayName: Dwolla
+docs:
+  webhooks: https://developers.dwolla.com/docs/balance/webhooks
+  verification: https://developers.dwolla.com/docs/balance/webhooks
+notes: >
+  Bank payments API. Header X-Request-Signature-SHA-256 = HMAC-SHA256 of the raw request body,
+  hex, keyed with the secret you supplied when creating the webhook subscription (raw string).
+  Dwolla does not support IP allowlisting as a validation method. Payload has topic (e.g.
+  customer_created, customer_transfer_completed, transfer_completed), resourceId and _links.
+testScenario:
+  events:
+    - customer_created
+    - customer_transfer_completed
+catalog:
+  summary: Verify Dwolla webhook signatures (`X-Request-Signature-SHA-256`, HMAC-SHA256 hex), handle customer and transfer events

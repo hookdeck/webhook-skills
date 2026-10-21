@@ -1,0 +1,17 @@
+name: helius
+displayName: Helius
+docs:
+  webhooks: https://www.helius.dev/docs/webhooks
+  verification: https://www.helius.dev/docs/api-reference/webhooks
+notes: >
+  Solana RPC/webhooks. No signature. The optional authHeader value set on the webhook (e.g.
+  "Bearer your-secret-token") is sent verbatim as the Authorization header; compare the whole
+  value constant-time. The payload "signature" field is the Solana transaction signature, not a
+  webhook signature. Payload is an array of (enhanced) transactions with type, e.g. NFT_SALE,
+  SWAP, TRANSFER.
+testScenario:
+  events:
+    - TRANSFER
+    - SWAP
+catalog:
+  summary: 'Authenticate Helius Solana webhooks (no signature: the `authHeader` you set is echoed verbatim in the `Authorization` header, compared in constant time), handle the batched transaction array and enhanced events like NFT_SALE, SWAP, and TRANSFER'

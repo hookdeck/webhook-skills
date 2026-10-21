@@ -1,0 +1,19 @@
+name: zoominfo
+displayName: ZoomInfo
+docs:
+  webhooks: https://tech-docs-library.zoominfo.com/webhooks-implementation-guide.pdf
+  verification: https://tech-docs-library.zoominfo.com/webhooks-implementation-guide.pdf
+notes: >
+  B2B data. No signature. ZoomInfo generates a verification token when the webhook is created
+  (can be regenerated) and sends it in the x-zoominfo-token header; compare it constant-time. The
+  Validate step posts a sample payload before the token exists. Subscriptions are object type
+  (Contact, Company) plus event type; Update is the only supported event type.
+testScenario:
+  events:
+    - contact update
+    - company update
+  prompt: >
+    Add an endpoint to my {framework} app that receives ZoomInfo webhooks. Verify the
+    x-zoominfo-token header and handle the payload.
+catalog:
+  summary: Verify ZoomInfo webhooks — no signature; compare the `x-zoominfo-token` verification token in constant time, accept the pre-token Validate request, handle Contact and Company update events

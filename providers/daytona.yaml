@@ -1,0 +1,19 @@
+name: daytona
+displayName: Daytona
+docs:
+  webhooks: https://www.daytona.io/docs/en/webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+  source: https://github.com/daytonaio/daytona/blob/main/apps/api/src/webhook/README.md
+notes: >
+  Sandbox infrastructure for AI code. Daytona's public webhook page documents no signature, but
+  its source shows delivery through Svix (dashboard reads the Svix endpoint secret). So verify as
+  Svix: svix-id, svix-timestamp, svix-signature; signed content "{id}.{timestamp}.{raw body}",
+  HMAC-SHA256 with the base64-decoded whsec_ secret. Say the scheme comes from Svix, not
+  Daytona's docs. Events include sandbox.created, sandbox.state.updated, snapshot.created,
+  volume.created.
+testScenario:
+  events:
+    - sandbox.created
+    - sandbox.state.updated
+catalog:
+  summary: 'Verify Daytona sandbox webhooks (signed via Svix, which Daytona''s docs don''t state: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}`, `whsec_` secret), dedupe on `svix-id`, handle `sandbox.created`, `sandbox.state.updated`, `snapshot.created`, `snapshot.removed`, `volume.created` and `volume.state.updated` events'

@@ -1,0 +1,18 @@
+name: ninjaone
+displayName: NinjaOne
+docs:
+  webhooks: https://app.ninjarmm.com/apidocs/NinjaRMM-API-v2.json
+  verification: https://app.ninjarmm.com/apidocs/NinjaRMM-API-v2.json
+notes: >
+  RMM platform. No signature. Only API-configured webhooks (PUT /v2/webhook with a headers array
+  of name/value) can carry a custom header such as X-Webhook-Secret or Authorization; console
+  notification-channel webhooks take a URL only and cannot be authenticated. Compare the header
+  constant-time. Payloads are activity/condition events (activityType, statusCode, ...).
+testScenario:
+  events:
+    - CONDITION
+  prompt: >
+    Add an endpoint to my {framework} app that receives NinjaOne webhooks. Authenticate them with
+    a shared secret header and handle the activity payload.
+catalog:
+  summary: Authenticate NinjaOne (NinjaRMM) activity webhooks (unsigned; constant-time compare of the custom `X-Webhook-Secret` header set through `PUT /v2/webhook` — console notification-channel webhooks can't carry a header), handle `CONDITION` `TRIGGERED` / `RESET`, `ACTION` and `ACTIONSET` activities identified by `activityType` + `statusCode`

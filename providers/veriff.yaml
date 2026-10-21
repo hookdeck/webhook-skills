@@ -1,0 +1,19 @@
+name: veriff
+displayName: Veriff
+docs:
+  webhooks: https://devdocs.veriff.com/docs/webhooks-guide
+  verification: https://devdocs.veriff.com/docs/hmac-authentication-and-endpoint-security
+notes: >
+  Identity verification. Header X-HMAC-SIGNATURE = HMAC-SHA256 of the raw request body, lowercase
+  hex, keyed with the integration's shared secret key (raw string). Also sends X-AUTH-CLIENT (the
+  integration API key) and vrf-integration-id; only x-hmac-signature proves authenticity. Webhook
+  types: decision webhook (verification.status approved/declined/resubmission_requested/expired/
+  abandoned) and event webhook (action started/submitted). Docs test vector: secret
+  abcdef12-abcd-abcd-abcd-abcdef012345 over the compact JSON of the docs' mock payload gives
+  01fa3ded011bfce75672c99877a6cc1cf7aeaeda0ccb6b43fc21b60f595063c2.
+testScenario:
+  events:
+    - decision
+    - submitted
+catalog:
+  summary: Verify Veriff identity-verification webhook signatures (`X-HMAC-SIGNATURE`, hex HMAC-SHA256 of the raw body keyed with the integration's shared secret key; `X-AUTH-CLIENT` is not proof of authenticity), handle decision webhooks (`verification.status` approved, declined, resubmission_requested, review, expired, abandoned) and event webhooks (started, submitted, flow_finished, flow_cancelled)

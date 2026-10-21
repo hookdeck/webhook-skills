@@ -1,0 +1,29 @@
+name: zendesk
+displayName: Zendesk
+docs:
+  webhooks: https://developer.zendesk.com/documentation/webhooks/creating-and-monitoring-webhooks/
+  verification: https://developer.zendesk.com/documentation/webhooks/verifying/
+  events: https://developer.zendesk.com/api-reference/webhooks/event-types/webhook-event-types/
+notes: >
+  Signature: HMAC-SHA256, base64-encoded, signed content = timestamp + raw body (no
+  separator); headers X-Zendesk-Webhook-Signature and
+  X-Zendesk-Webhook-Signature-Timestamp. Secret via GET
+  /api/v2/webhooks/{webhook_id}/signing_secret (reset with POST; Admin Center "Reveal
+  secret" also works); test webhooks use the static secret
+  dGhpc19zZWNyZXRfaXNfZm9yX3Rlc3Rpbmdfb25seQ==. Does NOT follow the Standard Webhooks
+  spec. Two models: event subscriptions (zen:event-type:* names across ticket, user,
+  organization, article, community post, agent availability domains) vs. webhooks
+  connected to triggers/automations (custom JSON payload defined in the trigger); a
+  webhook subscribed to events cannot also be connected to a trigger. Raw body required
+  (some requests, e.g. GET/DELETE methods, have no body). Retries: 409 up to 3x;
+  429/503 honored if retry-after < 60s; 12s timeout with up to 5 retries; circuit
+  breaker pauses delivery at 70% error rate or 1,000+ errors in 5 min. Endpoint auth
+  options (API key, basic, bearer) are separate from and additional to signature
+  verification. No official npm/pip SDK for verification — docs show inline crypto
+  examples.
+testScenario:
+  events:
+    - zen:event-type:ticket.created
+    - zen:event-type:user.created
+catalog:
+  summary: Verify Zendesk webhook signatures (`X-Zendesk-Webhook-Signature`, HMAC-SHA256 with timestamp), handle event subscriptions and trigger-based webhooks

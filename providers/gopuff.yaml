@@ -1,0 +1,17 @@
+name: gopuff
+displayName: Gopuff
+docs:
+  webhooks: https://devportaldocs.poweredbygopuff.com/#/webhooks/introduction
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+notes: >
+  Powered by Gopuff partner API. Endpoints are registered in the Svix App Portal, so webhooks are
+  Svix-signed: svix-id, svix-timestamp, svix-signature; signed content
+  "{id}.{timestamp}.{raw body}", HMAC-SHA256 with the base64-decoded whsec_ secret. Gopuff's
+  pages have no signature section; say the scheme comes from Svix. Event types: order.status.v2
+  (recommended), order.status (legacy), order.delivered.
+testScenario:
+  events:
+    - order.status.v2
+    - order.delivered
+catalog:
+  summary: 'Verify Powered by Gopuff partner webhooks (Svix-signed: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 over `id.timestamp.body` with the base64-decoded `whsec_` secret), handle `order.status.v2`, `order.status` and `order.delivered`, plus delivery status and ETA payloads (no event-type field in the body)'

@@ -1,0 +1,17 @@
+name: webex
+displayName: Webex
+docs:
+  webhooks: https://developer.webex.com/docs/webhooks
+  verification: https://developer.webex.com/blog/using-a-webhook-secret
+notes: >
+  Webex (formerly Cisco Spark). When the webhook is created with a secret (optional API field),
+  X-Spark-Signature = hex HMAC-SHA1 of the raw body keyed with the secret (raw string). This is
+  sent for every webhook type and is what Hookdeck verifies; X-Webex-Signature (SHA-256/512) is
+  only on some types. Payload has resource (messages, memberships, rooms, meetings,
+  attachmentActions) and event (created, updated, deleted); messages webhooks carry only the id.
+testScenario:
+  events:
+    - messages.created
+    - memberships.created
+catalog:
+  summary: Verify Webex (formerly Cisco Spark) webhook signatures (`X-Spark-Signature`, hex HMAC-SHA1 of the raw body keyed with the optional webhook `secret`), handle messages.created, messages.deleted, memberships.created, rooms.updated, meetings.started and attachmentActions.created events, fetch message text by id

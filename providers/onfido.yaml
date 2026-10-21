@@ -1,0 +1,18 @@
+name: onfido
+displayName: Onfido
+docs:
+  webhooks: https://documentation.onfido.com/api/latest/#webhooks
+  verification: https://documentation.onfido.com/api/manual-webhook-signature-verification/
+notes: >
+  Identity verification (Onfido, now Entrust Identity Verification). Header X-SHA2-Signature =
+  HMAC-SHA256 of the raw request body, lowercase hex, keyed with the webhook's token (returned in
+  the token field when the webhook is registered, also shown on Dashboard > Webhook Management),
+  used as a raw UTF-8 string. Use the raw body; parsed JSON may be reordered. Payload is
+  {"payload": {"resource_type", "action", "object": {...}}}; actions include check.completed,
+  report.completed, workflow_run.completed.
+testScenario:
+  events:
+    - check.completed
+    - workflow_run.completed
+catalog:
+  summary: Verify Onfido (Entrust Identity Verification) webhook signatures (`X-SHA2-Signature`, HMAC-SHA256 hex over the raw body, keyed with the webhook token), handle `check.completed`, `report.completed`, and `workflow_run.completed` events

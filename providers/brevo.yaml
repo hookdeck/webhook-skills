@@ -1,0 +1,17 @@
+name: brevo
+displayName: Brevo
+docs:
+  webhooks: https://developers.brevo.com/docs/how-to-use-webhooks
+  verification: https://developers.brevo.com/docs/secured-webhooks
+notes: >
+  Email/SMS marketing (formerly Sendinblue). No payload signature. Secure webhooks with Basic
+  auth (credentials in the notify URL, https://user:pass@host/, sent as Authorization: Basic),
+  a bearer token (auth: {type: bearer, token}) or custom headers, plus Brevo's IP allowlist;
+  compare credentials constant-time. Transactional events include delivered, opened, click,
+  hard_bounce, soft_bounce, spam, unsubscribed; marketing and contact events also exist.
+testScenario:
+  events:
+    - delivered
+    - hard_bounce
+catalog:
+  summary: 'Authenticate Brevo (formerly Sendinblue) webhooks (unsigned: Basic auth in the notify URL or bearer token, plus IP allowlist), handle single or batched delivered, opened, click, hard_bounce, soft_bounce, spam, and unsubscribed events'

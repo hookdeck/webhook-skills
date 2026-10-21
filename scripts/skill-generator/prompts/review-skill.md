@@ -118,7 +118,7 @@ When fixing a violation: keep the verification snippet's algorithm/header parse/
 
 ## Output Format
 
-After reviewing, respond with a JSON object in this exact format:
+After reviewing, end your reply with a single fenced `json` block containing your verdict, with nothing after it. The block must be valid JSON in this exact format:
 
 ```json
 {

@@ -1,0 +1,17 @@
+name: stytch
+displayName: Stytch
+docs:
+  webhooks: https://stytch.com/docs/workspace-management/webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+notes: >
+  Auth platform. Stytch webhooks are delivered by Svix (Stytch's docs point to Svix's verification
+  guide): svix-id, svix-timestamp, svix-signature ("v1,<base64>" space-delimited list); signed
+  content "{svix-id}.{svix-timestamp}.{raw body}", HMAC-SHA256 keyed with the base64-decoded part
+  of the whsec_ secret. Header names and secret format come from Svix's guide. Event types follow
+  <source>.<object>.<action>, e.g. direct.user.create, direct.member.update.
+testScenario:
+  events:
+    - direct.user.create
+    - direct.user.update
+catalog:
+  summary: Verify Stytch webhooks delivered via Svix (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 over `id.timestamp.body`, `whsec_` secret), derive the event type from `source`/`object_type`/`action`, handle direct.user.create, direct.member.update, direct.organization.create, and direct.saml_connection.delete events

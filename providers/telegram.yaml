@@ -1,0 +1,19 @@
+name: telegram
+displayName: Telegram Bot API
+docs:
+  webhooks: https://core.telegram.org/bots/webhooks
+  verification: https://core.telegram.org/bots/api#setwebhook
+notes: >
+  Telegram bot webhooks (setWebhook). No signature or HMAC. Pass secret_token (1-256 chars,
+  A-Z a-z 0-9 _ -) to setWebhook and Telegram sends it in the X-Telegram-Bot-Api-Secret-Token
+  header on every request; compare it to the expected value with a constant-time compare.
+  Optional IP allowlist 149.154.160.0/20 and 91.108.4.0/22. Payload is an Update object; route
+  on which field is present: message, edited_message, callback_query, inline_query,
+  my_chat_member.
+testScenario:
+  events:
+    - message
+    - callback_query
+catalog:
+  summary: 'Verify Telegram Bot API webhooks via the `X-Telegram-Bot-Api-Secret-Token` header (setWebhook `secret_token`, constant-time compare; no HMAC), route on the Update field present: message, edited_message, callback_query, inline_query, my_chat_member'
+  displayName: Telegram

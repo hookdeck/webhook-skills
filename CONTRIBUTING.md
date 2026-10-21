@@ -114,21 +114,44 @@ providers:
       See reference_impl for working TypeScript/Express example.
 ```
 
-### Provider Documentation Registry
+### Provider Registry (`providers/`)
 
-All providers and their official documentation URLs are tracked in `providers.yaml` at the repository root. When adding a new provider:
+Each provider has its own file, `providers/<name>.yaml`, with its documentation URLs, generator notes, agent `testScenario`, and the `catalog` text used for README.md and the plugin marketplace. See `providers/stripe.yaml` for the shape. When adding a new provider:
 
-1. Add the provider entry to `providers.yaml` with documentation URLs
-2. Generate the skill using the config: `./scripts/generate-skills.sh generate {provider} --config providers.yaml`
-3. Update the README.md Provider Skills table
-4. Add at least one scenario to `scripts/test-agent-scenario.sh`
+1. Add `providers/<name>.yaml` with documentation URLs, a `testScenario` (CI requires it), and `catalog.summary`: the one-line "What It Does" text for the README provider table
+2. Generate the skill: `./scripts/generate-skills.sh generate {provider} --config providers`
 
-The generator registers the new skill in `.claude-plugin/marketplace.json` automatically. For a hand-authored skill, register it (or fix any drift) with:
+A provider PR only touches `skills/<provider>-webhooks/` and `providers/<name>.yaml`. **Don't edit README.md's provider table or `.claude-plugin/marketplace.json` by hand**: both are generated from `providers/`, the skills' SKILL.md frontmatter and `scripts/skill-generator/marketplace.base.json`. After each merge to main, the Sync Catalog workflow regenerates them and opens (or updates) a `chore: sync README and marketplace.json` PR.
+
+To see the result locally:
 
 ```bash
-./scripts/generate-skills.sh sync-marketplace          # add any missing plugin entries
-./scripts/generate-skills.sh sync-marketplace --check   # report drift only (used by CI)
+./scripts/generate-skills.sh sync             # regenerate README.md provider table + marketplace.json
+./scripts/generate-skills.sh sync --check     # fail if either is out of date
+./scripts/generate-skills.sh sync --validate  # only check the sources are complete (used by PR CI)
 ```
+
+`sync-readme` and `sync-marketplace` regenerate either file on its own.
+
+Optional `catalog` fields:
+
+| Field | Use |
+|-------|-----|
+| `summary` | README "What It Does" cell (required unless `readme: false`) |
+| `displayName` | README provider name, when it should differ from the top-level `displayName` (e.g. `Telegram` vs `Telegram Bot API`) |
+| `docsUrl` | README provider link, when it should differ from `docs.webhooks` |
+| `readme: false` | Leave the skill out of the generated provider table (it's listed in a hand-written README section) |
+| `marketplace.description` / `keywords` / `category` | Override the marketplace defaults (SKILL.md description, `["webhooks", <provider>]`, `integration`) |
+
+Non-provider skills (patterns, infrastructure, audits) and the all-skills bundle are curated plugins in `scripts/skill-generator/marketplace.base.json`.
+
+### Generating a Batch of Providers
+
+Each provider is generated on its own `feat/<provider>-webhooks` branch, and each branch only adds its own `skills/<provider>-webhooks/` directory and `providers/<name>.yaml` file. Branches in a batch don't share any files, so they merge into one batch branch, or into main one at a time, without conflicts.
+
+1. Add the batch's `providers/<name>.yaml` files (with `testScenario` and, if you like, a draft `catalog.summary`), commit and push. Then generate the batch with `--base-branch <that branch>`.
+2. Merge the per-provider branches. Run `./scripts/validate-provider.sh <skill>` for each skill and `./scripts/generate-skills.sh sync --validate` before pushing.
+3. After the batch merges to main, the Sync Catalog workflow opens the README/marketplace PR.
 
 **Validate locally before pushing:**
 
@@ -140,7 +163,7 @@ The generator registers the new skill in `.claude-plugin/marketplace.json` autom
 ./scripts/validate-provider.sh --all
 ```
 
-The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs, and also checks that `.claude-plugin/marketplace.json` is in sync with `skills/`.
+The CI workflow `validate-provider-pr.yml` runs this same validation automatically for new provider PRs, and also runs `sync --validate` to check every skill has the catalog sources the post-merge sync needs.
 
 ### Acceptance Thresholds
 
@@ -157,10 +180,10 @@ If a skill is accepted with issues, they're tracked in `skills/{provider}-webhoo
 
 ### Using a Configuration File
 
-For generating multiple skills or providing detailed documentation, use a YAML config:
+For generating multiple skills or providing detailed documentation, pass a config. `--config providers` reads the registry (one `providers/<name>.yaml` per provider); a single YAML file with a `providers:` list also works, e.g. a scratch batch file in `scripts/skill-generator/` (see `providers.example.yaml`):
 
 ```yaml
-# providers.yaml
+# scripts/skill-generator/providers.batch.yaml (gitignored)
 providers:
   - name: twilio
     displayName: Twilio
@@ -178,8 +201,8 @@ providers:
 ```
 
 ```bash
-# Generate all providers from config
-./scripts/generate-skills.sh generate --config providers.yaml --create-pr=draft
+# Generate every provider in the batch file
+./scripts/generate-skills.sh generate --config scripts/skill-generator/providers.batch.yaml --create-pr=draft
 ```
 
 ---
@@ -247,47 +270,46 @@ The review command will:
 
 ### 7. Update an Existing Skill
 
-Use the review command to improve skills already in the repository. The recommended workflow uses `providers.yaml` as the source of truth:
+Use the review command to improve skills already in the repository. The recommended workflow uses `providers/<name>.yaml` as the source of truth:
 
-**Step 1: Update providers.yaml with current documentation**
+**Step 1: Update the provider file with current documentation**
 
-First, ensure `providers.yaml` has accurate and up-to-date documentation URLs for the provider:
+First, ensure `providers/<name>.yaml` has accurate and up-to-date documentation URLs for the provider:
 
 ```yaml
-# providers.yaml (at repo root)
-providers:
-  - name: stripe
-    displayName: Stripe
-    docs:
-      webhooks: https://docs.stripe.com/webhooks
-      verification: https://docs.stripe.com/webhooks/signatures
-      events: https://docs.stripe.com/api/events/types
-    notes: >
-      Check for any new event types. Verify signature verification
-      is current with latest SDK changes.
+# providers/stripe.yaml
+name: stripe
+displayName: Stripe
+docs:
+  webhooks: https://docs.stripe.com/webhooks
+  verification: https://docs.stripe.com/webhooks/signatures
+  events: https://docs.stripe.com/api/events/types
+notes: >
+  Check for any new event types. Verify signature verification
+  is current with latest SDK changes.
 ```
 
 **Step 2: Run the review command**
 
 ```bash
 # Review and update a single provider
-./scripts/generate-skills.sh review stripe --config providers.yaml --create-pr
+./scripts/generate-skills.sh review stripe --config providers --create-pr
 
 # Review multiple providers at once
-./scripts/generate-skills.sh review stripe shopify --config providers.yaml --create-pr
+./scripts/generate-skills.sh review stripe shopify --config providers --create-pr
 
 # Review all providers (periodic maintenance)
-./scripts/generate-skills.sh review --config providers.yaml --create-pr
+./scripts/generate-skills.sh review --config providers --create-pr
 ```
 
 The review command will:
-1. Read provider documentation URLs from `providers.yaml`
+1. Read provider documentation URLs from `providers/<name>.yaml`
 2. Run all example tests to verify current state
 3. AI reviews the skill against the official documentation
 4. Fixes any issues found (up to 3 iterations)
 5. If within acceptance thresholds, creates a PR with the updates
 
-**Tip:** When a provider updates their webhook documentation or changes their API, update `providers.yaml` first, then run the review to propagate changes to the skill.
+**Tip:** When a provider updates their webhook documentation or changes their API, update `providers/<name>.yaml` first, then run the review to propagate changes to the skill.
 
 ### 8. Manual Review and PR Creation
 
@@ -324,7 +346,7 @@ Use these conventions so PRs are consistent and easy to review.
 
 1. **Summary** — One or two sentences: what this PR does (e.g. "Add webhook skill for Deepgram" or "Improvements to deepgram-webhooks skill").
 2. **What's included** — For new or large PRs: SKILL.md, references (overview, setup, verification), examples (Express, Next.js, FastAPI) with test frameworks.
-3. **Integration** — If applicable: README (Provider Skills table), `scripts/test-agent-scenario.sh` (scenario added).
+3. **Integration** — `providers/<name>.yaml` with `testScenario` and `catalog.summary`. README.md and marketplace.json are regenerated after merge.
 4. **Testing** — How to run tests, e.g.:
    - `cd skills/{provider}-webhooks/examples/express && npm test`
    - `cd skills/{provider}-webhooks/examples/nextjs && npm test`
@@ -374,7 +396,7 @@ rm -rf .worktrees && git worktree prune
 | `--no-worktree` | Generate in current directory (shorthand for `--working-dir .`) | Creates worktree |
 | `--create-pr [type]` | Push and create PR (`true` or `draft`) | No PR |
 | `--parallel <n>` | Max concurrent generations | All providers |
-| `--model <model>` | Model to use | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | The CLI tool's own default |
 | `--max-iterations <n>` | Max test/fix cycles | 3 |
 | `--base-branch <branch>` | Branch to create from | main |
 | `--skip-tests` | Skip test execution | false |
@@ -398,7 +420,7 @@ rm -rf .worktrees && git worktree prune
 | `--create-pr [type]` | Create PR with fixes | No PR |
 | `--max-iterations <n>` | Max fix cycles | 3 |
 | `--parallel <n>` | Max concurrent reviews | All providers |
-| `--model <model>` | Model to use | claude-opus-4-20250514 |
+| `--model <model>` | Model to use | The CLI tool's own default |
 | `--branch-prefix <prefix>` | Branch name prefix | improve |
 | `--config <file>` | YAML config file | — |
 | `--dry-run` | Preview without executing | false |

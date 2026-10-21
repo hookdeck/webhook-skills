@@ -1,0 +1,47 @@
+name: upollo
+displayName: Upollo
+docs:
+  webhooks: https://app.upollo.ai/docs/reference/webhooks
+  verification: https://app.upollo.ai/docs/reference/webhooks
+notes: >
+  Fraud / risk-detection platform. NOT Standard Webhooks. Webhooks are not a
+  subscription to named events — a delivery fires whenever Upollo FLAGS a user
+  (account sharing, multi-accounting, etc.) and carries an analysis object:
+  recommended action (short form CHALLENGE/DENY/PERMIT/OFFER/LOG), flags[] (each
+  with type, firstFlagged, mostRecentlyFlagged), eventType (short form e.g.
+  LOGIN), userInfo, deviceInfo. Dispatch on action + flags[].type, not an event
+  name. Signature: single Upollo-Signature header with two comma-separated parts
+  "t:<unix_ts>,s0:<hash>". s0 = HMAC-SHA512 (NOT SHA-256) of the RAW body keyed
+  with the webhook secret; recompute over the raw body and constant-time compare.
+  The timestamp t is delivered but is NOT part of the signed content. Digest
+  encoding is undocumented — the s0: prefix and 128-char values indicate lowercase
+  hex; handlers accept hex or base64 as a safety net until confirmed live. Secret
+  is generated when you add a webhook URL under Webhooks on the Access & Keys page
+  at app.upollo.ai (this is the webhook secret, NOT the API key). Retry behaviour
+  undocumented. SDKs: pip upollo-python (0.1.1, live) is a gRPC ANALYSIS client and
+  does NOT verify webhooks — verify manually; npm @upollo/web and @upollo/node are
+  documented but return 404 on the public registry. Test flags via email suffixes
+  +account_sharing (-> ACCOUNT_SHARING) and +multiple_accounts (-> MULTIPLE_ACCOUNTS).
+  Enum values come from Upollo's own protobuf definitions (Outcome, FlagType,
+  EventType) shipped in upollo-python.
+  *** OPERATIONAL STATUS UNVERIFIED (Jul 2026): app.upollo.ai / upollo.ai did NOT
+  resolve and the npm SDKs 404 at generation time. The scheme here is documented and
+  matched to Upollo's protobuf, but was NOT confirmed against a live delivery.
+  Confirm Upollo is operational and re-verify the encoding/payload before relying on
+  this skill. ***
+testScenario:
+  events:
+    - ACCOUNT_SHARING
+    - MULTIPLE_ACCOUNTS
+  prompt: >
+    Create a {framework} webhook handler for Upollo. Verify the Upollo-Signature
+    header (parse the comma-separated "t:<ts>,s0:<hash>" parts, recompute
+    HMAC-SHA512 of the RAW body keyed with the webhook secret, constant-time compare
+    against the s0 part). After verifying, dispatch on the recommended action
+    (CHALLENGE/DENY/PERMIT/OFFER/LOG) and iterate flags[].type such as
+    ACCOUNT_SHARING and MULTIPLE_ACCOUNTS, normalizing the OUTCOME_/EVENT_TYPE_/
+    FLAG_TYPE_ enum prefixes. Return 400 for an invalid signature and 200 on success.
+    If you use any skills to help with this, add a comment noting which skill(s) you
+    referenced.
+catalog:
+  summary: Verify Upollo fraud/risk webhook signatures (`Upollo-Signature`, `t:`/`s0:` HMAC-SHA512 over the raw body), react to flags like `ACCOUNT_SHARING` and `MULTIPLE_ACCOUNTS` and the recommended `action` (CHALLENGE/DENY/PERMIT)

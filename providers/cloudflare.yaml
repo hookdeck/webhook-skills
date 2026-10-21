@@ -1,0 +1,19 @@
+name: cloudflare
+displayName: Cloudflare
+docs:
+  webhooks: https://developers.cloudflare.com/notifications/get-started/configure-webhooks/
+  verification: https://developers.cloudflare.com/notifications/get-started/configure-webhooks/
+notes: >
+  Cloudflare Notifications generic webhooks (not Workers). No signature: the secret you enter
+  when creating the webhook is sent verbatim in the cf-webhook-auth header; reject requests where
+  it is missing or differs (constant-time compare). Payload has name, text, data, alert_type,
+  account_id, policy_id, ts.
+testScenario:
+  events:
+    - alert
+    - test
+  prompt: >
+    Add an endpoint to my {framework} app that receives Cloudflare Notifications webhooks.
+    Authenticate them with the cf-webhook-auth secret and handle the alert payload.
+catalog:
+  summary: Authenticate Cloudflare Notifications generic webhooks via the shared secret sent verbatim in the `cf-webhook-auth` header (no HMAC/signature; constant-time compare, reject if missing or different), handle alerts routed on `alert_type` such as `advanced_ddos_attack_l7_alert`, `health_check_status_notification`, `dedicated_ssl_certificate_event_type`, `access_custom_certificate_expiration_type`, `workers_alert` and the dashboard test message — not Cloudflare Workers

@@ -1,0 +1,31 @@
+name: shopline
+displayName: SHOPLINE
+docs:
+  webhooks: https://developer.shopline.com/docs/apps/api-instructions-for-use/webhooks/overview/
+  verification: https://developer.shopline.com/docs/apps/api-instructions-for-use/generate-and-verify-signatures/
+notes: >
+  E-commerce platform. The SHOPLINE Open Platform (developer.shopline.com, English) is a
+  Shopify clone. Webhooks are signed with HMAC-SHA256 of the RAW request body keyed by the
+  app secret (Developer Center > App credentials); the signature is in the
+  X-Shopline-Hmac-Sha256 header. *** ENCODING VERIFIED (Jul 2026, live products/create
+  delivery on api_version v20240601): the digest is LOWERCASE HEX, 64 chars — confirmed by
+  recomputing HMAC-SHA256 over the raw body with the app secret and matching the header
+  exactly. The docs' header example shows base64 (Shopify-style) and is MISLEADING; the
+  "stray" hex code sample is the correct one. Handlers may accept both as a safety net, but
+  expect hex. *** Constant-time compare against the raw un-parsed body. This is NOT the Standard
+  Webhooks spec. Other headers: X-Shopline-Topic, X-Shopline-Shop-Domain, X-Shopline-Shop-Id,
+  X-Shopline-Merchant-Id, X-Shopline-API-Version, X-Shopline-Webhook-Id (stable across resends,
+  use for idempotency). Topics use Shopify-style slash format (orders/create, products/update,
+  collect/delete). NOTE: api_version is REQUIRED in the webhook-creation body — omitting it
+  returns 400 "The required property 'api_version' is missing from the object"; deliveries echo
+  it back in X-Shopline-Api-Version. Subscribe via the Admin REST API
+  POST https://{handle}.myshopline.com/admin/openapi/{version}/webhooks.json with
+  {topic, address, api_version}. Gotchas: 5s response timeout; up to 19 retries over 48h then
+  the subscription is auto-removed. No official published SDK — verify manually.
+testScenario:
+  events:
+    - orders/create
+    - products/update
+    - collect/delete
+catalog:
+  summary: Verify SHOPLINE HMAC signatures (`X-Shopline-Hmac-Sha256`, base64 with hex fallback), handle orders/create, products/update, and collect/delete events

@@ -1,0 +1,18 @@
+name: marketo
+displayName: Marketo
+docs:
+  webhooks: https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/webhooks/webhooks
+  verification: https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/webhooks/webhooks
+notes: >
+  Adobe Marketo Engage webhooks called from Smart Campaign flow steps. URL, method, payload
+  template and headers are user-defined. No signature: add a custom header (Webhooks Actions >
+  Set Custom Header, e.g. X-Webhook-Secret) and compare it constant-time. Payload is whatever the
+  template sends using lead tokens.
+testScenario:
+  events:
+    - lead webhook
+  prompt: >
+    Add an endpoint to my {framework} app that receives Marketo webhooks from a Smart Campaign.
+    Authenticate them with a shared secret header and handle the JSON payload.
+catalog:
+  summary: Authenticate Marketo Smart Campaign webhooks (no signature; shared-secret custom header such as `X-Webhook-Secret`), handle lead_created and lead_updated payloads

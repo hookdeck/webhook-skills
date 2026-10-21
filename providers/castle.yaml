@@ -1,0 +1,15 @@
+name: castle
+displayName: Castle
+docs:
+  webhooks: https://docs.castle.io/docs/webhooks
+  verification: https://docs.castle.io/docs/webhooks#check-the-signature
+notes: >
+  Fraud/account security. X-Castle-Signature = base64 HMAC-SHA256 of the raw JSON body keyed with
+  the account's API secret (not a per-webhook secret). Payload has type: $policy.matched,
+  $list_item.created, $list_item.archived, $list_item.unarchived.
+testScenario:
+  events:
+    - $policy.matched
+    - $list_item.created
+catalog:
+  summary: Verify Castle webhook signatures (`X-Castle-Signature`, base64 HMAC-SHA256 of the raw body keyed with your API secret), handle `$policy.matched` and `$list_item.created`/`archived`/`unarchived` events

@@ -1,0 +1,16 @@
+name: launchdarkly
+displayName: LaunchDarkly
+docs:
+  webhooks: https://launchdarkly.com/docs/home/infrastructure/webhooks
+  verification: https://launchdarkly.com/docs/home/infrastructure/webhooks
+notes: >
+  Feature flags. Signing is optional: when a secret is defined on the webhook (auto-generated or
+  user-supplied), X-LD-Signature = HMAC-SHA256 hex digest of the raw payload keyed with that
+  secret. Tell users to set a secret, or deliveries are unsigned. Payload is an audit log entry
+  with kind (flag, segment, project, environment, ...), name, titleVerb and accesses.
+testScenario:
+  events:
+    - flag
+    - segment
+catalog:
+  summary: Verify LaunchDarkly webhook signatures (HMAC-SHA256 hex over raw body, `X-LD-Signature`, optional so set a secret), handle `flag`, `segment`, `project`, and `environment` audit log events

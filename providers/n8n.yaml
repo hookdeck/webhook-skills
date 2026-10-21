@@ -1,0 +1,20 @@
+name: n8n
+displayName: n8n
+docs:
+  webhooks: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+  verification: https://docs.n8n.io/integrations/builtin/credentials/httprequest/
+notes: >
+  Workflow automation; the skill covers receiving requests sent by n8n's HTTP Request node.
+  n8n does not sign requests. Authenticate with a shared secret: Header auth credential (you
+  choose header name and value, e.g. X-Webhook-Secret) or Bearer auth (Authorization: Bearer
+  <token>); compare the header against the expected value with a constant-time compare.
+  Generic Basic auth is also supported (decode and compare username/password constant-time).
+  Payload is whatever the workflow sends; suggest including an event field.
+testScenario:
+  events:
+    - workflow event
+  prompt: >
+    Add an endpoint to my {framework} app that receives requests from an n8n HTTP Request
+    node. Authenticate them with a shared secret header and handle the JSON payload.
+catalog:
+  summary: 'Authenticate requests sent by an n8n workflow''s HTTP Request node (unsigned: Header auth shared secret, Bearer or Basic auth compared in constant time), route workflow payloads on a user-defined event field'

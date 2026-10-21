@@ -1,0 +1,28 @@
+name: monday
+displayName: monday.com
+docs:
+  webhooks: https://developer.monday.com/api-reference/reference/webhooks
+  verification: https://developer.monday.com/apps/docs/integration-authorization
+notes: >
+  Webhooks are created per-board via the Webhooks integration in the board's
+  Integrations center or via the GraphQL create_webhook mutation (board_id, url, event,
+  optional config). On creation monday.com POSTs a JSON body with a "challenge" token;
+  the endpoint must echo it back as {"challenge": "<token>"} or registration fails.
+  Requests MAY carry a JWT in the Authorization header — verify with a JWT library
+  against the app's Signing Secret (board/integration webhooks) or Client Secret (app
+  lifecycle webhooks); JWT auth is only guaranteed for webhooks created with an
+  integration app token — webhooks created with a personal API token or the no-code
+  board integration may not include it, leaving the challenge handshake as the only
+  creation-time check. Does NOT follow the Standard Webhooks spec. Payload wraps data in
+  an "event" object (userId, boardId, pulseId, pulseName, columnValues, triggerTime,
+  subscriptionId, triggerUuid; subitem events add parentItemId/parentItemBoardId).
+  Retries: once a minute for 30 minutes.
+testScenario:
+  events:
+    - create_item
+    - change_column_value
+    - create_update
+sdks:
+  npm: [monday-sdk-js]
+catalog:
+  summary: Verify monday.com webhook JWTs and the challenge handshake, handle item, column value, and update events

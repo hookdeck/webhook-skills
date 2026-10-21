@@ -1,0 +1,31 @@
+name: nylas
+displayName: Nylas
+docs:
+  webhooks: https://developer.nylas.com/docs/v3/notifications/webhooks/
+  verification: https://developer.nylas.com/docs/cookbook/use-cases/build/verify-webhook-signatures/
+  events: https://developer.nylas.com/docs/v3/notifications/notification-schemas/
+notes: >
+  Signature: x-nylas-signature header (casing varies — treat as case-insensitive) =
+  hex-encoded HMAC-SHA256 of the RAW request body keyed with the webhook_secret
+  (unique per destination, returned on creation/rotation). Verify raw bytes before
+  JSON parsing; if Content-Encoding: gzip, verify against the compressed bytes. Not
+  Standard Webhooks; payloads follow CloudEvents 1.0 (specversion, type, source, id,
+  time, webhook_delivery_attempt, data.{application_id, grant_id, object}). Creation
+  (Dashboard or POST /v3/webhooks) triggers a challenge handshake: Nylas GETs
+  ?challenge=<value> and the endpoint must echo the exact value (nothing else) with
+  200 within 10s, no chunked encoding. Retries only on temporary errors
+  (408/429/502/503/504/507): 2 retries for 3 total attempts with exponential backoff,
+  last 10-20 min after first. 95% non-200s over 15 min marks the webhook "failing";
+  72h of that marks it "failed" — manual reactivation required. Official SDKs expose
+  webhook CRUD, rotateSecret, ipAddresses, and extractChallengeParameter, but NO
+  signature-verify helper — implement the HMAC check with constant-time comparison.
+testScenario:
+  events:
+    - message.created
+    - grant.expired
+    - calendar.updated
+sdks:
+  npm: [nylas]
+  pip: [nylas]
+catalog:
+  summary: Verify Nylas v3 webhook signatures (`x-nylas-signature`, HMAC-SHA256), answer the challenge handshake, handle CloudEvents-format grant, message, and calendar events

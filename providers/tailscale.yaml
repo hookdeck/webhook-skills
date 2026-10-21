@@ -1,0 +1,18 @@
+name: tailscale
+displayName: Tailscale
+docs:
+  webhooks: https://tailscale.com/kb/1213/webhooks
+  verification: https://tailscale.com/kb/1213/webhooks
+  example: https://github.com/tailscale/tailscale/blob/main/docs/webhooks/example.go
+notes: >
+  Header Tailscale-Webhook-Signature: t=<unix>,v1=<hex>. v1 = hex HMAC-SHA256 over
+  "<t>.<raw body>" keyed with the webhook secret as a raw UTF-8 string (shown once at creation,
+  e.g. tskey-webhook-xxxxx). Only scheme v1 exists. Reject stale timestamps (5 minutes). Body is a
+  JSON array of events with type, e.g. nodeCreated, nodeNeedsApproval, nodeApproved,
+  nodeKeyExpiringInOneDay, nodeDeleted, policyUpdate, userCreated, test.
+testScenario:
+  events:
+    - nodeCreated
+    - policyUpdate
+catalog:
+  summary: Verify Tailscale webhook signatures (`Tailscale-Webhook-Signature` `t=<unix>,v1=<hex>`, HMAC-SHA256 hex over `{t}.{raw_body}` keyed with the `tskey-webhook-` secret, 5-minute freshness check), handle batched JSON-array events like nodeCreated, nodeNeedsApproval, nodeApproved, nodeKeyExpiringInOneDay, nodeDeleted, policyUpdate, and userCreated

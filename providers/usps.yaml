@@ -1,0 +1,32 @@
+name: usps
+displayName: USPS
+docs:
+  webhooks: https://developers.usps.com/subscriptions-trackingv3r2
+  verification: https://developers.usps.com/subscriptions-trackingv3r2
+  events: https://developers.usps.com/trackingv3
+notes: >
+  United States Postal Service Subscriptions - Tracking API (v3.2). You create a
+  subscription (POST /subscriptions) with a listenerURL, filterProperties (by
+  Mailer ID or trackingNumber), an eventType filter (currently only ALL_UPDATES),
+  and an optional 32-char secret; USPS then POSTs notifications to the listener.
+  Subscription management uses OAuth2 client-credentials (token endpoint
+  https://api.usps.com/oauth2/v3/token) but the OAuth token is NOT sent on
+  delivery. Per-message verification is OPTIONAL: supply a 32-char secret and USPS
+  sends Base64(HMAC-SHA256(secret, timestamp + payload)) in the X-HMAC header
+  (deprecated alias hmac-header); and/or IP-allowlist the USPS source IPs. The
+  notification envelope is {subscriptionId, subscriptionType (e.g. "TRACKING"),
+  timestamp, payload, links}; payload is a STRINGIFIED JSON that must be parsed,
+  and the HMAC is computed over the envelope timestamp concatenated with the raw
+  payload string (do not re-serialize). No official SDK. No documented delivery
+  retry; an unreachable listener is set to SUSPENDED, and subscriptions auto-delete
+  after 30 days of inactivity (warning at 25). Max 10 listener URLs per Home CRID.
+  The "event types" are really two payload schemas: Tracking Subscription Event
+  (tracking summary + trackingEvents) and Scan Event Extract Subscription Event (a
+  single raw scan record). Common tracking statuses inside the tracking payload:
+  Out for Delivery, Delivered, Available for Pickup.
+testScenario:
+  events:
+    - Tracking Subscription Event
+    - Scan Event Extract Subscription Event
+catalog:
+  summary: Verify USPS tracking webhook signatures (HMAC-SHA256 Base64 over `timestamp + payload`, `X-HMAC`), create tracking subscriptions, handle delivery events
