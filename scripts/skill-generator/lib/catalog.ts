@@ -30,7 +30,6 @@ const README_PATH = 'README.md';
 const MANIFEST_PATH = '.claude-plugin/marketplace.json';
 const BASE_PATH = 'scripts/skill-generator/marketplace.base.json';
 
-// Keep in sync with the markers in migrations/split-providers.py
 export const README_BEGIN =
   '<!-- BEGIN GENERATED: provider-skills. Edit providers/<name>.yaml (catalog.summary), not this table. -->';
 export const README_END = '<!-- END GENERATED: provider-skills -->';
