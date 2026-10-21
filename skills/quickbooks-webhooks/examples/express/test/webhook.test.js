@@ -122,6 +122,17 @@ describe('POST /webhooks/quickbooks', () => {
     expect(res.body).toEqual({ received: true, count: 1 });
   });
 
+  it('returns 200 when the CloudEvents notification uses a non-JSON content type', async () => {
+    const body = JSON.stringify([cloudEvent('qbo.invoice.created.v1')]);
+    const res = await request(app)
+      .post('/webhooks/quickbooks')
+      .set('Content-Type', 'application/cloudevents-batch+json')
+      .set('intuit-signature', generateQuickBooksSignature(body, verifierToken))
+      .send(body);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true, count: 1 });
+  });
+
   it('handles events for multiple companies in one notification', async () => {
     const body = JSON.stringify([
       cloudEvent('qbo.invoice.created.v1', { intuitaccountid: '111' }),

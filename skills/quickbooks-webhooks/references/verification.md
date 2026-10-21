@@ -87,7 +87,7 @@ return hash.equals(headers.get("intuit-signature"));
 - **Base64, not hex.** Compare against `digest('base64')`, not `digest('hex')`.
 - **Wrong environment token.** Development and Production have different Verifier Tokens. A sandbox token fails every production delivery.
 - **Header case.** The header is `intuit-signature`. Node and FastAPI lowercase incoming header names; Next.js `headers.get()` doesn't care about case.
-- **Content type.** Intuit sends `application/json; charset=utf-8`. `express.raw({ type: 'application/json' })` matches it. A stricter matcher might not, and then `req.body` is empty.
+- **Content type.** Intuit doesn't document the `Content-Type` of CloudEvents deliveries, and it may not be `application/json`. Match every content type when reading the raw body (`express.raw({ type: '*/*' })`); a matcher that misses leaves `req.body` empty and every request fails verification.
 - **Body-size limits.** Intuit sets no size limit, and big batches can exceed small server defaults. A truncated body fails verification.
 - **Rejections stall delivery.** Intuit retries non-2xx responses and may hold back later events until the first is acknowledged. A broken verifier stops the whole stream, not just one event.
 - **Array, not object.** CloudEvents payloads are a top-level JSON **array**. Code that reads `body.eventNotifications` only sees the legacy shape.

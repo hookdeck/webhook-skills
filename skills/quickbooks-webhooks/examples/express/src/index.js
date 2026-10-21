@@ -122,13 +122,15 @@ function handleEvent(event) {
   }
 }
 
-// QuickBooks webhook endpoint - must use raw body for signature verification
+// QuickBooks webhook endpoint - must use raw body for signature verification.
+// type: '*/*' captures the raw bytes whatever Content-Type Intuit sends
+// (CloudEvents deliveries may not use application/json).
 app.post(
   '/webhooks/quickbooks',
-  express.raw({ type: 'application/json', limit: '10mb' }),
+  express.raw({ type: '*/*', limit: '10mb' }),
   (req, res) => {
     const signature = req.headers['intuit-signature'];
-    // req.body is a Buffer when the content type matched express.raw()
+    // req.body is a Buffer of the raw request bytes
     const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
 
     if (!signature) {
