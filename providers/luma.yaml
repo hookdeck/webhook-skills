@@ -3,6 +3,7 @@ displayName: 'Luma'
 docs:
   webhooks: https://help.luma.com/p/webhooks
   verification: https://help.luma.com/p/webhooks
+  events: https://docs.luma.com/reference/webhooks
 notes: >
   Luma events platform (lu.ma), not Luma AI. Headers Webhook-Signature: "t=<unix seconds>,v1=<hex>",
   plus Webhook-Id and Webhook-Timestamp. v1 = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the
@@ -12,13 +13,15 @@ notes: >
   svix libraries and do not strip or base64-decode the whsec_ prefix. Hookdeck retries and replays
   keep the original timestamp, so any timestamp freshness check must be opt-in via
   LUMA_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
-  tailscale-webhooks skills do. Event types (from the docs' list): Calendar Event Added, Calendar
-  Person Subscribed/Unsubscribed, Event Created/Updated/Canceled, Guest Registered/Updated/Refunded,
-  Ticket Registered; use the exact type strings from the docs/payload. Express examples must read
-  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  tailscale-webhooks skills do. Body is {"type": "<event>", "data": {...}}. Event type strings are
+  dotted (docs.luma.com): calendar.event.added, calendar.event.submitted, calendar.person.subscribed,
+  calendar.person.unsubscribed, event.created, event.updated, event.canceled, guest.registered,
+  guest.updated, guest.refunded, ticket.registered. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'guest registered'
-    - 'event created'
+    - guest.registered
+    - ticket.registered
+    - event.created
 catalog:
-  summary: 'Verify Luma webhook signatures (`Webhook-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle calendar, event, guest and ticket events'
+  summary: 'Verify Luma webhook signatures (`Webhook-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle guest.registered, ticket.registered, event.created and calendar.person.unsubscribed events'

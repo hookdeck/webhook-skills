@@ -3,6 +3,7 @@ displayName: 'Fourthwall'
 docs:
   webhooks: https://docs.fourthwall.com/webhooks/getting-started
   verification: https://docs.fourthwall.com/webhooks/signature-verification
+  events: https://docs.fourthwall.com/api-reference/order-events/order-placed
 notes: >
   Creator commerce. Shop webhooks: header X-Fourthwall-Hmac-SHA256 = base64 HMAC-SHA256 of the raw
   body keyed with the shop's secret key (UUID-like, e.g. e3f93c7c-c92b-4b8f-a9b1-5b70e0891abc) as
@@ -15,5 +16,6 @@ testScenario:
   events:
     - 'ORDER_PLACED'
     - 'DONATION'
+    - 'SUBSCRIPTION_PURCHASED'
 catalog:
   summary: 'Verify Fourthwall shop webhook signatures (`X-Fourthwall-Hmac-SHA256`, HMAC-SHA256 base64 of the raw body), handle events like `ORDER_PLACED`, `ORDER_UPDATED`, `DONATION` and `SUBSCRIPTION_PURCHASED`'

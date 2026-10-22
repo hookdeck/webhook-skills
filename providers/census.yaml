@@ -3,16 +3,20 @@ displayName: 'Census (Fivetran Activations)'
 docs:
   webhooks: https://fivetran.com/docs/activations/syncs/sync-monitoring/sync-lifecycle-webhooks
   verification: https://fivetran.com/docs/activations/syncs/sync-monitoring/sync-lifecycle-webhooks
+  events: https://fivetran.com/docs/activations/syncs/sync-monitoring/sync-lifecycle-webhooks
 notes: >
-  Reverse ETL; Census is now Fivetran Activations (getcensus.com redirects to fivetran.com). Sync
-  lifecycle webhooks. Header X-Signature: standard base64 HMAC-SHA256 of the raw body keyed with the
-  one-time secret shown at creation (raw bytes). Distinct from the fivetran-webhooks skill (REST API
-  webhooks, X-Fivetran-Signature-256 hex). Events: sync.triggered, sync.started, sync.completed,
-  sync.failed, sync.alert (plus a test event). Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type verifies.
+  Reverse ETL; Census is now Fivetran Activations (getcensus.com redirects to fivetran.com).
+  Sync lifecycle webhooks. X-Signature = standard base64 HMAC-SHA256 of the raw body keyed with
+  the one-time secret shown at webhook creation (raw bytes, no prefix, no timestamp). Distinct
+  from the fivetran-webhooks skill (REST API webhooks, X-Fivetran-Signature-256, hex). Events are
+  in the JSON body (event): sync.triggered, sync.started, sync.completed (status ok or emergency),
+  sync.success, sync.failed, sync.alert.raised, sync.alert.resolved. The docs describe no test
+  event. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
 testScenario:
   events:
-    - 'sync.completed'
-    - 'sync.failed'
+    - sync.completed
+    - sync.failed
+    - sync.alert.raised
 catalog:
-  summary: 'Verify Census (Fivetran Activations) sync lifecycle webhook signatures (`X-Signature`, HMAC-SHA256 base64 of the raw body), handle `sync.started`, `sync.completed`, `sync.failed` and `sync.alert` events'
+  summary: Verify Census (Fivetran Activations) sync webhook signatures (`X-Signature`, base64 HMAC-SHA256 of the raw body), handle sync.completed, sync.failed and sync.alert.raised events

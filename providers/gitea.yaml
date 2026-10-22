@@ -3,6 +3,7 @@ displayName: 'Gitea'
 docs:
   webhooks: https://docs.gitea.com/usage/webhooks
   verification: https://docs.gitea.com/usage/webhooks#validating-deliveries
+  events: https://docs.gitea.com/usage/webhooks#events
 notes: >
   Self-hosted Git service. Header X-Gitea-Signature: bare hex HMAC-SHA256 of the raw request body
   keyed with the webhook Secret (no prefix). Gitea also sends GitHub-compatible X-Hub-Signature-256
@@ -15,5 +16,6 @@ testScenario:
   events:
     - 'push'
     - 'pull_request'
+    - 'issues'
 catalog:
   summary: 'Verify Gitea webhook signatures (`X-Gitea-Signature`, HMAC-SHA256 hex of the raw body), handle `X-Gitea-Event` events like `push`, `pull_request`, `issues` and `release`'

@@ -1,17 +1,32 @@
 name: flagsmith
-displayName: 'Flagsmith'
+displayName: Flagsmith
 docs:
   webhooks: https://docs.flagsmith.com/third-party-integrations/webhook
-  verification: https://docs.flagsmith.com/third-party-integrations/webhook
+  verification: https://docs.flagsmith.com/third-party-integrations/webhook#webhook-signature
+  events: https://docs.flagsmith.com/administration-and-security/governance-and-compliance/audit-logs
 notes: >
-  Feature flags. Secret is optional and user-set. Header X-Flagsmith-Signature: hex HMAC-SHA256 of
-  the raw body (UTF-8) keyed with the secret (UTF-8). Same scheme for environment, identity and
-  audit-log webhooks. Payload {data, event_type}: FLAG_UPDATED, FLAG_DELETED, AUDIT_LOG_CREATED.
-  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
-  verifies.
+  Feature flag and remote config platform (Cloud or self-hosted). Three webhook
+  types: environment (flag changes), audit log (organisation level) and identity
+  (flag evaluations for an identity). The secret is optional and user-set; when
+  set, X-Flagsmith-Signature is the hex HMAC-SHA256 of the raw request body
+  (UTF-8) keyed with the secret (UTF-8). No timestamp, no prefix, not Standard
+  Webhooks. Same scheme for all three types. Environment and audit-log payloads
+  are {event_type, data} with FLAG_UPDATED, FLAG_DELETED, AUDIT_LOG_CREATED
+  (NEW_VERSION_PUBLISHED exists in source but not the docs). Identity payloads
+  have no event_type ({identity, flags, traits, segments}). Express examples
+  read the raw body with express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - 'FLAG_UPDATED'
-    - 'AUDIT_LOG_CREATED'
+    - FLAG_UPDATED
+    - FLAG_DELETED
+    - AUDIT_LOG_CREATED
 catalog:
-  summary: 'Verify Flagsmith webhook signatures (`X-Flagsmith-Signature`, HMAC-SHA256 hex of the raw body), handle `FLAG_UPDATED`, `FLAG_DELETED` and `AUDIT_LOG_CREATED` events'
+  summary: Verify Flagsmith webhook signatures (`X-Flagsmith-Signature`, HMAC-SHA256), handle FLAG_UPDATED, FLAG_DELETED and AUDIT_LOG_CREATED events
+  marketplace:
+    description: Receive and verify Flagsmith webhooks. Use when setting up Flagsmith webhook handlers, debugging X-Flagsmith-Signature verification, or handling FLAG_UPDATED, FLAG_DELETED and AUDIT_LOG_CREATED events and identity webhooks.
+    keywords:
+    - webhooks
+    - flagsmith
+    - feature-flags
+    - remote-config
+    - audit-log

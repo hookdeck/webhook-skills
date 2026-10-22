@@ -2,16 +2,17 @@ name: seatable
 displayName: 'SeaTable'
 docs:
   webhooks: https://seatable.com/help/create-delete-webhook-seatable/
+  events: https://seatable.com/help/webhook-data-structure/
   verification: https://seatable.com/help/webhook-secret-key-seatable/
 notes: >
   No-code database. Secret key is optional; users must set one or no signature header is sent.
   Header X-Seatable-Signature: "sha256=<hex>" HMAC-SHA256 of the raw body keyed with the secret as
-  UTF-8. Payload has event (e.g. update) and data with op_type such as create_row, modify_row,
-  delete_row. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  UTF-8. Payload has event (always update) and data with op_type: insert_row, modify_row,
+  delete_row (one docs sample shows create_row, which the examples also accept). Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type verifies.
 testScenario:
   events:
-    - 'create_row'
+    - 'insert_row'
     - 'modify_row'
 catalog:
-  summary: 'Verify SeaTable webhook signatures (`X-Seatable-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle base change events like `create_row` and `modify_row`'
+  summary: 'Verify SeaTable webhook signatures (`X-Seatable-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle row change events like `insert_row`, `modify_row` and `delete_row`'

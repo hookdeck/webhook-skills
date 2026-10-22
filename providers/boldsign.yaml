@@ -3,6 +3,7 @@ displayName: 'BoldSign'
 docs:
   webhooks: https://developers.boldsign.com/webhooks/introduction/
   verification: https://developers.boldsign.com/webhooks/verify-webhook-events/
+  events: https://developers.boldsign.com/webhooks/available-events/
 notes: >
   E-signature. Header X-BoldSign-Signature: "t=<unix seconds>, s0=<hex>" (note the space after the
   comma); during key rollover also s1=<signature from old key>. s0 = HMAC-SHA256 hex over "<t>.<raw
@@ -10,12 +11,14 @@ notes: >
   Accept a match on s0 (or s1 if present). Hookdeck retries and replays keep the original timestamp,
   so any timestamp freshness check must be opt-in via BOLDSIGN_TIMESTAMP_TOLERANCE_SECONDS (default
   0 = off), as the buildkite-webhooks and tailscale-webhooks skills do. Setup sends a Verification
-  POST (event.eventType "Verification") that needs a 200 within 10s. Events (event.eventType)
+  POST (header X-BoldSign-Event: Verification, event.eventType "Verification") that needs a 200
+  within 10s. Failed deliveries retry at 1m, 15m, 45m, 1h, 8h, 24h. Events (event.eventType)
   include Sent, Viewed, Signed, Completed, Declined, Revoked, Expired. Express examples must read
   the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'Signed'
     - 'Completed'
+    - 'Declined'
 catalog:
   summary: 'Verify BoldSign webhook signatures (`X-BoldSign-Signature` `t=<ts>, s0=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle e-signature events like Sent, Signed, Completed and Declined'

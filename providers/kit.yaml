@@ -3,6 +3,7 @@ displayName: 'Kit (ConvertKit)'
 docs:
   webhooks: https://developers.kit.com/webhooks/overview
   verification: https://developers.kit.com/webhooks/verifying-signatures
+  events: https://developers.kit.com/webhooks/event-types
 notes: >
   Creator email marketing (formerly ConvertKit). Only new webhook endpoints (/v4/webhook_endpoints,
   app.kit.com/webhooks) are signed; legacy /v4/webhooks deliveries carry no signature. Header
@@ -12,11 +13,16 @@ notes: >
   use the standardwebhooks or svix libraries and do not strip or base64-decode the whsec_ prefix.
   Hookdeck retries and replays keep the original timestamp, so any timestamp freshness check must be
   opt-in via KIT_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
-  tailscale-webhooks skills do. Events (type) include subscriber.created, subscriber.activated,
-  subscriber.unsubscribed, subscriber.tag_added, purchase.created. Express examples must read the
-  raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  tailscale-webhooks skills do. Body is an envelope {delivery_id, events: [{id, type, created,
+  data}]} with 1-100 events; dedupe on event id. Events (type) include subscriber.created,
+  subscriber.activated, subscriber.unsubscribed, subscriber.bounced, subscriber.complained,
+  subscriber.subscribed_to_form, subscriber.tag_added, subscriber.tag_removed. The docs list no
+  purchase.created; subscriber.product_purchased is Planned and cannot be subscribed to yet.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
 testScenario:
   events:
     - 'subscriber.created'
+    - 'subscriber.tag_added'
 catalog:
-  summary: 'Verify Kit (ConvertKit) webhook signatures (`X-Kit-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle subscriber and purchase events'
+  summary: 'Verify Kit (ConvertKit) webhook signatures (`X-Kit-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle subscriber.created, subscriber.activated, subscriber.unsubscribed and subscriber.tag_added events'

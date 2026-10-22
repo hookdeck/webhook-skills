@@ -3,6 +3,7 @@ displayName: 'Breezy HR'
 docs:
   webhooks: https://developer.breezy.hr/docs/webhooks
   verification: https://developer.breezy.hr/docs/webhook-security
+  events: https://developer.breezy.hr/docs/webhook-events
 notes: >
   Recruiting/ATS (webhooks on Pro plans). Header X-Hook-Signature: bare hex HMAC-SHA256 of the raw
   JSON body. The secret is whsec_-prefixed but used WHOLE as a UTF-8 key (docs:

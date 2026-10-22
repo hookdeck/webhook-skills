@@ -3,6 +3,7 @@ displayName: 'Toggl Track'
 docs:
   webhooks: https://engineering.toggl.com/docs/track/webhooks_start/
   verification: https://engineering.toggl.com/docs/track/webhooks_start/validating_received_events/
+  events: https://engineering.toggl.com/docs/track/webhooks/event_filters/
 notes: >
   Time tracking (Toggl Track webhooks). Header X-Webhook-Signature-256: "sha256=<hex>" HMAC-SHA256
   of the full raw body keyed with the subscription secret (user-set or auto-generated). Docs test
@@ -15,7 +16,8 @@ notes: >
   with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'ping'
-    - 'time_entry created'
+    - ping
+    - time_entry.created
+    - project.updated
 catalog:
-  summary: 'Verify Toggl Track webhook signatures (`X-Webhook-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle PING validation and entity events like time_entry created and project updated'
+  summary: Verify Toggl Track webhook signatures (`X-Webhook-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle PING subscription validation and time_entry.created and project.updated events

@@ -3,6 +3,7 @@ displayName: 'Acuity Scheduling'
 docs:
   webhooks: https://developers.acuityscheduling.com/docs/webhooks
   verification: https://developers.acuityscheduling.com/docs/webhooks#verifying-webhook-requests
+  events: https://developers.acuityscheduling.com/docs/webhooks
 notes: >
   Appointment scheduling (Squarespace). Bodies are application/x-www-form-urlencoded (action, id,
   calendarID, appointmentTypeID). Header X-Acuity-Signature: base64 HMAC-SHA256 of the raw body
@@ -13,6 +14,7 @@ notes: >
 testScenario:
   events:
     - 'scheduled'
+    - 'rescheduled'
     - 'canceled'
 catalog:
   summary: 'Verify Acuity Scheduling webhook signatures (`X-Acuity-Signature`, HMAC-SHA256 base64 of the raw form-encoded body keyed with the API key), handle appointment actions like `scheduled`, `rescheduled`, `canceled` and `changed`'

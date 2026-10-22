@@ -7,9 +7,9 @@ docs:
 notes: >
   Web scraping API. Header X-Firecrawl-Signature: "sha256=<hex>" HMAC-SHA256 of the raw request
   body, keyed with the account webhook secret (Account settings > Advanced; one secret signs all
-  webhooks). Events (type): crawl.started, crawl.page, crawl.completed, crawl.failed,
+  webhooks). Events (type): crawl.started, crawl.page, crawl.completed,
   batch_scrape.started, batch_scrape.page, batch_scrape.completed, extract.started,
-  extract.completed, extract.failed. Express examples must read the raw body with express.raw({
+  extract.completed, extract.failed, plus agent.* and monitor.*. The docs list no crawl.failed. Express examples must read the raw body with express.raw({
   type: '*/*' }) so any content type verifies.
 testScenario:
   events:

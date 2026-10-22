@@ -12,5 +12,6 @@ testScenario:
   events:
     - 'incident'
     - 'change_event'
+    - 'signals_alerts'
 catalog:
-  summary: 'Verify FireHydrant webhook signatures (`fh-signature`, HMAC-SHA256 hex of the raw body), handle incident, change event and alert payloads'
+  summary: 'Verify FireHydrant webhook signatures (`fh-signature`, HMAC-SHA256 hex of the raw body), handle incident, change_event and signals_alerts payloads'

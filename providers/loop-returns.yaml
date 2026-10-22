@@ -3,15 +3,19 @@ displayName: 'Loop Returns'
 docs:
   webhooks: https://docs.loopreturns.com/webhook-reference/getting-started
   verification: https://docs.loopreturns.com/webhook-reference/validation
+  events: https://docs.loopreturns.com/webhook-reference/getting-started#available-triggers
 notes: >
   Shopify returns platform (Loop Returns, not loop.com freight; the loop-webhooks skill is a
   different vendor). Header X-Loop-Signature: standard base64 HMAC-SHA256 of the raw request body,
-  keyed with the webhook secret from Loop Admin > Developer Tools. Payloads carry topic and trigger;
-  events include return.created, return.updated, return.closed, label.created. Express examples must
+  keyed with the webhook secret from Loop Admin > Developer Tools. No timestamp in the signature.
+  Payloads carry topic and trigger (the event name lives in the body, not a header); triggers include
+  return.created, return.updated, return.closed, return.processing.failed, label.created,
+  label.updated, restock.requested, giftcard.requested, shipment.processed. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'return.created'
     - 'return.closed'
+    - 'label.created'
 catalog:
-  summary: 'Verify Loop Returns webhook signatures (`X-Loop-Signature`, HMAC-SHA256 base64 of the raw body), handle returns events like `return.created`, `return.updated` and `return.closed`'
+  summary: 'Verify Loop Returns webhook signatures (`X-Loop-Signature`, HMAC-SHA256 base64 of the raw body), handle return.created, return.updated, return.closed and label.created events'

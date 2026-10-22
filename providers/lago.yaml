@@ -3,6 +3,7 @@ displayName: 'Lago'
 docs:
   webhooks: https://docs.getlago.com/guide/webhooks
   verification: https://docs.getlago.com/api-reference/webhooks/format---signature
+  events: https://docs.getlago.com/api-reference/webhooks/messages
 notes: >
   Open-source usage billing (cloud and self-hosted). HMAC mode only: when the webhook endpoint is
   created with signature algorithm hmac, X-Lago-Signature = base64 HMAC-SHA256 of the raw body keyed

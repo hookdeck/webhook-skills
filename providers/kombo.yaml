@@ -6,12 +6,14 @@ docs:
 notes: >
   Unified HRIS/ATS/LMS API. Header X-Kombo-Signature: base64url (WITHOUT padding) HMAC-SHA256 of the
   raw JSON body (Kombo sends it with two-space indentation; never re-serialize) keyed with the Kombo
-  Webhook Secret's UTF-8 bytes (not decoded). Events (type) include data-changed, sync-finished,
-  connection-flow.integration-created, integration-state-changed. Express examples must read the raw
-  body with express.raw({ type: '*/*' }) so any content type verifies.
+  Webhook Secret's UTF-8 bytes (not decoded). Events (type) per the docs: data-changed, sync-finished
+  (deprecated), integration-created, integration-deleted, integration-state-changed,
+  connection-flow-failed, issue-status-changed, assessment:order-received. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'data-changed'
-    - 'sync-finished'
+    - 'integration-state-changed'
+    - 'integration-created'
 catalog:
-  summary: 'Verify Kombo webhook signatures (`X-Kombo-Signature`, unpadded base64url HMAC-SHA256 of the raw body), handle `data-changed`, `sync-finished` and integration lifecycle events'
+  summary: 'Verify Kombo webhook signatures (`X-Kombo-Signature`, unpadded base64url HMAC-SHA256 of the raw body), handle data-changed, integration-created and integration-state-changed events'

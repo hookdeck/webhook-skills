@@ -2,6 +2,7 @@ name: bird
 displayName: 'Bird'
 docs:
   webhooks: https://bird.com/docs/guides/webhooks
+  events: https://bird.com/docs/guides/email/events
   verification: https://bird.com/docs/guides/webhooks#verify-signatures
 notes: >
   Omnichannel messaging platform (formerly MessageBird). The current bird.com API follows Standard
@@ -18,6 +19,7 @@ notes: >
 testScenario:
   events:
     - 'email.delivered'
+    - 'email.bounced'
     - 'whatsapp.received'
 catalog:
   summary: 'Verify Bird (formerly MessageBird) Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 with a `whsec_` secret), handle channel events like `email.delivered`, `email.bounced` and `whatsapp.received`'

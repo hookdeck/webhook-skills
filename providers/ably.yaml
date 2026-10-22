@@ -15,5 +15,6 @@ testScenario:
   events:
     - 'channel.message'
     - 'channel.lifecycle'
+    - 'channel.presence'
 catalog:
   summary: 'Verify Ably webhook signatures (`X-Ably-Signature`, HMAC-SHA256 base64 of the raw body keyed with the API key''s secret part), handle `channel.message`, `channel.presence` and `channel.lifecycle` events'

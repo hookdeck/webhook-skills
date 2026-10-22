@@ -1,13 +1,16 @@
 name: descope
 displayName: 'Descope'
 docs:
+  events: https://docs.descope.com/audit-trails-and-integrations/audit-events
   webhooks: https://docs.descope.com/connectors/connector-configuration-guides/network/audit-webhook
   verification: https://docs.descope.com/connectors/connector-hmac-usage
 notes: >
   CIAM/auth platform, Audit Webhook connector. HMAC Secret is optional on the connector; users must
   set one. Header x-descope-webhook-s256: base64 HMAC-SHA256 of the body (Descope signs the JSON
-  string it sends, which is the body bytes; use the raw body). Payload is an audit event with action
-  (e.g. LoginSucceed, UserModified, UserCreated) and actor, project, data fields. Flow HTTP
+  string it sends, which is the body bytes; use the raw body). Body is a JSON array of up to 100
+  audit events (not a single object), each with action (e.g. LoginSucceed, UserModified, UserCreated,
+  Change Password), actorId, userId, projectId, loginIds, occurred (epoch ms number) and data fields.
+  Delivery is batched and delayed by minutes. Flow HTTP
   connectors expect a synchronous response body and are not covered. Express examples must read the
   raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
@@ -15,4 +18,4 @@ testScenario:
     - 'LoginSucceed'
     - 'UserModified'
 catalog:
-  summary: 'Verify Descope Audit Webhook connector signatures (`x-descope-webhook-s256`, HMAC-SHA256 base64 of the body), handle audit events like `LoginSucceed` and `UserModified`'
+  summary: 'Verify Descope Audit Webhook connector signatures (`x-descope-webhook-s256`, HMAC-SHA256 base64 of the body), handle batched audit events like `LoginSucceed`, `UserModified` and `Change Password`'

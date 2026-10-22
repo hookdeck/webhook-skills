@@ -3,17 +3,19 @@ displayName: 'Sendcloud'
 docs:
   webhooks: https://sendcloud.dev/api/v3/webhooks/index
   verification: https://sendcloud.dev/api/v3/webhooks/index
+  events: https://sendcloud.dev/api/v3/webhooks/parcel-status-changed
 notes: >
   Shipping platform. Header Sendcloud-Signature: bare hex HMAC-SHA256 over the entire raw body,
   keyed with the integration Secret Key or Webhook Signature Key as UTF-8. Docs test vector: body
   {"key": "value"}, secret secretkey ->
   1eed4b3d41f4653ac64fd56f1bf1cbfd349e4482cbc11dff7134bd93e5da4b0a. Payload has an action field,
-  e.g. parcel_status_changed, integration_connected, integration_updated, integration_deleted.
+  one of parcel_status_changed, return_created, integration_connected, integration_updated, integration_deleted.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   verifies.
 testScenario:
   events:
     - 'parcel_status_changed'
+    - 'return_created'
     - 'integration_updated'
 catalog:
-  summary: 'Verify Sendcloud webhook signatures (`Sendcloud-Signature`, HMAC-SHA256 hex of the raw body keyed with the integration secret), handle actions like `parcel_status_changed` and `integration_updated`'
+  summary: 'Verify Sendcloud webhook signatures (`Sendcloud-Signature`, HMAC-SHA256 hex of the raw body keyed with the integration secret), handle `parcel_status_changed`, `return_created` and `integration_updated` actions'

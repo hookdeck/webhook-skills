@@ -8,11 +8,12 @@ notes: >
   HMAC-SHA256 (PHP hash_hmac default) of the raw JSON body, keyed with the webhook's secret as a
   UTF-8 string; no prefix, no timestamp. The secret is per webhook and is returned by the webhooks
   API (e.g. "secret": "ybmcD7PQ9R"). Events include subscriber.created, subscriber.updated,
-  subscriber.unsubscribed, campaign.sent; batchable webhooks deliver an events array. Express
+  subscriber.unsubscribed, campaign.sent; flat payloads name the event in `event`, nested ones in `type`; batchable webhooks (required for campaign.open, campaign.click, subscriber.deleted) deliver an events array. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'subscriber.created'
+    - 'subscriber.unsubscribed'
     - 'campaign.sent'
 catalog:
   summary: 'Verify MailerLite webhook signatures (`Signature` header, HMAC-SHA256 hex of the raw body keyed with the webhook secret), handle subscriber and campaign events like `subscriber.created`, `subscriber.unsubscribed` and `campaign.sent`'

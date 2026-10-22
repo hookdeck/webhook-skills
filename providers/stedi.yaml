@@ -3,21 +3,27 @@ displayName: 'Stedi'
 docs:
   webhooks: https://www.stedi.com/docs/healthcare/event-destinations-message-handling
   verification: https://www.stedi.com/docs/healthcare/event-destinations-message-handling#verify-authenticity-and-receipt-time
+  events: https://www.stedi.com/docs/healthcare/event-destinations-event-types
 notes: >
-  Healthcare EDI/clearinghouse API, event destinations. Follows Standard Webhooks and the docs
-  verify with the standardwebhooks library: webhook-id (msg_{UUID}), webhook-timestamp,
-  webhook-signature ("v1,<base64>"). signingSecret is whsec_-prefixed (^whsec_[A-Za-z0-9+/=]+$, GET
-  /destinations/{id}/secret). Standard Webhooks: use the standardwebhooks library (Node:
-  standardwebhooks; Python: standardwebhooks) or an equivalent manual check; signed content is
-  "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64, "v1,<sig>" entries space-delimited (several
-  during rotation); key = base64-decode of the secret after the whsec_ prefix. The page's manual
-  steps say signed_payload = timestamp + '.' + body (no id); that contradicts the spec and the
-  library they use, so follow id.timestamp.body and mention it. Legacy Stedi webhooks are not
-  covered. Events include transaction.processed.v2, file.failed.v2, enrollment.activated. Express
-  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  Healthcare EDI/clearinghouse API, event destinations (not the Legacy webhooks). Follows Standard
+  Webhooks: webhook-id (msg_{UUID}), webhook-timestamp (when the event was created, not delivered),
+  webhook-signature ("v1,<base64>", several space-delimited entries during secret rotation).
+  signingSecret is whsec_-prefixed (GET /destinations/{id}/secret). Signed content is
+  "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64; key = base64-decode of the secret after the
+  whsec_ prefix. The docs' manual steps say signed_payload = timestamp + '.' + body (no id); that
+  contradicts the spec and the standardwebhooks library the docs use, so follow id.timestamp.body.
+  Thin events (type, resource, relatedResources): fetch the resource through the Stedi API. Event
+  types per the docs: event.ping, enrollment.activated, enrollment.rejected, enrollment.updated,
+  enrollment.task.assigned, enrollment.task.completed, enrollment.task.deleted, file.processed,
+  file.failed, transaction.processed, app.installed, app.uninstalled. No ".v2" suffixes appear in
+  the docs. Retries (5m, 30m, 2h, 8h, 24h, 48h) reuse the creation timestamp, so the
+  standardwebhooks library's fixed 5-minute tolerance rejects them; examples verify manually with
+  an optional tolerance. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
 testScenario:
   events:
-    - 'transaction.processed.v2'
+    - 'transaction.processed'
     - 'enrollment.activated'
+    - 'file.failed'
 catalog:
-  summary: 'Verify Stedi event destination webhooks (Standard Webhooks, `webhook-signature` HMAC-SHA256 base64 with a `whsec_` secret), handle healthcare events like `transaction.processed.v2` and `enrollment.activated`'
+  summary: 'Verify Stedi event destination webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256 base64 with a `whsec_` secret), handle healthcare events like `transaction.processed`, `file.failed` and `enrollment.activated`'
