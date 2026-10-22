@@ -44,7 +44,7 @@ function verifyFireHydrant(rawBody, signature, secret) {
 
 ```python
 expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-valid = hmac.compare_digest(signature, expected)
+valid = hmac.compare_digest(signature.encode(), expected.encode())
 ```
 
 In Express, read the body with `express.raw({ type: '*/*' })` so the signature verifies

@@ -31,13 +31,13 @@ function verifyStediWebhook(rawBody, headers, secret, toleranceSeconds = 0) {
 
   const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
   const expected = crypto.createHmac('sha256', key)
-    .update(`${id}.${timestamp}.`).update(rawBody).digest();
+    .update(`${id}.${timestamp}.`).update(rawBody).digest('base64');
 
   return header.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
-    const received = Buffer.from(sig || '', 'base64');
+    const received = Buffer.from(sig || '');
     return version === 'v1' && received.length === expected.length &&
-      crypto.timingSafeEqual(received, expected);
+      crypto.timingSafeEqual(received, Buffer.from(expected));
   });
 }
 ```
@@ -52,7 +52,7 @@ def verify_stedi_webhook(raw_body: bytes, msg_id: str, timestamp: str, header: s
     expected = hmac.new(key, f"{msg_id}.{timestamp}.".encode() + raw_body, hashlib.sha256).digest()
     for entry in header.split(" "):
         version, _, sig = entry.partition(",")
-        if version == "v1" and hmac.compare_digest(base64.b64decode(sig), expected):
+        if version == "v1" and hmac.compare_digest(base64.b64decode(sig, validate=True), expected):
             return True
     return False
 ```

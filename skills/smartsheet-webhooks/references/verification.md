@@ -33,7 +33,7 @@ const ok = header.toLowerCase() === expected; // use timingSafeEqual in real cod
 
 ```python
 expected = hmac.new(shared_secret.encode(), raw_body, hashlib.sha256).hexdigest()
-ok = hmac.compare_digest(header.lower(), expected)
+ok = hmac.compare_digest(header.lower().encode(), expected.encode())
 ```
 
 Smartsheet's official SDKs do not include a webhook verification helper, so this is manual in all frameworks.

@@ -23,7 +23,7 @@ def verify_firecrawl_webhook(raw_body: bytes, signature_header: str | None, secr
         return False
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(sig, expected)
+    return hmac.compare_digest(sig.encode(), expected.encode())
 
 
 @app.post("/webhooks/firecrawl")

@@ -50,7 +50,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
     if not signature or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(signature.encode(), expected.encode())
 ```
 
 Gitea can send JSON (`application/json`) or form-encoded (`application/x-www-form-urlencoded`, JSON in a `payload` field). The signature covers the raw body either way, so read the raw bytes for any content type (in Express: `express.raw({ type: '*/*' })`) and parse only after verifying.

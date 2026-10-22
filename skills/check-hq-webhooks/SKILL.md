@@ -49,7 +49,7 @@ import hmac, hashlib
 
 def verify(raw_body: bytes, signature_header: str, key: str) -> bool:
     expected = hmac.new(key.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, (signature_header or "").strip().lower())
+    return hmac.compare_digest(expected.encode(), (signature_header or "").strip().lower().encode())
 ```
 
 In Express read the body with `express.raw({ type: '*/*' })` so any content type verifies against the exact bytes.

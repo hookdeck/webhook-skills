@@ -17,7 +17,7 @@ function verifyFirecrawlWebhook(rawBody: string, signatureHeader: string | null,
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
   try {
-    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'));
+    return crypto.timingSafeEqual(Buffer.from(sig.toLowerCase()), Buffer.from(expected));
   } catch {
     return false;
   }

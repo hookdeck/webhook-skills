@@ -55,15 +55,15 @@ function verifyStediWebhook(
   const expected = crypto
     .createHmac('sha256', key)
     .update(`${id}.${timestamp}.${rawBody}`, 'utf8')
-    .digest();
+    .digest('base64');
 
   // Several "v1,<sig>" entries are present while a rotated secret is still valid.
   return signatureHeader.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
     if (version !== 'v1' || !sig) return false;
     try {
-      const received = Buffer.from(sig, 'base64');
-      return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+      const received = Buffer.from(sig);
+      return received.length === expected.length && crypto.timingSafeEqual(received, Buffer.from(expected));
     } catch {
       return false;
     }

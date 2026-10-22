@@ -24,7 +24,7 @@ function verify(rawBody, signatureHeader, secret) {
   if (algo !== 'sha256' || !sig) return false;
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   try {
-    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'));
+    return crypto.timingSafeEqual(Buffer.from(sig.toLowerCase()), Buffer.from(expected));
   } catch {
     return false;
   }
@@ -41,7 +41,7 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
     if algo != "sha256" or not sig:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(sig, expected)
+    return hmac.compare_digest(sig.encode(), expected.encode())
 ```
 
 ## Common Gotchas

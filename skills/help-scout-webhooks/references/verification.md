@@ -41,7 +41,7 @@ def verify_helpscout_webhook(raw_body: bytes, signature_header: str, secret: str
     expected = base64.b64encode(
         hmac.new(secret.encode(), raw_body, hashlib.sha1).digest()
     ).decode()
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 ```
 
 ### Test vector (from the Help Scout docs)

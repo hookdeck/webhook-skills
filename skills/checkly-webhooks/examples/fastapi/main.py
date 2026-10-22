@@ -16,7 +16,7 @@ def verify_checkly_signature(raw_body: bytes, signature: str | None, secret: str
     if not signature or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(signature.encode(), expected.encode())
 
 
 @app.post("/webhooks/checkly")

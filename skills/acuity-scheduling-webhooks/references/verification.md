@@ -34,7 +34,7 @@ def verify_acuity_signature(raw_body: bytes, signature: str | None, api_key: str
     if not signature:
         return False
     digest = hmac.new(api_key.encode(), raw_body, hashlib.sha256).digest()
-    return hmac.compare_digest(base64.b64encode(digest).decode(), signature)
+    return hmac.compare_digest(base64.b64encode(digest), signature.encode())
 ```
 
 ## Common Gotchas

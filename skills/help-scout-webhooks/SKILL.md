@@ -53,7 +53,7 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
     expected = base64.b64encode(
         hmac.new(secret.encode(), raw_body, hashlib.sha1).digest()
     ).decode()
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 ```
 
 Test vector from the Help Scout docs: secret `your secret key` and body `{"ticket":{"id":"1","number":"2"},"customer":{"id":"1","fname":"Jackie","lname":"Chan","email":"jackie.chan@somewhere.com","emails":["jackie.chan@somewhere.com"]}}` produce `I1KlvGppYqvFTJgJ9jezdQMDiyI=`.

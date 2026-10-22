@@ -25,7 +25,7 @@ def verify_breezy_signature(raw_body: bytes, signature: Optional[str], secret: O
         return False
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature.strip().lower())
+    return hmac.compare_digest(expected.encode(), signature.strip().lower().encode())
 
 
 async def verified_event(request: Request) -> dict:

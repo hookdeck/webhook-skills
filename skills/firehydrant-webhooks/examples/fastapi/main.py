@@ -22,7 +22,7 @@ def verify_firehydrant_webhook(raw_body: bytes, signature: str | None, secret: s
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
 
     # Timing-safe comparison
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(signature.encode(), expected.encode())
 
 
 @app.post("/webhooks/firehydrant")

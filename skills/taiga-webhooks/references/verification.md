@@ -27,7 +27,7 @@ crypto.timingSafeEqual(Buffer.from(signature.toLowerCase()), Buffer.from(expecte
 
 ```python
 expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha1).hexdigest()
-hmac.compare_digest(signature.lower(), expected)
+hmac.compare_digest(signature.lower().encode(), expected.encode())
 ```
 
 ## Common Gotchas

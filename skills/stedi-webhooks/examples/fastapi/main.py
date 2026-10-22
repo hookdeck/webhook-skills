@@ -75,7 +75,7 @@ def verify_stedi_webhook(
         if version != "v1" or not sig:
             continue
         try:
-            received = base64.b64decode(sig)
+            received = base64.b64decode(sig, validate=True)
         except (binascii.Error, ValueError):
             continue
         if hmac.compare_digest(received, expected):

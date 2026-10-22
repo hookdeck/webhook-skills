@@ -30,8 +30,8 @@ function verifyTerraformSignature(rawBody, signatureHeader, token) {
 
   // Timing-safe comparison; guard against length/format mismatches.
   try {
-    const received = Buffer.from(signatureHeader, 'hex');
-    const expectedBuf = Buffer.from(expected, 'hex');
+    const received = Buffer.from(signatureHeader.toLowerCase());
+    const expectedBuf = Buffer.from(expected);
     return received.length === expectedBuf.length && crypto.timingSafeEqual(received, expectedBuf);
   } catch {
     return false;

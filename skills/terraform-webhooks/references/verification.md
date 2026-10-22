@@ -35,8 +35,8 @@ function verifyTerraformSignature(rawBody, signatureHeader, token) {
   if (!signatureHeader || !token) return false;
   const expected = crypto.createHmac('sha512', token).update(rawBody).digest('hex');
   try {
-    const received = Buffer.from(signatureHeader, 'hex');
-    const expectedBuf = Buffer.from(expected, 'hex');
+    const received = Buffer.from(signatureHeader.toLowerCase());
+    const expectedBuf = Buffer.from(expected);
     return received.length === expectedBuf.length && crypto.timingSafeEqual(received, expectedBuf);
   } catch {
     return false;
@@ -53,7 +53,7 @@ def verify_terraform_signature(raw_body: bytes, signature_header: str, token: st
     if not signature_header or not token:
         return False
     expected = hmac.new(token.encode(), raw_body, hashlib.sha512).hexdigest()
-    return hmac.compare_digest(signature_header.lower(), expected)
+    return hmac.compare_digest(signature_header.lower().encode(), expected.encode())
 ```
 
 ## Common Gotchas

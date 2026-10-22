@@ -30,7 +30,7 @@ def verify_acuity_signature(raw_body: bytes, signature: str | None, api_key: str
     expected = base64.b64encode(digest).decode("ascii")
 
     # Timing-safe comparison
-    return hmac.compare_digest(expected, signature)
+    return hmac.compare_digest(expected.encode(), signature.encode())
 
 
 @app.post("/webhooks/acuity-scheduling")

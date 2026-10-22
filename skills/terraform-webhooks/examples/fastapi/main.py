@@ -31,7 +31,7 @@ def verify_terraform_signature(raw_body: bytes, signature_header: Optional[str],
     ).hexdigest()
 
     # Timing-safe comparison (case-insensitive hex).
-    return hmac.compare_digest(signature_header.lower(), expected)
+    return hmac.compare_digest(signature_header.lower().encode(), expected.encode())
 
 
 def get_triggers(payload: dict) -> list:

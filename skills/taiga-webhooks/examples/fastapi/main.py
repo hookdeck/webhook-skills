@@ -29,7 +29,7 @@ def verify_taiga_webhook(raw_body: bytes, signature: str | None, secret: str | N
     ).hexdigest()
 
     # Timing-safe comparison
-    return hmac.compare_digest(signature.lower(), expected_signature)
+    return hmac.compare_digest(signature.lower().encode(), expected_signature.encode())
 
 
 @app.post("/webhooks/taiga")

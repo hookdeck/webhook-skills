@@ -50,7 +50,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
     if not signature or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(signature.encode(), expected.encode())
 ```
 
 The body is a template you write, so the content type can be anything. In Express use `express.raw({ type: '*/*' })`, not `express.json()`. Re-serializing parsed JSON changes whitespace and breaks the digest.

@@ -49,7 +49,7 @@ import hashlib, hmac
 
 def verify_flagsmith_signature(raw_body: bytes, signature_header: str, secret: str) -> bool:
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature_header.strip().lower())
+    return hmac.compare_digest(expected.encode(), signature_header.strip().lower().encode())
 ```
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

@@ -67,7 +67,7 @@ def verify_fourthwall_signature(raw_body: bytes, signature_header: str, secret: 
         return False
     digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     expected = base64.b64encode(digest).decode("utf-8")
-    return hmac.compare_digest(expected, signature_header)
+    return hmac.compare_digest(expected.encode(), signature_header.encode())
 ```
 
 ## Common Gotchas

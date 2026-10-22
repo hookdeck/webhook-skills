@@ -52,7 +52,7 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
     expected = base64.b64encode(
         hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
     ).decode()
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 ```
 
 > **Raw body**: read the body as bytes before any JSON parsing, and accept any content type (Express: `express.raw({ type: '*/*' })`).

@@ -22,7 +22,7 @@ def verify_check_webhook(raw_body: bytes, signature_header: Optional[str], key: 
         return False
 
     expected = hmac.new(key.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature_header.strip().lower())
+    return hmac.compare_digest(expected.encode(), signature_header.strip().lower().encode())
 
 
 @app.post("/webhooks/check-hq")

@@ -7,10 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // in the x-descope-webhook-s256 header.
 function verifyDescopeSignature(rawBody: string, signatureHeader: string | null, secret: string): boolean {
   if (!signatureHeader) return false;
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  const received = Buffer.from(signatureHeader, 'base64');
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
+  const received = Buffer.from(signatureHeader);
   if (received.length !== expected.length) return false; // timingSafeEqual needs equal length
-  return crypto.timingSafeEqual(received, expected);
+  return crypto.timingSafeEqual(received, Buffer.from(expected));
 }
 
 export async function POST(request: NextRequest) {

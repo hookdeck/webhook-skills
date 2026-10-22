@@ -42,11 +42,9 @@ def verify_kombo_webhook(raw_body: bytes, signature_header: "str | None", secret
     if not signature_header:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
-    try:
-        provided = base64.urlsafe_b64decode(signature_header + "=" * (-len(signature_header) % 4))
-    except Exception:
-        return False
-    return hmac.compare_digest(provided, expected)
+    # Compare base64url text (Kombo strips the padding) so trailing junk can't decode to a match
+    expected_b64 = base64.urlsafe_b64encode(expected).rstrip(b"=")
+    return hmac.compare_digest(signature_header.rstrip("=").encode(), expected_b64)
 ```
 
 FastAPI: `await request.body()`.

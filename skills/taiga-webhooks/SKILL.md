@@ -50,7 +50,7 @@ def verify(raw_body: bytes, signature: str | None, secret: str | None) -> bool:
     if not signature or not secret:
         return False
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha1).hexdigest()
-    return hmac.compare_digest(signature.lower(), expected)
+    return hmac.compare_digest(signature.lower().encode(), expected.encode())
 ```
 
 Read the body as raw bytes (`express.raw({ type: '*/*' })` in Express) so verification works whatever `Content-Type` arrives.

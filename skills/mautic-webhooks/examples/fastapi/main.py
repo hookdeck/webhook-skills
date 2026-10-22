@@ -23,7 +23,7 @@ def verify_mautic_webhook(raw_body: bytes, signature_header: str | None, secret:
         hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     ).decode("utf-8")
 
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 
 
 def handle_event(event_type: str, event: dict) -> None:

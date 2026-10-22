@@ -37,7 +37,7 @@ def verify_kustomer_signature(raw_body: bytes, signature_header: str | None, sec
     if not signature_header or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 ```
 
 ## Common Gotchas

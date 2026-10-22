@@ -23,7 +23,7 @@ def verify_helpscout_webhook(raw_body: bytes, signature_header: str | None, secr
         hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha1).digest()
     ).decode("utf-8")
 
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(signature_header.encode(), expected.encode())
 
 
 @app.post("/webhooks/help-scout")

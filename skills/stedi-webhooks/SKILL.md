@@ -45,12 +45,12 @@ function verifyStediWebhook(rawBody, headers, secret) {
   const expected = crypto.createHmac('sha256', key)
     .update(`${headers['webhook-id']}.${headers['webhook-timestamp']}.`)
     .update(rawBody)
-    .digest();
+    .digest('base64');
   return headers['webhook-signature'].split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
-    const received = Buffer.from(sig || '', 'base64');
+    const received = Buffer.from(sig || '');
     return version === 'v1' && received.length === expected.length &&
-      crypto.timingSafeEqual(received, expected);
+      crypto.timingSafeEqual(received, Buffer.from(expected));
   });
 }
 ```

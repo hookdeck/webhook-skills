@@ -24,7 +24,7 @@ def verify_flagsmith_signature(raw_body: bytes, signature_header: Optional[str],
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
     # compare_digest is timing-safe; it returns False on length mismatch
-    return hmac.compare_digest(expected, signature_header.strip().lower())
+    return hmac.compare_digest(expected.encode(), signature_header.strip().lower().encode())
 
 
 @app.post("/webhooks/flagsmith")

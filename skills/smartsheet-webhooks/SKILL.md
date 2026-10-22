@@ -55,7 +55,7 @@ import hmac, hashlib
 
 def verify(raw_body: bytes, header: str, shared_secret: str) -> bool:
     expected = hmac.new(shared_secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest((header or "").strip().lower(), expected)
+    return hmac.compare_digest((header or "").strip().lower().encode(), expected.encode())
 ```
 
 Smartsheet's SDKs have no webhook verification helper, so verification is manual in every example. There is no timestamp in the signed content.

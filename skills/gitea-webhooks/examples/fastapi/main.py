@@ -24,7 +24,7 @@ def verify_gitea_webhook(raw_body: bytes, signature: str | None, secret: str | N
     ).hexdigest()
 
     # Use timing-safe comparison
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(signature.encode(), expected.encode())
 
 
 def parse_payload(raw_body: bytes, content_type: str) -> dict:

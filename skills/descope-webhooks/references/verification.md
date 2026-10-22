@@ -22,10 +22,10 @@ const crypto = require('crypto');
 
 function verifyDescopeSignature(rawBody, signatureHeader, secret) {
   if (!rawBody || !signatureHeader || !secret) return false;
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  const received = Buffer.from(signatureHeader, 'base64');
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
+  const received = Buffer.from(signatureHeader);
   if (received.length !== expected.length) return false;
-  return crypto.timingSafeEqual(received, expected);
+  return crypto.timingSafeEqual(received, Buffer.from(expected));
 }
 ```
 
