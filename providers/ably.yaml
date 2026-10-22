@@ -1,0 +1,19 @@
+name: ably
+displayName: 'Ably'
+docs:
+  webhooks: https://ably.com/docs/platform/integrations/webhooks
+  verification: https://ably.com/docs/platform/integrations/webhooks#signed
+notes: >
+  Realtime messaging. Signing is opt-in ('Sign with key' on the integration rule). Header
+  X-Ably-Signature: base64 HMAC-SHA256 of the raw body bytes; X-Ably-Key names the API key used. The
+  HMAC key is the keyValue part of the Ably API key (after the ':' in appId.keyId:keyValue), not the
+  whole key; say so prominently. Enveloped payloads have items[] with source channel.message,
+  channel.presence, channel.lifecycle, channel.occupancy; bodies can be msgpack, signed either way.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'channel.message'
+    - 'channel.lifecycle'
+catalog:
+  summary: 'Verify Ably webhook signatures (`X-Ably-Signature`, HMAC-SHA256 base64 of the raw body keyed with the API key''s secret part), handle `channel.message`, `channel.presence` and `channel.lifecycle` events'

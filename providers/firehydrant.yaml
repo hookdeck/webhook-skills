@@ -1,0 +1,16 @@
+name: firehydrant
+displayName: 'FireHydrant'
+docs:
+  webhooks: https://docs.firehydrant.com/docs/webhooks
+  verification: https://docs.firehydrant.com/docs/webhooks#verifying-requests
+notes: >
+  Incident management. Header fh-signature: bare hex HMAC-SHA256 of the raw request body keyed with
+  the user-set webhook Secret. Payload has data and event {operation, resource_type}; resource types
+  include incident, change_event, signals_alerts. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'incident'
+    - 'change_event'
+catalog:
+  summary: 'Verify FireHydrant webhook signatures (`fh-signature`, HMAC-SHA256 hex of the raw body), handle incident, change event and alert payloads'

@@ -1,0 +1,20 @@
+name: waha
+displayName: 'WAHA (WhatsApp HTTP API)'
+docs:
+  webhooks: https://waha.devlike.pro/docs/how-to/events/
+  verification: https://waha.devlike.pro/docs/how-to/events/
+notes: >
+  Self-hosted WhatsApp HTTP API. HMAC is optional per session webhook (config.webhooks[].hmac.key);
+  users must set it. Header X-Webhook-Hmac: HMAC-SHA512 hex of the raw body keyed with the key as
+  UTF-8; X-Webhook-Hmac-Algorithm: sha512. Docs test vector: body
+  {"event":"message","session":"default","engine":"WEBJS"}, key my-secret-key ->
+  208f8a55dde9e05519e898b10b89bf0d0b3b0fdf11fdbf09b6b90476301b98d8097c462b2b17a6ce93b6b47a136cf2e78a33a63f6752c2c1631777076153fa89.
+  Events: message, message.any, message.ack, message.reaction, session.status, group.v2.join,
+  presence.update. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'message'
+    - 'session.status'
+catalog:
+  summary: 'Verify WAHA (WhatsApp HTTP API) webhook signatures (`X-Webhook-Hmac`, HMAC-SHA512 hex of the raw body), handle events like `message`, `message.ack` and `session.status`'

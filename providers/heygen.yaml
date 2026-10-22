@@ -1,0 +1,20 @@
+name: heygen
+displayName: 'HeyGen'
+docs:
+  webhooks: https://developers.heygen.com/docs/webhooks
+  verification: https://developers.heygen.com/docs/webhooks.md
+notes: >
+  AI video generation (v3 webhook endpoints API). Header literally named signature: bare hex
+  HMAC-SHA256 of the raw request body, no timestamp. The endpoint secret looks like whsec_k7x9m2...
+  but this is NOT Standard Webhooks: key = the full secret string including whsec_, as UTF-8 (docs:
+  os.environ["HEYGEN_WEBHOOK_SECRET"].encode()). The secret is used whole as a UTF-8 HMAC key. Do
+  NOT use the standardwebhooks or svix libraries and do not strip or base64-decode the whsec_
+  prefix. Events include avatar_video.success, avatar_video.fail, video_translate.success,
+  video_translate.fail. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type verifies.
+testScenario:
+  events:
+    - 'avatar_video.success'
+    - 'avatar_video.fail'
+catalog:
+  summary: 'Verify HeyGen webhook signatures (`signature` header, HMAC-SHA256 hex of the raw body keyed with the whole `whsec_` secret; not Standard Webhooks), handle `avatar_video.success` and `avatar_video.fail` events'

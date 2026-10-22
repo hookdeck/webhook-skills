@@ -1,0 +1,19 @@
+name: fourthwall
+displayName: 'Fourthwall'
+docs:
+  webhooks: https://docs.fourthwall.com/webhooks/getting-started
+  verification: https://docs.fourthwall.com/webhooks/signature-verification
+notes: >
+  Creator commerce. Shop webhooks: header X-Fourthwall-Hmac-SHA256 = base64 HMAC-SHA256 of the raw
+  body keyed with the shop's secret key (UUID-like, e.g. e3f93c7c-c92b-4b8f-a9b1-5b70e0891abc) as
+  UTF-8. Platform App webhooks use X-Fourthwall-Hmac-Apps-SHA256 with the app's HMAC key and are not
+  covered. Payload {id, webhookId, shopId, type, apiVersion, createdAt, data}; types include
+  ORDER_PLACED, ORDER_UPDATED, GIFT_PURCHASE, DONATION, SUBSCRIPTION_PURCHASED, PRODUCT_CREATED.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'ORDER_PLACED'
+    - 'DONATION'
+catalog:
+  summary: 'Verify Fourthwall shop webhook signatures (`X-Fourthwall-Hmac-SHA256`, HMAC-SHA256 base64 of the raw body), handle events like `ORDER_PLACED`, `ORDER_UPDATED`, `DONATION` and `SUBSCRIPTION_PURCHASED`'

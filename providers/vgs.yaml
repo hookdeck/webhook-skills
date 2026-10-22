@@ -1,0 +1,20 @@
+name: vgs
+displayName: 'VGS (Very Good Security)'
+docs:
+  webhooks: https://docs.verygoodsecurity.com/enterprise-platform/developer-resources/webhook-notifications
+  verification: https://docs.verygoodsecurity.com/enterprise-platform/developer-resources/webhook-notifications#webhook-signatures
+notes: >
+  Data tokenization platform, webhook notifications. Header vgs-signature: "t=<unix
+  seconds>,v0=<hex>" (scheme v0). v0 = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the
+  per-integration secret as UTF-8. VGS says retries reuse the original timestamp, so a narrow window
+  rejects retries. Hookdeck retries and replays keep the original timestamp, so any timestamp
+  freshness check must be opt-in via VGS_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the
+  buildkite-webhooks and tailscale-webhooks skills do. Events include route.updated, route.delete,
+  vault.created, user.logged_in, user.permissions_updated. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'route.updated'
+    - 'vault.created'
+catalog:
+  summary: 'Verify VGS (Very Good Security) webhook signatures (`vgs-signature` `t=<ts>,v0=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle vault, route and user events like `route.updated` and `vault.created`'

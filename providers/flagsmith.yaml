@@ -1,0 +1,17 @@
+name: flagsmith
+displayName: 'Flagsmith'
+docs:
+  webhooks: https://docs.flagsmith.com/third-party-integrations/webhook
+  verification: https://docs.flagsmith.com/third-party-integrations/webhook
+notes: >
+  Feature flags. Secret is optional and user-set. Header X-Flagsmith-Signature: hex HMAC-SHA256 of
+  the raw body (UTF-8) keyed with the secret (UTF-8). Same scheme for environment, identity and
+  audit-log webhooks. Payload {data, event_type}: FLAG_UPDATED, FLAG_DELETED, AUDIT_LOG_CREATED.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'FLAG_UPDATED'
+    - 'AUDIT_LOG_CREATED'
+catalog:
+  summary: 'Verify Flagsmith webhook signatures (`X-Flagsmith-Signature`, HMAC-SHA256 hex of the raw body), handle `FLAG_UPDATED`, `FLAG_DELETED` and `AUDIT_LOG_CREATED` events'

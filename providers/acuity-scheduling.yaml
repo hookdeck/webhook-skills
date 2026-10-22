@@ -1,0 +1,18 @@
+name: acuity-scheduling
+displayName: 'Acuity Scheduling'
+docs:
+  webhooks: https://developers.acuityscheduling.com/docs/webhooks
+  verification: https://developers.acuityscheduling.com/docs/webhooks#verifying-webhook-requests
+notes: >
+  Appointment scheduling (Squarespace). Bodies are application/x-www-form-urlencoded (action, id,
+  calendarID, appointmentTypeID). Header X-Acuity-Signature: base64 HMAC-SHA256 of the raw body
+  keyed with the account API key (the main admin's API key for static webhooks, your user's API key
+  for dynamic webhooks), not a separate webhook secret. Actions: scheduled, rescheduled, canceled,
+  changed, order.completed. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type verifies.
+testScenario:
+  events:
+    - 'scheduled'
+    - 'canceled'
+catalog:
+  summary: 'Verify Acuity Scheduling webhook signatures (`X-Acuity-Signature`, HMAC-SHA256 base64 of the raw form-encoded body keyed with the API key), handle appointment actions like `scheduled`, `rescheduled`, `canceled` and `changed`'

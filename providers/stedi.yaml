@@ -1,0 +1,23 @@
+name: stedi
+displayName: 'Stedi'
+docs:
+  webhooks: https://www.stedi.com/docs/healthcare/event-destinations-message-handling
+  verification: https://www.stedi.com/docs/healthcare/event-destinations-message-handling#verify-authenticity-and-receipt-time
+notes: >
+  Healthcare EDI/clearinghouse API, event destinations. Follows Standard Webhooks and the docs
+  verify with the standardwebhooks library: webhook-id (msg_{UUID}), webhook-timestamp,
+  webhook-signature ("v1,<base64>"). signingSecret is whsec_-prefixed (^whsec_[A-Za-z0-9+/=]+$, GET
+  /destinations/{id}/secret). Standard Webhooks: use the standardwebhooks library (Node:
+  standardwebhooks; Python: standardwebhooks) or an equivalent manual check; signed content is
+  "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64, "v1,<sig>" entries space-delimited (several
+  during rotation); key = base64-decode of the secret after the whsec_ prefix. The page's manual
+  steps say signed_payload = timestamp + '.' + body (no id); that contradicts the spec and the
+  library they use, so follow id.timestamp.body and mention it. Legacy Stedi webhooks are not
+  covered. Events include transaction.processed.v2, file.failed.v2, enrollment.activated. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'transaction.processed.v2'
+    - 'enrollment.activated'
+catalog:
+  summary: 'Verify Stedi event destination webhooks (Standard Webhooks, `webhook-signature` HMAC-SHA256 base64 with a `whsec_` secret), handle healthcare events like `transaction.processed.v2` and `enrollment.activated`'

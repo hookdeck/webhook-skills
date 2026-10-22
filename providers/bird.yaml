@@ -1,0 +1,23 @@
+name: bird
+displayName: 'Bird'
+docs:
+  webhooks: https://bird.com/docs/guides/webhooks
+  verification: https://bird.com/docs/guides/webhooks#verify-signatures
+notes: >
+  Omnichannel messaging platform (formerly MessageBird). The current bird.com API follows Standard
+  Webhooks: webhook-id, webhook-timestamp, webhook-signature ("v1,<base64 HMAC-SHA256>", possibly
+  several space-delimited during 24h rotation). Secret is whsec_-prefixed, returned once when the
+  webhook subscription is created. Standard Webhooks: use the standardwebhooks library (Node:
+  standardwebhooks; Python: standardwebhooks) or an equivalent manual check; signed content is
+  "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64, "v1,<sig>" entries space-delimited (several
+  during rotation); key = base64-decode of the secret after the whsec_ prefix. Say that the legacy
+  MessageBird API (MessageBird-Signature / MessageBird-Signature-JWT) is a different scheme and not
+  covered. Events include email.delivered, email.bounced, whatsapp.received, preference.granted.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'email.delivered'
+    - 'whatsapp.received'
+catalog:
+  summary: 'Verify Bird (formerly MessageBird) Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 with a `whsec_` secret), handle channel events like `email.delivered`, `email.bounced` and `whatsapp.received`'

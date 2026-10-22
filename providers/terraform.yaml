@@ -1,0 +1,21 @@
+name: terraform
+displayName: 'HCP Terraform'
+docs:
+  webhooks: https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/notifications
+  verification: https://developer.hashicorp.com/terraform/cloud-docs/api-docs/notification-configurations#notification-authenticity
+notes: >
+  HCP Terraform (formerly Terraform Cloud) and Terraform Enterprise workspace notifications, generic
+  (webhook) destination type only. Header X-TFE-Notification-Signature: HMAC-SHA512 hex of the raw
+  body, keyed with the notification configuration's token (optional; users must set one or no
+  signature is sent). Enabling a configuration (or the verify API) sends a verification request that
+  only needs a 2xx (notifications[].trigger = "verification"). Payload has payload_version,
+  notification_configuration_id, run_id, workspace_name and a notifications array whose trigger
+  values include run:created, run:planning, run:needs_attention, run:applying, run:completed,
+  run:errored, assessment:drifted, assessment:failed. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'run:completed'
+    - 'run:errored'
+catalog:
+  summary: 'Verify HCP Terraform / Terraform Enterprise notification signatures (`X-TFE-Notification-Signature`, HMAC-SHA512 hex of the raw body keyed with the notification token), handle run triggers like `run:completed`, `run:errored` and `run:needs_attention`'

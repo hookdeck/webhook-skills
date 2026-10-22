@@ -1,0 +1,18 @@
+name: checkly
+displayName: 'Checkly'
+docs:
+  webhooks: https://www.checklyhq.com/docs/integrations/alerts/webhooks/
+  verification: https://www.checklyhq.com/docs/integrations/alerts/webhooks/#webhook-secrets
+notes: >
+  Synthetic monitoring alert channel. Secret is optional; users must set one. Header
+  x-checkly-signature: hex HMAC-SHA256 of the raw (rendered) body. The body is a user-defined
+  Handlebars template, so the signature covers the rendered body; x-checkly-timestamp is sent but
+  not signed. Alert types: ALERT_FAILURE, ALERT_RECOVERY, ALERT_DEGRADED (default template fields
+  alertType, checkName, checkId). Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'ALERT_FAILURE'
+    - 'ALERT_RECOVERY'
+catalog:
+  summary: 'Verify Checkly alert webhook signatures (`x-checkly-signature`, HMAC-SHA256 hex of the rendered body), handle `ALERT_FAILURE`, `ALERT_DEGRADED` and `ALERT_RECOVERY` alerts'

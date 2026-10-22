@@ -1,0 +1,18 @@
+name: check-hq
+displayName: 'Check'
+docs:
+  webhooks: https://docs.checkhq.com/docs/working-with-webhooks
+  verification: https://docs.checkhq.com/docs/the-shape-of-your-webhook-endpoint
+notes: >
+  Check (checkhq.com) payroll API, not a generic 'check'. Header Check-Signature: base-16 (hex)
+  HMAC-SHA256 of the raw request body keyed with the Webhook Config's key as UTF-8 text (40 hex
+  chars, but NOT hex-decoded). Check also sends deprecated X-* duplicates; verify Check-Signature.
+  Payload has resource_type, event (created, updated, status_change) and data, e.g. payroll updated,
+  payment status_change, employee created. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'payroll updated'
+    - 'payment status_change'
+catalog:
+  summary: 'Verify Check (checkhq.com) payroll webhook signatures (`Check-Signature`, HMAC-SHA256 hex of the raw body keyed with the webhook config `key`), handle payroll, payment and employee events'

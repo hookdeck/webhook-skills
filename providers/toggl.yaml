@@ -1,0 +1,21 @@
+name: toggl
+displayName: 'Toggl Track'
+docs:
+  webhooks: https://engineering.toggl.com/docs/track/webhooks_start/
+  verification: https://engineering.toggl.com/docs/track/webhooks_start/validating_received_events/
+notes: >
+  Time tracking (Toggl Track webhooks). Header X-Webhook-Signature-256: "sha256=<hex>" HMAC-SHA256
+  of the full raw body keyed with the subscription secret (user-set or auto-generated). Docs test
+  vector: secret PGuRrhCFajIyEvFlreKL, PING body, header
+  sha256=bf829606cda0ca6923defb5ca70a43135adc7e8887486a201a19cb50ca6006b1. Subscriptions must be
+  validated: PING events carry validation_code; the receiver can echo {"validation_code": "..."} in
+  the response, or (behind Hookdeck, which returns its own response) the user calls the validate
+  endpoint (GET) / validation URL. Events are entity+action, e.g. time_entry created/updated,
+  project created; payload.metadata has action and model. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'ping'
+    - 'time_entry created'
+catalog:
+  summary: 'Verify Toggl Track webhook signatures (`X-Webhook-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle PING validation and entity events like time_entry created and project updated'

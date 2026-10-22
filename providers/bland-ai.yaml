@@ -1,0 +1,18 @@
+name: bland-ai
+displayName: 'Bland AI'
+docs:
+  webhooks: https://docs.bland.ai/tutorials/webhooks
+  verification: https://docs.bland.ai/tutorials/webhook-signing
+notes: >
+  AI phone calls. Header X-Webhook-Signature: HMAC-SHA256 hex of the request body keyed with the
+  account webhook signing secret (Dev Portal > Account Settings > Keys > Replace Secret; shown once;
+  one secret covers all webhooks). Docs' Node sample signs JSON.stringify(req.body); use the raw
+  body bytes (identical for the compact JSON Bland sends) and say so. Enterprise JWT-signed webhooks
+  are a different scheme, not covered. The main webhook is the post-call payload (call_id, status,
+  transcripts, ...) sent to the call's webhook URL. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'post-call webhook (call completed)'
+catalog:
+  summary: 'Verify Bland AI webhook signatures (`X-Webhook-Signature`, HMAC-SHA256 hex of the body keyed with the account signing secret), handle post-call payloads with call_id, status and transcripts'

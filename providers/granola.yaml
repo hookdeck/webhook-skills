@@ -1,0 +1,20 @@
+name: granola
+displayName: 'Granola'
+docs:
+  webhooks: https://docs.granola.ai/webhooks
+  verification: https://docs.granola.ai/webhooks#verify-deliveries
+notes: >
+  AI meeting notes. Signs natively per Standard Webhooks (not via Svix): webhook-id (matches
+  event_id), webhook-timestamp, webhook-signature ("v1,<base64>"). signing_secret is whsec_-prefixed
+  and returned only once at endpoint creation. Standard Webhooks: use the standardwebhooks library
+  (Node: standardwebhooks; Python: standardwebhooks) or an equivalent manual check; signed content
+  is "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64, "v1,<sig>" entries space-delimited (several
+  during rotation); key = base64-decode of the secret after the whsec_ prefix. Events (event_type):
+  note.generated, note.edited, note.access_granted. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'note.generated'
+    - 'note.edited'
+catalog:
+  summary: 'Verify Granola Standard Webhooks signatures (`webhook-signature`, HMAC-SHA256 base64 with a `whsec_` secret), handle meeting note events like `note.generated` and `note.edited`'

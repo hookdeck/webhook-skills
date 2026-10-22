@@ -1,0 +1,23 @@
+name: codat
+displayName: 'Codat'
+docs:
+  webhooks: https://docs.codat.io/using-the-api/webhooks/overview
+  verification: https://docs.codat.io/using-the-api/webhooks/create-consumer
+  events: https://docs.codat.io/using-the-api/webhooks/event-types
+notes: >
+  Business data API. Delivered by Svix with Standard Webhooks header names webhook-id,
+  webhook-timestamp, webhook-signature (NOT svix-*). Secret is whsec_-prefixed (Codat Portal >
+  Monitor > Webhooks > Events > endpoint > Signing secret). Standard Webhooks: use the
+  standardwebhooks library (Node: standardwebhooks; Python: standardwebhooks) or an equivalent
+  manual check; signed content is "<id>.<timestamp>.<raw body>", HMAC-SHA256, base64, "v1,<sig>"
+  entries space-delimited (several during rotation); key = base64-decode of the secret after the
+  whsec_ prefix. Events include company.created, connection.created, connection.connected,
+  read.completed, write.successful. Legacy rule-based webhooks are deprecated and not covered.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'company.created'
+    - 'connection.created'
+catalog:
+  summary: 'Verify Codat webhooks (Svix-delivered Standard Webhooks, `webhook-signature` HMAC-SHA256 base64 with a `whsec_` secret), handle events like `company.created`, `connection.created` and `read.completed`'

@@ -1,0 +1,18 @@
+name: mautic
+displayName: 'Mautic'
+docs:
+  webhooks: https://devdocs.mautic.org/en/5.x/webhooks/getting_started.html
+  verification: https://devdocs.mautic.org/en/5.x/webhooks/getting_started.html
+notes: >
+  Open-source marketing automation. Header Webhook-Signature: bare base64 HMAC-SHA256 of the raw
+  JSON body keyed with the webhook's secret (random by default, editable) as a raw string. NOT
+  Standard Webhooks despite the header name: no webhook-id/timestamp, nothing else signed. Payload
+  is keyed by event type, e.g. mautic.lead_post_save_new, mautic.lead_post_save_update,
+  mautic.form_on_submit, mautic.email_on_open, each an array of events with a timestamp. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'mautic.lead_post_save_new'
+    - 'mautic.form_on_submit'
+catalog:
+  summary: 'Verify Mautic webhook signatures (`Webhook-Signature`, HMAC-SHA256 base64 of the raw body; not Standard Webhooks), handle events like `mautic.lead_post_save_new` and `mautic.form_on_submit`'

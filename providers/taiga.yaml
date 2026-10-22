@@ -1,0 +1,18 @@
+name: taiga
+displayName: 'Taiga'
+docs:
+  webhooks: https://docs.taiga.io/webhooks.html
+  verification: https://docs.taiga.io/webhooks.html#_verify_signature
+notes: >
+  Open-source project management. Header X-TAIGA-WEBHOOK-SIGNATURE: bare hex HMAC-SHA1 of the raw
+  body keyed with the webhook's secret key as UTF-8 (taiga-back also sends X-Hub-Signature:
+  sha1=<same hex>). Self-hosted instances need WEBHOOKS_ENABLED = True. Payload {action, type, by,
+  date, data, change}; action create, change, delete, test; type userstory, task, issue, epic,
+  wikipage, milestone. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type verifies.
+testScenario:
+  events:
+    - 'userstory change'
+    - 'task create'
+catalog:
+  summary: 'Verify Taiga webhook signatures (`X-TAIGA-WEBHOOK-SIGNATURE`, HMAC-SHA1 hex of the raw body), handle create, change and delete events for user stories, tasks, issues and epics'

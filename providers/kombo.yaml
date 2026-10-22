@@ -1,0 +1,17 @@
+name: kombo
+displayName: 'Kombo'
+docs:
+  webhooks: https://docs.kombo.dev/hris/guides/webhooks
+  verification: https://docs.kombo.dev/hris/guides/webhooks#validate-the-data
+notes: >
+  Unified HRIS/ATS/LMS API. Header X-Kombo-Signature: base64url (WITHOUT padding) HMAC-SHA256 of the
+  raw JSON body (Kombo sends it with two-space indentation; never re-serialize) keyed with the Kombo
+  Webhook Secret's UTF-8 bytes (not decoded). Events (type) include data-changed, sync-finished,
+  connection-flow.integration-created, integration-state-changed. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'data-changed'
+    - 'sync-finished'
+catalog:
+  summary: 'Verify Kombo webhook signatures (`X-Kombo-Signature`, unpadded base64url HMAC-SHA256 of the raw body), handle `data-changed`, `sync-finished` and integration lifecycle events'

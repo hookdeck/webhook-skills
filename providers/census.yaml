@@ -1,0 +1,18 @@
+name: census
+displayName: 'Census (Fivetran Activations)'
+docs:
+  webhooks: https://fivetran.com/docs/activations/syncs/sync-monitoring/sync-lifecycle-webhooks
+  verification: https://fivetran.com/docs/activations/syncs/sync-monitoring/sync-lifecycle-webhooks
+notes: >
+  Reverse ETL; Census is now Fivetran Activations (getcensus.com redirects to fivetran.com). Sync
+  lifecycle webhooks. Header X-Signature: standard base64 HMAC-SHA256 of the raw body keyed with the
+  one-time secret shown at creation (raw bytes). Distinct from the fivetran-webhooks skill (REST API
+  webhooks, X-Fivetran-Signature-256 hex). Events: sync.triggered, sync.started, sync.completed,
+  sync.failed, sync.alert (plus a test event). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'sync.completed'
+    - 'sync.failed'
+catalog:
+  summary: 'Verify Census (Fivetran Activations) sync lifecycle webhook signatures (`X-Signature`, HMAC-SHA256 base64 of the raw body), handle `sync.started`, `sync.completed`, `sync.failed` and `sync.alert` events'

@@ -1,0 +1,19 @@
+name: kustomer
+displayName: 'Kustomer'
+docs:
+  webhooks: https://help.kustomer.com/outbound-webhooks-rkUQvela8
+  verification: https://help.kustomer.com/outbound-webhooks-rkUQvela8#webhook-secrets
+notes: >
+  Customer service CRM, outbound webhooks. Header X-Kustomer-Webhook-Signature: hex HMAC-SHA256 of
+  the raw body keyed with the webhook secret (the token field from POST /v1/outbound-webhooks, or
+  shown after first save in the UI). The .md mirror at
+  https://help.kustomer.com/en_us/outbound-webhooks-rkUQvela8.md has the content. Events (name) like
+  kustomer.conversation.create, kustomer.conversation.update, kustomer.customer.create,
+  kustomer.message.create. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
+testScenario:
+  events:
+    - 'kustomer.conversation.create'
+    - 'kustomer.customer.update'
+catalog:
+  summary: 'Verify Kustomer outbound webhook signatures (`X-Kustomer-Webhook-Signature`, HMAC-SHA256 hex of the raw body), handle events like `kustomer.conversation.create` and `kustomer.customer.update`'

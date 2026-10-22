@@ -1,0 +1,19 @@
+name: gitea
+displayName: 'Gitea'
+docs:
+  webhooks: https://docs.gitea.com/usage/webhooks
+  verification: https://docs.gitea.com/usage/webhooks#validating-deliveries
+notes: >
+  Self-hosted Git service. Header X-Gitea-Signature: bare hex HMAC-SHA256 of the raw request body
+  keyed with the webhook Secret (no prefix). Gitea also sends GitHub-compatible X-Hub-Signature-256
+  (sha256=<hex>); verify X-Gitea-Signature (what Hookdeck checks). If no secret is set, the headers
+  are present but empty, so reject an empty signature. Event name in X-Gitea-Event (push,
+  pull_request, issues, issue_comment, create, delete, release). Gitea may also send form-encoded
+  payloads; the signature is over the raw body either way. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'push'
+    - 'pull_request'
+catalog:
+  summary: 'Verify Gitea webhook signatures (`X-Gitea-Signature`, HMAC-SHA256 hex of the raw body), handle `X-Gitea-Event` events like `push`, `pull_request`, `issues` and `release`'

@@ -1,0 +1,21 @@
+name: propelauth
+displayName: 'PropelAuth'
+docs:
+  webhooks: https://docs.propelauth.com/integrations/webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+notes: >
+  Authentication/user management. "We use Svix for our Webhooks"; PropelAuth's page links to Svix's
+  verification guide and does not name headers or the secret format itself, so say they come from
+  Svix. Svix delivery: headers svix-id, svix-timestamp, svix-signature ("v1,<base64>",
+  space-delimited). Signed content "<svix-id>.<svix-timestamp>.<raw body>", HMAC-SHA256, base64; key
+  = base64-decode of the secret after the whsec_ prefix. Use the svix library (Node: svix; Python:
+  svix) or an equivalent manual check. Webhooks are configured in Dashboard > Integrations >
+  Webhooks, with separate test and prod endpoints, each with its own secret. Events include
+  user.created, user.updated, user.deleted, org.created, user.added_to_org. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'user.created'
+    - 'org.created'
+catalog:
+  summary: 'Verify PropelAuth webhooks (delivered by Svix: `svix-signature` HMAC-SHA256 base64 with a `whsec_` secret), handle user and organization events like `user.created`, `user.deleted` and `org.created`'

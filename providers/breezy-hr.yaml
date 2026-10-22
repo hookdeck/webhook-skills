@@ -1,0 +1,20 @@
+name: breezy-hr
+displayName: 'Breezy HR'
+docs:
+  webhooks: https://developer.breezy.hr/docs/webhooks
+  verification: https://developer.breezy.hr/docs/webhook-security
+notes: >
+  Recruiting/ATS (webhooks on Pro plans). Header X-Hook-Signature: bare hex HMAC-SHA256 of the raw
+  JSON body. The secret is whsec_-prefixed but used WHOLE as a UTF-8 key (docs:
+  secret.encode('utf-8')); NOT Standard Webhooks. The secret is used whole as a UTF-8 HMAC key. Do
+  NOT use the standardwebhooks or svix libraries and do not strip or base64-decode the whsec_
+  prefix. Docs code re-serializes compact JSON while the troubleshooting text says raw body; use the
+  raw body. Events include candidateAdded, candidateStatusUpdated, candidateDeleted, positionAdded.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'candidateAdded'
+    - 'candidateStatusUpdated'
+catalog:
+  summary: 'Verify Breezy HR webhook signatures (`X-Hook-Signature`, HMAC-SHA256 hex of the raw body keyed with the whole `whsec_` secret; not Standard Webhooks), handle events like `candidateAdded` and `candidateStatusUpdated`'

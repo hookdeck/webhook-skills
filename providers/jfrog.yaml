@@ -1,0 +1,21 @@
+name: jfrog
+displayName: 'JFrog'
+docs:
+  webhooks: https://docs.jfrog.com/integrations/docs/webhooks
+  verification: https://docs.jfrog.com/integrations/docs/predefined-webhooks
+notes: >
+  Artifactory/Xray platform webhooks. Token mode only: with "use secret for signing" off (the
+  default, use_secret_for_signing=false) JFrog sends the configured secret token as-is in the
+  X-JFrog-Event-Auth header. Verify by comparing that header to the secret with a constant-time
+  compare. No payload signature. Verify the shared token with a constant-time compare
+  (crypto.timingSafeEqual / hmac.compare_digest), like the batch 1 n8n, zapier and brevo skills. Say
+  that the signing mode (use_secret_for_signing=true, an HMAC-SHA256 of the payload) is not covered
+  because JFrog does not document which header carries that signature. Payload has domain and
+  event_type, e.g. artifact deployed / deleted / moved, docker pushed, build uploaded. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'artifact deployed'
+    - 'docker pushed'
+catalog:
+  summary: 'Authenticate JFrog webhooks (token mode: `X-JFrog-Event-Auth` compared with the secret token in constant time; the signing mode is not covered), handle domain events like artifact deployed and docker pushed'

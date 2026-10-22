@@ -1,0 +1,22 @@
+name: smartsheet
+displayName: 'Smartsheet'
+docs:
+  webhooks: https://developers.smartsheet.com/api/smartsheet/guides/webhooks
+  verification: https://developers.smartsheet.com/api/smartsheet/guides/webhooks/webhook-callbacks
+notes: >
+  Work management. Header Smartsheet-Hmac-SHA256: hex (base 16) HMAC-SHA256 of the raw request body
+  keyed with the webhook's sharedSecret (assigned by Smartsheet on creation); compare
+  case-insensitively. Verification handshake: requests carrying a Smartsheet-Hook-Challenge header
+  must be answered by echoing the value in the Smartsheet-Hook-Response response header (or JSON
+  {"smartsheetHookResponse": ...}) with a 200; this happens on enable and is ONGOING (about once
+  every 100 callbacks). Show the challenge echo in every receiver, before signature checks
+  (challenge requests may be unsigned). Hookdeck answers the challenge at its edge. Callbacks have
+  scopeObjectId and an events array of objectType + eventType (e.g. row created, cell updated, sheet
+  updated). Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type verifies.
+testScenario:
+  events:
+    - 'row created'
+    - 'cell updated'
+catalog:
+  summary: 'Verify Smartsheet webhook callbacks (`Smartsheet-Hmac-SHA256`, HMAC-SHA256 hex of the raw body keyed with the `sharedSecret`), answer the `Smartsheet-Hook-Challenge` handshake, handle row and cell change events'

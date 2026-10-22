@@ -1,0 +1,17 @@
+name: doppler
+displayName: 'Doppler'
+docs:
+  webhooks: https://docs.doppler.com/docs/webhooks
+  verification: https://docs.doppler.com/docs/webhooks#verify-webhook-with-request-signing
+notes: >
+  Secrets manager. Signing secret is optional and user-set; users must set one. Header
+  X-Doppler-Signature: "sha256=<hex>" = HMAC-SHA256 of the raw request body. Docs' Node sample
+  re-serializes JSON.stringify(req.body); use raw bytes. Custom JSON payloads are also signed as the
+  request body. Default payload type is config.secrets.update (with config, project, workplace
+  objects). Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type verifies.
+testScenario:
+  events:
+    - 'config.secrets.update'
+catalog:
+  summary: 'Verify Doppler webhook signatures (`X-Doppler-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle `config.secrets.update` events when secrets change in a config'

@@ -1,0 +1,23 @@
+name: go1
+displayName: 'Go1'
+docs:
+  webhooks: https://developers.go1.com/docs/developer-tools/webhooks/overview-webhooks/
+  verification: https://developers.go1.com/docs/developer-tools/webhooks/security
+notes: >
+  Learning content platform. Signing is enabled by setting secret_key (max 64 chars) on the webhook.
+  Header Go1-Signature: t=<unix MILLISECONDS>,v1=<hex>. v1 = HMAC-SHA256 hex over "<t>.<raw JSON
+  body>" keyed with secret_key as UTF-8. Use t exactly as received (do not convert to seconds). Docs
+  test vector: secret MyS3cretK#y, body (compact)
+  {"id":"ABnJ5giCDEFG","event_type":"enrollment.create",...}, header
+  t=1706747802205,v1=a84cb2671c8c2215db331a18304ba98c89e8cc0f95e2e4eec4fa2673f877d786. Hookdeck
+  retries and replays keep the original timestamp, so any timestamp freshness check must be opt-in
+  via GO1_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
+  tailscale-webhooks skills do. Events (event_type) include enrollment.create, enrollment.update,
+  enrollment.delete. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type verifies.
+testScenario:
+  events:
+    - 'enrollment.create'
+    - 'enrollment.update'
+catalog:
+  summary: 'Verify Go1 webhook signatures (`Go1-Signature` `t=<ms>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the webhook `secret_key`), handle learning events like `enrollment.create` and `enrollment.update`'

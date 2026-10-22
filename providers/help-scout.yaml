@@ -1,0 +1,18 @@
+name: help-scout
+displayName: 'Help Scout'
+docs:
+  webhooks: https://developer.helpscout.com/webhooks/
+  verification: https://developer.helpscout.com/webhooks/
+notes: >
+  Customer support. Header X-HelpScout-Signature: base64 HMAC-SHA1 of the raw body keyed with the
+  webhook secret key (Workspace > Apps > Webhooks). Docs test vector: secret "your secret key", body
+  {"ticket":{"id":"1","number":"2"},"customer":{"id":"1","fname":"Jackie","lname":"Chan","email":"jackie.chan@somewhere.com","emails":["jackie.chan@somewhere.com"]}}
+  -> I1KlvGppYqvFTJgJ9jezdQMDiyI=. Event name in X-HelpScout-Event: convo.created, convo.assigned,
+  convo.status, convo.customer.reply.created, customer.created, satisfaction.ratings. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'convo.created'
+    - 'convo.assigned'
+catalog:
+  summary: 'Verify Help Scout webhook signatures (`X-HelpScout-Signature`, HMAC-SHA1 base64 of the raw body), handle `X-HelpScout-Event` events like `convo.created`, `convo.assigned` and `customer.created`'

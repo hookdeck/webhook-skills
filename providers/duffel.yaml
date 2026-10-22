@@ -1,0 +1,21 @@
+name: duffel
+displayName: 'Duffel'
+docs:
+  webhooks: https://duffel.com/docs/guides/receiving-webhooks
+  verification: https://duffel.com/docs/guides/receiving-webhooks
+notes: >
+  Travel/flights API. Header X-Duffel-Signature: "t=<unix seconds>,v1=<lowercase hex>". v1 =
+  HMAC-SHA256 over "<t>.<raw body>" keyed with the webhook secret string's bytes as-is (it looks
+  base64, e.g. 54vFWvaSbbzYpxXPeB4YEw==, but is NOT decoded); secret only returned by the
+  create-webhook call; live and test mode use separate webhooks. Hookdeck retries and replays keep
+  the original timestamp, so any timestamp freshness check must be opt-in via
+  DUFFEL_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
+  tailscale-webhooks skills do. Events (type) include ping.triggered, order.created,
+  order.airline_initiated_change_detected, order_cancellation.confirmed, payment.succeeded. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'order.created'
+    - 'ping.triggered'
+catalog:
+  summary: 'Verify Duffel webhook signatures (`X-Duffel-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle travel events like `order.created`, `order.airline_initiated_change_detected` and `ping.triggered`'

@@ -1,0 +1,18 @@
+name: expo
+displayName: 'Expo (EAS)'
+docs:
+  webhooks: https://docs.expo.dev/eas/webhooks/
+  verification: https://docs.expo.dev/eas/webhooks/
+notes: >
+  EAS Build and EAS Submit completion webhooks (eas webhook:create --event BUILD|SUBMIT --secret,
+  secret at least 16 chars). Header expo-signature: "sha1=<hex>" = HMAC-SHA1 of the raw request body
+  keyed with the secret. Payload has id, status (finished, errored, canceled), platform
+  (ios/android), artifacts, metadata. There is no event-type field: BUILD vs SUBMIT is set on the
+  webhook; tell them apart by payload fields. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'BUILD completed'
+    - 'SUBMIT completed'
+catalog:
+  summary: 'Verify Expo EAS webhook signatures (`expo-signature` `sha1=<hex>`, HMAC-SHA1 of the raw body), handle EAS Build and Submit completion payloads with finished, errored and canceled statuses'

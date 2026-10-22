@@ -1,0 +1,21 @@
+name: lago
+displayName: 'Lago'
+docs:
+  webhooks: https://docs.getlago.com/guide/webhooks
+  verification: https://docs.getlago.com/api-reference/webhooks/format---signature
+notes: >
+  Open-source usage billing (cloud and self-hosted). HMAC mode only: when the webhook endpoint is
+  created with signature algorithm hmac, X-Lago-Signature = base64 HMAC-SHA256 of the raw body keyed
+  with the organization HMAC Signature Token (Developers > Webhooks); X-Lago-Signature-Algorithm:
+  hmac. State clearly that Lago's DEFAULT is jwt (RS256 JWT verified with the public key from
+  /api/v1/webhooks/json_public_key), which this skill does not cover: choose HMAC when creating the
+  endpoint. Payload {webhook_type, object_type, ...}; webhook_type values include invoice.created,
+  invoice.payment_status_updated, subscription.started, subscription.terminated, customer.created,
+  wallet.depleted_ongoing_balance. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'invoice.created'
+    - 'subscription.terminated'
+catalog:
+  summary: 'Verify Lago webhook signatures in HMAC mode (`X-Lago-Signature`, HMAC-SHA256 base64 of the raw body; the default JWT mode is not covered), handle billing events like `invoice.created` and `subscription.terminated`'

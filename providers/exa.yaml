@@ -1,0 +1,19 @@
+name: exa
+displayName: 'Exa'
+docs:
+  webhooks: https://docs.exa.ai/websets/api/webhooks/create-a-webhook
+  verification: https://docs.exa.ai/websets/api/webhooks/verifying-signatures
+notes: >
+  AI search, Websets webhooks. Header Exa-Signature: "t=<unix seconds>,v1=<hex>" (possibly several
+  v1). v1 = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the webhook secret as UTF-8 (returned
+  only on create). Hookdeck retries and replays keep the original timestamp, so any timestamp
+  freshness check must be opt-in via EXA_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the
+  buildkite-webhooks and tailscale-webhooks skills do. Events include webset.created, webset.idle,
+  webset.search.completed, webset.item.created, webset.item.enriched. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'webset.item.created'
+    - 'webset.idle'
+catalog:
+  summary: 'Verify Exa Websets webhook signatures (`Exa-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle events like `webset.created`, `webset.item.created` and `webset.idle`'
