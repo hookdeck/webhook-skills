@@ -67,8 +67,8 @@ no install):
 npx hookdeck-cli listen 3000 project44 --path /webhooks/project44
 ```
 
-Put the printed URL in the project44 webhook configuration. Hookdeck's project44 source currently
-allows only `POST`, so keep the webhook `method` on `POST`.
+Put the printed URL in the project44 webhook configuration. Hookdeck's project44 source pre-selects
+only `POST`, so allow any other webhook `method` you use on the source.
 
 ## How It Works
 

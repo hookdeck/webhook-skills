@@ -70,8 +70,8 @@ def verify_fireberry_request(headers, secret=None, header_name=None) -> bool:
   sync with the key in the action.
 - **Any method, empty body.** The action can use POST, GET, PUT, DELETE or PATCH, and GET has no
   body. Accept all five and treat an empty body as valid. Authenticate before looking at the body.
-- **Hookdeck source is POST-only.** Hookdeck's Fireberry source currently allows only POST, so a
-  non-POST automation needs the method allowed on the source.
+- **Hookdeck source pre-selects POST.** Hookdeck's Fireberry source pre-selects POST only, so a
+  non-POST automation needs that method allowed on the source.
 - **Constant-time compare.** Check lengths before `timingSafeEqual` (it throws on unequal lengths)
   or hash both sides. In Python encode both sides to bytes.
 - **Fail closed.** If `FIREBERRY_WEBHOOK_SECRET` is unset, reject every request.
@@ -86,6 +86,6 @@ def verify_fireberry_request(headers, secret=None, header_name=None) -> bool:
 | 401 on every request | `FIREBERRY_WEBHOOK_SECRET` unset, or the header key/value differs from the action |
 | 401, secret looks right | `Bearer ` prefix omitted from the env value, or `FIREBERRY_WEBHOOK_HEADER` doesn't match |
 | 401 only behind a proxy | The proxy strips or renames the custom header |
-| Works for POST, not GET/PUT | Hookdeck source only allows POST, or your route is POST-only |
+| Works for POST, not GET/PUT | The method isn't allowed on the Hookdeck source, or your route is POST-only |
 | 400 after authenticating | Body isn't a JSON object (check the Body box in the action) |
 | Automation turned to Draft | Repeated error responses; fix the cause and re-activate |

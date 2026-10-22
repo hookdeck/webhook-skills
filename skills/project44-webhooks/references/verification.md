@@ -68,8 +68,8 @@ def verify_project44_request(headers, env=os.environ) -> bool:
 - **`api_key` vs `api_key_value`.** The docs name the field one way and show the other in the
   example payload. If no header arrives, check how the configuration was stored.
 - **Any method.** The webhook method is configurable, and `GET` has no body. Accept `POST`, `PUT`,
-  `PATCH` and `GET`, and don't fail on an empty body. Hookdeck's project44 source currently allows
-  only `POST`.
+  `PATCH` and `GET`, and don't fail on an empty body. Hookdeck's project44 source pre-selects
+  only `POST`; allow other methods on the source.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python compare bytes, not `str`.
 - **Fail closed.** If `PROJECT44_WEBHOOK_SECRET` is unset, reject everything.
@@ -86,5 +86,5 @@ def verify_project44_request(headers, env=os.environ) -> bool:
 | 401 and the value has `Bearer ` | The secret env var must include the `Bearer ` prefix |
 | 401 with the right secret | `PROJECT44_WEBHOOK_HEADER` doesn't match `api_key_name` |
 | No custom header at all | The configuration used `api_key_value`, or a proxy strips the header |
-| 405 or rejected by Hookdeck | Webhook method isn't `POST`; keep `POST` or allow the method on the source |
+| 405 or rejected by Hookdeck | Webhook method isn't allowed on the source; allow it there |
 | 400 after authentication | Body isn't a JSON object |

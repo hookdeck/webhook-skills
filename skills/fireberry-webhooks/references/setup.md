@@ -12,8 +12,8 @@
    **Status** equals **Lead**).
 2. Under **Then**, click **+ Add Action** and select **Webhook**. A panel opens on the right.
 3. **Request Method:** pick one of `POST`, `GET`, `PUT`, `DELETE`, `PATCH`. The handler in this skill
-   accepts all five. If you receive via Hookdeck, note its Fireberry source currently allows only
-   `POST`, so a non-POST method must be allowed on the source.
+   accepts all five. If you receive via Hookdeck, note its Fireberry source pre-selects only
+   `POST`, so allow any other method you pick on the source.
 4. **URL:** your endpoint, e.g. `https://example.com/webhooks/fireberry`.
 5. **Header:** click **+ Add Header** for each pair:
    - `Content-Type` = `application/json`

@@ -66,7 +66,7 @@ no install):
 npx hookdeck-cli listen 8000 fireberry --path /webhooks/fireberry
 ```
 
-Put the printed URL in the webhook action. Hookdeck's Fireberry source currently allows only
+Put the printed URL in the webhook action. Hookdeck's Fireberry source pre-selects only
 POST, so allow other methods on the source if your automation uses one.
 
 ## How It Works
