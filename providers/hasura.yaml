@@ -1,0 +1,34 @@
+name: hasura
+displayName: 'Hasura'
+docs:
+  webhooks: https://hasura.io/docs/2.0/event-triggers/create-trigger/
+  verification: https://hasura.io/docs/2.0/event-triggers/create-trigger/
+  events: https://hasura.io/docs/2.0/event-triggers/payload/
+notes: >
+  GraphQL engine; covers Hasura v2 Event Triggers (DDN v3 isn't covered). No signature: requests are
+  unsigned. Authenticate with a secret header the user adds to the Event Trigger (Advanced settings
+  > Headers; static value or from an env var, e.g. the docs' X-Hasura-From-Val / X-Hasura-From-Env).
+  The header name is user-chosen, so the examples read the header name from HASURA_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from HASURA_WEBHOOK_SECRET (the exact, whole
+  header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Hasura source does (API key verification: header name + exact value). Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Payload: {event: {op, data: {old, new}, session_variables, trace_context},
+  created_at, id, delivery_info, trigger: {name}, table: {schema, name}}. Dispatch on event.op:
+  INSERT, UPDATE, DELETE, MANUAL (see https://hasura.io/docs/2.0/event-triggers/payload/). Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  JSON only after the credential check.
+testScenario:
+  events:
+    - 'INSERT'
+    - 'UPDATE'
+    - 'DELETE'
+    - 'MANUAL'
+catalog:
+  summary: 'Authenticate Hasura Event Trigger webhooks (unsigned: a secret header you add to the trigger, compared in full in constant time), handle `INSERT`, `UPDATE`, `DELETE` and `MANUAL` operations'

@@ -1,0 +1,35 @@
+name: zuora
+displayName: 'Zuora'
+docs:
+  webhooks: https://docs.zuora.com/en/zuora-platform/extensibility/events-and-notifications/notifications/callout-notification-overview
+  verification: https://docs.zuora.com/en/zuora-platform/extensibility/events-and-notifications/callout-templates/create-a-callout-template
+notes: >
+  Subscription billing; covers callout notifications (Events and Notifications), not Workflow
+  callouts. Authentication Type 'Username/Password' sends 'Authorization: Basic
+  base64(username:password)', but by default Zuora sends the first request WITHOUT it and expects a
+  401 challenge. That flow won't work through Hookdeck: the callout template must have 'Enable
+  Preemptive Authentication' turned on; say so prominently. The optional callout HMAC is fully
+  user-defined (algorithm, encoding, data, header) and isn't covered. No signature. Authenticate
+  with HTTP Basic auth, which is what Hookdeck's Zuora source verifies. The examples read
+  ZUORA_WEBHOOK_USERNAME and ZUORA_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, split on the first colon), and compare the
+  username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, brevo,
+  assemblyai, honeybadger and coterie skills. The request method is user-chosen, so the examples
+  must not be POST-only: accept POST, PUT, PATCH, GET and DELETE (the callout method is
+  configurable; POST is the default) on the webhook route, and handle an empty body (e.g. GET). The
+  body/params are the template's merge fields; Zuora adds no event field, so use an illustrative
+  JSON body (e.g. {"event": "PaymentProcessed", "accountId": ...}) and say so. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only
+  after the credential check.
+testScenario:
+  events:
+    - 'Payment Processed callout (illustrative body)'
+    - 'Invoice Posted callout (illustrative body)'
+catalog:
+  summary: 'Authenticate Zuora callout notifications (unsigned HTTP Basic auth with Enable Preemptive Authentication, compared in constant time), handle the callout bodies your templates send'

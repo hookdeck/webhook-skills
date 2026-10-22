@@ -1,0 +1,32 @@
+name: belvo
+displayName: 'Belvo'
+docs:
+  webhooks: https://developers.belvo.com/developer_resources/resources-webhooks-payments-mexico
+  verification: https://developers.belvo.com/developer_resources/resources-webhooks-payments-mexico
+  events: https://developers.belvo.com/developer_resources/resources-webhooks-aggregation
+notes: >
+  Open finance (LatAm). Auth is optional on Aggregation, Payments Brazil and Payments Mexico
+  webhooks. Aggregation: you enter the full value ('Basic <base64>' or 'Bearer <token>'); Payments
+  Mexico/Brazil: you enter a token and Belvo sends 'Authorization: Bearer <token>'. No signature.
+  The credential is the Authorization header. Hookdeck's Belvo source compares the WHOLE
+  Authorization header value to the configured key, so the examples read BELVO_AUTHORIZATION = the
+  full value as Belvo sends it (e.g. 'Bearer <token>'), including the scheme prefix, and compare the
+  whole Authorization header to it; do not strip or parse the prefix (Coterie pattern). Belvo can
+  send Bearer or Basic: compare the whole value either way. Missing header or mismatch: 401. Compare
+  in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Payments Mexico bodies have eventCode
+  (payment_request_successful, payment_request_failed, consent_confirmed, customer_blocked,
+  withdrawal_created, ...); Aggregation webhooks use webhook_type / webhook_code. Handle both
+  shapes. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'payment_request_successful'
+    - 'payment_request_failed'
+    - 'consent_confirmed'
+catalog:
+  summary: 'Authenticate Belvo webhooks (the whole `Authorization` value, `Bearer` or `Basic`, compared in constant time), handle Payments `eventCode`s and Aggregation `webhook_code`s'

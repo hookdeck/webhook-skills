@@ -1,0 +1,30 @@
+name: onespan
+displayName: 'OneSpan'
+docs:
+  webhooks: https://docs.onespan.com/docs/setting-up-callback-notifications
+  verification: https://docs.onespan.com/docs/setting-up-callback-notifications
+notes: >
+  E-signature (OneSpan Sign). The callback key registered with the callback URL (POST /api/callback
+  {url, key, events}) is sent as 'Authorization: Basic {callbackKey}', the raw key, NOT
+  base64(user:pass), so don't decode it as HTTP Basic. No signature. The credential is the
+  Authorization header. Hookdeck's OneSpan source compares the WHOLE Authorization header value to
+  the configured key, so the examples read ONESPAN_AUTHORIZATION = the full value as OneSpan sends
+  it (e.g. 'Basic <callback key>'), including the scheme prefix, and compare the whole Authorization
+  header to it; do not strip or parse the prefix (Coterie pattern). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body: {name, sessionUser,
+  packageId, documentId, message, createdDate}; name is the event: PACKAGE_CREATE, PACKAGE_ACTIVATE,
+  PACKAGE_COMPLETE, PACKAGE_DECLINE, DOCUMENT_SIGNED, SIGNER_COMPLETE, ... Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only
+  after the credential check.
+testScenario:
+  events:
+    - 'PACKAGE_COMPLETE'
+    - 'DOCUMENT_SIGNED'
+    - 'SIGNER_COMPLETE'
+catalog:
+  summary: 'Authenticate OneSpan Sign callbacks (the whole `Authorization: Basic <callback key>` value compared in constant time), handle events like `PACKAGE_COMPLETE` and `DOCUMENT_SIGNED`'

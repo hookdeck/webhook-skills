@@ -1,0 +1,20 @@
+name: paragon
+displayName: Paragon
+docs:
+  webhooks: https://docs.useparagon.com/monitoring/event-destinations
+  verification: https://docs.useparagon.com/monitoring/event-destinations
+notes: >
+  Embedded integrations platform; covers monitoring Webhook Destinations (paid plans). Managed
+  Sync webhooks have no auth option and aren't covered. Requests are unsigned. Authenticate with
+  a secret header the user adds to the Webhook Destination (Show more request options >
+  headers). The header name is user-chosen, so the examples read it from PARAGON_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from PARAGON_WEBHOOK_SECRET (the exact whole
+  header value, including any 'Bearer ' prefix). Compare the whole value in constant time. Body
+  has a type field: workflow_failure or credentials_failure. Express examples read the raw body
+  with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'workflow_failure'
+    - 'credentials_failure'
+catalog:
+  summary: 'Authenticate Paragon Webhook Destination requests (unsigned: user-added secret header, default `Authorization`, compared in constant time), handle `workflow_failure` and `credentials_failure` events'

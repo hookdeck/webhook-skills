@@ -1,0 +1,29 @@
+name: kobotoolbox
+displayName: 'KoBoToolbox'
+docs:
+  webhooks: https://support.kobotoolbox.org/rest_services.html
+  verification: https://support.kobotoolbox.org/rest_services.html
+notes: >
+  Field data collection; covers project REST Services (JSON or XML). The kpi source passes
+  (username, password) to python requests, which sends Authorization: Basic preemptively. No
+  signature. Authenticate with HTTP Basic auth, which is what Hookdeck's KoBoToolbox source
+  verifies. The examples read KOBOTOOLBOX_WEBHOOK_USERNAME and KOBOTOOLBOX_WEBHOOK_PASSWORD, parse
+  'Authorization: Basic base64(username:password)' (scheme case-insensitive, split on the first
+  colon), and compare the username and the password each in constant time, evaluating both before
+  deciding (no short-circuit). Missing or malformed header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. A REST Service fires once per new
+  submission (edits send nothing). The body is the submission (_id, _uuid, _submission_time,
+  _xform_id_string, question fields; optionally a subset or a custom wrapper); there's no event
+  type. XML format is possible; accept non-JSON bodies. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'submission created'
+catalog:
+  summary: 'Authenticate KoBoToolbox REST Service deliveries (unsigned HTTP Basic auth compared in constant time), handle new form submissions'

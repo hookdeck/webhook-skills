@@ -1,0 +1,31 @@
+name: bringg
+displayName: 'Bringg'
+docs:
+  webhooks: https://developers.bringg.com/docs/bringg-webhooks
+  verification: https://developers.bringg.com/docs/webhook-authentication-methods
+notes: >
+  Delivery orchestration. Bringg offers JWT, OAuth 2.0 and Static Headers auth; only Static Headers
+  is covered (it's what Hookdeck's Bringg source verifies); mention the others need custom code. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds as Static
+  Headers on the webhook (Key-Value pairs). The header name is user-chosen, so the examples read the
+  header name from BRINGG_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  BRINGG_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Bringg source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body has webhook_type (e.g. task_created, task_done, task_cancelled,
+  driver_assigned, way_point_arrived, note_created). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'task_created'
+    - 'task_done'
+    - 'task_cancelled'
+catalog:
+  summary: 'Authenticate Bringg webhooks (unsigned Static Headers auth, compared in full in constant time), handle `webhook_type` events like `task_created`, `task_done` and `task_cancelled`'

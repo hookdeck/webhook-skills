@@ -1,0 +1,35 @@
+name: sigfox
+displayName: 'Sigfox'
+docs:
+  webhooks: https://support.sigfox.com/docs/custom-callback-creation
+  verification: https://support.sigfox.com/docs/callback-medium
+notes: >
+  IoT network (now operated by UnaBiz); covers device-type custom callbacks. No signature: requests
+  are unsigned. Authenticate with a secret header the user adds to the custom callback's Headers
+  (the authorization header must be set in the callback; Sigfox forbids standard headers except
+  Authorization, and any custom name works). The header name is user-chosen, so the examples read
+  the header name from SIGFOX_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  SIGFOX_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Sigfox source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Credentials in the URL (login:password@) are an alternative but aren't
+  covered. The request method is user-chosen, so the examples must not be POST-only: accept GET,
+  POST and PUT on the webhook route, and handle an empty body (e.g. GET). GET callbacks carry
+  variables in the query string; POST/PUT bodies are the callback's body template (JSON or
+  form-encoded) with variables like {device}, {time}, {data}, {seqNumber}. The callback type isn't
+  in the request, so the examples use an illustrative data uplink body. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after
+  the credential check.
+testScenario:
+  events:
+    - 'data uplink'
+    - 'service status'
+    - 'error'
+catalog:
+  summary: 'Authenticate Sigfox custom callbacks (unsigned: a secret header set in the callback, compared in full in constant time), handle GET, POST or PUT data uplink, service status and error callbacks'

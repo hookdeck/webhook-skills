@@ -1,0 +1,33 @@
+name: doordash-drive
+displayName: 'DoorDash Drive'
+docs:
+  webhooks: https://developer.doordash.com/en-US/docs/drive/how_to/webhooks
+  verification: https://developer.doordash.com/en-US/docs/drive/how_to/webhooks
+notes: >
+  Delivery API. Despite the 'Basic Auth' label in the Developer Portal, DoorDash sends whatever text
+  you enter as the Authorization header (often a bare token, not base64 user:pass); OAuth is the
+  other option and isn't covered. One endpoint per environment (Sandbox/Production). No signature.
+  The credential is the Authorization header. Hookdeck's DoorDash Drive source compares the WHOLE
+  Authorization header value to the configured key, so the examples read
+  DOORDASH_DRIVE_AUTHORIZATION = the full value as DoorDash Drive sends it (e.g. '<the exact text
+  you entered>'), including the scheme prefix, and compare the whole Authorization header to it; do
+  not strip or parse the prefix (Coterie pattern). Don't decode it as HTTP Basic. Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body has
+  event_name: DASHER_CONFIRMED, DASHER_CONFIRMED_PICKUP_ARRIVAL, DASHER_PICKED_UP,
+  DASHER_CONFIRMED_DROPOFF_ARRIVAL, DASHER_DROPPED_OFF, DELIVERY_CANCELLED,
+  DELIVERY_RETURN_INITIALIZED, DASHER_CONFIRMED_RETURN_ARRIVAL, DELIVERY_RETURNED, DELIVERY_BATCHED, dasher_enroute_to_* (opt-in);
+  refund webhooks have no event_name. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'DASHER_CONFIRMED'
+    - 'DASHER_PICKED_UP'
+    - 'DASHER_DROPPED_OFF'
+    - 'DELIVERY_CANCELLED'
+catalog:
+  summary: 'Authenticate DoorDash Drive webhooks (the whole `Authorization` value from the Developer Portal compared in constant time), handle `event_name`s like `DASHER_PICKED_UP` and `DASHER_DROPPED_OFF`'

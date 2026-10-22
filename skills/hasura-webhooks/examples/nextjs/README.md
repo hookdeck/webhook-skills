@@ -1,0 +1,77 @@
+# Hasura Webhooks - Next.js Example
+
+Minimal example of receiving Hasura Event Trigger webhooks and authenticating them with a secret
+header.
+
+Hasura v2 Event Triggers are not signed, so there is no HMAC to verify. You add a secret header to
+the trigger; the handler compares that header's whole value with `HASURA_WEBHOOK_SECRET` in
+constant time. A static shared credential authenticates the sender, not the body, and gives no
+replay protection, so use HTTPS and rotate the credential if it leaks. The route reads the body
+as text, so any content type works.
+
+## Prerequisites
+
+- Node.js 20+
+- A Hasura v2 Event Trigger with a secret header (see [../../references/setup.md](../../references/setup.md))
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set `HASURA_WEBHOOK_HEADER` to the header name you added to the trigger, and
+   `HASURA_WEBHOOK_SECRET` to its exact whole value (including any `Bearer ` prefix).
+
+## Run
+
+```bash
+npm run dev
+```
+
+Server runs on http://localhost:3000 and accepts requests at `POST /webhooks/hasura`.
+
+## Test
+
+```bash
+npm test
+```
+
+The tests send every operation (`INSERT`, `UPDATE`, `DELETE`, `MANUAL`) with correct, wrong and
+missing header values. No Hasura instance is needed.
+
+To try it by hand:
+
+```bash
+curl -X POST http://localhost:3000/webhooks/hasura \
+  -H "Content-Type: application/json" \
+  -H "Authorization: $HASURA_WEBHOOK_SECRET" \
+  -d '{"event":{"op":"INSERT","data":{"old":null,"new":{"id":1}},"session_variables":{},"trace_context":{}},"id":"123e4567-e89b-12d3-a456-426614174000","table":{"schema":"public","name":"users"},"trigger":{"name":"insert_user"}}'
+```
+
+## Receive Webhooks Locally
+
+Hasura Cloud can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account,
+no install):
+
+```bash
+npx hookdeck-cli listen 3000 hasura --path /webhooks/hasura
+```
+
+Put the printed URL in the Event Trigger's Webhook URL.
+
+## How It Works
+
+- `lib/verify-hasura.ts`: `verifyHasuraRequest()`
+- `app/webhooks/hasura/route.ts`: the `POST /webhooks/hasura` route
+
+1. The configured header is checked before the body is parsed. Failure returns `401`.
+2. The body must be a JSON object with `event.op` (`400` otherwise).
+3. The handler dispatches on `event.op`: `INSERT`, `UPDATE`, `DELETE`, `MANUAL`.
+4. It returns `200 {"received": true}`; non-2xx responses make Hasura retry per `retry_conf`.

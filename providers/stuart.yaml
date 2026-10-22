@@ -1,0 +1,33 @@
+name: stuart
+displayName: 'Stuart'
+docs:
+  webhooks: https://api-docs.stuart.com/
+  verification: https://api-docs.stuart.com/
+notes: >
+  Last-mile delivery. Stuart's 'Webhook authentication header' and 'Webhook authentication key'
+  (admin page or webhook API fields authentication_header / authentication_key) add one header to
+  every webhook; its name must start with X-. No signature: requests are unsigned. Authenticate with
+  a secret header the user adds in the Stuart dashboard or webhook API. The header name is
+  user-chosen, so the examples read the header name from STUART_WEBHOOK_HEADER (default
+  'X-Webhook-Secret') and the expected value from STUART_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Stuart
+  source does (API key verification: header name + exact value). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Version 3 webhooks have a
+  topic field: package_created, courier_assigned, courier_arriving, package_split, courier_waiting,
+  package_delivering, package_delivered, package_canceled, package_returning, package_returned,
+  courier_reassigning, courier_moving. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'package_created'
+    - 'courier_assigned'
+    - 'package_delivered'
+    - 'package_canceled'
+catalog:
+  summary: 'Authenticate Stuart delivery webhooks (unsigned: your `X-` authentication header compared in full in constant time), handle v3 topics like `package_created`, `courier_assigned` and `package_delivered`'

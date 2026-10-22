@@ -1,0 +1,33 @@
+name: onelogin
+displayName: 'OneLogin'
+docs:
+  webhooks: https://developers.onelogin.com/api-docs/1/events/webhooks/
+  verification: https://developers.onelogin.com/api-docs/1/events/webhooks/
+  events: https://developers.onelogin.com/api-docs/1/events/event-resource
+notes: >
+  Identity; covers the Event Broadcaster webhook (all account events, up to 3 attempts). No
+  signature: requests are unsigned. Authenticate with a secret header the user adds as a custom
+  header on the Event Broadcaster (the docs recommend an arbitrary string). The header name is
+  user-chosen, so the examples read the header name from ONELOGIN_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from ONELOGIN_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  OneLogin source does (API key verification: header name + exact value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. The body is a
+  JSON array of events (or newline-delimited); each has a numeric event_type_id, e.g. 5 User Login
+  Success, 6 User Login Failed, 7 User Logout, 8 User Logged into an App, 11 User Changed Password,
+  22 User Added an MFA Device. The full list comes from the Event Types API. Iterate the array.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - '5 (User Login Success)'
+    - '6 (User Login Failed)'
+    - '11 (User Changed Password)'
+catalog:
+  summary: 'Authenticate OneLogin Event Broadcaster webhooks (unsigned: a secret custom header compared in full in constant time), handle batched events by `event_type_id` such as login success and failure'
