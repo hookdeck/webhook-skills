@@ -1,0 +1,23 @@
+name: missive
+displayName: 'Missive'
+docs:
+  webhooks: https://learn.missiveapp.com/api-documentation/webhooks
+notes: >
+  Missive (team inbox) rule webhooks. If a validation secret is set on the rule's webhook action,
+  requests carry X-Hook-Signature: 'sha256=<hex>', HMAC-SHA256 hex of the raw request body keyed with
+  that secret. Require and strip the sha256= prefix. Compare in constant time: in Node, check the
+  received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid
+  hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. The body has a rule object (id, description, type)
+  plus conversation and message or comment objects; dispatch on rule.type (the docs' payload example
+  is label_change; other rule types are only named in the UI). Missive also sends a validation POST
+  when the rule is saved. Hookdeck setup (say this in SKILL.md's setup section and in
+  references/setup.md): Set a validation secret on the rule's webhook action. Without one, deliveries
+  are unsigned and fail verification. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'label_change'
+catalog:
+  summary: 'Verify Missive rule webhook signatures (`X-Hook-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the validation secret), handle rule events by `rule.type`'

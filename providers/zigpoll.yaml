@@ -1,0 +1,29 @@
+name: zigpoll
+displayName: 'Zigpoll'
+docs:
+  webhooks: https://docs.zigpoll.com/integrations/webhooks
+notes: >
+  Zigpoll (on-site surveys). Header X-Zigpoll-Signature: 't=<unix ms>,v1=<hex>'; v1 is hex HMAC-SHA256
+  over '{t}.{raw request body}' keyed with the account-wide Signing Secret (Integrations > Webhooks,
+  shown once). t is in milliseconds: divide by 1000 before any window check. t=<ts>,v1=<hex> header:
+  split on ',' and trim each part (allow a space after the comma), take t and every v1 (several are
+  sent during secret rotation) and accept if any v1 matches; reject a header with no t or no v1.
+  Compare in constant time: in Node, check the received value is exactly 64 hex chars
+  (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare
+  the lowercase hex strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length
+  check; in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives
+  401, not 500. Hookdeck retries and replays resend the original timestamp, so a 5-minute window
+  rejects late retries: make the timestamp freshness check opt-in via
+  ZIGPOLL_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the mercury-webhooks skill does. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so a 5-minute window
+  rejects late retries, and point to references/verification.md, which shows where the window can be
+  dropped or widened. Zigpoll re-signs each of its own attempts with a fresh t, but Hookdeck retries
+  and replays do not. The legacy X-Zigpoll-Secret static header is not sent for these webhooks; don't
+  use it. Payload type values: submitted-responses and completed-survey. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'submitted-responses'
+    - 'completed-survey'
+catalog:
+  summary: 'Verify Zigpoll webhook signatures (`X-Zigpoll-Signature` `t=<ms>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle `submitted-responses` and `completed-survey`'

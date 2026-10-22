@@ -1,0 +1,27 @@
+name: absorb-lms
+displayName: 'Absorb LMS'
+docs:
+  webhooks: https://support.absorblms.com/hc/en-us/articles/28999993938451-Webhooks
+  api: https://support.absorblms.com/api/v2/help_center/articles/28999993938451.json
+notes: >
+  Absorb LMS (learning management system) webhooks. The help-center HTML page is behind Cloudflare;
+  read the same article through the Zendesk JSON API URL in docs.api. Header absorb-signature: bare
+  lowercase hex HMAC-SHA256 of the raw request body (no prefix, no timestamp), keyed with the
+  webhook's Secret Key (generated after the webhook is saved) used as a UTF-8 string. Compare in
+  constant time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before
+  any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Absorb's
+  Test Webhook button sends a randomly generated signature, so test events cannot be verified; say so.
+  The payload carries eventName, the event's display name with spaces removed (e.g. UserCreated,
+  CertificateAwarded, EnrollmentCompletedbyAdmin, OnlineCourseActivated); dispatch on eventName.
+  Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md): Absorb's Test
+  Webhook button sends a random signature, so test events fail verification. Real deliveries are
+  signed with the Secret Key. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type verifies.
+testScenario:
+  events:
+    - 'UserCreated'
+    - 'CertificateAwarded'
+catalog:
+  summary: 'Verify Absorb LMS webhook signatures (`absorb-signature`, HMAC-SHA256 hex of the raw body), handle `UserCreated` and `CertificateAwarded` events'

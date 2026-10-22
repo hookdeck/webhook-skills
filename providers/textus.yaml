@@ -1,0 +1,21 @@
+name: textus
+displayName: 'TextUs'
+docs:
+  webhooks: https://apidocs.next.textus.com/overview/webhooks/webhooks-setup/
+notes: >
+  TextUs (business texting). Header X-TextUs-Signature: bare hex HMAC-SHA256 of the raw request body,
+  keyed with the webhook's secret, which starts with textus- (e.g. textus-HOTh4kXxHIbYst0xutpkdw): the
+  whole string, including the textus- prefix, is the HMAC key as UTF-8. Compare in constant time: in
+  Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x,
+  'hex') (invalid hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8
+  Buffers with crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Events: message.received,
+  message.delivered, message.failed, message.unknown, phone_call.completed, contact.opted_out,
+  contact.opted_in, contact.created. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'message.received'
+    - 'contact.opted_out'
+catalog:
+  summary: 'Verify TextUs webhook signatures (`X-TextUs-Signature`, HMAC-SHA256 hex of the raw body keyed with the whole `textus-` secret), handle message and contact events'

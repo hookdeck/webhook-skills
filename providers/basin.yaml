@@ -1,0 +1,25 @@
+name: basin
+displayName: 'Basin'
+docs:
+  webhooks: https://docs.usebasin.com/integrations/webhooks/
+  verification: https://docs.usebasin.com/integrations/webhooks/#webhook-signing
+notes: >
+  Basin (form backend). Header X-Basin-Signature: 'sha256=<hex>', HMAC-SHA256 hex of the raw request
+  body, keyed with the webhook signing secret (form dashboard: Integrations > Webhooks > Edit >
+  Webhook Signing > Show). Require and strip the sha256= prefix. Compare in constant time: in Node,
+  check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x,
+  'hex') (invalid hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8
+  Buffers with crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Signed webhooks are only available on
+  Basin's Growth plan and above; on lower plans deliveries carry no signature. The body may be JSON or
+  form-urlencoded depending on the webhook's format: verify over the raw bytes before parsing either.
+  There are no event types: each webhook fires on a form submission. Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Basin signs webhooks only on the Growth plan
+  and above: paste the webhook signing secret. On lower plans, deliveries are unsigned and fail
+  verification. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'form submission'
+catalog:
+  summary: 'Verify Basin form-submission webhooks (`X-Basin-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body; Growth plan and above), handle JSON or form-encoded submissions'

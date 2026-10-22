@@ -1,0 +1,27 @@
+name: nooks
+displayName: 'Nooks'
+docs:
+  webhooks: https://nooks.help.usepylon.com/articles/8109690071-nooks-webhooks-integration-guide
+notes: >
+  Nooks (AI sales dialer). Header x-webhook-signature: 't=<unix ms>,s=<base64>'. s is the base64
+  HMAC-SHA256 over '<t>.<raw body>' (t exactly as sent, a dot, then the raw body) keyed with the Nooks
+  signing key as UTF-8. t is in milliseconds: divide by 1000 before any window check. Parse by
+  splitting on ',' and '=' (only the first '=' of each part: base64 ends in '='). Compare in constant
+  time: compare the base64 strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a
+  length check (no lenient base64 decode of the header); in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Hookdeck retries and replays resend
+  the original timestamp, so a 5-minute window rejects late retries: make the timestamp freshness
+  check opt-in via NOOKS_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the mercury-webhooks skill
+  does. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so a
+  5-minute window rejects late retries, and point to references/verification.md, which shows where the
+  window can be dropped or widened. When a URL is saved, Nooks sends a one-time activation POST that
+  must get a 2xx; it may be unsigned, and the signing key is only issued after activation. Only
+  documented event: call.logged. Hookdeck setup (say this in SKILL.md's setup section and in
+  references/setup.md): The one-off activation ping Nooks sends when you save the URL is unsigned and
+  may show as a failed verification. Later deliveries are signed. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'call.logged'
+catalog:
+  summary: 'Verify Nooks webhook signatures (`x-webhook-signature` `t=<ms>,s=<base64>`, HMAC-SHA256 over `{t}.{body}`), handle `call.logged` events'
