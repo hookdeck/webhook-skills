@@ -1,0 +1,29 @@
+name: rev-ai
+displayName: 'Rev.ai'
+docs:
+  webhooks: https://docs.rev.ai/api/asynchronous/webhooks/
+  verification: https://docs.rev.ai/_bundle/api/asynchronous/reference.yaml
+notes: >
+  Speech-to-text (Rev AI async API). Auth headers are set per job in
+  notification_config.auth_headers; Authorization is the only header allowed and its value must be
+  '<scheme> <token>', e.g. {"Authorization": "Bearer $TOKEN"}. The legacy callback_url carries no
+  auth. No signature. The credential is the Authorization header. Hookdeck's Rev.ai source compares
+  the WHOLE Authorization header value to the configured key, so the examples read
+  REV_AI_AUTHORIZATION = the full value as Rev.ai sends it (e.g. 'Bearer <token>'), including the
+  scheme prefix, and compare the whole Authorization header to it; do not strip or parse the prefix
+  (Coterie pattern). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body is {job: {id, status, created_on, completed_on, failure, failure_detail,
+  ...}} with job.status transcribed or failed; fetch the transcript afterwards. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON
+  only after the credential check.
+testScenario:
+  events:
+    - 'transcribed'
+    - 'failed'
+catalog:
+  summary: 'Authenticate Rev.ai job notifications (the whole `Authorization: Bearer <token>` value from `notification_config.auth_headers`, compared in constant time), handle `transcribed` and `failed` jobs'

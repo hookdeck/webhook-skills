@@ -1,0 +1,32 @@
+name: aws-eventbridge
+displayName: 'Amazon EventBridge'
+docs:
+  webhooks: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-api-destinations.html
+  verification: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-target-connection-auth.html
+notes: >
+  AWS event bus; covers API destinations (rule or pipe targets) whose Connection uses Basic
+  authorization (EventBridge populates the Authorization header). API Key and OAuth connections
+  aren't covered. EventBridge also sends User-Agent: Amazon/EventBridge/ApiDestinations. No
+  signature. Authenticate with HTTP Basic auth, which is what Hookdeck's Amazon EventBridge source
+  verifies. The examples read AWS_EVENTBRIDGE_WEBHOOK_USERNAME and AWS_EVENTBRIDGE_WEBHOOK_PASSWORD,
+  parse 'Authorization: Basic base64(username:password)' (scheme case-insensitive, split on the
+  first colon), and compare the username and the password each in constant time, evaluating both
+  before deciding (no short-circuit). Missing or malformed header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. The request method is user-chosen, so
+  the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE (the API destination
+  method is configurable) on the webhook route, and handle an empty body (e.g. GET). Without an
+  input transformer the body is the event envelope {version, id, 'detail-type', source, account,
+  time, region, resources, detail}; dispatch on source + detail-type. With a transformer it's
+  whatever the template builds. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'EC2 Instance State-change Notification (aws.ec2)'
+    - 'OrderCreated (custom source)'
+catalog:
+  summary: 'Authenticate Amazon EventBridge API destination calls (unsigned Basic auth connection, compared in constant time), handle forwarded events by `source` and `detail-type`'

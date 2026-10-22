@@ -1,0 +1,30 @@
+name: paperform
+displayName: 'Paperform'
+docs:
+  webhooks: https://paperform.com/help/articles/how-to-use-webhooks/
+  verification: https://paperform.com/help/articles/how-to-use-webhooks/
+notes: >
+  Form builder; covers form-submission webhooks (Papersign isn't covered). Enable the 'Custom
+  headers' toggle on the webhook. No signature: requests are unsigned. Authenticate with a secret
+  header the user adds with the webhook's Custom headers. The header name is user-chosen, so the
+  examples read the header name from PAPERFORM_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from PAPERFORM_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
+  ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
+  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Paperform source does (API key
+  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Each webhook fires on New Submission or
+  Partial Submission (chosen per webhook); the body {data: [{title, key, type, value, ...}],
+  submission_id, created_at, ip_address, charge, ...} has no type field. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after
+  the credential check.
+testScenario:
+  events:
+    - 'New Submission'
+    - 'Partial Submission'
+catalog:
+  summary: 'Authenticate Paperform submission webhooks (unsigned: a secret custom header compared in full in constant time), handle new and partial submission payloads'

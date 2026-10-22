@@ -1,0 +1,35 @@
+name: azure-devops
+displayName: 'Azure DevOps'
+docs:
+  webhooks: https://learn.microsoft.com/en-us/azure/devops/service-hooks/services/webhooks
+  verification: https://learn.microsoft.com/en-us/azure/devops/service-hooks/consumers
+  events: https://learn.microsoft.com/en-us/azure/devops/service-hooks/events
+notes: >
+  Covers the Web Hooks service-hook consumer (webHooks / httpRequest) with basicAuthCredentials
+  (HTTPS required for basic auth). httpHeaders is an alternative and isn't covered. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's Azure DevOps source verifies. The
+  examples read AZURE_DEVOPS_WEBHOOK_USERNAME and AZURE_DEVOPS_WEBHOOK_PASSWORD, parse
+  'Authorization: Basic base64(username:password)' (scheme case-insensitive, split on the first
+  colon), and compare the username and the password each in constant time, evaluating both before
+  deciding (no short-circuit). Missing or malformed header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Body: {subscriptionId, notificationId,
+  id, eventType, publisherId, message, detailedMessage, resource, resourceVersion,
+  resourceContainers, createdDate}; eventType like git.push, git.pullrequest.created,
+  git.pullrequest.merged, workitem.created, workitem.updated, build.complete,
+  ms.vss-pipelines.run-state-changed-event. The docs' build.complete and deployment-approval-pending
+  examples are malformed JSON; don't copy them verbatim, and say so. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the
+  credential check.
+testScenario:
+  events:
+    - 'git.push'
+    - 'git.pullrequest.created'
+    - 'workitem.updated'
+    - 'build.complete'
+catalog:
+  summary: 'Authenticate Azure DevOps Web Hooks service hooks (unsigned basic auth credentials compared in constant time), handle `eventType`s like `git.push`, `git.pullrequest.created` and `workitem.updated`'

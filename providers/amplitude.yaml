@@ -1,0 +1,31 @@
+name: amplitude
+displayName: 'Amplitude'
+docs:
+  webhooks: https://amplitude.com/docs/data/destination-catalog/webhooks
+  verification: https://amplitude.com/docs/data/destination-catalog/webhooks
+notes: >
+  Product analytics; covers the Webhook streaming destination (Events and User Properties; Plus,
+  Growth and Enterprise plans). Up to five custom headers after the preset Content-Type and
+  User-Agent: Amplitude/Webhook/1.0. No signature: requests are unsigned. Authenticate with a secret
+  header the user adds in the destination's header rows. The header name is user-chosen, so the
+  examples read the header name from AMPLITUDE_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from AMPLITUDE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
+  ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
+  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Amplitude source does (API key
+  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Default event payloads follow
+  Amplitude's event format (event_type is your own event name, plus user_id, event_properties, ...);
+  user updates follow the user format. FreeMarker templates can emit any JSON. Use the default
+  format and say a template changes it. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'forwarded event (your event_type)'
+    - 'user properties update'
+catalog:
+  summary: 'Authenticate Amplitude webhook streaming destinations (unsigned: a secret header compared in full in constant time), handle forwarded events and user property updates'

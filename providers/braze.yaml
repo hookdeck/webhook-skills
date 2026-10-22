@@ -1,0 +1,31 @@
+name: braze
+displayName: 'Braze'
+docs:
+  webhooks: https://www.braze.com/docs/user_guide/message_building_by_channel/webhooks/creating_a_webhook
+  verification: https://www.braze.com/docs/user_guide/message_building_by_channel/webhooks/creating_a_webhook
+notes: >
+  Customer engagement; covers webhook campaigns, Canvas webhook steps and templates (not Braze
+  Currents). Basic authentication credentials (Settings > Credential Management) supply the
+  Authorization header; token credentials / manual headers aren't covered. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's Braze source verifies. The examples
+  read BRAZE_WEBHOOK_USERNAME and BRAZE_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, split on the first colon), and compare the
+  username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, brevo,
+  assemblyai, honeybadger and coterie skills. The request method is user-chosen, so the examples
+  must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook route, and handle an
+  empty body (e.g. GET). The body is what the marketer writes (JSON key-value pairs or raw text with
+  Liquid); Braze adds no event field, so use an illustrative JSON body and accept non-JSON bodies.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'campaign webhook (illustrative body)'
+    - 'Canvas webhook step (illustrative body)'
+catalog:
+  summary: 'Authenticate Braze webhook campaigns and Canvas steps (unsigned Basic auth credential compared in constant time), handle the request bodies your messages compose'

@@ -1,0 +1,28 @@
+name: workato
+displayName: 'Workato'
+docs:
+  webhooks: https://docs.workato.com/en/developing-connectors/http/connection-setup.html
+  verification: https://docs.workato.com/en/developing-connectors/http/connection-setup.html
+notes: >
+  Automation platform; no native outbound webhooks: deliveries are HTTP connector actions in recipes
+  (like n8n and Zapier), with Basic auth on the HTTP connection. No signature. Authenticate with
+  HTTP Basic auth, which is what Hookdeck's Workato source verifies. The examples read
+  WORKATO_WEBHOOK_USERNAME and WORKATO_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, split on the first colon), and compare the
+  username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, brevo,
+  assemblyai, honeybadger and coterie skills. The request method is user-chosen, so the examples
+  must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook route, and handle an
+  empty body (e.g. GET). Body is whatever the recipe sends; use an illustrative {"event": ...,
+  "data": ...} body. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'recipe event (illustrative body)'
+catalog:
+  summary: 'Authenticate requests from a Workato recipe''s HTTP connector (unsigned Basic auth compared in constant time), route recipe payloads on a user-defined event field'

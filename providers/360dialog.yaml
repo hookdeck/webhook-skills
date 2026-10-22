@@ -1,0 +1,31 @@
+name: 360dialog
+displayName: '360dialog'
+docs:
+  webhooks: https://docs.360dialog.com/docs/messaging/webhook
+  verification: https://docs.360dialog.com/docs/messaging/webhook
+notes: >
+  WhatsApp Business API provider. The webhook URL is set by API with a headers object; for auth set
+  'Authorization': 'Basic base64(USER:PASS)' there (docs example 'Basic dGVzdHVzZXI6dGVzdHBhc3M=').
+  No signature. Authenticate with HTTP Basic auth, which is what Hookdeck's 360dialog source
+  verifies. The examples read THREE_SIXTY_DIALOG_WEBHOOK_USERNAME and
+  THREE_SIXTY_DIALOG_WEBHOOK_PASSWORD, parse 'Authorization: Basic base64(username:password)'
+  (scheme case-insensitive, split on the first colon), and compare the username and the password
+  each in constant time, evaluating both before deciding (no short-circuit). Missing or malformed
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Cloud API bodies follow Meta's format: {object, entry: [{changes: [{field:
+  'messages', value: {messages | statuses, ...}}]}]}; Coexistence adds smb_message_echoes, history,
+  smb_app_state_sync. Dispatch on entry[].changes[].field and, within messages, on messages vs
+  statuses. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'messages (inbound message)'
+    - 'messages (status update)'
+    - 'smb_message_echoes'
+catalog:
+  summary: 'Authenticate 360dialog WhatsApp webhooks (unsigned HTTP Basic auth set in the webhook headers, compared in constant time), handle inbound messages and status updates'

@@ -1,0 +1,34 @@
+name: speechmatics
+displayName: 'Speechmatics'
+docs:
+  webhooks: https://docs.speechmatics.com/speech-to-text/batch/notifications
+  verification: https://docs.speechmatics.com/speech-to-text/batch/notifications
+notes: >
+  Speech-to-text batch job notifications. auth_headers are free-form 'Name: value' strings set per
+  job in notification_config (the docs' example is 'Authorization: Bearer <token>', the receiver's
+  own token, not the Speechmatics API key). No signature: requests are unsigned. Authenticate with a
+  secret header the user adds per job in notification_config.auth_headers. The header name is
+  user-chosen, so the examples read the header name from SPEECHMATICS_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from SPEECHMATICS_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  Speechmatics source does (API key verification: header name + exact value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. The request
+  method is user-chosen, so the examples must not be POST-only: accept POST and PUT on the webhook
+  route, and handle an empty body (e.g. GET). Speechmatics appends ?id=<job
+  id>&status=<success|error|fetch_error|trim_error> to the URL. The body is the requested contents:
+  JSON transcript/jobinfo, a single raw item, or multipart with several attachments, so don't assume
+  JSON. The vendor's own origin check is an IP allowlist. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'success'
+    - 'error'
+catalog:
+  summary: 'Authenticate Speechmatics batch job notifications (unsigned: your `auth_headers` value compared in full in constant time), handle `success` and `error` callbacks by the `status` query parameter'
