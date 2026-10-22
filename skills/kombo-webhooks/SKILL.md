@@ -26,17 +26,17 @@ metadata:
 Kombo signs the **raw request body** (JSON with two-space indentation) with
 HMAC-SHA256. The key is your **Kombo Webhook Secret** used as its UTF-8 bytes
 (do not base64-decode it). The digest is sent in `X-Kombo-Signature` as
-**base64url without padding**. Decode the header to bytes and compare the bytes
-in constant time. Never re-serialize the parsed JSON: use the exact bytes received.
+**base64url without padding**. Encode your HMAC as base64url, strip any `=`
+padding, and compare it with the header text in constant time. Never re-serialize the parsed JSON: use the exact bytes received.
 
 ```javascript
 const crypto = require('crypto');
 
 function verifyKomboWebhook(rawBody, signatureHeader, secret) {
   if (!signatureHeader) return false;
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  const provided = Buffer.from(signatureHeader, 'base64url');
-  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64url');
+  const provided = Buffer.from(signatureHeader.replace(/=+$/, ''));
+  return provided.length === expected.length && crypto.timingSafeEqual(provided, Buffer.from(expected));
 }
 ```
 

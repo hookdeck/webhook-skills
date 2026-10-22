@@ -52,7 +52,13 @@ def verify_stedi_webhook(raw_body: bytes, msg_id: str, timestamp: str, header: s
     expected = hmac.new(key, f"{msg_id}.{timestamp}.".encode() + raw_body, hashlib.sha256).digest()
     for entry in header.split(" "):
         version, _, sig = entry.partition(",")
-        if version == "v1" and hmac.compare_digest(base64.b64decode(sig, validate=True), expected):
+        if version != "v1":
+            continue
+        try:
+            received = base64.b64decode(sig, validate=True)
+        except ValueError:  # binascii.Error is a ValueError
+            continue
+        if hmac.compare_digest(received, expected):
             return True
     return False
 ```

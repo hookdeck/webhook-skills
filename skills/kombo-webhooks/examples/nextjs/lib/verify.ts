@@ -16,11 +16,11 @@ export function verifyKomboWebhook(
     return false;
   }
 
-  const expected = createHmac('sha256', secret).update(rawBody).digest();
+  const expected = createHmac('sha256', secret).update(rawBody).digest('base64url');
 
-  // Decode the header to bytes and compare bytes (not re-encoded strings)
-  const provided = Buffer.from(signatureHeader, 'base64url');
+  // Compare base64url text (padding stripped); decoding would skip invalid characters
+  const provided = Buffer.from(signatureHeader.replace(/=+$/, ''));
 
   // timingSafeEqual throws on length mismatch, so check length first
-  return provided.length === expected.length && timingSafeEqual(provided, expected);
+  return provided.length === expected.length && timingSafeEqual(provided, Buffer.from(expected));
 }

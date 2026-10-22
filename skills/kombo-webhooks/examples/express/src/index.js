@@ -23,13 +23,13 @@ function verifyKomboWebhook(rawBody, signatureHeader, secret) {
     return false;
   }
 
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64url');
 
-  // Decode the header to bytes and compare bytes (not re-encoded strings)
-  const provided = Buffer.from(signatureHeader, 'base64url');
+  // Compare base64url text (padding stripped); decoding would skip invalid characters
+  const provided = Buffer.from(signatureHeader.replace(/=+$/, ''));
 
   // timingSafeEqual throws on length mismatch, so check length first
-  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+  return provided.length === expected.length && crypto.timingSafeEqual(provided, Buffer.from(expected));
 }
 
 // express.raw with '*/*' keeps the raw bytes whatever Content-Type Kombo sends
