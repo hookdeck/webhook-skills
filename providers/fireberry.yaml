@@ -27,7 +27,7 @@ notes: >
   JSON only after the credential check.
 testScenario:
   events:
-    - 'account.created (illustrative body)'
-    - 'record.updated (illustrative body)'
+    - 'account.created'
+    - 'record.updated'
 catalog:
   summary: 'Authenticate Fireberry webhook automations (unsigned: a secret header on the action compared in full in constant time), handle the record payloads your automation sends'

@@ -3,6 +3,7 @@ displayName: 'Belvo'
 docs:
   webhooks: https://developers.belvo.com/developer_resources/resources-webhooks-payments-mexico
   verification: https://developers.belvo.com/developer_resources/resources-webhooks-payments-mexico
+  events: https://developers.belvo.com/developer_resources/resources-webhooks-aggregation
 notes: >
   Open finance (LatAm). Auth is optional on Aggregation, Payments Brazil and Payments Mexico
   webhooks. Aggregation: you enter the full value ('Basic <base64>' or 'Bearer <token>'); Payments

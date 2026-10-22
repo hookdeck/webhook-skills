@@ -24,10 +24,13 @@ notes: >
   shorthand codes ({START-LOCAL-DATE}, {EMAIL}, ...); nothing names the trigger unless the template
   does, so use an illustrative body with an event field. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
-  check.
+  check. The event strings (booking_made, booking_rescheduled, booking_cancelled, reminder,
+  follow_up, no_show) are illustrative values for an `event` field in the user's template, not names
+  YouCanBookMe sends.
 testScenario:
   events:
-    - 'booking created (illustrative template)'
-    - 'booking cancelled (illustrative template)'
+    - 'booking_made'
+    - 'booking_rescheduled'
+    - 'booking_cancelled'
 catalog:
-  summary: 'Authenticate YouCanBookMe webhook actions (unsigned: a secret request header compared in full in constant time), handle booking made, rescheduled and cancelled payloads from your template'
+  summary: 'Authenticate YouCanBookMe webhook actions (unsigned: a secret request header you choose, compared in full in constant time), handle booking_made, booking_rescheduled and booking_cancelled payloads from your template'

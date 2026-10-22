@@ -26,6 +26,5 @@ notes: >
 testScenario:
   events:
     - 'Deployment.failed'
-    - 'Deployment.success (illustrative)'
 catalog:
   summary: 'Authenticate Railway webhooks (unsigned: a secret custom header compared in full in constant time), handle deployment and alert events like `Deployment.failed`'

@@ -27,7 +27,10 @@ notes: >
   the credential check.
 testScenario:
   events:
-    - 'registration.after (illustrative template)'
-    - 'settings.after (illustrative template)'
+    - 'registration.after'
+    - 'settings.after'
+  prompt: >
+    Add an endpoint to my {framework} app that receives Ory Actions webhooks. Authenticate them
+    with the api_key header configured on the action and handle the JSON body.
 catalog:
   summary: 'Authenticate Ory Actions webhooks (unsigned: `api_key` auth in a header, compared in full in constant time), handle non-blocking registration, login and settings hooks'

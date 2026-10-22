@@ -3,6 +3,7 @@ displayName: 'OneLogin'
 docs:
   webhooks: https://developers.onelogin.com/api-docs/1/events/webhooks/
   verification: https://developers.onelogin.com/api-docs/1/events/webhooks/
+  events: https://developers.onelogin.com/api-docs/1/events/event-resource
 notes: >
   Identity; covers the Event Broadcaster webhook (all account events, up to 3 attempts). No
   signature: requests are unsigned. Authenticate with a secret header the user adds as a custom

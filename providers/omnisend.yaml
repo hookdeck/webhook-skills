@@ -24,7 +24,7 @@ notes: >
   credential check.
 testScenario:
   events:
-    - 'subscribed (docs example template)'
-    - 'order placed (illustrative template)'
+    - 'subscribed'
+    - 'placed order'
 catalog:
-  summary: 'Authenticate Omnisend automation webhooks (unsigned: the `X-Webhook-Secret`-style header compared in full in constant time), handle the JSON your automation template sends'
+  summary: 'Authenticate Omnisend automation webhooks (user-chosen secret header such as `X-Webhook-Secret`, compared in constant time), handle template-defined events like `subscribed` and `placed order`'

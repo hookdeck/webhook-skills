@@ -28,7 +28,8 @@ notes: >
   the credential check.
 testScenario:
   events:
-    - 'data uplink (illustrative body template)'
-    - 'service status (illustrative)'
+    - 'data uplink'
+    - 'service status'
+    - 'error'
 catalog:
-  summary: 'Authenticate Sigfox custom callbacks (unsigned: a secret header set in the callback, compared in full in constant time), handle GET, POST or PUT device messages from your body template'
+  summary: 'Authenticate Sigfox custom callbacks (unsigned: a secret header set in the callback, compared in full in constant time), handle GET, POST or PUT data uplink, service status and error callbacks'

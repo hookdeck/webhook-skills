@@ -3,6 +3,7 @@ displayName: 'Oyster'
 docs:
   webhooks: https://docs.oysterhr.com/docs/getting-started-with-webhooks
   verification: https://docs.oysterhr.com/docs/getting-started-with-webhooks
+  events: https://docs.oysterhr.com/reference/post_expenses-expense-approved
 notes: >
   Global HR/EOR. Webhooks are registered with POST /v1/webhooks {url, sharedSecret}; Oyster sends
   the sharedSecret as 'Authorization: Bearer <sharedSecret>' (e.g. 'Bearer 12345'); 5s timeout. No

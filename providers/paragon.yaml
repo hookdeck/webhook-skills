@@ -1,29 +1,20 @@
 name: paragon
-displayName: 'Paragon'
+displayName: Paragon
 docs:
   webhooks: https://docs.useparagon.com/monitoring/event-destinations
   verification: https://docs.useparagon.com/monitoring/event-destinations
 notes: >
-  Embedded integrations platform; covers monitoring Webhook Destinations (paid plans). Managed Sync
-  webhooks have no auth option and aren't covered. No signature: requests are unsigned. Authenticate
-  with a secret header the user adds to the Webhook Destination (Show more request options >
-  headers). The header name is user-chosen, so the examples read the header name from
-  PARAGON_WEBHOOK_HEADER (default 'Authorization') and the expected value from
-  PARAGON_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
-  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
-  'Bearer ' prefix. This is what Hookdeck's Paragon source does (API key verification: header name +
-  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
-  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
-  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
-  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
-  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
-  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
-  and coterie skills. Body has a type field: workflow_failure or credentials_failure. Express
-  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
-  JSON only after the credential check.
+  Embedded integrations platform; covers monitoring Webhook Destinations (paid plans). Managed
+  Sync webhooks have no auth option and aren't covered. Requests are unsigned. Authenticate with
+  a secret header the user adds to the Webhook Destination (Show more request options >
+  headers). The header name is user-chosen, so the examples read it from PARAGON_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from PARAGON_WEBHOOK_SECRET (the exact whole
+  header value, including any 'Bearer ' prefix). Compare the whole value in constant time. Body
+  has a type field: workflow_failure or credentials_failure. Express examples read the raw body
+  with express.raw({ type: '*/*' }).
 testScenario:
   events:
     - 'workflow_failure'
     - 'credentials_failure'
 catalog:
-  summary: 'Authenticate Paragon monitoring Webhook Destinations (unsigned: a secret header compared in full in constant time), handle `workflow_failure` and `credentials_failure` events'
+  summary: 'Authenticate Paragon Webhook Destination requests (unsigned: user-added secret header, default `Authorization`, compared in constant time), handle `workflow_failure` and `credentials_failure` events'

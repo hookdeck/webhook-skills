@@ -26,6 +26,11 @@ notes: >
   check.
 testScenario:
   events:
-    - 'scenario event (illustrative body)'
+    - 'order.created'
+    - 'scenario.failed'
+  prompt: >
+    Add an endpoint to my {framework} app that receives requests from a Make HTTP module.
+    Authenticate them with the secret header from an API key keychain and handle the JSON
+    payload, which has an event field such as {events}.
 catalog:
   summary: 'Authenticate requests from a Make scenario''s HTTP module (unsigned: API key keychain header compared in full in constant time), route scenario payloads on a user-defined event field'

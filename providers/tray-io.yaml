@@ -22,9 +22,13 @@ notes: >
   webhook route, and handle an empty body (e.g. GET). Body is whatever the workflow sends; suggest
   including an event field and use an illustrative {"event": ..., "data": ...} body. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
-  JSON only after the credential check.
+  JSON only after the credential check. Tray defines no event types: the skill uses record.created,
+  record.updated and record.deleted as an illustrative event field convention. Tray defaults Content-Type to application/x-www-form-urlencoded when no body type
+  is chosen, so guides should tell users to pick a JSON body.
 testScenario:
   events:
-    - 'workflow event (illustrative body)'
+    - 'record.created'
+    - 'record.updated'
+    - 'record.deleted'
 catalog:
-  summary: 'Authenticate requests from a Tray.io workflow''s HTTP Client connector (unsigned: a secret header compared in full in constant time), route workflow payloads on a user-defined event field'
+  summary: 'Authenticate requests from a Tray.io workflow''s HTTP Client connector (unsigned: a secret header compared in full in constant time), route workflow payloads on an event field such as `record.created`'

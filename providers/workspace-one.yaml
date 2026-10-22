@@ -27,7 +27,7 @@ notes: >
   works; parse JSON only after the credential check.
 testScenario:
   events:
-    - 'Device Enrollment (illustrative)'
-    - 'Device Compliance Status Change (illustrative)'
+    - 'Device Enrollment'
+    - 'Device Compliance Status Change'
 catalog:
   summary: 'Authenticate Workspace ONE UEM event notifications (unsigned HTTP Basic auth compared in constant time), handle device enrollment, compliance and wipe events'

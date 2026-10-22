@@ -20,7 +20,7 @@ notes: >
   leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body has
   event_name: DASHER_CONFIRMED, DASHER_CONFIRMED_PICKUP_ARRIVAL, DASHER_PICKED_UP,
   DASHER_CONFIRMED_DROPOFF_ARRIVAL, DASHER_DROPPED_OFF, DELIVERY_CANCELLED,
-  DELIVERY_RETURN_INITIALIZED, DELIVERY_RETURNED, DELIVERY_BATCHED, dasher_enroute_to_* (opt-in);
+  DELIVERY_RETURN_INITIALIZED, DASHER_CONFIRMED_RETURN_ARRIVAL, DELIVERY_RETURNED, DELIVERY_BATCHED, dasher_enroute_to_* (opt-in);
   refund webhooks have no event_name. Express examples must read the raw body with express.raw({
   type: '*/*' }) so any content type works; parse JSON only after the credential check.
 testScenario:

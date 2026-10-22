@@ -26,9 +26,10 @@ notes: >
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   works; parse JSON only after the credential check.
 testScenario:
+  # Hightouch writes no event name into the request; these are the method-derived trigger names the examples use.
   events:
-    - 'row added (illustrative payload)'
-    - 'row changed (illustrative payload)'
-    - 'row removed (illustrative payload)'
+    - 'row_added'
+    - 'row_changed'
+    - 'row_removed'
 catalog:
   summary: 'Authenticate Hightouch HTTP Request destination calls (unsigned: a secret header compared in full in constant time), handle row added, changed and removed sync requests'

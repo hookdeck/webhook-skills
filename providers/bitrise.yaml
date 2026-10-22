@@ -3,6 +3,7 @@ displayName: 'Bitrise'
 docs:
   webhooks: https://docs.bitrise.io/en/bitrise-platform/integrations/webhooks/adding-outgoing-webhooks
   verification: https://docs.bitrise.io/en/bitrise-platform/integrations/webhooks/adding-outgoing-webhooks
+  events: https://docs.bitrise.io/en/release-management/releases/configuring-a-release/outgoing-webhooks-in-release-management
 notes: >
   Mobile CI/CD; covers outgoing webhooks for CI build events and Release Management events. No
   signature: requests are unsigned. Authenticate with a secret header the user adds to the outgoing
