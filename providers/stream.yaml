@@ -1,0 +1,22 @@
+name: stream
+displayName: 'Stream (getstream.io)'
+docs:
+  webhooks: https://getstream.io/chat/docs/node/webhooks_overview/
+  verification: https://getstream.io/chat/docs/node/webhooks_overview/
+  events: https://getstream.io/chat/docs/node/webhook_events/
+notes: >
+  Stream (getstream.io) chat/activity feeds/video, not Bunny Stream or other 'Stream' products.
+  Header X-Signature: hex HMAC-SHA256 of the raw body keyed with the app's API secret (the full
+  Stream app API secret as UTF-8). The SDKs have verifyWebhook(body, signature); show as an option
+  but keep a manual check. Payload Compression (enable_hook_payload_compression) must be OFF:
+  compressed (gzip) payloads are signed over the uncompressed bytes and Hookdeck's Stream source
+  can't verify them; say so. Also mention X-Webhook-Id and X-Api-Key headers. Events: message.new,
+  message.updated, message.deleted, reaction.new, channel.created, user.updated, member.added.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'message.new'
+    - 'reaction.new'
+catalog:
+  summary: 'Verify Stream (getstream.io) webhook signatures (`X-Signature`, HMAC-SHA256 hex of the raw body keyed with the app API secret; leave payload compression off), handle events like `message.new`'

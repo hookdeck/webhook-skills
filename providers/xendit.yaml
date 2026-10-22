@@ -1,0 +1,21 @@
+name: xendit
+displayName: 'Xendit'
+docs:
+  webhooks: https://docs.xendit.co/docs/handling-webhooks
+  verification: https://docs.xendit.co/docs/handling-webhooks
+notes: >
+  Southeast Asia payments. Despite the word 'sign', there is no HMAC: Xendit sends the webhook
+  verification token (Dashboard > Settings > Webhooks) in the x-callback-token header, raw. Verify
+  it against XENDIT_CALLBACK_TOKEN. No payload signature. Verify the shared token with a
+  constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Payload shape varies by
+  product (Payments API events like payment.capture, payment.failure, payment_token.activation;
+  invoice callbacks with status PAID); check the docs and dispatch on the event field when present.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'payment.capture'
+    - 'payment.failure'
+catalog:
+  summary: 'Authenticate Xendit webhooks (`x-callback-token` header compared with the verification token in constant time), handle payment events like `payment.capture`'

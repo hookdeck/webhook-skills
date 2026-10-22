@@ -1,0 +1,18 @@
+name: unit
+displayName: 'Unit'
+docs:
+  webhooks: https://www.unit.co/docs/api/webhooks/
+  verification: https://www.unit.co/docs/api/webhooks/
+  events: https://www.unit.co/docs/api/events/
+notes: >
+  unit.co embedded banking API. Header X-Unit-Signature: bare base64 HMAC-SHA1 of the entire raw
+  request body, keyed with the webhook's token (required on webhook create) as a UTF-8 string.
+  Payload is JSON:API: data is an array of events with type like account.created, customer.created,
+  transaction.created, payment.clearing, application.approved; check the docs. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'transaction.created'
+    - 'account.created'
+catalog:
+  summary: 'Verify Unit (unit.co) webhook signatures (`X-Unit-Signature`, HMAC-SHA1 base64 of the raw body keyed with the webhook token), handle banking events like `transaction.created`'

@@ -1,0 +1,25 @@
+name: moonpay
+displayName: 'MoonPay'
+docs:
+  webhooks: https://dev.moonpay.com/api-reference/platform/webhooks/overview
+  verification: https://dev.moonpay.com/api-reference/widget/webhooks/signature
+notes: >
+  Crypto on/off ramp. Use the Moonpay-Signature-V2 header (not the legacy Moonpay-Signature):
+  t=<unix seconds>,s=<lowercase hex>. s = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the
+  webhook API key (Developers page, e.g. wk_test_...) as a string. POST webhooks only: GET callbacks
+  sign the query string instead and are not covered; say so. Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries: the timestamp freshness check must
+  be opt-in via MOONPAY_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
+  tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. Widget webhook
+  types include transaction_created, transaction_updated, transaction_failed,
+  sell_transaction_created, identity_check_updated; platform webhooks include
+  customer.identity_status_updated. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'transaction_created'
+    - 'transaction_updated'
+catalog:
+  summary: 'Verify MoonPay webhook signatures (`Moonpay-Signature-V2` `t=<ts>,s=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the webhook API key), handle `transaction_created` and `transaction_updated`'

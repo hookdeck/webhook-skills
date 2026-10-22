@@ -1,0 +1,30 @@
+name: increase
+displayName: 'Increase'
+docs:
+  webhooks: https://increase.com/documentation/webhooks
+  verification: https://increase.com/documentation/webhooks#securing-your-webhook-endpoint-recommended
+  events: https://increase.com/documentation/api/events
+notes: >
+  Banking API. Increase uses the Standard Webhooks header names and signed content: webhook-id (the
+  Event ID), webhook-timestamp, webhook-signature "v1,<base64>"; HMAC-SHA256 over
+  "<webhook-id>.<webhook-timestamp>.<raw body>", base64. BUT the key is the event subscription's
+  shared_secret used as raw UTF-8 bytes (1-100 chars, random by default; NOT whsec_, NOT base64).
+  Increase's Ruby sample: OpenSSL::HMAC.digest('SHA256', signing_secret, signed_payload). So verify
+  manually: do NOT use the standardwebhooks library with the secret as-is (it base64-decodes the
+  key). Hookdeck's Increase source uses a non-whsec_ secret as UTF-8 bytes too; say to use the
+  secret Increase generates or one that doesn't start with whsec_. Hookdeck retries and replays
+  resend the original timestamp, so a 5-minute window rejects late retries: the timestamp freshness
+  check must be opt-in via INCREASE_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the
+  buildkite-webhooks and tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and
+  replays resend the original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. Payload is a
+  thin event {id, category, associated_object_type, associated_object_id, created_at, type:
+  'event'}; dispatch on category, e.g. transaction.created, account.created, ach_transfer.updated,
+  card_payment.created. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type verifies.
+testScenario:
+  events:
+    - 'transaction.created'
+    - 'ach_transfer.updated'
+catalog:
+  summary: 'Verify Increase webhooks (Standard Webhooks headers, HMAC-SHA256 base64 over `{id}.{timestamp}.{body}` keyed with the raw `shared_secret`, not `whsec_`), handle event categories like `transaction.created`'

@@ -1,0 +1,28 @@
+name: emporix
+displayName: 'Emporix'
+docs:
+  webhooks: https://developer.emporix.io/user-guides/management-dashboard/administration/webhooks
+  verification: https://developer.emporix.io/user-guides/system-management/webhooks-user-guide
+  events: https://developer.emporix.io/api-documentation/api-guides/webhooks/webhook-service
+notes: >
+  Composable commerce platform. Cover the Svix strategies only (Svix-Shared, the default, and a
+  customer-licensed Svix account): Emporix delivers through Svix, so requests carry svix-id,
+  svix-timestamp and svix-signature ("v1,<base64>", space-delimited during rotation), HMAC-SHA256
+  over "<id>.<timestamp>.<raw body>", key = base64-decode of the endpoint signing secret after the
+  whsec_ prefix. The secret comes from the Svix dashboard (Administration > Webhooks > Open Svix
+  Dashboard); Emporix's own pages never show it, so say the whsec_ format comes from Svix. Use the
+  svix library (or standardwebhooks with svix-* headers) or an equivalent manual check. The 'Other -
+  HTTP' strategy (emporix-event-signature, base64 HMAC over alphabetically re-sorted JSON) is NOT
+  covered; say so, and say Hookdeck's Emporix source only supports the Svix strategies. The
+  standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must
+  say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md where the
+  window can be dropped or widened. Event types are dotted, e.g. order.created, order.updated,
+  customer.created, product.created; check the docs' event list. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'order.created'
+    - 'customer.created'
+catalog:
+  summary: 'Verify Emporix webhooks (Svix-delivered: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 base64 with a `whsec_` secret; the HTTP strategy isn''t covered), handle commerce events like `order.created` and `customer.created`'

@@ -1,0 +1,22 @@
+name: lokalise
+displayName: 'Lokalise'
+docs:
+  webhooks: https://developers.lokalise.com/docs/webhooks-guide
+  verification: https://developers.lokalise.com/docs/webhooks-guide
+  events: https://developers.lokalise.com/docs/webhook-events
+notes: >
+  Translation management. No payload signature: the webhook secret (random alphanumeric,
+  auto-generated or user-entered) is sent raw in the X-Secret header by default. Users can switch to
+  X-Api-Key or a custom header; the examples default to X-Secret and may allow an override env var.
+  Hookdeck's Lokalise source checks X-Secret. No payload signature. Verify the shared token with a
+  constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Lokalise sends a ping POST
+  on setup that only needs a 2xx. Events: project.translation.updated, project.keys.added,
+  project.keys.modified, project.task.closed and more. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'project.translation.updated'
+    - 'project.keys.added'
+catalog:
+  summary: 'Authenticate Lokalise webhooks (`X-Secret` header compared with the webhook secret in constant time), handle events like `project.translation.updated` and `project.keys.added`'

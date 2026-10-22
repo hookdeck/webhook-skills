@@ -1,0 +1,19 @@
+name: salesloft
+displayName: 'Salesloft'
+docs:
+  webhooks: https://developers.salesloft.com/docs/platform/webhooks/introduction/
+  verification: https://developers.salesloft.com/docs/platform/webhooks/delivery-headers/
+notes: >
+  Sales engagement platform. Header x-salesloft-signature: HMAC-SHA1 hex digest of the raw request
+  body, keyed with the subscription's callback_token (any string you choose when creating the
+  subscription through the Webhook Subscriptions API). The token is also echoed in the payload; the
+  header HMAC is the check to use. Subscriptions are API-only. Event types include person_created,
+  person_updated, call_created, email_updated, meeting_booked, cadence_membership_created and
+  others; check the docs. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
+testScenario:
+  events:
+    - 'person_created'
+    - 'call_created'
+catalog:
+  summary: 'Verify Salesloft webhook signatures (`x-salesloft-signature`, HMAC-SHA1 hex of the raw body keyed with the subscription''s `callback_token`), handle events like `person_created` and `call_created`'

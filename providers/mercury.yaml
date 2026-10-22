@@ -1,0 +1,26 @@
+name: mercury
+displayName: 'Mercury'
+docs:
+  webhooks: https://docs.mercury.com/reference/webhooks
+  verification: https://docs.mercury.com/reference/webhooks#verifying-webhook-signatures
+  events: https://docs.mercury.com/reference/createwebhook
+notes: >
+  Business banking. Header Mercury-Signature: t=<unix seconds>,v1=<hex>. v1 = HMAC-SHA256 hex over
+  "<t>.<raw body>" keyed with the endpoint's secretKey used as-is. Endpoints are created via the API
+  (POST /webhooks); the secret is only returned on creation, so save it then. Hookdeck retries and
+  replays resend the original timestamp, so a 5-minute window rejects late retries: the timestamp
+  freshness check must be opt-in via MERCURY_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the
+  buildkite-webhooks and tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and
+  replays resend the original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. The event
+  names you subscribe to (eventTypes like transaction.created, transaction.updated,
+  checkingAccount.balance.updated) do NOT appear in the body: the body has resourceType (e.g.
+  transaction) and operationType (created/updated), plus id, resourceId, occurredAt, changedPaths,
+  mergePatch. Dispatch on `${resourceType}.${operationType}`. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'transaction.created'
+    - 'transaction.updated'
+catalog:
+  summary: 'Verify Mercury webhook signatures (`Mercury-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle transaction events by `resourceType` and `operationType`'

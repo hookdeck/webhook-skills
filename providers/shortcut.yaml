@@ -1,0 +1,18 @@
+name: shortcut
+displayName: 'Shortcut'
+docs:
+  webhooks: https://developer.shortcut.com/api/webhook/v1
+  verification: https://developer.shortcut.com/api/webhook/v1
+notes: >
+  Project management (formerly Clubhouse). Outgoing webhooks are signed only when you set a secret:
+  header Payload-Signature, hex HMAC-SHA256 of the raw body (UTF-8) keyed with the secret. Payload
+  {id, changed_at, version, member_id, actions: [{entity_type, action, id, name, changes}],
+  references}; dispatch on actions[].entity_type and action, e.g. story create/update/delete, epic
+  update, comment create. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
+testScenario:
+  events:
+    - 'story create'
+    - 'story update'
+catalog:
+  summary: 'Verify Shortcut webhook signatures (`Payload-Signature`, HMAC-SHA256 hex of the raw body), handle story, epic and comment actions'

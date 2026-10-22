@@ -1,0 +1,20 @@
+name: stigg
+displayName: 'Stigg'
+docs:
+  webhooks: https://docs.stigg.io/documentation/native-integrations/events/webhooks
+  verification: https://docs.stigg.io/documentation/native-integrations/events/webhooks#verifying-webhook-secret
+notes: >
+  Pricing and entitlements platform. No HMAC yet (on Stigg's roadmap): each event carries the
+  webhook secret (from the webhook details page) in the Stigg-Webhooks-Secret header. Verify it
+  against STIGG_WEBHOOK_SECRET. No payload signature. Verify the shared token with a constant-time
+  compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or checking lengths
+  first), like the batch 1 n8n, zapier and brevo skills. Events include customer.created,
+  customer.updated, subscription.created, subscription.updated, subscription.canceled,
+  entitlements.updated; check the docs. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'subscription.created'
+    - 'customer.created'
+catalog:
+  summary: 'Authenticate Stigg webhooks (`Stigg-Webhooks-Secret` header compared with the webhook secret in constant time), handle events like `subscription.created` and `customer.created`'

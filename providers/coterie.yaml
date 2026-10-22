@@ -1,0 +1,22 @@
+name: coterie
+displayName: 'Coterie'
+docs:
+  webhooks: https://docs.coterieinsurance.com/
+  verification: https://docs.coterieinsurance.com/
+notes: >
+  Small business insurance API (Postman documenter; collection JSON at
+  docs.coterieinsurance.com/api/collections/8605509/SVn3ra1i). No signature. The only auth is an
+  opt-in static header named Authentication (not Authorization), turned on by request via your
+  Coterie contact, sent as 'Authentication: token <guid>'. The key is the WHOLE header value
+  including the 'token ' prefix: compare the full header to COTERIE_AUTHENTICATION (e.g. 'token
+  1234-...'), as Hookdeck's Coterie source does. No payload signature. Verify the shared token with
+  a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Check the docs for webhook
+  event names and payload shape (policy/quote/application status updates). Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'policy.bound'
+    - 'application.updated'
+catalog:
+  summary: 'Authenticate Coterie webhooks (the opt-in `Authentication: token <guid>` header compared in full in constant time), handle policy and application updates'

@@ -1,0 +1,19 @@
+name: recruitee
+displayName: 'Recruitee'
+docs:
+  webhooks: https://docs.recruitee.com/docs/webhooks
+  verification: https://docs.recruitee.com/docs/webhooks
+notes: >
+  Recruiting software. Header X-Recruitee-Signature: hex HMAC-SHA256 of the raw body keyed with the
+  webhook secret (Settings > Apps and Plugins > Webhooks). The docs publish a test vector (secret
+  DuP4ej5yyJB5TIrIEI/dCtJN7sHj with a candidate_moved body); you may use it. On Verify and create,
+  Recruitee sends a test request {"test":true} that only needs a 200. Payload {id, attempt_count,
+  created_at, event_type, event_subtype, payload}; event_type like new_candidate, candidate_moved,
+  candidate_assigned, candidate_disqualified, candidate_deleted. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'candidate_moved'
+    - 'new_candidate'
+catalog:
+  summary: 'Verify Recruitee webhook signatures (`X-Recruitee-Signature`, HMAC-SHA256 hex of the raw body), handle events like `candidate_moved` and `new_candidate`'

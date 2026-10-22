@@ -1,0 +1,24 @@
+name: oncehub
+displayName: 'OnceHub'
+docs:
+  webhooks: https://help.oncehub.com/developers/webhooks/introduction-to-webhooks/
+  verification: https://help.oncehub.com/developers/webhooks/webhook-signatures/
+notes: >
+  Scheduling platform. Only v2 webhooks are signed: if the dashboard doesn't show View secret for
+  the webhook, it is v1 and can't be verified; say so. Header Oncehub-Signature: t=<unix
+  seconds>,s=<hex>. s = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the endpoint secret
+  (Webhook & API integration > View secret) as UTF-8. Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries: the timestamp freshness check must
+  be opt-in via ONCEHUB_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
+  tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. Events include
+  booking.scheduled, booking.rescheduled, booking.canceled, booking.completed and booking.no_show;
+  check the docs. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'booking.scheduled'
+    - 'booking.rescheduled'
+catalog:
+  summary: 'Verify OnceHub v2 webhook signatures (`Oncehub-Signature` `t=<ts>,s=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle booking events like `booking.scheduled` and `booking.canceled`'

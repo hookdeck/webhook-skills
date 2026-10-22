@@ -1,0 +1,23 @@
+name: assemblyai
+displayName: 'AssemblyAI'
+docs:
+  webhooks: https://www.assemblyai.com/docs/deployment/webhooks
+  verification: https://www.assemblyai.com/docs/deployment/webhooks#authenticate-webhook-deliveries
+notes: >
+  Speech-to-text API. Webhooks are not signed. You set webhook_auth_header_name and
+  webhook_auth_header_value on the transcript request, and AssemblyAI sends that header verbatim on
+  the webhook. Both the header name and value are user-chosen, so the examples read
+  ASSEMBLYAI_WEBHOOK_AUTH_HEADER_NAME and ASSEMBLYAI_WEBHOOK_AUTH_HEADER_VALUE and compare the
+  header value in constant time (lowercase the header name for lookup). No payload signature. Verify
+  the shared token with a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest,
+  hashing both sides or checking lengths first), like the batch 1 n8n, zapier and brevo skills.
+  Hookdeck's AssemblyAI source likewise takes the header name and value. The payload is
+  {transcript_id, status} with status completed or error; fetch the transcript with the API
+  afterwards. The fixed sender IP is an optional extra. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'completed'
+    - 'error'
+catalog:
+  summary: 'Authenticate AssemblyAI transcript webhooks (the custom `webhook_auth_header_name` / `webhook_auth_header_value` header compared in constant time), handle `completed` and `error` transcript status events'

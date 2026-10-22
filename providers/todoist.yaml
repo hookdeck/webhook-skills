@@ -1,0 +1,18 @@
+name: todoist
+displayName: 'Todoist'
+docs:
+  webhooks: https://developer.todoist.com/api/v1/#tag/Webhooks
+  verification: https://developer.todoist.com/api/v1/#tag/Webhooks
+notes: >
+  Task manager. Header X-Todoist-Hmac-SHA256: base64 HMAC-SHA256 of the whole raw payload keyed with
+  the app's OAuth client_secret (App Management Console), not a separate webhook secret. Payload
+  {event_name, user_id, event_data, initiator, version, triggered_at}; event_name like item:added,
+  item:updated, item:completed, item:deleted, note:added, project:added. Mention
+  X-Todoist-Delivery-ID for idempotency. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'item:added'
+    - 'item:completed'
+catalog:
+  summary: 'Verify Todoist webhook signatures (`X-Todoist-Hmac-SHA256`, HMAC-SHA256 base64 of the raw body keyed with the app''s client secret), handle events like `item:added` and `item:completed`'

@@ -1,0 +1,19 @@
+name: cartesia
+displayName: 'Cartesia'
+docs:
+  webhooks: https://docs.cartesia.ai/line/infrastructure/observability#webhooks
+  verification: https://docs.cartesia.ai/line/infrastructure/observability#verify-the-webhook-secret
+notes: >
+  Voice AI (Line agents). Agent webhooks send the secret you set on the webhook (secret is required
+  on Create Webhook) in the X-Webhook-Secret header, raw with no prefix. Verify it against
+  CARTESIA_WEBHOOK_SECRET. No payload signature. Verify the shared token with a constant-time
+  compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or checking lengths
+  first), like the batch 1 n8n, zapier and brevo skills. Check the docs for the call event types and
+  payload shape (e.g. call started / call completed events). Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'call_completed'
+    - 'call_started'
+catalog:
+  summary: 'Authenticate Cartesia agent webhooks (`X-Webhook-Secret` header compared with your secret in constant time), handle call events'

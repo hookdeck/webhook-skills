@@ -1,0 +1,19 @@
+name: foursquare
+displayName: 'Foursquare'
+docs:
+  webhooks: https://docs.foursquare.com/developer/docs/configure-server-webhooks
+  verification: https://docs.foursquare.com/developer/docs/configure-server-webhooks
+notes: >
+  Movement SDK (formerly Pilgrim SDK) server webhooks only. Each request carries the secret from the
+  developer console's Pilgrim page in the Pilgrim-Secret header, raw with no prefix. Verify
+  Pilgrim-Secret against FOURSQUARE_PILGRIM_SECRET. No payload signature. Verify the shared token
+  with a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Events are arrival,
+  departure and geofence events (check the payload shape in the docs). Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'arrival'
+    - 'departure'
+catalog:
+  summary: 'Authenticate Foursquare Movement SDK webhooks (`Pilgrim-Secret` header compared in constant time), handle arrival, departure and geofence events'

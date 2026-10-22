@@ -1,0 +1,19 @@
+name: savvycal
+displayName: 'SavvyCal'
+docs:
+  webhooks: https://developers.savvycal.com/webhooks
+  verification: https://developers.savvycal.com/webhooks#securing-webhooks
+notes: >
+  Scheduling. Header x-savvycal-signature: HMAC-SHA256 of the raw body keyed with the webhook's
+  secret (integration settings). The docs' header example is "sha256=<UPPERCASE hex>" while the
+  Elixir sample compares the bare uppercase digest, so accept both: strip an optional sha256= prefix
+  and compare hex case-insensitively. Payload {type, payload}; types include event.created,
+  event.rescheduled, event.canceled, event.changed, checkout.pending, checkout.completed; check the
+  docs. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type verifies.
+testScenario:
+  events:
+    - 'event.created'
+    - 'event.canceled'
+catalog:
+  summary: 'Verify SavvyCal webhook signatures (`x-savvycal-signature`, HMAC-SHA256 hex of the raw body, optional `sha256=` prefix, any case), handle scheduling events like `event.created` and `event.canceled`'

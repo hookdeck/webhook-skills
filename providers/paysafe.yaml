@@ -1,0 +1,20 @@
+name: paysafe
+displayName: 'Paysafe'
+docs:
+  webhooks: https://developer.paysafe.com/en/api-docs/payments-api/configure-webhooks/
+  verification: https://developer.paysafe.com/en/api-docs/payments-api/configure-webhooks/
+notes: >
+  Payments API webhooks (Business Portal). Header Signature: base64 HMAC-SHA256 of the raw JSON
+  body, keyed with the HMAC key used as a raw UTF-8 string (as the official Java and PHP Payments
+  API SDKs do; the legacy Alternate Payments v1 SDK base64-decoded the key, which is not covered).
+  Test vector (verified): secret 'test-secret-key', a pretty-printed body with eventName
+  PAYMENT_HANDLE_COMPLETED; use a vector computed by your own HMAC in tests. Payload {payload,
+  attemptNumber, type, resourceId, links, eventDate, eventName}; eventName like
+  PAYMENT_HANDLE_COMPLETED, PAYMENT_HANDLE_FAILED, PAYMENT_COMPLETED, SETTLEMENT_COMPLETED. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'PAYMENT_HANDLE_COMPLETED'
+    - 'SETTLEMENT_COMPLETED'
+catalog:
+  summary: 'Verify Paysafe Payments API webhooks (`Signature` header, HMAC-SHA256 base64 of the raw body keyed with the HMAC key), handle events like `PAYMENT_HANDLE_COMPLETED`'

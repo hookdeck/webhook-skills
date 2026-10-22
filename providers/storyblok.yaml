@@ -1,0 +1,20 @@
+name: storyblok
+displayName: 'Storyblok'
+docs:
+  webhooks: https://www.storyblok.com/docs/concepts/webhooks
+  verification: https://www.storyblok.com/tp/webhook-secret-with-different-technologies
+notes: >
+  Headless CMS. The header is literally named webhook-signature but this is NOT Standard Webhooks:
+  it is a bare hex HMAC-SHA1 of the raw body keyed with the Webhook secret you set (a raw string;
+  the tutorial uses 'hello'). Do NOT use the standardwebhooks or svix libraries. Webhook secrets
+  need a paid plan, and task (Tasks app) webhooks are unsigned; say both. Payload {text, action,
+  space_id, story_id, full_slug, ...}; action values include published, unpublished, deleted, moved
+  (stories), entries_updated (datasources), created/replaced/deleted (assets), merged (releases),
+  deployed (pipelines), stage.changed (workflow). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'published'
+    - 'unpublished'
+catalog:
+  summary: 'Verify Storyblok webhook signatures (`webhook-signature`, HMAC-SHA1 hex of the raw body; not Standard Webhooks), handle story actions like `published` and `unpublished`'

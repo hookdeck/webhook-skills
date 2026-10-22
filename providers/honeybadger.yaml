@@ -1,0 +1,22 @@
+name: honeybadger
+displayName: 'Honeybadger'
+docs:
+  webhooks: https://docs.honeybadger.io/guides/integrations/webhook/
+  verification: https://docs.honeybadger.io/resources/security/#authenticating-requests-from-honeybadger
+notes: >
+  Error and uptime monitoring. Every webhook carries a Honeybadger-Token header: a secret token
+  derived from the project API key (project settings > API Key tab), sent raw with no prefix. It
+  changes if the project API key is reset. Verify Honeybadger-Token against HONEYBADGER_TOKEN. No
+  payload signature. Verify the shared token with a constant-time compare (crypto.timingSafeEqual /
+  hmac.compare_digest, hashing both sides or checking lengths first), like the batch 1 n8n, zapier
+  and brevo skills. Do NOT use the optional 'Authorization: Bearer' token from the webhook
+  integration settings; Hookdeck's Honeybadger source checks Honeybadger-Token, not the bearer
+  token, so the skill should match. Payload has an event field: occurred, assigned, commented,
+  resolved, down, up, check_in_missing, deployed and others; check the docs. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'occurred'
+    - 'resolved'
+catalog:
+  summary: 'Authenticate Honeybadger webhooks (`Honeybadger-Token` header compared with the project token in constant time), handle error and uptime events like `occurred`, `resolved` and `down`'

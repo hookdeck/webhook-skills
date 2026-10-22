@@ -1,0 +1,20 @@
+name: confluence
+displayName: 'Confluence Data Center'
+docs:
+  webhooks: https://confluence.atlassian.com/doc/managing-webhooks-1021225606.html
+  verification: https://confluence.atlassian.com/doc/managing-webhooks-1021225606.html
+notes: >
+  Confluence Data Center admin webhooks ONLY, not Confluence Cloud (Cloud uses app/Connect webhooks
+  with JWTs and is not covered; say so). When a secret (up to 255 chars) is set, each request has
+  X-Hub-Signature: sha256=<hex>, HMAC-SHA256 of the raw body. Accept with or without the sha256=
+  prefix. The value format comes from the identically worded Bitbucket Data Center page; say so. Set
+  a secret on the webhook. Payload has an event field: page_created, page_updated, page_removed,
+  blog_created, comment_created, space_created, etc. Header X-Event-Key may also carry the event.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'page_created'
+    - 'page_updated'
+catalog:
+  summary: 'Verify Confluence Data Center webhook signatures (`X-Hub-Signature: sha256=<hex>`, HMAC-SHA256 of the raw body; not Confluence Cloud), handle events like `page_created` and `page_updated`'

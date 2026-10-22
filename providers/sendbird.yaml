@@ -1,0 +1,19 @@
+name: sendbird
+displayName: 'Sendbird'
+docs:
+  webhooks: https://sendbird.com/docs/chat/platform-api/v3/webhook/webhook-overview
+  verification: https://sendbird.com/docs/chat/platform-api/v3/webhook/webhook-overview
+notes: >
+  Chat Platform API webhooks. Header x-sendbird-signature: hex HMAC-SHA256 of the raw body, keyed
+  with the app's MASTER API token (dashboard; secondary API tokens don't work). Use
+  x-sendbird-signature, not the legacy x-signature (breaks on non-ASCII bodies). The master token is
+  a full-access credential; say to keep it server-side. Payload has category like
+  group_channel:message_send, group_channel:create, group_channel:join, open_channel:message_send,
+  user:block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'group_channel:message_send'
+    - 'group_channel:create'
+catalog:
+  summary: 'Verify Sendbird Chat webhook signatures (`x-sendbird-signature`, HMAC-SHA256 hex of the raw body keyed with the master API token), handle categories like `group_channel:message_send`'

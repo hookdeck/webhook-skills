@@ -1,0 +1,23 @@
+name: documenso
+displayName: 'Documenso'
+docs:
+  webhooks: https://docs.documenso.com/docs/developers/webhooks/setup
+  verification: https://docs.documenso.com/docs/developers/webhooks/verification
+  events: https://docs.documenso.com/docs/developers/webhooks/events
+notes: >
+  Open-source document signing. No HMAC, despite the setup page saying the secret 'signs' the
+  payload: the secret is sent as plain text in X-Documenso-Secret (empty string when none is
+  configured, so the examples must reject an empty header and require a non-empty secret). Verify it
+  against DOCUMENSO_WEBHOOK_SECRET. No payload signature. Verify the shared token with a
+  constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Payload {event, payload,
+  createdAt, webhookEndpoint}; events DOCUMENT_CREATED, DOCUMENT_SENT, DOCUMENT_OPENED,
+  DOCUMENT_SIGNED, DOCUMENT_COMPLETED, DOCUMENT_REJECTED, DOCUMENT_CANCELLED,
+  DOCUMENT_RECIPIENT_COMPLETED. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'DOCUMENT_COMPLETED'
+    - 'DOCUMENT_SIGNED'
+catalog:
+  summary: 'Authenticate Documenso webhooks (`X-Documenso-Secret` header compared with the webhook secret in constant time), handle events like `DOCUMENT_SIGNED` and `DOCUMENT_COMPLETED`'

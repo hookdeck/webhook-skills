@@ -1,0 +1,22 @@
+name: medusa
+displayName: 'Medusa'
+docs:
+  webhooks: https://docs.medusajs.com/cloud/webhooks/endpoints
+  verification: https://docs.medusajs.com/cloud/webhooks/reference
+notes: >
+  Medusa Cloud webhooks only (self-hosted Medusa has no built-in outbound webhooks; say so). Header
+  X-Medusa-Signature: t=<unix seconds>,v1=<hex>. v1 = HMAC-SHA256 hex over "<t>.<raw body>" keyed
+  with the endpoint's signing secret as UTF-8. Hookdeck retries and replays resend the original
+  timestamp, so a 5-minute window rejects late retries: the timestamp freshness check must be opt-in
+  via MEDUSA_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
+  tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. Events include
+  order.placed, order.updated, customer.created, product.created; check the reference. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'order.placed'
+    - 'customer.created'
+catalog:
+  summary: 'Verify Medusa Cloud webhook signatures (`X-Medusa-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle commerce events like `order.placed`'

@@ -1,0 +1,19 @@
+name: workable
+displayName: 'Workable'
+docs:
+  webhooks: https://workable.readme.io/reference/webhook-subscriptions-candidates-employees
+  verification: https://workable.readme.io/reference/webhook-subscriptions-candidates-employees
+notes: >
+  Recruiting software. Header X-Workable-Signature: HMAC-SHA256 of the raw body, hex (Workable's
+  docs don't state the encoding; hex matches n8n's and Botpress's maintained integrations, say so).
+  The key is the account API token that created the subscription, or the OAuth application secret
+  for OAuth apps, used as a raw string; there is no separate webhook secret. Events:
+  candidate_created, candidate_moved, employee_created, employee_updated, employee_published.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'candidate_created'
+    - 'candidate_moved'
+catalog:
+  summary: 'Verify Workable webhook signatures (`X-Workable-Signature`, HMAC-SHA256 hex keyed with the API token or OAuth app secret), handle `candidate_created`, `candidate_moved` and employee events'

@@ -1,0 +1,25 @@
+name: footprint
+displayName: 'Footprint'
+docs:
+  webhooks: https://docs.onefootprint.com/articles/integrate/webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+  events: https://www.svix.com/event-types/us/org_2LbAthqjvv71cc7eYpwvHoeuuEw/
+notes: >
+  Identity verification/KYC. Delivered by Svix: Footprint's docs point to Svix's verification guide
+  and its event catalog is hosted on svix.com. Headers svix-id, svix-timestamp, svix-signature
+  ("v1,<base64>"), HMAC-SHA256 over "<id>.<timestamp>.<raw body>", key = base64-decode of the
+  endpoint signing secret after whsec_. The whsec_ format is Svix's; Footprint's pages never show
+  the secret, so say it's unconfirmed on Footprint's own docs. Use the svix library or an equivalent
+  manual check. The standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp
+  window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the
+  library rejects late retries after 5 minutes, and point to a manual verifier in
+  references/verification.md where the window can be dropped or widened. Events:
+  footprint.onboarding.completed, footprint.onboarding.status_changed,
+  footprint.watchlist_check.completed (check the Svix event catalog). Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'footprint.onboarding.completed'
+    - 'footprint.onboarding.status_changed'
+catalog:
+  summary: 'Verify Footprint webhooks (Svix-delivered: `svix-*` headers, HMAC-SHA256 base64 with a `whsec_` secret), handle onboarding events like `footprint.onboarding.completed`'

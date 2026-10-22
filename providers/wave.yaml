@@ -1,0 +1,25 @@
+name: wave
+displayName: 'Wave'
+docs:
+  webhooks: https://developer.waveapps.com/hc/en-us/articles/51070353613716-Webhooks
+  verification: https://developer.waveapps.com/hc/en-us/articles/51070420388628-Webhooks-Setup-Guide
+notes: >
+  Wave (waveapps.com) accounting/invoicing. Header x-wave-signature: t=<unix seconds>,v1=<hex>, plus
+  x-wave-timestamp. v1 = HMAC-SHA256 hex over "<t>.<raw body>" keyed with the webhook secret as
+  UTF-8. The help center HTML may be behind Cloudflare; the Zendesk JSON API
+  (developer.waveapps.com/api/v2/help_center/en-us/articles/51070420388628.json) has the same text.
+  The guide doesn't say exactly where the webhook secret is shown; say so. Webhooks need Wave Pro.
+  Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late
+  retries: the timestamp freshness check must be opt-in via WAVE_TIMESTAMP_TOLERANCE_SECONDS
+  (default 0 = off), as the buildkite-webhooks and tailscale-webhooks skills do. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late
+  retries, and point to references/verification.md, which shows where the window can be dropped or
+  widened. Events: invoice.sent, invoice.viewed, invoice.paid, invoice.partially_paid,
+  invoice.overdue, invoice.approved, estimate.sent, estimate.accepted, checkout.paid. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'invoice.paid'
+    - 'invoice.sent'
+catalog:
+  summary: 'Verify Wave webhook signatures (`x-wave-signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle invoice events like `invoice.paid` and `invoice.sent`'

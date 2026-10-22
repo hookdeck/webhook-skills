@@ -1,0 +1,21 @@
+name: shopware
+displayName: 'Shopware'
+docs:
+  webhooks: https://developer.shopware.com/docs/guides/plugins/apps/webhook.html
+  verification: https://developer.shopware.com/docs/guides/plugins/apps/lifecycle/app-signature-verification.html
+  events: https://developer.shopware.com/docs/resources/references/app-reference/webhook-events-reference.html
+notes: >
+  Shopware app system webhooks. Header shopware-shop-signature: hex HMAC-SHA256 of the raw body
+  keyed with the per-shop app secret your app assigned during the registration handshake (the
+  handshake goes to the app's registration URL, not the webhook URL). One secret per shop; it
+  rotates on re-registration (shopware-shop-signature-previous carries the old one on the
+  confirmation request). Payload {data: {payload, event}, source: {url, appVersion, shopId},
+  timestamp}; events such as checkout.order.placed, product.written, order.written,
+  customer.written, state transitions. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'checkout.order.placed'
+    - 'product.written'
+catalog:
+  summary: 'Verify Shopware app webhook signatures (`shopware-shop-signature`, HMAC-SHA256 hex of the raw body keyed with the shop''s app secret), handle events like `checkout.order.placed`'

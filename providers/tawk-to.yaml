@@ -1,0 +1,16 @@
+name: tawk-to
+displayName: 'tawk.to'
+docs:
+  webhooks: https://developer.tawk.to/webhooks/
+  verification: https://developer.tawk.to/webhooks/
+notes: >
+  Live chat. Header X-Tawk-Signature: hex HMAC-SHA1 of the raw body keyed with the webhook secret
+  key (shown when you create the webhook). Events: chat:start, chat:end, chat:transcript_created,
+  ticket:create. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'chat:start'
+    - 'ticket:create'
+catalog:
+  summary: 'Verify tawk.to webhook signatures (`X-Tawk-Signature`, HMAC-SHA1 hex of the raw body), handle `chat:start`, `chat:end` and `ticket:create` events'

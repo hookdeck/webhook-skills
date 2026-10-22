@@ -1,0 +1,22 @@
+name: cover-genius
+displayName: 'Cover Genius'
+docs:
+  webhooks: https://partner-docs.covergenius.com/offers/api/webhooks
+  verification: https://partner-docs.covergenius.com/offers/api/webhooks
+notes: >
+  Embedded insurance. Cover Offers webhooks only: Cover Genius sends the partner's authentication
+  key as plain text in the X-Api-Key header (no prefix). Verify by comparing X-Api-Key to the key
+  (env COVER_GENIUS_API_KEY). No payload signature. Verify the shared token with a constant-time
+  compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or checking lengths
+  first), like the batch 1 n8n, zapier and brevo skills. The Authorization 'Signature ...' header on
+  Offers webhooks signs only the Date header, so it adds nothing over the key check; mention it but
+  don't require it. XClaim (XClaim-Signature) and RentalCover (X-Signature + Timestamp) use other
+  schemes and are not covered; say so. Payload has an event field such as BOOKING_CREATED,
+  BOOKING_UPDATED, BOOKING_CANCELLED, RENEWAL_CREATED, RENEWAL_DUE, RENEWAL_NOTIFICATION. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'BOOKING_CREATED'
+    - 'BOOKING_CANCELLED'
+catalog:
+  summary: 'Authenticate Cover Genius Offers webhooks (`X-Api-Key` compared with your key in constant time; XClaim and RentalCover schemes aren''t covered), handle booking and renewal events like `BOOKING_CREATED`'

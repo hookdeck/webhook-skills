@@ -1,0 +1,20 @@
+name: middesk
+displayName: 'Middesk'
+docs:
+  webhooks: https://docs.middesk.com/build/webhooks
+  verification: https://docs.middesk.com/build/secure-webhooks
+  events: https://docs.middesk.com/api-reference/webhooks/create-webhook
+notes: >
+  Business identity verification (KYB). Header X-Middesk-Signature-256: bare hex HMAC-SHA256 of the
+  raw request body. The key is the secret you set when creating the webhook (examples show values
+  like whsec_abcdef123456 or sec_...), used whole as a UTF-8 string. The secret is used whole as a
+  UTF-8 HMAC key. This is NOT Standard Webhooks: do NOT use the standardwebhooks or svix libraries
+  and do not strip or base64-decode a whsec_ prefix. mTLS and OAuth bearer modes exist but are not
+  covered. Events include business.created, business.updated and others; check the docs. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'business.updated'
+    - 'business.created'
+catalog:
+  summary: 'Verify Middesk webhook signatures (`X-Middesk-Signature-256`, HMAC-SHA256 hex of the raw body keyed with the whole secret, even a `whsec_`-looking one; not Standard Webhooks), handle events like `business.updated`'

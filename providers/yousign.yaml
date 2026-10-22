@@ -1,0 +1,19 @@
+name: yousign
+displayName: 'Yousign'
+docs:
+  webhooks: https://developers.youtrust.com/docs/webhooks
+  verification: https://developers.youtrust.com/docs/use-webhooks-in-your-app
+notes: >
+  E-signature. developers.yousign.com now redirects to developers.youtrust.com (Youtrust brand), but
+  headers keep the x-yousign- names. Header X-Yousign-Signature-256: sha256=<hex>, HMAC-SHA256 hex
+  of the raw body keyed with the webhook secret (shown on the webhook subscription) as UTF-8.
+  x-yousign-issued-at is a separate unsigned timestamp; don't treat it as signed. Events
+  (event_name): signature_request.activated, signature_request.done, signature_request.declined,
+  signer.done, signer.declined. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'signature_request.done'
+    - 'signer.done'
+catalog:
+  summary: 'Verify Yousign webhook signatures (`X-Yousign-Signature-256: sha256=<hex>`, HMAC-SHA256 of the raw body), handle events like `signature_request.done` and `signer.done`'

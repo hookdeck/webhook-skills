@@ -1,0 +1,18 @@
+name: printify
+displayName: 'Printify'
+docs:
+  webhooks: https://developers.printify.com/#webhooks
+  verification: https://developers.printify.com/#webhooks
+notes: >
+  Print-on-demand. Webhooks are created via the API with an optional secret; set one. Header
+  X-Pfy-Signature: sha256=<hex>, HMAC-SHA256 hex of the raw body keyed with the secret as UTF-8.
+  Strip the sha256= prefix. Events: order:created, order:updated, order:sent-to-production,
+  order:shipment:created, order:shipment:delivered, product:publish:started, product:deleted,
+  shop:disconnected. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type verifies.
+testScenario:
+  events:
+    - 'order:created'
+    - 'product:publish:started'
+catalog:
+  summary: 'Verify Printify webhook signatures (`X-Pfy-Signature: sha256=<hex>`, HMAC-SHA256 of the raw body), handle events like `order:created` and `product:publish:started`'
