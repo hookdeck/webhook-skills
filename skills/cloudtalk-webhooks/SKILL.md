@@ -35,7 +35,7 @@ metadata:
 | `svix-timestamp` | Unix seconds when the request was sent |
 | `svix-signature` | Space-delimited list of `v1,<base64>` signatures |
 
-Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the secret after `whsec_`. The `svix` library (npm and PyPI) does this, enforces a 5-minute timestamp tolerance, and compares in constant time.
+Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the secret after `whsec_`. The `svix` library (npm and PyPI) does this, enforces a 5-minute timestamp tolerance, and compares in constant time. Hookdeck retries and replays resend the original `svix-timestamp`, so the library rejects them once they are more than 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the manual check in [references/verification.md](references/verification.md) and drop or widen its timestamp window.
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only

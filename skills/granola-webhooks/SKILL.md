@@ -52,7 +52,7 @@ const ok = signatureHeader.split(' ').some((entry) => {
 });
 ```
 
-Verify against the **raw body** before parsing JSON (in Express use `express.raw({ type: '*/*' })`), and reject old timestamps to stop replays.
+Verify against the **raw body** before parsing JSON (in Express use `express.raw({ type: '*/*' })`), and reject old timestamps to stop replays. Hookdeck retries and replays resend the original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the manual check in [references/verification.md](references/verification.md) and drop or widen its timestamp window.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

@@ -32,7 +32,7 @@ JSON body and three headers, `svix-id`, `svix-timestamp`, and `svix-signature`.
 Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with HMAC-SHA256 using
 the base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or
 more space-delimited `v1,<signature>` entries. Use the official `svix` library, which also
-enforces a 5-minute timestamp window and compares signatures in constant time.
+enforces a 5-minute timestamp window and compares signatures in constant time. Hookdeck retries and replays resend the original `svix-timestamp`, so the library rejects them once they are more than 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the manual check in [references/verification.md](references/verification.md) and drop or widen its timestamp window.
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only

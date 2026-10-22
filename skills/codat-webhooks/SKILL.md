@@ -35,7 +35,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds of this delivery attempt |
 | `webhook-signature` | `v1,<base64 HMAC-SHA256>`, space-separated entries (several during rotation) |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the base64-**decoded** part of the endpoint's secret after `whsec_`. Each endpoint has its own secret. The examples use the `standardwebhooks` library (npm, PyPI), which enforces a 5-minute timestamp tolerance and compares in constant time.
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the base64-**decoded** part of the endpoint's secret after `whsec_`. Each endpoint has its own secret. The examples use the `standardwebhooks` library (npm, PyPI), which enforces a 5-minute timestamp tolerance and compares in constant time. Hookdeck retries and replays resend the original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the manual check in [references/verification.md](references/verification.md) and drop or widen its timestamp window.
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

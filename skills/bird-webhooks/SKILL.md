@@ -38,7 +38,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds of this delivery attempt (changes on every retry) |
 | `webhook-signature` | `v1,<base64 HMAC-SHA256>`, several space-delimited entries during the 24h rotation overlap |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the endpoint secret after `whsec_`. Bird recommends rejecting timestamps more than 5 minutes old and deduplicating on `webhook-id`. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI), which does the timestamp check and constant-time comparison for every `v1,` entry. A dependency-free version is in [references/verification.md](references/verification.md).
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64. The key is the base64-**decoded** part of the endpoint secret after `whsec_`. Bird recommends rejecting timestamps more than 5 minutes old and deduplicating on `webhook-id`. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI), which does the timestamp check and constant-time comparison for every `v1,` entry. A dependency-free version is in [references/verification.md](references/verification.md). Hookdeck retries and replays resend the original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old. If you receive through Hookdeck and need late retries to pass, use that dependency-free version and drop or widen its timestamp window.
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
