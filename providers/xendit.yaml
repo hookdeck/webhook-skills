@@ -3,6 +3,7 @@ displayName: 'Xendit'
 docs:
   webhooks: https://docs.xendit.co/docs/handling-webhooks
   verification: https://docs.xendit.co/docs/handling-webhooks
+  events: https://docs.xendit.co/docs/payments-api-webhooks
 notes: >
   Southeast Asia payments. Despite the word 'sign', there is no HMAC: Xendit sends the webhook
   verification token (Dashboard > Settings > Webhooks) in the x-callback-token header, raw. Verify
@@ -12,10 +13,12 @@ notes: >
   product (Payments API events like payment.capture, payment.failure, payment_token.activation;
   invoice callbacks with status PAID); check the docs and dispatch on the event field when present.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
-  verifies.
+  verifies. Retries: up to six times over 24 hours on non-2xx. Bill Payments callbacks are
+  the exception: they use X-Callback-Signature (HMAC SHA256) and X-Callback-Timestamp.
 testScenario:
   events:
     - 'payment.capture'
     - 'payment.failure'
+    - 'payment_token.activation'
 catalog:
-  summary: 'Authenticate Xendit webhooks (`x-callback-token` header compared with the verification token in constant time), handle payment events like `payment.capture`'
+  summary: 'Authenticate Xendit webhooks (`x-callback-token` header compared with the verification token in constant time), handle `payment.capture`, `payment.failure`, `payment_token.activation` and invoice `PAID` events'

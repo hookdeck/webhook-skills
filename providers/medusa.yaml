@@ -1,22 +1,22 @@
 name: medusa
-displayName: 'Medusa'
+displayName: Medusa
 docs:
   webhooks: https://docs.medusajs.com/cloud/webhooks/endpoints
   verification: https://docs.medusajs.com/cloud/webhooks/reference
+  events: https://docs.medusajs.com/cloud/webhooks/reference#webhook-events
 notes: >
-  Medusa Cloud webhooks only (self-hosted Medusa has no built-in outbound webhooks; say so). Header
-  X-Medusa-Signature: t=<unix seconds>,v1=<hex>. v1 = HMAC-SHA256 hex over "<t>.<raw body>" keyed
-  with the endpoint's signing secret as UTF-8. Hookdeck retries and replays resend the original
-  timestamp, so a 5-minute window rejects late retries: the timestamp freshness check must be opt-in
-  via MEDUSA_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the buildkite-webhooks and
-  tailscale-webhooks skills do. SKILL.md must say that Hookdeck retries and replays resend the
-  original timestamp, so a 5-minute window rejects late retries, and point to
-  references/verification.md, which shows where the window can be dropped or widened. Events include
-  order.placed, order.updated, customer.created, product.created; check the reference. Express
-  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  Medusa Cloud webhooks only (self-hosted Medusa has no built-in outbound webhooks; app events like
+  order.placed are internal). One endpoint per organization. Header X-Medusa-Signature:
+  t=<unix seconds>,v1=<hex>. v1 = hex HMAC-SHA256 over "<t>.<raw body>" keyed with the endpoint's
+  signing secret as UTF-8. Medusa re-signs its own retries, but Hookdeck retries and replays resend the
+  original timestamp, so the docs' optional 5-minute freshness check is opt-in via
+  MEDUSA_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off). Body is a JSON object {id, type, data,
+  created_at}; id is reused across retries. Also sends X-Medusa-Event and X-Medusa-Delivery. Events:
+  build.created, build.succeeded, build.failed, build.canceled, deployment.created,
+  deployment.succeeded, deployment.failed, deployment.canceled.
 testScenario:
   events:
-    - 'order.placed'
-    - 'customer.created'
+    - build.succeeded
+    - deployment.succeeded
 catalog:
-  summary: 'Verify Medusa Cloud webhook signatures (`X-Medusa-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle commerce events like `order.placed`'
+  summary: Verify Medusa Cloud webhook signatures (`X-Medusa-Signature` `t=<unix>,v1=<hex>`, HMAC-SHA256 hex over `{t}.{raw_body}` keyed with the endpoint signing secret, opt-in freshness check), handle build.created, build.succeeded, build.failed, deployment.created, deployment.succeeded, and deployment.failed events

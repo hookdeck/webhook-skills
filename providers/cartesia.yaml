@@ -8,12 +8,15 @@ notes: >
   on Create Webhook) in the X-Webhook-Secret header, raw with no prefix. Verify it against
   CARTESIA_WEBHOOK_SECRET. No payload signature. Verify the shared token with a constant-time
   compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or checking lengths
-  first), like the batch 1 n8n, zapier and brevo skills. Check the docs for the call event types and
-  payload shape (e.g. call started / call completed events). Express examples must read the raw body
-  with express.raw({ type: '*/*' }) so any content type verifies.
+  first), like the batch 1 n8n, zapier and brevo skills. Events (envelope type, call_id, agent_id,
+  webhook_id, webhook_request_id, timestamp): call_started, call_completed, call_failed, call_turn,
+  post_call_analysis. Retries up to 3 times on network errors and 403/408/429/5xx (401 is permanent);
+  dedupe on webhook_request_id. Express examples read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
 testScenario:
   events:
-    - 'call_completed'
-    - 'call_started'
+    - call_started
+    - call_completed
+    - post_call_analysis
 catalog:
-  summary: 'Authenticate Cartesia agent webhooks (`X-Webhook-Secret` header compared with your secret in constant time), handle call events'
+  summary: 'Authenticate Cartesia agent webhooks (`x-webhook-secret` header compared with your secret in constant time; payload is unsigned), handle call_started, call_completed and post_call_analysis events'

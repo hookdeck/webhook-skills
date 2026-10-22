@@ -1,19 +1,34 @@
 name: outreach
-displayName: 'Outreach'
+displayName: Outreach
 docs:
   webhooks: https://developers.outreach.io/api/webhooks
   verification: https://developers.outreach.io/api/webhooks#authenticity-validation
+  events: https://developers.outreach.io/api/webhooks
 notes: >
-  Sales engagement platform. Webhooks are signed only when you set a secret attribute on the webhook
-  (via the API); without one there is no header, and Hookdeck's Outreach source fails verification,
-  so the skill must say to set a secret. Header Outreach-Webhook-Signature: bare hex HMAC-SHA256 of
-  the raw body keyed with the secret. Payload is JSON:API: data {type, id, attributes,
-  relationships}, meta {deliveredAt, eventName}; eventName is like prospect.created,
-  prospect.updated, sequenceState.created, call.created. Express examples must read the raw body
-  with express.raw({ type: '*/*' }) so any content type verifies.
+  Sales engagement platform. Webhooks are signed only when you set the secret attribute on the
+  webhook through the API (POST /api/v2/webhooks); without one there is no signature header and
+  nothing to verify, so the skill tells users to set a secret. Header Outreach-Webhook-Signature is
+  the bare lowercase-hex HMAC-SHA256 of the raw request body keyed with the secret. No timestamp.
+  Payload is JSON:API: data {type, id, attributes, relationships}, meta {deliveredAt, eventName};
+  eventName is resource.action (prospect.created, sequenceState.created, call.created). Outreach does
+  not retry on any HTTP status and times out after 5 seconds. Express examples read the raw body with
+  express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - 'prospect.created'
-    - 'prospect.updated'
+    - prospect.created
+    - sequenceState.created
+    - call.created
+  prompt: >
+    Add an endpoint to my {framework} app that receives Outreach webhooks. Verify the
+    Outreach-Webhook-Signature header (hex HMAC-SHA256 of the raw body) and handle
+    {events} events.
 catalog:
-  summary: 'Verify Outreach webhook signatures (`Outreach-Webhook-Signature`, HMAC-SHA256 hex of the raw body; set a secret on the webhook), handle events like `prospect.created`'
+  summary: Verify Outreach webhook signatures (`Outreach-Webhook-Signature`, HMAC-SHA256 hex of the raw body, requires a webhook secret), handle prospect.created, sequenceState.created and call.created events
+  marketplace:
+    description: Verify Outreach webhook signatures and handle prospect.created, prospect.updated, sequenceState.created, call.created and task.completed events.
+    keywords:
+    - webhooks
+    - outreach
+    - sales-engagement
+    - crm
+    - sequences

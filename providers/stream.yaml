@@ -18,5 +18,14 @@ testScenario:
   events:
     - 'message.new'
     - 'reaction.new'
+    - 'member.added'
 catalog:
-  summary: 'Verify Stream (getstream.io) webhook signatures (`X-Signature`, HMAC-SHA256 hex of the raw body keyed with the app API secret; leave payload compression off), handle events like `message.new`'
+  summary: 'Verify Stream (getstream.io) webhook signatures (`X-Signature`, HMAC-SHA256 hex of the raw body keyed with the app API secret; leave payload compression off), handle message.new, reaction.new and member.added events'
+  marketplace:
+    description: Verify Stream (getstream.io) webhook signatures (X-Signature, HMAC-SHA256 hex of the raw body with the app API secret), handle message.new, message.updated, message.deleted, reaction.new, channel.created, user.updated and member.added events.
+    keywords:
+    - webhooks
+    - stream
+    - getstream
+    - chat
+    - activity-feeds

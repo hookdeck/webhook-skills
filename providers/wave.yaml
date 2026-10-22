@@ -22,4 +22,4 @@ testScenario:
     - 'invoice.paid'
     - 'invoice.sent'
 catalog:
-  summary: 'Verify Wave webhook signatures (`x-wave-signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle invoice events like `invoice.paid` and `invoice.sent`'
+  summary: 'Verify Wave webhook signatures (`x-wave-signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle `invoice.sent`, `invoice.viewed`, `invoice.paid`, `invoice.partially_paid`, `invoice.overdue`, `invoice.approved`, `estimate.sent`, `estimate.accepted`, and `checkout.paid` events'

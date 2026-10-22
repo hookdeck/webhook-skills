@@ -16,4 +16,4 @@ testScenario:
     - 'group_channel:message_send'
     - 'group_channel:create'
 catalog:
-  summary: 'Verify Sendbird Chat webhook signatures (`x-sendbird-signature`, HMAC-SHA256 hex of the raw body keyed with the master API token), handle categories like `group_channel:message_send`'
+  summary: 'Verify Sendbird Chat webhook signatures (`x-sendbird-signature`, HMAC-SHA256 hex of the raw body keyed with the master API token), handle `group_channel:message_send`, `group_channel:create`, `group_channel:join`, `open_channel:message_send`, and `user:block` events'

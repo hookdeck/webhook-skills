@@ -1,20 +1,23 @@
 name: middesk
-displayName: 'Middesk'
+displayName: Middesk
 docs:
   webhooks: https://docs.middesk.com/build/webhooks
   verification: https://docs.middesk.com/build/secure-webhooks
   events: https://docs.middesk.com/api-reference/webhooks/create-webhook
 notes: >
-  Business identity verification (KYB). Header X-Middesk-Signature-256: bare hex HMAC-SHA256 of the
-  raw request body. The key is the secret you set when creating the webhook (examples show values
-  like whsec_abcdef123456 or sec_...), used whole as a UTF-8 string. The secret is used whole as a
-  UTF-8 HMAC key. This is NOT Standard Webhooks: do NOT use the standardwebhooks or svix libraries
-  and do not strip or base64-decode a whsec_ prefix. mTLS and OAuth bearer modes exist but are not
-  covered. Events include business.created, business.updated and others; check the docs. Express
-  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  Middesk business identity verification (KYB). Signature is in the X-Middesk-Signature-256
+  header: bare lowercase hex HMAC-SHA256 of the raw request body (no prefix, no timestamp).
+  The key is the secret set when creating the webhook (e.g. whsec_abcdef123456 or sec_...),
+  used whole as a UTF-8 string. This is NOT Standard Webhooks: do not use the standardwebhooks
+  or svix libraries and do not strip or base64-decode a whsec_ prefix. mTLS and OAuth bearer
+  (OIDC) modes also exist but are not covered. Payload is an Event object
+  ({object: "event", id, type, data: {object}, created_at}). Events include business.created,
+  business.updated, order.created, order.updated, monitor.updated, tin.retried, lien.updated.
+  Express examples must read the raw body with express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - 'business.updated'
-    - 'business.created'
+    - business.created
+    - business.updated
+    - order.updated
 catalog:
-  summary: 'Verify Middesk webhook signatures (`X-Middesk-Signature-256`, HMAC-SHA256 hex of the raw body keyed with the whole secret, even a `whsec_`-looking one; not Standard Webhooks), handle events like `business.updated`'
+  summary: Verify Middesk KYB webhook signatures (`X-Middesk-Signature-256`, HMAC-SHA256 hex of the raw body), handle business.created, business.updated and order.updated events

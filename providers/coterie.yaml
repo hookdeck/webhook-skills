@@ -11,12 +11,15 @@ notes: >
   including the 'token ' prefix: compare the full header to COTERIE_AUTHENTICATION (e.g. 'token
   1234-...'), as Hookdeck's Coterie source does. No payload signature. Verify the shared token with
   a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
-  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Check the docs for webhook
-  event names and payload shape (policy/quote/application status updates). Express examples must
-  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. The docs define no
+  event-type strings: webhooks are application, quote and policy payloads with no event field,
+  told apart by applicationId, quoteId and PolicyId (sample Status values ReadyToQuote and
+  Pending). Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
 testScenario:
   events:
-    - 'policy.bound'
-    - 'application.updated'
+    - 'application'
+    - 'quote'
+    - 'policy'
 catalog:
-  summary: 'Authenticate Coterie webhooks (the opt-in `Authentication: token <guid>` header compared in full in constant time), handle policy and application updates'
+  summary: 'Authenticate Coterie webhooks (the opt-in `Authentication: token <guid>` header compared in full in constant time), handle application, quote and policy payloads'

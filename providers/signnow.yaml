@@ -3,17 +3,19 @@ displayName: 'SignNow'
 docs:
   webhooks: https://docs.signnow.com/docs/guides-webhooks
   verification: https://docs.signnow.com/docs/guides-webhooks#hmac-security
+  events: https://docs.signnow.com/docs/guides-webhooks
 notes: >
   E-signature. Signed only when the event subscription has a secret_key (any string up to 300 chars,
   user-chosen or generated in the API Dashboard); without it deliveries are unsigned and Hookdeck's
   SignNow source fails verification, so say to set one. Header X-SignNow-Signature: base64
   HMAC-SHA256 of the raw body keyed with the secret_key as UTF-8. Payload {meta: {timestamp, event,
-  environment, callback_url, access_token}, content: {...}}; events like document.complete,
-  document.update, document.open, invite.create, user.document.complete. Express examples must read
-  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  environment, callback_url, access_token}, content: {...}}; events (in meta.event) like
+  document.complete, document.update, document.open, document.fieldinvite.create,
+  document.fieldinvite.signed, user.document.complete. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'document.complete'
-    - 'invite.create'
+    - 'document.fieldinvite.signed'
 catalog:
-  summary: 'Verify SignNow webhook signatures (`X-SignNow-Signature`, HMAC-SHA256 base64 of the raw body keyed with the subscription `secret_key`), handle events like `document.complete`'
+  summary: 'Verify SignNow webhook signatures (`X-SignNow-Signature`, HMAC-SHA256 base64 of the raw body keyed with the subscription `secret_key`), handle document.complete, document.fieldinvite.signed and user.document.complete events'

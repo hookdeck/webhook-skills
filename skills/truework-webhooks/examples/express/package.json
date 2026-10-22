@@ -1,0 +1,18 @@
+{
+  "name": "truework-webhooks-express",
+  "version": "1.0.0",
+  "description": "Receive Truework webhooks with Express (X-Truework-Token shared-token check, no signature)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
+  }
+}

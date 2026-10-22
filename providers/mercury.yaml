@@ -15,7 +15,7 @@ notes: >
   references/verification.md, which shows where the window can be dropped or widened. The event
   names you subscribe to (eventTypes like transaction.created, transaction.updated,
   checkingAccount.balance.updated) do NOT appear in the body: the body has resourceType (e.g.
-  transaction) and operationType (created/updated), plus id, resourceId, occurredAt, changedPaths,
+  transaction) and operationType (docs: create/update/delete, not created/updated), plus id, resourceId, occurredAt, changedPaths,
   mergePatch. Dispatch on `${resourceType}.${operationType}`. Express examples must read the raw
   body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
@@ -23,4 +23,4 @@ testScenario:
     - 'transaction.created'
     - 'transaction.updated'
 catalog:
-  summary: 'Verify Mercury webhook signatures (`Mercury-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle transaction events by `resourceType` and `operationType`'
+  summary: 'Verify Mercury webhook signatures (`Mercury-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle `transaction.created`, `transaction.updated`, and account balance events, dispatched by `resourceType` and `operationType`'

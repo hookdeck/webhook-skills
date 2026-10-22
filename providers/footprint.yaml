@@ -21,5 +21,6 @@ testScenario:
   events:
     - 'footprint.onboarding.completed'
     - 'footprint.onboarding.status_changed'
+    - 'footprint.watchlist_check.completed'
 catalog:
-  summary: 'Verify Footprint webhooks (Svix-delivered: `svix-*` headers, HMAC-SHA256 base64 with a `whsec_` secret), handle onboarding events like `footprint.onboarding.completed`'
+  summary: 'Verify Footprint webhook signatures (Svix: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64, `whsec_` secret), handle footprint.onboarding.completed, footprint.onboarding.status_changed and footprint.watchlist_check.completed events'

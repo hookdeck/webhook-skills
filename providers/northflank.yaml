@@ -3,18 +3,21 @@ displayName: 'Northflank'
 docs:
   webhooks: https://northflank.com/docs/v1/application/observe/configure-notification-integrations
   verification: https://northflank.com/docs/v1/application/observe/configure-notification-integrations#webhook-secrets
+  events: https://northflank.com/docs/v1/api/integrations/create-notification-integration
 notes: >
   Cloud deployment platform; notification integrations (webhook type). The secret you set on the
   integration (optional in Northflank, so say to set one) is sent raw in the
   X-Northflank-Notification-Integration-Token header. Verify against NORTHFLANK_WEBHOOK_SECRET. No
   payload signature. Verify the shared token with a constant-time compare (crypto.timingSafeEqual /
   hmac.compare_digest, hashing both sides or checking lengths first), like the batch 1 n8n, zapier
-  and brevo skills. Check the docs for the event types (build, deployment, backup, job run and
-  billing notifications) and the payload shape. Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type verifies.
+  and brevo skills. Event names use a colon form (build:start, build:success, build:failure,
+  job-run:failure, addon-backup:success, billing:invoice-payment-failed, service:deployment:status-update);
+  body is {event, data}. The docs show a payload only for build:start. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'build.succeeded'
-    - 'deployment.failed'
+    - 'build:success'
+    - 'build:failure'
+    - 'job-run:failure'
 catalog:
-  summary: 'Authenticate Northflank notification webhooks (`X-Northflank-Notification-Integration-Token` compared with your secret in constant time), handle build and deployment events'
+  summary: 'Authenticate Northflank notification webhooks (`X-Northflank-Notification-Integration-Token` compared with your secret in constant time), handle build:success, build:failure and job-run:failure events'

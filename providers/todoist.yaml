@@ -3,6 +3,7 @@ displayName: 'Todoist'
 docs:
   webhooks: https://developer.todoist.com/api/v1/#tag/Webhooks
   verification: https://developer.todoist.com/api/v1/#tag/Webhooks
+  events: https://developer.todoist.com/api/v1/#tag/Webhooks
 notes: >
   Task manager. Header X-Todoist-Hmac-SHA256: base64 HMAC-SHA256 of the whole raw payload keyed with
   the app's OAuth client_secret (App Management Console), not a separate webhook secret. Payload
@@ -14,5 +15,6 @@ testScenario:
   events:
     - 'item:added'
     - 'item:completed'
+    - 'note:added'
 catalog:
   summary: 'Verify Todoist webhook signatures (`X-Todoist-Hmac-SHA256`, HMAC-SHA256 base64 of the raw body keyed with the app''s client secret), handle events like `item:added` and `item:completed`'

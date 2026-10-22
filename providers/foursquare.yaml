@@ -8,12 +8,14 @@ notes: >
   developer console's Pilgrim page in the Pilgrim-Secret header, raw with no prefix. Verify
   Pilgrim-Secret against FOURSQUARE_PILGRIM_SECRET. No payload signature. Verify the shared token
   with a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
-  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Events are arrival,
-  departure and geofence events (check the payload shape in the docs). Express examples must read
+  checking lengths first), like the batch 1 n8n, zapier and brevo skills. Events (eventType): placeArrival,
+  placeDeparture, placeHistorical, geofenceEnter, geofenceDwell, geofencePresence, geofenceExit,
+  plus journeys* events. Express examples must read
   the raw body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'arrival'
-    - 'departure'
+    - placeArrival
+    - placeDeparture
+    - geofenceEnter
 catalog:
-  summary: 'Authenticate Foursquare Movement SDK webhooks (`Pilgrim-Secret` header compared in constant time), handle arrival, departure and geofence events'
+  summary: 'Authenticate Foursquare Movement SDK webhooks (`Pilgrim-Secret` header compared in constant time), handle placeArrival, placeDeparture and geofenceEnter events'

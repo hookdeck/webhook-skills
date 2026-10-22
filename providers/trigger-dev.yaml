@@ -3,12 +3,13 @@ displayName: 'Trigger.dev'
 docs:
   webhooks: https://trigger.dev/docs/troubleshooting-alerts#alert-webhooks
   verification: https://github.com/triggerdotdev/trigger.dev/blob/main/packages/trigger-sdk/src/v3/webhooks.ts
+  events: https://trigger.dev/docs/troubleshooting-alerts#alert-webhooks
 notes: >
   Background jobs platform. Outbound webhooks are alert notifications only. Header
   x-trigger-signature-hmacsha256: bare hex HMAC-SHA256 of the raw body, keyed with the alert webhook
   secret (shown on the Alerts page when you create the webhook) as UTF-8. The SDK has
   webhooks.constructEvent(request, secret); show it as an option but keep a manual check. Event
-  types: alert.run.failed, alert.deployment.success, alert.deployment.failed (check the SDK/docs).
+  types: alert.run.failed, alert.deployment.success, alert.deployment.failed, alert.error (error group alert).
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   verifies.
 testScenario:
@@ -16,4 +17,4 @@ testScenario:
     - 'alert.run.failed'
     - 'alert.deployment.success'
 catalog:
-  summary: 'Verify Trigger.dev alert webhooks (`x-trigger-signature-hmacsha256`, HMAC-SHA256 hex of the raw body), handle `alert.run.failed` and deployment alert events'
+  summary: 'Verify Trigger.dev alert webhooks (`x-trigger-signature-hmacsha256`, HMAC-SHA256 hex of the raw body), handle `alert.run.failed` and `alert.deployment.failed` events'

@@ -14,5 +14,6 @@ testScenario:
   events:
     - 'story create'
     - 'story update'
+    - 'epic update'
 catalog:
   summary: 'Verify Shortcut webhook signatures (`Payload-Signature`, HMAC-SHA256 hex of the raw body), handle story, epic and comment actions'

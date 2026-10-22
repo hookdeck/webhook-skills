@@ -1,27 +1,29 @@
 name: posthog
-displayName: 'PostHog'
+displayName: PostHog
 docs:
   webhooks: https://posthog.com/docs/cdp/destinations/webhook
   verification: https://github.com/PostHog/posthog/blob/master/nodejs/src/cdp/utils/standard-webhooks.ts
+  events: https://posthog.com/docs/data/events
 notes: >
-  Product analytics; the Webhook destination (CDP) has an optional 'Signing secret' that signs each
-  request following Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature
-  "v1,<base64>", HMAC-SHA256 over "<id>.<timestamp>.<raw body>". You choose the secret: PostHog
-  strips an optional whsec_ prefix and base64-decodes the rest (minimum 24 bytes). Tell users to
-  generate a whsec_<base64> secret (e.g. 'whsec_' + base64 of 32 random bytes) and paste the SAME
-  string into the PostHog destination and their receiver/Hookdeck; a bare base64 secret works in
-  PostHog but fails Hookdeck. Signing is documented only in PostHog's open-source code; cite it. Use
-  the standardwebhooks library (Node and Python) or an equivalent manual check. The standardwebhooks
-  / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck
-  retries and replays resend the original timestamp, so the library rejects late retries after 5
-  minutes, and point to a manual verifier in references/verification.md where the window can be
-  dropped or widened. The body is whatever the destination's template sends; the default includes
-  {event: {event, uuid, distinct_id, properties, timestamp, ...}, person: {...}}, so dispatch on
-  event.event (e.g. $pageview, $identify, or a custom event). Express examples must read the raw
-  body with express.raw({ type: '*/*' }) so any content type verifies.
+  Product analytics. The CDP Webhook destination has an optional Signing secret that signs
+  requests per Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature "v1,<base64>",
+  HMAC-SHA256 over "<id>.<timestamp>.<raw body>". The user chooses the secret; PostHog strips an
+  optional whsec_ prefix and base64-decodes the rest (minimum 24 bytes). Use whsec_<base64> so
+  Hookdeck can verify it too. Signing is documented only in PostHog's open-source code. The
+  standardwebhooks/svix libraries enforce a fixed 5-minute timestamp window, which Hookdeck
+  retries and replays can exceed (original timestamp is resent). The body is the destination
+  template; default is {event: {event, uuid, distinct_id, properties, timestamp}, person}.
+  Dispatch on event.event. Express examples use express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - '$pageview'
-    - '$identify'
+    - $pageview
+    - $identify
 catalog:
-  summary: 'Verify PostHog webhook destination signatures (Standard Webhooks `webhook-*` headers, HMAC-SHA256 base64 with a `whsec_` secret you generate), handle forwarded events like `$pageview`'
+  summary: Verify PostHog webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard Webhooks HMAC-SHA256), handle $pageview, $identify and custom events
+  marketplace:
+    description: Verify PostHog webhook destination signatures (Standard Webhooks, HMAC-SHA256), handle $pageview, $identify and custom analytics events.
+    keywords:
+    - webhooks
+    - posthog
+    - analytics
+    - standard-webhooks

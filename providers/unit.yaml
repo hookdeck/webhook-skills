@@ -1,18 +1,25 @@
 name: unit
-displayName: 'Unit'
+displayName: Unit
 docs:
   webhooks: https://www.unit.co/docs/api/webhooks/
   verification: https://www.unit.co/docs/api/webhooks/
   events: https://www.unit.co/docs/api/events/
 notes: >
-  unit.co embedded banking API. Header X-Unit-Signature: bare base64 HMAC-SHA1 of the entire raw
-  request body, keyed with the webhook's token (required on webhook create) as a UTF-8 string.
-  Payload is JSON:API: data is an array of events with type like account.created, customer.created,
-  transaction.created, payment.clearing, application.approved; check the docs. Express examples must
-  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+  Unit (unit.co) embedded banking API. Each webhook has a required `token`. Unit signs
+  the entire raw request body with HMAC-SHA1, keyed with the token as a UTF-8 string,
+  and sends the base64 digest (no prefix) in X-Unit-Signature. There is no timestamp and
+  no official verification helper, so verify manually with a timing-safe compare and
+  dedupe on event id. Payloads are JSON:API: `data` is an ARRAY of events, each with
+  id, type, attributes, relationships (up to 64 per request with AtLeastOnce delivery;
+  AtMostOnce sends one and is never retried on a non-200). Read the raw body for any
+  content type (Json or JsonAPI). Event types are resource.action in camelCase, e.g.
+  account.created, customer.created, transaction.created, payment.clearing,
+  application.approved, application.denied, payment.returned. New types are added
+  continuously, so ignore unknown ones.
 testScenario:
   events:
-    - 'transaction.created'
-    - 'account.created'
+    - account.created
+    - transaction.created
+    - application.approved
 catalog:
-  summary: 'Verify Unit (unit.co) webhook signatures (`X-Unit-Signature`, HMAC-SHA1 base64 of the raw body keyed with the webhook token), handle banking events like `transaction.created`'
+  summary: Verify Unit webhook signatures (`X-Unit-Signature`, HMAC-SHA1 base64 of the raw body), handle account.created, customer.created, transaction.created, payment.clearing, and application.approved events

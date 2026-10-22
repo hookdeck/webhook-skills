@@ -3,6 +3,7 @@ displayName: 'Storyblok'
 docs:
   webhooks: https://www.storyblok.com/docs/concepts/webhooks
   verification: https://www.storyblok.com/tp/webhook-secret-with-different-technologies
+  events: https://www.storyblok.com/docs/concepts/webhooks#webhook-triggers-and-example-payloads
 notes: >
   Headless CMS. The header is literally named webhook-signature but this is NOT Standard Webhooks:
   it is a bare hex HMAC-SHA1 of the raw body keyed with the Webhook secret you set (a raw string;
@@ -16,5 +17,6 @@ testScenario:
   events:
     - 'published'
     - 'unpublished'
+    - 'entries_updated'
 catalog:
   summary: 'Verify Storyblok webhook signatures (`webhook-signature`, HMAC-SHA1 hex of the raw body; not Standard Webhooks), handle story actions like `published` and `unpublished`'

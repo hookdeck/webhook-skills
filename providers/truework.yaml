@@ -9,11 +9,12 @@ notes: >
   signature. Verify the shared token with a constant-time compare (crypto.timingSafeEqual /
   hmac.compare_digest, hashing both sides or checking lengths first), like the batch 1 n8n, zapier
   and brevo skills. A recreated webhook gets a new token. Events: order.completed and
-  verification_request.state.change (check the docs). Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type verifies.
+  verification_request.state.change (confirmed against the docs; payload is
+  {version, hook:{id,event,target}, data:{order_id,...}}). Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
     - 'order.completed'
     - 'verification_request.state.change'
 catalog:
-  summary: 'Authenticate Truework webhooks (`X-Truework-Token` header compared with the webhook token in constant time), handle `order.completed` and verification request state change events'
+  summary: 'Authenticate Truework webhooks (`X-Truework-Token` header compared with the webhook token in constant time, no payload signature), handle `order.completed` and `verification_request.state.change` events'
