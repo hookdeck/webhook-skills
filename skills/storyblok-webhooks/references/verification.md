@@ -43,7 +43,7 @@ def verify_storyblok_webhook(raw_body: bytes, signature_header: str | None, secr
     if not signature_header or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha1).hexdigest()
-    return hmac.compare_digest(signature_header.strip().lower(), expected)
+    return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 ```
 
 FastAPI: `await request.body()` gives the raw bytes.

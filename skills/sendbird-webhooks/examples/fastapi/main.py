@@ -22,7 +22,7 @@ def verify_sendbird_webhook(raw_body: bytes, signature_header: str | None, api_t
     ).hexdigest()
 
     # Timing-safe comparison (case-insensitive hex)
-    return hmac.compare_digest(signature_header.strip().lower(), expected)
+    return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 
 
 @app.post("/webhooks/sendbird")

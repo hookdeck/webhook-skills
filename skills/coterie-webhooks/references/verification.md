@@ -76,7 +76,7 @@ def safe_equal(a: str, b: str) -> bool:
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Header disabled**: if requests arrive with no `Authentication` header, the optional header
   has not been enabled yet. Ask your Coterie contact; don't switch verification off.
-- **Hookdeck**: a Hookdeck Coterie source verifies the same header (full value) at the edge.
+- **Hookdeck**: a Hookdeck Coterie source verifies the same header (full value).
 
 ## Debugging 401s
 

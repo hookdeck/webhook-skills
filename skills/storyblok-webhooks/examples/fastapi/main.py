@@ -23,7 +23,7 @@ def verify_storyblok_webhook(raw_body: bytes, signature_header: str | None, secr
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha1).hexdigest()
 
     # Use timing-safe comparison to prevent timing attacks
-    return hmac.compare_digest(signature_header.strip().lower(), expected)
+    return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 
 
 async def verified_body(

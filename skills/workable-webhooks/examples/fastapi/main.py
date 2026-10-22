@@ -21,7 +21,7 @@ def verify_signature(raw_body: bytes, signature_header: str | None, key: str | N
     if not signature_header or not key:
         return False
     expected = hmac.new(key.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature_header.lower(), expected)
+    return hmac.compare_digest(signature_header.lower().encode(), expected.encode())
 
 
 @app.post("/webhooks/workable")

@@ -47,7 +47,7 @@ def verify_storyblok_webhook(raw_body: bytes, signature_header: str | None, secr
     if not signature_header or not secret:
         return False
     expected = hmac.new(secret.encode(), raw_body, hashlib.sha1).hexdigest()
-    return hmac.compare_digest(signature_header.strip().lower(), expected)
+    return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 ```
 
 The secret is a plain string (use it as-is; no base64 decoding). Read the body as raw bytes before any JSON parsing. In Express use `express.raw({ type: '*/*' })` so every content type reaches the verifier as a `Buffer`.

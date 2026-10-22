@@ -31,7 +31,7 @@ import hmac, hashlib
 
 def verify(raw_body: bytes, signature_header: str, key: str) -> bool:
     expected = hmac.new(key.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest((signature_header or "").lower(), expected)
+    return hmac.compare_digest((signature_header or "").lower().encode(), expected.encode())
 ```
 
 ## Common Gotchas

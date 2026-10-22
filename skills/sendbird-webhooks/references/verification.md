@@ -31,7 +31,7 @@ def verify_sendbird_webhook(raw_body: bytes, signature_header, api_token) -> boo
     if not signature_header or not api_token:
         return False
     expected = hmac.new(api_token.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature_header.strip().lower(), expected)
+    return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 ```
 
 ## Common Gotchas
