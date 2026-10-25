@@ -3,8 +3,9 @@
 ## How Does VideoAsk Authenticate Webhooks?
 
 It doesn't sign them. There is no HMAC, no signature header and no timestamp. Instead you add a
-header of your choosing to the webhook through the API (`headers` object on
-`PUT /forms/{form_id}/webhooks/{tag}`) and VideoAsk sends it with every delivery:
+header of your choosing to the webhook, either with **Add a secret** in the Connect tab (header
+name and value) or through the API (`headers` object on `PUT /forms/{form_id}/webhooks/{tag}`),
+and VideoAsk sends it with every delivery:
 
 ```
 secret: open-sesame
@@ -68,8 +69,10 @@ def verify_videoask_request(headers, header_name=None, secret=None) -> bool:
   `VIDEOASK_WEBHOOK_HEADER` to match. Header names are case-insensitive.
 - **Compare the whole value.** If you typed `Bearer abc123` as the value, `VIDEOASK_WEBHOOK_SECRET`
   is `Bearer abc123`. Do not strip or parse the prefix.
-- **API only.** Headers cannot be set in the web UI Connect tab. The docs show `headers` only in the
-  create/update request example, so send a test delivery to confirm the header arrives.
+- **Two ways to set it.** The Connect tab's **Add a secret** (header name and value) and the API's
+  `headers` object both set the header. The help centre calls it "signed", but no signing algorithm
+  is documented: you receive the value you set and compare it. Send a test delivery to confirm the
+  header arrives.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python encode both sides to bytes for `hmac.compare_digest`; passing
   `str` raises on non-ASCII.
@@ -81,8 +84,8 @@ def verify_videoask_request(headers, header_name=None, secret=None) -> bool:
 
 | Symptom | Likely cause |
 |---------|--------------|
-| 401 on every request | Secret env var unset, wrong header name, or the webhook was created without `headers` |
+| 401 on every request | Secret env var unset, wrong header name, or the webhook has no secret header |
 | 401 with the right secret | Value differs by a `Bearer ` prefix, trailing space or quoting |
-| 401 began suddenly | The webhook's `headers` were updated; copy the new value |
+| 401 began suddenly | The webhook's secret was changed; copy the new value |
 | 401 only behind a proxy | The proxy strips or renames the custom header |
 | 400 after authentication | Body isn't a JSON object |

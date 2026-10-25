@@ -52,16 +52,17 @@ function verifyBaserowRequest(headers, name = process.env.BASEROW_WEBHOOK_HEADER
   `Authorization`). The expected **value** (`BASEROW_WEBHOOK_SECRET`) is the exact, whole header
   value, including any `Bearer ` prefix you typed. Do not strip or parse a prefix.
 - Return `401` when the header is missing or does not match, `400` for a body that isn't a JSON
-  object, `200` once handled. Baserow treats only `200 OK` as success and retries a limited number
-  of times otherwise.
+  object, `200` once handled. The docs say success requires `200 OK` and failed calls are retried
+  a limited number of times (Baserow's source counts any status below 400 as success; return
+  `200` to match the docs).
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - Accept **POST, PUT, PATCH, GET and DELETE** on the route: you choose the method in Baserow, and a
   JSON body is sent even on GET. Handle an empty body (respond `200`, nothing to dispatch).
 
 **A static shared credential authenticates the sender, not the body, and gives no replay protection**
 (no signature, no timestamp). Serve the endpoint over HTTPS only, and rotate the secret (update the
-Baserow header and `BASEROW_WEBHOOK_SECRET` together) if it leaks. Make handlers idempotent using
-`event_id`.
+Baserow header and `BASEROW_WEBHOOK_SECRET` together) if it leaks. Make handlers idempotent, but
+not on `event_id` alone: a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call), so key on `event_id` + `batch_id`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

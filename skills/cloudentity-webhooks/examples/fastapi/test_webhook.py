@@ -20,9 +20,15 @@ EVENTS = [
 
 
 def batch(*types):
+    # Inferred shape: the event's subject_action name is the one key of `payload`.
     return {
         "audit_events": [
-            {"tenant_id": "example", "server_id": "demo", "event_id": f"evt_{i}", "type": t}
+            {
+                "tenant_id": "example",
+                "server_id": "demo",
+                "event_id": f"evt_{i}",
+                "payload": {t.replace(".", "_"): {}},
+            }
             for i, t in enumerate(types)
         ]
     }
@@ -94,10 +100,11 @@ class TestEventHandling:
         assert res.status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
 
-    def test_accepts_subject_action_form(self, capsys):
-        res = post({"X-API-Key": KEY}, body=json.dumps(batch("user_deleted")))
+    def test_event_without_payload_key_is_acknowledged(self, capsys):
+        body = {"audit_events": [{"tenant_id": "example", "server_id": "demo", "event_id": "evt_0"}]}
+        res = post({"X-API-Key": KEY}, body=json.dumps(body))
         assert res.status_code == 200
-        assert "Unhandled" not in capsys.readouterr().out
+        assert "Unhandled" in capsys.readouterr().out
 
     def test_handles_batch(self):
         body = json.dumps(batch("user.created", "user.authenticated", "group.created"))

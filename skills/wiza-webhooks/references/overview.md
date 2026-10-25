@@ -20,22 +20,24 @@ key instead (see [verification.md](verification.md)).
 
 ```json
 {
-  "id": 12345,
+  "status": { "code": 200, "message": "Single reveal finished" },
   "type": "individual_reveal",
-  "status": { "code": 200 },
-  "data": { }
+  "data": { "id": 123456, "status": "finished", "is_complete": true, "email": "stephen@wiza.co" }
 }
 ```
 
-- `id`: identifier of the reveal
+(Abridged from the docs' Individual Reveal payload.)
+
+- `status.code`: `200` for finished, `400` for failed; `status.message` describes it
 - `type`: `individual_reveal`
-- `status.code`: `200` for finished, `400` for failed
-- `data`: the reveal result; see Wiza's documentation for its fields
+- `data`: the reveal result, the same fields the GET endpoint returns; `data.id` is the reveal's id
+
+There is no top-level `id`.
 
 ## Delivery
 
 - Wiza sends `POST` requests with a JSON body.
-- A non-2xx response is retried up to 3 times, so make handlers idempotent (key on `id`).
+- A non-2xx response is retried up to 3 times, so make handlers idempotent (key on `data.id`).
 - The webhook URL is the default set in **Settings > API**, or a per-request `callback_url`.
 
 ## Full Event Reference

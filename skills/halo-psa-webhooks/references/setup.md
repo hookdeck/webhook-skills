@@ -32,8 +32,8 @@ Put it in your app's `.env` as `HALO_PSA_WEBHOOK_PASSWORD`, with a username of y
    and password from step 1.
 7. **Payload**: choose the payload type. (Optional) turn on **Use lightweight logs** for very
    large payloads; you then can't re-send webhooks from the logs.
-8. **Events**: add at least one, e.g. `New Ticket Logged`, `Ticket Updated`,
-   `Ticket Reassigned`. Add conditions if needed.
+8. **Events**: add at least one, e.g. `New Ticket Logged` or `Ticket Reassigned`. Add
+   conditions if needed.
 9. (Optional) set **Batching**; the body then becomes a JSON array.
 10. Save.
 

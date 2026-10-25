@@ -13,21 +13,26 @@ openings from resolutions.
 | `State` | Triggered When | Common Use Cases |
 |---------|----------------|------------------|
 | `OPEN` | A problem is opened | Page on-call, open a ticket |
-| `RESOLVED` | The problem is resolved | Close the ticket |
+
+`OPEN` is the only value the docs show (in the test notification's example payload). Dynatrace
+also notifies when a problem is resolved, but the docs don't print the `{State}` value for that
+case, so check a real delivery before matching on it; the examples log any non-`OPEN` state.
 
 ## Payload Structure (Illustrative)
 
-The payload is whatever your template produces. Common placeholders include `{ProblemID}`,
-`{State}`, `{ProblemTitle}`, `{ImpactedEntity}` and `{ProblemURL}`. The examples in this skill
-assume this JSON template (it is **not** a vendor schema):
+The payload is whatever your template produces. The documented placeholders are
+`{ImpactedEntities}`, `{ImpactedEntity}`, `{PID}`, `{ProblemDetailsHTML}`, `{ProblemDetailsJSON}`,
+`{ProblemID}`, `{ProblemImpact}`, `{ProblemTitle}`, `{State}` and `{Tags}` (`{ImpactedEntities}`
+and `{ProblemDetailsJSON}` are JSON values and take no quotes). No problem-URL placeholder is
+documented; the docs' example uses a literal `"Problem URL": "https://example.com"`. The examples in
+this skill assume this JSON template (it is **not** a vendor schema):
 
 ```json
 {
   "ProblemID": "P-2401",
   "State": "OPEN",
   "ProblemTitle": "Response time degradation",
-  "ImpactedEntity": "checkout-service",
-  "ProblemURL": "https://example.live.dynatrace.com/#problems/problemdetails;pid=1234"
+  "ImpactedEntity": "checkout-service"
 }
 ```
 
@@ -37,4 +42,4 @@ objects; adapt the handler to your format.
 ## Full Reference
 
 See [Dynatrace's webhook integration documentation](https://docs.dynatrace.com/docs/analyze-explore-automate/alerting-and-notifications-classic/problem-notifications/webhook-integration)
-for the full list of placeholders.
+for the placeholders and the example template.

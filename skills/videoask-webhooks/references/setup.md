@@ -7,13 +7,19 @@
 - The `form_id` of the videoask
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 videoask --path /webhooks/videoask` locally)
 
-## Why Use the API?
+## Option A: Connect Tab
 
-You can add a webhook in the **Connect** tab of a videoask, but the docs only show custom
-headers in the API request (`PUT /forms/{form_id}/webhooks/{tag}`). The docs show `headers` only in the create/update request example, so after
-creating the webhook, send a test delivery and confirm the header arrives before relying on it.
+1. Open the videoask, go to **Connect** > **Webhooks** and click **Connect**.
+2. Enter your target URL and toggle the events you want (`form_response`,
+   `form_response_transcribed`, `form_author_message`, `form_contact_message`,
+   `form_contact_tagged`, `form_contact_untagged`).
+3. Click **Add a secret** and enter a **Header name** and a long random **Value**, then **Save**.
 
-## Create the Webhook With a Secret Header
+An organization-level default webhook (with the same header name and value option) can be set so
+new videoasks get the same settings. After saving, send a test delivery and confirm the header
+arrives before relying on it.
+
+## Option B: Create the Webhook With a Secret Header Through the API
 
 Pick a header name and a long random value, then:
 
@@ -32,8 +38,9 @@ curl -X PUT "https://api.videoask.com/forms/$FORM_ID/webhooks/my-endpoint" \
 - The last path segment (`my-endpoint`) is the webhook's `tag`. The same `PUT` updates an existing
   webhook; list tags with `GET /forms/{form_id}/webhooks` (webhooks created in the web UI have
   randomly generated tags).
-- `event_types` accepts `form_response`, `form_response_transcribed`, `form_author_message`
-  and `form_contact_message`.
+- The API reference shows `event_types` values `form_response`, `form_response_transcribed`,
+  `form_author_message` and `form_contact_message`; the help centre also lists
+  `form_contact_tagged` and `form_contact_untagged`.
 
 Then configure your server with the same values:
 
@@ -59,5 +66,6 @@ curl -X POST http://localhost:3000/webhooks/videoask \
 
 ## Rotating the Credential
 
-Call the same `PUT` with a new `headers` value, then update `VIDEOASK_WEBHOOK_SECRET`. Do both
+Edit the webhook's secret in the Connect tab (or call the same `PUT` with a new `headers` value),
+then update `VIDEOASK_WEBHOOK_SECRET`. Do both
 close together: requests with the old value return 401 until the server catches up.

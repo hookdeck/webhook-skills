@@ -16,8 +16,14 @@ KEY = os.environ["ROLLER_WEBHOOK_API_KEY"]
 EVENTS = ["Booking.Created", "Booking.Updated", "Booking.Cancelled", "Customer.Created", "Redemption.Created", "PaymentLink.Created"]
 
 
+def event_body(event):
+    # ROLLER sends `type` and `eventType` as separate fields.
+    type_, event_type = event.split(".")
+    return json.dumps({"type": type_, "eventType": event_type})
+
+
 def post(headers=None, body=None, content_type="application/json"):
-    content = body if body is not None else json.dumps({"type": "Booking.Created"})
+    content = body if body is not None else event_body("Booking.Created")
     return client.post(
         "/webhooks/roller",
         content=content,
@@ -76,12 +82,12 @@ class TestBodyHandling:
 class TestEventHandling:
     @pytest.mark.parametrize("event", EVENTS)
     def test_handles_event(self, event, capsys):
-        res = post({"x-roller-apikey": KEY}, body=json.dumps({"type": event}))
+        res = post({"x-roller-apikey": KEY}, body=event_body(event))
         assert res.status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
 
     def test_acknowledges_unknown_event(self):
-        res = post({"x-roller-apikey": KEY}, body=json.dumps({"type": "Something.New"}))
+        res = post({"x-roller-apikey": KEY}, body=event_body("Something.New"))
         assert res.status_code == 200
 
 

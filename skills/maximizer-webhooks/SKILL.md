@@ -81,8 +81,10 @@ Each request is a JSON array. `Entity` is at the top level of each object; the o
 | `Opportunity` | `Create`, `Update`, `Delete` | Track deals and stage changes |
 | `Lead` | `Create`, `Update`, `Delete` | Route leads |
 
-Other entities (for example `Note`, `Task`, `Campaign`) arrive the same way. Subscriptions are
-unique per target + `Entity` + `Op`, so create one per combination you want.
+The Postman collection's payload examples also cover `LeadDefault` and `InteractionLog` /
+`InteractionLogDefault` (`Create`, `Update`, `Delete`) and `Export` (`Read`, for AbEntry and
+Opportunity exports); they arrive the same way. No other entities are documented. Subscriptions
+are unique per target + `Entity` + `Op`, so create one per combination you want.
 
 ## Respond Within 2 Seconds
 

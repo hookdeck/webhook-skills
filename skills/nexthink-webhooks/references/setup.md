@@ -19,8 +19,7 @@ Basic and OAuth credential types are not covered by Hookdeck's Nexthink source (
 2. Click **New credential**, enter a **Name** and choose protocol **HTTPS**.
 3. Set the **URL address** to your endpoint's base, in the form `https://{host}:{port}/`.
 4. Set **Authorization type** to **Bearer token**.
-5. Set the **Header prefix** manually (usually `Bearer`; a custom prefix such as
-   `CwsAuth bearer=` gives `Authorization: CwsAuth bearer=<token>`) and enter the **Token**.
+5. Set the **Header prefix** manually (usually `Bearer`) and enter the **Token**.
 6. Store the **whole header value** as `NEXTHINK_AUTHORIZATION`, for example
    `Bearer your-token`. Include the prefix exactly as Nexthink sends it.
 

@@ -58,7 +58,8 @@ function verifyWizaRequest(headers, apiKey = process.env.WIZA_API_KEY) {
 
 ## Event Types
 
-The payload is `{ id, type, status: { code }, data }`. The `type` documented for webhooks is
+The payload is `{ status: { code, message }, type, data }`; there is no top-level `id` (the
+reveal's id is `data.id`). The `type` documented for webhooks is
 `individual_reveal`; `status.code` says how the lookup ended.
 
 | `type` | `status.code` | Meaning |

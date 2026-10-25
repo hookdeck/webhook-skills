@@ -3,8 +3,8 @@ name: roller-webhooks
 description: >
   Receive and authenticate ROLLER webhooks. Use when setting up a ROLLER venue or
   attraction ticketing webhook endpoint, verifying the x-roller-apikey header,
-  debugging 401s, or handling events like Booking.Created, Booking.Updated,
-  Booking.Cancelled, Customer.Created, Redemption.Created and PaymentLink.Created.
+  debugging 401s, or handling booking, customer, redemption and payment-link events
+  (body `type` plus `eventType`, e.g. type Booking with eventType Created).
 license: MIT
 metadata:
   author: hookdeck
@@ -25,7 +25,7 @@ authenticates the request by comparing the header with the value you chose.
 - How do I receive ROLLER webhooks?
 - How do I verify the `x-roller-apikey` header?
 - Does ROLLER sign webhook payloads? (No: it sends a shared API key)
-- How do I handle `Booking.Created`, `Booking.Cancelled` or `Redemption.Created` events?
+- How do I handle booking created/cancelled or redemption events (`type` + `eventType`)?
 - Why does my ROLLER webhook endpoint return 401?
 
 ## Setup note
@@ -68,15 +68,18 @@ no timestamp, so there is no replay protection. Use HTTPS only, and rotate the a
 
 ## Event Types
 
-The JSON body has a `type` field. All webhooks are `POST`.
+The JSON body carries the payload type in `type` (`Booking`, `Customer`, `Redemption`,
+`BulkExport`, `SignedWaiver`, `PaymentLink`) and the action in `eventType` (`Created`,
+`Updated`, `Cancelled`). ROLLER never sends a dotted name: the examples join the two fields
+into the keys below. All webhooks are `POST`.
 
-| Event (`type`) | Sent When |
+| Event (`type`.`eventType`) | Sent When |
 |-------|-----------|
 | `Booking.Created` | A booking is created |
 | `Booking.Updated` | A booking is changed |
 | `Booking.Cancelled` | A booking is cancelled |
-| `Customer.Created` | A customer record is created |
-| `Redemption.Created` | A ticket or voucher is redeemed |
+| `Customer.Created` | A guest is created (the guest webhook's `type` is `Customer`) |
+| `Redemption.Created` | A ticket is redeemed |
 | `PaymentLink.Created` | A payment link is created |
 
 ## Environment Variables

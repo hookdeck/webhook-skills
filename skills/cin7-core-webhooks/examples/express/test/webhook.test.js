@@ -12,7 +12,7 @@ const SECRET = process.env.CIN7_CORE_WEBHOOK_SECRET;
 
 const EVENTS = [
   'Sale/Created', 'Sale/OrderAuthorised', 'Sale/ShipmentAuthorised',
-  'Purchase/Created', 'Product/Updated'
+  'Purchase/OrderAuthorised', 'Product/Updated'
 ];
 
 function post(body = JSON.stringify({ EventType: 'Sale/Created' }), contentType = 'application/json') {

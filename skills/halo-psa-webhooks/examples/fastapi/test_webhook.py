@@ -101,7 +101,7 @@ class TestBodyHandling:
         assert post(body='"hello"', auth=basic(USER, PASSWORD)).status_code == 400
 
     def test_batched_delivery(self):
-        batch = [sample_payload("Ticket Updated"), sample_payload("Ticket Reassigned")]
+        batch = [sample_payload("New Ticket Logged"), sample_payload("Ticket Reassigned")]
         assert post(body=json.dumps(batch), auth=basic(USER, PASSWORD)).status_code == 200
 
     def test_array_of_non_objects_returns_400(self):
@@ -113,7 +113,6 @@ class TestEvents:
         "event",
         [
             "New Ticket Logged",
-            "Ticket Updated",
             "Ticket Reassigned",
             "Document deleted on a Ticket",
             "Document edited on a Ticket",

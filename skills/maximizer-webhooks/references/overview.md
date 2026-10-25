@@ -35,9 +35,11 @@ An event is the combination of the object (`Entity`) and the operation (`Op`).
 | `Lead` + `Update` | A lead changes | Sync status |
 | `Lead` + `Delete` | A lead is deleted | Remove the lead |
 
-Other Maximizer objects (for example `Note`, `Task`, `Campaign`) use the same envelope. The
+The Postman collection's Payloads folder also has examples for `LeadDefault`, `InteractionLog` and
+`InteractionLogDefault` (each `Create`, `Update`, `Delete`) and `Export` + `Read` (AbEntry and
+Opportunity exports), all in the same envelope. Those are the only documented entities. The
 subscription API describes `Entity` as "AbEntry, Opportunity, etc" and `Op` as "Create, Update,
-Delete, etc"; check the Postman collection's Payloads folder for the full supported list.
+Delete, etc", so treat the list as a floor and log anything unexpected.
 
 ## Payload Structure
 

@@ -51,14 +51,13 @@ def handle_problem(payload: dict) -> None:
 
     if state == "OPEN":
         print(f"Problem opened: {problem_id} {title}")
-        # TODO: page on-call or open a ticket (payload["ImpactedEntity"], payload["ProblemURL"])
-
-    elif state == "RESOLVED":
-        print(f"Problem resolved: {problem_id} {title}")
-        # TODO: close the matching ticket
+        # TODO: page on-call or open a ticket (payload["ImpactedEntity"])
 
     else:
-        print(f"Unhandled problem state: {state}")
+        # Dynatrace also notifies when a problem is resolved, but its docs show only the
+        # OPEN value of {State}. Log other values and match on what a real delivery sends.
+        print(f"Problem {problem_id} state {state}: {title}")
+        # TODO: close the matching ticket once you have confirmed the resolved State value
 
 
 @app.post("/webhooks/dynatrace", dependencies=[Depends(require_dynatrace_secret)])

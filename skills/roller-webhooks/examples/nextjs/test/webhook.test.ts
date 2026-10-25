@@ -11,9 +11,15 @@ beforeAll(() => {
   process.env.ROLLER_WEBHOOK_API_KEY = KEY;
 });
 
+// ROLLER sends `type` and `eventType` as separate fields.
+function eventBody(event: string): string {
+  const [type, eventType] = event.split('.');
+  return JSON.stringify({ type, eventType });
+}
+
 function makeRequest(
   headers: Record<string, string> = {},
-  body: string = JSON.stringify({ type: 'Booking.Created' }),
+  body: string = eventBody('Booking.Created'),
   contentType = 'application/json'
 ): NextRequest {
   return new NextRequest('http://localhost:3000/webhooks/roller', {
@@ -67,7 +73,7 @@ describe('POST /webhooks/roller', () => {
   describe('Body handling', () => {
     it('accepts any content type', async () => {
       const res = await POST(
-        makeRequest({ 'x-roller-apikey': KEY }, JSON.stringify({ type: 'Booking.Created' }), 'text/plain')
+        makeRequest({ 'x-roller-apikey': KEY }, eventBody('Booking.Created'), 'text/plain')
       );
       expect(res.status).toBe(200);
     });
@@ -91,7 +97,7 @@ describe('POST /webhooks/roller', () => {
   describe('Event handling', () => {
     it.each(EVENTS)('handles %s', async (type) => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await POST(makeRequest({ 'x-roller-apikey': KEY }, JSON.stringify({ type })));
+      const res = await POST(makeRequest({ 'x-roller-apikey': KEY }, eventBody(type)));
       expect(res.status).toBe(200);
       expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
       spy.mockRestore();
@@ -99,7 +105,7 @@ describe('POST /webhooks/roller', () => {
 
     it('acknowledges unknown events', async () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await POST(makeRequest({ 'x-roller-apikey': KEY }, JSON.stringify({ type: 'Something.New' })));
+      const res = await POST(makeRequest({ 'x-roller-apikey': KEY }, eventBody('Something.New')));
       expect(res.status).toBe(200);
       spy.mockRestore();
     });

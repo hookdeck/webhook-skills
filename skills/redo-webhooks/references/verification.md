@@ -25,8 +25,10 @@ secret, can send arbitrary bodies or replay old ones. So:
 
 - Use HTTPS only (Redo requires it).
 - Keep the secret out of logs, URLs and source control.
-- Rotate it if it leaks: `PATCH /v2.2/webhooks/{webhookId}` with a new `secret`, then update
-  `REDO_AUTHORIZATION` (and the Hookdeck source).
+- Rotate it if it leaks. The docs' `PATCH /v2.2/webhooks/{webhookId}` example changes only
+  `topics` and doesn't say it accepts `secret`, so the documented route is to create a new
+  subscription with a new `secret`, update `REDO_AUTHORIZATION` (and the Hookdeck source), then
+  `DELETE` the old subscription.
 - Make handlers idempotent (`return.id` + `at`).
 
 ## Implementation

@@ -22,8 +22,9 @@ def safe_equal(a: str, b: str) -> bool:
 
 
 def verify_videoask_request(headers, header_name=None, secret=None) -> bool:
-    """VideoAsk does not sign payloads. Authenticate with a header you add through the
-    API (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
+    """VideoAsk does not sign payloads. Authenticate with a header you add in the Connect
+    tab ("Add a secret": header name and value) or through the API
+    (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
     yours; the value is compared whole (no Bearer parsing). This authenticates the
     sender only: no body integrity and no replay protection, so use HTTPS.
     """
@@ -61,6 +62,15 @@ def handle_event(payload: dict) -> None:
     elif event_type == "form_contact_message":
         print(f"Contact message from {who}")
         # TODO: notify the team
+
+    # Tag events are listed in VideoAsk's help centre; their payload isn't shown in the docs.
+    elif event_type == "form_contact_tagged":
+        print(f"Tag added to contact {who}")
+        # TODO: sync the contact's tags
+
+    elif event_type == "form_contact_untagged":
+        print(f"Tag removed from contact {who}")
+        # TODO: sync the contact's tags
 
     else:
         print(f"Unhandled event: {event_type}")

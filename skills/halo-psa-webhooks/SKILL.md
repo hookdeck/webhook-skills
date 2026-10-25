@@ -3,8 +3,8 @@ name: halo-psa-webhooks
 description: >
   Receive and authenticate HaloPSA (also HaloITSM and HaloCRM) webhooks. Use when
   setting up a Halo webhook endpoint, checking the Basic Authentication header,
-  debugging 401s, or handling notification events like New Ticket Logged, Ticket
-  Updated and Ticket Reassigned.
+  debugging 401s, or handling notification events like New Ticket Logged and Ticket
+  Reassigned.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,7 +15,7 @@ metadata:
 # HaloPSA Webhooks
 
 Halo (HaloPSA, HaloITSM, HaloCRM) sends a JSON webhook when a notification event fires, such as
-a ticket being logged, updated or reassigned. Webhooks are **not signed**. The only
+a ticket being logged or reassigned. Webhooks are **not signed**. The only
 authentication option is **Basic Authentication**: Halo sends
 `Authorization: Basic base64(username:password)` and your endpoint checks it against the
 username and password you entered on the webhook.
@@ -27,7 +27,7 @@ username and password you entered on the webhook.
 - How do I receive HaloPSA webhooks?
 - How do I authenticate Halo webhooks with Basic auth?
 - Does HaloPSA sign webhook payloads? (No: Basic Authentication is the only auth option)
-- How do I handle `New Ticket Logged`, `Ticket Updated` or `Ticket Reassigned` events?
+- How do I handle `New Ticket Logged` or `Ticket Reassigned` events?
 - How do I handle batched Halo webhooks (a JSON array)?
 - Why does my Halo webhook endpoint return 401?
 
@@ -79,7 +79,6 @@ event per webhook, and can put conditions on them.
 | Event | Sent When |
 |-------|-----------|
 | `New Ticket Logged` | A ticket is created |
-| `Ticket Updated` | A ticket is updated |
 | `Ticket Reassigned` | A ticket is reassigned |
 | `Document deleted on a Ticket` | An attachment is deleted from a ticket (v2.242+) |
 | `Document edited on a Ticket` | An attachment is edited on a ticket (v2.242+) |

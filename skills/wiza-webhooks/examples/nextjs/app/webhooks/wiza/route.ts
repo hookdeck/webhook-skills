@@ -4,15 +4,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyWizaRequest } from '../../../lib/verify-wiza';
 
 interface WizaPayload {
-  id?: number | string;
   type?: string;
-  status?: { code?: number };
-  data?: Record<string, unknown>;
+  status?: { code?: number; message?: string };
+  data?: { id?: number | string; [key: string]: unknown };
   [key: string]: unknown;
 }
 
 function handleEvent(payload: WizaPayload): void {
-  const { id, type, status } = payload;
+  const { type, status, data } = payload;
+  const id = data?.id; // the reveal's id; the envelope has no top-level id
 
   switch (type) {
     case 'individual_reveal':

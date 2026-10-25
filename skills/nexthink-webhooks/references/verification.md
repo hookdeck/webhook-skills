@@ -14,8 +14,10 @@ Points that cause most failures:
 - The key is the **whole `Authorization` value including the scheme prefix**. Compare the
   full header to `NEXTHINK_AUTHORIZATION` (for example `Bearer abc123`); don't strip, parse or
   base64-decode the prefix.
-- The prefix is whatever you typed in the credential's **Header prefix** field (a custom one
-  like `CwsAuth bearer=` is sent verbatim).
+- The prefix is whatever you typed in the credential's **Header prefix** field (usually
+  `Bearer`). Nexthink's `CwsAuth bearer=` example and the "Add a space between prefix and value"
+  option are documented for OAuth credentials only, so with any other prefix, capture a test
+  request and copy the exact header value.
 - Only the Bearer token type is covered; Basic and OAuth credentials are not.
 
 ## A Static Credential Is Limited

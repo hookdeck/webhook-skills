@@ -4,12 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyRollerRequest } from '../../../lib/verify-roller';
 
 interface RollerPayload {
-  type?: string;
+  type?: string; // Booking, Customer, Redemption, BulkExport, SignedWaiver, PaymentLink
+  eventType?: string; // Created, Updated, Cancelled
   [key: string]: unknown;
 }
 
+// ROLLER sends `type` and `eventType` as separate fields (never a dotted name);
+// compose them into one key to dispatch on.
 function handleEvent(payload: RollerPayload): void {
-  switch (payload.type) {
+  const event = `${payload.type}.${payload.eventType}`;
+  switch (event) {
     case 'Booking.Created':
       console.log(`Booking created`);
       // TODO: handle Booking.Created
@@ -41,7 +45,7 @@ function handleEvent(payload: RollerPayload): void {
       break;
 
     default:
-      console.log(`Unhandled event: ${payload.type}`);
+      console.log(`Unhandled event: ${event}`);
   }
 }
 

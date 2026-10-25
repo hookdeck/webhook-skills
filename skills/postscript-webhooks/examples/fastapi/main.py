@@ -16,8 +16,8 @@ def verify_postscript_request(headers, token=None) -> bool:
     """Postscript does not sign payloads. The Postscript-Signature header carries the
     account's webhook signing token (from GET /api/v2/webhooks/token) as plain text,
     so the whole header value is compared with the stored token. This authenticates
-    the sender, not the body, and gives no replay protection: use HTTPS and rotate
-    the token if it leaks.
+    the sender, not the body, and gives no replay protection: use HTTPS and keep
+    the token secret (the docs call it fixed and document no rotation).
     """
     token = token if token is not None else os.environ.get("POSTSCRIPT_WEBHOOK_TOKEN")
     if not token:

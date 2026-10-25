@@ -6,10 +6,12 @@ import { classify, verifyPax8Request } from '../../../lib/verify-pax8';
 function handleEvent(payload: Record<string, unknown>): void {
   const { topic, action } = classify(payload);
 
+  // SUBSCRIPTION and PRODUCT are the topic values the docs show; INVOICE, CLIENT, QUOTE
+  // and USER are assumed from the docs' event category names. Check topic-definitions.
   switch (topic) {
     case 'SUBSCRIPTION':
       console.log(`Pax8 subscription ${action}`);
-      // TODO: sync the subscription (e.g. CREATE, UPDATE) to your system
+      // TODO: sync the subscription (the docs show the CREATE action) to your system
       break;
 
     case 'INVOICE':

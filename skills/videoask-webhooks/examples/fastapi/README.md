@@ -3,7 +3,7 @@
 Minimal example of receiving VideoAsk webhooks and authenticating them with a secret header.
 
 VideoAsk does not sign payloads, so there is no HMAC to verify. You add a header of your choosing
-to the webhook through the API; the handler compares that header's whole value with your secret
+to the webhook (Connect tab **Add a secret**, or the API); the handler compares that header's whole value with your secret
 using a constant-time comparison. A static credential authenticates the sender, not the body, and
 gives no replay protection, so use HTTPS. The route reads the body with
 `await request.body()`, so any content type works.
@@ -11,7 +11,7 @@ gives no replay protection, so use HTTPS. The route reads the body with
 ## Prerequisites
 
 - Python 3.9+
-- A VideoAsk webhook created with a `headers` object (see [../../references/setup.md](../../references/setup.md))
+- A VideoAsk webhook with a secret header, added in the Connect tab (**Add a secret**) or the API `headers` object (see [../../references/setup.md](../../references/setup.md))
 
 ## Setup
 
@@ -72,5 +72,6 @@ Use the printed URL as the webhook `url` when you call the VideoAsk API.
 1. The configured header is checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
 3. The handler dispatches on the `event_type` field: `form_response`,
-   `form_response_transcribed`, `form_author_message`, `form_contact_message`.
+   `form_response_transcribed`, `form_author_message`, `form_contact_message`,
+   `form_contact_tagged`, `form_contact_untagged`.
 4. It returns `200 {"received": true}`.

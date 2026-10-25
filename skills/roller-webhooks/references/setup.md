@@ -42,7 +42,7 @@ this value.
 curl -X POST http://localhost:3000/webhooks/roller \
   -H "Content-Type: application/json" \
   -H "x-roller-apikey: $ROLLER_WEBHOOK_API_KEY" \
-  -d '{"type":"Booking.Created"}'
+  -d '{"type":"Booking","eventType":"Created"}'
 ```
 
 ## Rotating the Key

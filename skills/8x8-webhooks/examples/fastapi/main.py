@@ -72,6 +72,8 @@ def handle_event(event: dict) -> None:
         "template_quality_update",
         "template_correct_category_detection",
         "phone_number_quality_update",
+        "account_update",
+        "whatsapp_automatic_events",
     ):
         print(f"WhatsApp business update: {event_type}")
 

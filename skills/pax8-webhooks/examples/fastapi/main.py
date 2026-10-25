@@ -54,9 +54,11 @@ def handle_event(payload: dict) -> None:
     topic = classify(payload)["topic"]
     action = classify(payload)["action"]
 
+    # SUBSCRIPTION and PRODUCT are the topic values the docs show; INVOICE, CLIENT, QUOTE
+    # and USER are assumed from the docs' event category names. Check topic-definitions.
     if topic == "SUBSCRIPTION":
         print(f"Pax8 subscription {action}")
-        # TODO: sync the subscription (e.g. CREATE, UPDATE) to your system
+        # TODO: sync the subscription (the docs show the CREATE action) to your system
 
     elif topic == "INVOICE":
         print(f"Pax8 invoice {action}")

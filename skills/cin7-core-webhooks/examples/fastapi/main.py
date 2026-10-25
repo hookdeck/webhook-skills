@@ -55,8 +55,8 @@ def handle_event(payload: dict) -> None:
         print("Sale shipment authorised")
         # TODO: notify the customer / update tracking
 
-    elif event_type == "Purchase/Created":
-        print("Purchase created")
+    elif event_type == "Purchase/OrderAuthorised":
+        print("Purchase order authorised")
         # TODO: sync the purchase to accounting
 
     elif event_type == "Product/Updated":

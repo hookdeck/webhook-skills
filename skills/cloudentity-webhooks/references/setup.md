@@ -33,5 +33,5 @@ replay with curl:
 curl -X POST https://example.com/webhooks/cloudentity \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $CLOUDENTITY_WEBHOOK_API_KEY" \
-  -d '{"audit_events":[{"tenant_id":"example","server_id":"demo","event_id":"1","type":"user.created"}]}'
+  -d '{"audit_events":[{"tenant_id":"example","server_id":"demo","event_id":"1","payload":{"user_created":{}}}]}'
 ```

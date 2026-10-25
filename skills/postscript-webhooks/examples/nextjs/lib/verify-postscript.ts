@@ -6,8 +6,8 @@ import crypto from 'crypto';
  * Postscript does not sign payloads. The Postscript-Signature header carries the
  * account's webhook signing token (from GET /api/v2/webhooks/token) as plain text,
  * so the whole header value is compared with the stored token. This authenticates
- * the sender, not the body, and gives no replay protection: use HTTPS and rotate
- * the token if it leaks.
+ * the sender, not the body, and gives no replay protection: use HTTPS and keep
+ * the token secret (the docs call it fixed and document no rotation).
  */
 export function verifyPostscriptRequest(
   headers: Headers,

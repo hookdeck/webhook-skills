@@ -17,8 +17,9 @@ function safeEqual(a, b) {
 }
 
 /**
- * VideoAsk does not sign payloads. Authenticate with a header you add through the
- * API (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
+ * VideoAsk does not sign payloads. Authenticate with a header you add in the Connect
+ * tab ("Add a secret": header name and value) or through the API
+ * (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
  * yours; the value is compared whole (no Bearer parsing). This authenticates the
  * sender only: no body integrity and no replay protection, so use HTTPS.
  */
@@ -55,6 +56,17 @@ function handleEvent(payload) {
     case 'form_contact_message':
       console.log(`Contact message from ${who}`);
       // TODO: notify the team
+      break;
+
+    // Tag events are listed in VideoAsk's help centre; their payload isn't shown in the docs.
+    case 'form_contact_tagged':
+      console.log(`Tag added to contact ${who}`);
+      // TODO: sync the contact's tags
+      break;
+
+    case 'form_contact_untagged':
+      console.log(`Tag removed from contact ${who}`);
+      // TODO: sync the contact's tags
       break;
 
     default:

@@ -53,7 +53,7 @@ AUTH_KEY=$(printf %s "$WIZA_API_KEY" | sha256sum | cut -d' ' -f1)
 curl -X POST http://localhost:8000/webhooks/wiza \
   -H "Content-Type: application/json" \
   -H "x-auth-key: $AUTH_KEY" \
-  -d '{"id":12345,"type":"individual_reveal","status":{"code":200},"data":{}}'
+  -d '{"status":{"code":200,"message":"Single reveal finished"},"type":"individual_reveal","data":{"id":12345}}'
 ```
 
 ## Receive Webhooks Locally

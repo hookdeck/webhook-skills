@@ -14,16 +14,20 @@ authentication is the optional `authorization` value you set (see [verification.
 
 ## Which Topics and Actions Does Pax8 Send?
 
-| Topic | Actions you will typically see | Triggered when |
-|-------|-------------------------------|----------------|
-| `SUBSCRIPTION` | `CREATE`, `UPDATE` | Billing subscription events occur |
-| `INVOICE` | `CREATE`, `UPDATE` | Invoice and billing events occur |
-| `CLIENT` | `CREATE`, `UPDATE` | A client (company) is created or changed |
-| `PRODUCT` | `CREATE`, `UPDATE` | A catalog product visible to the account changes |
-| `QUOTE` | `CREATE`, `UPDATE` | A quote is created or changed |
-| `USER` | `CREATE`, `UPDATE` | A user is created or changed |
+The Subscribing to Events page lists six categories, with event display names (not wire values):
 
-The docs show only `SUBSCRIPTION` with the `CREATE` action explicitly. Pax8 adds topics
+| Category | Example events from the docs |
+|----------|------------------------------|
+| Client | Client Created, Client Updated, Client Deleted |
+| Invoice | Invoice Created, Invoice Voided |
+| Product | Product Created, Product Updated, Product Deleted |
+| Quote | Quote Pending, Quote Ownership Taken, Quote Created, Quote Updated, Quote Customer Responded, Quote Expired, Quote Deleted, Line Items Added, Line Item Deleted, Line Items Updated |
+| Subscription | Subscription Created, Subscription Updated, Subscription Cancelled, Subscription Vendor Mapping Updated, Subscription Commitment Term Updated, Subscription Purchase Order Updated |
+| User | User Created, User Deleted, User Marked Active, User Marked Inactive, User Info Updated, User Account Reassigned, User Country Changed, User Account Name Changed, User Partner Type Changed, Company User Promoted to Partner User |
+
+The only topic identifiers the docs show are `SUBSCRIPTION` and `PRODUCT`, and the only action
+is `CREATE` (on `SUBSCRIPTION`). The examples assume `INVOICE`, `CLIENT`, `QUOTE` and `USER` for
+the other categories; how the other display names map to actions is not documented. Pax8 adds topics
 continuously, so call `GET /webhooks/topic-definitions` for the authoritative list of topics,
 actions and filterable fields (for example `vendorId` with operator `IN`). Create calls
 referencing anything not in that catalog are rejected.
@@ -37,7 +41,7 @@ webhook to get different notifications for the same topic.
 |------|-------|
 | Method and body | `POST`, JSON |
 | Timeout | No response within 10 seconds = failed |
-| Attempts | 3 (initial + 2 automatic retries, back-off 10 s, 30 s, 60 s) |
+| Attempts | 3 (initial + 2 automatic retries). The docs give the back-off as "10 s → 30 s → 60 s", three intervals for two retries, so the exact spacing is unclear |
 | Final failure | Log status `FAILED`; logs kept for 30 days |
 | Alerts | One email to `contactEmail` after `errorThreshold` consecutive failures (default 10, max 20) |
 | Manual retry | `POST /webhooks/{webhookId}/logs/{logId}/retry` |

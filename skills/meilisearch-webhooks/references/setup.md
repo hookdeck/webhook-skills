@@ -66,4 +66,5 @@ bytes and the `Content-Encoding` header, so your handler sees what Meilisearch s
 ## Testing
 
 Trigger a task (for example add a document to an index) and watch the request arrive. Your
-`/webhooks/meilisearch` endpoint must return `2xx` or Meilisearch retries with exponential backoff.
+`/webhooks/meilisearch` endpoint must return `2xx`. Meilisearch Cloud retries failures with
+exponential backoff; a self-hosted instance sends once (30-second timeout) and does not retry.

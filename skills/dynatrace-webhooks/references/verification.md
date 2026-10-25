@@ -81,4 +81,4 @@ def verify_dynatrace_request(headers, name=None, secret=None) -> bool:
 | 401 on every request | Secret unset, or header name differs from `DYNATRACE_WEBHOOK_HEADER` |
 | 401 with correct secret | The env value omits or adds a `Bearer ` prefix compared with the Dynatrace header |
 | 401 only behind a proxy | The proxy strips or renames the custom header |
-| Cannot tell OPEN from RESOLVED | Template lacks `{State}` |
+| Cannot tell opened from resolved problems | Template lacks `{State}` |

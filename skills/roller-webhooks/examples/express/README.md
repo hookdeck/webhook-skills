@@ -49,7 +49,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/roller \
   -H "Content-Type: application/json" \
   -H "x-roller-apikey: $ROLLER_WEBHOOK_API_KEY" \
-  -d '{"type":"Booking.Created"}'
+  -d '{"type":"Booking","eventType":"Created"}'
 ```
 
 ## Receive Webhooks Locally
@@ -66,5 +66,5 @@ Use the printed URL as the webhook `url` when registering.
 
 1. The `x-roller-apikey` header is checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
-3. The handler dispatches on the `type` field: `Booking.Created`, `Booking.Updated`, `Booking.Cancelled`, `Customer.Created`, `Redemption.Created`, `PaymentLink.Created`.
+3. The handler joins the `type` and `eventType` fields (ROLLER sends them separately) and dispatches on the result: `Booking.Created`, `Booking.Updated`, `Booking.Cancelled`, `Customer.Created`, `Redemption.Created`, `PaymentLink.Created`.
 4. It returns `200 {"received": true}`. ROLLER expects an acknowledgement within 10 seconds.

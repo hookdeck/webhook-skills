@@ -17,16 +17,14 @@ function handleProblem(payload: DynatracePayload): void {
   switch (state) {
     case 'OPEN':
       console.log(`Problem opened: ${id} ${title}`);
-      // TODO: page on-call or open a ticket (payload.ImpactedEntity, payload.ProblemURL)
-      break;
-
-    case 'RESOLVED':
-      console.log(`Problem resolved: ${id} ${title}`);
-      // TODO: close the matching ticket
+      // TODO: page on-call or open a ticket (payload.ImpactedEntity)
       break;
 
     default:
-      console.log(`Unhandled problem state: ${state}`);
+      // Dynatrace also notifies when a problem is resolved, but its docs show only the
+      // OPEN value of {State}. Log other values and match on what a real delivery sends.
+      console.log(`Problem ${id} state ${state}: ${title}`);
+      // TODO: close the matching ticket once you have confirmed the resolved State value
   }
 }
 

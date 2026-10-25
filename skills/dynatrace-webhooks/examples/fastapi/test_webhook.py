@@ -23,7 +23,6 @@ def sample_payload(state="OPEN"):
         "State": state,
         "ProblemTitle": "Response time degradation",
         "ImpactedEntity": "checkout-service",
-        "ProblemURL": "https://example.live.dynatrace.com/#problems/problemdetails;pid=1234",
     }
 
 
@@ -97,16 +96,17 @@ class TestBodyHandling:
 
 
 class TestProblemHandling:
-    @pytest.mark.parametrize("state", ["OPEN", "RESOLVED"])
+    @pytest.mark.parametrize("state", ["OPEN"])
     def test_handles_state(self, state, capsys):
         res = post({HEADER: SECRET}, body=json.dumps(sample_payload(state)))
         assert res.status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
 
-    def test_unknown_state_is_acknowledged(self, capsys):
-        res = post({HEADER: SECRET}, body=json.dumps(sample_payload("MERGED")))
+    # The docs show only OPEN; other values (e.g. the one sent on resolution) are logged.
+    def test_other_state_is_acknowledged_and_logged(self, capsys):
+        res = post({HEADER: SECRET}, body=json.dumps(sample_payload("NOT_OPEN")))
         assert res.status_code == 200
-        assert "Unhandled" in capsys.readouterr().out
+        assert "state NOT_OPEN" in capsys.readouterr().out
 
 
 def test_health():

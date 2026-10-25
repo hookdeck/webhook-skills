@@ -11,7 +11,7 @@ Cin7 Core (formerly DEAR Inventory) can POST a JSON payload to a URL you choose 
 | `Sale/Created` | A sale is created | Sync orders to a warehouse or ERP |
 | `Sale/OrderAuthorised` | A sale order is authorised | Start fulfilment |
 | `Sale/ShipmentAuthorised` | A sale shipment is authorised | Notify customers, update tracking |
-| `Purchase/Created` | A purchase is created | Sync purchasing to accounting |
+| `Purchase/OrderAuthorised` | A purchase order is authorised | Sync purchasing to accounting |
 | `Product/Updated` | A product is updated | Refresh catalogue or pricing |
 
 This is not exhaustive. See the [Cin7 Core API docs](https://dearinventory.docs.apiary.io/) for every webhook `Type`.

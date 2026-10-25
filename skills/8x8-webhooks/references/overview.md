@@ -26,6 +26,8 @@ Every body has an `eventType` string. SMS and Chat Apps events also carry `names
 | `template_quality_update` | (provider event) | A WhatsApp template's quality score changes |
 | `template_correct_category_detection` | (provider event) | WhatsApp detects a more correct template category |
 | `phone_number_quality_update` | (provider event) | A WhatsApp phone number's quality changes |
+| `account_update` | (provider event) | Your WhatsApp Business Account (WABA) changes; `eventDetails.event` refines it (e.g. `ACCOUNT_VIOLATION`, `BUSINESS_VERIFICATION_STATUS_UPDATE`) |
+| `whatsapp_automatic_events` | (provider event) | Meta detects a purchase or lead conversion in a WhatsApp thread from a Click-to-WhatsApp ad; Meta's payload is in `eventDetails.rawEvent` |
 
 ## Payload Structure
 

@@ -37,7 +37,9 @@ curl --request POST \
 ```
 
 Repeat for each event you need: `shop.incoming_message`, `shop.subscriber.opt_in`,
-`shop.subscriber.opt_out`, `shop.email_collected`.
+`shop.subscriber.opt_out`, `shop.email_collected` (the API also accepts `shop.test`, its default).
+The body can include an optional `headers` object: "Custom key:value pairs to be sent as headers in
+every callback" (e.g. `"headers": {"X-My-Secret": "<random value>"}`).
 
 ## Test
 

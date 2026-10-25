@@ -3,7 +3,7 @@ name: dynatrace-webhooks
 description: >
   Receive and authenticate Dynatrace problem notification webhooks. Use when setting up
   a Dynatrace custom webhook integration (Classic problem notifications), verifying a
-  secret header, debugging 401s, or handling OPEN and RESOLVED problems from a payload
+  secret header, debugging 401s, or handling opened and resolved problems from a payload
   template with placeholders like {ProblemID}, {State} and {ProblemTitle}.
 license: MIT
 metadata:
@@ -17,7 +17,7 @@ metadata:
 Dynatrace (Classic) problem notifications can POST to a custom webhook URL when a problem opens
 or is resolved. Requests are **not signed**. The body is a payload template you write
 (JSON, text or XML) using placeholders such as `{ProblemID}`, `{State}`, `{ProblemTitle}`,
-`{ImpactedEntity}` and `{ProblemURL}`; Dynatrace adds no event field of its own. You authenticate
+`{ImpactedEntity}` and `{ProblemImpact}`; Dynatrace adds no event field of its own. You authenticate
 requests with a secret header you add as an **Additional HTTP header** on the integration.
 
 > **Send the secret in a custom header, not as a token in the webhook URL.** Dynatrace allows a
@@ -27,7 +27,7 @@ requests with a secret header you add as an **Additional HTTP header** on the in
 
 - How do I receive Dynatrace problem notification webhooks?
 - How do I authenticate a Dynatrace webhook? (No signature: use a secret header)
-- How do I handle `OPEN` and `RESOLVED` problems from a Dynatrace payload template?
+- How do I handle opened and resolved problems from a Dynatrace payload template?
 - Why does my Dynatrace webhook endpoint return 401?
 
 ## Verification (core)
@@ -72,17 +72,19 @@ schema. These examples assume this JSON template and dispatch on `State`:
   "ProblemID": "{ProblemID}",
   "State": "{State}",
   "ProblemTitle": "{ProblemTitle}",
-  "ImpactedEntity": "{ImpactedEntity}",
-  "ProblemURL": "{ProblemURL}"
+  "ImpactedEntity": "{ImpactedEntity}"
 }
 ```
 
 | `State` | Meaning |
 |---------|---------|
-| `OPEN` | A problem was opened |
-| `RESOLVED` | The problem was resolved |
+| `OPEN` | A problem was opened (the only value Dynatrace's docs show, in the test-notification example) |
 
-Include `{State}` in your template or you can't tell the two apart.
+A notification is also sent when a problem is resolved, but the docs don't show the `{State}` value
+it carries. The examples handle `OPEN` and log any other value; capture a real resolution (or
+check your Dynatrace environment) before matching on it. Include `{State}` in your template or you
+can't tell the two apart. The docs list no `{ProblemURL}` placeholder (their example has a literal
+`"Problem URL": "https://example.com"`).
 
 ## Environment Variables
 

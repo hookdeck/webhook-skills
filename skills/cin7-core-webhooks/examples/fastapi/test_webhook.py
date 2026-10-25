@@ -18,7 +18,7 @@ SECRET = os.environ["CIN7_CORE_WEBHOOK_SECRET"]
 
 EVENTS = [
     "Sale/Created", "Sale/OrderAuthorised", "Sale/ShipmentAuthorised",
-    "Purchase/Created", "Product/Updated",
+    "Purchase/OrderAuthorised", "Product/Updated",
 ]
 
 

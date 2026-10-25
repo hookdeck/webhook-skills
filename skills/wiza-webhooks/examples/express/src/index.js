@@ -30,7 +30,8 @@ function verifyWizaRequest(headers, apiKey = process.env.WIZA_API_KEY) {
 }
 
 function handleEvent(payload) {
-  const { id, type, status, data } = payload;
+  const { type, status, data } = payload;
+  const id = data && data.id; // the reveal's id; the envelope has no top-level id
 
   switch (type) {
     case 'individual_reveal':
@@ -43,7 +44,6 @@ function handleEvent(payload) {
       } else {
         console.log(`Reveal ${id} has status ${status && status.code}`);
       }
-      void data;
       break;
 
     default:

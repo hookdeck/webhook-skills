@@ -78,8 +78,8 @@ Use the printed URL as the **Payload URL** of the Halo webhook.
    colon. Anything else (missing, malformed, junk after the credentials, mismatch) returns `401`.
 2. The body is read raw, so any content type works. It must be a JSON object, or an array of
    objects when batching is on (`400` otherwise).
-3. The handler dispatches on the event name: `New Ticket Logged`, `Ticket Updated`,
-   `Ticket Reassigned`, `Document deleted on a Ticket`, `Document edited on a Ticket`.
+3. The handler dispatches on the event name: `New Ticket Logged`, `Ticket Reassigned`,
+   `Document deleted on a Ticket`, `Document edited on a Ticket`.
    Which JSON property carries the event name isn't documented in text, so the examples check
    `event`, `eventName` and `event_name`: confirm against a real delivery.
 4. It returns `200 {"received": true}`.

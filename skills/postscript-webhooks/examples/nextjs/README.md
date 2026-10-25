@@ -6,8 +6,8 @@ Minimal example of receiving Postscript webhooks and authenticating them with th
 Despite its name, `Postscript-Signature` is not an HMAC of the body: it carries your account's
 webhook signing token (from `GET /api/v2/webhooks/token`) as plain text. The handler compares the
 whole header value with `POSTSCRIPT_WEBHOOK_TOKEN` in constant time. That authenticates the sender,
-not the body, and gives no replay protection, so use HTTPS and rotate the token if it leaks. The
-route reads the body with `request.text()`, so any content type works.
+not the body, and gives no replay protection, so use HTTPS and keep the token secret (the docs
+document no way to rotate it). The route reads the body with `request.text()`, so any content type works.
 
 ## Prerequisites
 

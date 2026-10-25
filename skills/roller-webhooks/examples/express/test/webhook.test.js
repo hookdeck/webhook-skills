@@ -10,7 +10,13 @@ const KEY = process.env.ROLLER_WEBHOOK_API_KEY;
 
 const EVENTS = ['Booking.Created', 'Booking.Updated', 'Booking.Cancelled', 'Customer.Created', 'Redemption.Created', 'PaymentLink.Created'];
 
-function post(body = JSON.stringify({ type: 'Booking.Created' }), contentType = 'application/json') {
+// ROLLER sends `type` and `eventType` as separate fields.
+function eventBody(event) {
+  const [type, eventType] = event.split('.');
+  return JSON.stringify({ type, eventType });
+}
+
+function post(body = eventBody('Booking.Created'), contentType = 'application/json') {
   return request(app)
     .post('/webhooks/roller')
     .set('Content-Type', contentType)
@@ -60,7 +66,7 @@ describe('ROLLER webhook endpoint', () => {
 
   describe('Body handling', () => {
     it('accepts any content type (raw body)', async () => {
-      const res = await post(JSON.stringify({ type: 'Booking.Created' }), 'text/plain')
+      const res = await post(eventBody('Booking.Created'), 'text/plain')
         .set('x-roller-apikey', KEY);
       expect(res.status).toBe(200);
     });
@@ -84,7 +90,7 @@ describe('ROLLER webhook endpoint', () => {
   describe('Event handling', () => {
     it.each(EVENTS)('handles %s', async (type) => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify({ type })).set('x-roller-apikey', KEY);
+      const res = await post(eventBody(type)).set('x-roller-apikey', KEY);
       expect(res.status).toBe(200);
       expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
       spy.mockRestore();
@@ -92,7 +98,7 @@ describe('ROLLER webhook endpoint', () => {
 
     it('acknowledges unknown events', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify({ type: 'Something.New' })).set('x-roller-apikey', KEY);
+      const res = await post(eventBody('Something.New')).set('x-roller-apikey', KEY);
       expect(res.status).toBe(200);
       spy.mockRestore();
     });

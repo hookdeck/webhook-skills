@@ -27,8 +27,8 @@ function handleEvent(payload: Cin7CorePayload): void {
       // TODO: notify the customer / update tracking
       break;
 
-    case 'Purchase/Created':
-      console.log('Purchase created');
+    case 'Purchase/OrderAuthorised':
+      console.log('Purchase order authorised');
       // TODO: sync the purchase to accounting
       break;
 

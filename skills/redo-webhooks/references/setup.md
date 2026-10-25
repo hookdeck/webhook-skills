@@ -49,7 +49,9 @@ With this example the value to store is `REDO_AUTHORIZATION=Bearer your-subscrib
 ## Manage Webhooks
 
 - List: `GET https://api.getredo.com/v2.2/stores/{storeId}/webhooks`
-- Update (topics, secret rotation): `PATCH https://api.getredo.com/v2.2/webhooks/{webhookId}`
+- Update: `PATCH https://api.getredo.com/v2.2/webhooks/{webhookId}` (the docs' example changes
+  `topics`; changing `secret` this way isn't documented, so rotate by creating a new subscription
+  and deleting the old one)
 - Delete: `DELETE https://api.getredo.com/v2.2/webhooks/{webhookId}`
 - Replay: `POST https://api.getredo.com/v2.2/webhooks/{webhookId}/replay` with
   `{"startTime": "...", "endTime": "..."}`; replayed events arrive with `type: "backfill"`

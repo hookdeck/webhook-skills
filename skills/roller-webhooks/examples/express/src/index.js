@@ -27,8 +27,12 @@ function verifyRollerRequest(headers, apiKey = process.env.ROLLER_WEBHOOK_API_KE
   return Boolean(received) && safeEqual(received, apiKey);
 }
 
+// ROLLER sends the payload type (`type`: Booking, Customer, Redemption, ...) and the
+// action (`eventType`: Created, Updated, Cancelled) as separate fields; it never sends
+// a dotted name. Compose them into one key to dispatch on.
 function handleEvent(payload) {
-  switch (payload.type) {
+  const event = `${payload.type}.${payload.eventType}`;
+  switch (event) {
     case 'Booking.Created':
       console.log(`Booking created`);
       // TODO: handle Booking.Created
@@ -60,7 +64,7 @@ function handleEvent(payload) {
       break;
 
     default:
-      console.log(`Unhandled event: ${payload.type}`);
+      console.log(`Unhandled event: ${event}`);
   }
 }
 

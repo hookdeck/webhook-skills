@@ -14,6 +14,8 @@ const EVENTS = [
   'form_response_transcribed',
   'form_author_message',
   'form_contact_message',
+  'form_contact_tagged',
+  'form_contact_untagged',
 ];
 
 function samplePayload(eventType = 'form_response') {

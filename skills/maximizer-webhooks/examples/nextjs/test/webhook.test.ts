@@ -168,7 +168,7 @@ describe('POST /webhooks/maximizer', () => {
     it('acknowledges unknown entities', async () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const res = await POST(
-        makeRequest({ [HEADER]: SECRET }, JSON.stringify([sampleWebhook('Campaign', 'Create')]))
+        makeRequest({ [HEADER]: SECRET }, JSON.stringify([sampleWebhook('UnknownEntity', 'Create')]))
       );
       expect(res.status).toBe(200);
       spy.mockRestore();

@@ -17,16 +17,15 @@ token in the URL, but Hookdeck can't check it and URLs end up in logs.
 2. Enter your webhook URL (e.g. `https://example.com/webhooks/dynatrace`), with no secret in it.
 3. Under **Additional HTTP headers**, add a header with a name and secret value of your choosing,
    e.g. `X-Webhook-Secret: <long random value>` (or `Authorization: Bearer <value>`).
-4. Write the **Custom payload** template. Include `{State}` so you can tell `OPEN` from
-   `RESOLVED`, for example:
+4. Write the **Custom payload** template. Include `{State}` so you can tell an opened problem
+   (`OPEN`) from a resolved one (the docs don't show the resolved value), for example:
 
    ```json
    {
      "ProblemID": "{ProblemID}",
      "State": "{State}",
      "ProblemTitle": "{ProblemTitle}",
-     "ImpactedEntity": "{ImpactedEntity}",
-     "ProblemURL": "{ProblemURL}"
+     "ImpactedEntity": "{ImpactedEntity}"
    }
    ```
 

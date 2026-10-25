@@ -19,7 +19,10 @@ When a task completes, Meilisearch sends an HTTP `POST` to your URL. The request
 ```
 
 Several tasks can arrive in a single request, so always process every line. Your endpoint
-must respond with a `2xx`; anything else is a failure and is retried with exponential backoff.
+must respond with a `2xx`. On Meilisearch Cloud anything else is a failure and is retried with
+exponential backoff. The self-hosted docs don't mention retries: the open-source engine sends
+each request once (30-second timeout) and only logs a failure, so respond fast and don't count on
+a redelivery.
 A Meilisearch Cloud project can have up to 20 webhooks.
 
 ## Common Task Types

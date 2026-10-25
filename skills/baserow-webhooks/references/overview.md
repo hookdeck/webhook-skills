@@ -10,8 +10,8 @@ Webhooks are **not signed**. Baserow sends `X-Baserow-Event` and `X-Baserow-Deli
 the custom headers you add. Authenticate by adding a secret header (see [setup.md](setup.md)).
 
 Baserow Cloud keeps at most 5,000 pending calls per webhook (extra calls are dropped) and handles
-calls one at a time. A call succeeds only if your endpoint returns `200 OK`; failed calls are
-retried a limited number of times.
+calls one at a time. The docs say a call succeeds only if your endpoint returns `200 OK` (the
+source code checks for any status below 400); failed calls are retried a limited number of times.
 
 ## Common Event Types
 
@@ -47,7 +47,8 @@ Example for `view.created`:
 }
 ```
 
-- `event_type` and `event_id` describe what happened (use `event_id` for idempotency).
+- `event_type` and `event_id` describe what happened. For idempotency use `event_id` together
+  with `batch_id`: a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
 - `table_id`, `database_id` and `workspace_id` identify the source.
 - Row events carry an `items` array with the full affected rows; view and field events carry the
   object itself.

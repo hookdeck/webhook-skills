@@ -52,15 +52,18 @@ function verifyPostscriptRequest(headers, token = process.env.POSTSCRIPT_WEBHOOK
 - Missing header or mismatch: return `401`. A valid request gets `200`.
 - Read the body raw (`express.raw({ type: '*/*' })`) and check the token before parsing it.
 - **Security limits:** a static shared credential authenticates the sender, not the body, and gives
-  no replay protection (no signature, no timestamp). Use HTTPS only, and rotate the credential if
-  it leaks. Make the handler idempotent (use `webhook_id`).
+  no replay protection (no signature, no timestamp). Use HTTPS only. The docs call the token fixed
+  and document no way to rotate it, so guard it carefully. Make the handler idempotent, but not on
+  `webhook_id` (see Retries).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
 The payload has `event`, `resource_type`, `resource_id`, `webhook_id`, `event_time` and
-`event_data`. Subscriptions are created with `POST /api/v2/webhooks`, one event each.
+`event_data`. Subscriptions are created with `POST /api/v2/webhooks`, one event each; the request
+can also carry an optional `headers` object ("Custom key:value pairs to be sent as headers in every
+callback"), which you can use for an extra secret of your own.
 
 | Event | Sent When |
 |-------|-----------|
@@ -68,6 +71,7 @@ The payload has `event`, `resource_type`, `resource_id`, `webhook_id`, `event_ti
 | `shop.subscriber.opt_in` | A subscriber opts in to promotional texts |
 | `shop.subscriber.opt_out` | A subscriber opts out of texts |
 | `shop.email_collected` | An email is collected through a Postscript popup |
+| `shop.test` | Test event (the subscription API's default `event` value) |
 
 Postscript may add event types at any time, so acknowledge unknown events with `200`.
 
@@ -85,7 +89,7 @@ When you add a Postscript source in Hookdeck (source type `POSTSCRIPT`), paste t
 ## Retries
 
 If Postscript does not get a `200` quickly, it retries every 5 minutes for up to 1 hour. Respond
-`200` before doing heavy work, and dedupe on `webhook_id`.
+`200` before doing heavy work. Payloads have no documented event id. `webhook_id` appears to be the subscription's id (same UUID form as the subscription `id`), so it repeats across events: don't dedupe on it. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
 
 ## Local Development
 

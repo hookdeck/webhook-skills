@@ -58,7 +58,9 @@ const tasks = body.toString('utf8').split('\n').filter((l) => l.trim()).map((l) 
 
 Check the credential first, then gunzip, then `JSON.parse` **each line**, never the whole
 body. Return `401` for a missing or wrong header, `400` for a body that can't be gunzipped
-or parsed, and `2xx` once handled (non-2xx responses are retried with exponential backoff).
+or parsed, and `2xx` once handled. Meilisearch Cloud documents retries with exponential backoff
+for non-2xx responses; the self-hosted docs don't mention retries, and the open-source engine
+sends each request once with a 30-second timeout, so a failure there is lost.
 Python and Next.js equivalents are in [references/verification.md](references/verification.md).
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay

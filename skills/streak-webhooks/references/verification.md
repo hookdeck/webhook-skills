@@ -16,7 +16,9 @@ protection (no signature, no timestamp): anyone who captures a request, or the t
 or resend arbitrary bodies. So:
 
 - Serve the endpoint over HTTPS only.
-- Rotate the token if it leaks (create new webhooks with a new token, delete the old ones).
+- Rotate the token if it leaks: send a new `token` to `POST /webhooks/{webhookKey}` (its schema
+  lists `token`, though its prose says only `event` and `targetUrl` are applied, so confirm with a
+  delivery), or create new webhooks with a new token and delete the old ones.
 - Make handlers idempotent; Streak retries on non-200 responses.
 
 ## How to Verify
@@ -61,7 +63,7 @@ def verify_streak_request(headers, token):
 ## Common Gotchas
 
 - **No token, nothing to verify.** Check existing webhooks; if one was created without a token,
-  recreate it with one.
+  set one with `POST /webhooks/{webhookKey}` (confirm it arrives) or recreate the webhook with one.
 - **Read the raw body.** Use `express.raw({ type: '*/*' })` (or `request.text()` / `request.body()`)
   so any content type works, and parse only after the credential check.
 - **Compare the whole value.** No prefix such as `Bearer`; the header is the token verbatim.

@@ -81,6 +81,8 @@ The body is JSON with an `eventType` string:
 | `template_quality_update` | A WhatsApp template's quality score changes |
 | `template_correct_category_detection` | WhatsApp detects a more correct category for a template |
 | `phone_number_quality_update` | A WhatsApp phone number's quality changes |
+| `account_update` | Your WhatsApp Business Account changes (`eventDetails.event` refines it, e.g. `ACCOUNT_VIOLATION`) |
+| `whatsapp_automatic_events` | Meta detects a purchase or lead conversion in a thread from a Click-to-WhatsApp ad |
 
 Failed deliveries (connection error, timeout, 4xx or 5xx) are retried after 1, 10, 30 and 90
 seconds, so dedupe on `payload.umid` plus `payload.status.state` (or `eventId`).

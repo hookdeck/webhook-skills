@@ -6,7 +6,8 @@ VideoAsk (Typeform's video form product) can send a JSON `POST` to a URL you cho
 respondent completes a videoask or when a message is exchanged with a contact. You can set a
 webhook up in the **Connect** tab of a videoask, or with the API
 (`PUT /forms/{form_id}/webhooks/{tag}`). Requests are **not signed**. The only authentication
-available is a custom header you add through the API's `headers` object.
+available is a custom header: **Add a secret** (header name and value) in the Connect tab, or the
+API's `headers` object.
 
 Your endpoint must return a `2xx` status. If a request fails for any reason, VideoAsk retries
 it 3 times with back-off, after 5, 10 and 20 minutes.
@@ -19,6 +20,11 @@ it 3 times with back-off, after 5, 10 and 20 minutes.
 | `form_response_transcribed` | Same, and media is also transcribed (can take 3-4 minutes) | Index transcripts, run sentiment analysis |
 | `form_author_message` | The videoask creator sends a message to the contact (transcoded and transcribed) | Log conversation history |
 | `form_contact_message` | The contact sends a message (transcoded and transcribed) | Notify the team of a reply |
+| `form_contact_tagged` | A tag is added to a contact | Sync tags to a CRM |
+| `form_contact_untagged` | A tag is removed from a contact | Sync tags to a CRM |
+
+The two tag events are listed in VideoAsk's help centre (Connect tab event toggles); no example
+payload for them is published.
 
 The event name is in the `event_type` field. Subscribe to specific events with the
 `event_types` array when you create the webhook.

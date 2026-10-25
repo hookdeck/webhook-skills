@@ -13,10 +13,9 @@ const AUTH_KEY = crypto.createHash('sha256').update(API_KEY).digest('hex');
 
 function samplePayload(code = 200) {
   return {
-    id: 12345,
+    status: { code, message: code === 200 ? 'Single reveal finished' : 'Failed' },
     type: 'individual_reveal',
-    status: { code },
-    data: { email: 'jane@example.com', full_name: 'Jane Doe' },
+    data: { id: 12345, status: code === 200 ? 'finished' : 'failed', email: 'jane@example.com', name: 'Jane Doe' },
   };
 }
 
@@ -114,7 +113,7 @@ describe('Wiza webhook endpoint', () => {
     });
 
     it('acknowledges unknown types', async () => {
-      const res = await post(JSON.stringify({ id: 1, type: 'something_new' })).set('x-auth-key', AUTH_KEY);
+      const res = await post(JSON.stringify({ type: 'something_new', data: { id: 1 } })).set('x-auth-key', AUTH_KEY);
       expect(res.status).toBe(200);
       expect(spy).toHaveBeenCalledWith('Unhandled event type: something_new');
     });

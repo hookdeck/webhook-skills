@@ -52,5 +52,5 @@ Put the printed URL in the Cin7 Core webhook.
 
 1. `require_cin7_core_credential` checks the header before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
-3. `handle_event` dispatches on `EventType`: `Sale/Created`, `Sale/OrderAuthorised`, `Sale/ShipmentAuthorised`, `Purchase/Created`, `Product/Updated`.
+3. `handle_event` dispatches on `EventType`: `Sale/Created`, `Sale/OrderAuthorised`, `Sale/ShipmentAuthorised`, `Purchase/OrderAuthorised`, `Product/Updated`.
 4. It returns `200 {"received": true}`.

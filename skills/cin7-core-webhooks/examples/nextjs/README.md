@@ -50,4 +50,4 @@ Put the printed URL in the Cin7 Core webhook.
 ## How It Works
 
 - `lib/verify-cin7-core.ts`: `verifyCin7CoreRequest()`
-- `app/webhooks/cin7-core/route.ts`: authenticates (`401` on failure), parses a JSON object (`400` otherwise), dispatches on `EventType` (`Sale/Created`, `Sale/OrderAuthorised`, `Sale/ShipmentAuthorised`, `Purchase/Created`, `Product/Updated`) and returns `200`.
+- `app/webhooks/cin7-core/route.ts`: authenticates (`401` on failure), parses a JSON object (`400` otherwise), dispatches on `EventType` (`Sale/Created`, `Sale/OrderAuthorised`, `Sale/ShipmentAuthorised`, `Purchase/OrderAuthorised`, `Product/Updated`) and returns `200`.

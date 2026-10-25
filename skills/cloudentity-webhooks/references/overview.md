@@ -53,8 +53,12 @@ SecureAuth sends audit events in JSON batches:
 }
 ```
 
-The docs elide the remaining fields, including which one holds the event type (the examples read
-`type`, `event_type` or `action`). Iterate over `audit_events` and handle each entry on its own.
+The docs elide the remaining fields and don't name the field that carries the event type. The
+webhooks page says the payload "delivers the matching field in subject_action form", and the
+external-logging guide charts `audit_events.payload.login_failed.cause`, which suggests each audit
+event has a `payload` object with one key named for the event (`login_failed`). The examples
+dispatch on that key; it is inferred, so confirm it against a real delivery. Iterate over
+`audit_events` and handle each entry on its own.
 The HTTP method isn't stated in the docs; treat it as `POST` with a JSON body.
 
 ## Full Event Reference

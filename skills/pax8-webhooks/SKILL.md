@@ -75,17 +75,19 @@ non-`https` URLs) and rotate the credential if it leaks (update it with
 Topics and actions are defined by `GET /webhooks/topic-definitions`, the authoritative
 catalog (create calls are rejected for anything not in it).
 
-| Topic | Example actions | Notes |
-|-------|-----------------|-------|
-| `SUBSCRIPTION` | `CREATE`, `UPDATE` | Billing subscription events; `CREATE` is shown in the docs |
-| `INVOICE` | `CREATE`, `UPDATE` | Invoice and billing events |
-| `CLIENT` | `CREATE`, `UPDATE` | Client (company) events |
-| `PRODUCT` | `CREATE`, `UPDATE` | Catalog events, limited to products the account can see |
-| `QUOTE` | `CREATE`, `UPDATE` | Quote events |
-| `USER` | `CREATE`, `UPDATE` | User events |
+| Category | Example events (display names from the docs) |
+|----------|----------------------------------------------|
+| Subscription | Subscription Created, Updated, Cancelled, Commitment Term Updated, ... |
+| Invoice | Invoice Created, Invoice Voided |
+| Client | Client Created, Updated, Deleted |
+| Product | Product Created, Updated, Deleted |
+| Quote | Quote Pending, Created, Updated, Expired, Deleted, Line Items Added, ... |
+| User | User Created, Deleted, Marked Active, Marked Inactive, Info Updated, ... |
 
-The Pax8 page itself names only `SUBSCRIPTION` (with `CREATE`) and `PRODUCT`; check the
-topic-definitions API for the exact list on your account. The body is not documented (the
+The docs publish these as display names, not wire values. The only topic identifiers they show
+are `SUBSCRIPTION` and `PRODUCT`, and the only action is `CREATE`; the examples assume `INVOICE`,
+`CLIENT`, `QUOTE` and `USER` for the other categories. Check the topic-definitions API for the
+exact topics and actions on your account. The body is not documented (the
 `samplePayload` is elided), so the examples treat any payload as **illustrative** and read
 `topic` and `action` defensively.
 
@@ -93,7 +95,8 @@ topic-definitions API for the exact list on your account. The body is not docume
 
 - `POST` with a JSON body; can lag up to 5 minutes after the event
 - A response not received within 10 seconds counts as failed
-- Up to 3 attempts (initial + 2 retries, back-off 10 s, 30 s, 60 s), then log status `FAILED`
+- Up to 3 attempts (initial + 2 automatic retries), then log status `FAILED`. The docs give the
+  back-off as "10 s → 30 s → 60 s", three intervals for two retries, so the exact spacing is unclear
 - One email alert after `errorThreshold` consecutive failures (default 10, max 20)
 - Send a synthetic event with `POST /webhooks/{id}/topics/{topic}/test`
 

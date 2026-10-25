@@ -134,7 +134,7 @@ class TestEventHandling:
         assert "Unhandled" not in capsys.readouterr().out
 
     def test_unknown_entity_is_acknowledged(self):
-        res = post({HEADER: SECRET}, body=json.dumps([sample_webhook("Campaign", "Create")]))
+        res = post({HEADER: SECRET}, body=json.dumps([sample_webhook("UnknownEntity", "Create")]))
         assert res.status_code == 200
 
     def test_handler_error_still_returns_200(self):

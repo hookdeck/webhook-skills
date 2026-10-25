@@ -12,8 +12,9 @@ not the body, and gives no replay protection, so use HTTPS and rotate it if it l
 **Send the secret in a custom header, not as a token in the webhook URL.**
 
 The body is a template you write; the vendor adds no event field. This example assumes an
-illustrative JSON template with `ProblemID`, `State`, `ProblemTitle`, `ImpactedEntity` and
-`ProblemURL`, and dispatches on `State` (`OPEN`, `RESOLVED`). The route reads the body as text, so any content type works.
+illustrative JSON template with `ProblemID`, `State`, `ProblemTitle` and `ImpactedEntity`, and
+dispatches on `State`: `OPEN` is handled, and any other value (the docs don't show the one sent
+when a problem resolves) is logged. The route reads the body as text, so any content type works.
 
 ## Prerequisites
 

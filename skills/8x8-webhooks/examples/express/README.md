@@ -72,5 +72,6 @@ Use the printed URL as the webhook URL in 8x8 Connect.
 4. The handler switches on `eventType`: `inbound_message_received`,
    `outbound_message_status_changed`, `external_app_message`, `short_url_clicked`,
    `template_status_update`, `template_category_update`, `template_quality_update`,
-   `template_correct_category_detection`, `phone_number_quality_update`.
+   `template_correct_category_detection`, `phone_number_quality_update`, `account_update`,
+   `whatsapp_automatic_events`.
 5. It returns `200 {"received": true}`.

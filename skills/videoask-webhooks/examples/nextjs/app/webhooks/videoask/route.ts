@@ -41,6 +41,17 @@ function handleEvent(payload: VideoAskPayload): void {
       // TODO: notify the team
       break;
 
+    // Tag events are listed in VideoAsk's help centre; their payload isn't shown in the docs.
+    case 'form_contact_tagged':
+      console.log(`Tag added to contact ${who}`);
+      // TODO: sync the contact's tags
+      break;
+
+    case 'form_contact_untagged':
+      console.log(`Tag removed from contact ${who}`);
+      // TODO: sync the contact's tags
+      break;
+
     default:
       console.log(`Unhandled event: ${eventType}`);
   }

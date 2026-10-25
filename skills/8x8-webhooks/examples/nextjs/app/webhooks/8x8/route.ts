@@ -42,6 +42,8 @@ function handleEvent(event: EightXEightEvent): void {
     case 'template_quality_update':
     case 'template_correct_category_detection':
     case 'phone_number_quality_update':
+    case 'account_update':
+    case 'whatsapp_automatic_events':
       console.log(`WhatsApp business update: ${event.eventType}`);
       break;
 

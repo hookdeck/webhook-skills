@@ -18,12 +18,12 @@ and can add conditions to each.
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `New Ticket Logged` | A ticket is created | Create a matching record elsewhere, alert a channel |
-| `Ticket Updated` | A ticket is updated | Sync status and field changes |
 | `Ticket Reassigned` | A ticket is reassigned | Notify the new assignee |
 | `Document deleted on a Ticket` | An attachment is deleted (v2.242+) | Keep attachments in sync |
 | `Document edited on a Ticket` | An attachment is edited (v2.242+) | Keep attachments in sync |
 
-Halo has many more notification events; pick them in the webhook's **Events** list.
+These are the only event names Halo's webhook guide gives (it says "etc."); the full list is the
+notification events offered in the webhook's **Events** list in your Halo instance.
 
 ## Event Payload Structure
 

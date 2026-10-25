@@ -4,7 +4,7 @@ description: >
   Receive and authenticate Cin7 Core (formerly DEAR Inventory) webhooks. Use when
   setting up a Cin7 Core webhook endpoint, checking the Bearer or custom header,
   debugging 401s, or handling events like Sale/Created, Sale/OrderAuthorised,
-  Purchase/Created and Product/Updated.
+  Purchase/OrderAuthorised and Product/Updated.
 license: MIT
 metadata:
   author: hookdeck
@@ -21,7 +21,7 @@ Cin7 Core (formerly DEAR Inventory) sends a JSON webhook when something changes 
 - How do I receive Cin7 Core webhooks?
 - How do I authenticate Cin7 Core (DEAR Inventory) webhook requests?
 - Does Cin7 Core sign webhook payloads? (No: use a Bearer or custom header)
-- How do I handle `Sale/Created`, `Sale/OrderAuthorised` or `Purchase/Created` events?
+- How do I handle `Sale/Created`, `Sale/OrderAuthorised` or `Purchase/OrderAuthorised` events?
 - Why does my Cin7 Core webhook endpoint return 401?
 
 ## Setup note
@@ -70,7 +70,7 @@ The payload has an `EventType` field, one per webhook `Type` you register.
 | `Sale/Created` | A sale is created |
 | `Sale/OrderAuthorised` | A sale order is authorised |
 | `Sale/ShipmentAuthorised` | A sale shipment is authorised |
-| `Purchase/Created` | A purchase is created |
+| `Purchase/OrderAuthorised` | A purchase order is authorised |
 | `Product/Updated` | A product is updated |
 
 This is not the full list; see the [Cin7 Core API docs](https://dearinventory.docs.apiary.io/) for every webhook `Type`. Unknown events should be acknowledged with `200`.

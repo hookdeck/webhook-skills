@@ -40,7 +40,9 @@ async def require_wiza_auth_key(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    event_id = payload.get("id")
+    data = payload.get("data")
+    # The reveal's id; the envelope has no top-level id.
+    event_id = data.get("id") if isinstance(data, dict) else None
     event_type = payload.get("type")
     status = payload.get("status")
     code = status.get("code") if isinstance(status, dict) else None

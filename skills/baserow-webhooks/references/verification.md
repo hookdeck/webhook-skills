@@ -8,8 +8,8 @@ add to the webhook and check on your endpoint.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection.** Anyone who captures one request can replay it, and the body is not bound to the
-secret. Use HTTPS only, make handlers idempotent with `event_id`, and rotate the credential (change
-the Baserow header and `BASEROW_WEBHOOK_SECRET` together) if it leaks.
+secret. Use HTTPS only, make handlers idempotent with `event_id` + `batch_id`, and rotate the
+credential (change the Baserow header and `BASEROW_WEBHOOK_SECRET` together) if it leaks.
 
 ## How It Works
 
@@ -71,8 +71,9 @@ def verify_baserow_request(headers, name=None, secret=None) -> bool:
 - **Whole-value comparison.** `Authorization: Bearer abc` is compared as the full string.
 - **Hookdeck source methods.** The Baserow source pre-selects POST; allow any other method your
   webhook uses.
-- **Return exactly `200`.** Baserow counts only `200 OK` as success and retries a limited number of
-  times, so duplicates happen; dedupe on `event_id`.
+- **Return `200`.** The docs say success requires `200 OK` and failed calls are retried a limited
+  number of times (Baserow's source accepts any status below 400). Duplicates can happen; dedupe on
+  `event_id` + `batch_id`, because a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
 
 ## Debugging 401s
 

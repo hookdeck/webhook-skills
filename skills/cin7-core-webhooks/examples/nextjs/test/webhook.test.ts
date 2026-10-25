@@ -8,7 +8,7 @@ const SECRET = 'Bearer test_cin7_token_0123456789';
 
 const EVENTS = [
   'Sale/Created', 'Sale/OrderAuthorised', 'Sale/ShipmentAuthorised',
-  'Purchase/Created', 'Product/Updated',
+  'Purchase/OrderAuthorised', 'Product/Updated',
 ];
 
 beforeAll(() => {

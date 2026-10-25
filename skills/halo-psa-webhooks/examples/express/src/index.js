@@ -83,11 +83,6 @@ function handleEvent(payload) {
       // TODO: create the ticket in your system
       break;
 
-    case 'Ticket Updated':
-      console.log(`Ticket updated: ${objectId}`);
-      // TODO: sync the changes
-      break;
-
     case 'Ticket Reassigned':
       console.log(`Ticket reassigned: ${objectId}`);
       // TODO: notify the new assignee

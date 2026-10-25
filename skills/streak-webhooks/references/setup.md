@@ -47,8 +47,11 @@ missing header or mismatch.
 
 - List a pipeline's webhooks with Streak's "Get all pipeline-based webhooks" endpoint; see the
   [Streak API reference](https://streak.readme.io/reference/webhooks) for the other webhook endpoints.
-- To rotate the token, create replacement webhooks with a new token, update
-  `STREAK_WEBHOOK_TOKEN`, then delete the old ones.
+- To rotate the token, try the update endpoint first: `POST /webhooks/{webhookKey}` (Update a webhook) lists `token` in its request schema, but its prose says only `event` and `targetUrl` are applied. Send a new
+  `token` there, update `STREAK_WEBHOOK_TOKEN`, and confirm the next delivery carries it. If it
+  doesn't, create replacement webhooks with the new token, then delete the old ones.
+- The same update endpoint can add a token to a webhook that was created without one (subject to
+  the same caveat).
 - Returning `410 Gone` from your endpoint also deletes the webhook.
 
 ## Testing

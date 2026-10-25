@@ -13,8 +13,9 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 /**
- * VideoAsk does not sign payloads. Authenticate with a header you add through the
- * API (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
+ * VideoAsk does not sign payloads. Authenticate with a header you add in the Connect
+ * tab ("Add a secret": header name and value) or through the API
+ * (PUT /forms/{form_id}/webhooks/{tag}, "headers" object). The header name is
  * yours; the value is compared whole (no Bearer parsing). This authenticates the
  * sender only: no body integrity and no replay protection, so use HTTPS.
  */

@@ -37,10 +37,15 @@ async def require_cloudentity_key(request: Request) -> None:
 
 
 def event_name(audit_event: dict):
-    """The docs give identifiers as subject.action (user.created) and say the payload
-    carries subject_action (user_created). Normalise so either form matches."""
-    raw = audit_event.get("type") or audit_event.get("event_type") or audit_event.get("action")
-    return raw.lower().replace(".", "_") if isinstance(raw, str) else None
+    """The docs don't name a field that carries the event type. They say the webhook
+    payload "delivers the matching field in subject_action form" (user_deleted), and
+    the external-logging guide reads audit_events.payload.login_failed.cause, which
+    suggests each audit event's `payload` object holds one key named for the event.
+    That is an inference: confirm it against a real delivery before relying on it."""
+    payload = audit_event.get("payload")
+    if not isinstance(payload, dict) or len(payload) != 1:
+        return None
+    return next(iter(payload))
 
 
 def handle_event(audit_event: dict) -> None:

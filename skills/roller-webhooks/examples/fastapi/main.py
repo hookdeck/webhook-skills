@@ -34,7 +34,9 @@ async def require_roller_api_key(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    event = payload.get("type")
+    # ROLLER sends `type` (Booking, Customer, Redemption, ...) and `eventType`
+    # (Created, Updated, Cancelled) as separate fields, never a dotted name.
+    event = f"{payload.get('type')}.{payload.get('eventType')}"
 
     if event == "Booking.Created":
         print("Booking created")

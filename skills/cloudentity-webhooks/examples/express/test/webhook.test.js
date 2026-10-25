@@ -13,13 +13,14 @@ const EVENTS = [
   'group.created', 'login.failed', 'consent.revoked', 'client.created',
 ];
 
+// Inferred shape: the event's subject_action name is the one key of `payload`.
 function batch(...types) {
   return {
     audit_events: types.map((type, i) => ({
       tenant_id: 'example',
       server_id: 'demo',
       event_id: `evt_${i}`,
-      type,
+      payload: { [type.replace(/\./g, '_')]: {} },
     })),
   };
 }
@@ -109,11 +110,12 @@ describe('Cloudentity webhook endpoint', () => {
       spy.mockRestore();
     });
 
-    it('also accepts the subject_action form used in payloads', async () => {
+    it('acknowledges an event whose payload has no recognisable key', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify(batch('user_deleted'))).set('X-API-Key', KEY);
+      const body = { audit_events: [{ tenant_id: 'example', server_id: 'demo', event_id: 'evt_0' }] };
+      const res = await post(JSON.stringify(body)).set('X-API-Key', KEY);
       expect(res.status).toBe(200);
-      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(true);
       spy.mockRestore();
     });
 

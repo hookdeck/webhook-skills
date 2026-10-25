@@ -19,10 +19,14 @@ AUTH_KEY = hashlib.sha256(API_KEY.encode()).hexdigest()
 
 def sample_payload(code=200):
     return {
-        "id": 12345,
+        "status": {"code": code, "message": "Single reveal finished" if code == 200 else "Failed"},
         "type": "individual_reveal",
-        "status": {"code": code},
-        "data": {"email": "jane@example.com", "full_name": "Jane Doe"},
+        "data": {
+            "id": 12345,
+            "status": "finished" if code == 200 else "failed",
+            "email": "jane@example.com",
+            "name": "Jane Doe",
+        },
     }
 
 
@@ -97,7 +101,7 @@ class TestEventHandling:
         assert "Reveal 12345 failed" in capsys.readouterr().out
 
     def test_unknown_type_is_acknowledged(self, capsys):
-        res = post({"x-auth-key": AUTH_KEY}, body=json.dumps({"id": 1, "type": "something_new"}))
+        res = post({"x-auth-key": AUTH_KEY}, body=json.dumps({"type": "something_new", "data": {"id": 1}}))
         assert res.status_code == 200
         assert "Unhandled event type: something_new" in capsys.readouterr().out
 

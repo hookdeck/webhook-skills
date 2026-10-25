@@ -61,9 +61,11 @@ function verifyCloudentityRequest(headers, apiKey = process.env.CLOUDENTITY_WEBH
 ## Event Types
 
 Event identifiers use a `subject.action` form (`user.deleted`); the docs say the payload delivers
-the matching field in `subject_action` form (`user_deleted`). The examples accept both. The docs
-don't name the field that holds the type, so the examples look at `type`, `event_type` and
-`action`; confirm against a real delivery. Available events depend on the server type.
+the matching field in `subject_action` form (`user_deleted`). **The docs don't name the field that
+carries the event type.** The external-logging guide reads `audit_events.payload.login_failed.cause`,
+so the examples infer that each audit event's `payload` object holds one key named for the event
+and dispatch on that key. This is an inference, not documented: confirm it against a real delivery.
+Available events depend on the server type.
 
 | Event | Sent When |
 |-------|-----------|

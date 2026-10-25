@@ -80,9 +80,10 @@ records updated in a release.
 | person record update batch | A data release updates records matching your registered filters (up to 1,000 IDs per request, about monthly) |
 
 - Filters are chosen at registration and are not in the payload: `education`, `job_change`,
-  `location`, `mobile_phone_number`, `personal_emails`, `phone_number`, `phone_numbers`,
-  `social_profile`, `work_email`. With several filters on one webhook, an ID can appear more than
-  once, so dedupe. Consider one webhook per filter.
+  `location`, `mobile_phone_number`, `personal_emails`, `phone_number` (watches the
+  `mobile_phone` and `phone_numbers` fields), `social_profile`, `work_email`. With several
+  filters on one webhook, an ID can appear more than once, so dedupe. Consider one webhook per
+  filter.
 - PDL does **not** retry. If you don't return `200`, ask your PDL team to resend the whole batch.
   Return `200` only once the IDs are stored, and make processing idempotent.
 

@@ -5,17 +5,20 @@ import { verifyCloudentityRequest } from '../../../lib/verify-cloudentity';
 
 interface AuditEvent {
   event_id?: string;
-  type?: string;
-  event_type?: string;
-  action?: string;
+  payload?: unknown;
   [key: string]: unknown;
 }
 
-// The docs give identifiers as subject.action (user.created) and say the payload
-// carries subject_action (user_created). Normalise so either form matches.
+// The docs don't name a field that carries the event type. They say the webhook
+// payload "delivers the matching field in subject_action form" (user_deleted), and
+// the external-logging guide reads audit_events.payload.login_failed.cause, which
+// suggests each audit event's `payload` object holds one key named for the event.
+// That is an inference: confirm it against a real delivery before relying on it.
 function eventName(auditEvent: AuditEvent): string | undefined {
-  const raw = auditEvent.type || auditEvent.event_type || auditEvent.action;
-  return typeof raw === 'string' ? raw.toLowerCase().replace(/\./g, '_') : undefined;
+  const { payload } = auditEvent;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return undefined;
+  const keys = Object.keys(payload);
+  return keys.length === 1 ? keys[0] : undefined;
 }
 
 function handleEvent(auditEvent: AuditEvent): void {

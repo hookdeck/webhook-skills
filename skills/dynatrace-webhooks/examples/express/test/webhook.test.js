@@ -17,7 +17,6 @@ function samplePayload(state = 'OPEN') {
     State: state,
     ProblemTitle: 'Response time degradation',
     ImpactedEntity: 'checkout-service',
-    ProblemURL: 'https://example.live.dynatrace.com/#problems/problemdetails;pid=1234',
   };
 }
 
@@ -105,7 +104,7 @@ describe('Dynatrace webhook endpoint', () => {
   });
 
   describe('problem handling', () => {
-    it.each(['OPEN', 'RESOLVED'])('handles %s', async (state) => {
+    it.each(['OPEN'])('handles %s', async (state) => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
       const res = await post(JSON.stringify(samplePayload(state))).set(HEADER, SECRET);
       expect(res.status).toBe(200);
@@ -113,11 +112,12 @@ describe('Dynatrace webhook endpoint', () => {
       spy.mockRestore();
     });
 
-    it('acknowledges unknown states', async () => {
+    // The docs show only OPEN; other values (e.g. the one sent on resolution) are logged.
+    it('acknowledges and logs other states', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify(samplePayload('MERGED'))).set(HEADER, SECRET);
+      const res = await post(JSON.stringify(samplePayload('NOT_OPEN'))).set(HEADER, SECRET);
       expect(res.status).toBe(200);
-      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(true);
+      expect(spy.mock.calls.some(([m]) => String(m).includes('state NOT_OPEN'))).toBe(true);
       spy.mockRestore();
     });
   });

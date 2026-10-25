@@ -155,7 +155,7 @@ describe('Maximizer webhook endpoint', () => {
 
     it('acknowledges unknown entities', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify([sampleWebhook('Campaign', 'Create')])).set(HEADER, SECRET);
+      const res = await post(JSON.stringify([sampleWebhook('UnknownEntity', 'Create')])).set(HEADER, SECRET);
       expect(res.status).toBe(200);
       spy.mockRestore();
     });

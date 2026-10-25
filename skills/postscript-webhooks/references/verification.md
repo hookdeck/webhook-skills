@@ -20,8 +20,10 @@ protection** (no signature, no timestamp): anyone who captures one request can r
 tampered body carries the same header. So:
 
 - Accept webhooks over HTTPS only.
-- Rotate the credential if it leaks, and update `POSTSCRIPT_WEBHOOK_TOKEN`.
-- Make handling idempotent (dedupe on `webhook_id`).
+- Guard the token: the docs describe it as fixed and document no way to rotate it. For a secret
+  you control, add an optional `headers` object when creating the subscription; Postscript sends
+  those key:value pairs as headers on every callback.
+- Make handling idempotent. Payloads have no documented event id. `webhook_id` appears to be the subscription's id (same UUID form as the subscription `id`), so it repeats across events: don't dedupe on it. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
 
 ## Implementation
 

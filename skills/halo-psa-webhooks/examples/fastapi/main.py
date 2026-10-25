@@ -91,10 +91,6 @@ def handle_event(payload: dict) -> None:
         print(f"New ticket logged: {object_id}")
         # TODO: create the ticket in your system
 
-    elif event == "Ticket Updated":
-        print(f"Ticket updated: {object_id}")
-        # TODO: sync the changes
-
     elif event == "Ticket Reassigned":
         print(f"Ticket reassigned: {object_id}")
         # TODO: notify the new assignee

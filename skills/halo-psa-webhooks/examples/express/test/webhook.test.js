@@ -125,7 +125,7 @@ describe('HaloPSA webhook endpoint', () => {
     });
 
     it('accepts a batched delivery (JSON array)', async () => {
-      const batch = [samplePayload('Ticket Updated'), samplePayload('Ticket Reassigned')];
+      const batch = [samplePayload('New Ticket Logged'), samplePayload('Ticket Reassigned')];
       const res = await post(JSON.stringify(batch)).set('Authorization', basic(USER, PASSWORD));
       expect(res.status).toBe(200);
     });
@@ -139,7 +139,6 @@ describe('HaloPSA webhook endpoint', () => {
   describe('Event handling', () => {
     const events = [
       'New Ticket Logged',
-      'Ticket Updated',
       'Ticket Reassigned',
       'Document deleted on a Ticket',
       'Document edited on a Ticket',

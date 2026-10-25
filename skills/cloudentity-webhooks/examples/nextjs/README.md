@@ -63,7 +63,9 @@ Put the printed URL in the webhook's **URL** field.
 
 1. The `X-API-Key` header is checked before the body is read. Failure returns `401`.
 2. The body must be JSON with an `audit_events` array (`400` otherwise).
-3. Each audit event is dispatched on its event type (`user.created`, `user.updated`,
-   `user.deleted`, `user.authenticated`, `group.created`, `login.failed`, `consent.revoked`,
-   `client.created`). Both `user.created` and `user_created` forms match.
+3. Each audit event is dispatched on its event name in `subject_action` form (`user_created`,
+   `user_updated`, `user_deleted`, `user_authenticated`, `group_created`, `login_failed`,
+   `consent_revoked`, `client_created`), read as the single key of the event's `payload` object.
+   The docs don't name the field that carries the type; that location is inferred from the
+   external-logging guide, so confirm it against a real delivery.
 4. It returns `200 {"received": true}`.

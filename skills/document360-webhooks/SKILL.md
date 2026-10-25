@@ -83,21 +83,24 @@ The payload's `Event` field carries the event's display name. Keys are display l
 
 These are a subset. The full list of events you can map is in Document360's
 [notification mapping](https://docs.document360.com/docs/notification-mapping) docs (categories, Drive,
-workspaces, site settings and more). Unknown events should return `200` so the sender doesn't retry.
+workspaces, site settings and more). Return `200` for events you don't handle too; Document360
+doesn't document whether or how it retries failed deliveries.
 
-Typical payload (article events):
+Article event payload (the docs' example):
 
 ```json
 {
   "Knowledge base name": "Document360 2.0",
-  "Event": "Article published",
+  "Event": "Article settings saved",
   "User": "Matt Sterling",
   "User email": "matt.sterling@document360.co",
   "Logged on (UTC)": "09/12/2025 06:15:00",
   "Article name": "Getting Started",
   "Article id": "e1444f0x-0xx0-000x-xxx0-0x3f2bc3713c",
   "Language": "English",
-  "Language code": "en"
+  "Language code": "en",
+  "Project version id": "55144000-0xxx-000x-0000-0x2346b3bms3",
+  "Project version name": "1.0"
 }
 ```
 

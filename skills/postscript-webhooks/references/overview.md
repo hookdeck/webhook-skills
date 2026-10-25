@@ -15,6 +15,7 @@ HMAC of the body), which you compare with the token from `GET /api/v2/webhooks/t
 | `shop.subscriber.opt_in` | A subscriber opts in to promotional texts (most often by confirming with a reply) | Sync to CRM, start a welcome flow |
 | `shop.subscriber.opt_out` | A subscriber opts out of texts | Suppress in other channels |
 | `shop.email_collected` | An email is collected through a Postscript popup | Add to email list |
+| `shop.test` | Test event (the subscription API's default `event`) | Check your endpoint |
 
 Postscript may add event types at any time. Acknowledge events you don't handle.
 
@@ -48,7 +49,7 @@ Postscript may add event types at any time. Acknowledge events you don't handle.
 
 Respond `200` (the body is ignored), ideally before doing any complex work. If Postscript doesn't
 get a `200`, or the response is slow, it retries every 5 minutes for up to 1 hour. The same event
-can be delivered more than once, so make the handler idempotent (for example by `webhook_id`).
+can be delivered more than once, so make the handler idempotent. Payloads have no documented event id. `webhook_id` appears to be the subscription's id (same UUID form as the subscription `id`), so it repeats across events: don't dedupe on it. Use `event_data.id` where the event has one (e.g. `im_...` on `shop.incoming_message`), or `event` + `resource_id` + `event_time`.
 
 ## Full Event Reference
 

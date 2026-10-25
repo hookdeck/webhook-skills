@@ -19,7 +19,8 @@ updates produce it.
 | person record update batch | A release updates records matching a registered filter | Re-enrich changed contacts, refresh CRM job titles or emails |
 
 Supported filters (set at registration, not present in the payload): `education`, `job_change`,
-`location`, `mobile_phone_number`, `personal_emails`, `phone_number`, `phone_numbers`,
+`location`, `mobile_phone_number`, `personal_emails`, `phone_number` (which watches the
+`mobile_phone` and `phone_numbers` fields; `phone_numbers` is a field, not a filter),
 `social_profile`, `work_email`. If several filters are enabled on one webhook, an ID appears once
 per matching filter, so the same ID can be repeated. One webhook per filter avoids that.
 

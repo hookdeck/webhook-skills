@@ -60,7 +60,8 @@ the credential check. Python and Next.js equivalents are in
 > **Security note:** a static shared credential authenticates the *sender*, not the *body*, and
 > gives **no replay protection** (no signature, no timestamp). Anyone who captures one request
 > can replay it, so use HTTPS only, keep the secret out of logs and source control, and rotate
-> it (update the webhook subscription with a new `secret`) if it leaks.
+> it if it leaks (create a subscription with a new `secret`, then delete the old one; the docs
+> show `PATCH` changing only `topics`).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/),
 > [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

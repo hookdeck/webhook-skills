@@ -24,8 +24,10 @@ endpoint authenticates the request by comparing that whole value with the token 
 > authenticated at all.
 
 A static shared credential authenticates the sender, not the body, and gives no replay protection
-(no signature, no timestamp). Use HTTPS and rotate the credential (delete and recreate the
-webhook with a new token) if it leaks.
+(no signature, no timestamp). Use HTTPS and rotate the credential if it leaks: the update
+endpoint `POST /webhooks/{webhookKey}` lists `token` in its schema (its prose says only `event` and
+`targetUrl` are applied, so confirm with a delivery); otherwise delete and recreate the webhook
+with a new token.
 
 ## When to Use This Skill
 
