@@ -3,6 +3,7 @@ displayName: 'Demodesk'
 docs:
   webhooks: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
   verification: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
+  events: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
 notes: >
   Sales meetings; company webhooks (Settings > Integrations > Connections > Demodesk API >
   Webhooks), one event per endpoint, optional custom headers ('Custom headers can be useful for
@@ -30,4 +31,4 @@ testScenario:
     - 'demo.ended'
     - 'recording.uploaded'
 catalog:
-  summary: 'Authenticate Demodesk webhooks (unsigned: a custom header compared in full in constant time), handle `meta.event.action`s like `demo.scheduled` and `recording.uploaded`'
+  summary: 'Authenticate Demodesk webhooks (unsigned: a custom header compared in full in constant time), handle `meta.event.action`s like `demo.scheduled`, `demo.ended` and `recording.uploaded`'

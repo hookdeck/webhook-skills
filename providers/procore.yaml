@@ -30,7 +30,7 @@ notes: >
   after the credential check.
 testScenario:
   events:
-    - 'create (e.g. RFIs created)'
+    - 'create'
     - 'update'
     - 'delete'
 catalog:

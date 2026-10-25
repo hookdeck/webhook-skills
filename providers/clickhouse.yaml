@@ -28,7 +28,7 @@ notes: >
   works; parse the body only after the credential check.
 testScenario:
   events:
-    - 'alert triggered (illustrative template)'
-    - 'alert resolved (illustrative template)'
+    - 'search alert fired (illustrative template)'
+    - 'chart alert fired (illustrative template)'
 catalog:
   summary: 'Authenticate ClickStack (ClickHouse) Generic alert webhooks (unsigned: a secret header compared in full in constant time), handle alert payloads from your template'

@@ -3,33 +3,22 @@ displayName: 'Bitdefender'
 docs:
   webhooks: https://www.bitdefender.com/business/support/en/77209-135319-setpusheventsettings.html
   verification: https://www.bitdefender.com/business/support/en/77209-135319-setpusheventsettings.html
+  events: https://www.bitdefender.com/business/support/en/77209-135324-event-types.html
 notes: >
-  Endpoint security; covers the GravityZone Event Push Service with serviceType jsonRPC, set with
-  the setPushEventSettings API (serviceSettings: url, authorization, requireValidSslCertificate). No
-  signature. The credential is the Authorization header. Hookdeck's Bitdefender source compares the
-  WHOLE Authorization header value to the configured key, so the examples read
-  BITDEFENDER_AUTHORIZATION = the full value as Bitdefender sends it (e.g. 'Bearer sfasdfw34243'),
-  including any 'Bearer '/'Basic ' scheme prefix, and compare the whole Authorization header to it;
-  do not strip, parse or base64-decode the prefix (Coterie pattern). serviceSettings.authorization
-  is sent verbatim as the Authorization header (the docs' example is 'Bearer sfasdfw34243'). Missing
-  header or mismatch: 401. Compare in constant time: Node checks lengths, then
-  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
-  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
-  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
-  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
-  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
-  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
-  source type is BITDEFENDER, labelled 'Bitdefender'. Hookdeck shows this setup note for the source,
-  and SKILL.md and references/setup.md must tell the user the same thing: "Paste the authorization
-  value exactly as set in GravityZone, including any "Bearer " or "Basic " prefix." Body: JSON-RPC
-  2.0 {jsonrpc, method: 'addEvents', params: {events: [...]}, id}; each event has a module (av, fw,
-  hd, aph, avc, dp, network-sandboxing, ...). Respond 2xx. Express examples must read the raw body
-  with express.raw({ type: '*/*' }) so any content type works; parse the body only after the
-  credential check.
+  Endpoint security (GravityZone Event Push Service, serviceType jsonRPC, enabled with
+  setPushEventSettings; serviceSettings are url, authorization and requireValidSslCertificate).
+  No signature. The credential is the Authorization header, sent verbatim from
+  serviceSettings.authorization (docs example 'Bearer sfasdfw34243'). Compare the WHOLE header
+  to BITDEFENDER_AUTHORIZATION, including any 'Bearer '/'Basic ' prefix, as Hookdeck's
+  Bitdefender source does; do not strip or decode the prefix. Constant-time compare. A static
+  credential authenticates the sender, not the body, with no replay protection. The push
+  messages page also mentions an Event-Push-Service-Md5 header (not used). Body is JSON-RPC 2.0
+  addEvents with params.events; each event has a module (av, aph, avc, fw, hd, dp,
+  network-sandboxing, ...). Respond 2xx. Express examples use express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - 'av (antimalware event)'
-    - 'fw (firewall event)'
-    - 'hd (hyper detect event)'
+    - 'av'
+    - 'aph'
+    - 'avc'
 catalog:
-  summary: 'Authenticate Bitdefender GravityZone Event Push Service deliveries (unsigned: the whole `Authorization` value compared in constant time), handle JSON-RPC `addEvents` batches by `module` like `av`, `fw` and `hd`'
+  summary: 'Authenticate Bitdefender GravityZone Event Push Service deliveries (unsigned: the whole `Authorization` value compared in constant time), handle JSON-RPC `addEvents` batches by `module` like `av`, `aph` and `avc`'

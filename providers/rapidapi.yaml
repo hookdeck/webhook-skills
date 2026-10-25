@@ -3,6 +3,7 @@ displayName: 'RapidAPI'
 docs:
   webhooks: https://docs.rapidapi.com/docs/events
   verification: https://docs.rapidapi.com/docs/events
+  events: https://docs.rapidapi.com/docs/events#list-of-events
 notes: >
   API hub; covers RapidAPI Enterprise Hub events only (Admin Panel > Events), not the public
   marketplace. 'In every webhook request, the RapidAPI Enterprise Hub includes secret key passed in
@@ -26,7 +27,8 @@ notes: >
   works; parse the body only after the credential check.
 testScenario:
   events:
-    - 'API Created (illustrative payload)'
-    - 'Subscription Created (illustrative payload)'
+    - 'API Created'
+    - 'Subscription Created'
+    - 'User Created'
 catalog:
   summary: 'Authenticate RapidAPI Enterprise Hub event webhooks (unsigned: the `x-rapidapi-webhook-secret` value compared in constant time), handle hub events like API and subscription changes'

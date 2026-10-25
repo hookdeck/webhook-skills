@@ -29,6 +29,6 @@ notes: >
   after the credential check.
 testScenario:
   events:
-    - 'lesson completed (illustrative payload)'
+    - 'lesson completed'
 catalog:
   summary: 'Authenticate Lessonly (Seismic Learning) lesson-completed callbacks (unsigned: the whole `Authorization` value compared in constant time)'

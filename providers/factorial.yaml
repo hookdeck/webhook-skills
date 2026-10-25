@@ -22,14 +22,14 @@ notes: >
   same thing: "Set a challenge on the webhook subscription. Without one, Factorial sends nothing to
   verify." Factorial's own example compares req.get('x-factorial-wh-challenge') with
   process.env.FACTORIAL_WH_CHALLENGE. Each subscription has one subscription_type like
-  employees/employee/create, timeoff/leave/create, ats/application/create; the body is the affected
+  employees/employee/create_with_contract, timeoff/leave/create, ats/application/create; the body is the affected
   resource's JSON with no event field (the subscription decides the type). POST, 2xx acknowledges,
   HTTPS only. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works; parse the body only after the credential check.
 testScenario:
   events:
-    - 'employees/employee/create'
+    - 'employees/employee/create_with_contract'
     - 'timeoff/leave/create'
     - 'ats/application/create'
 catalog:
-  summary: 'Authenticate Factorial webhooks (unsigned: the `x-factorial-wh-challenge` value compared in constant time), handle subscription types like `employees/employee/create` and `timeoff/leave/create`'
+  summary: 'Authenticate Factorial webhooks (unsigned: the `x-factorial-wh-challenge` value compared in constant time), handle subscription types like `employees/employee/create_with_contract` and `timeoff/leave/create`'
