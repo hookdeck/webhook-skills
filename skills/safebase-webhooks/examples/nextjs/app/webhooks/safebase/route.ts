@@ -14,9 +14,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
+  // SafeBase doesn't name the headers; svix-* is inferred, so fall back to the
+  // webhook-* prefix (Svix's other prefix) when the svix-* headers are absent.
+  const svixId = request.headers.get('svix-id') ?? request.headers.get('webhook-id');
+  const svixTimestamp = request.headers.get('svix-timestamp') ?? request.headers.get('webhook-timestamp');
+  const svixSignature = request.headers.get('svix-signature') ?? request.headers.get('webhook-signature');
   if (!svixId || !svixTimestamp || !svixSignature) {
     return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
   }

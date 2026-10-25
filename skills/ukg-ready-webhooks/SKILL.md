@@ -34,9 +34,12 @@ subscription's Authentication option: Basic, OAuth, Bearer Token or No Authentic
 
 ## Verification (core)
 
-Set `UKG_READY_AUTHORIZATION` to the **full** header value as UKG Ready sends it, e.g.
-`Bearer <token>` (the token you set on the subscription). Compare the whole `Authorization`
-header to it; do not strip, parse or base64-decode the `Bearer ` prefix:
+UKG Ready's docs say only that the Bearer Token goes in the request header. The expected form
+is `Authorization: Bearer <token>` (the token you set on the subscription), so set
+`UKG_READY_AUTHORIZATION` to that **full** value and compare the whole `Authorization` header
+to it; do not strip, parse or base64-decode the `Bearer ` prefix. If deliveries are rejected,
+capture one (for example with the Hookdeck CLI below) and set `UKG_READY_AUTHORIZATION` to the
+`Authorization` value exactly as received:
 
 ```javascript
 const crypto = require('crypto');

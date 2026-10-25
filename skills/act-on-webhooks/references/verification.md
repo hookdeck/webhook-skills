@@ -10,6 +10,8 @@ Act-On sends outgoing webhooks through an embedded [Svix](https://www.svix.com/)
 | `svix-timestamp` | Unix timestamp (seconds) of this delivery attempt |
 | `svix-signature` | Space-separated list of signatures, each `v1,<base64>` (for example `v1,abc123 v1,def456`) |
 
+Because the `svix-` prefix is inferred, the snippets below (like Hookdeck) fall back to `webhook-id`, `webhook-timestamp` and `webhook-signature`, Svix's other header prefix, when the `svix-*` headers are absent. The signed content is the same either way.
+
 - **Algorithm:** HMAC-SHA256, base64-encoded
 - **Signed content:** `{svix-id}.{svix-timestamp}.{raw body}`
 - **Key:** base64-decode the part of the secret after `whsec_`
@@ -31,9 +33,9 @@ const wh = new Webhook(process.env.ACT_ON_WEBHOOK_SECRET); // "whsec_..." accept
 
 // rawBody: string or Buffer of the EXACT bytes received
 wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
+  'svix-id': req.headers['svix-id'] ?? req.headers['webhook-id'],
+  'svix-timestamp': req.headers['svix-timestamp'] ?? req.headers['webhook-timestamp'],
+  'svix-signature': req.headers['svix-signature'] ?? req.headers['webhook-signature'],
 }); // throws WebhookVerificationError on failure; returns nothing
 const payload = JSON.parse(rawBody.toString('utf8'));
 ```
@@ -51,9 +53,9 @@ wh = Webhook(os.environ["ACT_ON_WEBHOOK_SECRET"])
 raw_body = await request.body()
 try:
     wh.verify(raw_body, {
-        "svix-id": request.headers.get("svix-id"),
-        "svix-timestamp": request.headers.get("svix-timestamp"),
-        "svix-signature": request.headers.get("svix-signature"),
+        "svix-id": request.headers.get("svix-id") or request.headers.get("webhook-id"),
+        "svix-timestamp": request.headers.get("svix-timestamp") or request.headers.get("webhook-timestamp"),
+        "svix-signature": request.headers.get("svix-signature") or request.headers.get("webhook-signature"),
     })  # returns None; raises WebhookVerificationError on failure
 except WebhookVerificationError:
     raise HTTPException(status_code=400, detail="Invalid signature")
@@ -78,9 +80,9 @@ The window is off by default (`toleranceSeconds = 0`); pass a positive value, su
 import crypto from 'node:crypto';
 
 export function verifyActOn(rawBody, headers, secret, toleranceSeconds = 0) {
-  const id = headers['svix-id'];
-  const timestamp = headers['svix-timestamp'];
-  const signatures = headers['svix-signature'];
+  const id = headers['svix-id'] ?? headers['webhook-id'];
+  const timestamp = headers['svix-timestamp'] ?? headers['webhook-timestamp'];
+  const signatures = headers['svix-signature'] ?? headers['webhook-signature'];
   if (!id || !timestamp || !signatures) return false;
 
   // Timestamp must be a plain positive integer (Unix seconds).
@@ -116,9 +118,9 @@ import time
 
 
 def verify_act_on(raw_body: bytes, headers: dict, secret: str, tolerance_seconds: int = 0) -> bool:
-    msg_id = headers.get("svix-id")
-    timestamp = headers.get("svix-timestamp")
-    signatures = headers.get("svix-signature")
+    msg_id = headers.get("svix-id") or headers.get("webhook-id")
+    timestamp = headers.get("svix-timestamp") or headers.get("webhook-timestamp")
+    signatures = headers.get("svix-signature") or headers.get("webhook-signature")
     if not msg_id or not timestamp or not signatures:
         return False
 
@@ -161,5 +163,5 @@ def verify_act_on(raw_body: bytes, headers: dict, secret: str, tolerance_seconds
 | Always fails | Wrong secret (another endpoint's, or the string not copied exactly), or the body was parsed before verifying |
 | Fails only on retries or replays | The 5-minute window. Use the manual verifier with a larger or zero tolerance |
 | Empty body | `express.raw()` limited to `application/json`; use `type: '*/*'` |
-| `Missing Svix signature headers` | A proxy dropped the `svix-*` headers, or the request didn't come from Act-On's Svix portal |
+| `Missing Svix signature headers` | A proxy dropped the `svix-*` (or `webhook-*`) headers, or the request didn't come from Act-On's Svix portal |
 | Works in tests, fails in production | A middleware (body parser, gateway) rewrote the body |

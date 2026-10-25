@@ -32,9 +32,11 @@ app.post('/webhooks/safebase', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const svixId = req.headers['svix-id'];
-  const svixTimestamp = req.headers['svix-timestamp'];
-  const svixSignature = req.headers['svix-signature'];
+  // SafeBase doesn't name the headers; svix-* is inferred, so fall back to the
+  // webhook-* prefix (Svix's other prefix) when the svix-* headers are absent.
+  const svixId = req.headers['svix-id'] ?? req.headers['webhook-id'];
+  const svixTimestamp = req.headers['svix-timestamp'] ?? req.headers['webhook-timestamp'];
+  const svixSignature = req.headers['svix-signature'] ?? req.headers['webhook-signature'];
   if (!svixId || !svixTimestamp || !svixSignature) {
     return res.status(400).json({ error: 'Missing required webhook headers' });
   }

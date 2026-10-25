@@ -18,7 +18,7 @@ function safeEqual(a, b) {
 
 /**
  * UKG Ready (Ready only, not UKG Pro) does not sign payloads. With Bearer Token
- * authentication it sends `Authorization: Bearer <token>`. Compare the WHOLE header
+ * authentication it is expected to send `Authorization: Bearer <token>`. Compare the WHOLE header
  * value, including the "Bearer " prefix: do not strip, parse or base64-decode it.
  */
 function verifyUkgReadyRequest(headers, config = process.env) {

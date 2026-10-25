@@ -173,6 +173,16 @@ describe('POST /webhooks/act-on', () => {
     expect(res.status).toBe(200);
   });
 
+  test('accepts a delivery signed with webhook-* headers instead of svix-*', async () => {
+    const raw = JSON.stringify(contactAdded);
+    const headers = Object.fromEntries(
+      Object.entries(signedHeaders(raw)).map(([name, value]) => [name.replace(/^svix-/, 'webhook-'), value])
+    );
+    const res = await post(raw, headers);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+  });
+
   test('acknowledges a redelivery without handling it twice', async () => {
     const raw = JSON.stringify(spam);
     const headers = signedHeaders(raw);

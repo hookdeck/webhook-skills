@@ -19,6 +19,8 @@ const PORT = process.env.PORT || 3000;
 //   svix-signature  one or more space-separated "v1,<base64 HMAC-SHA256>" entries
 // Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
 // Key: base64-decode of the Signing Secret (after its `whsec_` prefix, if any).
+// The svix-* names are inferred, so the same values sent as webhook-id /
+// webhook-timestamp / webhook-signature (Svix's other prefix) are accepted too.
 // ---------------------------------------------------------------------------
 
 /**
@@ -139,10 +141,11 @@ app.post('/webhooks/act-on', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
+  // Fall back to the webhook-* prefix when the svix-* headers are absent.
   const headers = {
-    'svix-id': req.get('svix-id'),
-    'svix-timestamp': req.get('svix-timestamp'),
-    'svix-signature': req.get('svix-signature'),
+    'svix-id': req.get('svix-id') ?? req.get('webhook-id'),
+    'svix-timestamp': req.get('svix-timestamp') ?? req.get('webhook-timestamp'),
+    'svix-signature': req.get('svix-signature') ?? req.get('webhook-signature'),
   };
   if (!headers['svix-id'] || !headers['svix-timestamp'] || !headers['svix-signature']) {
     return res.status(400).json({ error: 'Missing Svix signature headers' });

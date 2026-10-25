@@ -169,6 +169,14 @@ def test_accepts_when_one_of_several_signatures_is_valid():
     assert post(raw, signed_headers(raw, msg_id=msg_id, timestamp=ts, signature=signature)).status_code == 200
 
 
+def test_accepts_webhook_prefixed_headers():
+    raw = json.dumps(CONTACT_ADDED)
+    headers = {name.replace("svix-", "webhook-"): value for name, value in signed_headers(raw).items()}
+    res = post(raw, headers)
+    assert res.status_code == 200
+    assert res.json() == {"received": True}
+
+
 def test_acknowledges_redelivery_without_handling_it_twice():
     raw = json.dumps(SPAM)
     headers = signed_headers(raw)

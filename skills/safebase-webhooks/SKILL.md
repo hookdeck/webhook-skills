@@ -20,7 +20,9 @@ body and three signature headers: `svix-id`, `svix-timestamp`, and `svix-signatu
 
 > SafeBase's help article never shows the header names or secret format. The `svix-*`
 > headers and the `whsec_` Signing Secret are Svix defaults, which is what Hookdeck's
-> SafeBase source (`SAFEBASE`) also assumes.
+> SafeBase source (`SAFEBASE`) also assumes. Because the `svix-` prefix is inferred, the
+> examples (like Hookdeck) also accept `webhook-id`, `webhook-timestamp` and
+> `webhook-signature` when the `svix-*` headers are absent.
 
 ## When to Use This Skill
 
@@ -43,9 +45,9 @@ import { Webhook } from 'svix'; // svix 2.x is ESM-only
 const wh = new Webhook(process.env.SAFEBASE_WEBHOOK_SECRET); // "whsec_..."
 // rawBody: the raw Buffer/string, never re-serialized JSON
 wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
+  'svix-id': req.headers['svix-id'] ?? req.headers['webhook-id'], // fall back to webhook-*
+  'svix-timestamp': req.headers['svix-timestamp'] ?? req.headers['webhook-timestamp'],
+  'svix-signature': req.headers['svix-signature'] ?? req.headers['webhook-signature'],
 }); // throws on a bad signature or a stale timestamp
 const body = JSON.parse(rawBody.toString('utf8')); // parse only after verify passes
 ```

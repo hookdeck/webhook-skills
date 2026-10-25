@@ -4,11 +4,15 @@
 
 UKG Ready (Ready only, not UKG Pro) **does not sign payloads**: there is no HMAC, signature
 header or timestamp. The subscription's Authentication option is Basic, OAuth, Bearer Token or
-No Authentication, and the credential is the `Authorization` header. With Bearer Token it is:
+No Authentication, and the credential is the `Authorization` header. With Bearer Token, UKG
+Ready's docs say only that the token goes in the request header; the expected form is:
 
 ```
 Authorization: Bearer <token>
 ```
+
+If deliveries are rejected, capture one (for example with `npx hookdeck-cli listen`) and set
+`UKG_READY_AUTHORIZATION` to the `Authorization` value exactly as received.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Anyone who captures the header can resend it, and the
@@ -71,7 +75,7 @@ def safe_equal(a: str, b: str) -> bool:
 
 ## Common Gotchas
 
-- **Missing prefix**: the stored secret must include `Bearer `.
+- **Missing prefix**: the stored secret must include the prefix (expected to be `Bearer `).
 - **Basic selected**: UKG Ready would send `Authorization: Basic ...`, which won't match.
 - **Unconfigured secret**: reject everything if `UKG_READY_AUTHORIZATION` is empty, otherwise
   an empty header would "match".
@@ -82,7 +86,8 @@ def safe_equal(a: str, b: str) -> bool:
 ## Debugging 401s
 
 1. Log which header names arrive (`Object.keys(req.headers)`), without logging the values.
-2. Confirm `Authorization` is present and starts with `Bearer `, then compare its length with
-   the configured value.
+2. Confirm `Authorization` is present and compare its length with the configured value. It is
+   expected to start with `Bearer `; if it doesn't, capture a delivery and set
+   `UKG_READY_AUTHORIZATION` to the value exactly as received.
 3. Check for trailing whitespace or quotes in `.env`.
 4. Check the Webhook Events Log in UKG Ready for the failure, then use **Retry Failed Events**.

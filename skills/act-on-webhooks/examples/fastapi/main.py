@@ -9,6 +9,8 @@ pages don't name the headers, but they are the Svix defaults:
   svix-signature  one or more space-separated "v1,<base64 HMAC-SHA256>" entries
 Signed content: f"{svix-id}.{svix-timestamp}.{raw_body}"
 Key: base64-decode of the Signing Secret (after its `whsec_` prefix, if any).
+The svix-* names are inferred, so the same values sent as webhook-id /
+webhook-timestamp / webhook-signature (Svix's other prefix) are accepted too.
 """
 
 import json
@@ -89,10 +91,11 @@ async def verified_act_on_payload(request: Request) -> Dict[str, Any]:
         logger.error("ACT_ON_WEBHOOK_SECRET is not set - rejecting delivery")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
+    # Fall back to the webhook-* prefix when the svix-* headers are absent.
     headers = {
-        "svix-id": request.headers.get("svix-id"),
-        "svix-timestamp": request.headers.get("svix-timestamp"),
-        "svix-signature": request.headers.get("svix-signature"),
+        "svix-id": request.headers.get("svix-id") or request.headers.get("webhook-id"),
+        "svix-timestamp": request.headers.get("svix-timestamp") or request.headers.get("webhook-timestamp"),
+        "svix-signature": request.headers.get("svix-signature") or request.headers.get("webhook-signature"),
     }
     if not all(headers.values()):
         raise HTTPException(status_code=400, detail="Missing Svix signature headers")

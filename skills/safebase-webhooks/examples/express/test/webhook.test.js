@@ -83,6 +83,21 @@ describe('SafeBase webhook handler', () => {
     expect(res.status).toBe(200);
   });
 
+  test('accepts a delivery signed with webhook-* headers instead of svix-*', async () => {
+    const payload = JSON.stringify({ eventType: 'portal.viewed' });
+    const msgId = 'msg_webhook_prefix';
+    const timestamp = now();
+    const res = await request(app)
+      .post('/webhooks/safebase')
+      .set('Content-Type', 'application/json')
+      .set('webhook-id', msgId)
+      .set('webhook-timestamp', timestamp)
+      .set('webhook-signature', sign(payload, msgId, timestamp))
+      .send(payload);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, type: 'portal.viewed' });
+  });
+
   test('rejects missing headers', async () => {
     const res = await request(app)
       .post('/webhooks/safebase')

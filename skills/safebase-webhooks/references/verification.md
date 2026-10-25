@@ -11,6 +11,10 @@ doesn't list the header names or secret format; they are Svix defaults:
 | `svix-timestamp` | Attempt time, Unix seconds |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
+Because the `svix-` prefix is inferred, the snippets below (like Hookdeck) fall back to
+`webhook-id`, `webhook-timestamp` and `webhook-signature`, Svix's other header prefix,
+when the `svix-*` headers are absent. The signed content is the same either way.
+
 The algorithm (Standard Webhooks with the `svix` header prefix):
 
 1. Build the signed content: `{svix-id}.{svix-timestamp}.{raw body}`.
@@ -29,9 +33,9 @@ import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
 const wh = new Webhook(process.env.SAFEBASE_WEBHOOK_SECRET);
 wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
+  'svix-id': req.headers['svix-id'] ?? req.headers['webhook-id'],
+  'svix-timestamp': req.headers['svix-timestamp'] ?? req.headers['webhook-timestamp'],
+  'svix-signature': req.headers['svix-signature'] ?? req.headers['webhook-signature'],
 }); // throws on failure; parse rawBody yourself afterwards
 ```
 
@@ -43,9 +47,9 @@ from svix.webhooks import Webhook, WebhookVerificationError
 wh = Webhook(os.environ["SAFEBASE_WEBHOOK_SECRET"])
 try:
     wh.verify(raw_body, {
-        "svix-id": headers["svix-id"],
-        "svix-timestamp": headers["svix-timestamp"],
-        "svix-signature": headers["svix-signature"],
+        "svix-id": headers.get("svix-id") or headers.get("webhook-id"),
+        "svix-timestamp": headers.get("svix-timestamp") or headers.get("webhook-timestamp"),
+        "svix-signature": headers.get("svix-signature") or headers.get("webhook-signature"),
     })
 except WebhookVerificationError:
     ...  # return 400
@@ -68,6 +72,8 @@ or a larger value.
 import crypto from 'node:crypto';
 
 // toleranceSeconds: null = no timestamp window
+// Pass req.headers['svix-id'] ?? req.headers['webhook-id'] (and the same for timestamp
+// and signature), and return 400 first if any of the three is missing.
 function verifySafeBase(rawBody, svixId, svixTimestamp, svixSignature, secret, toleranceSeconds = null) {
   if (!/^[1-9][0-9]*$/.test(svixTimestamp)) return false; // plain positive integer
   if (toleranceSeconds !== null) {
@@ -95,6 +101,8 @@ function verifySafeBase(rawBody, svixId, svixTimestamp, svixSignature, secret, t
 ```python
 import base64, hashlib, hmac, re, time
 
+# Pass headers.get("svix-id") or headers.get("webhook-id") (and the same for timestamp
+# and signature), and return 400 first if any of the three is missing.
 def verify_safebase(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_signature: str,
                     secret: str, tolerance_seconds=None) -> bool:
     if not re.fullmatch(r"[1-9][0-9]*", svix_timestamp):  # plain positive integer
@@ -136,7 +144,7 @@ def verify_safebase(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sig
 | Symptom | Likely cause |
 |---------|--------------|
 | Every request fails with "Invalid signature" | Wrong or truncated secret, or the body was parsed/re-serialized first |
-| Fails only behind a proxy | The proxy rewrote the body or stripped `svix-*` headers |
+| Fails only behind a proxy | The proxy rewrote the body or stripped the `svix-*` (or `webhook-*`) headers |
 | "Timestamp too old" on retries/replays | Fixed 5-minute window; use the manual verifier |
 | Missing headers | Something in front of your app dropped the headers |
 

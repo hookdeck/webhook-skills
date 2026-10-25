@@ -14,9 +14,11 @@
 2. Pick the **Category** (for example `ACCOUNT_CREATED` or `ACCOUNT_UPDATED`) and the
    **Event**, enter a **Name**, and tick **Active**.
 3. Enter the **Endpoint URL**, for example `https://example.com/webhooks/ukg-ready`.
-4. Set **Authentication** to **Bearer Token** and enter a token you generate. UKG Ready then
-   sends `Authorization: Bearer <token>`. Store the whole value (`Bearer <token>`, prefix
-   included) as `UKG_READY_AUTHORIZATION`.
+4. Set **Authentication** to **Bearer Token** and enter a token you generate. UKG Ready's docs
+   say only that the token goes in the request header; the expected form is
+   `Authorization: Bearer <token>`. Store the whole value (`Bearer <token>`, prefix
+   included) as `UKG_READY_AUTHORIZATION`. If deliveries are rejected, capture one and set
+   `UKG_READY_AUTHORIZATION` to the `Authorization` value exactly as received.
 5. Tick the fields that should trigger the webhook and be included in the payload. The
    **Payload Preview** shows what will be sent.
 6. Click **Save**, then **Test Connection** (reachability only; no payload is sent).

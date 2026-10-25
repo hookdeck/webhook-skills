@@ -3,8 +3,9 @@
 Minimal example of receiving UKG Ready webhook subscriptions and authenticating them with the
 `Authorization` header. For **UKG Ready** (formerly Kronos Workforce Ready) only, not UKG Pro.
 
-UKG Ready does not sign payloads. With Bearer Token authentication it sends
-`Authorization: Bearer <token>`. The handler compares the **whole header value**, including the
+UKG Ready does not sign payloads. With Bearer Token authentication it is expected to send
+`Authorization: Bearer <token>` (if deliveries are rejected, capture one and set the expected
+value exactly as received). The handler compares the **whole header value**, including the
 `Bearer ` prefix, in constant time. A static credential authenticates the sender, not the body,
 and gives no replay protection, so use HTTPS and rotate the token if it leaks.
 

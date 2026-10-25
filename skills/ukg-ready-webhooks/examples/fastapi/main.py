@@ -20,7 +20,7 @@ def safe_equal(a: str, b: str) -> bool:
 
 def verify_ukg_ready_request(headers, config=os.environ) -> bool:
     """UKG Ready (Ready only, not UKG Pro) does not sign payloads. With Bearer Token
-    authentication it sends `Authorization: Bearer <token>`. Compare the WHOLE header
+    authentication it is expected to send `Authorization: Bearer <token>`. Compare the WHOLE header
     value, including the "Bearer " prefix: do not strip, parse or base64-decode it.
     """
     expected = config.get("UKG_READY_AUTHORIZATION")

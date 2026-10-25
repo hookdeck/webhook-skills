@@ -12,6 +12,8 @@ import { Webhook } from 'svix';
 //   svix-signature  one or more space-separated "v1,<base64 HMAC-SHA256>" entries
 // Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
 // Key: base64-decode of the Signing Secret (after its `whsec_` prefix, if any).
+// The svix-* names are inferred, so the same values sent as webhook-id /
+// webhook-timestamp / webhook-signature (Svix's other prefix) are accepted too.
 // ---------------------------------------------------------------------------
 
 // Act-On payloads are each event's own object with NO event-type field.
@@ -130,9 +132,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
+  // Fall back to the webhook-* prefix when the svix-* headers are absent.
+  const svixId = request.headers.get('svix-id') ?? request.headers.get('webhook-id');
+  const svixTimestamp = request.headers.get('svix-timestamp') ?? request.headers.get('webhook-timestamp');
+  const svixSignature = request.headers.get('svix-signature') ?? request.headers.get('webhook-signature');
   if (!svixId || !svixTimestamp || !svixSignature) {
     return NextResponse.json({ error: 'Missing Svix signature headers' }, { status: 400 });
   }

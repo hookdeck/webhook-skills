@@ -98,6 +98,24 @@ def test_multiple_signatures():
     assert send(payload, msg_id, timestamp, signature).status_code == 200
 
 
+def test_webhook_prefixed_headers():
+    """The same values sent as webhook-* instead of svix-* are accepted."""
+    payload = json.dumps({"eventType": "portal.viewed"})
+    msg_id, timestamp = "msg_webhook_prefix", now()
+    response = client.post(
+        "/webhooks/safebase",
+        content=payload,
+        headers={
+            "content-type": "application/json",
+            "webhook-id": msg_id,
+            "webhook-timestamp": timestamp,
+            "webhook-signature": sign(payload, msg_id, timestamp),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"success": True, "type": "portal.viewed"}
+
+
 def test_missing_headers():
     response = client.post("/webhooks/safebase", content="{}", headers={"content-type": "application/json"})
     assert response.status_code == 400

@@ -35,12 +35,20 @@ async def safebase_webhook(
     svix_id: Optional[str] = Header(None),
     svix_timestamp: Optional[str] = Header(None),
     svix_signature: Optional[str] = Header(None),
+    webhook_id: Optional[str] = Header(None),
+    webhook_timestamp: Optional[str] = Header(None),
+    webhook_signature: Optional[str] = Header(None),
 ):
     secret = os.environ.get("SAFEBASE_WEBHOOK_SECRET")
     if not secret:
         print("SAFEBASE_WEBHOOK_SECRET is not set")
         raise HTTPException(status_code=500, detail="Server configuration error")
 
+    # SafeBase doesn't name the headers; svix-* is inferred, so fall back to the
+    # webhook-* prefix (Svix's other prefix) when the svix-* headers are absent.
+    svix_id = svix_id or webhook_id
+    svix_timestamp = svix_timestamp or webhook_timestamp
+    svix_signature = svix_signature or webhook_signature
     if not (svix_id and svix_timestamp and svix_signature):
         raise HTTPException(status_code=400, detail="Missing required webhook headers")
 
