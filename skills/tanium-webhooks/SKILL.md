@@ -3,7 +3,8 @@ name: tanium-webhooks
 description: >
   Receive and authenticate Tanium Connect HTTP destination webhooks. Use when setting up
   an endpoint for Tanium Connect deliveries, verifying the Header Authentication secret,
-  accepting POST, PUT or PATCH, handling JSON record batches, or debugging 401s.
+  accepting the method the destination is set to (not only POST), handling JSON record
+  batches, or debugging 401s.
 license: MIT
 metadata:
   author: hookdeck
@@ -25,7 +26,7 @@ sends that header on every request, and your endpoint compares it with the value
 - How do I receive Tanium Connect HTTP destination webhooks?
 - How do I authenticate Tanium Connect requests? (Header Authentication, no signature)
 - Does Tanium sign webhook payloads? (No: use a shared secret header)
-- How do I accept PUT or PATCH deliveries from Tanium Connect?
+- How do I accept non-POST deliveries (for example PUT or PATCH) from Tanium Connect?
 - How do I handle a JSON array of Tanium records?
 - Why does my Tanium webhook endpoint return 401?
 
@@ -69,8 +70,10 @@ function verifyTaniumRequest(
 
 ## Methods and Payload
 
-- **The HTTP method is chosen on the destination**, so don't make the route POST-only. The examples
-  accept `POST`, `PUT` and `PATCH`. Hookdeck's Tanium source pre-selects `POST` without managing the
+- **The HTTP method is chosen on the destination**, so don't make the route POST-only. Tanium's
+  docs don't list which methods the drop-down offers (only `POST` is named, in the batching
+  notes). The examples accept `POST`, `PUT` and `PATCH` for illustration; add whatever method your
+  destination uses. Hookdeck's Tanium source pre-selects `POST` without managing the
   method: if the destination sends anything else, also allow that method on the source.
 - **There is no event field.** The body is defined by the connection's configuration: usually an
   array of row objects keyed by the columns the author picked, or one object. Handle both. The

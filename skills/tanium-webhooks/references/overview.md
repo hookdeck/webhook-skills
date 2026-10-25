@@ -30,8 +30,10 @@ tell connections apart, use a separate URL path or a separate secret per connect
 
 ## Which HTTP Method?
 
-The method is chosen on the destination, so a receiver should not assume `POST`. The examples
-accept `POST`, `PUT` and `PATCH`.
+The method is chosen on the destination ("the HTTP method that you want to use for the
+request"), so a receiver should not assume `POST`. Tanium's docs don't list the options; the
+only method they name is `POST`, in the batching notes. The examples accept `POST`, `PUT` and
+`PATCH` for illustration; add whatever method your destination uses.
 
 ## How Is the Request Authenticated?
 

@@ -15,7 +15,9 @@ metadata:
 # SAP SuccessFactors Webhooks
 
 SAP SuccessFactors has no webhook product. The closest thing is an **Integration Center REST
-outbound integration** (scheduled, or triggered by Intelligent Services) that calls your URL.
+outbound integration** (Trigger Type: Scheduled, run on its schedule or with Run Now) that calls
+your URL. SAP's REST outbound page documents only the Scheduled trigger; Intelligent Services
+(event-triggered) integrations are not covered here.
 Requests are **not signed**: the REST connection's Authentication Type is either **Basic
 Authentication** or **OAuth**, and this skill covers Basic. OAuth is not covered by Hookdeck's SAP
 SuccessFactors source.

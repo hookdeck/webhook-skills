@@ -19,7 +19,7 @@ def safe_equal(a: str, b: str) -> bool:
 
 def verify_youmail_request(headers, config=os.environ) -> bool:
     """YouMail does not sign payloads. When the webhook is created with auth "Bearer",
-    YouMail sends `Authorization: Bearer <token>`. Compare the WHOLE header value,
+    YouMail is expected to send `Authorization: Bearer <token>` (not printed in its docs). Compare the WHOLE header value,
     including the "Bearer " prefix, with YOUMAIL_AUTHORIZATION. Don't strip or parse it.
     A static credential authenticates the sender only: it does not cover the body and
     gives no replay protection.

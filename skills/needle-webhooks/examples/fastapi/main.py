@@ -39,8 +39,8 @@ def verify_needle_webhook(raw_body: bytes, headers: Dict[str, str], secret: str)
     over the raw body, and compares in constant time against every `v1,` entry.
     Raises if verification fails.
 
-    Needle and Hookdeck retries/replays resend the ORIGINAL timestamp, so a
-    late retry fails here. See references/verification.md for a manual verifier
+    Hookdeck retries/replays resend the ORIGINAL timestamp, so a late one
+    fails here (Needle's own retries carry a fresh timestamp). See references/verification.md for a manual verifier
     where the window can be dropped or widened.
     """
     return Webhook(secret).verify(raw_body, headers)

@@ -50,4 +50,4 @@ Use the printed `https://` URL as the webhook URL in Settings > Integrations, th
 - The dependency reads `await request.body()`, so any content type works and the exact bytes are verified. Parse the body only after the check.
 - If `NEEDLE_WEBHOOK_SECRET` is unset the handler returns `500` and never accepts unverified requests.
 - Needle keeps the `webhook-id` when it resends an event, so the handler dedupes on it and returns `200` for duplicates. Events are unordered; use the body's `timestamp` for ordering.
-- The library enforces a fixed 5-minute timestamp window. Needle retries and Hookdeck retries or replays resend the original timestamp, so a late retry fails. See [verification.md](../../references/verification.md) for a manual verifier without that window.
+- The library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so a late one fails (Needle's own retries carry a fresh timestamp). See [verification.md](../../references/verification.md) for a manual verifier without that window.

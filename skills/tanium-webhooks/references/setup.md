@@ -26,7 +26,9 @@ whole value is compared, and no prefix is parsed.
 3. Add an **HTTP** destination and enter your endpoint URL.
 4. Under authentication, select **Header Authentication** and enter the **Auth Header Name** and
    **Secret**. Connect sends them as an HTTP request header on every delivery.
-5. Choose the request method and whether to batch the data into several requests.
+5. Choose the HTTP method and whether to batch the data into several requests. Tanium's docs
+   don't list the method options; they mention only `POST` (a batch size "creates multiple POST
+   requests").
 6. Set the schedule, or run the connection manually, then save.
 
 Basic Authentication, OAuth2 Client Credentials and IBM Cloud IAM are also offered by Tanium but
@@ -36,8 +38,8 @@ are not covered here or by Hookdeck's Tanium source.
 
 Create a **Tanium** source in Hookdeck (type `TANIUM`), set the same Header Name and Header Value
 (the exact whole value), and use the Hookdeck source URL as the destination URL. The source
-pre-selects `POST` without managing the method: if the destination sends `PUT` or `PATCH`, also
-allow that method on the source.
+pre-selects `POST` without managing the method: if the destination uses another method (for
+example `PUT` or `PATCH`), also allow that method on the source.
 
 ## Test
 

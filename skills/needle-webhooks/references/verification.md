@@ -44,9 +44,9 @@ event = wh.verify(raw_body, {
 })  # raises WebhookVerificationError
 ```
 
-## Why Are Retries and Hookdeck Replays Rejected?
+## Why Are Hookdeck Retries and Replays Rejected?
 
-The library enforces a **fixed 5-minute** window and it can't be changed. Needle retries (right away, +10 minutes, +1 hour) and Hookdeck retries or replays resend the **original** `webhook-timestamp`. A delivery that lands more than 5 minutes after the event was first sent fails with a timestamp error even though the signature is valid. Use the manual verifier below, which lets you drop the window (`toleranceSec = null`) or widen it. Dedupe on `webhook-id` instead of relying on freshness.
+The library enforces a **fixed 5-minute** window and it can't be changed. Needle defines `webhook-timestamp` as "when this request was sent", so Needle's own retries (right away, +10 minutes, +1 hour) carry a fresh timestamp. Hookdeck retries and replays resend the **original** `webhook-timestamp`, so one that lands more than 5 minutes after Needle sent the request fails with a timestamp error even though the signature is valid. Use the manual verifier below, which lets you drop the window (`toleranceSec = null`) or widen it. Dedupe on `webhook-id` instead of relying on freshness.
 
 ## Manual Verification (no fixed window)
 
@@ -121,7 +121,7 @@ def verify_needle(raw_body: bytes, headers, secret: str, tolerance=None) -> bool
 |---------|--------------|
 | Every request fails | Wrong secret (another webhook), or the key isn't base64-decoded |
 | Fails only in production | A proxy or middleware parses or rewrites the body before your handler |
-| Timestamp error on retries only | The 5-minute window. Use the manual verifier |
+| Timestamp error on Hookdeck retries or replays only | The 5-minute window. Use the manual verifier |
 | Missing headers | A proxy strips `webhook-*` headers, or the request isn't from Needle |
 
 Log the three headers and the raw body length, recompute the HMAC with the manual function, and compare it with the `v1,` value.

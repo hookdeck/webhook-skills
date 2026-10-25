@@ -30,7 +30,7 @@ beehiiv documents further event types; the examples log unknown ones and return 
 {
   "uid": "evt_...",
   "event_type": "subscription.created",
-  "event_timestamp": "2026-10-25T10:00:00Z",
+  "event_timestamp": 1792922400,
   "data": { }
 }
 ```
@@ -39,7 +39,7 @@ beehiiv documents further event types; the examples log unknown ones and return 
 |-------|-------|
 | `uid` | Event identifier, usable as a dedupe key |
 | `event_type` | Dispatch on this |
-| `event_timestamp` | When the event happened |
+| `event_timestamp` | When the event was created: an integer, seconds since the Unix epoch |
 | `data` | Event-specific object; check beehiiv's docs for each type |
 
 ## Delivery Notes

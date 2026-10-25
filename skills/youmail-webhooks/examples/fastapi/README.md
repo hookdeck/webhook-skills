@@ -3,8 +3,9 @@
 Minimal example of receiving YouMail Protective Services webhooks and authenticating them
 with the `Authorization` header.
 
-YouMail does not sign payloads. A webhook created with the **Bearer** auth scheme sends
-`Authorization: Bearer <token>`. The handler compares the **whole header value**, including
+YouMail does not sign payloads. A webhook created with the **Bearer** auth scheme is expected to
+send `Authorization: Bearer <token>` (YouMail doesn't print the header; if deliveries are
+rejected, capture one and set the expected value exactly as received). The handler compares the **whole header value**, including
 the `Bearer ` prefix, with a constant-time comparison. Basic auth is not covered.
 
 > Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole Authorization value, including "Bearer ".

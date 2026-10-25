@@ -24,8 +24,8 @@ const PORT = process.env.PORT || 3000;
  * timestamps more than 5 minutes off (fixed), recomputes the HMAC over the raw
  * body, and compares in constant time against every `v1,` entry.
  *
- * Needle and Hookdeck retries/replays resend the ORIGINAL timestamp, so a late
- * retry fails here. See references/verification.md for a manual verifier
+ * Hookdeck retries/replays resend the ORIGINAL timestamp, so a late one fails
+ * here (Needle's own retries carry a fresh timestamp). See references/verification.md for a manual verifier
  * where the window can be dropped or widened.
  *
  * @param {string} rawBody - the exact body Needle sent

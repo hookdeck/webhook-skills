@@ -68,7 +68,9 @@ def verify_tanium_request(headers, secret=None, header_name=None) -> bool:
   arrives. Do not strip or parse a `Bearer ` prefix.
 - **The header name is yours.** It is whatever you typed as Auth Header Name; set
   `TANIUM_WEBHOOK_HEADER` to match. HTTP header names are case-insensitive.
-- **Not POST-only.** The method is chosen on the destination; accept `POST`, `PUT` and `PATCH`.
+- **Not POST-only.** The method is chosen on the destination and Tanium's docs don't list the
+  options; the examples accept `POST`, `PUT` and `PATCH` for illustration, so add any other method
+  your destination uses.
   Hookdeck's Tanium source pre-selects `POST` without managing the method, so allow any other
   method on the source too.
 - **Raw body, any content type.** Read it raw (`express.raw({ type: '*/*' })`), authenticate, then
@@ -86,5 +88,5 @@ def verify_tanium_request(headers, secret=None, header_name=None) -> bool:
 | 401 on every request | `TANIUM_WEBHOOK_SECRET` unset, or `TANIUM_WEBHOOK_HEADER` doesn't match the Auth Header Name |
 | 401 only with a prefix | The env value omits (or adds) the `Bearer ` prefix typed in Tanium |
 | 401 only behind a proxy | The proxy strips or renames the header (common with `Authorization`) |
-| 404/405 on delivery | The destination uses `PUT`/`PATCH` and the route or Hookdeck source allows only `POST` |
+| 404/405 on delivery | The destination uses a method other than `POST` and the route or Hookdeck source allows only `POST` |
 | 400 after authentication | Body is not valid JSON object/array |

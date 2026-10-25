@@ -13,8 +13,10 @@ YouMail supports three auth options on a webhook: none, `Basic` (username and pa
 `Bearer` (token). Hookdeck's YouMail source and these examples cover **Bearer** only. Basic is
 not covered by Hookdeck's YouMail source.
 
-With `Bearer`, YouMail sends `Authorization: Bearer <token>`. Store the whole value, prefix
-included, as `YOUMAIL_AUTHORIZATION` (for example `Bearer 1b2c3d4e-...`).
+YouMail's docs don't print the header the `Bearer` scheme produces; the expected form is
+`Authorization: Bearer <token>`. Store the whole value, prefix included, as
+`YOUMAIL_AUTHORIZATION` (for example `Bearer 1b2c3d4e-...`). If deliveries are rejected,
+capture one and set `YOUMAIL_AUTHORIZATION` to the `Authorization` value exactly as received.
 
 ## Create a Webhook
 
@@ -22,21 +24,27 @@ YouMail webhooks are created through the API (`POST /api/v3/notifications/webhoo
 request body is a `WebhookSettings` object with `eventParams` key/value pairs:
 
 ```bash
-curl -X POST https://data.youmail.com/api/v3/notifications/webhooks \
+curl -X POST https://dataapi.youmail.com/api/v3/notifications/webhooks \
   -H "Content-Type: application/json" \
-  -H "<your YouMail API auth headers>" \
+  -H "User-Agent: my-app/1.0" \
+  -H "DataApiSid: $YOUMAIL_API_SID" \
+  -H "DataApiKey: $YOUMAIL_API_KEY" \
   -d '{
     "activeFlag": true,
     "eventType": "CALL_EVENT",
     "eventParams": [
       {"key": "url", "value": "https://example.com/webhooks/youmail/call-events"},
+      {"key": "method", "value": "POST"},
       {"key": "auth", "value": "Bearer"},
       {"key": "token", "value": "<your-token>"}
     ]
   }'
 ```
 
-Use your YouMail API credentials as described in the API docs. For `WATCHLIST_SCORE_THRESHOLD`
+The API root is `https://dataapi.youmail.com/api/*`. Every request needs a `User-Agent` header
+and your `DataApiSid` and `DataApiKey` headers (from the dashboard settings page; add
+`DataApiOrgSid` if you collaborate with several Organizations). `method` is a required param
+but "will default to POST and cannot be modified". For `WATCHLIST_SCORE_THRESHOLD`
 add `watchlistUuid` and `threshold` params. `WATCHLIST_PHONE_SCORE_THRESHOLD` is deprecated
 and rejected for new webhooks.
 

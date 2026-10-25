@@ -16,7 +16,8 @@ metadata:
 
 The YouMail Protective Services API sends webhooks for call events, phone insights, TN report
 status changes and watchlist score thresholds. Payloads are not signed. The only authentication
-is an optional `Authorization` header (Basic or Bearer) set on the webhook.
+is an optional `auth` scheme (Basic or Bearer) set on the webhook, expected to arrive as the
+`Authorization` header.
 
 ## When to Use This Skill
 
@@ -30,9 +31,12 @@ is an optional `Authorization` header (Basic or Bearer) set on the webhook.
 
 Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole Authorization value, including "Bearer ".
 
-YouMail sends `Authorization: Bearer {token}` when the webhook's `auth` is `Bearer`. The key is
-the **whole value including the `Bearer ` prefix**. Basic is not covered by Hookdeck's YouMail
-source.
+YouMail's docs say only that the `Bearer` scheme "requires additional `token`" on the webhook;
+they don't print the header it produces. The expected form is `Authorization: Bearer <token>`,
+so set `YOUMAIL_AUTHORIZATION` to that **whole value including the `Bearer ` prefix** and compare
+the whole header to it. If deliveries are rejected, capture one (for example with the Hookdeck
+CLI below) and set `YOUMAIL_AUTHORIZATION` to the `Authorization` value exactly as received.
+Basic is not covered by Hookdeck's YouMail source.
 
 ```javascript
 const crypto = require('crypto');

@@ -63,7 +63,7 @@ Missing headers or a bad signature: respond `400` (or `401`). In Express, read t
 
 ```json
 { "uid": "evt_...", "event_type": "subscription.created",
-  "event_timestamp": "2026-10-25T10:00:00Z", "data": { } }
+  "event_timestamp": 1792922400, "data": { } }
 ```
 
 Dispatch on `event_type`. `uid` identifies the event; the `svix-id` header is stable across retries and works as a dedupe key too.

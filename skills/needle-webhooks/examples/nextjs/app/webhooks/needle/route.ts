@@ -29,8 +29,8 @@ type NeedleHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signat
  * body, and compares in constant time against every `v1,` entry. Throws if
  * verification fails.
  *
- * Needle and Hookdeck retries/replays resend the ORIGINAL timestamp, so a late
- * retry fails here. See references/verification.md for a manual verifier
+ * Hookdeck retries/replays resend the ORIGINAL timestamp, so a late one fails
+ * here (Needle's own retries carry a fresh timestamp). See references/verification.md for a manual verifier
  * where the window can be dropped or widened.
  */
 function verifyNeedleWebhook(rawBody: string, headers: NeedleHeaders, secret: string): NeedleEvent {

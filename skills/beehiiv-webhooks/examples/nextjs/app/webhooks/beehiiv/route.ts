@@ -16,7 +16,7 @@ import { Webhook } from 'svix';
 interface BeehiivEvent {
   uid: string;
   event_type: string; // e.g. "subscription.created"
-  event_timestamp: string;
+  event_timestamp: number; // seconds since the Unix epoch
   data: Record<string, any>;
 }
 

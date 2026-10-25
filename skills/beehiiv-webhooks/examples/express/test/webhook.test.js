@@ -20,7 +20,7 @@ function sign(body, { id = 'msg_2abc', ts = Math.floor(Date.now() / 1000), secre
 }
 
 const envelope = (event_type, data = {}, uid = 'evt_' + Math.random().toString(36).slice(2)) =>
-  JSON.stringify({ uid, event_type, event_timestamp: '2026-10-25T10:00:00Z', data });
+  JSON.stringify({ uid, event_type, event_timestamp: 1792922400, data });
 
 const post = (body, headers = {}, contentType = 'application/json') => {
   const r = request(app).post('/webhooks/beehiiv').set('Content-Type', contentType);

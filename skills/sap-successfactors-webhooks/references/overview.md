@@ -4,8 +4,10 @@
 
 SAP SuccessFactors has no dedicated webhook feature. The closest equivalent is an **Integration
 Center REST outbound integration**: you pick a starting entity, map the fields you want, and the
-integration calls a REST URL you provide, either on a schedule or when an Intelligent Services
-event triggers it. Your endpoint is the "REST API URL" on the connection.
+integration calls a REST URL you provide. SAP's REST outbound page sets the Trigger Type to
+**Scheduled**: the integration runs on the schedule you choose or with **Run Now**. Intelligent
+Services (event-triggered) integrations are not documented on that page and are not covered here.
+Your endpoint is the "REST API URL" on the connection.
 
 Requests are not signed. Authentication is whatever you set on the REST connection:
 

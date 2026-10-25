@@ -24,7 +24,7 @@ metadata:
 - Where do I get my Needle `whsec_` webhook secret?
 - How do I handle `lead_created`, `linkedin_message_received` or `enrollment_completed`?
 - Why is my Needle `webhook-signature` verification failing?
-- Why are Needle retries or Hookdeck replays rejected as too old?
+- Why are Hookdeck retries or replays of Needle events rejected as too old?
 
 ## Signature at a Glance
 
@@ -59,7 +59,7 @@ function verifyNeedleWebhook(rawBody, headers) {
 
 Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).verify(await request.body(), headers)`.
 
-> **Retries and replays vs the 5-minute window.** The library always enforces a fixed 5-minute timestamp window. Needle's retries (right away, +10 min, +1 h) and Hookdeck retries or replays resend the **original** `webhook-timestamp`, so the library rejects any delivery that arrives more than 5 minutes after it was first sent. If your receiver sits behind Hookdeck, or you replay events, use the manual verifier in [references/verification.md](references/verification.md), where the window can be dropped or widened.
+> **Hookdeck retries and replays vs the 5-minute window.** The library always enforces a fixed 5-minute timestamp window. Needle defines `webhook-timestamp` as "when this request was sent", so its own retries (right away, +10 min, +1 h) carry a fresh one. Hookdeck retries and replays resend the **original** `webhook-timestamp`, so the library rejects any of those that arrive more than 5 minutes after Needle sent the request. If your receiver sits behind Hookdeck, or you replay events, use the manual verifier in [references/verification.md](references/verification.md), where the window can be dropped or widened.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

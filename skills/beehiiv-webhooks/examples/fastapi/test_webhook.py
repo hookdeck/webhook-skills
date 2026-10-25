@@ -36,7 +36,7 @@ def envelope(event_type: str, data=None, uid=None) -> bytes:
         {
             "uid": uid or f"evt_{uuid.uuid4()}",
             "event_type": event_type,
-            "event_timestamp": "2026-10-25T10:00:00Z",
+            "event_timestamp": 1792922400,
             "data": data or {},
         }
     ).encode()

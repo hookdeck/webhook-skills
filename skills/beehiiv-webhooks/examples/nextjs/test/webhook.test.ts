@@ -32,7 +32,7 @@ function signedHeaders(
 }
 
 const envelope = (event_type: string, data: object = {}, uid = `evt_${crypto.randomUUID()}`) =>
-  JSON.stringify({ uid, event_type, event_timestamp: '2026-10-25T10:00:00Z', data });
+  JSON.stringify({ uid, event_type, event_timestamp: 1792922400, data });
 
 function post(rawBody: string, headers: Record<string, string>) {
   return POST(new Request('http://localhost:3000/webhooks/beehiiv', { method: 'POST', headers, body: rawBody }));

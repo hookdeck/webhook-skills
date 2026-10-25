@@ -3,11 +3,16 @@
 ## How It Works
 
 YouMail **does not sign payloads**: there is no HMAC, timestamp or signature header. The only
-authentication is the optional `Authorization` header configured on the webhook:
+authentication is the optional `auth` scheme configured on the webhook. YouMail's docs say the
+`Bearer` scheme "requires additional `token`" but don't print the header it produces; the
+expected form is:
 
 ```
-Authorization: Bearer {token}
+Authorization: Bearer <token>
 ```
+
+If deliveries are rejected, capture one (for example with `npx hookdeck-cli listen`) and set
+`YOUMAIL_AUTHORIZATION` to the `Authorization` value exactly as received.
 
 A **static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Anyone who captures one request can resend it, and
@@ -73,9 +78,9 @@ def safe_equal(a: str, b: str) -> bool:
 
 ## Common Gotchas
 
-- **Basic scheme**: `Authorization: Basic base64(user:pass)` would need a different expected value
+- **Basic scheme**: Basic (expected as `Authorization: Basic base64(user:pass)`) would need a different expected value
   and is not covered by Hookdeck's YouMail source. Switch the webhook to Bearer.
-- **Missing prefix**: the stored secret must include `Bearer `.
+- **Missing prefix**: the stored secret must include the prefix (expected to be `Bearer `).
 - **Unconfigured secret**: reject everything if `YOUMAIL_AUTHORIZATION` is empty, otherwise an
   empty header would "match".
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
@@ -89,6 +94,8 @@ def safe_equal(a: str, b: str) -> bool:
 
 1. Log which header names arrive (`Object.keys(req.headers)`), without logging the values.
 2. Confirm `Authorization` is present, then compare the length of the received value with the
-   configured one (a missing `Bearer ` prefix shows up as a 7-character difference).
+   configured one (a missing `Bearer ` prefix shows up as a 7-character difference). It is
+   expected to start with `Bearer `; if it doesn't, capture a delivery and set
+   `YOUMAIL_AUTHORIZATION` to the value exactly as received.
 3. Check for trailing whitespace or quotes in `.env`.
 4. Confirm the webhook was created with `auth` set to `Bearer` and the same `token`.
