@@ -70,14 +70,14 @@ If you receive these through Hookdeck and want late retries and replays to pass,
 
 ## Manual Verification (No Library, Configurable Window)
 
-Set `toleranceSeconds` to `0` to drop the window, or to a larger value to widen it. The timestamp must be a plain positive integer, and every space-separated `v1,<base64>` entry is tried, compared in constant time.
+The window is off by default (`toleranceSeconds = 0`); pass a positive value, such as `300`, to opt in or widen it. The timestamp must be a plain positive integer, and every space-separated `v1,<base64>` entry is tried, compared in constant time.
 
 ### Node.js
 
 ```javascript
 import crypto from 'node:crypto';
 
-export function verifyActOn(rawBody, headers, secret, toleranceSeconds = 300) {
+export function verifyActOn(rawBody, headers, secret, toleranceSeconds = 0) {
   const id = headers['svix-id'];
   const timestamp = headers['svix-timestamp'];
   const signatures = headers['svix-signature'];
@@ -115,7 +115,7 @@ import re
 import time
 
 
-def verify_act_on(raw_body: bytes, headers: dict, secret: str, tolerance_seconds: int = 300) -> bool:
+def verify_act_on(raw_body: bytes, headers: dict, secret: str, tolerance_seconds: int = 0) -> bool:
     msg_id = headers.get("svix-id")
     timestamp = headers.get("svix-timestamp")
     signatures = headers.get("svix-signature")
