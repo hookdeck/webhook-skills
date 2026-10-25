@@ -1,0 +1,32 @@
+name: jamie
+displayName: 'Jamie'
+docs:
+  webhooks: https://docs.meetjamie.ai/developers/webhooks/getting-started
+  verification: https://docs.meetjamie.ai/developers/webhooks/security-verification
+notes: >
+  AI meeting notes. Jamie offers two modes at webhook creation: API Key (Jamie's recommended
+  default; a static key in a header of your choice, default x-jamie-api-key) and Signature
+  Verification. Hookdeck's Jamie source supports Signature Verification only, so the skill covers
+  that mode and says to choose it (mention API key mode exists but isn't supported by Hookdeck's
+  source). Signature: header x-jamie-signature: 't=<unix seconds>,v0=<lowercase hex>'; v0 =
+  HMAC-SHA256 over '<t>.<raw body>' keyed with the signing secret string's UTF-8 bytes as-is (not
+  decoded). Parse the header by splitting on ',' then on the first '=', accept any v0 entry, compare
+  hex in constant time (length check + crypto.timingSafeEqual / hmac.compare_digest), and use the
+  raw body bytes. Jamie's docs reject timestamps older than 5 minutes (300 s); make the window
+  JAMIE_TIMESTAMP_TOLERANCE_SECONDS (default 300, 0 disables) and say that Hookdeck retries and
+  replays resend the original timestamp, so a 5-minute window rejects late retries: behind Hookdeck
+  either set it to 0 and rely on Hookdeck's verification or accept that. references/verification.md
+  must include a standalone manual verifier (Node and Python) with no timestamp window.
+  Missing/malformed header or mismatch: 401. Hookdeck's source: HMAC sha256, hex, header
+  x-jamie-signature, timestamp-prefixed with '.'. Hookdeck's source type is JAMIE, labelled 'Jamie'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing: "Choose Signature Verification when creating the Jamie webhook and paste its
+  signing secret. API key mode is not supported." Model on main's Stripe-style skills (duffel,
+  buildkite, revenuecat). Single event meeting.completed (also sent in the jamie-event header); body
+  has metadata.event and the meeting summary/transcript data. POST JSON. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'meeting.completed'
+catalog:
+  summary: 'Verify Jamie webhook signatures (`x-jamie-signature` `t=<ts>,v0=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle `meeting.completed`'

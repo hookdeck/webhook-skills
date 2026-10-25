@@ -1,0 +1,35 @@
+name: pingone
+displayName: 'PingOne'
+docs:
+  webhooks: https://developer.pingidentity.com/pingone-api/platform/subscriptions-webhooks/
+  verification: https://developer.pingidentity.com/pingone-api/platform/subscriptions-webhooks/
+notes: >
+  Identity; covers subscriptions (webhooks) with admin-set httpEndpoint.headers. The docs' example
+  is '"Authorization": "Basic username:password"' (not base64), so the value is whatever the admin
+  typed. mTLS isn't covered. No signature: requests are unsigned. Authenticate with a secret header
+  the user adds on the subscription (httpEndpoint.headers). The header name is user-chosen, so the
+  examples read the header name from PINGONE_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from PINGONE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's PingOne source does (API key
+  verification: header name + exact whole value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is PINGONE, labelled 'PingOne'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing: "Paste the exact header value you set on the subscription." Body (format ACTIVITY): a
+  JSON ARRAY of audit events (JSON_ARRAY, up to 500) or ND_JSON (one per line); handle both. Each
+  event has action.type like USER.CREATED, USER.UPDATED, AUTHENTICATION.CREATED. PingOne retries
+  until 200. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'USER.CREATED'
+    - 'USER.UPDATED'
+    - 'AUTHENTICATION.CREATED'
+catalog:
+  summary: 'Authenticate PingOne subscription webhooks (unsigned: an admin-set header compared in full in constant time), handle audit `action.type`s like `USER.CREATED`'

@@ -1,0 +1,34 @@
+name: roller
+displayName: 'ROLLER'
+docs:
+  webhooks: https://docs.roller.app/docs/api/creating-webhooks
+  verification: https://docs.roller.app/docs/api/rest/operations/create-webhook
+notes: >
+  Venue/attraction ticketing; webhooks are registered through the REST API (POST webhooks with
+  authentication.apiKey: 'Subsequent webhook payloads will include a HTTP header x-roller-apikey
+  with this value'). The apiKey is user-chosen (the docs' example is a label like 'CRM Trigger
+  Webhook 002'), so tell users to set a long random value. No signature. ROLLER sends the webhook's
+  authentication.apiKey as plain text in the vendor-fixed 'x-roller-apikey' header. Hookdeck's
+  ROLLER source compares that header's WHOLE value (header name case-insensitive) to the configured
+  key, so the examples read ROLLER_WEBHOOK_API_KEY and compare the whole 'x-roller-apikey' value to
+  it in constant time. Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is ROLLER, labelled 'ROLLER'. Hookdeck shows this setup note
+  for the source, and SKILL.md and references/setup.md must tell the user the same thing: "Set the
+  webhook's apiKey to a long random value, then paste the same value here." Body has type, e.g.
+  Booking.Created, Booking.Updated, Booking.Cancelled, Customer.Created, Redemption.Created,
+  PaymentLink.Created. All webhooks are POST; acknowledge within 10 seconds. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
+  after the credential check.
+testScenario:
+  events:
+    - 'Booking.Created'
+    - 'Booking.Cancelled'
+    - 'Customer.Created'
+catalog:
+  summary: 'Authenticate ROLLER webhooks (unsigned: the `x-roller-apikey` value compared in constant time), handle `type`s like `Booking.Created`, `Booking.Cancelled` and `Customer.Created`'

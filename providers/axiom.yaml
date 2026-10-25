@@ -1,0 +1,35 @@
+name: axiom
+displayName: 'Axiom'
+docs:
+  webhooks: https://axiom.co/docs/monitor-data/custom-webhook-notifier
+  verification: https://axiom.co/docs/monitor-data/custom-webhook-notifier
+notes: >
+  Observability; covers monitor notifications sent through a Custom webhook notifier only; the plain
+  Webhook notifier (URL only) can't send a header. No signature: requests are unsigned. Authenticate
+  with a secret header the user adds to the Custom webhook notifier (headers / secretHeaders, e.g.
+  {"Authorization": "Bearer <token>"}). The header name is user-chosen, so the examples read the
+  header name from AXIOM_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  AXIOM_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Axiom source does (API key verification: header name +
+  exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is AXIOM, labelled 'Axiom'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing: "Use the
+  Custom webhook notifier with a secret header. The plain Webhook notifier cannot send one." The
+  body is a Go template the notifier's author edits; the default template puts the state in action
+  (Open / Closed) and monitor data under event. The body is a template the user writes; the vendor
+  adds no event field, so the examples and test scenario use a clearly labelled illustrative
+  payload. POST JSON. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'monitor Open (default template)'
+    - 'monitor Closed (default template)'
+catalog:
+  summary: 'Authenticate Axiom Custom webhook notifier requests (unsigned: a secret header compared in full in constant time), handle monitor open and closed notifications'

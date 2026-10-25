@@ -1,0 +1,32 @@
+name: swoogo
+displayName: 'Swoogo'
+docs:
+  webhooks: https://developer.swoogo.com/api-reference/overviews/webhooks
+  verification: https://developer.swoogo.com/api-reference/webhooks/create-webhook
+notes: >
+  Event management; webhooks have one trigger_object (event, contact, registrant, speaker, sponsor,
+  session, ...) firing on insert, update and/or delete, with custom headers (headers: [{key,
+  value}], e.g. Authorization: Bearer token). No signature: requests are unsigned. Authenticate with
+  a secret header the user adds to the webhook (headers). The header name is user-chosen, so the
+  examples read the header name from SWOOGO_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from SWOOGO_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's Swoogo source does (API key
+  verification: header name + exact whole value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is SWOOGO, labelled 'Swoogo'. Payloads are
+  json (application/json) or post (form-encoded): accept both. The body carries the chosen fields;
+  no delivered example is documented, so label payloads illustrative. Retries on non-2xx. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  the body only after the credential check.
+testScenario:
+  events:
+    - 'registrant insert (illustrative payload)'
+    - 'registrant update (illustrative payload)'
+catalog:
+  summary: 'Authenticate Swoogo webhooks (unsigned: a custom header compared in full in constant time), handle registrant, contact and session changes'

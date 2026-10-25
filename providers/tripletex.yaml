@@ -1,0 +1,34 @@
+name: tripletex
+displayName: 'Tripletex'
+docs:
+  webhooks: https://developer.tripletex.no/docs/documentation/webhooks/
+  verification: https://developer.tripletex.no/docs/documentation/webhooks/
+notes: >
+  Norwegian accounting; event subscriptions via POST /v2/event/subscription (API only) with
+  authHeaderName and authHeaderValue ('(Recommended) Custom authentication header ... sent as-is for
+  every webhook POST callback'). Basic credentials in the targetUrl and query tokens aren't covered.
+  No signature: requests are unsigned. Authenticate with a secret header the user adds via
+  authHeaderName / authHeaderValue. The header name is user-chosen, so the examples read the header
+  name from TRIPLETEX_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  TRIPLETEX_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Tripletex source does (API key verification: header name
+  + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is TRIPLETEX, labelled 'Tripletex'. Body: {subscriptionId,
+  event: 'object.verb', id, value}; events like invoice.charged, customer.create, order.update,
+  product.delete. Retries for 30 hours. POST. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential
+  check.
+testScenario:
+  events:
+    - 'invoice.charged'
+    - 'customer.create'
+    - 'order.update'
+catalog:
+  summary: 'Authenticate Tripletex event subscriptions (unsigned: the authHeaderName header compared in full in constant time), handle `event`s like `invoice.charged` and `customer.create`'

@@ -1,0 +1,32 @@
+name: acumatica
+displayName: 'Acumatica'
+docs:
+  webhooks: https://help.myob.com.au/advanced/Docs/Published/IntegrationDevelopmentGuide/IntegrationDev_PushNotifications_Destinations.html
+  verification: https://help.myob.com.au/advanced/Docs/Published/UserGuide/SM_30_20_00.html
+notes: >
+  ERP; covers push notifications to a Webhook destination (Push Notifications form, SM302000), sent
+  when a monitored generic inquiry's results change. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds in the destination's Header Name and Header Value
+  boxes ('For security reasons, you can specify a header of the HTTP request'). The header name is
+  user-chosen, so the examples read the header name from ACUMATICA_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from ACUMATICA_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  Acumatica source does (API key verification: header name + exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is ACUMATICA, labelled
+  'Acumatica'. Body: JSON with Inserted and Deleted row arrays plus Query, CompanyId, Id, TimeStamp,
+  AdditionalInfo (check the docs); no event-type field, the query name identifies the notification.
+  POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'row inserted (Inserted array)'
+    - 'row deleted (Deleted array)'
+catalog:
+  summary: 'Authenticate Acumatica push notifications (unsigned: a secret header compared in full in constant time), handle `Inserted` and `Deleted` row changes'

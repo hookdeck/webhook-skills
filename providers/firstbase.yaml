@@ -1,0 +1,35 @@
+name: firstbase
+displayName: 'Firstbase'
+docs:
+  webhooks: https://support.firstbase.com/hc/en-us/articles/40623853911191-Setting-up-Webhooks
+  verification: https://support.firstbase.com/hc/en-us/articles/40623853911191-Setting-up-Webhooks
+notes: >
+  Remote-employee equipment; covers webhooks with 'Custom header' authentication (sends a custom
+  header name and value you provide). 'Auth token' doesn't document its header and OAuth client
+  credentials need a token server; neither is covered. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds with Custom header authentication. The header name
+  is user-chosen, so the examples read the header name from FIRSTBASE_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from FIRSTBASE_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  Firstbase source does (API key verification: header name + exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is FIRSTBASE, labelled
+  'Firstbase'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing: "Use Custom header authentication, not Auth token or OAuth."
+  Thin JSON notification per resource type (orders, return orders, inventory orders) with eventType
+  CREATED, UPDATED or DELETED and the resource id; fetch details from the API. POST, return any 2xx,
+  HTTPS with a valid certificate. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'CREATED'
+    - 'UPDATED'
+    - 'DELETED'
+catalog:
+  summary: 'Authenticate Firstbase webhooks (unsigned: a custom header compared in full in constant time), handle `CREATED`, `UPDATED` and `DELETED` notifications for orders and inventory'

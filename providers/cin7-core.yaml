@@ -1,0 +1,38 @@
+name: cin7-core
+displayName: 'Cin7 Core'
+docs:
+  webhooks: https://dearinventory.docs.apiary.io/
+  verification: https://dearinventory.docs.apiary.io/
+notes: >
+  Inventory (formerly DEAR Inventory; webhooks need the Automation module). Webhooks are created
+  with POST /webhooks and ExternalAuthorizationType noauth, basicauth or bearerauth, plus
+  ExternalHeaders (additional key/value headers). Hookdeck's Cin7 Core source verifies one header,
+  so use bearerauth (header 'authorization', value 'Bearer <token>') or a custom header in
+  ExternalHeaders; basicauth isn't covered by the source. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds (bearerauth or ExternalHeaders). The header name
+  is user-chosen, so the examples read the header name from CIN7_CORE_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from CIN7_CORE_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Cin7
+  Core source does (API key verification: header name + exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is CIN7_CORE, labelled
+  'Cin7 Core'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing: "Use a custom header (ExternalHeaders) or Bearer auth on the
+  Cin7 Core webhook, and paste the exact header name and whole value, e.g. "authorization" and
+  "Bearer <token>"." Body has EventType per webhook Type, e.g. Sale/Created, Sale/OrderAuthorised,
+  Purchase/Created, Product/Updated. 6 attempts, then the webhook is deactivated. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body
+  only after the credential check.
+testScenario:
+  events:
+    - 'Sale/Created'
+    - 'Sale/OrderAuthorised'
+    - 'Sale/ShipmentAuthorised'
+catalog:
+  summary: 'Authenticate Cin7 Core webhooks (unsigned: the Bearer or custom header compared in full in constant time), handle `EventType`s like `Sale/Created` and `Sale/OrderAuthorised`'

@@ -1,0 +1,36 @@
+name: pax8
+displayName: 'Pax8'
+docs:
+  webhooks: https://devx.pax8.com/docs/how-to-use-webhook-apis
+  verification: https://devx.pax8.com/docs/how-to-use-webhook-apis
+notes: >
+  Cloud marketplace for MSPs; covers the partner Webhooks API (event subscriptions by topic and
+  action) only, not Vendor Provisioner webhooks (which use a Pax8-generated credential in a
+  vendor-chosen header such as pax8ApiTokenV1). Pax8 says: no HMAC yet; the authorization value
+  'will be sent to your webhook URL under the "Authorization" header as exactly as you inputed'. No
+  signature. The credential is the Authorization header. Hookdeck's Pax8 source compares the WHOLE
+  Authorization header value to the configured key, so the examples read PAX8_AUTHORIZATION = the
+  full value as Pax8 sends it (e.g. 'Bearer <token>'), including any 'Bearer '/'Basic ' scheme
+  prefix, and compare the whole Authorization header to it; do not strip, parse or base64-decode the
+  prefix (Coterie pattern). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is PAX8, labelled 'Pax8'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing: "Covers
+  partner Webhooks API webhooks only. Paste the Authorization value exactly as set in Pax8,
+  including any "Bearer " or "Basic " prefix." Topics include SUBSCRIPTION, INVOICE, CLIENT,
+  PRODUCT, QUOTE, USER with actions like CREATE, UPDATE; delivery can lag up to 5 minutes; 10 s
+  timeout, 3 attempts. The body isn't fully documented (samplePayload is elided), so label any
+  example payload illustrative. POST JSON. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential
+  check.
+testScenario:
+  events:
+    - 'SUBSCRIPTION CREATE (illustrative payload)'
+    - 'INVOICE CREATE (illustrative payload)'
+catalog:
+  summary: 'Authenticate Pax8 partner Webhooks API notifications (unsigned: the whole `Authorization` value compared in constant time), handle subscription, invoice and client topic events'

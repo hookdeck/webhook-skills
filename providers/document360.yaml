@@ -1,0 +1,37 @@
+name: document360
+displayName: 'Document360'
+docs:
+  webhooks: https://docs.document360.com/docs/webhook-notification-channel
+  verification: https://docs.document360.com/docs/webhook-notification-channel
+notes: >
+  Knowledge base; covers the Webhook notification channel (Settings > Knowledge base portal >
+  Notifications > Webhook) with header key-value pairs. The separate 'Authorization key' field
+  doesn't document its header; use a key-value header. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds to the channel (key-value pairs). The header name
+  is user-chosen, so the examples read the header name from DOCUMENT360_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from DOCUMENT360_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  Document360 source does (API key verification: header name + exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is DOCUMENT360,
+  labelled 'Document360'. The request method is user-chosen, so the examples must not be POST-only:
+  accept POST and PUT (Request method dropdown) on the webhook route (Next.js: export a handler for
+  each), and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Document360 source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Payload keys are display labels with spaces ('Knowledge base name',
+  'Event', 'Logged on (UTC)'); Event carries the display name, e.g. 'Article published', 'Article
+  created', 'Article deleted'. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'Article published'
+    - 'Article created'
+    - 'Article deleted'
+catalog:
+  summary: 'Authenticate Document360 notification webhooks (unsigned: a header compared in full in constant time, POST or PUT), handle `Event`s like `Article published`'

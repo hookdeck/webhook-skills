@@ -1,0 +1,34 @@
+name: people-data-labs
+displayName: 'People Data Labs'
+docs:
+  webhooks: https://docs.peopledatalabs.com/docs/webhooks
+  verification: https://docs.peopledatalabs.com/docs/webhooks
+notes: >
+  Data enrichment; Enterprise API / Data License customers only. The PDL team registers the webhook
+  (endpoint, headers, filters); 'At a minimum, this should contain a shared key for secure
+  authorization' (example 'Authorization': 'Bearer pk_1312323123131231'). No signature: requests are
+  unsigned. Authenticate with a secret header the user adds (the PDL team sets it on registration).
+  The header name is user-chosen, so the examples read the header name from
+  PEOPLE_DATA_LABS_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  PEOPLE_DATA_LABS_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's People Data Labs source does (API key
+  verification: header name + exact whole value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is PEOPLE_DATA_LABS, labelled 'People Data
+  Labs'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
+  tell the user the same thing: "The People Data Labs team registers webhooks for Enterprise
+  customers. Ask them to include a secret header." Fires roughly monthly per data release with
+  batches of updated person record IDs (a JSON array; check the docs' example). POST, HTTPS. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  the body only after the credential check.
+testScenario:
+  events:
+    - 'person record update batch'
+catalog:
+  summary: 'Authenticate People Data Labs person-update webhooks (unsigned: the shared header compared in full in constant time), handle monthly batches of updated record IDs'

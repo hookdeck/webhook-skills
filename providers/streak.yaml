@@ -1,0 +1,35 @@
+name: streak
+displayName: 'Streak'
+docs:
+  webhooks: https://streak.readme.io/reference/create-a-webhook
+  verification: https://streak.readme.io/reference/create-a-webhook
+notes: >
+  CRM in Gmail; webhooks are created with POST /api/v2/webhooks (pipeline or team, one event each)
+  and an optional token: 'An optional value that will be included as a header
+  (X-Streak-Webhook-Token) in every request'. Webhooks created without a token send nothing to
+  verify: say so prominently. No signature. Streak sends the webhook token as plain text in the
+  vendor-fixed 'X-Streak-Webhook-Token' header. Hookdeck's Streak source compares that header's
+  WHOLE value (header name case-insensitive) to the configured key, so the examples read
+  STREAK_WEBHOOK_TOKEN and compare the whole 'X-Streak-Webhook-Token' value to it in constant time.
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is STREAK, labelled 'Streak'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing: "Set a token when you create
+  the webhook through the Streak API. Webhooks without one send nothing to verify." Events:
+  BOX_CREATE, BOX_EDIT, BOX_CHANGE_STAGE, BOX_DELETE, COMMENT_CREATE, TASK_CREATE, ...; the event
+  decides the object sent (Box, Stage, Comment, Task) and the body may not name the event, so
+  suggest one URL (or query param) per webhook. A 410 Gone response deletes the webhook; other
+  non-200 responses are retried. POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'BOX_CREATE'
+    - 'BOX_CHANGE_STAGE'
+    - 'COMMENT_CREATE'
+catalog:
+  summary: 'Authenticate Streak webhooks (unsigned: the `X-Streak-Webhook-Token` value compared in constant time), handle events like `BOX_CREATE` and `BOX_CHANGE_STAGE`'

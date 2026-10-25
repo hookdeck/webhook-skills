@@ -1,0 +1,38 @@
+name: rocketlane
+displayName: 'Rocketlane'
+docs:
+  webhooks: https://developer.rocketlane.com/docs/setting-up-webhooks-in-rocketlane
+  verification: https://developer.rocketlane.com/docs/setting-up-webhooks-in-rocketlane
+notes: >
+  Customer onboarding; webhooks are defined in Settings > Webhooks (name, HTTPS URL, Basic auth:
+  'Only Basic Authentication is supported currently') and sent by 'Send webhook' automation actions.
+  No signature. Authenticate with HTTP Basic auth, which is what Hookdeck's Rocketlane source
+  verifies. The examples read ROCKETLANE_WEBHOOK_USERNAME and ROCKETLANE_WEBHOOK_PASSWORD, parse
+  'Authorization: Basic base64(username:password)' (scheme case-insensitive, accept only the strict
+  base64 alphabet and decode strictly, e.g. validate=True in Python, so valid credentials followed
+  by junk are rejected; split on the first colon), and compare the username and the password each in
+  constant time, evaluating both before deciding (no short-circuit). Missing or malformed header or
+  mismatch: 401. The docs don't say whether Basic credentials are sent preemptively. Say that the
+  credentials must arrive on the first request: Hookdeck never sends a 401 + WWW-Authenticate
+  challenge, it verifies the request as received. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is ROCKETLANE, labelled 'Rocketlane'. Hookdeck shows this setup note for the source,
+  and SKILL.md and references/setup.md must tell the user the same thing: "Choose Basic
+  authentication and set a username and password on the Rocketlane webhook." Body has eventType
+  (TASK_CREATED, TASK_UPDATED, TASK_DELETED, PROJECT_CREATED, ...) and resourceType; the docs'
+  payload structure prints 'TASK_UPDATED.' with a stray full stop (the samples have none). Only 200
+  or 204 count as delivered; 10 s timeout. POST. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential
+  check.
+testScenario:
+  events:
+    - 'TASK_CREATED'
+    - 'TASK_UPDATED'
+    - 'PROJECT_CREATED'
+catalog:
+  summary: 'Authenticate Rocketlane webhooks (unsigned HTTP Basic auth compared in constant time), handle `eventType`s like `TASK_CREATED` and `TASK_UPDATED`'

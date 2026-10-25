@@ -1,0 +1,33 @@
+name: cyberimpact
+displayName: 'Cyberimpact'
+docs:
+  webhooks: https://faq.cyberimpact.com/en/articles/1418
+  verification: https://faq.cyberimpact.com/en/articles/1418
+notes: >
+  Email marketing; covers the 'Send a webhook' action in marketing-automation scenarios. Header keys
+  'cannot contain spaces or special characters', so suggest a simple name like Authorization. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds to the action's
+  webhook headers (key-value pairs). The header name is user-chosen, so the examples read the header
+  name from CYBERIMPACT_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  CYBERIMPACT_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Cyberimpact source does (API key verification: header
+  name + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is CYBERIMPACT, labelled 'Cyberimpact'. Hookdeck shows this
+  setup note for the source, and SKILL.md and references/setup.md must tell the user the same thing:
+  "Use a simple header name without spaces or special characters, such as Authorization." Body: JSON
+  with event 'automation.webhook.send' plus the contact data and key-value pairs the scenario author
+  selected (check the article's example). POST; the test delivery expects 200. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
+  after the credential check.
+testScenario:
+  events:
+    - 'automation.webhook.send'
+catalog:
+  summary: 'Authenticate Cyberimpact scenario webhooks (unsigned: a secret header compared in full in constant time), handle `automation.webhook.send` contact payloads'

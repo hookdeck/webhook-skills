@@ -1,0 +1,37 @@
+name: 8x8
+displayName: '8x8'
+docs:
+  webhooks: https://developer.8x8.com/connect/docs/developer-tools
+  verification: https://developer.8x8.com/connect/docs/developer-tools
+notes: >
+  CPaaS; covers 8x8 Connect webhooks (SMS inbound messages and delivery receipts, Chat Apps,
+  short-URL clicks, WhatsApp Business Management updates) configured with the optional static 'HTTP
+  Authorization' value (API: httpAuthorization, e.g. 'Bearer 9QQhlsEb8VY' or 'Basic
+  dXNlcjpwYXNzd29yZA=='). No signature. The credential is the Authorization header. Hookdeck's 8x8
+  source compares the WHOLE Authorization header value to the configured key, so the examples read
+  EIGHT_X_EIGHT_AUTHORIZATION = the full value as 8x8 sends it (e.g. 'Bearer 9QQhlsEb8VY'),
+  including any 'Bearer '/'Basic ' scheme prefix, and compare the whole Authorization header to it;
+  do not strip, parse or base64-decode the prefix (Coterie pattern). 8x8 can send Bearer or Basic:
+  compare the whole value either way, never decode Basic. The OAuth client-credentials option sends
+  rotating tokens and isn't covered; the separate Contact Center Chat x-8x8-signature (JWS) isn't
+  covered either. Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is EIGHT_X_EIGHT, labelled '8x8'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing: "Paste the HTTP Authorization
+  value exactly as set in 8x8, including any "Bearer " or "Basic " prefix. OAuth authentication is
+  not supported." Body: JSON with eventType, e.g. inbound_message_received,
+  outbound_message_status_changed, short_url_clicked, template_status_update; POST. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body
+  only after the credential check.
+testScenario:
+  events:
+    - 'inbound_message_received'
+    - 'outbound_message_status_changed'
+    - 'template_status_update'
+catalog:
+  summary: 'Authenticate 8x8 Connect webhooks (unsigned: the whole `Authorization` value, `Bearer` or `Basic`, compared in constant time), handle `eventType`s like `inbound_message_received` and `outbound_message_status_changed`'
