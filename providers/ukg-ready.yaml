@@ -1,0 +1,37 @@
+name: ukg-ready
+displayName: 'UKG Ready'
+docs:
+  webhooks: https://secure.saashr.com/ta/docs/rest/public/Webhooks_User_Guide.html
+  verification: https://secure.saashr.com/ta/docs/rest/public/Webhooks_User_Guide.html
+notes: >
+  UKG Ready (formerly Kronos Workforce Ready) Webhook Subscriptions, documented in the Ready REST
+  docs (secure.saashr.com), not developer.ukg.com. Not UKG Pro, whose webhooks are Svix-style
+  signed; say the skill is for Ready only. The subscription's Authentication is Basic, OAuth, Bearer
+  Token or No Authentication. No signature. The credential is the Authorization header. Hookdeck's
+  UKG Ready source compares the WHOLE Authorization header value to the configured key, so the
+  examples read UKG_READY_AUTHORIZATION = the full value as UKG Ready sends it (e.g. 'Bearer
+  <token>'), including the 'Bearer ' scheme prefix, and compare the whole Authorization header to
+  it; do not strip, parse or base64-decode the prefix (Coterie pattern). Cover the Bearer Token
+  option: the value is 'Bearer ' + the token set on the subscription. Basic and OAuth are not
+  covered by Hookdeck's UKG Ready source; say so. Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is UKG_READY, labelled 'UKG
+  Ready'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
+  tell the user the same thing, verbatim: "Choose Bearer Token authentication on the UKG Ready
+  webhook, not Basic, and paste the whole Authorization value, including "Bearer "." Body: JSON with
+  the latest values of the fields chosen on the subscription (the shape is shown only in the app;
+  Category examples ACCOUNT_CREATED, ACCOUNT_UPDATED), so use a clearly labelled illustrative
+  payload. Test Connection only checks reachability, it sends no payload. Failed events are retried
+  nightly, up to 5 attempts in all. The method isn't stated; examples accept POST. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works (and, for
+  signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'ACCOUNT_CREATED (illustrative payload)'
+    - 'ACCOUNT_UPDATED (illustrative payload)'
+catalog:
+  summary: 'Authenticate UKG Ready webhook subscriptions (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle account and employee change payloads'

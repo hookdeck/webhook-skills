@@ -1,0 +1,45 @@
+name: act-on
+displayName: 'Act-On'
+docs:
+  webhooks: https://connect.act-on.com/hc/en-us/articles/20031498483479-Outgoing-Webhook-Management
+  verification: https://connect.act-on.com/hc/en-us/articles/20031106799383-Outgoing-Webhook-Event-Types
+notes: >
+  Act-On (marketing automation) outgoing webhooks, configured in an embedded Svix App Portal
+  (Endpoints, Event Catalog, Testing, Logs; 'Svix Play' test URL). Act-On says: 'Act-On will send a
+  payload with a signature ... generating an HMAC SHA-256 hash' and 'The Signing Secret is generated
+  automatically during configuration.' Act-On's pages don't name the headers or secret prefix; they
+  are Svix defaults (svix-* headers, whsec_ secret), which is what Hookdeck's config assumes; say
+  so. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds),
+  svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, key = base64-decode of the secret
+  after the whsec_ prefix, base64 output. The secret (ACT_ON_WEBHOOK_SECRET) is the endpoint's
+  Signing Secret from the Act-On webhook portal. Verify with the svix library (npm 'svix', pip
+  'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature. This matches
+  Hookdeck's Act-On source (Standard Webhooks, headers_prefix 'svix', whsec_ secret base64-decoded,
+  every v1 entry tried). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects
+  late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the decoded key, compare every
+  space-separated v1,<base64> entry in constant time, require the timestamp to be a plain positive
+  integer) where the window can be dropped or widened. Missing headers or a bad signature: 400 or
+  401. Act-On exclusively supports POST. Body: each event's own object with no event-type field
+  (e.g. contact.added sends {contact: {...}, contactReportLink, email, timestamp}); the event type
+  is only in Svix's message metadata, so tell the user to subscribe each endpoint to the events it
+  handles (or use one endpoint per event type) and show handling by shape. Event types:
+  contact.added, contact.updated, contact-bounce.hard, contact-bounce.soft,
+  contact-email.marked-as-spam, contact-opt.global-opt-out, form.submitted,
+  automated-program.started, subscription-category.opt-in, crm.connected and more. Custom headers
+  can also be added under Advanced, but the Svix signature is what Hookdeck verifies. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check. Hookdeck's
+  source type is ACT_ON, labelled 'Act-On'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste the
+  endpoint's Signing Secret from the Act-On webhook portal exactly as shown, including any whsec_
+  prefix."
+testScenario:
+  events:
+    - 'contact.added'
+    - 'form.submitted'
+    - 'contact-bounce.hard'
+catalog:
+  summary: 'Verify Act-On outgoing webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` Signing Secret), handle contact, form, bounce and subscription events'
