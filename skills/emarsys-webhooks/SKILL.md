@@ -67,7 +67,8 @@ function verifyEmarsys(headers, user = process.env.EMARSYS_WEBHOOK_USERNAME,
 ```
 
 - Header: `Authorization: Basic base64(username:password)`; the scheme is case-insensitive.
-- Python: `base64.b64decode(token, validate=True)`, split with `partition(b":")`, then
+- Python: `base64.b64decode(token, validate=True)`, reject unless re-encoding gives back the same
+  token (older Pythons ignore stray padding), split with `partition(b":")`, then
   `hmac.compare_digest` on **bytes** for username and password (encode both sides; never pass a
   `str`, which raises on non-ASCII).
 - Missing or malformed header, or a mismatch: `401`. Evaluate both comparisons before deciding.

@@ -54,6 +54,8 @@ def parse_basic_auth(header):
         raw = base64.b64decode(m.group(1), validate=True)   # strict: junk is rejected
     except (binascii.Error, ValueError):
         return None
+    if base64.b64encode(raw).decode() != m.group(1):       # older Pythons ignore stray padding
+        return None
     user, sep, password = raw.partition(b":")                 # first colon
     return (user, password) if sep else None
 

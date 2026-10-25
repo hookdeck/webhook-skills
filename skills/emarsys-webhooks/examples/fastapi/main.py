@@ -30,9 +30,13 @@ def parse_basic_auth(header: Optional[str]) -> Optional[Tuple[bytes, bytes]]:
     match = _BASIC_RE.fullmatch(header)
     if not match:
         return None
+    token = match.group(1)
     try:
-        decoded = base64.b64decode(match.group(1), validate=True)
+        decoded = base64.b64decode(token, validate=True)
     except (binascii.Error, ValueError):
+        return None
+    # Older Pythons ignore stray padding even with validate=True, so require the canonical encoding.
+    if base64.b64encode(decoded).decode() != token:
         return None
     username, sep, password = decoded.partition(b":")
     if not sep:
