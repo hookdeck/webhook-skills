@@ -3,6 +3,7 @@ displayName: 'Plain'
 docs:
   webhooks: https://www.plain.com/docs/webhooks
   verification: https://www.plain.com/docs/request-signing
+  events: https://www.plain.com/docs/webhooks/thread-created
   reference_impl: https://unpkg.com/@team-plain/webhooks@1.10.0/dist/verify.js
 notes: >
   Plain (customer support). Requests are signed only once a workspace HMAC secret exists (Settings >
@@ -27,4 +28,4 @@ testScenario:
     - 'thread.thread_created'
     - 'thread.email_received'
 catalog:
-  summary: 'Verify Plain webhook request signatures (`Plain-Request-Signature`, HMAC-SHA256 hex of the raw body keyed with the workspace HMAC secret), handle events like `thread.thread_created`'
+  summary: 'Verify Plain webhook request signatures (`Plain-Request-Signature`, HMAC-SHA256 hex of the raw body keyed with the workspace HMAC secret), handle `thread.thread_created`, `thread.email_received`, `thread.thread_status_transitioned`, and `customer.customer_created` events'

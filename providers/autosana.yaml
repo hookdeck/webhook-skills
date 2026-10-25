@@ -19,4 +19,4 @@ testScenario:
   events:
     - 'batch.completed'
 catalog:
-  summary: 'Verify Autosana webhook signatures (`X-Autosana-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle `batch.completed` events'
+  summary: 'Verify Autosana webhook signatures (`X-Autosana-Signature-256: sha256=<hex>`, HMAC-SHA256 of the raw body), handle `batch.completed` events'

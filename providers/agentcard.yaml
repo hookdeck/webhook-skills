@@ -2,6 +2,8 @@ name: agentcard
 displayName: 'Agentcard'
 docs:
   webhooks: https://docs.agentcard.com/webhooks/overview
+  verification: https://docs.agentcard.com/webhooks/overview#verify-the-signature
+  events: https://docs.agentcard.com/webhooks/cards/overview
   api: https://docs.agentcard.com/api-reference/webhook-endpoints/secret
 notes: >
   Agentcard (virtual cards for AI agents). Header AgentCard-Signature: 't=<unix seconds>,v1=<hex>'; v1
@@ -29,6 +31,7 @@ notes: >
 testScenario:
   events:
     - 'card.created'
+    - 'transaction.authorized'
     - 'approval.requested'
 catalog:
-  summary: 'Verify Agentcard webhook signatures (`AgentCard-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle card and approval events'
+  summary: 'Verify Agentcard webhook signatures (`AgentCard-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whsec_` secret; not Standard Webhooks), handle `card.created`, `transaction.authorized`, `approval.requested`, and `balance.low` events'

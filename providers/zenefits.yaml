@@ -2,6 +2,7 @@ name: zenefits
 displayName: 'TriNet Zenefits'
 docs:
   webhooks: https://developers.zenefits.com/docs/webhooks
+  events: https://developers.zenefits.com/reference/events
 notes: >
   TriNet Zenefits partner-app webhooks (the docs now say TriNet's HR platform). Header literally named
   signature: hex HMAC-SHA256 of the raw payload keyed with the application's webhook shared secret,

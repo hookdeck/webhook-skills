@@ -19,6 +19,6 @@ notes: >
   type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'trigger event'
+    - CONTENT_SCHEDULE
 catalog:
-  summary: 'Verify Glean trigger webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret), handle trigger deliveries'
+  summary: 'Verify Glean trigger webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256, `whsec_` secret), handle CONTENT_SCHEDULE trigger deliveries'

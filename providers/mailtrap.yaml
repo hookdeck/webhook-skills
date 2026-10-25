@@ -19,5 +19,6 @@ testScenario:
   events:
     - 'delivery'
     - 'bounce'
+    - 'soft bounce'
 catalog:
   summary: 'Verify Mailtrap webhook signatures (`Mailtrap-Signature`, HMAC-SHA256 hex of the raw body keyed with the 32-hex signing secret as text), handle delivery, open, click and bounce events'

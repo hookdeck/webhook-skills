@@ -1,8 +1,10 @@
 name: autumn
-displayName: 'Autumn'
+displayName: Autumn
 docs:
   webhooks: https://docs.useautumn.com/documentation/webhooks
   api: https://docs.useautumn.com/api-reference/webhooks/createWebhook
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+  events: https://docs.useautumn.com/api-reference/webhooks/billingUpdated
 notes: >
   Autumn (pricing and billing for AI apps). Delivered by Svix: svix-id, svix-timestamp,
   svix-signature; HMAC-SHA256 over '{svix-id}.{svix-timestamp}.{body}', key = base64-decode of the
@@ -18,7 +20,9 @@ notes: >
   body with express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'customer.products.updated'
-    - 'balances.limit_reached'
+    - billing.updated
+    - balances.limit_reached
+    - billing.auto_topup_failed
 catalog:
-  summary: 'Verify Autumn webhooks (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle billing and balance events like `balances.limit_reached`'
+  summary: Verify Autumn (Svix) webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256), handle billing.updated, balances.limit_reached and billing.auto_topup_failed events
+  docsUrl: https://docs.useautumn.com/documentation/webhooks

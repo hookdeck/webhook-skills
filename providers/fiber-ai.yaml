@@ -3,6 +3,7 @@ displayName: 'Fiber AI'
 docs:
   webhooks: https://docs.fiber.ai/monitoring/webhooks
   verification: https://docs.fiber.ai/monitoring/webhooks#verifying-signatures
+  events: https://docs.fiber.ai/monitoring/webhooks#event-catalog
 notes: >
   Fiber AI (B2B data / enrichment). Svix-hosted: svix-id, svix-timestamp, svix-signature headers;
   HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key = base64-decode of the whsec_ secret after the
@@ -17,6 +18,9 @@ notes: >
   batch_contact_enrich.completed, mosaic.completed, audience.enrichment_completed,
   tracker.signal_detected, job.changed and more; dispatch on the body's type. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+sdks:
+  npm: [svix]
+  pip: [svix]
 testScenario:
   events:
     - 'reveal.completed'

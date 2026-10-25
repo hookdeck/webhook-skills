@@ -2,6 +2,8 @@ name: envoy
 displayName: 'Envoy'
 docs:
   webhooks: https://developers.envoy.com/hub/docs/create-webhooks
+  verification: https://developers.envoy.com/hub/docs/create-webhooks#verify-a-webhook
+  events: https://developers.envoy.com/hub/reference/events
   reference_impl: https://unpkg.com/@envoy/envoy-integrations-sdk@2.5.4/src/util/EnvoySignatureVerifier.ts
 notes: >
   Envoy (workplace visitor management) app webhooks. Header X-Envoy-Signature: base64 HMAC-SHA256 of

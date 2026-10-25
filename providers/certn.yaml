@@ -2,6 +2,8 @@ name: certn
 displayName: 'Certn'
 docs:
   webhooks: https://docs.certn.co/api/guides/use-the-api/webhooks
+  verification: https://docs.certn.co/api/guides/use-the-api/webhooks#signature-verification
+  events: https://docs.certn.co/api/guides/use-the-api/webhooks/webhook-parameters-and-example
 notes: >
   Certn (background checks). Signing is opt-in; when enabled each request carries Certn-Signature:
   't=<unix seconds>, v1=<hex>[, v1=<hex>]' on one line (a space after each comma; several v1 during a
@@ -25,6 +27,7 @@ notes: >
   verifies.
 testScenario:
   events:
-    - 'applicant report update'
+    - 'report_status COMPLETE'
+    - 'report_status IN_PROGRESS'
 catalog:
-  summary: 'Verify Certn webhook signatures (`Certn-Signature` `t=<ts>, v1=<hex>`, HMAC-SHA256 over `{t}.{body}`; opt-in signing), handle applicant report updates'
+  summary: 'Verify Certn webhook signatures (`Certn-Signature` `t=<ts>, v1=<hex>`, HMAC-SHA256 over `{t}.{body}`; opt-in signing), handle applicant report updates dispatched on `report_status` (`IN_PROGRESS`, `COMPLETE`)'

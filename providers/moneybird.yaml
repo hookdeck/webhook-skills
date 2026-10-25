@@ -3,6 +3,7 @@ displayName: 'Moneybird'
 docs:
   webhooks: https://developer.moneybird.com/webhooks/getting-started
   verification: https://developer.moneybird.com/webhooks/verifying-signatures
+  events: https://developer.moneybird.com/webhooks/events
 notes: >
   Moneybird (Dutch accounting). Header Moneybird-Signature: 't=<unix seconds>,v1=<hex>' (several v1
   during secret rotation; accept if any matches). v1 is hex HMAC-SHA256 of '{t}.{raw_request_body}'
@@ -26,6 +27,7 @@ notes: >
 testScenario:
   events:
     - 'sales_invoice_created'
+    - 'sales_invoice_state_changed_to_paid'
     - 'contact_created'
 catalog:
-  summary: 'Verify Moneybird webhook signatures (`Moneybird-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`), handle actions like `sales_invoice_created`'
+  summary: 'Verify Moneybird webhook signatures (`Moneybird-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`, any matching `v1` during secret rotation), handle `sales_invoice_created`, `sales_invoice_state_changed_to_paid`, and `contact_created` actions dispatched by `action`'

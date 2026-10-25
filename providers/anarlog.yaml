@@ -2,6 +2,8 @@ name: anarlog
 displayName: 'Anarlog'
 docs:
   webhooks: https://docs.anarlog.so/reference/webhooks
+  verification: https://docs.anarlog.so/reference/webhooks#verify-signatures
+  events: https://docs.anarlog.so/reference/webhooks#events
 notes: >
   Anarlog (meeting notes). Header x-anarlog-signature: 'sha256=<hex>', HMAC-SHA256 hex of the raw
   request body keyed with the endpoint's whsec_ secret (shown once). Require and strip the sha256=
@@ -22,4 +24,4 @@ testScenario:
     - 'meeting.completed'
     - 'note.enhanced'
 catalog:
-  summary: 'Verify Anarlog webhook signatures (`x-anarlog-signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the whole `whsec_` secret; not Standard Webhooks), handle `meeting.completed` and `note.enhanced`'
+  summary: 'Verify Anarlog webhook signatures (`x-anarlog-signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the whole `whsec_` secret; not Standard Webhooks), handle `meeting.completed` and `note.enhanced` events'

@@ -3,6 +3,7 @@ displayName: 'TheirStack'
 docs:
   webhooks: https://theirstack.com/en/docs/webhooks
   verification: https://theirstack.com/en/docs/webhooks/verify-webhook-signatures
+  events: https://theirstack.com/en/docs/webhooks/receive-theirstack-events-in-your-webhook-endpoint
 notes: >
   TheirStack (job and technographic data). Header X-TheirStack-Signature-256: 'sha256=<hex>',
   HMAC-SHA256 hex of the raw JSON body keyed with the signing secret set (min 16 chars) or generated

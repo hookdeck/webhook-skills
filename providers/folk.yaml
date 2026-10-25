@@ -1,5 +1,5 @@
 name: folk
-displayName: 'folk'
+displayName: folk
 docs:
   webhooks: https://developer.folk.app/webhooks/about
   verification: https://developer.folk.app/webhooks/handle-deliveries
@@ -19,7 +19,8 @@ notes: >
   express.raw({ type: '*/*' }) so any content type verifies.
 testScenario:
   events:
-    - 'person.created'
-    - 'company.updated'
+    - person.created
+    - person.updated
+    - company.created
 catalog:
-  summary: 'Verify folk webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret), handle person and company events'
+  summary: Verify folk (CRM) webhook signatures (`webhook-id`/`webhook-timestamp`/`webhook-signature`, Standard Webhooks HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}`, `whsec_` secret shown once), handle person.created, person.updated, company.created and object.created events

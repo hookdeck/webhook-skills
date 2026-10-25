@@ -2,6 +2,8 @@ name: semble
 displayName: 'Semble'
 docs:
   webhooks: https://docs.semble.io/docs/webhooks/guide/
+  verification: https://docs.semble.io/docs/webhooks/guide/#4-verifying-webhook-signatures
+  events: https://docs.semble.io/docs/webhooks/events/
 notes: >
   Semble (practice management / EHR). Header X-Webhook-Signature: 't=<unix seconds>,v1=<hex>';
   X-Webhook-Timestamp carries the same t. v1 is lowercase hex HMAC-SHA256 over '<t>.<raw body>' keyed
@@ -19,8 +21,9 @@ notes: >
   must say that Hookdeck retries and replays resend the original timestamp, so a 5-minute window
   rejects late retries, and point to references/verification.md, which shows where the window can be
   dropped or widened. Event types are dotted camelCase, e.g. booking.created, booking.updated,
-  booking.deleted, contact.created, invoice.paid, resourceAvailability.updated; check the body's event
-  field. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  booking.deleted, contact.created, invoice.paid, resourceAvailability.updated; dispatch on the
+  body's eventType field (body: subscriptionId, eventId, eventType, identifiers, optional metadata).
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   verifies.
 testScenario:
   events:

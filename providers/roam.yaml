@@ -1,7 +1,7 @@
 name: roam
 displayName: 'Roam'
 docs:
-  webhooks: https://developer.ro.am/docs/webhooks
+  webhooks: https://developer.ro.am/docs/webhooks/webhooks
 notes: >
   Roam (ro.am virtual office, not Roam Research). Standard Webhooks, signed only when a signing secret
   is configured: webhook-id, webhook-timestamp, webhook-signature; HMAC-SHA256 over

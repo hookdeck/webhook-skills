@@ -3,6 +3,7 @@ displayName: 'athenahealth'
 docs:
   webhooks: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md
   verification: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md#verifying-message-authenticity
+  events: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md#subscription-topics
 notes: >
   athenahealth Event Subscription Platform (FHIR R4 backport Subscriptions). Header X-Hub-Signature:
   'sha256=<hex>' (WebSub content signing, https://www.w3.org/TR/websub/#signing-content): HMAC-SHA256

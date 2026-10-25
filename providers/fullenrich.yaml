@@ -18,7 +18,8 @@ notes: >
   }) so any content type verifies.
 testScenario:
   events:
-    - 'enrichment finished'
-    - 'contact finished'
+    - FINISHED
+    - IN_PROGRESS
+    - CREDITS_INSUFFICIENT
 catalog:
-  summary: 'Verify FullEnrich webhook signatures (`X-Signature-SHA1`, HMAC-SHA1 hex of the raw body keyed with your API key), handle enrichment results'
+  summary: Verify FullEnrich webhook signatures (`X-Signature-SHA1`, HMAC-SHA1 keyed with your API key), handle FINISHED, IN_PROGRESS, CANCELED and CREDITS_INSUFFICIENT enrichment results

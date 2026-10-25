@@ -1,7 +1,8 @@
 name: rocketreach
-displayName: 'RocketReach'
+displayName: RocketReach
 docs:
   webhooks: https://docs.rocketreach.co/reference/webhooks
+  verification: https://docs.rocketreach.co/reference/webhooks
 notes: >
   RocketReach (contact lookup) webhooks deliver async People Lookup and Bulk Lookup results, not
   change events. Once a secret is generated (API Usage & Settings page: Generate Secret), header
@@ -16,6 +17,7 @@ notes: >
   content type verifies.
 testScenario:
   events:
-    - 'person lookup result'
+    - complete
+    - progress
 catalog:
-  summary: 'Verify RocketReach webhook signatures (`X-RocketReach-Signature`, base64 HMAC-SHA256 of the raw body), handle async lookup results'
+  summary: Verify RocketReach webhook signatures (`X-RocketReach-Signature`, HMAC-SHA256 base64), handle People Lookup and Bulk People Lookup results

@@ -14,7 +14,7 @@ notes: >
   (encode both sides) so a non-ASCII header gives 401, not 500. The page is a JS-rendered Next.js app;
   if curl gets no text, read the page chunk it loads. Event types include video-created,
   video-deleted, video-transcode-complete, video-upload-failed, live-event-started, live-event-ended,
-  transcript-status-complete; check the docs for the payload's type field. Hookdeck setup (say this in
+  transcript-status-complete; the payload's event field is `webhook_type` (envelope: webhook_type, data, timestamp). Hookdeck setup (say this in
   SKILL.md's setup section and in references/setup.md): Set a secret on the webhook through the Vimeo
   API. Without one, deliveries are unsigned and fail verification. Express examples must read the raw
   body with express.raw({ type: '*/*' }) so any content type verifies.

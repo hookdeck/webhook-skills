@@ -26,5 +26,6 @@ testScenario:
   events:
     - 'replies'
     - 'mentions'
+    - 'publish'
 catalog:
-  summary: 'Verify Threads (Meta) webhook signatures (`X-Hub-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the app secret), answer the `hub.challenge` handshake, handle `replies` and `mentions`'
+  summary: 'Verify Threads (Meta) webhook signatures (`X-Hub-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the app secret), answer the `hub.challenge` handshake, handle `replies`, `mentions`, `publish` and `delete`'

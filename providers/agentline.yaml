@@ -2,6 +2,7 @@ name: agentline
 displayName: 'AgentLine'
 docs:
   webhooks: https://docs.agentline.cloud/guides/webhooks
+  events: https://docs.agentline.cloud/guides/events
 notes: >
   AgentLine (AI phone agents). Header X-Webhook-Signature (the default): bare hex HMAC-SHA256 of the
   raw request body keyed with the webhook signing secret as UTF-8 (returned in full once at creation,

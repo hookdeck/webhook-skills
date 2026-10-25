@@ -2,6 +2,8 @@ name: hail
 displayName: 'Hail'
 docs:
   webhooks: https://hail.so/docs/webhooks
+  verification: https://hail.so/docs/webhooks
+  events: https://hail.so/docs/webhooks
 notes: >
   Hail (email and SMS API). Header X-Hail-Signature: 't=<unix>,v1=<hex>'; v1 is hex HMAC-SHA256 over
   f'{t}.' + raw request bytes, keyed with the signing secret (returned once at create). The secret
@@ -30,5 +32,6 @@ testScenario:
   events:
     - 'email.received'
     - 'email.bounced'
+    - 'sms.received'
 catalog:
-  summary: 'Verify Hail webhook signatures (`X-Hail-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole secret; not Standard Webhooks), handle email and SMS events'
+  summary: 'Verify Hail webhook signatures (`X-Hail-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`, whole `whsec_` secret as the key), handle `email.received`, `email.bounced`, `sms.received`, and `call.completed` events'
