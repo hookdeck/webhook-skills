@@ -147,6 +147,11 @@ class TestEventHandling:
         body = {"event": {"class": EVENTS[3], "node": {"path": "/user/files/old.txt"}}, "user": None, "time": 1}
         assert send(headers={HEADER: SECRET}, body=json.dumps(body)).status_code == 200
 
+    @pytest.mark.parametrize("event", ["NodeCreatedEvent", 42, None, ["x"]])
+    def test_tolerates_non_object_event_field(self, event):
+        body = {"event": event, "user": "alice", "time": 1}
+        assert send(headers={HEADER: SECRET}, body=json.dumps(body)).status_code == 200
+
     def test_acknowledges_unknown_events(self):
         body = json.dumps(sample_payload("OCA\\Mail\\Event\\NewMessageReceivedEvent"))
         assert send(headers={HEADER: SECRET}, body=body).status_code == 200

@@ -68,14 +68,14 @@ Neither verifier checks `t` against the clock; see below.
 
 ## Replay Protection
 
-Jamie's docs say to reject timestamps older than 5 minutes (300 s). The examples do that through `JAMIE_TIMESTAMP_TOLERANCE_SECONDS` (default `300`; `0` disables it; an invalid value falls back to `300`, with a warning at startup).
+Jamie's docs recommend rejecting timestamps older than 5 minutes (300 s) when Jamie calls you directly. The examples make the window opt-in through `JAMIE_TIMESTAMP_TOLERANCE_SECONDS` (default `0`, off; set `300` to follow Jamie's recommendation; an invalid value leaves the check off, with a warning at startup).
 
 Retries and replays keep the original `t`:
 
 - Jamie's own retries happen up to about an hour after the first attempt, so the last two attempts fall outside a 5-minute window.
 - Hookdeck retries and replays resend the original timestamp, so a replay later than 5 minutes always fails.
 
-Behind Hookdeck either set `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0` and rely on Hookdeck's verification, or accept that late retries are rejected. Either way dedupe on `metadata.id` (the `jamie-delivery` header).
+Behind Hookdeck keep `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0` and rely on Hookdeck's verification; a window would reject late retries and replays. Either way dedupe on `metadata.id` (the `jamie-delivery` header).
 
 ## Common Gotchas
 
@@ -91,5 +91,5 @@ Behind Hookdeck either set `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0` and rely on Hoo
 - Confirm `JAMIE_WEBHOOK_SECRET` is the signing secret of the webhook that sent the event.
 - Check for whitespace or quotes around the secret in `.env`.
 - Check that no body-parsing middleware runs before verification.
-- Set `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0` to see whether a retry or replay is failing on age.
+- If you set `JAMIE_TIMESTAMP_TOLERANCE_SECONDS`, set it back to `0` to see whether a retry or replay is failing on age.
 - No `x-jamie-signature` header means the webhook is in API Key mode, or a proxy stripped the header.

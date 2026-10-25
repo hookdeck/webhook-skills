@@ -131,16 +131,17 @@ describe('Jamie webhook', () => {
   });
 
   describe('timestamp window', () => {
-    it('rejects a timestamp older than 300 seconds by default', async () => {
+    it('is off by default, so old timestamps (Hookdeck retries) verify', async () => {
       const body = event();
-      const res = await post(body, sign(body, now() - 301));
-      expect(res.status).toBe(401);
+      const res = await post(body, sign(body, now() - 86400));
+      expect(res.status).toBe(200);
     });
 
-    it('accepts a timestamp inside the default window', async () => {
+    it('rejects a timestamp older than 300 seconds when opted in', async () => {
+      process.env.JAMIE_TIMESTAMP_TOLERANCE_SECONDS = '300';
       const body = event();
-      const res = await post(body, sign(body, now() - 120));
-      expect(res.status).toBe(200);
+      expect((await post(body, sign(body, now() - 301))).status).toBe(401);
+      expect((await post(body, sign(body, now() - 120))).status).toBe(200);
     });
 
     it('is disabled by JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0', async () => {
@@ -157,11 +158,11 @@ describe('Jamie webhook', () => {
       expect((await post(body, sign(body, now() - 7200))).status).toBe(401);
     });
 
-    it('falls back to 300 for an invalid value', async () => {
+    it('leaves the check off for an invalid value', async () => {
       process.env.JAMIE_TIMESTAMP_TOLERANCE_SECONDS = 'soon';
       const body = event();
       const res = await post(body, sign(body, now() - 1000));
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
     });
   });
 

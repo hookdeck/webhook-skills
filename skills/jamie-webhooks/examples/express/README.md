@@ -29,7 +29,7 @@ npm start
 
 Server runs on http://localhost:3000
 
-The handler reads the raw body with `express.raw({ type: '*/*' })` and checks `v0` = HMAC-SHA256 (hex) of `<t>.<raw body>`. Failures return 401. By default it rejects timestamps more than 300 seconds from now (Jamie's documented window). Hookdeck retries and replays keep the original timestamp, so behind Hookdeck set `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0`.
+The handler reads the raw body with `express.raw({ type: '*/*' })` and checks `v0` = HMAC-SHA256 (hex) of `<t>.<raw body>`. Failures return 401. The timestamp window is off by default (`JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0`). Jamie's docs recommend 300 seconds when Jamie calls you directly; behind Hookdeck keep it at 0, because Hookdeck retries and replays resend the original timestamp.
 
 ## Test
 

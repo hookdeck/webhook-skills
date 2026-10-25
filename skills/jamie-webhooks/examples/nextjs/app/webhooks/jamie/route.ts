@@ -9,18 +9,19 @@ import crypto from 'crypto';
 // v0 = HMAC-SHA256 of "<t>.<raw body>", keyed with the signing secret string's UTF-8 bytes as-is.
 // https://docs.meetjamie.ai/developers/webhooks/security-verification
 
-// Replay window in seconds (Jamie's docs: reject timestamps older than 5 minutes). 0 disables it.
-// Hookdeck retries and replays keep the original timestamp, so behind Hookdeck late redeliveries
-// fail a 300 s window: set JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0 there. An invalid value falls back
-// to 300, with a warning.
-const DEFAULT_TOLERANCE_SECONDS = 300;
+// Optional replay window in seconds, off by default (0). Jamie's docs recommend rejecting
+// timestamps older than 5 minutes (300) when Jamie calls you directly; set
+// JAMIE_TIMESTAMP_TOLERANCE_SECONDS=300 to opt in. Behind Hookdeck leave it at 0: Hookdeck
+// retries and replays resend the original timestamp, so a window rejects late redeliveries.
+// An invalid value leaves the check off, with a warning.
+const DEFAULT_TOLERANCE_SECONDS = 0;
 let warnedInvalidTolerance = false;
 function timestampToleranceSeconds(): number {
   const raw = (process.env.JAMIE_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
   if (raw === '') return DEFAULT_TOLERANCE_SECONDS;
   if (!/^\d+$/.test(raw)) {
     if (!warnedInvalidTolerance) {
-      console.warn(`JAMIE_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; using ${DEFAULT_TOLERANCE_SECONDS}`);
+      console.warn(`JAMIE_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
       warnedInvalidTolerance = true;
     }
     return DEFAULT_TOLERANCE_SECONDS;

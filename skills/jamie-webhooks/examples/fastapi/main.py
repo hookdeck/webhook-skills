@@ -22,11 +22,12 @@ app = FastAPI()
 # v0 = HMAC-SHA256 of "<t>.<raw body>", keyed with the signing secret string's UTF-8 bytes as-is.
 # https://docs.meetjamie.ai/developers/webhooks/security-verification
 
-# Replay window in seconds (Jamie's docs: reject timestamps older than 5 minutes). 0 disables it.
-# Hookdeck retries and replays keep the original timestamp, so behind Hookdeck late redeliveries
-# fail a 300 s window: set JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0 there. An invalid value falls back
-# to 300, with a warning.
-DEFAULT_TOLERANCE_SECONDS = 300
+# Optional replay window in seconds, off by default (0). Jamie's docs recommend rejecting
+# timestamps older than 5 minutes (300) when Jamie calls you directly; set
+# JAMIE_TIMESTAMP_TOLERANCE_SECONDS=300 to opt in. Behind Hookdeck leave it at 0: Hookdeck
+# retries and replays resend the original timestamp, so a window rejects late redeliveries.
+# An invalid value leaves the check off, with a warning.
+DEFAULT_TOLERANCE_SECONDS = 0
 _warned_invalid_tolerance = False
 
 
@@ -38,9 +39,9 @@ def timestamp_tolerance_seconds() -> int:
     if not (raw.isascii() and raw.isdigit()):
         if not _warned_invalid_tolerance:
             logger.warning(
-                "JAMIE_TIMESTAMP_TOLERANCE_SECONDS=%r is not a whole number of seconds; using %d",
+                "JAMIE_TIMESTAMP_TOLERANCE_SECONDS=%r is not a whole number of seconds; "
+                "the timestamp check is off",
                 raw,
-                DEFAULT_TOLERANCE_SECONDS,
             )
             _warned_invalid_tolerance = True
         return DEFAULT_TOLERANCE_SECONDS

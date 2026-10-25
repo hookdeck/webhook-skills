@@ -29,7 +29,7 @@ On the webhooks page, click **Test** next to the webhook. Jamie sends a realisti
 
 ## Timestamp Window
 
-Jamie's docs reject signatures older than 5 minutes. The examples default to that (`JAMIE_TIMESTAMP_TOLERANCE_SECONDS=300`). Behind Hookdeck set it to `0`: retries and replays resend the original timestamp, so a 5-minute window rejects them.
+Jamie's docs recommend rejecting signatures older than 5 minutes when Jamie calls you directly. The examples leave that window off by default (`JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0`); set `300` to opt in. Behind Hookdeck keep `0`: retries and replays resend the original timestamp, so a 5-minute window rejects them.
 
 ## Local Development
 

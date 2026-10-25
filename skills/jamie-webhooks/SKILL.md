@@ -37,7 +37,7 @@ Jamie sends `x-jamie-signature: t=<unix seconds>,v0=<lowercase hex>`. `v0` is HM
 const crypto = require('crypto');
 
 // rawBody: Buffer of the exact request bytes (express.raw({ type: '*/*' }), not express.json)
-function verifyJamie(rawBody, signatureHeader, secret, toleranceSeconds = 300) {
+function verifyJamie(rawBody, signatureHeader, secret, toleranceSeconds = 0) {
   if (!secret || !signatureHeader) return false;
   let t; const v0 = [];
   for (const kv of signatureHeader.split(',')) {
@@ -59,7 +59,7 @@ function verifyJamie(rawBody, signatureHeader, secret, toleranceSeconds = 300) {
 ```python
 import hashlib, hmac, time
 
-def verify_jamie(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify_jamie(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
     if not secret or not header:
         return False
     t, v0 = None, []
@@ -79,7 +79,7 @@ Respond **401** when the header is missing or malformed or the signature does no
 
 ### Timestamp window
 
-Jamie's docs say to reject timestamps older than 5 minutes (300 s). The examples make this `JAMIE_TIMESTAMP_TOLERANCE_SECONDS` (default `300`, `0` disables it). Hookdeck retries and replays resend the **original** timestamp (and Jamie's own retries run up to about an hour after the first attempt), so a 5-minute window rejects late redeliveries. Behind Hookdeck, set it to `0` and rely on Hookdeck's verification, or accept that late retries fail.
+The timestamp window is **opt-in**: `JAMIE_TIMESTAMP_TOLERANCE_SECONDS` defaults to `0` (off). Jamie's docs recommend rejecting timestamps older than 5 minutes (300 s) when Jamie calls you directly, so set `300` there if you want that. Behind Hookdeck keep `0`: Hookdeck retries and replays resend the **original** timestamp (and Jamie's own retries run up to about an hour after the first attempt), so a window rejects late redeliveries.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -107,7 +107,7 @@ The event name is in `metadata.event` and in the `jamie-event` header.
 
 ```bash
 JAMIE_WEBHOOK_SECRET=your_signing_secret   # shown once when the webhook is created
-JAMIE_TIMESTAMP_TOLERANCE_SECONDS=300      # 0 disables the replay window (use 0 behind Hookdeck)
+JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0        # opt-in replay window; Jamie's docs suggest 300 when called directly
 ```
 
 ## Local Development

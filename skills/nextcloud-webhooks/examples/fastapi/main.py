@@ -40,12 +40,17 @@ async def require_nextcloud_credential(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing webhook credential")
 
 
+def _obj(value) -> dict:
+    """Return value if it's a JSON object, else {} (fields may be missing or another type)."""
+    return value if isinstance(value, dict) else {}
+
+
 def handle_event(payload: dict) -> None:
-    event = payload.get("event") or {}
+    event = _obj(payload.get("event"))
     cls = event.get("class")
-    user = payload.get("user") or {}
+    user = _obj(payload.get("user"))
     uid = user.get("uid")
-    node = event.get("node") or {}
+    node = _obj(event.get("node"))
     short_name = cls.split("\\")[-1] if isinstance(cls, str) else None
 
     if cls == "OCP\\Files\\Events\\Node\\NodeCreatedEvent":
@@ -70,8 +75,8 @@ def handle_event(payload: dict) -> None:
         "OCP\\Files\\Events\\Node\\NodeRestoredEvent",
     ):
         # two-node events carry event.source and event.target (either may lack an id)
-        source = (event.get("source") or {}).get("path")
-        target = (event.get("target") or {}).get("path")
+        source = _obj(event.get("source")).get("path")
+        target = _obj(event.get("target")).get("path")
         print(f"{short_name} by {uid}: {source} -> {target}")
         # TODO: update your copy of the path
 

@@ -133,12 +133,14 @@ def test_returns_500_without_secret(monkeypatch):
 
 
 class TestTimestampWindow:
-    def test_rejects_older_than_300_seconds_by_default(self):
+    def test_off_by_default_so_old_timestamps_verify(self):
+        body = event()
+        assert post(body, sign(body, int(time.time()) - 86400)).status_code == 200
+
+    def test_rejects_older_than_300_seconds_when_opted_in(self, monkeypatch):
+        monkeypatch.setenv("JAMIE_TIMESTAMP_TOLERANCE_SECONDS", "300")
         body = event()
         assert post(body, sign(body, int(time.time()) - 301)).status_code == 401
-
-    def test_accepts_inside_default_window(self):
-        body = event()
         assert post(body, sign(body, int(time.time()) - 120)).status_code == 200
 
     def test_disabled_with_zero(self, monkeypatch):
@@ -152,10 +154,10 @@ class TestTimestampWindow:
         assert post(body, sign(body, int(time.time()) - 1800)).status_code == 200
         assert post(body, sign(body, int(time.time()) - 7200)).status_code == 401
 
-    def test_invalid_value_falls_back_to_300(self, monkeypatch):
+    def test_invalid_value_leaves_check_off(self, monkeypatch):
         monkeypatch.setenv("JAMIE_TIMESTAMP_TOLERANCE_SECONDS", "soon")
         body = event()
-        assert post(body, sign(body, int(time.time()) - 1000)).status_code == 401
+        assert post(body, sign(body, int(time.time()) - 1000)).status_code == 200
 
 
 def test_verify_jamie_bytes():
