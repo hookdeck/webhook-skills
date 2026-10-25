@@ -38,7 +38,8 @@ npx hookdeck-cli listen 8000 incident-io --path /webhooks/incident-io
 ```
 
 Add the tunnel URL as an endpoint under **Settings → Webhooks**, copy its Signing secret into `.env`, then
-trigger a subscribed event (for example, declare a test incident).
+trigger a subscribed event. The endpoint settings can **send test events**, show recent deliveries and
+retry failed ones, which is quicker than declaring a real incident to exercise your handler.
 
 ## What Happens When My Endpoint Fails?
 

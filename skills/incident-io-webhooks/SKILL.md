@@ -42,15 +42,25 @@ after the prefix, any other value is used as UTF-8 bytes.
 ```javascript
 import crypto from 'node:crypto';
 
-const s = process.env.INCIDENT_IO_WEBHOOK_SECRET;
-const key = s.startsWith('whsec_') ? Buffer.from(s.slice(6), 'base64') : Buffer.from(s, 'utf8');
+function secretToKey(s) {
+  if (!s) return Buffer.alloc(0);
+  if (!s.startsWith('whsec_')) return Buffer.from(s, 'utf8');
+  const encoded = s.slice('whsec_'.length);
+  // Buffer.from(x, 'base64') skips invalid characters, so check the alphabet first
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return Buffer.alloc(0);
+  return Buffer.from(encoded, 'base64');
+}
+
+const key = secretToKey(process.env.INCIDENT_IO_WEBHOOK_SECRET);
 // id/ts/sig = webhook-id / webhook-timestamp / webhook-signature headers; rawBody = Buffer
 if (key.length === 0 || !/^[1-9]\d*$/.test(ts)) throw new Error('Bad secret or timestamp');
 const expected = Buffer.from(
   crypto.createHmac('sha256', key).update(`${id}.${ts}.`).update(rawBody).digest('base64')
 );
 const valid = sig.split(' ').some((entry) => {
-  const received = Buffer.from(entry.startsWith('v1,') ? entry.slice(3) : ''); // compare base64 text
+  const comma = entry.indexOf(',');
+  if (comma === -1 || entry.slice(0, comma) !== 'v1') return false; // version tag must be exactly v1
+  const received = Buffer.from(entry.slice(comma + 1)); // compare base64 text, don't decode
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 });
 const body = JSON.parse(rawBody.toString('utf8')); // only after valid === true
