@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Every Agentcard delivery carries `AgentCard-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the endpoint's **whole** secret string, `whsec_` prefix included, as UTF-8. **This is not Standard Webhooks**: don't use the `standardwebhooks` or `svix` libraries, and don't strip or base64-decode the prefix. Several `v1` values are sent during secret rotation; accept if any matches. The legacy `X-AgentCard-Signature: sha256=<hex>` header signs the body alone and is not used by the examples.
+Every Agentcard delivery carries `AgentCard-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the endpoint's **whole** secret string, `whsec_` prefix included, as UTF-8. **This is not Standard Webhooks**: don't use the `standardwebhooks` or `svix` libraries, and don't strip or base64-decode the prefix. `roll_secret` signs deliveries with the new secret from the next event, and Agentcard documents no overlap period, so update your secret promptly; the examples accept the header if any `v1` matches, which is harmless. The legacy `X-AgentCard-Signature: sha256=<hex>` header signs the body alone and is not used by the examples.
 
 ### Verification (Node.js)
 

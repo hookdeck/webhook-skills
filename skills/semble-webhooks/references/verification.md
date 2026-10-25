@@ -15,7 +15,7 @@ X-Webhook-Timestamp: 1700000500
 - Signed message: `"<t>.<raw request body>"`
 - `X-Webhook-Timestamp` holds the same value as `t`. Use the `t` from `X-Webhook-Signature`; that is the value Hookdeck verifies.
 
-Verify by splitting the header on `,`, trimming each part (a space may follow the comma), and splitting each on the first `=`. Take `t` and **every** `v1`: Semble sends several while a secret is being rotated, and the request is valid if any one matches. Reject a header with no `t` or no `v1`.
+Verify by splitting the header on `,`, trimming each part (a space may follow the comma), and splitting each on the first `=`. Take `t` and **every** `v1` and accept if any one matches. Semble's docs show a single `v1` and don't say it sends several during rotation, so this is only defensive. Reject a header with no `t` or no `v1`.
 
 ```javascript
 const expected = crypto.createHmac('sha256', secret)
@@ -49,7 +49,7 @@ The signature covers `t`, so an attacker can't refresh an old request's timestam
 
 - **Raw body:** the signature covers the exact bytes. Do not parse and re-serialise JSON first (`express.raw({ type: '*/*' })`, `request.text()`, `await request.body()`). In Express, `type: '*/*'` makes verification independent of the `Content-Type`.
 - **Secret as-is:** don't base64-decode the `secret` or strip a prefix.
-- **Several `v1` values:** during rotation, accept any match; don't read only the first.
+- **Several `v1` values:** not documented by Semble; the examples accept any match rather than reading only the first, which costs nothing.
 - **Status codes:** Semble's guide says to reject failures with 401 or 403; the examples return 400 for a bad signature. Semble's docs don't say which statuses are retried, so after fixing the secret requeue the message from the Webhook Logs page.
 - **Subscription pause:** repeated delivery failures pause the subscription (`deliveryPaused: true`). Fix the endpoint, then set it back with `updateWebhook`.
 

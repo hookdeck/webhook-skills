@@ -7,7 +7,7 @@ import crypto from 'crypto';
 // Semble signs every delivery with an X-Webhook-Signature header:
 //   t=<unix seconds>,v1=<lowercase hex>
 // v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the webhook secret as a UTF-8 string.
-// Several v1 values can be sent while a secret is being rotated; any one matching is enough.
+// Semble's docs show one v1; accepting any matching v1 is a harmless defensive choice.
 // X-Webhook-Timestamp repeats t, but the t inside X-Webhook-Signature is the one to sign with.
 // https://docs.semble.io/docs/webhooks/guide/
 

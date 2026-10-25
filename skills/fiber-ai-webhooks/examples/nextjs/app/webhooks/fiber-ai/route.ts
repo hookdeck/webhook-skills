@@ -48,8 +48,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Dispatch on the body's `type`. job.changed carries a `profiles` array and
-  // is recognised by that shape if no type is present.
+  // Fiber AI documents no event-type field or header (one endpoint per event type is the
+  // reliable way to tell events apart). Read `type` defensively if present; job.changed
+  // carries a `profiles` array and is recognised by that shape.
   const type =
     typeof event.type === 'string'
       ? event.type

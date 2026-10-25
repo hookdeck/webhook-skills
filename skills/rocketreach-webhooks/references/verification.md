@@ -50,7 +50,7 @@ would turn a bad header into a 500 instead of a 401.
   Next.js `request.text()`, in FastAPI `await request.body()`.
 - **Secret is generated, not optional in practice**: with no secret, deliveries have no signature
   header and verification fails.
-- **Regenerating the secret** invalidates the old one immediately; update your config first.
+- **Regenerating the secret:** RocketReach documents no overlap period for the old secret, so assume deliveries are signed with the new one straight away and update your config promptly.
 - **Bulk lookups** deliver a JSON list; the signature covers the whole body.
 - **Use the secret as UTF-8 text**, not base64-decoded bytes.
 

@@ -52,7 +52,7 @@ describe('Agentcard webhook signature verification', () => {
     expect((await post(cardCreated, `t=${ts}, v1=${v1For(cardCreated, ts)}`)).status).toBe(200);
   });
 
-  it('accepts when any v1 matches (secret rotation)', async () => {
+  it('accepts when any v1 matches (defensive parsing)', async () => {
     const ts = Math.floor(Date.now() / 1000);
     const old = v1For(cardCreated, ts, 'whsec_old_secret');
     expect((await post(cardCreated, `t=${ts},v1=${old},v1=${v1For(cardCreated, ts)}`)).status).toBe(200);

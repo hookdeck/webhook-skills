@@ -32,7 +32,7 @@ function timestampToleranceSeconds(): number {
 timestampToleranceSeconds(); // surface an invalid value at startup
 
 // Split on ',', trim each part (a space after the comma is allowed), split on the first '='.
-// Several v1 values are sent during secret rotation, so keep them all.
+// Keep every v1 (Agentcard's docs show one; accepting any match is harmless).
 function parseSignatureHeader(header: string): { t?: string; v1: string[] } {
   let t: string | undefined;
   const v1: string[] = [];

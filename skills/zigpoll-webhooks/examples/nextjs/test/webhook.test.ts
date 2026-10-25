@@ -68,7 +68,7 @@ describe('Zigpoll webhook signature verification', () => {
     expect((await post(submitted, header)).status).toBe(200);
   });
 
-  it('accepts when any v1 matches (secret rotation)', async () => {
+  it('accepts when any v1 matches (defensive parsing)', async () => {
     const t = Date.now();
     const header = `t=${t},v1=${v1Of(submitted, t, 'old_secret')},v1=${v1Of(submitted, t)}`;
     expect((await post(submitted, header)).status).toBe(200);

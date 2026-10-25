@@ -25,7 +25,7 @@ curl -X POST https://api.agentcard.sh/api/v2/webhook_endpoints \
 
 ## Get Your Signing Secret
 
-The create response carries the endpoint's `secret` (it looks like `whsec_...`) once. It can be read again with `GET /api/v2/webhook_endpoints/{id}/secret` and replaced with `POST /api/v2/webhook_endpoints/{id}/roll_secret`; during rotation Agentcard may send several `v1` values in one header.
+The create response carries the endpoint's `secret` (it looks like `whsec_...`) once. It can be read again with `GET /api/v2/webhook_endpoints/{id}/secret` and replaced with `POST /api/v2/webhook_endpoints/{id}/roll_secret`; deliveries are signed with the new secret from the next event, and Agentcard documents no overlap period, so update `AGENTCARD_WEBHOOK_SECRET` as soon as you roll it.
 
 **Paste the whole secret, including the `whsec_` prefix.** Agentcard uses it as a plain HMAC key, UTF-8, exactly as shown. This is not Standard Webhooks: don't strip the prefix or base64-decode it, and don't use the `standardwebhooks` or `svix` libraries.
 

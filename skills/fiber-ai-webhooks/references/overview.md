@@ -52,9 +52,12 @@ Example (`reveal.completed`):
 }
 ```
 
-The docs' example payloads do not include a `type` field. The handlers dispatch on the
-body's `type` when present (and treat a `profiles` array as `job.changed`); check the
-`examplePayload` from `listWebhookEventTypes` or `sendTestWebhookEvent` to see exactly what your endpoint receives.
+The docs' example payloads do not include a `type` field, and Fiber AI names no event header,
+so the event type isn't documented anywhere in the delivery. To tell events apart, subscribe
+one endpoint per event type and route by URL, or compare deliveries with the `examplePayload`
+that `listWebhookEventTypes` returns for each type. The example handlers read a `type` field
+only defensively, if one is present, and treat a `profiles` array as `job.changed`; use
+`sendTestWebhookEvent` to see exactly what your endpoint receives.
 
 ## Delivery Behavior
 

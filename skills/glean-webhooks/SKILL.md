@@ -85,7 +85,9 @@ comparing every space-separated `v1,<base64>` entry in constant time.
 
 Triggers are created from per-datasource **presets**. Preset ids are per
 deployment (discover them with `GET /api/trigger-presets`), so there is no fixed
-event list. Dispatch on the payload fields:
+event list. Glean's public docs don't publish the delivery body; the fields below come from
+the test fixture in Glean's customer-meeting-prep cookbook recipe, so treat them as illustrative
+and confirm them against a real delivery:
 
 | Field | Example | Meaning |
 |-------|---------|---------|

@@ -53,7 +53,7 @@ describe('Semble webhook signature verification', () => {
     expect((await post(bookingCreated, header)).status).toBe(200);
   });
 
-  it('accepts when any of several v1 values matches (secret rotation)', async () => {
+  it('accepts when any of several v1 values matches (defensive parsing)', async () => {
     const ts = Math.floor(Date.now() / 1000);
     const stale = hmac(bookingCreated, ts, 'old_secret');
     const header = `t=${ts},v1=${stale},v1=${hmac(bookingCreated, ts)}`;

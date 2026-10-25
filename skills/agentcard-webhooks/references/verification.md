@@ -9,7 +9,7 @@ AgentCard-Signature: t=1757264400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0
 ```
 
 - `t`: Unix timestamp in seconds
-- `v1`: lowercase hex HMAC-SHA256 (64 chars). Several `v1` values can appear while a secret is being rotated; accept if any matches.
+- `v1`: lowercase hex HMAC-SHA256 (64 chars). Agentcard's docs show one `v1`; the examples accept the header if any `v1` matches, defensively.
 - Key: the endpoint's **whole** secret string, including `whsec_`, as UTF-8
 - Signed message: `"<t>.<raw request body>"`
 
@@ -67,7 +67,7 @@ The signature covers `t`, so an attacker can't refresh an old request's timestam
 ## How Do I Debug Verification Failures?
 
 - Compare `AGENTCARD_WEBHOOK_SECRET` with the endpoint's secret (`GET /api/v2/webhook_endpoints/{id}/secret`): whole value, no whitespace or quotes, `whsec_` included.
-- After `roll_secret`, update the verifier; during rotation any one `v1` matching is enough.
+- After `roll_secret`, update the verifier right away: deliveries are signed with the new secret from the next event, and no overlap period is documented.
 - A body-parsing middleware ahead of your route (`express.json()`) re-serialises the body and breaks the signature.
 - Sandbox and production endpoints have different secrets.
 - If you set `AGENTCARD_TIMESTAMP_TOLERANCE_SECONDS`, an old `t` (a retry or replay) fails by design.

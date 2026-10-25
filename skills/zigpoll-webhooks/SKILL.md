@@ -23,7 +23,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Every Zigpoll delivery carries `X-Zigpoll-Signature: t=<unix milliseconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the account-wide **Signing Secret** (Integrations → Webhooks, shown once). Several `v1` values can be present during secret rotation: accept if any matches. `t` is in **milliseconds**.
+Every Zigpoll delivery carries `X-Zigpoll-Signature: t=<unix milliseconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the account-wide **Signing Secret** (Integrations → Webhooks, shown once). Zigpoll's docs show one `v1`; rotation goes through Zigpoll support and applies immediately (queued retries switch to the new secret), so there is no overlap period. The examples still accept the header if any `v1` matches, which is harmless. `t` is in **milliseconds**.
 
 ### Verification (Node.js)
 

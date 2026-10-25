@@ -27,7 +27,10 @@ in a default branch and read `reason`, `title` and `view_url` for context.
 
 ## Event Payload Structure
 
-Example delivery from Glean's customer-meeting-prep cookbook:
+Illustrative only: Glean's public docs don't publish a delivery body schema, and the
+customer-meeting-prep cookbook page doesn't show one. The JSON below is the test fixture
+(`fixtures/delivery.json`) from that recipe's source in the `gleanwork/glean-cookbook` repo, so
+confirm the field names against a real delivery before relying on them:
 
 ```json
 {

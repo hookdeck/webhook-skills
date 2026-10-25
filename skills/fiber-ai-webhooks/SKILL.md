@@ -71,8 +71,11 @@ where the window can be dropped or widened. Dedupe on `svix-id` instead, since i
 
 ## Common Event Types
 
-Dispatch on the body's `type`. Names are from the
-[Fiber AI webhook docs](https://docs.fiber.ai/monitoring/webhooks).
+Names are from the [Fiber AI webhook docs](https://docs.fiber.ai/monitoring/webhooks).
+**Fiber AI documents no event-type field in the body and no event header**, so there is no
+documented field to dispatch on. Either give each event type its own endpoint (and route by
+URL), or call `listWebhookEventTypes` and match deliveries against each type's
+`examplePayload`.
 
 | Event | Fires when |
 |-------|------------|
@@ -87,9 +90,10 @@ Dispatch on the body's `type`. Names are from the
 More: `audience.prospect_export_completed`, `audience.company_export_completed`,
 `audience.build_completed`, `github_to_linkedin.completed`, `domain_lookup.completed`,
 `saved_search.run_completed`, `depth_chart.completed` and others; see
-[references/overview.md](references/overview.md). The docs' example payloads do not show a
-`type` field, so confirm yours with `sendTestWebhookEvent` or the `examplePayload` from
-`listWebhookEventTypes`, and keep a `default` branch.
+[references/overview.md](references/overview.md). The examples read a `type` field only
+defensively, in case one is present, and otherwise recognise `job.changed` by its `profiles`
+array; keep a `default` branch and confirm what your endpoint receives with
+`sendTestWebhookEvent`.
 
 ## Environment Variables
 

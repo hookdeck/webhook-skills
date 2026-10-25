@@ -29,7 +29,7 @@ npm start
 
 Server runs on http://localhost:3000
 
-The handler reads the raw body with `express.raw({ type: '*/*' })`, verifies `X-Pennylane-Signature` (`t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`, any one of several `v1` values may match), then dispatches on the body's `event` (`customer_invoice.e_invoicing_status_updated`, `dms_file.created`, `supplier_invoice.e_invoicing_received`). A bad signature returns 400: Pennylane disables a subscription immediately on 401, 403, 404 or 410. The timestamp check is off by default because retries and replays keep the original timestamp; set `PENNYLANE_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
+The handler reads the raw body with `express.raw({ type: '*/*' })`, verifies `X-Pennylane-Signature` (`t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`, any one of several `v1` values may match), then dispatches on the body's `event` (`customer_invoice.e_invoicing_status_updated`, `dms_file.created`, `supplier_invoice.e_invoicing_received`). A bad signature returns 400: Pennylane disables a subscription immediately on 401, 403, 404 or 410. The timestamp check is off by default because Hookdeck retries and replays keep the original timestamp; set `PENNYLANE_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
 
 ## Test
 

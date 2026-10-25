@@ -28,7 +28,7 @@ Every Hail delivery carries `X-Hail-Signature: t=<unix>,v1=<hex>`. `v1` is the H
 
 **This is not Standard Webhooks.** The secret looks like `whsec_...`, but do not use the `standardwebhooks` or `svix` libraries, and do not strip or base64-decode the `whsec_` prefix.
 
-Several `v1` values may be sent during secret rotation: accept if any matches. Reject a header with no `t` or no `v1`.
+Hail's signer emits a single `v1`, and rotating the secret (`POST /webhooks/{id}/rotate-secret`) invalidates the old one immediately, so there is no overlap period to cover. The code below still accepts any matching `v1`, which costs nothing. Reject a header with no `t` or no `v1`.
 
 ### Verification (Node.js)
 
@@ -46,7 +46,7 @@ function verifyHail(rawBody, signatureHeader, secret) {
     if (k === 't') t = v; else if (k === 'v1') v1s.push(v);
   }
   if (!t || v1s.length === 0) return false;
-  // Optional replay window, off by default: retries and replays keep the original timestamp
+  // Optional replay window, off by default: Hookdeck retries and replays keep the original timestamp
   const expected = Buffer.from(crypto.createHmac('sha256', secret) // whole secret, as-is
     .update(`${t}.`).update(rawBody).digest('hex'));
   // exactly 64 hex chars first, so a bad value can't truncate or throw
@@ -81,7 +81,7 @@ def verify_hail(raw_body: bytes, signature_header: str, secret: str) -> bool:
 
 ### Timestamp window: off by default
 
-A 5-minute freshness window is common advice, but **Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late retries.** The examples therefore skip the freshness check unless you set `HAIL_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (default `0` = off). Dedupe on `X-Hail-Delivery` or the event `id` instead. [references/verification.md](references/verification.md) shows exactly where the window can be dropped or widened.
+A 5-minute freshness window is common advice, but **Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late retries.** (Hail itself re-signs each of its own attempts with the current time.) The examples therefore skip the freshness check unless you set `HAIL_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (default `0` = off). Dedupe on `X-Hail-Delivery` or the event `id` instead. [references/verification.md](references/verification.md) shows exactly where the window can be dropped or widened.
 
 ## Common Event Types
 

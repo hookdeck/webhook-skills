@@ -108,7 +108,7 @@ class TestSignatureVerification:
         assert post(INVOICE_UPDATED, header).status_code == 400
 
     def test_accepts_old_timestamp_by_default(self):
-        # Retries and replays (including Hookdeck's) keep the original timestamp
+        # Hookdeck retries and replays keep the original timestamp
         old = int(time.time()) - 3600
         assert post(INVOICE_UPDATED, sign(INVOICE_UPDATED, old)).status_code == 200
 

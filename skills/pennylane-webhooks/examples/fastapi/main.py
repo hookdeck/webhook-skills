@@ -19,11 +19,11 @@ app = FastAPI()
 # Pennylane signs every delivery with an X-Pennylane-Signature header:
 #   t=<unix seconds>,v1=<hex>
 # v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the subscription secret as-is.
-# During secret rotation several v1 values are sent; any one that matches is enough.
+# Pennylane's docs show one v1; accepting any matching v1 is a harmless defensive choice.
 # https://pennylane.readme.io/docs/authorization
 
-# Optional replay window in seconds. Off by default (0): retries and replays, including
-# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Optional replay window in seconds. Off by default (0): Hookdeck retries and replays carry the
+# original timestamp, so a window would reject late redeliveries.
 # Set PENNYLANE_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 # treated as 0, with a warning.
 _warned_invalid_tolerance = False

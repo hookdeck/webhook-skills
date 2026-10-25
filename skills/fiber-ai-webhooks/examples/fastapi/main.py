@@ -63,8 +63,9 @@ async def fiber_ai_webhook(
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # Dispatch on the body's `type`. job.changed carries a `profiles` array and
-    # is recognised by that shape if no type is present.
+    # Fiber AI documents no event-type field or header (one endpoint per event type is the
+    # reliable way to tell events apart). Read `type` defensively if present; job.changed
+    # carries a `profiles` array and is recognised by that shape.
     event_type = event.get("type")
     if not isinstance(event_type, str):
         event_type = "job.changed" if isinstance(event.get("profiles"), list) else "unknown"

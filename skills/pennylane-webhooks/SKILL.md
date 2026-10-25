@@ -26,7 +26,7 @@ Pennylane is French accounting software. Its webhooks are in Beta.
 
 ## Essential Code (USE THIS)
 
-Every Pennylane delivery carries `X-Pennylane-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the subscription `secret` **as-is**. Pennylane returns the secret only once, in the create-subscription response (scope `companies:webhook_subscriptions:all`), so save it then. Several `v1` values are sent during secret rotation: accept the request if any one matches, and reject a header with no `t` or no `v1`.
+Every Pennylane delivery carries `X-Pennylane-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the subscription `secret` **as-is**. Pennylane returns the secret only once, in the create-subscription response (scope `companies:webhook_subscriptions:all`), so save it then. Pennylane's docs show a single `v1` and don't describe secret rotation; the code below accepts the request if any `v1` matches (harmless either way) and rejects a header with no `t` or no `v1`.
 
 ### Verification (Node.js)
 
@@ -46,7 +46,7 @@ function verifyPennylane(rawBody, header, secret) {
     else if (key === 'v1') v1.push(value);
   }
   if (!t || v1.length === 0) return false;
-  // Optional replay window, off by default: retries and replays keep the original timestamp
+  // Optional replay window, off by default: Hookdeck retries and replays keep the original timestamp
   const expected = Buffer.from(
     crypto.createHmac('sha256', secret).update(`${t}.`).update(rawBody).digest('hex'));
   // 64 hex chars first: Buffer.from(x, 'hex') silently truncates invalid hex
@@ -88,7 +88,7 @@ Pennylane suggests (optionally) rejecting a `t` older than about 5 minutes. **Ho
 
 ### Status codes
 
-Return **400** for a bad signature. Pennylane disables the subscription immediately on 401, 403, 404 or 410 (and on TLS errors), whereas other failures are retried with back-off from 30 seconds up to 12 hours. Return 2xx within a few seconds, then process asynchronously.
+Return **400** for a bad signature. Pennylane disables the subscription on a permanent delivery error (HTTP 401, 403, 404 or 410), whereas other failures are retried (Pennylane doesn't document the schedule) until repeated failures over a sustained period disable it too. Return 2xx within a few seconds, then process asynchronously.
 
 ## Event Types
 
@@ -106,7 +106,7 @@ Envelope: `id` (delivery id, use it to deduplicate), `event`, `retry_count`, `cr
 
 | Header | Description |
 |--------|-------------|
-| `X-Pennylane-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` (several `v1` during secret rotation) |
+| `X-Pennylane-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` |
 | `User-Agent` | `Pennylane-Webhooks` |
 
 ## Environment Variables

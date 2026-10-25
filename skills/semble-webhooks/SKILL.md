@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Every Semble delivery carries `X-Webhook-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the lowercase hex HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the subscription's `secret` as a UTF-8 string (the `createWebhook` GraphQL mutation returns it). Several `v1` values can be sent while a secret is rotated: accept if any one matches. `X-Webhook-Timestamp` repeats `t`, but sign with the `t` from `X-Webhook-Signature`.
+Every Semble delivery carries `X-Webhook-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the lowercase hex HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the subscription's `secret` as a UTF-8 string (the `createWebhook` GraphQL mutation returns it). Semble's docs show a single `v1` and don't describe sending several during rotation; the code below accepts the header if any `v1` matches, which is harmless. `X-Webhook-Timestamp` repeats `t`, but sign with the `t` from `X-Webhook-Signature`.
 
 ### Verification (Node.js)
 

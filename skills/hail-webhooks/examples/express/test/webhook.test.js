@@ -66,7 +66,7 @@ describe('Hail webhook signature verification', () => {
     expect((await post(emailReceived, `t=${t}, v1=${v1For(emailReceived, t)}`)).status).toBe(200);
   });
 
-  it('accepts when any of several v1 values matches (secret rotation)', async () => {
+  it('accepts when any of several v1 values matches (defensive parsing)', async () => {
     const t = Math.floor(Date.now() / 1000);
     const stale = v1For(emailReceived, t, 'whsec_old_secret');
     const header = `t=${t},v1=${stale},v1=${v1For(emailReceived, t)}`;
@@ -117,7 +117,7 @@ describe('Hail webhook signature verification', () => {
     expect((await post(emailReceived, header)).status).toBe(400);
   });
 
-  it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+  it('accepts an old timestamp by default (Hookdeck retries and replays keep the original)', async () => {
     const old = Math.floor(Date.now() / 1000) - 3600;
     expect((await post(emailReceived, sign(emailReceived, old))).status).toBe(200);
   });

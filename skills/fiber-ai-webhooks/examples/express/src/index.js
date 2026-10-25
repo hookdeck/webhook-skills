@@ -55,8 +55,9 @@ app.post('/webhooks/fiber-ai',
       return res.status(400).json({ error: 'Invalid JSON' });
     }
 
-    // Dispatch on the body's `type`. job.changed carries a `profiles` array and
-    // is recognised by that shape if no type is present.
+    // Fiber AI documents no event-type field or header (one endpoint per event type is the
+    // reliable way to tell events apart). Read `type` defensively if present; job.changed
+    // carries a `profiles` array and is recognised by that shape.
     const type = typeof event.type === 'string'
       ? event.type
       : Array.isArray(event.profiles) ? 'job.changed' : 'unknown';

@@ -29,7 +29,7 @@ npm start
 
 Server runs on http://localhost:3000
 
-The handler reads the raw body with `express.raw({ type: '*/*' })`, verifies `X-Hail-Signature` (`t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`, the whole `whsec_` secret as the key), then dispatches on the body's `type`. The timestamp check is off by default because retries and replays keep the original timestamp; set `HAIL_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
+The handler reads the raw body with `express.raw({ type: '*/*' })`, verifies `X-Hail-Signature` (`t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">`, the whole `whsec_` secret as the key), then dispatches on the body's `type`. The timestamp check is off by default because Hookdeck retries and replays keep the original timestamp (Hail re-signs its own retries); set `HAIL_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
 
 ## Test
 

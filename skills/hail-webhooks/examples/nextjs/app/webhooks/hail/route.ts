@@ -11,8 +11,8 @@ import crypto from 'crypto';
 // no stripping or base64-decoding of the whsec_ prefix.
 // https://hail.so/docs/webhooks
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Optional replay window in seconds. Off by default (0): Hookdeck retries and replays carry the
+// original timestamp, so a window would reject late redeliveries (Hail re-signs its own retries).
 // Set HAIL_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 // treated as 0, with a warning.
 let warnedInvalidTolerance = false;
@@ -31,7 +31,7 @@ function timestampToleranceSeconds(): number {
 timestampToleranceSeconds(); // surface an invalid value at startup
 
 // "t=...,v1=..." -> { t, v1: [...] }. Parts are trimmed (a space after the comma is allowed) and
-// several v1 values can appear during secret rotation.
+// every v1 is collected (Hail sends one; accepting any match is harmless).
 function parseSignatureHeader(header: string): { t: string | null; v1: string[] } {
   let t: string | null = null;
   const v1: string[] = [];

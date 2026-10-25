@@ -22,11 +22,11 @@ handler can GET the new learner).
 ## Event Names
 
 `eventName` is the event's display name with the spaces removed, for example "User Created"
-becomes `UserCreated`. Absorb's help article lists the display names below; the names shown
-in the SKILL.md table (`UserCreated`, `CertificateAwarded`, `EnrollmentCompletedbyAdmin`,
-`OnlineCourseActivated`) are the confirmed examples, and the rest follow the same rule. Check
-the first real delivery of any other event in your Absorb portal (or the Hookdeck request
-view) before relying on its exact casing.
+becomes `UserCreated`. Absorb's help article lists the display names below. Only
+`UserCreated` and `CertificateAwarded` are confirmed on the wire (in the article's delivery
+screenshots); the other names apply the same rule but are untested. Check the first real
+delivery of any other event in your Absorb portal (or the Hookdeck request view) before
+relying on its exact casing, and compare case-insensitively.
 
 ### Administrator events
 
@@ -63,6 +63,14 @@ view) before relying on its exact casing.
 |--------|---------|
 | `absorb-signature` | Lowercase hex HMAC-SHA256 of the raw body (see [verification.md](verification.md)) |
 | `User-Agent` | Sent on every notification; Absorb suggests using it for logging and monitoring (its value isn't documented, so don't rely on it for authentication) |
+
+## Retries
+
+When a delivery fails, Absorb retries it twice immediately, then shows it as **Failed** on the
+Webhooks page's Events tab. An admin can then retry it manually, one delivery at a time, up to
+five times. See Absorb's
+[Webhooks Delivery Dashboard](https://support.absorblms.com/hc/en-us/articles/55719405215379-Webhooks-Delivery-Dashboard)
+article. Because the same event can arrive more than once, make your handler idempotent.
 
 ## Full Event Reference
 

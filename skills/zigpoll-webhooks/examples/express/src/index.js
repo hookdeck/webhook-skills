@@ -32,7 +32,7 @@ function timestampToleranceSeconds() {
 }
 timestampToleranceSeconds(); // surface an invalid value at startup
 
-// Split on ',' and trim each part. Several v1 values can be present (secret rotation).
+// Split on ',' and trim each part. Every v1 is kept (Zigpoll sends one; accepting any match is harmless).
 function parseSignatureHeader(header) {
   let t;
   const v1 = [];

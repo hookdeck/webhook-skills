@@ -3,7 +3,8 @@
 ## Prerequisites
 
 - A Vimeo developer account and an app at [developer.vimeo.com/apps](https://developer.vimeo.com/apps)
-- An access token for the app with the `edit` scope (needed to create and update webhooks)
+- The `CAPABILITY_WEBHOOK_SCOPE` capability on the app, which lets its access tokens use the `webhooks` scope
+- An access token for the app with the `public`, `private`, `edit`, `delete` and `webhooks` scopes (Vimeo's stated prerequisite; webhooks fire only for app users whose token has the `webhooks` scope)
 - Your application's public webhook endpoint URL (use the Hookdeck CLI for local testing)
 
 Vimeo app webhooks are managed through the API; there is no dashboard screen for them.

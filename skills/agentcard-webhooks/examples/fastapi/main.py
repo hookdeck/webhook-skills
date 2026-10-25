@@ -54,7 +54,7 @@ _TS_RE = re.compile(r"[0-9]+", re.ASCII)
 
 
 def parse_signature_header(header: str):
-    """Split on ',', trim each part, split on the first '='. Keep every v1 (secret rotation)."""
+    """Split on ',', trim each part, split on the first '='. Keep every v1 (defensive; the docs show one)."""
     t = None
     v1 = []
     for part in header.split(","):

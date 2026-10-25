@@ -48,7 +48,7 @@ timestamp_tolerance_seconds()  # surface an invalid value at startup
 
 
 def parse_signature_header(header: str):
-    """Split on ',' and trim each part. Several v1 values can be present (secret rotation)."""
+    """Split on ',' and trim each part. Every v1 is kept (Zigpoll sends one; accepting any match is harmless)."""
     t = None
     v1 = []
     for part in header.split(","):

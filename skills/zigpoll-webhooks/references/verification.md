@@ -9,7 +9,7 @@ X-Zigpoll-Signature: t=1754400000000,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e7
 ```
 
 - `t`: send time in **milliseconds**
-- `v1`: hex HMAC-SHA256. More than one `v1` can appear (secret rotation): accept if any matches
+- `v1`: hex HMAC-SHA256. Zigpoll's docs show one `v1` and describe no overlap period on rotation (support rotates the secret and it applies immediately); the examples accept the header if any `v1` matches, defensively
 - Key: the account-wide Signing Secret, used as-is
 - Signed message: `"<t>.<raw request body>"`
 

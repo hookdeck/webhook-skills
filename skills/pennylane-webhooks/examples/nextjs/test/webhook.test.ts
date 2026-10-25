@@ -72,7 +72,7 @@ describe('Pennylane webhook signature verification', () => {
     expect((await post(invoiceUpdated, header)).status).toBe(200);
   });
 
-  it('accepts when any v1 matches (secret rotation)', async () => {
+  it('accepts when any v1 matches (defensive parsing)', async () => {
     const ts = Math.floor(Date.now() / 1000);
     const stale = v1For(invoiceUpdated, ts, 'old_secret');
     const fresh = v1For(invoiceUpdated, ts);
@@ -122,7 +122,7 @@ describe('Pennylane webhook signature verification', () => {
     expect((await post(invoiceUpdated, header)).status).toBe(400);
   });
 
-  it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+  it('accepts an old timestamp by default (Hookdeck retries and replays keep the original)', async () => {
     const old = Math.floor(Date.now() / 1000) - 3600;
     expect((await post(invoiceUpdated, sign(invoiceUpdated, old))).status).toBe(200);
   });

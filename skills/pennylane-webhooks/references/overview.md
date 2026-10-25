@@ -44,8 +44,8 @@ Required OAuth scopes for deliveries: `customer_invoices:readonly` or `:all`, `d
 
 - Respond 2xx within a few seconds; a slow response counts as a timeout and is retried.
 - Delivery is **at-least-once** and **unordered**: deduplicate on `id` and reconcile state from the payload.
-- Timeouts, connection errors, 5xx, 429 and other non-2xx are retried with back-off from 30 seconds up to 12 hours; after several days of failures the subscription is disabled (`disabled_reason: repeated_failure`).
-- **401, 403, 404, 410 or a TLS error disable the subscription at once** (`permanent_error`). Don't return these for a bad signature.
+- A response that isn't 2xx in time is treated as a failed delivery and retried. Pennylane doesn't document the retry schedule (attempts or intervals); repeated failures over a sustained period disable the subscription (`disabled_reason: repeated_failure`).
+- **401, 403, 404 or 410 disable the subscription** as a permanent delivery error (`permanent_error`). Don't return these for a bad signature.
 - A disabled subscription is not re-enabled automatically: update it with `"enabled": true` once the endpoint is fixed.
 - Optional IP allowlist (port 443): `34.242.41.54`, `54.220.249.5`, `54.75.175.133`, `54.73.179.170`, `52.17.78.48`, `52.215.138.198`. Signature verification is the recommended check.
 
