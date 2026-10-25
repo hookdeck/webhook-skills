@@ -42,4 +42,4 @@ testScenario:
     - 'Webhook node contact payload (illustrative)'
     - 'Webhook node with event_data (illustrative)'
 catalog:
-  summary: 'Authenticate SAP Emarsys Automation Center Webhook node calls (HTTP Basic auth compared in constant time), handle preset-defined contact and event_data payloads'
+  summary: 'Authenticate SAP Emarsys Automation Center Webhook node calls (`Authorization: Basic` credentials compared in constant time), handle preset-defined contact and event_data payloads'

@@ -3,6 +3,7 @@ displayName: 'YouMail'
 docs:
   webhooks: https://data.youmail.com/docs#tag/Webhooks
   verification: https://data.youmail.com/docs#tag/Webhooks
+  events: https://data.youmail.com/docs#tag/WebhookEventType
 notes: >
   YouMail Protective Services API webhooks (data.youmail.com/docs; curl may get 403,
   https://r.jina.ai/https://data.youmail.com/docs can read it). A webhook's auth is 'Basic'
@@ -33,6 +34,7 @@ notes: >
 testScenario:
   events:
     - 'CALL_EVENT'
+    - 'PROVIDER_TN_REPORT_STATUS'
     - 'WATCHLIST_SCORE_THRESHOLD'
 catalog:
-  summary: 'Authenticate YouMail Protective Services webhooks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle call event, phone insight and score threshold payloads'
+  summary: 'Authenticate YouMail Protective Services webhooks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle CALL_EVENT, PHONE_INSIGHTS, PROVIDER_TN_REPORT_STATUS and WATCHLIST_SCORE_THRESHOLD payloads'
