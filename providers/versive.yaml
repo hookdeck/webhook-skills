@@ -44,4 +44,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Versive webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle interview events
+    secret), handle interview.completed events

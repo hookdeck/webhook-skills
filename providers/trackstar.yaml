@@ -52,9 +52,9 @@ notes: >-
 testScenario:
   events:
   - 'order.created'
-  - 'connection.created'
+  - 'connection.historical-sync-completed'
   - 'connection.deleted'
 catalog:
   summary: >-
-    Verify Trackstar webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle connection, sync and order events
+    Verify Trackstar webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256), handle order.created, order.updated and connection.historical-sync-completed events

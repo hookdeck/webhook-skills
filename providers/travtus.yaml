@@ -3,6 +3,7 @@ displayName: 'Travtus'
 docs:
   webhooks: 'https://docs.travtus.com/travtus-api-and-webhook/webhook/authentication'
   verification: 'https://docs.travtus.com/travtus-api-and-webhook/webhook/authentication'
+  events: 'https://docs.travtus.com/travtus-api-and-webhook/data-types-and-endpoints/task/webhooks'
 notes: >-
   Travtus (travtus.com), the "Adam" AI assistant platform for residential property management. Webhooks
   report lease and task changes and deliver AI-generated replies for the Messaging API (SMS, email, web

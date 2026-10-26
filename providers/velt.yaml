@@ -3,6 +3,7 @@ displayName: 'Velt'
 docs:
   webhooks: 'https://docs.velt.dev/webhooks/advanced'
   verification: 'https://docs.velt.dev/webhooks/advanced'
+  events: 'https://docs.velt.dev/webhooks/advanced'
 notes: >-
   Velt (velt.dev), an SDK for in-app collaboration (comments, huddles, CRDT sync, recordings, review workflows).
   Advanced (V2) webhooks, Enterprise only, are delivered through Svix and signed per Standard Webhooks;
@@ -64,5 +65,5 @@ testScenario:
   - 'comment_annotation.assign'
 catalog:
   summary: >-
-    Verify Velt webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_`
-    secret), handle comment, huddle, CRDT and recording events
+    Verify Velt Advanced (V2) webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle comment_annotation.add, comment.add, crdt.update_data and recorder.done events

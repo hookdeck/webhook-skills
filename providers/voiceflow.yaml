@@ -3,6 +3,7 @@ displayName: 'Voiceflow'
 docs:
   webhooks: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
   verification: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
+  events: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
 notes: >-
   Voiceflow (voiceflow.com), an AI-agent building platform. Organization events webhooks report project
   and project-environment lifecycle changes (created, published, merged, deleted); Svix delivers and signs
@@ -49,5 +50,6 @@ testScenario:
   - 'organization.project.environment.created'
 catalog:
   summary: >-
-    Verify Voiceflow webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle organization project and environment events
+    Verify Voiceflow organization webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`,
+    `svix-signature`, HMAC-SHA256, `whsec_` secret), handle organization.project.created,
+    organization.project.environment.published and organization.project.environment.merged events

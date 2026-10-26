@@ -3,6 +3,7 @@ displayName: 'Trunk'
 docs:
   webhooks: 'https://docs.trunk.io/setup-and-administration/apis/webhooks'
   verification: 'https://docs.trunk.io/flaky-tests/webhooks'
+  events: 'https://docs.trunk.io/merge-queue/webhooks'
 notes: >-
   Trunk (trunk.io), CI developer tooling: Merge Queue (pull_request.* and pull_request_batch.* lifecycle
   events) and Flaky Tests (test_case.* status, monitor, quarantine and AI-investigation events). Webhooks
@@ -58,5 +59,5 @@ testScenario:
   - 'pull_request.failed'
 catalog:
   summary: >-
-    Verify Trunk webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle merge queue and flaky test events
+    Verify Trunk webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle pull_request.merged, pull_request_batch.pending_failure and v2.test_case.status_changed events

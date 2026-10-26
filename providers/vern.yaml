@@ -3,6 +3,7 @@ displayName: 'Vern'
 docs:
   webhooks: 'https://docs.vern.so/help-center/send/webhooks'
   verification: 'https://docs.vern.so/help-center/send/webhooks'
+  events: 'https://docs.vern.so/help-center/send/webhooks'
 notes: >-
   Vern (vern.so), an AI data-onboarding / spreadsheet-import platform. Workbook exports with the Webhook
   option POST the cleaned rows (in batches) to endpoints configured in an embedded Svix portal; Svix signs
@@ -47,5 +48,5 @@ testScenario:
   - 'workbook.preview.export'
 catalog:
   summary: >-
-    Verify Vern webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret),
-    handle workbook export batches
+    Verify Vern webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_` secret),
+    handle workbook.production.export and workbook.preview.export batches
