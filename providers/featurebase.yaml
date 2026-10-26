@@ -3,6 +3,7 @@ displayName: "Featurebase"
 docs:
   webhooks: https://help.featurebase.app/api-reference/1754068-receive-events-with-webhooks
   verification: https://help.featurebase.app/api-reference/1754068-receive-events-with-webhooks
+  events: https://help.featurebase.app/api-reference/1022304-webhook-events-reference
 notes: >
   Featurebase webhooks (Growth plan and higher). The old developers.featurebase.app security page
   redirects; the current guide is on help.featurebase.app. Featurebase (featurebase.app), a feedback,

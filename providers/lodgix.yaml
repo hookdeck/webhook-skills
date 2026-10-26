@@ -43,7 +43,5 @@ notes: >
 testScenario:
   events:
     - "message.received"
-    - "message.received"
-    - "message.received"
 catalog:
   summary: "Verify Lodgix webhooks (`X-Lodgix-Signature`: `sha256=` hex HMAC-SHA256 of `{X-Lodgix-Timestamp}.{body}`), handle message.received events"
