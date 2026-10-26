@@ -47,4 +47,4 @@ testScenario:
     - "draft.scheduled"
     - "draft.published"
 catalog:
-  summary: "Verify Typefully webhooks (`X-Typefully-Signature`: `sha256=` hex HMAC-SHA256 of `{X-Typefully-Timestamp}.{body}`), handle draft lifecycle events"
+  summary: "Verify Typefully webhook signatures (`X-Typefully-Signature` `sha256=<hex>`, HMAC-SHA256 over `{X-Typefully-Timestamp}.{body}`), handle draft events like draft.created, draft.scheduled and draft.published"
