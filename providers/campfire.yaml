@@ -3,49 +3,23 @@ displayName: "Campfire"
 docs:
   webhooks: https://docs.campfire.ai/guides/webhooks
   verification: https://docs.campfire.ai/guides/webhooks#verifying-the-signature
+  events: https://docs.campfire.ai/guides/webhooks#topics
 notes: >
-  Campfire (campfire.ai, the AI accounting/ERP platform, not 37signals' Campfire chat) webhooks.
-  Campfire (campfire.ai, app.meetcampfire.com), an AI accounting and ERP platform. Webhooks report
-  created, updated and deleted invoices, bills, memos, journal entries and contracts, plus invoice and
-  bill payments. Delivery (from the docs): 2xx acknowledges; 4xx/5xx fail. Up to 5 retries about a
-  minute apart; a 404 is not retried. Each retry is re-signed. Not ordered; duplicates possible.
-  Campfire says: 'The signed message is the delivery timestamp and the raw request body, joined by a
-  single `:` character: {timestamp}:{raw request body}' 'Campfire computes an HMAC-SHA256 digest of
-  this message using your signing secret as the key, hex-encodes it, and sends it in the
-  `Campfire-Webhook-Signature-v1` header.' SIGNATURE SCHEME (it must match Hookdeck's CAMPFIRE source
-  exactly: HMAC controller, algorithm sha256, header campfire-webhook-signature-v1, encoding hex,
-  signed_content_template "{header:campfire-webhook-request-timestamp}:{body}"). The
-  Campfire-Webhook-Signature-v1 header carries the bare lowercase hex digest, no prefix. The signature
-  is lowercase hex HMAC-SHA256, keyed with the secret, over: the Campfire-Webhook-Request-Timestamp
-  header value, then a literal ":", then the raw request body bytes. Build the signed message as
-  BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact
-  header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a
-  header is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated
-  with Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
-  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
-  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
-  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
-  webhook's 50-character signing secret (`token`), used as UTF-8 (`secret.encode()`). Env var:
-  CAMPFIRE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
-  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
-  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
-  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
-  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
-  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
-  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
-  CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
-  (Campfire-Webhook-Request-Timestamp is Unix seconds). The separator is a COLON, not a dot. The
-  header name ends in -v1 but the value is bare hex. Events: dispatch on the body's `topic` field.
-  Documented event types (28): Invoice.created, Invoice.updated, Invoice.deleted, Invoice.payment,
-  Invoice.paid, Bill.created, Bill.updated, Bill.deleted, Bill.payment, Bill.paid, CreditMemo.created,
-  CreditMemo.updated, CreditMemo.deleted, CreditMemoLine.created (and 14 more). Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's Campfire source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
-  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  Hookdeck's source type is CAMPFIRE, labelled 'Campfire'.
+  Campfire (campfire.ai, app.meetcampfire.com), the AI accounting and ERP platform; not 37signals'
+  Campfire chat. Webhooks report created, updated and deleted invoices, bills, credit and debit
+  memos (and lines), journal entries and contracts, plus invoice and bill payments. Signature:
+  Campfire-Webhook-Signature-v1 carries the bare lowercase hex HMAC-SHA256 (no prefix) of
+  "{Campfire-Webhook-Request-Timestamp}:{raw request body}" (a colon, not a dot), keyed with the
+  webhook's 50-character signing secret (`token`) used as UTF-8 text. Timestamp header is Unix
+  seconds. Hookdeck's CAMPFIRE source: HMAC, sha256, hex, signed_content_template
+  "{header:campfire-webhook-request-timestamp}:{body}". Build the signed message as bytes (header
+  latin1, raw body untouched); validate 64 hex characters before decoding; constant-time compare;
+  missing or invalid signature returns 401. No timestamp window by default (Hookdeck retries and
+  replays resend the original timestamp); offer opt-in CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS. Dispatch
+  on the body's `topic` (28 documented topics, e.g. Invoice.created, Invoice.payment, Invoice.paid,
+  Bill.created, Bill.paid, JournalEntry.created). Method POST. Retries up to 5 times about a minute
+  apart (404 not retried), each re-signed; unordered, duplicates possible. Express examples read the
+  raw body with express.raw({ type: '*/*' }).
 testScenario:
   events:
     - "Invoice.created"

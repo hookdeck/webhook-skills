@@ -35,10 +35,11 @@ notes: >
   no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
   var such as AFFONSO_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
   verification.md (X-Affonso-Timestamp is Unix seconds). Events: dispatch on the body's `type` field.
-  Documented event types (19): affiliate.created, affiliate.confirmed, affiliate.updated,
+  Documented event types (21): affiliate.created, affiliate.confirmed, affiliate.updated,
   affiliate.deleted, referral.updated, referral.lead, referral.converted, referral.deleted,
   transaction.created, transaction.updated, transaction.approved, transaction.paid,
-  transaction.rejected, transaction.deleted (and 5 more). Handle a few common ones and log the rest.
+  transaction.rejected, transaction.deleted, payout.created, payout.updated, payout.paid,
+  payout.failed, payout.deleted, coupon.created, coupon.deleted. Handle a few common ones and log the rest.
   Method: POST. Hookdeck's Affonso source manages the method as POST, so the examples handle POST on
   the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
