@@ -3,6 +3,7 @@ displayName: 'Pipecat Cloud'
 docs:
   webhooks: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhooks'
   verification: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhooks'
+  events: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhook-events'
 notes: >-
   Pipecat Cloud (pipecat.daily.co), Daily's hosted platform for Pipecat voice and multimodal agents. Webhooks
   report build, deployment, service, spend, session, organization, API-key and secret events for an organization,
@@ -54,5 +55,5 @@ testScenario:
   - 'build.failed'
 catalog:
   summary: >-
-    Verify Pipecat Cloud webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle build, deployment, service and spend events
+    Verify Pipecat Cloud webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle build.succeeded, deployment.updated, service.suspended and spend.limit_reached events

@@ -50,4 +50,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Runa webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret),
-    handle order completion and product update events
+    handle order.completion and product.update events

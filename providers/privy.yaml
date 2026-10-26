@@ -2,7 +2,8 @@ name: 'privy'
 displayName: 'Privy'
 docs:
   webhooks: 'https://docs.privy.io/api-reference/webhooks/overview'
-  verification: 'https://docs.privy.io/api-reference/webhooks/overview'
+  verification: 'https://docs.privy.io/api-reference/webhooks/overview#webhook-signing-key'
+  events: 'https://docs.privy.io/api-reference/webhooks/overview#webhook-events-reference'
 notes: >-
   Privy (privy.io), auth and embedded-wallet infrastructure: users, wallets, transactions, wallet actions,
   intents, usage charges and yield. Endpoints are added under Configuration > Webhooks in the Privy Dashboard
@@ -51,9 +52,9 @@ notes: >-
 testScenario:
   events:
   - 'user.created'
-  - 'wallet.deposit_account.deposit_started'
-  - 'wallet.deposit_account.deposit_completed'
+  - 'transaction.confirmed'
+  - 'wallet.funds_deposited'
 catalog:
   summary: >-
-    Verify Privy webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle user, wallet, KYC and transaction events
+    Verify Privy webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle user.created, transaction.confirmed and wallet.funds_deposited events

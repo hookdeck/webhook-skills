@@ -1,8 +1,9 @@
 name: 'relay-messenger'
 displayName: 'Relay'
 docs:
-  webhooks: 'https://docs.relayapp.im/webhooks/overview'
+  webhooks: 'https://docs.relayapp.im/webhooks'
   verification: 'https://docs.relayapp.im/webhooks/verify-signatures'
+  events: 'https://docs.relayapp.im/events'
 notes: >-
   Relay (relayapp.im), a messenger where people chat with AI agents. An agent's webhook subscription receives
   message, reaction, participant, chat, contact, call, payment, location and rating events, signed with
@@ -54,5 +55,5 @@ testScenario:
   - 'message.received'
 catalog:
   summary: >-
-    Verify Relay webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle message, reaction, participant and chat events
+    Verify Relay webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard Webhooks
+    HMAC-SHA256, `whsec_` secret), handle message.received, message.sent, message.failed, reaction and participant events

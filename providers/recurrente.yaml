@@ -3,6 +3,7 @@ displayName: 'Recurrente'
 docs:
   webhooks: 'https://docs.recurrente.com/guias-espanol/comenzar/webhooks'
   verification: 'https://docs.recurrente.com/guias-espanol/comenzar/webhooks'
+  events: 'https://docs.recurrente.com/referencia-api/api-reference/webhook-events/intent-succeeded-webhook'
 notes: >-
   Recurrente (recurrente.com), a Guatemalan payments platform (cards, bank transfer, crypto, balance,
   cash; subscriptions; transfers and withdrawals; connected accounts). Docs are in Spanish. Endpoints
@@ -57,5 +58,5 @@ testScenario:
   - 'verification.rejected'
 catalog:
   summary: >-
-    Verify Recurrente webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle verification, tax, intent and subscription events
+    Verify Recurrente webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), handle intent.succeeded, subscription and verification events
