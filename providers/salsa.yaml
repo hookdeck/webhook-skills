@@ -61,4 +61,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Salsa webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle employer, worker and payroll events
+    `whsec_` secret), handle Employer.created, Worker.updated and PayrollRun.awaitingInput events

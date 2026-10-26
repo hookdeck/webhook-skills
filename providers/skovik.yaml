@@ -3,6 +3,7 @@ displayName: 'Skovik'
 docs:
   webhooks: 'https://developer.skovik.com/docs/api-webhooks-receiving'
   verification: 'https://developer.skovik.com/docs/api-webhooks-receiving'
+  events: 'https://developer.skovik.com/reference/api-webhooks'
 notes: >-
   Skovik (skovik.com), an operations platform whose API exposes users, branches and export orders. Webhook
   endpoints are managed in the settings UI; each delivery is a thin JSON:API-style notification pointing
@@ -51,4 +52,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Skovik webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle user, export and branch events
+    `whsec_` secret), handle users.created, export_orders.completed and branches.updated events

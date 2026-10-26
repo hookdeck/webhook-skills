@@ -3,6 +3,7 @@ displayName: 'Sohar Health'
 docs:
   webhooks: 'https://docs.soharhealth.com/documentation/webhooks/security'
   verification: 'https://docs.soharhealth.com/documentation/webhooks/security'
+  events: 'https://docs.soharhealth.com/documentation/webhooks/events'
 notes: >-
   Sohar Health (soharhealth.com), an insurance eligibility-verification and patient-intake API for behavioral-health
   providers. Webhooks report verification, discovery and Flow Run updates for production and sandbox (sandbox.*
@@ -50,5 +51,5 @@ testScenario:
   - 'verification.pending'
 catalog:
   summary: >-
-    Verify Sohar Health webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle verification, sandbox, discovery and flow events
+    Verify Sohar Health webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256),
+    handle verification.updated, verification.pending, discovery.updated, flow.updated and flow.callback events

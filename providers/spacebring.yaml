@@ -3,6 +3,7 @@ displayName: 'Spacebring'
 docs:
   webhooks: 'https://www.spacebring.com/docs/webhooks'
   verification: 'https://www.spacebring.com/docs/webhooks/verifying'
+  events: 'https://webhooks.spacebring.com/'
 notes: >-
   Spacebring (spacebring.com), a coworking and flexible-workspace management platform. Webhooks (API &
   webhooks add-on) report bookings, companies, events and tickets, memberships, locations, resources,
@@ -56,5 +57,5 @@ testScenario:
   - 'booking.deleted'
 catalog:
   summary: >-
-    Verify Spacebring webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle booking, membership, event and invoice events
+    Verify Spacebring webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix,
+    `whsec_` secret), handle booking.created, membership.created and shop.order.paid events

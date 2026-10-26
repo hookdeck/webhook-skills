@@ -3,6 +3,7 @@ displayName: 'sajn'
 docs:
   webhooks: 'https://docs.sajn.se/webhooks/overview'
   verification: 'https://docs.sajn.se/webhooks/verify-signatures'
+  events: 'https://docs.sajn.se/webhooks/events'
 notes: >-
   sajn (sajn.se), a Swedish e-signature and identity-check platform. Webhooks report document, party,
   approval, identity-check, contact, company, template, form, member, usage, security and sajn Login events
@@ -59,5 +60,6 @@ testScenario:
   - 'document.sent'
 catalog:
   summary: >-
-    Verify sajn webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_`
-    secret), handle document and signing events
+    Verify sajn webhook signatures (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    HMAC-SHA256, `whsec_` secret), handle document.completed, document.party.signed and document.party.delivery_failed
+    events

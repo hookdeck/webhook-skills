@@ -48,5 +48,5 @@ testScenario:
   - 'queue.job.succeeded'
 catalog:
   summary: >-
-    Verify SaladCloud webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    base64 secret), handle job queue job events
+    Verify SaladCloud webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks HMAC-SHA256, base64 secret), handle queue.job.succeeded events
