@@ -4,46 +4,19 @@ docs:
   webhooks: https://www.charitystack.com/docs/concepts/webhooks
   verification: https://www.charitystack.com/docs/guides/webhook-verification
 notes: >
-  CharityStack nonprofit fundraising webhooks, registered through its API. CharityStack
-  (charitystack.com), an online fundraising platform for nonprofits. Webhooks registered through its
-  API report donations, recurring subscriptions, contacts and forms. Delivery (from the docs): No
-  retry or timeout policy is documented. CharityStack says: '`X-Webhook-Signature` | HMAC-SHA256
-  signature in the format `sha256=<hex_digest>` ... `X-Webhook-Timestamp` | Unix timestamp (seconds)
-  of when the request was signed' 'signed_string = timestamp + "." + raw_body' SIGNATURE SCHEME (it
-  must match Hookdeck's CHARITYSTACK source exactly: HMAC controller, algorithm sha256, header
-  x-webhook-signature, encoding hex, signed_content_template "{header:x-webhook-timestamp}.{body}").
-  The X-Webhook-Signature header carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256,
-  keyed with the secret, over: the X-Webhook-Timestamp header value, then a literal ".", then the raw
-  request body bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
-  separators as UTF-8, header values as the exact header string encoded latin1 (Node
-  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
-  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
-  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
-  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
-  decode both to bytes) before the constant-time compare. Strip a leading `sha256=` before validating
-  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
-  prefix. Secret: the webhook `secret` from the create-webhook response (never shown again), used as
-  UTF-8. Env var: CHARITYSTACK_WEBHOOK_SECRET. Validate the signature's format before decoding it
-  (exact length and alphabet), then compare in constant time: Node checks lengths, then
-  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
-  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
-  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
-  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
-  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
-  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
-  var such as CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
-  verification.md (X-Webhook-Timestamp is Unix seconds). Events: dispatch on the body's `type` field.
-  Documented event types (10): donation.created, donation.updated, subscription.created,
-  subscription.updated, subscription.cancelled, subscription.payment_method_updated, contact.created,
-  contact.updated, form.created, form.updated. Handle a few common ones and log the rest. Method:
-  POST. Hookdeck's CharityStack source manages the method as POST, so the examples handle POST on the
-  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
-  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
-  await request.body()); parse the body only after the check. Hookdeck's source type is CHARITYSTACK,
-  labelled 'CharityStack'. Hookdeck shows this setup note for the source, and SKILL.md and
-  references/setup.md must tell the user the same thing, verbatim: "CharityStack shows the webhook
-  secret only once, when you create the webhook. Paste it here."
+  CharityStack nonprofit fundraising webhooks, registered through its API (POST /v1/webhooks). The
+  create response returns the webhook secret once; it is never shown again. Every delivery carries
+  X-Webhook-Signature (sha256=<hex>, HMAC-SHA256), X-Webhook-Timestamp (Unix seconds) and
+  X-Webhook-ID. Signed content is the X-Webhook-Timestamp header value, a literal ".", then the raw
+  body bytes, keyed with the secret's UTF-8 bytes. Hookdeck's CHARITYSTACK source is an HMAC source
+  (sha256, header x-webhook-signature, hex, signed_content_template
+  "{header:x-webhook-timestamp}.{body}", POST). No timestamp tolerance by default (retries and
+  replays resend the original headers); the examples offer an opt-in
+  CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS. No retry or timeout policy is documented. Setup note:
+  "CharityStack shows the webhook secret only once, when you create the webhook. Paste it here."
+  Events (dispatch on the body's `type`): donation.created, donation.updated, subscription.created,
+  subscription.updated, subscription.cancelled, subscription.payment_method_updated,
+  contact.created, contact.updated, form.created, form.updated.
 testScenario:
   events:
     - "donation.created"
