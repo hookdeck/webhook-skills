@@ -3,6 +3,7 @@ displayName: "Sent"
 docs:
   webhooks: https://docs.sent.dm/build/webhook-receiver
   verification: https://docs.sent.dm/build/signature-verification
+  events: https://docs.sent.dm/start/webhooks/event-types
 notes: >
   Sent (sent.dm) multi-channel messaging webhooks. Sent (sent.dm), a multi-channel messaging API (SMS,
   WhatsApp, RCS, voice). Webhooks report message statuses and inbound messages, template, channel
@@ -49,4 +50,4 @@ testScenario:
     - "message.received"
     - "message.failed"
 catalog:
-  summary: "Verify Sent (sent.dm) webhooks (Standard Webhooks on `X-Webhook-ID`, `X-Webhook-Timestamp`, `X-Webhook-Signature`, `whsec_` secret), handle message, template, channel and contact events"
+  summary: "Verify Sent (sent.dm) webhook signatures (`X-Webhook-Signature`, Standard Webhooks HMAC-SHA256 with a `whsec_` secret), handle message.delivered, message.failed, message.received and templates.approved events"
