@@ -59,6 +59,7 @@ notes: >
   WEBHOOK_SECRET value. Without one, deliveries are unsigned and fail verification."
 testScenario:
   events:
-    - "pipeline_done"
+    - "pipeline.result passed"
+    - "pipeline.result failed"
 catalog:
   summary: "Verify Semaphore CI webhooks (`x-semaphore-signature-256`: hex HMAC-SHA256 of the raw body), handle pipeline-finished notifications"

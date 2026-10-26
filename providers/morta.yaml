@@ -3,6 +3,7 @@ displayName: "Morta"
 docs:
   webhooks: https://docs.morta.io/webhooks/build
   verification: https://docs.morta.io/webhooks/signature
+  events: https://docs.morta.io/webhooks/events
 notes: >
   Morta (morta.io), a data and document platform for construction projects (hubs, tables, documents).
   A hub's notifications (Hub > Settings > Webhooks) post chosen events to an endpoint. Delivery (from

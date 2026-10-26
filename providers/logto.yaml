@@ -49,4 +49,4 @@ testScenario:
     - "PostSignIn"
     - "User.Created"
 catalog:
-  summary: "Verify Logto webhooks (`logto-signature-sha-256`: hex HMAC-SHA256 of the raw body), handle interaction, user, role and organization events"
+  summary: "Verify Logto webhook signatures (`logto-signature-sha-256`, hex HMAC-SHA256 of the raw body), handle PostSignIn, PostRegister and User.Created events"

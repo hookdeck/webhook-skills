@@ -41,14 +41,18 @@ notes: >
   POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
-  in /home/user/regwt/main-ro/samples-doc/providers/authgear/
-  (latest/identity.biometric.disabled.json, latest/identity.biometric.enabled.json,
-  latest/identity.email.added.json, latest/identity.email.removed.json, ...); base the examples' test
-  payloads on them. Hookdeck's source type is AUTHGEAR, labelled 'Authgear'. Hookdeck shows this setup
-  note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
-  verbatim: "Only non-blocking events are supported. Blocking events expect a synchronous response
-  from the receiver."
+  After verifying, treat every field of the parsed body as untrusted: check that the body and each
+  nested field is the expected type before reading into it (Express/Next.js: typeof / Array.isArray;
+  FastAPI: isinstance(x, dict) / isinstance(x, list) before .get() or iterating), so a wrong-typed
+  field is ignored or answered with 400, never a 500. Never say Hookdeck verifies 'at the edge'; say
+  Hookdeck's source verifies the signature. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/authgear/ (latest/identity.biometric.disabled.json,
+  latest/identity.biometric.enabled.json, latest/identity.email.added.json,
+  latest/identity.email.removed.json, ...); base the examples' test payloads on them. Hookdeck's
+  source type is AUTHGEAR, labelled 'Authgear'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Only non-blocking
+  events are supported. Blocking events expect a synchronous response from the receiver."
 testScenario:
   events:
     - "user.created"

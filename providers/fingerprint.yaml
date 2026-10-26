@@ -41,8 +41,13 @@ notes: >
   POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  PUBLISHED TEST VECTOR (verified against Hookdeck's controller): the vendor's docs give a worked
-  example, saved verbatim as JSON (secret, body string, headers) in
+  After verifying, treat every field of the parsed body as untrusted: check that the body and each
+  nested field is the expected type before reading into it (Express/Next.js: typeof / Array.isArray;
+  FastAPI: isinstance(x, dict) / isinstance(x, list) before .get() or iterating), so a wrong-typed
+  field is ignored or answered with 400, never a 500. Never say Hookdeck verifies 'at the edge'; say
+  Hookdeck's source verifies the signature. PUBLISHED TEST VECTOR (verified against Hookdeck's
+  controller): the vendor's docs give a worked example, saved verbatim as JSON (secret, body string,
+  headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/fingerprint.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
   paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or

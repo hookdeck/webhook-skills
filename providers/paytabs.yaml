@@ -4,57 +4,14 @@ docs:
   webhooks: https://support.paytabs.com/en/support/solutions/articles/60000718961
   verification: https://support.paytabs.com/en/support/solutions/articles/60000718961
 notes: >
-  PayTabs (paytabs.com), a MENA payment gateway. A payment request's callback URL, and the profile's
-  IPN listener URL, receive the full transaction as JSON. Delivery (from the docs): IPN fires on every
-  transaction create or change; the callback fires once per payment request when the payment ends,
-  regardless of the customer's actions. Retries, timeout and the expected response are not documented.
-  PayTabs's docs say: 'To Keep your Callback/IPN URL secure and to verify the response we are sending
-  a custom header Signature including HMAC signature of the entire request body hashed by Profile
-  ServerKey.' '$signature = hash_hmac('sha256', $payload, $serverKey);' ''signature' (hexadecimal
-  encoding for hmac of sorted post form fields)' From the docs (registry summary):
-  hex(HMAC-SHA256(profile ServerKey, raw body)), the whole header value. The prose says "Calculate the
-  Hash (sha256 algorithm)"; the PHP sample's hash_hmac default output fixes lowercase hex. SIGNATURE
-  SCHEME (it must match Hookdeck's PAYTABS source exactly: HMAC controller, algorithm "sha256",
-  header_key "signature", encoding "hex"). The signature header carries the bare lowercase hex digest,
-  no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
-  signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only
-  (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
-  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
-  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
-  both sides (or decode both to bytes) before the constant-time compare. Secret: The profile's
-  ServerKey (the same key used to call the PT2 API); there is no separate webhook secret. Use it as
-  UTF-8 bytes. Env var: PAYTABS_WEBHOOK_SECRET. Validate the signature's format before decoding it
-  (exact length and alphabet), then compare in constant time: Node checks lengths, then
-  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
-  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
-  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
-  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
-  one from unsigned headers or body fields. Only server-to-server callback (IPN) requests are covered;
-  the browser Return URL puts its signature in a form field over sorted params and is not a webhook.
-  The key is the profile ServerKey. Frameworks with CSRF protection must exempt the route. Events:
-  there is no event-name field or header; every callback is the full transaction. Dispatch on
-  `tran_type` (Sale, Refund, ...) and `payment_result.response_status` (A = authorised). Method: POST.
-  Hookdeck's PayTabs source manages the method as POST, so the examples handle POST on the webhook
-  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
-  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
-  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
-  Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON (secret,
-  body string, headers) in
-  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/paytabs.json.
-  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
-  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
-  re-serialise), and assert that the verifier accepts that header value
-  (7a181a32c768621eb6966107752ee70205a01f1c4403a3d13c0ff604f591f988) with that secret. Name the vector
-  in references/verification.md. Documented sample payloads (each JSON file's `body` is the payload as
-  the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/paytabs/
-  (latest/transaction.json); base the examples' test payloads on them. Hookdeck's source type is
-  PAYTABS, labelled 'PayTabs'. Hookdeck shows this setup note for the source, and SKILL.md and
-  references/setup.md must tell the user the same thing, verbatim: "Paste your PayTabs profile server
-  key. Only callback (IPN) requests are supported, not the browser return URL."
+  PayTabs (paytabs.com), a MENA payment gateway. A payment request's callback URL and the profile's
+  IPN listener URL receive the full transaction as JSON with a `Signature` header: hex(HMAC-SHA256(profile
+  ServerKey, raw body)), bare lowercase hex, no timestamp. There is no event name; dispatch on `tran_type`
+  (Sale, Refund) and `payment_result.response_status` (A = authorised). Only callback/IPN requests are
+  covered, not the browser Return URL. Hookdeck source type PAYTABS (HMAC, sha256, header `signature`, hex).
 testScenario:
   events:
     - "Sale"
     - "Refund"
 catalog:
-  summary: "Verify PayTabs webhooks (`signature`: hex HMAC-SHA256 of the raw body), handle payment callback (IPN) notifications"
+  summary: "Verify PayTabs webhooks (`Signature`: hex HMAC-SHA256 of the raw body), handle Sale and Refund transaction callbacks (IPN)"

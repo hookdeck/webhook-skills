@@ -3,6 +3,7 @@ displayName: "Violet"
 docs:
   webhooks: https://docs.violet.io/prism/webhooks/handling-webhooks
   verification: https://docs.violet.io/prism/webhooks/handling-webhooks
+  events: https://docs.violet.io/prism/webhooks/events
 notes: >
   Violet (violet.io), a unified checkout API that connects channels (apps selling merchants' products)
   to merchants' ecommerce platforms. A channel registers webhooks per event and receives order, offer,

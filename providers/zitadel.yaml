@@ -3,6 +3,7 @@ displayName: "ZITADEL"
 docs:
   webhooks: https://zitadel.com/docs/guides/integrate/actions/testing-request-signature
   verification: https://help.zitadel.com/how-to-validate-zitadel-actions-v2-signature-with-node.js
+  events: https://zitadel.com/docs/guides/integrate/actions/testing-event
 notes: >
   ZITADEL (zitadel.com), an open-source identity platform (cloud and self-hosted). Delivery (from the
   docs): Per-target `timeout`. Webhook targets handle the status code but ignore the response; Async

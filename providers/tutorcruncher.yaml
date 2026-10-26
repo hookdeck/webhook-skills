@@ -3,6 +3,7 @@ displayName: "TutorCruncher"
 docs:
   webhooks: https://help.tutorcruncher.com/en/articles/14182937-webhooks
   verification: https://help.tutorcruncher.com/en/articles/14182937-webhooks
+  events: https://app.tutorcruncher.com/api/docs/
 notes: >
   TutorCruncher (tutorcruncher.com), business management software for tutoring agencies. Integrations
   receive a webhook for every action on the account (a tutor created, a client enquiry, an invoice
@@ -57,6 +58,6 @@ testScenario:
   events:
     - "CREATED_A_CONTRACTOR"
     - "CREATED_AN_APPOINTMENT"
-    - "LOGIN"
+    - "RAISED_INVOICE"
 catalog:
-  summary: "Verify TutorCruncher webhooks (`webhook-signature`: hex HMAC-SHA256 of the raw body), handle action events (contractors, clients, lessons, invoices and more)"
+  summary: "Verify TutorCruncher webhooks (`Webhook-Signature`, hex HMAC-SHA256 of the raw body), handle CREATED_A_CONTRACTOR, CREATED_AN_APPOINTMENT, CLIENT_ENQUIRY and RAISED_INVOICE actions"

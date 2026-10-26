@@ -51,6 +51,6 @@ notes: >
   covered."
 testScenario:
   events:
-    - "booking_update"
+    - "booking status change"
 catalog:
   summary: "Verify Delivereasy webhooks (`x-signature`: base64 HMAC-SHA256 of the raw body), handle Lastmile booking updates"

@@ -3,6 +3,7 @@ displayName: "Dojah"
 docs:
   webhooks: https://docs.dojah.io/api-reference/core-concepts/webhooks-signatures
   verification: https://docs.dojah.io/api-reference/core-concepts/webhooks-signatures
+  events: https://docs.dojah.io/api-reference/core-concepts/webhooks-signatures
 notes: >
   Dojah (dojah.io), an African identity verification, KYC/KYB and AML platform. A callback URL is
   subscribed per service (kyc_widget, sms, address, AML Monitoring) and environment, with POST
@@ -44,5 +45,7 @@ notes: >
 testScenario:
   events:
     - "kyc_widget"
+    - "Completed"
+    - "Failed"
 catalog:
-  summary: "Verify Dojah webhooks (`x-dojah-signature`: hex HMAC-SHA256 of the raw body), handle verification results"
+  summary: "Verify Dojah webhook signatures (`x-dojah-signature`, HMAC-SHA256 hex of the raw body), handle kyc_widget verification_status results (Completed, Failed, Abandoned)"

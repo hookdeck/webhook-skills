@@ -3,6 +3,7 @@ displayName: "BigMailer"
 docs:
   webhooks: https://docs.bigmailer.io/docs/webhooks-getting-started
   verification: https://docs.bigmailer.io/docs/verifying-webhook-signatures
+  events: https://docs.bigmailer.io/docs/webhook-event-types
 notes: >
   BigMailer (bigmailer.io), a multi-brand email marketing platform on Amazon SES. Webhook endpoints
   are configured per account (console > API settings) and receive engagement events for the account's

@@ -3,6 +3,7 @@ displayName: "Sahha"
 docs:
   webhooks: https://sahha.ai/docs/connect/webhooks/
   verification: https://sahha.ai/docs/connect/webhooks/
+  events: https://sahha.ai/docs/connect/webhooks/events/
 notes: >
   Sahha (sahha.ai), a health-data API that turns wearable and phone data into scores, biomarkers and
   archetypes per user profile. Webhooks are configured in the Sahha Dashboard. Delivery (from the
@@ -46,4 +47,4 @@ testScenario:
     - "BiomarkerCreatedIntegrationEvent"
     - "ArchetypeCreatedIntegrationEvent"
 catalog:
-  summary: "Verify Sahha webhooks (`X-Signature`: hex HMAC-SHA256 of the raw body), handle score, biomarker, archetype and data log events"
+  summary: "Verify Sahha webhook signatures (`X-Signature`, HMAC-SHA256 hex of the raw body), handle ScoreCreatedIntegrationEvent, BiomarkerCreatedIntegrationEvent and ArchetypeCreatedIntegrationEvent events"

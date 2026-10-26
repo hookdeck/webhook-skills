@@ -56,4 +56,4 @@ testScenario:
     - "report_triaged"
     - "report_bounty_awarded"
 catalog:
-  summary: "Verify HackerOne webhooks (`X-H1-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle report lifecycle events"
+  summary: "Verify HackerOne webhook signatures (`X-H1-Signature`, `sha256=` hex HMAC-SHA256 of the raw body), handle report_created, report_triaged and report_bounty_awarded events"

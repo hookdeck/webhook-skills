@@ -3,6 +3,7 @@ displayName: "LoyaltyLion"
 docs:
   webhooks: https://developers.loyaltylion.com/api-reference/v2/webhooks/overview
   verification: https://developers.loyaltylion.com/api-reference/v2/webhooks/overview
+  events: https://developers.loyaltylion.com/api-reference/v2/webhooks/events/customers-update
 notes: >
   LoyaltyLion (loyaltylion.com), loyalty and referral programs for e-commerce stores. Webhooks are
   subscribed per topic through the v2 Webhook API, by an OAuth client or with API keys. Delivery (from

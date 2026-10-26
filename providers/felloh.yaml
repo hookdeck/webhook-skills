@@ -46,7 +46,7 @@ notes: >
   examples' test payloads on them. Hookdeck's source type is FELLOH, labelled 'Felloh'.
 testScenario:
   events:
-    - "transaction"
+    - "transaction-status"
     - "booking"
 catalog:
-  summary: "Verify Felloh webhooks (`x-signature`: hex HMAC-SHA256 of the raw body), handle transaction and booking events"
+  summary: "Verify Felloh webhook signatures (`X-Signature`, hex HMAC-SHA256 of the raw body), handle transaction-status, refund-status and booking events"

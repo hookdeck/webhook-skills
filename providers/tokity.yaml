@@ -3,6 +3,7 @@ displayName: "Tokity"
 docs:
   webhooks: https://help.tokity.com/article/5ya327c2uj
   verification: https://help.tokity.com/article/5ya327c2uj
+  events: https://help.tokity.com/article/1e1w8rvqmi-data-sync-notifications
 notes: >
   Tokity (tokity.com), formerly DeskDirector: client/tech portals on top of PSA ticketing
   (ConnectWise, Autotask...). Webhooks (Admin Portal > Advanced > Webhook) and Events actions both
@@ -45,4 +46,4 @@ testScenario:
     - "ticket_change"
     - "chat"
 catalog:
-  summary: "Verify Tokity webhooks (`x-dd-signature`: `sha256=` base64 HMAC-SHA256 of the raw body), handle ticket and chat changes"
+  summary: "Verify Tokity webhooks (`x-dd-signature`: `sha256=` base64 HMAC-SHA256 of the raw body), handle ticket changes (with `from` previous state) and chat session updates"

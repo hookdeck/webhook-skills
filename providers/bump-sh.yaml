@@ -40,6 +40,6 @@ notes: >
   only after the check. Hookdeck's source type is BUMP_SH, labelled 'Bump.sh'.
 testScenario:
   events:
-    - "structure_change"
+    - "api structure change"
 catalog:
   summary: "Verify Bump.sh webhooks (`x-bump-signature-256`: `sha256=` hex HMAC-SHA256 of the raw body), handle API structure change events"

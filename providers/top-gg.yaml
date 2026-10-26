@@ -3,6 +3,7 @@ displayName: "Top.gg"
 docs:
   webhooks: https://docs.top.gg/webhooks/overview
   verification: https://docs.top.gg/webhooks/overview
+  events: https://docs.top.gg/webhooks/events
 notes: >
   Top.gg (top.gg), the Discord bot and server listing site. A project's webhook (dashboard > Webhooks)
   is told about votes. Delivery (from the docs): 2xx within 5 s. v1: up to 3 retries on timeout or
@@ -52,4 +53,4 @@ testScenario:
     - "vote.create"
     - "webhook.test"
 catalog:
-  summary: "Verify Top.gg webhooks (`x-topgg-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle vote and test events"
+  summary: "Verify Top.gg v1 webhook signatures (`x-topgg-signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}` keyed with the whole `whs_` secret), handle vote.create and webhook.test events"
