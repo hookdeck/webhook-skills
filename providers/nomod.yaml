@@ -3,6 +3,7 @@ displayName: 'Nomod'
 docs:
   webhooks: 'https://nomod.com/docs/webhooks/verifying-webhook-signatures'
   verification: 'https://nomod.com/docs/webhooks/verifying-webhook-signatures'
+  events: 'https://nomod.com/docs/webhooks/how-webhooks-work'
 notes: >-
   Nomod (nomod.com), a UAE payment-links and card-acceptance platform for SMEs. Webhooks report charge
   lifecycle events for the Nomod API and Nomod Hosted Checkout integration types; delivery and signing
@@ -51,5 +52,5 @@ testScenario:
   - 'charge.authorised'
 catalog:
   summary: >-
-    Verify Nomod webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle charge events
+    Verify Nomod webhook signatures (`svix-signature`, Svix HMAC-SHA256, `whsec_` secret), handle
+    charge.completed, charge.authorised, charge.failed and charge.refunded events

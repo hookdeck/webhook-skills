@@ -51,5 +51,5 @@ testScenario:
   - 'v2.payment_intent.canceled'
 catalog:
   summary: >-
-    Verify NextPay webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle payment intent, payout and deposit events
+    Verify NextPay webhook signatures (Svix `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), handle v2.payment_intent.succeeded, payout_request.processed and payout.failed events

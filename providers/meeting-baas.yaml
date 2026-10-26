@@ -54,5 +54,5 @@ testScenario:
   - 'bot.chat_message'
 catalog:
   summary: >-
-    Verify Meeting BaaS webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle bot and calendar events
+    Verify Meeting BaaS webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle bot.completed, bot.status_change, bot.chat_message, bot.failed and calendar.event_created events

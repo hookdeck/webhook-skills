@@ -56,4 +56,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Linq webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_`
-    secret), handle message, reaction, poll and participant events
+    secret, HMAC-SHA256), handle message.received, message.sent, message.delivered and reaction.added events
