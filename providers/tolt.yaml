@@ -3,6 +3,7 @@ displayName: 'Tolt'
 docs:
   webhooks: 'https://docs.tolt.com/webhooks/introduction'
   verification: 'https://docs.tolt.com/webhooks/verify'
+  events: 'https://docs.tolt.com/webhooks/event-types'
 notes: >-
   Tolt (tolt.com), affiliate and partner program software for SaaS: partners, referral links, referred
   customers, transactions and commissions. Endpoints are added under Settings > Webhooks with chosen events
@@ -47,4 +48,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Tolt webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret),
-    handle partner, link, customer and transaction events
+    handle partner.created, customer.created, transaction.created and commission.created events

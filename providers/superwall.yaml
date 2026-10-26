@@ -3,6 +3,7 @@ displayName: 'Superwall'
 docs:
   webhooks: 'https://superwall.com/docs/integrations/webhooks'
   verification: 'https://superwall.com/docs/integrations/webhooks/verify'
+  events: 'https://superwall.com/docs/integrations/webhooks/v2'
 notes: >-
   Superwall (superwall.com), subscription infrastructure and paywalls for iOS, Android and Web. Webhooks
   report subscription lifecycle events (purchases, renewals, cancellations, refunds, expirations) and

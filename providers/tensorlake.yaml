@@ -3,6 +3,7 @@ displayName: 'Tensorlake'
 docs:
   webhooks: 'https://docs.tensorlake.ai/webhooks/overview'
   verification: 'https://docs.tensorlake.ai/platform/webhooks/signature-verification'
+  events: 'https://docs.tensorlake.ai/platform/webhooks/events'
 notes: >-
   Tensorlake (tensorlake.ai), a document-ingestion and serverless sandbox / application platform. Project-scoped
   webhooks report sandbox, application and application-request lifecycle changes; Svix signs and delivers
@@ -50,4 +51,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Tensorlake webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle sandbox and application request events
+    secret), handle `tensorlake.sandbox.failed`, `tensorlake.sandbox.running` and `tensorlake.application.request.completed` events

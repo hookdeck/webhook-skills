@@ -3,6 +3,7 @@ displayName: 'Surge'
 docs:
   webhooks: 'https://docs.surge.app/api-reference/webhooks'
   verification: 'https://docs.surge.app/api-reference/webhooks/signature-validation'
+  events: 'https://docs.surge.app/receiving/events'
 notes: >-
   Surge (surge.app), an SMS/MMS and voice messaging API for businesses. Project-level webhooks report
   message, contact, conversation, campaign, phone-number, link and call events, signed per Standard Webhooks
@@ -50,4 +51,5 @@ testScenario:
 catalog:
   summary: >-
     Verify Surge webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle message, contact, conversation and campaign events
+    `whsec_` secret, HMAC-SHA256), handle message.received, message.delivered, message.failed and
+    contact.opted_out events

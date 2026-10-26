@@ -3,6 +3,7 @@ displayName: 'Terminal'
 docs:
   webhooks: 'https://docs.withterminal.com/guides/webhooks'
   verification: 'https://docs.svix.com/receiving/verifying-payloads/how'
+  events: 'https://docs.withterminal.com/api-reference/webhook-events/overview'
 notes: >-
   Terminal (withterminal.com), a unified telematics/ELD data API (connections to fleet providers, syncs,
   vehicles, drivers, trailers, safety events). Webhooks run on Svix. Standard Webhooks signature with
@@ -50,5 +51,5 @@ testScenario:
   - 'connection.disconnected'
 catalog:
   summary: >-
-    Verify Terminal webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle connection, sync and data events
+    Verify Terminal webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix),
+    handle sync.completed, connection.created and connection.disconnected events

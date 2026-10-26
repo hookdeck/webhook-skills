@@ -1,0 +1,127 @@
+// Generated with: superwall-webhooks skill
+// https://github.com/hookdeck/webhook-skills
+
+import { pathToFileURL } from 'node:url';
+import dotenv from 'dotenv';
+import express from 'express';
+import { Webhook } from 'svix';
+
+dotenv.config({ quiet: true });
+
+export const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// IMPORTANT: express.raw() keeps the exact bytes Superwall (Svix) signed, whatever the content type
+app.post('/webhooks/superwall', express.raw({ type: '*/*' }), (req, res) => {
+  const secret = process.env.SUPERWALL_WEBHOOK_SECRET;
+  if (!secret || !secret.startsWith('whsec_')) {
+    console.error('SUPERWALL_WEBHOOK_SECRET is missing or not a whsec_ secret');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  // Read the svix-* headers; when svix-id is absent, fall back to the webhook-* headers
+  const prefix = req.headers['svix-id'] ? 'svix' : 'webhook';
+  const id = req.headers[`${prefix}-id`];
+  const timestamp = req.headers[`${prefix}-timestamp`];
+  const signature = req.headers[`${prefix}-signature`];
+  if (!id || !timestamp || !signature) {
+    return res.status(400).json({ error: 'Missing required webhook headers' });
+  }
+
+  try {
+    // Checks HMAC-SHA256 over `${id}.${timestamp}.${body}` against every v1, signature
+    // and enforces a fixed 5-minute timestamp window (see references/verification.md to change that).
+    // The library accepts either header-name set, so hand it the resolved values under both.
+    new Webhook(secret).verify(req.body, {
+      'svix-id': id,
+      'svix-timestamp': timestamp,
+      'svix-signature': signature,
+      'webhook-id': id,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': signature,
+    });
+  } catch (err) {
+    console.error('Superwall webhook verification failed:', err.message);
+    const error = /timestamp/i.test(err.message) ? 'Timestamp too old' : 'Invalid signature';
+    return res.status(400).json({ error });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(req.body.toString('utf8'));
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  // The event name is the top-level lowercase `type` in both formats. V2 puts the store facts in
+  // `event_data` (snake_case) and the event id in `id`; legacy puts them in `data` (camelCase) with
+  // the id in `data.id`. The `superwall_version` header is 2 for V2 and 1 for legacy.
+  const legacy = req.headers['superwall_version'] === '1' || (!event.event_data && event.object === 'event');
+  const type = event.type;
+  const facts = (legacy ? event.data : event.event_data) ?? {};
+  const eventId = legacy ? facts.id : event.id;
+  const periodType = legacy ? facts.periodType : facts.period_type;
+  const productId = legacy ? facts.productId : facts.product_id;
+  // `evt_...` ids (V2) are stable across redelivery: use them to deduplicate. Deliveries are
+  // at least once and unordered, so order by `occurred_at` (V2) rather than by arrival.
+  console.log(`Received Superwall webhook ${eventId} (${legacy ? 'legacy' : 'V2'}): ${type}`);
+
+  switch (type) {
+    case 'initial_purchase':
+      console.log(periodType === 'TRIAL' ? 'Trial started:' : 'Subscription started:', productId, event.app_user_id);
+      break;
+    case 'renewal':
+      console.log('Renewal:', productId, 'trial conversion:', legacy ? facts.isTrialConversion : facts.is_trial_conversion);
+      break;
+    case 'non_renewing_purchase':
+      console.log('One-time purchase:', productId, facts.price);
+      break;
+    case 'product_change':
+      console.log('Product change:', productId, '->', legacy ? facts.newProductId : facts.new_product_id);
+      break;
+    case 'cancellation':
+      // Auto-renew turned off; access continues until expiry. Legacy refunds arrive as a
+      // cancellation with isRefund true; V2 sends a separate `refund` event.
+      console.log('Cancellation:', productId, legacy ? facts.cancelReason : facts.cancel_reason);
+      break;
+    case 'uncancellation':
+      console.log('Auto-renew turned back on:', productId);
+      break;
+    case 'refund':
+      // price and proceeds are negative
+      console.log('Refund:', productId, facts.price, facts.proceeds);
+      break;
+    case 'billing_issue':
+      console.log('Billing issue, subscription at risk:', productId);
+      break;
+    case 'subscription_paused':
+      console.log('Subscription paused (Google Play):', productId);
+      break;
+    case 'subscription_extended':
+      console.log('Subscription extended by the store:', productId, legacy ? facts.expirationAt : facts.expiration_at);
+      break;
+    case 'expiration':
+      console.log('Subscription expired:', productId, legacy ? facts.expirationReason : facts.expiration_reason);
+      break;
+    case 'transferred':
+      // Reserved for ownership changes; documented as not sent yet
+      console.log('Subscription transferred:', productId);
+      break;
+    default:
+      // Return 2xx for events you don't handle, or Superwall keeps retrying them
+      console.log('Unhandled event type:', type);
+  }
+
+  res.status(200).json({ success: true, type });
+});
+
+// Start the server only when run directly (not when imported by tests)
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  app.listen(PORT, () => {
+    console.log(`Superwall webhook server running on http://localhost:${PORT}/webhooks/superwall`);
+  });
+}

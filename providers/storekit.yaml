@@ -3,6 +3,7 @@ displayName: 'Storekit'
 docs:
   webhooks: 'https://storekit.com/docs/developers/webhooks/overview'
   verification: 'https://storekit.com/docs/developers/webhooks/verifying-signatures'
+  events: 'https://storekit.com/docs/developers/webhooks/webhook-events'
 notes: >-
   storekit (storekit.com), online ordering, payments and in-store tooling for restaurants: orders, store
   status, menu availability, payouts, payment links and cloud printers. Endpoints are added in the dashboard's
@@ -54,5 +55,5 @@ testScenario:
   - 'order.accepted'
 catalog:
   summary: >-
-    Verify Storekit webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle order, store and menu item events
+    Verify Storekit webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix),
+    handle order.created.v2, order.refund.succeeded, store.closed and item.out_of_stock events

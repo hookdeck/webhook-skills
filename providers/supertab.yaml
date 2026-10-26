@@ -3,6 +3,7 @@ displayName: 'Supertab'
 docs:
   webhooks: 'https://docs.supertab.co/merchant-api/webhooks/consuming-webhooks'
   verification: 'https://docs.supertab.co/merchant-api/webhooks/consuming-webhooks'
+  events: 'https://www.svix.com/event-types/eu/org_2m1kyxXSEnLSeEprUkWs7ksPdgf/'
 notes: >-
   Supertab (supertab.co), micropayments and paywall tooling for publishers: purchases, time passes and
   One-Time Offerings. Endpoints are added under Webhooks in the Business Portal (a Svix portal); the Svix
@@ -45,5 +46,6 @@ testScenario:
   - 'purchase.completed_2025-04-01'
 catalog:
   summary: >-
-    Verify Supertab webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle purchase events
+    Verify Supertab webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `webhook-*` fallback), handle purchase.completed and
+    onetime_offering.purchasing_completed events

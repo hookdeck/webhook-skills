@@ -3,6 +3,7 @@ displayName: 'Swipelux'
 docs:
   webhooks: 'https://docs.swipelux.com/integration/webhooks'
   verification: 'https://docs.swipelux.com/integration/webhooks'
+  events: 'https://docs.swipelux.com/api-reference/webhooks/transfer-state-changed'
 notes: >-
   Swipelux (swipelux.com), a stablecoin and fiat on/off-ramp, accounts and transfers platform (API v3).
   Webhooks report customer, capability, application, recipient, destination, account and transfer changes;
