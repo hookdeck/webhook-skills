@@ -47,6 +47,6 @@ Use the Hookdeck URL as the webhook URL in BambooHR (HTTPS is required).
 
 ## Endpoint
 
-- `POST /webhooks/bamboohr` - reads the raw body (`express.raw({ type: '*/*' })`), verifies `X-BambooHR-Signature` against the body followed by `X-BambooHR-Timestamp`, then loops over `employees` handling `Created`, `Updated` and `Deleted` actions. Invalid signatures get `401`.
+- `POST /webhooks/bamboohr` - reads the raw body (`express.raw({ type: '*/*' })`), verifies `X-BambooHR-Signature` against the body followed by `X-BambooHR-Timestamp`, then handles Event-Based payloads by `type` (`employee.created`, `employee.updated`, `employee.deleted`, `company.*`) and Field-Based payloads by looping over `employees` (`Created`, `Updated` and `Deleted` actions). Invalid signatures get `401`.
 
 Set `BAMBOOHR_WEBHOOK_TOLERANCE_SECONDS` to opt in to a timestamp window (off by default).

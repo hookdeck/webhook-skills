@@ -84,7 +84,7 @@ Dispatch on the body's `request_type`:
 | `access` | Data-subject access request | `201 Created` |
 | `deletion` | Data-subject deletion request | `201 Created` |
 | `opt_out` | Opt-out request (`topic: opt_out:create`) | `201 Created` |
-| `readiness_check` | Asks whether the system can process a request | `200` |
+| `readiness_check` | Asks the readiness question configured on the integration; answer it with a callback | `200` (the docs give no code for readiness checks) |
 
 Access, deletion and opt-out bodies carry `topic` (e.g. `privacy_request:create`),
 `identifiers`, `webhook_callback_url` and request ids (`privacy_request_id` or

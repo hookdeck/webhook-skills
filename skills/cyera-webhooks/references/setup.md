@@ -43,7 +43,7 @@ integration's webhook URL field.
 |----------|---------|
 | `health_check` | `200` |
 | `access`, `deletion`, `opt_out` | `201` once the request is created, then report completion with a `PUT` to `webhook_callback_url` (API key) |
-| `readiness_check` | `200` |
+| `readiness_check` | `200` (the docs name `200` for health checks and reminders and give no code for readiness checks); send the answer with a `PUT` to `webhook_callback_url` |
 | Request not created | `4xx` / `5xx` |
 
 ## Rotating the Secret

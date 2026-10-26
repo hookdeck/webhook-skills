@@ -86,7 +86,7 @@ def verify_box(raw_body: bytes, signature, timestamp, secret: str) -> bool:
     return hmac.compare_digest(signature.encode("ascii"), expected)
 
 
-# Box's docs don't name the HTTP method (deliveries are POSTs in practice), so every method is
+# Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
 # verified the same way.
 @app.api_route("/webhooks/box", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def box_webhook(request: Request):

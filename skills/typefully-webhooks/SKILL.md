@@ -72,7 +72,7 @@ def verify_typefully(raw_body: bytes, timestamp, signature, secret: str) -> bool
 
 Respond `401` when the signature or timestamp header is missing, malformed, or doesn't match. Respond with any `2xx` once the event is accepted.
 
-**Replay window (opt-in):** Typefully suggests checking that the timestamp is recent. The examples don't, by default: Typefully's retries and Hookdeck's retries and replays resend the original timestamp, so a fixed window would reject legitimate redeliveries. Set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (the timestamp is Unix seconds) to opt in; unset or `0` leaves it off. Use idempotency on `data.id` plus the event for duplicate protection.
+**Replay window (opt-in):** Typefully suggests checking that the timestamp is recent. The examples don't, by default: Hookdeck's retries and replays resend the original timestamp, and Typefully doesn't document whether its own retries do, so a fixed window could reject legitimate redeliveries. Set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (the timestamp is Unix seconds) to opt in; unset or `0` leaves it off. Use idempotency on `data.id` plus the event for duplicate protection.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

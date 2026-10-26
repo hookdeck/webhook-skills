@@ -4,6 +4,8 @@ import json
 import os
 import time
 
+import pytest
+
 # BambooHR webhook private key (used as a plain UTF-8 string)
 SECRET = "37b26dc8cf1f08435fd0d08779268d77"
 os.environ["BAMBOOHR_WEBHOOK_SECRET"] = SECRET
@@ -45,6 +47,35 @@ def post(body: str, headers=None, content_type="application/json"):
 
 def valid_headers(body: str = payload, ts: str = timestamp):
     return {"X-BambooHR-Signature": sign(body, ts), "X-BambooHR-Timestamp": ts}
+
+
+EVENT_BASED = [
+    {"type": "employee.created", "timestamp": "2025-02-18T15:30:00Z", "data": {"companyId": "12345", "employeeId": "100"}},
+    {
+        "type": "employee.updated",
+        "timestamp": "2026-01-31T18:42:00+0000",
+        "data": {"companyId": "12345", "employeeId": "67890", "changedFields": ["firstName"]},
+    },
+    {"type": "employee.deleted", "timestamp": "2025-02-18T15:30:00Z", "data": {"companyId": "12345", "employeeId": "100"}},
+    {"type": "company.updated", "timestamp": "2025-02-18T15:30:00Z", "data": {"companyId": "12345"}},
+    {"type": "company.deleted", "timestamp": "2025-02-18T15:30:00Z", "data": {"companyId": "12345"}},
+    {"type": "company-integrations.updated", "timestamp": "2025-02-18T15:30:00Z", "data": {"companyId": "12345"}},
+    {"type": "some.future_event", "timestamp": "2025-02-18T15:30:00Z", "data": {}},
+]
+
+
+class TestEventBased:
+    @pytest.mark.parametrize("event", EVENT_BASED, ids=[e["type"] for e in EVENT_BASED])
+    def test_accepts_signed_event_based_payload(self, event):
+        body = json.dumps(event)
+        res = post(body, valid_headers(body))
+        assert res.status_code == 200
+        assert res.json() == {"received": True}
+
+    def test_rejects_event_based_payload_with_bad_signature(self):
+        body = json.dumps(EVENT_BASED[0])
+        headers = {"X-BambooHR-Signature": sign(body, timestamp, "wrong_secret"), "X-BambooHR-Timestamp": timestamp}
+        assert post(body, headers).status_code == 401
 
 
 class TestSignature:

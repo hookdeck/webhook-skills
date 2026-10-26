@@ -109,6 +109,7 @@ async def configcat_webhook(request: Request, raw_body: bytes = Depends(verified
     webhook_id = request.headers.get("x-configcat-webhook-id")
     print(f"ConfigCat settings changed ({request.method}, webhook {webhook_id}): {body}")
     # TODO: refresh your ConfigCat client, invalidate caches, notify your team
-    # Dedupe on X-ConfigCat-Webhook-ID: failed deliveries are retried (up to 5 times)
+    # Don't dedupe on X-ConfigCat-Webhook-ID: it is different for every request, including
+    # ConfigCat's retries (up to 5). Keep this idempotent, e.g. refresh state rather than apply deltas.
 
     return {"received": True}

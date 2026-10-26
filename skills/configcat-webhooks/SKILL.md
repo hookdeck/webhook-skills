@@ -81,7 +81,7 @@ The examples accept any body (JSON if it parses, else text, or empty) and treat 
 
 | Header | Description |
 |--------|-------------|
-| `X-ConfigCat-Webhook-ID` | Unique ID per request (use it to dedupe retries) |
+| `X-ConfigCat-Webhook-ID` | Unique ID per request; ConfigCat says it "is different for every request", so it can't dedupe ConfigCat's retries |
 | `X-ConfigCat-Webhook-Timestamp` | Send time, Unix seconds |
 | `X-ConfigCat-Webhook-Signature-V1` | Base64 HMAC-SHA256, one per signing key, comma-separated |
 

@@ -57,6 +57,34 @@ describe('POST /webhooks/bamboohr', () => {
     expect(await res.json()).toEqual({ received: true });
   });
 
+  it.each([
+    { type: 'employee.created', timestamp: '2025-02-18T15:30:00Z', data: { companyId: '12345', employeeId: '100' } },
+    {
+      type: 'employee.updated',
+      timestamp: '2026-01-31T18:42:00+0000',
+      data: { companyId: '12345', employeeId: '67890', changedFields: ['firstName'] },
+    },
+    { type: 'employee.deleted', timestamp: '2025-02-18T15:30:00Z', data: { companyId: '12345', employeeId: '100' } },
+    { type: 'company.updated', timestamp: '2025-02-18T15:30:00Z', data: { companyId: '12345' } },
+    { type: 'company.deleted', timestamp: '2025-02-18T15:30:00Z', data: { companyId: '12345' } },
+    { type: 'company-integrations.updated', timestamp: '2025-02-18T15:30:00Z', data: { companyId: '12345' } },
+    { type: 'some.future_event', timestamp: '2025-02-18T15:30:00Z', data: {} },
+  ])('accepts a signed event-based $type payload', async (event) => {
+    const body = JSON.stringify(event);
+    const res = await post(body, { 'x-bamboohr-signature': sign(body, timestamp), 'x-bamboohr-timestamp': timestamp });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ received: true });
+  });
+
+  it('rejects an event-based payload with a bad signature', async () => {
+    const body = JSON.stringify({ type: 'employee.created', timestamp: '2025-02-18T15:30:00Z', data: { employeeId: '100' } });
+    const res = await post(body, {
+      'x-bamboohr-signature': sign(body, timestamp, 'wrong_secret'),
+      'x-bamboohr-timestamp': timestamp,
+    });
+    expect(res.status).toBe(401);
+  });
+
   it('accepts an uppercase hex signature', async () => {
     const res = await post(payload, {
       'x-bamboohr-signature': sign(payload, timestamp).toUpperCase(),

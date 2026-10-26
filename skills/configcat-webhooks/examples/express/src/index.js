@@ -90,7 +90,8 @@ app.all('/webhooks/configcat', express.raw({ type: '*/*' }), (req, res) => {
   const webhookId = req.get('x-configcat-webhook-id');
   console.log(`ConfigCat settings changed (${req.method}, webhook ${webhookId})`, body);
   // TODO: refresh your ConfigCat client, invalidate caches, notify your team
-  // Dedupe on X-ConfigCat-Webhook-ID: failed deliveries are retried (up to 5 times)
+  // Don't dedupe on X-ConfigCat-Webhook-ID: it is different for every request, including
+  // ConfigCat's retries (up to 5). Keep this idempotent, e.g. refresh state rather than apply deltas.
 
   res.json({ received: true });
 });

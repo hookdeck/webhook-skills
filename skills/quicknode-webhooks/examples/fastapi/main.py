@@ -15,7 +15,7 @@ load_dotenv()
 
 app = FastAPI()
 
-# Nonces of deliveries already handled. Use a database or cache with a unique index in production.
+# Nonces of deliveries already handled (catches exact repeats). Use a database or cache with a unique index in production.
 processed_nonces: set = set()
 
 HEX_64 = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -104,7 +104,9 @@ async def quicknode_webhook(request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # At-least-once delivery: skip a nonce we already handled successfully
+    # Skip a nonce we already handled successfully. This catches exact repeats (Hookdeck retries and
+    # replays resend the same headers); Quicknode doesn't document whether its own retries reuse the
+    # nonce, so also make processing idempotent on block number/hash and transaction hash.
     nonce = request.headers["x-qn-nonce"]
     if nonce in processed_nonces:
         return {"received": True, "duplicate": True}

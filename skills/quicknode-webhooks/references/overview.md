@@ -34,7 +34,7 @@ The real fields depend on the dataset you select for a stream, or the filter you
 - **Streams:** your endpoint must return `2xx` within the configured timeout (default 30 s). Quicknode retries every N seconds (default 1) and pauses the stream after N failed retries (default 3). Blocks are delivered in sequence.
 - **Webhooks:** Quicknode documents "automatic retries for non-200 responses" and does not state a schedule.
 
-Acknowledge quickly and process in the background; deduplicate in case a delivery arrives more than once.
+Acknowledge quickly and process in the background; deduplicate on block number or hash and transaction hash in case a delivery arrives more than once (Quicknode doesn't document whether a retry keeps the same `X-QN-Nonce`).
 
 ## Compression
 

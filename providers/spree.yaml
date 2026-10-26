@@ -38,7 +38,7 @@ notes: >
   and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer
   an opt-in tolerance (an env var such as SPREE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
   so in SKILL.md and verification.md (X-Spree-Webhook-Timestamp is Unix seconds). Events: dispatch on
-  the body's `name` (order.placed, order.paid, order.canceled, payment.completed, shipment.shipped,
+  the body's `name` (order.placed, order.paid, order.canceled, payment.completed, fulfillment.fulfilled,
   user.created, product.updated; about 250 in all). Method: POST. Hookdeck's Spree Commerce source
   manages the method as POST, so the examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
@@ -51,6 +51,6 @@ testScenario:
   events:
     - "order.placed"
     - "order.paid"
-    - "shipment.shipped"
+    - "fulfillment.fulfilled"
 catalog:
-  summary: "Verify Spree Commerce webhooks (`X-Spree-Webhook-Signature`: hex HMAC-SHA256 of `{X-Spree-Webhook-Timestamp}.{body}`), handle order, payment, shipment and customer events"
+  summary: "Verify Spree Commerce webhooks (`X-Spree-Webhook-Signature`: hex HMAC-SHA256 of `{X-Spree-Webhook-Timestamp}.{body}`), handle order, payment, fulfillment and customer events"

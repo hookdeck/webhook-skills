@@ -4,7 +4,7 @@
 
 ConfigCat is a feature flag and remote configuration service. A ConfigCat webhook calls a URL you choose whenever a setting (feature flag) changes in a chosen **Config** and **Environment**, so your applications can refresh almost immediately instead of waiting for the next poll.
 
-Each webhook has a URL, an HTTP method (**GET** or **POST**), optional custom headers and an optional request body. Failed deliveries (a non-2XX response or a network error) are retried up to 5 times with variable delays. No timeout is documented, so respond quickly.
+Each webhook has a URL, an HTTP method (**GET** or **POST**), optional custom headers and an optional request body. Failed deliveries (a non-2XX response or a network error) are retried up to 5 times with variable delays. No timeout is documented, so respond quickly. `X-ConfigCat-Webhook-ID` "is different for every request" and the payload has no change ID, so make processing idempotent (re-read config state) rather than deduping on an ID.
 
 ## Common Event Types
 

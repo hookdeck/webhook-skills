@@ -38,7 +38,7 @@ Box signs every delivery with both keys, so you can change one at a time. Verifi
 
 ## Hookdeck Source
 
-Create a source of type **Box** and paste the primary signature key. Hookdeck verifies `BOX-SIGNATURE-PRIMARY` over the body followed by `BOX-DELIVERY-TIMESTAMP`. Hookdeck's Box source pre-selects POST without managing the method (Box's docs don't name one, and deliveries are POSTs in practice), so if the sender uses another method, allow it on the source too. Use the source URL as the webhook `address`.
+Create a source of type **Box** and paste the primary signature key. Hookdeck verifies `BOX-SIGNATURE-PRIMARY` over the body followed by `BOX-DELIVERY-TIMESTAMP`. Hookdeck's Box source pre-selects POST without managing the method (Box's docs don't name one), so if the sender uses another method, allow it on the source too. Use the source URL as the webhook `address`.
 
 ## Test Mode vs Live Mode
 

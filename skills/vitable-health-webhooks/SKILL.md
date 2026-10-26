@@ -29,7 +29,7 @@ Vitable signs every delivery with HMAC-SHA512 using the subscription's secret ke
 | Header | Description |
 |--------|-------------|
 | `X-Vitable-Signature` | `sha512=<128 hex characters>` |
-| `X-Vitable-Timestamp` | Unix seconds when the webhook was sent |
+| `X-Vitable-Timestamp` | `<unix_timestamp>` (Vitable's sample code compares it with the current time in seconds) |
 
 Signed content is `<X-Vitable-Timestamp value>.<raw body bytes>`. The key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Verify against the **raw body bytes**: never `JSON.parse`/`JSON.stringify` or decode and re-encode the body first.
 

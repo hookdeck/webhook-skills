@@ -4,7 +4,7 @@ description: >
   Receive and verify Spree Commerce webhooks. Use when setting up Spree webhook
   endpoint handlers, debugging X-Spree-Webhook-Signature verification, or
   handling order.placed, order.paid, order.canceled, payment.completed,
-  shipment.shipped, user.created and product.updated events.
+  fulfillment.fulfilled, user.created and product.updated events.
 license: MIT
 metadata:
   author: hookdeck
@@ -18,7 +18,7 @@ metadata:
 
 - How do I receive Spree Commerce (Spree 5/6) webhooks?
 - How do I verify the Spree `X-Spree-Webhook-Signature` header?
-- How do I handle `order.placed`, `order.paid` or `shipment.shipped` events?
+- How do I handle `order.placed`, `order.paid` or `fulfillment.fulfilled` events?
 - Why is my Spree webhook signature verification failing?
 - How do I create a Spree webhook endpoint and get its `secret_key`?
 
@@ -43,7 +43,7 @@ Respond **401** for a missing or empty signature or timestamp, a malformed value
 
 **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `SPREE_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use the event `id` for idempotency instead (see below).
 
-Spree also ships `constructWebhookEvent` in `@spree/sdk/webhooks` for JavaScript/TypeScript, but it takes the body as a string; the examples verify the raw bytes directly so they work the same in Express, Next.js and FastAPI.
+`@spree/sdk/webhooks` (1.2.1, the current release) exports `verifyWebhookSignature(payload, signature, timestamp, secret, toleranceSeconds = 300)`, which takes the body as a string and rejects timestamps more than 300 seconds old by default (the `constructWebhookEvent` helper in Spree's docs is only in the 6.0 prerelease). The examples verify the raw bytes directly so they work the same in Express, Next.js and FastAPI.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -63,12 +63,12 @@ Dispatch on the body's `name` field (also sent as `X-Spree-Webhook-Event`). The 
 | `order.paid` | The order is fully paid |
 | `order.canceled` | The order was canceled |
 | `payment.completed` | A payment succeeded |
-| `shipment.shipped` | A shipment was shipped |
+| `fulfillment.fulfilled` | One parcel went out |
 | `user.created` | A new customer registered |
 | `product.updated` | A product changed |
 | `webhook.test` | Synthetic delivery from `send_test` |
 
-A re-sent delivery carries the same event `id`; use it to deduplicate. Failed deliveries are retried up to 5 times over about six minutes, and 15 consecutive failures disable the endpoint.
+A re-sent delivery carries the same event `id`; use it to deduplicate. A failed delivery is tried up to 5 times in total over about six minutes, and 15 consecutive failures disable the endpoint.
 
 ## Environment Variables
 

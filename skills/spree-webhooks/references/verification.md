@@ -17,7 +17,7 @@ expected = OpenSSL::HMAC.hexdigest('SHA256', ENV['SPREE_WEBHOOK_SECRET'], "#{tim
 
 ## Implementation
 
-Spree provides `constructWebhookEvent` in `@spree/sdk/webhooks` (JavaScript/TypeScript). It takes the body as text, so these examples verify manually on the raw bytes instead; there is no Python SDK helper.
+`@spree/sdk/webhooks` (JavaScript/TypeScript, 1.2.1) exports `verifyWebhookSignature(payload, signature, timestamp, secret, toleranceSeconds = 300)`. It takes the body as text and rejects timestamps more than 300 seconds old by default, so these examples verify manually on the raw bytes instead; the `constructWebhookEvent` helper shown in Spree's docs is only in the 6.0 prerelease, and there is no Python SDK helper.
 
 ### Node.js
 

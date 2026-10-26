@@ -29,7 +29,7 @@ curl -X POST 'https://api.mystore.com/api/v3/admin/webhook_endpoints' \
   -d '{"url": "https://example.com/webhooks/spree", "subscriptions": ["order.*", "product.updated"], "active": true}'
 ```
 
-The response includes `secret_key`. Endpoints always belong to the current store. Recommended subscriptions: `order.placed`, `order.paid`, `order.canceled`, `payment.completed`, `shipment.shipped`, `user.created`, `product.updated`; prefer specific events over `*`.
+The response includes `secret_key`. Endpoints always belong to the current store. Recommended subscriptions: `order.placed`, `order.paid`, `order.canceled`, `payment.completed`, `fulfillment.fulfilled`, `user.created`, `product.updated`; prefer specific events over `*`.
 
 ## Test Your Endpoint
 

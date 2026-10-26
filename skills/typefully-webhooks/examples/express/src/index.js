@@ -14,8 +14,9 @@ const PORT = process.env.PORT || 3000;
 // The signature is HMAC-SHA256 (hex) of "<X-Typefully-Timestamp>.<raw body>" keyed with the webhook secret.
 // https://typefully.com/docs/api (Webhooks)
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Optional replay window in seconds. Off by default (0): Hookdeck's retries and replays carry the
+// original timestamp (Typefully doesn't document whether its own retries do), so a window could
+// reject late redeliveries.
 // Set TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 // treated as 0, with a warning.
 let warnedInvalidTolerance = false;

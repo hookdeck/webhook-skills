@@ -81,7 +81,23 @@ async def bamboohr_webhook(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # Employees may be batched into one POST; ignore unrecognized fields
+    # Event-based webhooks (recommended by BambooHR): one event per POST, {type, timestamp, data}
+    if isinstance(payload, dict) and isinstance(payload.get("type"), str):
+        event_type = payload["type"]
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        if event_type == "employee.created":
+            print(f"BambooHR: employee {data.get('employeeId')} created")
+        elif event_type == "employee.updated":
+            print(f"BambooHR: employee {data.get('employeeId')} updated: {data.get('changedFields')}")
+        elif event_type == "employee.deleted":
+            print(f"BambooHR: employee {data.get('employeeId')} deleted")
+        elif event_type in ("company.updated", "company.deleted", "company-integrations.updated"):
+            print(f"BambooHR: {event_type} for company {data.get('companyId')}")
+        else:
+            print(f"BambooHR: unhandled event type {event_type}")
+        return {"received": True}
+
+    # Field-based (legacy) webhooks: employees may be batched into one POST; ignore unrecognized fields
     employees = payload.get("employees") if isinstance(payload, dict) else None
     for employee in employees if isinstance(employees, list) else []:
         action = employee.get("action")

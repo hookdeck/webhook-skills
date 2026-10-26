@@ -64,7 +64,7 @@ A missing or empty header, a malformed value, or a mismatch gets `401`.
 
 **Timestamp window:** Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` (RFC 3339) older than 10 minutes. The examples leave that **off by default**, because Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance. Set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number (for example `600`) to opt in; unset or `0` is off. Box's own SDK helper (`WebhookValidator`) always enforces the 10 minutes and checks both keys, which is why the examples verify by hand. See [references/verification.md](references/verification.md).
 
-**HTTP method:** Box's docs don't name the delivery method (it is a POST in practice). The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes. Hookdeck's Box source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source.
+**HTTP method:** Box's docs don't name the delivery method; they say only that "Box makes an HTTP call to the `address`". The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes. Hookdeck's Box source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source.
 
 **Dedupe on `id`:** the body's `id` is the same across Box's retries; `BOX-DELIVERY-ID` changes on every retry, so don't use it.
 

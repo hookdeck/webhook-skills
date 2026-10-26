@@ -30,7 +30,7 @@ Call `POST https://cad.onshape.com/api/v6/webhooks` (Enterprise accounts use the
 
 - Use `companyId` (from `findCompany`, the `id` field) or a `documentId` owned by the company.
 - Set `isTransient=false` to avoid automatic clean-up after inactivity.
-- Registration sends a trial notification (`webhook.register`, and a `webhook.ping` validation). Your endpoint only needs to return HTTP 200 for it, and it is signed like any other delivery when a key is set.
+- Registration sends a trial notification (`webhook.register`, and a `webhook.ping` validation). Your endpoint only needs to return HTTP 200 for it. Onshape doesn't say whether the trial carries the signature headers (its help page only says webhooks include them when a key is set), so check the first `webhook.register` in Hookdeck's request log. Hookdeck's edge returns 200 either way, so registration succeeds; a failed check is recorded as failed verification.
 
 ## Test Mode vs Live Mode
 

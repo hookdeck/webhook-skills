@@ -103,8 +103,8 @@ async def spree_webhook(request: Request):
         print(f"Payment completed: event={event_id} payment={data.get('id')}")
         # TODO: Record the payment
 
-    elif name == "shipment.shipped":
-        print(f"Shipment shipped: event={event_id} shipment={data.get('id')}")
+    elif name == "fulfillment.fulfilled":
+        print(f"Parcel shipped: event={event_id} fulfillment={data.get('id')}")
         # TODO: Notify the customer with tracking details
 
     elif name == "user.created":

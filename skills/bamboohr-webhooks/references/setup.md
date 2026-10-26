@@ -11,14 +11,31 @@
 2. Add a webhook and enter your endpoint URL.
 3. Choose the fields to **monitor** from the predefined list (a change to any of them triggers the webhook).
 4. Choose which fields are **posted** in the payload, and optionally rename them.
-5. Choose the format: JSON (recommended) or HTML form.
-6. Save, then copy the generated **private key**. It is your `BAMBOOHR_WEBHOOK_SECRET`.
+5. Choose the data structure: **Event-Based** (recommended; `employee.created` / `employee.updated` / `employee.deleted`, where `employee.updated` needs at least one monitored field) or **Field-Based** (the batched `employees` payload with posted fields).
+6. Choose the format: JSON (recommended) or HTML form.
+7. Save, then copy the generated **private key**. It is your `BAMBOOHR_WEBHOOK_SECRET`.
 
 Custom fields can be monitored; fields in custom tables are not supported.
 
 ## Option 2: Permissioned Webhook (API)
 
-Call the **Create Webhook** endpoint with an API key or OAuth token. The webhook can only see fields that user's access level allows.
+Call the **Create Webhook** endpoint (`POST /api/v1/webhooks`) with an API key or OAuth token. The webhook can only see fields that user's access level allows.
+
+For an **Event-Based** webhook, list the events (`format` is required; `monitorFields` is required with `employee.updated`):
+
+```json
+{
+  "name": "My event webhook",
+  "url": "https://example.com/webhooks/bamboohr",
+  "format": "json",
+  "events": ["employee.created", "employee.updated", "employee.deleted"],
+  "monitorFields": ["firstName", "jobTitle"]
+}
+```
+
+Other events are `company.updated`, `company.deleted` and `company-integrations.updated`. You can't mix these with the legacy `employee_with_fields.*` events on one webhook. (BambooHR's guide page writes `employee.update` in one sentence; the API's event list uses `employee.updated`.)
+
+Omitting `events` creates a **Field-Based** webhook (legacy `employee_with_fields.*` events) that posts the fields you choose:
 
 ```json
 {

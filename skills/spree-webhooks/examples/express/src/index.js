@@ -86,8 +86,8 @@ app.post('/webhooks/spree',
         // TODO: Record the payment
         break;
 
-      case 'shipment.shipped':
-        console.log('Shipment shipped:', { eventId: event.id, shipment: data.id });
+      case 'fulfillment.fulfilled':
+        console.log('Parcel shipped:', { eventId: event.id, fulfillment: data.id });
         // TODO: Notify the customer with tracking details
         break;
 

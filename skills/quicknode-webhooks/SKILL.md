@@ -61,7 +61,7 @@ def verify(raw_body: bytes, headers, secret: str) -> bool:
 
 ### Timestamp tolerance is opt-in
 
-Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. `X-QN-Nonce` can be stored to skip repeated deliveries.
+Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. Storing `X-QN-Nonce` skips exact repeats (Hookdeck retries and replays resend it), but Quicknode doesn't document whether its own retries keep the nonce, so also key idempotency on block number or hash and transaction hash.
 
 > **For complete handlers with route wiring, payload dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -85,7 +85,7 @@ Quicknode has **no event type field or header**. Each stream or webhook delivers
 - Method is `POST`.
 - **Streams:** respond `2xx` within the configured timeout (default 30 s). Retries every N seconds (default 1) and pauses after N failed retries (default 3). Blocks are delivered in sequence.
 - **Webhooks:** "automatic retries for non-200 responses"; the schedule is not stated.
-- Treat delivery as at-least-once and deduplicate.
+- Treat delivery as at-least-once and deduplicate on block/transaction identifiers (the nonce is only documented as a replay guard).
 
 ## Environment Variables
 

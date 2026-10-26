@@ -20,7 +20,7 @@ The body's `request_type` tells you what to do:
 | `access` | A data-subject access request is created | `201 Created` |
 | `deletion` | A data-subject deletion request is created | `201 Created` |
 | `opt_out` | An opt-out request is created (`topic: opt_out:create`) | `201 Created` |
-| `readiness_check` | Cyera asks whether the system can process a request | `200 OK` |
+| `readiness_check` | A Readiness Check is configured on the integration and Cyera asks its question | `200 OK` (the docs give no code for readiness checks) |
 
 The docs show sample bodies for `access`, `opt_out`, `health_check` and `readiness_check`; there is
 no separate deletion sample, so the examples reuse the access shape for deletion.

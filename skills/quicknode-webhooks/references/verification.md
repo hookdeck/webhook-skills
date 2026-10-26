@@ -87,7 +87,7 @@ Do not reject old timestamps by default. Hookdeck retries and replays resend the
 
 ### Replays
 
-`X-QN-Nonce` is unique per message. Record the nonce after you have processed a delivery successfully and acknowledge repeats without reprocessing them. Do not record it before processing, or a retry of a failed delivery would be dropped.
+Quicknode describes `X-QN-Nonce` only as "a unique string that prevents replay attacks"; it doesn't say whether its own retries reuse the nonce or send a new one. The examples record the nonce after a delivery is processed successfully and acknowledge exact repeats (such as Hookdeck retries and replays, which resend the original headers) without reprocessing them. Do not record it before processing, or a retry of a failed delivery would be dropped. Because a Quicknode retry may carry a new nonce, also make processing idempotent on the data itself, for example by upserting on block number or hash and transaction hash.
 
 ## Debugging Verification Failures
 

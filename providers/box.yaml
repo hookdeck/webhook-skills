@@ -50,7 +50,7 @@ notes: >
   created_by, source, additional_info}; dispatch on `trigger` (e.g. FILE.UPLOADED, FILE.DOWNLOADED,
   FILE.TRASHED, FOLDER.CREATED, COMMENT.CREATED, COLLABORATION.CREATED, SIGN_REQUEST.COMPLETED, 46 in
   all). `id` is stable across retries and is the dedupe key (BOX-DELIVERY-ID changes per retry).
-  Methods: Box's docs don't name the HTTP method (deliveries are POSTs in practice). Hookdeck's Box
+  Methods: Box's docs don't name the HTTP method ("Box makes an HTTP call to the `address`"). Hookdeck's Box
   source pre-selects POST without managing the method (the user can change it). The examples must NOT
   be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
   route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify

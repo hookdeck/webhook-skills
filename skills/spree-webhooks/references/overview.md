@@ -4,7 +4,7 @@
 
 Spree Commerce (Spree 5/6, the open-source headless e-commerce platform) sends an HTTP `POST` to each of a store's webhook endpoints when events happen: orders, payments, fulfillments, catalog, customers, returns, marketplace sellers and more. Each store has its own endpoints, created in the admin or the Admin API, and each endpoint subscribes to events or patterns such as `order.*`.
 
-Delivery: any non-2xx response, timeout or connection error counts as a failure. A failed delivery is retried up to 5 times over about six minutes with growing waits. 15 consecutive failures disable the endpoint, and any delivery can be re-sent by hand from the delivery log. A re-sent delivery keeps the same event `id`.
+Delivery: any non-2xx response, timeout or connection error counts as a failure. A failed delivery is sent again with growing waits, up to 5 attempts in total over about six minutes. 15 consecutive failures disable the endpoint, and any delivery can be re-sent by hand from the delivery log. A re-sent delivery keeps the same event `id`.
 
 ## Common Event Types
 
@@ -14,12 +14,12 @@ Delivery: any non-2xx response, timeout or connection error counts as a failure.
 | `order.paid` | The order is fully paid | Release for fulfilment |
 | `order.canceled` | The order was canceled | Cancel downstream work |
 | `payment.completed` | A payment succeeded | Record the payment |
-| `shipment.shipped` | A shipment was shipped | Notify the customer |
+| `fulfillment.fulfilled` | One parcel went out | Notify the customer |
 | `user.created` | A new customer registered | Sync to a CRM |
 | `product.updated` | A product changed | Refresh a search index |
 | `webhook.test` | `send_test` was called on the endpoint | Check reachability and verification |
 
-Other events in Spree's list include `order.fulfilled`, `fulfillment.fulfilled`, `payment.refunded`, `product.created`, `product.out_of_stock`, `product.back_in_stock`, `return.received`, `refund.created`, `seller.approved` and `customer.anonymized`.
+Other events in Spree's list include `order.fulfilled`, `payment.refunded`, `product.created`, `product.out_of_stock`, `product.back_in_stock`, `return.received`, `refund.created`, `seller.approved` and `customer.anonymized`.
 
 ## Event Payload Structure
 

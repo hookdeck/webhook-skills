@@ -8,6 +8,8 @@
 - Signed content: the **raw request body bytes**, then the **`X-BambooHR-Timestamp` value**, concatenated with **no separator**
 - Signature encoding: lowercase hex, 64 characters, no prefix
 
+The same scheme applies to Event-Based and Field-Based webhooks: BambooHR documents a single signing scheme on its main Webhooks page, the Permissioned guide (which Event-Based webhooks sit under) points back to it, and the Create Webhook response returns a `privateKey` for HMAC-SHA256 verification whichever events you pick.
+
 BambooHR's own PHP sample is `hash_hmac('SHA256', $data . $timestamp, $privateKey)` with `$data` the raw body. There is no official SDK helper, so all examples verify manually.
 
 ## Node.js

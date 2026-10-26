@@ -63,7 +63,7 @@ This vector was also checked against Hookdeck's template.
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate retries. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); `X-ConfigCat-Webhook-Timestamp` is Unix seconds. Dedupe on `X-ConfigCat-Webhook-ID` instead.
+Not by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate retries. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); `X-ConfigCat-Webhook-Timestamp` is Unix seconds. Don't dedupe on `X-ConfigCat-Webhook-ID`: ConfigCat says it "is different for every request", so its own retries (up to 5) arrive with new IDs. Make the handler idempotent instead, for example by treating each call as a signal to refresh config state rather than applying a change twice.
 
 ## How Do I Debug Verification Failures?
 

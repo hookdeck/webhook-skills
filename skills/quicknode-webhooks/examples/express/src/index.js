@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Nonces of deliveries already handled. Use a database or cache with a unique index in production.
+// Nonces of deliveries already handled (catches exact repeats). Use a database or cache with a unique index in production.
 const processedNonces = new Set();
 
 const HEX_64 = /^[0-9a-fA-F]{64}$/;
@@ -97,7 +97,9 @@ app.post('/webhooks/quicknode',
       return res.status(400).send('Invalid JSON');
     }
 
-    // At-least-once delivery: skip a nonce we already handled successfully
+    // Skip a nonce we already handled successfully. This catches exact repeats (Hookdeck retries and
+    // replays resend the same headers); Quicknode doesn't document whether its own retries reuse the
+    // nonce, so also make processing idempotent on block number/hash and transaction hash.
     const nonce = req.headers['x-qn-nonce'];
     if (processedNonces.has(nonce)) {
       return res.status(200).send('Already processed');

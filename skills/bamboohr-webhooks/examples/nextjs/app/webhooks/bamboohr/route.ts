@@ -13,6 +13,13 @@ interface Employee {
   fields?: Record<string, unknown>;
 }
 
+// Event-based webhook body (one event per POST)
+interface EventData {
+  companyId?: string;
+  employeeId?: string;
+  changedFields?: string[];
+}
+
 // X-BambooHR-Signature is the hex HMAC-SHA256 of the raw body followed directly by
 // the X-BambooHR-Timestamp header value (no separator), keyed with the webhook's private key
 function verifySignature(
@@ -61,14 +68,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  let payload: { employees?: Employee[] };
+  let payload: { employees?: Employee[]; type?: unknown; data?: EventData };
   try {
     payload = JSON.parse(rawBody.toString('utf8'));
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Employees may be batched into one POST; ignore unrecognized fields
+  // Event-based webhooks (recommended by BambooHR): one event per POST, { type, timestamp, data }
+  if (typeof payload.type === 'string') {
+    const data = payload.data || {};
+    switch (payload.type) {
+      case 'employee.created':
+        console.log(`BambooHR: employee ${data.employeeId} created`);
+        break;
+      case 'employee.updated':
+        console.log(`BambooHR: employee ${data.employeeId} updated:`, data.changedFields);
+        break;
+      case 'employee.deleted':
+        console.log(`BambooHR: employee ${data.employeeId} deleted`);
+        break;
+      case 'company.updated':
+      case 'company.deleted':
+      case 'company-integrations.updated':
+        console.log(`BambooHR: ${payload.type} for company ${data.companyId}`);
+        break;
+      default:
+        console.log(`BambooHR: unhandled event type ${payload.type}`);
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  // Field-based (legacy) webhooks: employees may be batched into one POST; ignore unrecognized fields
   const employees = Array.isArray(payload.employees) ? payload.employees : [];
   for (const employee of employees) {
     switch (employee.action) {

@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyQuicknodeWebhook } from '@/lib/verify';
 
-// Nonces of deliveries already handled. Use a database or cache with a unique index in production.
+// Nonces of deliveries already handled (catches exact repeats). Use a database or cache with a unique index in production.
 const processedNonces = new Set<string>();
 
 export async function POST(request: NextRequest) {
@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // At-least-once delivery: skip a nonce we already handled successfully
+  // Skip a nonce we already handled successfully. This catches exact repeats (Hookdeck retries and
+  // replays resend the same headers); Quicknode doesn't document whether its own retries reuse the
+  // nonce, so also make processing idempotent on block number/hash and transaction hash.
   const nonce = request.headers.get('x-qn-nonce') as string;
   if (processedNonces.has(nonce)) {
     return NextResponse.json({ received: true, duplicate: true });

@@ -58,7 +58,7 @@ Applies to files (F) and/or folders (D). Strings are exact.
 
 ## Delivery and Retries
 
-A delivery fails when Box doesn't get a `2xx` within 30 seconds. Box retries up to 5 times over 1 hour (Box notes these numbers could change). Respond fast and process asynchronously. Box's docs don't name the HTTP method; deliveries are POSTs in practice.
+A delivery fails when Box doesn't get a `2xx` within 30 seconds. Box retries up to 5 times over 1 hour (Box notes these numbers could change). Respond fast and process asynchronously. Box's docs don't name the HTTP method ("Box makes an HTTP call to the `address`"); Hookdeck's Box source pre-selects POST and leaves the method unmanaged.
 
 ## Full Event Reference
 

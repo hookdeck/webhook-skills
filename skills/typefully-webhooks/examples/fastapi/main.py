@@ -29,8 +29,9 @@ _warned_invalid_tolerance = False
 
 
 def tolerance_seconds() -> int:
-    """Optional replay window. Off by default (0): retries and replays, including Hookdeck's,
-    carry the original timestamp, so a window would reject late redeliveries.
+    """Optional replay window. Off by default (0): Hookdeck's retries and replays carry the
+    original timestamp (Typefully doesn't document whether its own retries do), so a window
+    could reject late redeliveries.
     Set TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS to a positive whole number to opt in."""
     global _warned_invalid_tolerance
     raw = os.getenv("TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS", "").strip()

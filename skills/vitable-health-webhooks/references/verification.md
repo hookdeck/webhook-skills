@@ -78,7 +78,7 @@ Vitable's examples reject a timestamp more than 300 seconds from now. That prote
 VITABLE_WEBHOOK_TOLERANCE_SECONDS=300   # unset or 0 = off
 ```
 
-When it's set to a positive whole number, the timestamp (Unix seconds) must be an integer within that many seconds of now, or the request gets a `401`. Idempotent handling on `event_id` is the main defence against replayed events.
+When it's set to a positive whole number, the timestamp must be an integer within that many seconds of the current Unix time (the comparison Vitable's sample code makes), or the request gets a `401`. Idempotent handling on `event_id` is the main defence against replayed events.
 
 ## Debugging Verification Failures
 

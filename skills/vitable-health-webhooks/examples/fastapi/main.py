@@ -19,7 +19,7 @@ app = FastAPI()
 
 # Vitable Health signs every delivery with HMAC-SHA512:
 #   X-Vitable-Signature: sha512=<128 hex characters>
-#   X-Vitable-Timestamp: <unix seconds>
+#   X-Vitable-Timestamp: <unix_timestamp>
 # signed content = "<X-Vitable-Timestamp value>.<raw body bytes>", key = the secret's UTF-8 bytes.
 # https://developer.vitablehealth.com/webhooks/signatures
 

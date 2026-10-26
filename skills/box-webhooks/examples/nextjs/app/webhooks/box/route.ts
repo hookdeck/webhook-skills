@@ -51,7 +51,7 @@ function verifyBox(rawBody: Buffer, signature: string | null, timestamp: string 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Box's docs don't name the HTTP method (deliveries are POSTs in practice), so every method is
+// Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
 // verified the same way.
 async function handle(request: NextRequest) {
   const secret = process.env.BOX_WEBHOOK_SECRET;

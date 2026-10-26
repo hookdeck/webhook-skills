@@ -47,7 +47,7 @@ describe('Spree Webhook Endpoint', () => {
       'order.paid',
       'order.canceled',
       'payment.completed',
-      'shipment.shipped',
+      'fulfillment.fulfilled',
       'user.created',
       'product.updated',
       'webhook.test',

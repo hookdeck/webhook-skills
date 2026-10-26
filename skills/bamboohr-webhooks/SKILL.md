@@ -1,10 +1,10 @@
 ---
 name: bamboohr-webhooks
 description: >
-  Receive and verify BambooHR employee webhooks (Global and Permissioned). Use
-  when setting up BambooHR webhook handlers, debugging X-BambooHR-Signature
-  verification, or handling employee Created, Updated and Deleted actions in
-  the batched employees payload.
+  Receive and verify BambooHR webhooks, both Event-Based (employee.created,
+  employee.updated, employee.deleted, company.*) and Field-Based (the batched
+  employees payload with Created, Updated and Deleted actions). Use when setting
+  up BambooHR webhook handlers or debugging X-BambooHR-Signature verification.
 license: MIT
 metadata:
   author: hookdeck
@@ -19,12 +19,13 @@ metadata:
 - How do I receive BambooHR webhooks?
 - How do I verify the `X-BambooHR-Signature` header?
 - Why does my BambooHR webhook signature never match?
-- How do I handle `Created`, `Updated` and `Deleted` employee actions?
+- How do I handle Event-Based `employee.created`, `employee.updated` and `employee.deleted` events?
+- How do I handle Field-Based `Created`, `Updated` and `Deleted` employee actions?
 - How do I read the batched `employees` array in a BambooHR webhook?
 
 ## How BambooHR Webhooks Work
 
-BambooHR sends an HTTPS `POST` when monitored employee fields change. Two kinds exist: **Global** webhooks (an admin sets them up in account Settings > Webhooks) and **Permissioned** webhooks (created through the API, limited to the creating user's access). Each webhook has a **private key** used to sign requests. Payloads are JSON (recommended) or `application/x-www-form-urlencoded`, chosen per webhook, and several employees may be batched into one request.
+BambooHR sends an HTTPS `POST` when employee records (or, for Event-Based webhooks, the company) change. Webhooks are set up by an admin in Account Settings > Webhooks (**Global**) or through the API (**Permissioned**, limited to the creating user's access). Each webhook picks a data structure: **Event-Based** (recommended by BambooHR: one event per request, `{ type, timestamp, data }`) or **Field-Based** (the older batched `employees` payload with posted field values). Each webhook has a **private key** used to sign requests; BambooHR documents one signing scheme for all webhooks, and the Create Webhook API returns a `privateKey` for HMAC-SHA256 verification whichever events you pick. Payloads are JSON (recommended) or `application/x-www-form-urlencoded`, chosen per webhook.
 
 ## Verification (core)
 
@@ -65,7 +66,32 @@ Reject with `401` when either header is missing, the signature is malformed, or 
 
 ## Event Payload
 
-There is no event-type header. Each entry in the `employees` array carries an `action`:
+There is no event-type header. Tell the two shapes apart by the body: Event-Based payloads have a top-level `type`, Field-Based payloads have an `employees` array. The examples handle both.
+
+### Event-Based (recommended)
+
+```json
+{
+  "type": "employee.updated",
+  "timestamp": "2026-01-31T18:42:00+0000",
+  "data": { "companyId": "12345", "employeeId": "67890", "changedFields": ["firstName"] }
+}
+```
+
+| `type` | Triggered When | `data` |
+|--------|----------------|--------|
+| `employee.created` | An employee record was created (an `employee.updated` follows) | `companyId`, `employeeId` |
+| `employee.updated` | A monitored field changed | `companyId`, `employeeId`, `changedFields` (API field aliases) |
+| `employee.deleted` | An employee record was deleted | `companyId`, `employeeId` |
+| `company.updated` | Company information or status changed | `companyId` |
+| `company.deleted` | Company status changed to `DELETED` or `CANCELLED` | `companyId` |
+| `company-integrations.updated` | Company integration settings changed | `companyId` |
+
+The payload is a lightweight notification: fetch current data from the BambooHR API. The body `timestamp` is ISO 8601 and is unrelated to the `X-BambooHR-Timestamp` header.
+
+### Field-Based (legacy `employee_with_fields.*` events)
+
+Each entry in the `employees` array carries an `action`:
 
 | `action` | Meaning | `changedFields` / `fields` |
 |----------|---------|----------------------------|
@@ -96,7 +122,7 @@ Loop over `employees` and ignore fields you don't recognize. The per-employee `t
 ## Environment Variables
 
 ```bash
-BAMBOOHR_WEBHOOK_SECRET=your_webhook_private_key   # Global: shown in Settings > Webhooks; Permissioned: `privateKey` in the create response
+BAMBOOHR_WEBHOOK_SECRET=your_webhook_private_key   # Settings > Webhooks, or `privateKey` in the Create Webhook response
 BAMBOOHR_WEBHOOK_TOLERANCE_SECONDS=0               # optional; 0 or unset = no timestamp window
 ```
 
@@ -115,8 +141,8 @@ BambooHR only delivers to HTTPS URLs, so use the Hookdeck URL as the webhook URL
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - BambooHR webhook types, payload and retries
-- [references/setup.md](references/setup.md) - Creating Global and Permissioned webhooks, getting the private key
+- [references/overview.md](references/overview.md) - BambooHR webhook types, Event-Based and Field-Based payloads, retries
+- [references/setup.md](references/setup.md) - Creating webhooks in Settings or the API, getting the private key
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 
 ## Attribution

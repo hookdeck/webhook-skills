@@ -56,7 +56,7 @@ describe('Spree Webhook Route', () => {
       'order.paid',
       'order.canceled',
       'payment.completed',
-      'shipment.shipped',
+      'fulfillment.fulfilled',
       'user.created',
       'product.updated',
       'webhook.test',

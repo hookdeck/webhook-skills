@@ -55,7 +55,7 @@ function verifyBox(rawBody, signature, timestamp, secret) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Box's docs don't name the HTTP method (deliveries are POSTs in practice), so every method is
+// Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
 // verified the same way. Raw body is required: the signature covers the exact bytes Box sent.
 // type: '*/*' so any content type reaches the verifier as a Buffer.
 app.all('/webhooks/box', express.raw({ type: '*/*' }), (req, res) => {
