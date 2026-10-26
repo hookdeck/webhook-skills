@@ -43,10 +43,11 @@ Add the header to every entry; entries without it are delivered without the secr
 ## About Basic and JWT Authorization
 
 MeasureOne also supports Basic and JWT authorization for webhooks (credentials in
-`delivery_details`, sent in the `Authorization` header). Hookdeck's MeasureOne source does not cover
-Basic. The JWT option (`x_auth_token_credentials`) fetches a new token from your endpoint before every
-delivery and retry, so there is no stored value to compare against and it cannot be checked.
-Use the static header.
+`delivery_details`, sent in the `Authorization` header). Basic is a fixed value, so treat it as the
+static header: set the header name to `Authorization` and the value to the full `Basic <base64>`
+string, in Hookdeck and in `MEASUREONE_WEBHOOK_SECRET`. The JWT option (`x_auth_token_credentials`)
+fetches a new token from your endpoint before every delivery and retry, so there is no stored value
+to compare against and it cannot be checked.
 
 ## Test
 

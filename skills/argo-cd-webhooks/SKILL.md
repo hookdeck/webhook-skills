@@ -25,7 +25,8 @@ your template renders. You authenticate a request with a header you add to the w
 - How do I receive Argo CD notification webhooks?
 - Does Argo CD sign webhook requests? (No: use a shared secret header)
 - How do I add a secret header in `argocd-notifications-cm` and verify it?
-- Why does my Argo CD webhook arrive with no body? (The default method is GET)
+- Why does my Argo CD webhook arrive with no body? (The template's `body` is empty, or Next.js
+  dropped a GET body)
 - How do I handle sync-succeeded or health-degraded notifications?
 
 ## Setup Note
@@ -34,7 +35,8 @@ Argo CD webhooks are not signed. Add a secret header to the webhook service (ser
 
 Hookdeck's Argo CD source pre-selects GET and POST without managing the method, so if a
 template uses PUT or PATCH, allow that method on the source too. `basicAuth` on the Argo CD
-service is not covered by Hookdeck's Argo CD source; use a header.
+service sends `Authorization: Basic <base64(username:password)>` on every request; to use it, enter
+header name `Authorization` and the full `Basic <base64>` value.
 
 ## Verification (core)
 
@@ -64,7 +66,7 @@ function verifyArgoCdRequest(
   `ARGO_CD_WEBHOOK_SECRET`, the **whole** header value including any `Bearer ` prefix you typed.
   Do not strip or parse the prefix.
 - Return `401` for a missing header or a mismatch, `400` for a body that isn't a JSON object,
-  `200` once handled. An empty body (GET) is a valid `200`.
+  `200` once handled. An empty body is a valid `200`. GET requests carry the template body too.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
 - Accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the route and check the credential first

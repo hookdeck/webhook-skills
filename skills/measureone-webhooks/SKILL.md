@@ -31,9 +31,10 @@ and then check on your endpoint.
 
 Add a static header to delivery_details.headers on the Data Request and enter it here. The JWT option fetches a new token for every delivery and cannot be checked.
 
-MeasureOne also offers Basic and JWT authorization for webhooks. Hookdeck's MeasureOne source does
-not cover Basic, and the JWT option (`x_auth_token_credentials`) fetches a fresh token from your own
-endpoint before every delivery, so it can't be checked against a stored value. Use the static header.
+MeasureOne also offers Basic and JWT authorization for webhooks. Basic arrives as a fixed
+`Authorization` value, so it works as the static header: enter `Authorization` as the header name
+and the full `Basic <base64>` value. The JWT option (`x_auth_token_credentials`) fetches a fresh
+token from your own endpoint before every delivery, so it can't be checked against a stored value.
 
 ## Verification (core)
 

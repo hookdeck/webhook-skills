@@ -10,11 +10,13 @@ in the `Authorization` header.
 
 ## Delivery Receipt Statuses
 
-There is no `event` field. Dispatch on `status`:
+There is no `event` field. Dispatch on `status`, not `status_description`: the docs list 10
+statuses but only 9 descriptions, so they don't pair one-to-one.
 
 | `status` | `status_description` | Common Use Cases |
 |----------|----------------------|------------------|
-| `created`, `sending`, `pending`, `sent` | In transit | Track progress |
+| `created`, `sending`, `pending` | In transit | Track progress |
+| `sent` | Not paired in the docs; notification-api labels it `Delivered` for email, `Sent` for SMS | Track progress |
 | `delivered` | Delivered | Mark the message delivered |
 | `permanent-failure` | Blocked, No such number, No such address | Stop sending to the recipient |
 | `temporary-failure` | Content or inbox issue, Carrier issue | Record; a later callback may update it |

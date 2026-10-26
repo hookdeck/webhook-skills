@@ -76,8 +76,8 @@ type works, and parse it only after the check.
 
 ## Methods and Body
 
-The connector method is `POST` (default), `PUT`, `PATCH`, `GET` or `DELETE` (DELETE is generally
-available since 9.3). The examples accept all five on `/webhooks/kibana`, check the credential
+The connector method is `POST` (default), `PUT`, `PATCH`, `GET` or `DELETE` (PATCH, GET and DELETE
+are generally available since 9.3). The examples accept all five on `/webhooks/kibana`, check the credential
 first, and handle an empty body.
 
 There is no vendor event field. The body is the rule action's mustache template, so its shape is

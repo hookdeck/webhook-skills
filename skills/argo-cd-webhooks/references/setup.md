@@ -72,15 +72,19 @@ metadata:
   (default `Authorization`) and the expected value from `ARGO_CD_WEBHOOK_SECRET`.
 - `ARGO_CD_WEBHOOK_SECRET` is the **exact, whole header value**, including any `Bearer ` prefix you
   typed in the secret. The prefix is not parsed or stripped.
-- `basicAuth` on the service is **not covered by Hookdeck's Argo CD source**. Use a header.
-- The template **must set `method: POST`** (or another method) if you want a body: the default is
-  GET, which sends none.
+- `basicAuth` on the service sends `Authorization: Basic <base64(username:password)>` on every
+  request. It works like a header: enter header name `Authorization` and the full `Basic <base64>`
+  value in Hookdeck, and set `ARGO_CD_WEBHOOK_SECRET` to the same full value.
+- The body goes out with **every method, GET included**: the notifications engine sends the
+  template's `webhook.<name>.body` (or, with no `webhook` block, the notification `message`)
+  whatever the method. Next.js App Router route handlers drop GET request bodies, so set
+  `method: POST` in the template when using the Next.js example.
 
 ## Methods
 
 The template chooses `GET`, `POST`, `PUT` or `PATCH`; the default is `GET`. The examples accept
 `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the webhook route, check the credential first for
-every method, and return `200` for an empty body. Hookdeck's Argo CD source pre-selects GET
+every method, read the body for GET too, and return `200` for an empty body. Hookdeck's Argo CD source pre-selects GET
 and POST without managing the method, so if a template uses PUT or PATCH, allow that method on
 the source too.
 

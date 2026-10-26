@@ -68,7 +68,7 @@ async function argoCdHandler(req, res) {
 
   const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
 
-  // GET (the default) carries no body.
+  // An empty template body. Argo CD sends the body with GET (the default) too.
   if (raw.trim() === '') {
     console.log(`Argo CD ${req.method} request with an empty body`);
     return res.status(200).json({ received: true });

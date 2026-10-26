@@ -17,7 +17,7 @@ Your endpoint must return a 2xx within 10 seconds.
 | `STATUS_CHANGE` | `CREDENTIAL` | A credential's status changes | Prompt the user to fix a broken connection |
 | `NEW_DATA_AVAILABLE` | `METER` | New data is available | Fetch the new statements, meters or intervals |
 | `EXISTING_DATA_UPDATED` | `METER` | Existing data is updated | Re-sync the affected records |
-| `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | Data is deleted | Remove or move local copies |
+| `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | A user deletes a business unit (`data` says where its accounts moved and how many) | Reassign or remove the business unit's accounts locally |
 | `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to a business unit | Update local ownership |
 | `REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS` | `CREDENTIAL` | A real-time credential validation succeeds | Mark the connection ready |
 | `REAL_TIME_CREDENTIAL_VALIDATION_FAILURE` | `CREDENTIAL` | A real-time credential validation fails | Ask the user to re-enter credentials |

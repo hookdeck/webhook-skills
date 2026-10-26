@@ -18,7 +18,7 @@ Custom headers and OAuth 2.0 are not covered by Hookdeck's Kibana source.
 
 1. In Kibana go to **Stack Management > Connectors** and create a **Webhook** connector (not
    Webhook - Case Management).
-2. Set the **Method** (`POST` by default; `PUT`, `PATCH`, `GET` and `DELETE` also exist, DELETE
+2. Set the **Method** (`POST` by default; `PUT` also exists, and `PATCH`, `GET` and `DELETE` are
    generally available since 9.3) and the **URL** (e.g. `https://example.com/webhooks/kibana`).
 3. Under **Authentication** choose **Basic authentication** and enter a user name and password.
 4. Store them as `KIBANA_WEBHOOK_USERNAME` and `KIBANA_WEBHOOK_PASSWORD`. Use a long random

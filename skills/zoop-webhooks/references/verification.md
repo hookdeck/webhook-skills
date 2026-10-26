@@ -85,8 +85,9 @@ def safe_equal(a: str, b: str) -> bool:
   empty header would "match".
 - **Value mismatch**: the value is exactly what you passed as `authorization` when creating the
   webhook, including any scheme prefix you added.
-- **The ping is authenticated too**: a wrong value makes the ping fail and the webhook stays
-  `registred`.
+- **The ping**: Zoop's docs don't say whether it carries the `Authorization` header. The
+  examples check it, so a wrong or missing value makes the ping fail and the webhook stays
+  `registred`; confirm on a real ping.
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
   `express.raw({ type: '*/*' })` accepts any content type.
 - **1-second timeout**: verify, return `200`, then process.

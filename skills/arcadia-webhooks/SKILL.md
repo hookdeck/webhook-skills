@@ -81,7 +81,7 @@ Every payload has `id` (`whk_...`), `eventType`, `resource`, `createdAt`, `busin
 | `STATUS_CHANGE` | `CREDENTIAL` | A credential's status changes |
 | `NEW_DATA_AVAILABLE` | `METER` | New data is available for a resource |
 | `EXISTING_DATA_UPDATED` | `METER` | Existing data is updated |
-| `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | Data is deleted |
+| `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | A user deletes a business unit |
 | `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to a business unit |
 | `REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS` | `CREDENTIAL` | A real-time credential validation succeeds |
 | `REAL_TIME_CREDENTIAL_VALIDATION_FAILURE` | `CREDENTIAL` | A real-time credential validation fails |

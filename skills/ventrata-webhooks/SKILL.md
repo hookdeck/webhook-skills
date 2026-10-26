@@ -69,15 +69,16 @@ function verifyVentrataRequest(headers, secret = process.env.VENTRATA_WEBHOOK_SE
 
 The body is `{event, webhook, ...}` plus the objects the event concerns: `order`, `booking`,
 `product`, `availability`, `supplier` and `diff` (the last for order, booking and product updates).
-The capability documents these four events, while the API examples write `booking.updated`;
-handlers should accept both forms and dispatch on `event`.
+The capability documents these four events, while the payload examples write `booking.updated`
+(the docs show no dotted form for the other three). Handlers should accept both spellings and
+dispatch on `event`.
 
-| Event | Also written as | Sent When |
-|-------|-----------------|-----------|
-| `order_update` | `order.updated` | An order changes |
-| `booking_update` | `booking.updated` | A booking changes |
-| `availability_update` | `availability.updated` | Availability changes |
-| `product_update` | `product.updated` | A product changes |
+| Event | Sent When |
+|-------|-----------|
+| `order_update` | An order changes |
+| `booking_update` (payload examples: `booking.updated`) | A booking changes |
+| `availability_update` | Availability changes |
+| `product_update` | A product changes |
 
 Delivery is always an HTTP `POST`. Retries are per webhook (`retryOnError`).
 

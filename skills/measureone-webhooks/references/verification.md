@@ -71,8 +71,8 @@ def verify_measureone_request(headers, secret=None, header_name=None) -> bool:
 - **Fail closed.** If `MEASUREONE_WEBHOOK_SECRET` is unset, reject everything.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the check.
-- **JWT and Basic.** The JWT option fetches a new token for every delivery and cannot be checked;
-  Basic is not covered by Hookdeck's MeasureOne source.
+- **JWT and Basic.** The JWT option fetches a new token for every delivery and cannot be checked.
+  Basic is a fixed `Authorization` value: compare the full `Basic <base64>` string as the header.
 
 ## Debugging Verification Failures
 

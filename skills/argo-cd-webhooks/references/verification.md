@@ -61,14 +61,17 @@ def verify_argo_cd_request(headers, secret=None, header_name=None) -> bool:
 
 ## Common Gotchas
 
-- **GET by default.** Argo CD sends `GET` unless the template sets a method, and GET has no body.
-  Accept every method the template can choose (GET, POST, PUT, PATCH), check the credential
-  first, and handle an empty body.
+- **GET by default.** Argo CD sends `GET` unless the template sets a method, and the GET still
+  carries the template body. Accept every method the template can choose (GET, POST, PUT, PATCH),
+  check the credential first, read the body for every method, and handle an empty body. Next.js
+  App Router drops GET bodies, so use `method: POST` there.
 - **Compare the whole value.** Do not strip or parse a `Bearer ` prefix. If you typed
   `Bearer abc` in the secret, `ARGO_CD_WEBHOOK_SECRET` is `Bearer abc`.
 - **Case-insensitive header lookup.** Node lowercases header names; the Python helper lowercases both sides and
   `Headers` is case-insensitive.
-- **`basicAuth` isn't covered by Hookdeck's Argo CD source.** Use a header.
+- **`basicAuth` is an `Authorization` header.** Argo CD sends `Basic <base64(username:password)>`
+  on every request, so compare it as the header: name `Authorization`, value the full
+  `Basic <base64>` string.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `hmac.compare_digest` on bytes, never `str`, which
   raises on non-ASCII.
@@ -83,7 +86,7 @@ def verify_argo_cd_request(headers, secret=None, header_name=None) -> bool:
 |---------|--------------|
 | 401 on every request | `ARGO_CD_WEBHOOK_SECRET` unset, or the header name differs from `ARGO_CD_WEBHOOK_HEADER` |
 | 401 with the right secret | Missing or extra `Bearer ` prefix compared with what the Secret holds |
-| Request arrives with no body | Template has no `method`, so Argo CD sent GET |
+| Request arrives with no body | The template's `body` is empty, or a Next.js route received a GET (it drops GET bodies) |
 | 405 from Hookdeck or your server | The method (GET, PUT, PATCH) isn't allowed on the source or route |
 | 401 only behind a proxy | The proxy strips or renames the header |
 | 400 after authentication | Body isn't a JSON object (check the template's `body`) |

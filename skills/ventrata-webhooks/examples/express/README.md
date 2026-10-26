@@ -72,7 +72,7 @@ Use the printed URL as the webhook `url` when you create the webhook.
 
 1. The secret header is checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
-3. The handler dispatches on `event`, accepting both forms: `order_update` / `order.updated`,
-   `booking_update` / `booking.updated`, `availability_update` / `availability.updated`,
-   `product_update` / `product.updated`.
+3. The handler dispatches on `event`: `order_update`, `booking_update`, `availability_update`,
+   `product_update`. A dotted `<x>.updated` spelling (the docs' payload examples write
+   `booking.updated`) is mapped to `<x>_update` first.
 4. It returns `200 {"received": true}`.

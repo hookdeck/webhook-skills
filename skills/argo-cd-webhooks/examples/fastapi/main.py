@@ -75,7 +75,8 @@ def handle_notification(payload: dict) -> None:
     dependencies=[Depends(require_argo_cd_credential)],
 )
 async def argo_cd_webhook(request: Request):
-    # Read the raw body so any content type is accepted; GET (the default) has no body.
+    # Read the raw body so any content type is accepted. Argo CD sends the template body
+    # with every method, GET (the default) included; it may also be empty.
     raw_body = await request.body()
 
     if not raw_body.strip():

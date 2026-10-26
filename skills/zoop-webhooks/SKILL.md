@@ -83,7 +83,9 @@ Return `401` for a missing or mismatched header. Python: `hmac.compare_digest` o
 - **Read the raw body** (`express.raw({ type: '*/*' })`) so any content type works, check the
   header first, and parse the JSON only after the check passes.
 - **Answer `ping` with `200`.** On creation Zoop sends `type: "ping"` and activates the webhook
-  only if the URL accepts it. The ping carries your `Authorization` header too.
+  only if the URL accepts it. Zoop's docs don't say whether the ping carries your
+  `Authorization` header; the examples require it, so confirm on a real ping (a 401 in your logs
+  means it arrived without the header).
 - **Respond within 1 second.** Zoop closes the connection after 1 second and retries after
   10 minutes. Acknowledge with `200` first, then process (queue or background task).
 - **Dispatch on `type`, dedupe on `id`.** Zoop may deliver an event more than once (up to 3

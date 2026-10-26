@@ -10,8 +10,8 @@ whole value, in constant time. The route reads the body with `express.raw({ type
 Add a static header to delivery_details.headers on the Data Request and enter it here. The JWT option fetches a new token for every delivery and cannot be checked.
 
 This authenticates the sender only: it does not protect the body and gives no replay protection.
-Use HTTPS and rotate the credential if it leaks. The JWT option cannot be checked, and Basic is not
-covered by Hookdeck's MeasureOne source.
+Use HTTPS and rotate the credential if it leaks. The JWT option cannot be checked. Basic works as
+the static header: header name `Authorization`, value the full `Basic <base64>` string.
 
 ## Prerequisites
 

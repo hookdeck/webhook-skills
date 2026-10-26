@@ -15,9 +15,9 @@ header you add to the webhook service, and the body is whatever your template re
 
 | Part | Behaviour |
 |------|-----------|
-| Method | Set by the template: `GET`, `POST`, `PUT` or `PATCH`. **Default `GET`**, which has no body |
+| Method | Set by the template: `GET`, `POST`, `PUT` or `PATCH`. **Default `GET`**, which still carries the body |
 | Headers | Every header listed under the service's `headers` is sent on each request |
-| Body | The template's `body`, rendered with Go templates (e.g. `{{.app.metadata.name}}`) |
+| Body | The template's `body`, rendered with Go templates (e.g. `{{.app.metadata.name}}`), sent with any method. With no `webhook` block, the notification `message` |
 | Auth | Your own header (`headers`) or `basicAuth` on the service. No signature, no timestamp |
 | Retries | The notification service retries network errors and 5xx responses (`retryMax` default 3) |
 
