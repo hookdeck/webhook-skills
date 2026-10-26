@@ -45,6 +45,7 @@ function verifyCyera(rawBody, headers, secret) {
     .update(Buffer.concat([Buffer.from(ts, 'latin1'), Buffer.from(':'), rawBody]))
     .digest();
   const received = Buffer.from(sig, 'base64'); // safe: format validated above
+  if (received.toString('base64') !== sig) return false; // non-canonical encoding
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 ```
@@ -58,6 +59,8 @@ def verify_cyera(raw: bytes, sig: str, ts: str, secret: str) -> bool:
     if not sig or not ts or not re.fullmatch(r"[A-Za-z0-9+/]{43}=", sig):
         return False
     received = base64.b64decode(sig, validate=True)
+    if base64.b64encode(received).decode("ascii") != sig:  # non-canonical encoding
+        return False
     expected = hmac.new(secret.encode("utf-8"), ts.encode("latin-1") + b":" + raw, hashlib.sha256).digest()
     return hmac.compare_digest(received, expected)  # bytes, never str
 ```

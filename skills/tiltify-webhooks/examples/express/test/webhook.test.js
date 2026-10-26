@@ -134,6 +134,18 @@ describe('Tiltify webhook endpoint', () => {
     expect(res.status).toBe(401);
   });
 
+  test('rejects a non-canonical base64 encoding of the right digest', async () => {
+    const ts = nowIso();
+    const sig = sign(body, ts);
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    // A stray low bit in the last character decodes to the same bytes, but is not the signature sent
+    const res = await post(body, {
+      'X-Tiltify-Signature': sig.slice(0, 42) + A[A.indexOf(sig[42]) | 1] + '=',
+      'X-Tiltify-Timestamp': ts,
+    });
+    expect(res.status).toBe(401);
+  });
+
   test('rejects a signature made with another secret', async () => {
     const ts = nowIso();
     const res = await post(body, {

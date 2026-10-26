@@ -136,6 +136,16 @@ def test_compares_base64_case_sensitively():
     assert res.status_code == 401
 
 
+def test_rejects_non_canonical_base64():
+    ts = now_iso()
+    sig = sign(BODY, ts)
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    # A stray low bit in the last character decodes to the same bytes, but is not the signature sent
+    bad = sig[:42] + alphabet[alphabet.index(sig[42]) | 1] + "="
+    res = post(BODY, {"X-Tiltify-Signature": bad, "X-Tiltify-Timestamp": ts})
+    assert res.status_code == 401
+
+
 def test_rejects_signature_from_another_secret():
     ts = now_iso()
     res = post(BODY, {"X-Tiltify-Signature": sign(BODY, ts, "other_secret"), "X-Tiltify-Timestamp": ts})

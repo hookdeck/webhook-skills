@@ -111,6 +111,12 @@ class TestConfigCatWebhook:
         )
         assert error is not None
 
+    def test_rejects_non_canonical_base64(self):
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        # A stray low bit in the last character decodes to the same bytes, but is not the signature sent
+        bad = VECTOR_SIGNATURE[:42] + alphabet[alphabet.index(VECTOR_SIGNATURE[42]) | 1] + "="
+        assert verify_configcat_webhook(VECTOR_BODY, VECTOR_ID, VECTOR_TIMESTAMP, bad, SECRET) is not None
+
     def test_ignores_old_timestamps_by_default(self):
         res = client.post(URL, content=b"{}", headers=sign(b"{}", "wh-old", VECTOR_TIMESTAMP))
         assert res.status_code == 200

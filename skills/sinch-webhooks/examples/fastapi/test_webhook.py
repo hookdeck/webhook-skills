@@ -130,6 +130,14 @@ class TestInvalidRequests:
     def test_tampered_body(self):
         assert post(self.BODY + b" ", signed_headers(self.BODY)).status_code == 401
 
+    def test_non_canonical_base64(self):
+        headers = signed_headers(self.BODY)
+        sig = headers["x-sinch-webhook-signature"]
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        # A stray low bit in the last character decodes to the same bytes, but is not the signature sent
+        headers["x-sinch-webhook-signature"] = sig[:42] + alphabet[alphabet.index(sig[42]) | 1] + "="
+        assert post(self.BODY, headers).status_code == 401
+
     def test_changed_nonce(self):
         headers = {**signed_headers(self.BODY), "x-sinch-webhook-signature-nonce": "OTHERNONCE"}
         assert post(self.BODY, headers).status_code == 401

@@ -22,23 +22,23 @@ Tiltify has no webhook SDK, so verification is manual in every framework.
 
 ```javascript
 const signed = Buffer.concat([Buffer.from(timestamp, 'latin1'), Buffer.from('.'), rawBody]);
-const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signed).digest();
+const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signed).digest('base64');
 
 if (!/^[A-Za-z0-9+/]{43}=$/.test(signature)) return false;   // exact length and alphabet
-return crypto.timingSafeEqual(expected, Buffer.from(signature, 'base64'));
+return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature)); // compare the base64 text
 ```
 
-Validate the format first: `Buffer.from(x, 'base64')` silently drops bad characters, so never call it on an unvalidated value.
+Validate the format first, then compare the base64 text rather than decoded bytes: `Buffer.from(x, 'base64')` silently drops bad characters, and both Node and Python ignore stray low bits in the last character, while Hookdeck compares the base64 string exactly.
 
 ### Python
 
 ```python
 signed = b"".join([timestamp.encode("latin-1"), b".", raw_body])
-expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).digest()
+expected = base64.b64encode(hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).digest())
 
 if not re.fullmatch(r"[A-Za-z0-9+/]{43}=", signature):
     return False
-return hmac.compare_digest(expected, base64.b64decode(signature, validate=True))
+return hmac.compare_digest(expected, signature.encode("ascii"))  # compare the base64 text
 ```
 
 Compare bytes, never `str`, with `hmac.compare_digest`.

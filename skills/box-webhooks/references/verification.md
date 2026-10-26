@@ -31,7 +31,7 @@ expected = base64.b64encode(hmac.new(secret.encode(), signed, hashlib.sha256).di
 
 Build the message as bytes. The header value is encoded latin1 exactly as received (never trimmed or re-formatted) and the body is the raw bytes (never decoded and re-encoded, never `JSON.parse`d first).
 
-Validate the signature's format before comparing: exactly `[A-Za-z0-9+/]{43}=`. Then compare in constant time and case-sensitively: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (and never calls `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python checks `base64.b64decode(sig, validate=True)` and uses `hmac.compare_digest` on bytes.
+Validate the signature's format before comparing: exactly `[A-Za-z0-9+/]{43}=`. Then compare in constant time and case-sensitively: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (and never calls `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python checks `base64.b64decode(sig, validate=True)` and uses `hmac.compare_digest` on bytes. The examples compare the base64 text rather than decoded bytes, because decoders ignore stray low bits in the last character and Hookdeck compares base64 exactly.
 
 A missing or empty signature or timestamp header, a malformed value, or a mismatch returns `401`.
 

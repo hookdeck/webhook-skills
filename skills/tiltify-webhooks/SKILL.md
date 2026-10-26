@@ -36,19 +36,19 @@ The signature is the standard base64 (padded, 44 characters) HMAC-SHA256 of `<X-
 
 ```javascript
 const signed = Buffer.concat([Buffer.from(timestamp, 'latin1'), Buffer.from('.'), rawBody]);
-const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signed).digest();
+const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signed).digest('base64');
 
-if (!/^[A-Za-z0-9+/]{43}=$/.test(signature)) return false;     // validate before decoding
-return crypto.timingSafeEqual(expected, Buffer.from(signature, 'base64'));
+if (!/^[A-Za-z0-9+/]{43}=$/.test(signature)) return false;     // validate the format first
+return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature)); // compare the base64 text
 ```
 
 ```python
 signed = b"".join([timestamp.encode("latin-1"), b".", raw_body])
-expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).digest()
+expected = base64.b64encode(hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).digest())
 
-if not re.fullmatch(r"[A-Za-z0-9+/]{43}=", signature):          # validate before decoding
+if not re.fullmatch(r"[A-Za-z0-9+/]{43}=", signature):          # validate the format first
     return False
-return hmac.compare_digest(expected, base64.b64decode(signature, validate=True))
+return hmac.compare_digest(expected, signature.encode("ascii"))  # compare the base64 text
 ```
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

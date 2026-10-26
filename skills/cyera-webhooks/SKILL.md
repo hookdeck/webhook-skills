@@ -53,12 +53,13 @@ function verifyCyera(rawBody /* Buffer */, headers, secret) {
     .update(Buffer.concat([Buffer.from(ts, 'latin1'), Buffer.from(':'), rawBody]))
     .digest();
   const received = Buffer.from(sig, 'base64');
+  if (received.toString('base64') !== sig) return false; // non-canonical encoding
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 ```
 
 Python equivalent: `hmac.new(secret.encode(), ts.encode('latin-1') + b':' + raw, hashlib.sha256).digest()`,
-`base64.b64decode(sig, validate=True)`, then `hmac.compare_digest` on bytes.
+`base64.b64decode(sig, validate=True)`, a re-encode check that it gives back `sig` (decoders ignore stray low bits in the last character; Hookdeck compares base64 exactly), then `hmac.compare_digest` on bytes.
 
 - Missing or empty signature or timestamp, malformed signature, or mismatch: respond `401`.
 - Read the **raw body** (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`); parse JSON only after the check.

@@ -41,7 +41,7 @@ Steps:
 1. Read the raw body (Express `express.raw({ type: '*/*' })`, Next.js `await request.arrayBuffer()`, FastAPI `await request.body()`).
 2. Require all three headers to be present and non-empty, else 401.
 3. Require the signature to match `[A-Za-z0-9+/]{43}=` (44 padded base64 characters), else 401. Compare the WHOLE header value as one digest: no list splitting, no prefix parsing.
-4. Compute the HMAC and compare in constant time (Node: equal-length buffers with `crypto.timingSafeEqual`; Python: `hmac.compare_digest` on bytes, with `base64.b64decode(..., validate=True)`).
+4. Compute the HMAC and compare in constant time (Node: equal-length buffers with `crypto.timingSafeEqual`; Python: `hmac.compare_digest` on bytes, with `base64.b64decode(..., validate=True)` followed by a re-encode check, since decoders ignore stray low bits in the last character and Hookdeck compares base64 exactly).
 5. Respond `200` if valid, `401` otherwise. Parse JSON only after this check.
 
 Header values are encoded latin-1 exactly as received; they are never trimmed, parsed or re-formatted.

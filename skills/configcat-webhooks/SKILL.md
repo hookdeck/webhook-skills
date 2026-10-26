@@ -45,7 +45,7 @@ def verify(raw_body: bytes, wid: str, ts: str, signature: str, secret: str) -> b
         return False
     message = wid.encode("latin-1") + ts.encode("latin-1") + raw_body
     digest = hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest()
-    return hmac.compare_digest(base64.b64decode(signature, validate=True), digest)
+    return hmac.compare_digest(base64.b64encode(digest), signature.encode("ascii"))  # compare the base64 text
 ```
 
 Verify the **raw bytes** before parsing (never `JSON.parse` then re-serialise). Missing headers, a malformed value or a mismatch is a `401`. The documented vector (secret `configcat_whsk_VN3juirnVh5pNvCKd81RYRYchxUX4j3NykbZG2fAy88=`, body `examplebody`, ID `b616ca659d154a5fb907dd8475792eeb`, timestamp `1669629035`) must produce `Ks3cYsu9Lslfo+hVxNC3oQWnsF9e5d73TI5t94D9DRA=`.

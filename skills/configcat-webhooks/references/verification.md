@@ -35,7 +35,7 @@ message = wid.encode("latin-1") + ts.encode("latin-1") + raw_body
 expected = base64.b64encode(hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest())
 ```
 
-Validate the format first: the signature must match `[A-Za-z0-9+/]{43}=` (44 characters, padded, case-sensitive). Then compare in constant time: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (never `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python uses `hmac.compare_digest` on bytes and `base64.b64decode(..., validate=True)`.
+Validate the format first: the signature must match `[A-Za-z0-9+/]{43}=` (44 characters, padded, case-sensitive). Then compare in constant time: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (never `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python uses `hmac.compare_digest` on bytes and `base64.b64decode(..., validate=True)`, then re-encodes and requires the original string (or compares the base64 text directly), because the decoder ignores stray low bits in the last character and Hookdeck compares base64 exactly.
 
 Compare the **whole** header as one digest, with no list splitting or prefix parsing. A missing or empty header, a malformed value or a mismatch is `401`.
 

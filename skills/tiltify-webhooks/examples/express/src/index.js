@@ -68,11 +68,13 @@ function verifyTiltifySignature(
     Buffer.from('.', 'utf8'),
     rawBody,
   ]);
-  const expected = crypto
-    .createHmac('sha256', Buffer.from(secret, 'utf8'))
-    .update(signedContent)
-    .digest();
-  const received = Buffer.from(signatureHeader, 'base64');
+  const expected = Buffer.from(
+    crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signedContent).digest('base64'),
+    'ascii',
+  );
+  // Compare the base64 text, as Hookdeck does: decoding would also accept a
+  // non-canonical last character (stray low bits) that maps to the same digest.
+  const received = Buffer.from(signatureHeader, 'ascii');
 
   return crypto.timingSafeEqual(expected, received)
     ? { valid: true }
