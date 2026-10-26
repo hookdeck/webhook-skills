@@ -191,6 +191,10 @@ class TestEventHandling:
         assert second.json() == {"received": True, "duplicate": True}
         assert capsys.readouterr().out.count("Affiliate confirmed") == 1
 
+    def test_non_object_event_field_does_not_crash(self):
+        body = json.dumps({"event": "not-an-object", "object": {}}).encode()
+        assert post(body, sign(body)).status_code == 200
+
 
 def test_health_check():
     assert client.get("/health").json() == {"status": "ok"}

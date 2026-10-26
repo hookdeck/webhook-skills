@@ -36,9 +36,10 @@ def verify_rewardful_signature(raw_body: bytes, signature, secret=None) -> bool:
 
 
 def handle_event(payload: dict) -> None:
-    event = payload.get("event") or {}
-    event_type = event.get("type")
-    obj = payload.get("object") or {}
+    event = payload.get("event")
+    event_type = event.get("type") if isinstance(event, dict) else None
+    obj = payload.get("object")
+    obj = obj if isinstance(obj, dict) else {}
 
     if event_type == "affiliate.created":
         print(f"Affiliate created: {obj.get('email')} ({obj.get('id')})")
@@ -106,7 +107,8 @@ async def rewardful_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Expected a JSON object")
 
     # Retries redeliver the same event; acknowledge repeats without reprocessing.
-    event_id = (payload.get("event") or {}).get("id")
+    event = payload.get("event")
+    event_id = event.get("id") if isinstance(event, dict) else None
     if event_id and event_id in seen_events:
         return {"received": True, "duplicate": True}
 

@@ -28,7 +28,7 @@ The signing key is the **merchant secret** of the collecting account (the accoun
 npx hookdeck-cli listen 3000 khipu --path /webhooks/khipu
 ```
 
-Use the Hookdeck URL as `notify_url`. When creating the Hookdeck source, pick the **Khipu** source type so verification happens at the edge as well.
+Use the Hookdeck URL as `notify_url`. When creating the Hookdeck source, pick the **Khipu** source type so Hookdeck verifies the signature as well.
 
 ## Testing
 
