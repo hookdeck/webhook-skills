@@ -108,6 +108,16 @@ describe('PayNow webhook', () => {
     expect((await post(body, headers)).status).toBe(401);
   });
 
+  it('rejects a non-canonical base64 encoding of the right digest', async () => {
+    const body = event('ON_ORDER_COMPLETED');
+    const headers = sign(body);
+    const sig = headers['PayNow-Signature'];
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    // Set a stray low bit in the last character: decodes to the same bytes, but is not what PayNow sends
+    headers['PayNow-Signature'] = sig.slice(0, 42) + A[A.indexOf(sig[42]) | 1] + '=';
+    expect((await post(body, headers)).status).toBe(401);
+  });
+
   it('returns 500 when the secret is not configured', async () => {
     delete process.env.PAYNOW_WEBHOOK_SECRET;
     const body = event('ON_ORDER_COMPLETED');

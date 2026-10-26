@@ -43,6 +43,9 @@ def verify_paynow_signature(
         provided = base64.b64decode(signature, validate=True)
     except ValueError:
         return "Malformed signature"
+    # Reject non-canonical encodings (stray low bits in the last character): core compares base64 exactly
+    if base64.b64encode(provided).decode("ascii") != signature:
+        return "Malformed signature"
 
     # Optional replay protection. Off by default: Hookdeck retries and replays resend the
     # original headers, so a fixed window would reject legitimate deliveries.

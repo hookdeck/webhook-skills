@@ -119,6 +119,16 @@ def test_rejects_signature_with_different_base64_case():
     assert post(body, headers).status_code == 401
 
 
+def test_rejects_non_canonical_base64():
+    body = event("ON_ORDER_COMPLETED")
+    headers = sign(body)
+    sig = headers["PayNow-Signature"]
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    # Set a stray low bit in the last character: decodes to the same bytes, but is not what PayNow sends
+    headers["PayNow-Signature"] = sig[:42] + alphabet[alphabet.index(sig[42]) | 1] + "="
+    assert post(body, headers).status_code == 401
+
+
 def test_returns_500_when_secret_not_configured(monkeypatch):
     monkeypatch.delenv("PAYNOW_WEBHOOK_SECRET")
     body = event("ON_ORDER_COMPLETED")

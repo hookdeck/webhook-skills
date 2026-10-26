@@ -31,6 +31,7 @@ function verify(rawBody, timestamp, signature, secret) {
   const message = Buffer.concat([Buffer.from(timestamp, 'latin1'), Buffer.from('.'), rawBody]);
   const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(message).digest();
   const provided = Buffer.from(signature, 'base64');
+  if (provided.toString('base64') !== signature) return false; // non-canonical encoding
   return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
 }
 ```
@@ -45,7 +46,10 @@ def verify(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool
         return False
     message = b"".join([timestamp.encode("latin-1"), b".", raw_body])
     expected = hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest()
-    return hmac.compare_digest(base64.b64decode(signature, validate=True), expected)
+    provided = base64.b64decode(signature, validate=True)
+    if base64.b64encode(provided).decode("ascii") != signature:  # non-canonical encoding
+        return False
+    return hmac.compare_digest(provided, expected)
 ```
 
 Full handlers with tests: [Express](../examples/express/), [Next.js](../examples/nextjs/), [FastAPI](../examples/fastapi/).
@@ -59,7 +63,7 @@ The examples make it opt-in: set `PAYNOW_WEBHOOK_TOLERANCE_SECONDS` (for example
 ## Common Gotchas
 
 - **Raw body.** Verify the exact bytes. In Express use `express.raw({ type: '*/*' })`; in Next.js `await request.arrayBuffer()`; in FastAPI `await request.body()`. PayNow's sample converts the body to a UTF-8 string before hashing; keep it as bytes so non-UTF-8 payloads still verify.
-- **Don't decode base64 unvalidated.** `Buffer.from(sig, 'base64')` silently drops invalid characters. Check the 44-character padded alphabet first. In Python use `base64.b64decode(..., validate=True)`.
+- **Don't decode base64 unvalidated.** `Buffer.from(sig, 'base64')` silently drops invalid characters. Check the 44-character padded alphabet first. In Python use `base64.b64decode(..., validate=True)`. Then re-encode and require the original string, since both decoders ignore stray bits in the last character and Hookdeck compares base64 exactly.
 - **Compare as one digest.** Use the whole header value: no splitting, no prefix parsing. Compare in constant time (`crypto.timingSafeEqual` on equal-length buffers, `hmac.compare_digest` on bytes).
 - **Milliseconds, not seconds.** `PayNow-Timestamp` is Unix milliseconds. It is signed exactly as sent, so never re-format it.
 - **Status codes.** Return `401` for a missing, malformed, or mismatched signature. A response above 299 triggers a retry.

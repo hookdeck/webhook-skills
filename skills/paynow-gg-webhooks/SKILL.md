@@ -38,6 +38,7 @@ function verify(rawBody /* Buffer */, timestamp, signature, secret) {
   const message = Buffer.concat([Buffer.from(timestamp, 'latin1'), Buffer.from('.'), rawBody]);
   const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(message).digest();
   const provided = Buffer.from(signature, 'base64'); // safe: format validated above
+  if (provided.toString('base64') !== signature) return false; // non-canonical encoding
   return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
 }
 ```
@@ -52,7 +53,10 @@ def verify(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool
         return False
     message = b"".join([timestamp.encode("latin-1"), b".", raw_body])
     expected = hmac.new(secret.encode("utf-8"), message, hashlib.sha256).digest()
-    return hmac.compare_digest(base64.b64decode(signature, validate=True), expected)
+    provided = base64.b64decode(signature, validate=True)
+    if base64.b64encode(provided).decode("ascii") != signature:  # non-canonical encoding
+        return False
+    return hmac.compare_digest(provided, expected)
 ```
 
 Respond **401** for a missing, malformed, or mismatched signature. Read the body as raw bytes (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check.
