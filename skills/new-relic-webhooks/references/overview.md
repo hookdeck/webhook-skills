@@ -14,16 +14,18 @@ The state of the issue is whatever your template puts in the body.
 
 ## Illustrative Notification States
 
-The examples assume the template in [setup.md](setup.md). New Relic's docs don't list the values
-of its `state` template variable, so that template derives `state` itself from `issueClosedAt` and
-`issueAcknowledgedAt` (the conditional New Relic's xMatters template uses). The values are the
-template's own strings:
+The examples assume the template in [setup.md](setup.md), which sends New Relic's `state`
+variable (the issue's life cycle state) and its `isAcknowledged` boolean as `acknowledged`. See
+New Relic's [workflow template variables](https://docs.newrelic.com/docs/alerts/get-notified/custom-variables-alert-event-workflows/).
 
-| `state` | Set When | Common Use Cases |
-|---------|----------|------------------|
-| `open` | Neither `issueClosedAt` nor `issueAcknowledgedAt` is set | Page on-call, open a ticket |
-| `acknowledged` | `issueAcknowledgedAt` is set, `issueClosedAt` isn't | Mark the ticket as being worked |
-| `closed` | `issueClosedAt` is set | Close the ticket |
+| `state` | Meaning | Common Use Cases |
+|---------|---------|------------------|
+| `CREATED` | The issue was created | Open a ticket |
+| `ACTIVATED` | The issue is active (opened) | Page on-call, open a ticket |
+| `CLOSED` | The issue closed | Close the ticket |
+
+`acknowledged: true` on a `CREATED` or `ACTIVATED` issue means someone acknowledged it: mark the
+ticket as being worked.
 
 ## Illustrative Payload Structure
 
@@ -31,7 +33,8 @@ template's own strings:
 {
   "issueId": "a1b2c3d4-0000-4000-8000-000000000001",
   "title": "High CPU on web-1",
-  "state": "open",
+  "state": "ACTIVATED",
+  "acknowledged": false,
   "priority": "CRITICAL",
   "issuePageUrl": "https://one.newrelic.com/alerts-ai/issues/a1b2c3d4"
 }

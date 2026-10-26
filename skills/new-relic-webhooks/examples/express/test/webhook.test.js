@@ -14,14 +14,15 @@ function basic(user, pass, scheme = 'Basic') {
   return `${scheme} ${Buffer.from(`${user}:${pass}`).toString('base64')}`;
 }
 
-const STATES = ['open', 'acknowledged', 'closed'];
+const STATES = ['CREATED', 'ACTIVATED', 'CLOSED'];
 
 // Illustrative payload from the Handlebars template in references/setup.md
-function samplePayload(state = 'open') {
+function samplePayload(state = 'ACTIVATED', acknowledged = false) {
   return {
     issueId: 'a1b2c3d4-0000-4000-8000-000000000001',
     title: 'High CPU on web-1',
     state,
+    acknowledged,
     priority: 'CRITICAL',
     issuePageUrl: 'https://one.newrelic.com/alerts-ai/issues/a1b2c3d4'
   };
@@ -131,6 +132,14 @@ describe('New Relic webhook endpoint', () => {
       const res = await post(JSON.stringify(samplePayload(state))).set('Authorization', basic(USER, PASS));
       expect(res.status).toBe(200);
       expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
+      spy.mockRestore();
+    });
+
+    it('handles an acknowledged issue via the acknowledged boolean', async () => {
+      const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const res = await post(JSON.stringify(samplePayload('ACTIVATED', true))).set('Authorization', basic(USER, PASS));
+      expect(res.status).toBe(200);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Issue acknowledged'))).toBe(true);
       spy.mockRestore();
     });
 

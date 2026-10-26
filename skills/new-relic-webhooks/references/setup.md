@@ -31,16 +31,17 @@ Pick a username and a long random password and store them as `NEW_RELIC_WEBHOOK_
 {
   "issueId": {{json issueId}},
   "title": {{json issueTitle}},
-  "state": {{#if issueClosedAt}}"closed"{{else if issueAcknowledgedAt}}"acknowledged"{{else}}"open"{{/if}},
+  "state": {{json state}},
+  "acknowledged": {{json isAcknowledged}},
   "priority": {{json priority}},
   "issuePageUrl": {{json issuePageUrl}}
 }
 ```
 
 This is an illustrative template. You can rewrite it, but the example handlers read exactly
-these fields and dispatch on `state` (`open`, `acknowledged`, `closed`). The template computes
-`state` itself, using the same conditional as New Relic's xMatters template, because New Relic
-doesn't document the values of its own `state` variable.
+these fields and dispatch on `state` (`CREATED`, `ACTIVATED`, `CLOSED`, the issue life cycle values
+New Relic documents), treating `acknowledged` (`isAcknowledged`, `true`/`false`) as a flag. See
+New Relic's [workflow template variables](https://docs.newrelic.com/docs/alerts/get-notified/custom-variables-alert-event-workflows/).
 
 4. Use **Send test notification** to check your endpoint, then save and activate the workflow.
 
@@ -50,7 +51,7 @@ doesn't document the values of its own `state` variable.
 curl -X POST http://localhost:3000/webhooks/new-relic \
   -u "$NEW_RELIC_WEBHOOK_USERNAME:$NEW_RELIC_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"issueId":"1","title":"High CPU","state":"open","priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
+  -d '{"issueId":"1","title":"High CPU","state":"ACTIVATED","acknowledged":false,"priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
 ```
 
 ## Rotating the Credential

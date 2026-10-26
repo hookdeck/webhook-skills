@@ -62,7 +62,8 @@ function verifyTrayRequest(headers, {
   prefix if the workflow sends one.
 - Missing header or mismatch: `401`. Unconfigured secret: reject everything.
 - The request method is user-chosen too: accept `POST`, `PUT`, `PATCH`, `DELETE` and `GET`, and
-  accept an empty body (for example a `GET`).
+  accept an empty body (for example a `GET`). Hookdeck's Tray.io source pre-selects `POST` without
+  managing the method, so allow whichever method your HTTP Client step uses on the source too.
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse JSON only after the credential check.
   Set the HTTP Client step's body type to JSON, because Tray defaults to
   `application/x-www-form-urlencoded` when none is chosen.

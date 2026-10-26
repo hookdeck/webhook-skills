@@ -76,7 +76,9 @@ retried, up to 5 tries), so a wrong secret loses events instead of delaying them
 ## Request Method and Body
 
 - The method is chosen on the subscription (`rest_method`). Invoice Ninja's server only accepts
-  `post` (the default) or `put` there, so accept `POST` and `PUT` on the route.
+  `post` (the default) or `put` there, so accept `POST` and `PUT` on the route. Hookdeck's
+  Invoice Ninja source pre-selects `POST` without managing the method, so allow `PUT` on the
+  source too if you use it.
 - The body is JSON: the entity as produced by Invoice Ninja's transformer, with no wrapper and
   **no event field**.
 

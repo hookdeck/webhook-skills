@@ -65,24 +65,25 @@ async def require_new_relic_basic_auth(request: Request) -> None:
 def handle_issue(payload: dict) -> None:
     # The payload comes from a Handlebars template you write in the workflow, so there is
     # no fixed event field. This handler assumes the illustrative template in
-    # references/setup.md, which sends issueId, title, state, priority and issuePageUrl. The
-    # template itself sets state to open, acknowledged or closed (New Relic doesn't document
-    # its own state values).
+    # references/setup.md, which sends issueId, title, state, acknowledged, priority and
+    # issuePageUrl. state is New Relic's issue life cycle state (CREATED, ACTIVATED, CLOSED);
+    # acknowledged is its isAcknowledged boolean.
     issue_id = payload.get("issueId")
     title = payload.get("title")
     priority = payload.get("priority")
     url = payload.get("issuePageUrl")
-    state = str(payload.get("state") or "").lower()
+    state = str(payload.get("state") or "").upper()
+    acknowledged = payload.get("acknowledged") in (True, "true")
 
-    if state == "open":
-        print(f"Issue open: {issue_id} {title} ({priority}) {url}")
-        # TODO: page on-call or open a ticket
+    if state in ("CREATED", "ACTIVATED"):
+        if acknowledged:
+            print(f"Issue acknowledged: {issue_id} {title}")
+            # TODO: mark the ticket as being worked
+        else:
+            print(f"Issue {state.lower()}: {issue_id} {title} ({priority}) {url}")
+            # TODO: page on-call or open a ticket
 
-    elif state == "acknowledged":
-        print(f"Issue acknowledged: {issue_id} {title}")
-        # TODO: mark the ticket as being worked
-
-    elif state == "closed":
+    elif state == "CLOSED":
         print(f"Issue closed: {issue_id} {title}")
         # TODO: close the matching ticket
 

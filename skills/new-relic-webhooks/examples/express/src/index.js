@@ -43,24 +43,27 @@ function verifyNewRelicRequest(
 
 // The payload comes from a Handlebars template you write in the workflow, so there is no
 // fixed event field. This handler assumes the illustrative template in references/setup.md,
-// which sends issueId, title, state, priority and issuePageUrl. The template itself sets state
-// to open, acknowledged or closed (New Relic doesn't document its own state values).
+// which sends issueId, title, state, acknowledged, priority and issuePageUrl. state is New
+// Relic's issue life cycle state (CREATED, ACTIVATED, CLOSED); acknowledged is its
+// isAcknowledged boolean.
 function handleIssue(payload) {
   const { issueId, title, priority, issuePageUrl } = payload;
-  const state = String(payload.state || '').toLowerCase();
+  const state = String(payload.state || '').toUpperCase();
+  const acknowledged = payload.acknowledged === true || payload.acknowledged === 'true';
 
   switch (state) {
-    case 'open':
-      console.log(`Issue open: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
-      // TODO: page on-call or open a ticket
+    case 'CREATED':
+    case 'ACTIVATED':
+      if (acknowledged) {
+        console.log(`Issue acknowledged: ${issueId} ${title}`);
+        // TODO: mark the ticket as being worked
+      } else {
+        console.log(`Issue ${state.toLowerCase()}: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
+        // TODO: page on-call or open a ticket
+      }
       break;
 
-    case 'acknowledged':
-      console.log(`Issue acknowledged: ${issueId} ${title}`);
-      // TODO: mark the ticket as being worked
-      break;
-
-    case 'closed':
+    case 'CLOSED':
       console.log(`Issue closed: ${issueId} ${title}`);
       // TODO: close the matching ticket
       break;

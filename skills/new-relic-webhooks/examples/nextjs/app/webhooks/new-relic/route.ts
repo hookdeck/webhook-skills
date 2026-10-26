@@ -4,12 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyNewRelicRequest } from '../../../lib/verify-new-relic';
 
 // Shape of the illustrative Handlebars template in references/setup.md.
-// The real payload is whatever template you configure in the workflow. The template itself sets
-// state to open, acknowledged or closed (New Relic doesn't document its own state values).
+// The real payload is whatever template you configure in the workflow. state is New Relic's
+// issue life cycle state (CREATED, ACTIVATED, CLOSED); acknowledged is its isAcknowledged boolean.
 interface NewRelicIssuePayload {
   issueId?: string;
   title?: string;
   state?: string;
+  acknowledged?: boolean | string;
   priority?: string;
   issuePageUrl?: string;
   [key: string]: unknown;
@@ -17,20 +18,22 @@ interface NewRelicIssuePayload {
 
 function handleIssue(payload: NewRelicIssuePayload): void {
   const { issueId, title, priority, issuePageUrl } = payload;
-  const state = String(payload.state || '').toLowerCase();
+  const state = String(payload.state || '').toUpperCase();
+  const acknowledged = payload.acknowledged === true || payload.acknowledged === 'true';
 
   switch (state) {
-    case 'open':
-      console.log(`Issue open: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
-      // TODO: page on-call or open a ticket
+    case 'CREATED':
+    case 'ACTIVATED':
+      if (acknowledged) {
+        console.log(`Issue acknowledged: ${issueId} ${title}`);
+        // TODO: mark the ticket as being worked
+      } else {
+        console.log(`Issue ${state.toLowerCase()}: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
+        // TODO: page on-call or open a ticket
+      }
       break;
 
-    case 'acknowledged':
-      console.log(`Issue acknowledged: ${issueId} ${title}`);
-      // TODO: mark the ticket as being worked
-      break;
-
-    case 'closed':
+    case 'CLOSED':
       console.log(`Issue closed: ${issueId} ${title}`);
       // TODO: close the matching ticket
       break;

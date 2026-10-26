@@ -3,7 +3,7 @@ name: new-relic-webhooks
 description: >
   Receive and authenticate New Relic alert webhooks. Use when setting up a New Relic
   Webhook destination for workflow notifications, verifying HTTP Basic authentication,
-  debugging 401s, or handling open, acknowledged and closed issue notifications
+  debugging 401s, or handling CREATED, ACTIVATED, CLOSED and acknowledged issue notifications
   from your own payload template.
 license: MIT
 metadata:
@@ -22,9 +22,9 @@ Bearer token and custom headers options are alternatives it does not cover.
 
 The body is JSON rendered from a Handlebars template that you write in the workflow, so there is
 no fixed event field. The examples use an illustrative template with `issueId`, `title`, `state`,
-`priority` and `issuePageUrl`; adapt them to your own. New Relic's docs don't list the values of
-its `state` variable, so the template sets `state` itself (`open`, `acknowledged`, `closed`) from
-`issueClosedAt` and `issueAcknowledgedAt`, the way New Relic's own xMatters template does.
+`acknowledged`, `priority` and `issuePageUrl`; adapt them to your own. `state` is New Relic's
+`state` variable, the issue's life cycle state (`CREATED`, `ACTIVATED`, `CLOSED`), and
+`acknowledged` is its `isAcknowledged` boolean ([workflow template variables](https://docs.newrelic.com/docs/alerts/get-notified/custom-variables-alert-event-workflows/)).
 
 > **Security note:** a static shared credential authenticates the *sender*, not the *body*, and
 > gives **no replay protection** (no signature, no timestamp). Use HTTPS only, and rotate the
@@ -35,7 +35,7 @@ its `state` variable, so the template sets `state` itself (`open`, `acknowledged
 - How do I receive New Relic alert webhooks?
 - How do I verify the Basic auth credentials on a New Relic Webhook destination?
 - Does New Relic sign webhook payloads? (No: use Basic authentication)
-- How do I tell open, acknowledged and closed issue notifications apart?
+- How do I handle issue `CREATED`, `ACTIVATED` and `CLOSED` notifications, and acknowledgements?
 - Why does my New Relic webhook endpoint return 401?
 
 ## Verification (core)
@@ -74,13 +74,15 @@ function verifyNewRelicRequest(headers, username, password) {
 New Relic renders whatever Handlebars template you configure, so these fields are an example,
 not a fixed schema (see [references/setup.md](references/setup.md) for the template).
 
-| `state` (set by the template) | Meaning |
+| `state` | Meaning |
 |---------|---------|
-| `open` | Neither `issueClosedAt` nor `issueAcknowledgedAt` is set |
-| `acknowledged` | `issueAcknowledgedAt` is set and the issue isn't closed |
-| `closed` | `issueClosedAt` is set |
+| `CREATED` | The issue was created |
+| `ACTIVATED` | The issue is active (opened) |
+| `CLOSED` | The issue closed |
 
-These strings come from your template, not from New Relic.
+These are the life cycle values New Relic documents for its `state` variable. Acknowledgement is
+not a state: the template sends `isAcknowledged` (`true`/`false`) as `acknowledged`. See New
+Relic's [workflow template variables](https://docs.newrelic.com/docs/alerts/get-notified/custom-variables-alert-event-workflows/).
 
 Other fields in the example: `issueId`, `title`, `priority`, `issuePageUrl`.
 

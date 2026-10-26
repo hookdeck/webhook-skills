@@ -16,7 +16,7 @@ client = TestClient(app)
 USER = os.environ["NEW_RELIC_WEBHOOK_USERNAME"]
 PASS = os.environ["NEW_RELIC_WEBHOOK_PASSWORD"]
 
-STATES = ["open", "acknowledged", "closed"]
+STATES = ["CREATED", "ACTIVATED", "CLOSED"]
 
 
 def basic(user, password, scheme="Basic"):
@@ -24,12 +24,13 @@ def basic(user, password, scheme="Basic"):
     return f"{scheme} {token}"
 
 
-def sample_payload(state="open"):
+def sample_payload(state="ACTIVATED", acknowledged=False):
     # Illustrative payload from the Handlebars template in references/setup.md
     return {
         "issueId": "a1b2c3d4-0000-4000-8000-000000000001",
         "title": "High CPU on web-1",
         "state": state,
+        "acknowledged": acknowledged,
         "priority": "CRITICAL",
         "issuePageUrl": "https://one.newrelic.com/alerts-ai/issues/a1b2c3d4",
     }
@@ -112,6 +113,11 @@ class TestIssueStateHandling:
         res = post({"Authorization": basic(USER, PASS)}, body=json.dumps(sample_payload(state)))
         assert res.status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
+
+    def test_acknowledged_issue_uses_boolean(self, capsys):
+        res = post({"Authorization": basic(USER, PASS)}, body=json.dumps(sample_payload("ACTIVATED", True)))
+        assert res.status_code == 200
+        assert "Issue acknowledged" in capsys.readouterr().out
 
     def test_unknown_state_is_acknowledged(self):
         res = post({"Authorization": basic(USER, PASS)}, body=json.dumps(sample_payload("SOMETHING_NEW")))

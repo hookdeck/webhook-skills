@@ -6,7 +6,7 @@ import { verifyNewRelicRequest } from '../lib/verify-new-relic';
 const USER = 'newrelic';
 const PASS = 'p@ss:word, with: colons';
 
-const STATES = ['open', 'acknowledged', 'closed'];
+const STATES = ['CREATED', 'ACTIVATED', 'CLOSED'];
 
 beforeAll(() => {
   process.env.NEW_RELIC_WEBHOOK_USERNAME = USER;
@@ -18,11 +18,12 @@ function basic(user: string, pass: string, scheme = 'Basic'): string {
 }
 
 // Illustrative payload from the Handlebars template in references/setup.md
-function samplePayload(state = 'open') {
+function samplePayload(state = 'ACTIVATED', acknowledged = false) {
   return {
     issueId: 'a1b2c3d4-0000-4000-8000-000000000001',
     title: 'High CPU on web-1',
     state,
+    acknowledged,
     priority: 'CRITICAL',
     issuePageUrl: 'https://one.newrelic.com/alerts-ai/issues/a1b2c3d4',
   };
@@ -142,6 +143,16 @@ describe('POST /webhooks/new-relic', () => {
       );
       expect(res.status).toBe(200);
       expect(spy.mock.calls.some(([m]) => String(m).startsWith('Unhandled'))).toBe(false);
+      spy.mockRestore();
+    });
+
+    it('handles an acknowledged issue via the acknowledged boolean', async () => {
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const res = await POST(
+        makeRequest({ Authorization: basic(USER, PASS) }, JSON.stringify(samplePayload('ACTIVATED', true)))
+      );
+      expect(res.status).toBe(200);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Issue acknowledged'))).toBe(true);
       spy.mockRestore();
     });
 
