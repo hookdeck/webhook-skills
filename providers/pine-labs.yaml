@@ -23,30 +23,34 @@ notes: >-
   on equal-length Buffers; Python: hmac.compare_digest on bytes); ignore other versions. No timestamp
   window by default, because Hookdeck retries and replays resend the original timestamp; an optional PINE_LABS_WEBHOOK_TOLERANCE_SECONDS
   env var opts in. PINE_LABS_WEBHOOK_SECRET holds the secret exactly as entered/shown (no whsec_ prefix
-  added). This matches Hookdeck's Pine Labs source (Standard Webhooks, headers_prefix 'webhook', a whsec_
-  secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry
-  tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
-  webhook-* or svix-*). Missing headers or a bad signature: 400 or 401; handlers fail closed when the
-  secret env var is unset. Hookdeck's configuration alert for this source reads exactly: "Paste the secret
-  key exactly as shown in the Pine Labs dashboard, without adding a whsec_ prefix." SKILL.md and references/setup.md
-  must state this requirement, quoting the alert verbatim. Verification notes: Raw body is required ("Ensure
-  that the webhook body remains unparsed."). Verification is mandatory per the docs. Body: {event_type,
-  data}. `{event_type, data}`; payouts and Pay by Points use `{eventType, data}`. Event type: Top-level
-  `event_type` in the Pine Labs Online examples (`{event_type, data}`). The payout events and the "Pay
-  by Points" order examples use camelCase `eventType` instead, with camelCase data fields. Event types
-  (30 documented, list may not be exhaustive): CUSTOMER_ACTIVATED, CUSTOMER_DELETED, CUSTOMER_SUSPENDED,
-  CUSTOMER_CREATION_FAILED, ORDER_AUTHORIZED, ORDER_PROCESSED, ORDER_CANCELLED, PAYMENT_FAILED, ORDER_FAILED,
-  REFUND_PROCESSED, REFUND_FAILED, TOKEN_ACTIVATED, TOKEN_DEACTIVATED, TOKEN_SUSPENDED, TOKEN_PROVISION_FAILED,
-  SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_PENDING, SUBSCRIPTION_PAUSED, SUBSCRIPTION_RESUMED, SUBSCRIPTION_COMPLETED,
-  SUBSCRIPTION_CHARGED, SUBSCRIPTION_HALTED, SUBSCRIPTION_CANCELLED, SUBSCRIPTION_REVOKE_FAILED, SUBSCRIPTION_UPDATED,
-  SUBSCRIPTION_UPDATE_FAILED, payout-transaction-failed, payout-transaction-success, ORDER_SETTLED, ORDER_SETTLEMENT_REJECTED.
-  Transport: HTTP POST, JSON. Delivery: Retry-policy page: a 2XX within 5 seconds counts as delivered;
-  anything else is retried on the schedule above. The overview instead says up to three attempts (see
-  gaps). Order is not guaranteed (ORDER_PROCESSED can precede ORDER_AUTHORIZED). Setup: The webhook URL
-  is configured by Pine Labs support at onboarding; no self-serve subscription or challenge is documented,
-  so the row has no handshake block. Express examples must read the raw body with express.raw({ type:
-  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
-  Hookdeck's source type is PINE_LABS, labelled 'Pine Labs'.
+  added). HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and,
+  when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly
+  as Hookdeck does; then hand the library (or manual check) the three values under the header names it
+  expects. Include a test that a delivery signed the same way but sent with the other prefix's headers
+  is accepted. This matches Hookdeck's Pine Labs source (Standard Webhooks, headers_prefix 'webhook',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Hookdeck's configuration alert for this source reads exactly: "Paste
+  the secret key exactly as shown in the Pine Labs dashboard, without adding a whsec_ prefix." SKILL.md
+  and references/setup.md must state this requirement, quoting the alert verbatim. Verification notes:
+  Raw body is required ("Ensure that the webhook body remains unparsed."). Verification is mandatory per
+  the docs. Body: {event_type, data}. `{event_type, data}`; payouts and Pay by Points use `{eventType,
+  data}`. Event type: Top-level `event_type` in the Pine Labs Online examples (`{event_type, data}`).
+  The payout events and the "Pay by Points" order examples use camelCase `eventType` instead, with camelCase
+  data fields. Event types (30 documented, list may not be exhaustive): CUSTOMER_ACTIVATED, CUSTOMER_DELETED,
+  CUSTOMER_SUSPENDED, CUSTOMER_CREATION_FAILED, ORDER_AUTHORIZED, ORDER_PROCESSED, ORDER_CANCELLED, PAYMENT_FAILED,
+  ORDER_FAILED, REFUND_PROCESSED, REFUND_FAILED, TOKEN_ACTIVATED, TOKEN_DEACTIVATED, TOKEN_SUSPENDED,
+  TOKEN_PROVISION_FAILED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_PENDING, SUBSCRIPTION_PAUSED, SUBSCRIPTION_RESUMED,
+  SUBSCRIPTION_COMPLETED, SUBSCRIPTION_CHARGED, SUBSCRIPTION_HALTED, SUBSCRIPTION_CANCELLED, SUBSCRIPTION_REVOKE_FAILED,
+  SUBSCRIPTION_UPDATED, SUBSCRIPTION_UPDATE_FAILED, payout-transaction-failed, payout-transaction-success,
+  ORDER_SETTLED, ORDER_SETTLEMENT_REJECTED. Transport: HTTP POST, JSON. Delivery: Retry-policy page: a
+  2XX within 5 seconds counts as delivered; anything else is retried on the schedule above. The overview
+  instead says up to three attempts (see gaps). Order is not guaranteed (ORDER_PROCESSED can precede ORDER_AUTHORIZED).
+  Setup: The webhook URL is configured by Pine Labs support at onboarding; no self-serve subscription
+  or challenge is documented, so the row has no handshake block. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is PINE_LABS, labelled 'Pine Labs'.
 testScenario:
   events:
   - 'ORDER_PROCESSED'

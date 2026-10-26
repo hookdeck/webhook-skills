@@ -17,25 +17,30 @@ notes: >-
   The standardwebhooks library only strips whsec_, so the code must turn a leading 'wsec_' into 'whsec_'
   (or strip it) before constructing Webhook; a value already starting whsec_ is used as is. SPEED_WEBHOOK_SECRET
   holds the wsec_ value exactly as Speed shows it. Verify with the standardwebhooks library (npm 'standardwebhooks',
-  pip 'standardwebhooks'). This matches Hookdeck's Speed source (Standard Webhooks, headers_prefix 'webhook',
-  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
-  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
-  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
-  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
-  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
-  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
-  constant time after a length check, require the timestamp to be a plain positive integer) where the
-  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
-  when the secret env var is unset. Hookdeck's configuration alert for this source reads exactly: "Speed
-  shows the secret with a wsec_ prefix. Replace wsec_ with whsec_ when you paste it here, or verification
-  fails." SKILL.md and references/setup.md must state this requirement, quoting the alert verbatim. Verification
-  notes: Speed's Java sample has typos (`HmacSHA256` unquoted, `:` for `;`, `StandardCharsets,UTF_8`)
-  but the construction is unambiguous. Speed calls verification optional. Body: {id, object, api_version,
-  event_type, data, livemode, request, created, modified}. `data.object` is the resource (payment, checkout_session,
-  ...); Connect events add `account_id`. Event type: Top-level `event_type` of the event object `{id (evt_),
-  object: "events", api_version, event_type, data: {object}, livemode, request, created, modified}`; top-level
-  `object` is always `events`. Event types (28 documented, list may not be exhaustive): payment.created,
-  payment.paid, payment.confirmed, payment.expired, payment.cancelled, checkout_session.created, checkout_session.paid,
+  pip 'standardwebhooks'). HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Speed source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Speed shows the secret with a wsec_ prefix. Replace
+  wsec_ with whsec_ when you paste it here, or verification fails." SKILL.md and references/setup.md must
+  state this requirement, quoting the alert verbatim. Verification notes: Speed's Java sample has typos
+  (`HmacSHA256` unquoted, `:` for `;`, `StandardCharsets,UTF_8`) but the construction is unambiguous.
+  Speed calls verification optional. Body: {id, object, api_version, event_type, data, livemode, request,
+  created, modified}. `data.object` is the resource (payment, checkout_session, ...); Connect events add
+  `account_id`. Event type: Top-level `event_type` of the event object `{id (evt_), object: "events",
+  api_version, event_type, data: {object}, livemode, request, created, modified}`; top-level `object`
+  is always `events`. Event types (28 documented, list may not be exhaustive): payment.created, payment.paid,
+  payment.confirmed, payment.expired, payment.cancelled, checkout_session.created, checkout_session.paid,
   checkout_session.payment_paid, checkout_session.deactivated, checkout_link.created, checkout_link.deactivated,
   checkout_link.paid, payment_link.created, payment_link.deactivated, payment_link.paymentreceived, payment_address.paymentreceived,
   payrequest.payment_paid, invoice.paid, withdraw.created, withdraw.paid, withdraw.failed, withdrawal_link.created,

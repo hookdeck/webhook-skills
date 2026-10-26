@@ -27,6 +27,10 @@ notes: >-
   Python: hmac.compare_digest on bytes); ignore other versions. No timestamp window by default, because
   Hookdeck retries and replays resend the original timestamp; an optional WEBINY_WEBHOOK_TOLERANCE_SECONDS
   env var opts in. WEBINY_WEBHOOK_SECRET holds the secret exactly as entered/shown (no whsec_ prefix added).
+  HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when
+  webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as
+  Hookdeck does; then hand the library (or manual check) the three values under the header names it expects.
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
   This matches Hookdeck's Webiny source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
   base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
   other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
