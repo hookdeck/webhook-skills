@@ -53,5 +53,5 @@ testScenario:
   - 'responseFinished'
 catalog:
   summary: >-
-    Verify Formbricks webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle survey response events
+    Verify Formbricks webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks HMAC-SHA256 with a `whsec_` secret), handle responseCreated, responseUpdated and responseFinished events

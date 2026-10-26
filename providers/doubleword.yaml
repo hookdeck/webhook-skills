@@ -45,5 +45,5 @@ testScenario:
   - 'batch.failed'
 catalog:
   summary: >-
-    Verify Doubleword webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle batch events
+    Verify Doubleword webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    HMAC-SHA256, `whsec_` secret), handle batch.completed and batch.failed events

@@ -62,5 +62,5 @@ testScenario:
   - 'customer.updated'
 catalog:
   summary: >-
-    Verify Flexprice webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle customer, subscription, invoice and payment events
+    Verify Flexprice webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret; Cloud only), handle invoice.update.finalized, payment.success and subscription.cancelled events

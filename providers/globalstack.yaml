@@ -53,5 +53,5 @@ testScenario:
   - 'onramp.funds_received'
 catalog:
   summary: >-
-    Verify GlobalStack webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle onramp, offramp, conversion and transfer events
+    Verify GlobalStack webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle onramp.success, conversion.success, transfer.success and deposit.confirmed events

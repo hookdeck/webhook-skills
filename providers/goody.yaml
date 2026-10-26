@@ -50,5 +50,6 @@ testScenario:
   - 'order_batch.completed'
 catalog:
   summary: >-
-    Verify Goody webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle order events
+    Verify Goody webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `whsec_` secret), handle order.created, order.gift_accepted, order.shipped and
+    order_batch.completed events

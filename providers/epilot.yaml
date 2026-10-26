@@ -55,9 +55,10 @@ notes: >-
   Hookdeck's source type is EPILOT, labelled 'epilot'.
 testScenario:
   events:
-  - 'customer_request_created (one eventName per webhook config)'
-  - 'automation trigger webhook payload'
+  - automation_trigger_webhook
+  - customer_request_created
+  - FileCreated
 catalog:
   summary: >-
     Verify epilot webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle entity, portal and automation events
+    `whsec_` secret), handle automation_trigger_webhook, customer_request_created and FileCreated events
