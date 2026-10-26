@@ -96,6 +96,9 @@ app.post('/webhooks/khipu', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payment === null || typeof payment !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // There is no event name: every verified POST is a reconciled payment.
   // Use payment_id for idempotency (see webhook-handler-patterns).

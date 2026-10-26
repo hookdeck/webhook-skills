@@ -39,7 +39,7 @@ function handleEvent(kind, payload) {
     case 'applicant': {
       const { applicant } = payload;
       console.log(`Applicant ${applicant.id} (${applicant.name}) is in stage: ${applicant.stage && applicant.stage.title}`);
-      for (const check of applicant.background_checks || []) {
+      for (const check of Array.isArray(applicant.background_checks) ? applicant.background_checks : []) {
         console.log(`  Background check ${check.id || ''} status: ${check.status}`);
       }
       // TODO: sync the stage change or background-check result to your system

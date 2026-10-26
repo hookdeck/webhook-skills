@@ -10,6 +10,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -57,7 +63,7 @@ async def storylane_webhook(request: Request):
     event = payload.get("event")
     if event == "demo_viewed":
         # `lead` is an object for a known visitor and None for an anonymous one
-        lead = payload.get("lead") or {}
+        lead = _as_dict(payload.get("lead"))
         print(
             f"Demo \"{payload.get('name')}\" viewed (session {payload.get('id')}) "
             f"by {lead.get('email', 'an unknown visitor')}"

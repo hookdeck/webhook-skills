@@ -59,6 +59,9 @@ app.post('/webhooks/baseten', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   switch (event.type) {
     case 'async_request_completed':

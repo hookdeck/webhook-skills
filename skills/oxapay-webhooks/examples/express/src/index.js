@@ -94,6 +94,9 @@ app.post('/webhooks/oxapay',
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Retries resend the same callback: de-duplicate on track_id + status.
     handleOxapayCallback(event);

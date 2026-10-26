@@ -80,6 +80,9 @@ app.post('/webhooks/referralhero', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   try {
     // In production, enqueue the event here and process it asynchronously.

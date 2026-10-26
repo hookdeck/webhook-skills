@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Delivery is at-least-once: redeliveries keep the same event id (evnt_...), so dedupe on it.
   // Ordering is not guaranteed.

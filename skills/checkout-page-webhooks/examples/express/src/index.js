@@ -58,6 +58,9 @@ app.post(
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (payload === null || typeof payload !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Retries re-send the same eventId
     const eventId = payload.eventId;

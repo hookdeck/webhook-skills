@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("rootfi-webhooks")
@@ -124,7 +130,7 @@ async def rootfi_webhook(request: Request, raw_body: bytes = Depends(verified_bo
     # X-RootFi-Webhook-Delivery-Id header (stable across retries) and upsert records.
     delivery_id = request.headers.get("x-rootfi-webhook-delivery-id")
     event = payload.get("event")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "DATA_MODEL_CHANGES":
         logger.info("[%s] %s %s: %s records (sync %s, company %s)", delivery_id, data.get("data_model"), data.get("type"), data.get("no_of_records"), data.get("sync_id"), data.get("company_id"))

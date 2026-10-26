@@ -47,6 +47,9 @@ app.post('/webhooks/forgejo',
     } catch {
       return res.status(400).send('Invalid payload');
     }
+    if (payload === null || typeof payload !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
     const action = payload.action;
 
     console.log(`Received ${event} event (delivery: ${deliveryId})`);

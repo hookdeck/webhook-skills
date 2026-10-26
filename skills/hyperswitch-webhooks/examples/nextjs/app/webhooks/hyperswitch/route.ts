@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
     console.error('Invalid JSON payload:', (err as Error).message);
     return new NextResponse('Invalid JSON payload', { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Retries can deliver the same event twice: acknowledge duplicates without re-applying.
   if (event.event_id && processedEventIds.has(event.event_id)) {

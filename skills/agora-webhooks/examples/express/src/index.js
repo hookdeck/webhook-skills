@@ -43,6 +43,9 @@ app.post('/webhooks/agora', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   // eventType is a JSON number; productId (1 = RTC) scopes the code space
   const { productId, eventType, noticeId, payload = {} } = event;

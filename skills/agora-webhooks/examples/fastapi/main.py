@@ -10,6 +10,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -51,11 +57,13 @@ async def agora_webhook(request: Request):
         event = json.loads(raw_body)
     except ValueError:
         return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+    if not isinstance(event, dict):
+        return JSONResponse({"error": "Invalid payload"}, status_code=400)
 
     # eventType is a JSON number; productId (1 = RTC) scopes the code space
     product_id = event.get("productId")
     event_type = event.get("eventType")
-    payload = event.get("payload") or {}
+    payload = _as_dict(event.get("payload"))
     print(f"Received productId={product_id} eventType={event_type} noticeId={event.get('noticeId')}")
 
     if product_id == 1:

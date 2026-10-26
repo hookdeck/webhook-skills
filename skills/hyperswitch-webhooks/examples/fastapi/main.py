@@ -80,6 +80,8 @@ def handle_hyperswitch_event(event: Dict[str, Any]) -> None:
     refund_details, ...) held in `content.object`.
     """
     event_type = event.get("event_type")
+    if not isinstance(event_type, str):
+        event_type = ""
     content = event.get("content")
     obj = (content.get("object") if isinstance(content, dict) else None) or {}
 

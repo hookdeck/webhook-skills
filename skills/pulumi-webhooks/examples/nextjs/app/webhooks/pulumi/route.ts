@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // The body has no event name: the Pulumi-Webhook-Kind header says which kind of event it is
   const kind = request.headers.get('pulumi-webhook-kind');

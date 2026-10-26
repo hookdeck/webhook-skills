@@ -8,6 +8,12 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -29,10 +35,10 @@ def verify_creem_signature(raw_body: bytes, signature, secret=None) -> bool:
 
 def handle_event(body: dict) -> None:
     event_type = body.get("eventType")
-    resource = body.get("object") or {}
+    resource = _as_dict(body.get("object"))
 
     if event_type == "checkout.completed":
-        print("Checkout completed", resource.get("id"), (resource.get("order") or {}).get("id"))
+        print("Checkout completed", resource.get("id"), _as_dict(resource.get("order")).get("id"))
         # TODO: fulfil the order; resource["metadata"] / resource["request_id"] carry your own reference
 
     elif event_type == "subscription.paid":

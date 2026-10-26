@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // The event name is the body's `type` field (X-Api-Video-WebhookID is the subscription id)
   switch (event.type) {

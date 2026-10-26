@@ -93,6 +93,9 @@ app.post('/webhooks/terra-api', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   const user = payload.user || {};
 

@@ -9,6 +9,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -42,7 +48,7 @@ async def ziina_webhook(request: Request, x_hmac_signature: str | None = Header(
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # The event name does not change with the status; the new state is in data.status.
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
     status = data.get("status")
     event = payload.get("event")
     if event == "payment_intent.status.updated":

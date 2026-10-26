@@ -94,6 +94,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Envelope: { event, data }. Delivery is at least once and unordered: dedupe on the
   // X-RootFi-Webhook-Delivery-Id header (stable across retries) and upsert records.

@@ -9,6 +9,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -35,8 +41,8 @@ seen_event_uuids: set[str] = set()
 
 def handle_event(event: dict) -> None:
     event_type = event.get("type")
-    payload = event.get("payload") or {}
-    media_id = (payload.get("media") or {}).get("id")
+    payload = _as_dict(event.get("payload"))
+    media_id = _as_dict(payload.get("media")).get("id")
 
     if event_type == "media.created":
         print("Media created:", media_id)
@@ -52,31 +58,31 @@ def handle_event(event: dict) -> None:
     elif event_type == "media.updated":
         print("Media updated:", media_id, payload.get("previous_attributes"))
     elif event_type == "media.transcript_updated":
-        print("Transcript updated:", media_id, (payload.get("transcript") or {}).get("language_code"))
+        print("Transcript updated:", media_id, _as_dict(payload.get("transcript")).get("language_code"))
     elif event_type == "media.transcript_failed":
-        print("Transcript failed:", media_id, (payload.get("transcript") or {}).get("reason"))
+        print("Transcript failed:", media_id, _as_dict(payload.get("transcript")).get("reason"))
     elif event_type == "media.deleted":
         print("Media deleted:", media_id)
         # TODO: Remove the media from your catalog
     elif event_type == "media.translation_created":
         print("Translation created:", media_id)
     elif event_type == "media.localization_created":
-        print("Localization created:", (payload.get("localization") or {}).get("hashed_id"))
+        print("Localization created:", _as_dict(payload.get("localization")).get("hashed_id"))
     elif event_type == "media.localization_failed":
-        print("Localization failed:", (payload.get("localization") or {}).get("hashed_id"))
+        print("Localization failed:", _as_dict(payload.get("localization")).get("hashed_id"))
     elif event_type == "viewing_session.play":
-        print("Play:", (payload.get("viewing_session") or {}).get("id"), media_id)
+        print("Play:", _as_dict(payload.get("viewing_session")).get("id"), media_id)
     elif event_type == "viewing_session.percent_watched":
         print("Percent watched:", payload.get("percent_watched"), media_id)
     elif event_type == "viewing_session.turnstile.converted":
-        print("Form converted:", (payload.get("viewing_session") or {}).get("id"))
+        print("Form converted:", _as_dict(payload.get("viewing_session")).get("id"))
         # TODO: Send the lead to your CRM
     elif event_type == "viewing_session.call_to_action.converted":
-        print("Call to action converted:", (payload.get("viewing_session") or {}).get("id"))
+        print("Call to action converted:", _as_dict(payload.get("viewing_session")).get("id"))
     elif event_type == "viewing_session.annotation.converted":
-        print("Annotation converted:", (payload.get("viewing_session") or {}).get("id"))
+        print("Annotation converted:", _as_dict(payload.get("viewing_session")).get("id"))
     elif event_type == "live_event.registration":
-        print("Live event registration:", (payload.get("live_event") or {}).get("id"))
+        print("Live event registration:", _as_dict(payload.get("live_event")).get("id"))
         # TODO: Add the registrant to your system
     else:
         print(f"Unhandled event type: {event_type}")
@@ -104,10 +110,13 @@ async def wistia_webhook(request: Request):
 
     # One POST can batch several events; each has its own uuid
     for event in body["events"]:
-        uuid = event.get("uuid")
-        if uuid in seen_event_uuids:
+        if not isinstance(event, dict):
             continue
-        seen_event_uuids.add(uuid)
+        uuid = event.get("uuid")
+        if isinstance(uuid, str):
+            if uuid in seen_event_uuids:
+                continue
+            seen_event_uuids.add(uuid)
         handle_event(event)
 
     return {"received": True}

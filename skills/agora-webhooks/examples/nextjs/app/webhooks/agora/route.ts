@@ -41,6 +41,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // eventType is a JSON number; productId (1 = RTC) scopes the code space
   const { productId, eventType, noticeId, payload = {} } = event;

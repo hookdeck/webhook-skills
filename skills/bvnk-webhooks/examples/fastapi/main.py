@@ -12,6 +12,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("bvnk-webhooks")
@@ -55,11 +61,13 @@ async def bvnk_webhook(raw_body: bytes = Depends(verified_body)):
         payload = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # eventId is unique per event: use it to drop duplicates from retries (see webhook-handler-patterns)
     event = payload.get("event")
     event_id = payload.get("eventId")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "payment:v2:payin:status-change":
         logger.info("[%s] Pay-in status changed", event_id)

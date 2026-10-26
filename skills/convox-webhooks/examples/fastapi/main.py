@@ -13,6 +13,12 @@ from typing import List, Optional, Tuple
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("convox-webhooks")
@@ -118,7 +124,7 @@ async def convox_webhook(raw_body: bytes = Depends(verified_body)):
 
     action = event.get("action")
     status = event.get("status")
-    data = event.get("data") or {}
+    data = _as_dict(event.get("data"))
 
     # Delivery is best-effort and never retried; events can arrive out of order or twice.
     # Order by event["timestamp"] and dedupe on data["tick_id"] + event["action"].

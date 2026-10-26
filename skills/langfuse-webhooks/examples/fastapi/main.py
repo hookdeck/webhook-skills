@@ -11,6 +11,12 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -75,7 +81,7 @@ def verify_langfuse_signature(
 
 def handle_event(event: dict) -> None:
     action = event.get("action")
-    prompt = event.get("prompt") or {}
+    prompt = _as_dict(event.get("prompt"))
     if action == "created":
         print(f"Prompt version created: {prompt.get('name')} v{prompt.get('version')}")
     elif action == "updated":

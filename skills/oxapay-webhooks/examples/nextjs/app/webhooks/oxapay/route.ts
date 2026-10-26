@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return new NextResponse('Invalid JSON', { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Retries resend the same callback: de-duplicate on track_id + status.
   handleOxapayCallback(event);

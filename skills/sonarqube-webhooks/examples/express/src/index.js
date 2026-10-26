@@ -71,6 +71,9 @@ app.post('/webhooks/sonarqube',
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (payload === null || typeof payload !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // SonarQube never retries and times out after 10 seconds: respond fast
     handleAnalysis(payload);

@@ -7,6 +7,18 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -50,25 +62,25 @@ async def forgejo_webhook(request: Request):
     print(f"Received {event} event (delivery: {delivery_id})")
 
     if event == "push":
-        commits = payload.get("commits") or [{}]
-        pusher = payload.get("pusher") or {}
+        commits = [c for c in _as_list(payload.get("commits")) if isinstance(c, dict)] or [{}]
+        pusher = _as_dict(payload.get("pusher"))
         print(f"Push to {payload.get('ref')} by {pusher.get('login')}: {commits[0].get('message')}")
         # TODO: Trigger CI/CD, run tests, deploy, etc.
 
     elif event == "pull_request":
-        pr = payload.get("pull_request") or {}
+        pr = _as_dict(payload.get("pull_request"))
         print(f"PR #{payload.get('number')} {action}: {pr.get('title')}")
         # TODO: Run checks, notify reviewers, etc.
 
     elif event == "issues":
-        issue = payload.get("issue") or {}
+        issue = _as_dict(payload.get("issue"))
         print(f"Issue #{issue.get('number')} {action}: {issue.get('title')}")
         # TODO: Triage, label, notify, etc.
 
     elif event in ("issue_comment", "pull_request_comment"):
-        issue = payload.get("issue") or {}
-        comment = payload.get("comment") or {}
-        print(f"Comment on #{issue.get('number')} by {(comment.get('user') or {}).get('login')}")
+        issue = _as_dict(payload.get("issue"))
+        comment = _as_dict(payload.get("comment"))
+        print(f"Comment on #{issue.get('number')} by {_as_dict(comment.get('user')).get('login')}")
         # TODO: Bot commands, notifications, etc.
 
     elif event == "create":
@@ -80,7 +92,7 @@ async def forgejo_webhook(request: Request):
         # TODO: Cleanup, archive, etc.
 
     elif event == "release":
-        release = payload.get("release") or {}
+        release = _as_dict(payload.get("release"))
         print(f"Release {action}: {release.get('tag_name')}")
         # TODO: Deploy, notify, update changelog, etc.
 

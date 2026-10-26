@@ -45,9 +45,13 @@ app.post('/webhooks/bvnk', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // eventId is unique per event: use it to drop duplicates from retries (see webhook-handler-patterns)
-  const { event, eventId, data = {} } = payload;
+  const { event, eventId } = payload;
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
 
   switch (event) {
     case 'payment:v2:payin:status-change':

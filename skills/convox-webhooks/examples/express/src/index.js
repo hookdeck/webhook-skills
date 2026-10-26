@@ -93,6 +93,9 @@ app.post('/webhooks/convox', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Delivery is best-effort and never retried; events can arrive out of order or twice.
   // Order by event.timestamp and dedupe on event.data.tick_id + event.action.

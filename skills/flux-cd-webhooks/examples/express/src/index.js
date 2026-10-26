@@ -48,6 +48,9 @@ app.post('/webhooks/flux-cd',
     } catch {
       return res.status(400).send('Invalid payload');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Flux has no event-name field: branch on severity and reason
     const { severity, reason, message, involvedObject } = event;

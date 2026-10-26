@@ -12,6 +12,17 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
 load_dotenv()
 
 logger = logging.getLogger("terra-api-webhooks")
@@ -119,7 +130,7 @@ async def terra_webhook(raw_body: bytes = Depends(verified_body)):
     if not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    user = payload.get("user") or {}
+    user = _as_dict(payload.get("user"))
     event_type = payload.get("type")
 
     # The event type is the top-level "type" field; "status" qualifies it.
@@ -132,7 +143,7 @@ async def terra_webhook(raw_body: bytes = Depends(verified_body)):
     elif event_type == "connection_error":
         logger.error("Connection error for user %s: %s", user.get("user_id"), payload.get("status"))
     elif event_type in ("activity", "sleep", "body", "daily", "athlete"):
-        logger.info("%s data for user %s: %d record(s)", event_type, user.get("user_id"), len(payload.get("data") or []))
+        logger.info("%s data for user %s: %d record(s)", event_type, user.get("user_id"), len(_as_list(payload.get("data"))))
     else:
         logger.info("Unhandled event: %s", event_type)
 

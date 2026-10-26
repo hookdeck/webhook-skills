@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
   const action = payload.action;
 
   console.log(`Received ${event} event (delivery: ${deliveryId})`);

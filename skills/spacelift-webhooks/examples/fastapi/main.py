@@ -9,6 +9,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -48,14 +54,18 @@ def handle_message(payload) -> str:
     kind = classify(payload)
 
     if kind == "run":
-        run_id = (payload.get("run") or {}).get("id")
+        run_id = _as_dict(payload.get("run")).get("id")
+        version = payload.get("stateVersion")
+        if not isinstance(run_id, (str, int)) or isinstance(version, bool) or not isinstance(version, int):
+            print("Run event without a usable run.id / stateVersion; ignoring")
+            return kind
         prev = last_version.get(run_id)
         # Updates can arrive out of order: ignore a stale stateVersion.
         if prev is not None and payload["stateVersion"] <= prev:
             print(f"Ignoring stale run update {run_id} v{payload['stateVersion']}")
         else:
             last_version[run_id] = payload["stateVersion"]
-            stack_id = (payload.get("stack") or {}).get("id")
+            stack_id = _as_dict(payload.get("stack")).get("id")
             print(f"Run {run_id} on stack {stack_id}: {payload['state']} (v{payload['stateVersion']})")
             # TODO: update your run tracking, notify a channel, etc.
 

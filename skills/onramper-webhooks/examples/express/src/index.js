@@ -76,6 +76,9 @@ app.post('/webhooks/onramper', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON body' });
   }
+  if (tx === null || typeof tx !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   try {
     handleEvent(tx);

@@ -41,6 +41,9 @@ app.post('/webhooks/pulumi', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // The body has no event name: the Pulumi-Webhook-Kind header says which kind of event it is
   const kind = req.headers['pulumi-webhook-kind'];

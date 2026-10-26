@@ -121,6 +121,9 @@ app.post('/webhooks/hyperswitch', express.raw({ type: '*/*' }), (req, res) => {
     console.error('Invalid JSON payload:', err.message);
     return res.status(400).send('Invalid JSON payload');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Retries can deliver the same event twice: acknowledge duplicates without re-applying.
   if (event.event_id && processedEventIds.has(event.event_id)) {

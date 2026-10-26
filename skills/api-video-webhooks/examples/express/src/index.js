@@ -56,6 +56,9 @@ app.post('/webhooks/api-video',
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // The event name is the body's `type` field (X-Api-Video-WebhookID is the subscription id)
     switch (event.type) {

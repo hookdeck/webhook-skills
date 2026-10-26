@@ -98,6 +98,9 @@ app.post('/webhooks/rootfi', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Envelope: { event, data }. Delivery is at least once and unordered: dedupe on the
   // X-RootFi-Webhook-Delivery-Id header (stable across retries) and upsert records.

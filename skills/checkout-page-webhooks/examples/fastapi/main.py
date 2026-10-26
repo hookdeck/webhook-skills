@@ -11,6 +11,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -71,7 +77,7 @@ async def checkout_page_webhook(request: Request):
     event = payload.get("event")
     attempt = request.headers.get("x-webhook-delivery-attempt")
     print(f"Received {event} (eventId {event_id}, attempt {attempt})")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "payment.paid":
         print("Payment paid:", json.dumps(data.get("payment", data)))

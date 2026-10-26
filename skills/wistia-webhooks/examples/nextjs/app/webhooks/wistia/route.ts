@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
 
   // One POST can batch several events; each has its own uuid
   for (const event of body.events) {
+    if (!event || typeof event !== 'object') continue;
     if (seenEventUuids.has(event.uuid)) continue;
     seenEventUuids.add(event.uuid);
     handleEvent(event);

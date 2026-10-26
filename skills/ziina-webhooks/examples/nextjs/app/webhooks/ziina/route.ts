@@ -30,6 +30,9 @@ export async function POST(request: Request) {
   } catch {
     return new Response('Invalid JSON', { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return new Response('Invalid payload', { status: 400 });
+  }
 
   // The event name does not change with the status; the new state is in data.status.
   const status = payload.data?.status;

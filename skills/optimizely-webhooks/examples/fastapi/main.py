@@ -10,6 +10,12 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -44,7 +50,7 @@ def handle_event(payload: dict) -> None:
         # TODO: re-fetch the datafile from data["cdn_url"]
     elif event == "project.ruleset_updated":
         for change in data if isinstance(data, list) else []:
-            entity = change.get("entity") or {}
+            entity = _as_dict(change.get("entity"))
             print(f"Ruleset change: {change.get('change_type')} on {entity.get('type')}")
         # TODO: audit log, notify your team
     else:

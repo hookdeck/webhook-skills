@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Delivery is best-effort and never retried; events can arrive out of order or twice.
   // Order by event.timestamp and dedupe on event.data.tick_id + event.action.

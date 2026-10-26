@@ -9,6 +9,22 @@ import re
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
+def _as_str(value):
+    """A JSON string field, or "" when the field is missing or another type."""
+    return value if isinstance(value, str) else ""
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -55,15 +71,15 @@ def classify(payload: dict):
 def handle_event(kind, payload: dict) -> None:
     if kind == "applicant":
         applicant = payload["applicant"]
-        stage = applicant.get("stage") or {}
+        stage = _as_dict(applicant.get("stage"))
         print(f"Applicant {applicant.get('id')} ({applicant.get('name')}) is in stage: {stage.get('title')}")
-        for check in applicant.get("background_checks") or []:
-            print(f"  Background check {check.get('id', '')} status: {check.get('status')}")
+        for check in _as_list(applicant.get("background_checks")):
+            print(f"  Background check {_as_str(check.get('id'))} status: {check.get('status')}")
         # TODO: sync the stage change or background-check result to your system
 
     elif kind == "worker":
         print(f"Worker {payload.get('id')} ({payload.get('name')}) is_active={str(payload.get('is_active')).lower()}")
-        for check in payload.get("data_collection_checks") or []:
+        for check in _as_list(payload.get("data_collection_checks")):
             print(f"  Document check {check.get('id')}: {check.get('status')}")
         # TODO: activate/deactivate the worker, or fetch approved documents
 

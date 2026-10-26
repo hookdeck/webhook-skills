@@ -9,6 +9,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -56,7 +62,7 @@ async def proof_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event = payload.get("event")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "transaction.created":
         print(f"Transaction created: {data.get('transaction_id')}")

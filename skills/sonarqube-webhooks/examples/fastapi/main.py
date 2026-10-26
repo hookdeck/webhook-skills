@@ -8,6 +8,12 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -33,8 +39,8 @@ def verify_sonarqube_signature(
 
 def handle_analysis(payload: dict) -> None:
     """SonarQube has no event types: every delivery is an analysis result."""
-    project = (payload.get("project") or {}).get("key")
-    gate_status = (payload.get("qualityGate") or {}).get("status")
+    project = _as_dict(payload.get("project")).get("key")
+    gate_status = _as_dict(payload.get("qualityGate")).get("status")
 
     if gate_status == "OK":
         print(f"Quality gate passed for {project} (task {payload.get('taskId')})")

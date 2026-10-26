@@ -6,6 +6,12 @@ import json
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -55,7 +61,7 @@ async def flux_cd_webhook(request: Request):
     severity = event.get("severity")
     reason = event.get("reason")
     message = event.get("message")
-    obj = event.get("involvedObject") or {}
+    obj = _as_dict(event.get("involvedObject"))
     target = f"{obj.get('kind')}/{obj.get('namespace')}/{obj.get('name')}"
 
     if severity == "error":

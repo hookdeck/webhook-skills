@@ -41,9 +41,13 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // eventId is unique per event: use it to drop duplicates from retries (see webhook-handler-patterns)
-  const { event, eventId, data = {} } = payload;
+  const { event, eventId } = payload;
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
 
   switch (event) {
     case 'payment:v2:payin:status-change':

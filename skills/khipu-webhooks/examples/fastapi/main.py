@@ -112,6 +112,8 @@ async def khipu_webhook(request: Request):
         payment = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(payment, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # There is no event name: every verified POST is a reconciled payment.
     # Use payment_id for idempotency (see webhook-handler-patterns).

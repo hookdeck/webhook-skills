@@ -45,6 +45,9 @@ app.post('/webhooks/column', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Delivery is at-least-once: redeliveries keep the same event id (evnt_...), so dedupe on it.
   // Ordering is not guaranteed.

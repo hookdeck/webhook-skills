@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
   }
 
   // The event type is in the body: { event, url, webhook_key, created_at, data }
-  const { event, data = {} } = payload;
+  const { event } = payload;
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
   switch (event) {
     case 'partner.created':
       console.log(`New partner ${data.id} (${data.email}), status ${data.status}`);

@@ -9,6 +9,12 @@ import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -35,7 +41,7 @@ def verify_learnupon_signature(raw_body: bytes, signature, secret=None) -> bool:
 
 
 def handle_event(event_type: str, item: dict) -> None:
-    user = item.get("user") or {}
+    user = _as_dict(item.get("user"))
 
     if event_type == "user_created":
         print(f"User created: {user.get('userId')} ({user.get('email')})")

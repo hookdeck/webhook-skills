@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payment === null || typeof payment !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // There is no event name: every verified POST is a reconciled payment.
   // Use payment_id for idempotency (see webhook-handler-patterns).

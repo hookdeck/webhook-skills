@@ -132,6 +132,9 @@ function socotraWebhook(req, res) {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   handleEvent(event);
   return res.status(200).json({ received: true });
