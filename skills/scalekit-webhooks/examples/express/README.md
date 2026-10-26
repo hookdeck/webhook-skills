@@ -43,7 +43,7 @@ The tests sign payloads the way Scalekit does (`base64(HMAC-SHA256(base64decode(
 npx hookdeck-cli listen 3000 scalekit --path /webhooks/scalekit
 ```
 
-Register the printed URL as an endpoint in **Developers > Webhooks**, subscribe to events such as `organization.directory.user_created`, then trigger one (or **Resend** a message from the endpoint's message log).
+Register the printed URL as an endpoint in **Dashboard > Webhooks**, subscribe to events such as `organization.directory.user_created`, then trigger one (or **Resend** a message from the endpoint's message log).
 
 ## Notes
 
