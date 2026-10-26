@@ -58,4 +58,4 @@ testScenario:
     - "container.transport.vessel_arrived"
     - "container.updated"
 catalog:
-  summary: "Verify Terminal49 webhooks (`X-T49-Webhook-Signature`: hex HMAC-SHA256 of the raw body), handle tracking request, container transport and ETA events"
+  summary: "Verify Terminal49 webhook signatures (`X-T49-Webhook-Signature`, hex HMAC-SHA256 of the raw body), handle tracking_request.succeeded, container.transport.vessel_arrived and container.updated events"

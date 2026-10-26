@@ -3,6 +3,7 @@ displayName: "ComplyCube"
 docs:
   webhooks: https://docs.complycube.com/documentation/guides/webhooks
   verification: https://docs.complycube.com/documentation/guides/webhooks#signature-verification
+  events: https://docs.complycube.com/documentation/api-reference/other-resources/webhooks#event-types
 notes: >
   ComplyCube (complycube.com), KYC/AML and identity verification. Webhook endpoints are configured in
   the portal or via the API, each subscribed to event types (workflow sessions, checks, clients,

@@ -37,7 +37,7 @@ notes: >
   subscription and `url` echoes the destination. No header names the type. Documented event types
   (15): partner.created, partner.updated, partner.approved, partner.rejected, partner.archived,
   partner.deleted, customer.created, customer.updated, customer.deleted, transaction.created,
-  transaction.updated, transaction.deleted, reward.created, reward.approved (and 1 more). Handle a few
+  transaction.updated, transaction.deleted, reward.created, reward.approved, reward.paid. Handle a few
   common ones and log the rest. Method: POST. Hookdeck's Partnero source manages the method as POST,
   so the examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:

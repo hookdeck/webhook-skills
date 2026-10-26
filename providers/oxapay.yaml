@@ -3,6 +3,7 @@ displayName: "OxaPay"
 docs:
   webhooks: https://docs.oxapay.com/webhook
   verification: https://docs.oxapay.com/webhook
+  events: https://docs.oxapay.com/webhook
 notes: >
   OxaPay (oxapay.com), crypto payment gateway. Merchants pass a `callback_url` on payment (invoice,
   white-label, static address, payment link, donation) and payout requests; OxaPay posts the

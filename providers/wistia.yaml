@@ -53,4 +53,4 @@ testScenario:
     - "media.created"
     - "viewing_session.play"
 catalog:
-  summary: "Verify Wistia webhooks (`X-Wistia-Signature`: hex HMAC-SHA256 of the raw body), handle media and viewing session events"
+  summary: "Verify Wistia webhook signatures (`X-Wistia-Signature`, HMAC-SHA256 hex of the raw body), handle media.ready, media.created and viewing_session.play events"

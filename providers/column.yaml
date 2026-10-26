@@ -61,7 +61,7 @@ notes: >
 testScenario:
   events:
     - "ach.outgoing_transfer.completed"
-    - "wire.incoming_transfer.completed"
+    - "ach.outgoing_transfer.returned"
     - "book.transfer.completed"
 catalog:
-  summary: "Verify Column webhooks (`Column-Signature`: hex HMAC-SHA256 of the raw body), handle ACH, wire, book transfer and account events"
+  summary: "Verify Column webhooks (`Column-Signature`: hex HMAC-SHA256 of the raw body), handle ach.outgoing_transfer.completed, ach.outgoing_transfer.returned and book.transfer.completed events"

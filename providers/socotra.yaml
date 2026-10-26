@@ -60,7 +60,8 @@ notes: >
   it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook
   route (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI:
   api_route with those methods), verify the signature first for every method, and treat a missing body
-  as empty bytes (a GET with no body is verified over zero bytes). Say in SKILL.md and setup.md that
+  as empty bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged
+  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that
   Hookdeck's Socotra source pre-selects POST without managing the method, so any other method the
   sender uses must also be allowed on the source. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
