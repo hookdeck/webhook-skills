@@ -195,6 +195,24 @@ class TestInvalidRequests:
         assert res.status_code == 400
 
 
+class TestMethods:
+    OTHER_SECRET = "whsec_" + base64.b64encode(b"another-webhook-key").decode()
+
+    @pytest.mark.parametrize("method", ["PUT", "PATCH", "DELETE"])
+    def test_other_methods(self, method):
+        body = json.dumps(automation_trigger())
+        ok = client.request(method, "/webhooks/epilot", content=body, headers=signed_headers(body))
+        assert ok.status_code == 200
+        bad = client.request(
+            method, "/webhooks/epilot", content=body, headers=signed_headers(body, secret=self.OTHER_SECRET)
+        )
+        assert bad.status_code == 400
+
+    def test_get_without_body_verified_over_zero_bytes(self):
+        assert client.get("/webhooks/epilot", headers=signed_headers("")).status_code == 200
+        assert client.get("/webhooks/epilot", headers=signed_headers("x")).status_code == 400
+
+
 class TestFailClosed:
     def test_missing_secret_returns_500(self, monkeypatch):
         monkeypatch.delenv("EPILOT_WEBHOOK_SECRET")

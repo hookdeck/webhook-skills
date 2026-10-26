@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import crypto from 'crypto';
-import { POST } from '../app/webhooks/epilot/route';
+import { GET, POST, PUT, PATCH, DELETE } from '../app/webhooks/epilot/route';
 
 // epilot secrets look like "whsec_" + base64(key bytes), for example
 // "whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD". The HMAC key is the decoded part.
@@ -213,6 +213,27 @@ describe('invalid requests', () => {
       .digest('base64');
     const res = await post(body, signedHeaders(body, { id, timestamp: ts, signature: `v1,${wrong}` }));
     expect(res.status).toBe(400);
+  });
+});
+
+describe('other HTTP methods', () => {
+  const OTHER_SECRET = 'whsec_' + Buffer.from('another-webhook-key').toString('base64');
+  const send = (handler: (r: Request) => Promise<Response>, method: string, body: string | undefined, headers: Record<string, string>) =>
+    handler(new Request('http://localhost:3000/webhooks/epilot', { method, headers, body }));
+
+  it.each([
+    ['PUT', PUT],
+    ['PATCH', PATCH],
+    ['DELETE', DELETE],
+  ] as const)('verifies and handles %s', async (method, handler) => {
+    const body = JSON.stringify(automationTrigger());
+    expect((await send(handler, method, body, signedHeaders(body))).status).toBe(200);
+    expect((await send(handler, method, body, signedHeaders(body, { secret: OTHER_SECRET }))).status).toBe(400);
+  });
+
+  it('verifies a GET with no body over zero bytes', async () => {
+    expect((await send(GET, 'GET', undefined, signedHeaders(''))).status).toBe(200);
+    expect((await send(GET, 'GET', undefined, signedHeaders('x'))).status).toBe(400);
   });
 });
 

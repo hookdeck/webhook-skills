@@ -54,7 +54,7 @@ function resolveSignatureHeaders(get) {
  */
 function verifyEpilotWebhook(rawBody, headers, secret = process.env.EPILOT_WEBHOOK_SECRET) {
   new Webhook(secret).verify(rawBody, headers, { jsonParse: false }); // throws on failure
-  return JSON.parse(rawBody);
+  return rawBody ? JSON.parse(rawBody) : {}; // a bodiless (e.g. GET) delivery is verified over zero bytes
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
@@ -94,7 +94,12 @@ function handleEvent(event) {
 // epilot webhook endpoint. express.raw() with '*/*' keeps the exact bytes for
 // the HMAC whatever the content type; express.json() would re-serialise the
 // body and break verification. Parse only after the check.
-app.post('/webhooks/epilot', express.raw({ type: '*/*' }), (req, res) => {
+// Each epilot webhook config sets its own httpMethod, so accept all of them.
+app.all('/webhooks/epilot', express.raw({ type: '*/*' }), (req, res) => {
+  if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return res.status(405).set('Allow', 'GET, POST, PUT, PATCH, DELETE').json({ error: 'Method not allowed' });
+  }
+
   // Fail closed: never accept unverified deliveries because a secret is missing.
   if (!process.env.EPILOT_WEBHOOK_SECRET) {
     console.error('EPILOT_WEBHOOK_SECRET is not set; rejecting delivery');
@@ -140,7 +145,7 @@ let server;
 if (require.main === module) {
   server = app.listen(PORT, () => {
     console.log(`epilot webhook server listening on port ${PORT}`);
-    console.log(`Webhook endpoint: POST http://localhost:${PORT}/webhooks/epilot`);
+    console.log(`Webhook endpoint: http://localhost:${PORT}/webhooks/epilot (GET, POST, PUT, PATCH, DELETE)`);
   });
 }
 

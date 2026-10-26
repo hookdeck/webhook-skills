@@ -62,7 +62,8 @@ def verify_epilot_webhook(raw_body: bytes, headers: Dict[str, str], secret: str)
     on failure (WebhookVerificationError, or ValueError for a malformed entry).
     """
     Webhook(secret).verify(raw_body, headers, json_parse=False)
-    return json.loads(raw_body)
+    # A bodiless (e.g. GET) delivery is verified over zero bytes.
+    return json.loads(raw_body) if raw_body else {}
 
 
 async def verified_epilot_event(request: Request) -> Dict[str, Any]:
@@ -119,7 +120,8 @@ def handle_event(event: Dict[str, Any]) -> None:
         logger.info("Unhandled epilot event: %s (webhook %s)", name, metadata.get("webhook_id"))
 
 
-@app.post("/webhooks/epilot")
+# Each epilot webhook config sets its own httpMethod, so accept all of them.
+@app.api_route("/webhooks/epilot", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def epilot_webhook(request: Request, event: Dict[str, Any] = Depends(verified_epilot_event)):
     # Retries reuse the same webhook-id; acknowledge duplicates with 200.
     message_id = request.state.message_id

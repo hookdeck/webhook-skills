@@ -198,6 +198,25 @@ describe('invalid requests', () => {
   });
 });
 
+describe('other HTTP methods', () => {
+  it.each(['PUT', 'PATCH', 'DELETE'])('verifies and handles %s', async (method) => {
+    const body = JSON.stringify(automationTrigger());
+    const ok = await request(app)[method.toLowerCase()]('/webhooks/epilot').set(signedHeaders(body)).send(body);
+    expect(ok.status).toBe(200);
+    const bad = await request(app)[method.toLowerCase()]('/webhooks/epilot')
+      .set(signedHeaders(body, { secret: 'whsec_' + Buffer.from('another-webhook-key').toString('base64') }))
+      .send(body);
+    expect(bad.status).toBe(400);
+  });
+
+  it('verifies a GET with no body over zero bytes', async () => {
+    const ok = await request(app).get('/webhooks/epilot').set(signedHeaders(''));
+    expect(ok.status).toBe(200);
+    const bad = await request(app).get('/webhooks/epilot').set(signedHeaders('x'));
+    expect(bad.status).toBe(400);
+  });
+});
+
 describe('fail closed', () => {
   it('returns 500 when EPILOT_WEBHOOK_SECRET is not set', async () => {
     delete process.env.EPILOT_WEBHOOK_SECRET;

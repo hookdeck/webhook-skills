@@ -29,7 +29,7 @@ Minimal example of receiving [epilot](https://www.epilot.cloud) webhooks with si
 uvicorn main:app --reload --port 8000
 ```
 
-Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/epilot`.
+Server runs on http://localhost:8000. The endpoint `/webhooks/epilot` accepts `GET`, `POST`, `PUT`, `PATCH` and `DELETE` (each epilot webhook config sets its own `httpMethod`; Hookdeck's epilot source pre-selects POST without managing it, so allow any other method on the source too).
 
 ## Test
 
@@ -37,7 +37,7 @@ Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/epilot`.
 pytest test_webhook.py -v
 ```
 
-The tests sign payloads the way epilot does (`v1a,<Ed25519> v1,base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`). They cover tampered bodies, `v1a`-only headers, stale timestamps, multiple signatures, another webhook's secret, retried deliveries, svix-* header fallback and the fail-closed path when no secret is configured.
+The tests sign payloads the way epilot does (`v1a,<Ed25519> v1,base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`). They cover tampered bodies, `v1a`-only headers, stale timestamps, multiple signatures, another webhook's secret, retried deliveries, svix-* header fallback, every method, a bodiless GET and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 

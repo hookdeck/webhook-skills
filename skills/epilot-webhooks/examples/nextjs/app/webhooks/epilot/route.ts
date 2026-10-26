@@ -53,7 +53,8 @@ function resolveSignatureHeaders(headers: Headers): SignatureHeaders | null {
  */
 function verifyEpilotWebhook(rawBody: string, headers: SignatureHeaders, secret: string): EpilotEvent {
   new Webhook(secret).verify(rawBody, headers, { jsonParse: false }); // throws on failure
-  return JSON.parse(rawBody) as EpilotEvent;
+  // A bodiless (e.g. GET) delivery is verified over zero bytes.
+  return (rawBody ? JSON.parse(rawBody) : {}) as EpilotEvent;
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
@@ -90,7 +91,7 @@ function handleEvent(event: EpilotEvent): void {
   }
 }
 
-export async function POST(request: Request) {
+async function handle(request: Request) {
   // Fail closed: never accept unverified deliveries because a secret is missing.
   const secret = process.env.EPILOT_WEBHOOK_SECRET;
   if (!secret) {
@@ -131,3 +132,10 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ received: true });
 }
+
+// Each epilot webhook config sets its own httpMethod, so handle all of them.
+export const GET = handle;
+export const POST = handle;
+export const PUT = handle;
+export const PATCH = handle;
+export const DELETE = handle;
