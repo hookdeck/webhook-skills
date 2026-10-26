@@ -10,7 +10,7 @@
 Create one webhook config per event, in the epilot UI or with the Webhooks API. A config has:
 
 - **Event** (`eventName`): one of the values from `GET /v1/webhooks/events` for your organization, for example `customer_request_created`, the Automation Trigger Webhook, a portal activity, or an Event Catalog `event_*` event
-- **URL** and **HTTP method** (POST by default; if you pick another, allow it on the Hookdeck source too)
+- **URL** and **HTTP method** (the API examples use POST; if you pick another, allow it on the Hookdeck source too)
 - **Authentication** (optional, see below)
 - **Filter**, an optional **JSONata** expression to reshape the body, and a **retry policy**
 - **Delivery mode** for file events (`json_base64` or `binary_multipart`)

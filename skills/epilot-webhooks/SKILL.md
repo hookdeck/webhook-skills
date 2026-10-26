@@ -16,7 +16,7 @@ metadata:
 
 # epilot Webhooks
 
-[epilot](https://www.epilot.cloud) is a cloud CRM and commerce platform for energy utilities. Each epilot webhook config subscribes to **one** organization event (an automation trigger, portal activity, entity or file events, Event Catalog events) and sends it to your URL (POST by default), signed per [Standard Webhooks](https://www.standardwebhooks.com/) with `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
+[epilot](https://www.epilot.cloud) is a cloud CRM and commerce platform for energy utilities. Each epilot webhook config subscribes to **one** organization event (an automation trigger, portal activity, entity or file events, Event Catalog events) and sends it to your URL (the API examples use POST), signed per [Standard Webhooks](https://www.standardwebhooks.com/) with `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
 
 ## When to Use This Skill
 
@@ -83,7 +83,7 @@ Default body: `{ metadata, entity, relations, activity, changed_attributes }`. `
 ## Delivery Semantics
 
 - Default transport is JSON with `Transfer-Encoding: chunked`. A JSONata expression can reshape the body.
-- Each webhook config sets its own `httpMethod` (POST by default). Hookdeck's epilot source pre-selects POST without managing the method, so if your epilot webhook uses another method, allow it on the source too. The examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`, verify the signature first for every method, and treat a missing body as empty bytes.
+- Each webhook config sets its own `httpMethod` (optional, with no documented default; the API examples use POST). Hookdeck's epilot source pre-selects POST without managing the method, so if your epilot webhook uses another method, allow it on the source too. The examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`, verify the signature first for every method, and treat a missing body as empty bytes.
 - `retryPolicy` (new webhooks: enabled, `maxAttempts` 3, maximum 5) retries 5xx, 429 and connection errors after 5 s, 5 min, 30 min, 2 h and 5 h. Webhooks created before this feature don't retry.
 - Events are logged for 4 weeks and can be replayed.
 - File events can arrive as `multipart/form-data` (`binary_multipart`) or with Base64 bytes in the JSON (`json_base64`). `binary_multipart` signs per-file metadata, not the raw body, so the examples can't verify it (see the alert above).

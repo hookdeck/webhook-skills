@@ -2,7 +2,7 @@
 
 ## What Are epilot Webhooks?
 
-[epilot](https://www.epilot.cloud) is a cloud CRM and commerce platform for energy utilities. The epilot Webhooks API lets you subscribe to events in your organization. When one occurs, epilot sends an HTTP request (POST by default; the config's `httpMethod` is configurable) to your URL with a signed payload. Your server verifies the signature and answers `200`.
+[epilot](https://www.epilot.cloud) is a cloud CRM and commerce platform for energy utilities. The epilot Webhooks API lets you subscribe to events in your organization. When one occurs, epilot sends an HTTP request (the config's `httpMethod` is configurable; the API examples use POST) to your URL with a signed payload. Your server verifies the signature and answers `200`.
 
 Each **webhook config subscribes to one event** (`eventName`). To receive several events, create several webhook configs, each with its own signing secret.
 
