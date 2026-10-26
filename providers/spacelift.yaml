@@ -1,0 +1,66 @@
+name: spacelift
+displayName: "Spacelift"
+docs:
+  webhooks: https://docs.spacelift.io/integrations/webhooks
+  verification: https://docs.spacelift.io/integrations/webhooks
+notes: >
+  Spacelift (spacelift.io), the IaC orchestration platform. Named webhooks are created under
+  Integrations -> Webhooks and receive messages routed by notification policies (run state changes and
+  internal errors); per-stack webhooks are kept for backwards compatibility. Paid accounts only.
+  Delivery (from the docs): Optional "Retry on failure": up to 3 retries, only on 5xx responses.
+  Webhooks are auto-disabled after 10 or more consecutive failures and must be re-enabled by hand.
+  Deliveries and their status codes are viewable per webhook. Out-of-order delivery is anticipated
+  (`stateVersion`). Spacelift's docs say: 'X-Signature header contains the SHA1 hash of the payload,
+  while X-Signature-256 contains the SHA256 hash. We're using the exact same mechanism as GitHub to
+  generate signatures' 'Only the SHA-256 signature will be used for webhook payload validation. The
+  X-Signature header containing the SHA1 hash will not be provided' 'Secret (optional): Enter the
+  secret, if needed, to validate the received payload' From the docs (registry summary): Two headers:
+  `X-Signature-256` (HMAC-SHA256) and `X-Signature` (HMAC-SHA1), keyed with the webhook secret over
+  the payload. Spacelift states only that it uses "the exact same mechanism as GitHub" and links
+  GitHub's docs; the value format is not printed on the page. GitHub's mechanism is `sha256=<hex>`
+  (and `sha1=<hex>`) over the raw body, so that is the expected shape, but it is GitHub's format by
+  reference, not a Spacelift-printed one. In the FedRAMP environment only `X-Signature-256` is sent.
+  SIGNATURE SCHEME (it must match Hookdeck's SPACELIFT source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-signature-256", encoding "hex"). The X-Signature-256 header carries
+  `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser also
+  accepts the bare digest, so accept the value with or without the prefix. The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: Chosen by the administrator when the
+  webhook is created. It cannot be modified: rotating means deleting and recreating the webhook. Use
+  it as UTF-8 bytes. Env var: SPACELIFT_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Spacelift also sends `X-Signature` (HMAC-SHA1); verify
+  only `X-Signature-256`, as Hookdeck does (the SHA-1 header is absent on FedRAMP). Spacelift says it
+  uses 'the exact same mechanism as GitHub', so expect `sha256=<hex>`. Events: there is no event-name
+  field or header. Tell the two documented payload shapes apart: run events (`account`, `state`,
+  `stateVersion`, `timestamp`, `run`, `stack`) and internal error events (`title`, `body`, ...). Use
+  `stateVersion` to order run updates. Methods: Spacelift's docs don't name the HTTP method.
+  Hookdeck's Spacelift source pre-selects POST without managing the method (the user can change it).
+  The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
+  (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
+  with those methods), verify the signature first for every method, and treat a missing body as empty
+  bytes (a GET with no body is verified over zero bytes). Say in SKILL.md and setup.md that Hookdeck's
+  Spacelift source pre-selects POST without managing the method, so any other method the sender uses
+  must also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/spacelift/ (latest/internal-error.json,
+  latest/run.json); base the examples' test payloads on them. Hookdeck's source type is SPACELIFT,
+  labelled 'Spacelift'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a secret on the Spacelift
+  webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "run"
+    - "internal_error"
+catalog:
+  summary: "Verify Spacelift webhooks (`X-Signature-256`: `sha256=` hex HMAC-SHA256 of the raw body), handle run state changes and internal errors"

@@ -1,0 +1,81 @@
+name: bvnk
+displayName: "BVNK"
+docs:
+  webhooks: https://docs.bvnk.com/bvnk/get-started/create-webhook-listener
+  verification: https://docs.bvnk.com/bvnk/get-started/create-webhook-listener
+notes: >
+  BVNK (bvnk.com), stablecoin and fiat payment infrastructure. Webhooks are configured in the BVNK
+  Portal (Integrations -> Webhooks) with a URL and selected events. Delivery (from the docs): Return
+  200 within 10 seconds. Otherwise retried with growing delays capped at 15 minutes, up to 100
+  attempts. Duplicates are possible; deduplicate on the event id. BVNK's docs say: 'The signature is
+  present in the headers as the `x-signature` header.' '// Secret key from webhook configuration (used
+  as string directly, not Base64 decoded) ... // Use secret key as UTF-8 bytes directly (as hook
+  service does)' 'Mac mac = Mac.getInstance("HmacSHA256"); ... String computedSignatureBase64 =
+  java.util.Base64.getEncoder().encodeToString(computedSignature);' 'The key is displayed in the field
+  Public Key when you create the hook.' From the docs (registry summary): Header `x-signature:
+  <base64>`, no prefix. MAC = standard base64 of HMAC-SHA256(key = the secret string's UTF-8 bytes,
+  NOT base64-decoded even though it looks like base64; message = the payload exactly as received). The
+  published test vector (secret `JUL5Qk...Gfg==`, body `{"event":"bvnk:ledger:report:ready",...}`,
+  signature `VWEtiJu/7dLrq0ZtXS0HbGDPy6Re86oZeTnEEc9mlxg=`) verifies (harvest_bvnk.py). Legacy
+  "Standard" webhooks use a different scheme: hex HMAC-SHA256 over the webhook path + content type +
+  payload; see the `verification.legacy_standard_scheme` gap. SIGNATURE SCHEME (it must match
+  Hookdeck's BVNK source exactly: HMAC controller, algorithm "sha256", header_key "x-signature",
+  encoding "base64"). The x-signature header carries the bare standard base64 (padded) digest, no
+  prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over the raw request body
+  bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
+  body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as Hookdeck does): require
+  the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the strings, or the
+  decoded bytes AND the re-encoded string, in constant time. Decoding alone is not enough: a value
+  whose last character carries stray low bits decodes to the same bytes but Hookdeck rejects it, so
+  the skill must reject it too. Secret: The secret is shown in the field labelled "Public Key" when
+  the webhook is created, and is used as a UTF-8 string, not decoded. Use it as UTF-8 bytes. Env var:
+  BVNK_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and alphabet),
+  then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length
+  Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops
+  bad characters); Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(...,
+  validate=True). Missing or empty signature header, malformed value or mismatch: 401. No timestamp is
+  signed, so there is no replay window to check; do not invent one from unsigned headers or body
+  fields. The secret is the value shown in the webhook's 'Public Key' field. It looks like base64 but
+  is used as its UTF-8 string bytes, NOT base64-decoded. Legacy BVNK webhooks (body `"event":
+  "statusChanged"`) use a different scheme (hex over path + content type + payload) and fail
+  verification; say so. Events: dispatch on the body's `event` field. Top-level body field `event`, a
+  colon-separated URN (`bvnk:payment:channel:created`, `platform:accounts:customer:created`,
+  `payment:v2:payin:status-change`). Legacy "Standard" webhooks instead carry `"source": "payment",
+  "event": "statusChanged"` (camelCase names); those are not listed here. No header names the event.
+  Documented event types (28): platform:accounts:customer:status-change,
+  platform:accounts:customer:agreement-status-change,
+  platform:accounts:customer:associate-status-change, platform:accounts:customer:associate-deleted,
+  platform:accounts:customer:document-status-change,
+  platform:accounts:customer:associate-document-status-change, platform:accounts:customer:created,
+  platform:accounts:customer:data-updated, platform:accounts:customer:initialized,
+  bvnk:customers:status-change, bvnk:customers:agreements:status-change,
+  bvnk:customers:associates:status-change, bvnk:customers:documents:status-change,
+  bvnk:customers:associates:documents:status-change (and 14 more). Handle a few common ones and log
+  the rest. Method: POST. Hookdeck's BVNK source manages the method as POST, so the examples handle
+  POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified
+  against Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON
+  (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/bvnk.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (VWEtiJu/7dLrq0ZtXS0HbGDPy6Re86oZeTnEEc9mlxg=) with that secret. Name the vector in
+  references/verification.md. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/bvnk/
+  (latest/bvnk.ledger.report.ready.json); base the examples' test payloads on them. Hookdeck's source
+  type is BVNK, labelled 'BVNK'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the secret shown in the
+  webhook's Public Key field in BVNK. Legacy BVNK webhooks (statusChanged events) sign differently and
+  fail verification."
+testScenario:
+  events:
+    - "bvnk:payment:channel:transaction-confirmed"
+    - "payment:v2:payin:status-change"
+    - "bvnk:ledger:report:ready"
+catalog:
+  summary: "Verify BVNK webhooks (`x-signature`: base64 HMAC-SHA256 of the raw body), handle payment, customer and ledger events"

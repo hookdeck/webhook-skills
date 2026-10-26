@@ -1,0 +1,51 @@
+name: storylane
+displayName: "Storylane"
+docs:
+  webhooks: https://docs.storylane.io/integrations-demo-suite/integrations-and-data-flow/webhooks
+  verification: https://docs.storylane.io/integrations-demo-suite/integrations-and-data-flow/webhooks
+notes: >
+  Storylane (storylane.io), interactive product demos. Demo alerts (Settings -> Alerts) can post to a
+  webhook URL when a demo session is viewed, with the session, lead and buyer-reveal data. Starter
+  plan and above. Delivery (from the docs): Nothing about timeouts or retries is documented; a Test
+  webhook button exists. Storylane's docs say: 'Every webhook request includes an
+  x-storylane-signature header. This signature is an HMAC-SHA256 hash of the raw request body,
+  generated using your Webhook Verification Secret and then Base64 encoded.' 'const hmac =
+  crypto.createHmac('sha256', secret); const digest = hmac.update(req.rawBody).digest('base64');' From
+  the docs (registry summary): Header `x-storylane-signature: <base64>`. MAC = standard base64 of
+  HMAC-SHA256(key = the Webhook Verification Secret, message = the raw request body). The Node sample
+  compares with `===`; the Ruby and Python samples compare in constant time. SIGNATURE SCHEME (it must
+  match Hookdeck's STORYLANE source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-storylane-signature", encoding "base64"). The x-storylane-signature header carries the bare
+  standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with the
+  secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
+  signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
+  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
+  but Hookdeck rejects it, so the skill must reject it too. Secret: A Webhook Verification Secret. The
+  page does not say where it is shown or whether it is per alert or per account. Use it as UTF-8
+  bytes. Env var: STORYLANE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `event` field. Top-level
+  body field `event`, the LAST key of both examples. Only one value is documented, `demo_viewed`;
+  known and unknown sessions share it and differ by `lead` being an object or null. Documented event
+  types (1): demo_viewed. Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  Storylane source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/storylane/ (latest/demo_viewed.json); base the
+  examples' test payloads on them. Hookdeck's source type is STORYLANE, labelled 'Storylane'.
+testScenario:
+  events:
+    - "demo_viewed"
+catalog:
+  summary: "Verify Storylane webhooks (`x-storylane-signature`: base64 HMAC-SHA256 of the raw body), handle demo viewed events"

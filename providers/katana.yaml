@@ -1,0 +1,61 @@
+name: katana
+displayName: "Katana MRP"
+docs:
+  webhooks: https://developer.katanamrp.com/reference/createwebhook
+  verification: https://developer.katanamrp.com/docs/verifying-webhook-signature
+notes: >
+  Katana MRP (katanamrp.com), cloud manufacturing ERP. Webhooks are registered through the public API
+  (`POST /webhooks` with `url` and `subscribed_events`); each one returns its own signing token.
+  Delivery (from the docs): Acknowledge with a 20X within 10 seconds; otherwise three more attempts at
+  30 s, 2 min and 15 min (each "or more"). Subscribing to both a status event and the matching update
+  event can deliver two identical payloads. Katana MRP's docs say: 'Each webhook event has an
+  `x-sha2-signature` header. This header contains the webhook event’s signature in hexadecimal
+  format.' '# Compute the HMAC using the SHA256 algorithm and using your webhook's token as the key.
+  expected_signature = hmac(algorithm="SHA256", key=webhook_token, data=raw_event_body)' 'Remember to
+  use the raw event request body because the fields may be reordered if you first parse it from JSON.'
+  From the docs (registry summary): Header `x-sha2-signature: <hex>`, no prefix. MAC = HMAC-SHA256(key
+  = the webhook's `token`, message = the raw request body); the header is hex and the pseudocode
+  decodes it before comparing. SIGNATURE SCHEME (it must match Hookdeck's KATANA source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-sha2-signature", encoding "hex"). The x-sha2-signature
+  header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
+  digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: One token per webhook, returned in the `token` field when the webhook
+  is created through the API (the create example shows a 16-hex-character value, `73f82127d57a2cea`).
+  Use it as UTF-8 bytes. Env var: KATANA_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The key is the webhook's `token` from the create-webhook
+  API response, used as its UTF-8 string even though it looks like hex: never hex-decode it. Events:
+  dispatch on the body's `action` field. Top-level body field `action`, `<resource>.<verb>`;
+  `resource_type` names the resource. `object` holds only `id`, `status` and `href`, so receivers
+  fetch the record from `href`. No header names the event. Documented event types (65):
+  sales_order.created, sales_order.updated, sales_order.deleted, sales_order.packed,
+  sales_order.delivered, sales_order.invoiced, sales_order.availability_updated, sales_order.approved,
+  purchase_order.created, purchase_order.updated, purchase_order.deleted,
+  purchase_order.partially_received, purchase_order.received, purchase_order.approved (and 51 more).
+  Handle a few common ones and log the rest. Methods: Katana's docs don't name the HTTP method.
+  Hookdeck's Katana MRP source pre-selects POST without managing the method (the user can change it).
+  The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
+  (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
+  with those methods), verify the signature first for every method, and treat a missing body as empty
+  bytes (a GET with no body is verified over zero bytes). Say in SKILL.md and setup.md that Hookdeck's
+  Katana MRP source pre-selects POST without managing the method, so any other method the sender uses
+  must also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is KATANA, labelled 'Katana MRP'.
+testScenario:
+  events:
+    - "sales_order.created"
+    - "manufacturing_order.done"
+    - "purchase_order.received"
+catalog:
+  summary: "Verify Katana MRP webhooks (`x-sha2-signature`: hex HMAC-SHA256 of the raw body), handle sales, purchase and manufacturing order events"

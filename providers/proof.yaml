@@ -1,0 +1,66 @@
+name: proof
+displayName: "Proof"
+docs:
+  webhooks: https://dev.proof.com/docs/webhooks-v2
+  verification: https://dev.proof.com/docs/webhooks-v2
+notes: >
+  Proof (proof.com, formerly Notarize), the online notarization and identity platform. Webhooks V2
+  report notary and transaction state changes to subscriptions created per event through the Webhook
+  API. Delivery (from the docs): Only a 200 acknowledges; otherwise retried with back-off, up to 16
+  attempts across 48 hours, 30 s timeout per attempt. Deliveries can repeat and arrive out of order.
+  Proof's docs say: 'Each webhook request includes an `X-Notarize-Signature` header containing a
+  hexadecimal HMAC-SHA256 signature of the request body. By default, the API key used to create the
+  webhook subscription is used as the HMAC signing key.' 'If the webhook was created using an API key
+  in the Authorization header, Proof will automatically include the `X-Notarize-Signature` header in
+  all webhook requests. The API key will be used as the HMAC signing key unless a custom `signing_key`
+  is provided in the create-webhook request.' 'If the webhook was created using OAuth, the
+  `X-Notarize-Signature` header will not be included by default. To enable event signing, include a
+  `signing_key` when creating or updating the webhook.' From the docs (registry summary):
+  `X-Notarize-Signature: <hex>` = hex HMAC-SHA256(key, request body). The key is the API key that
+  created the subscription, or its custom `signing_key`. No code sample or test vector is given.
+  Subscriptions created with OAuth are unsigned unless a `signing_key` is set (and then signing cannot
+  be turned off). SIGNATURE SCHEME (it must match Hookdeck's PROOF source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-notarize-signature", encoding "hex"). The X-Notarize-Signature
+  header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
+  digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The Proof API key used to create the subscription, unless a
+  `signing_key` was given on create or update; OAuth-created subscriptions must set a `signing_key` to
+  be signed. Use it as UTF-8 bytes. Env var: PROOF_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Events: dispatch on the
+  body's `event` field. Top-level `event` is the subscribed event name; `data` holds ids and
+  `date_occurred`. The two IDV examples carry
+  `transaction.transaction.automated_identity_verification_by_idv_service_*` in `event` (doubled
+  prefix) under headings without it; which form is sent is unknown (see gaps). Documented event types
+  (37): notary.compliant, notary.created, notary.needs_review, notary.non_compliant,
+  notary.signer_ready, transaction.created, transaction.deleted, transaction.canceled,
+  transaction.expired, transaction.updated, transaction.recalled, transaction.reviewed,
+  transaction.document.upload, transaction.document.processed (and 23 more). Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Proof source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/proof/ (v2/transaction.declined.json,
+  v2/transaction.held_for_review.json, v2/transaction.import.failed.json,
+  v2/transaction.import.processed.json, ...); base the examples' test payloads on them. Hookdeck's
+  source type is PROOF, labelled 'Proof'. Hookdeck shows this setup note for the source, and SKILL.md
+  and references/setup.md must tell the user the same thing, verbatim: "Paste the Proof API key that
+  created the webhook, or its signing_key if you set one. Webhooks created with OAuth must set a
+  signing_key."
+testScenario:
+  events:
+    - "transaction.completed"
+    - "transaction.created"
+    - "notary.created"
+catalog:
+  summary: "Verify Proof webhooks (`X-Notarize-Signature`: hex HMAC-SHA256 of the raw body), handle transaction and notary events"

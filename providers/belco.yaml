@@ -1,0 +1,56 @@
+name: belco
+displayName: "Belco"
+docs:
+  webhooks: https://developers.belco.io/reference/quickstart
+  verification: https://developers.belco.io/reference/webhooks-verifying-requests
+notes: >
+  Belco (belco.io), the customer-service inbox for e-commerce (chat, email, phone). Webhooks are
+  created per shop through the REST API (`POST /webhooks` with `shopId`, `url`, `events`) and report
+  call and conversation activity. Delivery (from the docs): A 2xx (the docs say 200 OK) within 5 s
+  succeeds. Non-2xx responses are retried up to 9 times with a back-off that grows by 30 s per retry.
+  10 consecutive failures within 5 minutes disable the webhook until it is re-enabled in the
+  dashboard. Receivers should dedupe on `requestId`. Belco's docs say: 'checking the sha256 signature
+  of the posted JSON data. The signature can be found in the x-hook-signature header.'
+  'crypto.createHmac('sha256', secret) .update(req.body) // the raw JSON string .digest('hex')' 'Every
+  webhook has a unique secret key that can be used to generate a hash to compare the signature with.'
+  From the docs (registry summary): Header `x-hook-signature: <hex>`, no prefix. MAC = lowercase hex
+  of HMAC-SHA256(key = the webhook's `secret` string, message = the raw request body). Both Node
+  samples call `.digest('hex')`; the newer page compares with `crypto.timingSafeEqual`, the older one
+  with `!==`. SIGNATURE SCHEME (it must match Hookdeck's BELCO source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-hook-signature", encoding "hex"). The x-hook-signature header
+  carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
+  list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
+  signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: One secret per webhook, returned as the `secret` property of the
+  Webhook object by the webhooks API. No format, rotation or dashboard location is documented. Use it
+  as UTF-8 bytes. Env var: BELCO_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Dedupe on the body's `requestId`. Events: dispatch on the
+  body's `eventName` field. Top-level body field `eventName`, `<object>.<action>` (`call.answered`,
+  `conversation.note.added`). The docs never name the field in prose; every one of the six sample
+  payloads carries it equal to its heading. No header names the event. Documented event types (10):
+  call.created, call.queued, call.answered, call.closed, conversation.created, conversation.replied,
+  conversation.note.added, conversation.assigned, conversation.closed, conversation.reopened. Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Belco source manages the method as POST,
+  so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/belco/ (v1/conversation.assigned.json,
+  v1/conversation.closed.json, v1/conversation.created.json, v1/conversation.note.added.json, ...);
+  base the examples' test payloads on them. Hookdeck's source type is BELCO, labelled 'Belco'.
+testScenario:
+  events:
+    - "conversation.created"
+    - "conversation.closed"
+    - "call.answered"
+catalog:
+  summary: "Verify Belco webhooks (`x-hook-signature`: hex HMAC-SHA256 of the raw body), handle call and conversation events"

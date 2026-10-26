@@ -1,0 +1,62 @@
+name: api-video
+displayName: "api.video"
+docs:
+  webhooks: https://docs.api.video/reference/create-and-manage-webhooks
+  verification: https://docs.api.video/reference/create-and-manage-webhooks
+notes: >
+  api.video, video hosting, encoding and live streaming API. Webhook subscriptions are created in the
+  dashboard (Project settings -> Webhooks) or with `POST /webhooks`, each with a URL and events; each
+  returns a signature secret. Delivery (from the docs): 1xx/2xx is success; anything above 299 is
+  retried 3 times at 3-second intervals. api.video's docs say: 'X-Api-Video-Signature is the webhook's
+  body encrypted using the webhook's signature secret, in HMAC SHA256' '$webhookBody =
+  file_get_contents("php://input"); ... $actualSignature = hash_hmac("sha256", $webhookBody,
+  $secret);' '"signatureSecret":"sig_sec_0000000000000000000000"' From the docs (registry summary):
+  Header `X-Api-Video-Signature: <hex>`, no prefix. MAC = lowercase hex of HMAC-SHA256(key = the
+  subscription's `signatureSecret` (`sig_sec_...`), message = the raw body, `php://input`). The PHP
+  sample compares with `===`. The simulated call (secret `sig_sec_0000000000000000000000`, signature
+  `27a77d3a...4e8c`) verifies (harvest_api_video.py); the "Trigger an event" body and its
+  `3b7f8f40...` header are illustrative and do not pair. SIGNATURE SCHEME (it must match Hookdeck's
+  API_VIDEO source exactly: HMAC controller, algorithm "sha256", header_key "x-api-video-signature",
+  encoding "hex"). The X-Api-Video-Signature header carries the bare lowercase hex digest, no prefix.
+  Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The `signatureSecret`
+  returned when the webhook is created (`201`), also retrievable with `GET /webhooks/{webhookId}`
+  using the `X-Api-Video-WebhookID` header value. Use it as UTF-8 bytes. Env var:
+  API_VIDEO_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the body's `type` field. Top-level body field
+  `type`. The body is flat: `type`, `emittedAt` and the event's ids/fields. `X-Api-Video-WebhookID`
+  names the subscription, not the event. Documented event types (6): live-stream.broadcast.started,
+  live-stream.broadcast.ended, video.source.recorded, video.encoding.quality.completed,
+  video.caption.generated, video.summary.generated. Handle a few common ones and log the rest. Method:
+  POST. Hookdeck's api.video source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
+  Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON (secret,
+  body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/api-video.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (27a77d3a7fc626854886b5dbfae4e32c8b0170c1ea1b714c91ba77f1e7774e8c) with that secret. Name the vector
+  in references/verification.md. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/api-video/
+  (latest/video.encoding.quality.completed.json); base the examples' test payloads on them. Hookdeck's
+  source type is API_VIDEO, labelled 'api.video'.
+testScenario:
+  events:
+    - "video.encoding.quality.completed"
+    - "video.source.recorded"
+    - "live-stream.broadcast.started"
+catalog:
+  summary: "Verify api.video webhooks (`X-Api-Video-Signature`: hex HMAC-SHA256 of the raw body), handle video encoding and live stream events"

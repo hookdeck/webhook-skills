@@ -1,0 +1,60 @@
+name: texture
+displayName: "Texture"
+docs:
+  webhooks: https://docs.texturehq.com/platform-concepts/destinations/webhooks
+  verification: https://docs.texturehq.com/management-api/destinations#webhook-signature-verification
+notes: >
+  Texture (texturehq.com), the energy-device data platform. Webhook destinations deliver workspace
+  events (devices, commands, customers, enrollments, sites, alerts). Delivery (from the docs): Respond
+  2xx within 10 seconds; failed deliveries are retried (schedule undocumented) and persistent failures
+  may lose events. Events may arrive out of order; dedupe on the event `key`. Texture's docs say:
+  'Grab the `Texture-Signature` value from the headers of the incoming POST request.' 'Texture
+  computes an **HMAC-SHA256** hash of `JSON.stringify(payload)` using your destination's `secret`. 2.
+  The resulting hex digest is sent in the `Texture-Signature` header.' '**Payload Format**: Ensure you
+  use the raw payload for the HMAC computation. The order and whitespace matter.' 'The webhook
+  signature is computed over the redacted body you receive.' '"secret": "whsec_my-webhook-secret" ...
+  | `secret` | string | No | HMAC signing secret for signature verification. If omitted, Texture
+  generates one for you. |' From the docs (registry summary): `Texture-Signature: <hex>` = hex
+  HMAC-SHA256(secret, body), where the body is `JSON.stringify(payload)` (the raw body as sent). The
+  secret is used literally, including any `whsec_` prefix; it is not a Standard Webhooks key and there
+  is no `v1,` prefix or webhook-id. Signing is per destination secret; the webhooks page says a random
+  secret is created when none is given. SIGNATURE SCHEME (it must match Hookdeck's TEXTURE source
+  exactly: HMAC controller, algorithm "sha256", header_key "texture-signature", encoding "hex"). The
+  Texture-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
+  value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The destination's `secret` (any
+  string; the docs' example is `whsec_my-webhook-secret`). Optional on create; Texture generates one
+  if omitted. Use it as UTF-8 bytes. Env var: TEXTURE_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. The secret looks like a
+  Standard Webhooks `whsec_` secret but it is NOT one: use the WHOLE string, including `whsec_`, as a
+  plain UTF-8 HMAC key (hex digest, no webhook-id). Do not use the standardwebhooks or svix libraries
+  and say so. `Texture-Timestamp` is sent but not signed. Events: dispatch on the body's `type` field.
+  The body's `type` is the dotted event type (`device.updated`). Destinations subscribe with
+  UPPER_SNAKE names (`DEVICE_UPDATED`), a separate vocabulary. The webhooks page's own example,
+  `device.created`, is in neither list, so no documented wire value is recorded here. Documented event
+  types (9): customer.created, command.failed, command.overridden, command.succeeded,
+  device.discovered, device.updated, device.disconnected, enrollment.approved, site.created. Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Texture source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is TEXTURE, labelled 'Texture'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste the
+  whole secret, including the whsec_ prefix. Texture uses it as a plain HMAC key."
+testScenario:
+  events:
+    - "device.updated"
+    - "command.succeeded"
+    - "customer.created"
+catalog:
+  summary: "Verify Texture webhooks (`Texture-Signature`: hex HMAC-SHA256 of the raw body), handle device, command, customer and site events"

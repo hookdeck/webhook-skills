@@ -1,0 +1,63 @@
+name: referralhero
+displayName: "ReferralHero"
+docs:
+  webhooks: https://support.referralhero.com/features/integrations/webhooks
+  verification: https://support.referralhero.com/features/integrations/webhooks
+notes: >
+  ReferralHero (referralhero.com), referral and waitlist campaigns. Webhooks are added per campaign
+  (Edit Campaign > Integrations > Webhooks) with the events toggled on. Delivery (from the docs):
+  Respond 200 with a blank body; anything else is an error. Failures are retried 3 times over 5
+  minutes; 10 consecutive bad responses disable the webhook. A Test button sends fake data.
+  ReferralHero's docs say: 'Read the raw request body (e.g., request.raw_post in Rails). Retrieve the
+  signature from the X-ReferralHero-Signature header. Recompute the HMAC-SHA256 hash of the raw body
+  using your Webhook Secret Key as the secret.' 'computed_signature = Base64.strict_encode64(
+  OpenSSL::HMAC.digest('sha256', secret, raw_payload) )' 'Make sure to enable the “Payload
+  Verification” toggle. Once enabled, a secret key will be generated.' From the docs (registry
+  summary): Header `X-ReferralHero-Signature: <base64>`. MAC = base64 (standard, padded) of
+  HMAC-SHA256(key = the Webhook Secret Key, message = the raw request body). All three samples
+  base64-encode (Ruby `Base64.strict_encode64`, Python `base64.b64encode`, Node `digest('base64')`).
+  Note: the samples read the key from an environment variable named `REFERRALHERO_API_KEY`, but the
+  prose says the Webhook Secret Key; the variable name is just a name. SIGNATURE SCHEME (it must match
+  Hookdeck's REFERRALHERO source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-referralhero-signature", encoding "base64"). The X-ReferralHero-Signature header carries the bare
+  standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with the
+  secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
+  signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
+  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
+  but Hookdeck rejects it, so the skill must reject it too. Secret: The Webhook Secret Key, shown
+  under the profile menu (Webhook Secret, with regenerate) and under each campaign's Integration >
+  Webhook tab. Use it as UTF-8 bytes. Env var: REFERRALHERO_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. ReferralHero's samples read
+  the key from an env var named REFERRALHERO_API_KEY, but the key is the Webhook Secret Key, not the
+  API key; the examples use REFERRALHERO_WEBHOOK_SECRET. Events: dispatch on the body's `response`
+  field. Top-level body field `response` carries the event name in every example. Five of the six
+  examples carry the value of their heading; the `subscriber_updated` example carries `"response":
+  "subscriber_fields_updated"`. The docs do not reconcile the two, so the heading is recorded as the
+  event and the conflict as a gap: a receiver should expect `subscriber_fields_updated` on the wire
+  for that event until a capture says otherwise. Documented event types (6): new_registration,
+  subscriber_promoted, subscriber_updated, subscriber_deleted, reward_unlocked, reward_sent. Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's ReferralHero source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is REFERRALHERO, labelled 'ReferralHero'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Signing is opt-in: turn on Payload Verification for the ReferralHero webhook and paste the Webhook
+  Secret Key. Without it, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "new_registration"
+    - "subscriber_promoted"
+    - "reward_unlocked"
+catalog:
+  summary: "Verify ReferralHero webhooks (`X-ReferralHero-Signature`: base64 HMAC-SHA256 of the raw body), handle subscriber and reward events"

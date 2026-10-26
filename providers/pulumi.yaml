@@ -1,0 +1,62 @@
+name: pulumi
+displayName: "Pulumi Cloud"
+docs:
+  webhooks: https://www.pulumi.com/docs/deployments/concepts/webhooks/
+  verification: https://www.pulumi.com/docs/deployments/concepts/webhooks/
+notes: >
+  Pulumi Cloud (pulumi.com), infrastructure as code. Delivery (from the docs): Order is not
+  guaranteed. Pulumi Cloud records recent deliveries; a delivery whose endpoint returned non-2xx or
+  did not respond counts as failed and can be redelivered unchanged from the console (or the CLI for
+  stack webhooks). No automatic retry is described. Pulumi Cloud's docs say:
+  '`Pulumi-Webhook-Signature` | Only set if the webhook has a shared secret. HMAC hex digest of the
+  request payload, using the `sha256` hash function and the webhook secret as the HMAC key.' 'mac :=
+  hmac.New(sha256.New, []byte(secret)) ... return fmt.Sprintf("%x", mac.Sum(nil))' 'If a secret is
+  provided, webhook deliveries will contain a signature in the HTTP request header' From the docs
+  (registry summary): Header `Pulumi-Webhook-Signature: <hex>`, no prefix. MAC = lowercase hex of
+  HMAC-SHA256(key = the webhook secret, message = the raw request payload). The header table and the
+  Go and TypeScript snippets say hex; the Python snippet computes `hexdigest()` and then assigns
+  `base64.b64encode(hash.digest())` as the expected signature, which contradicts them (see the
+  `verification.encoding` gap). The JavaScript snippet is broken as printed
+  (`hmac.update(payloadBody)` with `hmac` and `payloadBody` undefined). SIGNATURE SCHEME (it must
+  match Hookdeck's PULUMI source exactly: HMAC controller, algorithm "sha256", header_key
+  "pulumi-webhook-signature", encoding "hex"). The Pulumi-Webhook-Signature header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: A secret the user chooses when creating a generic JSON webhook (optional). Use it as UTF-8
+  bytes. Env var: PULUMI_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The header table and the Go/TypeScript snippets say hex;
+  the docs' Python snippet base64-encodes, which is wrong; use hex. Events: dispatch on the
+  Pulumi-Webhook-Kind header. Header `Pulumi-Webhook-Kind` carries the Event Kind (`stack`,
+  `stack_update`, ...). The 21 subscription filters (`update_succeeded`, `deployment_failed`, ...) are
+  not on the wire as such: within a kind the body says what happened (`kind` + `result` for updates,
+  `status` for deployments and drift, `action` for stack create/delete). The body has no event-name
+  field. Documented event types (7): stack, stack_preview, stack_update, deployment, drift_detection,
+  drift_remediation, policy_violation. Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Pulumi Cloud source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/pulumi/ (latest/deployment.json,
+  latest/drift_detection.json, latest/drift_remediation.json, latest/stack.json, ...); base the
+  examples' test payloads on them. Hookdeck's source type is PULUMI, labelled 'Pulumi Cloud'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Set a shared secret on the Pulumi webhook. Without one, deliveries are
+  unsigned and fail verification."
+testScenario:
+  events:
+    - "stack_update"
+    - "deployment"
+    - "drift_detection"
+catalog:
+  summary: "Verify Pulumi Cloud webhooks (`Pulumi-Webhook-Signature`: hex HMAC-SHA256 of the raw body), handle stack, update, deployment and drift events"

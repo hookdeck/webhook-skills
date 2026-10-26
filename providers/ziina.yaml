@@ -1,0 +1,52 @@
+name: ziina
+displayName: "Ziina"
+docs:
+  webhooks: https://docs.ziina.com/api-reference/webhook/index
+  verification: https://docs.ziina.com/api-reference/webhook/index
+notes: >
+  Ziina (ziina.com), the UAE payments app and payment API. One webhook URL per account, set with `POST
+  /webhook` (`url`, optional `secret`); deliveries report payment intent and refund status changes.
+  Delivery (from the docs): A non-ok status is retried 3 times. No timeout or spacing is documented.
+  Ziina's docs say: 'If a secret was provided when configuring the webhook, the HTTP request will
+  contain a header `X-Hmac-Signature` ... The value of this field will be the hexadecimal encoded
+  SHA-256 HMAC signature of the request body.' '`secret`: optional. If provided, the secret will be
+  used to generate an HMAC signature that will be passed as a header' From the docs (registry
+  summary): Header `X-Hmac-Signature: <hex>`, no prefix. MAC = hex of HMAC-SHA256(key = the secret
+  given to `POST /webhook`, message = the request body). No sample code is published. SIGNATURE SCHEME
+  (it must match Hookdeck's ZIINA source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-hmac-signature", encoding "hex"). The X-Hmac-Signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: Chosen by the merchant and passed as `secret` when setting the webhook URL; one per account
+  (setting the URL again overwrites it). No format is documented. Use it as UTF-8 bytes. Env var:
+  ZIINA_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the body's `event` field. Top-level body field
+  `event`. The new state is in `data.status` (the example shows `completed`); the event name does not
+  change with the status. No header names the event. Documented event types (2):
+  payment_intent.status.updated, refund.status.updated. Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Ziina source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/ziina/ (latest/payment_intent.status.updated.json);
+  base the examples' test payloads on them. Hookdeck's source type is ZIINA, labelled 'Ziina'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set a secret when you register the webhook through the Ziina API.
+  Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "payment_intent.status.updated"
+    - "refund.status.updated"
+catalog:
+  summary: "Verify Ziina webhooks (`X-Hmac-Signature`: hex HMAC-SHA256 of the raw body), handle payment intent and refund status updates"
