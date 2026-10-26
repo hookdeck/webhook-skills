@@ -1,0 +1,68 @@
+name: qlik-cloud
+displayName: "Qlik Cloud"
+docs:
+  webhooks: https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Admin/mc-administer-webhooks.htm
+  verification: https://qlik.dev/apis/event/verify-webhook-signatures-hmac
+notes: >
+  Qlik Cloud (qlik.com), Qlik's SaaS analytics and data integration platform. Tenant webhooks deliver
+  system events (apps, reloads, automations, users, API keys, data-integration tasks, ...). Delivery
+  (from the docs): No timeout or retry policy is documented. Delivery history is kept 7 days and an
+  event can be resent by hand from it. Qlik Cloud's docs say: 'When Qlik Cloud sends a webhook to your
+  endpoint, it includes a signature in the Qlik-Signature header.' 'Get the digest in hex format (Qlik
+  Cloud sends signatures as hex-encoded)' 'compute the HMAC-SHA256 digest of the payload with your
+  secret key ... const payload = req.rawBody || Buffer.from(JSON.stringify(req.body));' 'Optionally,
+  enter a secret for webhook authentication. The secret must be between 32 and 64 characters. If
+  created, the secret will be included as part of a hash, appended to the HTTP request as a
+  qlik-signature.' From the docs (registry summary): HMAC-SHA256(webhook secret, raw request body),
+  hex-encoded, compared with the whole header value. No prefix, no timestamp. SIGNATURE SCHEME (it
+  must match Hookdeck's QLIK_CLOUD source exactly: HMAC controller, algorithm "sha256", header_key
+  "qlik-signature", encoding "hex"). The qlik-signature header carries the bare lowercase hex digest,
+  no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only
+  (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The optional webhook
+  secret (32 to 64 characters), write-once, set when creating or editing the webhook. Without it no
+  qlik-signature is sent. Use it as UTF-8 bytes. Env var: QLIK_CLOUD_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: dispatch on
+  the body's `type` field. Top-level CloudEvents `type`. Events in the Legacy format have been sent
+  since November 3, 2025 as hybrids that carry the same value in the legacy `eventType` too; the
+  legacy fields are removed on December 10, 2026, leaving `type` alone. Payloads from before the
+  hybrid period (the help page's example) carry only `eventType`. Documented event types (22):
+  com.qlik.v1.app.created, com.qlik.v1.app.exported, com.qlik.v1.app.published,
+  com.qlik.v1.app.deleted, com.qlik.v1.app.reload.finished, com.qlik.v1.app.data.updated,
+  com.qlik.v1.reload.finished, com.qlik.v1.api-key.validation.failed, com.qlik.v1.user.created,
+  com.qlik.v1.user.deleted, com.qlik.v1.automation.created, com.qlik.v1.automation.updated,
+  com.qlik.v1.automation.deleted, com.qlik.v1.automation.run.started (and 8 more). Handle a few common
+  ones and log the rest. Methods: Qlik Cloud's docs don't name the HTTP method. Hookdeck's Qlik Cloud
+  source pre-selects POST without managing the method (the user can change it). The examples must NOT
+  be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
+  route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify
+  the signature first for every method, and treat a missing body as empty bytes (a GET with no body is
+  verified over zero bytes, and once verified it is acknowledged with 200, not rejected as invalid
+  JSON). Say in SKILL.md and setup.md that Hookdeck's Qlik Cloud source pre-selects POST without
+  managing the method, so any other method the sender uses must also be allowed on the source. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/qlik-cloud/
+  (latest/com.qlik.analytics.change-store.changes.saved.json,
+  latest/com.qlik.v1.reload.finished.json); base the examples' test payloads on them. Hookdeck's
+  source type is QLIK_CLOUD, labelled 'Qlik Cloud'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set a secret on the
+  Qlik Cloud webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "com.qlik.v1.app.created"
+    - "com.qlik.v1.app.reload.finished"
+    - "com.qlik.v1.automation.created"
+catalog:
+  summary: "Verify Qlik Cloud webhooks (`qlik-signature`: hex HMAC-SHA256 of the raw body), handle app, reload, automation and user events"

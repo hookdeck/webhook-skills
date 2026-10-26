@@ -1,0 +1,58 @@
+name: authgear
+displayName: "Authgear"
+docs:
+  webhooks: https://docs.authgear.com/integrate/events-hooks/webhooks
+  verification: https://docs.authgear.com/integrate/events-hooks/webhooks#verifying-signature
+notes: >
+  Authgear (authgear.com), an auth-as-a-service platform. Webhooks are configured in the portal
+  (Advanced > Hooks) for blocking and non-blocking events. Delivery (from the docs): Non-blocking
+  hooks must finish within 60 s and return 2xx; the response is ignored. Retries are not documented.
+  Authgear's docs say: 'The signature is calculated as the hex encoded value of HMAC-SHA256 of the
+  request body and included in the HTTP header `x-authgear-body-signature`.' 'To obtain the secret
+  key, visit the portal and go to **Advanced** -> **Hooks** -> **Webhook Signature**.' 'hasher :=
+  hmac.New(sha256.New, secret) ... sig = hex.EncodeToString(signature)' From the docs (registry
+  summary): `x-authgear-body-signature: <hex>` = hex HMAC-SHA256(project webhook secret, raw body).
+  Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's AUTHGEAR source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-authgear-body-signature", encoding "hex"). The
+  x-authgear-body-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One secret per project: portal >
+  Advanced > Hooks > Webhook Signature (re-authentication may be required to reveal it). Use it as
+  UTF-8 bytes. Env var: AUTHGEAR_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Only non-blocking events are covered; blocking events
+  expect a synchronous decision response. Events: dispatch on the body's `type` field. Top-level
+  `type`, equal to the section heading in 25 of 26 examples (identity.phone.added's example says
+  user.phone.added — a doc slip). Nested `identities[].type` (login_id, oauth, biometric) is an
+  identity kind, not the event. Documented event types (26): user.created, user.profile.updated,
+  user.authenticated, user.disabled, user.reenabled, user.anonymous.promoted, user.deletion_scheduled,
+  user.deletion_unscheduled, user.deleted, identity.email.added, identity.email.removed,
+  identity.email.updated, identity.email.verified, identity.email.unverified (and 12 more). Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Authgear source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/authgear/
+  (latest/identity.biometric.disabled.json, latest/identity.biometric.enabled.json,
+  latest/identity.email.added.json, latest/identity.email.removed.json, ...); base the examples' test
+  payloads on them. Hookdeck's source type is AUTHGEAR, labelled 'Authgear'. Hookdeck shows this setup
+  note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Only non-blocking events are supported. Blocking events expect a synchronous response
+  from the receiver."
+testScenario:
+  events:
+    - "user.created"
+    - "user.authenticated"
+    - "user.deleted"
+catalog:
+  summary: "Verify Authgear webhooks (`x-authgear-body-signature`: hex HMAC-SHA256 of the raw body), handle non-blocking user and identity events"

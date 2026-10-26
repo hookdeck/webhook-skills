@@ -1,0 +1,58 @@
+name: planetscale
+displayName: "PlanetScale"
+docs:
+  webhooks: https://planetscale.com/docs/api/webhooks
+  verification: https://planetscale.com/docs/api/webhooks#validating-a-webhook-signature
+notes: >
+  PlanetScale (planetscale.com), managed Vitess and Postgres. Webhooks are per database (up to 5),
+  created in the dashboard, with the pscale CLI or the API, and report branch, backup, deploy-request,
+  storage and access-request events. Delivery (from the docs): 2xx within 2 s; redirects are not
+  followed; repeatedly failing webhooks are disabled. No retry policy is stated. PlanetScale's docs
+  say: 'All webhooks from PlanetScale will have an X-PlanetScale-Signature header. This header is a
+  SHA-256 HMAC hex digest of the request body, using your webhook secret as the key.' 'You must create
+  the digest using the *exact* body string sent in the POST request.' 'payload_body = request.data ...
+  hmac.new(secret_token.encode('utf-8'), msg=payload_body, digestmod=sha256) ... hexdigest()' From the
+  docs (registry summary): hex(HMAC-SHA256(webhook secret, raw body)), the whole header value, no
+  prefix. The JavaScript and TypeScript samples hash `JSON.stringify(req.body)`, a re-serialization
+  that will not match byte-for-byte; the page itself warns to use the exact body, as the Python and
+  Ruby samples do. SIGNATURE SCHEME (it must match Hookdeck's PLANETSCALE source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-planetscale-signature", encoding "hex"). The
+  x-planetscale-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One secret per webhook: database
+  Settings > Webhooks > ... > Show secret. Use it as UTF-8 bytes. Env var: PLANETSCALE_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields.
+  PlanetScale's JavaScript sample hashes JSON.stringify(req.body); that re-serialisation does not
+  match byte-for-byte, so verify the raw body as the Python sample does. Events: dispatch on the
+  body's `event` field. Top-level `event`; `timestamp` (Unix seconds), `organization`, `database` and
+  `resource` (the resource's API representation) sit beside it. Documented event types (21):
+  branch.anomaly, branch.primary_promoted, branch.out_of_memory, branch.ready,
+  branch.schema_recommendation, branch.sleeping, branch.start_maintenance, backup.failed,
+  backup.succeeded, cluster.storage, database.access_request, deploy_request.opened,
+  deploy_request.queued, deploy_request.in_progress (and 7 more). Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's PlanetScale source manages the method as POST, so the examples handle
+  POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Documented sample payloads
+  (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/planetscale/ (latest/backup.failed.json,
+  latest/backup.succeeded.json, latest/branch.anomaly.json, latest/branch.out_of_memory.json, ...);
+  base the examples' test payloads on them. Hookdeck's source type is PLANETSCALE, labelled
+  'PlanetScale'.
+testScenario:
+  events:
+    - "branch.ready"
+    - "deploy_request.opened"
+    - "branch.anomaly"
+catalog:
+  summary: "Verify PlanetScale webhooks (`x-planetscale-signature`: hex HMAC-SHA256 of the raw body), handle branch, deploy request, backup and cluster events"

@@ -1,0 +1,69 @@
+name: loyaltylion
+displayName: "LoyaltyLion"
+docs:
+  webhooks: https://developers.loyaltylion.com/api-reference/v2/webhooks/overview
+  verification: https://developers.loyaltylion.com/api-reference/v2/webhooks/overview
+notes: >
+  LoyaltyLion (loyaltylion.com), loyalty and referral programs for e-commerce stores. Webhooks are
+  subscribed per topic through the v2 Webhook API, by an OAuth client or with API keys. Delivery (from
+  the docs): Respond 200 within 5 s. Failures retry with exponential backoff; an email alert after 5
+  failed attempts, and the subscription is removed after 30. At-least-once; dedupe on `id`.
+  LoyaltyLion's docs say: 'The webhooks we deliver have a `x-loyaltylion-hmac-sha256` header, which is
+  a base64 encoded sha256 HMAC of the raw JSON request body and the relevant secret key' 'for webhooks
+  registered with an an OAuth client, use OAuth client secret ... for other webhooks, use your site
+  secret' 'crypto.createHmac('sha256', LOYALTYLION_SECRET).update(data).digest('base64')' From the
+  docs (registry summary): base64(HMAC-SHA256(secret, raw body)), the whole header value, no prefix.
+  The TypeScript, Ruby and PHP samples all compute the base64 digest and compare it to the header.
+  SIGNATURE SCHEME (it must match Hookdeck's LOYALTYLION source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-loyaltylion-hmac-sha256", encoding "base64"). The x-loyaltylion-hmac-sha256
+  header carries the bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value
+  as one digest (no list splitting or prefix parsing). The signature is standard base64 (padded)
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
+  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
+  constant time. Decoding alone is not enough: a value whose last character carries stray low bits
+  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: The
+  OAuth client secret for webhooks registered by an OAuth client; the site secret for webhooks created
+  with API keys. Use it as UTF-8 bytes. Env var: LOYALTYLION_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Which secret signs depends
+  on how the webhook was registered: the OAuth client secret for webhooks registered with an OAuth
+  client, otherwise the site secret. The body is an envelope `{id, topic, created_at, payload}`.
+  Events: dispatch on the body's `topic` field. Top-level `topic` in the envelope (`id`, `topic`,
+  `created_at`, `payload`). Every topic page's example carries its own topic, e.g. `"topic":
+  "program_events/customer.enrolled"`. Topics carry `/` and `.`, so sample files use the safe stem.
+  One exception: rewards/store_fulfilment is posted to the custom reward's own fulfilment URL and its
+  body has no envelope and no `topic`. Documented event types (21): customers/update,
+  loyalty_emails/unsubscribe, rewards/store_fulfilment, receipts/manual_approval_required,
+  program_events/customer.enrolled, program_events/customer.tier_upgraded,
+  program_events/customer.tier_downgraded, program_events/customer.reward_available_notification,
+  program_events/customer.recurring_reward_available_reminder, program_events/customer.claimed_reward,
+  program_events/customer.points_earned, program_events/customer.referral_complete,
+  program_events/customer.rule_completed, program_events/customer.approaching_tier_upgrade (and 7
+  more). Handle a few common ones and log the rest. Method: POST. Hookdeck's LoyaltyLion source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/loyaltylion/
+  (latest/customers.update.json, latest/loyalty_emails.unsubscribe.json,
+  latest/program_events.customer.approaching_points_expiration.json,
+  latest/program_events.customer.approaching_reward_expiration.json, ...); base the examples' test
+  payloads on them. Hookdeck's source type is LOYALTYLION, labelled 'LoyaltyLion'. Hookdeck shows this
+  setup note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Paste the OAuth client secret for webhooks registered with an OAuth client, or your site
+  secret for other webhooks."
+testScenario:
+  events:
+    - "program_events/customer.enrolled"
+    - "customers/update"
+    - "rewards/store_fulfilment"
+catalog:
+  summary: "Verify LoyaltyLion webhooks (`x-loyaltylion-hmac-sha256`: base64 HMAC-SHA256 of the raw body), handle customer, program event and reward topics"

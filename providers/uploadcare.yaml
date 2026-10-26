@@ -1,0 +1,53 @@
+name: uploadcare
+displayName: "Uploadcare"
+docs:
+  webhooks: https://uploadcare.com/docs/webhooks/
+  verification: https://uploadcare.com/docs/webhooks/
+notes: >
+  Uploadcare (uploadcare.com), file upload, storage and CDN. Webhooks are per project, set in the
+  dashboard or the REST API, each pinned to a REST API version (v0.6 or v0.7) that decides the events
+  and payload shape. Delivery (from the docs): Only 2xx succeeds; attempts time out after one minute.
+  Retries at 1, 5, 10, 30, 60 minutes, then hourly within 72 hours; then the webhook is disabled and
+  the project owner emailed. Uploadcare's docs say: 'the header has the following format:
+  X-Uc-Signature: v1=SIGNATURE.' 'The signature is generated with HMAC/SHA-256 algorithm' '"v1=" +
+  hmac.new(UC_SIGNING_SECRET.encode("utf-8"), webhook_body.encode("utf-8"),
+  hashlib.sha256).hexdigest()' 'a signing secret can be added with a POST request when creating or
+  updating a webhook ... The signing secret can be added in Dashboard settings on the Webhooks page.'
+  From the docs (registry summary): `v1=` + hex(HMAC-SHA256(signing_secret, body)). The Python sample
+  checks `calculated in header`, a substring test. SIGNATURE SCHEME (it must match Hookdeck's
+  UPLOADCARE source exactly: HMAC controller, algorithm "sha256", header_key "x-uc-signature",
+  encoding "hex"). The x-uc-signature header carries `v1=<hex>`. Strip a leading `v1=` before
+  validating the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or
+  without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: Optional `signing_secret`, set when creating or updating the webhook (REST API or
+  dashboard). Without it requests are unsigned. Use it as UTF-8 bytes. Env var:
+  UPLOADCARE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. The event name is the body's `hook.event`. Events: dispatch on the
+  body's `hook.event` field. Nested `hook.event`; `hook` also holds webhook and project information.
+  The examples are elided, so only `hook.event` and parts of `data` are shown. Documented event types
+  (5): file.uploaded, file.info_updated, file.deleted, file.stored, file.infected. Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Uploadcare source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is UPLOADCARE, labelled 'Uploadcare'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set a
+  signing_secret on the Uploadcare webhook. Without one, deliveries are unsigned and fail
+  verification."
+testScenario:
+  events:
+    - "file.uploaded"
+    - "file.info_updated"
+    - "file.deleted"
+catalog:
+  summary: "Verify Uploadcare webhooks (`x-uc-signature`: `v1=` hex HMAC-SHA256 of the raw body), handle file upload, update, store, delete and infected events"

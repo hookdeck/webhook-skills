@@ -1,0 +1,58 @@
+name: agentset
+displayName: "Agentset"
+docs:
+  webhooks: https://docs.agentset.ai/webhooks
+  verification: https://docs.agentset.ai/webhooks/verify-webhook-requests
+notes: >
+  Agentset (agentset.ai), a managed RAG platform. Organization webhooks are created in the dashboard
+  (Webhooks settings) with a URL, chosen events and optional namespaces, and report document and
+  ingest-job lifecycle changes. Delivery (from the docs): 2xx within 20 s, else up to 10 retries with
+  exponential backoff capped at 24 h (12 s, 2m24s, 30m8s, ...). Owners are emailed after 5, 10 and 15
+  consecutive failures; the 20th disables the webhook. Agentset's docs say: 'All webhooks are
+  delivered with an Agentset-Signature header.' 'Calculate the HMAC of the raw body using the SHA-256
+  hash function and the secret.' '.createHmac('sha256', secret) .update(rawBody) .digest('hex');' From
+  the docs (registry summary): hex(HMAC-SHA256(signing secret, raw body)), the whole header value, no
+  prefix; the Next.js, Python and Go samples compare it directly. SIGNATURE SCHEME (it must match
+  Hookdeck's AGENTSET source exactly: HMAC controller, algorithm "sha256", header_key
+  "agentset-signature", encoding "hex"). The agentset-signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: One signing secret per webhook, shown in its Update Details tab. Use it as UTF-8 bytes. Env
+  var: AGENTSET_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the body's `event` field. Top-level `event` in
+  the envelope `id`, `event`, `createdAt`, `data`. Documented event types (14): document.queued,
+  document.queued_for_resync, document.queued_for_deletion, document.processing, document.error,
+  document.ready, document.deleted, ingest_job.queued, ingest_job.queued_for_resync,
+  ingest_job.queued_for_deletion, ingest_job.processing, ingest_job.error, ingest_job.ready,
+  ingest_job.deleted. Handle a few common ones and log the rest. Methods: Agentset's docs don't name
+  the HTTP method. Hookdeck's Agentset source pre-selects POST without managing the method (the user
+  can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
+  webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
+  FastAPI: api_route with those methods), verify the signature first for every method, and treat a
+  missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it is
+  acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's
+  Agentset source pre-selects POST without managing the method, so any other method the sender uses
+  must also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/agentset/ (latest/document.deleted.json,
+  latest/document.error.json, latest/document.processing.json, latest/document.queued.json, ...); base
+  the examples' test payloads on them. Hookdeck's source type is AGENTSET, labelled 'Agentset'.
+testScenario:
+  events:
+    - "document.ready"
+    - "document.error"
+    - "ingest_job.queued"
+catalog:
+  summary: "Verify Agentset webhooks (`agentset-signature`: hex HMAC-SHA256 of the raw body), handle document and ingest job events"

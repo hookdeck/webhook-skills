@@ -1,0 +1,58 @@
+name: thought-industries
+displayName: "Thought Industries"
+docs:
+  webhooks: https://developer.thoughtindustries.com/docs/webhooks/
+  verification: https://developer.thoughtindustries.com/docs/webhooks/
+notes: >
+  Thought Industries (thoughtindustries.com), a customer/partner learning platform. Webhooks are
+  Manager Notifications (Admin > Users > Manager Notifications) whose channel is Webhook: one trigger
+  + one destination URL per notification. Delivery (from the docs): Return 200-308 within 8 s. A
+  failed delivery is retried twice (about 1 and 2 minutes later; 3 attempts in total), then dropped.
+  No delivery log in Admin; backfill from the Events API. Retries can duplicate events (dedupe on id,
+  or event + user + notifiableId + timestamp). bundlePurchase lags about an hour; userLastActive* are
+  sent daily at 12:00 instance time. Thought Industries's docs say: 'Every webhook request, including
+  Test Event, carries an X-Ti-Hook-Signature header: sha256= followed by the lowercase hex HMAC-SHA256
+  of the request body, keyed with your site’s Site Secret.' 'Compute the HMAC over the raw body bytes
+  exactly as received. Parsing the JSON and serializing it again can change the bytes and break the
+  match.' 'The Site Secret is not your API key and is not shown in Admin. Request it from Thought
+  Industries Support.' From the docs (registry summary): `X-Ti-Hook-Signature: sha256=<hex>` =
+  `sha256=` + lowercase hex HMAC-SHA256(Site Secret, raw body). No timestamp. SIGNATURE SCHEME (it
+  must match Hookdeck's THOUGHT_INDUSTRIES source exactly: HMAC controller, algorithm "sha256",
+  header_key "x-ti-hook-signature", encoding "hex"). The X-Ti-Hook-Signature header carries
+  `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser also
+  accepts the bare digest, so accept the value with or without the prefix. The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The site's Site Secret, which is
+  neither the API key nor shown in Admin: Thought Industries Support issues it and rotates it on
+  request. Hookdeck's configuration_alert says the same: "Ask Thought Industries Support for your Site
+  Secret and paste it here." Use it as UTF-8 bytes. Env var: THOUGHT_INDUSTRIES_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields. Events:
+  dispatch on the body's `event` field. Top-level `event` holds the trigger kind (courseCompletion,
+  login, ...). Each notification is configured for one trigger, so an endpoint shared by several
+  notifications must key on `event`. Documented event types (31): courseEnrollment, courseAction,
+  courseCompletion, courseCertificate, coursePurchase, quizAttempt, assignmentSubmission,
+  courseComment, courseInstructorMessage, emailCapture, learningPathEnrollment, learningPathAction,
+  login, visit (and 17 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  Thought Industries source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is THOUGHT_INDUSTRIES,
+  labelled 'Thought Industries'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Ask Thought Industries Support for
+  your Site Secret and paste it here."
+testScenario:
+  events:
+    - "courseCompletion"
+    - "courseEnrollment"
+    - "quizAttempt"
+catalog:
+  summary: "Verify Thought Industries webhooks (`X-Ti-Hook-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle course, learning path and quiz events"

@@ -1,0 +1,60 @@
+name: hifi
+displayName: "HIFI"
+docs:
+  webhooks: https://docs.hifi.com/v3/core/webhooks/overview
+  verification: https://docs.hifi.com/v3/core/webhooks/overview
+notes: >
+  HIFI (hifi.com), stablecoin on/off-ramp and payments infrastructure. v3 webhook endpoints are
+  registered per profile through the API (up to 16), each subscribed to explicit event types. Delivery
+  (from the docs): Any 2xx succeeds. Otherwise retried with backoff from 30 s, doubling (with jitter)
+  to a 24 h cap, up to 10 attempts; then that event type's subscription on the endpoint is disabled
+  until re-subscribed. Events can arrive out of order. Single events can be resent via the API. HIFI's
+  docs say: 'Every delivery includes a `hifi-signature` header ... hifi-signature:
+  t=1721856000,v1=5257a869e7bff6cd0e07e1e9b1eb2a4f...' '`v1` - an HMAC-SHA256 hex digest of `{t}.{raw
+  request body}`, keyed with the endpoint's `signingSecret`.' '.createHmac("sha256",
+  signingSecret).update(`${timestamp}.${rawBody}`, "utf8").digest("hex")' '"signingSecret":
+  "3f2504e04f8911d39a0c0305e82c3301b1f2c9e8a7d6f5e4c3b2a1908f7e6d5" ... `signingSecret` is only ever
+  returned once, in this response' From the docs (registry summary): `hifi-signature:
+  t=<unix>,v1=<hex>` where v1 = hex HMAC-SHA256(endpoint signingSecret, `{t}.{raw body}`). SIGNATURE
+  SCHEME (it must match Hookdeck's HIFI source exactly: HMAC controller, algorithm "sha256",
+  header_key "hifi-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  hifi-signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature
+  is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the
+  header (a string; never parse it to a number and re-format it), then a literal ".", then the raw
+  request body bytes. The header may carry more than one v1= entry (for example during key rotation):
+  accept the delivery if ANY v1= entry matches, and ignore other keys such as v0. A header with no t=
+  value fails. Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The endpoint's `signingSecret`,
+  returned once at registration; it cannot be rotated (delete and re-register instead). Use it as
+  UTF-8 bytes. Env var: HIFI_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries
+  and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so
+  a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  HIFI_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
+  Unix seconds). Events: dispatch on the body's `eventType` field. Top-level `eventType` in the
+  envelope (`{id, eventType, eventCreatedAt, data}`); the example carries `ONRAMP.STATUS.COMPLETED`, a
+  table row. `data.status` repeats the status for STATUS events but is not the event. RESOURCE.CREATED
+  and RESOURCE.STATUS.CREATED are distinct events that both fire on creation. Documented event types
+  (145): USER.CREATED, USER.STATUS.ACTIVE, USER.STATUS.INACTIVE, COMPLIANCE.CREATED,
+  COMPLIANCE.STATUS.NOT_SUBMITTED, COMPLIANCE.STATUS.PENDING, COMPLIANCE.STATUS.IN_REVIEW,
+  COMPLIANCE.STATUS.APPROVED, COMPLIANCE.STATUS.REJECTED, COMPLIANCE.STATUS.REQUIRES_INFO,
+  RFI.STATUS.ISSUED, RFI.STATUS.SUBMITTED, RFI.STATUS.RESOLVED, RFI.STATUS.EXPIRED (and 131 more).
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's HIFI source manages the method
+  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Hookdeck's source type is HIFI, labelled 'HIFI'.
+testScenario:
+  events:
+    - "ONRAMP.STATUS.COMPLETED"
+    - "USER.CREATED"
+    - "CRYPTO_TRANSFER.CREATED"
+catalog:
+  summary: "Verify HIFI webhooks (`hifi-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle user, compliance, onramp, offramp and transfer events"

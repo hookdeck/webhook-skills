@@ -1,0 +1,53 @@
+name: freemius
+displayName: "Freemius"
+docs:
+  webhooks: https://freemius.com/help/documentation/saas/events-webhooks/
+  verification: https://freemius.com/help/documentation/saas/events-webhooks/
+notes: >
+  Freemius (freemius.com), the monetization platform for SaaS, WordPress plugins and themes, and
+  desktop software: checkout, licensing, subscriptions, affiliates. A webhook (Webhooks > Listeners in
+  the Developer Dashboard) is registered per product and receives all event types or a chosen subset.
+  Delivery (from the docs): Not documented: no retry schedule, timeout or success code. The dashboard
+  keeps an Events log (Webhooks > Events) with each event's state (processed, pending, canceled, error
+  per the API schema). Freemius's docs say: 'Freemius includes a signature in the x-signature header
+  of each request. You can validate this signature using your product's secret key.' 'Compute the HMAC
+  SHA256 hash of the raw body using your product's secret key.' 'const hash =
+  crypto.createHmac('sha256', PRODUCT_SECRET_KEY).update(rawBody).digest('hex');' From the docs
+  (registry summary): `x-signature: <hex>` = lowercase hex HMAC-SHA256(product secret key, raw body).
+  Bare value, no prefix and no timestamp. SIGNATURE SCHEME (it must match Hookdeck's FREEMIUS source
+  exactly: HMAC controller, algorithm "sha256", header_key "x-signature", encoding "hex"). The
+  x-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value
+  as one digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256,
+  keyed with the secret, over the raw request body bytes only (no timestamp, id or other header is
+  signed). Build the signed message as BYTES: the raw body bytes exactly as received, never decoded to
+  a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the
+  secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively
+  (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to
+  bytes) before the constant-time compare. Secret: The product's secret key (Developer Dashboard >
+  Settings > API & Keys), used as the HMAC key string as-is; one key per product, not per webhook. Use
+  it as UTF-8 bytes. Env var: FREEMIUS_WEBHOOK_SECRET. Validate the signature's format before decoding
+  it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `type` field. Top-level
+  `type` of the event resource. The webhooks page names `event.type` and says the delivered payload
+  has the same schema as the API's event resource, whose `type` is "The type of event." (example
+  `license.activated`). Medium confidence: no delivered body is published, so the carrier is read off
+  the API schema the docs point to, not off a webhook example. Documented event types (148):
+  affiliate.approved, affiliate.blocked, affiliate.created, affiliate.deleted,
+  affiliate.payout.pending, affiliate.paypal.updated, affiliate.rejected, affiliate.suspended,
+  affiliate.unapproved, affiliate.updated, card.created, card.updated, cart.abandoned, cart.completed
+  (and 134 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's Freemius source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Hookdeck's source type is FREEMIUS, labelled 'Freemius'.
+testScenario:
+  events:
+    - "license.activated"
+    - "subscription.created"
+    - "payment.created"
+catalog:
+  summary: "Verify Freemius webhooks (`x-signature`: hex HMAC-SHA256 of the raw body), handle license, subscription, payment and user events"

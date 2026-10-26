@@ -1,0 +1,53 @@
+name: preczn
+displayName: "Preczn"
+docs:
+  webhooks: https://docs.preczn.com/docs/receiving-and-verifying-webhooks
+  verification: https://docs.preczn.com/docs/receiving-and-verifying-webhooks
+notes: >
+  Preczn (preczn.com), a payments orchestration platform for software platforms (merchant boarding,
+  processors, loans). Webhook subscriptions belong to a platform and a mode (Test or Live). Delivery
+  (from the docs): 2xx within 5 s. 5xx, network errors and timeouts are retried up to 3 times with
+  exponential backoff; 4xx is never retried. 25 consecutive failures auto-disable the subscription.
+  History kept 15 days. Preczn's docs say: 'X-Preczn-Signature:
+  v1=fd2118dc6da5fda8ae597a4ddfea31c691335b73613b15936a4ab49c632d3658' 'The current version is **v1**:
+  an HMAC of the raw request body, using SHA-256, rendered as lowercase hexadecimal.' 'The header may
+  contain more than one signature, comma-separated. ... **The request is authentic if at least one
+  signature matches**' 'signing_bytes = bytearray(signing_secret.encode(encoding='UTF-8'))' From the
+  docs (registry summary): `X-Preczn-Signature: v1=<hex>[,v1=<hex>...]`, each v1 = lowercase hex
+  HMAC-SHA256(subscription signing secret as UTF-8, raw body). Several comma-separated signatures
+  appear during secret rotation; any match authenticates. SIGNATURE SCHEME (it must match Hookdeck's
+  PRECZN source exactly: HMAC controller, algorithm "sha256", header_key "x-preczn-signature",
+  encoding "hex"). The X-Preczn-Signature header carries `v1=<hex>`. Strip a leading `v1=` before
+  validating the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or
+  without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The subscription's signing secret: visible any time in the dashboard, or in the API create
+  response only. Use it as UTF-8 bytes. Env var: PRECZN_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. The header may carry
+  several comma-separated `v1=` entries (secret rotation): split on commas, trim spaces, and accept
+  the delivery if ANY `v1=` entry matches; ignore entries with other keys. Events: dispatch on the
+  body's `eventType` field. Top-level `eventType`; the body has the same four fields for every event
+  and only `data` changes shape. Documented event types (14): transaction.approved,
+  transaction.declined, transaction.pending, transaction.errored, merchant.created, merchant.updated,
+  merchant.deleted, loan.created, loan.updated, form.created, form.started, form.updated,
+  form.completed, form.expired. Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  Preczn source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is PRECZN, labelled 'Preczn'.
+testScenario:
+  events:
+    - "transaction.approved"
+    - "transaction.declined"
+    - "merchant.created"
+catalog:
+  summary: "Verify Preczn webhooks (`X-Preczn-Signature`: `v1=` hex HMAC-SHA256 of the raw body), handle transaction, merchant, loan and form events"

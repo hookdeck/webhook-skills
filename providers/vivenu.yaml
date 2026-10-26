@@ -1,0 +1,57 @@
+name: vivenu
+displayName: "vivenu"
+docs:
+  webhooks: https://docs.vivenu.com/api/core/webhooks
+  verification: https://docs.vivenu.com/api/core/webhooks#security
+notes: >
+  vivenu (vivenu.com), an event ticketing platform. Seller-account webhooks (dashboard Developer >
+  Webhooks, or POST /api/webhooks) fire on transactions, checkouts, tickets, purchase intents,
+  customers, events and more. Delivery (from the docs): 10 s timeout. A non-2xx/3xx response is
+  retried up to six more times with progressive backoff from 30 s to 2 h; the response body is logged
+  but not evaluated. At-least-once and unordered: dedupe on body `id`. Failed calls can be
+  re-triggered manually in the dashboard; there are no test events. vivenu's docs say: 'When setting
+  up a webhook, you can provide an hmacKey to sign calls made from vivenu. The signature is computed
+  by calculating the HMAC of the raw JSON payload with the provided key and the sha256 algorithm,
+  encoded as a hex string. The signature is added to the request in the x-vivenu-signature header.'
+  'const signature = crypto.createHmac("sha256", HMAC_KEY).update(req.rawPayload).digest("hex") ...
+  const isValid = signature.toLowerCase() === requestSignature.toLowerCase()' From the docs (registry
+  summary): `x-vivenu-signature: <hex>` = hex HMAC-SHA256(webhook hmacKey, raw JSON payload). Bare
+  value, no prefix, no timestamp; the sample compares case-insensitively. SIGNATURE SCHEME (it must
+  match Hookdeck's VIVENU source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-vivenu-signature", encoding "hex"). The x-vivenu-signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The optional `hmacKey` set on the webhook configuration (dashboard or API). Hookdeck's
+  configuration_alert: "Set an hmacKey on the vivenu webhook. Without one, deliveries are unsigned and
+  fail verification." Use it as UTF-8 bytes. Env var: VIVENU_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Events: dispatch on the
+  body's `type` field. Top-level `type` of the Webhook Payload `{mode, id, type, data}`; its enum
+  lists every event type. `mode` is dev/prod, `id` the transmission ID. Documented event types (45):
+  transaction.complete, transaction.reservedBySystem, transaction.canceled,
+  transaction.partiallyCanceled, checkout.completed, checkout.aborted, checkout.detailsSubmitted,
+  ticket.created, ticket.updated, purchaseIntent.created, purchaseIntent.updated,
+  purchaseIntent.completed, purchaseIntent.approved, purchaseIntent.rejected (and 31 more). Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's vivenu source manages the method as POST,
+  so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is VIVENU, labelled 'vivenu'. Hookdeck shows this setup note for the source,
+  and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set an hmacKey on
+  the vivenu webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "transaction.complete"
+    - "checkout.completed"
+    - "ticket.created"
+catalog:
+  summary: "Verify vivenu webhooks (`x-vivenu-signature`: hex HMAC-SHA256 of the raw body), handle transaction, checkout, ticket and customer events"

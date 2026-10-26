@@ -1,0 +1,54 @@
+name: govuk-pay
+displayName: "GOV.UK Pay"
+docs:
+  webhooks: https://docs.payments.service.gov.uk/webhooks/
+  verification: https://docs.payments.service.gov.uk/webhooks/#verifying-webhook-messages-from-gov-uk-pay
+notes: >
+  GOV.UK Pay (payments.service.gov.uk), the UK government's payment platform for public-sector
+  services. Per-service webhooks are created in the GOV.UK Pay admin tool (Settings > Developers >
+  Webhooks). Delivery (from the docs): At least once: a missing or non-2xx response is retried for
+  "several attempts" (no schedule given); return 2xx before processing. Messages can arrive out of
+  order and more than once (dedupe on webhook_message_id). The admin tool shows per-event delivery
+  history. GOV.UK Pay's docs say: 'Every webhook message from GOV.UK Pay is signed with the
+  Pay-Signature header. The value of this header is a lower-case, hexadecimal hash-based message
+  authentication code (HMAC) of the webhook message body, generated using the SHA-256 hash function.
+  Your webhook signing secret is used as the key.' 'the message is the HTTP request body, which is
+  encoded as UTF-8 with no byte order mark (BOM) the key is your webhooks’s signing secret, encoded as
+  UTF-8 bytes with no BOM output the HMAC as a lower-case hexadecimal string' From the docs (registry
+  summary): `Pay-Signature: <hex>` = lowercase hex HMAC-SHA256(signing secret as UTF-8, request body
+  as UTF-8 without BOM). Bare value, no prefix, no timestamp. SIGNATURE SCHEME (it must match
+  Hookdeck's GOVUK_PAY source exactly: HMAC controller, algorithm "sha256", header_key
+  "pay-signature", encoding "hex"). The Pay-Signature header carries the bare lowercase hex digest, no
+  prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only
+  (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The per-webhook
+  signing secret, shown with View on the Webhooks settings page of the admin tool. Use it as UTF-8
+  bytes. Env var: GOVUK_PAY_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Dedupe on `webhook_message_id`; messages can arrive out of
+  order. Events: dispatch on the body's `event_type` field. Top-level `event_type`. `resource_type` is
+  always `payment` today ("Webhooks on GOV.UK Pay currently support only the payment resource").
+  Documented event types (4): card_payment_succeeded, card_payment_captured, card_payment_settled,
+  card_payment_refunded. Handle a few common ones and log the rest. Method: POST. Hookdeck's GOV.UK
+  Pay source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/govuk-pay/ (latest/card_payment_captured.json); base
+  the examples' test payloads on them. Hookdeck's source type is GOVUK_PAY, labelled 'GOV.UK Pay'.
+testScenario:
+  events:
+    - "card_payment_captured"
+    - "card_payment_succeeded"
+    - "card_payment_refunded"
+catalog:
+  summary: "Verify GOV.UK Pay webhooks (`Pay-Signature`: hex HMAC-SHA256 of the raw body), handle card payment events"

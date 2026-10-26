@@ -1,0 +1,67 @@
+name: ayrshare
+displayName: "Ayrshare"
+docs:
+  webhooks: https://www.ayrshare.com/docs/apis/webhooks/overview
+  verification: https://www.ayrshare.com/docs/apis/webhooks/rotate-signing-secret
+notes: >
+  Ayrshare (ayrshare.com), a social media posting and management API. Webhooks are registered per
+  action (POST /hook/webhook or the Developer Dashboard) on the Primary Profile or a User Profile,
+  with an optional profile-wide HMAC secret. Delivery (from the docs): Must answer 200 within 15 s.
+  429/408/425, 5xx, timeouts and dropped connections get up to 9 attempts over about an hour, then
+  about 5 min, 30 min, 2 h and 12 h later (up to ~16 h). Other 4xx are final. At least once; dedupe on
+  `hookId`. Ayrshare's docs say: 'You may choose to add additional security by setting HMAC
+  authentication as an HTTP request. ... Ayrshare uses HMAC-SHA256 to hash the body of the message and
+  includes it and the UNIX timestamp in the header of the POST.' 'X-Authorization-Timestamp : <Unix
+  Timestamp In Seconds> X-Authorization-Content-SHA256 : <current-sig>
+  X-Authorization-Content-SHA256-V2 : v1=<current-sig>' 'The -V2 header is always present whenever a
+  delivery is signed — it carries at least v1=<current-sig> — so you can rely on it as a stable
+  receiver contract.' '.createHmac("sha256", secret) .update(rawBody) // the raw, unparsed request
+  body .digest("hex");' 'secret string Secret text used for HMAC.' From the docs (registry summary):
+  hex(HMAC-SHA256(profile signing secret, raw body)). X-Authorization-Content-SHA256 carries the bare
+  current signature; X-Authorization-Content-SHA256-V2 carries `v1=<current>` and, for 24 h after a
+  rotation, `v1=<current>,v1=<previous>` (accept if any matches). X-Authorization-Timestamp is sent
+  but is not part of the signed content. SIGNATURE SCHEME (it must match Hookdeck's AYRSHARE source
+  exactly: HMAC controller, algorithm "sha256", header_key "x-authorization-content-sha256-v2",
+  encoding "hex"). The x-authorization-content-sha256-v2 header carries `v1=<hex>`. Strip a leading
+  `v1=` before validating the digest; Hookdeck's parser also accepts the bare digest, so accept the
+  value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: Optional `secret` given when registering a webhook, or set/rotated in the dashboard
+  or via POST /hook/webhook/secret. One secret per User Profile across all its actions. Without a
+  secret, deliveries are unsigned. Use it as UTF-8 bytes. Env var: AYRSHARE_WEBHOOK_SECRET. Validate
+  the signature's format before decoding it (exact length and alphabet), then compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. The header may carry
+  several comma-separated `v1=` entries (secret rotation): split on commas, trim spaces, and accept
+  the delivery if ANY `v1=` entry matches; ignore entries with other keys. Ayrshare also sends
+  X-Authorization-Content-SHA256 (the bare current signature) and an unsigned
+  X-Authorization-Timestamp; verify only the -V2 header, as Hookdeck does, which keeps working through
+  the 24-hour rotation window. Events: dispatch on the body's `action` field. Top-level `action` (the
+  registration category); `subAction` refines it within messages (messageCreated, messageRead, ...),
+  comments, mentions and scheduled (tikTokPublished). The automations action also carries `type`
+  (`automation.triggered`, `automation.completed`). Documented event types (11): scheduled, social,
+  messages, batch, feed, mentions, comments, automations, demo, suspended, ads. Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Ayrshare source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/ayrshare/ (latest/ads.json, latest/messages.json);
+  base the examples' test payloads on them. Hookdeck's source type is AYRSHARE, labelled 'Ayrshare'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Register a webhook secret with Ayrshare. Without one, deliveries are
+  unsigned and fail verification."
+testScenario:
+  events:
+    - "scheduled"
+    - "social"
+    - "messages"
+catalog:
+  summary: "Verify Ayrshare webhooks (`x-authorization-content-sha256-v2`: `v1=` hex HMAC-SHA256 of the raw body), handle scheduled post, social account, message and comment actions"

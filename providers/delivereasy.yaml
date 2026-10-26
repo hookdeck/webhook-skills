@@ -1,0 +1,56 @@
+name: delivereasy
+displayName: "Delivereasy"
+docs:
+  webhooks: https://developer.delivereasy.co.nz/intro/webhooks
+  verification: https://developer.delivereasy.co.nz/intro/webhooks
+notes: >
+  Delivereasy (delivereasy.co.nz), a New Zealand food delivery and last-mile courier company. Lastmile
+  API partners get a webhook each time a booking changes stage; the URL (one for staging, one for
+  production) is configured by a Delivereasy representative. Delivery (from the docs): Return 200 as
+  soon as the webhook arrives and process asynchronously. At least once: deduplicate on the booking
+  id. Retry schedule and timeout are not documented. Delivereasy's docs say: 'Lastmile ... The
+  signature is in the X-Signature header, calculated as the Base64-encoded HMAC-SHA256 of the raw
+  request body.' 'Our webhooks include a signature header containing an HMAC signature of the request
+  body. Your API key is used as the HMAC key.' 'hmac = OpenSSL::HMAC.digest("sha256", api_key,
+  request_body) signature = Base64.strict_encode64(hmac)' 'Marketplace ... The signature is in the
+  X-Delivereasy-Signature header, calculated as the hex-encoded HMAC-SHA256 of the raw request body.'
+  'For 2026-01-01, the HMAC key is your API key (the same X-DELIVEREASY-API-KEY you use for requests).
+  For 2025-01-01, a separate webhook secret is used instead.' From the docs (registry summary):
+  base64(HMAC-SHA256(API key, raw body)) (strict, i.e. padded, base64), the whole header value with no
+  prefix. SIGNATURE SCHEME (it must match Hookdeck's DELIVEREASY source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-signature", encoding "base64"). The x-signature header carries the
+  bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no
+  list splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
+  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
+  but Hookdeck rejects it, so the skill must reject it too. Secret: The Lastmile account's Delivereasy
+  API key is the HMAC key; there is no separate webhook secret. Use it as UTF-8 bytes. Env var:
+  DELIVEREASY_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Only Lastmile webhooks are covered: the HMAC key is the account's
+  Delivereasy API key. Marketplace webhooks (X-Delivereasy-Signature, separate webhook secret) are out
+  of scope; say so. Webhook URLs are configured by a Delivereasy representative. Events: there is no
+  event-name field or header. Every Lastmile delivery is the booking resource itself (`id`,
+  `booking_identifier`, `status`, `driver`, `pickup`, `dropoff`, ...); dispatch on `status`. Method:
+  POST. Hookdeck's Delivereasy source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Hookdeck's source type is DELIVEREASY,
+  labelled 'Delivereasy'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Only Lastmile webhooks are
+  supported: paste your Delivereasy API key. Marketplace webhooks (X-Delivereasy-Signature) aren't
+  covered."
+testScenario:
+  events:
+    - "booking_update"
+catalog:
+  summary: "Verify Delivereasy webhooks (`x-signature`: base64 HMAC-SHA256 of the raw body), handle Lastmile booking updates"

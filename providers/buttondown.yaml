@@ -1,0 +1,55 @@
+name: buttondown
+displayName: "Buttondown"
+docs:
+  webhooks: https://docs.buttondown.com/api-webhooks-introduction
+  verification: https://docs.buttondown.com/api-webhooks-introduction
+notes: >
+  Buttondown (buttondown.com), newsletter publishing. Webhooks are created in the app or the API with
+  a URL, chosen event types and an optional signing key. Delivery (from the docs): Only 2xx succeeds
+  (3xx/4xx/5xx/timeouts fail). Up to 5 retries about 5 minutes apart; a webhook failing on 5
+  consecutive events is disabled with an email. At-least-once, unordered. No timeout stated.
+  Buttondown's docs say: 'Buttondown will include an X-Buttondown-Signature header in the format:
+  X-Buttondown-Signature: sha256=<signature>' 'expected_signature = mac.hexdigest()' 'The signature is
+  computed using HMAC-SHA256 over the raw request body (before JSON parsing)' 'The signing key can be
+  any string you choose—make it long and random for best security.' From the docs (registry summary):
+  `sha256=` + hex(HMAC-SHA256(signing key, raw body)); the Python sample strips the prefix and
+  compares hex digests. SIGNATURE SCHEME (it must match Hookdeck's BUTTONDOWN source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-buttondown-signature", encoding "hex"). The
+  x-buttondown-signature header carries `sha256=<hex>`. Strip a leading `sha256=` before validating
+  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body
+  bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
+  body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: An optional signing key of the user's choosing, set in the webhook's settings; without it
+  requests are unsigned. Use it as UTF-8 bytes. Env var: BUTTONDOWN_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: dispatch on
+  the body's `event_type` field. Top-level `event_type`; `data` holds ids (e.g. `newsletter`,
+  `subscriber`). Documented event types (84): advertising_slot.inquiry, advertising_slot.purchased,
+  automation.invoked, date.day.started, date.month.started, date.week.started, date.year.started,
+  bigcommerce.customer.created, bigcommerce.customer.updated, bigcommerce.order.created,
+  bigcommerce.order.updated, email.created, email.deleted, email.send.started (and 70 more). Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Buttondown source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/buttondown/ (latest/subscriber.confirmed.json);
+  base the examples' test payloads on them. Hookdeck's source type is BUTTONDOWN, labelled
+  'Buttondown'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Set a signing key on the Buttondown webhook. Without
+  one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "subscriber.confirmed"
+    - "subscriber.created"
+    - "email.sent"
+catalog:
+  summary: "Verify Buttondown webhooks (`x-buttondown-signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle subscriber, email and automation events"

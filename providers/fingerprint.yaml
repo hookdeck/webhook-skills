@@ -1,0 +1,56 @@
+name: fingerprint
+displayName: "Fingerprint"
+docs:
+  webhooks: https://docs.fingerprint.com/docs/webhooks
+  verification: https://docs.fingerprint.com/docs/webhooks#webhook-signatures
+notes: >
+  Fingerprint (fingerprint.com, formerly FingerprintJS), browser and device identification. Webhooks
+  push each identification event to the customer's server, configured per application in the
+  dashboard. Delivery (from the docs): 2xx within 3 s. A timeout or non-2xx is retried once, 5 minutes
+  later, with the same request ID. Multiple webhooks per application are delivered and retried
+  independently. Fingerprint's docs say: 'Each request contains a special `FPJS-Event-Signature` HTTP
+  header.' 'The value of the `FPJS-Event-Signature` header is a comma-separated list of
+  `<signatureversion>=<hash>` ... the algorithm for `v1` is a **HMAC SHA-256 of the HTTP raw
+  payload**, using the webhook's secret.' 'return signature === crypto.createHmac('sha256',
+  secret).update(data).digest('hex'); ...
+  console.log(checkHeader('v1=b82fcb791acec57859b989b430a826488ce2e479fdf92326bd0a2e8375a42ba4',
+  Buffer.from('payload'), 'secret'))' From the docs (registry summary): `FPJS-Event-Signature:
+  v1=<hex>[,<ver>=<hex>...]`, a comma-separated list; v1 = hex HMAC-SHA256(webhook signing key, raw
+  body). The page's test vector (secret `secret`, body `payload` -> v1=b82fcb...) checks out.
+  SIGNATURE SCHEME (it must match Hookdeck's FINGERPRINT source exactly: HMAC controller, algorithm
+  "sha256", header_key "fpjs-event-signature", encoding "hex"). The FPJS-Event-Signature header
+  carries `v1=<hex>`. Strip a leading `v1=` before validating the digest; Hookdeck's parser also
+  accepts the bare digest, so accept the value with or without the prefix. The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: A per-webhook symmetric key shown
+  once when the webhook is created. Use it as UTF-8 bytes. Env var: FINGERPRINT_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields. The
+  header may carry several comma-separated `v1=` entries (secret rotation): split on commas, trim
+  spaces, and accept the delivery if ANY `v1=` entry matches; ignore other versions. Events: there is
+  no event-name field or header; every delivery is an identification event (`event_id`,
+  `identification`, Smart Signals). Method: POST. Hookdeck's Fingerprint source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  PUBLISHED TEST VECTOR (verified against Hookdeck's controller): the vendor's docs give a worked
+  example, saved verbatim as JSON (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/fingerprint.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (v1=b82fcb791acec57859b989b430a826488ce2e479fdf92326bd0a2e8375a42ba4) with that secret. Name the
+  vector in references/verification.md. Hookdeck's source type is FINGERPRINT, labelled 'Fingerprint'.
+testScenario:
+  events:
+    - "identification"
+catalog:
+  summary: "Verify Fingerprint webhooks (`FPJS-Event-Signature`: `v1=` hex HMAC-SHA256 of the raw body), handle identification events"

@@ -1,0 +1,61 @@
+name: violet
+displayName: "Violet"
+docs:
+  webhooks: https://docs.violet.io/prism/webhooks/handling-webhooks
+  verification: https://docs.violet.io/prism/webhooks/handling-webhooks
+notes: >
+  Violet (violet.io), a unified checkout API that connects channels (apps selling merchants' products)
+  to merchants' ecommerce platforms. A channel registers webhooks per event and receives order, offer,
+  merchant, sync, payout and transfer events. Delivery (from the docs): Respond 2XX within the first
+  10 seconds. 10 attempts with back-off over 24 hours, then FAILED. More than 50 failures in 30
+  minutes pauses the webhook for 1 h, then 3 h, then up to 24 h; still failing after three pauses it
+  is DISABLED until the channel re-activates it. Events can be re-fetched by id
+  (X-Violet-Event-Id-Source marks a resend). Violet's docs say: 'Violet includes an HMAC signature in
+  the `X-Violet-Hmac` header. You should validate this signature using your app secret and the raw
+  request body before processing the data.' 'const hmac = CryptoJS.HmacSHA256(rawRequestBody, secret);
+  const computedHmac = CryptoJS.enc.Base64.stringify(hmac);' 'SecretKeySpec secretKey = new
+  SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");' From the docs (registry
+  summary): `X-Violet-Hmac: <base64>` = standard Base64 of HMAC-SHA256(app secret as UTF-8, raw body).
+  Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's VIOLET source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-violet-hmac", encoding "base64"). The X-Violet-Hmac
+  header carries the bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value
+  as one digest (no list splitting or prefix parsing). The signature is standard base64 (padded)
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
+  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
+  constant time. Decoding alone is not enough: a value whose last character carries stray low bits
+  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: The
+  channel's app secret (the same secret used for API calls), as UTF-8 bytes; not a per-webhook secret.
+  Use it as UTF-8 bytes. Env var: VIOLET_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The key is the Violet app secret (a 32-hex-character
+  string used as UTF-8, never hex-decoded). Events: dispatch on the X-Violet-Topic header. Only the
+  header names the event. The body is the entity itself (a fully composed Order, an Offer, a
+  PayoutAccount, a sync record, a transfer...) with no event field, and several events share one
+  entity shape (all ORDER_* send an Order), so a header-less request cannot be classified. Documented
+  event types (52): ORDER_ACCEPTED, ORDER_UPDATED, ORDER_COMPLETED, ORDER_SHIPPED, ORDER_DELIVERED,
+  ORDER_REFUNDED, ORDER_CANCELLED, ORDER_FAILED, MERCHANT_CONNECTED, MERCHANT_DISCONNECTED,
+  MERCHANT_ENABLED, MERCHANT_DISABLED, MERCHANT_NEEDS_ATTENTION, MERCHANT_COMPLETE (and 38 more).
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's Violet source manages the method
+  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/main-ro/samples-doc/providers/violet/ (latest/MERCHANT_ENABLED.json,
+  latest/MERCHANT_PAYOUT_ACCOUNT_ACTIVATED.json, latest/MERCHANT_PAYOUT_ACCOUNT_CREATED.json,
+  latest/MERCHANT_PAYOUT_ACCOUNT_DEACTIVATED.json, ...); base the examples' test payloads on them.
+  Hookdeck's source type is VIOLET, labelled 'Violet'.
+testScenario:
+  events:
+    - "ORDER_COMPLETED"
+    - "ORDER_SHIPPED"
+    - "MERCHANT_CONNECTED"
+catalog:
+  summary: "Verify Violet webhooks (`X-Violet-Hmac`: base64 HMAC-SHA256 of the raw body), handle order, merchant, offer and payout events"

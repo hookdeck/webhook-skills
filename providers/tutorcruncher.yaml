@@ -1,0 +1,62 @@
+name: tutorcruncher
+displayName: "TutorCruncher"
+docs:
+  webhooks: https://help.tutorcruncher.com/en/articles/14182937-webhooks
+  verification: https://help.tutorcruncher.com/en/articles/14182937-webhooks
+notes: >
+  TutorCruncher (tutorcruncher.com), business management software for tutoring agencies. Integrations
+  receive a webhook for every action on the account (a tutor created, a client enquiry, an invoice
+  raised, ...). Delivery (from the docs): Timeouts, no response and 5xx are retried up to 4 times with
+  exponential backoff (after 1 s, 10 s, 100 s and 1000 s); redirects and 4xx other than 429 are not.
+  An endpoint whose failure rate stays above 20% is disabled. Each integration keeps webhook logs with
+  request and response data. TutorCruncher's docs say: 'We include a signature in the Webhooks header
+  which can be used to verify if the webhook came from TutorCruncher.' 'payload = request.body ...
+  header_signature = request.META['Webhook-Signature'] ... assert hmac.new(private_key.encode(),
+  payload, hashlib.sha256).hexdigest() == header_signature' 'private_key = 'YOUR_PRIVATE_API_KEY''
+  From the docs (registry summary): HMAC-SHA256(private API key, raw request body), lowercase hex
+  (`.hexdigest()` in both examples). No prefix, no timestamp. The header name matches the Standard
+  Webhooks header, but the value is a bare hex digest with no id or timestamp. SIGNATURE SCHEME (it
+  must match Hookdeck's TUTORCRUNCHER source exactly: HMAC controller, algorithm "sha256", header_key
+  "webhook-signature", encoding "hex"). The webhook-signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The account's (integration's) private API key; there is no separate webhook secret. Use it
+  as UTF-8 bytes. Env var: TUTORCRUNCHER_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The header is named `Webhook-Signature`, like Standard
+  Webhooks, but this is NOT Standard Webhooks: the value is a bare lowercase hex digest of the raw
+  body, with no `v1,` prefix, id or timestamp. The key is the account's private API key. Events: the
+  body is `{events: [...]}`; each element carries its own `action` (upper-snake, e.g.
+  CREATED_A_CONTRACTOR) and a readable `verb`. Loop over every element. Methods: TutorCruncher's docs
+  don't name the HTTP method. Hookdeck's TutorCruncher source pre-selects POST without managing the
+  method (the user can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH
+  and DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
+  for each; FastAPI: api_route with those methods), verify the signature first for every method, and
+  treat a missing body as empty bytes (a GET with no body is verified over zero bytes, and once
+  verified it is acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md
+  that Hookdeck's TutorCruncher source pre-selects POST without managing the method, so any other
+  method the sender uses must also be allowed on the source. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/main-ro/samples-doc/providers/tutorcruncher/
+  (latest/CREATED_A_CONTRACTOR.json); base the examples' test payloads on them. Hookdeck's source type
+  is TUTORCRUNCHER, labelled 'TutorCruncher'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste your
+  TutorCruncher private API key. TutorCruncher signs webhooks with it."
+testScenario:
+  events:
+    - "CREATED_A_CONTRACTOR"
+    - "CREATED_AN_APPOINTMENT"
+    - "LOGIN"
+catalog:
+  summary: "Verify TutorCruncher webhooks (`webhook-signature`: hex HMAC-SHA256 of the raw body), handle action events (contractors, clients, lessons, invoices and more)"

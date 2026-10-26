@@ -1,0 +1,67 @@
+name: lettermint
+displayName: "Lettermint"
+docs:
+  webhooks: https://lettermint.co/docs/platform/webhooks
+  verification: https://lettermint.co/docs/platform/webhooks/signing
+notes: >
+  Lettermint (lettermint.co), a European transactional email service. Webhooks are created in the
+  dashboard or the Team API, scoped to a team, projects or routes, with chosen events and optional
+  Basic Auth. Delivery (from the docs): 30 s timeout. Timeouts, 408, 429 and 5xx are retried with
+  exponential backoff, 12 attempts over about 14 hours; other 4xx (including 401) are not. 20
+  consecutive no-response deliveries pause the webhook for 1 minute (doubling up to 5). Lettermint's
+  docs say: 'X-Lettermint-Signature Signature in format t={timestamp},v1={hmac_hex}' 'We compute the
+  signature over this exact string: {timestamp}.{raw_json_body}' 'crypto.createHmac('sha256',
+  secret).update(signedPayload).digest('hex')' 'Use your webhook secret as-is, including the whsec_
+  prefix. Do not strip or decode it.' From the docs (registry summary): Header `t=<unix
+  seconds>,v1=<hex>`; v1 = hex(HMAC-SHA256(secret, `{timestamp}.{raw_json_body}`)). The secret is used
+  as-is, `whsec_` prefix included (not base64-decoded as Svix does). SIGNATURE SCHEME (it must match
+  Hookdeck's LETTERMINT source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-lettermint-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  x-lettermint-signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it
+  appears in the header (a string; never parse it to a number and re-format it), then a literal ".",
+  then the raw request body bytes. The header may carry more than one v1= entry (for example during
+  key rotation): accept the delivery if ANY v1= entry matches, and ignore other keys such as v0. A
+  header with no t= value fails. Build the signed message as BYTES: the raw body bytes exactly as
+  received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before
+  verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is
+  compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both
+  sides (or decode both to bytes) before the constant-time compare. Secret: One signing secret per
+  webhook (`whsec_...`), used verbatim as the HMAC key. Use it as UTF-8 bytes. Env var:
+  LETTERMINT_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  LETTERMINT_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
+  (t is Unix seconds; Lettermint's SDKs use 300 seconds). The secret starts with `whsec_` but this is
+  NOT Standard Webhooks: use the WHOLE string, including `whsec_`, as a plain UTF-8 HMAC key (nothing
+  stripped or base64-decoded). Do not use the standardwebhooks or svix libraries, and say so.
+  Lettermint's SDKs also check that X-Lettermint-Delivery equals t; Hookdeck does not, so the examples
+  don't require it. Events: dispatch on the body's `event` field. Top-level `event` in the envelope
+  (`id`, `event`, `timestamp`, `context`, `data`; outbound message events add `sandbox` and
+  `sandbox_result`). Also sent in the X-Lettermint-Event header. Documented event types (17):
+  message.created, message.sent, message.delivered, message.auto_replied, message.hard_bounced,
+  message.soft_bounced, message.spam_complaint, message.failed, message.suppressed,
+  message.policy_rejected, message.unsubscribed, message.opened, message.clicked, suppression.added
+  (and 3 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's Lettermint source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/lettermint/
+  (latest/message.clicked.json, latest/message.created.json, latest/message.delivered.json,
+  latest/message.failed.json, ...); base the examples' test payloads on them. Hookdeck's source type
+  is LETTERMINT, labelled 'Lettermint'. Hookdeck shows this setup note for the source, and SKILL.md
+  and references/setup.md must tell the user the same thing, verbatim: "Paste the whole secret,
+  including the whsec_ prefix. Lettermint uses it as a plain HMAC key."
+testScenario:
+  events:
+    - "message.delivered"
+    - "message.hard_bounced"
+    - "message.spam_complaint"
+catalog:
+  summary: "Verify Lettermint webhooks (`x-lettermint-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle message delivery, bounce, complaint and suppression events"

@@ -1,0 +1,48 @@
+name: formspree
+displayName: "Formspree"
+docs:
+  webhooks: https://help.formspree.io/articles/plugins/webhooks/
+  verification: https://help.formspree.io/articles/advanced-features/verify-webhook-signatures
+notes: >
+  Formspree (formspree.io), a form backend. The Webhook plugin (Professional and Business plans) is
+  enabled per form and posts each new submission. Delivery (from the docs): 2xx within 3 seconds; any
+  other status or a timeout is retried up to 10 times. Retries can duplicate a submission, so handlers
+  should be idempotent. Formspree's docs say: 'Formspree does not sign just the raw body. It signs
+  both the timestamp and the raw body, in this format: {timestamp}.{raw_body}' 'The signature is sent
+  in the Formspree-Signature header using this format: t=<unix>,v1=<hex>' 'expected_sig =
+  hmac.new(key=secret.encode("utf-8"), msg=signed_payload.encode("utf-8"),
+  digestmod=hashlib.sha256).hexdigest()' From the docs (registry summary): `Formspree-Signature:
+  t=<unix>,v1=<hex>` where v1 = hex HMAC-SHA256(signing secret as UTF-8, `{t}.{raw_body}`). SIGNATURE
+  SCHEME (it must match Hookdeck's FORMSPREE source exactly: HMAC controller, algorithm "sha256",
+  header_key "formspree-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true).
+  The Formspree-Signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it
+  appears in the header (a string; never parse it to a number and re-format it), then a literal ".",
+  then the raw request body bytes. The header may carry more than one v1= entry (for example during
+  key rotation): accept the delivery if ANY v1= entry matches, and ignore other keys such as v0. A
+  header with no t= value fails. Build the signed message as BYTES: the raw body bytes exactly as
+  received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before
+  verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is
+  compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both
+  sides (or decode both to bytes) before the constant-time compare. Secret: The signing secret shown
+  in Formspree for the webhook, used as UTF-8 bytes. Use it as UTF-8 bytes. Env var:
+  FORMSPREE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  FORMSPREE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t
+  is Unix seconds). Events: there is no event-name field or header; every delivery is a new submission
+  (`form` is the form's hashid). Build Hooks send an empty body. Method: POST. Hookdeck's Formspree
+  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is FORMSPREE, labelled 'Formspree'.
+testScenario:
+  events:
+    - "form_submission"
+catalog:
+  summary: "Verify Formspree webhooks (`Formspree-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle form submissions"

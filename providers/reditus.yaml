@@ -1,0 +1,55 @@
+name: reditus
+displayName: "Reditus"
+docs:
+  webhooks: https://docs.getreditus.com/webhooks/get_started
+  verification: https://docs.getreditus.com/webhooks/get_started
+notes: >
+  Reditus (getreditus.com), affiliate and referral program software for B2B SaaS. Webhooks report
+  partnership, referral, advocate, lead and reward events. Delivery (from the docs): Nothing is
+  documented about retries, timeouts or the expected response. Reditus's docs say: 'We send a
+  X-Signature Header which contains the signed payload.' 'expected_signature =
+  OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, raw_body)' 'crypto.createHmac('sha256',
+  secret).update(rawBody, 'utf8').digest('hex')' From the docs (registry summary):
+  hex(HMAC-SHA256(webhook secret, raw body)), the whole header value, no prefix. The algorithm and
+  encoding come only from the seven code samples (Ruby, Go, Python, Node, .NET, PHP, Java), which
+  agree. SIGNATURE SCHEME (it must match Hookdeck's REDITUS source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-signature", encoding "hex"). The x-signature header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: A webhook secret; where it is shown or how it is set is not documented. Use it as UTF-8
+  bytes. Env var: REDITUS_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Reditus's docs don't say where the webhook secret is
+  shown; say so. Events: dispatch on the body's `event_type` field. Top-level `event_type`; `url` (the
+  destination), `created_at` (a date) and `data` sit beside it. Documented event types (5):
+  partnership.accepted, referral.created, advocate.created, lead.created, reward.created. Handle a few
+  common ones and log the rest. Methods: Reditus's docs don't name the HTTP method. Hookdeck's Reditus
+  source pre-selects POST without managing the method (the user can change it). The examples must NOT
+  be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
+  route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify
+  the signature first for every method, and treat a missing body as empty bytes (a GET with no body is
+  verified over zero bytes, and once verified it is acknowledged with 200, not rejected as invalid
+  JSON). Say in SKILL.md and setup.md that Hookdeck's Reditus source pre-selects POST without managing
+  the method, so any other method the sender uses must also be allowed on the source. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact
+  bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the
+  body only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/reditus/
+  (latest/partnership.accepted.json); base the examples' test payloads on them. Hookdeck's source type
+  is REDITUS, labelled 'Reditus'.
+testScenario:
+  events:
+    - "partnership.accepted"
+    - "referral.created"
+    - "reward.created"
+catalog:
+  summary: "Verify Reditus webhooks (`x-signature`: hex HMAC-SHA256 of the raw body), handle partnership, referral, lead and reward events"

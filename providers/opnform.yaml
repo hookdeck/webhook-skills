@@ -1,0 +1,50 @@
+name: opnform
+displayName: "OpnForm"
+docs:
+  webhooks: https://docs.opnform.com/api-reference/integrations/webhook-security
+  verification: https://docs.opnform.com/api-reference/integrations/webhook-security
+notes: >
+  OpnForm (opnform.com), an open-source form builder. A form's webhook integration (UI or POST
+  /open/forms/{form}/integrations) posts each submission to an HTTPS URL, optionally signed with a
+  webhook secret and with up to 10 custom headers. Delivery (from the docs): Each attempt is logged
+  per integration (List Integration Events); the latest eligible failed attempt can be retried
+  manually through the API. Automatic retries, timeout and the expected status code are not
+  documented. OpnForm's docs say: 'Each webhook request includes an `X-Webhook-Signature` header with
+  the format: X-Webhook-Signature: sha256=HEXADECIMAL_VALUE' 'signature = HMAC-SHA256(webhook_secret,
+  request_body) ... `request_body` is the raw JSON payload' '`webhook_secret` is the secret you
+  provided when creating the webhook' From the docs (registry summary): `sha256=` +
+  hex(HMAC-SHA256(webhook_secret, raw body)). The samples strip nothing: they compare the whole header
+  against `'sha256=' + hexdigest`. SIGNATURE SCHEME (it must match Hookdeck's OPNFORM source exactly:
+  HMAC controller, algorithm "sha256", header_key "x-webhook-signature", encoding "hex"). The
+  x-webhook-signature header carries `sha256=<hex>`. Strip a leading `sha256=` before validating the
+  digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body
+  bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
+  body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: Opt-in: the `webhook_secret` set on the integration (at least 12 characters). Without one,
+  no signature header is sent. Use it as UTF-8 bytes. Env var: OPNFORM_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: there is no
+  event-name field or header; every delivery is a form submission (`form_id`, `form_title`,
+  `form_slug`, `submission_id`, `edit_link`, `submission`, `data`, `meta`). Method: POST. Hookdeck's
+  OpnForm source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/opnform/
+  (latest/submission.json); base the examples' test payloads on them. Hookdeck's source type is
+  OPNFORM, labelled 'OpnForm'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a webhook secret on the
+  OpnForm webhook integration. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "form_submission"
+catalog:
+  summary: "Verify OpnForm webhooks (`x-webhook-signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle form submissions"

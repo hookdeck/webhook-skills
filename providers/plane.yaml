@@ -1,0 +1,54 @@
+name: plane
+displayName: "Plane"
+docs:
+  webhooks: https://developers.plane.so/dev-tools/intro-webhooks
+  verification: https://developers.plane.so/dev-tools/intro-webhooks
+notes: >
+  Plane (plane.so), open-source project management. Webhooks are workspace-level (Workspace settings >
+  Webhooks, owners and admins), subscribe to project, cycle, module, milestone, page and work-item
+  events, and can filter work-item events with PQL. The current system is v2. Delivery (from the
+  docs): Any 2xx succeeds. 5xx/unavailable is retried with exponential backoff (~10 min base, jitter);
+  after 5 failed attempts the webhook is disabled and its creator emailed. 4xx is not retried. No
+  timeout stated. Plane's docs say: 'X-Plane-Signature HMAC-SHA256 hex digest of the raw request body,
+  keyed with your webhook secret' 'expected = hmac.new( secret.encode( "utf-8" ), request_body_bytes,
+  hashlib.sha256, ).hexdigest()' 'The secret key is formatted as plane_wh_ followed by a random
+  string.' From the docs (registry summary): hex(HMAC-SHA256(secret, raw body)), the whole header
+  value, no prefix; the Python sample compares it directly. SIGNATURE SCHEME (it must match Hookdeck's
+  PLANE source exactly: HMAC controller, algorithm "sha256", header_key "x-plane-signature", encoding
+  "hex"). The x-plane-signature header carries the bare lowercase hex digest, no prefix. Compare the
+  WHOLE header value as one digest (no list splitting or prefix parsing). The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: Generated on create and downloaded
+  as a CSV (`plane_wh_...`); viewable later in the edit form. Re-generating invalidates the old key at
+  once. Use it as UTF-8 bytes. Env var: PLANE_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `event` field. Top-level
+  `event` (dot notation), duplicated in the `X-Plane-Event` header. Two of the four page examples
+  carry `WebhookScope.ScopeChoices.WORK_ITEM_UPDATED` in `event` instead (see gaps). Legacy v1
+  webhooks, still delivering, do not use dot-notation names. Documented event types (43):
+  project.created, project.updated, project.archived, project.deleted, cycle.created, cycle.updated,
+  cycle.archived, cycle.deleted, module.created, module.updated, module.archived, module.deleted,
+  milestone.created, milestone.updated (and 29 more). Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Plane source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/plane/ (latest/workitem.comment.created.json,
+  latest/workitem.link.created.json); base the examples' test payloads on them. Hookdeck's source type
+  is PLANE, labelled 'Plane'.
+testScenario:
+  events:
+    - "workitem.created"
+    - "workitem.comment.created"
+    - "project.updated"
+catalog:
+  summary: "Verify Plane webhooks (`x-plane-signature`: hex HMAC-SHA256 of the raw body), handle project, cycle, module and work item events"

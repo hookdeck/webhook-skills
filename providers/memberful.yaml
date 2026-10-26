@@ -1,0 +1,49 @@
+name: memberful
+displayName: "Memberful"
+docs:
+  webhooks: https://memberful.com/help/custom-development-and-api/webhooks/
+  verification: https://memberful.com/help/custom-development-and-api/webhooks/
+notes: >
+  Memberful (memberful.com), a membership and subscription platform for creators. Webhooks notify a
+  site or app of member, subscription, order, price and download changes. Delivery (from the docs):
+  Respond 2XX within 15 s or the request is retried several times with exponential delay. After 24 h
+  of failures the account owner is notified, and the endpoint is deleted if it still fails three days
+  later. Delivery order is not guaranteed; the docs advise re-fetching from the API. Memberful's docs
+  say: 'Memberful signs every request with an X-Memberful-Webhook-Signature header that combines your
+  secret key and the request payload' 'Memberful computes a hash-based message authentication code (
+  HMAC ) with SHA-256 , using your Webhook secret as the key and the webhook's payload as the message'
+  'computed_signature = OpenSSL::HMAC.hexdigest("SHA256", secret, request.body.read)' From the docs
+  (registry summary): HMAC-SHA256(webhook secret, raw payload), compared with the header value. The
+  prose never names the encoding; both the Ruby (`hexdigest`) and Node (`digest('hex')`) examples use
+  hex. No prefix, no timestamp. SIGNATURE SCHEME (it must match Hookdeck's MEMBERFUL source exactly:
+  HMAC controller, algorithm "sha256", header_key "x-memberful-webhook-signature", encoding "hex").
+  The x-memberful-webhook-signature header carries the bare lowercase hex digest, no prefix. Compare
+  the WHOLE header value as one digest (no list splitting or prefix parsing). The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The webhook secret
+  shown after creating the webhook endpoint in Settings > Webhooks. Use it as UTF-8 bytes. Env var:
+  MEMBERFUL_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: Memberful's event reference lists the event names
+  (member_signup, subscription.created, order.completed, ...) but never shows where the name travels.
+  The examples read a top-level `event` field when present, say that this is an assumption to confirm
+  against a real delivery, and log anything else. Method: POST. Hookdeck's Memberful source manages
+  the method as POST, so the examples handle POST on the webhook route. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are
+  verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only
+  after the check. Hookdeck's source type is MEMBERFUL, labelled 'Memberful'.
+testScenario:
+  events:
+    - "member_signup"
+    - "subscription.created"
+    - "order.completed"
+catalog:
+  summary: "Verify Memberful webhooks (`x-memberful-webhook-signature`: hex HMAC-SHA256 of the raw body), handle member, subscription and order events"

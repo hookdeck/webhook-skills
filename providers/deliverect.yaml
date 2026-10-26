@@ -1,0 +1,65 @@
+name: deliverect
+displayName: "Deliverect"
+docs:
+  webhooks: https://developers.deliverect.com/reference/hmac-authentication
+  verification: https://developers.deliverect.com/reference/hmac-authentication
+notes: >
+  Deliverect (deliverect.com), an order and menu hub between ordering channels, POS systems and
+  couriers. A partner integration (channel, POS, dispatch, retail) receives Deliverect's calls on the
+  URLs it registers; a channel's /register response returns one URL per webhook kind. Delivery (from
+  the docs): Each operational webhook expects a 200 OK. Retries and timeouts are not on the pages
+  read. Deliverect's docs say: 'We hash the request payload using the SHA256 algorithm to generate a
+  hex-encoded HMAC signature. This signature is included in the request header ...
+  x-server-authorization-hmac-sha256:' 'Make sure to capture the complete raw JSON body exactly as
+  received, with no formatting, whitespace, or encoding transformations.' 'Prior to being certified,
+  we sign requests using a temporary secret value, which may be either: channelLink ... locationId ...
+  Certified partners can generate their production HMAC secret via the Integration settings.' From the
+  docs (registry summary): hex(HMAC-SHA256(secret, raw body)), the whole header value; for a GET with
+  no body, HMAC over the empty string. The example header is masked
+  (`65060aeeee***...***eeebdad3196e9d7`). SIGNATURE SCHEME (it must match Hookdeck's DELIVERECT source
+  exactly: HMAC controller, algorithm "sha256", header_key "x-server-authorization-hmac-sha256",
+  encoding "hex"). The x-server-authorization-hmac-sha256 header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: One secret per environment. Before certification (staging) the secret is the call's
+  `channelLink`, or `locationId` for Dispatch API integrations and the POS Get Products webhook;
+  certified partners generate a production HMAC secret in Integration settings. Use it as UTF-8 bytes.
+  Env var: DELIVERECT_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length
+  and alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Before certification Deliverect signs with the channelLink or
+  locationId value instead of the integration's HMAC secret; say so in setup. Events: there is no
+  event-name field or header; the kind of call is chosen by URL (statusUpdateURL, menuUpdateURL,
+  snoozeUnsnoozeURL, busyModeURL, ...). The examples use one route and tell kinds apart by shape or by
+  an optional path segment. Methods: Deliverect sends most calls as POSTs with JSON bodies, but some
+  signed calls are GETs with no body, and then the HMAC is computed over the empty string. Hookdeck's
+  Deliverect source pre-selects POST without managing the method (the user can change it). The
+  examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
+  (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
+  with those methods), verify the signature first for every method, and treat a missing body as empty
+  bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged with
+  200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's Deliverect source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Hookdeck's source type is
+  DELIVERECT, labelled 'Deliverect'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the HMAC secret from your
+  Deliverect integration settings. Before certification, Deliverect signs with the channelLink or
+  locationId value instead. Some Deliverect calls are GET requests, so also allow GET on this source
+  if your integration receives them."
+testScenario:
+  events:
+    - "order_status_update"
+    - "menu_update"
+    - "busy_mode"
+catalog:
+  summary: "Verify Deliverect webhooks (`x-server-authorization-hmac-sha256`: hex HMAC-SHA256 of the raw body), handle order status, menu, snooze and busy-mode calls"

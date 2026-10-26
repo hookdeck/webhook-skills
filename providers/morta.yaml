@@ -1,0 +1,57 @@
+name: morta
+displayName: "Morta"
+docs:
+  webhooks: https://docs.morta.io/webhooks/build
+  verification: https://docs.morta.io/webhooks/signature
+notes: >
+  Morta (morta.io), a data and document platform for construction projects (hubs, tables, documents).
+  A hub's notifications (Hub > Settings > Webhooks) post chosen events to an endpoint. Delivery (from
+  the docs): Any 2xx acknowledges; any other status, or no answer within 10 s, marks the delivery
+  failed. Retries are not documented. Morta's docs say: 'Morta-Signature :
+  t=1234567890,v1=5ab0811a0d362f7becff116ce7b232c3ef61400d01911c50c03183a44d4cb00c' 'The signature is
+  based on concatenating: The timestamp The full stop character . The JSON request body' 'body =
+  request . data . decode ( "utf8" ) ... message = bytes ( f" { ts } . { body } " , "utf8" ) h = hmac
+  . new ( signing_secret , message , digestmod = "sha256" ) valid = hmac . compare_digest ( h .
+  hexdigest ( ) , sig )' 'Morta by default will sign every webhook with a signature in the
+  Morta-Signature header.' From the docs (registry summary): Header `t=<unix>,v1=<hex>`; v1 =
+  hex(HMAC-SHA256(signing secret, `<t>.<raw JSON body>`)). SIGNATURE SCHEME (it must match Hookdeck's
+  MORTA source exactly: HMAC controller, algorithm "sha256", header_key "morta-signature", encoding
+  "hex", delimiter ".", prefix_data_with_timestamp true). The morta-signature header is
+  `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header (a string;
+  never parse it to a number and re-format it), then a literal ".", then the raw request body bytes.
+  The header may carry more than one v1= entry (for example during key rotation): accept the delivery
+  if ANY v1= entry matches, and ignore other keys such as v0. A header with no t= value fails. Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The hub's signing secret, on Hub > Settings > Secrets. Use it as
+  UTF-8 bytes. Env var: MORTA_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries
+  and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so
+  a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  MORTA_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
+  Unix seconds). The body's `change` field is itself a JSON-encoded string; parse it a second time.
+  Events: dispatch on the body's `event` field. Top-level `event` (`resource.verb`, e.g.
+  table.row_created) in an envelope shared by every event; only `event` and `context` vary.
+  `resourceId` names the primary resource. Documented event types (76): project.created,
+  project.updated, project.deleted, project.restored, project.searched, project.duplicated,
+  project.duplication_failed, project.joined, project.read, member.created, member.updated,
+  member.deleted, policy.created, policy.updated (and 62 more). Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's Morta source manages the method as POST, so the examples handle POST
+  on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Hookdeck's source type is
+  MORTA, labelled 'Morta'.
+testScenario:
+  events:
+    - "table.row_created"
+    - "project.created"
+    - "member.created"
+catalog:
+  summary: "Verify Morta webhooks (`morta-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle project, table, document and member events"

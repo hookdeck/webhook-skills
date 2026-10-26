@@ -1,0 +1,49 @@
+name: sahha
+displayName: "Sahha"
+docs:
+  webhooks: https://sahha.ai/docs/connect/webhooks/
+  verification: https://sahha.ai/docs/connect/webhooks/
+notes: >
+  Sahha (sahha.ai), a health-data API that turns wearable and phone data into scores, biomarkers and
+  archetypes per user profile. Webhooks are configured in the Sahha Dashboard. Delivery (from the
+  docs): 2xx within 30 s. Failed deliveries retried up to 5 times with exponential backoff.
+  Out-of-order delivery possible. Scores and biomarkers are held for a configurable interval
+  (real-time to 720 min) and only the final value is sent; data logs and tags are always immediate.
+  Sahha's docs say: 'X-Signature HMAC-SHA256 hash of the payload using your secret key' 'Compute an
+  HMAC-SHA256 hash of the raw request body using your secret key, then compare it to the signature in
+  the header.' 'const computed = hmac.update(req.body).digest('hex'); if (signature.toLowerCase() !==
+  computed.toLowerCase())' From the docs (registry summary): `X-Signature: <hex>` = hex
+  HMAC-SHA256(secret key, raw body), compared case-insensitively in the samples. Bare value, no
+  prefix. SIGNATURE SCHEME (it must match Hookdeck's SAHHA source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-signature", encoding "hex"). The X-Signature header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The webhook secret key copied from the Dashboard's Webhooks page. Use it as UTF-8 bytes. Env
+  var: SAHHA_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the X-Event-Type header. The X-Event-Type
+  header carries the Event Types table's name; the handler samples dispatch on it. Whether the body
+  also names the type is on the Event Reference page, which is not in the cache. Documented event
+  types (5): ScoreCreatedIntegrationEvent, BiomarkerCreatedIntegrationEvent,
+  ArchetypeCreatedIntegrationEvent, TagReceivedIntegrationEvent, DataLogReceivedIntegrationEvent.
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's Sahha source manages the method
+  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Hookdeck's source type is SAHHA, labelled 'Sahha'.
+testScenario:
+  events:
+    - "ScoreCreatedIntegrationEvent"
+    - "BiomarkerCreatedIntegrationEvent"
+    - "ArchetypeCreatedIntegrationEvent"
+catalog:
+  summary: "Verify Sahha webhooks (`X-Signature`: hex HMAC-SHA256 of the raw body), handle score, biomarker, archetype and data log events"

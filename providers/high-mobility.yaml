@@ -1,0 +1,61 @@
+name: high-mobility
+displayName: "High Mobility"
+docs:
+  webhooks: https://docs.high-mobility.com/docs/webhooks
+  verification: https://docs.high-mobility.com/docs/webhooks
+notes: >
+  High Mobility (high-mobility.com), connected-car data platform. Webhooks are configured per app (API
+  Credentials > Webhooks) with a URL, a secret and a choice of events, and report fleet vehicle
+  clearance changes. Delivery (from the docs): Any 2xx succeeds. 10 s connect and 10 s response
+  timeouts. Retried every 10 minutes, up to 200 attempts in production and 5 in sandbox. Duplicates
+  and out-of-order events are possible. High Mobility's docs say: 'X-HM-Signature-256 A signature that
+  is computed based on the payload and the secret. This follows the format "sha256=SIGNATURE".' 'The
+  X-HM-Signature-256 header contains an HMAC-SHA256 signature calculated using the configured webhook
+  secret and the exact raw request body bytes.' 'sha256=<lowercase hexadecimal digest>' 'We are still
+  providing the header X-HM-Signature that uses , in order to give customer a chance with past
+  implementation to migrate. However X-HM-Signature-256 should be used for a secure implementation.'
+  From the docs (registry summary): `sha256=` + lowercase hex HMAC-SHA256(secret, raw body). A
+  deprecated `X-HM-Signature` header (SHA-1) is still sent for old integrations. SIGNATURE SCHEME (it
+  must match Hookdeck's HIGH_MOBILITY source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-hm-signature-256", encoding "hex"). The x-hm-signature-256 header carries `sha256=<hex>`. Strip a
+  leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
+  accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: A secret string entered when configuring the app's webhook; one per
+  webhook configuration (project). Use it as UTF-8 bytes. Env var: HIGH_MOBILITY_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields. High
+  Mobility also sends a deprecated `X-HM-Signature` (HMAC-SHA1); verify only `X-HM-Signature-256`, as
+  Hookdeck does. A `ping` event is sent when the webhook config changes; it is a normal signed
+  delivery, not a challenge. Events: dispatch on the body's `event.type` field. Nested `event.type`;
+  `event.action` refines fleet_clearance_changed (e.g. `rejected`) and `event.detail` gives a reason.
+  `vehicle.vin` is `*` on ping. Documented event types (2): fleet_clearance_changed, ping. Handle a
+  few common ones and log the rest. Methods: High Mobility's docs don't name the HTTP method.
+  Hookdeck's High Mobility source pre-selects POST without managing the method (the user can change
+  it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook
+  route (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI:
+  api_route with those methods), verify the signature first for every method, and treat a missing body
+  as empty bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged
+  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's High Mobility
+  source pre-selects POST without managing the method, so any other method the sender uses must also
+  be allowed on the source. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Documented sample payloads
+  (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/high-mobility/ (latest/fleet_clearance_changed.json);
+  base the examples' test payloads on them. Hookdeck's source type is HIGH_MOBILITY, labelled 'High
+  Mobility'.
+testScenario:
+  events:
+    - "fleet_clearance_changed"
+    - "ping"
+catalog:
+  summary: "Verify High Mobility webhooks (`x-hm-signature-256`: `sha256=` hex HMAC-SHA256 of the raw body), handle fleet clearance changes and ping deliveries"

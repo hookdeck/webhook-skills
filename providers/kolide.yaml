@@ -1,0 +1,56 @@
+name: kolide
+displayName: "1Password Device Trust (Kolide)"
+docs:
+  webhooks: https://support.1password.com/device-trust-webhooks/
+  verification: https://support.1password.com/device-trust-webhooks/
+notes: >
+  1Password Device Trust (formerly Kolide, kolide.com), device-compliance checks gating SSO. Admins
+  with Full Access register webhook endpoints in the admin console (Settings > Developers > Webhooks).
+  Delivery (from the docs): Retries, timeout and success codes are not documented. Delivery logs are
+  kept six months. 1Password Device Trust (Kolide)'s docs say: 'each HTTP POST request sent to your
+  endpoint will include an HTTP header called Authorization.' 'The signature in Authorization is a
+  SHA256 HMAC hexdigest of the JSON payload in the HTTP body, signed with the webhook endpoint’s
+  secret.' 'Authorization: c71fd8b49e0736962d16f8410fa0d6f5bb27d7ef35cd1c0b6d4da0b8568921ac' 'data =
+  request.body.read ... expected_hmac = OpenSSL::HMAC.hexdigest('sha256', SIGNING_SECRET, data)' From
+  the docs (registry summary): `Authorization: <hex>` = hex HMAC-SHA256(endpoint signing secret, raw
+  body). Bare value: no `Bearer`/scheme, no prefix, no timestamp. SIGNATURE SCHEME (it must match
+  Hookdeck's KOLIDE source exactly: HMAC controller, algorithm "sha256", header_key "authorization",
+  encoding "hex"). The Authorization header carries the bare lowercase hex digest, no prefix. Compare
+  the WHOLE header value as one digest (no list splitting or prefix parsing). The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: A per-endpoint
+  signing secret, shown with "Reveal Secret" on the webhook settings screen. Rotating it also changes
+  X-Kolide-Webhook-Identifier. Use it as UTF-8 bytes. Env var: KOLIDE_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. The signature is in
+  the `Authorization` header as a bare hex value, with no `Bearer` or other scheme. Events: dispatch
+  on the body's `event` field. Top-level `event`, present in every example (including the full test
+  request) with the lower-case form of its section heading. No sentence names the field; the carrier
+  is read off the examples, which agree 13/13. Documented event types (13): audit_log.recorded,
+  admin_users.created, auth_logs.success, auth_logs.failure, devices.created, devices.registered,
+  devices.destroyed, device_trust.status_changed, issues.new, issues.resolved,
+  requests.issue_exemption, requests.registration, webhook.test. Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's 1Password Device Trust (Kolide) source manages the method as POST, so
+  the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/kolide/ (latest/admin_users.created.json,
+  latest/audit_log.recorded.json, latest/auth_logs.failure.json, latest/auth_logs.success.json, ...);
+  base the examples' test payloads on them. Hookdeck's source type is KOLIDE, labelled '1Password
+  Device Trust (Kolide)'.
+testScenario:
+  events:
+    - "devices.created"
+    - "issues.new"
+    - "device_trust.status_changed"
+catalog:
+  summary: "Verify 1Password Device Trust (Kolide) webhooks (`Authorization`: hex HMAC-SHA256 of the raw body), handle device, issue, audit and auth events"

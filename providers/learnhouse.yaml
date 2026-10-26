@@ -1,0 +1,57 @@
+name: learnhouse
+displayName: "LearnHouse"
+docs:
+  webhooks: https://docs.learnhouse.app/guides/custom-features/webhooks
+  verification: https://docs.learnhouse.app/guides/custom-features/webhooks
+notes: >
+  LearnHouse (learnhouse.app), an open-source learning management platform (cloud and self-hosted).
+  Webhooks are a Pro feature, managed per organization in settings or through
+  /api/v1/orgs/{org_id}/webhooks. Delivery (from the docs): Any 2xx succeeds. Otherwise up to 3
+  attempts, waiting 1 s then 4 s; every delivery is logged (GET .../deliveries). At-least-once: dedupe
+  on delivery_id. Targets must be public (localhost/private IPs rejected). LearnHouse's docs say:
+  'X-Webhook-Signature sha256=<hmac-hex>: HMAC-SHA256 of the raw request body' 'The signature is
+  sha256= followed by the hex HMAC-SHA256 of the exact raw body bytes, keyed by your endpoint secret.'
+  ''sha256=' + crypto.createHmac('sha256', SECRET).update(raw).digest('hex')' From the docs (registry
+  summary): `X-Webhook-Signature: sha256=<hex>` = `sha256=` + hex HMAC-SHA256(endpoint secret, raw
+  body). The `whsec_...` secret is used as the literal HMAC key string (not Standard Webhooks).
+  SIGNATURE SCHEME (it must match Hookdeck's LEARNHOUSE source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-webhook-signature", encoding "hex"). The X-Webhook-Signature header carries
+  `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser also
+  accepts the bare digest, so accept the value with or without the prefix. The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: A per-endpoint secret prefixed
+  `whsec_`, returned once at creation (and on rotation); the whole string, prefix included, is the
+  key. Use it as UTF-8 bytes. Env var: LEARNHOUSE_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. The secret starts with
+  `whsec_` but this is NOT Standard Webhooks: use the WHOLE string, including `whsec_`, as a plain
+  UTF-8 HMAC key (nothing stripped or base64-decoded). Do not use the standardwebhooks or svix
+  libraries, and say so. Events: dispatch on the body's `event` field. The event name is in both the
+  top-level `event` field of the envelope and the X-Webhook-Event header ("The event name, e.g.
+  course_completed"). The body field is recorded as the carrier because the envelope example shows it;
+  either works. Documented event types (39): ping, course_completed, course_enrolled,
+  activity_completed, assignment_submitted, assignment_graded, certificate_claimed, user_signed_up,
+  user_email_verified, user_role_changed, user_invited_to_org, user_removed_from_org, course_created,
+  course_published (and 25 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  LearnHouse source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is LEARNHOUSE, labelled
+  'LearnHouse'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Paste the whole secret, including the whsec_ prefix.
+  LearnHouse uses it as a plain HMAC key."
+testScenario:
+  events:
+    - "course_completed"
+    - "course_enrolled"
+    - "ping"
+catalog:
+  summary: "Verify LearnHouse webhooks (`X-Webhook-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle course, activity, assignment and user events"

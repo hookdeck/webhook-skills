@@ -1,0 +1,59 @@
+name: dub
+displayName: "Dub"
+docs:
+  webhooks: https://dub.co/docs/webhooks/introduction
+  verification: https://dub.co/docs/webhooks/verify-webhook-requests
+notes: >
+  Dub (dub.co), a link-management and attribution platform with Dub Partners (affiliate programs).
+  Workspace webhooks (Business plan and above) are created on the Webhooks settings page. Delivery
+  (from the docs): Non-2xx is retried until delivered with exponential backoff (12 s, 2m28s, 30m8s,
+  6h7m6s, then every 24 h); emails after 5, 10 and 15 consecutive failures; disabled on the 20th. No
+  timeout is stated. Dub's docs say: 'All webhooks are delivered with a `Dub-Signature` header. ...
+  Dub-Signature: c9ed6a2abf93f59d761eea69908d8de00f4437b5b6d7cd8b9bf5719cbe61bf46' 'Calculate the HMAC
+  of the raw body using the `SHA-256` hash function and the secret. ... crypto.createHmac("sha256",
+  secret).update(rawBody).digest("hex");' 'const keyData = new TextEncoder().encode(secret); const
+  messageData = new TextEncoder().encode(JSON.stringify(body));' 'export const WEBHOOK_SECRET_PREFIX =
+  "whsec_";' From the docs (registry summary): `Dub-Signature: <hex>` = hex HMAC-SHA256(webhook
+  signing secret, raw body). Bare value, no prefix, no timestamp. The secret string is the key as-is.
+  SIGNATURE SCHEME (it must match Hookdeck's DUB source exactly: HMAC controller, algorithm "sha256",
+  header_key "dub-signature", encoding "hex"). The Dub-Signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: A signing secret per webhook, in the webhook's Configuration tab. Use it as UTF-8 bytes. Env
+  var: DUB_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. The secret starts with `whsec_` but this is NOT Standard Webhooks:
+  use the WHOLE string, including `whsec_`, as a plain UTF-8 HMAC key (nothing stripped or
+  base64-decoded). Do not use the standardwebhooks or svix libraries, and say so. Events: dispatch on
+  the body's `event` field. Top-level `event` of the `{id, event, createdAt, data}` envelope.
+  Documented event types (15): partner.enrolled, program_application.created,
+  partner.application_submitted, partner.merged, lead.created, sale.created, commission.created,
+  bounty.created, bounty.updated, discount_code.created, discount_code.deleted, link.created,
+  link.updated, link.deleted (and 1 more). Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Dub source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/dub/ (latest/bounty.created.json,
+  latest/bounty.updated.json, latest/commission.created.json, latest/discount_code.created.json, ...);
+  base the examples' test payloads on them. Hookdeck's source type is DUB, labelled 'Dub'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Paste the whole secret, including the whsec_ prefix. Dub uses it as a plain
+  HMAC key."
+testScenario:
+  events:
+    - "link.created"
+    - "lead.created"
+    - "sale.created"
+catalog:
+  summary: "Verify Dub webhooks (`Dub-Signature`: hex HMAC-SHA256 of the raw body), handle link, lead, sale, partner and commission events"

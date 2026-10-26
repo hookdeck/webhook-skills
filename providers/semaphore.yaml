@@ -1,0 +1,64 @@
+name: semaphore
+displayName: "Semaphore CI"
+docs:
+  webhooks: https://docs.semaphoreci.com/using-semaphore/notifications
+  verification: https://docs.semaphoreci.com/using-semaphore/notifications
+notes: >
+  Semaphore CI (semaphore.io). A notification (UI or `sem create notification --webhook-endpoint`)
+  with rules filtering on projects, branches, tags, pipelines and results posts to a webhook URL when
+  a matching pipeline finishes. Delivery (from the docs): Response timeout is per notification:
+  `timeout` in ms, default 500. Retries happen only on timeouts and only if `retries` is set (default
+  0, max 5), with exponential backoff and growing timeouts (the sender: 500 ms x 2^n delay capped at
+  30 s, timeouts doubled up to 15 s). Any response, of any status, ends delivery. Dedupe on
+  X-Semaphore-Webhook-Id. Semaphore CI's docs say: 'Semaphore includes the signature in the
+  X-Semaphore-Signature-256 header when the webhook secret is present. Semaphore uses an HMAC-SHA256
+  to compute the signature of the request body.' ':crypto.mac(:hmac, :sha256, secret, body) |>
+  Base.encode16(case: :lower)' 'body = Webhook.Message.construct(data) |> Poison.encode!() ...
+  signature = get_signature(body, ...) ... HTTPoison.request(req.method, req.endpoint, req.body,
+  req.headers, req.options)' 'Create a organization secret containing the environment variable
+  WEBHOOK_SECRET and a secret value.' From the docs (registry summary): lowercase hex
+  HMAC-SHA256(WEBHOOK_SECRET value, raw body), the whole header value with no prefix. The page states
+  the algorithm only; the encoding is from Semaphore's open-source signer. SIGNATURE SCHEME (it must
+  match Hookdeck's SEMAPHORE source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-semaphore-signature-256", encoding "hex"). The x-semaphore-signature-256 header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: Opt-in: create an organization secret holding the environment variable WEBHOOK_SECRET and
+  name that secret on the notification (`--webhook-secret`). Without it the header is not sent. Use it
+  as UTF-8 bytes. Env var: SEMAPHORE_WEBHOOK_SECRET. Validate the signature's format before decoding
+  it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The secret is the WEBHOOK_SECRET value of the Semaphore
+  organization secret named on the notification (`--webhook-secret`); signing only happens when one is
+  set. Events: there is no event-name field or header; every delivery is a finished pipeline
+  (`version`, `organization`, `project`, `repository`, `revision`, `workflow`, `pipeline`, `blocks`).
+  Dispatch on `pipeline.result` (passed, failed, stopped, canceled). Methods: Semaphore's docs don't
+  name the HTTP method. Hookdeck's Semaphore CI source pre-selects POST without managing the method
+  (the user can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and
+  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler for
+  each; FastAPI: api_route with those methods), verify the signature first for every method, and treat
+  a missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it
+  is acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that
+  Hookdeck's Semaphore CI source pre-selects POST without managing the method, so any other method the
+  sender uses must also be allowed on the source. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/semaphore/ (latest/pipeline.json); base the
+  examples' test payloads on them. Hookdeck's source type is SEMAPHORE, labelled 'Semaphore CI'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set a webhook secret on the Semaphore notification and paste its
+  WEBHOOK_SECRET value. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "pipeline_done"
+catalog:
+  summary: "Verify Semaphore CI webhooks (`x-semaphore-signature-256`: hex HMAC-SHA256 of the raw body), handle pipeline-finished notifications"

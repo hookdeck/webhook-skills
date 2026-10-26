@@ -1,0 +1,49 @@
+name: survicate
+displayName: "Survicate"
+docs:
+  webhooks: https://developers.survicate.com/webhooks/
+  verification: https://developers.survicate.com/webhooks/security/
+notes: >
+  Survicate (survicate.com), a customer-feedback survey tool. Workspace webhooks fire on survey
+  answers and completions. Delivery (from the docs): Retries, timeout and success codes are not
+  documented; `deliveryTries` in the body counts attempts and `messageId` can serve as a dedupe key.
+  Survicate's docs say: 'Each webhook includes a hmac signature in `Hmac` header.' 'Compute an HMAC
+  with the SHA256 hash function. Use the **signing secret** as the key, and use the request body as
+  the data to hash. Example: hash_hmac(‘sha256’, $body, $signing_secret);' 'Make sure that the hash
+  function in the programming language of your choice will return the hash in lowercase hexits.' 'Each
+  webhook includes a verification token in Token header. Be noted that the token is sent as plain
+  text' From the docs (registry summary): `Hmac: <hex>` = lowercase hex HMAC-SHA256(workspace signing
+  secret, request body). Bare value, no prefix, no timestamp. SIGNATURE SCHEME (it must match
+  Hookdeck's SURVICATE source exactly: HMAC controller, algorithm "sha256", header_key "hmac",
+  encoding "hex"). The Hmac header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One Signing Secret per workspace,
+  from Webhooks Settings in the Survicate panel (the same page shows the plain Verification Token).
+  Use it as UTF-8 bytes. Env var: SURVICATE_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. The signing secret is per workspace. Survicate also sends
+  a plaintext Token header, which is not checked. Events: every body is `{messageId, deliveryTries,
+  event: {<type>: {...}}}`; the event is the KEY inside `event` (questionAnswered or surveyCompleted).
+  Method: POST. Hookdeck's Survicate source manages the method as POST, so the examples handle POST on
+  the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/survicate/ (latest/questionAnswered.json,
+  latest/surveyCompleted.json); base the examples' test payloads on them. Hookdeck's source type is
+  SURVICATE, labelled 'Survicate'.
+testScenario:
+  events:
+    - "questionAnswered"
+    - "surveyCompleted"
+catalog:
+  summary: "Verify Survicate webhooks (`Hmac`: hex HMAC-SHA256 of the raw body), handle question answered and survey completed events"

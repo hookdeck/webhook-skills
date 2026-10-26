@@ -1,0 +1,61 @@
+name: oh-dear
+displayName: "Oh Dear"
+docs:
+  webhooks: https://ohdear.app/docs/integrations/webhooks
+  verification: https://ohdear.app/docs/integrations/webhooks
+notes: >
+  Oh Dear (ohdear.app), website and application monitoring (uptime, certificates, broken links, DNS,
+  scheduled tasks, application health, Lighthouse, AI checks). A team adds a webhook URL in its
+  notification settings and receives every notification event. Delivery (from the docs): Only HTTP 200
+  succeeds (redirects fail). Up to 3 attempts; a timeout is 3 s or more. A URL failing for 48 h with
+  no success is paused and the team emailed. Logs kept 5 days with manual Resend (same `uuid`). Oh
+  Dear's docs say: 'For every webhook we call, we pass an additional header called OhDear-Signature
+  that contains the hash of the payload.' '$computedSignature = hash_hmac('sha256', $payload,
+  $secret);' 'The $payload is the body of the POST request, which will be a JSON representation of the
+  event.' 'The $secret is the one you can find on your team notifications settings page' From the docs
+  (registry summary): hex(HMAC-SHA256(team signing secret, raw body)) (PHP hash_hmac's default
+  lowercase hex), the whole header value. SIGNATURE SCHEME (it must match Hookdeck's OH_DEAR source
+  exactly: HMAC controller, algorithm "sha256", header_key "ohdear-signature", encoding "hex"). The
+  ohdear-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
+  value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One signing secret per team, shown
+  in the team's notification settings. Use it as UTF-8 bytes. Env var: OH_DEAR_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields.
+  Redirects count as failed deliveries, so the endpoint must answer 2xx directly. Events: dispatch on
+  the body's `type` field. Top-level `type`, a camelCase `...Notification` name. The uptime types
+  carry a monitor-kind prefix: `[monitor-type]UptimeCheckFailedNotification` /
+  `...RecoveredNotification` with [monitor-type] one of http, tcp, ping, so the six concrete uptime
+  types in events.yaml are expanded from that documented rule. The page's table of contents uses
+  different, class-style names (UptimeCheckFailed, CertificateChanged, CronFailed) that are NOT wire
+  values. Nested objects also have `type` keys (check types such as `uptime`, link types); only the
+  top-level one is the event. Documented event types (37): monitorAddedNotification,
+  httpUptimeCheckFailedNotification, tcpUptimeCheckFailedNotification,
+  pingUptimeCheckFailedNotification, httpUptimeCheckRecoveredNotification,
+  tcpUptimeCheckRecoveredNotification, pingUptimeCheckRecoveredNotification,
+  performanceThresholdExceededNotification, performanceThresholdRecoveredNotification,
+  performanceDeltaExceededNotification, brokenLinksFoundNotification, brokenLinksFixedNotification,
+  mixedContentFoundNotification, mixedContentFixedNotification (and 23 more). Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Oh Dear source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/oh-dear/ (latest/monitorAddedNotification.json);
+  base the examples' test payloads on them. Hookdeck's source type is OH_DEAR, labelled 'Oh Dear'.
+testScenario:
+  events:
+    - "monitorAddedNotification"
+    - "httpUptimeCheckFailedNotification"
+    - "httpUptimeCheckRecoveredNotification"
+catalog:
+  summary: "Verify Oh Dear webhooks (`ohdear-signature`: hex HMAC-SHA256 of the raw body), handle uptime, certificate, broken link and monitor notifications"

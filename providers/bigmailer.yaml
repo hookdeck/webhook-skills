@@ -1,0 +1,59 @@
+name: bigmailer
+displayName: "BigMailer"
+docs:
+  webhooks: https://docs.bigmailer.io/docs/webhooks-getting-started
+  verification: https://docs.bigmailer.io/docs/verifying-webhook-signatures
+notes: >
+  BigMailer (bigmailer.io), a multi-brand email marketing platform on Amazon SES. Webhook endpoints
+  are configured per account (console > API settings) and receive engagement events for the account's
+  brands. Delivery (from the docs): Retries, timeout and success codes are not documented. BigMailer's
+  docs say: 'We do so by including a signature in each event's X-BigMailer-Signature header.' 'The
+  timestamp is prefixed by t=, and each signature is prefixed by a scheme. ... Currently, the only
+  valid signature scheme is v1. X-BigMailer-Signature: t=1492774578,
+  v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8be' 'The timestamp (as a string)
+  The character . The actual JSON payload (i.e., the request’s body)' 'Compute an HMAC with the SHA256
+  hash function. Use the endpoint’s signing secret as the key, and use the signed_payload string as
+  the message.' From the docs (registry summary): `X-BigMailer-Signature: t=<unix>,v1=<sig>[,v1=...]`
+  where v1 = HMAC-SHA256(endpoint secret, `<t>` + `.` + raw body). Only `v1` is valid; ignore other
+  schemes. The digest encoding is never named: hex is inferred from the 64-hex-character example
+  value. SIGNATURE SCHEME (it must match Hookdeck's BIGMAILER source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-bigmailer-signature", encoding "hex", delimiter ".",
+  prefix_data_with_timestamp true). The X-BigMailer-Signature header is `t=<timestamp>,v1=<hex>`
+  (comma-separated key=value pairs). The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over: the t value exactly as it appears in the header (a string; never parse it to a number
+  and re-format it), then a literal ".", then the raw request body bytes. The header may carry more
+  than one v1= entry (for example during key rotation): accept the delivery if ANY v1= entry matches,
+  and ignore other keys such as v0. A header with no t= value fails. Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: A secret per endpoint, shown with "show" in the Webhooks settings. Use it as UTF-8 bytes.
+  Env var: BIGMAILER_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length
+  and alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  BIGMAILER_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t
+  is Unix seconds). Events: dispatch on the body's `type` field. Top-level `type`, the lower-cased
+  section heading, in all five examples; the field lists do not describe it. The event's data sits
+  under a key named after the type (`bounce`, `click`, ...), and `bounce.type` (hard/soft) is a nested
+  bounce kind, not the event. Documented event types (5): bounce, click, complaint, open, unsubscribe.
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's BigMailer source manages the
+  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/main-ro/samples-doc/providers/bigmailer/ (latest/bounce.json,
+  latest/click.json, latest/complaint.json, latest/open.json, ...); base the examples' test payloads
+  on them. Hookdeck's source type is BIGMAILER, labelled 'BigMailer'.
+testScenario:
+  events:
+    - "bounce"
+    - "click"
+    - "unsubscribe"
+catalog:
+  summary: "Verify BigMailer webhooks (`X-BigMailer-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle bounce, click, complaint, open and unsubscribe events"

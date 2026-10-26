@@ -1,0 +1,60 @@
+name: cloudsmith
+displayName: "Cloudsmith"
+docs:
+  webhooks: https://docs.cloudsmith.com/developer-tools/webhooks
+  verification: https://docs.cloudsmith.com/developer-tools/webhooks
+notes: >
+  Cloudsmith (cloudsmith.com), a hosted package/artifact repository. Webhooks are configured per
+  repository and fire on package lifecycle events. Delivery (from the docs): Retries, timeout and
+  success codes are not documented. SSL verification of the target can be turned off per webhook.
+  Cloudsmith's docs say: 'When enabled, Cloudsmith will send the HMAC in the X-Cloudsmith-Signature
+  header of every message. The algorithm used for the calculation is HMAC-SHA1.' 'This is used to
+  generate an HMAC-based hex digest of the request body, which we send as the X-Cloudsmith-Signature
+  header' 'you can use the Secret Header and Secret Value fields. These are values that will be sent
+  with every webhook sent' From the docs (registry summary): `X-Cloudsmith-Signature: <hex>` = hex
+  HMAC-SHA1(HMAC Signature Key, raw body). Bare value. The docs page names HMAC-SHA1 but not the
+  encoding; the API's OpenAPI `signature_key` says hex digest. SIGNATURE SCHEME (it must match
+  Hookdeck's CLOUDSMITH source exactly: HMAC controller, algorithm "sha1", header_key
+  "x-cloudsmith-signature", encoding "hex"). The X-Cloudsmith-Signature header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA1, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  40 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The webhook's HMAC Signature Key, provided or noted at creation; it can be replaced later
+  but not read back. Use it as UTF-8 bytes. Env var: CLOUDSMITH_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. HMAC-SHA1 (40 hex
+  characters). Cloudsmith lets each webhook pick a payload format (JSON object by default, JSON array,
+  form-encoded JSON or a template); the signature is over whatever raw bytes are sent. Events:
+  dispatch on the body's `meta.event_id` field. `meta.event_id` holds the Identifier column's value
+  (its description cell is empty; the example is `package.synced`, and the example Package payload
+  carries it). Medium confidence because the body shape is a per-webhook choice: JSON Array wraps the
+  object in `[...]`, Form Encoded sends `payload=<url-encoded JSON>`, and a Handlebars Template
+  replaces the body with whatever the template emits, so `meta.event_id` is only reliably at this path
+  for the JSON Object format. Documented event types (11): ping, package.created, package.deleted,
+  package.failed, package.quarantined, package.released, package.restored, package.security_scanned,
+  package.synced, package.syncing, package.tags_updated. Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Cloudsmith source manages the method as POST, so the examples handle POST
+  on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Documented sample payloads
+  (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/cloudsmith/ (latest/package.synced.json); base the
+  examples' test payloads on them. Hookdeck's source type is CLOUDSMITH, labelled 'Cloudsmith'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set an HMAC signature key on the Cloudsmith webhook. Without one,
+  deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "package.synced"
+    - "package.created"
+    - "package.security_scanned"
+catalog:
+  summary: "Verify Cloudsmith webhooks (`X-Cloudsmith-Signature`: hex HMAC-SHA1 of the raw body), handle package lifecycle and security scan events"

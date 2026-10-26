@@ -1,0 +1,56 @@
+name: mews-pos
+displayName: "Mews POS"
+docs:
+  webhooks: https://docs.mews.com/pos-api/events/webhooks
+  verification: https://docs.mews.com/pos-api/events/wh-security
+notes: >
+  Mews (mews.com), the hospitality cloud. Its POS API (restaurant/bar point of sale) sends webhooks
+  for booking, order and product changes. Delivery (from the docs): Retries, timeout and success codes
+  are not documented. Mews POS's docs say: 'Each webhook request includes an `X-Signature` header,
+  which contains an HMAC SHA-256 signature to verify the authenticity of the webhook.' 'Compute an
+  HMAC SHA-256 hash using your secret key and the raw request body. 3. Encode the result in Base64.'
+  'computed_signature = OpenSSL::HMAC.digest('sha256', secret, payload) ...
+  Base64.strict_encode64(computed_signature)' 'To confirm that a request to your Webhook endpoint
+  originates from Mews, we can add a shared secret token to the URL' From the docs (registry summary):
+  `X-Signature: <base64>` = standard Base64 (strict_encode64, padded) of HMAC-SHA256(secret key, raw
+  body). Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's MEWS_POS source exactly:
+  HMAC controller, algorithm "sha256", header_key "x-signature", encoding "base64"). The X-Signature
+  header carries the bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value
+  as one digest (no list splitting or prefix parsing). The signature is standard base64 (padded)
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
+  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
+  constant time. Decoding alone is not enough: a value whose last character carries stray low bits
+  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: "your
+  secret key"; how it is issued (with the webhook endpoint, per client) is not described on the
+  security page. Use it as UTF-8 bytes. Env var: MEWS_POS_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Only the Mews POS API signs
+  webhooks (not the Mews Connector PMS API). Events: dispatch on the body's `meta.eventType` field.
+  `meta.eventType` names the event; `data.type` is the ENTITY (`bookings`, `orders`, `products`),
+  which several events share, so keying on it merges them. The page also says each message
+  "encapsulates all simultaneous events", but the only body it shows is a single `{data, meta}`
+  object, so how a multi-event message is shaped is not documented (gaps[discriminator.batching]).
+  Documented event types (6): booking.status.updated, order.state.updated, order.status.updated,
+  product.availability.updated, order.total.updated, order.payments.added. Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Mews POS source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/mews-pos/ (latest/booking.status.updated.json);
+  base the examples' test payloads on them. Hookdeck's source type is MEWS_POS, labelled 'Mews POS'.
+testScenario:
+  events:
+    - "booking.status.updated"
+    - "order.status.updated"
+    - "order.payments.added"
+catalog:
+  summary: "Verify Mews POS webhooks (`X-Signature`: base64 HMAC-SHA256 of the raw body), handle booking, order and product availability events"

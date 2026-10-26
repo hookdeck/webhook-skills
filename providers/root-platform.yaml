@@ -1,0 +1,60 @@
+name: root-platform
+displayName: "Root"
+docs:
+  webhooks: https://docs.rootplatform.com/reference/webhooks
+  verification: https://docs.rootplatform.com/docs/webhook-setup-and-verification
+notes: >
+  Root (rootplatform.com), an embedded-insurance platform (policies, claims, complaints, payments).
+  Webhooks are created over the API per organization and environment, each with a list of
+  subscriptions. Delivery (from the docs): 2xx within 30 s or the request is retried at least once
+  after ~5-40 s. Webhooks slower than 5 s or failing drop to priority 2 (sandbox is always priority
+  2). Webhooks with 100% failure over 48 h, 96 h or 2 weeks (at least 10 queue events over 12 h) are
+  disabled automatically; their events are stored as failed and can be retried. Root's docs say:
+  'Every webhook includes an `X-Hook-Signature-256` header, containing an HMAC digest value. This
+  digest is generated using a combination of the unique webhook secret ... and the webhook payload,
+  using `sha256` as the hashing algorithm.' 'const signature = req.get("X-Hook-Signature-256"); const
+  check = crypto.createHmac("sha256", secret); check.update(req.body); // The raw (unparsed) request
+  body string ... if (signature === digest)' 'For compatibility, a `X-Hook-Signature` header is also
+  supported, which uses `sha1` as the hashing algorithm. However, this approach is deprecated' From
+  the docs (registry summary): `X-Hook-Signature-256: <hex>` = hex HMAC-SHA256(webhook secret, raw
+  body). Bare value, no prefix, no timestamp. The deprecated `X-Hook-Signature` carries hex HMAC-SHA1
+  of the same input. Hex comes from the samples (`digest("hex")`, openssl dgst); the prose never names
+  an encoding. SIGNATURE SCHEME (it must match Hookdeck's ROOT_PLATFORM source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-hook-signature-256", encoding "hex"). The
+  X-Hook-Signature-256 header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The per-webhook `secret` returned in
+  the create-webhook response. A separate, optional `verification_token` chosen at creation is echoed
+  in every body as `verification_token`. Use it as UTF-8 bytes. Env var: ROOT_PLATFORM_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields. Root
+  also sends a deprecated `X-Hook-Signature` (HMAC-SHA1); verify only `X-Hook-Signature-256`, as
+  Hookdeck does. The body's `verification_token` is not a signature. Events: dispatch on the body's
+  `event.type` field. Event webhooks carry `event: {type, created_at, requested_by, metadata, ...}`;
+  the subscription name is `event.type` in every Events-reference example that matches a subscription.
+  Notification webhooks carry a `notification` object instead and no type. Documented event types
+  (56): alteration_package_created, policy_issued, policy_cancelled, policy_cancel_failed,
+  policy_activated, policy_alteration_package_applied, policy_lapsed, policy_not_taken_up,
+  policy_expired, policy_lapse_failed, policy_updated, policy_reactivated, policy_requoted,
+  policy_beneficiaries_updated (and 42 more). Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Root source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is ROOT_PLATFORM,
+  labelled 'Root'.
+testScenario:
+  events:
+    - "policyholder_created"
+    - "policy_issued"
+    - "claim_opened"
+catalog:
+  summary: "Verify Root webhooks (`X-Hook-Signature-256`: hex HMAC-SHA256 of the raw body), handle policy, policyholder, claim and payment events"

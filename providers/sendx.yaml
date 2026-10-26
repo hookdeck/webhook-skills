@@ -1,0 +1,50 @@
+name: sendx
+displayName: "SendX"
+docs:
+  webhooks: https://docs.sendx.io/api-reference/webhook/verify-webhook
+  verification: https://docs.sendx.io/api-reference/webhook/verify-webhook
+notes: >
+  SendX (sendx.io), an email marketing platform. Team webhooks (POST /webhook or the app) notify an
+  endpoint of contact and email engagement events across campaigns, drips, RSS, workflows and seed
+  tests. Delivery (from the docs): Respond in under 5 seconds (advice, not a stated timeout). Retries
+  exist (the attempt header) but their schedule is not documented. SendX's docs say: 'SendX computes
+  an HMAC-SHA256 hash of this body using your team's unique API key as the secret. The result is
+  hex-encoded and added to the request headers.' 'X-SendX-Signature:
+  3e7bda1d2d3c74b5f8a5ce5e7e7efef2df... X-SendX-Signature-Alg: hmac-sha256' 'The webhook payload (JSON
+  body) is taken as-is. ... Make sure to use the raw request body, not a parsed or re-serialized
+  version' From the docs (registry summary): hex(HMAC-SHA256(team API key, raw body)), the whole
+  header value. X-SendX-Signature-Alg names the algorithm (`hmac-sha256`); the Python sample rejects
+  any other value. SIGNATURE SCHEME (it must match Hookdeck's SENDX source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-sendx-signature", encoding "hex"). The x-sendx-signature header
+  carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
+  list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
+  signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The team API key (the same X-Team-ApiKey used for the REST API);
+  there is no separate webhook secret. Use it as UTF-8 bytes. Env var: SENDX_WEBHOOK_SECRET. Validate
+  the signature's format before decoding it (exact length and alphabet), then compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. The HMAC key is the
+  SendX team API key. SendX also sends X-SendX-Signature-Alg (`hmac-sha256`); the examples may log it
+  but Hookdeck does not check it. Events: dispatch on the body's top-level `type`, an INTEGER code (7
+  = mail open from a campaign, 8 = click, 5 = bounce, ...); each engagement kind has one code per
+  sending surface. Compare as numbers. Method: POST. Hookdeck's SendX source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is SENDX, labelled 'SendX'. Hookdeck shows this setup note for the source,
+  and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste your SendX
+  team API key. SendX signs webhooks with it."
+testScenario:
+  events:
+    - "7"
+    - "8"
+    - "5"
+catalog:
+  summary: "Verify SendX webhooks (`x-sendx-signature`: hex HMAC-SHA256 of the raw body), handle engagement events (opens, clicks, bounces, unsubscribes)"

@@ -1,0 +1,61 @@
+name: medplum
+displayName: "Medplum"
+docs:
+  webhooks: https://www.medplum.com/docs/subscriptions
+  verification: https://www.medplum.com/docs/subscriptions/subscription-extensions#signatures
+notes: >
+  Medplum (medplum.com), an open-source FHIR healthcare developer platform (hosted and self-hosted).
+  Webhooks are FHIR `Subscription` resources with `channel.type: rest-hook` and a `channel.endpoint`;
+  Medplum POSTs to the endpoint when a resource matching `criteria` changes. Delivery (from the docs):
+  Default 4 attempts, 1-18 via subscription-max-attempts (rest-hook only; Bot subscriptions never
+  retry). Exponential backoff with jitter: first retry ~20 s after the failure, gaps capped at 8 h;
+  the default window is ~2 minutes, the maximum ~2.5 days, then the event is dropped. Success codes
+  are configurable (subscription-success-codes, e.g. "200-399,404"). Each attempt writes an AuditEvent
+  unless log-only. Medplum's docs say: 'Webhooks can optionally use a FHIR extension to enable an HMAC
+  signature. To enable HMAC signatures, use the extension
+  https://www.medplum.com/fhir/StructureDefinition/subscription-secret and valueString of a
+  cryptographically secure secret.' 'signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
+  ... log('Received: ' + flask.request.headers.get('x-signature'))' 'const body = interaction ===
+  'delete' ? '{}' : stringify(resource); ... headers['X-Signature'] = createHmac('sha256',
+  secret).update(body).digest('hex');' From the docs (registry summary): `x-signature: <hex>` = hex
+  HMAC-SHA256(subscription-secret valueString, body). Bare value, no prefix, no timestamp. The Python
+  sample hashes the raw body (`request.get_data()`); the Express sample re-serializes it
+  (`JSON.stringify(req.body)`), which only matches when Medplum sends compact JSON. Hex comes from
+  both samples (`.digest('hex')`, `.hexdigest()`); the prose never names an encoding. SIGNATURE SCHEME
+  (it must match Hookdeck's MEDPLUM source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-signature", encoding "hex"). The x-signature header carries the bare lowercase hex digest, no
+  prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only
+  (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The `valueString` of
+  the Subscription's https://www.medplum.com/fhir/StructureDefinition/subscription-secret extension,
+  chosen by the subscriber. Hookdeck's configuration_alert: "Add a subscription-secret extension to
+  the Medplum Subscription. Without it, deliveries are unsigned and fail verification." Use it as
+  UTF-8 bytes. Env var: MEDPLUM_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Medplum's TypeScript sample hashes
+  JSON.stringify(req.body); verify the raw body as the Python sample and the server source do. Deletes
+  send the literal body `{}`. Events: there is no event-name field; a Subscription is bound to one
+  FHIR `criteria` and fires on create/update/delete. Dispatch on the body's `resourceType`; a delete
+  sends `{}`. Method: POST. Hookdeck's Medplum source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is MEDPLUM, labelled 'Medplum'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Add a
+  subscription-secret extension to the Medplum Subscription. Without it, deliveries are unsigned and
+  fail verification."
+testScenario:
+  events:
+    - "create"
+    - "update"
+    - "delete"
+catalog:
+  summary: "Verify Medplum webhooks (`x-signature`: hex HMAC-SHA256 of the raw body), handle FHIR Subscription notifications"

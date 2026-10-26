@@ -1,0 +1,51 @@
+name: uppromote
+displayName: "UpPromote"
+docs:
+  webhooks: https://aff-api.uppromote.com/docs/v2/webhook-overview-1623756m0
+  verification: https://aff-api.uppromote.com/docs/v2/webhook-overview-1623756m0
+notes: >
+  UpPromote (uppromote.com), a Shopify affiliate-marketing app. Its affiliate API v2 subscribes a
+  target_url to one event per subscription; the signing secret is shown in the app under Settings >
+  Integrations once a subscription exists. Delivery (from the docs): 200 within 6 s ("Return HTTP 200
+  OK"; the retry rule says non-2xx). Timeouts, network errors and non-2xx are retried up to 3 times, 5
+  minutes apart, then dropped. No redirects; public HTTPS only. UpPromote's docs say: 'Each webhook
+  request includes a header: X-UpPromote-Signature: <signature>' 'The signature is generated using the
+  HMAC-SHA256 algorithm with your subscription’s secret key and the raw request body.' 'const
+  calculatedSignature = crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");'
+  From the docs (registry summary): `X-UpPromote-Signature: <hex>` = hex HMAC-SHA256(secret key, raw
+  body). Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's UPPROMOTE source exactly:
+  HMAC controller, algorithm "sha256", header_key "x-uppromote-signature", encoding "hex"). The
+  X-UpPromote-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One Secret Key per store, shown in
+  UpPromote > Settings > Integrations > Get Secret Key after the first subscription is created. Use it
+  as UTF-8 bytes. Env var: UPPROMOTE_WEBHOOK_SECRET. Validate the signature's format before decoding
+  it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. UpPromote's Ruby sample reads HTTP_X_SIGNATURE, a doc
+  slip: the header is X-UpPromote-Signature. Events: there is no event-name field in the body; each
+  topic is subscribed to its own URL. Tell deliveries apart by URL or shape. Method: POST. Hookdeck's
+  UpPromote source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/uppromote/ (latest/affiliate.approved.json,
+  latest/affiliate.inactive.json, latest/affiliate.new.json, latest/affiliate.status-changed.json,
+  ...); base the examples' test payloads on them. Hookdeck's source type is UPPROMOTE, labelled
+  'UpPromote'.
+testScenario:
+  events:
+    - "referral.new"
+    - "affiliate.approved"
+    - "payment.paid"
+catalog:
+  summary: "Verify UpPromote webhooks (`X-UpPromote-Signature`: hex HMAC-SHA256 of the raw body), handle referral, affiliate and payment events"

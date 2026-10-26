@@ -1,0 +1,59 @@
+name: hint-health
+displayName: "Hint Health"
+docs:
+  webhooks: https://developers.hint.com/reference/webhooks
+  verification: https://developers.hint.com/reference/webhooks
+notes: >
+  Hint Health (hint.com), direct primary care practice management. Partners register a global or
+  per-integration webhook endpoint with a partner API key; practices with API Access can register
+  their own. Delivery (from the docs): At least once. 5 s connect timeout, 20 s response timeout.
+  Retried hourly, up to 72 attempts. Over 100 failed attempts mutes the integration (at most one
+  delivery per hour, other events dropped). Order not guaranteed; `.updated` events are held a few
+  seconds. Hint Health's docs say: 'Every delivery carries X-Hint-Signature: sha256=<digest>. The
+  digest is the lowercase hex HMAC-SHA256 of the raw request body, keyed with your webhooks signature
+  key.' 'The signature key is one of your partner API keys, by default the one created with your
+  partner account.' 'Partner Portal > Webhooks > Settings > Webhooks Signature Key ... A practice with
+  API Access: Admin > Developers > Webhook Endpoints > Webhooks Signature Key. Live and sandbox have
+  separate keys.' From the docs (registry summary): `sha256=` + lowercase hex HMAC-SHA256(signature
+  key, raw body). The Rails sample splits on `=` and uses the prefix as the digest name; the Django
+  sample compares the whole prefixed string. SIGNATURE SCHEME (it must match Hookdeck's HINT_HEALTH
+  source exactly: HMAC controller, algorithm "sha256", header_key "x-hint-signature", encoding "hex").
+  The x-hint-signature header carries `sha256=<hex>`. Strip a leading `sha256=` before validating the
+  digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body
+  bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
+  body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The webhooks signature key is one of the partner API keys (by default the one created with
+  the partner account), chosen in Partner Portal > Webhooks > Settings; a practice with API Access has
+  its own under Admin > Developers > Webhook Endpoints. Rotation is immediate, no overlap. Use it as
+  UTF-8 bytes. Env var: HINT_HEALTH_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `type` field. Top-level
+  `type`, a `resource.action` pair. The envelope is `id`, `created_at`, `type`, `practice_id`,
+  `object`. Documented event types (44): patient.created, patient.updated, patient.destroyed,
+  patient.inactive, membership.created, membership.updated, membership.destroyed,
+  practitioner.created, practitioner.updated, practitioner.destroyed, company.created,
+  company.updated, company.destroyed, employee_division.created (and 30 more). Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Hint Health source manages the method as POST, so
+  the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/hint-health/ (latest/patient.created.json); base
+  the examples' test payloads on them. Hookdeck's source type is HINT_HEALTH, labelled 'Hint Health'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Paste the partner API key you chose as the webhooks signature key."
+testScenario:
+  events:
+    - "patient.created"
+    - "membership.updated"
+    - "practitioner.created"
+catalog:
+  summary: "Verify Hint Health webhooks (`x-hint-signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle patient, membership and practitioner events"
