@@ -40,5 +40,5 @@ testScenario:
   - 'session.ended'
 catalog:
   summary: >-
-    Verify Agntix webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle session events
+    Verify Agntix webhook signatures (`svix-signature`, HMAC-SHA256, Svix `whsec_` secret), handle
+    session.created and session.ended events

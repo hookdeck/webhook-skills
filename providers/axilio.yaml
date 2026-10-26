@@ -3,6 +3,7 @@ displayName: 'Axilio'
 docs:
   webhooks: 'https://docs.axilio.ai/webhooks/overview'
   verification: 'https://docs.axilio.ai/webhooks/overview#verify-the-signature'
+  events: 'https://docs.axilio.ai/webhooks/events'
 notes: >-
   Axilio (axilio.ai), real-phone automation: workflow runs, live sessions, files, billing and phone rentals.
   Destinations are registered under Settings > Webhooks in the dashboard. Standard Webhooks signature

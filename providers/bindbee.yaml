@@ -62,4 +62,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Bindbee webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    secret used as raw UTF-8 bytes), handle connector, hris, ats and lms events
+    secret used as raw UTF-8 bytes), handle connector.linked, connector.sync.completed and hris.employee.created events
