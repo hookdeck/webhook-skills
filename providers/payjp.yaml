@@ -18,14 +18,16 @@ notes: >
   SKILL.md and verification.md must say plainly that a static shared credential authenticates the
   sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
   and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
-  main. Hookdeck's source type is PAYJP, labelled 'PAY.JP'. Body: v1 event {id, object: 'event',
-  livemode, type, created, data, pending_webhooks}; type e.g. charge.succeeded, charge.failed,
-  charge.refunded, customer.created, subscription.renewed, transfer.succeeded. Dispatch on type;
-  dedupe on id. All webhooks are POST and the response must be HTTP 200 (body ignored); failures are
-  retried every 3 minutes, at most 3 times. Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
-  verified); parse the body only after the check. Documented sample payloads (each JSON file's
-  `body` is the payload as the vendor's docs show it) are in
+  main. Hookdeck's source type is PAYJP, labelled 'PAY.JP'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use the
+  webhook token (whook_...) shown in your PAY.JP account settings." Body: v1 event {id, object:
+  'event', livemode, type, created, data, pending_webhooks}; type e.g. charge.succeeded,
+  charge.failed, charge.refunded, customer.created, subscription.renewed, transfer.succeeded.
+  Dispatch on type; dedupe on id. All webhooks are POST and the response must be HTTP 200 (body
+  ignored); failures are retried every 3 minutes, at most 3 times. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
   /home/user/regwt/b13-merge/samples-doc/providers/payjp/latest/ (charge.succeeded.json); base the
   examples' test payloads on them.
 testScenario:

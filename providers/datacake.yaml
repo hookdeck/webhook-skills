@@ -20,14 +20,16 @@ notes: >
   that a static shared credential authenticates the sender, not the body, and gives no replay
   protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
   on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is DATACAKE,
-  labelled 'Datacake'. Body: {event, data}; event e.g. device_measurement, decoder_output, downlink;
-  data holds the measurements or decoder result. Dispatch on event. POST (the receiver example
-  listens on POST). Express examples must read the raw body with express.raw({ type: '*/*' }) so any
-  content type works (and, for signatures, the exact bytes are verified); parse the body only after
-  the check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs
-  show it) are in /home/user/regwt/b13-merge/samples-doc/providers/datacake/latest/
-  (decoder_output.json, device_measurement.json, downlink.json); base the examples' test payloads on
-  them.
+  labelled 'Datacake'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Datacake webhooks are not
+  signed. Add a secret header under Headers on the webhook and enter it here." Body: {event, data};
+  event e.g. device_measurement, decoder_output, downlink; data holds the measurements or decoder
+  result. Dispatch on event. POST (the receiver example listens on POST). Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/datacake/latest/ (decoder_output.json,
+  device_measurement.json, downlink.json); base the examples' test payloads on them.
 testScenario:
   events:
     - 'device_measurement'

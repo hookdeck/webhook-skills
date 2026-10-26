@@ -22,11 +22,12 @@ notes: >
   timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
   and honeybadger skills on main. Hookdeck's source type is INCODE, labelled 'Incode'. Hookdeck
   shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
-  same thing, verbatim: "Incode retries unless it gets a 200 with a JSON content type, or a 204. If
-  you customize the source response, keep it JSON." Response: Incode retries unless it gets '200 OK
-  along with the application/json header or 204 No content', so the examples must answer 200 with a
-  JSON body (res.json / JSONResponse). Body: each webhook kind has its own shape: session webhooks
-  carry event_type (SESSION_STARTED, SESSION_SUCCEEDED, SESSION_FAILED, ONBOARDING_FINISHED,
+  same thing, verbatim: "Add a custom header in Dashboard > Configuration > Webhooks and enter it
+  here. Incode retries unless it gets a 200 with a JSON content type, or a 204, so keep any custom
+  source response JSON." Response: Incode retries unless it gets '200 OK along with the
+  application/json header or 204 No content', so the examples must answer 200 with a JSON body
+  (res.json / JSONResponse). Body: each webhook kind has its own shape: session webhooks carry
+  event_type (SESSION_STARTED, SESSION_SUCCEEDED, SESSION_FAILED, ONBOARDING_FINISHED,
   MANUAL_REVIEW_APPROVED, ...), Identity Enrolled carries eventType, the onboarding status webhook
   carries interviewId and onboardingStatus. Read event_type, then eventType, then onboardingStatus.
   POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content

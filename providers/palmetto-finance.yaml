@@ -26,19 +26,19 @@ notes: >
   zapier, coterie and honeybadger skills on main. Hookdeck's source type is PALMETTO_FINANCE,
   labelled 'Palmetto Finance'. Hookdeck shows this setup note for the source, and SKILL.md and
   references/setup.md must tell the user the same thing, verbatim: "Use the default server API key
-  authentication. Palmetto shows the key only once, when you register the webhook." Methods: each
-  subscription sets its own httpMethod (the example uses POST). The examples must not be POST-only:
-  accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per
-  method; Next.js: export a handler for each; FastAPI: api_route with those methods), check the
-  credential first for every method, and handle an empty body. Say in SKILL.md and setup.md that
-  Hookdeck's Palmetto Finance source pre-selects POST without managing the method, so any other
-  method the sender uses must also be allowed on the source. Body: flat event objects with event
-  plus the event's fields (accountId, applicationId, ...); event e.g. accountCreated,
-  applicationStatus, contractSigned, milestoneAchieved, quoteCreated, documentUploaded. Dispatch on
-  event. 30-second timeout; 5xx/429/network errors retried up to 9 times, other 4xx not; 10 failures
-  disable a subscription. Express examples must read the raw body with express.raw({ type: '*/*' })
-  so any content type works (and, for signatures, the exact bytes are verified); parse the body only
-  after the check.
+  authentication. Palmetto shows the key only once, when you register the webhook. Enter apiKey as
+  the header unless your requests show api_key." Methods: each subscription sets its own httpMethod
+  (the example uses POST). The examples must not be POST-only: accept GET, POST, PUT, PATCH and
+  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
+  for each; FastAPI: api_route with those methods), check the credential first for every method, and
+  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Palmetto Finance source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Body: flat event objects with event plus the event's fields (accountId,
+  applicationId, ...); event e.g. accountCreated, applicationStatus, contractSigned,
+  milestoneAchieved, quoteCreated, documentUploaded. Dispatch on event. 30-second timeout;
+  5xx/429/network errors retried up to 9 times, other 4xx not; 10 failures disable a subscription.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works (and, for signatures, the exact bytes are verified); parse the body only after the check.
 testScenario:
   events:
     - 'accountCreated'

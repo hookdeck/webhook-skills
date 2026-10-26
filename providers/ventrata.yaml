@@ -20,12 +20,15 @@ notes: >
   shared credential authenticates the sender, not the body, and gives no replay protection (no
   signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
   zapier, coterie and honeybadger skills on main. Hookdeck's source type is VENTRATA, labelled
-  'Ventrata'. Body: {event, webhook, ...} plus the objects the event concerns (order, booking,
-  product, availability, supplier, diff). The capability lists booking_update, order_update,
-  availability_update, product_update while the examples write booking.updated; accept both forms.
-  Dispatch on event. 'the HTTP method is always POST.' Retries are per webhook (retryOnError).
-  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
-  works (and, for signatures, the exact bytes are verified); parse the body only after the check.
+  'Ventrata'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Ventrata webhooks are not signed. Add a secret
+  header when you create the webhook through the OCTO API and enter it here." Body: {event, webhook,
+  ...} plus the objects the event concerns (order, booking, product, availability, supplier, diff).
+  The capability lists booking_update, order_update, availability_update, product_update while the
+  examples write booking.updated; accept both forms. Dispatch on event. 'the HTTP method is always
+  POST.' Retries are per webhook (retryOnError). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
 testScenario:
   events:
     - 'booking_update'

@@ -8,11 +8,14 @@ notes: >
   and returned letters. Notify says: 'You must provide: a URL where Notify will post the callback
   [and] a bearer token which Notify will put in the authorisation header of the requests'; its
   source sends headers {'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'} with
-  method POST. No signature. The credential is the Authorization header. Hookdeck's GOV.UK Notify
-  source compares the WHOLE Authorization header value to the configured key, so the examples read
-  GOVUK_NOTIFY_AUTHORIZATION = the full value as GOV.UK Notify sends it (e.g. 'Bearer <token>'),
-  including any scheme prefix, and compare the whole Authorization header to it; do not strip, parse
-  or base64-decode the prefix (Coterie pattern). Missing header or mismatch: 401. Compare in
+  method POST. No signature. GOV.UK Notify sends 'Authorization: Bearer <secret>'. Hookdeck's GOV.UK
+  Notify source is API key verification on the authorization header with value_prefix 'Bearer '
+  (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and the scheme matches in any
+  case (auth schemes are case-insensitive, RFC 9110). So the examples read the BARE secret from
+  GOVUK_NOTIFY_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer ',
+  case-insensitively, strip it, as core does), require the Authorization header to start with
+  'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
+  trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
   SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
   pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
@@ -20,15 +23,15 @@ notes: >
   signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
   zapier, coterie and honeybadger skills on main. Hookdeck's source type is GOVUK_NOTIFY, labelled
   'GOV.UK Notify'. Hookdeck shows this setup note for the source, and SKILL.md and
-  references/setup.md must tell the user the same thing, verbatim: "Paste "Bearer " followed by the
-  bearer token you set for the callback in GOV.UK Notify (API integration > Callbacks)." Body: no
-  event field; tell callback kinds apart by shape. Delivery receipts: {id, reference, to, status
-  (delivered, permanent-failure, temporary-failure, technical-failure), created_at, completed_at,
-  sent_at, notification_type (email, sms, letter), template_id, template_version}. Received text
-  messages: {id, source_number, destination_number, message, date_received}. Build example payloads
-  from the documented field tables and label them as such. Retried every 5 minutes, up to 5 times.
-  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
-  works (and, for signatures, the exact bytes are verified); parse the body only after the check.
+  references/setup.md must tell the user the same thing, verbatim: "Paste the bearer token you set
+  for the callback in GOV.UK Notify (API integration > Callbacks)." Body: no event field; tell
+  callback kinds apart by shape. Delivery receipts: {id, reference, to, status (delivered,
+  permanent-failure, temporary-failure, technical-failure), created_at, completed_at, sent_at,
+  notification_type (email, sms, letter), template_id, template_version}. Received text messages:
+  {id, source_number, destination_number, message, date_received}. Build example payloads from the
+  documented field tables and label them as such. Retried every 5 minutes, up to 5 times. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check.
 testScenario:
   events:
     - 'delivery receipt: delivered'

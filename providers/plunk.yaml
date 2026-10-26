@@ -22,18 +22,19 @@ notes: >
   timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
   and honeybadger skills on main. Hookdeck's source type is PLUNK, labelled 'Plunk'. Hookdeck shows
   this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
-  thing, verbatim: "Use a static header value, not a {{variable}}." Methods: the step's method is 'a
-  literal verb (GET, POST, PUT, PATCH, DELETE)', default POST. The examples must not be POST-only:
-  accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per
-  method; Next.js: export a handler for each; FastAPI: api_route with those methods), check the
-  credential first for every method, and handle an empty body. Say in SKILL.md and setup.md that
-  Hookdeck's Plunk source pre-selects POST without managing the method, so any other method the
-  sender uses must also be allowed on the source. Body: the default body (no custom body) is
-  {contact, workflow, execution, event}; a custom body replaces it entirely. There is no
-  Plunk-defined event field on the wire; use the default body shape as the example and handle custom
-  bodies as plain JSON. No automatic retries. Express examples must read the raw body with
-  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
-  verified); parse the body only after the check.
+  thing, verbatim: "Add a secret header to the webhook step in your workflow and enter it here. Use
+  a static value, not a {{variable}}." Methods: the step's method is 'a literal verb (GET, POST,
+  PUT, PATCH, DELETE)', default POST. The examples must not be POST-only: accept GET, POST, PUT,
+  PATCH and DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a
+  handler for each; FastAPI: api_route with those methods), check the credential first for every
+  method, and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Plunk source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Body: the default body (no custom body) is {contact, workflow, execution,
+  event}; a custom body replaces it entirely. There is no Plunk-defined event field on the wire; use
+  the default body shape as the example and handle custom bodies as plain JSON. No automatic
+  retries. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check.
 testScenario:
   events:
     - 'workflow webhook step (default body)'
