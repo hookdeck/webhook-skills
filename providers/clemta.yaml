@@ -56,5 +56,4 @@ testScenario:
   - 'company.verified'
 catalog:
   summary: >-
-    Verify Clemta webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle company, tax, service and requirement events
+    Verify Clemta webhook signatures (`webhook-signature`, Standard Webhooks HMAC-SHA256, `whsec_` secret), handle company.created, company.incorporated, service_order.completed and requirement.created events

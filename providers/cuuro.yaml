@@ -3,6 +3,7 @@ displayName: 'Cuuro'
 docs:
   webhooks: 'https://docs.cuuro.ai/integrations/webhooks'
   verification: 'https://docs.cuuro.ai/integrations/webhooks'
+  events: 'https://docs.cuuro.ai/integrations/webhooks'
 notes: >-
   Cuuro (cuuro.ai), an AI due-diligence platform for investors. API-integration webhooks report target-company
   creation and analysis creation/completion; sent by Svix. Standard Webhooks signature with svix-* headers:
@@ -44,5 +45,5 @@ testScenario:
   - 'analysis.completed'
 catalog:
   summary: >-
-    Verify Cuuro webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle startup and analysis events
+    Verify Cuuro webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), handle startup.created, analysis.created and analysis.completed events

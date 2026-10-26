@@ -50,5 +50,6 @@ testScenario:
   - 'ORDER_CUSTOM_SCORE_CHANGE'
 catalog:
   summary: >-
-    Verify Cerebrum webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle order, score, dispute and voucher events
+    Verify Cerebrum webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `whsec_` secret), handle ORDER_STATUS_CHANGE, ORDER_SCORE_CHANGE, ORDER_DISPUTE_RESOLVED
+    and VOUCHER_REDEEMED events

@@ -51,5 +51,5 @@ testScenario:
   - 'alert.refunded'
 catalog:
   summary: >-
-    Verify Chargeblast webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle alert and deflection events
+    Verify Chargeblast webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), read the event type from `X-Event-Type`, handle alert.created, alert.updated and deflection.created events
