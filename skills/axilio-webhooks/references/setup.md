@@ -2,52 +2,40 @@
 
 ## Prerequisites
 
-- An Axilio organization with access to the dashboard
-- Your application's public `https://` webhook endpoint URL (use the Hookdeck CLI to get one for local development)
+- An Axilio organization with access to **Settings > Webhooks** in the [dashboard](https://app.axilio.ai)
+- A public `https://` URL for your endpoint (use `npx hookdeck-cli listen` locally, see below)
 
-## How Do I Register a Webhook Destination?
+## How Do I Get My Axilio Signing Secret?
 
-1. Open **Settings > Webhooks** in the Axilio dashboard.
-2. Click **Register Destination** and enter your public `https://` URL, for example `https://example.com/webhooks/axilio`.
-3. Choose the event types to receive, or subscribe to all of them. Event types are grouped by area: runs, sessions, billing, files and phones. Subscribe narrowly: an endpoint that only handles `run.failed` should not receive `session.started`.
-4. **Copy the signing secret.** It starts with `whsec_` and is shown once.
+Each destination has its own signing secret. It starts with `whsec_` and is **shown once**, when you register the destination, so copy it straight into `AXILIO_WEBHOOK_SECRET`. Use the full `whsec_...` value; the Standard Webhooks library strips the prefix and base64-decodes the rest.
 
-## How Do I Get and Store the Signing Secret?
+## Register Your Endpoint
 
-The secret is per destination. Put the whole value, including `whsec_`, in your environment:
+1. Open **Settings** > **Webhooks** in the dashboard.
+2. Click **Register Destination** and enter a public `https://` URL.
+3. Choose the event types to receive, or subscribe to all of them. Subscribe narrowly: an endpoint that only handles `run.failed` should not receive `session.started`.
+4. Copy the signing secret.
 
-```bash
-AXILIO_WEBHOOK_SECRET=whsec_...
-```
+Event types are grouped by area: runs, sessions, billing, files and phones.
 
-The Standard Webhooks library strips the prefix and base64-decodes the key itself. Keep it in a secret manager, not in source control.
+## How Do I Test an Axilio Webhook?
 
-If you lose it, register the destination again, or rotate it with the API (`POST /webhooks/endpoints/{endpoint_id}:rotateSecret`). A rotation returns the new secret once. By default (`graceful` mode) the previous secret keeps verifying for 24 hours so you can roll out the new one across a deploy; `immediate` mode stops the old secret at once, for a secret that may be compromised.
+On a destination's page, click **Test** and pick an event type. Axilio delivers that type's example payload to that destination only, with `"test": true`. Every documented event type can be tested this way before the real event fires. The docs describe no challenge or handshake when you register a destination.
 
-## How Do I Send a Test Event?
-
-On a destination's page, click **Test** and pick an event type. Axilio delivers that type's example payload to that destination only, with `"test": true`. Every event type can be tested this way before the real event fires. The API can do the same: `POST` a test event with an `event_type` (default `webhook.test`) and an optional `endpoint_id`.
-
-No challenge or handshake is documented. Your endpoint just needs to verify the signature and return a `2xx`.
-
-## How Do I Receive Webhooks Locally?
+## Local Development
 
 ```bash
+# Express / Next.js
 npx hookdeck-cli listen 3000 axilio --path /webhooks/axilio
+
+# FastAPI
+npx hookdeck-cli listen 8000 axilio --path /webhooks/axilio
 ```
 
-Use port `8000` for FastAPI. No install or account required. Register the printed `https://` URL as the destination, then click **Test**.
+Register the printed URL as the destination, send a **Test**, and check the delivery log in the dashboard.
 
-## How Do I Replay a Failed Delivery?
+## Handler Requirements
 
-The dashboard's delivery log shows every attempt and its response. Replay a failed event once your endpoint is fixed. The API also exposes the delivery log, per-event attempts and a replay call.
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `AXILIO_WEBHOOK_SECRET` | The destination's full `whsec_...` signing secret. Handlers fail closed (`500`) when it is unset |
-
-## Test Mode vs Live Mode
-
-Axilio's webhook docs describe no separate test mode. A **Test** delivery is a signed request to your real destination that carries `"test": true`, so check that flag before triggering real side effects.
+- Verify the signature against the raw body, then parse it.
+- Return a `2xx` as soon as the event is stored or queued. Anything else is retried (30 s, 2 min, 5 min, 15 min, 1 h).
+- Dedupe on the event `id`.

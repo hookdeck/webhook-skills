@@ -3,17 +3,17 @@
 """Argil webhook receiver for FastAPI.
 
 Argil signs webhooks per Standard Webhooks:
-  webhook-id         unique message ID (stable across retries)
-  webhook-timestamp  Unix seconds
+  webhook-id         event ID (stable across retries)
+  webhook-timestamp  Unix seconds when the attempt was sent
   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
 Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
-Key: base64-decode of the secret after its `whsec_` prefix.
-Webhooks created before Argil added signing are unsigned: recreate them.
+Key: base64-decode of the secret after its `whsec_` prefix, returned once by
+POST /webhooks. The body is `{event, data}` with SCREAMING_SNAKE events.
 """
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -27,47 +27,55 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="Argil Webhook Handler")
 
 # In-memory dedupe for the demo. Use Redis or your database in production.
-# Delivery is at-least-once and the body has no event ID: dedupe on webhook-id.
-processed_message_ids: set = set()
+# Deliveries are at least once; webhook-id is the same on every retry.
+processed_event_ids: set = set()
+
+
+def signature_headers(get: Callable[[str], Optional[str]]) -> Optional[Dict[str, str]]:
+    """Read the three signature headers.
+
+    `webhook-*` is the documented prefix; if `webhook-id` is absent, fall back
+    to `svix-*` (same scheme, other prefix). Returns the values under the names
+    the standardwebhooks library expects, or None if any is missing.
+    """
+    prefix = "webhook" if get("webhook-id") else "svix"
+    headers = {
+        "webhook-id": get(f"{prefix}-id"),
+        "webhook-timestamp": get(f"{prefix}-timestamp"),
+        "webhook-signature": get(f"{prefix}-signature"),
+    }
+    return headers if all(headers.values()) else None
 
 
 def verify_argil_webhook(raw_body: bytes, headers: Dict[str, str], secret: str) -> Dict[str, Any]:
     """Verify an Argil delivery with the Standard Webhooks library.
 
-    It recomputes the HMAC over the raw body, compares in constant time
-    against every `v1,` entry and enforces a fixed 5-minute timestamp window.
-    Hookdeck retries and replays resend the original timestamp, so late ones
-    fail here: see the manual verifier in references/verification.md to drop
-    or widen the window. Raises WebhookVerificationError on failure.
+    It checks the timestamp (fixed 5-minute tolerance), recomputes the HMAC
+    over the raw body and compares in constant time against every `v1,` entry.
+    Retries and replays (for example from Hookdeck) keep the original
+    timestamp, so this rejects them after 5 minutes; see
+    references/verification.md for a manual verifier without the window.
+    Raises WebhookVerificationError on failure.
     """
-    return Webhook(secret).verify(
-        raw_body,
-        {
-            "webhook-id": headers["webhook-id"],
-            "webhook-timestamp": headers["webhook-timestamp"],
-            "webhook-signature": headers["webhook-signature"],
-        },
-    )
+    return Webhook(secret).verify(raw_body, headers)
 
 
 async def verified_argil_event(request: Request) -> Dict[str, Any]:
-    """FastAPI dependency: returns the verified {event, data} body or raises."""
+    """FastAPI dependency: returns the verified Argil payload or raises."""
     secret = os.environ.get("ARGIL_WEBHOOK_SECRET")
     # Fail closed: never accept unverified deliveries because a secret is missing.
     if not secret:
         logger.error("ARGIL_WEBHOOK_SECRET is not set; rejecting delivery")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
-    headers = {
-        "webhook-id": request.headers.get("webhook-id"),
-        "webhook-timestamp": request.headers.get("webhook-timestamp"),
-        "webhook-signature": request.headers.get("webhook-signature"),
-    }
-    if not all(headers.values()):
-        # Webhooks created before Argil added signing arrive without these headers.
+    headers = signature_headers(request.headers.get)
+    if headers is None:
         raise HTTPException(
             status_code=400,
-            detail="Missing webhook-id, webhook-timestamp or webhook-signature",
+            detail=(
+                "Missing Standard Webhooks signature headers. Webhooks created before "
+                "Argil added signing are unsigned: recreate the webhook to get a whsec_ secret."
+            ),
         )
 
     # Raw body: request.json() would re-serialise and break the HMAC.
@@ -79,7 +87,7 @@ async def verified_argil_event(request: Request) -> Dict[str, Any]:
         logger.error("Argil webhook verification failed: %s", err)
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    request.state.message_id = headers["webhook-id"]
+    request.state.event_id = headers["webhook-id"]
     return payload
 
 
@@ -89,7 +97,7 @@ def handle_event(payload: Dict[str, Any]) -> None:
 
     if event == "VIDEO_GENERATION_SUCCESS":
         logger.info(
-            "Video ready: %s (%s) %s, cost %s",
+            "Video ready: %s (%s) %s cost %s",
             data.get("videoId"),
             data.get("videoName"),
             data.get("videoUrl"),
@@ -97,13 +105,19 @@ def handle_event(payload: Dict[str, Any]) -> None:
         )
     elif event == "VIDEO_GENERATION_FAILED":
         logger.info(
-            "Video failed: %s (%s), refunded %s",
+            "Video failed: %s: %s (cost %s, refunded %s)",
             data.get("videoId"),
             data.get("message"),
+            data.get("renderCost"),
             data.get("renderCostRefunded"),
         )
     elif event == "AVATAR_TRAINING_SUCCESS":
-        logger.info("Avatar trained: %s (%s)", data.get("avatarId"), data.get("avatarName"))
+        logger.info(
+            "Avatar trained: %s (%s) voice %s",
+            data.get("avatarId"),
+            data.get("avatarName"),
+            data.get("voiceId"),
+        )
     elif event == "AVATAR_TRAINING_FAILED":
         logger.info("Avatar training failed: %s (%s)", data.get("avatarId"), data.get("avatarName"))
     else:
@@ -112,16 +126,15 @@ def handle_event(payload: Dict[str, Any]) -> None:
 
 @app.post("/webhooks/argil")
 async def argil_webhook(request: Request, payload: Dict[str, Any] = Depends(verified_argil_event)):
-    # Retries reuse the same webhook-id; acknowledge duplicates with 200.
-    message_id = request.state.message_id
-    if message_id in processed_message_ids:
+    event_id = request.state.event_id
+    if event_id in processed_event_ids:
         return {"received": True, "duplicate": True}
 
     try:
         # Argil needs a 2xx within 10 seconds. In production, enqueue the event
         # here and process it asynchronously.
         handle_event(payload)
-        processed_message_ids.add(message_id)
+        processed_event_ids.add(event_id)
     except Exception:
         logger.exception("Error handling Argil event")
         raise HTTPException(status_code=500, detail="Internal server error")

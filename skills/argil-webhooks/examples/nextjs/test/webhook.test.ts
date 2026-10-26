@@ -9,7 +9,7 @@ import { POST } from '../app/webhooks/argil/route';
 // "whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD". The HMAC key is the decoded part.
 const SECRET = 'whsec_' + Buffer.from('argil-test-signing-key-0123456789').toString('base64');
 
-/** Sign exactly like Argil does (Standard Webhooks). */
+/** Sign per Standard Webhooks: base64(HMAC-SHA256(key, `${id}.${ts}.${body}`)). */
 function sign(rawBody: string, id: string, timestamp: string, secret = SECRET): string {
   const key = Buffer.from(secret.slice('whsec_'.length), 'base64');
   const sig = crypto
@@ -26,26 +26,24 @@ interface SignOptions {
   timestamp?: number | string;
   secret?: string;
   signature?: string;
+  prefix?: string;
 }
 
 function signedHeaders(rawBody: string, opts: SignOptions = {}): Record<string, string> {
   const id = opts.id || `msg_${crypto.randomUUID().replace(/-/g, '')}`;
   const ts = String(opts.timestamp ?? now());
+  const prefix = opts.prefix ?? 'webhook';
   return {
     'content-type': 'application/json',
-    'webhook-id': id,
-    'webhook-timestamp': ts,
-    'webhook-signature': opts.signature ?? sign(rawBody, id, ts, opts.secret),
+    [`${prefix}-id`]: id,
+    [`${prefix}-timestamp`]: ts,
+    [`${prefix}-signature`]: opts.signature ?? sign(rawBody, id, ts, opts.secret),
   };
 }
 
 function post(rawBody: string, headers: Record<string, string>) {
   return POST(
-    new Request('http://localhost:3000/webhooks/argil', {
-      method: 'POST',
-      headers,
-      body: rawBody,
-    })
+    new Request('http://localhost:3000/webhooks/argil', { method: 'POST', headers, body: rawBody })
   );
 }
 
@@ -53,12 +51,12 @@ const videoSuccess = () => ({
   event: 'VIDEO_GENERATION_SUCCESS',
   data: {
     videoId: 'vid_123',
-    videoName: 'Product intro',
-    videoUrl: 'https://example.com/video.mp4',
-    message: 'Video generated',
-    extras: {},
-    renderCost: 10,
-    renderCostRefunded: 0,
+    videoName: 'Launch teaser',
+    videoUrl: 'https://cdn.argil.ai/videos/vid_123.mp4',
+    message: 'Video generation completed successfully',
+    extras: { campaign: 'spring' },
+    renderCost: 150,
+    renderCostRefunded: false,
   },
 });
 
@@ -82,42 +80,51 @@ describe('valid signatures', () => {
   it('accepts VIDEO_GENERATION_FAILED', async () => {
     const body = JSON.stringify({
       event: 'VIDEO_GENERATION_FAILED',
-      data: { videoId: 'vid_9', videoName: 'x', message: 'render error', extras: {}, renderCost: 10, renderCostRefunded: 10 },
+      data: {
+        videoId: 'vid_124',
+        videoName: 'Launch teaser',
+        message: 'Render crashed',
+        extras: {},
+        renderCost: 150,
+        renderCostRefunded: true,
+      },
     });
     const res = await post(body, signedHeaders(body));
     expect(res.status).toBe(200);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Video failed: vid_9'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Render crashed'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('refunded true'));
   });
 
   it('accepts AVATAR_TRAINING_SUCCESS', async () => {
     const body = JSON.stringify({
       event: 'AVATAR_TRAINING_SUCCESS',
-      data: { avatarId: 'avt_1', avatarName: 'Alex', extras: {} },
+      data: { avatarId: 'av_1', voiceId: 'vo_1', avatarName: 'Sam', extras: {} },
     });
     const res = await post(body, signedHeaders(body));
     expect(res.status).toBe(200);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Avatar trained: avt_1'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Avatar trained: av_1'));
   });
 
   it('accepts AVATAR_TRAINING_FAILED', async () => {
     const body = JSON.stringify({
       event: 'AVATAR_TRAINING_FAILED',
-      data: { avatarId: 'avt_2', avatarName: 'Sam', extras: {} },
+      data: { avatarId: 'av_2', avatarName: 'Sam', extras: {} },
     });
     const res = await post(body, signedHeaders(body));
     expect(res.status).toBe(200);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Avatar training failed: avt_2'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Avatar training failed: av_2'));
   });
 
-  it('acknowledges unknown event names with 200', async () => {
+  it('acknowledges unknown events with 200', async () => {
     const body = JSON.stringify({ event: 'SOMETHING_NEW', data: {} });
     const res = await post(body, signedHeaders(body));
     expect(res.status).toBe(200);
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Unhandled Argil event'));
   });
 
-  it('verifies bodies sent with any content type', async () => {
+  it('accepts a delivery with svix-* headers when webhook-* are absent', async () => {
     const body = JSON.stringify(videoSuccess());
-    const res = await post(body, { ...signedHeaders(body), 'content-type': 'text/plain' });
+    const res = await post(body, signedHeaders(body, { prefix: 'svix' }));
     expect(res.status).toBe(200);
   });
 
@@ -129,7 +136,7 @@ describe('valid signatures', () => {
     expect(res.status).toBe(200);
   });
 
-  it('returns 200 for a retried delivery with the same webhook-id', async () => {
+  it('returns 200 duplicate for a retried delivery with the same webhook-id', async () => {
     const body = JSON.stringify(videoSuccess());
     const id = `msg_retry_${Date.now()}`;
     const first = await post(body, signedHeaders(body, { id }));
@@ -141,10 +148,11 @@ describe('valid signatures', () => {
 });
 
 describe('invalid requests', () => {
-  it('rejects an unsigned delivery (webhook created before signing) with 400', async () => {
+  it('rejects missing signature headers with 400 and the recreate hint', async () => {
     const body = JSON.stringify(videoSuccess());
     const res = await post(body, { 'content-type': 'application/json' });
     expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/[Rr]ecreate the webhook/);
   });
 
   it('rejects a bad signature', async () => {
@@ -167,7 +175,7 @@ describe('invalid requests', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects a timestamp outside the library 5-minute window', async () => {
+  it('rejects a timestamp outside the 5-minute tolerance', async () => {
     const body = JSON.stringify(videoSuccess());
     const res = await post(body, signedHeaders(body, { timestamp: now() - 600 }));
     expect(res.status).toBe(400);

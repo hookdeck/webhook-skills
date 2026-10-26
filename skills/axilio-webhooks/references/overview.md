@@ -2,79 +2,11 @@
 
 ## What Are Axilio Webhooks?
 
-[Axilio](https://axilio.ai) runs real-phone automation: workflow runs, live sessions, files, billing and phone rentals. Webhooks tell your server when something changes in your organization, so you don't poll `GET /runs/{run_id}` until a run finishes. You register a destination once, and Axilio sends it a signed `POST` with a JSON body for each event you subscribed to.
+[Axilio](https://axilio.ai) automates real phones. Its webhooks send a signed `POST` with a JSON body to your destination when something changes in your organization: a run finishes, a session ends, a payment fails, a file arrives or a rented phone goes offline. Use them instead of polling `GET /runs/{run_id}`.
 
-Deliveries follow the [Standard Webhooks](https://www.standardwebhooks.com/) scheme. See [verification.md](verification.md).
-
-## Common Event Types
-
-The documented list has 28 event types and may not be exhaustive. Handle unknown types by acknowledging them with a `2xx`.
-
-### Runs
-
-| Event | Fires when |
-|-------|------------|
-| `run.started` | A queued run gets a phone and starts executing |
-| `run.completed` | A run finishes successfully |
-| `run.failed` | A run fails while executing, or Axilio could not queue or dispatch it |
-| `run.cancelled` | A run stops before it finishes. `data.reason` is `user` or `queue_timeout` |
-
-### Sessions
-
-| Event | Fires when |
-|-------|------------|
-| `session.started` | A session gets a phone and goes live |
-| `session.ended` | A session ends and Axilio releases its phone. `data.end_reason` is `released`, `idle_timeout`, `max_duration`, `run_finished` or `device_lost` |
-| `session.recording_ready` | The session's recording finishes uploading and you can download it |
-
-### Billing
-
-| Event | Fires when |
-|-------|------------|
-| `balance.low` | Your balance drops below the low-balance alert threshold you set |
-| `balance.depleted` | Your balance goes below zero |
-| `balance.recovered` | A balance alert ends because the balance rose back above its threshold |
-| `invoice.paid` | You pay a subscription or rental invoice |
-| `invoice.payment_failed` | A payment attempt on a subscription or rental invoice fails. Each attempt is its own event |
-| `subscription.updated` | Your plan subscription changes status, for example to `past_due` or back to `active` |
-| `subscription.canceled` | Your plan subscription ends |
-| `auto_recharge.succeeded` | Axilio charges an automatic top-up and credits your balance |
-| `auto_recharge.failed` | An automatic top-up fails. Axilio turns auto-recharge off until you turn it back on |
-
-Amounts are in microdollars (1,000,000 = $1.00).
-
-### Files
-
-| Event | Fires when |
-|-------|------------|
-| `file.ready` | An upload completes, or a file a phone captured during a session lands in your library |
-| `file.capture_failed` | A file a phone captured never became a library file. `data.reason` says why |
-| `file.delivered` | A file you pushed to a phone arrived on it |
-| `file.delivery_failed` | A file you pushed to a phone did not arrive. `data.error` says why |
-
-### Phones (rented phones only)
-
-Axilio sends these only for phones your organization rents. Shared phones never send them.
-
-| Event | Fires when |
-|-------|------------|
-| `phone.maintenance_started` | The phone leaves service for an automatic repair or a software update |
-| `phone.maintenance_ended` | The repair or update finished and the phone is back |
-| `phone.offline` | The phone leaves service until it proves healthy again or an operator repairs it |
-| `phone.online` | A phone that was out of service is back |
-| `phone.rental.activated` | A rental starts and the phone becomes yours alone |
-| `phone.rental.past_due` | A rental payment fails. The phone stays yours while Stripe retries |
-| `phone.rental.canceled` | A rental subscription ends |
-
-### Test
-
-| Event | Fires when |
-|-------|------------|
-| `webhook.test` | The default type for a test event sent through the API |
+Payloads never contain your content: no run variables or outputs, no file bytes, no recordings and no download links. Fetch those through the API with your own key.
 
 ## Event Payload Structure
-
-Every delivery is a `POST` with a JSON body of the same shape:
 
 ```json
 {
@@ -82,32 +14,71 @@ Every delivery is a `POST` with a JSON body of the same shape:
   "type": "run.completed",
   "occurred_at": "2026-09-24T12:00:45Z",
   "test": false,
-  "data": {
-    "id": "0199a3c2-58c1-7f3a-9f2e-2f9a6a2f6a11",
-    "workflow_id": "0199a3c2-58c1-7f3a-9f2e-2f9a6a2f6a22",
-    "status": "completed",
-    "trigger": "api",
-    "started_at": "2026-09-24T12:00:00Z",
-    "completed_at": "2026-09-24T12:00:45Z",
-    "success": true,
-    "created_at": "2026-09-24T11:59:57Z"
-  }
+  "data": { "id": "0199a3c2-58c1-7f3a-9f2e-2f9a6a2f6a11", "workflow_id": "0199a3c2-58c1-7f3a-9f2e-2f9a6a2f6a22", "status": "completed", "success": true }
 }
 ```
 
-- `id`: unique per event, and the same value as the `webhook-id` header. It is `<type>:<resource id>[:<time>]`, so a repeatable event such as `phone.offline` carries the time of the change. Use it to discard duplicates.
-- `type`: the event type you subscribed to.
-- `occurred_at`: when the change happened, in UTC.
-- `test`: `true` only for a test you sent yourself.
-- `data`: the resource the event is about, with the same field names as the API. It carries ids, statuses, reasons and timestamps only. Payloads never contain your content (run variables or outputs, file bytes, recordings, download links), so fetch those through the API with your own key.
+| Field | Meaning |
+|-------|---------|
+| `id` | Unique per change; equals the `webhook-id` header. Format `<type>:<resource id>[:<time>]` |
+| `type` | The event type |
+| `occurred_at` | When the change happened (UTC) |
+| `test` | `true` only for a test sent from the dashboard |
+| `data` | The resource, with the same field names as the API. A field with no value yet is left out |
 
-## Delivery Behaviour
+## Common Event Types
 
-- **At least once.** Any non-2xx response, or none, is retried after 30 seconds, 2 minutes, 5 minutes, 15 minutes and 1 hour. Respond with a `2xx` as soon as you have the event and do slow work afterwards. The docs state no timeout.
-- **Duplicates are possible.** Keep the `id` of events you have handled and skip repeats.
-- **Order is not guaranteed.** `run.completed` can arrive before `run.started`. Compare `occurred_at`, or fetch the resource, instead of relying on arrival order.
-- **Failed deliveries stay replayable.** The dashboard's delivery log shows every attempt and its response. Replay a failed event once your endpoint is fixed.
+The docs list 28 event types (the list may not be exhaustive).
+
+| Event | Triggered When | Notable `data` fields |
+|-------|----------------|-----------------------|
+| `run.started` | A queued run gets a phone and starts | `id`, `workflow_id`, `phone_id`, `session_id`, `status` |
+| `run.completed` | A run finishes successfully | adds `completed_at`, `success` |
+| `run.failed` | A run fails, or could not be queued or dispatched | same as completed |
+| `run.cancelled` | A run stops early | `reason`: `user` or `queue_timeout` |
+| `session.started` | A session gets a phone and goes live | `session_id`, `status`, `source`, `phone_id` |
+| `session.ended` | A session ends and the phone is released | `end_reason`: `released`, `idle_timeout`, `max_duration`, `run_finished`, `device_lost` |
+| `session.recording_ready` | A session recording finished uploading | `session_id`, `phone_id` |
+| `balance.low` | Balance drops below your alert threshold | `alert_id`, `kind`, `threshold_microdollars`, `balance_microdollars`, `balance_display` |
+| `balance.depleted` | Balance goes below zero | same as `balance.low` |
+| `balance.recovered` | A balance alert ends | same as `balance.low` |
+| `invoice.paid` | A subscription or rental invoice is paid | `stripe_invoice_id`, `invoice_number`, `amount_microdollars`, `currency`, `status`, `plan_name` |
+| `invoice.payment_failed` | A payment attempt fails (one event per attempt) | same as `invoice.paid` |
+| `subscription.updated` | Plan subscription status changes (for example `past_due`) | `subscription_id`, `plan_name`, `billing_cycle`, `status`, `cancel_at_period_end` |
+| `subscription.canceled` | Plan subscription ends | same as `subscription.updated` |
+| `auto_recharge.succeeded` | An automatic top-up is charged and credited | `stripe_invoice_id`, `amount_microdollars`, `balance_display` |
+| `auto_recharge.failed` | An automatic top-up fails; auto-recharge is turned off | same as succeeded |
+| `file.ready` | An upload completes or a captured file lands in your library | `id`, `filename`, `mime_type`, `size_bytes`, `source` (`upload` or `capture`) |
+| `file.capture_failed` | A captured file never became a library file | adds `reason` |
+| `file.delivered` | A file you pushed arrived on the phone | `id`, `file_id`, `phone_id`, `status`, `bytes_transferred` |
+| `file.delivery_failed` | A pushed file did not arrive | adds `error` |
+| `phone.maintenance_started` / `phone.maintenance_ended` | A rented phone leaves service for repair or update / returns | `phone_id`, `phone_name`, `status`, `reason`, `changed_at` |
+| `phone.offline` / `phone.online` | A rented phone leaves service / is back | same as above |
+| `phone.rental.activated` | A rental starts | `id`, `plan_name`, `phone_id`, `status`, `payment_status` |
+| `phone.rental.past_due` | A rental payment fails | same as activated |
+| `phone.rental.canceled` | A rental subscription ends | same as activated |
+| `webhook.test` | Only when you send it | `message` |
+
+`phone.*` events are sent only for phones your organization rents. Money amounts are in microdollars (1,000,000 = $1.00).
+
+## How Do I Recognise Duplicates?
+
+Delivery is at least once, so skip an `id` you have already handled. The `id` is built from the event type and resource:
+
+| Events | `id` |
+|--------|------|
+| `run.*`, `session.started`, `session.ended`, `phone.rental.activated`, `phone.rental.canceled`, `subscription.canceled` | `<type>:<resource id>` |
+| `phone.maintenance_*`, `phone.offline`, `phone.online`, `phone.rental.past_due`, `subscription.updated` | `<type>:<resource id>:<time of the change>` |
+| `invoice.paid`, `auto_recharge.*` | `<type>:<Stripe invoice id>` |
+| `invoice.payment_failed` | `<type>:<Stripe invoice id>:<attempt number>` |
+| `balance.*` | `<type>:<alert id>` |
+
+## Delivery and Retries
+
+- Any non-2xx response, or none, is retried after 30 s, 2 min, 5 min, 15 min and 1 h. The docs state no timeout, so respond quickly and process asynchronously.
+- Order is not guaranteed. Compare `occurred_at` or fetch the resource.
+- The dashboard's delivery log shows every attempt and response. Replay a failed event once your endpoint is fixed.
 
 ## Full Event Reference
 
-For every event's `data` fields and example payloads, see Axilio's [webhook event reference](https://docs.axilio.ai/webhooks/events) and the [webhooks overview](https://docs.axilio.ai/webhooks/overview).
+For the complete list and example payloads, see [Axilio's webhook documentation](https://docs.axilio.ai/webhooks/overview) and [event reference](https://docs.axilio.ai/webhooks/events).

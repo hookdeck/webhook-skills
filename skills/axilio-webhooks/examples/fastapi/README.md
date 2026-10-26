@@ -1,19 +1,18 @@
 # Axilio Webhooks - FastAPI Example
 
-Minimal example of receiving [Axilio](https://axilio.ai) webhooks with Standard Webhooks signature verification, using the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package that Axilio's docs recommend.
+Minimal example of receiving [Axilio](https://axilio.ai) webhooks with signature verification. Axilio signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does.
 
 ## Prerequisites
 
 - Python 3.9+
-- An Axilio organization with a webhook destination registered under Settings > Webhooks
-- The destination's signing secret (`whsec_...`). Axilio shows it **only once**, at registration (see [setup](../../references/setup.md))
+- An Axilio organization with access to **Settings > Webhooks**
+- The signing secret (`whsec_...`) of your webhook destination
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+1. Install dependencies:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   python3 -m venv venv && source venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -22,7 +21,7 @@ Minimal example of receiving [Axilio](https://axilio.ai) webhooks with Standard 
    cp .env.example .env
    ```
 
-3. Add the full signing secret, including the `whsec_` prefix, to `AXILIO_WEBHOOK_SECRET` in `.env`.
+3. Put your destination's signing secret in `AXILIO_WEBHOOK_SECRET`. It is shown once when you register the destination (see [setup](../../references/setup.md)).
 
 ## Run
 
@@ -35,10 +34,10 @@ Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/axilio`.
 ## Test
 
 ```bash
-pytest test_webhook.py
+pytest test_webhook.py -v
 ```
 
-The tests sign payloads with Axilio's algorithm (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`) and cover all 28 documented event types, dashboard test deliveries, non-JSON content types, tampered bodies, stale timestamps, multiple signatures, redeliveries, and the fail-closed path when no secret is configured.
+The tests sign payloads the way Axilio does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`). They cover every documented event type, tampered bodies, stale timestamps, multiple and non-`v1` signatures, another destination's secret, the `svix-*` header fallback, retried deliveries, and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 
@@ -46,11 +45,12 @@ The tests sign payloads with Axilio's algorithm (`base64(HMAC-SHA256(base64decod
 npx hookdeck-cli listen 8000 axilio --path /webhooks/axilio
 ```
 
-Register the printed `https://` URL as a destination in Settings > Webhooks, subscribe to the events you want, then click **Test** on the destination's page to send an event's example payload (`"test": true`).
+Register the printed URL under **Settings > Webhooks > Register Destination**, then click **Test** on the destination to send an example event.
 
 ## Notes
 
-- The verification dependency reads `await request.body()`. The signature covers the exact raw bytes, so `request.json()` before verification breaks it. Reading bytes works for any content type.
+- The verifier is a FastAPI dependency that reads `await request.body()` so the exact raw bytes are verified. `request.json()` would re-serialise the body and break the signature.
 - If `AXILIO_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
-- The `standardwebhooks` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so a retry later than that is rejected. [references/verification.md](../../references/verification.md) has a manual verifier where the window can be dropped or widened.
-- Axilio delivers at least once and does not guarantee order. Redeliveries are deduped on the body `id` (in memory here; use a database or cache in production), and `occurred_at` tells you which event is newer.
+- The library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late retries fail it. See [verification](../../references/verification.md) for a verifier with an adjustable window.
+- Delivery is at least once. The handler dedupes on `webhook-id` (the same value as the body's `id`). Use Redis or a database in production.
+- Order is not guaranteed; compare `occurred_at`. Enqueue the event and process it asynchronously in production.

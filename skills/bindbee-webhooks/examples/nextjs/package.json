@@ -1,11 +1,11 @@
 {
-  "name": "bindbee-webhooks-nextjs",
+  "name": "bindbee-webhooks-nextjs-example",
   "version": "1.0.0",
-  "description": "Bindbee webhook handler with Next.js",
+  "description": "Next.js example for receiving Bindbee webhooks (Standard Webhooks signature)",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3000",
     "test": "vitest run"
   },
   "dependencies": {
@@ -19,5 +19,8 @@
     "@types/react-dom": "^19.3.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

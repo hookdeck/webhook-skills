@@ -1,19 +1,18 @@
 # Bayou Energy Webhooks - FastAPI Example
 
-Minimal FastAPI example of receiving [Bayou Energy](https://www.bayou.energy) webhooks with signature verification. Bayou signs deliveries per the Standard Webhooks spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. Verification runs in a FastAPI dependency (`verified_bayou_event`).
+Minimal example of receiving [Bayou Energy](https://bayou.energy) webhooks with signature verification. Bayou signs deliveries per the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
 
 ## Prerequisites
 
 - Python 3.9+
-- A Bayou Energy company account
-- The company's signing secret (`whsec_...`)
+- A Bayou Energy account with access to **Settings** in the [Bayou dashboard](https://bayou.energy/dashboard)
+- Your company's signing secret (`whsec_...`)
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+1. Install dependencies:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   python3 -m venv venv && source venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -22,12 +21,12 @@ Minimal FastAPI example of receiving [Bayou Energy](https://www.bayou.energy) we
    cp .env.example .env
    ```
 
-3. Put your signing secret, including the `whsec_` prefix, in `BAYOU_ENERGY_WEBHOOK_SECRET`. Find it in the Bayou dashboard under **Settings**, below the Webhook URL (see [setup](../../references/setup.md)).
+3. Put the signing secret from **Settings** (just below the Webhook URL field) in `BAYOU_ENERGY_WEBHOOK_SECRET`. Keep the `whsec_` prefix.
 
 ## Run
 
 ```bash
-uvicorn main:app --port 8000
+uvicorn main:app --reload --port 8000
 ```
 
 Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/bayou-energy`.
@@ -38,7 +37,7 @@ Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/bayou-en
 pytest test_webhook.py -v
 ```
 
-The tests sign payloads the way Bayou does, including the test vector from Bayou's docs. They cover tampered bodies, stale timestamps, multiple signatures, another secret, an undecoded key, retried deliveries, and the fail-closed path when no secret is configured.
+The tests sign payloads the way Bayou does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`) and check the signing code against the test vector in Bayou's docs. They cover all seven events, tampered bodies, stale timestamps, multiple signatures, `svix-*` headers, retried deliveries, and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 
@@ -46,11 +45,13 @@ The tests sign payloads the way Bayou does, including the test vector from Bayou
 npx hookdeck-cli listen 8000 bayou-energy --path /webhooks/bayou-energy
 ```
 
-Paste the printed URL into the **Webhook URL** field in the Bayou dashboard settings.
+Paste the printed URL into the **Webhook URL** field in **Settings** in the Bayou dashboard. Bayou sends every webhook to that one URL.
 
 ## Notes
 
-- The dependency reads `await request.body()`. The signature covers the exact raw bytes, so a Pydantic body model or `request.json()` before verification breaks it.
-- The `standardwebhooks` library rejects timestamps more than 5 minutes off. Hookdeck retries and replays resend the original timestamp, so use the manual verifier in [verification.md](../../references/verification.md) if you need to drop or widen the window.
+- The dependency reads the body with `await request.body()`. `request.json()` would re-serialise it and break the signature.
+- The Python library raises a plain `ValueError` for malformed headers, so the handler catches `Exception` and returns `400`.
 - If `BAYOU_ENERGY_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
 - Bayou payloads have no event ID. The handler dedupes on the `webhook-id` header.
+- The library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late retries are rejected. [references/verification.md](../../references/verification.md) has a manual verifier where the window can be dropped or widened.
+- The handler doesn't log `file_url` (pre-signed bill URL) or `onboarding_token`.

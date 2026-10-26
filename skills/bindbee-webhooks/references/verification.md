@@ -2,48 +2,63 @@
 
 ## How Does Bindbee Sign Webhooks?
 
-Bindbee uses the Standard Webhooks header layout on version 2 webhooks:
+Version 2 deliveries follow the [Standard Webhooks](https://www.standardwebhooks.com/) scheme:
 
-| Header | Value |
-|--------|-------|
-| `webhook-id` | Unique message ID (equals the body's `id`) |
-| `webhook-timestamp` | Unix seconds |
-| `webhook-signature` | One or more space-separated `v1,<base64>` entries |
+| Header | Contains |
+|--------|----------|
+| `webhook-id` | The event ID (equals `id` in the body) |
+| `webhook-timestamp` | When Bindbee sent the event, Unix seconds |
+| `webhook-signature` | One or more space-separated `v1,<base64>` entries (Bindbee sends one today) |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw request body}`, HMAC-SHA256, base64 output. The key is the secret's **raw UTF-8 bytes**: "Sign {webhook-id}.{webhook-timestamp}.{body} with HMAC-SHA256, keyed with the secret's UTF-8 bytes" ([Bindbee docs](https://docs.bindbee.dev/guides/webhooks/verify-signatures)).
+- **Signed content:** `{webhook-id}.{webhook-timestamp}.{raw request body}`
+- **Algorithm:** HMAC-SHA256, output encoded as standard base64
+- **Key:** the signing secret's raw UTF-8 bytes
 
-## Implementation
+Hookdeck's Bindbee source also accepts the same three values under `svix-id` / `svix-timestamp` / `svix-signature` when `webhook-id` is absent, and the examples do the same.
 
-There is no official SDK helper to use, and the `standardwebhooks` and `svix` libraries must not be used: they base64-decode the secret, so the HMAC key would be wrong. Implement it by hand, matching Hookdeck's Standard Webhooks controller:
+## How Do I Verify Without a Library?
 
-1. Require `webhook-id`, `webhook-timestamp` and `webhook-signature`.
-2. Require the timestamp to match `/^[1-9][0-9]*$/`.
-3. Key: if the secret starts with `whsec_`, base64-decode the rest; otherwise use the secret's UTF-8 bytes. Reject an empty key (fail closed). Bindbee secrets have no prefix, so the first branch only mirrors Hookdeck.
-4. Compute base64 HMAC-SHA256 over the bytes `{id}.{timestamp}.` followed by the raw body bytes.
-5. Split the header on spaces; accept any `v1,<sig>` entry that matches in constant time and ignore other versions (such as `v1a`).
+The steps the examples implement:
 
-```javascript
-const expected = Buffer.from(crypto.createHmac('sha256', key).update(signed).digest('base64'));
-candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
-```
+1. Require `webhook-id`, `webhook-timestamp` and `webhook-signature` (or the `svix-*` set when `webhook-id` is absent).
+2. Require the timestamp to be a plain positive integer (`/^[1-9][0-9]*$/`).
+3. Build the key: base64-decode the part after `whsec_` if the secret starts with `whsec_`, otherwise use the secret's UTF-8 bytes. Reject an empty key.
+4. Compute HMAC-SHA256 over `{id}.{timestamp}.` followed by the raw body bytes, then base64-encode.
+5. Split the signature header on spaces; accept if any `v1,<sig>` entry matches in constant time (Node: compare lengths, then `crypto.timingSafeEqual` on equal-length Buffers; Python: `hmac.compare_digest` on bytes). Ignore other versions such as `v1a`.
+6. Only then parse the JSON.
 
 ```python
-hmac.compare_digest(candidate_bytes, expected_bytes)
+key = secret.encode("utf-8")
+expected = hmac.new(key, f"{msg_id}.{timestamp}.".encode() + raw_body, hashlib.sha256).digest()
+ok = any(
+    v == "v1" and hmac.compare_digest(base64.b64decode(sig), expected)
+    for v, _, sig in (e.partition(",") for e in header.split(" "))
+)
 ```
 
-See the full implementations in [examples/express/](../examples/express/), [examples/nextjs/](../examples/nextjs/) and [examples/fastapi/](../examples/fastapi/).
+## Why Doesn't the Standard Webhooks Library Work as Documented?
+
+The `standardwebhooks` and `svix` libraries base64-decode the secret, so a Bindbee secret pasted into them produces the wrong key and every signature fails. Bindbee's own docs work around this by building a `whsec_` secret from `base64(secret)` (Node) or passing the raw bytes (Python). These examples skip the library: it also enforces a fixed 5-minute timestamp window, and Hookdeck retries and replays resend the original timestamp.
+
+## Does the Timestamp Matter?
+
+Bindbee's docs suggest rejecting timestamps more than 5 minutes from your clock. The examples leave the window **off by default**, because retries and replays keep the original `webhook-timestamp`. Set `BINDBEE_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number to opt in. Deduplicate on `webhook-id` instead.
 
 ## Common Gotchas
 
-- **Raw body**: verify the exact bytes. In Express use `express.raw({ type: '*/*' })`; in Next.js use `request.arrayBuffer()`; in FastAPI `await request.body()`. Parse JSON afterwards.
-- **Do not base64-decode the secret.** Paste it exactly as the dashboard shows it.
-- **Version 1 webhooks** have no `webhook-*` headers and cannot be verified by this scheme. Hookdeck's alert: "Paste the security signature secret as-is. Only version 2 webhooks are supported; version 1 webhooks lack the webhook-* headers and fail verification."
-- **No timestamp window by default**: Hookdeck retries and replays resend the original timestamp, so a window would reject them. Opt in with `BINDBEE_WEBHOOK_TOLERANCE_SECONDS`.
-- **Secret rotation**: regenerating the organization secret invalidates the old one immediately.
-- **Hookdeck** also accepts `svix-*` prefixed headers; Bindbee sends `webhook-*`.
+- **Raw body:** parsing then re-serializing JSON changes the bytes. Use `express.raw({ type: '*/*' })`, `request.arrayBuffer()` (Next.js) or `await request.body()` (FastAPI).
+- **Secret format:** paste it as shown, with no `whsec_` prefix and no base64 encoding.
+- **Version 1 webhooks** carry only the legacy `X-BINDBEE-WEBHOOK-SIGNATURE` header (HMAC-SHA256 of the body alone, URL-safe base64 with padding) and can't be verified by this scheme. Move them to version 2.
+- **Regenerated secret:** every webhook fails verification at once until the new secret is deployed.
+- **Status codes:** return `401` for a bad signature (Bindbee gives up) and `200` once verified. Never return a `4xx` for a temporary problem: it is final.
 
 ## Debugging Verification Failures
 
-- `400` for every request: the secret env var is unset or empty (handlers fail closed), or the secret was changed in the dashboard.
-- Valid-looking signature but mismatch: a library base64-decoded the secret, or the body was parsed and re-serialised before verifying.
-- Only some deliveries fail: confirm they come from a version 2 webhook.
+| Symptom | Likely cause |
+|---------|--------------|
+| Every request fails | A framework parsed the JSON first; or the wrong secret (Security signature card, no prefix) |
+| Fails only in a library | The library base64-decoded the secret |
+| Only some webhooks fail | Those webhooks are on version 1 |
+| All webhooks failed at once | The secret was regenerated |
+| `Timestamp too old` | `BINDBEE_WEBHOOK_TOLERANCE_SECONDS` is set and the clock is off, or a replay arrived late |
+| Works locally, fails behind a proxy | The proxy re-encoded the body |

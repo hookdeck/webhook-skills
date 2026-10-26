@@ -9,79 +9,92 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
-// Basiq signs webhooks with Standard Webhooks:
-//   webhook-id         unique message ID
-//   webhook-timestamp  Unix seconds
-//   webhook-signature  one or more space-separated "v1,<base64 HMAC-SHA256>" entries
+// Basiq signs webhooks with the Standard Webhooks scheme:
+//   webhook-id         unique message ID (same if the message is resent)
+//   webhook-timestamp  Unix seconds of the attempt
+//   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
+// Key: base64-decode of the endpoint's secret after its `whsec_` prefix.
+// Each Basiq webhook subscription has its own signing secret.
 // ---------------------------------------------------------------------------
 
 /**
- * Verify a Basiq delivery with the Standard Webhooks library. It checks the
- * timestamp (fixed 5-minute window), recomputes the HMAC over the raw body, and
- * compares in constant time against every `v1,` entry.
- *
- * The fixed window rejects Hookdeck retries and replays older than 5 minutes
- * (they resend the original timestamp). For a configurable window, see the
- * manual verifier in references/verification.md.
+ * Pick the header set. Hookdeck's Basiq source reads webhook-* and falls back
+ * to svix-* when webhook-id is absent; do the same, then hand the library the
+ * values under the webhook-* names it expects.
+ */
+function signatureHeaders(get) {
+  const prefix = get('webhook-id') ? 'webhook' : 'svix';
+  return {
+    'webhook-id': get(`${prefix}-id`),
+    'webhook-timestamp': get(`${prefix}-timestamp`),
+    'webhook-signature': get(`${prefix}-signature`),
+  };
+}
+
+/**
+ * Verify a Basiq delivery with the Standard Webhooks library. It enforces a
+ * fixed 5-minute timestamp window, recomputes the HMAC over the raw body, and
+ * compares in constant time against every `v1,` entry. Hookdeck retries and
+ * replays resend the ORIGINAL timestamp, so late ones fail here; see
+ * references/verification.md for a manual verifier with a configurable window.
  *
  * @param {string} rawBody - the exact body Basiq sent
- * @param {object} headers - must contain webhook-id/-timestamp/-signature
- * @param {string} secret - the endpoint's whsec_ signing secret
- * @returns {object} the parsed, verified event
+ * @param {object} headers - webhook-id / webhook-timestamp / webhook-signature
+ * @param {string} secret - the subscription's whsec_ signing secret
  * @throws {Error} if verification fails
  */
 function verifyBasiqWebhook(rawBody, headers, secret = process.env.BASIQ_WEBHOOK_SECRET) {
-  return new Webhook(secret).verify(rawBody, {
-    'webhook-id': headers['webhook-id'],
-    'webhook-timestamp': headers['webhook-timestamp'],
-    'webhook-signature': headers['webhook-signature'],
-  }); // throws WebhookVerificationError; returns the parsed JSON body
+  new Webhook(secret).verify(rawBody, headers, { jsonParse: false });
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Dedupe on the webhook-id header.
+// webhook-id stays the same if Basiq resends a message.
 const processedMessageIds = new Set();
 
-// Basiq notifications are thin: { eventTypeId, eventId, links: { event, eventEntity } }.
-// Fetch links.event / links.eventEntity with your Basiq API token for the data.
+// Basiq notifications are thin: eventTypeId, eventId and links. Fetch the
+// event or the affected object from links.event / links.eventEntity with your
+// Basiq API token to get the data.
 function handleEvent(event) {
-  const type = event.eventTypeId;
-  const entity = event.links?.eventEntity ?? 'unknown';
+  const { eventTypeId, eventId, links = {} } = event;
 
-  switch (type) {
+  switch (eventTypeId) {
     case 'user.created':
     case 'user.updated':
     case 'user.deleted':
-      console.log(`${type}: ${entity}`);
+      console.log(`${eventTypeId}: ${links.eventEntity} (event ${eventId})`);
       break;
+
     case 'connection.created':
     case 'connection.activated':
     case 'connection.invalidated':
     case 'connection.deleted':
-      console.log(`${type}: ${entity}`);
+      console.log(`${eventTypeId}: ${links.eventEntity} (event ${eventId})`);
       break;
+
     case 'consent.created':
     case 'consent.updated':
-    case 'consent.warning':
-    case 'consent.reminder':
-    case 'consent.expired':
     case 'consent.revoked':
-      console.log(`${type}: ${entity}`);
+    case 'consent.expired':
+    case 'consent.reminder':
+    case 'consent.warning':
+      console.log(`${eventTypeId}: ${links.eventEntity} (event ${eventId})`);
       break;
+
     case 'account.updated':
-    case 'transactions.updated':
-      console.log(`${type}: ${entity}`);
+      console.log(`Account updated: ${links.eventEntity} (event ${eventId})`);
       break;
+    case 'transactions.updated':
+      console.log(`Transactions updated: ${links.eventEntity} (event ${eventId})`);
+      break;
+
     default:
-      console.log(`Unhandled Basiq event type: ${type}`);
+      console.log(`Unhandled Basiq event type: ${eventTypeId}`);
   }
 }
 
-// Basiq webhook endpoint. express.raw({ type: '*/*' }) keeps the exact bytes for
-// the HMAC for any content type; express.json() would re-serialise the body and
-// break it. The body is parsed only after verification succeeds.
+// Basiq webhook endpoint. express.raw() keeps the exact bytes for the HMAC for
+// any content type; express.json() would re-serialise the body and break it.
 app.post('/webhooks/basiq', express.raw({ type: '*/*' }), (req, res) => {
   // Fail closed: never accept unverified deliveries because a secret is missing.
   if (!process.env.BASIQ_WEBHOOK_SECRET) {
@@ -89,27 +102,31 @@ app.post('/webhooks/basiq', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
-  const headers = {
-    'webhook-id': req.get('webhook-id'),
-    'webhook-timestamp': req.get('webhook-timestamp'),
-    'webhook-signature': req.get('webhook-signature'),
-  };
+  const headers = signatureHeaders((name) => req.get(name));
   if (!headers['webhook-id'] || !headers['webhook-timestamp'] || !headers['webhook-signature']) {
-    return res.status(400).json({ error: 'Missing webhook signature headers' });
-  }
-  if (!Buffer.isBuffer(req.body)) {
-    return res.status(400).json({ error: 'Missing request body' });
+    return res.status(400).json({ error: 'Missing signature headers' });
   }
 
-  let event;
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
   try {
-    event = verifyBasiqWebhook(req.body.toString('utf8'), headers);
+    verifyBasiqWebhook(rawBody, headers);
   } catch (err) {
     console.error('Basiq webhook verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  // Duplicates are possible; acknowledge with 200.
+  // Verified: only now parse the body.
+  let event;
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  if (!event || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  // A resent message reuses the same webhook-id; acknowledge duplicates with 200.
   const messageId = headers['webhook-id'];
   if (processedMessageIds.has(messageId)) {
     return res.status(200).json({ received: true, duplicate: true });
@@ -139,4 +156,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, server, verifyBasiqWebhook };
+module.exports = { app, server, verifyBasiqWebhook, signatureHeaders };

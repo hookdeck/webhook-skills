@@ -1,12 +1,12 @@
 # Bayou Energy Webhooks - Express Example
 
-Minimal example of receiving [Bayou Energy](https://www.bayou.energy) webhooks with signature verification. Bayou signs deliveries per the Standard Webhooks spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package.
+Minimal example of receiving [Bayou Energy](https://bayou.energy) webhooks with signature verification. Bayou signs deliveries per the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
 
 ## Prerequisites
 
 - Node.js 18+
-- A Bayou Energy company account
-- The company's signing secret (`whsec_...`)
+- A Bayou Energy account with access to **Settings** in the [Bayou dashboard](https://bayou.energy/dashboard)
+- Your company's signing secret (`whsec_...`)
 
 ## Setup
 
@@ -20,7 +20,7 @@ Minimal example of receiving [Bayou Energy](https://www.bayou.energy) webhooks w
    cp .env.example .env
    ```
 
-3. Put your signing secret, including the `whsec_` prefix, in `BAYOU_ENERGY_WEBHOOK_SECRET`. Find it in the Bayou dashboard under **Settings**, below the Webhook URL (see [setup](../../references/setup.md)).
+3. Put the signing secret from **Settings** (just below the Webhook URL field) in `BAYOU_ENERGY_WEBHOOK_SECRET`. Keep the `whsec_` prefix.
 
 ## Run
 
@@ -36,7 +36,7 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/bayou-en
 npm test
 ```
 
-The tests sign payloads the way Bayou does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`), including the test vector from Bayou's docs. They cover tampered bodies, stale timestamps, multiple signatures, another secret, retried deliveries, and the fail-closed path when no secret is configured.
+The tests sign payloads the way Bayou does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`) and check the signing code against the test vector in Bayou's docs. They cover all seven events, tampered bodies, stale timestamps, multiple signatures, `svix-*` headers, retried deliveries, and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 
@@ -44,11 +44,12 @@ The tests sign payloads the way Bayou does (`base64(HMAC-SHA256(base64decode(sec
 npx hookdeck-cli listen 3000 bayou-energy --path /webhooks/bayou-energy
 ```
 
-Paste the printed URL into the **Webhook URL** field in the Bayou dashboard settings.
+Paste the printed URL into the **Webhook URL** field in **Settings** in the Bayou dashboard. Bayou sends every webhook to that one URL.
 
 ## Notes
 
-- The route uses `express.raw({ type: '*/*' })`. The signature covers the exact raw body bytes, so `express.json()` before verification breaks it. The body is parsed only after the check.
-- The `standardwebhooks` library rejects timestamps more than 5 minutes off. Hookdeck retries and replays resend the original timestamp, so use the manual verifier in [verification.md](../../references/verification.md) if you need to drop or widen the window.
+- The route uses `express.raw({ type: '*/*' })`, so any content type works and the exact bytes are verified. `express.json()` before verification breaks the signature.
 - If `BAYOU_ENERGY_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
 - Bayou payloads have no event ID. The handler dedupes on the `webhook-id` header.
+- The library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late retries are rejected. [references/verification.md](../../references/verification.md) has a manual verifier where the window can be dropped or widened.
+- The handler doesn't log `file_url` (pre-signed bill URL) or `onboarding_token`.

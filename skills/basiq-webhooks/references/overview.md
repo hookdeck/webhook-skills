@@ -2,61 +2,55 @@
 
 ## What Are Basiq Webhooks?
 
-[Basiq](https://basiq.io) is an Australian open-banking (CDR) data API covering users, consents, connections, accounts and transactions. Its webhooks notify you when those objects change. Subscriptions are created through the API (`POST /notifications/webhooks`), and the current list of event types is served by `GET /events/types`.
+Basiq is an Australian open-banking (CDR) data API. Webhooks tell your application when something changes in Basiq, so you don't have to poll. You create a subscription with a URL and a list of event types, and Basiq sends an HTTP POST with a JSON body to that URL whenever a subscribed event occurs.
 
-Deliveries are a JSON `POST` to your subscribed URL, signed with [Standard Webhooks](https://www.standardwebhooks.com/) headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
+The body is a **thin notification**. It names the event and links to it, and you fetch the data from the Basiq API.
 
-## Which Basiq Webhook Events Are There?
-
-Basiq documents these 15 event types (the list may not be exhaustive; call `GET /events/types` for the current set):
-
-| Event | Triggered when | Common use cases |
-|-------|----------------|------------------|
-| `user.created` | A user is created | Provision records for the new user |
-| `user.updated` | A user is updated | Refresh your copy of the user |
-| `user.deleted` | A user is deleted | Remove the user's data on your side |
-| `connection.created` | A connection is created | Track onboarding progress |
-| `connection.activated` | A connection becomes active | Start the first data fetch |
-| `connection.invalidated` | A connection is invalidated | Ask the user to reconnect |
-| `connection.deleted` | A connection is deleted | Clean up |
-| `consent.created` | A consent is created | Record the consent |
-| `consent.updated` | A consent is updated | Refresh consent details |
-| `consent.warning` | A consent warning is raised | Warn the user |
-| `consent.reminder` | A consent reminder is due | Prompt the user to renew |
-| `consent.expired` | A consent has expired | Stop fetching data |
-| `consent.revoked` | A consent was revoked | Stop fetching data, delete as required |
-| `account.updated` | An account is updated | Re-fetch the account |
-| `transactions.updated` | Transactions are updated | Re-fetch transactions |
-
-## What Does a Basiq Webhook Payload Look Like?
-
-A thin notification. No resource data is inlined:
+## Event Payload Structure
 
 ```json
 {
-  "eventTypeId": "transactions.updated",
-  "eventId": "evt-123",
+  "eventTypeId": "user.created",
+  "eventId": "f2f567b6bbb213c40a2875105327bb37b44a38ab8861b64074e2978b98d1f7c7",
   "links": {
-    "event": "https://au-api.basiq.io/events/evt-123",
-    "eventEntity": "https://au-api.basiq.io/users/usr-456/transactions"
+    "event": "https://au-api.basiq.io/events/f2f567b6bbb213c40a2875105327bb37b44a38ab8861b64074e2978b98d1f7c7",
+    "eventEntity": "https://au-api.basiq.io/users/88a85f64-5717-4562-b3fc-2c963f66af88"
   }
 }
 ```
 
-- `eventTypeId` is the event type (the discriminator).
-- `eventId` identifies the event.
-- `links.event` points at the event, and `links.eventEntity` at the affected object. Fetch them with your Basiq API token to get the data.
+| Field | Meaning |
+|-------|---------|
+| `eventTypeId` | Event type, for example `user.created`. This is the field to switch on |
+| `eventId` | ID of the event |
+| `links.event` | URL of the event resource |
+| `links.eventEntity` | URL of the affected object (user, connection, consent, account, ...) |
 
-The URLs above are illustrative; use the links you receive.
+No resource data is inlined. Fetch `links.eventEntity` with your Basiq API token to get the current state.
 
-## Delivery Semantics
+## Common Event Types
 
-- Messages are kept and can be listed with `GET /notifications/webhooks/{webhookId}/messages`.
-- A new subscription may take up to 15 minutes to start delivering.
-- Basiq's docs state no retry schedule, timeout or ordering guarantee. Treat delivery as at-least-once and unordered.
-- Dedupe on `webhook-id` (and `eventId`), return a `2xx` quickly, and fetch the data asynchronously.
+Basiq documents these 15 event types. The list may not be exhaustive: `GET /events/types` returns the full current list with descriptions.
+
+| Event | Group |
+|-------|-------|
+| `user.created`, `user.updated`, `user.deleted` | User lifecycle |
+| `connection.created`, `connection.activated`, `connection.invalidated`, `connection.deleted` | Bank connection lifecycle |
+| `consent.created`, `consent.updated`, `consent.revoked`, `consent.expired`, `consent.reminder`, `consent.warning` | CDR consent lifecycle |
+| `account.updated` | Account data changed |
+| `transactions.updated` | Transaction data changed |
+
+Event names are lowercase, dot-separated, and `transactions.updated` is **plural** while the others are singular.
+
+## Delivery Notes
+
+- **Transport:** JSON `POST` to the subscribed URL.
+- **Messages:** Every webhook message is kept and can be listed with `GET /notifications/webhooks/{webhookId}/messages` and fetched with `.../messages/{messageId}`.
+- **Resends:** `webhook-id` stays the same if the same message is resent, so use it to dedupe.
+- **Start-up delay:** A new subscription can take up to 15 minutes before deliveries start.
+- **Gaps:** Basiq's docs don't state a retry schedule, response timeout or ordering guarantee. Return a `2xx` fast, queue slow work, and treat events as possibly duplicated or out of order. Fetching the entity gives you current state either way.
+- **Source IPs:** `13.238.192.210`, `3.24.252.173`, `3.104.17.39`.
 
 ## Full Event Reference
 
-- [Basiq webhooks](https://api.basiq.io/docs/webhooks)
-- [Webhook security](https://api.basiq.io/docs/webhooks-security)
+See [Basiq's webhook documentation](https://api.basiq.io/docs/webhooks), the [List event types](https://api.basiq.io/reference/listeventtypes) API reference, and [webhook security](https://api.basiq.io/docs/webhooks-security).

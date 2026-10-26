@@ -4,125 +4,74 @@
 import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
-// ---------------------------------------------------------------------------
-// Agntix delivers webhooks through Svix:
-//   svix-id         message ID
-//   svix-timestamp  Unix seconds when the message was sent
-//   svix-signature  "v1,<base64 HMAC-SHA256>" (space-delimited list)
-// Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
-// ---------------------------------------------------------------------------
-
-// Flat envelope (no `data`). `eventType` is the event; `type` is VOICE | CHAT.
-interface AgntixEvent {
-  id: string; // session UUID, shared by session.created and session.ended
-  eventType: string; // "session.created" | "session.ended"
-  type?: string;
-  platform?: string;
-  direction?: string;
-  state?: string;
-  agentId?: string;
-  createdAt?: string;
-  endedAt?: string;
-  metadata?: { sessionVariables?: Record<string, unknown>; [key: string]: unknown };
-  analysis?: { summary?: string; [key: string]: unknown };
-  recordingUrl?: string;
-  [key: string]: unknown;
-}
-
-type SvixHeaders = Record<'svix-id' | 'svix-timestamp' | 'svix-signature', string>;
-
-/**
- * Verify an Agntix delivery with the official Svix library. Svix checks the
- * timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw body,
- * and compares in constant time against every `v1,` entry.
- *
- * svix 2.x `verify()` returns nothing (it throws on failure), so the JSON is
- * parsed here after verification succeeds.
- *
- * Hookdeck retries and replays resend the ORIGINAL timestamp, so this library
- * check rejects deliveries retried after 5 minutes. To drop or widen the
- * window, use the manual verifier in references/verification.md.
- */
-function verifyAgntixWebhook(rawBody: string, headers: SvixHeaders, secret: string): AgntixEvent {
-  new Webhook(secret).verify(rawBody, headers);
-  return JSON.parse(rawBody) as AgntixEvent;
-}
-
-// In-memory dedupe for the demo. Use Redis or your database in production.
-// The top-level `id` is the SESSION UUID and is shared by session.created and
-// session.ended, so the key combines eventType and id.
-const processedEvents = new Set<string>();
-
-function handleEvent(event: AgntixEvent): void {
-  switch (event.eventType) {
-    case 'session.created': {
-      // Fires when the session is initiated (for outbound calls: before pickup).
-      const vars = event.metadata?.sessionVariables ?? {};
-      console.log(
-        `Session created: ${event.id} (${event.type}/${event.platform}/${event.direction}) ` +
-          `agent ${event.agentId}, variables ${JSON.stringify(vars)}`
-      );
-      break;
-    }
-    case 'session.ended': {
-      // Fires once when the session closes, with the post-call analysis attached.
-      console.log(
-        `Session ended: ${event.id} at ${event.endedAt}. ` +
-          `Summary: ${event.analysis?.summary ?? 'n/a'}. Recording: ${event.recordingUrl ?? 'n/a'}`
-      );
-      break;
-    }
-    default:
-      console.log(`Unhandled Agntix event type: ${event.eventType}`);
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  // Fail closed: never accept unverified deliveries because a secret is missing.
   const secret = process.env.AGNTIX_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error('AGNTIX_WEBHOOK_SECRET is not set — rejecting delivery');
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+  if (!secret || !secret.startsWith('whsec_')) {
+    console.error('AGNTIX_WEBHOOK_SECRET is missing or not a whsec_ secret');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json({ error: 'Missing Svix signature headers' }, { status: 400 });
+  // Read the svix-* headers; when svix-id is absent, fall back to the webhook-* headers
+  const prefix = request.headers.get('svix-id') ? 'svix' : 'webhook';
+  const id = request.headers.get(`${prefix}-id`);
+  const timestamp = request.headers.get(`${prefix}-timestamp`);
+  const signature = request.headers.get(`${prefix}-signature`);
+  if (!id || !timestamp || !signature) {
+    return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
   }
 
-  // Raw body: the signature covers the exact bytes, so never verify request.json().
+  // Read the RAW body: verification needs the exact bytes Agntix (Svix) signed
   const rawBody = await request.text();
 
-  let event: AgntixEvent;
   try {
-    event = verifyAgntixWebhook(
-      rawBody,
-      { 'svix-id': svixId, 'svix-timestamp': svixTimestamp, 'svix-signature': svixSignature },
-      secret
-    );
+    // Checks HMAC-SHA256 over `${id}.${timestamp}.${body}` against every v1, signature
+    // and enforces a fixed 5-minute timestamp window (see references/verification.md to change that).
+    // The library accepts either header-name set, so hand it the resolved values under both.
+    new Webhook(secret).verify(rawBody, {
+      'svix-id': id,
+      'svix-timestamp': timestamp,
+      'svix-signature': signature,
+      'webhook-id': id,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': signature,
+    });
   } catch (err) {
-    console.error('Agntix webhook verification failed:', (err as Error).message);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Agntix webhook verification failed:', message);
+    const error = /timestamp/i.test(message) ? 'Timestamp too old' : 'Invalid signature';
+    return NextResponse.json({ error }, { status: 400 });
   }
 
-  // Duplicates are normal (at-least-once delivery) — acknowledge with 200.
-  const dedupeKey = `${event.eventType}:${event.id}`;
-  if (processedEvents.has(dedupeKey)) {
-    return NextResponse.json({ received: true, duplicate: true });
-  }
-
+  let event: Record<string, any>;
   try {
-    // Keep this fast: Agntix needs a 2xx within 15 seconds. In production,
-    // enqueue the event here and process it asynchronously.
-    handleEvent(event);
-    processedEvents.add(dedupeKey);
-  } catch (err) {
-    console.error('Error handling Agntix event:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    event = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  return NextResponse.json({ received: true });
+  // Flat envelope (no `data`): { id, eventType, type, platform, direction, state, agentId, createdAt, metadata, ... }
+  // `eventType` is the event name. `type` is the session kind (VOICE | CHAT), NOT the event name.
+  // `id` is the session UUID: deduplicate on id + eventType (both events share the session id).
+  const eventType: string = event.eventType;
+  const sessionVariables: Record<string, any> = event.metadata?.sessionVariables ?? {};
+  console.log(`Received Agntix webhook ${eventType} for session ${event.id} (${event.type} ${event.platform} ${event.direction})`);
+
+  // Delivery is at least once: persist id + eventType, return 2xx, then process asynchronously.
+  switch (eventType) {
+    case 'session.created':
+      // Fired when the session is initiated (for outbound calls, before pickup)
+      console.log('Session created:', event.id, event.state, sessionVariables);
+      break;
+    case 'session.ended':
+      // Carries the post-call analysis; some analysis fields appear only if enabled on the agent
+      console.log('Session ended:', event.id, event.endedAt, event.analysis?.summary, event.recordingUrl);
+      break;
+    default:
+      // Planned events are not delivered yet. Return 2xx for anything unknown, or Svix keeps retrying
+      console.log('Unhandled event type:', eventType);
+  }
+
+  return NextResponse.json({ success: true, eventType });
 }

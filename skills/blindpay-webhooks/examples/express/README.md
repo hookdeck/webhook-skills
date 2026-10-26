@@ -1,11 +1,12 @@
 # BlindPay Webhooks - Express Example
 
-Minimal example of receiving [BlindPay](https://blindpay.com) webhooks with signature verification, using the official [`svix`](https://www.npmjs.com/package/svix) library.
+Minimal example of receiving BlindPay webhooks with signature verification using the
+official [`svix`](https://www.npmjs.com/package/svix) library (BlindPay delivers webhooks through Svix).
 
 ## Prerequisites
 
-- Node.js 22+ (required by `svix` 2.x)
-- A BlindPay instance and a webhook signing secret (`whsec_...`)
+- Node.js 18+
+- A BlindPay instance with a webhook endpoint and its signing secret (`whsec_...`)
 
 ## Setup
 
@@ -19,7 +20,8 @@ Minimal example of receiving [BlindPay](https://blindpay.com) webhooks with sign
    cp .env.example .env
    ```
 
-3. Add your BlindPay webhook signing secret to `BLINDPAY_WEBHOOK_SECRET` in `.env` (see [setup](../../references/setup.md)).
+3. Add your BlindPay webhook secret to `.env` as `BLINDPAY_WEBHOOK_SECRET` (the full
+   `whsec_...` value from the endpoint's **Get secret** menu item or the `/secret` API).
 
 ## Run
 
@@ -27,7 +29,11 @@ Minimal example of receiving [BlindPay](https://blindpay.com) webhooks with sign
 npm start
 ```
 
-Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/blindpay`.
+Server runs on http://localhost:3000. Webhook endpoint:
+
+```
+POST http://localhost:3000/webhooks/blindpay
+```
 
 ## Test
 
@@ -35,21 +41,42 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/blindpay
 npm test
 ```
 
-The tests sign payloads with Svix's algorithm, `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{svix-id}.{svix-timestamp}.{raw body}"))`, and cover every documented event type, tampered bodies, wrong secrets, stale timestamps, multiple signatures, missing headers, `svix-id` deduplication, and the fail-closed path when no secret is configured.
+The tests sign requests with the same HMAC-SHA256 algorithm Svix uses
+(`{svix-id}.{svix-timestamp}.{raw body}`), including deliveries that carry the `webhook-*`
+header names instead of `svix-*`.
 
-## Receive real webhooks locally
+## Receive Real Webhooks Locally
+
+Start a tunnel with the Hookdeck CLI (no account required):
 
 ```bash
 npx hookdeck-cli listen 3000 blindpay --path /webhooks/blindpay
 ```
 
-Register the printed URL as a webhook endpoint in the BlindPay dashboard, then trigger an event such as creating a customer.
+1. In the [BlindPay dashboard](https://app.blindpay.com), open your instance's **Webhooks** tab
+   (or `POST /v1/instances/{instance}/webhook-endpoints`) and add the tunnel URL as an endpoint.
+2. Fetch the endpoint's signing secret and copy it into `.env`.
 
-## Notes
+## Event Handling
 
-- This example is an ES module (`"type": "module"`) because `svix` 2.x ships ESM only.
-- The route uses `express.raw({ type: '*/*' })`. The signature covers the exact raw body bytes, so `express.json()` before verification breaks it.
-- `svix` 2.x `verify()` returns nothing and throws on failure; `verifyBlindPayWebhook` parses the JSON itself afterwards.
-- The `svix` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late retries are rejected. See [references/verification.md](../../references/verification.md) for a manual verifier without the window.
-- If `BLINDPAY_WEBHOOK_SECRET` is unset the handler returns `500`. It never accepts unverified requests.
-- Deduplication uses `svix-id`, which is stable across retries.
+The body is flat: `webhook_event` holds the event name, followed by the resource's own fields.
+The handler routes on `webhook_event` and acknowledges anything else with `200`:
+
+- `customer.new`, `customer.update`, `customer.delete`
+- `bankAccount.new`, `blockchainWallet.new`, `blockchainWallet.update`, `tos.accept`
+- `payin.new`, `payin.update`, `payin.complete`
+- `payout.new`, `payout.update`, `payout.complete`
+- `virtualAccount.new`, `virtualAccount.complete`
+- `transfer.new`, `transfer.update`, `transfer.complete`
+- `wallet.new`, `wallet.update`, `wallet.inbound`
+- `limitIncrease.new`, `limitIncrease.update`
+- `payable.new`, `payable.update`, `payable.complete`
+
+`svix-id` is stable across retries and replays, so deduplicate on it before acting twice.
+
+## Timestamp Window
+
+The `svix` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays
+resend the original `svix-timestamp`, so late retries are rejected. See
+[references/verification.md](../../references/verification.md) for a manual verifier with a
+configurable window.

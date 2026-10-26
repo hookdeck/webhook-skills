@@ -2,182 +2,161 @@
 
 ## How Does Airweave Sign Webhooks?
 
-Airweave delivers webhooks through [Svix](https://www.svix.com/), which signs every delivery with the Standard Webhooks scheme. Every request has three headers:
+Airweave delivers through Svix, so every delivery carries three headers:
 
-| Header | Description |
-|--------|-------------|
-| `svix-id` | Unique message identifier. Same on every retry of the message to one subscription |
-| `svix-timestamp` | Unix timestamp (seconds) of the delivery attempt |
-| `svix-signature` | Space-delimited list of signatures, each `v1,<base64>` (e.g. `v1,abc123 v1,def456`) |
+| Header | Contents |
+|--------|----------|
+| `svix-id` | Unique message id (`msg_...`), stable across retries. Use it to deduplicate |
+| `svix-timestamp` | Unix timestamp in seconds when the delivery was signed |
+| `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-- **Algorithm:** HMAC-SHA256, base64-encoded
-- **Signed content:** `{svix-id}.{svix-timestamp}.{raw body}`
-- **Key:** base64-decode the part of the secret after `whsec_`
-- **Secret:** the `secret` field from `GET /webhooks/subscriptions/{id}?include_secret=true`, in the format `whsec_...`
-- **Timestamp tolerance:** the Svix library always enforces 5 minutes. The scheme itself has no window; that is the verifier's choice
+Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
+carry the same values. Hookdeck's Airweave source reads the `svix-*` headers and falls back to
+the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
 
-If you set a custom secret when creating the subscription, paste the whsec_ secret Airweave returns for the subscription, not the value you sent.
+The algorithm:
 
-## Why Does Signature Verification Matter?
+1. Build the signed content: `{svix-id}.{svix-timestamp}.{raw body}`.
+2. Strip the `whsec_` prefix from the secret and base64-decode the rest. That is the HMAC key.
+3. Compute HMAC-SHA256 of the signed content and base64-encode the digest.
+4. Compare it in constant time against every `v1,` entry in `svix-signature`. One match is
+   enough, and several entries can appear (for example while a secret is being rotated). Ignore other versions such as `v1a`.
+5. Optionally reject timestamps too far from now (the library uses a fixed 5 minutes).
 
-Your webhook URL is public. Without verification anyone can POST a fake `sync.completed` and trigger your downstream workflow, or a fake `collection.deleted` and trigger a cleanup. Airweave's docs say to always verify in production.
-
-## SDK Verification (Recommended)
-
-Airweave recommends the official Svix libraries in production. They are available for Node.js and Python, so all three examples in this skill use them.
-
-### Node.js (`svix` on npm)
-
-```javascript
-import { Webhook } from 'svix'; // svix 2.x is ESM-only and needs Node 22+
-
-const wh = new Webhook(process.env.AIRWEAVE_WEBHOOK_SECRET); // "whsec_..." accepted as-is
-
-// rawBody: string or Buffer of the EXACT bytes received
-wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
-}); // throws WebhookVerificationError on failure; returns nothing
-const event = JSON.parse(rawBody.toString('utf8'));
-```
-
-- Express: `express.raw({ type: '*/*' })` on the route, then pass `req.body` (a Buffer).
-- Next.js App Router: `const rawBody = await request.text()`.
-
-### Python (`svix` on PyPI)
-
-```python
-import json
-from svix.webhooks import Webhook, WebhookVerificationError
-
-wh = Webhook(os.environ["AIRWEAVE_WEBHOOK_SECRET"])
-raw_body = await request.body()
-try:
-    wh.verify(raw_body, {
-        "svix-id": request.headers.get("svix-id"),
-        "svix-timestamp": request.headers.get("svix-timestamp"),
-        "svix-signature": request.headers.get("svix-signature"),
-    })  # returns None; raises WebhookVerificationError on failure
-except WebhookVerificationError:
-    raise HTTPException(status_code=400, detail="Invalid signature")
-event = json.loads(raw_body)
-```
-
-The libraries also read `webhook-id`, `webhook-timestamp` and `webhook-signature` if the `svix-*` headers are absent.
-
-## Why Do Retries and Replays Fail With "Message timestamp too old"?
-
-The Svix library rejects any `svix-timestamp` more than 5 minutes from the current time, and you cannot configure that. Hookdeck retries and replays resend the original request with its original headers, including `svix-timestamp`, so a retry or replay delivered more than 5 minutes after the original fails the library's check even though the signature is valid.
-
-If you receive Airweave events through Hookdeck and want late retries and replays to verify, use the manual verifier below. It runs the same HMAC check and lets you drop the window (`toleranceSeconds = null`) or widen it. Dropping the window removes replay protection, so deduplicate on `svix-id`.
-
-## Manual Verification (No Window or a Custom Window)
-
-This is the algorithm the SDK runs. It compares every space-separated `v1,<base64>` entry in constant time after a length check, ignores other versions such as `v1a`, and requires the timestamp to be a plain positive integer.
+## SDK Verification (recommended)
 
 ### Node.js
 
 ```javascript
+import { Webhook } from 'svix'; // svix 2.x is ESM-only
+
+const prefix = req.headers['svix-id'] ? 'svix' : 'webhook'; // fall back to webhook-* headers
+const id = req.headers[`${prefix}-id`];
+const timestamp = req.headers[`${prefix}-timestamp`];
+const signature = req.headers[`${prefix}-signature`];
+
+new Webhook(process.env.AIRWEAVE_WEBHOOK_SECRET).verify(rawBody, {
+  'svix-id': id, 'svix-timestamp': timestamp, 'svix-signature': signature,
+  'webhook-id': id, 'webhook-timestamp': timestamp, 'webhook-signature': signature,
+});
+// svix 2.x verify() returns undefined; parse rawBody yourself afterwards.
+```
+
+With Express, read the body with `express.raw({ type: '*/*' })` so any content type reaches the
+verifier as a Buffer.
+
+### Python
+
+```python
+from svix.webhooks import Webhook, WebhookVerificationError
+
+prefix = "svix" if headers.get("svix-id") else "webhook"
+id_, ts, sig = (headers.get(f"{prefix}-{name}") for name in ("id", "timestamp", "signature"))
+
+wh = Webhook(os.environ["AIRWEAVE_WEBHOOK_SECRET"])
+try:
+    wh.verify(raw_body, {
+        "svix-id": id_, "svix-timestamp": ts, "svix-signature": sig,
+        "webhook-id": id_, "webhook-timestamp": ts, "webhook-signature": sig,
+    })
+except (WebhookVerificationError, ValueError):
+    ...  # return 400 (a malformed v1 entry raises a plain ValueError)
+```
+
+## Why Do Hookdeck Retries and Replays Fail the SDK Check?
+
+The `svix` library always enforces a fixed 5-minute timestamp window and exposes no option to
+change it. Hookdeck retries and replays resend the original request, including the original
+timestamp. A retry or replay more than 5 minutes after the first delivery is rejected as
+"Message timestamp too old", even though the signature is valid.
+
+If your handler sits behind Hookdeck, or you replay events for debugging (including Airweave's
+own `recover` endpoint), use the manual verifier below, which drops the
+window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating
+on the `svix-id` header.
+
+## Manual Verification (configurable timestamp window)
+
+```javascript
 import crypto from 'node:crypto';
 
-// rawBody: Buffer of the exact bytes received. toleranceSeconds: null disables the window.
-export function verifyAirweaveManually(rawBody, headers, secret, toleranceSeconds = null) {
-  const id = headers['svix-id'];
-  const timestamp = headers['svix-timestamp'];
-  const signatureHeader = headers['svix-signature'];
-  if (!secret || !id || !timestamp || !signatureHeader) return false;
-
-  // Plain positive integer only: no signs, decimals, exponents or whitespace.
-  if (!/^[1-9]\d*$/.test(timestamp)) return false;
-  if (toleranceSeconds !== null && Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSeconds) {
-    return false;
+// toleranceSeconds: null disables the timestamp check; 300 matches the SDK; larger widens it
+function verifyAirweave(rawBody, id, timestamp, signatureHeader, secret, toleranceSeconds = null) {
+  if (!id || !signatureHeader || !/^[0-9]+$/.test(timestamp ?? '') || Number(timestamp) <= 0) return false;
+  if (toleranceSeconds !== null) {
+    const now = Math.floor(Date.now() / 1000);
+    if (Math.abs(now - Number(timestamp)) > toleranceSeconds) return false;
   }
 
   const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
   const expected = crypto
     .createHmac('sha256', key)
     .update(`${id}.${timestamp}.`)
-    .update(rawBody)
-    .digest();
+    .update(rawBody) // Buffer or string, exactly as received
+    .digest('base64');
 
   return signatureHeader.split(' ').some((entry) => {
-    const comma = entry.indexOf(',');
-    if (comma === -1 || entry.slice(0, comma) !== 'v1') return false;
-    const provided = Buffer.from(entry.slice(comma + 1), 'base64');
-    return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+    const [version, sig] = entry.split(',');
+    if (version !== 'v1' || !sig) return false;
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
   });
 }
 ```
 
-### Python
-
 ```python
 import base64, hashlib, hmac, re, time
+from typing import Optional
 
-def verify_airweave_manually(raw_body: bytes, headers: dict, secret: str, tolerance: int | None = None) -> bool:
-    """tolerance=None disables the timestamp window."""
-    msg_id = headers.get("svix-id")
-    timestamp = headers.get("svix-timestamp")
-    signature_header = headers.get("svix-signature")
-    if not (secret and msg_id and timestamp and signature_header):
+def verify_airweave(raw_body: bytes, msg_id: str, timestamp: str, signature_header: str,
+                       secret: str, tolerance_seconds: Optional[int] = None) -> bool:
+    # tolerance_seconds=None disables the timestamp check; 300 matches the SDK
+    if not msg_id or not signature_header or not re.fullmatch(r"[0-9]+", timestamp or "") or int(timestamp) <= 0:
         return False
-
-    # Plain positive integer only.
-    if not re.fullmatch(r"[1-9][0-9]*", timestamp):
+    if tolerance_seconds is not None and abs(int(time.time()) - int(timestamp)) > tolerance_seconds:
         return False
-    if tolerance is not None and abs(int(time.time()) - int(timestamp)) > tolerance:
-        return False
-
     try:
         key = base64.b64decode(secret.removeprefix("whsec_"))
     except ValueError:
         return False
     signed = f"{msg_id}.{timestamp}.".encode() + raw_body
-    expected = hmac.new(key, signed, hashlib.sha256).digest()
-
+    expected = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest()).decode()
     for entry in signature_header.split(" "):
         version, _, sig = entry.partition(",")
-        if version != "v1":
-            continue
-        try:
-            provided = base64.b64decode(sig, validate=True)
-        except ValueError:
-            continue
-        if len(provided) == len(expected) and hmac.compare_digest(provided, expected):
+        if version == "v1" and len(sig) == len(expected) and hmac.compare_digest(sig.encode(), expected.encode()):
             return True
     return False
 ```
 
-## Why Not Use Airweave's Manual Snippet?
-
-The manual examples in Airweave's setup guide split `svix-signature` on `,` and take the last space-separated token:
-
-```python
-for sig in signature.split(","):
-    sig_value = sig.split(" ")[-1]
-```
-
-That is not how Svix formats the header. The header is a space-delimited list of `v1,<sig>` entries, so this only works when there is exactly one signature. During a secret rotation Svix sends two (`v1,<old> v1,<new>`), and splitting on `,` then reading the last space-separated token drops the first one. Use the library or the verifier above, which check every entry.
+Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK example above.
 
 ## Common Gotchas
 
-- **Raw body.** The HMAC covers the exact bytes Airweave sent. `express.json()`, `request.json()` or re-serialising with `JSON.stringify` changes whitespace and key order and breaks the signature. Verify first, then parse.
-- **Decode the secret.** The key is the base64-decoded bytes after `whsec_`, not the literal `whsec_...` string. The SDK does this for you.
-- **Use the returned secret.** A custom secret you supplied at creation is not what you paste. Use the `whsec_` value the API returns.
-- **Several signatures.** `svix-signature` can carry more than one `v1,` entry. Accept the request if any entry matches, and ignore other versions.
-- **svix 2.x `verify()` returns nothing.** Parse the raw body after verification. svix 2.x for JavaScript is also ESM-only and needs Node 22+.
-- **Header case.** HTTP headers are case-insensitive. Node lowercases them (`req.headers['svix-id']`); Starlette's `request.headers` is case-insensitive.
-- **Per-subscription secrets.** Each subscription has its own secret. Using one subscription's secret for another's deliveries fails.
-- **Dedupe on `svix-id`.** It is stable across retries of a message to one subscription.
+- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order. Use
+  `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()`
+  (FastAPI).
+- **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the
+  literal string. The `svix` library always base64-decodes, so it needs a `whsec_` secret.
+- **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
+  Don't compare the whole header.
+- **Fixed 5-minute window in the SDK.** See the Hookdeck section above.
+- **Paste the returned secret.** If you set a custom `secret` when creating the subscription,
+  paste the `whsec_` secret Airweave returns for the subscription (`GET
+  /webhooks/subscriptions/{id}?include_secret=true`), not the value you sent.
+- **Disabled subscriptions send nothing.** If no deliveries arrive at all, check `disabled` on the
+  subscription. See [setup.md](setup.md).
+- **Airweave's own manual snippets only handle one signature.** They split `svix-signature` on
+  `,` and take the last space-separated token, which is not the Svix format (space-delimited
+  `v1,<sig>` entries). Use the `svix` library or the manual verifier here, which compare every entry.
+- **CSRF middleware** must be disabled on the webhook route.
 
-## How Do I Debug Verification Failures?
+## Debugging Verification Failures
 
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| `No matching signature found` | Body parsed or modified before verification | Use the raw body (`express.raw()`, `request.text()`, `await request.body()`) |
-| `No matching signature found` with raw body | Wrong secret, or the value you sent instead of the one returned | Fetch it again with `?include_secret=true` |
-| `Message timestamp too old` | Retry or replay after more than 5 minutes (Hookdeck keeps the original timestamp), or clock skew | Use the manual verifier with no window, or sync the server clock |
-| `Message timestamp too new` | Server clock is behind | Sync the server clock (NTP) |
-| `Missing required headers` | Proxy or framework stripped `svix-*` headers | Pass them through your load balancer / reverse proxy |
-| Works locally, fails in production | A middleware parses JSON globally before your route | Mount the webhook route before the global JSON parser, or exclude it |
+| Symptom | Likely cause |
+|---------|--------------|
+| Every request fails with "Invalid signature" | Wrong secret (another endpoint's, or a rotated-out one), or the body was parsed/re-serialized before verification |
+| "Missing required webhook headers" | A proxy dropped the `svix-*` headers |
+| Fails only after deploys or proxies | A proxy or middleware rewrote the body |
+| "Timestamp too old" on retries or replays | The SDK's fixed 5-minute window; use the manual verifier |
+| "Timestamp too old" on first delivery | Server clock drift |

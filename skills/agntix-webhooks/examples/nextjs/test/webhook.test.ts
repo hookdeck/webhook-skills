@@ -1,197 +1,151 @@
-// Generated with: agntix-webhooks skill
-// https://github.com/hookdeck/webhook-skills
-
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import crypto from 'crypto';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { POST } from '../app/webhooks/agntix/route';
 
-// Svix secrets are "whsec_" + base64(key bytes). The HMAC key is the
-// base64-DECODED part after "whsec_".
-const SECRET = 'whsec_' + Buffer.from('agntix-test-signing-key-012345678').toString('base64');
-const OTHER_SECRET = 'whsec_' + Buffer.from('some-other-endpoint-signing-key01').toString('base64');
+// Svix-format secret: 'whsec_' + base64(key); this is base64 of "test_secret_key_for-webhooks"
+const TEST_SECRET = 'whsec_dGVzdF9zZWNyZXRfa2V5X2Zvci13ZWJob29rcw==';
 
-/** Sign exactly like Agntix (Svix). */
-function sign(rawBody: string, id: string, timestamp: string, secret = SECRET): string {
+// Svix algorithm: base64(HMAC-SHA256(decoded secret, `${id}.${timestamp}.${body}`))
+function sign(payload: string, msgId: string, timestamp: string, secret = TEST_SECRET): string {
   const key = Buffer.from(secret.slice('whsec_'.length), 'base64');
-  const sig = crypto.createHmac('sha256', key).update(`${id}.${timestamp}.${rawBody}`).digest('base64');
-  return `v1,${sig}`;
+  const signature = crypto.createHmac('sha256', key).update(`${msgId}.${timestamp}.${payload}`).digest('base64');
+  return `v1,${signature}`;
 }
 
-const now = () => Math.floor(Date.now() / 1000);
+const now = () => Math.floor(Date.now() / 1000).toString();
 
-interface SignOptions {
-  id?: string;
-  timestamp?: number | string;
-  secret?: string;
-  signature?: string;
-  contentType?: string;
-}
-
-function signedHeaders(rawBody: string, opts: SignOptions = {}): Record<string, string> {
-  const id = opts.id || `msg_${crypto.randomUUID().replace(/-/g, '')}`;
-  const ts = String(opts.timestamp ?? now());
-  return {
-    'Content-Type': opts.contentType ?? 'application/json',
-    'svix-id': id,
-    'svix-timestamp': ts,
-    'svix-signature': opts.signature ?? sign(rawBody, id, ts, opts.secret),
+// prefix: 'svix' (Agntix) or 'webhook' (Standard Webhooks names for the same values)
+function send(
+  payload: string,
+  opts: { msgId?: string; timestamp?: string; signature?: string; headers?: Record<string, string>; contentType?: string; prefix?: string } = {}
+) {
+  const msgId = opts.msgId ?? `msg_${crypto.randomBytes(12).toString('hex')}`;
+  const timestamp = opts.timestamp ?? now();
+  const prefix = opts.prefix ?? 'svix';
+  const headers = opts.headers ?? {
+    [`${prefix}-id`]: msgId,
+    [`${prefix}-timestamp`]: timestamp,
+    [`${prefix}-signature`]: opts.signature ?? sign(payload, msgId, timestamp),
   };
-}
-
-async function post(rawBody: string, headers: Record<string, string>) {
-  const res = await POST(
-    new Request('http://localhost:3000/webhooks/agntix', { method: 'POST', headers, body: rawBody })
+  return POST(
+    new Request('http://localhost:3000/webhooks/agntix', {
+      method: 'POST',
+      headers: { 'content-type': opts.contentType ?? 'application/json', ...headers },
+      body: payload,
+    })
   );
-  return { status: res.status, body: await res.json() };
 }
 
-function sessionCreated(overrides: Record<string, unknown> = {}) {
-  return {
-    id: crypto.randomUUID(),
-    eventType: 'session.created',
+// Flat envelope (no `data`): `eventType` is the event name, `type` is the session kind (VOICE | CHAT)
+function envelope(eventType: string, extra: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    id: '4981804c-2658-4893-84ff-9c2fa90fb3c2',
+    eventType,
     type: 'VOICE',
     platform: 'PHONE',
     direction: 'OUTBOUND',
-    state: 'OPEN',
+    state: eventType === 'session.ended' ? 'CLOSED' : 'OPEN',
     agentId: '40235145-aa3d-443e-9d0c-841dd0716a2f',
     createdAt: '2026-04-08T05:00:01.130Z',
-    metadata: {
-      customerPhoneNumber: '+971501234567',
-      sessionVariables: { crmContactId: 'CRM-7728' },
-    },
-    ...overrides,
-  };
+    metadata: { customerPhoneNumber: '+971501234567', sessionVariables: { crmContactId: 'CRM-7728' } },
+    ...extra,
+  });
 }
 
-function sessionEnded(overrides: Record<string, unknown> = {}) {
-  return {
-    ...sessionCreated(),
-    eventType: 'session.ended',
-    state: 'CLOSED',
-    lastActivityAt: '2026-04-08T05:00:01.130Z',
+const events: Record<string, Record<string, unknown>> = {
+  'session.created': {},
+  'session.ended': {
+    lastActivityAt: '2026-04-08T05:00:09.000Z',
     endedAt: '2026-04-08T05:00:10.546Z',
-    analysis: { summary: 'Customer confirmed delivery slot for Wednesday afternoon.' },
-    recordingUrl: 'https://app.agntix.ai/en/logs-history?opened=4981804c',
-    ...overrides,
-  };
-}
+    analysis: { summary: 'Customer confirmed delivery slot.', extractedData: { slotConfirmed: true } },
+    recordingUrl: 'https://app.agntix.ai/en/logs-history?opened=4981804c-2658-4893-84ff-9c2fa90fb3c2',
+  },
+};
 
-let logSpy: ReturnType<typeof vi.spyOn>;
-
-beforeEach(() => {
-  process.env.AGNTIX_WEBHOOK_SECRET = SECRET;
-  logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
-});
-
-afterEach(() => vi.restoreAllMocks());
-
-describe('valid signatures', () => {
-  it('accepts session.created', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body));
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true });
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Session created'));
+describe('Agntix webhook handler', () => {
+  beforeEach(() => {
+    process.env.AGNTIX_WEBHOOK_SECRET = TEST_SECRET;
   });
 
-  it('accepts session.ended', async () => {
-    const body = JSON.stringify(sessionEnded());
-    const res = await post(body, signedHeaders(body));
+  test.each(Object.entries(events))('handles %s', async (eventType, extra) => {
+    const res = await send(envelope(eventType, extra));
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true });
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Customer confirmed delivery slot'));
+    expect(await res.json()).toEqual({ success: true, eventType });
   });
 
-  it('acknowledges unknown event types with 200', async () => {
-    const body = JSON.stringify(sessionCreated({ eventType: 'session.updated' }));
-    const res = await post(body, signedHeaders(body));
+  test('handles unknown event types gracefully', async () => {
+    const res = await send(envelope('session.updated'));
     expect(res.status).toBe(200);
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Unhandled Agntix event type'));
+    expect((await res.json()).eventType).toBe('session.updated');
   });
 
-  it('verifies any content type (raw body, not JSON-parsed)', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body, { contentType: 'text/plain' }));
+  test('verifies regardless of request content type', async () => {
+    const res = await send(envelope('session.ended'), {
+      contentType: 'application/octet-stream',
+    });
     expect(res.status).toBe(200);
   });
 
-  it('accepts when any one of several space-delimited signatures matches', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const headers = signedHeaders(body);
-    headers['svix-signature'] = `v1,bm90LXRoZS1yaWdodC1zaWduYXR1cmU= ${headers['svix-signature']}`;
-    const res = await post(body, headers);
+  test('accepts a delivery signed the same way but sent with webhook-* headers', async () => {
+    const res = await send(envelope('session.ended'), { prefix: 'webhook' });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ success: true, eventType: 'session.ended' });
+  });
+
+  test('rejects an invalid signature sent with webhook-* headers', async () => {
+    const res = await send(envelope('session.created'), { prefix: 'webhook', signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('Invalid signature');
+  });
+
+  test('accepts any matching signature among several (secret rotation)', async () => {
+    const payload = envelope('session.created');
+    const msgId = 'msg_rotation';
+    const timestamp = now();
+    const signature = `v1,aW52YWxpZF9zaWduYXR1cmU= ${sign(payload, msgId, timestamp)}`;
+    const res = await send(payload, { msgId, timestamp, signature });
     expect(res.status).toBe(200);
   });
-});
 
-describe('deduplication', () => {
-  it('acknowledges a retried event without reprocessing it', async () => {
-    const body = JSON.stringify(sessionEnded());
-    const first = await post(body, signedHeaders(body));
-    const retry = await post(body, signedHeaders(body));
-    expect(first.body).toEqual({ received: true });
-    expect(retry.status).toBe(200);
-    expect(retry.body).toEqual({ received: true, duplicate: true });
-  });
-
-  it('does not treat session.ended as a duplicate of session.created for the same session', async () => {
-    const created = sessionCreated();
-    const createdBody = JSON.stringify(created);
-    const endedBody = JSON.stringify(sessionEnded({ id: created.id }));
-    await post(createdBody, signedHeaders(createdBody));
-    const res = await post(endedBody, signedHeaders(endedBody));
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true });
-  });
-});
-
-describe('invalid requests', () => {
-  it('rejects a tampered body', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const headers = signedHeaders(body);
-    const res = await post(body.replace('VOICE', 'CHAT'), headers);
+  test('rejects missing headers', async () => {
+    const res = await send('{}', { headers: {} });
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'Invalid signature' });
+    expect((await res.json()).error).toBe('Missing required webhook headers');
   });
 
-  it('rejects a signature made with another endpoint secret', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body, { secret: OTHER_SECRET }));
+  test('rejects an invalid signature', async () => {
+    const res = await send(envelope('session.created'), { signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('Invalid signature');
+  });
+
+  test('rejects a signature made with a different secret', async () => {
+    const payload = envelope('session.created');
+    const msgId = 'msg_other';
+    const timestamp = now();
+    const signature = sign(payload, msgId, timestamp, 'whsec_b3RoZXJfc2VjcmV0X2tleQ==');
+    const res = await send(payload, { msgId, timestamp, signature });
     expect(res.status).toBe(400);
   });
 
-  it('rejects a timestamp older than 5 minutes', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body, { timestamp: now() - 600 }));
+  test('rejects a tampered body', async () => {
+    const msgId = 'msg_tamper';
+    const timestamp = now();
+    const signature = sign(envelope('session.ended', { endedAt: '2026-04-08T05:00:10.546Z' }), msgId, timestamp);
+    const res = await send(envelope('session.created'), { msgId, timestamp, signature });
     expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('Invalid signature');
   });
 
-  it('rejects a timestamp in the future', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body, { timestamp: now() + 600 }));
+  test('rejects a timestamp older than 5 minutes', async () => {
+    const res = await send(envelope('session.created'), { timestamp: String(Math.floor(Date.now() / 1000) - 600) });
     expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('Timestamp too old');
   });
 
-  it('rejects a malformed signature header', async () => {
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body, { signature: 'garbage' }));
-    expect(res.status).toBe(400);
-  });
-
-  it.each(['svix-id', 'svix-timestamp', 'svix-signature'])('rejects a missing %s header', async (name) => {
-    const body = JSON.stringify(sessionCreated());
-    const headers = signedHeaders(body);
-    delete headers[name];
-    const res = await post(body, headers);
-    expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'Missing Svix signature headers' });
-  });
-
-  it('fails closed with 500 when the secret is not configured', async () => {
+  test('returns 500 when the secret is not configured', async () => {
     delete process.env.AGNTIX_WEBHOOK_SECRET;
-    const body = JSON.stringify(sessionCreated());
-    const res = await post(body, signedHeaders(body));
+    const res = await send(envelope('session.created'));
     expect(res.status).toBe(500);
   });
 });

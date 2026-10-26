@@ -2,35 +2,63 @@
 
 ## Prerequisites
 
-- A Basiq account and an application API key, to obtain a server access token
+- A Basiq application and a server access token for the Basiq API (`Authorization: Bearer ...`)
 - A public HTTPS URL for your endpoint (for local development, use the Hookdeck CLI below)
+
+Basiq webhook subscriptions are managed through the API, not a dashboard form.
 
 ## How Do I Create a Basiq Webhook Subscription?
 
-Subscriptions are managed through the API rather than a dashboard form.
+```bash
+curl -X POST https://au-api.basiq.io/notifications/webhooks \
+  -H "Authorization: Bearer $BASIQ_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production receiver",
+    "description": "Consent and connection events",
+    "url": "https://your-app.com/webhooks/basiq",
+    "subscribedEvents": ["user.created", "connection.activated", "consent.revoked", "transactions.updated"]
+  }'
+```
 
-1. Get a server access token with your API key.
-2. `POST /notifications/webhooks` with the **URL** of your endpoint (for example `https://your-app.com/webhooks/basiq`) and the **events** you want, using event type IDs from `GET /events/types`. Basiq's webhooks page names these two inputs but the field names are in the API reference, so check them there.
-3. Subscribe only to event types that endpoint lists.
-4. A new subscription may take up to 15 minutes to start delivering.
+Only `url` is required. `subscribedEvents` lists the event types to send. Get valid values from `GET /events/types`.
 
-## Where Do I Get the Basiq Webhook Signing Secret?
+## Where Do I Get the Signing Secret?
 
-Each endpoint has one signing secret, in the form `whsec_` + base64 (for example `whsec_MA4V6bD7rB0Hcm2aw8ghgDeQ5UAak24DwnX0rX6`). Per Basiq, the signing secret is the part after the `whsec_` prefix, and that part is base64-decoded to get the HMAC key. Store the **full** value, including the prefix, as `BASIQ_WEBHOOK_SECRET`. See [webhook security](https://api.basiq.io/docs/webhooks-security).
+Each subscription has its own signing secret in the form `whsec_` followed by base64. The create-webhook response includes a `secret` field. Put the **full value, including `whsec_`**, in `BASIQ_WEBHOOK_SECRET`. A secret from one subscription won't verify deliveries from another. Use `GET /notifications/webhooks/{webhookId}` to look a subscription up again.
 
 ## How Do I Send a Test Message?
 
-Use `POST /notifications/messages/test` to have Basiq send a test message to your subscription. Delivered messages can be listed with `GET /notifications/webhooks/{webhookId}/messages`.
+```bash
+curl -X POST https://au-api.basiq.io/notifications/messages/test \
+  -H "Authorization: Bearer $BASIQ_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"eventTypeId": "user.created", "Text": "My test message"}'
+```
+
+This sends a test webhook for the event type to your subscriptions.
+
+## Managing Subscriptions
+
+| Call | Purpose |
+|------|---------|
+| `GET /notifications/webhooks` | List your subscriptions |
+| `POST /notifications/webhooks` | Create a subscription |
+| `GET /notifications/webhooks/{webhookId}` | Get one subscription |
+| `POST /notifications/webhooks/{webhookId}` | Update a subscription |
+| `DELETE /notifications/webhooks/{webhookId}` | Delete a subscription |
+| `GET /notifications/webhooks/{webhookId}/messages` | List sent messages |
 
 ## Local Development
 
 ```bash
-npx hookdeck-cli listen 3000 basiq --path /webhooks/basiq   # Express / Next.js
-npx hookdeck-cli listen 8000 basiq --path /webhooks/basiq   # FastAPI
+npx hookdeck-cli listen 3000 basiq --path /webhooks/basiq
 ```
 
-No account required. Use the printed URL as the subscription `url`.
+Use 8000 for FastAPI. Create a subscription with the printed URL as `url`, then send a test message.
 
-## Challenge or Handshake
+## Things to Know
 
-Basiq documents no endpoint challenge, so there is nothing to answer when you create a subscription.
+- A new subscription can take up to 15 minutes to start delivering. If nothing arrives after that, contact support@basiq.io.
+- Basiq documents no challenge or handshake step for new endpoints.
+- If your endpoint sits behind a firewall, allow `13.238.192.210`, `3.24.252.173` and `3.104.17.39`.

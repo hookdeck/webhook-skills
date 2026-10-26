@@ -2,144 +2,156 @@
 
 ## How Does BlindPay Sign Webhooks?
 
-BlindPay delivers webhooks through [Svix](https://www.svix.com/) using the Standard Webhooks scheme with `svix-*` headers:
+BlindPay delivers through Svix, so every delivery carries three headers:
 
-| Header | Description |
-|--------|-------------|
-| `svix-id` | Unique message identifier, the same on every retry |
-| `svix-timestamp` | Unix timestamp (seconds) when the message was sent |
-| `svix-signature` | Space-delimited list of signatures, each `v1,<base64>` |
+| Header | Contents |
+|--------|----------|
+| `svix-id` | Unique message id (`msg_...`), the same on every retry of a message |
+| `svix-timestamp` | Unix timestamp in seconds when the delivery was signed |
+| `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-- **Algorithm:** HMAC-SHA256, base64-encoded
-- **Signed content:** `{svix-id}.{svix-timestamp}.{raw body}`
-- **Key:** base64-decode the part of the secret after `whsec_`
-- **Library timestamp window:** fixed 5 minutes
+Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
+carry the same values. Hookdeck's BlindPay source reads the `svix-*` headers and falls back to
+the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
 
-BlindPay's docs say never to modify the request body before verification.
+The algorithm:
 
-## Why Does Signature Verification Matter?
+1. Build the signed content: `{svix-id}.{svix-timestamp}.{raw body}`.
+2. Strip the `whsec_` prefix from the secret and base64-decode the rest. That is the HMAC key.
+3. Compute HMAC-SHA256 of the signed content and base64-encode the digest.
+4. Compare it in constant time against every `v1,` entry in `svix-signature`. One match is
+   enough, and several entries can appear during secret rotation. Ignore other versions such as `v1a`.
+5. Optionally reject timestamps too far from now (the library uses a fixed 5 minutes).
 
-Your webhook URL is public. Without verification anyone could POST a fake `payin.complete` and get you to credit an account. Always verify in production.
-
-## SDK Verification (Recommended)
-
-The official `svix` library works for Node.js and Python, so all three examples use it.
-
-### Node.js (`svix` on npm)
-
-```javascript
-import { Webhook } from 'svix'; // svix 2.x is ESM-only and needs Node 22+
-
-const wh = new Webhook(process.env.BLINDPAY_WEBHOOK_SECRET); // "whsec_..." accepted as-is
-wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
-}); // throws WebhookVerificationError; returns nothing
-const event = JSON.parse(rawBody.toString('utf8'));
-```
-
-- Express: `express.raw({ type: '*/*' })` on the route, then pass `req.body` (a Buffer).
-- Next.js App Router: `const rawBody = await request.text()`.
-
-### Python (`svix` on PyPI)
-
-```python
-import json
-from svix.webhooks import Webhook, WebhookVerificationError
-
-raw_body = await request.body()
-try:
-    Webhook(secret).verify(raw_body, {
-        "svix-id": request.headers.get("svix-id"),
-        "svix-timestamp": request.headers.get("svix-timestamp"),
-        "svix-signature": request.headers.get("svix-signature"),
-    })  # returns None; raises WebhookVerificationError on failure
-except WebhookVerificationError:
-    raise HTTPException(status_code=400, detail="Invalid signature")
-event = json.loads(raw_body)
-```
-
-In svix 2.x `verify()` no longer returns the parsed payload, so parse the raw body yourself after verification.
-
-## Manual Verification (No Timestamp Window, or a Wider One)
-
-**Hookdeck retries and replays resend the original timestamp**, so the `svix` library rejects a late retry once it is more than 5 minutes old. Use this verifier when you need to accept those, or to debug. It requires the timestamp to be a plain positive integer, checks every `v1,` entry in constant time after a length check, and takes an optional window (`0` = no window).
+## SDK Verification (recommended)
 
 ### Node.js
 
 ```javascript
-import crypto from 'node:crypto';
+import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
-export function verifyManually(rawBody, headers, secret, toleranceSeconds = 0) {
-  const id = headers['svix-id'];
-  const timestamp = headers['svix-timestamp'];
-  const signatureHeader = headers['svix-signature'];
-  if (!id || !timestamp || !signatureHeader || !secret) return false;
-  if (!/^[1-9][0-9]*$/.test(timestamp)) return false; // plain positive integer
-  if (toleranceSeconds > 0 && Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp)) > toleranceSeconds) {
-    return false;
-  }
+const prefix = req.headers['svix-id'] ? 'svix' : 'webhook'; // fall back to webhook-* headers
+const id = req.headers[`${prefix}-id`];
+const timestamp = req.headers[`${prefix}-timestamp`];
+const signature = req.headers[`${prefix}-signature`];
 
-  const key = secret.startsWith('whsec_')
-    ? Buffer.from(secret.slice('whsec_'.length), 'base64')
-    : Buffer.from(secret, 'utf8');
-  const expected = Buffer.from(
-    crypto.createHmac('sha256', key).update(`${id}.${timestamp}.`).update(rawBody).digest('base64')
-  );
-
-  return signatureHeader.split(' ').some((entry) => {
-    const [version, sig] = entry.split(',');
-    if (version !== 'v1' || !sig) return false;
-    const received = Buffer.from(sig);
-    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
-  });
-}
+new Webhook(process.env.BLINDPAY_WEBHOOK_SECRET).verify(rawBody, {
+  'svix-id': id, 'svix-timestamp': timestamp, 'svix-signature': signature,
+  'webhook-id': id, 'webhook-timestamp': timestamp, 'webhook-signature': signature,
+});
+// svix 2.x verify() returns undefined; parse rawBody yourself afterwards.
 ```
+
+With Express, read the body with `express.raw({ type: '*/*' })` so any content type reaches the
+verifier as a Buffer.
 
 ### Python
 
 ```python
+from svix.webhooks import Webhook, WebhookVerificationError
+
+prefix = "svix" if headers.get("svix-id") else "webhook"
+id_, ts, sig = (headers.get(f"{prefix}-{name}") for name in ("id", "timestamp", "signature"))
+
+wh = Webhook(os.environ["BLINDPAY_WEBHOOK_SECRET"])
+try:
+    wh.verify(raw_body, {
+        "svix-id": id_, "svix-timestamp": ts, "svix-signature": sig,
+        "webhook-id": id_, "webhook-timestamp": ts, "webhook-signature": sig,
+    })
+except (WebhookVerificationError, ValueError):
+    ...  # return 400 (a malformed v1 entry raises a plain ValueError)
+```
+
+## Why Do Hookdeck Retries and Replays Fail the SDK Check?
+
+The `svix` library always enforces a fixed 5-minute timestamp window and exposes no option to
+change it. Hookdeck retries and replays resend the original request, including the original
+timestamp. A retry or replay more than 5 minutes after the first delivery is rejected as
+"Message timestamp too old", even though the signature is valid.
+
+If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the
+window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating
+on `svix-id`, which is stable across retries.
+
+## Manual Verification (configurable timestamp window)
+
+```javascript
+import crypto from 'node:crypto';
+
+// toleranceSeconds: null disables the timestamp check; 300 matches the SDK; larger widens it
+function verifyBlindPay(rawBody, id, timestamp, signatureHeader, secret, toleranceSeconds = null) {
+  if (!id || !signatureHeader || !/^[0-9]+$/.test(timestamp ?? '') || Number(timestamp) <= 0) return false;
+  if (toleranceSeconds !== null) {
+    const now = Math.floor(Date.now() / 1000);
+    if (Math.abs(now - Number(timestamp)) > toleranceSeconds) return false;
+  }
+
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const expected = crypto
+    .createHmac('sha256', key)
+    .update(`${id}.${timestamp}.`)
+    .update(rawBody) // Buffer or string, exactly as received
+    .digest('base64');
+
+  return signatureHeader.split(' ').some((entry) => {
+    const [version, sig] = entry.split(',');
+    if (version !== 'v1' || !sig) return false;
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  });
+}
+```
+
+```python
 import base64, hashlib, hmac, re, time
+from typing import Optional
 
-def verify_manually(raw_body: bytes, headers: dict, secret: str, tolerance: int = 0) -> bool:
-    msg_id = headers.get("svix-id")
-    timestamp = headers.get("svix-timestamp")
-    signature_header = headers.get("svix-signature")
-    if not (msg_id and timestamp and signature_header and secret):
+def verify_blindpay(raw_body: bytes, msg_id: str, timestamp: str, signature_header: str,
+                       secret: str, tolerance_seconds: Optional[int] = None) -> bool:
+    # tolerance_seconds=None disables the timestamp check; 300 matches the SDK
+    if not msg_id or not signature_header or not re.fullmatch(r"[0-9]+", timestamp or "") or int(timestamp) <= 0:
         return False
-    if not re.fullmatch(r"[1-9][0-9]*", timestamp):  # plain positive integer
+    if tolerance_seconds is not None and abs(int(time.time()) - int(timestamp)) > tolerance_seconds:
         return False
-    if tolerance > 0 and abs(int(time.time()) - int(timestamp)) > tolerance:
+    try:
+        key = base64.b64decode(secret.removeprefix("whsec_"))
+    except ValueError:
         return False
-
-    key = base64.b64decode(secret.removeprefix("whsec_")) if secret.startswith("whsec_") else secret.encode()
     signed = f"{msg_id}.{timestamp}.".encode() + raw_body
-    expected = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest())
-
+    expected = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest()).decode()
     for entry in signature_header.split(" "):
         version, _, sig = entry.partition(",")
-        if version == "v1" and hmac.compare_digest(sig.encode(), expected):
+        if version == "v1" and len(sig) == len(expected) and hmac.compare_digest(sig.encode(), expected.encode()):
             return True
     return False
 ```
 
+Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK example above.
+
 ## Common Gotchas
 
-- **Raw body.** The HMAC covers the exact bytes BlindPay sent. `express.json()`, `request.json()` or re-serialising with `JSON.stringify` changes whitespace and key order and breaks the signature. Verify first, then parse.
-- **Decode the secret.** The key is the base64-decoded bytes after `whsec_`, not the literal `whsec_...` string. The SDK does this for you.
-- **Several signatures.** `svix-signature` can carry more than one `v1,` entry (for example during secret rotation). Accept the request if any entry matches. Entries with other versions are ignored.
-- **svix 2.x `verify()` returns nothing.** Parse the raw body after verification. svix 2.x for JavaScript is also ESM-only and needs Node 22+.
-- **Late retries.** The SDK's fixed 5-minute window rejects retries and Hookdeck replays after that. Use the manual verifier above.
-- **Per-endpoint secrets.** Each endpoint has its own `whsec_` secret. A different endpoint's secret fails.
-- **Header names.** The Svix library also accepts `webhook-id`, `webhook-timestamp` and `webhook-signature`; BlindPay sends the `svix-*` set.
+- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order. Use
+  `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()`
+  (FastAPI).
+- **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the
+  literal string. The `svix` library always base64-decodes, so it needs a `whsec_` secret.
+- **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
+  Don't compare the whole header.
+- **Fixed 5-minute window in the SDK.** See the Hookdeck section above.
+- **One secret per endpoint.** Fetch the secret for the endpoint that receives the delivery
+  (`GET .../webhook-endpoints/{we_id}/secret`, or **Get secret** in the dashboard). See [setup.md](setup.md).
+- **Verify before acting.** BlindPay's docs say to verify the signature before you act on any payload,
+  and never to modify the request body first (even whitespace or key order invalidates the signature).
+- **CSRF middleware** must be disabled on the webhook route.
 
-## How Do I Debug Verification Failures?
+## Debugging Verification Failures
 
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| `No matching signature found` | Body parsed or modified before verification | Use the raw body (`express.raw()`, `request.text()`, `await request.body()`) |
-| `No matching signature found` with raw body | Wrong endpoint's secret | Fetch it again from the dashboard or `GET .../webhook-endpoints/{we_id}/secret` |
-| `Message timestamp too old` | Retry or replay older than 5 minutes | Use the manual verifier with no window |
-| `Message timestamp too new` | Server clock ahead | Sync the server clock (NTP) |
-| `Missing required headers` | Proxy stripped `svix-*` headers | Pass them through your load balancer |
+| Symptom | Likely cause |
+|---------|--------------|
+| Every request fails with "Invalid signature" | Wrong secret (another endpoint's), or the body was parsed/re-serialized before verification |
+| "Missing required webhook headers" | A proxy dropped the `svix-*` headers |
+| Fails only after deploys or proxies | A proxy or middleware rewrote the body |
+| "Timestamp too old" on retries or replays | The SDK's fixed 5-minute window; use the manual verifier |
+| "Timestamp too old" on first delivery | Server clock drift |

@@ -4,161 +4,123 @@
 import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
-// ---------------------------------------------------------------------------
-// BlindPay delivers webhooks through Svix:
-//   svix-id         message ID (stable across retries)
-//   svix-timestamp  Unix seconds when the message was sent
-//   svix-signature  "v1,<base64 HMAC-SHA256>" (space-delimited list)
-// Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
-// ---------------------------------------------------------------------------
+export const dynamic = 'force-dynamic';
 
-interface BlindPayEvent {
-  webhook_event: string; // e.g. "payin.complete"
-  [key: string]: any; // flat: the resource's own fields follow webhook_event
-}
+export async function POST(request: Request) {
+  const secret = process.env.BLINDPAY_WEBHOOK_SECRET;
+  if (!secret || !secret.startsWith('whsec_')) {
+    console.error('BLINDPAY_WEBHOOK_SECRET is missing or not a whsec_ secret');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
 
-type SvixHeaders = Record<'svix-id' | 'svix-timestamp' | 'svix-signature', string>;
+  // Read the svix-* headers; when svix-id is absent, fall back to the webhook-* headers
+  const prefix = request.headers.get('svix-id') ? 'svix' : 'webhook';
+  const id = request.headers.get(`${prefix}-id`);
+  const timestamp = request.headers.get(`${prefix}-timestamp`);
+  const signature = request.headers.get(`${prefix}-signature`);
+  if (!id || !timestamp || !signature) {
+    return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
+  }
 
-/**
- * Verify a BlindPay delivery with the official Svix library. Svix checks the
- * timestamp (fixed 5-minute window), recomputes the HMAC over the raw body,
- * and compares in constant time against every `v1,` entry.
- *
- * The 5-minute window also rejects late Hookdeck retries and replays, which
- * keep the original timestamp. See references/verification.md for a manual
- * verifier without the window.
- *
- * svix 2.x `verify()` returns nothing (it throws on failure), so the JSON is
- * parsed here after verification succeeds.
- */
-function verifyBlindPayWebhook(rawBody: string, headers: SvixHeaders, secret: string): BlindPayEvent {
-  new Webhook(secret).verify(rawBody, headers);
-  return JSON.parse(rawBody) as BlindPayEvent;
-}
+  // Read the RAW body: verification needs the exact bytes BlindPay (Svix) signed
+  const rawBody = await request.text();
 
-// In-memory dedupe for the demo. Use Redis or your database in production.
-// svix-id is the same on every retry of a message.
-const processedMessageIds = new Set<string>();
+  try {
+    // Checks HMAC-SHA256 over `${id}.${timestamp}.${body}` against every v1, signature
+    // and enforces a fixed 5-minute timestamp window (see references/verification.md to change that).
+    // The library accepts either header-name set, so hand it the resolved values under both.
+    new Webhook(secret).verify(rawBody, {
+      'svix-id': id,
+      'svix-timestamp': timestamp,
+      'svix-signature': signature,
+      'webhook-id': id,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': signature,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('BlindPay webhook verification failed:', message);
+    const error = /timestamp/i.test(message) ? 'Timestamp too old' : 'Invalid signature';
+    return NextResponse.json({ error }, { status: 400 });
+  }
 
-function handleEvent(event: BlindPayEvent): void {
-  const eventType = event.webhook_event;
+  let payload: Record<string, any>;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
-  switch (eventType) {
-    // --- Customers ---------------------------------------------------------
+  // Flat body: `webhook_event` first, then the resource's own fields (no wrapper object)
+  const event: string = payload.webhook_event;
+  // svix-id is stable across retries and replays: deduplicate on it (or on the resource id + event)
+  console.log(`Received BlindPay webhook ${event} (${id}) for ${payload.id}`);
+
+  switch (event) {
     case 'customer.new':
-    case 'customer.update':
+    case 'customer.update': // includes KYC status changes from BlindPay's compliance review
+      console.log('Customer:', event, payload.id, payload.kyc_status);
+      break;
     case 'customer.delete':
-      console.log(`${eventType}: customer ${event.id} (${event.kyc_status ?? event.status ?? 'n/a'})`);
+      console.log('Customer deleted:', payload.id);
       break;
-    case 'tos.accept':
-      console.log(`Terms of service accepted: ${event.id}`);
-      break;
-
-    // --- Bank accounts and wallets -------------------------------------------
     case 'bankAccount.new':
-      console.log(`Bank account added: ${event.id}`);
+      console.log('Bank account added:', payload.id);
       break;
     case 'blockchainWallet.new':
     case 'blockchainWallet.update':
-    case 'wallet.new':
-    case 'wallet.update':
-      console.log(`${eventType}: ${event.id}`);
+      console.log('Blockchain wallet:', event, payload.id);
       break;
-    case 'wallet.inbound':
-      // Funds arrived in a wallet.
-      console.log(`Inbound wallet funds: ${event.id}`);
+    case 'tos.accept':
+      console.log('Terms of service accepted:', payload.id);
       break;
-
-    // --- Payins --------------------------------------------------------------
     case 'payin.new':
     case 'payin.update':
-      console.log(`${eventType}: payin ${event.id} is ${event.status}`);
+      console.log('Payin in progress:', event, payload.id, payload.status);
       break;
     case 'payin.complete':
-      // Carries amounts, fees, bank details and tracking objects.
-      console.log(`Payin completed: ${event.id} for customer ${event.customer_id}`);
+      // Sent to the destination wallet, refunded, or failed: branch on `status`
+      console.log('Payin finished:', payload.id, payload.status, payload.receiver_amount);
       break;
-
-    // --- Payouts -------------------------------------------------------------
     case 'payout.new':
-    case 'payout.update':
-      console.log(`${eventType}: payout ${event.id} is ${event.status}`);
+    case 'payout.update': // also fires for a payout that reached `failed`
+      console.log('Payout in progress:', event, payload.id, payload.status);
       break;
     case 'payout.complete':
-      console.log(`Payout completed: ${event.id}`);
+      console.log('Payout finished:', payload.id, payload.status);
       break;
-
-    // --- Virtual accounts ----------------------------------------------------
     case 'virtualAccount.new':
     case 'virtualAccount.complete':
-      console.log(`${eventType}: ${event.id}`);
+      console.log('Virtual account:', event, payload.id);
       break;
-
-    // --- Transfers -----------------------------------------------------------
     case 'transfer.new':
     case 'transfer.update':
     case 'transfer.complete':
-      console.log(`${eventType}: transfer ${event.id} is ${event.status}`);
+      console.log('Transfer:', event, payload.id, payload.status);
       break;
-
-    // --- Limit increases and payables ----------------------------------------
+    case 'wallet.new':
+    case 'wallet.update':
+      console.log('Managed wallet:', event, payload.id);
+      break;
+    case 'wallet.inbound':
+      console.log('Stablecoin deposit detected:', payload.id);
+      break;
     case 'limitIncrease.new':
     case 'limitIncrease.update':
+      console.log('Limit increase:', event, payload.id, payload.status);
+      break;
     case 'payable.new':
     case 'payable.update':
     case 'payable.complete':
-      console.log(`${eventType}: ${event.id}`);
+      console.log('Payable:', event, payload.id, payload.status);
       break;
-
     default:
-      console.log(`Unhandled BlindPay event type: ${eventType}`);
-  }
-}
-
-export async function POST(request: Request) {
-  // Fail closed: never accept unverified deliveries because a secret is missing.
-  const secret = process.env.BLINDPAY_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error('BLINDPAY_WEBHOOK_SECRET is not set — rejecting delivery');
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+      // The documented list may not be exhaustive: return 200 for events you don't handle
+      console.log('Unhandled BlindPay event:', event);
   }
 
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json({ error: 'Missing Svix signature headers' }, { status: 400 });
-  }
-
-  // Raw body: the signature covers the exact bytes, so never verify request.json().
-  const rawBody = await request.text();
-
-  let event: BlindPayEvent;
-  try {
-    event = verifyBlindPayWebhook(
-      rawBody,
-      { 'svix-id': svixId, 'svix-timestamp': svixTimestamp, 'svix-signature': svixSignature },
-      secret
-    );
-  } catch (err) {
-    console.error('BlindPay webhook verification failed:', (err as Error).message);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-  }
-
-  // Duplicates are normal (retries reuse svix-id) — acknowledge with 200.
-  if (processedMessageIds.has(svixId)) {
-    return NextResponse.json({ received: true, duplicate: true });
-  }
-
-  try {
-    // Keep this fast. In production, enqueue the event and process it asynchronously.
-    handleEvent(event);
-    processedMessageIds.add(svixId);
-  } catch (err) {
-    console.error('Error handling BlindPay event:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-
-  return NextResponse.json({ received: true });
+  return NextResponse.json({ success: true, event });
 }

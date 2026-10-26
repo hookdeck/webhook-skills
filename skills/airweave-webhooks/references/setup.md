@@ -1,14 +1,16 @@
 # Setting Up Airweave Webhooks
 
-Airweave has no dashboard form for webhooks in the docs. You manage subscriptions through the Subscriptions API (beta). Base URL: `https://api.airweave.ai`.
-
 ## Prerequisites
 
-- An Airweave account
-- Admin or owner role and a Bearer token for create, update, delete and recover calls. API key auth (`x-api-key`) works for read-only calls: listing subscriptions, reading messages and viewing delivery attempts
-- A public HTTPS endpoint (HTTP is only allowed for local development). For local work, run `npx hookdeck-cli listen 3000 airweave --path /webhooks/airweave` (use `8000` for FastAPI) and register the URL it prints
+- An Airweave account. **Creating, updating, deleting and recovering subscriptions needs the admin
+  or owner role and Bearer token authentication.** API key auth works for read-only calls
+  (listing subscriptions, messages, delivery attempts).
+- A publicly reachable **HTTPS** endpoint (HTTP is only allowed for local development; use the
+  Hookdeck CLI tunnel for that)
 
-## Register Your Endpoint
+## How Do I Register an Airweave Webhook Endpoint?
+
+Subscriptions are created through the API:
 
 ```bash
 curl -X POST 'https://api.airweave.ai/webhooks/subscriptions' \
@@ -16,59 +18,52 @@ curl -X POST 'https://api.airweave.ai/webhooks/subscriptions' \
   -H 'Content-Type: application/json' \
   -d '{
     "url": "https://your-server.com/webhooks/airweave",
-    "event_types": ["sync.completed", "sync.failed", "source_connection.auth_completed", "collection.deleted"]
+    "event_types": ["sync.completed", "sync.failed", "source_connection.created", "collection.deleted"]
   }'
 ```
 
-The response includes the subscription `id` (for example `ep_2bVxUn3RFnLYHa8z6ZKHMT9PqPX`), `url`, `filter_types` and `disabled`. It does not include the secret. There is no verification challenge: Airweave starts delivering as soon as the subscription exists.
+The response holds the subscription `id` (`ep_...`), `url`, `filter_types`, and `disabled: false`.
+Pick any of the 11 event types listed in [overview.md](overview.md). Return a `2xx` quickly from
+your handler and process on a queue. There is no challenge or handshake.
 
-Recommended events: `sync.completed` and `sync.failed` for most integrations. Subscribe to any combination of the 11 documented event types.
+## Where Do I Find the Signing Secret?
 
-## Get Your Signing Secret
+The secret is per subscription. Fetch it with `include_secret=true`:
 
 ```bash
 curl -X GET 'https://api.airweave.ai/webhooks/subscriptions/{subscription_id}?include_secret=true' \
   -H 'x-api-key: YOUR_API_KEY'
 ```
 
-The response includes a `secret` field in the format `whsec_...`. Put the whole value in `AIRWEAVE_WEBHOOK_SECRET`.
-
-### What If I Set a Custom Secret?
-
-You can pass your own `secret` (minimum 24 characters) when you create the subscription. Verifiers still need the `whsec_` value Airweave returns. Hookdeck's Airweave source gives the same instruction:
-
-> If you set a custom secret, paste the whsec_ secret Airweave returns for the subscription, not the value you sent.
-
-Each subscription has its own secret.
-
-## Manage Subscriptions
-
-| Task | Call |
-|------|------|
-| List | `GET /webhooks/subscriptions` |
-| Get one (includes recent delivery attempts) | `GET /webhooks/subscriptions/{id}` |
-| Change URL or event types | `PATCH /webhooks/subscriptions/{id}` with `url` / `event_types` |
-| Disable | `PATCH` with `{"disabled": true}` |
-| Enable, optionally recovering missed messages | `PATCH` with `{"disabled": false, "recover_since": "2025-01-15T00:00:00Z"}` |
-| Delete | `DELETE /webhooks/subscriptions/{id}` |
-
-## Recover Failed Messages
-
-If your endpoint was down, replay failed messages in chronological order:
+The response includes a `secret` field in the format `whsec_...`. Store the full value, prefix
+included:
 
 ```bash
-curl -X POST 'https://api.airweave.ai/webhooks/subscriptions/{subscription_id}/recover' \
-  -H 'Authorization: Bearer <token>' \
-  -H 'Content-Type: application/json' \
-  -d '{ "since": "2025-01-15T00:00:00Z", "until": "2025-01-16T00:00:00Z" }'
+AIRWEAVE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-`since` is required and inclusive; `until` defaults to now.
+You may supply your own `secret` (minimum 24 characters) when creating the subscription. Hookdeck's
+configuration alert for this source says: "If you set a custom secret, paste the whsec_ secret
+Airweave returns for the subscription, not the value you sent." So still fetch the subscription with
+`include_secret=true` and use the returned `whsec_...` value as `AIRWEAVE_WEBHOOK_SECRET`. The
+examples reject a value that doesn't start with `whsec_` with a 500 instead of verifying with the
+wrong key.
 
-## Inspect Messages
+## Managing a Subscription
 
-`GET /webhooks/messages` lists delivered messages (filter by event type), and `GET /webhooks/messages/{id}` returns one, optionally with delivery attempts. Use them to see why a delivery failed.
+| You want to | Call |
+|-------------|------|
+| Pause delivery | `PATCH /webhooks/subscriptions/{id}` with `{"disabled": true}` |
+| Resume and replay failures | `PATCH` with `{"disabled": false, "recover_since": "2025-01-15T00:00:00Z"}` |
+| Change URL or events | `PATCH` with `url` or `event_types` |
+| Replay failed messages | `POST /webhooks/subscriptions/{id}/recover` with `since` (required) and `until` |
+| See why deliveries fail | `GET /webhooks/messages/{message_id}?include_attempts=true` |
+| Delete | `DELETE /webhooks/subscriptions/{id}` (pending deliveries are cancelled) |
 
-## Test Mode vs Live Mode
+Recovery replays failed messages in chronological order.
 
-Airweave has no separate test mode for webhooks. Create a subscription pointing at your Hookdeck CLI URL, trigger a sync from your collection, and watch the delivery in the Hookdeck web UI. The Airweave repository also has a sample receiver under `examples/webhook-demo`.
+## Verification Behind Hookdeck
+
+If the endpoint URL points at a Hookdeck source, Hookdeck verifies the signature on ingest and
+forwards to your handler. Retries and replays resend the original `svix-timestamp`; see
+[verification.md](verification.md) for how that interacts with the library's 5-minute window.

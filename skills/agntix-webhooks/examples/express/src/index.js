@@ -1,135 +1,91 @@
 // Generated with: agntix-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 
-import 'dotenv/config';
-import express from 'express';
 import { pathToFileURL } from 'node:url';
+import dotenv from 'dotenv';
+import express from 'express';
 import { Webhook } from 'svix';
 
-const app = express();
+dotenv.config({ quiet: true });
+
+export const app = express();
 const PORT = process.env.PORT || 3000;
-
-// ---------------------------------------------------------------------------
-// Agntix delivers webhooks through Svix:
-//   svix-id         message ID
-//   svix-timestamp  Unix seconds when the message was sent
-//   svix-signature  "v1,<base64 HMAC-SHA256>" (space-delimited list)
-// Signed content: `${svix-id}.${svix-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
-// ---------------------------------------------------------------------------
-
-/**
- * Verify an Agntix delivery with the official Svix library.
- * Svix checks the timestamp (fixed 5-minute tolerance), recomputes the HMAC
- * over the raw body, and compares in constant time against every `v1,` entry.
- *
- * svix 2.x `verify()` returns nothing (it throws on failure), so parse the
- * JSON yourself afterwards.
- *
- * Hookdeck retries and replays resend the ORIGINAL timestamp, so this library
- * check rejects deliveries retried after 5 minutes. To drop or widen the
- * window, use the manual verifier in references/verification.md.
- *
- * @param {Buffer|string} rawBody - the exact bytes Agntix sent
- * @param {object} headers - svix-id / svix-timestamp / svix-signature
- * @param {string} secret - the endpoint's whsec_ signing secret
- * @returns {object} the parsed, verified payload
- * @throws {WebhookVerificationError} if the signature or timestamp is invalid
- */
-export function verifyAgntixWebhook(rawBody, headers, secret = process.env.AGNTIX_WEBHOOK_SECRET) {
-  new Webhook(secret).verify(rawBody, headers);
-  return JSON.parse(rawBody.toString('utf8'));
-}
-
-// In-memory dedupe for the demo. Use Redis or your database in production.
-// The top-level `id` is the SESSION UUID and is shared by session.created and
-// session.ended, so the key combines eventType and id.
-const processedEvents = new Set();
-
-function handleEvent(event) {
-  // Flat envelope (no `data`). `eventType` is the event; `type` is VOICE | CHAT.
-  switch (event.eventType) {
-    case 'session.created': {
-      // Fires when the session is initiated (for outbound calls: before pickup).
-      const vars = event.metadata?.sessionVariables ?? {};
-      console.log(
-        `Session created: ${event.id} (${event.type}/${event.platform}/${event.direction}) ` +
-          `agent ${event.agentId}, variables ${JSON.stringify(vars)}`
-      );
-      break;
-    }
-    case 'session.ended': {
-      // Fires once when the session closes, with the post-call analysis attached.
-      const { analysis, recordingUrl } = event;
-      console.log(
-        `Session ended: ${event.id} at ${event.endedAt}. ` +
-          `Summary: ${analysis?.summary ?? 'n/a'}. Recording: ${recordingUrl ?? 'n/a'}`
-      );
-      break;
-    }
-    default:
-      console.log(`Unhandled Agntix event type: ${event.eventType}`);
-  }
-}
-
-// Agntix webhook endpoint. express.raw({ type: '*/*' }) keeps the exact bytes
-// for the HMAC whatever the content type. Parse JSON only after verification.
-app.post('/webhooks/agntix', express.raw({ type: '*/*' }), (req, res) => {
-  // Fail closed: never accept unverified deliveries because a secret is missing.
-  if (!process.env.AGNTIX_WEBHOOK_SECRET) {
-    console.error('AGNTIX_WEBHOOK_SECRET is not set — rejecting delivery');
-    return res.status(500).json({ error: 'Webhook secret not configured' });
-  }
-
-  const headers = {
-    'svix-id': req.get('svix-id'),
-    'svix-timestamp': req.get('svix-timestamp'),
-    'svix-signature': req.get('svix-signature'),
-  };
-  if (!headers['svix-id'] || !headers['svix-timestamp'] || !headers['svix-signature']) {
-    return res.status(400).json({ error: 'Missing Svix signature headers' });
-  }
-  if (!Buffer.isBuffer(req.body)) {
-    return res.status(400).json({ error: 'Missing request body' });
-  }
-
-  let event;
-  try {
-    event = verifyAgntixWebhook(req.body, headers);
-  } catch (err) {
-    console.error('Agntix webhook verification failed:', err.message);
-    return res.status(400).json({ error: 'Invalid signature' });
-  }
-
-  // Duplicates are normal (at-least-once delivery) — acknowledge with 200.
-  const dedupeKey = `${event.eventType}:${event.id}`;
-  if (processedEvents.has(dedupeKey)) {
-    return res.status(200).json({ received: true, duplicate: true });
-  }
-
-  try {
-    // Keep this fast: Agntix needs a 2xx within 15 seconds. In production,
-    // enqueue the event here and process it asynchronously.
-    handleEvent(event);
-    processedEvents.add(dedupeKey);
-  } catch (err) {
-    console.error('Error handling Agntix event:', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-
-  return res.status(200).json({ received: true });
-});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-export { app };
+// IMPORTANT: express.raw() keeps the exact bytes Agntix (Svix) signed, whatever the content type
+app.post('/webhooks/agntix', express.raw({ type: '*/*' }), (req, res) => {
+  const secret = process.env.AGNTIX_WEBHOOK_SECRET;
+  if (!secret || !secret.startsWith('whsec_')) {
+    console.error('AGNTIX_WEBHOOK_SECRET is missing or not a whsec_ secret');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  // Read the svix-* headers; when svix-id is absent, fall back to the webhook-* headers
+  const prefix = req.headers['svix-id'] ? 'svix' : 'webhook';
+  const id = req.headers[`${prefix}-id`];
+  const timestamp = req.headers[`${prefix}-timestamp`];
+  const signature = req.headers[`${prefix}-signature`];
+  if (!id || !timestamp || !signature) {
+    return res.status(400).json({ error: 'Missing required webhook headers' });
+  }
+
+  try {
+    // Checks HMAC-SHA256 over `${id}.${timestamp}.${body}` against every v1, signature
+    // and enforces a fixed 5-minute timestamp window (see references/verification.md to change that).
+    // The library accepts either header-name set, so hand it the resolved values under both.
+    new Webhook(secret).verify(req.body, {
+      'svix-id': id,
+      'svix-timestamp': timestamp,
+      'svix-signature': signature,
+      'webhook-id': id,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': signature,
+    });
+  } catch (err) {
+    console.error('Agntix webhook verification failed:', err.message);
+    const error = /timestamp/i.test(err.message) ? 'Timestamp too old' : 'Invalid signature';
+    return res.status(400).json({ error });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(req.body.toString('utf8'));
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  // Flat envelope (no `data`): { id, eventType, type, platform, direction, state, agentId, createdAt, metadata, ... }
+  // `eventType` is the event name. `type` is the session kind (VOICE | CHAT), NOT the event name.
+  // `id` is the session UUID: deduplicate on it (session.created and session.ended share the same id,
+  // so key on id + eventType).
+  const eventType = event.eventType;
+  const sessionVariables = event.metadata?.sessionVariables ?? {};
+  console.log(`Received Agntix webhook ${eventType} for session ${event.id} (${event.type} ${event.platform} ${event.direction})`);
+
+  // Delivery is at least once: persist id + eventType, return 2xx, then process asynchronously.
+  switch (eventType) {
+    case 'session.created':
+      // Fired when the session is initiated (for outbound calls, before pickup)
+      console.log('Session created:', event.id, event.state, sessionVariables);
+      break;
+    case 'session.ended':
+      // Carries the post-call analysis; some analysis fields appear only if enabled on the agent
+      console.log('Session ended:', event.id, event.endedAt, event.analysis?.summary, event.recordingUrl);
+      break;
+    default:
+      // Planned events are not delivered yet. Return 2xx for anything unknown, or Svix keeps retrying
+      console.log('Unhandled event type:', eventType);
+  }
+
+  res.status(200).json({ success: true, eventType });
+});
 
 // Start the server only when run directly (not when imported by tests)
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   app.listen(PORT, () => {
-    console.log(`Agntix webhook server listening on port ${PORT}`);
-    console.log(`Webhook endpoint: POST http://localhost:${PORT}/webhooks/agntix`);
+    console.log(`Agntix webhook server running on http://localhost:${PORT}/webhooks/agntix`);
   });
 }

@@ -2,45 +2,47 @@
 
 ## Prerequisites
 
-- An Argil account with an [API key](https://docs.argil.ai)
-- A public HTTPS URL for your webhook endpoint (for local development, use the Hookdeck CLI below)
+- An Argil account and an [API key](https://docs.argil.ai/resources/introduction), sent in the `x-api-key` header
+- A public HTTPS URL for your endpoint (for local development, use the Hookdeck CLI below)
 
-## How Do I Create an Argil Webhook?
+Argil webhooks are managed through the API: list, create, update and delete. The docs don't describe a dashboard screen for them.
 
-Argil webhooks are managed through the API: list, create (with a callback URL and an `events` list), update and delete. One webhook can subscribe to several events. See [Create webhook](https://docs.argil.ai/api-reference/endpoint/webhooks.create).
-
-Illustrative request (the base URL, auth header and field names here are placeholders, so copy the exact ones from the API reference):
+## How Do I Create an Argil Webhook and Get the Signing Secret?
 
 ```bash
-curl -X POST "$ARGIL_API_BASE/webhooks" \
-  -H "$ARGIL_AUTH_HEADER" \
+curl -X POST https://api.argil.ai/v1/webhooks \
+  -H "x-api-key: $ARGIL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"callbackUrl": "https://your-app.com/webhooks/argil",
        "events": ["VIDEO_GENERATION_SUCCESS", "VIDEO_GENERATION_FAILED",
                   "AVATAR_TRAINING_SUCCESS", "AVATAR_TRAINING_FAILED"]}'
 ```
 
-No challenge or validation request is sent to the callback URL.
+`callbackUrl` and `events` (at least one) are required. The `201` response is the webhook (`id`, `callbackUrl`, `events`, `createdAt`, `updatedAt`) plus `secret`, for example `whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD`.
 
-## Where Do I Get the Argil Webhook Signing Secret?
+**The secret is returned only by this call.** Store the full value, including `whsec_`, as `ARGIL_WEBHOOK_SECRET`. The docs describe no endpoint to read or rotate it, so if you lose it, delete the webhook and create a new one.
 
-The response of the create call includes a `secret`, shown **once**. It is `whsec_` + base64, for example `whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD`. Store the full value, including `whsec_`, as `ARGIL_WEBHOOK_SECRET`.
+## Why Do My Argil Deliveries Have No Signature?
 
-## What If My Webhook Is Not Signed?
+Webhooks created before Argil added signing are delivered unsigned. Recreate the webhook to get a `whsec_` secret. Hookdeck's alert for this source says: "Webhooks created before Argil added signing are unsigned. Recreate the webhook to get a whsec_ secret."
 
-Webhooks created since signing shipped are signed with the secret returned once at creation. Webhooks created before then are delivered without a signature, so there are no `webhook-id` / `webhook-timestamp` / `webhook-signature` headers and verification can't succeed.
+## Manage Existing Webhooks
 
-Hookdeck's configuration alert for this source reads:
-
-> "Webhooks created before Argil added signing are unsigned. Recreate the webhook to get a whsec_ secret."
-
-To fix it, delete the old webhook, create a new one with the same URL and events, and save the new `secret`. Don't accept unsigned deliveries in your handler to work around it.
+| Action | Call |
+|--------|------|
+| List | `GET https://api.argil.ai/v1/webhooks` ([reference](https://docs.argil.ai/api-reference/endpoint/webhooks.list)) |
+| Create | `POST https://api.argil.ai/v1/webhooks` ([reference](https://docs.argil.ai/api-reference/endpoint/webhooks.create)) |
+| Update (URL or events, re-enables a disabled webhook) | [reference](https://docs.argil.ai/api-reference/endpoint/webhooks.update) |
+| Delete | [reference](https://docs.argil.ai/api-reference/endpoint/webhooks.delete) |
 
 ## Local Development
 
 ```bash
-npx hookdeck-cli listen 3000 argil --path /webhooks/argil   # Express / Next.js
-npx hookdeck-cli listen 8000 argil --path /webhooks/argil   # FastAPI
+npx hookdeck-cli listen 3000 argil --path /webhooks/argil
 ```
 
-No account required. Create a webhook pointing at the printed URL, then generate a video or train an avatar to trigger an event.
+Use the printed URL as `callbackUrl` in the create call above, then render a video or train an avatar to receive events. Use `8000` for the FastAPI example.
+
+## Validation
+
+Argil's docs describe no challenge or handshake request, so a new endpoint just needs to answer `2xx` within 10 seconds.

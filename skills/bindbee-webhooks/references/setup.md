@@ -2,39 +2,35 @@
 
 ## Prerequisites
 
-- A Bindbee account
-- A publicly reachable HTTPS endpoint (use the Hookdeck CLI during development)
-
-## Version 2 only
-
-Hookdeck's configuration alert for this source reads: "Paste the security signature secret as-is. Only version 2 webhooks are supported; version 1 webhooks lack the webhook-* headers and fail verification."
-
-Create the webhook as **version 2** (`2026.10.06`). Version 1 (`2025.01.01`, deprecated December 31, 2026) deliveries have no `webhook-*` headers and cannot be verified with this skill.
+- A Bindbee account (Admins and Members can both manage webhooks)
+- A public HTTPS endpoint that accepts `POST` and answers `2xx` within 10 seconds
 
 ## Get Your Signing Secret
 
-1. Open the **Webhooks** page in the Bindbee dashboard.
-2. Find the **Security signature** card.
-3. Copy the secret. There is one organization-wide secret, used for every webhook on both versions. It has no prefix: paste it as-is into `BINDBEE_WEBHOOK_SECRET`.
+1. Open **Webhooks** in the Bindbee dashboard.
+2. On the **Security signature** card, click the eye icon to reveal the secret and copy it.
+3. Store it as `BINDBEE_WEBHOOK_SECRET`, **exactly as shown**. It has no prefix and is used as raw UTF-8 bytes. Do not add `whsec_` or base64-encode it.
 
-Regenerating the secret invalidates the old one immediately, so update your environment (or Hookdeck source) at the same time.
+One organization-wide secret signs every webhook, on both versions. Regenerating it (refresh icon, then **Regenerate it**) invalidates the old one immediately for every webhook, so deploy the new value straight away.
 
 ## Register Your Endpoint
 
-1. On the Webhooks page, create a webhook with your endpoint URL.
-2. Choose version 2 and an environment: production, development or both.
-3. Subscribe to events by exact name (no wildcards), for example `connector.linked`, `connector.sync.completed`, `connector.sync.failed`, `connector.relink_needed` and `hris.employee.created`.
+1. In **Webhooks**, click **Add webhook**.
+2. Enter the destination URL (after the fixed `https://`). **Send test event** sends one `HEAD` request with no body; it reports "Invalid URL" only if your endpoint answers `5xx` or doesn't answer at all.
+3. Leave **API Versions** on **Version 2 (2026.10.06)**. The version can't be changed once the webhook exists.
+4. Give it a unique **Webhook Name**.
+5. Under **Webhook Type**, tick **Production**, **Development** or both.
+6. Select events by name (no wildcards): connector changes, and a created and an updated event per data model. Subscribe only to what your handler processes. Recommended starting set: `connector.linked`, `connector.sync.completed`, `connector.sync.failed`, `connector.relink_needed`, plus the models you use (for example `hris.employee.created` and `hris.employee.updated`).
+7. Click **Create webhook**.
 
-No challenge or handshake is documented, so your endpoint only needs to verify the signature and return `200`.
+Bindbee rejects public request-inspection services (`webhook.site`, `webhook-test.com`), URL shorteners and addresses that resolve to private networks ("Url not allowed"). Use your own endpoint, or a tunnel to it while developing: `npx hookdeck-cli listen 3000 bindbee --path /webhooks/bindbee`.
 
-## Local Development
+## Hookdeck Event Gateway
 
-```bash
-npx hookdeck-cli listen 3000 bindbee --path /webhooks/bindbee
-```
+Hookdeck has a **Bindbee** source type (`BINDBEE`). Its configuration alert reads exactly: "Paste the security signature secret as-is. Only version 2 webhooks are supported; version 1 webhooks lack the webhook-* headers and fail verification."
 
-Use the URL the CLI prints as the webhook URL. Use port `8000` for FastAPI.
+Paste the secret from the Security signature card without changes. Create the webhook in Bindbee on version 2; a version 1 webhook will fail verification in Hookdeck and in your own handler alike.
 
-## Production and Test Environments
+## Test Mode vs Live Mode
 
-Webhooks are scoped to production, development or both. Use separate endpoints (or check `connector`) if you need to tell them apart.
+Environments are per webhook: a webhook fires only for connectors in the environments you tick, and `connector.environment` (`production` or `development`) on every event says which one. Delivery logs (dashboard **Logs > Webhooks**, or the API) show the final status of each delivery.

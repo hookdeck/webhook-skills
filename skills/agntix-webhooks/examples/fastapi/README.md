@@ -1,18 +1,18 @@
 # Agntix Webhooks - FastAPI Example
 
-Minimal example of receiving [Agntix](https://agntix.ai) webhooks with signature verification, using the official [`svix`](https://pypi.org/project/svix/) library (Agntix delivers webhooks through Svix).
+Minimal example of receiving Agntix webhooks with signature verification using the
+official [`svix`](https://pypi.org/project/svix/) library (Agntix signs deliveries per Standard Webhooks with `svix-*` headers; Agntix delivers webhooks through Svix).
 
 ## Prerequisites
 
 - Python 3.9+
-- An Agntix account and an endpoint signing secret (`whsec_...`)
+- Agntix account with a webhook endpoint (Developer > + Add Endpoint) and its signing secret (`whsec_...`)
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+1. Install dependencies:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   python3 -m venv venv && source venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -21,15 +21,20 @@ Minimal example of receiving [Agntix](https://agntix.ai) webhooks with signature
    cp .env.example .env
    ```
 
-3. Add your endpoint's signing secret to `AGNTIX_WEBHOOK_SECRET` in `.env` (the full `whsec_...` value). See [setup](../../references/setup.md).
+3. Add your Agntix signing secret to `.env` as `AGNTIX_WEBHOOK_SECRET`. You'll find it on the
+   endpoint in the dashboard's **Developer** section.
 
 ## Run
 
 ```bash
-uvicorn main:app --reload --port 8000
+uvicorn main:app --port 8000
 ```
 
-Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/agntix`.
+Server runs on http://localhost:8000. Webhook endpoint:
+
+```
+POST http://localhost:8000/webhooks/agntix
+```
 
 ## Test
 
@@ -37,21 +42,33 @@ Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/agntix`.
 pytest test_webhook.py -v
 ```
 
-The tests sign payloads with Svix's algorithm, `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{svix-id}.{svix-timestamp}.{raw body}"))`, and cover `session.created` and `session.ended`, tampered bodies, wrong secrets, stale and future timestamps, multiple signatures, missing headers, deduplication and the fail-closed path when no secret is configured.
+The tests sign requests with the same HMAC-SHA256 algorithm Svix uses
+(`{svix-id}.{svix-timestamp}.{raw body}`), including deliveries that carry the `webhook-*`
+header names instead of `svix-*`.
 
-## Receive real webhooks locally
+## Receive Real Webhooks Locally
+
+Start a tunnel with the Hookdeck CLI (no account required):
 
 ```bash
 npx hookdeck-cli listen 8000 agntix --path /webhooks/agntix
 ```
 
-Add the printed URL as an endpoint in the Agntix dashboard (**Developer → + Add Endpoint**), subscribe to `session.created` and `session.ended`, then start a call or chat session.
+1. In **Developer > + Add Endpoint**, add the tunnel URL and subscribe to `session.created` and `session.ended`.
+2. Copy the endpoint's signing secret into `.env`.
+3. Start a test call or chat session so Agntix delivers a real event.
 
-## Notes
+## Event Handling
 
-- Verification runs in a FastAPI dependency (`verified_agntix_event`) that reads `await request.body()`. The signature covers the exact raw bytes, so never verify `request.json()`.
-- `svix` `verify()` returns `None` and raises on failure. The dependency parses the JSON itself afterwards.
-- The Svix library always enforces a 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late retries are rejected. See [verification](../../references/verification.md) for a manual verifier where the window can be dropped or widened.
-- If `AGNTIX_WEBHOOK_SECRET` is unset the handler returns `500`. It never accepts unverified requests.
-- The payload's top-level `id` is the session UUID and is shared by `session.created` and `session.ended`, so deduplication keys on `eventType` + `id`.
-- Agntix needs a `2xx` within **15 seconds**. Enqueue the event and process it asynchronously in production.
+The handler reads the event name from the body's top-level `eventType` field (the top-level
+`type` is the session kind, `VOICE` or `CHAT`), and acknowledges anything else with `200`:
+
+- `session.created`
+- `session.ended` (with the post-call `analysis` and `recordingUrl`)
+
+## Timestamp Window
+
+The `svix` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays
+resend the original `svix-timestamp`, so late retries are rejected. See
+[references/verification.md](../../references/verification.md) for a manual verifier with a
+configurable window.

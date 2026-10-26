@@ -2,12 +2,12 @@
 
 ## How Does Argil Sign Webhooks?
 
-Argil signs webhooks per [Standard Webhooks](https://www.standardwebhooks.com/):
+Argil follows [Standard Webhooks](https://www.standardwebhooks.com). Each delivery carries:
 
 | Header | Value |
 |--------|-------|
-| `webhook-id` | Unique message ID, the same on every retry |
-| `webhook-timestamp` | Unix timestamp (seconds) |
+| `webhook-id` | Event ID, the same on every retry |
+| `webhook-timestamp` | Unix timestamp (seconds) of this attempt |
 | `webhook-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 ```
@@ -16,28 +16,32 @@ content   = "{webhook-id}.{webhook-timestamp}.{raw request body}"
 signature = base64(HMAC-SHA256(key, content))
 ```
 
-The request is valid when any `v1,` entry matches. Other versions (for example `v1a`) are ignored. The secret is returned once by `POST /webhooks` and looks like `whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD`. Only webhooks created since signing shipped are signed; see [setup](setup.md).
+The request is valid when any `v1,` entry matches. Ignore entries with other versions.
+
+## Why Does Signature Verification Matter?
+
+Your endpoint URL is public. Without verification anyone can POST a fake `VIDEO_GENERATION_SUCCESS` with a `videoUrl` of their choosing.
 
 ## Implementation
 
-### Library Verification
+### Library Verification (recommended)
 
-Argil publishes no webhook SDK. Use the `standardwebhooks` library (npm, PyPI). It reads `webhook-id`, `webhook-timestamp` and `webhook-signature` directly and returns the parsed payload.
+[`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) (npm, PyPI) is what Argil's docs use. It returns the parsed payload and enforces a **fixed 5-minute** timestamp window.
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
 
-const event = new Webhook(process.env.ARGIL_WEBHOOK_SECRET).verify(rawBody, {
+const payload = new Webhook(process.env.ARGIL_WEBHOOK_SECRET).verify(rawBody, {
   'webhook-id': req.get('webhook-id'),
   'webhook-timestamp': req.get('webhook-timestamp'),
   'webhook-signature': req.get('webhook-signature'),
-}); // throws on bad signature or a timestamp more than 5 minutes off
+}); // throws on a bad signature or a timestamp more than 5 minutes off
 ```
 
 ```python
 from standardwebhooks.webhooks import Webhook
 
-event = Webhook(os.environ["ARGIL_WEBHOOK_SECRET"]).verify(
+payload = Webhook(os.environ["ARGIL_WEBHOOK_SECRET"]).verify(
     await request.body(),
     {
         "webhook-id": request.headers["webhook-id"],
@@ -47,30 +51,19 @@ event = Webhook(os.environ["ARGIL_WEBHOOK_SECRET"]).verify(
 )
 ```
 
-### Why Does the Library Reject Late Retries?
+**Header prefix fallback.** If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead and pass them to the library under the `webhook-*` names. The examples do this.
 
-The library always enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, and Hookdeck itself applies no timestamp window. A retry that arrives more than 5 minutes after the original is rejected by the library even though the signature is valid. Argil's own retries (30 s, 2 min, 10 min, 1 h, 6 h, ...) hit the same limit after the first few.
+### Manual Verification (no timestamp window)
 
-### Manual Verification (no timestamp window by default)
-
-Use this behind Hookdeck, or when you want to drop or widen the window. Set `MAX_AGE_SECONDS` to a number to enforce one.
+Retries and replays (for example from the Hookdeck Event Gateway) resend the **original** timestamp, so the library rejects them after 5 minutes. Use this verifier when you need to accept late retries, and apply your own window if you want one:
 
 ```javascript
 const crypto = require('crypto');
 
-const MAX_AGE_SECONDS = null; // e.g. 86400 to accept up to a day old
-
 function verifyArgil(rawBody, id, timestamp, signatureHeader, secret) {
-  if (!id || !timestamp || !signatureHeader || !secret) return false;
-  // Plain positive integer only (no "1e9", " 12", "-5", "0x10")
-  if (!/^[1-9][0-9]*$/.test(timestamp)) return false;
-  if (MAX_AGE_SECONDS !== null && Math.abs(Date.now() / 1000 - Number(timestamp)) > MAX_AGE_SECONDS) return false;
-
-  const key = secret.startsWith('whsec_')
-    ? Buffer.from(secret.slice('whsec_'.length), 'base64')
-    : Buffer.from(secret, 'utf8');
-  const expected = crypto.createHmac('sha256', key).update(`${id}.${timestamp}.`).update(rawBody).digest();
-
+  if (!/^\d+$/.test(timestamp)) return false; // plain positive integer
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const expected = crypto.createHmac('sha256', key).update(`${id}.${timestamp}.${rawBody}`).digest();
   return signatureHeader.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
     if (version !== 'v1' || !sig) return false;
@@ -81,25 +74,20 @@ function verifyArgil(rawBody, id, timestamp, signatureHeader, secret) {
 ```
 
 ```python
-import base64, hashlib, hmac, re, time
-
-MAX_AGE_SECONDS = None  # e.g. 86400 to accept up to a day old
+import base64, hashlib, hmac
 
 def verify_argil(raw_body: bytes, msg_id: str, timestamp: str, signature_header: str, secret: str) -> bool:
-    if not (msg_id and timestamp and signature_header and secret):
+    if not timestamp.isdigit():
         return False
-    if not re.fullmatch(r"[1-9][0-9]*", timestamp):
-        return False
-    if MAX_AGE_SECONDS is not None and abs(time.time() - int(timestamp)) > MAX_AGE_SECONDS:
-        return False
-    key = base64.b64decode(secret[len("whsec_"):]) if secret.startswith("whsec_") else secret.encode()
-    expected = hmac.new(key, f"{msg_id}.{timestamp}.".encode() + raw_body, hashlib.sha256).digest()
+    key = base64.b64decode(secret.removeprefix("whsec_"))
+    signed = f"{msg_id}.{timestamp}.".encode() + raw_body
+    expected = hmac.new(key, signed, hashlib.sha256).digest()
     for entry in signature_header.split(" "):
         version, _, sig = entry.partition(",")
         if version != "v1" or not sig:
             continue
         try:
-            received = base64.b64decode(sig, validate=True)
+            received = base64.b64decode(sig)
         except ValueError:
             continue
         if len(received) == len(expected) and hmac.compare_digest(received, expected):
@@ -109,19 +97,19 @@ def verify_argil(raw_body: bytes, msg_id: str, timestamp: str, signature_header:
 
 ## Common Gotchas
 
-- **Unsigned legacy webhooks.** Webhooks created before Argil added signing carry no signature headers. Recreate them to get a `whsec_` secret.
-- **Raw body.** The HMAC covers the exact bytes Argil sent. Use `express.raw({ type: '*/*' })`, `await request.text()` or `await request.body()`. Parsing and re-serialising JSON changes whitespace and key order.
+- **Unsigned legacy webhooks.** Webhooks created before signing shipped send no signature headers. Recreate the webhook to get a `whsec_` secret.
+- **Secret shown once.** `POST /webhooks` is the only call that returns it.
+- **Raw body.** The HMAC covers the exact bytes Argil sent. Use `express.raw({ type: '*/*' })`, `await request.text()` or `await request.body()`.
 - **Decode the secret.** The HMAC key is the base64-decoded part after `whsec_`, not the literal string.
-- **The secret is shown once.** If you lose it, recreate the webhook.
-- **Multiple signatures.** Accept the request if any `v1,` entry matches.
-- **Timestamp window.** The library enforces 5 minutes and rejects late retries and replays. Use the manual verifier to drop or widen it.
+- **Multiple signatures.** `webhook-signature` can hold several space-separated entries. Accept the request if any `v1,` entry matches.
+- **Timestamp window.** The library's 5-minute check fails late retries and replays. Use the manual verifier if you need them.
 - **No event ID in the body.** Dedupe on `webhook-id`.
 
 ## How Do I Debug Argil Verification Failures?
 
 | Symptom | Likely cause |
 |---------|--------------|
-| No `webhook-*` headers at all | The webhook predates signing: recreate it |
-| Every request fails | Wrong secret, key not base64-decoded, or the body was parsed before verification |
-| Fresh deliveries pass, retries and replays fail | The library's 5-minute window: use the manual verifier |
-| Fails only in production | A proxy or middleware changed the body or stripped `webhook-*` headers |
+| No `webhook-*` or `svix-*` headers at all | Webhook predates signing: recreate it |
+| Every request fails | Wrong webhook's secret, `whsec_` not stripped or key not base64-decoded, or the body was parsed before verification |
+| Fails only on retries or replays | Timestamp older than 5 minutes: use the manual verifier |
+| Fails after recreating the webhook | `ARGIL_WEBHOOK_SECRET` still holds the old webhook's secret |

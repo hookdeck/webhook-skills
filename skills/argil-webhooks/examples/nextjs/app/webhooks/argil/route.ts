@@ -6,52 +6,70 @@ import { Webhook } from 'standardwebhooks';
 
 // ---------------------------------------------------------------------------
 // Argil signs webhooks per Standard Webhooks:
-//   webhook-id         unique message ID (stable across retries)
-//   webhook-timestamp  Unix seconds
+//   webhook-id         event ID (stable across retries)
+//   webhook-timestamp  Unix seconds when the attempt was sent
 //   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
-// Webhooks created before Argil added signing are unsigned: recreate them.
+// Key: base64-decode of the secret after its `whsec_` prefix, returned once
+// by POST /webhooks. The body is `{ event, data }` with SCREAMING_SNAKE events.
 // ---------------------------------------------------------------------------
 
 interface ArgilEvent {
-  event: string; // e.g. "VIDEO_GENERATION_SUCCESS"
+  event: string; // VIDEO_GENERATION_SUCCESS, AVATAR_TRAINING_FAILED, ...
   data: Record<string, any>;
 }
 
-type StandardHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
+type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
 
 /**
- * Verify an Argil delivery with the Standard Webhooks library. It recomputes
- * the HMAC over the raw body, compares in constant time against every `v1,`
- * entry and enforces a fixed 5-minute timestamp window. Hookdeck retries and
- * replays resend the original timestamp, so late ones fail here: see the
- * manual verifier in references/verification.md to drop or widen the window.
+ * Read the three signature headers. `webhook-*` is the documented prefix; if
+ * `webhook-id` is absent, fall back to `svix-*` (same scheme, other prefix).
+ * Returns the values under the names the standardwebhooks library expects.
+ */
+function signatureHeaders(request: Request): SignatureHeaders | null {
+  const prefix = request.headers.get('webhook-id') ? 'webhook' : 'svix';
+  const id = request.headers.get(`${prefix}-id`);
+  const timestamp = request.headers.get(`${prefix}-timestamp`);
+  const signature = request.headers.get(`${prefix}-signature`);
+  if (!id || !timestamp || !signature) return null;
+  return { 'webhook-id': id, 'webhook-timestamp': timestamp, 'webhook-signature': signature };
+}
+
+/**
+ * Verify an Argil delivery with the Standard Webhooks library. It checks the
+ * timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw body
+ * and compares in constant time against every `v1,` entry.
+ *
+ * Retries and replays (for example from Hookdeck) keep the original timestamp,
+ * so this rejects them after 5 minutes. See references/verification.md for a
+ * manual verifier without the window.
  */
 function verifyArgilWebhook(
   rawBody: string,
-  headers: StandardHeaders,
+  headers: SignatureHeaders,
   secret = process.env.ARGIL_WEBHOOK_SECRET as string
 ): ArgilEvent {
   return new Webhook(secret).verify(rawBody, headers) as ArgilEvent;
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Delivery is at-least-once and the body has no event ID: dedupe on webhook-id.
-const processedMessageIds = new Set<string>();
+// Deliveries are at least once; webhook-id is the same on every retry.
+const processedEventIds = new Set<string>();
 
 function handleEvent(payload: ArgilEvent): void {
   const { event, data = {} } = payload;
 
   switch (event) {
     case 'VIDEO_GENERATION_SUCCESS':
-      console.log(`Video ready: ${data.videoId} (${data.videoName}) ${data.videoUrl}, cost ${data.renderCost}`);
+      console.log(`Video ready: ${data.videoId} (${data.videoName}) ${data.videoUrl} cost ${data.renderCost}`);
       break;
     case 'VIDEO_GENERATION_FAILED':
-      console.log(`Video failed: ${data.videoId} (${data.message}), refunded ${data.renderCostRefunded}`);
+      console.log(
+        `Video failed: ${data.videoId}: ${data.message} (cost ${data.renderCost}, refunded ${data.renderCostRefunded})`
+      );
       break;
     case 'AVATAR_TRAINING_SUCCESS':
-      console.log(`Avatar trained: ${data.avatarId} (${data.avatarName})`);
+      console.log(`Avatar trained: ${data.avatarId} (${data.avatarName}) voice ${data.voiceId}`);
       break;
     case 'AVATAR_TRAINING_FAILED':
       console.log(`Avatar training failed: ${data.avatarId} (${data.avatarName})`);
@@ -68,13 +86,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
-  const id = request.headers.get('webhook-id');
-  const timestamp = request.headers.get('webhook-timestamp');
-  const signature = request.headers.get('webhook-signature');
-  if (!id || !timestamp || !signature) {
-    // Webhooks created before Argil added signing arrive without these headers.
+  const headers = signatureHeaders(request);
+  if (!headers) {
     return NextResponse.json(
-      { error: 'Missing webhook-id, webhook-timestamp or webhook-signature' },
+      {
+        error:
+          'Missing Standard Webhooks signature headers. Webhooks created before Argil added signing are unsigned: recreate the webhook to get a whsec_ secret.',
+      },
       { status: 400 }
     );
   }
@@ -84,18 +102,14 @@ export async function POST(request: Request) {
 
   let payload: ArgilEvent;
   try {
-    payload = verifyArgilWebhook(rawBody, {
-      'webhook-id': id,
-      'webhook-timestamp': timestamp,
-      'webhook-signature': signature,
-    });
+    payload = verifyArgilWebhook(rawBody, headers);
   } catch (err) {
     console.error('Argil webhook verification failed:', (err as Error).message);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Retries reuse the same webhook-id; acknowledge duplicates with 200.
-  if (processedMessageIds.has(id)) {
+  const eventId = headers['webhook-id'];
+  if (processedEventIds.has(eventId)) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
@@ -103,7 +117,7 @@ export async function POST(request: Request) {
     // Argil needs a 2xx within 10 seconds. In production, enqueue the event
     // here and process it asynchronously.
     handleEvent(payload);
-    processedMessageIds.add(id);
+    processedEventIds.add(eventId);
   } catch (err) {
     console.error('Error handling Argil event:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

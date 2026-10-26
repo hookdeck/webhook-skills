@@ -3,6 +3,7 @@ displayName: 'Basiq'
 docs:
   webhooks: 'https://api.basiq.io/docs/webhooks'
   verification: 'https://api.basiq.io/docs/webhooks-security'
+  events: 'https://api.basiq.io/reference/listeventtypes'
 notes: >-
   Basiq (basiq.io), an Australian open-banking (CDR) data API: users, consents, connections, accounts
   and transactions. Webhook subscriptions are created via POST /notifications/webhooks; the event type
@@ -13,7 +14,12 @@ notes: >-
   Research: whsec_ ("The signing secret is the part after the whsec_ prefix." https://api.basiq.io/docs/webhooks-security).
   It starts with whsec_; the key is the base64-decoding of the part after whsec_. BASIQ_WEBHOOK_SECRET
   holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
-  which reads webhook-id, webhook-timestamp and webhook-signature. This matches Hookdeck's Basiq source
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Basiq source
   (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
   other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
   no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
@@ -45,4 +51,4 @@ testScenario:
 catalog:
   summary: >-
     Verify Basiq webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle account, connection, consent, transaction and user events
+    `whsec_` secret), handle user.created, connection.activated, consent.revoked, account.updated and transactions.updated events

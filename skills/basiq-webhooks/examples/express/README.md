@@ -1,11 +1,12 @@
 # Basiq Webhooks - Express Example
 
-Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification. Basiq signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com/) (`webhook-id`, `webhook-timestamp`, `webhook-signature`), so the handler verifies them with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package.
+Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification. Basiq signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
 
 ## Prerequisites
 
 - Node.js 18+
-- A Basiq account and application, with a webhook subscription whose signing secret (`whsec_...`) you can read
+- A Basiq application and API access
+- The signing secret (`whsec_...`) of your webhook subscription
 
 ## Setup
 
@@ -19,7 +20,7 @@ Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature v
    cp .env.example .env
    ```
 
-3. Put your endpoint's signing secret, including the `whsec_` prefix, in `BASIQ_WEBHOOK_SECRET` (see [setup](../../references/setup.md)).
+3. Put the subscription's signing secret in `BASIQ_WEBHOOK_SECRET`, including the `whsec_` prefix. It is returned as `secret` when you create the subscription (see [setup](../../references/setup.md)).
 
 ## Run
 
@@ -35,7 +36,7 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/basiq`.
 npm test
 ```
 
-The tests sign payloads the way Standard Webhooks does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`). They cover every documented event type, tampered and re-serialised bodies, stale timestamps, multiple signatures, another endpoint's secret, repeated deliveries, and the fail-closed path when no secret is configured.
+The tests sign payloads the way Basiq does (`base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{webhook-id}.{webhook-timestamp}.{raw body}"))`). They cover tampered bodies, stale and future timestamps, multiple signatures, another subscription's secret, the `svix-*` header fallback, resent messages, and the fail-closed path when no secret is configured.
 
 ## Receive real webhooks locally
 
@@ -43,13 +44,11 @@ The tests sign payloads the way Standard Webhooks does (`base64(HMAC-SHA256(base
 npx hookdeck-cli listen 3000 basiq --path /webhooks/basiq
 ```
 
-Create a Basiq webhook subscription (`POST /notifications/webhooks`) with the printed URL, then send a test message with `POST /notifications/messages/test`.
+Create a subscription with `POST /notifications/webhooks` using the printed URL, then send a test message with `POST /notifications/messages/test`. A new subscription can take up to 15 minutes to start delivering.
 
 ## Notes
 
-- The route uses `express.raw({ type: '*/*' })`. The signature covers the exact raw body bytes for any content type, so `express.json()` before verification breaks it. The body is parsed only after the check.
-- The `standardwebhooks` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so late ones are rejected. For a configurable window, use the manual verifier in [references/verification.md](../../references/verification.md).
+- The route uses `express.raw({ type: '*/*' })`. The signature covers the exact raw body bytes, so `express.json()` before verification breaks it.
 - If `BASIQ_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
-- The handler dedupes on the `webhook-id` header.
-- Basiq notifications are thin (`eventTypeId`, `eventId`, `links`). Fetch `links.event` or `links.eventEntity` for the data.
-- Return a `2xx` quickly. Enqueue the event and process it asynchronously in production.
+- The library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays resend the original timestamp, so use the manual verifier in [references/verification.md](../../references/verification.md) if you need to widen or drop it.
+- Payloads are thin (`eventTypeId`, `eventId`, `links`). Fetch `links.eventEntity` from the Basiq API for the data.

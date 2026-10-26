@@ -6,12 +6,11 @@ import { Webhook } from 'standardwebhooks';
 
 // ---------------------------------------------------------------------------
 // Bayou Energy signs webhooks per the Standard Webhooks spec:
-//   webhook-id         unique message ID
-//   webhook-timestamp  Unix seconds when the webhook was sent
-//   webhook-signature  one or more space-separated "v1,<base64 HMAC-SHA256>"
-// Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
-// Key: base64-decode of the company's secret after its `whsec_` prefix.
-// Body: { event, object }
+//   webhook-id         unique message ID (stable across retries)
+//   webhook-timestamp  Unix seconds when the message was sent
+//   webhook-signature  one or more space-separated "v1,<base64>" entries
+// Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`, HMAC-SHA256.
+// Key: base64-decode of the company secret after its `whsec_` prefix.
 // ---------------------------------------------------------------------------
 
 interface BayouEvent {
@@ -19,16 +18,34 @@ interface BayouEvent {
   object: Record<string, any>; // the bill or the customer
 }
 
-type WebhookHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
+type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
 
 /**
- * Verify a Bayou Energy delivery with the Standard Webhooks library. It checks
- * the timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw
- * body, and compares in constant time against every `v1,` entry.
+ * Read the three signature headers. Bayou sends webhook-*; like Hookdeck, fall
+ * back to the svix-* names when webhook-id is absent. The result always uses
+ * the webhook-* names, which is what the standardwebhooks library expects.
+ */
+function signatureHeaders(headers: Headers): Partial<SignatureHeaders> {
+  const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
+  return {
+    'webhook-id': headers.get(`${prefix}-id`) ?? undefined,
+    'webhook-timestamp': headers.get(`${prefix}-timestamp`) ?? undefined,
+    'webhook-signature': headers.get(`${prefix}-signature`) ?? undefined,
+  };
+}
+
+/**
+ * Verify a Bayou delivery with the Standard Webhooks library. It enforces a
+ * fixed 5-minute timestamp window, recomputes the HMAC over the raw body and
+ * compares in constant time against every `v1,` entry.
+ *
+ * Hookdeck retries and replays resend the ORIGINAL timestamp, so this rejects
+ * a retry that arrives more than 5 minutes after the first attempt. See
+ * references/verification.md for a manual verifier with a configurable window.
  */
 function verifyBayouWebhook(
   rawBody: string,
-  headers: WebhookHeaders,
+  headers: SignatureHeaders,
   secret = process.env.BAYOU_ENERGY_WEBHOOK_SECRET as string
 ): BayouEvent {
   return new Webhook(secret).verify(rawBody, headers) as BayouEvent;
@@ -38,43 +55,41 @@ function verifyBayouWebhook(
 // Bayou payloads carry no event ID, so dedupe on the webhook-id header.
 const processedMessageIds = new Set<string>();
 
+// Avoid logging object.file_url (pre-signed bill URL) or object.onboarding_token.
 function handleEvent(payload: BayouEvent): void {
   const { event, object = {} } = payload;
 
   switch (event) {
-    // --- Bills -------------------------------------------------------------
     case 'new_bill':
-      console.log(`New bill ${object.id} for customer ${object.customer_id} (${object.utility})`);
-      break;
     case 'updated_bill':
-      console.log(`Updated bill ${object.id} for customer ${object.customer_id}`);
+      console.log(
+        `${event}: bill ${object.id} for customer ${object.customer_id} (${object.utility}), ` +
+          `total ${object.total_amount}, status ${object.status}`
+      );
       break;
-    case 'new_unparsed_bill':
-      // Bill found but not parsed yet; object.file_url is a short-lived link.
-      console.log(`New unparsed bill ${object.id} for customer ${object.customer_id}`);
-      break;
-
-    // --- Customer data readiness -------------------------------------------
     case 'bills_ready':
-      console.log(`Bills ready for customer ${object.id}: ${(object.bills_parsed || []).length} parsed`);
+      // object is the customer; bills_parsed holds the initial bills.
+      console.log(`Bills ready for customer ${object.id}: ${(object.bills_parsed || []).length} bills`);
       break;
     case 'intervals_ready':
       console.log(
-        `Intervals ready for customer ${object.id}: ${object.first_interval_discovered} to ${object.last_interval_discovered}`
+        `Intervals ready for customer ${object.id}: ` +
+          `${object.first_interval_discovered} to ${object.last_interval_discovered}`
       );
       break;
-
-    // --- Customer credentials ----------------------------------------------
     case 'customer_has_filled_credentials':
-      console.log(`Customer ${object.id} shared credentials for ${object.utility}`);
+      console.log(`Customer ${object.id} shared ${object.utility} credentials`);
+      break;
+    case 'new_unparsed_bill':
+      // The bill exists but isn't parsed yet; wait for updated_bill.
+      console.log(`Unparsed bill ${object.id} for customer ${object.customer_id} (${object.utility})`);
       break;
     case 'customer_must_reauthenticate':
       // reason: credentials_are_invalid or mfa_factor_has_expired
-      console.log(`Customer ${object.id} must re-authenticate (${object.reason})`);
+      console.log(`Customer ${object.id} must re-authenticate: ${object.reason}`);
       break;
-
     default:
-      console.log(`Unhandled Bayou Energy event: ${event}`);
+      console.log(`Unhandled Bayou event: ${event}`);
   }
 }
 
@@ -85,11 +100,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
-  const id = request.headers.get('webhook-id');
-  const timestamp = request.headers.get('webhook-timestamp');
-  const signature = request.headers.get('webhook-signature');
-  if (!id || !timestamp || !signature) {
-    return NextResponse.json({ error: 'Missing webhook signature headers' }, { status: 400 });
+  const headers = signatureHeaders(request.headers);
+  if (!headers['webhook-id'] || !headers['webhook-timestamp'] || !headers['webhook-signature']) {
+    return NextResponse.json({ error: 'Missing signature headers' }, { status: 400 });
   }
 
   // Raw body: request.json() would re-serialise and break the HMAC.
@@ -97,27 +110,24 @@ export async function POST(request: Request) {
 
   let payload: BayouEvent;
   try {
-    payload = verifyBayouWebhook(rawBody, {
-      'webhook-id': id,
-      'webhook-timestamp': timestamp,
-      'webhook-signature': signature,
-    });
+    payload = verifyBayouWebhook(rawBody, headers as SignatureHeaders);
   } catch (err) {
-    console.error('Bayou Energy webhook verification failed:', (err as Error).message);
+    console.error('Bayou webhook verification failed:', (err as Error).message);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Acknowledge duplicates (same webhook-id) with 200.
-  if (processedMessageIds.has(id)) {
+  // Retries reuse the same webhook-id; acknowledge duplicates with 200.
+  const messageId = headers['webhook-id'];
+  if (processedMessageIds.has(messageId)) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
     // In production, enqueue the event here and process it asynchronously.
     handleEvent(payload);
-    processedMessageIds.add(id);
+    processedMessageIds.add(messageId);
   } catch (err) {
-    console.error('Error handling Bayou Energy event:', err);
+    console.error('Error handling Bayou event:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 

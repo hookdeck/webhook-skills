@@ -1,11 +1,13 @@
 # Airweave Webhooks - Next.js Example
 
-Minimal example of receiving [Airweave](https://airweave.ai) webhooks with signature verification, using the official [`svix`](https://www.npmjs.com/package/svix) library that Airweave recommends for production.
+Minimal example of receiving Airweave webhooks in the Next.js App Router with signature
+verification using the official [`svix`](https://www.npmjs.com/package/svix) library
+(Airweave delivers webhooks through Svix).
 
 ## Prerequisites
 
-- Node.js 22+ (required by `svix` 2.x)
-- An Airweave account and a webhook subscription signing secret (`whsec_...`)
+- Node.js 18+
+- An Airweave webhook subscription and its signing secret (`whsec_...`)
 
 ## Setup
 
@@ -16,10 +18,11 @@ Minimal example of receiving [Airweave](https://airweave.ai) webhooks with signa
 
 2. Copy environment variables:
    ```bash
-   cp .env.example .env
+   cp .env.example .env.local
    ```
 
-3. Add your subscription's signing secret to `AIRWEAVE_WEBHOOK_SECRET` in `.env`. Fetch it with `GET /webhooks/subscriptions/{id}?include_secret=true` (see [setup](../../references/setup.md)). If you set a custom secret, paste the whsec_ secret Airweave returns for the subscription, not the value you sent.
+3. Add your Airweave signing secret to `.env.local` as `AIRWEAVE_WEBHOOK_SECRET`. It is the `secret`
+   returned by `GET /webhooks/subscriptions/{id}?include_secret=true`.
 
 ## Run
 
@@ -27,7 +30,11 @@ Minimal example of receiving [Airweave](https://airweave.ai) webhooks with signa
 npm run dev
 ```
 
-Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/airweave`.
+Server runs on http://localhost:3000. Webhook endpoint:
+
+```
+POST http://localhost:3000/webhooks/airweave
+```
 
 ## Test
 
@@ -35,22 +42,39 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/airweave
 npm test
 ```
 
-The tests sign payloads with Airweave's (Svix's) algorithm, `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{svix-id}.{svix-timestamp}.{raw body}"))`, and cover all 11 documented event types, tampered bodies, wrong secrets, stale and future timestamps, multiple signatures, missing headers, `svix-id` deduplication, and the fail-closed path when no secret is configured.
+The tests sign requests with the same HMAC-SHA256 algorithm Svix uses
+(`{svix-id}.{svix-timestamp}.{raw body}`), including deliveries that carry the `webhook-*`
+header names instead of `svix-*`.
 
-## Receive real webhooks locally
+## Receive Real Webhooks Locally
+
+Start a tunnel with the Hookdeck CLI (no account required):
 
 ```bash
 npx hookdeck-cli listen 3000 airweave --path /webhooks/airweave
 ```
 
-Register the printed URL as a subscription (`POST https://api.airweave.ai/webhooks/subscriptions` with `url` and `event_types`), then trigger a sync.
+1. Create a subscription (`POST https://api.airweave.ai/webhooks/subscriptions`, Bearer token, admin or
+   owner role) with the tunnel URL and the event types you want, e.g.
+   `["sync.completed", "sync.failed"]`.
+2. Fetch the secret: `GET /webhooks/subscriptions/{id}?include_secret=true`. Copy the `secret`
+   (`whsec_...`) into `.env`. If you set a custom `secret` when creating the subscription, paste the
+   `whsec_` secret Airweave returns for the subscription, not the value you sent.
 
-## Notes
+## Event Handling
 
-- `svix` 2.x ships ESM only; the example's `package.json` sets `"type": "module"` and needs Node 22+.
-- The route handler (`app/webhooks/airweave/route.ts`) reads `await request.text()`. The signature covers the exact raw body bytes, so verifying `request.json()` output breaks it.
-- `svix` 2.x `verify()` returns nothing and throws on failure. `verifyAirweaveWebhook` parses the JSON itself after verification.
-- The Svix library always enforces a 5-minute timestamp window. Retries and replays (for example from Hookdeck) keep the original timestamp, so a late retry is rejected. See [verification](../../references/verification.md) for a manual verifier where you can drop or widen the window.
-- If `AIRWEAVE_WEBHOOK_SECRET` is unset the handler returns `500`. It never accepts unverified requests.
-- Deduplication uses `svix-id`, which stays the same across retries of a message. Airweave payloads carry no event ID field.
-- Airweave times out after 30 seconds. Enqueue the event and process it asynchronously in production.
+The handler reads the event name from the top-level `event_type` field, routes these
+events, and acknowledges anything else with `200`:
+
+- `sync.pending`, `sync.running`, `sync.completed`, `sync.failed`, `sync.cancelled`
+- `source_connection.created`, `source_connection.auth_completed`, `source_connection.deleted`
+- `collection.created`, `collection.updated`, `collection.deleted`
+
+The body carries no event id, so deduplicate on the `svix-id` header.
+
+## Timestamp Window
+
+The `svix` library enforces a fixed 5-minute timestamp window. Hookdeck retries and replays
+resend the original `svix-timestamp`, so late retries are rejected. See
+[references/verification.md](../../references/verification.md) for a manual verifier with a
+configurable window.

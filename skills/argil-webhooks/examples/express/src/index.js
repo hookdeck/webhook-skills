@@ -10,51 +10,68 @@ const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
 // Argil signs webhooks per Standard Webhooks:
-//   webhook-id         unique message ID (stable across retries)
-//   webhook-timestamp  Unix seconds
+//   webhook-id         event ID (stable across retries)
+//   webhook-timestamp  Unix seconds when the attempt was sent
 //   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
-// Key: base64-decode of the secret after its `whsec_` prefix.
-// Webhooks created before Argil added signing are unsigned: recreate them.
+// Key: base64-decode of the secret after its `whsec_` prefix, returned once
+// by POST /webhooks. The body is `{ event, data }` with SCREAMING_SNAKE events.
 // ---------------------------------------------------------------------------
 
 /**
- * Verify an Argil delivery with the Standard Webhooks library. It recomputes
- * the HMAC over the raw body, compares in constant time against every `v1,`
- * entry and enforces a fixed 5-minute timestamp window. Hookdeck retries and
- * replays resend the original timestamp, so late ones fail here: see the
- * manual verifier in references/verification.md to drop or widen the window.
+ * Read the three signature headers. `webhook-*` is the documented prefix; if
+ * `webhook-id` is absent, fall back to `svix-*` (same scheme, other prefix).
+ * Returns the values under the names the standardwebhooks library expects.
+ */
+function signatureHeaders(get) {
+  const prefix = get('webhook-id') ? 'webhook' : 'svix';
+  const headers = {
+    'webhook-id': get(`${prefix}-id`),
+    'webhook-timestamp': get(`${prefix}-timestamp`),
+    'webhook-signature': get(`${prefix}-signature`),
+  };
+  return headers['webhook-id'] && headers['webhook-timestamp'] && headers['webhook-signature']
+    ? headers
+    : null;
+}
+
+/**
+ * Verify an Argil delivery with the Standard Webhooks library. It checks the
+ * timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw body
+ * and compares in constant time against every `v1,` entry.
+ *
+ * Retries and replays (for example from Hookdeck) keep the original timestamp,
+ * so this rejects them after 5 minutes. See references/verification.md for a
+ * manual verifier without the window.
  *
  * @param {string} rawBody - the exact body Argil sent
- * @param {object} headers - must contain webhook-id/-timestamp/-signature
+ * @param {object} headers - webhook-id / webhook-timestamp / webhook-signature
  * @param {string} secret - the whsec_ secret returned when the webhook was created
- * @returns {object} the parsed, verified {event, data} body
+ * @returns {object} the parsed, verified `{ event, data }` payload
  * @throws {Error} if verification fails
  */
 function verifyArgilWebhook(rawBody, headers, secret = process.env.ARGIL_WEBHOOK_SECRET) {
-  return new Webhook(secret).verify(rawBody, {
-    'webhook-id': headers['webhook-id'],
-    'webhook-timestamp': headers['webhook-timestamp'],
-    'webhook-signature': headers['webhook-signature'],
-  }); // throws WebhookVerificationError; returns the parsed JSON body
+  return new Webhook(secret).verify(rawBody, headers);
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Delivery is at-least-once and the body has no event ID: dedupe on webhook-id.
-const processedMessageIds = new Set();
+// Deliveries are at least once; webhook-id is the same on every retry.
+const processedEventIds = new Set();
 
 function handleEvent(payload) {
   const { event, data = {} } = payload;
 
   switch (event) {
     case 'VIDEO_GENERATION_SUCCESS':
-      console.log(`Video ready: ${data.videoId} (${data.videoName}) ${data.videoUrl}, cost ${data.renderCost}`);
+      console.log(`Video ready: ${data.videoId} (${data.videoName}) ${data.videoUrl} cost ${data.renderCost}`);
       break;
     case 'VIDEO_GENERATION_FAILED':
-      console.log(`Video failed: ${data.videoId} (${data.message}), refunded ${data.renderCostRefunded}`);
+      console.log(
+        `Video failed: ${data.videoId}: ${data.message} (cost ${data.renderCost}, refunded ${data.renderCostRefunded})`
+      );
       break;
     case 'AVATAR_TRAINING_SUCCESS':
-      console.log(`Avatar trained: ${data.avatarId} (${data.avatarName})`);
+      console.log(`Avatar trained: ${data.avatarId} (${data.avatarName}) voice ${data.voiceId}`);
       break;
     case 'AVATAR_TRAINING_FAILED':
       console.log(`Avatar training failed: ${data.avatarId} (${data.avatarName})`);
@@ -64,8 +81,8 @@ function handleEvent(payload) {
   }
 }
 
-// express.raw() keeps the exact bytes for the HMAC whatever the content type;
-// express.json() would re-serialise the body and break verification.
+// express.raw() keeps the exact bytes for the HMAC; express.json() would
+// re-serialise the body and break verification.
 app.post('/webhooks/argil', express.raw({ type: '*/*' }), (req, res) => {
   // Fail closed: never accept unverified deliveries because a secret is missing.
   if (!process.env.ARGIL_WEBHOOK_SECRET) {
@@ -73,27 +90,24 @@ app.post('/webhooks/argil', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
-  const headers = {
-    'webhook-id': req.get('webhook-id'),
-    'webhook-timestamp': req.get('webhook-timestamp'),
-    'webhook-signature': req.get('webhook-signature'),
-  };
-  if (!headers['webhook-id'] || !headers['webhook-timestamp'] || !headers['webhook-signature']) {
-    // Webhooks created before Argil added signing arrive without these headers.
-    return res.status(400).json({ error: 'Missing webhook-id, webhook-timestamp or webhook-signature' });
+  const headers = signatureHeaders((name) => req.get(name));
+  if (!headers) {
+    return res.status(400).json({
+      error:
+        'Missing Standard Webhooks signature headers. Webhooks created before Argil added signing are unsigned: recreate the webhook to get a whsec_ secret.',
+    });
   }
 
   let payload;
   try {
-    payload = verifyArgilWebhook(Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '', headers);
+    payload = verifyArgilWebhook(req.body.toString('utf8'), headers);
   } catch (err) {
     console.error('Argil webhook verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  // Retries reuse the same webhook-id; acknowledge duplicates with 200.
-  const messageId = headers['webhook-id'];
-  if (processedMessageIds.has(messageId)) {
+  const eventId = headers['webhook-id'];
+  if (processedEventIds.has(eventId)) {
     return res.status(200).json({ received: true, duplicate: true });
   }
 
@@ -101,7 +115,7 @@ app.post('/webhooks/argil', express.raw({ type: '*/*' }), (req, res) => {
     // Argil needs a 2xx within 10 seconds. In production, enqueue the event
     // here and process it asynchronously.
     handleEvent(payload);
-    processedMessageIds.add(messageId);
+    processedEventIds.add(eventId);
   } catch (err) {
     console.error('Error handling Argil event:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -122,4 +136,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, server, verifyArgilWebhook };
+module.exports = { app, server, verifyArgilWebhook, signatureHeaders };
