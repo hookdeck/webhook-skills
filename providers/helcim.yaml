@@ -50,5 +50,5 @@ testScenario:
   - 'terminalCancel'
 catalog:
   summary: >-
-    Verify Helcim webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    base64 secret), handle card transaction and terminal cancel events
+    Verify Helcim webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256
+    with the base64 verifierToken), handle cardTransaction and terminalCancel events

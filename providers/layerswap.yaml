@@ -41,9 +41,10 @@ notes: >-
   the check. Hookdeck's source type is LAYERSWAP, labelled 'Layerswap'.
 testScenario:
   events:
-  - 'swap status update (ls_transfer_pending)'
-  - 'swap status update (completed)'
+  - 'ls_transfer_pending'
+  - 'completed'
+  - 'refunded'
 catalog:
   summary: >-
-    Verify Layerswap webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle swap status updates
+    Verify Layerswap webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle swap status updates (ls_transfer_pending, completed, failed, pending_refund, refunded)

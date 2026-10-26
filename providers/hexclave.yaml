@@ -48,5 +48,5 @@ testScenario:
   - 'user.updated'
 catalog:
   summary: >-
-    Verify Hexclave webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle user and team events
+    Verify Hexclave webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `whsec_` secret), handle user.created, user.updated and team.created events

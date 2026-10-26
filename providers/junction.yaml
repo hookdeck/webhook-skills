@@ -52,9 +52,9 @@ notes: >-
 testScenario:
   events:
   - 'provider.connection.created'
-  - 'provider.connection.error'
-  - 'provider.device.created'
+  - 'daily.data.sleep.created'
+  - 'historical.data.workouts.created'
 catalog:
   summary: >-
-    Verify Junction webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle provider connection and health data events
+    Verify Junction webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, delivered
+    by Svix), handle provider.connection.created, daily.data.sleep.created and historical.data.workouts.created events

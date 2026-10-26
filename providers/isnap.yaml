@@ -52,9 +52,9 @@ notes: >-
 testScenario:
   events:
   - 'message.received'
-  - 'message.queued'
-  - 'message.scheduled'
+  - 'message.delivered'
+  - 'line.offline'
 catalog:
   summary: >-
     Verify iSnap webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle message, reaction, typing and line events
+    `whsec_` secret), handle message.received, message.delivered and line.offline events
