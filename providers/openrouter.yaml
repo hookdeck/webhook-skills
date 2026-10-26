@@ -53,3 +53,11 @@ testScenario:
     - "video.generation.cancelled"
 catalog:
   summary: "Verify OpenRouter video-generation callbacks (`X-OpenRouter-Signature`: `t=...,v1=` hex HMAC-SHA256 of `{t},{body}`), handle completed, failed, cancelled and expired jobs"
+  marketplace:
+    description: Verify OpenRouter video-generation callback signatures (X-OpenRouter-Signature, t=,v1= HMAC-SHA256 over "{t},{body}"), handle video.generation.completed, failed, cancelled and expired events.
+    keywords:
+    - webhooks
+    - openrouter
+    - video generation
+    - llm
+    - ai

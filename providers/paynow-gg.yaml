@@ -3,7 +3,8 @@ displayName: "PayNow"
 docs:
   webhooks: https://docs.paynow.gg/webhooks/webhooks-introduction
   verification: https://docs.paynow.gg/webhooks/validating-incoming-webhooks
-  events: https://docs.paynow.gg/webhooks/webhook-examples
+  events: https://docs.paynow.gg/webhooks/events/
+  examples: https://docs.paynow.gg/webhooks/integration-implementation-examples/
 notes: >
   PayNow (paynow.gg, game-server stores; not PayNow Singapore or Paynow Zimbabwe) store webhooks of
   the JSON v1 type (the Discord v1 type posts to Discord and is out of scope). PayNow (paynow.gg), a
@@ -51,6 +52,6 @@ testScenario:
   events:
     - "ON_ORDER_COMPLETED"
     - "ON_PAYMENT_COMPLETED"
-    - "ON_SUBSCRIPTION_RENEWED"
+    - "ON_REFUND"
 catalog:
   summary: "Verify PayNow (paynow.gg) webhooks (`PayNow-Signature`: base64 HMAC-SHA256 of `{PayNow-Timestamp}.{body}`), handle order, payment, refund, delivery item and subscription events"
