@@ -3,6 +3,7 @@ displayName: "Spree Commerce"
 docs:
   webhooks: https://spreecommerce.org/docs/developer/core-concepts/webhooks
   verification: https://spreecommerce.org/docs/developer/core-concepts/webhooks
+  events: https://spreecommerce.org/docs/api-reference/webhooks-events
 notes: >
   Spree Commerce (open-source e-commerce, Spree 5/6) webhook endpoints, created in the admin or the
   Admin API. Spree Commerce (spreecommerce.org), an open-source headless e-commerce platform (Spree
@@ -38,7 +39,7 @@ notes: >
   an opt-in tolerance (an env var such as SPREE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
   so in SKILL.md and verification.md (X-Spree-Webhook-Timestamp is Unix seconds). Events: dispatch on
   the body's `name` (order.placed, order.paid, order.canceled, payment.completed, shipment.shipped,
-  customer.created, product.updated; about 250 in all). Method: POST. Hookdeck's Spree Commerce source
+  user.created, product.updated; about 250 in all). Method: POST. Hookdeck's Spree Commerce source
   manages the method as POST, so the examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
   are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body

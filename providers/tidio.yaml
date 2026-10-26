@@ -43,7 +43,7 @@ notes: >
   contact.updated, contact.created, conversation.solved_by_operator, conversation.solved_by_lyro,
   conversation.solved_automatically, conversation.operator_replied, ticket.created,
   ticket.status_updated, ticket.operator_assigned, ticket.operator_replied, ticket.contact_replied,
-  ticket.internal_note_added, ticket.replied, ticket.holder_changed (and 1 more). Handle a few common
+  ticket.internal_note_added, ticket.replied, ticket.holder_changed, customer_satisfaction.rated. Handle a few common
   ones and log the rest. Method: POST. Hookdeck's Tidio source manages the method as POST, so the
   examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
