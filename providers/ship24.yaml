@@ -2,6 +2,7 @@ name: ship24
 displayName: 'Ship24'
 docs:
   webhooks: https://docs.ship24.com/webhooks/overview
+  events: https://docs.ship24.com/webhooks/delivery
   verification: https://docs.ship24.com/webhooks/authentication
 notes: >
   Ship24 (multi-carrier parcel tracking). Ship24 says: 'Ship24 will allocate to your account a
@@ -33,4 +34,4 @@ testScenario:
     - 'tracking/events'
     - 'tracking/pod'
 catalog:
-  summary: 'Authenticate Ship24 tracking webhooks (unsigned: the whole `Authorization: Bearer <webhook secret>` value compared in constant time), handle tracking updates and proof of delivery'
+  summary: 'Authenticate Ship24 tracking webhooks (unsigned: `Authorization: Bearer <webhook secret>` compared in constant time), handle `tracking/events` and `tracking/pod` messages'

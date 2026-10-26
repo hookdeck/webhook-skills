@@ -4,34 +4,16 @@ docs:
   webhooks: https://docs.payroc.com/guides/events/create-event-subscription
   verification: https://docs.payroc.com/guides/events/create-event-subscription
 notes: >
-  Payroc (payment processor) Event Subscriptions, created through the API only. The OpenAPI spec
-  says the subscription's notifications[].secret is a 'String that we send with a notification so
-  that you can ensure it is a valid notification from our gateway. We include the value in the
-  Payroc-Secret header parameter in the webhook call.' The user supplies it (16 to 64 characters).
-  Not Hosted Payments Page callbacks. No signature: requests are unsigned. Payroc sends the
-  subscription's secret as plain text in the Payroc-Secret header on every request. The examples
-  read PAYROC_WEBHOOK_SECRET, look the Payroc-Secret header up case-insensitively and compare its
-  WHOLE value to the secret. This is what Hookdeck's Payroc source does (API key verification,
-  header payroc-secret, exact whole value). Missing header or mismatch: 401. Compare in constant
-  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
-  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
-  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
-  shared credential authenticates the sender, not the body, and gives no replay protection (no
-  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
-  zapier, coterie and honeybadger skills on main. Hookdeck's source type is PAYROC, labelled
-  'Payroc'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
-  tell the user the same thing, verbatim: "Covers event subscriptions only, not Hosted Payments Page
-  callbacks." Body: CloudEvents 1.0 JSON {specversion, type, version, source: 'payroc', id, time,
-  datacontenttype, data}; type e.g. processingAccount.status.changed,
-  processingAccount.riskStatus.changed, processingAccount.signature.signed,
-  terminalOrder.status.changed. Dispatch on type; dedupe on id. Return exactly 200; otherwise Payroc
-  retries five times, then emails the subscription's support address. POST. Express examples must
-  read the raw body with express.raw({ type: '*/*' }) so any content type works (and, for
-  signatures, the exact bytes are verified); parse the body only after the check. Documented sample
-  payloads (each JSON file's `body` is the payload as the vendor's docs show it) are in
-  /home/user/regwt/b13-merge/samples-doc/providers/payroc/latest/
-  (processingAccount.riskStatus.changed.json, processingAccount.signature.signed.json,
-  processingAccount.status.changed.json); base the examples' test payloads on them.
+  Payroc (payment processor) event subscriptions, created through the API only. Not Hosted Payments
+  Page callbacks. Requests are unsigned: the subscription's notifications[].secret (user supplied,
+  16 to 64 characters) is sent as plain text in the Payroc-Secret header. Examples read
+  PAYROC_WEBHOOK_SECRET, look the header up case-insensitively and compare the whole value in
+  constant time (Node: length check then timingSafeEqual; Python: compare_digest on bytes). A static
+  shared credential authenticates the sender, not the body, and gives no replay protection; use
+  HTTPS and rotate it if it leaks. Matches Hookdeck's PAYROC source (API key, payroc-secret).
+  Body is a CloudEvents 1.0 JSON object; dispatch on type, dedupe on id. Return exactly 200 or
+  Payroc retries five times and then emails the subscription's support address. Express examples use
+  express.raw({ type: '*/*' }). terminalOrder.status.changed has no documented sample payload.
 testScenario:
   events:
     - 'processingAccount.status.changed'

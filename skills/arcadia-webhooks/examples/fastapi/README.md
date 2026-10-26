@@ -1,0 +1,82 @@
+# Arcadia Webhooks - FastAPI Example
+
+Minimal example of receiving Arcadia webhooks and authenticating them with the custom header
+Arcadia support configures.
+
+Arcadia does not sign payloads, so there is no HMAC to verify. The handler reads the header named
+by `ARCADIA_WEBHOOK_HEADER` (default `X-Arcadia-Token`, looked up case-insensitively) and compares
+its whole value with `ARCADIA_WEBHOOK_SECRET` in constant time. The route reads the body with
+`await request.body()`, so any content type works.
+
+A static shared credential authenticates the sender, not the body, and gives no replay
+protection (no signature, no timestamp). Use HTTPS and rotate the value if it leaks.
+
+## Prerequisites
+
+- Python 3.9+
+- An Arcadia account; support sets the header name and value (see [../../references/setup.md](../../references/setup.md))
+
+Arcadia support sets the header name and value: open a support ticket to request one. Values cannot contain spaces.
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set `ARCADIA_WEBHOOK_HEADER` and `ARCADIA_WEBHOOK_SECRET` to the header name and exact value
+   configured by Arcadia support.
+
+## Run
+
+```bash
+uvicorn main:app --port 8000
+```
+
+Server runs on http://localhost:8000 and accepts requests at `POST /webhooks/arcadia`.
+
+## Test
+
+```bash
+pytest test_webhook.py -v
+```
+
+The tests send every handled event with correct, wrong and missing header values. No Arcadia
+account is needed.
+
+To try it by hand:
+
+```bash
+curl -X POST http://localhost:8000/webhooks/arcadia \
+  -H "Content-Type: application/json" \
+  -H "X-Arcadia-Token: $ARCADIA_WEBHOOK_SECRET" \
+  -d '{"id":"whk_1","eventType":"STATUS_CHANGE","resource":"CREDENTIAL","createdAt":"2024-02-21T00:00:00.000+00:00","businessUnitIds":[],"errors":[],"data":{"id":"crd_1"}}'
+```
+
+## Receive Webhooks Locally
+
+Arcadia can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account, no
+install):
+
+```bash
+npx hookdeck-cli listen 8000 arcadia --path /webhooks/arcadia
+```
+
+## How It Works
+
+- `main.py`: `verify_arcadia_request()` plus the `POST /webhooks/arcadia` route
+
+1. The configured header is checked before the body is parsed. Failure returns `401`.
+2. The body must be a JSON object (`400` otherwise).
+3. Payloads whose `id` was already handled are acknowledged without reprocessing.
+4. The handler dispatches on `eventType`: `STATUS_CHANGE`, `NEW_DATA_AVAILABLE`,
+   `EXISTING_DATA_UPDATED`, `DATA_DELETED`, `BUSINESS_UNIT_ASSIGNMENT`,
+   `REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS`, `REAL_TIME_CREDENTIAL_VALIDATION_FAILURE`,
+   `MFA_CHALLENGE_METHOD`, `MFA_CHALLENGE_CODE`.
+5. It returns `200 {"received": true}`.

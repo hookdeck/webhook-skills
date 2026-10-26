@@ -42,4 +42,4 @@ testScenario:
     - 'workflow.execution.rejected'
     - 'workflow.execution.initiated'
 catalog:
-  summary: 'Authenticate Vellum monitoring webhooks (unsigned API Key Header or Bearer Token, compared in constant time), handle workflow execution events'
+  summary: 'Authenticate Vellum monitoring webhooks (API Key Header or Bearer Token compared in constant time, no signature), handle workflow.execution.fulfilled, workflow.execution.rejected and workflow.execution.initiated events'

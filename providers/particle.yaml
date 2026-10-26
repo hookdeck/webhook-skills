@@ -37,7 +37,7 @@ notes: >
   are verified); parse the body only after the check.
 testScenario:
   events:
-    - 'device event temperature (form-encoded default)'
-    - 'device event motion-detected (JSON)'
+    - 'temperature'
+    - 'motion-detected'
 catalog:
-  summary: 'Authenticate Particle webhook integrations (unsigned: a static custom header, compared in constant time), accept the configured method, parse form-encoded or JSON device events'
+  summary: 'Authenticate Particle webhook integrations (unsigned: a static custom header such as `Authorization`, compared in constant time), accept any request method, parse form-encoded or JSON device events like temperature and motion-detected'

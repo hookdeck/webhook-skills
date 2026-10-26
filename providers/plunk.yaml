@@ -37,7 +37,8 @@ notes: >
   check.
 testScenario:
   events:
-    - 'workflow webhook step (default body)'
-    - 'workflow webhook step (custom body, illustrative)'
+    - 'email.bounce'
+    - 'email.complaint'
+    - 'contact.unsubscribed'
 catalog:
   summary: 'Authenticate Plunk workflow webhook steps (unsigned: a static secret header you set, compared in constant time), accept the step''s method, handle contact and workflow payloads'

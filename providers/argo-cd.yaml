@@ -41,5 +41,10 @@ testScenario:
   events:
     - 'on-sync-succeeded template (illustrative payload)'
     - 'on-health-degraded template (illustrative payload)'
+  prompt: >
+    Add an endpoint to my {framework} app that receives Argo CD notification webhooks (the
+    Argo CD Notifications webhook service). They are unsigned: authenticate them with a secret
+    header configured on the service, accept GET and POST, handle an empty body, and handle an
+    illustrative JSON payload for the on-sync-succeeded and on-health-degraded templates.
 catalog:
   summary: 'Authenticate Argo CD notification webhooks (unsigned: a header you configure, compared in constant time), accept GET or POST, handle template-defined sync and health payloads'

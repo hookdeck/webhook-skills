@@ -41,6 +41,5 @@ notes: >
 testScenario:
   events:
     - 'click'
-    - 'click (PUT delivery)'
 catalog:
   summary: 'Authenticate Rebrandly Clickstream and webhook deliveries (unsigned: a header you name, compared in constant time), accept POST or PUT, handle click batches'

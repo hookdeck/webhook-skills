@@ -3,6 +3,7 @@ displayName: 'Connecteam'
 docs:
   webhooks: https://developer.connecteam.com/docs/setting-up-webhook-via-api
   verification: https://developer.connecteam.com/docs/setting-up-webhook-via-api
+  events: https://developer.connecteam.com/docs/setting-up-webhook-via-api
 notes: >
   Connecteam (frontline workforce app) webhooks created through the Webhook API (users, forms,
   time_activity, shift_scheduler, tasks, chat features). Connecteam says: 'When secretKey is set,

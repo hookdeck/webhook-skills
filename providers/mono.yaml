@@ -3,6 +3,7 @@ displayName: 'Mono'
 docs:
   webhooks: https://docs.mono.co/docs/webhooks
   verification: https://docs.mono.co/docs/webhooks
+  events: https://docs.mono.co/docs/payments/onetime/webhook-events
 notes: >
   Mono (African open banking: Connect and DirectPay). Mono says: 'All Webhook requests are sent with
   a mono-webhook-secret header for verification. It should match the secret you passed when creating

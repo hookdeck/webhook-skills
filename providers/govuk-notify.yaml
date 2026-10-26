@@ -27,7 +27,7 @@ notes: >
   for the callback in GOV.UK Notify (API integration > Callbacks)." Body: no event field; tell
   callback kinds apart by shape. Delivery receipts: {id, reference, to, status (delivered,
   permanent-failure, temporary-failure, technical-failure), created_at, completed_at, sent_at,
-  notification_type (email, sms, letter), template_id, template_version}. Received text messages:
+  notification_type (email, sms), template_id, template_version}. Received text messages:
   {id, source_number, destination_number, message, date_received}. Build example payloads from the
   documented field tables and label them as such. Retried every 5 minutes, up to 5 times. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
@@ -37,5 +37,6 @@ testScenario:
     - 'delivery receipt: delivered'
     - 'delivery receipt: permanent-failure'
     - 'received text message'
+    - 'returned letter'
 catalog:
-  summary: 'Authenticate GOV.UK Notify callbacks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle delivery receipts and received text messages'
+  summary: 'Authenticate GOV.UK Notify callbacks (unsigned: `Authorization: Bearer <token>` compared in constant time), handle delivery receipts, received text messages and returned letters'

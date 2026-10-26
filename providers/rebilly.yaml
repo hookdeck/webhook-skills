@@ -52,4 +52,4 @@ testScenario:
     - 'subscription-activated'
     - 'customer-created'
 catalog:
-  summary: 'Authenticate Rebilly webhooks (HTTP Basic auth compared in constant time; JWT and v1a Ed25519 signatures explained), accept any method, handle billing events by `eventType`'
+  summary: 'Authenticate Rebilly webhooks (`Authorization: Basic` HTTP basic auth, compared in constant time; `Security-Signature` JWT and `v1a` Ed25519 signatures explained), accept GET, POST, PUT, PATCH and DELETE, handle transaction-processed, subscription-activated and invoice-issued events by `eventType`'

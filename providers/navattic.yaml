@@ -33,10 +33,11 @@ notes: >
   verified); parse the body only after the check. Documented sample payloads (each JSON file's
   `body` is the payload as the vendor's docs show it) are in
   /home/user/regwt/b13-merge/samples-doc/providers/navattic/latest/ (session_closed.json); base the
-  examples' test payloads on them.
+  examples' test payloads on them. Correction from the live docs page: for account events `data` is
+  the company account object itself (id, name, websiteDomain, ...), not a wrapper, so the examples
+  tell visitor events (data.session) from account events by shape.
 testScenario:
   events:
-    - 'session_closed (visitor)'
-    - 'session_closed (account)'
+    - 'session_closed'
 catalog:
   summary: 'Authenticate Navattic webhooks (unsigned: the whole `Authorization` value, Basic or Bearer, compared in constant time), handle `session_closed` events'

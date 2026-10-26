@@ -3,6 +3,7 @@ displayName: 'PAY.JP'
 docs:
   webhooks: https://docs.pay.jp/v1/webhook
   verification: https://docs.pay.jp/v1/webhook
+  events: https://docs.pay.jp/v1/api
 notes: >
   PAY.JP (Japanese payments; docs in Japanese). Every PAY.JP webhook carries X-Payjp-Webhook-Token,
   an account-specific token ID such as whook_a09d5c1c87be4e1590a9f16516 ('PAY.JP からのすべての Webhook には

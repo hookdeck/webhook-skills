@@ -36,4 +36,4 @@ testScenario:
     - 'PostCreated'
     - 'MemberPurchased'
 catalog:
-  summary: 'Authenticate Mighty Networks webhooks (unsigned: the whole `Authorization: Bearer <key>` value compared in constant time), handle member, post, purchase and RSVP events'
+  summary: 'Authenticate Mighty Networks webhooks (unsigned: `Authorization: Bearer <API key>` compared in constant time), handle MemberJoined, MemberPurchased, PostCreated and RsvpCreated events'

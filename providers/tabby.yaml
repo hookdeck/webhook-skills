@@ -33,8 +33,8 @@ notes: >
   the check.
 testScenario:
   events:
-    - 'payment authorized'
-    - 'payment closed'
-    - 'payment rejected'
+    - 'authorized'
+    - 'closed'
+    - 'rejected'
 catalog:
-  summary: 'Authenticate Tabby payment and dispute webhooks (unsigned: the header title and value set at registration, compared in constant time), handle payment status changes'
+  summary: 'Authenticate Tabby payment and dispute webhooks (unsigned: the secret header set at registration, `X-Auth-Key` by default, compared in constant time), handle payment statuses like `authorized`, `closed` and `rejected` and dispute statuses'

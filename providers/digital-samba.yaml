@@ -39,4 +39,4 @@ testScenario:
     - 'session_ended'
     - 'recording_ready'
 catalog:
-  summary: 'Authenticate Digital Samba webhooks (unsigned: the whole `Authorization: Bearer <secret>` value compared in constant time), handle participant, session, recording and library events'
+  summary: 'Authenticate Digital Samba webhooks (unsigned: `Authorization: Bearer <secret>` compared in constant time), handle participant_joined, session_ended and recording_ready events'

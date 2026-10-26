@@ -38,6 +38,6 @@ testScenario:
   events:
     - 'APP_DEPLOY'
     - 'STATIC_SITE_DEPLOY'
-    - 'DATABASE_CREATE'
+    - 'APP_DELETE'
 catalog:
-  summary: 'Authenticate Sevalla webhooks (`svl-signature` carries the whsec_ secret itself, not a signature: compared in constant time), handle app, static site and database events'
+  summary: 'Authenticate Sevalla webhooks (`svl-signature` carries the whsec_ secret itself, not a signature: compared in constant time), handle APP_DEPLOY, STATIC_SITE_DEPLOY and other app and static site events'

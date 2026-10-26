@@ -3,6 +3,7 @@ displayName: 'Incode'
 docs:
   webhooks: https://developer.incode.com/general-reference/webhooks-overview
   verification: https://developer.incode.com/dashboard-platform-administration/configuration-webhooks-tab
+  events: https://developer.incode.com/general-reference/session-webhooks
 notes: >
   Incode (identity verification). 'You can create custom headers that your endpoint receives as part
   of webhook notifications. ... all headers are sent for all webhooks. Dynamic values are not
