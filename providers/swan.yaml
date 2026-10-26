@@ -1,0 +1,36 @@
+name: swan
+displayName: 'Swan'
+docs:
+  webhooks: https://docs.swan.io/developers/using-api/webhooks
+  verification: https://docs.swan.io/developers/using-api/webhooks
+notes: >
+  Swan (embedded banking, EU). Swan says: 'Each request includes a shared secret in the
+  x-swan-secret header. This secret acts like a password, known only to you and Swan.' The secret is
+  optional per webhook subscription (dashboard or the addWebhookSubscription mutation). No
+  signature: requests are unsigned. Swan sends the subscription's webhook secret as plain text in
+  the x-swan-secret header on every request. The examples read SWAN_WEBHOOK_SECRET, look the
+  x-swan-secret header up case-insensitively and compare its WHOLE value to the secret. This is what
+  Hookdeck's Swan source does (API key verification, header x-swan-secret, exact whole value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is SWAN, labelled 'Swan'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set a
+  webhook secret on the Swan webhook subscription. Subscriptions without one send nothing to
+  verify." Body: thin notification {eventType, eventId, eventDate, projectId, resourceId}; eventType
+  is <Resource>.<Action> (Transaction.Booked, Account.Created, AccountHolder.Updated, Card.Created,
+  Onboarding.Updated, ...); query the API for the resource. Respond 200 OK within 10 seconds; errors
+  are retried every 30 seconds up to 7 times; at-least-once and unordered, so dedupe on eventId.
+  POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check.
+testScenario:
+  events:
+    - 'Transaction.Booked'
+    - 'Account.Created'
+    - 'Onboarding.Updated'
+catalog:
+  summary: 'Authenticate Swan webhooks (unsigned: the subscription''s `x-swan-secret` compared in constant time), handle thin `<Resource>.<Action>` notifications'

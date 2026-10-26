@@ -1,0 +1,33 @@
+name: ship24
+displayName: 'Ship24'
+docs:
+  webhooks: https://docs.ship24.com/webhooks/overview
+  verification: https://docs.ship24.com/webhooks/authentication
+notes: >
+  Ship24 (multi-carrier parcel tracking). Ship24 says: 'Ship24 will allocate to your account a
+  random Webhook Secret that will be sent in an Authorization header for each webhook request in the
+  following format: Authorization: Bearer your_webhook_secret', visible in the dashboard. No
+  signature. The credential is the Authorization header. Hookdeck's Ship24 source compares the WHOLE
+  Authorization header value to the configured key, so the examples read SHIP24_AUTHORIZATION = the
+  full value as Ship24 sends it (e.g. 'Bearer <webhook secret>'), including any scheme prefix, and
+  compare the whole Authorization header to it; do not strip, parse or base64-decode the prefix
+  (Coterie pattern). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is SHIP24, labelled 'Ship24'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste
+  "Bearer " followed by your Ship24 Webhook Secret." Body: {trackings: [ ... ]}, each with metadata
+  {generatedAt, messageId, topic}, tracker, shipment, events and statistics; metadata.topic is
+  tracking/events or tracking/pod. Loop over trackings[] and dispatch on metadata.topic; dedupe on
+  metadata.messageId. Any 2xx; retried up to 20 times. POST. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes
+  are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'tracking/events'
+    - 'tracking/pod'
+catalog:
+  summary: 'Authenticate Ship24 tracking webhooks (unsigned: the whole `Authorization: Bearer <webhook secret>` value compared in constant time), handle tracking updates and proof of delivery'

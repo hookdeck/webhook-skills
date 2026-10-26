@@ -1,0 +1,38 @@
+name: zoop
+displayName: 'Zoop'
+docs:
+  webhooks: https://docs.zoop.co/docs/notifica%C3%A7%C3%B5es-e-eventos-webhook
+  verification: https://docs.zoop.co/docs/webhook-com-autoriza%C3%A7%C3%A3o
+notes: >
+  Zoop (Brazilian payments platform; docs in Portuguese). The partner creates the webhook through
+  the API with a unique "authorization" string, and Zoop returns it in the request header verbatim
+  ('--header Authorization: xxxxxxxxxxxx'), with no Bearer prefix unless the user included one. No
+  signature. The credential is the Authorization header. Hookdeck's Zoop source compares the WHOLE
+  Authorization header value to the configured key, so the examples read ZOOP_AUTHORIZATION = the
+  full value as Zoop sends it (e.g. 'xxxxxxxxxxxx'), including any scheme prefix, and compare the
+  whole Authorization header to it; do not strip, parse or base64-decode the prefix (Coterie
+  pattern). The value is exactly the authorization string set when creating the webhook. Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is ZOOP, labelled 'Zoop'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set an
+  authorization value when you create the webhook through the Zoop API, then paste the same value
+  here." Body: {id, resource: 'event', type, source, payload: {object}, uri, created_at,
+  updated_at}; type e.g. transaction.succeeded, transaction.failed, transaction.canceled,
+  seller.activated, bank_account.associated. On creation Zoop sends a validation event with type
+  'ping' and activates the webhook only if it is accepted; handle it with a 200. Zoop expects a
+  response within 1 second, so acknowledge first and process later. Dispatch on type; dedupe on id.
+  POST only. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works (and, for signatures, the exact bytes are verified); parse the body only after
+  the check.
+testScenario:
+  events:
+    - 'transaction.succeeded'
+    - 'transaction.failed'
+    - 'ping'
+catalog:
+  summary: 'Authenticate Zoop webhooks (unsigned: the `authorization` value sent verbatim in `Authorization`, compared in constant time), handle transaction, seller and ping events'

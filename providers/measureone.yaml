@@ -1,0 +1,40 @@
+name: measureone
+displayName: 'MeasureOne'
+docs:
+  webhooks: https://docs.measureone.com/api/openapi_3.2/components/section/webhook/events
+  verification: https://docs.measureone.com/api/openapi_3.2/components/section/webhook/webhook_security
+notes: >
+  MeasureOne (consumer-permissioned data: academic, income, insurance). Each Data Request's
+  delivery_details[] has a url and optional 'headers object Additional http headers that you may
+  want to pass'. MeasureOne also offers Basic and JWT authorization; the JWT option fetches a fresh
+  token from your own endpoint before every delivery, which can't be checked, and Basic is not
+  covered by Hookdeck's MeasureOne source; say so. No signature: requests are unsigned. Authenticate
+  with a secret header the user adds as a static header in delivery_details[].headers on each Data
+  Request. The header name is user-chosen, so the examples read the header name from
+  MEASUREONE_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  MEASUREONE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's MeasureOne source does (API key verification: Header
+  Name + exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is MEASUREONE, labelled 'MeasureOne'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Use a static header in delivery_details. The JWT option fetches a
+  new token for every delivery and cannot be checked." Body: flat JSON {event, datarequest_id,
+  individual_id, external_id, metadata, ...event-specific fields}; event e.g.
+  datarequest.report_available, datarequest.items_available, session.completed, item.processed,
+  datarequest.refresh_failed. Dispatch on event. Any 2xx succeeds; retried up to 10 times with
+  backoff. POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works (and, for signatures, the exact bytes are verified); parse the body only after
+  the check.
+testScenario:
+  events:
+    - 'datarequest.report_available'
+    - 'session.completed'
+    - 'datarequest.items_available'
+catalog:
+  summary: 'Authenticate MeasureOne webhooks (unsigned: a static header from delivery_details, compared in constant time), handle data request, session and item events'

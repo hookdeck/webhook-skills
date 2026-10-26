@@ -1,0 +1,38 @@
+name: govuk-notify
+displayName: 'GOV.UK Notify'
+docs:
+  webhooks: https://docs.notifications.service.gov.uk/rest-api.html
+  verification: https://docs.notifications.service.gov.uk/rest-api.html
+notes: >
+  GOV.UK Notify callbacks (API integration > Callbacks): delivery receipts, received text messages
+  and returned letters. Notify says: 'You must provide: a URL where Notify will post the callback
+  [and] a bearer token which Notify will put in the authorisation header of the requests'; its
+  source sends headers {'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'} with
+  method POST. No signature. The credential is the Authorization header. Hookdeck's GOV.UK Notify
+  source compares the WHOLE Authorization header value to the configured key, so the examples read
+  GOVUK_NOTIFY_AUTHORIZATION = the full value as GOV.UK Notify sends it (e.g. 'Bearer <token>'),
+  including any scheme prefix, and compare the whole Authorization header to it; do not strip, parse
+  or base64-decode the prefix (Coterie pattern). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is GOVUK_NOTIFY, labelled
+  'GOV.UK Notify'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste "Bearer " followed by the
+  bearer token you set for the callback in GOV.UK Notify (API integration > Callbacks)." Body: no
+  event field; tell callback kinds apart by shape. Delivery receipts: {id, reference, to, status
+  (delivered, permanent-failure, temporary-failure, technical-failure), created_at, completed_at,
+  sent_at, notification_type (email, sms, letter), template_id, template_version}. Received text
+  messages: {id, source_number, destination_number, message, date_received}. Build example payloads
+  from the documented field tables and label them as such. Retried every 5 minutes, up to 5 times.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works (and, for signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'delivery receipt: delivered'
+    - 'delivery receipt: permanent-failure'
+    - 'received text message'
+catalog:
+  summary: 'Authenticate GOV.UK Notify callbacks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle delivery receipts and received text messages'
