@@ -1,0 +1,32 @@
+name: pubnub
+displayName: 'PubNub'
+docs:
+  webhooks: https://www.pubnub.com/docs/integrations/event-forwarding/create-webhook-action
+  verification: https://www.pubnub.com/docs/integrations/event-forwarding/create-webhook-action
+notes: >
+  Realtime messaging; covers the Events & Actions Webhook action (legacy Keysets-page webhooks have
+  no auth option and aren't covered). No signature: requests are unsigned. Authenticate with a
+  secret header the user adds to the Webhook action (custom headers, value from a keyset secret).
+  The header name is user-chosen, so the examples read the header name from PUBNUB_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from PUBNUB_WEBHOOK_SECRET (the exact, whole
+  header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's PubNub source does (API key verification: header name + exact value). Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body (No Envelope) has a dataSchema like
+  pubnub.com/schemas/events/messages.pubsub.publish?v=1.0.0; strip the prefix and version to get the
+  type: messages.pubsub.publish, user.created, channel.created, membership.created,
+  presence.user.channel.joined, etc. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'messages.pubsub.publish'
+    - 'user.created'
+    - 'presence.user.channel.joined'
+catalog:
+  summary: 'Authenticate PubNub Events & Actions webhooks (unsigned: a secret custom header compared in full in constant time), handle events by `dataSchema` like `messages.pubsub.publish` and `user.created`'

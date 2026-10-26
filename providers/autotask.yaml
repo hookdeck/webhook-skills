@@ -1,0 +1,24 @@
+name: autotask
+displayName: 'Autotask'
+docs:
+  webhooks: https://www.autotask.net/help/developerhelp/Content/APIs/Webhooks/Webhooks.htm
+  verification: https://www.autotask.net/help/developerhelp/Content/APIs/Webhooks/SecretKeyPayloadVerification.htm
+  events: https://www.autotask.net/help/developerhelp/Content/APIs/Webhooks/Webhooks_Creating.htm
+notes: >
+  Autotask PSA (Datto, now Kaseya) REST API webhooks. Header X-Hook-Signature: 'sha1=<base64>', e.g.
+  sha1=UaDXFl2DRDu9dnINVkFle7y5uAE=, a base64 HMAC-SHA1 of the raw request body keyed with the
+  SecretKey set when the webhook was created (up to 64 chars). Algorithm is SHA-1 and the digest is
+  base64 (keep the = padding). Require and strip the sha1= prefix. Compare in constant time: compare
+  the base64 strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check
+  (no lenient base64 decode of the header); in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. Webhooks are created through the REST API
+  (CompanyWebhooks, ContactWebhooks, TicketWebhooks, etc.) with WebhookUrl and SecretKey. The payload
+  has Action (Create, Update, Delete, Deactivated), EntityType (Company, Contact, Ticket, ...), Id and
+  Fields; dispatch on EntityType and Action. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'Ticket Create'
+    - 'Company Update'
+catalog:
+  summary: 'Verify Autotask webhook signatures (`X-Hook-Signature` `sha1=<base64>`, HMAC-SHA1 of the raw body keyed with the webhook SecretKey), handle entity Create/Update/Delete callouts'

@@ -1,0 +1,34 @@
+name: tray-io
+displayName: 'Tray.io'
+docs:
+  webhooks: https://tray.ai/documentation/connectors/core/http-client
+  verification: https://tray.ai/documentation/connectors/core/http-client
+notes: >
+  Automation platform (now tray.ai); requests are built in a workflow's HTTP Client connector, like
+  n8n and Zapier. No signature: requests are unsigned. Authenticate with a secret header the user
+  adds in the HTTP Client step's headers (value from a Generic Service Authentication). The header
+  name is user-chosen, so the examples read the header name from TRAY_IO_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from TRAY_IO_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Tray.io
+  source does (API key verification: header name + exact value). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. The request method is
+  user-chosen, so the examples must not be POST-only: accept POST, PUT, PATCH, DELETE and GET on the
+  webhook route, and handle an empty body (e.g. GET). Body is whatever the workflow sends; suggest
+  including an event field and use an illustrative {"event": ..., "data": ...} body. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  JSON only after the credential check. Tray defines no event types: the skill uses record.created,
+  record.updated and record.deleted as an illustrative event field convention. Tray defaults Content-Type to application/x-www-form-urlencoded when no body type
+  is chosen, so guides should tell users to pick a JSON body.
+testScenario:
+  events:
+    - 'record.created'
+    - 'record.updated'
+    - 'record.deleted'
+catalog:
+  summary: 'Authenticate requests from a Tray.io workflow''s HTTP Client connector (unsigned: a secret header compared in full in constant time), route workflow payloads on an event field such as `record.created`'

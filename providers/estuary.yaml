@@ -1,0 +1,45 @@
+name: estuary
+displayName: 'Estuary'
+docs:
+  webhooks: https://docs.estuary.dev/concepts/materialization-triggers/
+  verification: https://docs.estuary.dev/concepts/materialization-triggers/
+notes: >
+  Estuary (real-time data integration) materialization triggers and the HTTP Webhook materialization
+  connector. A trigger's headers are 'HTTP headers to include in the request. Header values are
+  encrypted at rest ...' (example Authorization: "Bearer my-secret-token"); the HTTP Webhook
+  connector takes /headers/customHeaders. No signature: requests are unsigned. Authenticate with a
+  secret header the user adds to the materialization trigger (or the HTTP Webhook connector's custom
+  headers). The header name is user-chosen, so the examples read the header name from
+  ESTUARY_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  ESTUARY_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Estuary source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is ESTUARY, labelled 'Estuary'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Estuary triggers are not signed. Add a secret header to the materialization
+  trigger (or the HTTP Webhook connector) and enter it here." Methods: triggers default to POST and
+  can use PUT or PATCH ('One of: POST, PUT, PATCH'). The examples must not be POST-only: accept GET,
+  POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per method;
+  Next.js: export a handler for each; FastAPI: api_route with those methods), check the credential
+  first for every method, and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's
+  Estuary source pre-selects POST without managing the method, so any other method the sender uses
+  must also be allowed on the source. The body is defined by the sender's own configuration and
+  there is no vendor event field, so the examples and test scenario use a clearly labelled
+  illustrative payload. A trigger fires once per committed transaction and its body is the author's
+  payloadTemplate (variables include materialization_name, collection_names,
+  flow_published_at_min/max and run_id); the HTTP Webhook connector sends documents. Non-retryable
+  4xx fail the trigger. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works (and, for signatures, the exact bytes are verified); parse the body only
+  after the check.
+testScenario:
+  events:
+    - 'materialization trigger (illustrative payload)'
+    - 'HTTP Webhook connector document (illustrative payload)'
+catalog:
+  summary: 'Authenticate Estuary materialization triggers and HTTP Webhook deliveries (unsigned: a header you configure, compared in constant time), accept POST, PUT or PATCH'

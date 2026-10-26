@@ -1,0 +1,22 @@
+name: autosana
+displayName: 'Autosana'
+docs:
+  webhooks: https://docs.autosana.ai/webhooks
+notes: >
+  Autosana (AI mobile app testing). If a signing secret is set (Settings > Integrations > Webhooks),
+  payloads are signed: header X-Autosana-Signature-256: 'sha256=<hex>', HMAC-SHA256 hex of the raw
+  body keyed with that secret as UTF-8. Require and strip the sha256= prefix. Compare in constant
+  time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
+  Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. The only
+  documented notification is batch.completed (an event field in the body), sent when a batch of flow
+  runs completes. Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md):
+  Set a signing secret on the Autosana webhook. Without one, deliveries are unsigned and fail
+  verification. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'batch.completed'
+catalog:
+  summary: 'Verify Autosana webhook signatures (`X-Autosana-Signature-256: sha256=<hex>`, HMAC-SHA256 of the raw body), handle `batch.completed` events'

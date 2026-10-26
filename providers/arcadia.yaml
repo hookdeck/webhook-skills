@@ -1,0 +1,43 @@
+name: arcadia
+displayName: 'Arcadia'
+docs:
+  webhooks: https://docs.arcadia.com/reference/webhooks-overview
+  verification: https://docs.arcadia.com/reference/webhooks-overview
+notes: >
+  Arcadia (utility data platform, Plug/Spark APIs) webhooks. Custom headers 'can be useful for
+  authentication purposes to verify that a webhook is coming from Arcadia', but 'these values must
+  be set by Arcadia internally and cannot be set via the API or Dashboard' (ask support via Zendesk)
+  and 'Spaces are not allowed', so a 'Bearer x' value is impossible; suggest a custom header such as
+  X-Arcadia-Token. Values apply to all webhooks in the org. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds through an Arcadia support ticket. The header name
+  is user-chosen, so the examples read the header name from ARCADIA_WEBHOOK_HEADER (default
+  'X-Arcadia-Token') and the expected value from ARCADIA_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Arcadia
+  source does (API key verification: Header Name + exact whole Header Value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
+  ARCADIA, labelled 'Arcadia'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Arcadia support sets the header
+  name and value: open a support ticket to request one. Values cannot contain spaces." Body: {id
+  (whk_...), eventType, resource, createdAt, businessUnitIds, errors, data}; eventType e.g.
+  STATUS_CHANGE, NEW_DATA_AVAILABLE, EXISTING_DATA_UPDATED, DATA_DELETED,
+  REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS, MFA_CHALLENGE_CODE; resource names the entity
+  (CREDENTIAL, ACCOUNT, STATEMENT, METER, ...). Dispatch on eventType (and resource); dedupe on id.
+  2xx within 10 seconds. POST. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works (and, for signatures, the exact bytes are verified); parse the
+  body only after the check. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in /home/user/regwt/b13-merge/samples-doc/providers/arcadia/latest/
+  (BUSINESS_UNIT_ASSIGNMENT.json, DATA_DELETED.json, EXISTING_DATA_UPDATED.json,
+  MFA_CHALLENGE_CODE.json, ...); base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'STATUS_CHANGE'
+    - 'NEW_DATA_AVAILABLE'
+    - 'DATA_DELETED'
+catalog:
+  summary: 'Authenticate Arcadia utility data webhooks (unsigned: a custom header Arcadia support sets, compared in constant time), handle status, data and credential events'

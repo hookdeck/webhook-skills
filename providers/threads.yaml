@@ -1,0 +1,31 @@
+name: threads
+displayName: 'Threads'
+docs:
+  webhooks: https://developers.facebook.com/documentation/threads/webhooks
+  verification: https://developers.facebook.com/docs/graph-api/webhooks/getting-started
+  reference_impl: https://github.com/fbsamples/graph-api-webhooks-samples
+notes: >
+  Threads (Meta) webhooks. Meta signs every notification: header X-Hub-Signature-256: 'sha256=<hex>',
+  HMAC-SHA256 hex of the raw payload keyed with the app secret. Require and strip the sha256= prefix.
+  The Threads page does not name the key; Meta's getting-started guide says the App Secret, and
+  Threads apps also show a separate Threads App Secret (Use cases > Threads API > Settings). Say the
+  docs don't say which one signs, to use the secret of the app the webhook is configured on and try
+  the other if verification fails. Compare in constant time: in Node, check the received value is
+  exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently
+  truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. Setup also needs the GET verification handshake:
+  respond to hub.mode=subscribe with hub.challenge when hub.verify_token matches (examples handle GET
+  with a THREADS_VERIFY_TOKEN; Hookdeck's edge answers the challenge itself). Topics/fields: replies,
+  mentions, publish, delete; the body is {object, entry[]} or per field values, check the samples. See
+  facebook-webhooks / whatsapp-webhooks skills for the Meta pattern. Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Paste the app secret your Threads app signs
+  webhooks with. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'replies'
+    - 'mentions'
+    - 'publish'
+catalog:
+  summary: 'Verify Threads (Meta) webhook signatures (`X-Hub-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the app secret), answer the `hub.challenge` handshake, handle `replies`, `mentions`, `publish` and `delete`'

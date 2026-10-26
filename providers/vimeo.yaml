@@ -1,0 +1,26 @@
+name: vimeo
+displayName: 'Vimeo'
+docs:
+  webhooks: https://developer.vimeo.com/api/app-webhooks
+  verification: https://developer.vimeo.com/api/app-webhooks#securing-webhooks
+notes: >
+  Vimeo app webhooks. Signing only happens once a secret is set by a POST or PATCH to the webhook with
+  a secret parameter (Vimeo recommends a random string of at least 64 bytes). Header
+  X-Webhook-Signature: hex HMAC-SHA256 of the raw payload body keyed with that secret (hex comes from
+  the docs' PHP hash_hmac sample, whose default output is lowercase hex). Compare in constant time: in
+  Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x,
+  'hex') (invalid hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8
+  Buffers with crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. The page is a JS-rendered Next.js app;
+  if curl gets no text, read the page chunk it loads. Event types include video-created,
+  video-deleted, video-transcode-complete, video-upload-failed, live-event-started, live-event-ended,
+  transcript-status-complete; the payload's event field is `webhook_type` (envelope: webhook_type, data, timestamp). Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Set a secret on the webhook through the Vimeo
+  API. Without one, deliveries are unsigned and fail verification. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'video-transcode-complete'
+    - 'video-deleted'
+catalog:
+  summary: 'Verify Vimeo app webhook signatures (`X-Webhook-Signature`, HMAC-SHA256 hex of the raw body), handle video events like `video-transcode-complete` and `video-deleted`'

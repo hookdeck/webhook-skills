@@ -1,0 +1,34 @@
+name: demodesk
+displayName: 'Demodesk'
+docs:
+  webhooks: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
+  verification: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
+  events: https://demodesk.ai/help/how-to-generate-an-api-key-and-manage-webhooks
+notes: >
+  Sales meetings; company webhooks (Settings > Integrations > Connections > Demodesk API >
+  Webhooks), one event per endpoint, optional custom headers ('Custom headers can be useful for
+  authentication, for example: Authorization: Bearer abc123'). No signature: requests are unsigned.
+  Authenticate with a secret header the user adds to the webhook endpoint (custom headers). The
+  header name is user-chosen, so the examples read the header name from DEMODESK_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from DEMODESK_WEBHOOK_SECRET (the exact, whole
+  header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Demodesk source does (API key verification: header name + exact whole value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is DEMODESK, labelled 'Demodesk'. Body has meta.event.action, e.g. demo.scheduled,
+  demo.rescheduled, demo.canceled, demo.ended, recording.uploaded. POST JSON. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
+  after the credential check.
+testScenario:
+  events:
+    - 'demo.scheduled'
+    - 'demo.ended'
+    - 'recording.uploaded'
+catalog:
+  summary: 'Authenticate Demodesk webhooks (unsigned: a custom header compared in full in constant time), handle `meta.event.action`s like `demo.scheduled`, `demo.ended` and `recording.uploaded`'

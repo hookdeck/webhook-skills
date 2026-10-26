@@ -1,0 +1,45 @@
+name: rebrandly
+displayName: 'Rebrandly'
+docs:
+  webhooks: https://developers.rebrandly.com/docs/clickstream-webhooks
+  verification: https://developers.rebrandly.com/docs/clickstream-webhook-setup
+notes: >
+  Rebrandly (branded short links). Two products: enterprise Clickstream webhooks ('Provide Rebrandly
+  with the following: API endpoint URL; HTTP method (POST or PUT); Authentication header key and
+  value') and the self-serve Webhooks feature in account settings, whose header name Rebrandly's own
+  blog gives inconsistently (X-Rebrandly-Secret and apikey), so tell the user to capture one
+  delivery and set the header name to what arrives. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds (the authentication header key and value given to
+  Rebrandly for Clickstream, or the self-serve webhook's secret). The header name is user-chosen, so
+  the examples read the header name from REBRANDLY_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from REBRANDLY_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
+  ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
+  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Rebrandly source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is REBRANDLY, labelled
+  'Rebrandly'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Rebrandly webhooks are not signed. Add an
+  authentication header to the webhook and enter it here." Methods: Clickstream uses the POST or PUT
+  method you give Rebrandly at setup. The examples must not be POST-only: accept GET, POST, PUT,
+  PATCH and DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a
+  handler for each; FastAPI: api_route with those methods), check the credential first for every
+  method, and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Rebrandly source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Body: Clickstream {data: [ click, ... ], key}; each click has timestamp,
+  client (language, location, agent), referral and route. Only click events exist; loop over data[].
+  No retries (each event is sent once). Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/rebrandly/latest/ (click.json); base the
+  examples' test payloads on them.
+testScenario:
+  events:
+    - 'click'
+catalog:
+  summary: 'Authenticate Rebrandly Clickstream and webhook deliveries (unsigned: a header you name, compared in constant time), accept POST or PUT, handle click batches'

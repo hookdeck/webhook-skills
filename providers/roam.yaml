@@ -1,0 +1,26 @@
+name: roam
+displayName: 'Roam'
+docs:
+  webhooks: https://developer.ro.am/docs/webhooks/webhooks
+notes: >
+  Roam (ro.am virtual office, not Roam Research). Standard Webhooks, signed only when a signing secret
+  is configured: webhook-id, webhook-timestamp, webhook-signature; HMAC-SHA256 over
+  '{webhook-id}.{webhook-timestamp}. {payload}', key = the whsec_ secret base64-decoded. Roam's own
+  example uses the standardwebhooks library with the whsec_ secret. The standardwebhooks / svix
+  libraries always enforce a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}', key = base64-decode of the secret after whsec_, compare every space-separated v1,<base64>
+  entry in constant time) where the window can be dropped or widened. One event can arrive as two
+  POSTs with the same webhook-id (legacy and v1 bodies): dedupe on webhook-id. Events: chat.message,
+  chat.reaction, meeting.started, meeting.ended, lobby.booked, magicast.created, onair.event.created
+  and more. Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md):
+  Configure a signing secret for the Roam webhook. Without one, deliveries are unsigned and fail
+  verification. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'chat.message'
+    - 'meeting.ended'
+catalog:
+  summary: 'Verify Roam webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret), handle `chat.message` and `meeting.ended` events'

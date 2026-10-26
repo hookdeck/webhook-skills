@@ -1,0 +1,31 @@
+name: currents
+displayName: 'Currents'
+docs:
+  webhooks: https://docs.currents.dev/resources/integrations/http-webhooks
+  verification: https://docs.currents.dev/resources/integrations/http-webhooks#security
+notes: >
+  Playwright/Cypress test reporting (currents.dev); HTTP Webhook integration under Manage Project >
+  Integrations. No signature: requests are unsigned. Authenticate with a secret header the user adds
+  to the integration's Headers. The header name is user-chosen, so the examples read the header name
+  from CURRENTS_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  CURRENTS_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Currents source does (API key verification: header name
+  + exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Currents also sends an unsigned x-timestamp header; it can be forged, so it's
+  at most a freshness hint (optional check), not replay protection. Body has event: RUN_START,
+  RUN_FINISH, RUN_TIMEOUT, RUN_CANCELED. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'RUN_START'
+    - 'RUN_FINISH'
+    - 'RUN_TIMEOUT'
+    - 'RUN_CANCELED'
+catalog:
+  summary: 'Authenticate Currents HTTP webhooks (unsigned: a secret custom header compared in full in constant time), handle `RUN_START`, `RUN_FINISH`, `RUN_TIMEOUT` and `RUN_CANCELED`'

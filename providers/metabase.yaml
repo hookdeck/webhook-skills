@@ -1,0 +1,34 @@
+name: metabase
+displayName: 'Metabase'
+docs:
+  webhooks: https://www.metabase.com/docs/latest/configuring-metabase/webhooks
+  verification: https://www.metabase.com/docs/latest/configuring-metabase/webhooks
+notes: >
+  BI; covers alert webhooks with Basic authentication (Metabase builds 'Authorization: Basic
+  btoa(username:password)' client-side, so it is preemptive). Bearer, API key and query-param
+  options aren't covered by Hookdeck's Metabase source. No signature. Authenticate with HTTP Basic
+  auth, which is what Hookdeck's Metabase source verifies. The examples read
+  METABASE_WEBHOOK_USERNAME and METABASE_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, accept only the strict base64 alphabet and
+  decode strictly, e.g. validate=True in Python, so valid credentials followed by junk are rejected;
+  split on the first colon), and compare the username and the password each in constant time,
+  evaluating both before deciding (no short-circuit). Missing or malformed header or mismatch: 401.
+  Credentials must arrive on the first request (Metabase sends them up front). Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is METABASE, labelled 'Metabase'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing: "Choose Basic authentication on the Metabase webhook." Body: {type: 'alert', alert_id,
+  alert_creator_id, alert_creator_name, data: {type: 'question', question_id, question_name,
+  question_url, visualization (base64 PNG), raw_data}, sent_at}. POST JSON. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
+  after the credential check.
+testScenario:
+  events:
+    - 'alert'
+catalog:
+  summary: 'Authenticate Metabase alert webhooks (unsigned HTTP Basic auth compared in constant time), handle `alert` payloads with question results'

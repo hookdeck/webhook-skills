@@ -1,0 +1,37 @@
+name: quickbase
+displayName: 'Quickbase'
+docs:
+  webhooks: https://help.quickbase.com/docs/configure-a-webhook
+  verification: https://help.quickbase.com/docs/api-webhooks-create
+notes: >
+  Low-code apps; covers table webhooks fired when a record is added, modified or deleted. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds in the webhook's
+  Message header list (up to 10 name/value pairs). The header name is user-chosen, so the examples
+  read the header name from QUICKBASE_WEBHOOK_HEADER (default 'Authorization') and the expected
+  value from QUICKBASE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix
+  the user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip
+  or parse a 'Bearer ' prefix. This is what Hookdeck's Quickbase source does (API key verification:
+  header name + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is QUICKBASE, labelled 'Quickbase'. The request method is
+  user-chosen, so the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE (POST
+  is the default) on the webhook route (Next.js: export a handler for each), and handle an empty
+  body. Say in SKILL.md and setup.md that Hookdeck's Quickbase source pre-selects POST without
+  managing the method, so any other method the sender uses must also be allowed on the source.
+  Message format is XML, JSON or RAW with field references and markers; The body is a template the
+  user writes; the vendor adds no event field, so the examples and test scenario use a clearly
+  labelled illustrative payload. Accept non-JSON bodies. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works; parse the body only after the
+  credential check.
+testScenario:
+  events:
+    - 'record added (illustrative JSON template)'
+    - 'record modified (illustrative JSON template)'
+    - 'record deleted (illustrative JSON template)'
+catalog:
+  summary: 'Authenticate Quickbase table webhooks (unsigned: a secret header compared in full in constant time, any HTTP method), handle record added, modified and deleted requests'

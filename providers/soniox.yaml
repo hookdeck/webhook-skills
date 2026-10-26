@@ -1,0 +1,40 @@
+name: soniox
+displayName: 'Soniox'
+docs:
+  webhooks: https://soniox.com/docs/stt/async/webhooks
+  verification: https://soniox.com/docs/stt/async/webhooks
+notes: >
+  Soniox (speech-to-text) async transcription completion webhooks. The header is set per
+  transcription request, not account-wide: 'Soniox allows you to include a custom HTTP header in
+  every webhook request by setting the following parameters when creating a transcription:
+  webhook_auth_header_name ... webhook_auth_header_value' (example Authorization / 'Bearer
+  <my-secret-token>'). No signature: requests are unsigned. Authenticate with a secret header the
+  user adds via webhook_auth_header_name/webhook_auth_header_value on every transcription it
+  creates. The header name is user-chosen, so the examples read the header name from
+  SONIOX_WEBHOOK_HEADER (default 'Authorization') and the expected value from SONIOX_WEBHOOK_SECRET
+  (the exact, whole header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Soniox source does (API key verification: Header Name + exact whole Header Value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is SONIOX, labelled 'Soniox'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Soniox
+  sets the header per transcription request: send the same header name and value with every async
+  transcription." Body: {id, status} where status is completed or error; there is no event name.
+  Fetch the transcript with the API by id. POST. Show the create-transcription call with webhook_url
+  and the two header fields in setup.md. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/soniox/latest/ (transcription-completed.json);
+  base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'transcription completed'
+    - 'transcription error'
+catalog:
+  summary: 'Authenticate Soniox async transcription webhooks (unsigned: the per-request header you name, compared in constant time), handle completed and error statuses'

@@ -1,0 +1,30 @@
+name: omnisend
+displayName: 'Omnisend'
+docs:
+  webhooks: https://api-docs.omnisend.com/docs/how-to-send-webhooks-from-automations
+  verification: https://api-docs.omnisend.com/docs/how-to-send-webhooks-from-automations
+notes: >
+  Ecommerce email/SMS; covers the automation 'send webhook' action (paid plans only, not the free
+  plan). The docs recommend a shared secret custom header such as X-Webhook-Secret (up to 15
+  headers). No signature: requests are unsigned. Authenticate with a secret header the user adds to
+  the webhook action's headers. The header name is user-chosen, so the examples read the header name
+  from OMNISEND_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the expected value from
+  OMNISEND_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Omnisend source does (API key verification: header name
+  + exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body is the author's JSON template with [[contact.*]] / [[event.raw.*]] tags;
+  the guide's own example puts "event": "subscribed" in it by hand. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the
+  credential check.
+testScenario:
+  events:
+    - 'subscribed'
+    - 'placed order'
+catalog:
+  summary: 'Authenticate Omnisend automation webhooks (user-chosen secret header such as `X-Webhook-Secret`, compared in constant time), handle template-defined events like `subscribed` and `placed order`'

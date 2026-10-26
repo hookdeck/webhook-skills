@@ -1,0 +1,36 @@
+name: baserow
+displayName: 'Baserow'
+docs:
+  webhooks: https://baserow.io/user-docs/webhooks
+  verification: https://baserow.io/user-docs/webhooks
+notes: >
+  No-code database; covers table webhooks (cloud and self-hosted). Baserow sends only
+  X-Baserow-Event and X-Baserow-Delivery plus the user's custom headers. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds to the webhook (custom headers). The
+  header name is user-chosen, so the examples read the header name from BASEROW_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from BASEROW_WEBHOOK_SECRET (the exact, whole
+  header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Baserow source does (API key verification: header name + exact whole value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is BASEROW, labelled 'Baserow'. The request method is user-chosen, so the examples
+  must not be POST-only: accept POST, PUT, PATCH, GET and DELETE (a JSON body is sent even on GET)
+  on the webhook route (Next.js: export a handler for each), and handle an empty body. Say in
+  SKILL.md and setup.md that Hookdeck's Baserow source pre-selects POST without managing the method,
+  so any other method the sender uses must also be allowed on the source. Body has event_type, e.g.
+  rows.created, rows.updated, rows.deleted, view.created, field.updated (plus event_id, table_id,
+  items). Return 200. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'rows.created'
+    - 'rows.updated'
+    - 'rows.deleted'
+catalog:
+  summary: 'Authenticate Baserow webhooks (unsigned: a secret header compared in full in constant time, any HTTP method), handle `event_type`s like `rows.created`, `rows.updated` and `rows.deleted`'

@@ -1,0 +1,26 @@
+name: agentline
+displayName: 'AgentLine'
+docs:
+  webhooks: https://docs.agentline.cloud/guides/webhooks
+  events: https://docs.agentline.cloud/guides/events
+notes: >
+  AgentLine (AI phone agents). Header X-Webhook-Signature (the default): bare hex HMAC-SHA256 of the
+  raw request body keyed with the webhook signing secret as UTF-8 (returned in full once at creation,
+  masked later). AgentLine lets a webhook use a custom header via signature_header, but Hookdeck's
+  AgentLine source only checks X-Webhook-Signature, so the skill tells users to keep the default
+  header. Compare in constant time: in Node, check the received value is exactly 64 hex chars
+  (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare
+  the lowercase hex strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length
+  check; in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives
+  401, not 500. Delivered types: call.received, call.utterance, call.completed, call.owner_task,
+  call.failed, call.busy, call.no-answer, call.canceled, sms.received, webhook.test. Hookdeck setup
+  (say this in SKILL.md's setup section and in references/setup.md): Keep the default
+  X-Webhook-Signature header on the AgentLine webhook. A custom signature_header isn't supported.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'call.completed'
+    - 'sms.received'
+catalog:
+  summary: 'Verify AgentLine webhook signatures (`X-Webhook-Signature`, HMAC-SHA256 hex of the raw body), handle call and SMS events like `call.completed` and `sms.received`'

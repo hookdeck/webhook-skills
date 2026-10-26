@@ -1,0 +1,24 @@
+name: bitdefender
+displayName: 'Bitdefender'
+docs:
+  webhooks: https://www.bitdefender.com/business/support/en/77209-135319-setpusheventsettings.html
+  verification: https://www.bitdefender.com/business/support/en/77209-135319-setpusheventsettings.html
+  events: https://www.bitdefender.com/business/support/en/77209-135324-event-types.html
+notes: >
+  Endpoint security (GravityZone Event Push Service, serviceType jsonRPC, enabled with
+  setPushEventSettings; serviceSettings are url, authorization and requireValidSslCertificate).
+  No signature. The credential is the Authorization header, sent verbatim from
+  serviceSettings.authorization (docs example 'Bearer sfasdfw34243'). Compare the WHOLE header
+  to BITDEFENDER_AUTHORIZATION, including any 'Bearer '/'Basic ' prefix, as Hookdeck's
+  Bitdefender source does; do not strip or decode the prefix. Constant-time compare. A static
+  credential authenticates the sender, not the body, with no replay protection. The push
+  messages page also mentions an Event-Push-Service-Md5 header (not used). Body is JSON-RPC 2.0
+  addEvents with params.events; each event has a module (av, aph, avc, fw, hd, dp,
+  network-sandboxing, ...). Respond 2xx. Express examples use express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'av'
+    - 'aph'
+    - 'avc'
+catalog:
+  summary: 'Authenticate Bitdefender GravityZone Event Push Service deliveries (unsigned: the whole `Authorization` value compared in constant time), handle JSON-RPC `addEvents` batches by `module` like `av`, `aph` and `avc`'

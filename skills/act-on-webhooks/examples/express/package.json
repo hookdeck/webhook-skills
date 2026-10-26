@@ -1,0 +1,24 @@
+{
+  "name": "act-on-webhooks-express",
+  "version": "1.0.0",
+  "description": "Act-On webhook handler with Express and Svix signature verification",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "svix": "^2.9.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.5.2",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

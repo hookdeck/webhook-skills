@@ -1,0 +1,29 @@
+name: athenahealth
+displayName: 'athenahealth'
+docs:
+  webhooks: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md
+  verification: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md#verifying-message-authenticity
+  events: https://github.com/athenahealth/aone-fhir-subscriptions/blob/main/README.md#subscription-topics
+notes: >
+  athenahealth Event Subscription Platform (FHIR R4 backport Subscriptions). Header X-Hub-Signature:
+  'sha256=<hex>' (WebSub content signing, https://www.w3.org/TR/websub/#signing-content): HMAC-SHA256
+  hex of the raw body keyed with the X-Hub-Secret value the subscriber chose and sent when creating
+  the FHIR Subscription. athenahealth says the method may change from sha256 and receivers should
+  check the method in the header; Hookdeck's athenahealth source only verifies sha256, so the examples
+  require the sha256= prefix, reject any other method, and the skill says a future method change would
+  fail verification. Compare in constant time: in Node, check the received value is exactly 64 hex
+  chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently truncates), or
+  compare the lowercase hex strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a
+  length check; in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header
+  gives 401, not 500. Notifications are FHIR subscription-notification Bundles; topics are resource
+  events such as Appointment.schedule, Appointment.cancel, Encounter.signoff, LabResult.create.
+  Describe the Bundle shape from the README. Hookdeck setup (say this in SKILL.md's setup section and
+  in references/setup.md): Set the X-Hub-Secret header when you create the FHIR subscription and paste
+  the same value here. Without it, notifications are unsigned. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'Appointment.schedule'
+    - 'Appointment.cancel'
+catalog:
+  summary: 'Verify athenahealth FHIR subscription notifications (`X-Hub-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with your `X-Hub-Secret`), handle appointment topics like `Appointment.schedule`'

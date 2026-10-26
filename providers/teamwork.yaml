@@ -1,0 +1,26 @@
+name: teamwork
+displayName: 'Teamwork.com'
+docs:
+  webhooks: https://apidocs.teamwork.com/guides/teamwork/setting-up-webhooks
+  events: https://apidocs.teamwork.com/guides/teamwork/webhook-events
+notes: >
+  Teamwork.com Projects webhooks, Version 2 only. Header X-Projects-Signature: hex HMAC-SHA256 of the
+  raw POST body, keyed with the token set on the v2 webhook (as UTF-8 bytes). The token is optional in
+  Teamwork, so the user must pick Version 2 and set one. Teamwork Desk and Spaces webhooks are
+  documented separately and are not covered. Compare in constant time: in Node, check the received
+  value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex
+  silently truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. The event arrives in the X-Projects-Event header in
+  uppercase ENTITY.ACTION form, e.g. TASK.CREATED, TASK.COMPLETED, PROJECT.CREATED, COMMENT.CREATED;
+  dispatch on that header (fall back to the body if the docs show an event field). Hookdeck setup (say
+  this in SKILL.md's setup section and in references/setup.md): Only Teamwork.com Projects webhooks
+  are supported. Use Version 2 webhooks and set a token; Teamwork signs with it. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - TASK.CREATED
+    - TASK.COMPLETED
+    - PROJECT.CREATED
+catalog:
+  summary: Verify Teamwork Projects webhook signatures (`X-Projects-Signature`, HMAC-SHA256 hex over the raw body with the Version 2 webhook token), handle TASK.CREATED, TASK.COMPLETED, PROJECT.CREATED, and COMMENT.CREATED events from the `X-Projects-Event` header

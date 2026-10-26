@@ -1,0 +1,30 @@
+name: railway
+displayName: 'Railway'
+docs:
+  webhooks: https://docs.railway.com/observability/webhooks
+  verification: https://docs.railway.com/observability/webhooks#verifying-the-sender
+notes: >
+  App hosting. Railway's docs say payloads aren't signed and recommend a custom header
+  (Authorization: Bearer <token> or X-Webhook-Secret); up to 20 headers, sent with every delivery
+  and Test Webhook; values are write-only after save. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds in Project Settings > Webhooks. The header name is
+  user-chosen, so the examples read the header name from RAILWAY_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from RAILWAY_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Railway
+  source does (API key verification: header name + exact value). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body has type
+  '<Resource>.<state>' (the docs' example is Deployment.failed; deployment states and alerts aren't
+  enumerated) plus details, resource and timestamp. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'Deployment.failed'
+catalog:
+  summary: 'Authenticate Railway webhooks (unsigned: a secret custom header compared in full in constant time), handle deployment and alert events like `Deployment.failed`'

@@ -1,0 +1,35 @@
+name: hightouch
+displayName: 'Hightouch'
+docs:
+  webhooks: https://hightouch.com/docs/destinations/http-request
+  verification: https://hightouch.com/docs/destinations/http-request
+notes: >
+  Reverse ETL; covers the HTTP Request destination (the old Webhook destination is deprecated). No
+  signature: requests are unsigned. Authenticate with a secret header the user adds to the HTTP
+  Request destination's headers (tick Secret to encrypt it). The header name is user-chosen, so the
+  examples read the header name from HIGHTOUCH_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from HIGHTOUCH_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
+  ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
+  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Hightouch source does (API key
+  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. OAuth mode sends rotating tokens and
+  isn't covered. The request method is user-chosen, so the examples must not be POST-only: accept
+  POST, PUT, PATCH and DELETE (each sync trigger picks its own method) on the webhook route, and
+  handle an empty body (e.g. GET). Rows added, changed and removed are separate triggers, each with
+  its own method, URL and Liquid payload; the trigger isn't written into the request, so the
+  examples use an illustrative body and may branch on method. With batching the body is an array.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  # Hightouch writes no event name into the request; these are the method-derived trigger names the examples use.
+  events:
+    - 'row_added'
+    - 'row_changed'
+    - 'row_removed'
+catalog:
+  summary: 'Authenticate Hightouch HTTP Request destination calls (unsigned: a secret header compared in full in constant time), handle row added, changed and removed sync requests'

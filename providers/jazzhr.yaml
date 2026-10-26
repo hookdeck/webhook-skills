@@ -1,0 +1,22 @@
+name: jazzhr
+displayName: 'JazzHR'
+docs:
+  webhooks: https://apidoc.jazzhrapis.com/candidate-export/
+notes: >
+  JazzHR candidate-export custom integration. Header X-JazzHR-Signature: bare hex HMAC-SHA256 of the
+  raw request body keyed with the secret the user gave JazzHR when adding the integration. The docs'
+  worked example must be reproduced in the tests: secret 'secret-key', body '{"data":"JazzHR Verify
+  Event"}', signature 4fdc7dcdcb02bca16c7ec4a15b9d6436de1f186e11ff155d0ab178b5aca4f30e. Compare in
+  constant time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before
+  any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500.
+  X-JazzHR-Event is CANDIDATE-EXPORT for candidate data, or VERIFY for the signed setup POST, which
+  only needs a 200 response. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type verifies.
+testScenario:
+  events:
+    - 'CANDIDATE-EXPORT'
+    - 'VERIFY'
+catalog:
+  summary: 'Verify JazzHR candidate-export webhook signatures (`X-JazzHR-Signature`, HMAC-SHA256 hex of the raw body), handle `CANDIDATE-EXPORT` and the `VERIFY` setup event'

@@ -1,0 +1,40 @@
+name: payjp
+displayName: 'PAY.JP'
+docs:
+  webhooks: https://docs.pay.jp/v1/webhook
+  verification: https://docs.pay.jp/v1/webhook
+  events: https://docs.pay.jp/v1/api
+notes: >
+  PAY.JP (Japanese payments; docs in Japanese). Every PAY.JP webhook carries X-Payjp-Webhook-Token,
+  an account-specific token ID such as whook_a09d5c1c87be4e1590a9f16516 ('PAY.JP からのすべての Webhook には
+  X-Payjp-Webhook-Token がヘッダーに含まれています'), shown under アカウント設定 (account settings). It is set by
+  PAY.JP, not chosen by the user, and the v2 guide checks it with a plain string comparison. No
+  signature: requests are unsigned. PAY.JP sends the account's webhook token as plain text in the
+  X-Payjp-Webhook-Token header on every request. The examples read PAYJP_WEBHOOK_SECRET, look the
+  X-Payjp-Webhook-Token header up case-insensitively and compare its WHOLE value to the secret. This
+  is what Hookdeck's PAY.JP source does (API key verification, header x-payjp-webhook-token, exact
+  whole value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is PAYJP, labelled 'PAY.JP'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use the
+  webhook token (whook_...) shown in your PAY.JP account settings." Body: v1 event {id, object:
+  'event', livemode, type, created, data, pending_webhooks}; type e.g. charge.succeeded,
+  charge.failed, charge.refunded, customer.created, subscription.renewed, transfer.succeeded.
+  Dispatch on type; dedupe on id. All webhooks are POST and the response must be HTTP 200 (body
+  ignored); failures are retried every 3 minutes, at most 3 times. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/payjp/latest/ (charge.succeeded.json); base the
+  examples' test payloads on them.
+testScenario:
+  events:
+    - 'charge.succeeded'
+    - 'charge.failed'
+    - 'subscription.renewed'
+catalog:
+  summary: 'Authenticate PAY.JP webhooks (unsigned: the account''s `X-Payjp-Webhook-Token` compared in constant time), handle charge, customer, subscription and transfer events'

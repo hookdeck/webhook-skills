@@ -1,0 +1,38 @@
+name: ventrata
+displayName: 'Ventrata'
+docs:
+  webhooks: https://docs.ventrata.com/capabilities/webhooks
+  verification: https://docs.ventrata.com/capabilities/webhooks
+notes: >
+  Ventrata (tours and attractions ticketing) OCTO webhooks capability (octo/webhooks), created
+  through the API with a headers map, e.g. "headers": {"X-Webhook-Secret": "whsec_123456abcdef"}.
+  The whsec_ value is just a user-chosen string, not a signing secret; no signature is documented.
+  No signature: requests are unsigned. Authenticate with a secret header the user adds in the
+  webhook's headers when creating it through the API. The header name is user-chosen, so the
+  examples read the header name from VENTRATA_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the
+  expected value from VENTRATA_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
+  ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
+  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Ventrata source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is VENTRATA, labelled
+  'Ventrata'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Ventrata webhooks are not signed. Add a secret
+  header when you create the webhook through the OCTO API and enter it here." Body: {event, webhook,
+  ...} plus the objects the event concerns (order, booking, product, availability, supplier, diff).
+  The capability lists booking_update, order_update, availability_update, product_update while the
+  examples write booking.updated; accept both forms. Dispatch on event. 'the HTTP method is always
+  POST.' Retries are per webhook (retryOnError). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'booking_update'
+    - 'order_update'
+    - 'availability_update'
+catalog:
+  summary: 'Authenticate Ventrata OCTO webhooks (unsigned: a header from the webhook''s headers map, compared in constant time), handle booking, order, availability and product updates'

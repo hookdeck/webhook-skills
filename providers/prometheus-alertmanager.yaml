@@ -1,0 +1,45 @@
+name: prometheus-alertmanager
+displayName: 'Prometheus Alertmanager'
+docs:
+  webhooks: https://prometheus.io/docs/alerting/latest/configuration/
+  verification: https://prometheus.io/docs/alerting/latest/configuration/
+notes: >
+  Prometheus Alertmanager webhook receivers (webhook_configs). The receiver's http_config sets the
+  Authorization header on every request, in one of two forms, and Hookdeck's Prometheus
+  Alertmanager source (hookdeck/core#6046 head 8c48f55d) offers both: BASIC_AUTH (the default,
+  for http_config.basic_auth: 'Authorization: Basic <base64(user:pass)>'; the user enters username
+  and password) and a Bearer token (API key on authorization with value_prefix 'Bearer ', for
+  http_config.authorization, whose type defaults to Bearer: 'Authorization: Bearer <credentials>';
+  the user stores just the secret and the scheme matches in any case). The env var prefix is
+  ALERTMANAGER. No signature. The examples accept both forms: Bearer against the BARE secret in
+  ALERTMANAGER_WEBHOOK_SECRET (strip a leading 'Bearer ' from the configured value,
+  case-insensitively, as core does; never trim), and Basic against ALERTMANAGER_WEBHOOK_USERNAME and
+  ALERTMANAGER_WEBHOOK_PASSWORD (case-insensitive 'Basic' scheme, strict base64, split on the FIRST
+  colon so a password may contain ':', compare both parts in constant time). A form that is not
+  configured is rejected, so with neither configured every request is rejected. Hookdeck never
+  sends a 401 challenge; Alertmanager sends basic_auth on every request. Show alertmanager.yml
+  receivers with http_config.authorization (type: Bearer, credentials_file) and with basic_auth
+  (username, password_file). oauth2 is not supported. Missing header,
+  wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is PROMETHEUS_ALERTMANAGER, labelled 'Prometheus Alertmanager'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set basic_auth, or authorization with the default Bearer type, in
+  the webhook receiver's http_config. OAuth 2.0 is not supported." Body: the version 4 JSON
+  {version: '4', groupKey, truncatedAlerts, status, receiver, groupLabels, commonLabels,
+  commonAnnotations, externalURL, alerts: [{status, labels, annotations, startsAt, endsAt,
+  generatorURL, fingerprint}]}. status is firing or resolved (a state, not an event type); loop over
+  alerts[]. Use groupKey plus the alert fingerprints to deduplicate (notifications repeat per
+  group_interval/repeat_interval). POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check.
+testScenario:
+  events:
+    - 'firing'
+    - 'resolved'
+catalog:
+  summary: 'Authenticate Prometheus Alertmanager webhook receivers (unsigned: `Authorization` Bearer credentials or basic_auth from http_config, compared in constant time), handle firing and resolved alert groups'

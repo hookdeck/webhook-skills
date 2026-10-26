@@ -1,0 +1,19 @@
+name: roller
+displayName: 'ROLLER'
+docs:
+  webhooks: https://docs.roller.app/docs/api/creating-webhooks
+  verification: https://docs.roller.app/docs/api/rest/operations/create-webhook
+notes: >
+  Venue and attraction ticketing. Webhooks are registered through the REST API (POST webhooks) with
+  authentication.apiKey; ROLLER then sends that value as plain text in the x-roller-apikey header.
+  No signature. The apiKey is user-chosen, so tell users to set a long random value. Compare the
+  whole x-roller-apikey value with ROLLER_WEBHOOK_API_KEY in constant time. Payload has a type
+  field (Booking.Created, Booking.Updated, Booking.Cancelled, Customer.Created, Redemption.Created,
+  PaymentLink.Created). Express examples must read the raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'Booking.Created'
+    - 'Booking.Cancelled'
+    - 'Redemption.Created'
+catalog:
+  summary: 'Authenticate ROLLER webhooks (unsigned: the `x-roller-apikey` value compared in constant time), handle `type`s like `Booking.Created`, `Booking.Cancelled` and `Redemption.Created`'

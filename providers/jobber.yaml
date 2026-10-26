@@ -1,0 +1,24 @@
+name: jobber
+displayName: 'Jobber'
+docs:
+  webhooks: https://developer.getjobber.com/docs/using_jobbers_api/setting_up_webhooks/
+  verification: https://developer.getjobber.com/docs/using_jobbers_api/setting_up_webhooks/#verifying-webhook-authenticity
+notes: >
+  Jobber (field service) app webhooks. Header X-Jobber-Hmac-SHA256: base64 HMAC-SHA256 of the raw JSON
+  payload, keyed with the app's OAuth client secret (for app developers, not end-user accounts). The
+  site may return a Cloudflare 403 to curl; try again with a browser User-Agent or https://r.jina.ai/
+  in front of the URL. Compare in constant time: compare the base64 strings as equal-length UTF-8
+  Buffers with crypto.timingSafeEqual after a length check (no lenient base64 decode of the header);
+  in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not
+  500. The body is {data: {webHookEvent: {topic, appId, accountId, itemId, occurredAt}}}; topics are
+  WebHookTopicEnum values such as CLIENT_CREATE, INVOICE_UPDATE, APP_CONNECT, APP_DISCONNECT. Dispatch
+  on data.webHookEvent.topic and fetch the item through the GraphQL API by itemId. Hookdeck setup (say
+  this in SKILL.md's setup section and in references/setup.md): Jobber signs webhooks with your app's
+  OAuth client secret. Paste that secret here. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'CLIENT_CREATE'
+    - 'INVOICE_UPDATE'
+catalog:
+  summary: 'Verify Jobber app webhook signatures (`X-Jobber-Hmac-SHA256`, base64 HMAC-SHA256 of the raw body keyed with the OAuth client secret), handle topics like `CLIENT_CREATE` and `INVOICE_UPDATE`'

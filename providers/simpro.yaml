@@ -1,0 +1,34 @@
+name: simpro
+displayName: 'Simpro'
+docs:
+  webhooks: https://developer.simprogroup.com/apidoc/?page=cd8682773ab1b07fdc9661984e281ce3
+  verification: https://developer.simprogroup.com/apidoc/?page=cd8682773ab1b07fdc9661984e281ce3#tag/Message-Verification
+notes: >
+  Simpro (field service management). The scheme is on Simpro's 'Web Hooks' guide page (the page is
+  behind a Cloudflare challenge; https://r.jina.ai/<url> can read it). Simpro says: 'In each
+  message, the header X-Response-Signature contains a hash of the request body, calculated using an
+  SHA1 HMAC hexdigest', with the PHP example hash_equals($headers['X-Response-Signature'],
+  hash_hmac('sha1', $requestBody, $secret)). 'Secret is a random string of your choice' set on the
+  webhook subscription. So: header X-Response-Signature = bare lowercase hex HMAC-SHA1 of the raw
+  body (no prefix, no timestamp), key = the secret's UTF-8 bytes (SIMPRO_WEBHOOK_SECRET). This
+  matches Hookdeck's Simpro source (HMAC, sha1, header x-response-signature, hex; hex compared
+  case-insensitively). Validate the header is exactly 40 hex characters before decoding
+  (Buffer.from(x, 'hex') silently truncates invalid hex), then compare with crypto.timingSafeEqual
+  on the decoded bytes (or lowercase both and compare equal-length Buffers); Python:
+  hmac.compare_digest on lowercased hex. Missing or invalid signature: 401. There is no timestamp,
+  so say there's no replay protection beyond HTTPS. Body: JSON {ID, build, description, name,
+  action, reference, date_triggered}; ID is the event, e.g. company.customer.updated, job.created,
+  invoice.created, quote.updated, employee.deleted, and reference holds the ids to fetch the record;
+  dispatch on ID. Test Subscription sends test.updated. POST. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact
+  bytes are verified); parse the body only after the check. Hookdeck's source type is SIMPRO,
+  labelled 'Simpro'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set the Secret on the Simpro
+  webhook subscription to a long random value, then paste the same value here."
+testScenario:
+  events:
+    - 'job.created'
+    - 'company.customer.updated'
+    - 'invoice.created'
+catalog:
+  summary: 'Verify Simpro webhooks (`X-Response-Signature`: hex HMAC-SHA1 of the raw body with your subscription Secret), handle job, customer, invoice and quote events by `ID`'

@@ -1,0 +1,37 @@
+name: trendyol
+displayName: 'Trendyol'
+docs:
+  webhooks: https://developers.trendyol.com/docs/webhook-model
+  verification: https://developers.trendyol.com/docs/webhook-model
+notes: >
+  Trendyol (Turkish marketplace) seller order-package webhooks (docs in Turkish). Each webhook has
+  authenticationType BASIC_AUTHENTICATION or API_KEY; with API_KEY 'ilgili alan "x-api-key" olarak
+  gönderilecektir' (the key is sent in the x-api-key header). Example request: "authenticationType":
+  "API_KEY", "apiKey": "123456". Basic authentication is not covered by Hookdeck's Trendyol source;
+  say so. No signature: requests are unsigned. Trendyol sends the webhook's apiKey as plain text in
+  the x-api-key header on every request. The examples read TRENDYOL_WEBHOOK_SECRET, look the
+  x-api-key header up case-insensitively and compare its WHOLE value to the secret. This is what
+  Hookdeck's Trendyol source does (API key verification, header x-api-key, exact whole value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is TRENDYOL, labelled 'Trendyol'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Choose API key authentication (authenticationType API_KEY) when you create the Trendyol webhook."
+  Body: a page of shipment packages {content: [ ... ]}, each the full order package (id,
+  orderNumber, status, lines, addresses, ...); loop over content[] and dispatch on each package's
+  status (CREATED, PICKING, INVOICED, SHIPPED, DELIVERED, CANCELLED, RETURNED, ...; the example
+  writes it in Title case, e.g. 'Delivered', so compare case-insensitively). POST (the docs require
+  it); failed requests are re-sent every 5 minutes. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'CREATED'
+    - 'SHIPPED'
+    - 'DELIVERED'
+catalog:
+  summary: 'Authenticate Trendyol order package webhooks (unsigned: the `x-api-key` header compared in constant time), handle package status changes in `content[]`'

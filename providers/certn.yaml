@@ -1,0 +1,33 @@
+name: certn
+displayName: 'Certn'
+docs:
+  webhooks: https://docs.certn.co/api/guides/use-the-api/webhooks
+  verification: https://docs.certn.co/api/guides/use-the-api/webhooks#signature-verification
+  events: https://docs.certn.co/api/guides/use-the-api/webhooks/webhook-parameters-and-example
+notes: >
+  Certn (background checks). Signing is opt-in; when enabled each request carries Certn-Signature:
+  't=<unix seconds>, v1=<hex>[, v1=<hex>]' on one line (a space after each comma; several v1 during a
+  48h secret roll). v1 is hex HMAC-SHA256 of '<t>.<request body as text>' keyed with the signing
+  secret as UTF-8. t=<ts>,v1=<hex> header: split on ',' and trim each part (allow a space after the
+  comma), take t and every v1 (several are sent during secret rotation) and accept if any v1 matches;
+  reject a header with no t or no v1. Compare in constant time: in Node, check the received value is
+  exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently
+  truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. Hookdeck retries and replays resend the original
+  timestamp, so a 5-minute window rejects late retries: make the timestamp freshness check opt-in via
+  CERTN_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the mercury-webhooks skill does. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so a 5-minute window
+  rejects late retries, and point to references/verification.md, which shows where the window can be
+  dropped or widened. There are no event types: Certn posts the applicant (report) object as results
+  become available; dispatch on its status / report_status fields. Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Signing is opt-in: turn on signed payloads in
+  Certn and paste the signing secret. Without it, deliveries are unsigned and fail verification.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'report_status COMPLETE'
+    - 'report_status IN_PROGRESS'
+catalog:
+  summary: 'Verify Certn webhook signatures (`Certn-Signature` `t=<ts>, v1=<hex>`, HMAC-SHA256 over `{t}.{body}`; opt-in signing), handle applicant report updates dispatched on `report_status` (`IN_PROGRESS`, `COMPLETE`)'

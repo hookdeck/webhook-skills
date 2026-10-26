@@ -1,0 +1,35 @@
+name: factorial
+displayName: 'Factorial'
+docs:
+  webhooks: https://apidoc.factorialhr.com/docs/webhooks-what
+  verification: https://apidoc.factorialhr.com/docs/manage-webhooks
+notes: >
+  HR software; webhook subscriptions are created through the API with an optional 'challenge' ('A
+  secret you define. Returned on every delivery in the x-factorial-wh-challenge header'). Without a
+  challenge Factorial sends nothing to verify: say so prominently. No signature. Factorial sends the
+  subscription challenge as plain text in the vendor-fixed 'x-factorial-wh-challenge' header.
+  Hookdeck's Factorial source compares that header's WHOLE value (header name case-insensitive) to
+  the configured key, so the examples read FACTORIAL_WH_CHALLENGE and compare the whole
+  'x-factorial-wh-challenge' value to it in constant time. Missing header or mismatch: 401. Compare
+  in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is FACTORIAL, labelled 'Factorial'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing: "Set a challenge on the webhook subscription. Without one, Factorial sends nothing to
+  verify." Factorial's own example compares req.get('x-factorial-wh-challenge') with
+  process.env.FACTORIAL_WH_CHALLENGE. Each subscription has one subscription_type like
+  employees/employee/create_with_contract, timeoff/leave/create, ats/application/create; the body is the affected
+  resource's JSON with no event field (the subscription decides the type). POST, 2xx acknowledges,
+  HTTPS only. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'employees/employee/create_with_contract'
+    - 'timeoff/leave/create'
+    - 'ats/application/create'
+catalog:
+  summary: 'Authenticate Factorial webhooks (unsigned: the `x-factorial-wh-challenge` value compared in constant time), handle subscription types like `employees/employee/create_with_contract` and `timeoff/leave/create`'

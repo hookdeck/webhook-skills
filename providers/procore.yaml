@@ -1,0 +1,37 @@
+name: procore
+displayName: 'Procore'
+docs:
+  webhooks: https://v2.support.procore.com/product-manuals/admin-company/tutorials/configure-company-webhooks/
+  verification: https://v2.support.procore.com/product-manuals/admin-company/tutorials/configure-company-webhooks/
+notes: >
+  Construction platform; covers company- and project-level webhooks (Admin > Webhooks). No
+  signature. The credential is the Authorization header. Hookdeck's Procore source compares the
+  WHOLE Authorization header value to the configured key, so the examples read PROCORE_AUTHORIZATION
+  = the full value as Procore sends it (e.g. 'Basic c3a24b8208ac5199d083d54a1234e94b8864'),
+  including any 'Bearer '/'Basic ' scheme prefix, and compare the whole Authorization header to it;
+  do not strip, parse or base64-decode the prefix (Coterie pattern). The optional 'Authorization
+  Header' field is placed verbatim in the header of the POST; the docs' example is 'Basic
+  c3a24b8208ac5199d083d54a1234e94b8864' (a token, not base64 user:pass), so never decode it. Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main (and the batch 5 iterable, oyster, fireberry and new-relic skills if present). Hookdeck's
+  source type is PROCORE, labelled 'Procore'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing: "Paste the Authorization
+  Header value exactly as set in Procore, including any "Bearer " or "Basic " prefix." Each event
+  has a resource name and an event type (create, update, delete); the v2 payload carries fields like
+  id, ulid, timestamp, user_id, company_id, project_id, api_version, event_type, resource_name,
+  resource_id (check the developer docs at https://developers.procore.com/documentation/webhooks; if
+  you can't confirm a field, say so and label the payload illustrative). POST. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
+  after the credential check.
+testScenario:
+  events:
+    - 'create'
+    - 'update'
+    - 'delete'
+catalog:
+  summary: 'Authenticate Procore webhooks (unsigned: the whole `Authorization` value compared in constant time), handle resource `create`, `update` and `delete` events'

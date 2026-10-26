@@ -1,0 +1,44 @@
+name: sublime-security
+displayName: 'Sublime Security'
+docs:
+  webhooks: https://docs.sublime.security/docs/webhooks
+  verification: https://docs.sublime.security/docs/webhooks#check-the-webhook-signature
+notes: >
+  Sublime Security (email security platform) webhook Actions. Sublime says: 'Webhook notifications
+  include a signature in the X-Sublime-Signature HTTP header. ... The timestamp is prefixed by t=,
+  and each signature is prefixed by a scheme. Schemes start with v, followed by an integer.
+  Currently, the only valid signature scheme is v0.' Example header:
+  t=1626139320,v0=3d35d777510a7ccf73ded723f141b0ada2986aebe63c4e45a9c7e4bb1abaca06. 'Sublime
+  generates signatures using a hash-based message authentication code (HMAC) with SHA-256.' The
+  signed_payload is the timestamp, the character '.', and the raw request body. The secret is the
+  webhook Action's signing secret (Actions page > select the webhook Action > Click to reveal), used
+  as the HMAC key as UTF-8 bytes (SUBLIME_SECURITY_WEBHOOK_SECRET). Stripe-style scheme: parse the
+  header into t and every v0 value (split on ',', then on the first '='), compute lowercase hex
+  HMAC-SHA256 of '<t>.<raw body>' and accept if ANY v0 value matches; validate each candidate is
+  exactly 64 hex characters before decoding (Buffer.from(x, 'hex') silently truncates invalid hex),
+  compare with crypto.timingSafeEqual on decoded bytes (Python: hmac.compare_digest on lowercased
+  hex); hex is compared case-insensitively. Require t to be a plain positive integer. This matches
+  Hookdeck's Sublime Security source (HMAC, sha256, header x-sublime-signature, hex,
+  prefix_data_with_timestamp with delimiter '.'; core has no timestamp window). Timestamp window:
+  follow the house pattern from batch 6 (e.g. the boldsign skill): any window the skill enforces is
+  OFF by default and opt-in via SUBLIME_SECURITY_TIMESTAMP_TOLERANCE_SECONDS (a positive whole
+  number turns it on; anything else leaves it off with a warning). Sublime's own retries come with a
+  new timestamp and signature, but Hookdeck retries and replays resend the original timestamp, so
+  SKILL.md must say a window would reject late Hookdeck redeliveries. Use the body's id for
+  idempotency. Missing or invalid signature: 401. Body: JSON {id, api_version, created_at, type,
+  data}; type is why it was sent: message.flagged, group, manual (type_extended may list several
+  reasons and adds group_late_arriving); data holds message, flagged_rules and triggered_actions.
+  Dispatch on type. Respond 2xx within 10 seconds. POST. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes
+  are verified); parse the body only after the check. Hookdeck's source type is SUBLIME_SECURITY,
+  labelled 'Sublime Security'. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/sublime-security/latest/ (message.flagged.json);
+  base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'message.flagged'
+    - 'group'
+    - 'manual'
+catalog:
+  summary: 'Verify Sublime Security webhooks (`X-Sublime-Signature: t=...,v0=...`: hex HMAC-SHA256 of `<t>.<raw body>`), handle message.flagged, group and manual Action events'

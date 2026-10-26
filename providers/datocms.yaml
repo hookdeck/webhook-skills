@@ -1,0 +1,30 @@
+name: datocms
+displayName: 'DatoCMS'
+docs:
+  webhooks: https://www.datocms.com/docs/general-concepts/webhooks
+  verification: https://www.datocms.com/docs/content-management-api/resources/webhook
+notes: >
+  Headless CMS. Webhooks have http_basic_user / http_basic_password fields (and custom headers,
+  which aren't covered). No signature. Authenticate with HTTP Basic auth, which is what Hookdeck's
+  DatoCMS source verifies. The examples read DATOCMS_WEBHOOK_USERNAME and DATOCMS_WEBHOOK_PASSWORD,
+  parse 'Authorization: Basic base64(username:password)' (scheme case-insensitive, split on the
+  first colon), and compare the username and the password each in constant time, evaluating both
+  before deciding (no short-circuit). Missing or malformed header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Default body: {environment,
+  entity_type, event_type, entity, related_entities?}; entity_type is item, item_type, upload,
+  build_trigger, environment, maintenance_mode, sso_user, cda_cache_tags; event_type is create,
+  update, delete, publish, unpublish, ... Payloads can be customised. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the
+  credential check.
+testScenario:
+  events:
+    - 'item create'
+    - 'item publish'
+    - 'upload delete'
+catalog:
+  summary: 'Authenticate DatoCMS webhooks (unsigned HTTP Basic auth compared in constant time), handle `entity_type`/`event_type` pairs like item `publish` and upload `delete`'

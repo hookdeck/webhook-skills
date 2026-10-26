@@ -1,0 +1,30 @@
+name: 8x8
+displayName: '8x8'
+docs:
+  webhooks: https://developer.8x8.com/connect/docs/developer-tools
+  verification: https://developer.8x8.com/connect/docs/developer-tools
+  events: https://developer.8x8.com/connect/docs/inbound-sms
+notes: >
+  CPaaS; 8x8 Connect webhooks (SMS inbound messages and delivery receipts, Chat Apps, short URL
+  clicks, WhatsApp Business Management updates). No signature. The only authentication is the
+  optional static HTTP Authorization value set on the webhook (API field httpAuthorization,
+  e.g. 'Bearer 9QQhlsEb8VY' or 'Basic dXNlcjpwYXNzd29yZA=='), sent back as the Authorization
+  header. The key is the WHOLE header value including any Bearer/Basic prefix: compare the full
+  Authorization header to EIGHT_X_EIGHT_AUTHORIZATION, as Hookdeck's 8x8 source (EIGHT_X_EIGHT)
+  does; never strip, parse or base64-decode it, Basic included. Say plainly that a static shared
+  credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate it if it leaks. Setup note: paste the HTTP
+  Authorization value exactly as set in 8x8, including any "Bearer " or "Basic " prefix; OAuth
+  authentication is not supported. Not covered: the OAuth client-credentials option (rotating
+  tokens) and the Contact Center Chat x-8x8-signature (JWS). Constant-time compare (Node:
+  SHA-256 digests then crypto.timingSafeEqual; Python: hmac.compare_digest on bytes). Body is
+  JSON with eventType (inbound_message_received, outbound_message_status_changed,
+  short_url_clicked, template_status_update, ...), POST. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) and parse only after the credential check.
+testScenario:
+  events:
+    - 'inbound_message_received'
+    - 'outbound_message_status_changed'
+    - 'short_url_clicked'
+catalog:
+  summary: 'Authenticate 8x8 Connect webhooks (unsigned: the whole `Authorization` value, `Bearer` or `Basic`, compared in constant time), handle `eventType`s like `inbound_message_received`, `outbound_message_status_changed` and `short_url_clicked`'

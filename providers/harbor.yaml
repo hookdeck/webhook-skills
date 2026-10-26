@@ -1,0 +1,43 @@
+name: harbor
+displayName: 'Harbor'
+docs:
+  webhooks: https://goharbor.io/docs/main/working-with-projects/project-configuration/configure-webhooks/
+  verification: https://goharbor.io/docs/main/working-with-projects/project-configuration/configure-webhooks/
+notes: >
+  Harbor (open source container registry) project webhooks, HTTP notify type (not Slack). The
+  webhook form asks: 'If your webhook listener implements authentication, enter the authentication
+  header'; Harbor's source does header.Set("Authorization", event.Target.AuthHeader), i.e. the Auth
+  Header value is sent verbatim as Authorization, and the request is always http.MethodPost. No
+  signature. The credential is the Authorization header. Hookdeck's Harbor source compares the WHOLE
+  Authorization header value to the configured key, so the examples read HARBOR_AUTHORIZATION = the
+  full value as Harbor sends it (e.g. 'Bearer <token>'), including any scheme prefix, and compare
+  the whole Authorization header to it; do not strip, parse or base64-decode the prefix (Coterie
+  pattern). The value is whatever the user typed in Harbor's Auth Header field (for example 'Bearer
+  <token>' or 'Basic <base64>'), so the env var holds exactly that. Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is HARBOR,
+  labelled 'Harbor'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Use the HTTP notify type and
+  paste the Auth Header value exactly as set in Harbor, including any "Bearer " or "Basic " prefix."
+  Body: Default format {type, occur_at (Unix seconds), operator, event_data: {resources, repository,
+  ...}}; type e.g. PUSH_ARTIFACT, PULL_ARTIFACT, DELETE_ARTIFACT, SCANNING_COMPLETED,
+  SCANNING_FAILED, QUOTA_EXCEED, REPLICATION, TAG_RETENTION. The CloudEvents format instead uses a
+  CloudEvents 1.0 envelope with reverse-DNS types (harbor.artifact.pushed) and data; handle both,
+  dispatching on type. Any 2xx counts. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/harbor/latest/ (DELETE_ARTIFACT.json,
+  PULL_ARTIFACT.json, PUSH_ARTIFACT.json, QUOTA_EXCEED.json, ...); base the examples' test payloads
+  on them.
+testScenario:
+  events:
+    - 'PUSH_ARTIFACT'
+    - 'SCANNING_COMPLETED'
+    - 'DELETE_ARTIFACT'
+catalog:
+  summary: 'Authenticate Harbor registry webhooks (unsigned: the Auth Header sent verbatim as `Authorization`, compared in constant time), handle artifact push, pull, scan and quota events'

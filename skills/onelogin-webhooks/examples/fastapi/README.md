@@ -1,0 +1,68 @@
+# OneLogin Webhooks - FastAPI Example
+
+Minimal example of receiving OneLogin Event Broadcaster webhooks and authenticating them with a secret custom header.
+
+OneLogin does not sign payloads, so there is no HMAC to verify. The handler compares the custom header you configured on the broadcaster with your stored secret (whole value, constant-time). A static shared credential authenticates the sender, not the body, and gives no replay protection: use HTTPS and rotate it if it leaks. The route reads the body with `await request.body()`, so any content type works.
+
+## Prerequisites
+
+- Python 3.9+
+- A OneLogin admin account with access to **Developers > Webhooks** (see [../../references/setup.md](../../references/setup.md))
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set `ONELOGIN_WEBHOOK_HEADER` to the custom header name you add in the Event Broadcaster (default `Authorization`) and `ONELOGIN_WEBHOOK_SECRET` to the exact header value, including any `Bearer ` prefix.
+
+## Run
+
+```bash
+uvicorn main:app --port 8000
+```
+
+Server runs on http://localhost:8000 and accepts requests at `POST /webhooks/onelogin`.
+
+## Test
+
+```bash
+pytest test_webhook.py -v
+```
+
+The tests send events with correct, wrong and missing headers, JSON array bodies, and every documented `event_type_id`. No OneLogin account is needed.
+
+To try it by hand:
+
+```bash
+curl -X POST http://localhost:8000/webhooks/onelogin \
+  -H "Content-Type: application/json" \
+  -H "$ONELOGIN_WEBHOOK_HEADER: $ONELOGIN_WEBHOOK_SECRET" \
+  -d '[{"event_type_id":5,"user_id":1,"user_name":"Test User","ipaddr":"203.0.113.1"}]'
+```
+
+## Receive Webhooks Locally
+
+OneLogin can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account, no install):
+
+```bash
+npx hookdeck-cli listen 8000 onelogin --path /webhooks/onelogin
+```
+
+Put the printed URL in the Event Broadcaster.
+
+## How It Works
+
+- `main.py`: `verify_onelogin_request()`, a FastAPI dependency, `parse_events()` and the `POST /webhooks/onelogin` route`
+
+1. The custom header is checked before the body is parsed. Failure returns `401`.
+2. The body must be a JSON array of events (the recommended JSON Array format type); otherwise `400`.
+3. Each event is dispatched on `event_type_id`: `5` login success, `6` login failed, `7` logout, `8` logged into an app, `11` changed password, `22` added an MFA device. Unknown IDs are acknowledged.
+4. It returns `200`. OneLogin retries non-200 responses up to 3 attempts in total.

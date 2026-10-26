@@ -1,0 +1,82 @@
+# Hightouch Webhooks - FastAPI Example
+
+Minimal example of receiving Hightouch HTTP Request destination calls and authenticating them
+with a secret header.
+
+Hightouch does not sign requests, so there is no HMAC to verify. The handler looks up the header
+named by `HIGHTOUCH_WEBHOOK_HEADER` (default `Authorization`) case-insensitively and compares its
+**whole value** with `HIGHTOUCH_WEBHOOK_SECRET` in constant time. A static shared credential
+authenticates the sender, not the body, and gives no replay protection, so use HTTPS and rotate
+the credential if it leaks.
+
+## Prerequisites
+
+- Python 3.9+
+- A Hightouch HTTP Request destination with a secret header (see [../../references/setup.md](../../references/setup.md))
+
+## Setup
+
+1. Create a virtual environment and install dependencies:
+   ```bash
+   python3 -m venv venv && source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Set `HIGHTOUCH_WEBHOOK_HEADER` to the header key you added to the destination and
+   `HIGHTOUCH_WEBHOOK_SECRET` to its exact, whole value (including any `Bearer ` prefix).
+
+## Run
+
+```bash
+python main.py
+```
+
+Server runs on http://localhost:8000 and accepts `POST`, `PUT`, `PATCH`, `DELETE` and `GET` at
+`/webhooks/hightouch`.
+
+## Test
+
+```bash
+pytest test_webhook.py -v
+```
+
+The tests cover the credential check (correct, wrong, missing, custom header name, whole-value
+comparison), every method, empty bodies, batched array bodies and arbitrary content types. No
+Hightouch account is needed.
+
+To try it by hand:
+
+```bash
+curl -X POST http://localhost:8000/webhooks/hightouch \
+  -H "Content-Type: application/json" \
+  -H "Authorization: $HIGHTOUCH_WEBHOOK_SECRET" \
+  -d '{"id":"cus_123","email":"alice@example.com"}'
+```
+
+## Receive Webhooks Locally
+
+Hightouch can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account,
+no install):
+
+```bash
+npx hookdeck-cli listen 8000 hightouch --path /webhooks/hightouch
+```
+
+Use the printed URL as the base URL in the Hightouch HTTP Request destination.
+
+## How It Works
+
+- `main.py`: `verify_hightouch_request()`, a dependency that rejects before the body is read, and the route
+
+1. The credential header is checked before the body is parsed. Failure returns `401`.
+2. The body is read raw (any content type) and may be empty. A non-empty body must be JSON (`400` otherwise).
+3. The method picks the trigger: `POST` is `row_added`, `PUT`/`PATCH` is `row_changed`, `DELETE`
+   is `row_removed`. This is a convention (Hightouch doesn't send the trigger); match it to your
+   sync configuration.
+4. With batching the body is an array or an object wrapping one; both are accepted.
+5. It returns `200 {"received": true, "trigger": "..."}`.

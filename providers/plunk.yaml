@@ -1,0 +1,44 @@
+name: plunk
+displayName: 'Plunk'
+docs:
+  webhooks: https://docs.useplunk.com/guides/webhooks
+  verification: https://docs.useplunk.com/guides/webhooks
+notes: >
+  Plunk (email platform) Webhook steps in workflows. 'Headers (optional): Custom headers to include
+  in the request, provided as JSON. This is useful for authentication.' Example {"Authorization":
+  "Bearer your-secret-token"}. Plunk recommends: 'configure a secret header on the webhook step and
+  check it on your endpoint'. Header values support {{variable}} interpolation; a static value is
+  required for verification. No signature: requests are unsigned. Authenticate with a secret header
+  the user adds on the workflow's webhook step. The header name is user-chosen, so the examples read
+  the header name from PLUNK_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  PLUNK_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Plunk source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is PLUNK, labelled 'Plunk'. Hookdeck shows
+  this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
+  thing, verbatim: "Add a secret header to the webhook step in your workflow and enter it here. Use
+  a static value, not a {{variable}}." Methods: the step's method is 'a literal verb (GET, POST,
+  PUT, PATCH, DELETE)', default POST. The examples must not be POST-only: accept GET, POST, PUT,
+  PATCH and DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a
+  handler for each; FastAPI: api_route with those methods), check the credential first for every
+  method, and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Plunk source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Body: the default body (no custom body) is {contact, workflow, execution,
+  event}; a custom body replaces it entirely. There is no Plunk-defined event field on the wire; use
+  the default body shape as the example and handle custom bodies as plain JSON. No automatic
+  retries. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check.
+testScenario:
+  events:
+    - 'email.bounce'
+    - 'email.complaint'
+    - 'contact.unsubscribed'
+catalog:
+  summary: 'Authenticate Plunk workflow webhook steps (unsigned: a static secret header you set, compared in constant time), accept the step''s method, handle contact and workflow payloads'

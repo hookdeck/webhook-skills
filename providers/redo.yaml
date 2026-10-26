@@ -1,0 +1,32 @@
+name: redo
+displayName: 'Redo'
+docs:
+  webhooks: https://developers.redo.com/docs/guides/integrations/webhooks
+  verification: https://developers.redo.com/docs/guides/integrations/webhooks
+notes: >
+  E-commerce returns; covers return webhooks subscribed with POST /v2.2/stores/{storeId}/webhooks
+  (required secret you generate). Redo sends 'Authorization: Bearer <your-subscriber-secret>'. No
+  signature. The credential is the Authorization header. Hookdeck's Redo source compares the WHOLE
+  Authorization header value to the configured key, so the examples read REDO_AUTHORIZATION = the
+  full value as Redo sends it (e.g. 'Bearer your-subscriber-secret'), including any 'Bearer '/'Basic
+  ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
+  base64-decode the prefix (Coterie pattern). So the configured value is 'Bearer ' followed by the
+  subscription secret. Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is REDO, labelled 'Redo'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing: "Paste the
+  full Authorization header value Redo sends: "Bearer " followed by your subscription secret."
+  Events: return.created, return.updated (body has type and the return object); backfill events are
+  sent at setup. POST JSON. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'return.created'
+    - 'return.updated'
+catalog:
+  summary: 'Authenticate Redo return webhooks (unsigned: the whole `Authorization: Bearer <secret>` value compared in constant time), handle `return.created` and `return.updated`'

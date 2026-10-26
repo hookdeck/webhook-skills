@@ -1,0 +1,36 @@
+name: project44
+displayName: 'project44'
+docs:
+  webhooks: https://developers.project44.com/api-reference/webhook-guide
+  verification: https://developers.project44.com/api-reference/webhook-guide#authentication-method-fields
+notes: >
+  Supply chain visibility. Webhooks are configured via PUT /api/v4/webhooks with an authentication
+  type: API_KEY (a header per api_key_name/value, max 2), BASIC, OAUTH2, MTLS. Only API_KEY is
+  covered (Hookdeck's project44 source); the docs name the value field api_key_value but the example
+  uses api_key. No signature: requests are unsigned. Authenticate with a secret header the user adds
+  as api_key_name / api_key_value. The header name is user-chosen, so the examples read the header
+  name from PROJECT44_WEBHOOK_HEADER (default 'X-Api-Key') and the expected value from
+  PROJECT44_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's project44 source does (API key verification: header name
+  + exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. The request method is user-chosen, so the examples must not be POST-only:
+  accept POST, PUT and PATCH (the webhook method is configurable; POST is the default), and GET on
+  the webhook route, and handle an empty body (e.g. GET). Note in SKILL.md that Hookdeck's project44
+  source currently allows only POST, so keep the webhook on POST or allow the method on the source.
+  Body has eventType like shipments.v1.event.added, shipments.v1.state.updated,
+  shipments.v1.shipment.created, shipments.v1.exception.addedOrUpdated. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after
+  the credential check.
+testScenario:
+  events:
+    - 'shipments.v1.shipment.created'
+    - 'shipments.v1.event.added'
+    - 'shipments.v1.state.updated'
+catalog:
+  summary: 'Authenticate project44 webhooks (unsigned `API_KEY` auth header compared in full in constant time), handle `eventType`s like `shipments.v1.event.added` and `shipments.v1.state.updated`'

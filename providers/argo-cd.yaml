@@ -1,0 +1,50 @@
+name: argo-cd
+displayName: 'Argo CD'
+docs:
+  webhooks: https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/services/webhook/
+  verification: https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/services/webhook/
+notes: >
+  Argo CD Notifications webhook service (argocd-notifications-cm). Config: service.webhook.<name>
+  with url, headers (name/value list) and basicAuth; templates set webhook.<name>.method and body.
+  The notifications engine sets every configured header on each request and defaults the method to
+  GET ('method: POST # one of: GET, POST, PUT, PATCH. Default value: GET'). basicAuth is not covered
+  by Hookdeck's Argo CD source; say so. No signature: requests are unsigned. Authenticate with a
+  secret header the user adds to the webhook service (service.webhook.<name>.headers in
+  argocd-notifications-cm). The header name is user-chosen, so the examples read the header name
+  from ARGO_CD_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  ARGO_CD_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Argo CD source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is ARGO_CD, labelled 'Argo CD'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Argo CD sends GET unless the notification template sets a method: set
+  method: POST in the template, or allow GET on this source." Methods: the template chooses GET,
+  POST, PUT or PATCH and the default is GET, which sends no body. The examples must not be
+  POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
+  route per method; Next.js: export a handler for each; FastAPI: api_route with those methods),
+  check the credential first for every method, and handle an empty body. Say in SKILL.md and
+  setup.md that Hookdeck's Argo CD source pre-selects POST without managing the method, so any other
+  method the sender uses must also be allowed on the source. The body is defined by the sender's own
+  configuration and there is no vendor event field, so the examples and test scenario use a clearly
+  labelled illustrative payload. Show an argocd-notifications-cm example with a secret header from
+  argocd-notifications-secret ($secret-key syntax), a trigger (e.g. on-sync-succeeded) and a
+  template that sets method: POST and a JSON body with app name, sync status and health. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'on-sync-succeeded template (illustrative payload)'
+    - 'on-health-degraded template (illustrative payload)'
+  prompt: >
+    Add an endpoint to my {framework} app that receives Argo CD notification webhooks (the
+    Argo CD Notifications webhook service). They are unsigned: authenticate them with a secret
+    header configured on the service, accept GET and POST, handle an empty body, and handle an
+    illustrative JSON payload for the on-sync-succeeded and on-health-degraded templates.
+catalog:
+  summary: 'Authenticate Argo CD notification webhooks (unsigned: a header you configure, compared in constant time), accept GET or POST, handle template-defined sync and health payloads'

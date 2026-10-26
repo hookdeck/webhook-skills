@@ -1,0 +1,39 @@
+name: datacake
+displayName: 'Datacake'
+docs:
+  webhooks: https://docs.datacake.de/integrations/outgoing-webhooks
+  verification: https://docs.datacake.de/integrations/outgoing-webhooks/securing-outgoing-webhooks-in-datacake
+notes: >
+  Datacake (IoT platform) outgoing webhooks (Workspace > Integrations > Webhooks). 'the recommended
+  and secure way to authenticate webhook requests is via an HTTP header: Name: Authorization (or any
+  custom header name) Value: A secret token' and 'Under Headers, add: Name: Authorization Value:
+  Bearer ABC123'. IP allowlisting is not reliable. No signature: requests are unsigned. Authenticate
+  with a secret header the user adds under Headers on the webhook. The header name is user-chosen,
+  so the examples read the header name from DATACAKE_WEBHOOK_HEADER (default 'Authorization') and
+  the expected value from DATACAKE_WEBHOOK_SECRET (the exact, whole header value, including any
+  'Bearer ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE
+  value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Datacake source does (API
+  key verification: Header Name + exact whole Header Value). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is DATACAKE,
+  labelled 'Datacake'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Datacake webhooks are not
+  signed. Add a secret header under Headers on the webhook and enter it here." Body: {event, data};
+  event e.g. device_measurement, decoder_output, downlink; data holds the measurements or decoder
+  result. Dispatch on event. POST (the receiver example listens on POST). Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/datacake/latest/ (decoder_output.json,
+  device_measurement.json, downlink.json); base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'device_measurement'
+    - 'decoder_output'
+    - 'downlink'
+catalog:
+  summary: 'Authenticate Datacake outgoing webhooks (unsigned: a header you add, compared in constant time), handle measurement, decoder and downlink events'

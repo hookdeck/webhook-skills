@@ -1,0 +1,26 @@
+name: theirstack
+displayName: 'TheirStack'
+docs:
+  webhooks: https://theirstack.com/en/docs/webhooks
+  verification: https://theirstack.com/en/docs/webhooks/verify-webhook-signatures
+  events: https://theirstack.com/en/docs/webhooks/receive-theirstack-events-in-your-webhook-endpoint
+notes: >
+  TheirStack (job and technographic data). Header X-TheirStack-Signature-256: 'sha256=<hex>',
+  HMAC-SHA256 hex of the raw JSON body keyed with the signing secret set (min 16 chars) or generated
+  on the webhook; the header is only sent when a secret is configured. Require and strip the sha256=
+  prefix. Reproduce the docs' test values in the tests: secret "It's a Secret to Everybody", payload
+  'Hello, World!', signature sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17.
+  Compare in constant time: in Node, check the received value is exactly 64 hex chars
+  (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare
+  the lowercase hex strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length
+  check; in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives
+  401, not 500. Event types: job.new, company.new, job.closed, tech.new. Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Set a signing secret on the TheirStack
+  webhook. Without one, deliveries are unsigned and fail verification. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'job.new'
+    - 'company.new'
+catalog:
+  summary: 'Verify TheirStack webhook signatures (`X-TheirStack-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body), handle `job.new` and `company.new` events'

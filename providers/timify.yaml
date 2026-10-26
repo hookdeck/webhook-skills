@@ -1,0 +1,38 @@
+name: timify
+displayName: 'TIMIFY'
+docs:
+  webhooks: https://docs.timify.dev/docs/webhooks.md
+  verification: https://docs.timify.dev/docs/webhooks.md
+notes: >
+  TIMIFY (appointment scheduling) webhook subscriptions in the Developer Platform (application >
+  Webhooks Subscriptions tab; the app needs the scopes the events require). displayName 'TIMIFY'.
+  TIMIFY says: 'Enable Include header name when you create a webhook subscription to add a custom
+  HTTP header and secret value to every webhook request.' No signature: requests are unsigned.
+  Authenticate with a secret header the user adds by enabling Include header name on the webhook
+  subscription. The header name is user-chosen, so the examples read the header name from
+  TIMIFY_WEBHOOK_HEADER (default 'Authorization') and the expected value from TIMIFY_WEBHOOK_SECRET
+  (the exact, whole header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's TIMIFY source does (API key verification: Header Name + exact whole Header Value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is TIMIFY, labelled 'TIMIFY'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Sync-type webhooks, such as Before Confirmations, expect a synchronous answer and aren't
+  supported." Webhooks (from the scope table): Customers, Event, Events, Services, Resource,
+  Company, Manager, Enterprise, Customer Fields, Shift, Notification, Service Groups with types
+  Created, Updated, Deleted; Before Confirmations and Before Reminders are type Sync. Body: JSON
+  event data; the field names aren't on the overview page, so use a clearly labelled illustrative
+  payload and dispatch defensively. POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check.
+testScenario:
+  events:
+    - 'Event Created (booking, illustrative payload)'
+    - 'Customers Updated (illustrative payload)'
+catalog:
+  summary: 'Authenticate TIMIFY webhook subscriptions (unsigned: the Include header name header, its whole value compared in constant time), handle booking, customer and resource changes; Sync webhooks are not supported'

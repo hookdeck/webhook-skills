@@ -1,0 +1,34 @@
+name: clickhouse
+displayName: 'ClickHouse'
+docs:
+  webhooks: https://clickhouse.com/docs/use-cases/observability/clickstack/alerts
+  verification: https://clickhouse.com/docs/use-cases/observability/clickstack/alerts
+notes: >
+  Covers ClickStack (HyperDX observability) alert webhooks of service type Generic only; ClickHouse
+  Cloud's control plane has no event webhooks. No signature: requests are unsigned. Authenticate
+  with a secret header the user adds to the Generic webhook (Webhook headers). The header name is
+  user-chosen, so the examples read the header name from CLICKHOUSE_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from CLICKHOUSE_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  ClickHouse source does (API key verification: header name + exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is CLICKHOUSE, labelled
+  'ClickHouse'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing: "Covers ClickStack alert webhooks of type Generic only." The
+  body is an optional template with {{title}}, {{body}} and {{link}}; The body is a template the
+  user writes; the vendor adds no event field, so the examples and test scenario use a clearly
+  labelled illustrative payload. Method and content type aren't documented; accept non-JSON bodies.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'search alert fired (illustrative template)'
+    - 'chart alert fired (illustrative template)'
+catalog:
+  summary: 'Authenticate ClickStack (ClickHouse) Generic alert webhooks (unsigned: a secret header compared in full in constant time), handle alert payloads from your template'

@@ -1,0 +1,39 @@
+name: clickatell
+displayName: 'Clickatell'
+docs:
+  webhooks: https://help.clickatell.com/developers-api-reference/reference/one-api-client-callbacks
+  verification: https://help.clickatell.com/developers-documentation/custom-security-headers-for-webhook-callbacks
+notes: >
+  Clickatell One API (WhatsApp and SMS) callbacks. 'Custom Security Headers allow you to add your
+  own HTTP authentication headers to outbound webhook callbacks from One API' (up to 5 per callback
+  URL; may need a role permission). 'If you add a custom header with the name Authorization, this
+  overrides your Basic Auth configuration for that callback URL.' Basic Auth alone and legacy SMS
+  Gateway callbacks are not covered by Hookdeck's Clickatell source; say so. No signature: requests
+  are unsigned. Authenticate with a secret header the user adds as a Custom Security Header on the
+  One API callback URL. The header name is user-chosen, so the examples read the header name from
+  CLICKATELL_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  CLICKATELL_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Clickatell source does (API key verification: Header
+  Name + exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is CLICKATELL, labelled 'Clickatell'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Covers One API callbacks only. Add a Custom Security Header to the
+  callback URL." Body: {integrationId, integrationName, event: {<kind>: [ ... ]}}; the event kind is
+  the NAME of the one key inside event: moText, moMedia, moLocation, messageStatusUpdate,
+  messageFallback, statusIsTyping, ... Dispatch on that key. Any 2xx acknowledges; events may be
+  duplicated or out of order. POST. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works (and, for signatures, the exact bytes are verified); parse the
+  body only after the check.
+testScenario:
+  events:
+    - 'messageStatusUpdate'
+    - 'moText'
+    - 'moMedia'
+catalog:
+  summary: 'Authenticate Clickatell One API callbacks (unsigned: a Custom Security Header you name, compared in constant time), handle message status and inbound message events'

@@ -1,0 +1,35 @@
+name: jobadder
+displayName: 'JobAdder'
+docs:
+  webhooks: https://api.jobadder.com/v2/docs
+  verification: https://api.jobadder.com/v2/docs
+notes: >
+  Recruitment CRM; webhooks are created via the Webhook API (POST /webhooks, partner app with
+  offline_access) with an optional 'authorization' value ('Optional authorization header to include
+  with the HTTP POST notification', example 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='). No signature. The
+  credential is the Authorization header. Hookdeck's JobAdder source compares the WHOLE
+  Authorization header value to the configured key, so the examples read JOBADDER_AUTHORIZATION =
+  the full value as JobAdder sends it (e.g. 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='), including any 'Bearer
+  '/'Basic ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
+  base64-decode the prefix (Coterie pattern). Compare the whole value even when it looks like Basic
+  credentials; never decode it. Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is JOBADDER, labelled 'JobAdder'. Hookdeck shows this setup
+  note for the source, and SKILL.md and references/setup.md must tell the user the same thing:
+  "Paste the authorization value exactly as set in the JobAdder webhook, including any "Bearer " or
+  "Basic " prefix." Body names the event in 'event', e.g. candidate_status_changed,
+  job_status_changed, jobapplication_status_changed, placement_approved. POST JSON. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body
+  only after the credential check.
+testScenario:
+  events:
+    - 'candidate_status_changed'
+    - 'jobapplication_status_changed'
+    - 'placement_approved'
+catalog:
+  summary: 'Authenticate JobAdder webhooks (unsigned: the whole `Authorization` value compared in constant time), handle `event`s like `candidate_status_changed` and `placement_approved`'

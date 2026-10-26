@@ -1,0 +1,23 @@
+name: rocketreach
+displayName: RocketReach
+docs:
+  webhooks: https://docs.rocketreach.co/reference/webhooks
+  verification: https://docs.rocketreach.co/reference/webhooks
+notes: >
+  RocketReach (contact lookup) webhooks deliver async People Lookup and Bulk Lookup results, not
+  change events. Once a secret is generated (API Usage & Settings page: Generate Secret), header
+  X-RocketReach-Signature carries a base64 HMAC-SHA256 of the raw body keyed with that secret as UTF-8
+  (e.g. h50yogIFeOJuOvaxOoJhtJ2WHOzqdKFsGG7p4f3lkwI=). Compare in constant time: compare the base64
+  strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check (no lenient
+  base64 decode of the header); in Python use hmac.compare_digest on bytes (encode both sides) so a
+  non-ASCII header gives 401, not 500. There are no event types; describe the lookup result body from
+  the docs. Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md): Generate
+  a webhook secret in the RocketReach API settings. Without one, deliveries are unsigned and fail
+  verification. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - complete
+    - progress
+catalog:
+  summary: Verify RocketReach webhook signatures (`X-RocketReach-Signature`, HMAC-SHA256 base64), handle People Lookup and Bulk People Lookup results

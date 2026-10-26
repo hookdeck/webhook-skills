@@ -1,0 +1,41 @@
+name: payrix-pro
+displayName: 'Payrix Pro'
+docs:
+  webhooks: https://resource.payrix.com/docs/set-up-webhooks
+  verification: https://resource.payrix.com/docs/set-up-webhooks
+notes: >
+  Payrix Pro (Worldpay's payment facilitation platform; not Payrix Payments). Each webhook alert has
+  actions with an Endpoint and '(Optional) ... the header name and header value in the open fields
+  under the Endpoint field'; 'Header Value: Any value displayed in the webhook header, including
+  authentication or other security flags.' No signature: requests are unsigned. Authenticate with a
+  secret header the user adds on each webhook action. The header name is user-chosen, so the
+  examples read the header name from PAYRIX_PRO_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from PAYRIX_PRO_WEBHOOK_SECRET (the exact, whole header value, including any
+  'Bearer ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE
+  value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Payrix Pro source does
+  (API key verification: Header Name + exact whole Header Value). Missing header or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is PAYRIX_PRO,
+  labelled 'Payrix Pro'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a Header Name and Header
+  Value on each Payrix Pro webhook action. Actions without one send nothing to verify." Methods:
+  Payrix's docs don't name the HTTP method, and each action has its own format (Content-Type)
+  setting. The examples must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
+  webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
+  FastAPI: api_route with those methods), check the credential first for every method, and handle an
+  empty body. Say in SKILL.md and setup.md that Hookdeck's Payrix Pro source pre-selects POST
+  without managing the method, so any other method the sender uses must also be allowed on the
+  source. Body: not documented; parse JSON when the content type says so and otherwise keep the raw
+  text. Use a clearly labelled illustrative payload (e.g. a transaction alert). Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works (and, for
+  signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'transaction alert (illustrative payload)'
+    - 'merchant alert (illustrative payload)'
+catalog:
+  summary: 'Authenticate Payrix Pro webhook alerts (unsigned: the Header Name and Header Value on the action, compared in constant time), accept any method, handle JSON or raw payloads'

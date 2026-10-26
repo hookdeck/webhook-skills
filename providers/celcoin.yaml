@@ -1,0 +1,45 @@
+name: celcoin
+displayName: 'Celcoin'
+docs:
+  webhooks: https://developers.celcoin.com.br/docs/webhooks-baas
+  verification: https://developers.celcoin.com.br/docs/celbricks-cadastrar-e-gerenciar-webhooks
+notes: >
+  Celcoin (Brazilian BaaS: Pix, cards, accounts; docs in Portuguese) webhook subscriptions, created
+  through the API. 'Disponibilizamos duas opções de autenticação nas notificações, Basic Auth ou
+  OAuth 2.0. ... Utilizando Basic Authentication: Neste formato o basic auth definido será enviado
+  nas notificações.' Subscription body: "auth": {"login": ..., "pwd": ..., "type": "basic"}. The
+  JWT/OAuth 2.0 mode is not covered by Hookdeck's Celcoin source; say so. No signature. Authenticate
+  with HTTP Basic auth, which is what Hookdeck's Celcoin source verifies. The examples read
+  CELCOIN_WEBHOOK_USERNAME and CELCOIN_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, accept only the strict base64 alphabet and
+  decode strictly, e.g. validate=True in Python, so valid credentials followed by junk are rejected;
+  split on the first colon), and compare the username and the password each in constant time,
+  evaluating both before deciding (no short-circuit). Missing or malformed header or mismatch: 401.
+  SKILL.md and setup.md must say that Hookdeck never sends a 401 challenge (no WWW-Authenticate
+  round trip), so the credentials must arrive with each request. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is CELCOIN, labelled 'Celcoin'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Use Basic auth (auth.type basic) on the webhook subscription, not JWT/OAuth
+  2.0." Methods: Celcoin's docs don't name the HTTP method. The examples must not be POST-only:
+  accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per
+  method; Next.js: export a handler for each; FastAPI: api_route with those methods), check the
+  credential first for every method, and handle an empty body. Say in SKILL.md and setup.md that
+  Hookdeck's Celcoin source pre-selects POST without managing the method, so any other method the
+  sender uses must also be allowed on the source. Body: {entity, createTimestamp, status (CONFIRMED
+  or ERROR), body}; webhooks are registered per entity, e.g. pix-payment-in, pix-payment-out,
+  pix-reversal-in, internal-transfer-in, spb-transfer-out, onboarding-proposal, kyc. Dispatch on
+  entity. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check.
+testScenario:
+  events:
+    - 'pix-payment-in'
+    - 'pix-payment-out'
+    - 'onboarding-proposal'
+catalog:
+  summary: 'Authenticate Celcoin webhook notifications (HTTP Basic auth compared in constant time), handle Pix, transfer and onboarding events by `entity`'

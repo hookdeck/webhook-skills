@@ -1,0 +1,33 @@
+name: vtex
+displayName: 'VTEX'
+docs:
+  webhooks: https://developers.vtex.com/docs/guides/orders-feed
+  verification: https://developers.vtex.com/docs/guides/orders-feed
+notes: >
+  Commerce; covers the Orders API Hook (configured by API, one per appKey; VTEX removes it after 3
+  days with no notifications). hook.headers carries the credentials. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds in the hook configuration's headers
+  object. The header name is user-chosen, so the examples read the header name from
+  VTEX_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the expected value from VTEX_WEBHOOK_SECRET
+  (the exact, whole header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's VTEX source does (API key verification: header name + exact value). Missing header
+  or mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. On setup VTEX
+  POSTs {"hookConfig": "ping"} and needs a 200; reply 200 to it (the docs don't say whether the ping
+  carries the headers, so accept the ping before the auth check and do nothing with it).
+  Notifications: {Domain, OrderId, State, LastState, LastChange, CurrentChange, Origin: {Account,
+  Key}}; State is the new order status (order-created, payment-approved, ready-for-handling,
+  invoiced, canceled, ...). Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'payment-approved'
+    - 'ready-for-handling'
+    - 'canceled'
+catalog:
+  summary: 'Authenticate VTEX Orders API hooks (unsigned: a secret in the hook `headers`, compared in full in constant time), answer the `hookConfig` ping and handle order status changes like `payment-approved`'

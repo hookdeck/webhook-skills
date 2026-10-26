@@ -1,0 +1,23 @@
+name: payroc
+displayName: 'Payroc'
+docs:
+  webhooks: https://docs.payroc.com/guides/events/create-event-subscription
+  verification: https://docs.payroc.com/guides/events/create-event-subscription
+notes: >
+  Payroc (payment processor) event subscriptions, created through the API only. Not Hosted Payments
+  Page callbacks. Requests are unsigned: the subscription's notifications[].secret (user supplied,
+  16 to 64 characters) is sent as plain text in the Payroc-Secret header. Examples read
+  PAYROC_WEBHOOK_SECRET, look the header up case-insensitively and compare the whole value in
+  constant time (Node: length check then timingSafeEqual; Python: compare_digest on bytes). A static
+  shared credential authenticates the sender, not the body, and gives no replay protection; use
+  HTTPS and rotate it if it leaks. Matches Hookdeck's PAYROC source (API key, payroc-secret).
+  Body is a CloudEvents 1.0 JSON object; dispatch on type, dedupe on id. Return exactly 200 or
+  Payroc retries five times and then emails the subscription's support address. Express examples use
+  express.raw({ type: '*/*' }). terminalOrder.status.changed has no documented sample payload.
+testScenario:
+  events:
+    - 'processingAccount.status.changed'
+    - 'terminalOrder.status.changed'
+    - 'processingAccount.riskStatus.changed'
+catalog:
+  summary: 'Authenticate Payroc event subscription webhooks (unsigned: the `Payroc-Secret` header compared in constant time), handle CloudEvents for processing accounts and terminal orders'

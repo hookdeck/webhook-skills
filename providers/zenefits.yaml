@@ -1,0 +1,26 @@
+name: zenefits
+displayName: 'TriNet Zenefits'
+docs:
+  webhooks: https://developers.zenefits.com/docs/webhooks
+  events: https://developers.zenefits.com/reference/events
+notes: >
+  TriNet Zenefits partner-app webhooks (the docs now say TriNet's HR platform). Header literally named
+  signature: hex HMAC-SHA256 of the raw payload keyed with the application's webhook shared secret,
+  which is NOT the OAuth client secret. Reproduce the docs' example in the tests: secret
+  lDVtBQnoRcqYv4fUeVD0oyzgsKWHGtqhatjBX5wXRFQzkVUCzBA571E4qUxvR5LE, body '{"test":"valid payload"}',
+  signature 219a08ea32f319931dc849badc076323f40367aad859ddba4de82e33135fad31. Compare in constant
+  time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
+  Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Events:
+  companies.did_create, companies.did_change, people.did_create, people.did_change,
+  employments.did_start, employments.did_terminate, flow.did_complete.hiring and more; check the
+  payload's type field. Hookdeck setup (say this in SKILL.md's setup section and in
+  references/setup.md): Use your app's webhook shared secret, not its OAuth client secret. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'people.did_create'
+    - 'employments.did_terminate'
+catalog:
+  summary: 'Verify TriNet Zenefits webhook signatures (`signature` header, HMAC-SHA256 hex of the raw body keyed with the webhook shared secret), handle people and employment events'

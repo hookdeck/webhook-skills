@@ -1,0 +1,35 @@
+name: invoice-ninja
+displayName: 'Invoice Ninja'
+docs:
+  webhooks: https://api-docs.invoicing.co/#tag/webhooks
+  verification: https://github.com/invoiceninja/invoiceninja/blob/v5-stable/app/Jobs/Util/WebhookSingle.php
+notes: >
+  Invoicing. Header support is confirmed in the open-source server and admin portal (webhook headers
+  key/value). No signature: requests are unsigned. Authenticate with a secret header the user adds
+  to the webhook (Headers key/value). The header name is user-chosen, so the examples read the
+  header name from INVOICE_NINJA_WEBHOOK_HEADER (default 'Authorization') and the expected value
+  from INVOICE_NINJA_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix
+  the user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip
+  or parse a 'Bearer ' prefix. This is what Hookdeck's Invoice Ninja source does (API key
+  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. The request method is user-chosen, so
+  the examples must not be POST-only: accept POST, PUT, PATCH and GET (the webhook rest_method is
+  configurable; POST is the default) on the webhook route, and handle an empty body (e.g. GET). Warn
+  in SKILL.md: a 404, 405 or 410 response makes Invoice Ninja delete the webhook subscription, so
+  never answer those (use 401 for bad credentials, 400 for bad bodies). The event key
+  (create_invoice, create_payment, update_client, ...) names the subscription only; the body is the
+  entity (transformer output) with no event field, so route by URL per subscription or by entity
+  shape. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'create_invoice'
+    - 'create_payment'
+    - 'update_client'
+catalog:
+  summary: 'Authenticate Invoice Ninja webhooks (unsigned: a secret header compared in full in constant time), handle invoice, payment and client entity payloads (and avoid the 404/405/410 responses that delete the subscription)'

@@ -1,0 +1,35 @@
+name: dynatrace
+displayName: 'Dynatrace'
+docs:
+  webhooks: https://docs.dynatrace.com/docs/analyze-explore-automate/alerting-and-notifications-classic/problem-notifications/webhook-integration
+  verification: https://docs.dynatrace.com/docs/analyze-explore-automate/alerting-and-notifications-classic/problem-notifications/webhook-integration
+notes: >
+  Observability; covers (Classic) problem notifications through a custom webhook integration. Don't
+  put the secret in the URL query (Dynatrace allows a token in the URL; Hookdeck can't check it). No
+  signature: requests are unsigned. Authenticate with a secret header the user adds as an
+  'Additional HTTP header' on the integration. The header name is user-chosen, so the examples read
+  the header name from DYNATRACE_WEBHOOK_HEADER (default 'Authorization') and the expected value
+  from DYNATRACE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's Dynatrace source does (API key verification:
+  header name + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is DYNATRACE, labelled 'Dynatrace'. Hookdeck shows this setup
+  note for the source, and SKILL.md and references/setup.md must tell the user the same thing: "Send
+  the secret in a custom header, not as a token in the webhook URL." The payload is a fully
+  customizable template with placeholders like {ProblemID}, {State}, {ProblemTitle},
+  {ImpactedEntity}, {ProblemURL}; Content-Type can be JSON, text or XML. The body is a template the
+  user writes; the vendor adds no event field, so the examples and test scenario use a clearly
+  labelled illustrative payload. POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'problem OPEN (illustrative template)'
+    - 'problem RESOLVED (illustrative template)'
+catalog:
+  summary: 'Authenticate Dynatrace problem notification webhooks (unsigned: a secret header compared in full in constant time), handle `OPEN` and `RESOLVED` problems from your payload template'

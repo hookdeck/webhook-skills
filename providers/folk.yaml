@@ -1,0 +1,26 @@
+name: folk
+displayName: folk
+docs:
+  webhooks: https://developer.folk.app/webhooks/about
+  verification: https://developer.folk.app/webhooks/handle-deliveries
+  events: https://developer.folk.app/webhooks/events-and-payloads
+notes: >
+  folk (CRM). Standard Webhooks with webhook-id, webhook-timestamp, webhook-signature ('v1,<base64>')
+  headers; the signing secret (whsec_..., e.g. whsec_QWFSUzl1QUVoQW1kdWtpTnJRTUFpbXNlZmxLTg==) is only
+  visible once at webhook creation. folk recommends the official Standard Webhooks libraries; use
+  standardwebhooks. The standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp
+  window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the
+  library rejects late retries after 5 minutes, and point to a manual verifier in
+  references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key = base64-decode of
+  the secret after whsec_, compare every space-separated v1,<base64> entry in constant time) where the
+  window can be dropped or widened. Events: person.created, person.updated, person.deleted,
+  person.groups_updated, company.created, company.updated, company.deleted, object.created,
+  note.created and more; dispatch on the body's type. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - person.created
+    - person.updated
+    - company.created
+catalog:
+  summary: Verify folk (CRM) webhook signatures (`webhook-id`/`webhook-timestamp`/`webhook-signature`, Standard Webhooks HMAC-SHA256 base64 over `{id}.{timestamp}.{raw body}`, `whsec_` secret shown once), handle person.created, person.updated, company.created and object.created events

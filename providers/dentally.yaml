@@ -1,0 +1,22 @@
+name: dentally
+displayName: 'Dentally'
+docs:
+  webhooks: https://developer.dentally.co/#webhooks
+  verification: https://developer.dentally.co/#signing-webhooks
+notes: >
+  Dentally (dental practice management). Header X-Dentally-Signature: bare hex HMAC-SHA256 of the raw
+  POST body (no prefix, no timestamp), keyed with the webhook endpoint's secret string (e.g.
+  pLjUpNQu8a4YjeCrf2KseA) as UTF-8. Compare in constant time: in Node, check the received value is
+  exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid hex silently
+  truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. Events: appointment.created, appointment.updated,
+  appointment.deleted, patient.created, patient.updated, patient.deleted, payment.created,
+  payment.updated, payment.deleted. Webhooks are disabled after 50 failed deliveries. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'appointment.created'
+    - 'patient.updated'
+catalog:
+  summary: 'Verify Dentally webhook signatures (`X-Dentally-Signature`, HMAC-SHA256 hex of the raw body), handle appointment, patient and payment events'

@@ -1,0 +1,28 @@
+name: halo-psa
+displayName: 'HaloPSA'
+docs:
+  webhooks: https://www.usehalo.com/guides/838
+  verification: https://www.usehalo.com/guides/838
+notes: >
+  PSA/ITSM (HaloPSA, also HaloITSM and HaloCRM). Standard webhooks with Basic Authentication,
+  the only auth option; no signature. Authenticate with HTTP Basic auth, which is what
+  Hookdeck's HaloPSA source (HALO_PSA) verifies. Read HALO_PSA_WEBHOOK_USERNAME and
+  HALO_PSA_WEBHOOK_PASSWORD, parse 'Authorization: Basic base64(username:password)' (scheme
+  case-insensitive, strict base64 alphabet, strict decode, split on the first colon) and compare
+  username and password each in constant time, evaluating both. Missing, malformed or mismatch:
+  401. The docs don't say whether credentials are sent preemptively; they must arrive on the
+  first request because Hookdeck never sends a 401 + WWW-Authenticate challenge. Say plainly that
+  a static shared credential authenticates the sender, not the body, with no replay protection.
+  Hookdeck setup note: "Choose Basic Authentication on the Halo webhook." Events are notification
+  events (New Ticket Logged, Ticket Updated, Ticket Reassigned, Document deleted on a Ticket,
+  Document edited on a Ticket); the payload has an event name property but its field name isn't
+  documented in text, so label example payloads illustrative. Batching sends a JSON array. The
+  Method setting also offers GET but notifications are POSTs and Hookdeck's source accepts POST
+  only. Express examples must read the raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'New Ticket Logged'
+    - 'Ticket Updated'
+    - 'Ticket Reassigned'
+catalog:
+  summary: 'Authenticate HaloPSA webhooks (unsigned: `Authorization: Basic` username and password compared in constant time), handle New Ticket Logged, Ticket Updated and Ticket Reassigned events'
