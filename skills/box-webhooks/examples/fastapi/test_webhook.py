@@ -163,8 +163,8 @@ class TestMethods:
         assert client.request(method, "/webhooks/box").status_code == 401
 
     def test_get_without_body_is_empty_bytes(self):
-        # Signature over just the timestamp is valid, but there is no JSON event to handle
-        assert deliver(b"", method="GET").status_code == 400
+        # Signature over just the timestamp is valid; an empty body is acknowledged
+        assert deliver(b"", method="GET").status_code == 200
 
 
 class TestTolerance:

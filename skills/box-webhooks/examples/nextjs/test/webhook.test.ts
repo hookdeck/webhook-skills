@@ -189,8 +189,8 @@ describe('HTTP methods', () => {
   });
 
   it('treats a GET without a body as empty bytes (signature over just the timestamp)', async () => {
-    // Signature is valid, but there is no JSON event to handle
-    expect((await deliver(null, { method: 'GET' })).status).toBe(400);
+    // Signature is valid; an empty body is acknowledged without parsing
+    expect((await deliver(null, { method: 'GET' })).status).toBe(200);
   });
 });
 

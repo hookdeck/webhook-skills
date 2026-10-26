@@ -177,8 +177,8 @@ describe('HTTP methods', () => {
       .get('/webhooks/box')
       .set('BOX-SIGNATURE-PRIMARY', sign('', ts))
       .set('BOX-DELIVERY-TIMESTAMP', ts);
-    // Signature is valid, but there is no JSON event to handle
-    expect(res.status).toBe(400);
+    // Signature is valid; an empty body is acknowledged without parsing
+    expect(res.status).toBe(200);
   });
 });
 

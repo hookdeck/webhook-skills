@@ -72,6 +72,9 @@ app.all('/webhooks/box', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(401).send('Invalid signature');
   }
 
+  // Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+  if (rawBody.length === 0) return res.status(200).json({ received: true });
+
   let event;
   try {
     event = JSON.parse(rawBody.toString('utf8'));

@@ -106,6 +106,10 @@ async def box_webhook(request: Request):
         logger.error("Box webhook signature verification failed")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
+    # Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+    if not raw_body:
+        return {"received": True}
+
     try:
         event = json.loads(raw_body)
     except json.JSONDecodeError:

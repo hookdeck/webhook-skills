@@ -75,6 +75,9 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
+  // Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+  if (rawBody.length === 0) return NextResponse.json({ received: true });
+
   let event: any;
   try {
     event = JSON.parse(rawBody.toString('utf8'));
