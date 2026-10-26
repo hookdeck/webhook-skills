@@ -3,6 +3,7 @@ displayName: 'Novu'
 docs:
   webhooks: 'https://docs.novu.co/platform/developer/webhooks'
   verification: 'https://docs.novu.co/platform/developer/webhooks'
+  events: 'https://docs.novu.co/platform/developer/webhooks/event-types'
 notes: >-
   Novu (novu.co), an open-source notification infrastructure platform. Outbound webhooks (Team and Enterprise
   plans) report message delivery/engagement, preference and workflow changes and inbound email; delivered

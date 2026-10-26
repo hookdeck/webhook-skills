@@ -1,0 +1,104 @@
+# Generated with: pinata-webhooks skill
+# https://github.com/hookdeck/webhook-skills
+
+import json
+import os
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
+from svix.webhooks import Webhook, WebhookVerificationError
+
+load_dotenv()
+
+app = FastAPI(title="Pinata Webhook Handler")
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
+@app.post("/webhooks/pinata")
+async def pinata_webhook(request: Request):
+    secret = os.environ.get("PINATA_WEBHOOK_SECRET")
+    if not secret or not secret.startswith("whsec_"):
+        print("PINATA_WEBHOOK_SECRET is missing or not a whsec_ secret")
+        raise HTTPException(status_code=500, detail="Server configuration error")
+
+    # Read the webhook-* headers (Standard Webhooks); when webhook-id is absent, fall back to the svix-* headers
+    prefix = "webhook" if request.headers.get("webhook-id") else "svix"
+    msg_id = request.headers.get(f"{prefix}-id")
+    timestamp = request.headers.get(f"{prefix}-timestamp")
+    signature = request.headers.get(f"{prefix}-signature")
+    if not (msg_id and timestamp and signature):
+        raise HTTPException(status_code=400, detail="Missing required webhook headers")
+
+    # Verify the RAW body: the exact bytes Pinata (Svix) signed
+    raw_body = await request.body()
+    try:
+        # Checks HMAC-SHA256 over "{id}.{timestamp}.{body}" against every v1, signature
+        # and enforces a fixed 5-minute timestamp window (see references/verification.md to change that).
+        # The library accepts either header-name set, so hand it the resolved values under both.
+        Webhook(secret).verify(
+            raw_body,
+            {
+                "svix-id": msg_id,
+                "svix-timestamp": timestamp,
+                "svix-signature": signature,
+                "webhook-id": msg_id,
+                "webhook-timestamp": timestamp,
+                "webhook-signature": signature,
+            },
+        )
+    except (WebhookVerificationError, ValueError) as err:
+        # A malformed signature entry raises a plain ValueError rather than WebhookVerificationError
+        print(f"Pinata webhook verification failed: {err}")
+        detail = "Timestamp too old" if "timestamp" in str(err).lower() else "Invalid signature"
+        raise HTTPException(status_code=400, detail=detail)
+
+    try:
+        event = json.loads(raw_body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    # The event name is the top-level `event_type`; the two CAR-import events name it `event` instead.
+    # The file sits under data.object (data.new_file for pin_by_cid_succeeded).
+    event_type = event.get("event_type") or event.get("event")
+    # The webhook-id header identifies the message and is stable across retries: use it to deduplicate
+    print(f"Received Pinata webhook {msg_id}: {event_type}")
+
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    file = data.get("object") if isinstance(data.get("object"), dict) else {}
+    new_file = data.get("new_file") if isinstance(data.get("new_file"), dict) else {}
+
+    if event_type in ("ipfs.private.file_added", "ipfs.public.file_added"):
+        print(f"File added ({event_type.split('.')[1]}): {file.get('id')} {file.get('cid')} {file.get('name')}")
+    elif event_type in ("ipfs.private.file_updated", "ipfs.public.file_updated"):
+        # data.previous_attributes holds the values that changed
+        print(f"File updated ({event_type.split('.')[1]}): {file.get('id')} {data.get('previous_attributes')}")
+    elif event_type in ("ipfs.private.file_deleted", "ipfs.public.file_deleted"):
+        print(f"File deleted ({event_type.split('.')[1]}): {file.get('id')} {file.get('cid')}")
+    elif event_type == "ipfs.public.car_import_succeeded":
+        print(f"CAR import succeeded: {file.get('cid')} {file.get('name')}")
+    elif event_type == "ipfs.public.car_import_failed":
+        print(f"CAR import failed: {data.get('file_id')} {data.get('error')}")
+    elif event_type == "ipfs.public.pin_by_cid_added":
+        print(f"Pin by CID queued: {file.get('id')} {file.get('cid')} {file.get('status')}")
+    elif event_type == "ipfs.public.pin_by_cid_succeeded":
+        # The pinned file is data.new_file; data.object is the pin request
+        print(f"Pin by CID succeeded: {new_file.get('id')} {new_file.get('cid')}")
+    elif event_type == "ipfs.public.pin_by_cid_failed":
+        print(f"Pin by CID failed: {file.get('id')} {file.get('cid')} {file.get('status')}")
+    else:
+        # Return 200 for events you don't handle, or Pinata (Svix) keeps retrying them
+        print(f"Unhandled event type: {event_type}")
+
+    return {"success": True, "type": event_type}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

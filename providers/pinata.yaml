@@ -52,5 +52,5 @@ testScenario:
   - 'ipfs.private.file_updated'
 catalog:
   summary: >-
-    Verify Pinata webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
-    `whsec_` secret), handle IPFS file and pin events
+    Verify Pinata webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256
+    via Svix), handle ipfs.public.file_added and ipfs.public.pin_by_cid_succeeded events

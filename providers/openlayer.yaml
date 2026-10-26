@@ -3,6 +3,7 @@ displayName: 'Openlayer'
 docs:
   webhooks: 'https://docs.openlayer.com/security/webhooks/verify-signatures'
   verification: 'https://docs.openlayer.com/security/webhooks/verify-signatures'
+  events: 'https://docs.openlayer.com/security/webhooks/events'
 notes: >-
   Openlayer (openlayer.com), an AI evaluation and observability platform. Workspace webhooks report test
   lifecycle changes and test-suite run results, signed per the Standard Webhooks spec (webhook-* headers).
