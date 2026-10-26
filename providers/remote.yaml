@@ -1,0 +1,69 @@
+name: remote
+displayName: "Remote"
+docs:
+  webhooks: https://developer.remote.com/docs/introduction-to-webhooks
+  verification: https://developer.remote.com/docs/verifying-webhooks
+  events: https://developer.remote.com/docs/available-webhooks
+notes: >
+  Remote (remote.com) API webhooks, registered with POST /v1/webhook-callbacks. Remote (remote.com),
+  global employment (EOR), contractor management and payroll. Delivery (from the docs): A 2xx is
+  success. A 4xx or 5xx counts as DELIVERED and is never retried; only transport failures (timeout,
+  connection, DNS, TLS) are retried, at 30 s, 5 min, 1 h, 6 h and 18 h. Missed events are listed and
+  replayed through the webhook-events API. Remote says: 'When you receive a webhook request from
+  Remote, it includes 2 custom HTTP headers: 1. `X-Remote-Timestamp` 2. `X-Remote-Signature`' 'message
+  = raw_request_body + ":" + timestamp' 'with SHA256 as the hash function. The signature included in
+  the `X-Remote-Signature` header is Base 16 encoded.' SIGNATURE SCHEME (it must match Hookdeck's
+  REMOTE_COM source exactly: HMAC controller, algorithm sha256, header x-remote-signature, encoding
+  hex, signed_content_template "{body}:{header:x-remote-timestamp}"). The X-Remote-Signature header
+  carries the bare lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed
+  with the secret, over: the raw request body bytes, then a literal ":", then the X-Remote-Timestamp
+  header value. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  separators as UTF-8, header values as the exact header string encoded latin1 (Node
+  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
+  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
+  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
+  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Compare the WHOLE header value as one digest
+  (no list splitting, no prefix parsing). Secret: the callback's `signing_key`, returned by POST
+  /v1/webhook-callbacks (there is no dashboard field), used as UTF-8. Env var: REMOTE_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as REMOTE_WEBHOOK_TOLERANCE_SECONDS, unset or 0
+  = off) and say so in SKILL.md and verification.md (X-Remote-Timestamp is Unix MILLISECONDS). Body
+  FIRST, then a COLON, then the timestamp. Remote treats a 4xx or 5xx as delivered (never retried);
+  only transport failures are retried. The docs' test vector uses the compact 376-byte body (matching
+  its Content-Length), not the pretty-printed one. Events: dispatch on the body's `event_type` field.
+  Documented event types (112): company.activated, company.archived,
+  company.eor_hiring.additional_information_required, company.eor_hiring.reserve_payment_requested,
+  company.eor_hiring.no_reserve_payment_requested, company.eor_hiring.referred,
+  company.eor_hiring.verification_completed, company.manager_created, company.manager_updated,
+  company.manager_deleted, company.owner_changed, company.partner_offboarded,
+  company.pricing_plan.updated, contract.termination_date_reached (and 98 more). Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Remote source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs give a worked
+  example, saved verbatim as JSON (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/remote.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts those headers and secret and computes
+  e3f4092f158983aea32ab25f6fecc59f64b26d45fadbed6409893f3a882abef7. Add references/verification.md
+  text naming the vector. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/b14-merge/samples-doc/providers/remote/latest/
+  (employment.onboarding_task.completed.json); base the examples' test payloads on them. Hookdeck's
+  source type is REMOTE_COM, labelled 'Remote'.
+testScenario:
+  events:
+    - "employment.onboarding_task.completed"
+    - "employment.onboarding.completed"
+    - "timeoff.requested"
+catalog:
+  summary: "Verify Remote webhooks (`X-Remote-Signature`: hex HMAC-SHA256 of `{body}:{X-Remote-Timestamp}`), handle employment, contract, payroll and time-off events"

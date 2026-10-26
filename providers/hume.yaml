@@ -1,0 +1,55 @@
+name: hume
+displayName: "Hume"
+docs:
+  webhooks: https://dev.hume.ai/docs/speech-to-speech-evi/configuration/webhooks
+  verification: https://dev.hume.ai/docs/speech-to-speech-evi/configuration/webhooks
+notes: >
+  Hume AI EVI (speech-to-speech) webhooks only, configured on an EVI Config. Hume AI (hume.ai),
+  emotionally intelligent voice AI; EVI is its speech-to-speech interface. Delivery (from the docs):
+  Not documented (see gaps). Hume says: 'X-Hume-AI-Webhook-Signature: HMAC-SHA256 signature of the
+  payload and timestamp, signed using your webhook signing key. X-Hume-AI-Webhook-Timestamp: Unix
+  timestamp indicating when the request was sent.' 'const message = `${payload}.${timestamp}`; const
+  expectedSig = crypto.createHmac('sha256', signingKey).update(message).digest('hex');' SIGNATURE
+  SCHEME (it must match Hookdeck's HUME source exactly: HMAC controller, algorithm sha256, header
+  x-hume-ai-webhook-signature, encoding hex, signed_content_template
+  "{body}.{header:x-hume-ai-webhook-timestamp}"). The X-Hume-AI-Webhook-Signature header carries the
+  bare lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over: the raw request body bytes, then a literal ".", then the X-Hume-AI-Webhook-Timestamp
+  header value. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  separators as UTF-8, header values as the exact header string encoded latin1 (Node
+  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
+  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
+  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
+  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Compare the WHOLE header value as one digest
+  (no list splitting, no prefix parsing). Secret: the account's webhook signing key (Developers page >
+  Generate signing key), used as UTF-8. Env var: HUME_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
+  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  opt-in tolerance (an env var such as HUME_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (X-Hume-AI-Webhook-Timestamp is Unix seconds; Hume's examples use 180
+  s). Body FIRST, then a period, then the timestamp. Events: dispatch on the body's `event_name`
+  field. Documented event types (3): chat_started, chat_ended, tool_call. Handle a few common ones and
+  log the rest. Method: POST. Hookdeck's Hume source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/hume/latest/ (chat_ended.json,
+  chat_started.json); base the examples' test payloads on them. Hookdeck's source type is HUME,
+  labelled 'Hume'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "For Hume EVI (speech-to-speech) webhooks. Paste the
+  webhook signing key from the Developers page."
+testScenario:
+  events:
+    - "chat_started"
+    - "chat_ended"
+    - "tool_call"
+catalog:
+  summary: "Verify Hume EVI webhooks (`X-Hume-AI-Webhook-Signature`: hex HMAC-SHA256 of `{body}.{timestamp}`), handle chat_started, chat_ended and tool_call events"

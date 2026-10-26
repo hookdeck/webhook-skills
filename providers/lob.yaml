@@ -1,0 +1,59 @@
+name: lob
+displayName: "Lob"
+docs:
+  webhooks: https://help.lob.com/print-and-mail/getting-data-and-results/using-webhooks
+  verification: https://help.lob.com/print-and-mail/getting-data-and-results/using-webhooks
+notes: >
+  Lob print-and-mail webhooks (postcards, self mailers, letters, checks, addresses, bank accounts),
+  per environment. Lob (lob.com), the print-and-mail and address-verification API. Delivery (from the
+  docs): Any 2xx confirms delivery; anything else, including TLS and DNS failures, is retried at
+  increasing intervals: 8 attempts in all over about 27.5 hours. A webhook whose deliveries fail for 5
+  consecutive days is disabled (email notice); one success resets the clock. Events are not sent in
+  real time. Lob says: 'Concatenate the Lob-Signature-Timestamp (as a string), the . character, and
+  the raw request body (as a string).' 'Compute the HMAC with SHA-256 using the webhook secret from
+  the dashboard as the key and the signature input as the message. Convert to a string in base-16,
+  hexidecimal format.' SIGNATURE SCHEME (it must match Hookdeck's LOB source exactly: HMAC controller,
+  algorithm sha256, header lob-signature, encoding hex, signed_content_template
+  "{header:lob-signature-timestamp}.{body}"). The Lob-Signature header carries the bare lowercase hex
+  digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the
+  Lob-Signature-Timestamp header value, then a literal ".", then the raw request body bytes. Build the
+  signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header
+  values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the webhook's secret from its details page in the Lob dashboard, used as
+  UTF-8. Env var: LOB_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length
+  and alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  LOB_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (Lob's
+  step 4 is optional and recommends 5 minutes). Events sent from Lob's dashboard webhook debugger are
+  signed with the literal secret `secret`, not the webhook's secret, so they fail verification; real
+  deliveries pass. Events: dispatch on the body's `event_type.id` (e.g. postcard.created,
+  postcard.delivered, letter.mailed, letter.delivered, check.in_transit,
+  self_mailer.rendered_thumbnails; 93 in all). Method: POST. Hookdeck's Lob source manages the method
+  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/b14-merge/samples-doc/providers/lob/latest/
+  (self_mailer.rendered_thumbnails.json); base the examples' test payloads on them. Hookdeck's source
+  type is LOB, labelled 'Lob'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Events sent from Lob's webhook
+  debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed
+  with the webhook's secret."
+testScenario:
+  events:
+    - "postcard.created"
+    - "letter.delivered"
+    - "check.in_transit"
+catalog:
+  summary: "Verify Lob webhooks (`Lob-Signature`: hex HMAC-SHA256 of `{Lob-Signature-Timestamp}.{body}`), handle postcard, letter, check, self mailer and address events"

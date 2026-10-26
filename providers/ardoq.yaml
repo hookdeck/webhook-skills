@@ -1,0 +1,58 @@
+name: ardoq
+displayName: "Ardoq"
+docs:
+  webhooks: https://help.ardoq.com/en/articles/44099-setting-up-webhooks-in-ardoq
+  verification: https://help.ardoq.com/en/articles/44099-setting-up-webhooks-in-ardoq
+notes: >
+  Ardoq organization webhooks. Ardoq (ardoq.com), an enterprise-architecture platform. An
+  organization-wide webhook (enabled by Ardoq on request, created by admins) receives every change
+  across the organization; signed webhooks are narrowed to component, reference and tag changes.
+  Delivery (from the docs): No retry or timeout policy is documented. Ardoq says: 'Ardoq signs each
+  request with two headers: X-Ardoq-Signature-256: sha256=<hex digest> X-Ardoq-Timestamp: <unix epoch
+  seconds>' 'Compute HMAC-SHA256(secret, "<timestamp>.<raw body>"), hex-encode it, and prefix
+  sha256=.' 'The secret is shown once, at the moment it's created.' SIGNATURE SCHEME (it must match
+  Hookdeck's ARDOQ source exactly: HMAC controller, algorithm sha256, header x-ardoq-signature-256,
+  encoding hex, signed_content_template "{header:x-ardoq-timestamp}.{body}"). The
+  X-Ardoq-Signature-256 header carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256,
+  keyed with the secret, over: the X-Ardoq-Timestamp header value, then a literal ".", then the raw
+  request body bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  separators as UTF-8, header values as the exact header string encoded latin1 (Node
+  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
+  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
+  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
+  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Strip a leading `sha256=` before validating
+  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  prefix. Secret: the webhook's signing secret, shown once when it is created, used as UTF-8
+  (`secret.encode()`). Env var: ARDOQ_WEBHOOK_SECRET. Validate the signature's format before decoding
+  it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as ARDOQ_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-Ardoq-Timestamp is Unix seconds). Signed webhooks only deliver component,
+  reference and tag changes (field, report, dashboard and survey changes come only on unsigned
+  webhooks, which this skill does not cover); there are no deletion events. Events: the body is
+  {resource-type, resource-id, event-type, organization, organization-label, data}; dispatch on
+  `resource-type` (component, reference, tag on signed webhooks) and `event-type` (e.g. create).
+  Method: POST. Hookdeck's Ardoq source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b14-merge/samples-doc/providers/ardoq/latest/ (tag.json); base the examples' test
+  payloads on them. Hookdeck's source type is ARDOQ, labelled 'Ardoq'. Hookdeck shows this setup note
+  for the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Keep signing on for the Ardoq webhook (it is on by default) and paste its secret, which Ardoq shows
+  only once. Ardoq enables webhooks per organization."
+testScenario:
+  events:
+    - "component"
+    - "reference"
+    - "tag"
+catalog:
+  summary: "Verify Ardoq webhooks (`X-Ardoq-Signature-256`: `sha256=` hex HMAC-SHA256 of `{X-Ardoq-Timestamp}.{body}`), handle component, reference and tag changes"

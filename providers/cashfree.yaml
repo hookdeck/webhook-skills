@@ -1,0 +1,72 @@
+name: cashfree
+displayName: "Cashfree"
+docs:
+  webhooks: https://www.cashfree.com/docs/api-reference/webhooks/overview
+  verification: https://www.cashfree.com/docs/api-reference/webhooks/payloads-and-signatures
+notes: >
+  Cashfree Payments webhooks: Payment Gateway, Payouts V2, Secure ID and PPI share one scheme.
+  Cashfree Payments (cashfree.com), an Indian payments company. One signing scheme covers four webhook
+  products: Payment Gateway (payments, refunds, settlements, subscriptions, links, token vault,
+  disputes), Payouts V2, Secure ID (Video KYC, bank-account verification, reverse penny drop) and PPI
+  wallets. Hookdeck's CASHFREE source type (batch 14) links to
+  https://www.cashfree.com/docs/api-reference/webhooks/payloads-and-signatures; legacy Payouts V1 /
+  Cashgram webhooks use a different, form-encoded scheme. Delivery (from the docs): Anything but HTTP
+  200 fails (3xx included). Payment Gateway: per-endpoint policy, Default 3 retries at 2, 10 and 30
+  minutes, or Fixed/Exponential/Custom up to 10; Batch Resend in the dashboard. Payouts V2: fixed
+  schedule, endpoint disabled after 5 consecutive failures. Secure ID and PPI: retried, schedule
+  unstated. At-least-once; order not guaranteed. Cashfree says: 'signedPayload = x-webhook-timestamp +
+  rawBody expectedSignature = Base64Encode(HMAC-SHA256(signedPayload, clientSecret))' 'Payouts V1
+  (Cashgram) uses form-encoded POST parameters.' SIGNATURE SCHEME (it must match Hookdeck's CASHFREE
+  source exactly: HMAC controller, algorithm sha256, header x-webhook-signature, encoding base64,
+  signed_content_template "{header:x-webhook-timestamp}{body}"). The x-webhook-signature header
+  carries the bare standard base64 (padded) digest, no prefix. The signature is standard base64
+  (padded) HMAC-SHA256, keyed with the secret, over: the x-webhook-timestamp header value, then the
+  raw request body bytes. Where two parts are adjacent above there is NO separator between them. Build
+  the signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8,
+  header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive):
+  require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded
+  bytes or the strings in constant time. Compare the WHOLE header value as one digest (no list
+  splitting, no prefix parsing). Secret: the merchant's Cashfree client secret (x-client-secret; for
+  partner-level webhooks, the Partner API key), used as UTF-8. Env var: CASHFREE_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as CASHFREE_WEBHOOK_TOLERANCE_SECONDS, unset or
+  0 = off) and say so in SKILL.md and verification.md (Cashfree's docs suggest 5 minutes; the unit of
+  x-webhook-timestamp is not stated, so check a real delivery). Timestamp FIRST, then the body, NO
+  separator. Legacy Payouts V1 and Cashgram webhooks (form-encoded, different scheme) are not covered
+  and fail verification. Cashfree treats anything other than HTTP 200 as a failure, so the examples
+  answer 200. Cashfree's SDKs (PGVerifyWebhookSignature) exist; the examples verify by hand. Events:
+  Payment Gateway and Payouts V2 bodies carry the event in `type`; Secure ID and PPI bodies carry it
+  in `event_type` (per the payloads-and-signatures page), so read `type` and fall back to
+  `event_type`. The Payment Gateway webhook pages send PAYMENT_SUCCESS_WEBHOOK,
+  PAYMENT_FAILED_WEBHOOK, PAYMENT_USER_DROPPED_WEBHOOK, REFUND_STATUS_WEBHOOK,
+  SETTLEMENT_STATUS_WEBHOOK (the overview page's samples abbreviate some, e.g. PAYMENT_SUCCESS);
+  Payouts V2 sends TRANSFER_SUCCESS, TRANSFER_FAILED, TRANSFER_REVERSED; Secure ID sends VKYC_* and
+  BANK_ACCOUNT_VERIFICATION_*; PPI sends PPI_CREDIT_SUCCESS. Method: POST. Hookdeck's Cashfree source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/b14-merge/samples-doc/providers/cashfree/latest/
+  (BANK_ACCOUNT_VERIFICATION_SUCCESS.json, PAYMENT_SUCCESS.json, PPI_CREDIT_SUCCESS.json,
+  TRANSFER_SUCCESS.json, ...); base the examples' test payloads on them. Hookdeck's source type is
+  CASHFREE, labelled 'Cashfree'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste your Cashfree client secret
+  (the Partner API key for partner webhooks). Legacy Payouts V1 and Cashgram webhooks use another
+  scheme and fail verification."
+testScenario:
+  events:
+    - "PAYMENT_SUCCESS_WEBHOOK"
+    - "PAYMENT_FAILED_WEBHOOK"
+    - "REFUND_STATUS_WEBHOOK"
+catalog:
+  summary: "Verify Cashfree webhooks (`x-webhook-signature`: base64 HMAC-SHA256 of `x-webhook-timestamp` followed by the body), handle payment, refund, payout and verification events"

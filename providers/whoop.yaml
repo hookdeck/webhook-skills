@@ -1,0 +1,57 @@
+name: whoop
+displayName: "WHOOP"
+docs:
+  webhooks: https://developer.whoop.com/docs/developing/webhooks/
+  verification: https://developer.whoop.com/docs/developing/webhooks/
+notes: >
+  WHOOP developer-platform webhooks (thin notifications; fetch the data from the v2 API). WHOOP
+  (whoop.com), a wearable fitness and health tracker with a developer API. Delivery (from the docs):
+  Any non-2xx or no response before the timeout fails; failures are retried five times over about an
+  hour. Duplicates and missed webhooks are possible (reconcile via the API). WHOOP says:
+  'X-WHOOP-Signature - the actual signature X-WHOOP-Signature-Timestamp - the milliseconds since epoch
+  timestamp used to verify the signature' 'calculated_signature_string =
+  base64Encode(HMACSHA256(timestamp_header + raw_http_request_body, client_secret))' SIGNATURE SCHEME
+  (it must match Hookdeck's WHOOP source exactly: HMAC controller, algorithm sha256, header
+  x-whoop-signature, encoding base64, signed_content_template
+  "{header:x-whoop-signature-timestamp}{body}"). The X-WHOOP-Signature header carries the bare
+  standard base64 (padded) digest, no prefix. The signature is standard base64 (padded) HMAC-SHA256,
+  keyed with the secret, over: the X-WHOOP-Signature-Timestamp header value, then the raw request body
+  bytes. Where two parts are adjacent above there is NO separator between them. Build the signed
+  message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header values as
+  the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive):
+  require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded
+  bytes or the strings in constant time. Compare the WHOLE header value as one digest (no list
+  splitting, no prefix parsing). Secret: the WHOOP app's OAuth CLIENT SECRET from the Developer
+  Dashboard; there is no separate webhook secret. Used as UTF-8. Env var: WHOOP_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as WHOOP_WEBHOOK_TOLERANCE_SECONDS, unset or 0 =
+  off) and say so in SKILL.md and verification.md (X-WHOOP-Signature-Timestamp is Unix MILLISECONDS).
+  Timestamp FIRST, then the body, NO separator. Events: dispatch on the body's `type` field.
+  Documented event types (6): recovery.updated, recovery.deleted, workout.updated, workout.deleted,
+  sleep.updated, sleep.deleted. Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  WHOOP source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Doc-derived payload records are in
+  /home/user/regwt/b14-merge/registry-output/providers/whoop/payloads/ (sleep.updated.yaml); base the
+  test payloads on them. Hookdeck's source type is WHOOP, labelled 'WHOOP'. Hookdeck shows this setup
+  note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Paste your WHOOP app's client secret from the Developer Dashboard. WHOOP signs webhooks
+  with it; there is no separate webhook secret."
+testScenario:
+  events:
+    - "sleep.updated"
+    - "workout.updated"
+    - "recovery.updated"
+catalog:
+  summary: "Verify WHOOP webhooks (`X-WHOOP-Signature`: base64 HMAC-SHA256 of `X-WHOOP-Signature-Timestamp` followed by the body, keyed with the app client secret), handle sleep, workout and recovery events"

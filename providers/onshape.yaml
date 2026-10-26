@@ -1,0 +1,62 @@
+name: onshape
+displayName: "Onshape"
+docs:
+  webhooks: https://onshape-public.github.io/docs/app-dev/webhook/
+  verification: https://cad.onshape.com/help/Content/Plans/webhooks.htm
+notes: >
+  Onshape (PTC cloud CAD) webhooks registered through the REST API (POST /api/v6/webhooks). Onshape
+  (onshape.com, PTC), cloud CAD/PDM. Apps register webhooks through the REST API (POST
+  /api/v6/webhooks) for document, model, comment, release, task, team and company events; company
+  administrators configure signature keys and optional basic auth in Company/Classroom/Enterprise
+  settings. Delivery (from the docs): No timeout or retry policy is documented (see gaps). Onshape
+  says: 'Signature = <Base64<HMAC256-digest<<timestamp header value>.<webhook payload>>>'
+  'X-onshape-webhook-signature-primary - Present if the primary signature key is specified in the
+  company settings' SIGNATURE SCHEME (it must match Hookdeck's ONSHAPE source exactly: HMAC
+  controller, algorithm sha256, header x-onshape-webhook-signature-primary, encoding base64,
+  signed_content_template "{header:x-onshape-webhook-timestamp}.{body}"). The
+  X-onshape-webhook-signature-primary header carries the bare standard base64 (padded) digest, no
+  prefix. The signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the
+  X-onshape-webhook-timestamp header value, then a literal ".", then the raw request body bytes. Build
+  the signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8,
+  header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive):
+  require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded
+  bytes or the strings in constant time. Compare the WHOLE header value as one digest (no list
+  splitting, no prefix parsing). Secret: the company's PRIMARY signature key (Enterprise company
+  settings), used as UTF-8. Env var: ONSHAPE_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as ONSHAPE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-onshape-webhook-timestamp). Verify X-onshape-webhook-signature-primary ONLY,
+  against the primary key, exactly as Hookdeck's Onshape source does; do not fall back to the
+  -secondary header. Registration sends a trial notification (onshape.common.lifecycle.statechange /
+  webhook.register) that only needs an HTTP 200. Webhook basic auth is a separate option, not covered.
+  Events: dispatch on the body's `event` (e.g. onshape.model.lifecycle.changed,
+  onshape.model.translation.complete, onshape.document.lifecycle.created, onshape.revision.created,
+  onshape.comment.create; 48 in all). Method: POST. Hookdeck's Onshape source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/onshape/latest/ (onshape.comment.create.json,
+  onshape.document.lifecycle.statechange.json, onshape.model.lifecycle.changed.json,
+  onshape.model.translation.complete.json, ...); base the examples' test payloads on them. Hookdeck's
+  source type is ONSHAPE, labelled 'Onshape'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Onshape signature
+  keys are an Enterprise company setting. Paste the primary key; only the primary signature is
+  verified."
+testScenario:
+  events:
+    - "onshape.model.lifecycle.changed"
+    - "onshape.model.translation.complete"
+    - "onshape.document.lifecycle.created"
+catalog:
+  summary: "Verify Onshape webhooks (`X-onshape-webhook-signature-primary`: base64 HMAC-SHA256 of `{timestamp}.{body}`), handle model, document, revision and comment events"

@@ -1,0 +1,61 @@
+name: cyera
+displayName: "Cyera"
+docs:
+  webhooks: https://integrations.privacy.cyera.io/docs/integrations/webhooks
+  verification: https://integrations.privacy.cyera.io/docs/integrations/webhooks
+notes: >
+  Cyera Privacy (the privacy-request product formerly DataGrail, not Cyera's DSPM platform) webhook
+  integrations: privacy-request notifications (access, deletion, opt-out), health checks and readiness
+  checks. Cyera (cyera.com), data security; Cyera Privacy automates data-subject privacy requests
+  across integrated systems. Delivery (from the docs): 201 Created for a created request; 200 OK for
+  health checks and reminders; 4xx/5xx when the request was not created. Completion is reported later
+  by a PUT to `webhook_callback_url` with an API key. Retries are not documented. Cyera says:
+  'Concatenate the timestamp and body to a single string (e.g. $TIMESTAMP:$PAYLOAD).' 'Calculate the
+  HMAC-SHA256 signature for the string, using the Webhook Secret. Convert the signature to the
+  printable ASCII characters (base64). Compare the signature with the webhook signature from the
+  request header X-Webhook-Signature.' SIGNATURE SCHEME (it must match Hookdeck's CYERA source
+  exactly: HMAC controller, algorithm sha256, header x-webhook-signature, encoding base64,
+  signed_content_template "{header:x-webhook-timestamp}:{body}"). The X-Webhook-Signature header
+  carries the bare standard base64 (padded) digest, no prefix. The signature is standard base64
+  (padded) HMAC-SHA256, keyed with the secret, over: the X-Webhook-Timestamp header value, then a
+  literal ":", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character
+  padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded bytes or the strings in
+  constant time. Compare the WHOLE header value as one digest (no list splitting, no prefix parsing).
+  Secret: the Webhook Secret from the Cyera Privacy webhook integration (examples show
+  `dgwebhook...`), used as UTF-8. Env var: CYERA_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
+  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  opt-in tolerance (an env var such as CYERA_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so
+  in SKILL.md and verification.md (X-Webhook-Timestamp is Unix seconds). The separator is a COLON.
+  Cyera expects 201 Created when a privacy request was created and 200 for health checks and
+  reminders; completion is reported later by a PUT to the body's `webhook_callback_url` with an API
+  key (out of scope beyond a note). Events: dispatch on the body's `request_type` (health_check,
+  access, deletion, opt_out, readiness_check); access/deletion/opt_out bodies carry `topic`,
+  identifiers, `webhook_callback_url` and request ids. Method: POST. Hookdeck's Cyera source manages
+  the method as POST, so the examples handle POST on the webhook route. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are
+  verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only
+  after the check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's
+  docs show it) are in /home/user/regwt/b14-merge/samples-doc/providers/cyera/latest/ (access.json,
+  health_check.json, opt_out.json, readiness_check.json); base the examples' test payloads on them.
+  Hookdeck's source type is CYERA, labelled 'Cyera'. Hookdeck shows this setup note for the source,
+  and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "For Cyera
+  Privacy's privacy-request webhooks. Paste the Webhook Secret from the webhook integration."
+testScenario:
+  events:
+    - "access"
+    - "deletion"
+    - "health_check"
+catalog:
+  summary: "Verify Cyera Privacy webhooks (`X-Webhook-Signature`: base64 HMAC-SHA256 of `{X-Webhook-Timestamp}:{body}`), handle access, deletion, opt-out and health-check requests"

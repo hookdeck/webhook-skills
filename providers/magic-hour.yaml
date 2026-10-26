@@ -1,0 +1,56 @@
+name: magic-hour
+displayName: "Magic Hour"
+docs:
+  webhooks: https://docs.magichour.ai/integration/webhook
+  verification: https://docs.magichour.ai/integration/webhook/secure-handler
+notes: >
+  Magic Hour render-job webhooks (video, image, audio). Magic Hour (magichour.ai), an AI video, image
+  and audio generation API. Webhooks report when a render job starts, completes or errors. Delivery
+  (from the docs): Network failures, timeouts and non-2xx responses are retried at 1, 2, 4, 8, ...
+  minutes (capped at 60); events older than 24 h are marked failed. Timestamp and signature are
+  regenerated per attempt. No timeout value is stated. Magic Hour says: '**Format**:
+  `{timestamp}.{raw_json_payload}` ... You must use the raw request body exactly as received.' 'A
+  64-character hexadecimal string representing the HMAC-SHA256 hash.'
+  'MAGIC_HOUR_WEBHOOK_SECRET=whsec_abc123def456...' SIGNATURE SCHEME (it must match Hookdeck's
+  MAGIC_HOUR source exactly: HMAC controller, algorithm sha256, header magic-hour-event-signature,
+  encoding hex, signed_content_template "{header:magic-hour-event-timestamp}.{body}"). The
+  magic-hour-event-signature header carries the bare lowercase hex digest, no prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over: the magic-hour-event-timestamp header value,
+  then a literal ".", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
+  webhook secret, used WHOLE as a plain UTF-8 HMAC key including its `whsec_` prefix. This is NOT
+  Standard Webhooks (nothing is base64-decoded, hex digest); do not use the standardwebhooks or svix
+  libraries and say so. Env var: MAGIC_HOUR_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as MAGIC_HOUR_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (magic-hour-event-timestamp is Unix seconds, regenerated per attempt). Events:
+  dispatch on the body's `type` field. Documented event types (9): video.started, video.completed,
+  video.errored, image.started, image.completed, image.errored, audio.started, audio.completed,
+  audio.errored. Handle a few common ones and log the rest. Method: POST. Hookdeck's Magic Hour source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Hookdeck's source type is MAGIC_HOUR, labelled 'Magic Hour'. Hookdeck shows
+  this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
+  thing, verbatim: "Paste the whole secret, including the whsec_ prefix. Magic Hour uses it as a plain
+  HMAC key."
+testScenario:
+  events:
+    - "video.completed"
+    - "image.completed"
+    - "video.errored"
+catalog:
+  summary: "Verify Magic Hour webhooks (`magic-hour-event-signature`: hex HMAC-SHA256 of `{timestamp}.{body}`, `whsec_` secret used as-is), handle video, image and audio job events"

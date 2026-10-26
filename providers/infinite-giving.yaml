@@ -1,0 +1,56 @@
+name: infinite-giving
+displayName: "Infinite Giving"
+docs:
+  webhooks: https://docs.infinitegiving.com/guide/webhooks/overview
+  verification: https://docs.infinitegiving.com/guide/webhooks/overview
+notes: >
+  Infinite Giving partner webhooks (integration partners, after OAuth connect). Infinite Giving
+  (infinitegiving.com), a non-cash donation platform (stock, crypto, DAF) for nonprofits. Partner
+  integrations receive donation webhooks for connected organizations after OAuth connect. Delivery
+  (from the docs): Up to 5 attempts (first plus four retries ~1m, 5m, 30m, 2h apart). No timeout
+  stated. Infinite Giving says: 'X-IG-Timestamp Unix timestamp (seconds) used in the signature.
+  X-IG-Signature sha256=<hex> HMAC signature.' 'Compute HMAC-SHA256 of `${timestamp}.${rawBody}` with
+  your signing secret (from kickoff). Compare to X-IG-Signature (sha256= + hex digest).' SIGNATURE
+  SCHEME (it must match Hookdeck's INFINITE_GIVING source exactly: HMAC controller, algorithm sha256,
+  header x-ig-signature, encoding hex, signed_content_template "{header:x-ig-timestamp}.{body}"). The
+  X-IG-Signature header carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over: the X-IG-Timestamp header value, then a literal ".", then the raw request body
+  bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal separators as
+  UTF-8, header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1');
+  Python value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body
+  bytes as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Strip a leading `sha256=` before validating the digest; Hookdeck's
+  parser also accepts the bare digest, so accept the value with or without the prefix. Secret: the
+  partner signing secret Infinite Giving hands over at partner kickoff, used as UTF-8. Env var:
+  INFINITE_GIVING_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-IG-Timestamp is Unix seconds). Events: dispatch on the body's `event` field.
+  Documented event types (2): donation:created, donation:updated. Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's Infinite Giving source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/infinite-giving/latest/ (donation.created.json,
+  donation.updated.json); base the examples' test payloads on them. Hookdeck's source type is
+  INFINITE_GIVING, labelled 'Infinite Giving'. Hookdeck shows this setup note for the source, and
+  SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Infinite Giving
+  webhooks are for integration partners. Paste the signing secret Infinite Giving gives you at partner
+  kickoff."
+testScenario:
+  events:
+    - "donation:created"
+    - "donation:updated"
+    - "donation:created"
+catalog:
+  summary: "Verify Infinite Giving webhooks (`X-IG-Signature`: `sha256=` hex HMAC-SHA256 of `{X-IG-Timestamp}.{body}`), handle donation created and updated events"

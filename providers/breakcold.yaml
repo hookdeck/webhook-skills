@@ -1,0 +1,55 @@
+name: breakcold
+displayName: "Breakcold"
+docs:
+  webhooks: https://docs.breakcold.com/api/webhooks
+  verification: https://docs.breakcold.com/api/webhooks
+notes: >
+  Breakcold CRM outbound webhooks. Breakcold (breakcold.com), a sales CRM. Outbound webhooks report
+  record, note, task, relation, call and file changes in a workspace. Delivery (from the docs): Any
+  2xx accepts. Up to 3 attempts in total (retries after about 5 s and 30 s), 10 s timeout; endpoints
+  are disabled after 50 consecutive failures. Delivery logs kept 30 days. Breakcold says:
+  '`X-Webhook-Signature` | HMAC-SHA256 signature in the format `sha256=HEX_DIGEST`.' 'The signed
+  string is `${timestamp}.${rawBody}`, where `timestamp` is the `X-Webhook-Timestamp` header and
+  `rawBody` is the exact request body string.' SIGNATURE SCHEME (it must match Hookdeck's BREAKCOLD
+  source exactly: HMAC controller, algorithm sha256, header x-webhook-signature, encoding hex,
+  signed_content_template "{header:x-webhook-timestamp}.{body}"). The X-Webhook-Signature header
+  carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the
+  X-Webhook-Timestamp header value, then a literal ".", then the raw request body bytes. Build the
+  signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header
+  values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Strip a leading `sha256=` before validating the digest; Hookdeck's
+  parser also accepts the bare digest, so accept the value with or without the prefix. Secret: the
+  endpoint's signing secret, used as a UTF-8 string. Env var: BREAKCOLD_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject
+  old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp,
+  and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer
+  an opt-in tolerance (an env var such as BREAKCOLD_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and
+  say so in SKILL.md and verification.md (X-Webhook-Timestamp is Unix seconds). The test event is
+  `webhook.test`. Events: dispatch on the body's `event` field. Documented event types (15):
+  record.created, record.updated, record.deleted, note.created, note.updated, note.deleted,
+  task.created, task.completed, relation.added, relation.removed, call.linked, call.unlinked,
+  file.uploaded, file.deleted (and 1 more). Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Breakcold source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b14-merge/samples-doc/providers/breakcold/latest/ (call.linked.json,
+  call.unlinked.json, file.deleted.json, file.uploaded.json, ...); base the examples' test payloads on
+  them. Hookdeck's source type is BREAKCOLD, labelled 'Breakcold'.
+testScenario:
+  events:
+    - "record.created"
+    - "note.created"
+    - "task.completed"
+catalog:
+  summary: "Verify Breakcold webhooks (`X-Webhook-Signature`: `sha256=` hex HMAC-SHA256 of `{X-Webhook-Timestamp}.{body}`), handle record, note, task, relation, call and file events"

@@ -1,0 +1,64 @@
+name: tiltify
+displayName: "Tiltify"
+docs:
+  webhooks: https://developers.tiltify.com/docs/webhooks/receiving-webhooks
+  verification: https://developers.tiltify.com/docs/webhooks/receiving-webhooks/verifying
+  events: https://developers.tiltify.com/docs/webhooks/subscriptions/types-of-events
+notes: >
+  Tiltify developer webhooks (donation and fact updates for a Webhook Endpoint's subscriptions).
+  Tiltify (tiltify.com), a charity fundraising platform for streamers and creators. Delivery (from the
+  docs): 200-299 acknowledges. Failures are retried 12 times (2 s doubling to 512 s, then 900 s; about
+  an hour in all); after the 12th retry the endpoint is deactivated and must be re-enabled in the
+  dashboard or through the API. Tiltify says: 'This is found in the X-Tiltify-Signature header. This
+  is base64 encoded' 'This is found in the X-Tiltify-Timestamp header. This is an ISO-8601 encoded
+  timestamp of when the Webhook Attempt was made.' 'Signed Payload Format:
+  "#{timestamp}.#{request_body}"' SIGNATURE SCHEME (it must match Hookdeck's TILTIFY source exactly:
+  HMAC controller, algorithm sha256, header x-tiltify-signature, encoding base64,
+  signed_content_template "{header:x-tiltify-timestamp}.{body}"). The X-Tiltify-Signature header
+  carries the bare standard base64 (padded) digest, no prefix. The signature is standard base64
+  (padded) HMAC-SHA256, keyed with the secret, over: the X-Tiltify-Timestamp header value, then a
+  literal ".", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character
+  padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded bytes or the strings in
+  constant time. Compare the WHOLE header value as one digest (no list splitting, no prefix parsing).
+  Secret: the endpoint's Secret Webhook Signing Key (Webhook Endpoint > Overview), a 64-character hex
+  string used as UTF-8 text, NOT hex-decoded (the published vector confirms it). Env var:
+  TILTIFY_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  TILTIFY_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
+  (X-Tiltify-Timestamp is ISO-8601, e.g. 2023-04-18T16:49:00.617031Z). After 12 failed retries Tiltify
+  deactivates the endpoint. Events: dispatch on the body's `meta.event_type`
+  (public:direct:donation_updated, public:direct:fact_updated, private:direct:donation_updated, and
+  the indirect variants; 8 in all). Method: POST. Hookdeck's Tiltify source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs give a worked
+  example, saved verbatim as JSON (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/tiltify.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts those headers and secret and computes
+  4OSwlhTt0EcrlSQFlqgE18FOtT+EKX4qTJdJeC8oV/o=. Add references/verification.md text naming the vector.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/tiltify/latest/
+  (public.direct.donation_updated.json); base the examples' test payloads on them. Hookdeck's source
+  type is TILTIFY, labelled 'Tiltify'.
+testScenario:
+  events:
+    - "public:direct:donation_updated"
+    - "public:direct:fact_updated"
+    - "private:direct:donation_updated"
+catalog:
+  summary: "Verify Tiltify webhooks (`X-Tiltify-Signature`: base64 HMAC-SHA256 of `{X-Tiltify-Timestamp}.{body}`), handle donation and fact updates"

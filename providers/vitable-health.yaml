@@ -1,0 +1,60 @@
+name: vitable-health
+displayName: "Vitable Health"
+docs:
+  webhooks: https://developer.vitablehealth.com/webhooks
+  verification: https://developer.vitablehealth.com/webhooks/signatures
+  events: https://developer.vitablehealth.com/webhooks/events
+notes: >
+  Vitable Health embedded-benefits webhooks (thin enrollment and employee events; fetch the resource
+  by id). Vitable Health (vitablehealth.com), an embedded health-benefits API for payroll and HR
+  platforms. Delivery (from the docs): Any 2xx acknowledges. Otherwise up to 14 attempts with
+  exponential backoff and jitter (first retry after 1 minute, at most 24 h apart, about 3.4 days in
+  all). The circuit opens after 25 consecutive failed deliveries; Vitable re-enables the endpoint on
+  request. At-least-once: deduplicate on event_id. Missed events can be queried from the API. Vitable
+  Health says: 'X-Vitable-Signature: sha512=<signature> X-Vitable-Timestamp: <unix_timestamp>'
+  'message = f"{timestamp}.{payload}" expected = "sha512=" + hmac.new( secret_key.encode("utf-8"),
+  message.encode("utf-8"), hashlib.sha512, ).hexdigest()' 'To get your webhook secret key, reach out
+  to our team. Each webhook subscription has its own secret key' SIGNATURE SCHEME (it must match
+  Hookdeck's VITABLE_HEALTH source exactly: HMAC controller, algorithm sha512, header
+  x-vitable-signature, encoding hex, signed_content_template "{header:x-vitable-timestamp}.{body}").
+  The X-Vitable-Signature header carries `sha512=<hex>`. The signature is lowercase hex HMAC-SHA512,
+  keyed with the secret, over: the X-Vitable-Timestamp header value, then a literal ".", then the raw
+  request body bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  separators as UTF-8, header values as the exact header string encoded latin1 (Node
+  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
+  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
+  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
+  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Strip a leading `sha512=` before validating
+  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  prefix. Secret: the subscription's secret key, which Vitable's team provides on request, used as
+  UTF-8. Env var: VITABLE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as VITABLE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-Vitable-Timestamp is Unix seconds; Vitable's examples use 300 s). HMAC-SHA512
+  (128 hex characters), not SHA-256. Dedupe on `event_id`. Events: dispatch on the body's `event_name`
+  field. Documented event types (10): enrollment.accepted, enrollment.terminated, enrollment.elected,
+  enrollment.granted, enrollment.waived, enrollment.started, employee.eligibility_granted,
+  employee.eligibility_terminated, employee.deactivated, employee.deduction_created. Handle a few
+  common ones and log the rest. Method: POST. Hookdeck's Vitable Health source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/vitable-health/latest/
+  (enrollment.accepted.json); base the examples' test payloads on them. Hookdeck's source type is
+  VITABLE_HEALTH, labelled 'Vitable Health'.
+testScenario:
+  events:
+    - "enrollment.accepted"
+    - "enrollment.terminated"
+    - "employee.eligibility_granted"
+catalog:
+  summary: "Verify Vitable Health webhooks (`X-Vitable-Signature`: `sha512=` hex HMAC-SHA512 of `{X-Vitable-Timestamp}.{body}`), handle enrollment and employee events"
