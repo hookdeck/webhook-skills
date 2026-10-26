@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   // Authenticate before reading or parsing the body.
   if (!verifyAlertmanagerRequest(request.headers)) {
     return NextResponse.json(
-      { error: 'Invalid or missing Authorization bearer credentials' },
+      { error: 'Invalid or missing Authorization credentials' },
       { status: 401 }
     );
   }

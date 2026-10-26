@@ -5,22 +5,21 @@ docs:
   verification: https://prometheus.io/docs/alerting/latest/configuration/
 notes: >
   Prometheus Alertmanager webhook receivers (webhook_configs). The receiver's http_config sets the
-  Authorization header on every request. Its authorization option '# Sets the authentication type. [
-  type: <string> | default: Bearer ]' with credentials (or credentials_file) sends 'Authorization:
-  Bearer <credentials>'; that is what Hookdeck's Prometheus Alertmanager source checks (API key on
-  authorization with value_prefix 'Bearer '). The env var prefix is ALERTMANAGER. No signature.
-  Prometheus Alertmanager sends 'Authorization: Bearer <secret>'. Hookdeck's Prometheus Alertmanager
-  source is API key verification on the authorization header with value_prefix 'Bearer '
-  (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and the scheme matches in any
-  case (auth schemes are case-insensitive, RFC 9110). So the examples read the BARE secret from
-  ALERTMANAGER_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer ',
-  case-insensitively, strip it, as core does), require the Authorization header to start with
-  'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
-  trim or otherwise alter the secret. Show an alertmanager.yml receiver with url and
-  http_config.authorization (type: Bearer, credentials_file). basic_auth also sets Authorization
-  ('Basic <base64(user:pass)>'); core's alert names it because core first compares the whole header
-  to the stored value, so it only works if the user stores the whole 'Basic ...' value. Mention that
-  in setup.md, but the examples cover the Bearer form. oauth2 is not supported. Missing header,
+  Authorization header on every request, in one of two forms, and Hookdeck's Prometheus
+  Alertmanager source (hookdeck/core#6046 head 8c48f55d) offers both: BASIC_AUTH (the default,
+  for http_config.basic_auth: 'Authorization: Basic <base64(user:pass)>'; the user enters username
+  and password) and a Bearer token (API key on authorization with value_prefix 'Bearer ', for
+  http_config.authorization, whose type defaults to Bearer: 'Authorization: Bearer <credentials>';
+  the user stores just the secret and the scheme matches in any case). The env var prefix is
+  ALERTMANAGER. No signature. The examples accept both forms: Bearer against the BARE secret in
+  ALERTMANAGER_WEBHOOK_SECRET (strip a leading 'Bearer ' from the configured value,
+  case-insensitively, as core does; never trim), and Basic against ALERTMANAGER_WEBHOOK_USERNAME and
+  ALERTMANAGER_WEBHOOK_PASSWORD (case-insensitive 'Basic' scheme, strict base64, split on the FIRST
+  colon so a password may contain ':', compare both parts in constant time). A form that is not
+  configured is rejected, so with neither configured every request is rejected. Hookdeck never
+  sends a 401 challenge; Alertmanager sends basic_auth on every request. Show alertmanager.yml
+  receivers with http_config.authorization (type: Bearer, credentials_file) and with basic_auth
+  (username, password_file). oauth2 is not supported. Missing header,
   wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
@@ -43,4 +42,4 @@ testScenario:
     - 'firing'
     - 'resolved'
 catalog:
-  summary: 'Authenticate Prometheus Alertmanager webhook receivers (unsigned: `Authorization: Bearer <credentials>` from http_config, compared in constant time), handle firing and resolved alert groups'
+  summary: 'Authenticate Prometheus Alertmanager webhook receivers (unsigned: `Authorization` Bearer credentials or basic_auth from http_config, compared in constant time), handle firing and resolved alert groups'

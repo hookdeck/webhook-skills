@@ -4,6 +4,8 @@ import os
 
 # Set test environment variables before importing the app
 os.environ["ALERTMANAGER_WEBHOOK_SECRET"] = "test_alertmanager_secret_0123456789"
+os.environ["ALERTMANAGER_WEBHOOK_USERNAME"] = "alertmanager"
+os.environ["ALERTMANAGER_WEBHOOK_PASSWORD"] = "pa:ss_word_0123456789"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,6 +16,12 @@ client = TestClient(app)
 
 SECRET = os.environ["ALERTMANAGER_WEBHOOK_SECRET"]
 AUTH = {"Authorization": f"Bearer {SECRET}"}
+USER = os.environ["ALERTMANAGER_WEBHOOK_USERNAME"]
+PASS = os.environ["ALERTMANAGER_WEBHOOK_PASSWORD"]
+
+
+def basic_auth(user, password):
+    return "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
 
 
 @pytest.fixture(autouse=True)
@@ -100,6 +108,42 @@ class TestBearerVerification:
 
     def test_authenticates_before_parsing_body(self):
         assert post({"Authorization": "Bearer wrong"}, body="not json").status_code == 401
+
+
+class TestBasicAuthVerification:
+    def test_correct_credentials_password_with_colon(self):
+        assert post({"Authorization": basic_auth(USER, PASS)}).status_code == 200
+
+    def test_scheme_is_case_insensitive(self):
+        token = base64.b64encode(f"{USER}:{PASS}".encode()).decode()
+        assert post({"Authorization": f"basic {token}"}).status_code == 200
+        assert post({"Authorization": f"BASIC {token}"}).status_code == 200
+
+    def test_wrong_password_or_username(self):
+        assert post({"Authorization": basic_auth(USER, "wrong")}).status_code == 401
+        assert post({"Authorization": basic_auth("someone", PASS)}).status_code == 401
+
+    def test_malformed_credentials(self):
+        no_colon = base64.b64encode(f"{USER}{PASS}".encode()).decode()
+        valid = base64.b64encode(f"{USER}:{PASS}".encode()).decode()
+        for value in (f"Basic {no_colon}", "Basic !!not-base64!!", f"Basic {valid}AAAA", f"Basic {valid}="):
+            assert post({"Authorization": value}).status_code == 401
+
+    def test_non_ascii_header_does_not_raise(self):
+        assert verify_alertmanager_request({"authorization": "Basic pässwörd"}) is False
+
+    def test_rejected_when_basic_not_configured(self):
+        header = {"authorization": basic_auth(USER, PASS)}
+        assert verify_alertmanager_request(header, SECRET, "", "") is False
+        assert verify_alertmanager_request(header, SECRET, USER, "") is False
+
+    def test_rejects_everything_when_neither_is_configured(self):
+        assert verify_alertmanager_request({"authorization": basic_auth(USER, PASS)}, "", "", "") is False
+        assert verify_alertmanager_request({"authorization": "Bearer x"}, "", "", "") is False
+
+    def test_basic_without_bearer_secret(self):
+        header = {"authorization": basic_auth(USER, PASS)}
+        assert verify_alertmanager_request(header, "", USER, PASS) is True
 
 
 class TestBodyHandling:

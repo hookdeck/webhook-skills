@@ -17,20 +17,57 @@ function safeEqual(a, b) {
 }
 
 const BEARER = /^bearer /i; // auth schemes are case-insensitive (RFC 9110)
+const BASIC = /^basic +([A-Za-z0-9+/]+={0,2})$/i;
+
+/** Decode `Basic base64(username:password)`; null unless it is canonical base64 with a colon. */
+function parseBasic(header) {
+  const m = BASIC.exec(header);
+  if (!m || m[1].length % 4 !== 0) return null;
+  const buf = Buffer.from(m[1], 'base64');
+  if (buf.toString('base64') !== m[1]) return null; // reject junk after valid base64
+  const decoded = buf.toString('utf8');
+  const i = decoded.indexOf(':'); // split on the FIRST colon: a password may contain ':'
+  if (i === -1) return null;
+  return { username: decoded.slice(0, i), password: decoded.slice(i + 1) };
+}
 
 /**
- * Alertmanager does not sign payloads. http_config.authorization (default type
- * Bearer) sends `Authorization: Bearer <credentials>` on every request.
- * The secret is stored bare; if the configured value starts with "Bearer ",
- * that prefix is stripped (as Hookdeck does). The secret is otherwise untouched.
+ * Alertmanager does not sign payloads. The receiver's http_config sets the Authorization
+ * header on every request, in one of two forms (Hookdeck's source offers both):
+ * - authorization (default type Bearer): `Authorization: Bearer <credentials>`. The secret is
+ *   stored bare in ALERTMANAGER_WEBHOOK_SECRET; a leading "Bearer " in it is stripped.
+ * - basic_auth: `Authorization: Basic base64(username:password)`, checked against
+ *   ALERTMANAGER_WEBHOOK_USERNAME and ALERTMANAGER_WEBHOOK_PASSWORD.
+ * A form that isn't configured is rejected, so with neither configured everything is rejected.
  */
-function verifyAlertmanagerRequest(headers, secret = process.env.ALERTMANAGER_WEBHOOK_SECRET) {
-  if (!secret) return false; // never accept when unconfigured
-  const expected = secret.replace(BEARER, '');
-  if (!expected) return false; // a configured value of just "Bearer " must not match
+function verifyAlertmanagerRequest(
+  headers,
+  secret = process.env.ALERTMANAGER_WEBHOOK_SECRET,
+  basic = {
+    username: process.env.ALERTMANAGER_WEBHOOK_USERNAME,
+    password: process.env.ALERTMANAGER_WEBHOOK_PASSWORD,
+  }
+) {
   const header = headers['authorization'];
-  if (!header || !BEARER.test(header)) return false;
-  return safeEqual(header.replace(BEARER, ''), expected);
+  if (typeof header !== 'string' || !header) return false;
+
+  if (BEARER.test(header)) {
+    if (!secret) return false; // Bearer not configured
+    const expected = secret.replace(BEARER, '');
+    if (!expected) return false; // a configured value of just "Bearer " must not match
+    return safeEqual(header.replace(BEARER, ''), expected);
+  }
+
+  if (/^basic /i.test(header)) {
+    if (!basic || !basic.username || !basic.password) return false; // basic_auth not configured
+    const creds = parseBasic(header);
+    if (!creds) return false;
+    const userOk = safeEqual(creds.username, basic.username);
+    const passOk = safeEqual(creds.password, basic.password); // evaluate both, no short-circuit
+    return userOk && passOk;
+  }
+
+  return false;
 }
 
 // In-memory dedupe for the example; use a shared store (Redis, DB) in production.
@@ -70,7 +107,7 @@ function handleGroup(payload) {
 // Read the body raw (any content type) so the request is authenticated before parsing.
 app.post('/webhooks/prometheus-alertmanager', express.raw({ type: '*/*' }), (req, res) => {
   if (!verifyAlertmanagerRequest(req.headers)) {
-    return res.status(401).json({ error: 'Invalid or missing Authorization bearer credentials' });
+    return res.status(401).json({ error: 'Invalid or missing Authorization credentials' });
   }
 
   let payload;

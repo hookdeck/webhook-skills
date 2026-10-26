@@ -6,9 +6,14 @@ import { seen } from '../lib/seen';
 
 const SECRET = 'test_alertmanager_secret_0123456789';
 const AUTH = `Bearer ${SECRET}`;
+const USER = 'alertmanager';
+const PASS = 'pa:ss_word_0123456789';
+const basicAuth = (u: string, p: string) => `Basic ${Buffer.from(`${u}:${p}`).toString('base64')}`;
 
 beforeAll(() => {
   process.env.ALERTMANAGER_WEBHOOK_SECRET = SECRET;
+  process.env.ALERTMANAGER_WEBHOOK_USERNAME = USER;
+  process.env.ALERTMANAGER_WEBHOOK_PASSWORD = PASS;
 });
 
 function alert(status = 'firing', fingerprint = '1a2b3c4d5e6f7a8b') {
@@ -117,6 +122,49 @@ describe('POST /webhooks/prometheus-alertmanager', () => {
     it('authenticates before parsing the body', async () => {
       const res = await POST(makeRequest({ Authorization: 'Bearer wrong' }, 'not json'));
       expect(res.status).toBe(401);
+    });
+  });
+
+  describe('basic_auth verification', () => {
+    it('accepts the correct username and password (password contains a colon)', async () => {
+      expect((await POST(makeRequest({ Authorization: basicAuth(USER, PASS) }))).status).toBe(200);
+    });
+
+    it('matches the scheme case-insensitively', async () => {
+      const token = Buffer.from(`${USER}:${PASS}`).toString('base64');
+      expect((await POST(makeRequest({ Authorization: `basic ${token}` }))).status).toBe(200);
+      expect((await POST(makeRequest({ Authorization: `BASIC ${token}` }))).status).toBe(200);
+    });
+
+    it('rejects a wrong password or username', async () => {
+      expect((await POST(makeRequest({ Authorization: basicAuth(USER, 'wrong') }))).status).toBe(401);
+      expect((await POST(makeRequest({ Authorization: basicAuth('someone', PASS) }))).status).toBe(401);
+    });
+
+    it('rejects malformed credentials', async () => {
+      const noColon = Buffer.from(`${USER}${PASS}`).toString('base64');
+      const valid = Buffer.from(`${USER}:${PASS}`).toString('base64');
+      for (const value of [`Basic ${noColon}`, 'Basic !!not-base64!!', `Basic ${valid}AAAA`, 'Basic ']) {
+        expect((await POST(makeRequest({ Authorization: value }))).status).toBe(401);
+      }
+    });
+
+    it('rejects basic_auth when it is not configured', () => {
+      const headers = new Headers({ Authorization: basicAuth(USER, PASS) });
+      expect(verifyAlertmanagerRequest(headers, SECRET, { username: '', password: '' })).toBe(false);
+      expect(verifyAlertmanagerRequest(headers, SECRET, { username: USER, password: '' })).toBe(false);
+    });
+
+    it('rejects everything when neither form is configured', () => {
+      const none = { username: '', password: '' };
+      const basic = new Headers({ Authorization: basicAuth(USER, PASS) });
+      expect(verifyAlertmanagerRequest(basic, '', none)).toBe(false);
+      expect(verifyAlertmanagerRequest(new Headers({ Authorization: 'Bearer x' }), '', none)).toBe(false);
+    });
+
+    it('accepts basic_auth with no Bearer secret configured', () => {
+      const headers = new Headers({ Authorization: basicAuth(USER, PASS) });
+      expect(verifyAlertmanagerRequest(headers, '', { username: USER, password: PASS })).toBe(true);
     });
   });
 

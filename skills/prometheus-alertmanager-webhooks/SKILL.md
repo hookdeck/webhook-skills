@@ -2,8 +2,8 @@
 name: prometheus-alertmanager-webhooks
 description: >
   Receive and authenticate Prometheus Alertmanager webhooks. Use when setting up an
-  Alertmanager webhook_configs receiver, verifying the Authorization Bearer header from
-  http_config, debugging 401s, or handling firing and resolved alert groups.
+  Alertmanager webhook_configs receiver, verifying the Authorization header from http_config
+  (Bearer credentials or basic_auth), debugging 401s, or handling firing and resolved alert groups.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,8 +15,13 @@ metadata:
 
 Alertmanager POSTs a version 4 JSON notification to each URL in a receiver's `webhook_configs`
 whenever a group of alerts fires or resolves. Webhooks are **not signed**. The receiver's
-`http_config` sets an `Authorization` header on every request, and your endpoint authenticates the
-request by comparing that header with the secret you configured.
+`http_config` sets an `Authorization` header on every request, either `Bearer <credentials>`
+(`authorization`, default type Bearer) or `Basic base64(username:password)` (`basic_auth`). Your
+endpoint authenticates the request by comparing those credentials with the ones you configured.
+
+Hookdeck's Prometheus Alertmanager source offers both: **Basic auth** (the default) for
+`basic_auth`, where you enter the username and password, and **Bearer token** for `authorization`,
+where you enter the bare credentials.
 
 Setup note (same as Hookdeck's Prometheus Alertmanager source): "Set basic_auth, or authorization with the default Bearer type, in the webhook receiver's http_config. OAuth 2.0 is not supported."
 
@@ -24,7 +29,7 @@ Setup note (same as Hookdeck's Prometheus Alertmanager source): "Set basic_auth,
 
 - How do I receive Prometheus Alertmanager webhooks?
 - How do I authenticate requests from an Alertmanager `webhook_configs` receiver?
-- Does Alertmanager sign webhook payloads? (No: use the `Authorization: Bearer` credentials)
+- Does Alertmanager sign webhook payloads? (No: check the `Authorization` credentials, Bearer or basic_auth)
 - How do I handle `firing` and `resolved` alerts and loop over `alerts[]`?
 - How do I deduplicate repeated Alertmanager notifications?
 - Why does my Alertmanager webhook endpoint return 401?
@@ -42,20 +47,40 @@ function safeEqual(a, b) {
 }
 
 const BEARER = /^bearer /i; // auth schemes are case-insensitive (RFC 9110)
+const BASIC = /^basic +([A-Za-z0-9+/]+={0,2})$/i;
 
-function verifyAlertmanagerRequest(headers, secret = process.env.ALERTMANAGER_WEBHOOK_SECRET) {
-  if (!secret) return false;                      // never accept when unconfigured
-  const expected = secret.replace(BEARER, '');    // store the bare secret
-  if (!expected) return false; // a configured value of just "Bearer " must not match
+function verifyAlertmanagerRequest(headers, env = process.env) {
   const header = headers['authorization'];
-  if (!header || !BEARER.test(header)) return false;
-  return safeEqual(header.replace(BEARER, ''), expected);
+  if (typeof header !== 'string' || !header) return false;
+
+  if (BEARER.test(header)) {                         // http_config.authorization (Bearer)
+    const expected = (env.ALERTMANAGER_WEBHOOK_SECRET || '').replace(BEARER, ''); // bare secret
+    return Boolean(expected) && safeEqual(header.replace(BEARER, ''), expected);
+  }
+
+  const m = BASIC.exec(header);                      // http_config.basic_auth
+  const user = env.ALERTMANAGER_WEBHOOK_USERNAME;
+  const pass = env.ALERTMANAGER_WEBHOOK_PASSWORD;
+  if (!m || !user || !pass) return false;            // not Basic, or basic_auth not configured
+  const buf = Buffer.from(m[1], 'base64');
+  if (buf.toString('base64') !== m[1]) return false; // canonical base64 only
+  const decoded = buf.toString('utf8');
+  const i = decoded.indexOf(':');                    // FIRST colon: a password may contain ':'
+  if (i === -1) return false;
+  const userOk = safeEqual(decoded.slice(0, i), user);
+  const passOk = safeEqual(decoded.slice(i + 1), pass); // evaluate both, no short-circuit
+  return userOk && passOk;
 }
 ```
 
-- Header: `Authorization: Bearer <credentials>`. Store just the secret (no `Bearer ` prefix) in
-  `ALERTMANAGER_WEBHOOK_SECRET`; a leading `Bearer ` in the configured value is stripped. Do not
-  trim or otherwise alter the secret.
+- `authorization`: `Authorization: Bearer <credentials>`. Store just the secret (no `Bearer `
+  prefix) in `ALERTMANAGER_WEBHOOK_SECRET`; a leading `Bearer ` in the configured value is
+  stripped. Do not trim or otherwise alter the secret.
+- `basic_auth`: `Authorization: Basic base64(username:password)`, checked against
+  `ALERTMANAGER_WEBHOOK_USERNAME` and `ALERTMANAGER_WEBHOOK_PASSWORD`. Split on the first colon (a
+  password may contain `:`) and compare both parts. The `Basic` scheme matches in any case.
+  Hookdeck never sends a 401 challenge; Alertmanager sends `basic_auth` on every request anyway.
+- A form you haven't configured is rejected, so with neither configured every request is rejected.
 - Return `401` for a missing header, wrong scheme or mismatch, `400` for a body that isn't a JSON
   object, `200` once handled.
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, and authenticate
@@ -89,7 +114,11 @@ plus each alert's `fingerprint` (and `status`, `startsAt`, `endsAt` if resolved 
 ## Environment Variables
 
 ```bash
-ALERTMANAGER_WEBHOOK_SECRET=your-shared-secret   # the bare credentials from alertmanager.yml
+# authorization (Bearer): the bare credentials from alertmanager.yml
+ALERTMANAGER_WEBHOOK_SECRET=your-shared-secret
+# basic_auth: the username and password from alertmanager.yml
+ALERTMANAGER_WEBHOOK_USERNAME=alertmanager
+ALERTMANAGER_WEBHOOK_PASSWORD=your-password
 ```
 
 ## Local Development
