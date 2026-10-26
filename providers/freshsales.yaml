@@ -1,0 +1,33 @@
+name: freshsales
+displayName: 'Freshsales'
+docs:
+  webhooks: https://crmsupport.freshworks.com/support/solutions/articles/50000002418-how-to-use-workflows-with-webhooks-
+  verification: https://crmsupport.freshworks.com/support/solutions/articles/50000002418-how-to-use-workflows-with-webhooks-
+notes: >
+  CRM (Freshworks); webhooks are a workflow 'Trigger webhook' action. The optional username/password
+  or API key Authentication field's delivery format is undocumented, so steer users to a custom
+  header (format 'X-Sample-CustomHeader1: VALUE'), which is what Hookdeck's Freshsales source
+  verifies. No signature: requests are unsigned. Authenticate with a secret header the user adds as
+  a custom header on the Trigger webhook action. The header name is user-chosen, so the examples
+  read the header name from FRESHSALES_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the expected
+  value from FRESHSALES_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's Freshsales source does (API key
+  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. The request method is user-chosen, so
+  the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook route,
+  and handle an empty body (e.g. GET). Body is Simple (selected fields) or Advanced (author-written
+  with placeholders) content and carries no event type; use an illustrative deal/contact body and
+  say so. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'deal updated (illustrative Advanced content)'
+    - 'contact created (illustrative)'
+catalog:
+  summary: 'Authenticate Freshsales workflow webhooks (unsigned: a secret custom header compared in full in constant time), handle the deal and contact payloads your workflow sends'

@@ -1,0 +1,57 @@
+# CompanyCam Webhooks - FastAPI Example
+
+Minimal example of receiving CompanyCam webhooks with `X-CompanyCam-Signature` verification
+(base64 HMAC-SHA1 of the raw body).
+
+## Prerequisites
+
+- Python 3.9+
+- A CompanyCam webhook created **with a `token`** (without one, deliveries are unsigned and fail verification)
+
+## Setup
+
+1. Create a virtual environment and install dependencies:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Add your webhook token to `.env` as `COMPANYCAM_WEBHOOK_TOKEN`
+
+## Run
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+Server runs on http://localhost:8000
+
+## Test
+
+Run the unit tests (they generate real signatures):
+
+```bash
+pytest test_webhook.py
+```
+
+### Receive real webhooks locally
+
+Use the Hookdeck CLI to tunnel CompanyCam webhooks to your local server (no account required):
+
+```bash
+npx hookdeck-cli listen 8000 companycam --path /webhooks/companycam
+```
+
+Use the printed HTTPS URL as the `url` when creating the CompanyCam webhook
+(`POST /public_api/v1/webhooks`, with a `token`).
+
+## Endpoint
+
+- `POST /webhooks/companycam` - Receives and verifies CompanyCam webhooks
+- `GET /health` - Health check

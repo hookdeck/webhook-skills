@@ -1,0 +1,27 @@
+name: huntress
+displayName: 'Huntress'
+docs:
+  webhooks: https://support.huntress.io/hc/en-us/articles/51679111552147-How-to-use-Webhooks-Integration
+  api: https://support.huntress.io/api/v2/help_center/articles/51679111552147.json
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+notes: >
+  Huntress (managed security). The help-center HTML is behind Cloudflare; read the article through the
+  Zendesk JSON URL in docs.api. 'Huntress uses Svix to sign Webhook payloads, so any Svix client
+  library will work out of the box.' Headers svix-id, svix-timestamp, svix-signature; HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_. Huntress's page never
+  shows the secret, so say the whsec_ format comes from Svix's docs. Endpoints are managed in the
+  Huntress portal (account admin, up to 5 endpoints; View Signing Secret, Send Test). The
+  standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must
+  say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256
+  over '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_, compare every
+  space-separated v1,<base64> entry in constant time) where the window can be dropped or widened.
+  Notification categories (subscription toggles, not wire values): Incident Reports, Escalations,
+  Platform Actions, Account Notices; describe the payload's type field from the article. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'incident report'
+    - 'escalation'
+catalog:
+  summary: 'Verify Huntress webhooks (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle incident report and escalation notifications'

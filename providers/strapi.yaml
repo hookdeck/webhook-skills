@@ -1,0 +1,35 @@
+name: strapi
+displayName: 'Strapi'
+docs:
+  webhooks: https://docs.strapi.io/cms/backend-customization/webhooks
+  verification: https://docs.strapi.io/cms/backend-customization/webhooks#webhooks-security
+notes: >
+  Headless CMS. Strapi's webhook runner does not sign requests: the docs' 'Verifying signatures'
+  section (X-Webhook-Signature over timestamp.body) is guidance for a sender you build yourself, not
+  something Strapi sends; say so and don't verify a signature. Verify a configured header instead
+  (per webhook in the admin panel, or defaultHeaders in config/server, e.g. Authorization: Bearer
+  my-very-secured-token). No signature: requests are unsigned. Authenticate with a secret header the
+  user adds per webhook or via defaultHeaders. The header name is user-chosen, so the examples read
+  the header name from STRAPI_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  STRAPI_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Strapi source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Strapi adds an X-Strapi-Event header; the body has event (entry.create,
+  entry.update, entry.delete, entry.publish, entry.unpublish, entry.draft-discard, media.create,
+  media.update, media.delete, review-workflows.updateEntryStage, releases.publish), createdAt,
+  model, entry. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'entry.create'
+    - 'entry.update'
+    - 'entry.publish'
+    - 'media.create'
+catalog:
+  summary: 'Authenticate Strapi webhooks (unsigned: an auth header you add per webhook or via `defaultHeaders`, compared in full in constant time), handle `entry.*`, `media.*` and release events'

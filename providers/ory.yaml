@@ -1,0 +1,36 @@
+name: ory
+displayName: 'Ory'
+docs:
+  webhooks: https://www.ory.com/docs/guides/integrate-with-ory-cloud-through-webhooks
+  verification: https://www.ory.com/docs/guides/integrate-with-ory-cloud-through-webhooks#request-authentication
+notes: >
+  Identity (Ory Network Actions webhooks). Covers non-blocking webhooks only (response.ignore:
+  true); blocking/parsed webhooks need the receiver's response to change the flow and don't suit
+  Hookdeck. Auth type api_key with in: header (cookie placement isn't covered). No signature:
+  requests are unsigned. Authenticate with a secret header the user adds via auth.type api_key
+  (config name/value, in: header). The header name is user-chosen, so the examples read the header
+  name from ORY_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  ORY_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user typed).
+  Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer
+  ' prefix. This is what Hookdeck's Ory source does (API key verification: header name + exact
+  value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. The request method is user-chosen, so the examples must not be POST-only:
+  accept POST, PUT and PATCH on the webhook route, and handle an empty body (e.g. GET). The body is
+  the user's Jsonnet template over ctx (e.g. ctx.identity, ctx.flow); use an illustrative template
+  that sends {"event": "registration.after", "identity": ...} and say so. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only after
+  the credential check.
+testScenario:
+  events:
+    - 'registration.after'
+    - 'settings.after'
+  prompt: >
+    Add an endpoint to my {framework} app that receives Ory Actions webhooks. Authenticate them
+    with the api_key header configured on the action and handle the JSON body.
+catalog:
+  summary: 'Authenticate Ory Actions webhooks (unsigned: `api_key` auth in a header, compared in full in constant time), handle non-blocking registration, login and settings hooks'

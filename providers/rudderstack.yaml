@@ -1,0 +1,30 @@
+name: rudderstack
+displayName: 'RudderStack'
+docs:
+  webhooks: https://www.rudderstack.com/docs/destinations/http-webhook/setup-guide/
+  verification: https://www.rudderstack.com/docs/destinations/http-webhook/setup-guide/
+notes: >
+  Customer data platform; covers the HTTP Webhook destination with Basic Auth (it sends
+  Authorization: Basic base64(user:pass)); Bearer / API Key auth types aren't covered. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's RudderStack source verifies. The
+  examples read RUDDERSTACK_WEBHOOK_USERNAME and RUDDERSTACK_WEBHOOK_PASSWORD, parse 'Authorization:
+  Basic base64(username:password)' (scheme case-insensitive, split on the first colon), and compare
+  the username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, brevo,
+  assemblyai, honeybadger and coterie skills. The request method is user-chosen, so the examples
+  must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook route, and handle an
+  empty body (e.g. GET). Default 'send the event payload as is': the RudderStack event with type
+  (track, identify, page, screen, group, alias) and, for track, event; mappings can emit any shape;
+  batching sends arrays. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'track'
+    - 'identify'
+catalog:
+  summary: 'Authenticate RudderStack HTTP Webhook destination calls (unsigned Basic auth compared in constant time), handle forwarded `track` and `identify` events'

@@ -1,0 +1,40 @@
+name: gc-notify
+displayName: 'GC Notify'
+docs:
+  webhooks: https://documentation.notification.canada.ca/en/callbacks.html
+  verification: https://documentation.notification.canada.ca/en/callbacks.html
+notes: >
+  GC Notify (Government of Canada notification service, a fork of GOV.UK Notify; not GOV.UK Notify
+  itself). GC Notify says: 'You'll need to provide a Bearer token, for security. We'll add this to
+  the authorization header of the callback request'; its source sends 'Authorization': f'Bearer
+  {callback_target_token}' with method POST. No signature. GC Notify sends 'Authorization: Bearer
+  <secret>'. Hookdeck's GC Notify source is API key verification on the authorization header with
+  value_prefix 'Bearer ' (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and
+  the scheme matches in any case (auth schemes are case-insensitive, RFC 9110). So the examples read
+  the BARE secret from GC_NOTIFY_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer
+  ', case-insensitively, strip it, as core does), require the Authorization header to start with
+  'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
+  trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is GC_NOTIFY, labelled 'GC
+  Notify'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
+  tell the user the same thing, verbatim: "Paste the bearer token you set for the callback in GC
+  Notify." Body: message delivery receipts only, with no event field: {id, reference, to, status
+  (e.g. delivered, permanent-failure, temporary-failure, technical-failure), status_description,
+  provider_response, created_at, completed_at, sent_at, notification_type (email or sms)}. Build
+  example payloads from the documented field table and label them as such; dispatch on status.
+  Respond quickly (the guidance is within 1 second); failures are retried 6 times over 25 minutes,
+  then callbacks may be suspended. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works (and, for signatures, the exact bytes are verified); parse the
+  body only after the check.
+testScenario:
+  events:
+    - 'delivered'
+    - 'permanent-failure'
+    - 'technical-failure'
+catalog:
+  summary: 'Authenticate GC Notify delivery receipt callbacks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle delivered, permanent-failure and technical-failure statuses for email and SMS'

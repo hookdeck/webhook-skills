@@ -1,0 +1,26 @@
+name: companycam
+displayName: 'CompanyCam'
+docs:
+  webhooks: https://developers.companycam.com/webhooks
+  verification: https://developers.companycam.com/openapi/public_api_v1.yaml
+  events: https://companycam.readme.io/docs/webhooks-1
+notes: >
+  CompanyCam (job-site photos). Header X-CompanyCam-Signature: Base64(HMAC-SHA1(webhook token, raw
+  body)), keyed with the token parameter supplied when creating the webhook (optional on create, so
+  the user must set one). Algorithm is SHA-1 and the digest is base64. Verify against the raw body,
+  not a re-serialized parse. Compare in constant time: compare the base64 strings as equal-length
+  UTF-8 Buffers with crypto.timingSafeEqual after a length check (no lenient base64 decode of the
+  header); in Python use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives
+  401, not 500. The developers.companycam.com webhooks page is JS-rendered; the OpenAPI spec carries
+  the same scheme, and the legacy readme.io page lists the scopes/events: project.created,
+  project.updated, photo.created, photo.updated, comment.created, document.created,
+  todo_list.completed, task.completed and more; the event name is in the payload's event_type field. Hookdeck setup (say
+  this in SKILL.md's setup section and in references/setup.md): Set a token when you create the
+  CompanyCam webhook. Without one, deliveries are unsigned and fail verification. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'photo.created'
+    - 'project.created'
+catalog:
+  summary: 'Verify CompanyCam webhook signatures (`X-CompanyCam-Signature`, base64 HMAC-SHA1 of the raw body keyed with the webhook token), handle `photo.created` and `project.created` events'

@@ -1,0 +1,25 @@
+name: appstle
+displayName: 'Appstle Subscriptions'
+docs:
+  webhooks: https://developers.appstle.com/subscription/webhooks
+notes: >
+  Appstle Subscriptions (Shopify subscriptions app). Delivered by Svix: svix-id, svix-timestamp,
+  svix-signature ('v1,<base64>', space-separated during rotation), HMAC-SHA256 over
+  '{svix-id}.{svix-timestamp}.{raw body}', key = base64-decode of the secret after whsec_. The secret
+  is in Settings > Webhooks in the Appstle dashboard. Use the svix library as Appstle's docs do. The
+  standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must
+  say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256
+  over '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_, compare every
+  space-separated v1,<base64> entry in constant time) where the window can be dropped or widened.
+  Events: subscription.created, subscription.updated, subscription.activated, subscription.paused,
+  subscription.cancelled, subscription.billing-success, subscription.billing-failure,
+  subscription.billing-skipped, subscription.upcoming-order-notification and more; check the payload's
+  type field. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type verifies.
+testScenario:
+  events:
+    - 'subscription.created'
+    - 'subscription.billing-failure'
+catalog:
+  summary: 'Verify Appstle Subscriptions webhooks (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle `subscription.created` and `subscription.billing-failure` events'

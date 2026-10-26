@@ -1,0 +1,32 @@
+name: nium
+displayName: 'Nium'
+docs:
+  webhooks: https://docs.nium.com/docs/developers/notifications-and-webhooks
+  verification: https://docs.nium.com/docs/developers/notifications-and-webhooks
+notes: >
+  Cross-border payments. Nium includes a static client-specified header agreed at onboarding; the
+  docs' x-partner-key is an example name, not a fixed one. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds via Nium during client setup. The header name is
+  user-chosen, so the examples read the header name from NIUM_WEBHOOK_HEADER (default
+  'x-partner-key') and the expected value from NIUM_WEBHOOK_SECRET (the exact, whole header value,
+  including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and compare
+  the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Nium source
+  does (API key verification: header name + exact value). Missing header or mismatch: 401. Compare
+  in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, brevo, assemblyai, honeybadger and coterie skills. Body has a template field naming the
+  event, e.g. CUSTOMER_STATUS_WEBHOOK, REMIT_TRANSACTION_PAID_WEBHOOK,
+  FX_CONVERSION_COMPLETED_WEBHOOK, CARD_POS_APPROVED_WEBHOOK; RFI events use rfiDetails.status
+  (RFI_REQUESTED, RFI_RESPONDED, RFI_CLOSED). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'CUSTOMER_STATUS_WEBHOOK'
+    - 'REMIT_TRANSACTION_PAID_WEBHOOK'
+    - 'FX_CONVERSION_COMPLETED_WEBHOOK'
+catalog:
+  summary: 'Authenticate Nium webhooks (unsigned: the static header agreed at onboarding, e.g. `x-partner-key`, compared in full in constant time), handle events by `template` such as `REMIT_TRANSACTION_PAID_WEBHOOK`'

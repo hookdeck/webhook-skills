@@ -1,0 +1,24 @@
+name: mailtrap
+displayName: 'Mailtrap'
+docs:
+  webhooks: https://docs.mailtrap.io/email-api-smtp/advanced/webhooks
+  verification: https://docs.mailtrap.io/email-api-smtp/advanced/webhooks#webhook-signature-verification
+notes: >
+  Mailtrap (email sending). Header Mailtrap-Signature: lowercase hex HMAC-SHA256 of the raw body (JSON
+  or JSONL; signed regardless of Content-Type), keyed with the webhook's signing secret (32 hex
+  characters) used as a plain UTF-8 string: do NOT hex-decode it. Compare in constant time: in Node,
+  check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x,
+  'hex') (invalid hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8
+  Buffers with crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Sending events have an event field:
+  delivery, open, click, unsubscribe, spam, 'soft bounce' (with a space), bounce, suspension, reject;
+  deliveries batch events (check the docs for the envelope, e.g. an events array). Audit Log webhooks
+  send activity_log.* types. Basic auth in the URL is also offered but not covered. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'delivery'
+    - 'bounce'
+    - 'soft bounce'
+catalog:
+  summary: 'Verify Mailtrap webhook signatures (`Mailtrap-Signature`, HMAC-SHA256 hex of the raw body keyed with the 32-hex signing secret as text), handle delivery, open, click and bounce events'

@@ -1,0 +1,37 @@
+name: ship24
+displayName: 'Ship24'
+docs:
+  webhooks: https://docs.ship24.com/webhooks/overview
+  events: https://docs.ship24.com/webhooks/delivery
+  verification: https://docs.ship24.com/webhooks/authentication
+notes: >
+  Ship24 (multi-carrier parcel tracking). Ship24 says: 'Ship24 will allocate to your account a
+  random Webhook Secret that will be sent in an Authorization header for each webhook request in the
+  following format: Authorization: Bearer your_webhook_secret', visible in the dashboard. No
+  signature. Ship24 sends 'Authorization: Bearer <secret>'. Hookdeck's Ship24 source is API key
+  verification on the authorization header with value_prefix 'Bearer ' (hookdeck/core#6046 head
+  8c48f55d): the user stores just the secret, and the scheme matches in any case (auth schemes are
+  case-insensitive, RFC 9110). So the examples read the BARE secret from SHIP24_WEBHOOK_SECRET (if
+  the configured value itself starts with 'Bearer ', case-insensitively, strip it, as core does),
+  require the Authorization header to start with 'Bearer ' compared case-insensitively, and compare
+  the rest to the secret in constant time. Do not trim or otherwise alter the secret. Missing
+  header, wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is SHIP24, labelled 'Ship24'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Paste
+  the Webhook Secret from your Ship24 dashboard." Body: {trackings: [ ... ]}, each with metadata
+  {generatedAt, messageId, topic}, tracker, shipment, events and statistics; metadata.topic is
+  tracking/events or tracking/pod. Loop over trackings[] and dispatch on metadata.topic; dedupe on
+  metadata.messageId. Any 2xx; retried up to 20 times. POST. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes
+  are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'tracking/events'
+    - 'tracking/pod'
+catalog:
+  summary: 'Authenticate Ship24 tracking webhooks (unsigned: `Authorization: Bearer <webhook secret>` compared in constant time), handle `tracking/events` and `tracking/pod` messages'

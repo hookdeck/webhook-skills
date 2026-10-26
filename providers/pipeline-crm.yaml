@@ -1,0 +1,28 @@
+name: pipeline-crm
+displayName: 'Pipeline CRM'
+docs:
+  webhooks: https://app.pipelinecrm.com/api/docs
+  api: https://app.pipelinecrm.com/openapi.json
+notes: >
+  Pipeline CRM automations ('Call an API' action). Standard Webhooks, opt-in per action: Request
+  signing > Enable signing; the secret is shown once. Headers webhook-id, webhook-timestamp,
+  webhook-signature ('v1,<base64>', space-separated when more than one secret is active); HMAC-SHA256
+  over '{webhook-id}.{webhook-timestamp}.{raw request body}', key = base64-decoded part after whsec_.
+  The webhook-timestamp is per attempt. Read the docs text from openapi.json if the HTML page is
+  JS-rendered. The standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window.
+  SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the library
+  rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_,
+  compare every space-separated v1,<base64> entry in constant time) where the window can be dropped or
+  widened. The body carries event_model (deal, person, company) and event_action (create, update,
+  destroy); dispatch on '{event_model}.{event_action}', e.g. deal.create, deal.update, person.create.
+  Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md): Signing is opt-in:
+  click Enable signing under Request signing on the automation's Call an API action and paste the
+  secret. Without it, deliveries are unsigned and fail verification. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'deal.create'
+    - 'deal.update'
+catalog:
+  summary: 'Verify Pipeline CRM automation webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret; opt-in signing), handle deal, person and company events'

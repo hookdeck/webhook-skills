@@ -1,0 +1,32 @@
+name: videoask
+displayName: 'VideoAsk'
+docs:
+  webhooks: https://developers.videoask.com/
+  verification: https://developers.videoask.com/
+notes: >
+  Video forms (Typeform). Headers can only be set through the API: PUT
+  /forms/{form_id}/webhooks/{tag} with {url, event_types, headers: {"secret": "open-sesame"}}. The
+  docs only show headers in this request example, so suggest a test delivery to confirm. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds via the webhook
+  headers object (API only). The header name is user-chosen, so the examples read the header name
+  from VIDEOASK_WEBHOOK_HEADER (default 'secret') and the expected value from
+  VIDEOASK_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's VideoAsk source does (API key verification: header name
+  + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is VIDEOASK, labelled 'VideoAsk'. Body has event_type:
+  form_response, form_response_transcribed, form_author_message, form_contact_message. Return 2xx; 3
+  retries. POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'form_response'
+    - 'form_response_transcribed'
+catalog:
+  summary: 'Authenticate VideoAsk form webhooks (unsigned: a header set through the API compared in full in constant time), handle `event_type`s like `form_response`'

@@ -1,0 +1,41 @@
+name: tanium
+displayName: 'Tanium'
+docs:
+  webhooks: https://help.tanium.com/bundle/ug_connect_cloud/page/userguides/connect/http.html
+  verification: https://help.tanium.com/bundle/ug_connect_cloud/page/userguides/connect/http.html
+notes: >
+  Tanium Connect HTTP destinations (Tanium Cloud). Connect sends the rows of the connection source
+  the author picks (saved question, event source, ...), with author-chosen columns, on a schedule,
+  manually or on an event; JSON by default, optionally batched into several requests. Auth options:
+  None, Basic Authentication, OAuth2 Client Credentials, Header Authentication ('an HTTP
+  Authorization request header containing the Auth Header Name and Secret value'; for Splunk: Auth
+  Header Name Authorization, value 'Splunk <token>') and IBM Cloud IAM. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds with Header Authentication on the
+  Connect HTTP destination (Auth Header Name + Secret). The header name is user-chosen, so the
+  examples read the header name from TANIUM_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from TANIUM_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's Tanium source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is TANIUM, labelled
+  'Tanium'. Basic Authentication and OAuth2 are not covered by Hookdeck's Tanium source; say so. The
+  request method is user-chosen, so the examples must not be POST-only: accept POST, PUT and PATCH
+  on the webhook route (Next.js: export a handler for each; FastAPI: api_route with those methods),
+  and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Tanium source pre-selects
+  POST without managing the method, so any other method the sender uses must also be allowed on the
+  source. The body is defined by the sender's own configuration and there is no vendor event field,
+  so the examples and test scenario use a clearly labelled illustrative payload. Handle a JSON array
+  of records or an object; don't assume an event field. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'Connect run with JSON records (illustrative payload)'
+    - 'PUT delivery (sender-chosen method)'
+catalog:
+  summary: 'Authenticate Tanium Connect HTTP destination deliveries (unsigned: Header Authentication, the header you name compared in constant time), accept the method you choose, handle JSON record batches'

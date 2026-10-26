@@ -1,0 +1,43 @@
+name: navattic
+displayName: 'Navattic'
+docs:
+  webhooks: https://docs.navattic.com/integrations/webhook
+  verification: https://docs.navattic.com/integrations/webhook
+notes: >
+  Navattic (interactive product demos) webhook integration. Navattic documents the header
+  'Authorization | Only sent when configured on the webhook: Basic <credentials> or Bearer <token>.'
+  No signature. The credential is the Authorization header. Hookdeck's Navattic source compares the
+  WHOLE Authorization header value to the configured key, so the examples read
+  NAVATTIC_AUTHORIZATION = the full value as Navattic sends it (e.g. 'Basic <credentials>'),
+  including any scheme prefix, and compare the whole Authorization header to it; do not strip, parse
+  or base64-decode the prefix (Coterie pattern). The value is the full 'Basic ...' or 'Bearer ...'
+  string as configured on the webhook; do not decode Basic credentials. Missing header or mismatch:
+  401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length
+  Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode
+  both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say
+  plainly that a static shared credential authenticates the sender, not the body, and gives no
+  replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
+  NAVATTIC, labelled 'Navattic'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the full Authorization
+  value Navattic sends, including the "Basic " or "Bearer " prefix." Methods: Navattic's page
+  doesn't name the HTTP method. The examples must not be POST-only: accept GET, POST, PUT, PATCH and
+  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
+  for each; FastAPI: api_route with those methods), check the credential first for every method, and
+  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Navattic source pre-selects
+  POST without managing the method, so any other method the sender uses must also be allowed on the
+  source. Body: {eventType, timestamp (ISO 8601, the session close time), data}; eventType is always
+  session_closed today; Visitor and Account actions differ only in what data holds (session,
+  endUser, companyAccount, ...). Dispatch on eventType. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/navattic/latest/ (session_closed.json); base the
+  examples' test payloads on them. Correction from the live docs page: for account events `data` is
+  the company account object itself (id, name, websiteDomain, ...), not a wrapper, so the examples
+  tell visitor events (data.session) from account events by shape.
+testScenario:
+  events:
+    - 'session_closed'
+catalog:
+  summary: 'Authenticate Navattic webhooks (unsigned: the whole `Authorization` value, Basic or Bearer, compared in constant time), handle `session_closed` events'

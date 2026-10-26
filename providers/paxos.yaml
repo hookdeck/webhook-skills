@@ -1,0 +1,33 @@
+name: paxos
+displayName: 'Paxos'
+docs:
+  webhooks: https://docs.paxos.com/guides/webhooks/index
+  verification: https://docs.paxos.com/guides/webhooks/quickstart
+notes: >
+  Crypto/stablecoin infrastructure. Paxos does not sign webhook events (the docs say signature
+  verification is planned). The webhook consumer's API Key auth type sends the API Key Header name
+  and value you provide. OAuth (client credentials) is the alternative and isn't covered. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds on the webhook
+  consumer (Auth Type: API Key). The header name is user-chosen, so the examples read the header
+  name from PAXOS_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  PAXOS_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Paxos source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Events are thin: {id, type, source, time, object...}; fetch the full object
+  with Get Event. type examples: identity.approved, identity.documents_required,
+  transfer.crypto_deposit.completed, transfer.wire_withdrawal.failed, orchestration.completed.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'identity.approved'
+    - 'transfer.crypto_deposit.completed'
+    - 'orchestration.completed'
+catalog:
+  summary: 'Authenticate Paxos webhooks (unsigned: the API Key header you configure, compared in full in constant time), handle thin events like `identity.approved` and `transfer.crypto_deposit.completed`'

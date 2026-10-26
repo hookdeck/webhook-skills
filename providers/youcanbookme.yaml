@@ -1,0 +1,36 @@
+name: youcanbookme
+displayName: 'YouCanBookMe'
+docs:
+  webhooks: https://support.youcanbook.me/hc/en-us/articles/17321754662807-Passing-data-to-other-systems
+  verification: https://support.youcanbook.me/hc/en-us/articles/17321777608727-More-information-on-Webhooks
+notes: >
+  Scheduling; webhooks are notification actions (when a booking is made, rescheduled, cancelled,
+  reminders, follow-ups, no-show). Plan availability for webhooks conflicts between help articles;
+  say to check the current plan. No signature: requests are unsigned. Authenticate with a secret
+  header the user adds as a Request Header key/value on the webhook action. The header name is
+  user-chosen, so the examples read the header name from YOUCANBOOKME_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from YOUCANBOOKME_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  YouCanBookMe source does (API key verification: header name + exact value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. The request
+  method is user-chosen, so the examples must not be POST-only: accept POST, PUT, PATCH, DELETE and
+  GET on the webhook route, and handle an empty body (e.g. GET). Payload is the owner's JSON with
+  shorthand codes ({START-LOCAL-DATE}, {EMAIL}, ...); nothing names the trigger unless the template
+  does, so use an illustrative body with an event field. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check. The event strings (booking_made, booking_rescheduled, booking_cancelled, reminder,
+  follow_up, no_show) are illustrative values for an `event` field in the user's template, not names
+  YouCanBookMe sends.
+testScenario:
+  events:
+    - 'booking_made'
+    - 'booking_rescheduled'
+    - 'booking_cancelled'
+catalog:
+  summary: 'Authenticate YouCanBookMe webhook actions (unsigned: a secret request header you choose, compared in full in constant time), handle booking_made, booking_rescheduled and booking_cancelled payloads from your template'

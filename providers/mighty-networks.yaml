@@ -1,0 +1,39 @@
+name: mighty-networks
+displayName: 'Mighty Networks'
+docs:
+  webhooks: https://docs.mightynetworks.com/api/webhooks
+  verification: https://docs.mightynetworks.com/api/webhooks#security
+notes: >
+  Mighty Networks (community platform) webhooks, configured in Network settings with an API key.
+  'Authentication: Configure an API key that will be included as a Bearer token in the Authorization
+  header'; delivery example 'Authorization: Bearer YOUR_CONFIGURED_API_KEY'. No signature. Mighty
+  Networks sends 'Authorization: Bearer <secret>'. Hookdeck's Mighty Networks source is API key
+  verification on the authorization header with value_prefix 'Bearer ' (hookdeck/core#6046 head
+  8c48f55d): the user stores just the secret, and the scheme matches in any case (auth schemes are
+  case-insensitive, RFC 9110). So the examples read the BARE secret from
+  MIGHTY_NETWORKS_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer ',
+  case-insensitively, strip it, as core does), require the Authorization header to start with
+  'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
+  trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is MIGHTY_NETWORKS,
+  labelled 'Mighty Networks'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the API key you configured
+  with the webhook in Mighty Networks." Body: {event_id, event_timestamp, event_type, payload};
+  event_type carries the event name with a 'Hook' suffix (PostCreatedHook) while the reference pages
+  name events without it (PostCreated, MemberJoined, MemberPurchased, RsvpCreated, ...), so
+  normalise by stripping a trailing 'Hook' before dispatch. Dedupe on event_id. Any 2xx within 10
+  seconds; retried up to 5 times. POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check.
+testScenario:
+  events:
+    - 'MemberJoined'
+    - 'PostCreated'
+    - 'MemberPurchased'
+catalog:
+  summary: 'Authenticate Mighty Networks webhooks (unsigned: `Authorization: Bearer <API key>` compared in constant time), handle MemberJoined, MemberPurchased, PostCreated and RsvpCreated events'

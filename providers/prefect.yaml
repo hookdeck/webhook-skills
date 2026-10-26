@@ -1,0 +1,34 @@
+name: prefect
+displayName: 'Prefect'
+docs:
+  webhooks: https://docs.prefect.io/v3/how-to-guides/automations/custom-notifications
+  verification: https://github.com/PrefectHQ/prefect/blob/main/src/prefect/blocks/notifications.py
+notes: >
+  Workflow orchestration; covers automation notifications sent by the Custom Webhook notification
+  block (Prefect Cloud's own 'webhooks' are inbound, not this). No signature: requests are unsigned.
+  Authenticate with a secret header the user adds in the Custom Webhook block's headers (the value
+  can be a {{secret}} template). The header name is user-chosen, so the examples read the header
+  name from PREFECT_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  PREFECT_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Prefect source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. The request method is user-chosen, so the examples must not be POST-only:
+  accept POST, PUT, PATCH and GET (the block method is configurable; POST is the default) on the
+  webhook route, and handle an empty body (e.g. GET). The body is the block's json_data or form_data
+  template with {{subject}}, {{body}} and {{name}} substituted; Prefect adds no event field, so the
+  examples assume an illustrative template like {"subject": "{{subject}}", "body": "{{body}}",
+  "name": "{{name}}"} and say it's illustrative. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'flow run Failed notification (illustrative template)'
+    - 'flow run Completed notification (illustrative template)'
+catalog:
+  summary: 'Authenticate Prefect Custom Webhook notifications (unsigned: a secret header on the block compared in full in constant time), handle automation notifications rendered from your template'

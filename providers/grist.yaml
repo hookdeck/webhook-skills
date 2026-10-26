@@ -1,0 +1,33 @@
+name: grist
+displayName: 'Grist'
+docs:
+  webhooks: https://support.getgrist.com/webhooks/
+  verification: https://support.getgrist.com/webhooks/
+notes: >
+  Spreadsheet-database; covers Grist document webhooks (Document settings > Webhooks), which fire on
+  row add and/or update for one table. No signature. The credential is the Authorization header.
+  Hookdeck's Grist source compares the WHOLE Authorization header value to the configured key, so
+  the examples read GRIST_AUTHORIZATION = the full value as Grist sends it (e.g. 'Bearer <token>'),
+  including any 'Bearer '/'Basic ' scheme prefix, and compare the whole Authorization header to it;
+  do not strip, parse or base64-decode the prefix (Coterie pattern). The optional 'Header
+  Authorization' field is a static string sent verbatim as the Authorization header; whatever the
+  user typed (e.g. 'Bearer x') is the whole value. Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is GRIST, labelled 'Grist'. Hookdeck shows
+  this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
+  thing: "Paste the Header Authorization value exactly as set in Grist, including any "Bearer " or
+  "Basic " prefix." Body: a JSON ARRAY of row objects (id plus column values), batched; there is no
+  event field, the webhook's event types (add, update) are set in its config. Grist retries until
+  success. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'add (rows added, batched JSON array)'
+    - 'update (rows updated, batched JSON array)'
+catalog:
+  summary: 'Authenticate Grist document webhooks (unsigned: the whole `Authorization` value compared in constant time), handle batched arrays of added and updated rows'

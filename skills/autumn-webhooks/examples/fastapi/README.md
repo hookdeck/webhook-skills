@@ -1,0 +1,54 @@
+# Autumn Webhooks - FastAPI Example
+
+Minimal example of receiving [Autumn](https://useautumn.com) webhooks with signature verification in FastAPI, using the [`svix`](https://pypi.org/project/svix/) library Autumn's docs recommend, plus a manual verifier for when the library's fixed 5-minute timestamp window gets in the way.
+
+## Prerequisites
+
+- Python 3.9+ (3.10+ recommended)
+- An Autumn account and a webhook signing secret (`whsec_...`)
+
+## Setup
+
+1. Create a virtual environment and install dependencies:
+   ```bash
+   python3 -m venv venv && source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Add your Autumn webhook signing secret to `AUTUMN_WEBHOOK_SECRET` in `.env`. Autumn shows it **once**: when you add the endpoint in the dashboard, or in the response of `webhooks.create` / `webhooks.sync`. `webhooks.get` never returns it (see [setup](../../references/setup.md)).
+
+## Run
+
+```bash
+python main.py
+```
+
+Server runs on http://localhost:8000. Webhook endpoint: `POST /webhooks/autumn`.
+
+## Test
+
+```bash
+pytest test_webhook.py -v
+```
+
+The tests sign payloads with Autumn's (Svix's) algorithm, `base64(HMAC-SHA256(base64decode(secret after "whsec_"), "{svix-id}.{svix-timestamp}.{raw body}"))`, and cover each event type, tampered bodies, wrong secrets, stale timestamps (svix rejects them, the manual verifier with a wider or no window accepts them), multiple signatures, missing headers, non-JSON content types, `svix-id` deduplication, and the fail-closed path when no secret is configured.
+
+## Receive real webhooks locally
+
+```bash
+npx hookdeck-cli listen 8000 autumn --path /webhooks/autumn
+```
+
+Add the printed URL as an endpoint in the Autumn dashboard (**Developer → Webhooks → Add Endpoint**; Autumn requires https and rejects localhost), then use **Send Test Event**.
+
+## Notes
+
+- The handler reads `await request.body()` (raw bytes), so any content type verifies. Never verify `request.json()`.
+- `svix` `verify()` returns `None` in 2.x and raises on failure. `verify_autumn_webhook` parses the JSON itself afterwards.
+- **Retries and replays:** the svix library always rejects a `svix-timestamp` older than 5 minutes. Hookdeck retries and replays resend the original timestamp, so late retries fail. Set `AUTUMN_TIMESTAMP_TOLERANCE_SECONDS` to a number of seconds (or `off`) to use the manual verifier instead. Keep deduplicating on `svix-id`.
+- If `AUTUMN_WEBHOOK_SECRET` is unset the handler returns `500`. It never accepts unverified requests.

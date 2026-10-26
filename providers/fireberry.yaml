@@ -1,0 +1,33 @@
+name: fireberry
+displayName: 'Fireberry'
+docs:
+  webhooks: https://www.fireberry.com/articles/webhook-automations
+  verification: https://www.fireberry.com/articles/webhook-automations
+notes: >
+  CRM, formerly Powerlink; webhooks are an automation action. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds to the webhook automation action (Header key/value
+  pairs). The header name is user-chosen, so the examples read the header name from
+  FIREBERRY_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  FIREBERRY_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Fireberry source does (API key verification: header name
+  + exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python
+  uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. The request method is user-chosen, so the examples must not be POST-only:
+  accept POST, PUT, PATCH, GET and DELETE on the webhook route, and handle an empty body (e.g. GET).
+  Note in SKILL.md that Hookdeck's Fireberry source currently allows only POST, so a non-POST
+  automation needs the method allowed on the source. The body is free text the automation's author
+  writes with field references; Fireberry adds no event field, so the examples use a clearly
+  labelled illustrative JSON body like {"event": "account.created", "record": {...}}. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  JSON only after the credential check.
+testScenario:
+  events:
+    - 'account.created'
+    - 'record.updated'
+catalog:
+  summary: 'Authenticate Fireberry webhook automations (unsigned: a secret header on the action compared in full in constant time), handle the record payloads your automation sends'

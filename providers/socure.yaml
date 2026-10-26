@@ -1,0 +1,33 @@
+name: socure
+displayName: 'Socure'
+docs:
+  webhooks: https://help.socure.com/riskos/docs/set-up-webhooks
+  verification: https://help.socure.com/riskos/docs/webhook-configuration-reference
+notes: >
+  Identity verification; covers RiskOS webhooks (Developer Workbench > Webhooks). Auth type is
+  required and fixed at creation: Basic (Authorization: Basic base64), Bearer, or OAuth 2.0; only
+  Basic is covered. RiskOS includes the credentials on every outbound request. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's Socure source verifies. The examples
+  read SOCURE_WEBHOOK_USERNAME and SOCURE_WEBHOOK_PASSWORD, parse 'Authorization: Basic
+  base64(username:password)' (scheme case-insensitive, split on the first colon), and compare the
+  username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. The docs don't say whether Basic
+  credentials are sent preemptively. Say that the credentials must arrive on the first request: a
+  401 + WWW-Authenticate challenge flow won't work through Hookdeck, which verifies the request as
+  received. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body has
+  event_type: evaluation_completed, evaluation_paused, reevaluation, decision_update,
+  workflow_execution_failed, case_status_updated, case_notes_added, review_case_assigned, ...
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'evaluation_completed'
+    - 'decision_update'
+    - 'case_status_updated'
+catalog:
+  summary: 'Authenticate Socure RiskOS webhooks (unsigned HTTP Basic auth compared in constant time), handle `event_type`s like `evaluation_completed` and `case_status_updated`'

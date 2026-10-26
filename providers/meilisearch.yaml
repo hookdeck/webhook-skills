@@ -1,0 +1,42 @@
+name: meilisearch
+displayName: 'Meilisearch'
+docs:
+  webhooks: https://www.meilisearch.com/docs/capabilities/platform/management/webhooks
+  verification: https://www.meilisearch.com/docs/capabilities/platform/management/webhooks
+notes: >
+  Search engine; covers task webhooks (Meilisearch Cloud project webhooks, self-hosted
+  --task-webhook-url with --task-webhook-authorization-header, and the /webhooks API). No signature.
+  The credential is the Authorization header. Hookdeck's Meilisearch source compares the WHOLE
+  Authorization header value to the configured key, so the examples read MEILISEARCH_AUTHORIZATION =
+  the full value as Meilisearch sends it (e.g. 'Bearer your-secret-token'), including any 'Bearer
+  '/'Basic ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
+  base64-decode the prefix (Coterie pattern). The docs: 'Always validate the Authorization header on
+  incoming webhook requests.' Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is MEILISEARCH, labelled 'Meilisearch'. Hookdeck shows this
+  setup note for the source, and SKILL.md and references/setup.md must tell the user the same thing:
+  "Paste the Authorization header value exactly as set in Meilisearch, including any "Bearer " or
+  "Basic " prefix." IMPORTANT body handling: the sender sets 'Content-Encoding: gzip' and
+  'Content-Type: application/x-ndjson'; the body is gzip-compressed ndjson, one finished task object
+  per line (type, status, uid, indexUid, ...). The examples must check the credential first, then
+  gunzip the raw body when Content-Encoding is gzip (Node zlib.gunzipSync, Python gzip.decompress;
+  reject undecodable bodies with 400), then split on newlines and JSON.parse each non-empty line;
+  never JSON.parse the whole body. Next.js: read request.arrayBuffer(), not text(). Tests must send
+  a gzipped multi-line body. Note that Hookdeck stores gzip bodies as binary, so events show a
+  binary body in the dashboard; Hookdeck forwards the original bytes and Content-Encoding header.
+  Task types: documentAdditionOrUpdate, documentDeletion, settingsUpdate, indexCreation,
+  indexDeletion, dumpCreation, ...; status succeeded, failed or canceled. POST. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body
+  only after the credential check.
+testScenario:
+  events:
+    - 'documentAdditionOrUpdate'
+    - 'settingsUpdate'
+    - 'indexDeletion'
+catalog:
+  summary: 'Authenticate Meilisearch task webhooks (unsigned: the whole `Authorization` value compared in constant time), gunzip and split the ndjson body, handle task `type`s like `documentAdditionOrUpdate` and `settingsUpdate`'

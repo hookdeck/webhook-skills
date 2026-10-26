@@ -1,0 +1,23 @@
+name: tremendous
+displayName: 'Tremendous'
+docs:
+  webhooks: https://developers.tremendous.com/docs/webhooks-1
+  verification: https://developers.tremendous.com/docs/webhooks-1#webhook-verification
+notes: >
+  Tremendous (rewards and payouts). Header Tremendous-Webhook-Signature: always 'sha256=<hex>',
+  HMAC-SHA256 hex of the whole raw request body keyed with the webhook's private_key (returned when
+  you create or retrieve the webhook through the API). Require and strip the sha256= prefix. Compare
+  in constant time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i)
+  before any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex
+  strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python
+  use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500.
+  Events are uppercase dotted, e.g. REWARDS.DELIVERY.SUCCEEDED, REWARDS.DELIVERY.FAILED,
+  ORDERS.APPROVED, CAMPAIGNS.CREATED; check the List of available events table and the payload shape.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'REWARDS.DELIVERY.SUCCEEDED'
+    - 'ORDERS.APPROVED'
+catalog:
+  summary: 'Verify Tremendous webhook signatures (`Tremendous-Webhook-Signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the webhook `private_key`), handle reward and order events'

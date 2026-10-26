@@ -1,0 +1,34 @@
+name: wiza
+displayName: 'Wiza'
+docs:
+  webhooks: https://docs.wiza.co/using-the-api/webhooks
+  verification: https://docs.wiza.co/using-the-api/webhooks
+notes: >
+  B2B contact data. 'Webhook requests include an x-auth-key header containing a SHA256 hash of your
+  API key.' It is not a body signature: the value is the lowercase hex SHA-256 of the Wiza API key
+  and is the same on every request. The examples read WIZA_API_KEY, compute sha256(api_key) as
+  lowercase hex, and compare it to the whole x-auth-key value in constant time (header name
+  case-insensitive). Missing header or mismatch: 401. Hookdeck's Wiza source compares the whole
+  x-auth-key value to its configured key, so in Hookdeck the user enters the lowercase hex SHA-256
+  hash of the API key, not the API key itself; show a one-liner to compute it (e.g. printf %s
+  "$WIZA_API_KEY" | sha256sum, or node -e). Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Also say rotating the API key changes the header value.
+  Model on the n8n, zapier, coterie and honeybadger skills on main (and the batch 5 iterable,
+  oyster, fireberry and new-relic skills if present). Hookdeck's source type is WIZA, labelled
+  'Wiza'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
+  tell the user the same thing: "Enter the lowercase hex SHA-256 hash of your Wiza API key, as sent
+  in x-auth-key, not the API key itself." The webhook URL is the default in Settings > API
+  (optionally Send All Callbacks) or a per-request callback_url. Body: {id, type:
+  'individual_reveal', status: {code: 200 finished or 400 failed}, data: {...}}. POST JSON; non-2xx
+  is retried up to 3 times. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'individual_reveal (finished)'
+    - 'individual_reveal (failed)'
+catalog:
+  summary: 'Authenticate Wiza webhooks (unsigned: `x-auth-key` is the SHA-256 hex of your API key, compared in constant time), handle `individual_reveal` results'

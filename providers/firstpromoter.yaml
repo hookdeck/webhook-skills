@@ -1,0 +1,43 @@
+name: firstpromoter
+displayName: 'FirstPromoter'
+docs:
+  webhooks: https://docs.firstpromoter.com/webhooks-v2/overview
+  verification: https://docs.firstpromoter.com/webhooks-v2/overview
+notes: >
+  FirstPromoter (affiliate and referral management) Webhooks v2 (Settings > Integrations >
+  Webhooks). 'headers object Custom HTTP headers to include on every request. Useful for API keys or
+  authorization tokens your endpoint requires.' Legacy webhooks: 'Custom headers | Not supported',
+  so they can't be verified. No signature: requests are unsigned. Authenticate with a secret header
+  the user adds to the Webhooks v2 subscription. The header name is user-chosen, so the examples
+  read the header name from FIRSTPROMOTER_WEBHOOK_HEADER (default 'Authorization') and the expected
+  value from FIRSTPROMOTER_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's FirstPromoter source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is FIRSTPROMOTER, labelled
+  'FirstPromoter'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Covers Webhooks v2 only: add a
+  custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers."
+  Body: {event_id, event_type, action, entity_type, entity_id, changes, data, timestamp}; the
+  X-Event-Id and X-Event-Type headers repeat the id and type. event_type e.g. promoter.created,
+  referral.created, referral.converted, commission.created, commission.approved, payout.created.
+  Dispatch on event_type; dedupe on event_id. 'Your endpoint receives a POST request with a JSON
+  payload. Respond with any 2xx status code'; 3 retries by default. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/firstpromoter/latest/ (commission.updated.json,
+  contract_document.signed.json, promoter.created.json, referral.updated.json); base the examples'
+  test payloads on them.
+testScenario:
+  events:
+    - 'promoter.created'
+    - 'referral.converted'
+    - 'commission.created'
+catalog:
+  summary: 'Authenticate FirstPromoter Webhooks v2 (unsigned: a custom header you add, compared in constant time), handle promoter, referral, commission and payout events'

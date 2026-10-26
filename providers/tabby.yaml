@@ -1,0 +1,40 @@
+name: tabby
+displayName: 'Tabby'
+docs:
+  webhooks: https://docs.tabby.ai/pay-in-4-custom-integration/webhooks
+  verification: https://docs.tabby.ai/api-reference/webhooks/register-a-webhook
+notes: >
+  Tabby (buy now, pay later; MENA) payment and dispute webhooks, registered through the API (POST
+  /api/v1/webhooks). Despite the 'sign' wording there is no HMAC: 'header': {'title': 'X-Auth-Key',
+  'value': 'your_random_signing_secret'}, where title is an 'Arbitrary header name' and value a
+  'Random string'; it is optional and added to every notification. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds when registering the webhook through the
+  Tabby API. The header name is user-chosen, so the examples read the header name from
+  TABBY_WEBHOOK_HEADER (default 'X-Auth-Key') and the expected value from TABBY_WEBHOOK_SECRET (the
+  exact, whole header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Tabby source does (API key verification: Header Name + exact whole Header Value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is TABBY, labelled 'Tabby'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set the
+  header when you register the webhook through the Tabby API (POST /api/v1/webhooks). Webhooks
+  without one send nothing to verify." Body: payment webhooks send the payment object with no event
+  field (id, status, created_at, amount, currency, captures, refunds, order, ...); the event is what
+  changed: status authorized/closed/rejected/expired, a new capture or refund. Dispute webhooks send
+  the dispute object with its status. Dispatch on status (and on captures/refunds). Respond with
+  exactly 200 within 1 minute; anything else is resent up to 4 more times; duplicates and reordering
+  happen. POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works (and, for signatures, the exact bytes are verified); parse the body only after
+  the check.
+testScenario:
+  events:
+    - 'authorized'
+    - 'closed'
+    - 'rejected'
+catalog:
+  summary: 'Authenticate Tabby payment and dispute webhooks (unsigned: the secret header set at registration, `X-Auth-Key` by default, compared in constant time), handle payment statuses like `authorized`, `closed` and `rejected` and dispute statuses'

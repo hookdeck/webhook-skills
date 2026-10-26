@@ -1,0 +1,32 @@
+name: bitrise
+displayName: 'Bitrise'
+docs:
+  webhooks: https://docs.bitrise.io/en/bitrise-platform/integrations/webhooks/adding-outgoing-webhooks
+  verification: https://docs.bitrise.io/en/bitrise-platform/integrations/webhooks/adding-outgoing-webhooks
+  events: https://docs.bitrise.io/en/release-management/releases/configuring-a-release/outgoing-webhooks-in-release-management
+notes: >
+  Mobile CI/CD; covers outgoing webhooks for CI build events and Release Management events. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds to the outgoing
+  webhook's Headers (the value can be hidden). The header name is user-chosen, so the examples read
+  the header name from BITRISE_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  BITRISE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Bitrise source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Release Management bodies have a trigger_event field (e.g. app_version_added,
+  testflight_upload_completed, google_play_upload_completed); CI build event payloads don't document
+  a type field (build_status / build_triggered_workflow etc.), so detect them by shape and say so.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'CI build finished'
+    - 'app_version_added'
+    - 'testflight_upload_completed'
+catalog:
+  summary: 'Authenticate Bitrise outgoing webhooks (unsigned: a secret custom header compared in full in constant time), handle CI build events and Release Management events like `app_version_added`'

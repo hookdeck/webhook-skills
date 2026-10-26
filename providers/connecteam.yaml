@@ -1,0 +1,48 @@
+name: connecteam
+displayName: 'Connecteam'
+docs:
+  webhooks: https://developer.connecteam.com/docs/setting-up-webhook-via-api
+  verification: https://developer.connecteam.com/docs/setting-up-webhook-via-api
+  events: https://developer.connecteam.com/docs/setting-up-webhook-via-api
+notes: >
+  Connecteam (frontline workforce app) webhooks created through the Webhook API (users, forms,
+  time_activity, shift_scheduler, tasks, chat features). Connecteam says: 'When secretKey is set,
+  Connecteam sends that exact value in the x-webhook-secret header. It does not sign or hash the
+  request body.' secretKey is optional at creation; the docs don't say whether dashboard-created
+  webhooks can set it. No signature: requests are unsigned. Connecteam sends the webhook's secretKey
+  as plain text in the x-webhook-secret header on every request. The examples read
+  CONNECTEAM_WEBHOOK_SECRET, look the x-webhook-secret header up case-insensitively and compare its
+  WHOLE value to the secret. This is what Hookdeck's Connecteam source does (API key verification,
+  header x-webhook-secret, exact whole value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is CONNECTEAM, labelled
+  'Connecteam'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Set a secretKey when you create the webhook through
+  the Connecteam API. Webhooks without one send nothing to verify." Methods: only the Chat webhook
+  guide names the method (POST, with User-Agent: connecteam); the setup page doesn't. The examples
+  must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express:
+  app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route with those
+  methods), check the credential first for every method, and handle an empty body. Say in SKILL.md
+  and setup.md that Hookdeck's Connecteam source pre-selects POST without managing the method, so
+  any other method the sender uses must also be allowed on the source. Body: most features send
+  {requestId, company, activityType, eventTimestamp, eventType, data}; Time Activity is flat
+  (userId, timeClockId, timeActivity at the root, plus webhookVersion). Dispatch on eventType
+  (user_created, user_updated, user_archived, form_submission, clock_in, clock_out, shift_created,
+  task_created, ...). Return any 2xx within 10 seconds; 404 is treated as permanent. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check. Documented
+  sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/connecteam/latest/ (admin_day_locked.json,
+  admin_day_unlocked.json, admin_declined_add_request.json, admin_declined_delete_request.json,
+  ...); base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'user_created'
+    - 'form_submission'
+    - 'clock_in'
+catalog:
+  summary: 'Authenticate Connecteam webhooks (unsigned: the `x-webhook-secret` secretKey compared in constant time), handle user, form, time clock, scheduler and task events'

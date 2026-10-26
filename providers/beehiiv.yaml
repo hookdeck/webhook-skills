@@ -1,0 +1,37 @@
+name: beehiiv
+displayName: 'beehiiv'
+docs:
+  webhooks: https://developers.beehiiv.com/webhooks
+  verification: https://developers.beehiiv.com/webhooks#verifying-webhook-signatures
+notes: >
+  beehiiv (newsletter platform; displayName must be lowercase 'beehiiv'). beehiiv says: 'beehiiv
+  delivers webhooks through Svix. Each request includes svix-id, svix-timestamp, and svix-signature
+  headers that you should verify with your endpoint's signing secret', found under Settings >
+  Webhooks on the endpoint details page. Webhooks need a paid plan (Lite and above). Standard
+  Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, key = base64-decode of the secret
+  after the whsec_ prefix, base64 output. The secret (BEEHIIV_WEBHOOK_SECRET) is the endpoint's
+  signing secret from Settings > Webhooks (Svix-issued, whsec_). Verify with the svix library (npm
+  'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature. This
+  matches Hookdeck's beehiiv source (Standard Webhooks, headers_prefix 'svix', whsec_ secret
+  base64-decoded, every v1 entry tried). The library always enforces a fixed 5-minute timestamp
+  window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the
+  library rejects late retries after 5 minutes, and point to a manual verifier in
+  references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the decoded key,
+  compare every space-separated v1,<base64> entry in constant time, require the timestamp to be a
+  plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401. Body: {uid, event_type, event_timestamp, data}. Event types: post.sent,
+  post.updated, post.scheduled, subscription.created, subscription.confirmed, subscription.deleted,
+  subscription.upgraded, subscription.downgraded, subscription.paused, subscription.resumed,
+  newsletter_list_subscription.subscribed, survey.response_submitted, podcasts.episode.published and
+  more. Dispatch on event_type. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works (and, for signatures, the exact bytes are verified); parse the
+  body only after the check. Hookdeck's source type is BEEHIIV, labelled 'beehiiv'.
+testScenario:
+  events:
+    - 'subscription.created'
+    - 'post.sent'
+    - 'subscription.deleted'
+catalog:
+  summary: 'Verify beehiiv webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle post, subscription and survey events'

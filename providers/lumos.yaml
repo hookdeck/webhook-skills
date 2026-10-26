@@ -1,0 +1,42 @@
+name: lumos
+displayName: 'Lumos'
+docs:
+  webhooks: https://developers.lumos.com/docs/webhooks
+  verification: https://lumos.help.usepylon.com/articles/9414083876-webhook-security-for-offboarding-payloads
+notes: >
+  Lumos (identity governance) inline webhooks: Provisioning, Deprovisioning, Pre-Approval and
+  Request Validation. Lumos says: 'You can also add your own custom headers to any webhook, for
+  example a bearer token or an API key that your endpoint expects.' Lumos also signs each request
+  with HMAC-SHA256 over a timestamp plus the body in X-Lumos-Webhook-Signature, but the header
+  format is in a login-gated article, so the skill does NOT verify that signature: it checks the
+  custom header Hookdeck's Lumos source uses, and SKILL.md and verification.md must say plainly that
+  the Lumos signature isn't verified here (and why). No signature: requests are unsigned.
+  Authenticate with a secret header the user adds as a custom header on the Lumos webhook. The
+  header name is user-chosen, so the examples read the header name from LUMOS_WEBHOOK_HEADER
+  (default 'Authorization') and the expected value from LUMOS_WEBHOOK_SECRET (the exact, whole
+  header value, including any 'Bearer ' prefix the user typed). Look the header up
+  case-insensitively and compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is
+  what Hookdeck's Lumos source does (API key verification: Header Name + exact whole Header Value).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is LUMOS, labelled 'Lumos'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use
+  notification webhooks such as provisioning and deprovisioning. Pre-approval and request validation
+  webhooks expect a decision back and aren't supported." Body: deprovisioning payloads carry the
+  user (email, given and family name), the account on the target app, the application (name,
+  instance id), the permissions being removed, a comment and optional custom fields; field names are
+  not public, so use a clearly labelled illustrative payload. HTTPS only; redirects are not
+  followed. Pre-Approval and Request Validation hooks expect a decision in the response, which
+  Hookdeck can't return. The method isn't stated; examples accept POST. Express examples must read
+  the raw body with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the
+  exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'Provisioning webhook (illustrative payload)'
+    - 'Deprovisioning webhook (illustrative payload)'
+catalog:
+  summary: 'Authenticate Lumos provisioning and deprovisioning webhooks with a custom header you name (whole value compared in constant time; the `X-Lumos-Webhook-Signature` HMAC is not verified)'

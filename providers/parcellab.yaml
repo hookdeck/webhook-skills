@@ -1,0 +1,33 @@
+name: parcellab
+displayName: 'parcelLab'
+docs:
+  webhooks: https://docs.parcellab.com/docs/developers/v2/data-elements/get-status-updates/webhooks
+  verification: https://docs.parcellab.com/docs/developers/v2/data-elements/get-status-updates/webhooks
+notes: >
+  Post-purchase tracking. parcelLab sets up webhooks from the HTTPS URL and credentials you provide;
+  it supports HTTP Basic, access token headers and OAuth 2.0; only Basic is covered. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's parcelLab source verifies. The
+  examples read PARCELLAB_WEBHOOK_USERNAME and PARCELLAB_WEBHOOK_PASSWORD, parse 'Authorization:
+  Basic base64(username:password)' (scheme case-insensitive, split on the first colon), and compare
+  the username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. The docs don't say whether Basic
+  credentials are sent preemptively. Say that the credentials must arrive on the first request: a
+  401 + WWW-Authenticate challenge flow won't work through Hookdeck, which verifies the request as
+  received. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Body has
+  event: onCreated, onUpdated, onDispatch, onScheduled, onDelay, onInternalDelay, onOutForDelivery,
+  onFailedAttempt, onPickupReady, onDelivered, onReturn (CloudEvents format sends type
+  com.parcellab.tracking.event.<lowercased>). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'onDispatch'
+    - 'onOutForDelivery'
+    - 'onDelivered'
+catalog:
+  summary: 'Authenticate parcelLab tracking webhooks (unsigned HTTP Basic auth compared in constant time), handle events like `onDispatch`, `onOutForDelivery` and `onDelivered`'

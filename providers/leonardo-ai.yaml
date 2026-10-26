@@ -1,0 +1,38 @@
+name: leonardo-ai
+displayName: 'Leonardo.Ai'
+docs:
+  webhooks: https://docs.leonardo.ai/docs/guide-to-the-webhook-callback-feature
+  verification: https://docs.leonardo.ai/docs/guide-to-the-webhook-callback-feature
+notes: >
+  Leonardo.Ai (generative image API) webhook callbacks. 'The webhook callback API key will be used
+  for authenticating to your webhook callback. It will be added to the header of the request as
+  authorization: Bearer $yourWebhookCallbackApiKey.' The callback URL and key are optional settings
+  on a production API key; changing them means creating a new production API key. No signature.
+  Leonardo.Ai sends 'Authorization: Bearer <secret>'. Hookdeck's Leonardo.Ai source is API key
+  verification on the authorization header with value_prefix 'Bearer ' (hookdeck/core#6046 head
+  8c48f55d): the user stores just the secret, and the scheme matches in any case (auth schemes are
+  case-insensitive, RFC 9110). So the examples read the BARE secret from LEONARDO_AI_WEBHOOK_SECRET
+  (if the configured value itself starts with 'Bearer ', case-insensitively, strip it, as core
+  does), require the Authorization header to start with 'Bearer ' compared case-insensitively, and
+  compare the rest to the secret in constant time. Do not trim or otherwise alter the secret.
+  Missing header, wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is LEONARDO_AI, labelled 'Leonardo.Ai'. Hookdeck shows this setup
+  note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Set a webhook callback API key on the production API key, then paste it here." Body:
+  {type, object, timestamp (ms), api_version, data: {object}}; type image_generation.complete,
+  data.object the generation (id, status, generated_images, ...). Dispatch on type. POST,
+  application/json. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works (and, for signatures, the exact bytes are verified); parse the body only after
+  the check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs
+  show it) are in /home/user/regwt/b13-merge/samples-doc/providers/leonardo-ai/latest/
+  (image_generation.complete.json); base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'image_generation.complete'
+catalog:
+  summary: 'Authenticate Leonardo.Ai webhook callbacks (unsigned: the whole `Authorization: Bearer <key>` value compared in constant time), handle `image_generation.complete`'

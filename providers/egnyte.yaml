@@ -1,0 +1,38 @@
+name: egnyte
+displayName: 'Egnyte'
+docs:
+  webhooks: https://developers.egnyte.com/integration/cfs/api-docs/webhooks-api
+  verification: https://developers.egnyte.com/integration/cfs/api-docs/webhooks-api
+notes: >
+  Egnyte (file collaboration) Webhooks API. Egnyte says: 'Webhook requests include an authorization
+  header whose value is the authHeader you configure at registration time' (example "authHeader":
+  "Bearer secret-token-12345"). No signature. The credential is the Authorization header. Hookdeck's
+  Egnyte source compares the WHOLE Authorization header value to the configured key, so the examples
+  read EGNYTE_AUTHORIZATION = the full value as Egnyte sends it (e.g. 'Bearer secret-token-12345'),
+  including the 'Bearer ' scheme prefix, and compare the whole Authorization header to it; do not
+  strip, parse or base64-decode the prefix (Coterie pattern). authHeader is optional at
+  registration; without it nothing is sent to verify, so tell the user to set it. Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
+  EGNYTE, labelled 'Egnyte'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the authHeader value
+  exactly as set on the Egnyte webhook, including any "Bearer " prefix." Body: {"data": [ ... ]}, an
+  array of events, each with eventId (dedupe key), domain, timestamp (ms), user, actionSource,
+  eventType (e.g. fs:add_file, fs:delete_file, fs:move_file, fs:add_folder, link:create,
+  comment:set_comment, permission:permission_change, workflow:completed, group:add_members),
+  webhookId and an event-specific data object; loop over data[] and dispatch on eventType. Egnyte
+  wants exactly HTTP 200 (return 200, not 202/204); any other status is retried immediately, after 1
+  min, 10 min and 1 h, then the webhook is disabled. POST, application/json. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works (and, for
+  signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'fs:add_file'
+    - 'fs:delete_file'
+    - 'link:create'
+catalog:
+  summary: 'Authenticate Egnyte webhooks (unsigned: the whole `Authorization` value set as `authHeader`, compared in constant time), handle batched `data[]` file, folder, link and permission events'

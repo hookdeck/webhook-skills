@@ -1,0 +1,24 @@
+name: glean
+displayName: 'Glean'
+docs:
+  webhooks: https://developers.glean.com/guides/triggers/overview
+  verification: https://developers.glean.com/guides/triggers/webhook-delivery
+notes: >
+  Glean Triggers (created via the API: POST /api/triggers returns signing_secret only at creation).
+  Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature 'v1,<base64>', HMAC-SHA256 over
+  '{webhook-id}.{webhook-timestamp}.{raw body}', key = signing secret with whsec_ removed and
+  base64-decoded. An optional BEARER credential adds Authorization: Bearer <secret> in addition to the
+  signature; mention it as an extra check only. The standardwebhooks / svix libraries always enforce a
+  fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so the library rejects late retries after 5 minutes, and point to a manual
+  verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key =
+  base64-decode of the secret after whsec_, compare every space-separated v1,<base64> entry in
+  constant time) where the window can be dropped or widened. Triggers come from per-datasource presets
+  (ids are per deployment), so there is no fixed event list; describe the payload from the docs and
+  dispatch on its trigger/event fields. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - CONTENT_SCHEDULE
+catalog:
+  summary: 'Verify Glean trigger webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256, `whsec_` secret), handle CONTENT_SCHEDULE trigger deliveries'

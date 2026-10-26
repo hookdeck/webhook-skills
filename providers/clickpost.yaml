@@ -1,0 +1,43 @@
+name: clickpost
+displayName: 'ClickPost'
+docs:
+  webhooks: https://docs.clickpost.ai/docs/tracking-a-shipment-using-webhook
+  verification: https://docs.clickpost.ai/docs/all-status-webhook
+notes: >
+  ClickPost (shipment tracking for e-commerce) status webhooks (Settings > Notifications > Webhooks,
+  Selected Status or All Status tab). Auth options on the dashboard: 'Simple Token | A static bearer
+  token sent in the Authorization header. | Authorization: Token <token>', X-API-Key (x-api-key),
+  Webhook-Key (webhook-key), Basic Auth and Dynamic Token. Hookdeck's ClickPost source covers Simple
+  Token only; say the others aren't covered. No signature. ClickPost sends 'Authorization: Token
+  <secret>'. Hookdeck's ClickPost source is API key verification on the authorization header with
+  value_prefix 'Token ' (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and the
+  scheme matches in any case (auth schemes are case-insensitive, RFC 9110). So the examples read the
+  BARE secret from CLICKPOST_WEBHOOK_SECRET (if the configured value itself starts with 'Token ',
+  case-insensitively, strip it, as core does), require the Authorization header to start with 'Token
+  ' compared case-insensitively, and compare the rest to the secret in constant time. Do not trim or
+  otherwise alter the secret. The scheme is 'Token', not 'Bearer'. Missing header, wrong scheme or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
+  CLICKPOST, labelled 'ClickPost'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Choose Simple Token
+  authentication on the ClickPost webhook and paste the token." Body: a flat scan record {waybill,
+  cp_id, status, remark, location, timestamp, clickpost_status_code, clickpost_status_description,
+  additional: {latest_status, ...}}. Dispatch on clickpost_status_code (an integer: 1 OrderPlaced, 2
+  PickupPending, 4 PickedUp, 5 InTransit, 6 OutForDelivery, 8 Delivered, ...). Scans may arrive out
+  of order; dedupe on waybill + scan. Success is 200/201/202/204 within 5 seconds. POST. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check. Documented
+  sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/clickpost/latest/ (41.json, 42.json, 43.json,
+  44.json, ...); base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'clickpost_status_code 8 (Delivered)'
+    - 'clickpost_status_code 6 (OutForDelivery)'
+    - 'clickpost_status_code 4 (PickedUp)'
+catalog:
+  summary: 'Authenticate ClickPost shipment status webhooks (unsigned: the whole `Authorization: Token <token>` value compared in constant time), handle scans by `clickpost_status_code`'

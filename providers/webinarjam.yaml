@@ -1,0 +1,41 @@
+name: webinarjam
+displayName: 'WebinarJam'
+docs:
+  webhooks: https://support.webinarjam.com/en/articles/15370084-connect-and-use-a-custom-webhook
+  verification: https://support.webinarjam.com/en/articles/15370084-connect-and-use-a-custom-webhook
+notes: >
+  WebinarJam (and EverWebinar) native Custom Webhook autoresponder integration: Profile >
+  Integrations > Autoresponder > Custom Webhook, then automation rules per webinar. Authentication
+  type: 'Bearer token ... The token will be sent as an authorization header with each request' or
+  'Custom header ... a specific header name and value'. The 8.17.0 release notes
+  (https://support.webinarjam.com/en/articles/15370089-2026-apr-6-webinarjam-8-17-0-release-notes)
+  say: 'For each trigger (e.g., registration, attended live, missed live), we send a POST request
+  with:' lead details, key links and optional custom body key-value pairs. No signature: requests
+  are unsigned. Authenticate with a secret header the user adds (for the Bearer token option the
+  header is Authorization and the value is 'Bearer <token>'; for Custom header it is the name and
+  value the user chose). The header name is user-chosen, so the examples read the header name from
+  WEBINARJAM_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  WEBINARJAM_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's WebinarJam source does (API key verification: Header
+  Name + exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node
+  checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is WEBINARJAM, labelled 'WebinarJam'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "For the Bearer token option, enter Authorization as the header
+  name and "Bearer <token>" as the value." Body: lead details (first name, last name, email, phone),
+  key links (live room, replay, unsubscribe) and custom key-value pairs; field names are not
+  documented, so use a clearly labelled illustrative payload. Triggers: Registered, Attended,
+  Missed, left early, purchase. POST. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check.
+testScenario:
+  events:
+    - 'Registered trigger (illustrative payload)'
+    - 'Attended live trigger (illustrative payload)'
+catalog:
+  summary: 'Authenticate WebinarJam and EverWebinar Custom Webhook deliveries (unsigned: Bearer token or custom header, the whole value compared in constant time), handle registration and attendance triggers'

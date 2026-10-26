@@ -1,0 +1,40 @@
+name: ingenious-build
+displayName: 'INGENIOUS.BUILD'
+docs:
+  webhooks: https://help.ingenious.build/custom-accounting-integration-setup-guide-ingenious.build-help-center
+  verification: https://help.ingenious.build/custom-accounting-integration-setup-guide-ingenious.build-help-center
+notes: >
+  INGENIOUS.BUILD (construction project management) Custom Accounting Integration webhooks.
+  displayName 'INGENIOUS.BUILD'. One webhook URL per object type (Budgets, Budget Changes,
+  Contracts, Contract Changes, Invoices); webhooks fire only when a user clicks Sync to Accounting
+  on an approved record. The docs say: 'Add any authorization headers your endpoint expects, for
+  example: Authorization: Bearer your-token-here.' No signature: requests are unsigned. Authenticate
+  with a secret header the user adds to each webhook URL on the Custom Accounting Integration. The
+  header name is user-chosen, so the examples read the header name from
+  INGENIOUS_BUILD_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  INGENIOUS_BUILD_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's INGENIOUS.BUILD source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is INGENIOUS_BUILD,
+  labelled 'INGENIOUS.BUILD'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Add an auth header, such as
+  Authorization: Bearer <token>, to each webhook URL on the Custom Accounting Integration." Body
+  (payload docs at https://api.ingenious.build/page/webhook-payloads.md): {name, subject, data};
+  name is the event (budget_exported_to_accounting, budget_change_exported_to_accounting,
+  contract_exported_to_accounting, contract_change_exported_to_accounting,
+  invoice_exported_to_accounting), subject the object type; dispatch on name. POST. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works (and, for
+  signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'invoice_exported_to_accounting'
+    - 'contract_exported_to_accounting'
+    - 'budget_exported_to_accounting'
+catalog:
+  summary: 'Authenticate INGENIOUS.BUILD Custom Accounting Integration webhooks (unsigned: a header you name, its whole value compared in constant time), handle budget, contract and invoice exports'

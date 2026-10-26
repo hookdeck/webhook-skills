@@ -1,0 +1,48 @@
+name: palmetto-finance
+displayName: 'Palmetto Finance'
+docs:
+  webhooks: https://docs.palmetto.com/finance/webhooks/
+  verification: https://docs.palmetto.com/finance/webhooks/
+notes: >
+  Palmetto Finance (LightReach solar financing) webhooks. 'There are 3 authentication mechanisms
+  available: Server API key, Client headers, Client basic authorization header ... Server API key
+  This is the default ... Palmetto generates an API key. It is returned from the registration
+  endpoint, and only once. ... on webhook events to your endpoint, an apiKey header will be sent
+  with the API key as the value.' Other pages call the header api_key, so the header name is
+  configurable: default 'apiKey', and tell the user to check a delivery. Client headers and client
+  basic auth are not covered by Hookdeck's Palmetto Finance source; say so. No signature: requests
+  are unsigned. Authenticate with a secret header the user adds (the server API key Palmetto returns
+  at registration). The header name is user-chosen, so the examples read the header name from
+  PALMETTO_FINANCE_WEBHOOK_HEADER (default 'apiKey') and the expected value from
+  PALMETTO_FINANCE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's Palmetto Finance source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is PALMETTO_FINANCE,
+  labelled 'Palmetto Finance'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Use the default server API key
+  authentication. Palmetto shows the key only once, when you register the webhook. Enter apiKey as
+  the header unless your requests show api_key." Methods: each subscription sets its own httpMethod
+  (the example uses POST). The examples must not be POST-only: accept GET, POST, PUT, PATCH and
+  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
+  for each; FastAPI: api_route with those methods), check the credential first for every method, and
+  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Palmetto Finance source
+  pre-selects POST without managing the method, so any other method the sender uses must also be
+  allowed on the source. Body: flat event objects with event plus the event's fields (accountId,
+  applicationId, ...); event e.g. accountCreated, applicationStatus, contractSigned,
+  milestoneAchieved, quoteCreated, documentUploaded. Dispatch on event. 30-second timeout;
+  5xx/429/network errors retried up to 9 times, other 4xx not; 10 failures disable a subscription.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works (and, for signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'accountCreated'
+    - 'contractSigned'
+    - 'milestoneAchieved'
+catalog:
+  summary: 'Authenticate Palmetto Finance webhooks (unsigned: the server API key in the `apiKey` header, compared in constant time), handle account, application, contract and milestone events'

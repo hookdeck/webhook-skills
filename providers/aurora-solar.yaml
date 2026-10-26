@@ -1,0 +1,44 @@
+name: aurora-solar
+displayName: 'Aurora Solar'
+docs:
+  webhooks: https://docs.aurorasolar.com/reference/webhooks
+  verification: https://docs.aurorasolar.com/reference/webhooks
+notes: >
+  Aurora Solar (solar design software) webhook subscriptions. 'Aurora webhooks are fired as GET
+  requests to a URL generated using a template provided by you': there is NO body; the event data
+  (the attributes the URL template selects, e.g. project_id, design_id) arrives in the query string.
+  Header-based token authentication: "header_auth_key": "X-Aurora-Webhook-Token",
+  "header_auth_value": "2dbcbba1-..." (key user-chosen). Basic Auth is the other option and is not
+  covered by Hookdeck's Aurora Solar source; say so. No signature: requests are unsigned.
+  Authenticate with a secret header the user adds via header_auth_key/header_auth_value on the
+  webhook subscription. The header name is user-chosen, so the examples read the header name from
+  AURORA_SOLAR_WEBHOOK_HEADER (default 'X-Aurora-Webhook-Token') and the expected value from
+  AURORA_SOLAR_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's Aurora Solar source does (API key verification:
+  Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
+  digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
+  str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is AURORA_SOLAR, labelled
+  'Aurora Solar'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Use header-based token
+  authentication on the Aurora Solar webhook. Webhooks without it send nothing to verify." Methods:
+  the receivers' primary route must handle GET with the data in the query string and no body
+  (Express app.get, Next.js export GET, FastAPI @app.get), check the header first, then read the
+  query parameters. Also accept POST for flexibility. Say in SKILL.md and setup.md that Hookdeck's
+  Aurora Solar source pre-selects GET without managing the method. Show a URL template such as
+  https://<hookdeck-url>?event=project_created&project_id={project_id}. Each subscription is for one
+  event, so put a static event name in the template to dispatch on. Respond within 10 seconds;
+  failures are retried 5 more times over 24 hours. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'project_created'
+    - 'design_created'
+    - 'performance_simulation_job_completed'
+catalog:
+  summary: 'Authenticate Aurora Solar webhooks (unsigned GET requests: the header_auth_key header compared in constant time), read event data from the query string'

@@ -1,0 +1,32 @@
+name: proxyclick
+displayName: 'Proxyclick (Eptura Visitor)'
+docs:
+  webhooks: https://knowledge.eptura.com/Visitor/Integrations/Proxyclick_APIs_and_webhooks/Send_info_from_Proxyclick_to_other_systems_using_webhooks
+  verification: https://knowledge.eptura.com/Visitor/Integrations/Proxyclick_APIs_and_webhooks/Send_info_from_Proxyclick_to_other_systems_using_webhooks
+notes: >
+  Visitor management (Proxyclick is now Eptura Visitor). Integrations > API and Webhooks > Settings
+  > Add webhook; basic authentication (username/password) is the only security option. No signature.
+  Authenticate with HTTP Basic auth, which is what Hookdeck's Proxyclick source verifies. The
+  examples read PROXYCLICK_WEBHOOK_USERNAME and PROXYCLICK_WEBHOOK_PASSWORD, parse 'Authorization:
+  Basic base64(username:password)' (scheme case-insensitive, split on the first colon), and compare
+  the username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. The docs don't say whether Basic
+  credentials are sent preemptively. Say that the credentials must arrive on the first request: a
+  401 + WWW-Authenticate challenge flow won't work through Hookdeck, which verifies the request as
+  received. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger and coterie skills. Triggers are
+  visitor/visit events (on-site, check-in, check-out, visit created/updated/deleted) named only as
+  UI labels; the payload attribute reference is unreachable, so the examples use a clearly labelled
+  illustrative body and say no event field is documented. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'Visitor check-in'
+    - 'Visit created'
+catalog:
+  summary: 'Authenticate Proxyclick (Eptura Visitor) webhooks (unsigned HTTP Basic auth compared in constant time), handle visitor check-in, check-out and visit events'

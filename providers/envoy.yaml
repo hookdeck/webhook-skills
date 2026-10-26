@@ -1,0 +1,27 @@
+name: envoy
+displayName: 'Envoy'
+docs:
+  webhooks: https://developers.envoy.com/hub/docs/create-webhooks
+  verification: https://developers.envoy.com/hub/docs/create-webhooks#verify-a-webhook
+  events: https://developers.envoy.com/hub/reference/events
+  reference_impl: https://unpkg.com/@envoy/envoy-integrations-sdk@2.5.4/src/util/EnvoySignatureVerifier.ts
+notes: >
+  Envoy (workplace visitor management) app webhooks. Header X-Envoy-Signature: base64 HMAC-SHA256 of
+  the raw request body keyed with the Envoy app's client secret (the official SDK's
+  EnvoySignatureVerifier confirms sha256/base64/raw body). The docs page also shows a stray Ruby
+  snippet (hexdigest of timestamp+token, Mailgun-style): ignore it; the prose and the SDK agree.
+  Compare in constant time: compare the base64 strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check (no lenient base64 decode of the header); in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Optional
+  HTTP Basic auth on the endpoint exists but is not covered. Topics: entry_sign_in, entry_sign_out,
+  invite_created, invite_updated, invite_removed, employee_entry_sign_in, desk_sign_in, ticket_created
+  and more; check the payload for the topic field. Hookdeck setup (say this in SKILL.md's setup
+  section and in references/setup.md): Envoy signs webhooks with your Envoy app's client secret. Paste
+  that secret here. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'entry_sign_in'
+    - 'invite_created'
+catalog:
+  summary: 'Verify Envoy webhook signatures (`X-Envoy-Signature`, base64 HMAC-SHA256 of the raw body keyed with your app''s client secret), handle visitor events like `entry_sign_in` and `invite_created`'

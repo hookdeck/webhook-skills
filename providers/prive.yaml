@@ -1,0 +1,27 @@
+name: prive
+displayName: 'Prive (Recurly Commerce)'
+docs:
+  webhooks: https://developers.tryprive.com/reference/publicapicontroller_createwebhook
+  verification: https://developers.tryprive.com/reference/getting-started-with-prive-api
+notes: >
+  Prive (Shopify subscriptions), now Recurly Commerce: keep the Prive name in the skill and mention
+  the rename. Header x-prive-hmac-sha256: bare base64 HMAC-SHA256 of the raw body (Shopify-style, no
+  prefix), keyed with the secret token Prive provides to the merchant. The docs' Node sample passes
+  'hex' as a third argument to update(), which Node ignores; the digest is base64. Compare in constant
+  time: compare the base64 strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a
+  length check (no lenient base64 decode of the header); in Python use hmac.compare_digest on bytes
+  (encode both sides) so a non-ASCII header gives 401, not 500. Webhook topics (create-webhook topic
+  enum): subscriptions/created, subscriptions/line_removed, subscriptions/status/updated,
+  orders/created, billingAttempts/created, billingAttempts/success, billingAttempts/failed,
+  paymentMethod/updated, subscriptionActivities/created, subscription/customAttributes/updated. No
+  topic header or body field is documented, so say each webhook subscribes to one topic and suggest
+  one endpoint path (or Hookdeck connection) per topic. Hookdeck setup (say this in SKILL.md's setup
+  section and in references/setup.md): Prive (now Recurly Commerce) provides the secret token. Ask
+  Prive support for it if you don't have it. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'subscriptions/created'
+    - 'billingAttempts/failed'
+catalog:
+  summary: 'Verify Prive (now Recurly Commerce) webhook signatures (`x-prive-hmac-sha256`, base64 HMAC-SHA256 of the raw body), handle subscription and billing-attempt topics'

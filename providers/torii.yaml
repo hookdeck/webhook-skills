@@ -1,0 +1,36 @@
+name: torii
+displayName: 'Torii'
+docs:
+  webhooks: https://support.toriihq.com/hc/en-us/articles/4824204903067-Custom-Actions
+  verification: https://support.toriihq.com/hc/en-us/articles/4824204903067-Custom-Actions
+notes: >
+  SaaS management. Torii has no native event webhooks: outbound requests come from the workflow
+  'Custom action (HTTP Request)', whose method, URL, headers and JSON body the workflow author
+  defines. No signature: requests are unsigned. Authenticate with a secret header the user adds to
+  the custom action (Step 7, headers as key-value pairs). The header name is user-chosen, so the
+  examples read the header name from TORII_WEBHOOK_HEADER (default 'Authorization') and the expected
+  value from TORII_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
+  user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
+  parse a 'Bearer ' prefix. This is what Hookdeck's Torii source does (API key verification: header
+  name + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and new-relic skills
+  if present). Hookdeck's source type is TORII, labelled 'Torii'. The request method is user-chosen,
+  so the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook
+  route (Next.js: export a handler for each), and handle an empty body. Say in SKILL.md and setup.md
+  that Hookdeck's Torii source pre-selects POST without managing the method, so any other method the
+  sender uses must also be allowed on the source. The body is the author's JSON with @ placeholders;
+  The body is a template the user writes; the vendor adds no event field, so the examples and test
+  scenario use a clearly labelled illustrative payload. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential
+  check.
+testScenario:
+  events:
+    - 'new app discovered (illustrative workflow body)'
+    - 'user offboarding (illustrative workflow body)'
+catalog:
+  summary: 'Authenticate Torii workflow custom-action requests (unsigned: a secret header compared in full in constant time), handle the JSON bodies your workflows send'

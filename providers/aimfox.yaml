@@ -1,0 +1,23 @@
+name: aimfox
+displayName: 'Aimfox'
+docs:
+  webhooks: https://docs.aimfox.com/#/webhook-docs
+  verification: https://docs.aimfox.com/#/webhook-docs
+  events: https://docs.aimfox.com/#/webhook-docs
+notes: >
+  LinkedIn automation; workspace webhooks (beta). Requests are unsigned. The webhook's optional
+  'Authentication Header' (Basic or a custom header such as a Bearer token; the API stores a
+  free-form headers object) is the only authentication. The header name is user-chosen, so the
+  examples read it from AIMFOX_WEBHOOK_HEADER (default 'Authorization') and compare the whole
+  value, including any 'Bearer ' or 'Basic ' prefix, with AIMFOX_WEBHOOK_SECRET in constant time.
+  Missing header or mismatch is 401. A static shared credential authenticates the sender, not the
+  body, and gives no replay protection. Body has event_type (new_connection, accepted, new_reply,
+  message, account_logged_out and others), id, workspace and event. Retries up to 6 times with
+  exponential backoff. Express examples read the raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'new_connection'
+    - 'new_reply'
+    - 'account_logged_out'
+catalog:
+  summary: 'Authenticate Aimfox webhooks (unsigned: the authentication header compared in full in constant time), handle `event_type`s like `new_connection`, `new_reply` and `account_logged_out`'

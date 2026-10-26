@@ -1,0 +1,30 @@
+name: oyster
+displayName: 'Oyster'
+docs:
+  webhooks: https://docs.oysterhr.com/docs/getting-started-with-webhooks
+  verification: https://docs.oysterhr.com/docs/getting-started-with-webhooks
+  events: https://docs.oysterhr.com/reference/post_expenses-expense-approved
+notes: >
+  Global HR/EOR. Webhooks are registered with POST /v1/webhooks {url, sharedSecret}; Oyster sends
+  the sharedSecret as 'Authorization: Bearer <sharedSecret>' (e.g. 'Bearer 12345'); 5s timeout. No
+  signature. The credential is the Authorization header. Hookdeck's Oyster source compares the WHOLE
+  Authorization header value to the configured key, so the examples read OYSTER_AUTHORIZATION = the
+  full value as Oyster sends it (e.g. 'Bearer <sharedSecret>'), including the scheme prefix, and
+  compare the whole Authorization header to it; do not strip or parse the prefix (Coterie pattern).
+  Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body has eventName like hiring.employment_engaged, expenses.expense_approved,
+  contract.change_applied, benefits.enrollment_enrolled. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works; parse JSON only after the credential
+  check.
+testScenario:
+  events:
+    - 'hiring.employment_engaged'
+    - 'expenses.expense_approved'
+    - 'contract.change_applied'
+catalog:
+  summary: 'Authenticate Oyster webhooks (the whole `Authorization: Bearer <sharedSecret>` value compared in constant time), handle `eventName`s like `hiring.employment_engaged` and `expenses.expense_approved`'

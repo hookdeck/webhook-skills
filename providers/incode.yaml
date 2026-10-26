@@ -1,0 +1,43 @@
+name: incode
+displayName: 'Incode'
+docs:
+  webhooks: https://developer.incode.com/general-reference/webhooks-overview
+  verification: https://developer.incode.com/dashboard-platform-administration/configuration-webhooks-tab
+  events: https://developer.incode.com/general-reference/session-webhooks
+notes: >
+  Incode (identity verification). 'You can create custom headers that your endpoint receives as part
+  of webhook notifications. ... all headers are sent for all webhooks. Dynamic values are not
+  supported.' Configured in Dashboard > Configuration > Webhooks (Custom Header Key and Custom
+  Header Value). An OIDC/OAuth option also exists and is not covered by Hookdeck's Incode source;
+  say so. No signature: requests are unsigned. Authenticate with a secret header the user adds in
+  Dashboard > Configuration > Webhooks. The header name is user-chosen, so the examples read the
+  header name from INCODE_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  INCODE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Incode source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is INCODE, labelled 'Incode'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Add a custom header in Dashboard > Configuration > Webhooks and enter it
+  here. Incode retries unless it gets a 200 with a JSON content type, or a 204, so keep any custom
+  source response JSON." Response: Incode retries unless it gets '200 OK along with the
+  application/json header or 204 No content', so the examples must answer 200 with a JSON body
+  (res.json / JSONResponse). Body: each webhook kind has its own shape: session webhooks carry
+  event_type (SESSION_STARTED, SESSION_SUCCEEDED, SESSION_FAILED, ONBOARDING_FINISHED,
+  MANUAL_REVIEW_APPROVED, ...), Identity Enrolled carries eventType, the onboarding status webhook
+  carries interviewId and onboardingStatus. Read event_type, then eventType, then onboardingStatus.
+  POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check.
+testScenario:
+  events:
+    - 'SESSION_SUCCEEDED'
+    - 'SESSION_FAILED'
+    - 'ONBOARDING_FINISHED'
+catalog:
+  summary: 'Authenticate Incode webhooks (unsigned: a custom header from the dashboard, compared in constant time), answer 200 JSON, handle session and onboarding events'

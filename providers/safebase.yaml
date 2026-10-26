@@ -1,0 +1,42 @@
+name: safebase
+displayName: 'SafeBase'
+docs:
+  webhooks: https://help.safebase.io/en/articles/16203084-integration-webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+notes: >
+  SafeBase (trust center; now part of Drata). SafeBase's webhook setup is an embedded Svix App
+  Portal (Add Endpoint, Event Catalog, Testing and Logs tabs, rate limiting, custom header) and it
+  points customers to Svix's source-IP list (https://docs.svix.com/receiving/source-ips). SafeBase's
+  page never shows the header names or secret format; they are Svix defaults (svix-* headers, whsec_
+  Signing Secret), which is what Hookdeck's config assumes; say so. Standard Webhooks signature with
+  svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more
+  space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
+  body}', HMAC-SHA256, key = base64-decode of the secret after the whsec_ prefix, base64 output. The
+  secret (SAFEBASE_WEBHOOK_SECRET) is the endpoint's Signing Secret from the SafeBase webhook
+  portal. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id,
+  svix-timestamp and svix-signature. This matches Hookdeck's SafeBase source (Standard Webhooks,
+  headers_prefix 'svix', whsec_ secret base64-decoded, every v1 entry tried). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays
+  resend the original timestamp, so the library rejects late retries after 5 minutes, and point to a
+  manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with
+  the decoded key, compare every space-separated v1,<base64> entry in constant time, require the
+  timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401. Body: JSON; each event in the Event Catalog has its own
+  schema. SafeBase says the test event has no event name but real events do; the field is not
+  documented, so the examples read the event name defensively (e.g. eventType, event_type, type or
+  event) and log the body otherwise. Event types: accessRequest.requested, accessRequest.blocked,
+  accessRequest.autoApprove.requireManual, accounts.created, accounts.nda.completed,
+  portal.file.downloaded, portal.viewed, questionnaire.completed, knowledgebase.entry.created and
+  more. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check. Hookdeck's source type is SAFEBASE, labelled 'SafeBase'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Paste the endpoint's Signing Secret from the SafeBase webhook portal exactly as shown, including
+  any whsec_ prefix."
+testScenario:
+  events:
+    - 'accessRequest.requested'
+    - 'accounts.nda.completed'
+    - 'portal.file.downloaded'
+catalog:
+  summary: 'Verify SafeBase trust center webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` Signing Secret), handle access request, account, portal and questionnaire events'

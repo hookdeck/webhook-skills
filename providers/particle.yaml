@@ -1,0 +1,43 @@
+name: particle
+displayName: 'Particle'
+docs:
+  webhooks: https://docs.particle.io/reference/cloud-apis/webhooks/
+  verification: https://docs.particle.io/reference/cloud-apis/webhooks/
+notes: >
+  Particle (IoT device cloud) webhook integrations. 'Custom headers are typically used to include an
+  Authorization header' (example "headers": {"Authorization": "Bearer 12345"}); integrations can
+  also use HTTP basic auth, which Hookdeck's Particle source doesn't cover; say so. Header values
+  may be mustache variables; the value must be static to verify. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds to the webhook integration. The header
+  name is user-chosen, so the examples read the header name from PARTICLE_WEBHOOK_HEADER (default
+  'Authorization') and the expected value from PARTICLE_WEBHOOK_SECRET (the exact, whole header
+  value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
+  Particle source does (API key verification: Header Name + exact whole Header Value). Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is PARTICLE, labelled 'Particle'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use
+  a static header value, not a mustache variable." Methods: requestType is 'one of GET, POST, PUT,
+  or DELETE', default POST. The examples must not be POST-only: accept GET, POST, PUT, PATCH and
+  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
+  for each; FastAPI: api_route with those methods), check the credential first for every method, and
+  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Particle source pre-selects
+  POST without managing the method, so any other method the sender uses must also be allowed on the
+  source. Body: the default request format is a web form (application/x-www-form-urlencoded) with
+  fields event, data, published_at and coreid; JSON, query-string and custom bodies are also
+  configurable. Parse form-encoded and JSON bodies (and query parameters for GET), after the auth
+  check. The event name is chosen by the customer's firmware, so dispatch on the event field with
+  illustrative names (e.g. temperature, motion-detected). Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes
+  are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'temperature'
+    - 'motion-detected'
+catalog:
+  summary: 'Authenticate Particle webhook integrations (unsigned: a static custom header such as `Authorization`, compared in constant time), accept any request method, parse form-encoded or JSON device events like temperature and motion-detected'

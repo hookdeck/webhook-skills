@@ -1,0 +1,28 @@
+name: autumn
+displayName: Autumn
+docs:
+  webhooks: https://docs.useautumn.com/documentation/webhooks
+  api: https://docs.useautumn.com/api-reference/webhooks/createWebhook
+  verification: https://docs.svix.com/receiving/verifying-payloads/how
+  events: https://docs.useautumn.com/api-reference/webhooks/billingUpdated
+notes: >
+  Autumn (pricing and billing for AI apps). Delivered by Svix: svix-id, svix-timestamp,
+  svix-signature; HMAC-SHA256 over '{svix-id}.{svix-timestamp}.{body}', key = base64-decode of the
+  whsec_ secret after the prefix. The secret is returned only once by webhooks.create / webhooks.sync
+  (Get never returns it). Use the svix library as Autumn's docs suggest. The standardwebhooks / svix
+  libraries always enforce a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}', key = base64-decode of the secret after whsec_, compare every space-separated v1,<base64>
+  entry in constant time) where the window can be dropped or widened. Events: balances.limit_reached,
+  balances.usage_alert_triggered, billing.updated, billing.auto_topup_failed, invoice.finalized,
+  customer.products.updated and more; dispatch on the body's type. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - billing.updated
+    - balances.limit_reached
+    - billing.auto_topup_failed
+catalog:
+  summary: Verify Autumn (Svix) webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256), handle billing.updated, balances.limit_reached and billing.auto_topup_failed events
+  docsUrl: https://docs.useautumn.com/documentation/webhooks

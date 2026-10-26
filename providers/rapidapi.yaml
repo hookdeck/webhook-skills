@@ -1,0 +1,34 @@
+name: rapidapi
+displayName: 'RapidAPI'
+docs:
+  webhooks: https://docs.rapidapi.com/docs/events
+  verification: https://docs.rapidapi.com/docs/events
+  events: https://docs.rapidapi.com/docs/events#list-of-events
+notes: >
+  API hub; covers RapidAPI Enterprise Hub events only (Admin Panel > Events), not the public
+  marketplace. 'In every webhook request, the RapidAPI Enterprise Hub includes secret key passed in
+  the x-rapidapi-webhook-secret header'; 'Generate new' rotates it. No signature. RapidAPI sends the
+  hub's webhook secret key as plain text in the vendor-fixed 'x-rapidapi-webhook-secret' header.
+  Hookdeck's RapidAPI source compares that header's WHOLE value (header name case-insensitive) to
+  the configured key, so the examples read RAPIDAPI_WEBHOOK_SECRET and compare the whole
+  'x-rapidapi-webhook-secret' value to it in constant time. Missing header or mismatch: 401. Compare
+  in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main (and the batch 5 iterable, oyster, fireberry and
+  new-relic skills if present). Hookdeck's source type is RAPIDAPI, labelled 'RapidAPI'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing: "Covers Enterprise Hub events only." Events are named like 'API Created',
+  'Subscription Created', 'User Created', 'Billing Plan Updated'; the body format isn't documented,
+  so label example payloads illustrative and don't assume a field name without checking. POST.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse the body only after the credential check.
+testScenario:
+  events:
+    - 'API Created'
+    - 'Subscription Created'
+    - 'User Created'
+catalog:
+  summary: 'Authenticate RapidAPI Enterprise Hub event webhooks (unsigned: the `x-rapidapi-webhook-secret` value compared in constant time), handle hub events like API and subscription changes'

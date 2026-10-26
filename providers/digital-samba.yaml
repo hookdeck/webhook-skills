@@ -1,0 +1,42 @@
+name: digital-samba
+displayName: 'Digital Samba'
+docs:
+  webhooks: https://docs.digitalsamba.com/reference/rest-api/webhooks
+  verification: https://docs.digitalsamba.com/reference/rest-api/webhooks/create
+notes: >
+  Digital Samba (embedded video conferencing). Digital Samba says: 'An authorization_header secret
+  property can be configured to improve the security of the webhook. ... it will be included in
+  every webhook POST request as a bearer token' and 'The webhook will send the secret as a standard
+  Authorization Bearer http header.' authorization_header is optional and set when creating or
+  editing the webhook through the REST API. No signature. Digital Samba sends 'Authorization: Bearer
+  <secret>'. Hookdeck's Digital Samba source is API key verification on the authorization header
+  with value_prefix 'Bearer ' (hookdeck/core#6046 head 8c48f55d): the user stores just the secret,
+  and the scheme matches in any case (auth schemes are case-insensitive, RFC 9110). So the examples
+  read the BARE secret from DIGITAL_SAMBA_WEBHOOK_SECRET (if the configured value itself starts with
+  'Bearer ', case-insensitively, strip it, as core does), require the Authorization header to start
+  with 'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time.
+  Do not trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare
+  in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is DIGITAL_SAMBA, labelled
+  'Digital Samba'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set authorization_header on the
+  webhook through the Digital Samba REST API, then paste the same secret." Body: {eventType,
+  sessionId, roomId, timestamp (Unix seconds), data}; eventType e.g. participant_joined,
+  participant_left, session_started, session_ended, recording_ready, session_summary_ready. Dispatch
+  on eventType. POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works (and, for signatures, the exact bytes are verified); parse the body only
+  after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/digital-samba/latest/ (participant_joined.json);
+  base the examples' test payloads on them.
+testScenario:
+  events:
+    - 'participant_joined'
+    - 'session_ended'
+    - 'recording_ready'
+catalog:
+  summary: 'Authenticate Digital Samba webhooks (unsigned: `Authorization: Bearer <secret>` compared in constant time), handle participant_joined, session_ended and recording_ready events'

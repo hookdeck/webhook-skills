@@ -1,0 +1,25 @@
+name: fullenrich
+displayName: 'FullEnrich'
+docs:
+  webhooks: https://docs.fullenrich.com/api/v2/general/webhooks
+notes: >
+  FullEnrich (contact enrichment). Header X-Signature-SHA1: bare lowercase hex HMAC-SHA1 of the raw
+  request body, keyed with the user's FullEnrich API key (there is no separate webhook secret).
+  Algorithm is SHA-1, not SHA-256. Compare in constant time: in Node, check the received value is
+  exactly 40 hex chars (/^[0-9a-f]{40}$/i) before any Buffer.from(x, 'hex') (invalid hex silently
+  truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
+  crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode both
+  sides) so a non-ASCII header gives 401, not 500. Webhooks are per-request callbacks: the webhook_url
+  given on an enrichment (or reverse email lookup) request receives the finished batch, and
+  webhook_events.contact_finished receives each contact as it completes. There are no event types; the
+  body mirrors Get Enrichment Result and its status is the job state. Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): FullEnrich signs webhooks with your FullEnrich
+  API key. Paste that key here. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type verifies.
+testScenario:
+  events:
+    - FINISHED
+    - IN_PROGRESS
+    - CREDITS_INSUFFICIENT
+catalog:
+  summary: Verify FullEnrich webhook signatures (`X-Signature-SHA1`, HMAC-SHA1 keyed with your API key), handle FINISHED, IN_PROGRESS, CANCELED and CREDITS_INSUFFICIENT enrichment results

@@ -1,0 +1,36 @@
+name: copper
+displayName: 'Copper'
+docs:
+  webhooks: https://developer.copper.com/webhooks/overview.html
+  verification: https://developer.copper.com/webhooks/overview.html
+notes: >
+  CRM (Google Workspace). Copper webhooks are created by API (POST /webhooks) with an optional
+  headers object (sent as HTTP headers) and an optional secret object (echoed in the JSON body, not
+  a header or signature). Hookdeck's Copper source verifies a header from the subscription's headers
+  object, so the skill must too: put the secret in headers (e.g. {"X-Webhook-Secret": "..."}).
+  Mention the body secret only as a weaker, optional extra check that Hookdeck doesn't perform. No
+  signature: requests are unsigned. Authenticate with a secret header the user adds via the
+  subscription's headers object. The header name is user-chosen, so the examples read the header
+  name from COPPER_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the expected value from
+  COPPER_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Copper source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Body: {ids: [...], type:
+  'person'|'company'|'lead'|'opportunity'|'project'|'task'|'activity_log', event:
+  'new'|'update'|'delete', subscription_id, updated_attributes, secret}. Dispatch on type + event.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works; parse JSON only after the credential check.
+testScenario:
+  events:
+    - 'person.new'
+    - 'person.update'
+    - 'opportunity.update'
+    - 'lead.delete'
+catalog:
+  summary: 'Authenticate Copper CRM webhooks (unsigned: a secret in the subscription''s `headers`, compared in full in constant time), handle `new`, `update` and `delete` events for people, leads, companies and opportunities'

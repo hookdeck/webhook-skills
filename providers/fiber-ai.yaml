@@ -1,0 +1,29 @@
+name: fiber-ai
+displayName: 'Fiber AI'
+docs:
+  webhooks: https://docs.fiber.ai/monitoring/webhooks
+  verification: https://docs.fiber.ai/monitoring/webhooks#verifying-signatures
+  events: https://docs.fiber.ai/monitoring/webhooks#event-catalog
+notes: >
+  Fiber AI (B2B data / enrichment). Svix-hosted: svix-id, svix-timestamp, svix-signature headers;
+  HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key = base64-decode of the whsec_ secret after the
+  prefix. The secret is in the webhook portal (and returned by createWebhookEndpoint as
+  signingSecret); the old secret keeps verifying during a rotation grace period. Use the svix library
+  as the docs do. The standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp
+  window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the
+  library rejects late retries after 5 minutes, and point to a manual verifier in
+  references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}', key = base64-decode of
+  the secret after whsec_, compare every space-separated v1,<base64> entry in constant time) where the
+  window can be dropped or widened. Events: reveal.completed, batch_live_enrich.completed,
+  batch_contact_enrich.completed, mosaic.completed, audience.enrichment_completed,
+  tracker.signal_detected, job.changed and more; dispatch on the body's type. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+sdks:
+  npm: [svix]
+  pip: [svix]
+testScenario:
+  events:
+    - 'reveal.completed'
+    - 'tracker.signal_detected'
+catalog:
+  summary: 'Verify Fiber AI webhooks (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle async job events like `reveal.completed`'

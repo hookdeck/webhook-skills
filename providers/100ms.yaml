@@ -1,0 +1,41 @@
+name: 100ms
+displayName: '100ms'
+docs:
+  webhooks: https://www.100ms.live/docs/server-side/v2/how-to-guides/configure-webhooks/overview
+  verification: https://www.100ms.live/docs/server-side/v2/how-to-guides/configure-webhooks/secure-webhooks
+notes: >
+  100ms (live video SDK). 'You can specify headers that will be passed transparently to your webhook
+  endpoint. At your end, verify the contents of the HTTP header (key) and value. Secret headers can
+  be configured on the 100ms dashboard.' No signature. The env var prefix is HUNDRED_MS (a name
+  can't start with a digit). No signature: requests are unsigned. Authenticate with a secret header
+  the user adds in the 100ms dashboard. The header name is user-chosen, so the examples read the
+  header name from HUNDRED_MS_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  HUNDRED_MS_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's 100ms source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is HUNDRED_MS, labelled '100ms'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "100ms webhooks are not signed. Add a secret header to the webhook in the
+  100ms dashboard and enter it here." Body: {version, id, app_id, account_id, template_id,
+  timestamp, type, data}; type is <object>.<action>.<outcome>, e.g. peer.join.success,
+  peer.leave.success, session.open.success, session.close.success, recording.success,
+  hls.started.success. Dispatch on type; dedupe on id. 'Webhook MUST implement POST'; respond 200
+  (anything else is retried three times). Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in
+  /home/user/regwt/b13-merge/samples-doc/providers/100ms/latest/ (peer.join.success.json); base the
+  examples' test payloads on them.
+testScenario:
+  events:
+    - 'peer.join.success'
+    - 'session.close.success'
+    - 'recording.success'
+catalog:
+  summary: 'Authenticate 100ms webhooks (unsigned: a secret header you set in the dashboard, compared in constant time), handle peer, session, recording and HLS events'

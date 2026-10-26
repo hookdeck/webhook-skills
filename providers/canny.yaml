@@ -1,0 +1,26 @@
+name: canny
+displayName: 'Canny'
+docs:
+  webhooks: https://developers.canny.io/api-reference
+notes: >
+  Canny (product feedback). Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature (one
+  or more space-separated 'v1,<base64>' entries; two for 24h during rotation), HMAC-SHA256 over
+  '<webhook-id>.<webhook-timestamp>.<raw request body>', key = signing secret without whsec_,
+  base64-decoded. The secret is in API settings once a webhook is added. Teams that used webhooks
+  before signing also receive legacy canny-timestamp, canny-nonce and canny-signature headers (nonce
+  signed with the API key): ignore them and say they are legacy and being removed. The
+  standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must
+  say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256
+  over '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_, compare every
+  space-separated v1,<base64> entry in constant time) where the window can be dropped or widened.
+  Events: post.created, post.edited, post.deleted, post.status_changed, post.tag_added,
+  comment.created, comment.deleted, vote.created, vote.deleted and more; dispatch on the body's type.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  verifies.
+testScenario:
+  events:
+    - 'post.created'
+    - 'vote.created'
+catalog:
+  summary: 'Verify Canny webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret; legacy `canny-*` headers ignored), handle post, comment and vote events'

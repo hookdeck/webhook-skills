@@ -1,0 +1,40 @@
+name: mono
+displayName: 'Mono'
+docs:
+  webhooks: https://docs.mono.co/docs/webhooks
+  verification: https://docs.mono.co/docs/webhooks
+  events: https://docs.mono.co/docs/payments/onetime/webhook-events
+notes: >
+  Mono (African open banking: Connect and DirectPay). Mono says: 'All Webhook requests are sent with
+  a mono-webhook-secret header for verification. It should match the secret you passed when creating
+  the webhook.' The secret is set on the app in the Mono dashboard. No signature: requests are
+  unsigned. Mono sends the app's webhook secret as plain text in the mono-webhook-secret header on
+  every request. The examples read MONO_WEBHOOK_SECRET, look the mono-webhook-secret header up
+  case-insensitively and compare its WHOLE value to the secret. This is what Hookdeck's Mono source
+  does (API key verification, header mono-webhook-secret, exact whole value). Missing header or
+  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
+  bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
+  must say plainly that a static shared credential authenticates the sender, not the body, and gives
+  no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
+  leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
+  MONO, labelled 'Mono'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Use the webhook secret from your
+  app in the Mono dashboard." Body: {event, event_id, timestamp, data}; event e.g.
+  mono.events.account_connected, mono.events.account_updated, mono.events.account_unlinked,
+  direct_debit.payment_successful, direct_debit.payment_failed. event_id is reused across retries:
+  dedupe on it. Mono needs exactly 200 OK (retried with exponential backoff for 48 hours otherwise).
+  POST. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works (and, for signatures, the exact bytes are verified); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs
+  show it) are in /home/user/regwt/b13-merge/samples-doc/providers/mono/latest/
+  (direct_debit.payment_abandoned.json, direct_debit.payment_cancelled.json,
+  direct_debit.payment_failed.json, direct_debit.payment_successful.json, ...); base the examples'
+  test payloads on them.
+testScenario:
+  events:
+    - 'mono.events.account_connected'
+    - 'direct_debit.payment_successful'
+    - 'mono.events.account_updated'
+catalog:
+  summary: 'Authenticate Mono webhooks (unsigned: the `mono-webhook-secret` header compared in constant time), handle account connection and DirectPay payment events'

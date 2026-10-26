@@ -1,0 +1,45 @@
+name: vellum
+displayName: 'Vellum'
+docs:
+  webhooks: https://docs.vellum.ai/product/monitoring/webhooks
+  verification: https://docs.vellum.ai/product/monitoring/webhooks
+notes: >
+  Vellum (LLM app platform) organization Monitoring webhooks. Authentication options: 'API Key
+  Header: Send an API key in a custom header with each webhook request' and 'Bearer Token' (header
+  Authorization, value 'Bearer <token>'). Vellum can also sign requests (HMAC, X-Vellum-Timestamp
+  and X-Vellum-Signature over timestamp, method, URL and body); Hookdeck's Vellum source does not
+  check that signature, and the skill does not verify it either; say so. No signature: requests are
+  unsigned. Authenticate with a secret header the user adds with API Key Header (or Bearer Token)
+  authentication on the webhook. The header name is user-chosen, so the examples read the header
+  name from VELLUM_WEBHOOK_HEADER (default 'Authorization') and the expected value from
+  VELLUM_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Vellum source does (API key verification: Header Name +
+  exact whole Header Value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
+  and honeybadger skills on main. Hookdeck's source type is VELLUM, labelled 'Vellum'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Turn on authentication and choose API Key Header (or Bearer Token, with
+  header name Authorization and value "Bearer <token>"). The HMAC signature option is not
+  supported." Methods: Vellum's docs don't name the HTTP method for webhooks. The examples must not
+  be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or
+  one route per method; Next.js: export a handler for each; FastAPI: api_route with those methods),
+  check the credential first for every method, and handle an empty body. Say in SKILL.md and
+  setup.md that Hookdeck's Vellum source pre-selects POST without managing the method, so any other
+  method the sender uses must also be allowed on the source. Body: {id, timestamp, api_version,
+  trace_id, span_id, parent, name, body}; name is the event, e.g. workflow.execution.initiated,
+  workflow.execution.fulfilled, workflow.execution.rejected, metric.execution.fulfilled. Dispatch on
+  name; handlers should be idempotent (dedupe on id). Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'workflow.execution.fulfilled'
+    - 'workflow.execution.rejected'
+    - 'workflow.execution.initiated'
+catalog:
+  summary: 'Authenticate Vellum monitoring webhooks (API Key Header or Bearer Token compared in constant time, no signature), handle workflow.execution.fulfilled, workflow.execution.rejected and workflow.execution.initiated events'

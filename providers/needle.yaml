@@ -1,0 +1,37 @@
+name: needle
+displayName: 'Needle'
+docs:
+  webhooks: https://needle.app/docs/webhooks
+  verification: https://needle.app/docs/webhooks
+notes: >
+  Needle (needle.app, formerly needle-ai.com) is an agent-native outbound/GTM engine; not Needle
+  Engine (3D). Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed
+  content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, key = base64-decode
+  of the secret after the whsec_ prefix, base64 output. The secret (NEEDLE_WEBHOOK_SECRET) is shown
+  once when the webhook is added and starts with whsec_. Verify with the standardwebhooks library
+  (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp and
+  webhook-signature. This matches Hookdeck's Needle source (Standard Webhooks, headers_prefix
+  'webhook', whsec_ secret base64-decoded, every v1 entry tried). The library always enforces a
+  fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so the library rejects late retries after 5 minutes, and point to a manual
+  verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the
+  decoded key, compare every space-separated v1,<base64> entry in constant time, require the
+  timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401. Needle says its headers follow Standard Webhooks so its
+  libraries can check them. Body: one POST per event with JSON {version: 'v1', id, type, timestamp,
+  data}; data is the event object (id, type, label, occurredAt, channel, leadId, campaignId, ...).
+  Dispatch on the top-level type, e.g. lead_created, lead_updated, linkedin_message_received,
+  enrollment_completed, campaign_status_changed, account_disconnected (67 types on the docs page).
+  webhook-id stays the same on a resend and is the dedupe key. 2xx within 10 s; retried right away,
+  after 10 min and 1 h; events are unordered (up to 5 concurrent requests). Optional custom headers
+  are not signed. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works (and, for signatures, the exact bytes are verified); parse the body only after
+  the check. Hookdeck's source type is NEEDLE, labelled 'Needle'.
+testScenario:
+  events:
+    - 'lead_created'
+    - 'linkedin_message_received'
+    - 'enrollment_completed'
+catalog:
+  summary: 'Verify Needle webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret), handle lead, message, campaign and account events'

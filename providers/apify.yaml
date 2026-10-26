@@ -1,0 +1,33 @@
+name: apify
+displayName: 'Apify'
+docs:
+  webhooks: https://docs.apify.com/platform/integrations/webhooks
+  verification: https://docs.apify.com/platform/integrations/webhooks/actions#headers-template
+notes: >
+  Web scraping platform. Apify's docs suggest a secret token in the URL first; don't use that: send
+  the secret as a header with the webhook's Headers template (e.g. {"X-Webhook-Secret": "..."}),
+  which is what Hookdeck's Apify source checks. X-Apify-Webhook and X-Apify-Webhook-Dispatch-Id are
+  system headers, not secrets. No signature: requests are unsigned. Authenticate with a secret
+  header the user adds with the Headers template. The header name is user-chosen, so the examples
+  read the header name from APIFY_WEBHOOK_HEADER (default 'X-Webhook-Secret') and the expected value
+  from APIFY_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the user
+  typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or parse a
+  'Bearer ' prefix. This is what Hookdeck's Apify source does (API key verification: header name +
+  exact value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, brevo, assemblyai, honeybadger
+  and coterie skills. Default payload: {userId, createdAt, eventType, eventData: {actorId,
+  actorRunId}, resource}; eventType is ACTOR.RUN.SUCCEEDED, ACTOR.RUN.FAILED, ACTOR.RUN.TIMED_OUT,
+  ACTOR.RUN.ABORTED, ACTOR.RUN.CREATED, ACTOR.RUN.RESURRECTED, ACTOR.BUILD.*. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON only
+  after the credential check.
+testScenario:
+  events:
+    - 'ACTOR.RUN.SUCCEEDED'
+    - 'ACTOR.RUN.FAILED'
+    - 'ACTOR.RUN.TIMED_OUT'
+catalog:
+  summary: 'Authenticate Apify webhooks (unsigned: a secret header from the Headers template, compared in full in constant time), handle `eventType`s like `ACTOR.RUN.SUCCEEDED` and `ACTOR.RUN.FAILED`'

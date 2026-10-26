@@ -1,0 +1,31 @@
+name: iterable
+displayName: 'Iterable'
+docs:
+  webhooks: https://support.iterable.com/hc/en-us/articles/208013936-System-Webhooks
+  verification: https://support.iterable.com/hc/en-us/articles/208013936-System-Webhooks
+notes: >
+  Marketing automation; covers system webhooks. Authentication None, Basic or OAuth 2.0: Basic sends
+  exactly what you type in Authentication Token (e.g. 'Basic abc123', not necessarily base64
+  user:pass); OAuth 2.0 static token sends 'Bearer <token>' (you enter only the token). No
+  signature. The credential is the Authorization header. Hookdeck's Iterable source compares the
+  WHOLE Authorization header value to the configured key, so the examples read
+  ITERABLE_AUTHORIZATION = the full value as Iterable sends it (e.g. 'Bearer <token>'), including
+  the scheme prefix, and compare the whole Authorization header to it; do not strip or parse the
+  prefix (Coterie pattern). Iterable can send Bearer or Basic: compare the whole value either way,
+  never decode Basic. Missing header or mismatch: 401. Compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
+  sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
+  on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
+  authenticates the sender, not the body, and gives no replay protection (no signature, no
+  timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, brevo,
+  assemblyai, honeybadger and coterie skills. Body has eventName (emailSend, emailOpen, emailClick,
+  emailBounce, emailUnSubscribe, smsSend, pushSend, inAppOpen, ...), email, dataFields. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse
+  JSON only after the credential check.
+testScenario:
+  events:
+    - 'emailSend'
+    - 'emailOpen'
+    - 'emailBounce'
+catalog:
+  summary: 'Authenticate Iterable system webhooks (the whole `Authorization` value, `Bearer` or `Basic`, compared in constant time), handle `eventName`s like `emailSend`, `emailOpen` and `emailBounce`'

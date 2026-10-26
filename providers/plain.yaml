@@ -1,0 +1,31 @@
+name: plain
+displayName: 'Plain'
+docs:
+  webhooks: https://www.plain.com/docs/webhooks
+  verification: https://www.plain.com/docs/request-signing
+  events: https://www.plain.com/docs/webhooks/thread-created
+  reference_impl: https://unpkg.com/@team-plain/webhooks@1.10.0/dist/verify.js
+notes: >
+  Plain (customer support). Requests are signed only once a workspace HMAC secret exists (Settings >
+  Request signing, workspace admins). Header Plain-Request-Signature: hex HMAC-SHA256 of the raw
+  request body keyed with that secret. The docs' Node snippet hashes JSON.stringify(request.body), but
+  the official @team-plain/webhooks SDK hashes the raw payload; use the raw body. Compare in constant
+  time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
+  Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Payload:
+  {timestamp, workspaceId, payload: {eventType, ...}, webhookMetadata: {...}}; event types like
+  thread.thread_created, thread.email_received, thread.thread_status_transitioned,
+  customer.customer_created. The SDK's replay check uses
+  webhookMetadata.webhookDeliveryAttemptTimestamp in the body, not the signature; if you mention it,
+  make it opt-in. Basic auth in the target URL is an alternative, not covered. Hookdeck setup (say
+  this in SKILL.md's setup section and in references/setup.md): Turn on request signing in Plain
+  (Settings > Request signing) and paste its HMAC secret. Without it, requests are unsigned and fail
+  verification. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies.
+testScenario:
+  events:
+    - 'thread.thread_created'
+    - 'thread.email_received'
+catalog:
+  summary: 'Verify Plain webhook request signatures (`Plain-Request-Signature`, HMAC-SHA256 hex of the raw body keyed with the workspace HMAC secret), handle `thread.thread_created`, `thread.email_received`, `thread.thread_status_transitioned`, and `customer.customer_created` events'

@@ -1,0 +1,42 @@
+name: honeycomb
+displayName: 'Honeycomb'
+docs:
+  webhooks: https://docs.honeycomb.io/notify/webhooks
+  verification: https://docs.honeycomb.io/notify/webhooks
+notes: >
+  Honeycomb (observability) webhook recipients for Triggers, SLO burn alerts and Anomaly Detection
+  (Team Settings > Integrations). Honeycomb says it 'will always include' the header
+  'X-Honeycomb-Webhook-Token | The value of the Webhook integration's Shared Secret'; the Shared
+  Secret is optional when creating the webhook, and custom headers cannot override this one. No
+  signature: requests are unsigned. Honeycomb sends the webhook's Shared Secret as plain text in the
+  X-Honeycomb-Webhook-Token header on every request. The examples read HONEYCOMB_WEBHOOK_SECRET,
+  look the X-Honeycomb-Webhook-Token header up case-insensitively and compare its WHOLE value to the
+  secret. This is what Hookdeck's Honeycomb source does (API key verification, header
+  x-honeycomb-webhook-token, exact whole value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is HONEYCOMB, labelled
+  'Honeycomb'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Set a Shared Secret on the Honeycomb webhook.
+  Webhooks without one send nothing to verify." Methods: Honeycomb's docs don't name the HTTP
+  method. The examples must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook
+  route (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI:
+  api_route with those methods), check the credential first for every method, and handle an empty
+  body. Say in SKILL.md and setup.md that Hookdeck's Honeycomb source pre-selects POST without
+  managing the method, so any other method the sender uses must also be allowed on the source. Body:
+  application/json. The default payload is not documented field by field (the page says it carries
+  the result of the alert in JSON), and a webhook may use a custom JSON template per alert type, so
+  use a clearly labelled illustrative payload and dispatch defensively (e.g. trigger vs burn alert
+  by the fields present). X-Honeycomb-Webhook-Delivery-ID is stable across retries; use it for
+  idempotency. Respond within 15 seconds. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
+  parse the body only after the check.
+testScenario:
+  events:
+    - 'Trigger fired (illustrative payload)'
+    - 'SLO burn alert (illustrative payload)'
+catalog:
+  summary: 'Authenticate Honeycomb trigger, SLO burn alert and anomaly webhooks (unsigned: the `X-Honeycomb-Webhook-Token` Shared Secret compared in constant time)'

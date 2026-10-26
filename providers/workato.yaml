@@ -1,0 +1,28 @@
+name: workato
+displayName: Workato
+docs:
+  webhooks: https://docs.workato.com/en/developing-connectors/http/connection-setup.html
+  verification: https://docs.workato.com/en/developing-connectors/http/connection-setup.html
+notes: >
+  Automation platform with no native outbound webhooks: deliveries are HTTP connector actions
+  in recipes (like n8n and Zapier), using an HTTP connection with Basic auth ("Basic auth user"
+  and "Basic auth password" fields). No signature. Authenticate with HTTP Basic auth, which is what
+  Hookdeck's Workato source verifies: parse 'Authorization: Basic base64(username:password)'
+  (scheme case-insensitive, split on the first colon) and compare username and password each in
+  constant time, evaluating both before deciding. A static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp). The request
+  method is user-chosen, so the examples accept POST, PUT, PATCH, GET and DELETE and handle an
+  empty body. The body is whatever the recipe sends; the examples assume an illustrative
+  {"event": ..., "data": ...} body (order.created, record.updated, recipe.failed are conventions,
+  not Workato events). Express examples read the raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - order.created
+    - record.updated
+    - recipe.failed
+  prompt: >
+    Add an endpoint to my {framework} app that receives requests from a Workato recipe's HTTP
+    action. Authenticate them with the Basic auth username and password from the HTTP connection
+    and handle the JSON payload.
+catalog:
+  summary: 'Authenticate requests sent by a Workato recipe''s HTTP connector action (unsigned: `Authorization: Basic` username and password compared in constant time, any HTTP method), route recipe payloads on a user-defined event field such as order.created and record.updated'

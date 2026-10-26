@@ -1,0 +1,40 @@
+name: youmail
+displayName: 'YouMail'
+docs:
+  webhooks: https://data.youmail.com/docs#tag/Webhooks
+  verification: https://data.youmail.com/docs#tag/Webhooks
+  events: https://data.youmail.com/docs#tag/WebhookEventType
+notes: >
+  YouMail Protective Services API webhooks (data.youmail.com/docs; curl may get 403,
+  https://r.jina.ai/https://data.youmail.com/docs can read it). A webhook's auth is 'Basic'
+  (username and password) or 'Bearer' (token), or none; method 'will default to POST and cannot be
+  modified'. No signature. The credential is the Authorization header. Hookdeck's YouMail source
+  compares the WHOLE Authorization header value to the configured key, so the examples read
+  YOUMAIL_AUTHORIZATION = the full value as YouMail sends it (e.g. 'Bearer <token>'), including the
+  'Bearer ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
+  base64-decode the prefix (Coterie pattern). Cover the Bearer scheme: the value is 'Bearer ' + the
+  token set on the webhook. Basic is not covered by Hookdeck's YouMail source; say so. Missing
+  header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is YOUMAIL, labelled 'YouMail'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole
+  Authorization value, including "Bearer "." Body: no common envelope and no type field; each
+  webhook is created for one eventType (CALL_EVENT sends callEvents; PHONE_INSIGHTS sends *Summaries
+  arrays; PROVIDER_TN_REPORT_STATUS a TN report status object; WATCHLIST_SCORE_THRESHOLD a phone
+  number with old/new scores; WATCHLIST_PHONE_SCORE_THRESHOLD is deprecated). Tell the user to give
+  each webhook its own URL (e.g. /webhooks/youmail/call-events) or detect by shape; the examples
+  detect by top-level keys. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works (and, for signatures, the exact bytes are verified); parse the body
+  only after the check.
+testScenario:
+  events:
+    - 'CALL_EVENT'
+    - 'PROVIDER_TN_REPORT_STATUS'
+    - 'WATCHLIST_SCORE_THRESHOLD'
+catalog:
+  summary: 'Authenticate YouMail Protective Services webhooks (unsigned: the whole `Authorization: Bearer <token>` value compared in constant time), handle CALL_EVENT, PHONE_INSIGHTS, PROVIDER_TN_REPORT_STATUS and WATCHLIST_SCORE_THRESHOLD payloads'

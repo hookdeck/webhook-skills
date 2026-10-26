@@ -1,0 +1,42 @@
+name: govuk-notify
+displayName: 'GOV.UK Notify'
+docs:
+  webhooks: https://docs.notifications.service.gov.uk/rest-api.html
+  verification: https://docs.notifications.service.gov.uk/rest-api.html
+notes: >
+  GOV.UK Notify callbacks (API integration > Callbacks): delivery receipts, received text messages
+  and returned letters. Notify says: 'You must provide: a URL where Notify will post the callback
+  [and] a bearer token which Notify will put in the authorisation header of the requests'; its
+  source sends headers {'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'} with
+  method POST. No signature. GOV.UK Notify sends 'Authorization: Bearer <secret>'. Hookdeck's GOV.UK
+  Notify source is API key verification on the authorization header with value_prefix 'Bearer '
+  (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and the scheme matches in any
+  case (auth schemes are case-insensitive, RFC 9110). So the examples read the BARE secret from
+  GOVUK_NOTIFY_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer ',
+  case-insensitively, strip it, as core does), require the Authorization header to start with
+  'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
+  trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is GOVUK_NOTIFY, labelled
+  'GOV.UK Notify'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the bearer token you set
+  for the callback in GOV.UK Notify (API integration > Callbacks)." Body: no event field; tell
+  callback kinds apart by shape. Delivery receipts: {id, reference, to, status (delivered,
+  permanent-failure, temporary-failure, technical-failure), created_at, completed_at, sent_at,
+  notification_type (email, sms), template_id, template_version}. Received text messages:
+  {id, source_number, destination_number, message, date_received}. Build example payloads from the
+  documented field tables and label them as such. Retried every 5 minutes, up to 5 times. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works (and,
+  for signatures, the exact bytes are verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'delivery receipt: delivered'
+    - 'delivery receipt: permanent-failure'
+    - 'received text message'
+    - 'returned letter'
+catalog:
+  summary: 'Authenticate GOV.UK Notify callbacks (unsigned: `Authorization: Bearer <token>` compared in constant time), handle delivery receipts, received text messages and returned letters'

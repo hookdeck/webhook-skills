@@ -1,0 +1,24 @@
+name: humaans
+displayName: 'Humaans'
+docs:
+  webhooks: https://docs.humaans.io/api/#webhooks
+  verification: https://docs.humaans.io/api/#webhook-howto
+notes: >
+  Humaans (HRIS). Svix-delivered, documented with webhook-id, webhook-timestamp, webhook-signature
+  headers ('v1,<base64>'), HMAC-SHA256 over '${id}.${timestamp}.${body}', key = base64-decode of the
+  secret after whsec_ (e.g. whsec_vwbddlgH8lyKqHEDzn3EUpmk). Use the standardwebhooks library (or
+  svix); accept svix-* headers too, since Svix can send either prefix. The standardwebhooks / svix
+  libraries always enforce a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}', key = base64-decode of the secret after whsec_, compare every space-separated v1,<base64>
+  entry in constant time) where the window can be dropped or widened. The body has an action field
+  (person.created, person.updated, person.offboarded, timeAway.created, timeAway.approved,
+  compensation.updated, ...); dispatch on it. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'person.created'
+    - 'timeAway.approved'
+catalog:
+  summary: 'Verify Humaans webhooks (Standard Webhooks via Svix: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_` secret), handle person and time-away events'

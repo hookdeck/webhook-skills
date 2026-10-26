@@ -1,0 +1,39 @@
+name: gumlet
+displayName: 'Gumlet'
+docs:
+  webhooks: https://docs.gumlet.com/developers/webhooks/index
+  verification: https://docs.gumlet.com/developers/webhooks/index
+notes: >
+  Gumlet (video hosting and image optimisation). Gumlet says: 'the optional parameter Secret Token
+  is used to ensure in your code that the Webhook is coming from Gumlet. If you give this parameter,
+  you will receive it back as x-gumlet-token inside the request header with each request.' No
+  signature: requests are unsigned. Gumlet sends the webhook's Secret Token as plain text in the
+  x-gumlet-token header on every request. The examples read GUMLET_WEBHOOK_SECRET, look the
+  x-gumlet-token header up case-insensitively and compare its WHOLE value to the secret. This is
+  what Hookdeck's Gumlet source does (API key verification, header x-gumlet-token, exact whole
+  value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
+  hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
+  SKILL.md and verification.md must say plainly that a static shared credential authenticates the
+  sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
+  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is GUMLET, labelled 'Gumlet'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set a
+  Secret Token on the Gumlet webhook. Webhooks without one send nothing to verify." Body: JSON with
+  a type field and no common envelope: video status payloads (type video.status.ready,
+  video.status.processed, video.status.errored, ...; asset_id, status, input, output), live stream
+  payloads (live.video.status.*), and analytics/events (event.video.uploaded, event.embed.viewed,
+  event.embed.form_submitted, ...). Dispatch on type. Any 2xx counts; others are retried every 30
+  minutes for 24 hours. POST. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works (and, for signatures, the exact bytes are verified); parse the body
+  only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/b13-merge/samples-doc/providers/gumlet/latest/
+  (live.video.status.complete.json, video.status.ready.json); base the examples' test payloads on
+  them.
+testScenario:
+  events:
+    - 'video.status.ready'
+    - 'live.video.status.complete'
+    - 'event.video.uploaded'
+catalog:
+  summary: 'Authenticate Gumlet webhooks (unsigned: the optional `x-gumlet-token` Secret Token compared in constant time), handle video, live stream and embed events'

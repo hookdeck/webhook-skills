@@ -1,0 +1,27 @@
+name: holded
+displayName: 'Holded'
+docs:
+  webhooks: https://www.holded.com/en-us/developers/webhooks
+  verification: https://www.holded.com/en-us/developers/webhooks
+  events: https://www.holded.com/en-us/developers/webhooks
+notes: >
+  Holded (business management / invoicing). Header x-holded-webhook-signature: 'sha256=<hex>',
+  HMAC-SHA256 hex of the raw request body. Require and strip the sha256= prefix. The secret looks like
+  whsec_... but this is NOT Standard Webhooks: the HMAC key is the whole secret string including
+  whsec_, as UTF-8. Do NOT use the standardwebhooks or svix libraries and do not strip or
+  base64-decode the whsec_ prefix. The x-holded-webhook-date header is sent but is not signed. Compare
+  in constant time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i)
+  before any Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex
+  strings as equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python
+  use hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500.
+  Events are grouped by document type, e.g. invoice.create, invoice.update, invoice.delete,
+  invoice.approve, contact.create, contact.update, payment.create; the event name is in the
+  x-holded-webhook-event header. Hookdeck setup (say this in SKILL.md's setup section and in references/setup.md): Paste
+  the whole secret, including the whsec_ prefix. Holded uses it as a plain HMAC key. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'invoice.create'
+    - 'contact.create'
+catalog:
+  summary: 'Verify Holded webhook signatures (`x-holded-webhook-signature` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the whole `whsec_` secret; not Standard Webhooks), handle `invoice.create` and `contact.create` events'

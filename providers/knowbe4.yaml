@@ -1,0 +1,40 @@
+name: knowbe4
+displayName: 'KnowBe4'
+docs:
+  webhooks: https://support.knowbe4.com/hc/en-us/articles/10103021848723-Webhooks-in-Your-KnowBe4-Console
+  verification: https://support.knowbe4.com/hc/en-us/articles/14196559482387-Create-and-Manage-Webhooks-in-Your-PhishER-Platform
+notes: >
+  KnowBe4 webhooks: KSAT (KnowBe4 console; Platinum, Diamond or SAT Advanced tiers) and PhishER
+  (Send to Webhook actions). Both let the admin add a custom header (Key and Value); KSAT also
+  offers an Authentication method and PhishER offers No Auth, API Key, Bearer Token or Basic Auth.
+  No signature is documented. No signature: requests are unsigned. Authenticate with a secret header
+  the user adds as a custom header on the KSAT or PhishER webhook. The header name is user-chosen,
+  so the examples read the header name from KNOWBE4_WEBHOOK_HEADER (default 'Authorization') and the
+  expected value from KNOWBE4_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer '
+  prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do not
+  strip or parse a 'Bearer ' prefix. This is what Hookdeck's KnowBe4 source does (API key
+  verification: Header Name + exact whole Header Value). Missing header or mismatch: 401. Compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
+  SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
+  pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
+  shared credential authenticates the sender, not the body, and gives no replay protection (no
+  signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n,
+  zapier, coterie and honeybadger skills on main. Hookdeck's source type is KNOWBE4, labelled
+  'KnowBe4'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
+  must tell the user the same thing, verbatim: "Add a custom header with a secret value to the KSAT
+  or PhishER webhook." Basic Auth is not covered by Hookdeck's KnowBe4 source; say so. Body: JSON,
+  not documented field by field; KSAT subscribes to events from Phishing Events, Training Events and
+  General Events groups (UI label example 'Phish Failure Removed'), PhishER sends message data on an
+  action, and admins can add custom data key/values (e.g. {"System": "KnowBe4"}). The body is
+  defined by the sender's own configuration and there is no vendor event field, so the examples and
+  test scenario use a clearly labelled illustrative payload. KSAT retries a failed request up to
+  three more times, 15 minutes apart, and deactivates a webhook with more than 1,000 failures in an
+  hour. The method isn't stated; examples accept POST. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check.
+testScenario:
+  events:
+    - 'KSAT phishing event (illustrative payload)'
+    - 'PhishER Send to Webhook action (illustrative payload)'
+catalog:
+  summary: 'Authenticate KnowBe4 KSAT and PhishER webhooks (unsigned: a custom header you name, its whole value compared in constant time), handle phishing, training and PhishER message payloads'

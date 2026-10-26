@@ -1,0 +1,45 @@
+name: emarsys
+displayName: 'SAP Emarsys'
+docs:
+  webhooks: https://help.sap.com/docs/SAP_EMARSYS/f8e2fafeea804018a954a8857d9dfff3/9146e550b3a74b258b2dc1643dd51e00.html
+  verification: https://help.sap.com/docs/SAP_EMARSYS/f8e2fafeea804018a954a8857d9dfff3/9146e550b3a74b258b2dc1643dd51e00.html
+notes: >
+  SAP Emarsys Automation Center Webhook node presets (Automation > Webhook Node Presets > Create
+  preset; HTTPS URL only). displayName 'SAP Emarsys'. Authentication method: HTTP basic
+  authentication (Username and Password), JWT authentication (Secret key) or OAuth2; only HTTP basic
+  is covered by Hookdeck's source, say JWT and OAuth2 are not. help.sap.com pages render with JS;
+  r.jina.ai can read them. No signature. Authenticate with HTTP Basic auth, which is what Hookdeck's
+  SAP Emarsys source verifies. The examples read EMARSYS_WEBHOOK_USERNAME and
+  EMARSYS_WEBHOOK_PASSWORD, parse 'Authorization: Basic base64(username:password)' (scheme
+  case-insensitive, accept only the strict base64 alphabet and decode strictly, e.g. validate=True
+  in Python, so valid credentials followed by junk are rejected; split on the first colon), and
+  compare the username and the password each in constant time, evaluating both before deciding (no
+  short-circuit). Missing or malformed header or mismatch: 401. The docs don't say whether the Basic
+  credentials are sent preemptively. SKILL.md and setup.md must say that Hookdeck never sends a 401
+  challenge (no WWW-Authenticate round trip), so the credentials must arrive with each request.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
+  sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS and rotate the credential if it leaks. Model
+  on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is EMARSYS,
+  labelled 'SAP Emarsys'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Choose HTTP basic authentication
+  in the Webhook node preset. Hookdeck never answers with a 401 challenge, so the credentials have
+  to arrive with each request; if deliveries show as failed verification, they are not." Body: the
+  preset defines it: contact field values and Additional data (static key-values) at the top level,
+  optional event_data with the triggering event's attributes, and renamable operational fields
+  deduplication_id, ems_program_id, event_time. The body is defined by the sender's own
+  configuration and there is no vendor event field, so the examples and test scenario use a clearly
+  labelled illustrative payload. Use deduplication_id for idempotency when present. A failed request
+  is retried with intervals growing from 30 s to 10 min; after the 11th failure the program goes to
+  Fail-safe mode; returning 406 discards the contact and keeps the program running. The method isn't
+  stated; examples accept POST. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works (and, for signatures, the exact bytes are verified); parse the
+  body only after the check.
+testScenario:
+  events:
+    - 'Webhook node contact payload (illustrative)'
+    - 'Webhook node with event_data (illustrative)'
+catalog:
+  summary: 'Authenticate SAP Emarsys Automation Center Webhook node calls (`Authorization: Basic` credentials compared in constant time), handle preset-defined contact and event_data payloads'

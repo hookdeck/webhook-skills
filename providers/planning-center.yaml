@@ -1,0 +1,26 @@
+name: planning-center
+displayName: 'Planning Center'
+docs:
+  webhooks: https://api.planningcenteronline.com/docs/overview/webhooks
+  verification: https://api.planningcenteronline.com/docs/overview/webhooks#authenticity
+notes: >
+  Planning Center (church management) webhook subscriptions. Header X-PCO-Webhooks-Authenticity: bare
+  hex HMAC-SHA256 of the raw body, keyed with the subscription's authenticity_secret used as a UTF-8
+  string (it looks like 64 hex chars; do NOT hex-decode it). Compare in constant time: in Node, check
+  the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex')
+  (invalid hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers
+  with crypto.timingSafeEqual after a length check; in Python use hmac.compare_digest on bytes (encode
+  both sides) so a non-ASCII header gives 401, not 500. The docs' Authenticity section has a worked
+  example (secret 2608ab74..., expected
+  a0782fde663e7ee25a99b9d44f45434120ff027ba98ef333a83a4590fcc97828; the body is a Ruby single-quoted
+  string, so its \" sequences are a literal backslash and quote): reproduce it in the tests. Body is
+  JSON:API: data[] of EventDelivery objects with attributes.name (e.g.
+  people.v2.events.person.updated), attributes.attempt and attributes.payload, a JSON string that must
+  be parsed again. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type verifies. The public docs name only people.v2.events.person.updated; the rest of the
+  event catalog is behind login, so do not invent other event names.
+testScenario:
+  events:
+    - 'people.v2.events.person.updated'
+catalog:
+  summary: 'Verify Planning Center webhook signatures (`X-PCO-Webhooks-Authenticity`, HMAC-SHA256 hex of the raw body keyed with the `authenticity_secret`), handle `people.v2.events.person.updated` and other EventDelivery events'

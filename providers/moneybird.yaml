@@ -1,0 +1,33 @@
+name: moneybird
+displayName: 'Moneybird'
+docs:
+  webhooks: https://developer.moneybird.com/webhooks/getting-started
+  verification: https://developer.moneybird.com/webhooks/verifying-signatures
+  events: https://developer.moneybird.com/webhooks/events
+notes: >
+  Moneybird (Dutch accounting). Header Moneybird-Signature: 't=<unix seconds>,v1=<hex>' (several v1
+  during secret rotation; accept if any matches). v1 is hex HMAC-SHA256 of '{t}.{raw_request_body}'
+  keyed with the webhook secret (the secret field in the POST /{administration_id}/webhooks.json
+  response; also revealable on the webhook detail page). t=<ts>,v1=<hex> header: split on ',' and trim
+  each part (allow a space after the comma), take t and every v1 (several are sent during secret
+  rotation) and accept if any v1 matches; reject a header with no t or no v1. Compare in constant
+  time: in Node, check the received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any
+  Buffer.from(x, 'hex') (invalid hex silently truncates), or compare the lowercase hex strings as
+  equal-length UTF-8 Buffers with crypto.timingSafeEqual after a length check; in Python use
+  hmac.compare_digest on bytes (encode both sides) so a non-ASCII header gives 401, not 500. Hookdeck
+  retries and replays resend the original timestamp, so a 5-minute window rejects late retries: make
+  the timestamp freshness check opt-in via MONEYBIRD_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as
+  the mercury-webhooks skill does. SKILL.md must say that Hookdeck retries and replays resend the
+  original timestamp, so a 5-minute window rejects late retries, and point to
+  references/verification.md, which shows where the window can be dropped or widened. Moneybird
+  recommends a 5-minute freshness check; explain why the examples default it off. The body has action
+  (e.g. sales_invoice_created, sales_invoice_state_changed_to_paid, contact_created), entity_type,
+  entity_id and entity; dispatch on action. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type verifies.
+testScenario:
+  events:
+    - 'sales_invoice_created'
+    - 'sales_invoice_state_changed_to_paid'
+    - 'contact_created'
+catalog:
+  summary: 'Verify Moneybird webhook signatures (`Moneybird-Signature` `t=<ts>,v1=<hex>`, HMAC-SHA256 over `{t}.{body}`, any matching `v1` during secret rotation), handle `sales_invoice_created`, `sales_invoice_state_changed_to_paid`, and `contact_created` actions dispatched by `action`'

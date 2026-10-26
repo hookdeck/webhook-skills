@@ -1,0 +1,39 @@
+name: ampersand
+displayName: 'Ampersand'
+docs:
+  webhooks: https://docs.ampersand.ai/destinations/webhooks
+  verification: https://docs.ampersand.ai/destinations/webhooks
+notes: >
+  Ampersand (withampersand.com; docs at docs.ampersand.ai, full text at
+  https://docs.ampersand.ai/llms-full.txt) is a deep-integration platform for SaaS builders.
+  Ampersand says: 'Ampersand uses Svix to deliver webhooks to your destination, which is why the
+  signature is sent in the svix-signature header.' Each webhook destination has its own 'Webhook
+  Signing Secret' (whsec_...). Standard Webhooks signature with svix-* headers: svix-id,
+  svix-timestamp (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, key =
+  base64-decode of the secret after the whsec_ prefix, base64 output. The secret
+  (AMPERSAND_WEBHOOK_SECRET) is the destination's Webhook Signing Secret from the Ampersand
+  dashboard (starts with whsec_). Verify with the svix library (npm 'svix', pip 'svix'), whose
+  Webhook.verify reads svix-id, svix-timestamp and svix-signature. This matches Hookdeck's Ampersand
+  source (Standard Webhooks, headers_prefix 'svix', whsec_ secret base64-decoded, every v1 entry
+  tried). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that
+  Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the decoded key, compare every space-separated v1,<base64>
+  entry in constant time, require the timestamp to be a plain positive integer) where the window can
+  be dropped or widened. Missing headers or a bad signature: 400 or 401. Bodies: notification
+  webhooks carry notificationType and data (e.g. installation.created, installation.updated,
+  installation.deleted, connection.created, connection.error, read.backfill.done,
+  read.triggered.error, write.async.done, destination.webhook.disabled); read/subscribe result
+  webhooks carry action, groupRef, objectName, result and so on. Dispatch on notificationType when
+  present, otherwise treat it as a read result. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works (and, for signatures, the exact bytes are
+  verified); parse the body only after the check. Hookdeck's source type is AMPERSAND, labelled
+  'Ampersand'.
+testScenario:
+  events:
+    - 'installation.created'
+    - 'connection.error'
+    - 'read.backfill.done'
+catalog:
+  summary: 'Verify Ampersand webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret), handle installation, connection and read/write notifications and read results'

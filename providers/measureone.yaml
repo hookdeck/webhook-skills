@@ -1,0 +1,24 @@
+name: measureone
+displayName: 'MeasureOne'
+docs:
+  webhooks: https://docs.measureone.com/api/openapi_3.2/components/section/webhook/events
+  verification: https://docs.measureone.com/api/openapi_3.2/components/section/webhook/webhook_security
+  events: https://docs.measureone.com/api/openapi_3.2/openapi/webhooks
+notes: >
+  Consumer-permissioned data (academic, income, insurance). Webhooks are unsigned. Each Data
+  Request's delivery_details[] has a url and optional headers object; authenticate with a secret
+  header the user adds there. The header name is user-chosen, so examples read it from
+  MEASUREONE_WEBHOOK_HEADER (default Authorization) and compare the whole value with
+  MEASUREONE_WEBHOOK_SECRET (no Bearer parsing) in constant time. Basic and JWT options exist;
+  Hookdeck's MeasureOne source does not cover Basic, and the JWT option fetches a new token for
+  every delivery and cannot be checked. A static header authenticates the sender only: no body
+  integrity, no replay protection. Dispatch on the event field. Any 2xx succeeds; retried up to 10
+  times with exponential backoff. Express examples read the raw body with
+  express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'datarequest.report_complete'
+    - 'datarequest.items_available'
+    - 'item.processed'
+catalog:
+  summary: 'Authenticate MeasureOne webhooks (static secret header from `delivery_details.headers`, compared in constant time), handle events like `datarequest.report_complete`, `datarequest.items_available` and `item.processed`'

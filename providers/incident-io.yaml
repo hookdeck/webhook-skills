@@ -1,0 +1,25 @@
+name: incident-io
+displayName: 'incident.io'
+docs:
+  webhooks: https://docs.incident.io/integrations/webhooks
+  verification: https://docs.incident.io/api-reference/webhooks
+  events: https://docs.incident.io/openapi/webhooks.json
+notes: >
+  Incident management / on-call platform (not PagerDuty, Rootly or Statuspage). Hookdeck source type
+  INCIDENT_IO uses the STANDARD_WEBHOOKS controller with headers_prefix 'webhook', so the target is the
+  Settings -> Webhooks product (Svix-powered), not workflow HTTP-request steps. Headers: webhook-id,
+  webhook-timestamp (unix seconds), webhook-signature (space-delimited "v1,<base64>" entries). HMAC-SHA256,
+  standard base64, over "{id}.{timestamp}." + raw body. Key: whsec_ prefix -> base64-decode the rest,
+  otherwise UTF-8 bytes; reject an empty key. No svix-* headers, no hex, no handshake. Timestamp window is
+  optional (24h retries; relays/replays resend the original timestamp); dedupe on webhook-id. Body envelope:
+  {"event_type": "<type>", "<type>": {...}} so the resource is body[body.event_type]. Private incidents,
+  alerts and escalations are id-only (membership_* carry incident_id/user_id/actor_user_id). 34 versioned
+  event names from webhooks.json; don't hardcode IP addresses (point to /admin/webhook-ips and
+  GET /v1/ip_ranges). Webhooks are not HIPAA compliant. Ordering isn't guaranteed: re-fetch from the API.
+testScenario:
+  events:
+    - public_incident.incident_created_v2
+    - public_incident.incident_status_updated_v2
+    - schedule.shift_change_v1
+catalog:
+  summary: 'Verify incident.io webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256 base64), read the resource from `body[event_type]`, handle public_incident.incident_created_v2, id-only private_* events and schedule.shift_change_v1'
