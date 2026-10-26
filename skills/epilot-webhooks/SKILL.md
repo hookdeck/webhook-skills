@@ -82,7 +82,7 @@ Default body: `{ metadata, entity, relations, activity, changed_attributes }`. `
 
 ## Delivery Semantics
 
-- Default transport is JSON with `Transfer-Encoding: chunked`. The `httpMethod` is configurable, and a JSONata expression can reshape the body.
+- Default transport is JSON with `Transfer-Encoding: chunked`. The `httpMethod` is configurable: keep it at `POST`, because Hookdeck's epilot source is set to POST and these examples only accept POST. A JSONata expression can reshape the body.
 - `retryPolicy` (new webhooks: enabled, `maxAttempts` 3, maximum 5) retries 5xx, 429 and connection errors after 5 s, 5 min, 30 min, 2 h and 5 h. Webhooks created before this feature don't retry.
 - Events are logged for 4 weeks and can be replayed.
 - File events can arrive as `multipart/form-data` (`binary_multipart`) or with Base64 bytes in the JSON (`json_base64`). `binary_multipart` signs per-file metadata, not the raw body, so the examples can't verify it (see the alert above).
