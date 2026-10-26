@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET, PATCH, POST, PUT } from '../app/webhooks/invoice-ninja/route';
+import * as route from '../app/webhooks/invoice-ninja/route';
+import { POST, PUT } from '../app/webhooks/invoice-ninja/route';
 import { detectEntity, verifyInvoiceNinjaRequest } from '../lib/verify-invoice-ninja';
 
 const HEADER = 'X-Webhook-Secret';
@@ -60,25 +61,22 @@ describe('/webhooks/invoice-ninja', () => {
     });
 
     it('never answers 404, 405 or 410 for bad credentials', async () => {
-      for (const [method, fn] of [['POST', POST], ['PUT', PUT], ['PATCH', PATCH]] as const) {
+      for (const [method, fn] of [['POST', POST], ['PUT', PUT]] as const) {
         const res = await fn(makeRequest(method, { headers: {} }));
         expect([404, 405, 410]).not.toContain(res.status);
         expect(res.status).toBe(401);
       }
-      const res = await GET(makeRequest('GET', { headers: {}, body: null }));
-      expect(res.status).toBe(401);
     });
   });
 
   describe('request methods', () => {
-    it('accepts PUT and PATCH with a JSON body', async () => {
+    it('accepts PUT with a JSON body', async () => {
       expect((await PUT(makeRequest('PUT'))).status).toBe(200);
-      expect((await PATCH(makeRequest('PATCH'))).status).toBe(200);
     });
 
-    it('accepts GET with an empty body', async () => {
-      const res = await GET(makeRequest('GET', { body: null }));
-      expect(res.status).toBe(200);
+    it('exports only POST and PUT (rest_method is only post or put)', () => {
+      const methods = Object.keys(route).filter((k) => /^[A-Z]+$/.test(k));
+      expect(methods.sort()).toEqual(['POST', 'PUT']);
     });
 
     it('accepts an empty POST body', async () => {

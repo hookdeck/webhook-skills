@@ -31,14 +31,16 @@ Pick a username and a long random password and store them as `NEW_RELIC_WEBHOOK_
 {
   "issueId": {{json issueId}},
   "title": {{json issueTitle}},
-  "state": {{json state}},
+  "state": {{#if issueClosedAt}}"closed"{{else if issueAcknowledgedAt}}"acknowledged"{{else}}"open"{{/if}},
   "priority": {{json priority}},
   "issuePageUrl": {{json issuePageUrl}}
 }
 ```
 
 This is an illustrative template. You can rewrite it, but the example handlers read exactly
-these fields and dispatch on `state` (`ACTIVATED`, `ACKNOWLEDGED`, `CLOSED`).
+these fields and dispatch on `state` (`open`, `acknowledged`, `closed`). The template computes
+`state` itself, using the same conditional as New Relic's xMatters template, because New Relic
+doesn't document the values of its own `state` variable.
 
 4. Use **Send test notification** to check your endpoint, then save and activate the workflow.
 
@@ -48,7 +50,7 @@ these fields and dispatch on `state` (`ACTIVATED`, `ACKNOWLEDGED`, `CLOSED`).
 curl -X POST http://localhost:3000/webhooks/new-relic \
   -u "$NEW_RELIC_WEBHOOK_USERNAME:$NEW_RELIC_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"issueId":"1","title":"High CPU","state":"ACTIVATED","priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
+  -d '{"issueId":"1","title":"High CPU","state":"open","priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
 ```
 
 ## Rotating the Credential

@@ -3,8 +3,8 @@ name: tray-io-webhooks
 description: >
   Receive and authenticate requests sent by Tray.io (tray.ai) workflows. Use when
   setting up an endpoint that a Tray HTTP Client step calls, checking the secret
-  header that authenticates the sender, debugging 401s, or routing a workflow
-  payload on an event field such as record.created, record.updated or record.deleted.
+  header that authenticates the sender, debugging 401s, or routing a payload
+  whose shape (including any event field) the workflow builder defines.
 license: MIT
 metadata:
   author: hookdeck
@@ -29,7 +29,7 @@ and rotate the credential if it leaks.
 - How do I receive requests from a Tray.io workflow?
 - How do I authenticate a Tray HTTP Client request with a secret header?
 - Does Tray.io sign webhook payloads? (No: use a shared secret header)
-- How do I route a Tray payload on an `event` field like `record.created`?
+- How do I route a Tray payload when the workflow, not Tray, defines the body?
 - Why does my Tray endpoint return 401 or 400?
 
 ## Verification (core)
@@ -69,17 +69,19 @@ function verifyTrayRequest(headers, {
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-## Event Names (convention)
+## Payload (user-defined)
 
-Tray defines no webhook event types. Include an `event` field in the body you build, such as:
+Tray defines no webhook payload and no event types: the body is whatever the HTTP Client step
+sends. The examples assume you add an `event` field to the body you build, such as:
 
 ```json
 {"event": "record.created", "data": {"id": "rec_123", "name": "Acme"}}
 ```
 
-The examples handle these illustrative values; replace them with your own.
+The `event` field and these values are this skill's own convention, not Tray names; replace them
+with your own.
 
-| Event | Meaning (your choice) |
+| Event (illustrative) | Meaning (your choice) |
 |-------|-----------------------|
 | `record.created` | A record was created in the source system |
 | `record.updated` | A record was changed |

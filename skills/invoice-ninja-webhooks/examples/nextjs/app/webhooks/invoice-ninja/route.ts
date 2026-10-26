@@ -33,8 +33,8 @@ function handleEntity(event: string | null, payload: InvoiceNinjaEntity): void {
   }
 }
 
-// The method is chosen on the Invoice Ninja subscription (rest_method, POST by default),
-// so the same handler serves POST, PUT, PATCH and GET.
+// The method is the Invoice Ninja subscription's rest_method, which its server validates as
+// post (the default) or put, so the same handler serves POST and PUT.
 // Never answer 404, 405 or 410: Invoice Ninja deletes the webhook subscription when it sees them.
 async function handle(request: NextRequest) {
   // Authenticate before reading or parsing the body.
@@ -42,7 +42,8 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing webhook credential' }, { status: 401 });
   }
 
-  // Read as text so any content type is accepted; GET deliveries can have an empty body.
+  // Read as text so any content type is accepted. Invoice Ninja always sends a JSON body;
+  // an empty one is still acknowledged.
   const raw = await request.text();
   let payload: InvoiceNinjaEntity = {};
   if (raw.trim() !== '') {
@@ -70,5 +71,3 @@ async function handle(request: NextRequest) {
 
 export const POST = handle;
 export const PUT = handle;
-export const PATCH = handle;
-export const GET = handle;

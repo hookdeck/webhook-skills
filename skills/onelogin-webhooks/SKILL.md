@@ -53,7 +53,7 @@ function verifyOneLoginRequest(headers,
 
 ## Payload and Event Types
 
-The body is a JSON array of event objects (the format OneLogin recommends) or newline-delimited JSON, depending on the format chosen in the broadcaster configuration. Iterate every element. Each event has a numeric `event_type_id` plus fields such as `user_id`, `user_name`, `app_name`, `ipaddr`, `risk_score`, `event_timestamp` and `uuid`.
+Choose the **JSON Array** format type in the broadcaster configuration, as OneLogin recommends: the body is then a JSON array of event objects, sent as a `POST`. OneLogin's docs describe no other format, so the examples handle only the JSON array. Iterate every element. Each event has a numeric `event_type_id` plus fields such as `user_id`, `user_name`, `app_name`, `ipaddr`, `risk_score`, `event_timestamp` and `uuid`.
 
 | `event_type_id` | Event |
 |-----------------|-------|

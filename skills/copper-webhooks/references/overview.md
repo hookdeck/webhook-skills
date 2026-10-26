@@ -31,6 +31,10 @@ Each subscription is for one `type` and one `event`.
 | `task` | Task | yes | yes | yes |
 | `activity_log` | Activity | yes | yes | yes |
 
+The table follows Copper's webhooks overview. Its Create subscription reference lists only `lead`,
+`person`, `company`, `opportunity`, `project` and `task` as valid `type` values, so confirm an
+`activity_log` subscription is accepted before relying on it.
+
 ## Event Payload Structure
 
 ```json
@@ -40,7 +44,8 @@ Each subscription is for one `type` and one `event`.
   "event": "update",
   "subscription_id": 987,
   "updated_attributes": { "title": ["Engineer", "Senior Engineer"] },
-  "secret": { "key1": "value1" }
+  "key1": "value1",
+  "timestamp": "2021-12-13T19:18:22.084Z"
 }
 ```
 
@@ -50,8 +55,9 @@ Each subscription is for one `type` and one `event`.
 | `type` | Entity type (table above) |
 | `event` | `new`, `update` or `delete` |
 | `subscription_id` | ID of the subscription that fired |
-| `updated_attributes` | Changed fields, for `update` events |
-| `secret` | The optional `secret` object from the subscription, echoed back in the body |
+| `updated_attributes` | Changed fields as `[old, new]`; only on `update` events |
+| `timestamp` | ISO 8601 timestamp string |
+| your `secret` keys | Each key/value pair of the subscription's optional `secret` object, merged into the top level of the body (here `"key1": "value1"`). There is no `secret` wrapper field |
 
 The notification carries IDs, not full records. Fetch the records from the Copper API if you need
 their data.

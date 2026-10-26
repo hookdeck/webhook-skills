@@ -14,10 +14,10 @@ function basic(user, pass, scheme = 'Basic') {
   return `${scheme} ${Buffer.from(`${user}:${pass}`).toString('base64')}`;
 }
 
-const STATES = ['ACTIVATED', 'ACKNOWLEDGED', 'CLOSED'];
+const STATES = ['open', 'acknowledged', 'closed'];
 
 // Illustrative payload from the Handlebars template in references/setup.md
-function samplePayload(state = 'ACTIVATED') {
+function samplePayload(state = 'open') {
   return {
     issueId: 'a1b2c3d4-0000-4000-8000-000000000001',
     title: 'High CPU on web-1',

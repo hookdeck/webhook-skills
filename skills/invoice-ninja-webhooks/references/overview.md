@@ -21,8 +21,8 @@ Taken from Invoice Ninja's `WebhookSingle` job:
 | 5xx | Logged as a failure, not retried |
 
 Requests carry `Accept: application/json`, a `User-Agent` starting `InvoiceNinja/`, and your
-custom headers. The method is the subscription's `rest_method` (`POST` by default; `GET`, `PUT`
-and `PATCH` are possible).
+custom headers. The method is the subscription's `rest_method`, which the server validates as
+`post` (the default) or `put`, and the entity is always sent as a JSON body.
 
 ## Event Payload Structure
 

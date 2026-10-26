@@ -25,7 +25,8 @@ and no timestamp. So:
 - Rotate the credential if it leaks (`PUT /webhooks/{id}` with new `headers`).
 - Make handlers idempotent; see webhook-handler-patterns.
 
-The subscription's optional `secret` object is echoed in the JSON **body**, not sent as a header.
+The subscription's optional `secret` object is not sent as a header: its key/value pairs are merged
+into the top level of the JSON **body** (there is no `secret` field wrapping them).
 You can compare it as an extra check, but it is weaker (it lives in the payload) and Hookdeck does
 not perform it.
 

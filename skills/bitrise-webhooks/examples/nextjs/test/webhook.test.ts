@@ -129,19 +129,6 @@ describe('POST /webhooks/bitrise', () => {
       spy.mockRestore();
     });
 
-    it('detects CI build events by shape', async () => {
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await POST(
-        makeRequest(
-          { Authorization: SECRET },
-          JSON.stringify({ build_slug: 'b1', build_status: 1, build_triggered_workflow: 'primary' })
-        )
-      );
-      expect(res.status).toBe(200);
-      expect(spy.mock.calls.some(([m]) => String(m).startsWith('CI build event'))).toBe(true);
-      spy.mockRestore();
-    });
-
     it('acknowledges unknown Release Management events', async () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const res = await POST(
@@ -151,10 +138,11 @@ describe('POST /webhooks/bitrise', () => {
       spy.mockRestore();
     });
 
-    it('acknowledges unrecognised payloads', async () => {
+    it('acknowledges and logs payloads without trigger_event (undocumented CI build shape)', async () => {
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const res = await POST(makeRequest({ Authorization: SECRET }, JSON.stringify({ hello: 'world' })));
       expect(res.status).toBe(200);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Payload without trigger_event'))).toBe(true);
       spy.mockRestore();
     });
   });

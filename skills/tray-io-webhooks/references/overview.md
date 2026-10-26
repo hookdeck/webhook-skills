@@ -19,12 +19,13 @@ Requests are unsigned. Add a header in the HTTP Client step whose value comes fr
 Authentication (`$.auth.<field>`), and compare it on your side. Tray's docs say not to hard-code
 credentials in the properties panel, so the `$.auth` method also keeps the value obscured in logs.
 
-## Event Names
+## Payload and Event Names (user-defined)
 
-Tray documents no event types for this connector. This skill suggests an `event` field in a body you
-build yourself; the examples handle these illustrative values:
+Tray documents no payload schema and no event types for this connector: the body is whatever the
+workflow sends. This skill suggests an `event` field in a body you build yourself; the examples
+handle these illustrative values, which are not Tray names:
 
-| Event | Meaning (your choice) |
+| Event (illustrative) | Meaning (your choice) |
 |-------|-----------------------|
 | `record.created` | A record was created in the source system |
 | `record.updated` | A record was changed |

@@ -22,7 +22,7 @@ Invoice Ninja does not sign requests, so you add a secret header yourself:
 2. Add a webhook:
    - **Target URL:** your endpoint, for example `https://example.com/webhooks/invoice-ninja?event=create_invoice`
    - **Event:** one event, such as `create_invoice`, `create_payment` or `update_client`
-   - **Method:** `POST` (default) or another method; the examples accept `POST`, `PUT`, `PATCH` and `GET`
+   - **Method:** `POST` (default) or `PUT`, the only two values Invoice Ninja accepts; the examples handle both
    - **Headers:** add the key/value pair from the previous step
 3. Repeat for each event. A subscription has exactly one event, and the event is not in the body,
    so give each subscription its own `?event=` value or its own URL.

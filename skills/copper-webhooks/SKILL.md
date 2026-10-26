@@ -56,16 +56,20 @@ function verifyCopperRequest(headers, expected = process.env.COPPER_WEBHOOK_SECR
 - A static shared credential authenticates the sender, **not the body**, and gives **no replay
   protection** (no signature, no timestamp). Use HTTPS (Copper only accepts `https://` targets)
   and rotate the credential if it leaks.
-- The optional `secret` object is echoed back inside the JSON body, not sent as a header. It is a
-  weaker extra check that Hookdeck does not perform; don't rely on it alone.
+- The subscription's optional `secret` object is not a header and not a body field called
+  `secret`: Copper merges its key/value pairs into the **top level** of the JSON body (a secret of
+  `{"key": "copper_notifications"}` arrives as `"key": "copper_notifications"`). It is a weaker
+  extra check that Hookdeck does not perform; don't rely on it alone.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
-The body is `{ids, type, event, subscription_id, updated_attributes, secret}`. Dispatch on `type`
-plus `event`. `ids` holds 1 to 30 record IDs per notification.
+The body is `{ids, type, event, subscription_id, updated_attributes, timestamp}` plus your
+`secret` key/value pairs at the top level. `updated_attributes` is only on `update` events and
+`timestamp` is an ISO 8601 string. Dispatch on `type` plus `event`. `ids` holds 1 to 30 record IDs
+per notification.
 
 | `event` | Sent When |
 |---------|-----------|
@@ -76,7 +80,11 @@ plus `event`. `ids` holds 1 to 30 record IDs per notification.
 | `type` | Record |
 |--------|--------|
 | `lead`, `person`, `company`, `opportunity`, `project`, `task` | The matching CRM record |
-| `activity_log` | An activity |
+| `activity_log` | An activity (`new`, `update` and `delete`, per the webhooks overview) |
+
+Copper's webhooks overview lists `activity_log` for all three events, but the Create subscription
+reference lists only `lead`, `person`, `company`, `opportunity`, `project` and `task` as valid
+`type` values, so test an `activity_log` subscription before relying on it.
 
 Each subscription covers one `type` and one `event`, so create one subscription per combination
 you need (up to 100 per account). Notifications fire at most once and are **not retried**.

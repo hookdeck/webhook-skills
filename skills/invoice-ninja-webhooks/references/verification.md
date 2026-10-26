@@ -68,7 +68,7 @@ def verify_invoice_ninja_request(headers, secret=None, header_name=None) -> bool
   `401`, bad bodies `400`.
 - **A 401 is not retried.** Only connection errors and `429` are retried, so a wrong secret drops
   events. Fix the value and trigger the event again.
-- **The method is configurable.** Accept `POST`, `PUT`, `PATCH` and `GET`, and tolerate an empty body.
+- **The method is configurable.** `rest_method` is `post` (default) or `put`, so accept `POST` and `PUT`.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, and
   `JSON.parse` only after the credential check.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which

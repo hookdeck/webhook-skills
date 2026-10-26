@@ -27,7 +27,7 @@ function samplePayload(type = 'person', event = 'update') {
     event,
     subscription_id: 987,
     updated_attributes: { title: ['Engineer', 'Senior Engineer'] },
-    secret: {},
+    timestamp: '2021-12-13T19:18:22.084Z',
   };
 }
 
@@ -72,7 +72,7 @@ describe('POST /webhooks/copper', () => {
     });
 
     it('does not accept the secret from the JSON body', async () => {
-      const body = JSON.stringify({ ...samplePayload(), secret: { key: SECRET } });
+      const body = JSON.stringify({ ...samplePayload(), secret: SECRET });
       const res = await POST(makeRequest({}, body));
       expect(res.status).toBe(401);
     });

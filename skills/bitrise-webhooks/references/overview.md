@@ -2,8 +2,9 @@
 
 ## What Are Bitrise Webhooks?
 
-Bitrise can send **outgoing webhooks**: HTTP POST requests with a JSON body to a URL you choose.
-There are two families:
+Bitrise can send **outgoing webhooks** to a URL you choose. The Release Management docs describe
+HTTP POST requests with a JSON payload; the CI build docs don't publish the request format. There
+are two families:
 
 - **CI build events**: sent when a build is started and when it ends. Configured per project under
   Project settings > Integrations > Webhooks.
@@ -70,11 +71,11 @@ Every Release Management webhook has these fields:
 }
 ```
 
-**CI build events have no documented type field.** The docs only say a build event is a build
-being started or ending, and publish no payload schema. The examples therefore tell the families
-apart by shape: a string `trigger_event` means Release Management; otherwise a body with
-`build_status`, `build_triggered_workflow` (or similar build fields) is treated as a CI build
-event. Look at a real delivery in **Recent deliveries** for the exact fields your project gets.
+**CI build event payloads are undocumented.** The docs only say a build event is a build being
+started or ending, and publish no payload schema, field names or type field for them. The examples
+therefore only check for a string `trigger_event` (Release Management); any other body is
+acknowledged and its field names logged, without guessing at build fields. Look at a real delivery
+in **Recent deliveries** for the exact fields your project gets.
 
 ## Full Event Reference
 

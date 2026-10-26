@@ -9,7 +9,9 @@ authentication is an optional static credential, delivered in the `Authorization
 Authorization: Bearer <token>
 ```
 
-- **Payments (Mexico/Brazil)**: you enter a token and Belvo sends `Bearer <token>`.
+- **Payments Mexico**: you enter a token and Belvo sends `Bearer <token>`.
+- **Payments Brazil**: the field takes "an optional bearer token"; the docs don't show the header
+  itself, so confirm it arrives as `Bearer <token>` with a test delivery.
 - **Aggregation**: you enter `Bearer <token>` or `Basic <base64>` and Belvo sends it as entered.
 
 Points that cause most failures:
@@ -49,7 +51,7 @@ app.post('/webhooks/belvo', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(401).end();
   }
   const payload = JSON.parse(req.body.toString('utf8'));
-  // payload.eventCode (Payments) or payload.webhook_code (Aggregation)
+  // payload.eventCode (Mexico), payload.resource (Brazil V2) or payload.webhook_code (Brazil V1, Aggregation)
 });
 ```
 

@@ -15,7 +15,7 @@ Prefer a plain random string over `Bearer <token>`. If you do type a `Bearer ` p
 
 1. In the OneLogin admin portal go to **Developers > Webhooks** and create an Event Broadcaster.
 2. Enter your endpoint URL (`https://example.com/webhooks/onelogin`).
-3. Choose the **JSON Array** format (recommended; newline-delimited is also handled by the examples).
+3. Choose the **JSON Array** format type (OneLogin recommends it, and it is the only format the docs describe and the examples handle).
 4. Add a **custom header**: name = your `ONELOGIN_WEBHOOK_HEADER`, value = your `ONELOGIN_WEBHOOK_SECRET`.
 5. Save and enable the broadcaster.
 

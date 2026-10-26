@@ -112,11 +112,10 @@ describe('OneLogin webhook route', () => {
       expect(spy).toHaveBeenCalledTimes(3);
     });
 
-    it('accepts newline-delimited events', async () => {
+    it('returns 400 for newline-delimited events (only the JSON Array format is documented)', async () => {
       const body = [sampleEvent(5), sampleEvent(6)].map((e) => JSON.stringify(e)).join('\n');
       const res = await POST(makeRequest(body, { [HEADER]: SECRET }, 'text/plain'));
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ received: 2 });
+      expect(res.status).toBe(400);
     });
 
     it('returns 400 for invalid JSON after authenticating', async () => {

@@ -45,7 +45,7 @@ Server runs on http://localhost:8000 and accepts requests at `POST /webhooks/bit
 pytest test_webhook.py
 ```
 
-The tests send Release Management and CI build payloads with correct, wrong and missing headers.
+The tests send Release Management payloads, and a body without `trigger_event`, with correct, wrong and missing headers.
 No Bitrise account is needed.
 
 ## Receive Webhooks Locally
@@ -66,7 +66,7 @@ Put the printed URL in the Bitrise outgoing webhook.
 1. The configured header is checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
 3. A string `trigger_event` marks a Release Management event (`app_version_added`,
-   `testflight_upload_completed`, `google_play_upload_completed`, and others). CI build events
-   have no documented type field, so a body with `build_status`, `build_triggered_workflow` or
-   `build_slug` is treated as a CI build event.
+   `testflight_upload_completed`, `google_play_upload_completed`, and others). Bitrise documents
+   no payload for CI build events, so any other body is acknowledged and its field names logged
+   for you to inspect.
 4. It returns `200 {"received": true}`.

@@ -54,7 +54,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/copper \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: $COPPER_WEBHOOK_SECRET" \
-  -d '{"ids":[1],"type":"person","event":"new","subscription_id":1,"updated_attributes":{},"secret":{}}'
+  -d '{"ids":[1],"type":"person","event":"new","subscription_id":1,"updated_attributes":{},"timestamp":"2021-12-13T19:18:22.084Z"}'
 ```
 
 ## Receive Webhooks Locally
@@ -78,4 +78,4 @@ Use the printed URL as the subscription's `target`.
    `project`, `task` or `activity_log`, each with `new`, `update` or `delete`.
 4. It returns `200 {"received": true}`.
 
-The subscription's optional `secret` object is echoed in the body; this example does not rely on it.
+The subscription's optional `secret` key/value pairs are merged into the top level of the body; this example does not rely on them.

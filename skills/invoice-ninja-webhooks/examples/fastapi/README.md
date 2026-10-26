@@ -38,7 +38,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Server runs on http://localhost:8000 and accepts `POST`, `PUT`, `PATCH` and `GET` at `/webhooks/invoice-ninja`.
+Server runs on http://localhost:8000 and accepts `POST` and `PUT` at `/webhooks/invoice-ninja`.
 
 ## Test
 
@@ -75,7 +75,7 @@ Put the printed URL (plus `?event=create_invoice`, for example) in the webhook's
 
 1. The secret header is checked before the body is read. Failure returns `401`, never `404`,
    `405` or `410` (Invoice Ninja deletes the webhook subscription on those).
-2. An empty body is accepted (for example `GET`). A non-empty body must be a JSON object (`400` otherwise).
+2. Invoice Ninja always sends a JSON body; an empty body is still acknowledged. A non-empty body must be a JSON object (`400` otherwise).
 3. The body is the entity itself and has no event field. The handler uses `?event=` from the target
    URL (`create_invoice`, `create_payment`, `update_client`) and otherwise detects the entity by
    shape (`line_items` document, `applied` payment, `contacts` client).

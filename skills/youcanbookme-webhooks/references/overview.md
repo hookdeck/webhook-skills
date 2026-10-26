@@ -41,7 +41,7 @@ with booking data:
 {
   "event": "booking_made",
   "email": "{EMAIL}",
-  "start": "{START-LOCAL-DATE}"
+  "start": "{START-ISO}"
 }
 ```
 

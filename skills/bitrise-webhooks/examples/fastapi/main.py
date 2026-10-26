@@ -37,13 +37,9 @@ async def require_bitrise_secret(request: Request) -> None:
 
 
 def detect_kind(payload: dict) -> str:
-    """Release Management bodies have a string trigger_event. CI build event bodies document
-    no type field, so they are detected by shape."""
-    if isinstance(payload.get("trigger_event"), str):
-        return "release_management"
-    if any(k in payload for k in ("build_status", "build_triggered_workflow", "build_slug")):
-        return "ci_build"
-    return "unknown"
+    """Release Management bodies have a string trigger_event. Bitrise publishes no payload schema
+    for CI build events, so anything else is logged as-is rather than parsed on guessed field names."""
+    return "release_management" if isinstance(payload.get("trigger_event"), str) else "other"
 
 
 def handle_release_event(payload: dict) -> None:
@@ -107,22 +103,20 @@ def handle_release_event(payload: dict) -> None:
         print(f"Unhandled Release Management event: {event}")
 
 
-def handle_ci_build_event(payload: dict) -> None:
+def handle_other_event(payload: dict) -> None:
+    # Likely a CI build event (build started or finished), whose payload Bitrise doesn't document.
     print(
-        f"CI build event: build {payload.get('build_slug')} "
-        f"workflow {payload.get('build_triggered_workflow')} status {payload.get('build_status')}"
+        "Payload without trigger_event (undocumented, e.g. a CI build event); "
+        f"fields: {', '.join(payload.keys())}"
     )
-    # TODO: report build status or trigger a downstream job
+    # TODO: inspect a real delivery under Recent deliveries, then handle the fields you see
 
 
 def handle_event(payload: dict) -> None:
-    kind = detect_kind(payload)
-    if kind == "release_management":
+    if detect_kind(payload) == "release_management":
         handle_release_event(payload)
-    elif kind == "ci_build":
-        handle_ci_build_event(payload)
     else:
-        print("Unhandled Bitrise payload")
+        handle_other_event(payload)
 
 
 @app.post("/webhooks/bitrise", dependencies=[Depends(require_bitrise_secret)])

@@ -51,7 +51,7 @@ To try it by hand:
 curl -X POST http://localhost:8000/webhooks/new-relic \
   -u "$NEW_RELIC_WEBHOOK_USERNAME:$NEW_RELIC_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"issueId":"1","title":"High CPU","state":"ACTIVATED","priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
+  -d '{"issueId":"1","title":"High CPU","state":"open","priority":"CRITICAL","issuePageUrl":"https://one.newrelic.com"}'
 ```
 
 ## Receive Webhooks Locally
@@ -71,6 +71,6 @@ Use the printed URL as the Endpoint URL of the Webhook destination.
 1. The Basic credentials are checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
 3. The payload comes from your Handlebars template, so there is no fixed event field. This
-   example uses an illustrative template and dispatches on `state`: `ACTIVATED`,
-   `ACKNOWLEDGED`, `CLOSED`.
+   example uses an illustrative template that sets `state` to `open`, `acknowledged` or
+   `closed`, and dispatches on it.
 4. It returns `200 {"received": true}`.

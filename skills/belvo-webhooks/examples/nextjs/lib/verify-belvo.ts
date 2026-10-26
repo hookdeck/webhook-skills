@@ -33,20 +33,30 @@ export function verifyBelvoRequest(
 }
 
 export type BelvoKind =
-  | { family: 'payments'; code: string }
-  | { family: 'aggregation'; code: string; type?: string };
+  | { family: 'payments_mx'; code: string }
+  | { family: 'payments_br_v2'; code: string; id?: string }
+  | { family: 'payments_br_v1' | 'aggregation'; code: string; type?: string };
 
 /**
- * Belvo has two body shapes: Payments (Mexico/Brazil) use eventType/eventCode,
- * Aggregation uses webhook_type/webhook_code.
+ * Belvo body shapes, told apart by the fields present:
+ * - Payments Mexico: eventType/eventCode/details
+ * - Payments Brazil V2 (resources created with X-Belvo-API-Resource-Version: Payments-BR.V2):
+ *   schema_version/resource/resource_id
+ * - Payments Brazil V1: webhook_type/webhook_code with object_id (no link_id)
+ * - Aggregation: webhook_type/webhook_code with link_id
  */
 export function classify(payload: Record<string, unknown>): BelvoKind | null {
   if (typeof payload.eventCode === 'string') {
-    return { family: 'payments', code: payload.eventCode };
+    return { family: 'payments_mx', code: payload.eventCode };
+  }
+  if (typeof payload.schema_version === 'string' && typeof payload.resource === 'string') {
+    const id = typeof payload.resource_id === 'string' ? payload.resource_id : undefined;
+    return { family: 'payments_br_v2', code: payload.resource, id };
   }
   if (typeof payload.webhook_code === 'string') {
     const type = typeof payload.webhook_type === 'string' ? payload.webhook_type : undefined;
-    return { family: 'aggregation', code: payload.webhook_code, type };
+    const family = 'object_id' in payload && !('link_id' in payload) ? 'payments_br_v1' : 'aggregation';
+    return { family, code: payload.webhook_code, type };
   }
   return null;
 }

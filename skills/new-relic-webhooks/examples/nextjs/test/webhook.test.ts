@@ -6,7 +6,7 @@ import { verifyNewRelicRequest } from '../lib/verify-new-relic';
 const USER = 'newrelic';
 const PASS = 'p@ss:word, with: colons';
 
-const STATES = ['ACTIVATED', 'ACKNOWLEDGED', 'CLOSED'];
+const STATES = ['open', 'acknowledged', 'closed'];
 
 beforeAll(() => {
   process.env.NEW_RELIC_WEBHOOK_USERNAME = USER;
@@ -18,7 +18,7 @@ function basic(user: string, pass: string, scheme = 'Basic'): string {
 }
 
 // Illustrative payload from the Handlebars template in references/setup.md
-function samplePayload(state = 'ACTIVATED') {
+function samplePayload(state = 'open') {
   return {
     issueId: 'a1b2c3d4-0000-4000-8000-000000000001',
     title: 'High CPU on web-1',

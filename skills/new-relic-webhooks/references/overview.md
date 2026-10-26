@@ -14,14 +14,16 @@ The state of the issue is whatever your template puts in the body.
 
 ## Illustrative Notification States
 
-The examples assume the template in [setup.md](setup.md), which sends the issue `state`. These
-values are illustrative; confirm which states your template and workflow send.
+The examples assume the template in [setup.md](setup.md). New Relic's docs don't list the values
+of its `state` template variable, so that template derives `state` itself from `issueClosedAt` and
+`issueAcknowledgedAt` (the conditional New Relic's xMatters template uses). The values are the
+template's own strings:
 
-| `state` | Triggered When | Common Use Cases |
-|---------|----------------|------------------|
-| `ACTIVATED` | An issue opens | Page on-call, open a ticket |
-| `ACKNOWLEDGED` | An issue is acknowledged | Mark the ticket as being worked |
-| `CLOSED` | An issue closes | Close the ticket |
+| `state` | Set When | Common Use Cases |
+|---------|----------|------------------|
+| `open` | Neither `issueClosedAt` nor `issueAcknowledgedAt` is set | Page on-call, open a ticket |
+| `acknowledged` | `issueAcknowledgedAt` is set, `issueClosedAt` isn't | Mark the ticket as being worked |
+| `closed` | `issueClosedAt` is set | Close the ticket |
 
 ## Illustrative Payload Structure
 
@@ -29,7 +31,7 @@ values are illustrative; confirm which states your template and workflow send.
 {
   "issueId": "a1b2c3d4-0000-4000-8000-000000000001",
   "title": "High CPU on web-1",
-  "state": "ACTIVATED",
+  "state": "open",
   "priority": "CRITICAL",
   "issuePageUrl": "https://one.newrelic.com/alerts-ai/issues/a1b2c3d4"
 }

@@ -16,7 +16,7 @@ HEADER = os.environ["VTEX_WEBHOOK_HEADER"]
 SECRET = os.environ["VTEX_WEBHOOK_SECRET"]
 
 STATES = [
-    "order-created", "order-completed", "payment-pending", "payment-approved",
+    "order-created", "on-order-completed", "payment-pending", "payment-approved",
     "waiting-ffmt-authorization", "ready-for-handling", "start-handling", "handling",
     "invoiced", "cancel", "canceled",
 ]
@@ -27,9 +27,7 @@ def sample_payload(state="payment-approved"):
         "Domain": "Marketplace",
         "OrderId": "v40484048naf-01",
         "State": state,
-        "LastState": "payment-pending",
         "LastChange": "2019-07-29T23:17:30.0617185Z",
-        "CurrentChange": "2019-07-29T23:17:30.0617185Z",
         "Origin": {"Account": "accountABC", "Key": "vtexappkey-keyEDF"},
     }
 

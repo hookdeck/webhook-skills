@@ -64,11 +64,11 @@ function verifyYoucanbookmeRequest(headers, {
 ## Payload and Event Names
 
 There is no fixed schema. The body is the template you write, using shorthand codes such as
-`{START-LOCAL-DATE}` and `{EMAIL}`, and **nothing in the request names the trigger** unless your
+`{START-ISO}` and `{EMAIL}`, and **nothing in the request names the trigger** unless your
 template does. The examples assume you add an `event` field, for example:
 
 ```json
-{ "event": "booking_made", "email": "{EMAIL}", "start": "{START-LOCAL-DATE}" }
+{ "event": "booking_made", "email": "{EMAIL}", "start": "{START-ISO}" }
 ```
 
 | `event` (your choice, illustrative) | Notification action |

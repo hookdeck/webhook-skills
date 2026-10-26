@@ -40,8 +40,8 @@ async def require_onelogin_credential(request: Request) -> None:
 
 
 def parse_events(raw: bytes):
-    """The body is a JSON array of events (recommended format) or newline-delimited JSON.
-    Returns a list of event dicts, or None if the body isn't valid."""
+    """The body is a JSON array of events (the JSON Array format type OneLogin recommends; its
+    docs describe no other). Returns a list of event dicts, or None if the body isn't valid."""
     try:
         text = raw.decode("utf-8").strip()
     except UnicodeDecodeError:
@@ -50,13 +50,9 @@ def parse_events(raw: bytes):
         return None
     try:
         parsed = json.loads(text)
-        events = parsed if isinstance(parsed, list) else [parsed]
     except json.JSONDecodeError:
-        # Not a single JSON document: try newline-delimited JSON.
-        try:
-            events = [json.loads(line) for line in text.splitlines() if line.strip()]
-        except json.JSONDecodeError:
-            return None
+        return None
+    events = parsed if isinstance(parsed, list) else [parsed]
     return events if all(isinstance(e, dict) for e in events) else None
 
 

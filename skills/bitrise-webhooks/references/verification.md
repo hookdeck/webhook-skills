@@ -79,8 +79,9 @@ def verify_bitrise_request(headers, secret=None, header_name=None) -> bool:
 - **Hidden values can't be read back.** If you tick **Hide** and lose the value, set a new one.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the header check.
-- **Telling payloads apart.** `trigger_event` identifies Release Management events. CI build
-  events have no documented type field, so detect them by shape.
+- **Telling payloads apart.** `trigger_event` identifies Release Management events. Bitrise
+  documents no payload for CI build events, so treat any other body as undocumented and inspect a
+  real delivery before relying on its fields.
 
 ## Debugging Verification Failures
 

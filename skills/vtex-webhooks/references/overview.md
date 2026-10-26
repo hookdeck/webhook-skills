@@ -18,7 +18,7 @@ The event is the order status in the `State` field.
 | `State` | Triggered When | Common Use Cases |
 |---------|----------------|------------------|
 | `order-created` | The order is created | Create the order in an ERP |
-| `order-completed` | The order is complete | Confirm the order downstream |
+| `on-order-completed` | The purchase was processed at checkout; the order data is complete | Confirm the order downstream |
 | `payment-pending` | Payment is awaiting confirmation | Hold fulfillment |
 | `payment-approved` | Payment is approved | Release the order for fulfillment |
 | `waiting-ffmt-authorization` | Fulfillment authorization is awaited | Approve or reject fulfillment |
@@ -29,8 +29,10 @@ The event is the order status in the `State` field.
 | `cancel` | Cancellation workflow status | Stop fulfillment |
 | `canceled` | The order was canceled | Restock, refund |
 
-VTEX has more statuses than this table; see its order flow documentation. Always return `200` for
-states you don't handle.
+These are the API status names from VTEX's [order flow and status table](https://help.vtex.com/en/docs/tutorials/order-flow-and-status),
+which has more statuses than this table. The Orders Feed guide's `FromWorkflow` filter example
+spells this status `order-completed`, which the status table doesn't list; check the `State` your
+hook actually sends. Always return `200` for states you don't handle.
 
 ## Event Payload Structure
 
@@ -39,9 +41,7 @@ states you don't handle.
   "Domain": "Marketplace",
   "OrderId": "v40484048naf-01",
   "State": "payment-approved",
-  "LastState": "payment-pending",
   "LastChange": "2019-07-29T23:17:30.0617185Z",
-  "CurrentChange": "2019-07-29T23:17:30.0617185Z",
   "Origin": { "Account": "accountABC", "Key": "vtexappkey-keyEDF" }
 }
 ```
@@ -50,9 +50,8 @@ states you don't handle.
 |-------|---------|
 | `Domain` | Where the order lives (e.g. `Marketplace`) |
 | `OrderId` | The order to fetch from the Orders API |
-| `State` | The new order status |
-| `LastState` | The previous status (not in every sample) |
-| `LastChange` / `CurrentChange` | Timestamps of the previous and current change |
+| `State` | The order status |
+| `LastChange` | A timestamp of the order's last change (the docs give only the sample value) |
 | `Origin.Account` / `Origin.Key` | The account and appKey the hook belongs to |
 
 The notification only identifies the order and its status. Fetch the full order from the Orders API

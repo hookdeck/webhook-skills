@@ -3,7 +3,7 @@ name: new-relic-webhooks
 description: >
   Receive and authenticate New Relic alert webhooks. Use when setting up a New Relic
   Webhook destination for workflow notifications, verifying HTTP Basic authentication,
-  debugging 401s, or handling issue activated, acknowledged and closed notifications
+  debugging 401s, or handling open, acknowledged and closed issue notifications
   from your own payload template.
 license: MIT
 metadata:
@@ -21,8 +21,10 @@ by comparing them with the ones you stored. This skill covers Basic authenticati
 Bearer token and custom headers options are alternatives it does not cover.
 
 The body is JSON rendered from a Handlebars template that you write in the workflow, so there is
-no fixed event field. The examples use an illustrative template with `issueId`, `title`, `state`
-(`ACTIVATED`, `ACKNOWLEDGED`, `CLOSED`), `priority` and `issuePageUrl`; adapt them to your own.
+no fixed event field. The examples use an illustrative template with `issueId`, `title`, `state`,
+`priority` and `issuePageUrl`; adapt them to your own. New Relic's docs don't list the values of
+its `state` variable, so the template sets `state` itself (`open`, `acknowledged`, `closed`) from
+`issueClosedAt` and `issueAcknowledgedAt`, the way New Relic's own xMatters template does.
 
 > **Security note:** a static shared credential authenticates the *sender*, not the *body*, and
 > gives **no replay protection** (no signature, no timestamp). Use HTTPS only, and rotate the
@@ -33,7 +35,7 @@ no fixed event field. The examples use an illustrative template with `issueId`, 
 - How do I receive New Relic alert webhooks?
 - How do I verify the Basic auth credentials on a New Relic Webhook destination?
 - Does New Relic sign webhook payloads? (No: use Basic authentication)
-- How do I handle issue `ACTIVATED`, `ACKNOWLEDGED` and `CLOSED` notifications?
+- How do I tell open, acknowledged and closed issue notifications apart?
 - Why does my New Relic webhook endpoint return 401?
 
 ## Verification (core)
@@ -72,11 +74,13 @@ function verifyNewRelicRequest(headers, username, password) {
 New Relic renders whatever Handlebars template you configure, so these fields are an example,
 not a fixed schema (see [references/setup.md](references/setup.md) for the template).
 
-| `state` | Meaning |
+| `state` (set by the template) | Meaning |
 |---------|---------|
-| `ACTIVATED` | An issue opened |
-| `ACKNOWLEDGED` | Someone acknowledged the issue |
-| `CLOSED` | The issue closed |
+| `open` | Neither `issueClosedAt` nor `issueAcknowledgedAt` is set |
+| `acknowledged` | `issueAcknowledgedAt` is set and the issue isn't closed |
+| `closed` | `issueClosedAt` is set |
+
+These strings come from your template, not from New Relic.
 
 Other fields in the example: `issueId`, `title`, `priority`, `issuePageUrl`.
 

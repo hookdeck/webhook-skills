@@ -6,8 +6,9 @@ const express = require('express');
 
 const app = express();
 
-// Invoice Ninja sends the webhook with the rest_method chosen on the subscription (POST by default).
-const ALLOWED_METHODS = ['POST', 'PUT', 'PATCH', 'GET'];
+// Invoice Ninja sends the webhook with the subscription's rest_method, which its server
+// validates as post (the default) or put.
+const ALLOWED_METHODS = ['POST', 'PUT'];
 
 /**
  * Constant-time string comparison. Hashing both sides first gives equal-length
@@ -83,7 +84,7 @@ app.all('/webhooks/invoice-ninja', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).json({ error: `Unsupported method ${req.method}` });
   }
 
-  // GET (and some PUT/PATCH) deliveries can have an empty body.
+  // Invoice Ninja always sends a JSON body; an empty one is still acknowledged.
   const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
   let payload = {};
   if (raw.trim() !== '') {
@@ -119,6 +120,6 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Webhook endpoint: POST|PUT|PATCH|GET http://localhost:${PORT}/webhooks/invoice-ninja`);
+    console.log(`Webhook endpoint: POST|PUT http://localhost:${PORT}/webhooks/invoice-ninja`);
   });
 }

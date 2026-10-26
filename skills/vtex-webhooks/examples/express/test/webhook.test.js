@@ -11,7 +11,7 @@ const HEADER = process.env.VTEX_WEBHOOK_HEADER;
 const SECRET = process.env.VTEX_WEBHOOK_SECRET;
 
 const STATES = [
-  'order-created', 'order-completed', 'payment-pending', 'payment-approved',
+  'order-created', 'on-order-completed', 'payment-pending', 'payment-approved',
   'waiting-ffmt-authorization', 'ready-for-handling', 'start-handling', 'handling',
   'invoiced', 'cancel', 'canceled'
 ];
@@ -21,9 +21,7 @@ function samplePayload(State = 'payment-approved') {
     Domain: 'Marketplace',
     OrderId: 'v40484048naf-01',
     State,
-    LastState: 'payment-pending',
     LastChange: '2019-07-29T23:17:30.0617185Z',
-    CurrentChange: '2019-07-29T23:17:30.0617185Z',
     Origin: { Account: 'accountABC', Key: 'vtexappkey-keyEDF' }
   };
 }

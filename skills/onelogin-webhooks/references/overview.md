@@ -42,7 +42,7 @@ A request body is an array of event objects:
 
 Each event carries many more fields (most are `null` unless relevant to the event type): `login_name`, `app_id`, `actor_user_id`, `actor_user_name`, `role_name`, `group_name`, `otp_device_name`, `user_agent`, `error_description` and so on. The example above is trimmed.
 
-If the broadcaster is set to newline-delimited format, the same objects arrive one per line instead of inside an array.
+OneLogin's docs recommend the JSON Array format type and describe no other, so configure the broadcaster with it.
 
 ## Delivery
 

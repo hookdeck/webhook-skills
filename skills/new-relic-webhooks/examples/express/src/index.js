@@ -43,23 +43,24 @@ function verifyNewRelicRequest(
 
 // The payload comes from a Handlebars template you write in the workflow, so there is no
 // fixed event field. This handler assumes the illustrative template in references/setup.md,
-// which sends issueId, title, state, priority and issuePageUrl.
+// which sends issueId, title, state, priority and issuePageUrl. The template itself sets state
+// to open, acknowledged or closed (New Relic doesn't document its own state values).
 function handleIssue(payload) {
   const { issueId, title, priority, issuePageUrl } = payload;
-  const state = String(payload.state || '').toUpperCase();
+  const state = String(payload.state || '').toLowerCase();
 
   switch (state) {
-    case 'ACTIVATED':
-      console.log(`Issue activated: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
+    case 'open':
+      console.log(`Issue open: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
       // TODO: page on-call or open a ticket
       break;
 
-    case 'ACKNOWLEDGED':
+    case 'acknowledged':
       console.log(`Issue acknowledged: ${issueId} ${title}`);
       // TODO: mark the ticket as being worked
       break;
 
-    case 'CLOSED':
+    case 'closed':
       console.log(`Issue closed: ${issueId} ${title}`);
       // TODO: close the matching ticket
       break;

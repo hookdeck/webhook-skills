@@ -90,10 +90,10 @@ Every Release Management body also has `release_id`, `app_id`, `triggered_by`, `
 `sent_at` and `webhook_event_unique_id` (usable as an idempotency key). The full list is in
 [references/overview.md](references/overview.md).
 
-**CI build events** (build started, build finished) have no documented type field. The docs
-describe no `trigger_event` for them, so detect them by shape: no `trigger_event`, but build
-fields such as `build_status` or `build_triggered_workflow`. Inspect a real delivery under
-**Recent deliveries** to see exactly what your project sends.
+**CI build events** (build started, build finished) have no documented payload: Bitrise publishes
+no schema, field names or type field for them. Treat a body without `trigger_event` as
+undocumented (the examples acknowledge it and log its field names) and inspect a real delivery
+under **Recent deliveries** to see exactly what your project sends before relying on any field.
 
 ## Environment Variables
 

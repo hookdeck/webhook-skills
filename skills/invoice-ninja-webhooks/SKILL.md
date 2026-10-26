@@ -75,10 +75,10 @@ retried, up to 5 tries), so a wrong secret loses events instead of delaying them
 
 ## Request Method and Body
 
-- The method is chosen on the subscription (`rest_method`, `POST` by default), so accept `POST`,
-  `PUT`, `PATCH` and `GET` on the route, and handle an **empty body** (for example `GET`).
-- When there is a body it is JSON: the entity as produced by Invoice Ninja's transformer, with
-  no wrapper and **no event field**.
+- The method is chosen on the subscription (`rest_method`). Invoice Ninja's server only accepts
+  `post` (the default) or `put` there, so accept `POST` and `PUT` on the route.
+- The body is JSON: the entity as produced by Invoice Ninja's transformer, with no wrapper and
+  **no event field**.
 
 ## Routing Events
 

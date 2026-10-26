@@ -12,8 +12,9 @@ load_dotenv()
 
 app = FastAPI()
 
-# Invoice Ninja sends the webhook with the rest_method chosen on the subscription (POST by default).
-ALLOWED_METHODS = ["POST", "PUT", "PATCH", "GET"]
+# Invoice Ninja sends the webhook with the subscription's rest_method, which its server
+# validates as post (the default) or put.
+ALLOWED_METHODS = ["POST", "PUT"]
 
 
 def safe_equal(a: str, b: str) -> bool:
@@ -93,7 +94,7 @@ def handle_entity(event: Optional[str], payload: dict) -> None:
     dependencies=[Depends(require_invoice_ninja_credential)],
 )
 async def invoice_ninja_webhook(request: Request):
-    # Raw bytes, any content type; GET (and some PUT/PATCH) deliveries can have an empty body.
+    # Raw bytes, any content type. Invoice Ninja always sends a JSON body; an empty one is still acknowledged.
     raw = (await request.body()).decode("utf-8", errors="replace")
     payload: dict = {}
     if raw.strip():

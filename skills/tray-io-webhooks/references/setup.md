@@ -21,7 +21,8 @@
    `Authorization` = `$.auth.api_key` (or `Bearer ` followed by `$.auth.api_key`).
 4. Set `TRAY_IO_WEBHOOK_HEADER` to the header name and `TRAY_IO_WEBHOOK_SECRET` to the **exact whole
    header value** your workflow sends, including any `Bearer ` prefix.
-5. Set the body type to JSON and include an `event` field, for example
+5. Set the body type to JSON. The body is yours to define; to match the examples, include an
+   `event` field (a convention of this skill, not a Tray field), for example
    `{"event": "record.created", "data": {...}}`.
 
 ## Test

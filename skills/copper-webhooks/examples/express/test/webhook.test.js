@@ -20,7 +20,7 @@ function samplePayload(type = 'person', event = 'update') {
     event,
     subscription_id: 987,
     updated_attributes: { title: ['Engineer', 'Senior Engineer'] },
-    secret: {}
+    timestamp: '2021-12-13T19:18:22.084Z'
   };
 }
 
@@ -60,7 +60,7 @@ describe('Copper webhook endpoint', () => {
     });
 
     it('does not accept the secret from the JSON body', async () => {
-      const res = await post(JSON.stringify({ ...samplePayload(), secret: { key: SECRET } }));
+      const res = await post(JSON.stringify({ ...samplePayload(), secret: SECRET }));
       expect(res.status).toBe(401);
     });
 

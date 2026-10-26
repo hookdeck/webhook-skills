@@ -55,7 +55,7 @@ describe('Invoice Ninja webhook endpoint', () => {
     });
 
     it('never answers 404, 405 or 410 for bad credentials', async () => {
-      for (const method of ['post', 'put', 'patch', 'get']) {
+      for (const method of ['post', 'put']) {
         const res = await send(method, { headers: {} });
         expect([404, 405, 410]).not.toContain(res.status);
         expect(res.status).toBe(401);
@@ -64,15 +64,15 @@ describe('Invoice Ninja webhook endpoint', () => {
   });
 
   describe('request methods', () => {
-    it.each(['post', 'put', 'patch'])('accepts %s with a JSON body', async (method) => {
+    it.each(['post', 'put'])('accepts %s with a JSON body', async (method) => {
       const res = await send(method);
       expect(res.status).toBe(200);
+      expect(res.body).toEqual({ received: true });
     });
 
-    it('accepts GET with an empty body', async () => {
-      const res = await send('get', { body: undefined });
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual({ received: true });
+    it.each(['patch', 'get'])('answers 400 for %s (rest_method is only post or put)', async (method) => {
+      const res = await send(method);
+      expect(res.status).toBe(400);
     });
 
     it('accepts an empty POST body', async () => {

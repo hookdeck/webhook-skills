@@ -37,7 +37,7 @@ Server runs on http://localhost:8000 and accepts requests at `POST /webhooks/one
 pytest test_webhook.py -v
 ```
 
-The tests send events with correct, wrong and missing headers, arrays and newline-delimited bodies, and every documented `event_type_id`. No OneLogin account is needed.
+The tests send events with correct, wrong and missing headers, JSON array bodies, and every documented `event_type_id`. No OneLogin account is needed.
 
 To try it by hand:
 
@@ -63,6 +63,6 @@ Put the printed URL in the Event Broadcaster.
 - `main.py`: `verify_onelogin_request()`, a FastAPI dependency, `parse_events()` and the `POST /webhooks/onelogin` route`
 
 1. The custom header is checked before the body is parsed. Failure returns `401`.
-2. The body must be a JSON array of events (or newline-delimited JSON); otherwise `400`.
+2. The body must be a JSON array of events (the recommended JSON Array format type); otherwise `400`.
 3. Each event is dispatched on `event_type_id`: `5` login success, `6` login failed, `7` logout, `8` logged into an app, `11` changed password, `22` added an MFA device. Unknown IDs are acknowledged.
 4. It returns `200`. OneLogin retries non-200 responses up to 3 attempts in total.

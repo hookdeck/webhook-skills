@@ -7,9 +7,7 @@ interface VtexPayload {
   Domain?: string;
   OrderId?: string;
   State?: string;
-  LastState?: string;
   LastChange?: string;
-  CurrentChange?: string;
   Origin?: { Account?: string; Key?: string };
   hookConfig?: string;
   [key: string]: unknown;
@@ -36,7 +34,7 @@ function handleEvent(payload: VtexPayload): void {
       // TODO: create the order in your ERP
       break;
 
-    case 'order-completed':
+    case 'on-order-completed':
       console.log(`Order completed: ${OrderId}`);
       // TODO: confirm the order downstream
       break;

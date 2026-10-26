@@ -7,13 +7,15 @@ describe two things:
 
 - **Custom headers**: a secret key you add to the integration's Headers field, sent with every
   request. Your endpoint compares it with the value it stored.
-- **`x-timestamp`**: an epoch timestamp header on every request.
+- **`x-timestamp`**: the system's epoch timestamp, sent with every request "to help you prevent
+  replay attacks". It is not signed.
 
 There is no HMAC, no signed content, and no fixed header name. The raw body is not part of the
 check, but authenticate before parsing it.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
-> protection** (no signature, no timestamp). Anyone who captures one request can resend it.
+> protection** (no signature, and `x-timestamp` is unsigned). Anyone who captures one request can
+> resend it with a fresh `x-timestamp`.
 > Use HTTPS, keep the secret out of logs, and rotate it if it leaks.
 
 ## Implementation
@@ -57,10 +59,12 @@ def verify_currents_request(headers, secret=None, header_name=None) -> bool:
 
 ## What About x-timestamp?
 
-`x-timestamp` is not signed, so an attacker who replays a request can also set a fresh value.
-It is at most a freshness hint: you may log it or drop requests that are wildly stale, but don't
-rely on it for replay protection. Deduplicate on `buildId` + `groupId` + `event` instead, and
-remember that retries re-deliver the original request with its original timestamp.
+Currents documents `x-timestamp` as a replay-attack aid and asks you to keep your server clock
+synchronized. It is not signed, so an attacker who replays a captured request can also set a fresh
+value. It is at most a freshness hint: you may log it or drop requests that are wildly stale, but
+don't rely on it for replay protection. Deduplicate on `buildId` + `groupId` + `event` instead.
+Currents' docs don't say whether it uses seconds or milliseconds, or whether failed deliveries
+are retried, so check real requests before enforcing a freshness window.
 
 ## Common Gotchas
 

@@ -101,18 +101,14 @@ class TestEventHandling:
         assert res.status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
 
-    def test_detects_ci_build_events_by_shape(self, capsys):
-        body = json.dumps({"build_slug": "b1", "build_status": 1, "build_triggered_workflow": "primary"})
-        res = post({"Authorization": SECRET}, body=body)
-        assert res.status_code == 200
-        assert "CI build event" in capsys.readouterr().out
-
     def test_acknowledges_unknown_release_events(self):
         body = json.dumps(release_payload("something_new"))
         assert post({"Authorization": SECRET}, body=body).status_code == 200
 
-    def test_acknowledges_unrecognised_payloads(self):
+    def test_acknowledges_and_logs_payloads_without_trigger_event(self, capsys):
+        # No trigger_event: an undocumented shape, such as a CI build event.
         assert post({"Authorization": SECRET}, body=json.dumps({"hello": "world"})).status_code == 200
+        assert "Payload without trigger_event" in capsys.readouterr().out
 
 
 def test_health():

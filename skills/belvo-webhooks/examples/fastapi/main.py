@@ -38,12 +38,19 @@ def verify_belvo_request(headers, config=os.environ) -> bool:
 
 
 def classify(payload: dict):
-    """Belvo has two body shapes: Payments (Mexico/Brazil) use eventType/eventCode,
-    Aggregation uses webhook_type/webhook_code."""
+    """Belvo body shapes, told apart by the fields present:
+    - Payments Mexico: eventType/eventCode/details
+    - Payments Brazil V2 (resources created with X-Belvo-API-Resource-Version: Payments-BR.V2):
+      schema_version/resource/resource_id
+    - Payments Brazil V1: webhook_type/webhook_code with object_id (no link_id)
+    - Aggregation: webhook_type/webhook_code with link_id"""
     if isinstance(payload.get("eventCode"), str):
-        return {"family": "payments", "code": payload["eventCode"]}
+        return {"family": "payments_mx", "code": payload["eventCode"]}
+    if isinstance(payload.get("schema_version"), str) and isinstance(payload.get("resource"), str):
+        return {"family": "payments_br_v2", "code": payload["resource"], "id": payload.get("resource_id")}
     if isinstance(payload.get("webhook_code"), str):
-        return {"family": "aggregation", "code": payload["webhook_code"], "type": payload.get("webhook_type")}
+        family = "payments_br_v1" if "object_id" in payload and "link_id" not in payload else "aggregation"
+        return {"family": family, "code": payload["webhook_code"], "type": payload.get("webhook_type")}
     return None
 
 
@@ -129,12 +136,25 @@ def handle_aggregation(code: str, payload: dict) -> None:
         print(f"Unhandled Belvo aggregation event: {label}")
 
 
+def handle_payments_brazil(kind: dict, payload: dict) -> None:
+    # Brazil webhooks only identify the resource: fetch it from
+    # GET /payments/br/{resource}/{id}/ (V2: send X-Belvo-API-Resource-Version: Payments-BR.V2).
+    if kind["family"] == "payments_br_v2":
+        print(f"Belvo Brazil {kind['code']} {kind['id']} updated at {payload.get('timestamp')}")
+    else:
+        data = payload.get("data") or {}
+        print(f"Belvo Brazil {kind['type']} {kind['code']} for {payload.get('object_id')}: {data.get('status')}")
+    # TODO: fetch the resource and update your records
+
+
 def handle_event(payload: dict) -> None:
     kind = classify(payload)
     if kind is None:
-        print("Unhandled Belvo payload (no eventCode or webhook_code)")
-    elif kind["family"] == "payments":
+        print("Unhandled Belvo payload (no eventCode, resource or webhook_code)")
+    elif kind["family"] == "payments_mx":
         handle_payments(kind["code"], payload)
+    elif kind["family"] in ("payments_br_v1", "payments_br_v2"):
+        handle_payments_brazil(kind, payload)
     else:
         handle_aggregation(kind["code"], payload)
 

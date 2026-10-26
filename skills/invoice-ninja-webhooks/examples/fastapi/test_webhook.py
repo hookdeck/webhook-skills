@@ -56,7 +56,7 @@ class TestSecretHeaderVerification:
     def test_rejects_secret_under_other_header_name(self):
         assert send(headers={"X-Other": SECRET}).status_code == 401
 
-    @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "GET"])
+    @pytest.mark.parametrize("method", ["POST", "PUT"])
     def test_never_answers_404_405_410_for_bad_credentials(self, method):
         res = send(method, headers={})
         assert res.status_code == 401
@@ -67,12 +67,9 @@ class TestSecretHeaderVerification:
 
 
 class TestMethods:
-    @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH"])
+    @pytest.mark.parametrize("method", ["POST", "PUT"])
     def test_accepts_body_methods(self, method):
-        assert send(method).status_code == 200
-
-    def test_accepts_get_with_empty_body(self):
-        res = send("GET", body=NO_BODY)
+        res = send(method)
         assert res.status_code == 200
         assert res.json() == {"received": True}
 

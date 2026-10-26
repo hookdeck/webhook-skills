@@ -44,7 +44,7 @@ def handle_event(payload: dict) -> None:
         print(f"Order created: {order_id}")
         # TODO: create the order in your ERP
 
-    elif state == "order-completed":
+    elif state == "on-order-completed":
         print(f"Order completed: {order_id}")
         # TODO: confirm the order downstream
 

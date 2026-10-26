@@ -73,7 +73,7 @@ Use the printed URL as `hook.url` in the VTEX hook configuration.
 1. `{"hookConfig": "ping"}` (sent when the hook is saved) gets `200` before the auth check.
 2. The secret header is checked before the body is used. Failure returns `401`.
 3. The body must be a JSON object (`400` otherwise).
-4. The handler dispatches on `State`: `order-created`, `order-completed`, `payment-pending`,
+4. The handler dispatches on `State`: `order-created`, `on-order-completed`, `payment-pending`,
    `payment-approved`, `waiting-ffmt-authorization`, `ready-for-handling`, `start-handling`,
    `handling`, `invoiced`, `cancel`, `canceled`.
 5. It returns `200 {"received": true}`.

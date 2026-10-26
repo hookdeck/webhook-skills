@@ -90,11 +90,11 @@ class TestBodyHandling:
         assert res.json() == {"received": 3}
         assert len(capsys.readouterr().out.strip().splitlines()) == 3
 
-    def test_accepts_newline_delimited_events(self):
+    def test_newline_delimited_events_return_400(self):
+        # Only the JSON Array format type is documented.
         body = "\n".join(json.dumps(e) for e in [sample_event(5), sample_event(6)])
         res = post({HEADER: SECRET}, body, "text/plain")
-        assert res.status_code == 200
-        assert res.json() == {"received": 2}
+        assert res.status_code == 400
 
     def test_invalid_json_returns_400_after_auth(self):
         assert post({HEADER: SECRET}, "{not json").status_code == 400

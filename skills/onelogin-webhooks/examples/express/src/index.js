@@ -34,8 +34,8 @@ function verifyOneLoginRequest(
 }
 
 /**
- * The body is a JSON array of events (recommended format) or newline-delimited JSON.
- * Returns an array of event objects, or null if the body isn't valid.
+ * The body is a JSON array of events (the JSON Array format type OneLogin recommends; its docs
+ * describe no other). Returns an array of event objects, or null if the body isn't valid.
  */
 function parseEvents(raw) {
   const text = raw.trim();
@@ -45,13 +45,7 @@ function parseEvents(raw) {
     if (Array.isArray(parsed)) return parsed.every(isObject) ? parsed : null;
     return isObject(parsed) ? [parsed] : null;
   } catch {
-    // Not a single JSON document: try newline-delimited JSON.
-    try {
-      const events = text.split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
-      return events.every(isObject) ? events : null;
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 

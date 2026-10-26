@@ -53,6 +53,22 @@ AGGREGATION = {
     "external_id": "your_external_id",
     "data": {},
 }
+BRAZIL_V1 = {
+    "webhook_id": "3b9a69f7-0f0a-455b-832d-49ad6fd4905c",
+    "webhook_type": "PAYMENT_INTENTS",
+    "webhook_code": "STATUS_UPDATE",
+    "object_id": "d2e40773-19f6-48d1-93c3-3590ec0c74df",
+    "external_id": "c3c51aaf-aaa3-400c-926d-87ab62e195fd",
+    "data": {"status": "FAILED", "failure_code": "consent_expired",
+             "failure_message": "The payment consent was not accepted in time."},
+}
+BRAZIL_V2 = {
+    "schema_version": "2.0.0",
+    "resource": "BANK_ACCOUNT",
+    "resource_id": "7d01c4cf-57ed-4ed9-b109-a5bfb2d8c42b",
+    "resource_version": "V2",
+    "timestamp": "2025-01-16T10:30:45Z",
+}
 AGGREGATION_ERROR = {
     **AGGREGATION,
     "webhook_type": "TRANSACTIONS",
@@ -105,8 +121,8 @@ class TestBelvoWebhook:
     def test_json_array_returns_400(self):
         assert post("[1,2]", {"Authorization": AUTH}).status_code == 400
 
-    def test_accepts_payments_and_aggregation_payloads(self):
-        for body in (PAYMENT_FAILED, CONSENT_CONFIRMED, CUSTOMER_BLOCKED, AGGREGATION, AGGREGATION_ERROR):
+    def test_accepts_payments_mexico_brazil_and_aggregation_payloads(self):
+        for body in (PAYMENT_FAILED, CONSENT_CONFIRMED, CUSTOMER_BLOCKED, AGGREGATION, AGGREGATION_ERROR, BRAZIL_V1, BRAZIL_V2):
             assert post(json.dumps(body), {"Authorization": AUTH}).status_code == 200
 
     def test_acknowledges_unknown_payloads(self):
@@ -115,7 +131,10 @@ class TestBelvoWebhook:
 
 class TestHelpers:
     def test_classify(self):
-        assert classify(PAYMENT_SUCCESS) == {"family": "payments", "code": "payment_request_successful"}
+        assert classify(PAYMENT_SUCCESS) == {"family": "payments_mx", "code": "payment_request_successful"}
+        assert classify(BRAZIL_V1) == {"family": "payments_br_v1", "code": "STATUS_UPDATE", "type": "PAYMENT_INTENTS"}
+        assert classify(BRAZIL_V2) == {
+            "family": "payments_br_v2", "code": "BANK_ACCOUNT", "id": "7d01c4cf-57ed-4ed9-b109-a5bfb2d8c42b"}
         assert classify(AGGREGATION) == {"family": "aggregation", "code": "new_accounts_available", "type": "ACCOUNTS"}
         assert classify({"foo": 1}) is None
 

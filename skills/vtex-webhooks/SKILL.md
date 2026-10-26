@@ -66,13 +66,13 @@ protection** (there is no signature and no timestamp). Use HTTPS only, and rotat
 
 ## Event Types
 
-The notification body is `{Domain, OrderId, State, LastState, LastChange, CurrentChange, Origin: {Account, Key}}`.
-`State` is the new order status; dispatch on it.
+The documented notification body is `{Domain, OrderId, State, LastChange, Origin: {Account, Key}}`.
+`State` is the order status (the API status names from VTEX's order flow table); dispatch on it.
 
 | `State` | Meaning |
 |---------|---------|
 | `order-created` | The order was created |
-| `order-completed` | The order is complete |
+| `on-order-completed` | The purchase was processed at checkout and the order data is complete |
 | `payment-pending` | Waiting for payment |
 | `payment-approved` | Payment approved |
 | `waiting-ffmt-authorization` | Waiting for fulfillment authorization |

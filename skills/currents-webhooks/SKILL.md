@@ -2,7 +2,7 @@
 name: currents-webhooks
 description: >
   Receive and authenticate Currents HTTP webhooks. Use when setting up a Currents
-  (currents.dev) webhook endpoint for Playwright or Cypress test runs, checking the
+  (currents.dev) webhook endpoint for Playwright test runs, checking the
   secret custom header, debugging 401s, or handling RUN_START, RUN_FINISH,
   RUN_TIMEOUT and RUN_CANCELED events.
 license: MIT
@@ -14,7 +14,7 @@ metadata:
 
 # Currents Webhooks
 
-Currents (currents.dev) reports Playwright and Cypress test runs. Its **HTTP Webhook**
+Currents (currents.dev) reports Playwright test runs. Its **HTTP Webhook**
 integration sends a JSON `POST` when a run starts, finishes, times out or is canceled.
 Webhooks are **not signed**. You authenticate them with a secret header that you add to the
 integration's **Headers** field; your endpoint compares that header with the value you stored.
@@ -59,10 +59,11 @@ function verifyCurrentsRequest(
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, and parse the
   JSON only after the check passes.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
-  protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
-- Currents also sends an `x-timestamp` header (epoch time). It is unsigned and can be forged,
-  so treat it as a freshness hint at most, never as replay protection. Handle events
-  idempotently instead.
+  protection** (no signature, and the only timestamp is unsigned). Use HTTPS and rotate the
+  credential if it leaks.
+- Currents also sends an `x-timestamp` header with the system's epoch timestamp, which its docs
+  offer to help you prevent replay attacks. It is not signed, so anyone holding the secret header
+  can set a fresh value: treat it as a freshness hint at most, and handle events idempotently.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

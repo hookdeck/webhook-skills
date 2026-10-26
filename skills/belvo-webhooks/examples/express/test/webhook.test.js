@@ -47,6 +47,21 @@ const aggregation = {
   external_id: 'your_external_id',
   data: {},
 };
+const brazilV1 = {
+  webhook_id: '3b9a69f7-0f0a-455b-832d-49ad6fd4905c',
+  webhook_type: 'PAYMENT_INTENTS',
+  webhook_code: 'STATUS_UPDATE',
+  object_id: 'd2e40773-19f6-48d1-93c3-3590ec0c74df',
+  external_id: 'c3c51aaf-aaa3-400c-926d-87ab62e195fd',
+  data: { status: 'FAILED', failure_code: 'consent_expired', failure_message: 'The payment consent was not accepted in time.' },
+};
+const brazilV2 = {
+  schema_version: '2.0.0',
+  resource: 'BANK_ACCOUNT',
+  resource_id: '7d01c4cf-57ed-4ed9-b109-a5bfb2d8c42b',
+  resource_version: 'V2',
+  timestamp: '2025-01-16T10:30:45Z',
+};
 const aggregationError = {
   ...aggregation,
   webhook_type: 'TRANSACTIONS',
@@ -115,8 +130,8 @@ describe('Belvo webhook', () => {
     expect((await post('[1,2]', { Authorization: AUTH })).status).toBe(400);
   });
 
-  it('accepts Payments and Aggregation payloads', async () => {
-    for (const body of [paymentFailed, consentConfirmed, customerBlocked, aggregation, aggregationError]) {
+  it('accepts Payments (Mexico, Brazil V1/V2) and Aggregation payloads', async () => {
+    for (const body of [paymentFailed, consentConfirmed, customerBlocked, aggregation, aggregationError, brazilV1, brazilV2]) {
       expect((await post(body, { Authorization: AUTH })).status).toBe(200);
     }
   });
@@ -125,8 +140,10 @@ describe('Belvo webhook', () => {
     expect((await post({ foo: 1 }, { Authorization: AUTH })).status).toBe(200);
   });
 
-  it('classifies both payload shapes', () => {
-    expect(classify(paymentSuccess)).toEqual({ family: 'payments', code: 'payment_request_successful' });
+  it('classifies every payload shape', () => {
+    expect(classify(paymentSuccess)).toEqual({ family: 'payments_mx', code: 'payment_request_successful' });
+    expect(classify(brazilV1)).toEqual({ family: 'payments_br_v1', code: 'STATUS_UPDATE', type: 'PAYMENT_INTENTS' });
+    expect(classify(brazilV2)).toEqual({ family: 'payments_br_v2', code: 'BANK_ACCOUNT', id: '7d01c4cf-57ed-4ed9-b109-a5bfb2d8c42b' });
     expect(classify(aggregation)).toEqual({ family: 'aggregation', code: 'new_accounts_available', type: 'ACCOUNTS' });
     expect(classify({ foo: 1 })).toBeNull();
   });

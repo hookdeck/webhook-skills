@@ -53,7 +53,7 @@ function handleEvent(payload) {
       // TODO: create the order in your ERP
       break;
 
-    case 'order-completed':
+    case 'on-order-completed':
       console.log(`Order completed: ${OrderId}`);
       // TODO: confirm the order downstream
       break;

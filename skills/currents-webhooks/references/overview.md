@@ -2,7 +2,7 @@
 
 ## What Are Currents Webhooks?
 
-Currents (currents.dev) is a dashboard for Playwright and Cypress test runs. Its HTTP Webhook
+Currents (currents.dev) is a dashboard for Playwright test runs. Its HTTP Webhook
 integration sends a `POST` with a JSON payload to a publicly accessible URL you choose at each
 run lifecycle event. Requests are not signed. Authenticity relies on a secret custom header you
 configure, plus an unsigned `x-timestamp` header.

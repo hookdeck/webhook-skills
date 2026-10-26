@@ -34,15 +34,11 @@ function verifyBitriseRequest(
 }
 
 /**
- * Release Management bodies have a string trigger_event. CI build event bodies document no
- * type field, so they are detected by shape.
+ * Release Management bodies have a string trigger_event. Bitrise publishes no payload schema for
+ * CI build events, so anything else is logged as-is rather than parsed on guessed field names.
  */
 function detectKind(payload) {
-  if (typeof payload.trigger_event === 'string') return 'release_management';
-  if ('build_status' in payload || 'build_triggered_workflow' in payload || 'build_slug' in payload) {
-    return 'ci_build';
-  }
-  return 'unknown';
+  return typeof payload.trigger_event === 'string' ? 'release_management' : 'other';
 }
 
 function handleReleaseEvent(payload) {
@@ -121,21 +117,15 @@ function handleReleaseEvent(payload) {
   }
 }
 
-function handleCiBuildEvent(payload) {
-  const { build_slug: slug, build_status: status, build_triggered_workflow: workflow } = payload;
-  console.log(`CI build event: build ${slug} workflow ${workflow} status ${status}`);
-  // TODO: report build status or trigger a downstream job
+function handleOtherEvent(payload) {
+  // Likely a CI build event (build started or finished), whose payload Bitrise doesn't document.
+  console.log(`Payload without trigger_event (undocumented, e.g. a CI build event); fields: ${Object.keys(payload).join(', ')}`);
+  // TODO: inspect a real delivery under Recent deliveries, then handle the fields you see
 }
 
 function handleEvent(payload) {
-  switch (detectKind(payload)) {
-    case 'release_management':
-      return handleReleaseEvent(payload);
-    case 'ci_build':
-      return handleCiBuildEvent(payload);
-    default:
-      console.log('Unhandled Bitrise payload');
-  }
+  if (detectKind(payload) === 'release_management') return handleReleaseEvent(payload);
+  return handleOtherEvent(payload);
 }
 
 // Read the body raw (any content type) so the request is authenticated before parsing.

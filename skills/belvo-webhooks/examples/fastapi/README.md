@@ -1,6 +1,6 @@
 # Belvo Webhooks - FastAPI Example
 
-Minimal example of receiving Belvo Payments (Mexico/Brazil) and Aggregation webhooks and
+Minimal example of receiving Belvo Payments (Mexico and Brazil) and Aggregation webhooks and
 authenticating them with the `Authorization` header.
 
 Belvo does not sign payloads. The only authentication is an optional static credential you set
@@ -68,6 +68,8 @@ Use the printed URL as the webhook URL in Belvo.
 1. The body is read raw with `await request.body()`, so any content type works.
 2. The `require_belvo_auth` dependency compares `Authorization` in full with `BELVO_AUTHORIZATION`. Failure returns `401`.
 3. The body must be a JSON object (`400` otherwise).
-4. Payments bodies carry `eventCode`; Aggregation bodies carry `webhook_type` and `webhook_code`.
+4. Payments Mexico bodies carry `eventCode`; Payments Brazil V2 bodies carry `schema_version` and
+   `resource`; Brazil V1 and Aggregation bodies carry `webhook_type` and `webhook_code`, with
+   `object_id` (Brazil V1) or `link_id` (Aggregation).
    The handler dispatches on whichever is present.
 5. It returns `200 {"received": true}`.

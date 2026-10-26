@@ -16,7 +16,7 @@ client = TestClient(app)
 USER = os.environ["NEW_RELIC_WEBHOOK_USERNAME"]
 PASS = os.environ["NEW_RELIC_WEBHOOK_PASSWORD"]
 
-STATES = ["ACTIVATED", "ACKNOWLEDGED", "CLOSED"]
+STATES = ["open", "acknowledged", "closed"]
 
 
 def basic(user, password, scheme="Basic"):
@@ -24,7 +24,7 @@ def basic(user, password, scheme="Basic"):
     return f"{scheme} {token}"
 
 
-def sample_payload(state="ACTIVATED"):
+def sample_payload(state="open"):
     # Illustrative payload from the Handlebars template in references/setup.md
     return {
         "issueId": "a1b2c3d4-0000-4000-8000-000000000001",

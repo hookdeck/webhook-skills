@@ -30,14 +30,6 @@ function releasePayload(event = 'testflight_upload_completed') {
   };
 }
 
-function ciBuildPayload() {
-  return {
-    build_slug: 'b1',
-    build_status: 1,
-    build_triggered_workflow: 'primary'
-  };
-}
-
 function post(body = JSON.stringify(releasePayload()), contentType = 'application/json') {
   return request(app)
     .post('/webhooks/bitrise')
@@ -133,14 +125,6 @@ describe('Bitrise webhook endpoint', () => {
       spy.mockRestore();
     });
 
-    it('detects CI build events by shape', async () => {
-      const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
-      const res = await post(JSON.stringify(ciBuildPayload())).set('Authorization', SECRET);
-      expect(res.status).toBe(200);
-      expect(spy.mock.calls.some(([m]) => String(m).startsWith('CI build event'))).toBe(true);
-      spy.mockRestore();
-    });
-
     it('acknowledges unknown Release Management events', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
       const res = await post(JSON.stringify(releasePayload('something_new'))).set('Authorization', SECRET);
@@ -148,10 +132,11 @@ describe('Bitrise webhook endpoint', () => {
       spy.mockRestore();
     });
 
-    it('acknowledges unrecognised payloads', async () => {
+    it('acknowledges and logs payloads without trigger_event (undocumented CI build shape)', async () => {
       const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
       const res = await post(JSON.stringify({ hello: 'world' })).set('Authorization', SECRET);
       expect(res.status).toBe(200);
+      expect(spy.mock.calls.some(([m]) => String(m).startsWith('Payload without trigger_event'))).toBe(true);
       spy.mockRestore();
     });
   });

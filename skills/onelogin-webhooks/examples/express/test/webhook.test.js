@@ -100,11 +100,10 @@ describe('OneLogin webhook endpoint', () => {
       spy.mockRestore();
     });
 
-    it('accepts newline-delimited events', async () => {
+    it('returns 400 for newline-delimited events (only the JSON Array format is documented)', async () => {
       const body = [sampleEvent(5), sampleEvent(6)].map((e) => JSON.stringify(e)).join('\n');
       const res = await post(body, 'text/plain').set(HEADER, SECRET);
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual({ received: 2 });
+      expect(res.status).toBe(400);
     });
 
     it('returns 400 for invalid JSON after authenticating', async () => {

@@ -12,7 +12,9 @@ interface CopperPayload {
   event: string;
   subscription_id?: number;
   updated_attributes?: Record<string, unknown>;
-  secret?: Record<string, unknown>;
+  timestamp?: string;
+  // Key/value pairs from the subscription's optional `secret` object are merged in at the top level.
+  [key: string]: unknown;
 }
 
 function handleEvent(payload: CopperPayload): void {

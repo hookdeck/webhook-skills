@@ -32,8 +32,10 @@ Allowlist Belvo's webhook IPs if you filter inbound traffic: `3.130.254.46`, `18
 
 ## Payments Brazil
 
-Payments Brazil webhooks take a token and send `Authorization: Bearer <token>`, as in Mexico.
-Check the Payments Brazil docs for portal navigation.
+In the Belvo dashboard, open the payment webhooks section, select the **Payments Webhooks** tab and
+click **+New webhook**. Enter the URL and, in **Authorization**, "an optional bearer token". The
+Brazil docs don't show the exact header Belvo sends, so check a test delivery (you should see
+`Authorization: Bearer <token>`) and store that whole value as `BELVO_AUTHORIZATION`.
 
 ## Local Testing
 

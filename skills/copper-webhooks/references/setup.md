@@ -44,7 +44,8 @@ Reuse the same header on all of them.
 
 Optional extras:
 
-- `secret`: an object such as `{"key1": "value1"}` that Copper echoes inside the JSON body. It is
+- `secret`: an object such as `{"key1": "value1"}` whose key/value pairs Copper merges into the top
+  level of the JSON body (`"key1": "value1"`), not a nested `secret` field. It is
   not a header and not a signature; treat it as a weak extra check only.
 - `custom_field_computed_values`: `true` converts dropdown option IDs to option names.
 

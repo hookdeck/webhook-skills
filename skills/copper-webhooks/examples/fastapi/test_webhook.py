@@ -30,7 +30,7 @@ def sample_payload(kind="person", event="update"):
         "event": event,
         "subscription_id": 987,
         "updated_attributes": {"title": ["Engineer", "Senior Engineer"]},
-        "secret": {},
+        "timestamp": "2021-12-13T19:18:22.084Z",
     }
 
 
@@ -62,7 +62,7 @@ class TestSecretHeaderVerification:
         assert post().status_code == 401
 
     def test_secret_in_body_is_not_accepted(self):
-        body = json.dumps({**sample_payload(), "secret": {"key": SECRET}})
+        body = json.dumps({**sample_payload(), "secret": SECRET})
         assert post(body=body).status_code == 401
 
     def test_compares_whole_value_including_bearer_prefix(self):

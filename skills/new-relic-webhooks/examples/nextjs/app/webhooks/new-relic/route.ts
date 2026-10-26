@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyNewRelicRequest } from '../../../lib/verify-new-relic';
 
 // Shape of the illustrative Handlebars template in references/setup.md.
-// The real payload is whatever template you configure in the workflow.
+// The real payload is whatever template you configure in the workflow. The template itself sets
+// state to open, acknowledged or closed (New Relic doesn't document its own state values).
 interface NewRelicIssuePayload {
   issueId?: string;
   title?: string;
@@ -16,20 +17,20 @@ interface NewRelicIssuePayload {
 
 function handleIssue(payload: NewRelicIssuePayload): void {
   const { issueId, title, priority, issuePageUrl } = payload;
-  const state = String(payload.state || '').toUpperCase();
+  const state = String(payload.state || '').toLowerCase();
 
   switch (state) {
-    case 'ACTIVATED':
-      console.log(`Issue activated: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
+    case 'open':
+      console.log(`Issue open: ${issueId} ${title} (${priority}) ${issuePageUrl}`);
       // TODO: page on-call or open a ticket
       break;
 
-    case 'ACKNOWLEDGED':
+    case 'acknowledged':
       console.log(`Issue acknowledged: ${issueId} ${title}`);
       // TODO: mark the ticket as being worked
       break;
 
-    case 'CLOSED':
+    case 'closed':
       console.log(`Issue closed: ${issueId} ${title}`);
       // TODO: close the matching ticket
       break;

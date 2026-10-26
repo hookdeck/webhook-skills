@@ -60,7 +60,7 @@ def verify_onelogin_request(headers, secret=None, header_name=None) -> bool:
 - **Whole value.** `Bearer abc` and `abc` are different secrets. Do not normalize.
 - **Case-insensitive header name.** Node lower-cases incoming header names; `Headers` and Starlette handle case for you.
 - **Fail closed.** If `ONELOGIN_WEBHOOK_SECRET` is unset, reject everything.
-- **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then parse after the credential check. The body is a JSON array (or newline-delimited JSON); iterate it.
+- **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then parse after the credential check. The body is a JSON array (with the recommended JSON Array format type); iterate it.
 - **Respond 200.** Anything else, or a timeout, triggers a retry (3 attempts max).
 - **Proxies.** Headers such as `Authorization` may be stripped or rewritten by gateways. A dedicated header name avoids this.
 
@@ -71,5 +71,5 @@ def verify_onelogin_request(headers, secret=None, header_name=None) -> bool:
 | 401 on every request | `ONELOGIN_WEBHOOK_SECRET` unset, or header name differs from the one configured in OneLogin |
 | 401 only with `Bearer` secrets | The stored secret omits (or adds) the `Bearer ` prefix the broadcaster sends |
 | 401 only behind a proxy | The proxy strips or renames the header |
-| 400 after authentication | Body is neither a JSON array/object nor newline-delimited JSON |
+| 400 after authentication | Body isn't a JSON array of objects: check the broadcaster uses the JSON Array format type |
 | OneLogin keeps resending | Endpoint returned non-200 or timed out |

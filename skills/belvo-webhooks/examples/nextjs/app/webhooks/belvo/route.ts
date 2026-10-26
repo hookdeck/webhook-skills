@@ -1,7 +1,7 @@
 // Generated with: belvo-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 import { NextRequest, NextResponse } from 'next/server';
-import { classify, verifyBelvoRequest } from '../../../lib/verify-belvo';
+import { classify, verifyBelvoRequest, type BelvoKind } from '../../../lib/verify-belvo';
 
 type Payload = Record<string, any>;
 
@@ -92,12 +92,26 @@ function handleAggregation(code: string, payload: Payload): void {
   }
 }
 
+function handlePaymentsBrazil(kind: BelvoKind, payload: Payload): void {
+  // Brazil webhooks only identify the resource: fetch it from
+  // GET /payments/br/{resource}/{id}/ (V2: send X-Belvo-API-Resource-Version: Payments-BR.V2).
+  if (kind.family === 'payments_br_v2') {
+    console.log(`Belvo Brazil ${kind.code} ${kind.id} updated at ${payload.timestamp}`);
+  } else if (kind.family === 'payments_br_v1') {
+    const data = payload.data || {};
+    console.log(`Belvo Brazil ${kind.type} ${kind.code} for ${payload.object_id}: ${data.status}`);
+  }
+  // TODO: fetch the resource and update your records
+}
+
 function handleEvent(payload: Payload): void {
   const kind = classify(payload);
   if (!kind) {
-    console.log('Unhandled Belvo payload (no eventCode or webhook_code)');
-  } else if (kind.family === 'payments') {
+    console.log('Unhandled Belvo payload (no eventCode, resource or webhook_code)');
+  } else if (kind.family === 'payments_mx') {
     handlePayments(kind.code, payload);
+  } else if (kind.family === 'payments_br_v1' || kind.family === 'payments_br_v2') {
+    handlePaymentsBrazil(kind, payload);
   } else {
     handleAggregation(kind.code, payload);
   }
