@@ -95,6 +95,9 @@ app.post('/webhooks/sent-dm', express.raw({ type: '*/*' }), (req, res) => {
     console.error('Sent webhook verification failed:', err.message);
     return res.status(401).json({ error: 'invalid signature' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   // Dedupe on the event's own id, NOT x-webhook-id (that is the webhook's id).
   const eventId = req.get('x-webhook-event-id');

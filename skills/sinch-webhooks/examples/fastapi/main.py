@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -113,11 +119,11 @@ async def sinch_webhook(request: Request):
     if not isinstance(payload, dict):
         payload = {}
 
-    callback_key = next((key for key in CALLBACK_KEYS if payload.get(key) is not None), None)
+    callback_key = next((key for key in CALLBACK_KEYS if isinstance(payload.get(key), dict)), None)
 
     if callback_key == "message":
         message = payload["message"]
-        print(f"Inbound message: {message.get('id')} {(message.get('channel_identity') or {}).get('channel')}")
+        print(f"Inbound message: {message.get('id')} {_as_dict(message.get('channel_identity')).get('channel')}")
         # TODO: Process the contact's message (payload["message"]["contact_message"])
 
     elif callback_key == "message_delivery_report":
@@ -126,7 +132,7 @@ async def sinch_webhook(request: Request):
         # TODO: Update the delivery status of the message
 
     elif callback_key == "contact_create_notification":
-        print(f"Contact created: {(payload['contact_create_notification'].get('contact') or {}).get('id')}")
+        print(f"Contact created: {_as_dict(payload['contact_create_notification'].get('contact')).get('id')}")
         # TODO: Sync the new contact
 
     elif callback_key is None:

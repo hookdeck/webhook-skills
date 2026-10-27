@@ -100,6 +100,9 @@ export async function POST(request: Request) {
     console.error('Sent webhook verification failed:', (err as Error).message);
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Dedupe on the event's own id, NOT x-webhook-id (that is the webhook's id).
   const eventId = request.headers.get('x-webhook-event-id');

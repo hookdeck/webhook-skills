@@ -66,6 +66,9 @@ app.post('/webhooks/paynow-gg', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   // Deduplicate on event.event_id in production: PayNow retries any non-2xx response
   switch (event.event_type) {

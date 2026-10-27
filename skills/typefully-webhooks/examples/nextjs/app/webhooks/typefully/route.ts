@@ -83,6 +83,9 @@ export async function POST(request: Request) {
   } catch {
     return new NextResponse('Invalid JSON', { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return new NextResponse('Invalid payload', { status: 400 });
+  }
 
   // Envelope: { event: "draft.created", data: <draft> }
   const draft = payload.data ?? {};

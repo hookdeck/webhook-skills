@@ -74,6 +74,9 @@ app.post('/webhooks/openrouter',
     } catch {
       return res.status(400).send('Invalid JSON payload');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Deduplicate retries on this header (e.g. "<job id>-completed")
     const idempotencyKey = req.get('X-OpenRouter-Idempotency-Key');

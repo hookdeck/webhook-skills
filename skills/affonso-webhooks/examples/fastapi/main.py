@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("affonso-webhooks")
@@ -99,9 +105,11 @@ async def affonso_webhook(raw_body: bytes = Depends(verified_body)):
         event = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     event_type = event.get("type")
-    data = event.get("data") or {}
+    data = _as_dict(event.get("data"))
 
     if event_type in ("affiliate.created", "affiliate.confirmed"):
         logger.info("Affiliate %s (%s): %s, status %s", data.get("affiliateId"), event_type, data.get("email"), data.get("status"))

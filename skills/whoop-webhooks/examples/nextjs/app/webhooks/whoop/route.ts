@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   const { type, id, user_id, trace_id } = event;
   console.log(`Received ${type} for user ${user_id} (id ${id}, trace ${trace_id})`);

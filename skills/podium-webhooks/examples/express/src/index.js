@@ -128,6 +128,9 @@ app.all('/webhooks/podium', express.raw({ type: '*/*' }), (req, res) => {
     } catch {
       return res.status(400).json({ error: 'Invalid JSON' });
     }
+    if (payload === null || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
   }
 
   try {

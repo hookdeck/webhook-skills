@@ -89,6 +89,9 @@ app.post('/webhooks/spherepay', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Delivery is at-least-once and unordered: dedupe on event.id, compare event.sequence for staleness
   const data = event.data || {};

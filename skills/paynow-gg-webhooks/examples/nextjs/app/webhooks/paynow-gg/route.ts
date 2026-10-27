@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Deduplicate on event.event_id in production: PayNow retries any non-2xx response
   switch (event.event_type) {

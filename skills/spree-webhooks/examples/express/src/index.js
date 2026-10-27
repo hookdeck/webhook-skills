@@ -60,6 +60,9 @@ app.post('/webhooks/spree',
     } catch {
       return res.status(400).send('Invalid JSON payload');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Deduplicate on event.id: a re-sent delivery carries the same id
     const data = event.data || {};

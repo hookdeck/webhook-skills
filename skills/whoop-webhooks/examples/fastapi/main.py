@@ -88,6 +88,8 @@ async def whoop_webhook(request: Request):
         event = json.loads(raw_body)
     except ValueError:
         return JSONResponse({"error": "Invalid JSON"}, status_code=400)
+    if not isinstance(event, dict):
+        return JSONResponse({"error": "Invalid payload"}, status_code=400)
 
     event_type = event.get("type")
     object_id = event.get("id")

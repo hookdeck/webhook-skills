@@ -112,6 +112,9 @@ app.post('/webhooks/micetribe', express.raw({ type: '*/*' }), (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   const trigger = event && event.meta && event.meta.trigger;
 

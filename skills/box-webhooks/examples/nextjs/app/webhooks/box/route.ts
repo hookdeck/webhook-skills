@@ -84,6 +84,9 @@ async function handle(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // event.id is stable across Box retries (BOX-DELIVERY-ID changes per retry): use it to dedupe
   const { trigger, id } = event;

@@ -57,6 +57,9 @@ app.post('/webhooks/bamboohr', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Event-based webhooks (recommended by BambooHR): one event per POST, { type, timestamp, data }
   if (typeof payload.type === 'string') {
@@ -85,6 +88,7 @@ app.post('/webhooks/bamboohr', express.raw({ type: '*/*' }), (req, res) => {
   // Field-based (legacy) webhooks: employees may be batched into one POST; ignore unrecognized fields
   const employees = Array.isArray(payload.employees) ? payload.employees : [];
   for (const employee of employees) {
+    if (employee === null || typeof employee !== 'object') continue;
     switch (employee.action) {
       case 'Created':
         console.log(`BambooHR: employee ${employee.id} created`);

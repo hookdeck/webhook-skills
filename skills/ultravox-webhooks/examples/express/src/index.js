@@ -69,6 +69,9 @@ app.post('/webhooks/ultravox', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON payload' });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   switch (payload.event) {
     case 'call.started':

@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // Event-based webhooks (recommended by BambooHR): one event per POST, { type, timestamp, data }
   if (typeof payload.type === 'string') {
@@ -102,6 +105,7 @@ export async function POST(request: NextRequest) {
   // Field-based (legacy) webhooks: employees may be batched into one POST; ignore unrecognized fields
   const employees = Array.isArray(payload.employees) ? payload.employees : [];
   for (const employee of employees) {
+    if (employee === null || typeof employee !== 'object') continue;
     switch (employee.action) {
       case 'Created':
         console.log(`BambooHR: employee ${employee.id} created`);

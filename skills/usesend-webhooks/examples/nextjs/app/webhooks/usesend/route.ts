@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return new NextResponse('Invalid JSON', { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return new NextResponse('Invalid payload', { status: 400 });
+  }
 
   // Duplicates are possible: dedupe on event.id in production.
   switch (event.type) {

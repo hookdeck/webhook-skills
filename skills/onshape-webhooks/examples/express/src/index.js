@@ -148,6 +148,9 @@ app.post('/webhooks/onshape',
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     // Retries resend the same event: de-duplicate on event.messageId
     handleOnshapeEvent(event);

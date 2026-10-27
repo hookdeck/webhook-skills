@@ -120,6 +120,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   if (event.webhook_id) {
     if (processedWebhookIds.has(event.webhook_id)) {

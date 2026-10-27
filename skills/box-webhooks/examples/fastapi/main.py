@@ -14,6 +14,12 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("box-webhooks")
@@ -114,11 +120,13 @@ async def box_webhook(request: Request):
         event = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # event["id"] is stable across Box retries (BOX-DELIVERY-ID changes per retry): use it to dedupe
     trigger = event.get("trigger")
     event_id = event.get("id")
-    source = event.get("source") or {}
+    source = _as_dict(event.get("source"))
 
     if trigger in ("FILE.UPLOADED", "FILE.DOWNLOADED", "FILE.TRASHED"):
         logger.info('%s: file %s "%s" (event %s)', trigger, source.get("id"), source.get("name"), event_id)

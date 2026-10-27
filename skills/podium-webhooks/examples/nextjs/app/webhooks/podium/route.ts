@@ -110,6 +110,9 @@ async function handle(request: Request) {
     } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
+    if (payload === null || typeof payload !== 'object') {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
   }
 
   try {

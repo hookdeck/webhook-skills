@@ -77,6 +77,9 @@ app.post('/webhooks/affonso', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   const data = event.data || {};
 

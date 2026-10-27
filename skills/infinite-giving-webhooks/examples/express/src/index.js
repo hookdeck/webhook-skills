@@ -86,6 +86,9 @@ app.post('/webhooks/infinite-giving', express.raw({ type: '*/*' }), (req, res) =
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Dispatch on the body's `event` field. X-IG-Webhook-Id (same as payload.id)
   // is unique per delivery: use it to dedupe retries.

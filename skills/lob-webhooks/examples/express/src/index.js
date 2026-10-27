@@ -76,6 +76,9 @@ app.post('/webhooks/lob', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // The event type is event_type.id; the mailpiece/resource is in event.body.
   const eventType = event.event_type && event.event_type.id;

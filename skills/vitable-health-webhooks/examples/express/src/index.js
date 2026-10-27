@@ -90,6 +90,9 @@ app.post('/webhooks/vitable-health', express.raw({ type: '*/*' }), (req, res) =>
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   if (event.event_id && seenEvents.has(event.event_id)) {
     return res.json({ received: true, duplicate: true });

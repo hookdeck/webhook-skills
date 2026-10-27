@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("coassemble-webhooks")
@@ -97,12 +103,14 @@ async def coassemble_webhook(raw_body: bytes = Depends(verified_body)):
         payload = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # Dedupe on the X-Coassemble-Delivery header: retries and replays keep the same delivery ID
     event = payload.get("type")
-    data = payload.get("data") or {}
-    tracking = data.get("tracking") or {}
-    course = data.get("course") or {}
+    data = _as_dict(payload.get("data"))
+    tracking = _as_dict(data.get("tracking"))
+    course = _as_dict(data.get("course"))
 
     # Test deliveries (testMode: true, including the dashboard's test button) are signed and delivered
     # like real ones, so acknowledge them without taking production actions
@@ -121,10 +129,10 @@ async def coassemble_webhook(raw_body: bytes = Depends(verified_body)):
     elif event == "quiz.failed":
         logger.info("Quiz failed (delivery %s)", payload.get("id"))
     elif event == "migration.progress":
-        item = data.get("item") or {}
+        item = _as_dict(data.get("item"))
         logger.info("Migration batch %s: %r %s", data.get("id"), item.get("title"), item.get("status"))
     elif event == "migration.completed":
-        counts = data.get("counts") or {}
+        counts = _as_dict(data.get("counts"))
         logger.info("Migration batch %s %s: %s/%s succeeded", data.get("id"), data.get("status"), counts.get("succeeded"), counts.get("total"))
     else:
         logger.info("Unhandled event: %s", event)

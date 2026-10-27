@@ -69,6 +69,9 @@ app.post('/webhooks/campfire', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Campfire sends { webhook_uuid, topic, data, changes }. *.deleted topics
   // carry only { id } in data and null in changes.

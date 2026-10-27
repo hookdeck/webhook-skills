@@ -82,6 +82,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
     // Dedupe on the X-Coassemble-Delivery header: retries and replays keep the same delivery ID
   const data = payload.data || {};

@@ -92,7 +92,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
 
-  const callbackKey = CALLBACK_KEYS.find((key) => payload && payload[key] !== undefined);
+  const callbackKey = CALLBACK_KEYS.find(
+    (key) => payload && payload[key] !== null && typeof payload[key] === 'object'
+  );
 
   switch (callbackKey) {
     case 'message':

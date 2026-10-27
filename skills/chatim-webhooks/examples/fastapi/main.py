@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("chatim-webhooks")
@@ -97,15 +103,17 @@ async def chatim_webhook(raw_body: bytes = Depends(verified_body)):
         payload = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # Use payload["eventId"] (or the X-Chatim-Delivery-Id header) for idempotency
     event = payload.get("event")
-    data = payload.get("data") or {}
-    visitor = data.get("visitor") or {}
+    data = _as_dict(payload.get("data"))
+    visitor = _as_dict(data.get("visitor"))
     chat = payload.get("chatUuid")
 
     if event == "chat.started":
-        logger.info("Chat %s started by %s on %s", chat, visitor.get("name") or visitor.get("uuid"), (data.get("page") or {}).get("url"))
+        logger.info("Chat %s started by %s on %s", chat, visitor.get("name") or visitor.get("uuid"), _as_dict(data.get("page")).get("url"))
     elif event == "chat.message.received":
         logger.info("Message from %s: %s", visitor.get("name") or visitor.get("uuid"), data.get("message"))
     elif event == "chat.form.submitted":
@@ -113,7 +121,7 @@ async def chatim_webhook(raw_body: bytes = Depends(verified_body)):
     elif event == "chat.closed":
         logger.info("Chat %s closed by %s after %ss", chat, data.get("closedBy"), data.get("duration"))
     elif event == "chat.assigned":
-        logger.info("Chat %s assigned to %s", chat, (data.get("assignedTo") or {}).get("name"))
+        logger.info("Chat %s assigned to %s", chat, _as_dict(data.get("assignedTo")).get("name"))
     elif event == "chat.handoff":
         logger.info("Chat %s handed off to live chat: %s", chat, data.get("reason"))
     else:

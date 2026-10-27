@@ -66,6 +66,9 @@ app.post('/webhooks/usesend', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Duplicates are possible: dedupe on event.id in production.
   switch (event.type) {

@@ -93,6 +93,9 @@ app.post('/webhooks/cyera', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   switch (payload.request_type) {
     case 'health_check':

@@ -80,9 +80,11 @@ async def bamboohr_webhook(
         payload = json.loads(raw_body)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
 
     # Event-based webhooks (recommended by BambooHR): one event per POST, {type, timestamp, data}
-    if isinstance(payload, dict) and isinstance(payload.get("type"), str):
+    if isinstance(payload.get("type"), str):
         event_type = payload["type"]
         data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
         if event_type == "employee.created":
@@ -98,8 +100,10 @@ async def bamboohr_webhook(
         return {"received": True}
 
     # Field-based (legacy) webhooks: employees may be batched into one POST; ignore unrecognized fields
-    employees = payload.get("employees") if isinstance(payload, dict) else None
+    employees = payload.get("employees")
     for employee in employees if isinstance(employees, list) else []:
+        if not isinstance(employee, dict):
+            continue
         action = employee.get("action")
         employee_id = employee.get("id")
         if action == "Created":

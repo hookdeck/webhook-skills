@@ -130,7 +130,7 @@ FACT_EVENTS = {
 def handle_event(event: dict) -> None:
     meta = event.get("meta") if isinstance(event.get("meta"), dict) else {}
     data = event.get("data") if isinstance(event.get("data"), dict) else {}
-    event_type = meta.get("event_type")
+    event_type = meta.get("event_type") if isinstance(meta.get("event_type"), str) else None
     event_id = meta.get("id")
     if event_type in DONATION_EVENTS:
         # New, moderated or refunded donation. The same donation can arrive more

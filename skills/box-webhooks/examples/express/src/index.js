@@ -81,9 +81,13 @@ app.all('/webhooks/box', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // event.id is stable across Box retries (BOX-DELIVERY-ID changes per retry): use it to dedupe
-  const { trigger, id, source = {} } = event;
+  const { trigger, id } = event;
+  const source = event.source ?? {};
 
   switch (trigger) {
     case 'FILE.UPLOADED':

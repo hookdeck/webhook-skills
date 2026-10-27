@@ -20,6 +20,12 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from standardwebhooks.webhooks import Webhook
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("sent-dm-webhooks")
@@ -64,15 +70,18 @@ async def verified_sent_event(request: Request) -> Dict[str, Any]:
     raw_body = await request.body()
 
     try:
-        return verify_sent_webhook(raw_body, headers, secret)
+        event = verify_sent_webhook(raw_body, headers, secret)
     except Exception as err:  # WebhookVerificationError, bad base64, etc.
         logger.error("Sent webhook verification failed: %s", err)
         raise HTTPException(status_code=401, detail="invalid signature")
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    return event
 
 
 def handle_event(event: Dict[str, Any]) -> None:
     event_type = event.get("event")  # dispatch on the body's `event` field
-    payload = event.get("payload") or {}
+    payload = _as_dict(event.get("payload"))
 
     if event_type == "message.delivered":
         logger.info(

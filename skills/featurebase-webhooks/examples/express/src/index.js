@@ -117,6 +117,9 @@ app.post('/webhooks/featurebase', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   if (event.id && processedEventIds.has(event.id)) {
     return res.status(200).json({ received: true, duplicate: true });

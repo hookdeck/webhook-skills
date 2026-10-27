@@ -35,6 +35,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (event === null || typeof event !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // event_id is stable across retries (also sent as X-Schematic-Webhook-Id). Dashboard
   // test sends carry neither, so don't require it.

@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return new NextResponse('Invalid JSON', { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return new NextResponse('Invalid payload', { status: 400 });
+  }
 
   switch (payload.request_type) {
     case 'health_check':

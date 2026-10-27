@@ -118,6 +118,9 @@ app.post('/webhooks/tidio', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   if (event.webhook_id) {
     if (processedWebhookIds.has(event.webhook_id)) {

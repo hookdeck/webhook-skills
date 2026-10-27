@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  if (payload === null || typeof payload !== 'object') {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+  }
 
   // 3. DEDUPE.
   const deliveryId = request.headers.get('x-webhook-delivery-id') ?? payload.eventId;

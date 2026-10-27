@@ -11,6 +11,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -104,7 +110,7 @@ async def verified_lob_event(request: Request) -> dict:
 @app.post("/webhooks/lob")
 async def lob_webhook(event: dict = Depends(verified_lob_event)):
     # The event type is event_type.id; the mailpiece/resource is in event["body"].
-    event_type = (event.get("event_type") or {}).get("id")
+    event_type = _as_dict(event.get("event_type")).get("id")
     resource = event.get("body") or {}
     resource_id = resource.get("id") if isinstance(resource, dict) else None
 

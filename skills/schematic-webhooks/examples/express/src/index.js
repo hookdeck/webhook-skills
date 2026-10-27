@@ -90,6 +90,9 @@ app.post('/webhooks/schematic', express.raw({ type: '*/*' }), (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
+  if (event === null || typeof event !== 'object') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
 
   // event_id is stable across retries (also sent as X-Schematic-Webhook-Id). Dashboard
   // test sends carry neither, so don't require it.

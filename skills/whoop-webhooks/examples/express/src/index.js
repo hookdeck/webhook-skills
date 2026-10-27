@@ -78,6 +78,9 @@ app.post('/webhooks/whoop',
     } catch {
       return res.status(400).send('Invalid JSON');
     }
+    if (event === null || typeof event !== 'object') {
+      return res.status(400).send('Invalid payload');
+    }
 
     const { type, id, user_id, trace_id } = event;
     console.log(`Received ${type} for user ${user_id} (id ${id}, trace ${trace_id})`);

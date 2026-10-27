@@ -91,7 +91,9 @@ app.post('/webhooks/sinch',
       return res.status(400).send('Invalid JSON payload');
     }
 
-    const callbackKey = CALLBACK_KEYS.find((key) => payload && payload[key] !== undefined);
+    const callbackKey = CALLBACK_KEYS.find(
+      (key) => payload && payload[key] !== null && typeof payload[key] === 'object'
+    );
 
     switch (callbackKey) {
       case 'message':

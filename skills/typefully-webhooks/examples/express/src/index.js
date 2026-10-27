@@ -84,6 +84,9 @@ app.post('/webhooks/typefully', express.raw({ type: '*/*' }), (req, res) => {
   } catch {
     return res.status(400).send('Invalid JSON');
   }
+  if (payload === null || typeof payload !== 'object') {
+    return res.status(400).send('Invalid payload');
+  }
 
   // Envelope: { event: "draft.created", data: <draft> }
   const draft = payload.data || {};
