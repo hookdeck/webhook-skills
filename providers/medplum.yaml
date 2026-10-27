@@ -4,6 +4,9 @@ docs:
   webhooks: https://www.medplum.com/docs/subscriptions
   verification: https://www.medplum.com/docs/subscriptions/subscription-extensions#signatures
 notes: >
+  Delete notifications have an X-Medplum-Deleted-Resource header containing resourceType/id.
+  This header is unsigned (the HMAC covers only the body); do not trust it as an authenticated
+  resource identifier without application-level reconciliation.
   Medplum (medplum.com), an open-source FHIR healthcare developer platform (hosted and self-hosted).
   Webhooks are FHIR `Subscription` resources with `channel.type: rest-hook` and a `channel.endpoint`;
   Medplum POSTs to the endpoint when a resource matching `criteria` changes. Delivery (from the docs):

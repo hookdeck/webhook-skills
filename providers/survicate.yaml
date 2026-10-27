@@ -4,6 +4,9 @@ docs:
   webhooks: https://developers.survicate.com/webhooks/
   verification: https://developers.survicate.com/webhooks/security/
 notes: >
+  Configure endpoint URL and events in each survey's Connect tab, and use Send sample request
+  to test. Workspace Webhooks Settings supplies the Signing Secret. See
+  https://developers.survicate.com/getting-started/#7-get-the-data-out.
   Survicate (survicate.com), a customer-feedback survey tool. Workspace webhooks fire on survey
   answers and completions. Delivery (from the docs): Retries, timeout and success codes are not
   documented; `deliveryTries` in the body counts attempts and `messageId` can serve as a dedupe key.

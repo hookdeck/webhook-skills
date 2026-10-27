@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "test_secret_123",
+  "body": "{\n  \"id\": \"example_delivery\",\n  \"note\": \"Zoë café ✓\",\n  \"event_type\": \"card_payment_captured\"\n}\n",
+  "signature": "0a797146a7c7e4b126c0a8da71c4ccd13049e77b7c5bc1f6d5fe574d502cba36",
+  "events": [
+    "card_payment_captured"
+  ]
+}

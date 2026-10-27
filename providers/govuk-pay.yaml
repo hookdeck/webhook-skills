@@ -4,6 +4,9 @@ docs:
   webhooks: https://docs.payments.service.gov.uk/webhooks/
   verification: https://docs.payments.service.gov.uk/webhooks/#verifying-webhook-messages-from-gov-uk-pay
 notes: >
+  Live callback URLs must use HTTPS/TLS 1.2 and a .gov.uk domain. Support-approved exceptions
+  require a domain owned by the service or its parent organisation. Tunnel testing is for
+  sandbox or not-live-yet modes; confirm an approved callback domain before live Hookdeck routing.
   GOV.UK Pay (payments.service.gov.uk), the UK government's payment platform for public-sector
   services. Per-service webhooks are created in the GOV.UK Pay admin tool (Settings > Developers >
   Webhooks). Delivery (from the docs): At least once: a missing or non-2xx response is retried for

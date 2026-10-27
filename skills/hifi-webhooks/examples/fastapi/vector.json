@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "test_secret_123",
+  "body": "{\n  \"id\": \"example_delivery\",\n  \"note\": \"Zoë café ✓\",\n  \"eventType\": \"ONRAMP.STATUS.COMPLETED\"\n}\n",
+  "signature": "t=1721856000,v1=b5a0fbe95421a1d51fac8fa255809f309e207a269e4089203c07b85a1832a4de",
+  "events": [
+    "ONRAMP.STATUS.COMPLETED"
+  ]
+}

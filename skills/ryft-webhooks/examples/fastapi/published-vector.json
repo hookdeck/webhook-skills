@@ -1,0 +1,6 @@
+{
+  "body": "{\"amount\": 500, \"currency\": \"GBP\"}",
+  "secret": "abcdef4455",
+  "signature": "12443c521a6900579d09b1b29cf17b679f7745eb32a8018e46f44bb27103f865",
+  "source": "https://github.com/RyftPay/ryft-dotnet/blob/master/RyftDotNet/test/RyftDotNet.Tests/Utility/Webhooks/WebhookSignatureVerifierTest.cs"
+}

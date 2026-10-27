@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "test_secret_123",
+  "body": "{\n  \"id\": \"example_delivery\",\n  \"note\": \"Zoë café ✓\",\n  \"event\": \"courseCompletion\"\n}\n",
+  "signature": "sha256=24ee30c2d51f9684cc72dfabf2a87672408f9e747b2eb3988edef2e69e9a6b85",
+  "events": [
+    "courseCompletion"
+  ]
+}

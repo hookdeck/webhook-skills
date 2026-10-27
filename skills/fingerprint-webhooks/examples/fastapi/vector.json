@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "test_secret_123",
+  "body": "{\n  \"event_id\": \"example_event\",\n  \"identification\": {\n    \"visitor_id\": \"example_visitor\"\n  }\n}\n",
+  "signature": "v1=6e42001e7a04f6a1febbb6abcc87394c1a53efe9a64a298c11ac52f8aed23914",
+  "events": [
+    "identification"
+  ]
+}

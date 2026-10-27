@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "whsec_test_secret_123",
+  "body": "{\n  \"id\": \"example_delivery\",\n  \"note\": \"Zoë café ✓\",\n  \"event\": \"link.created\"\n}\n",
+  "signature": "6a1c0ec4f2ee40270543c9e00821f1ea35f703149df965f09ff16cab58658aff",
+  "events": [
+    "link.created"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative payload; fixed signature independently computed with Python HMAC and checked against core. Not a captured delivery.",
+  "secret": "test_secret_123",
+  "body": "{\n  \"id\": 123,\n  \"status\": \"pending\"\n}\n",
+  "signature": "f549f0f62e8daf4959ed700f2d5542662c91206895aec4de5607379a8b36d2c5",
+  "events": [
+    "referral.new"
+  ]
+}
