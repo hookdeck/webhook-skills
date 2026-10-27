@@ -1,0 +1,65 @@
+name: rootfi
+displayName: "RootFi (Commenda)"
+docs:
+  webhooks: https://integrations.docs.commenda.io/documentation/concepts/webhooks
+  verification: https://integrations.docs.commenda.io/documentation/concepts/webhooks
+notes: >
+  RootFi, the unified accounting/commerce/payments integrations API, now documented as Commenda
+  integrations (integrations.docs.commenda.io). Webhook configs are created in the dashboard or
+  through `POST /v4/core/webhook-config`, one event type per config. Delivery (from the docs): Any 2xx
+  succeeds. Otherwise (timeouts included) up to 5 attempts in total with backoff min(60 × 2^attempt,
+  900) s (about 1, 2, 4, 8 min, capped at 15). Requests time out after 30 s. At-least-once, no
+  ordering ("a `SYNC_COMPLETED` can arrive before the last `DATA_MODEL_CHANGES` batch"). RootFi
+  (Commenda)'s docs say: 'When a config has a signing key, we sign each delivery and send the result
+  in `X-RootFi-Signature`: X-RootFi-Signature: t=1716035258,v1=5257a869e7d0a1b...' '`t` is the unix
+  timestamp and `v1` is a hex HMAC-SHA256. The signed message is the timestamp, a literal `.`, and the
+  **raw** request body: HMAC-SHA256(signing_key, "{t}.{raw_body}")' '`X-RootFi-Signature` | HMAC
+  signature. Sent only when the config has a signing key' From the docs (registry summary): Header
+  `X-RootFi-Signature: t=<unix seconds>,v1=<hex>`. v1 = hex HMAC-SHA256(signing_key, "<t>.<raw
+  body>"); the page's JavaScript keys with the signing key string as-is. No test vector. SIGNATURE
+  SCHEME (it must match Hookdeck's ROOTFI source exactly: HMAC controller, algorithm "sha256",
+  header_key "x-rootfi-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true).
+  The X-RootFi-Signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it
+  appears in the header (a string; never parse it to a number and re-format it), then a literal ".",
+  then the raw request body bytes. The header may carry more than one v1= entry (for example during
+  key rotation): accept the delivery if ANY v1= entry matches, and ignore other keys such as v0. A
+  header with no t= value fails. Build the signed message as BYTES: the raw body bytes exactly as
+  received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before
+  verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is
+  compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both
+  sides (or decode both to bytes) before the constant-time compare. Secret: The optional `signing_key`
+  the customer sets on the webhook config (dashboard or API); RootFi does not generate one. Use it as
+  UTF-8 bytes. Env var: ROOTFI_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries
+  and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so
+  a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  ROOTFI_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
+  Unix seconds). Events: dispatch on the body's `event` field. Top-level `event` carries the type
+  verbatim (the event-type table's values). For `DATA_MODEL_CHANGES`, `data.data_model` (`INVOICE`)
+  and `data.type` (`CREATE` / `UPDATE` / `DELETE`) say what changed; a config's lowercase `topics`
+  (`invoice.create`) filter those deliveries but are not sent as a field. No header names the type.
+  Documented event types (5): DATA_MODEL_CHANGES, SYNC_STARTED, SYNC_COMPLETED, CONNECTION_CHANGED,
+  DISCONNECT_REQUESTED. Handle a few common ones and log the rest. Method: POST. Hookdeck's RootFi
+  (Commenda) source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Documented sample payloads (each JSON file's
+  `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/rootfi/ (latest/CONNECTION_CHANGED.json,
+  latest/DISCONNECT_REQUESTED.json, latest/SYNC_COMPLETED.json, latest/SYNC_STARTED.json); base the
+  examples' test payloads on them. Hookdeck's source type is ROOTFI, labelled 'RootFi (Commenda)'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set a signing_key on the RootFi webhook config. Without one,
+  deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "SYNC_COMPLETED"
+    - "DATA_MODEL_CHANGES"
+    - "CONNECTION_CHANGED"
+catalog:
+  summary: "Verify RootFi (Commenda) webhooks (`X-RootFi-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle sync, data model and connection events"

@@ -1,0 +1,53 @@
+name: sonarqube
+displayName: "SonarQube"
+docs:
+  webhooks: https://docs.sonarsource.com/sonarqube-server/project-administration/integrations/webhooks
+  verification: https://docs.sonarsource.com/sonarqube-server/project-administration/integrations/webhooks
+notes: >
+  SonarQube Server (sonarsource.com), the self-hosted code quality and security analysis server (docs
+  for 2026.5). Webhooks are configured per project (up to 10) or globally, in the UI or with the
+  `api/webhooks` Web API, and all of them fire. Self-hosted, so every instance is its own sender.
+  Delivery (from the docs): A delivery fails if the URL does not respond within 10 seconds, and failed
+  deliveries are never retried (redeliver through the Web API if needed). Delivery records are kept 30
+  days. SonarQube's docs say: 'Enter a random string in the Secret text box. This is used as the key
+  to generate the HMAC hex digest value in the X-Sonar-Webhook-HMAC-SHA256 header.' 'SonarQube uses a
+  HMAC lower-case SHA256 digest to compute the signature of the request body.' 'String
+  expectedSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_256,
+  "your_secret").hmacHex(request.getBody())' 'Enter a secret if you want to protect the webhook with
+  HMAC. ... A basic authentication mechanism is supported by providing user/password in the URL of the
+  Webhook such as https://myLogin:myPassword@my_server/foo.' From the docs (registry summary):
+  `X-Sonar-Webhook-HMAC-SHA256: <hex>`, the bare lowercase hex HMAC-SHA256 of the request body keyed
+  with the webhook's Secret (Java sample: commons-codec `HmacUtils(HMAC_SHA_256,
+  secret).hmacHex(body)`). Sent only when a Secret is set. No test vector. SIGNATURE SCHEME (it must
+  match Hookdeck's SONARQUBE source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-sonar-webhook-hmac-sha256", encoding "hex"). The X-Sonar-Webhook-HMAC-SHA256 header carries the
+  bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: The Secret field of the webhook (Project Settings > Webhooks > Create/Update), a
+  random string the administrator enters. Use it as UTF-8 bytes. Env var: SONARQUBE_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
+  there is no replay window to check; do not invent one from unsigned headers or body fields. Events:
+  there is no event-name field or header; every delivery is an analysis result (`taskId`, `status`,
+  `analysedAt`, `project`, `qualityGate`, `properties`). Branch on `qualityGate.status` (OK / ERROR).
+  Method: POST. Hookdeck's SonarQube source manages the method as POST, so the examples handle POST on
+  the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Hookdeck's source type is SONARQUBE,
+  labelled 'SonarQube'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a secret on the SonarQube
+  webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "OK"
+    - "ERROR"
+catalog:
+  summary: "Verify SonarQube webhook signatures (`X-Sonar-Webhook-HMAC-SHA256`, HMAC-SHA256 hex of the raw body), handle analysis results by qualityGate.status OK and ERROR"

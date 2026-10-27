@@ -1,0 +1,56 @@
+name: wistia
+displayName: "Wistia"
+docs:
+  webhooks: https://docs.wistia.com/docs/webhooks
+  verification: https://docs.wistia.com/docs/webhooks#headers
+notes: >
+  Wistia (wistia.com), the video hosting and marketing platform. Webhooks report media lifecycle
+  (created, processing, ready, failed, updated, transcripts, translations, localizations, deleted),
+  viewing sessions (plays, percent watched, form, call-to-action and annotation conversions) and
+  live-event registrations. Delivery (from the docs): At least once, unordered, 10 s timeout; a
+  message may be resent (e.g. after a timeout). Dedupe on each event's `uuid` and order by
+  `generated_at`. Close events are batched into one POST. Wistia's docs say: 'X-Wistia-Signature | An
+  HMAC hexdigest of the POST body, computed using the `secret_key` provided when configuring the
+  webhook. You should be using a `sha256` HMAC hexdigests.' 'payload_body = request.body.read ...
+  signature = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret_key, payload_body)' 'You
+  will also need to enter a *Secret Key* (it can be whatever you want).' From the docs (registry
+  summary): `X-Wistia-Signature: <hex>` = HMAC-SHA256 hexdigest(`secret_key`, POST body), per the Ruby
+  sample `OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret_key, payload_body)`. The
+  table's "You should be using a sha256" wording leaves room for an older default; the example POST's
+  signature value is a dummy. SIGNATURE SCHEME (it must match Hookdeck's WISTIA source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-wistia-signature", encoding "hex"). The
+  X-Wistia-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
+  value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The `secret_key` chosen when
+  configuring the webhook in Account Settings -> Webhooks. Use it as UTF-8 bytes. Env var:
+  WISTIA_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: the body is `{hook: {uuid}, events: [...]}`; each event has
+  `uuid`, `type`, `generated_at` and `payload`, and one POST can batch several. Loop over `events` and
+  dispatch on each `type` (media.created, media.ready, media.updated, media.deleted,
+  viewing_session.play, viewing_session.percent_watched, live_event.registration, ...); dedupe on each
+  event's `uuid`. Method: POST. Hookdeck's Wistia source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/wistia/ (latest/live_event.registration.json,
+  latest/media.failed.json, latest/media.localization_created.json,
+  latest/media.localization_failed.json, ...); base the examples' test payloads on them. Hookdeck's
+  source type is WISTIA, labelled 'Wistia'.
+testScenario:
+  events:
+    - "media.ready"
+    - "media.created"
+    - "viewing_session.play"
+catalog:
+  summary: "Verify Wistia webhook signatures (`X-Wistia-Signature`, HMAC-SHA256 hex of the raw body), handle media.ready, media.created and viewing_session.play events"

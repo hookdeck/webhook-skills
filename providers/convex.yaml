@@ -1,0 +1,48 @@
+name: convex
+displayName: "Convex"
+docs:
+  webhooks: https://docs.convex.dev/production/integrations/log-streams
+  verification: https://docs.convex.dev/production/integrations/log-streams#securing-webhook-log-streams
+notes: >
+  Convex (convex.dev), the reactive backend platform. This row is its webhook LOG STREAM (Pro plan),
+  which POSTs batches of deployment log events (console logs, function executions, audit log, usage
+  and scheduler stats) to a URL; Convex has no other outbound event webhook. Delivery (from the docs):
+  Best effort, batched; events can be dropped under high throughput or duplicated by network retries.
+  A `verification` event is sent to confirm the stream works. Convex's docs say: 'The request body is
+  signed using HMAC-SHA256 and encoded as a lowercase hex string, and the resulting signature is
+  included in the `x-webhook-signature` HTTP header. The HMAC secret is visible in the dashboard upon
+  configuring the webhook.' 'Note that the signature is prefixed with `sha256=`.' 'new
+  TextEncoder().encode(env.WEBHOOK_SECRET),' From the docs (registry summary): `x-webhook-signature:
+  sha256=<lowercase hex>` = HMAC-SHA256(secret as UTF-8, raw body); the sample verifies
+  `crypto.subtle.verify` over `c.req.arrayBuffer()` after stripping `sha256=`. SIGNATURE SCHEME (it
+  must match Hookdeck's CONVEX source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-webhook-signature", encoding "hex"). The x-webhook-signature header carries `sha256=<hex>`. Strip
+  a leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
+  accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: An HMAC secret Convex generates and shows in the dashboard when the
+  webhook log stream is configured. Use it as UTF-8 bytes. Env var: CONVEX_WEBHOOK_SECRET. Validate
+  the signature's format before decoding it (exact length and alphabet), then compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: this is
+  Convex's webhook LOG STREAM. The body is a JSON array of log events; each has `topic` (verification,
+  console, function_execution, audit_log, scheduler_stats, current_storage_usage, ...), `timestamp`
+  (Unix ms) and `convex`. Loop over the array and dispatch on `topic`. Method: POST. Hookdeck's Convex
+  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is CONVEX, labelled 'Convex'.
+testScenario:
+  events:
+    - "verification"
+    - "console"
+    - "function_execution"
+catalog:
+  summary: "Verify Convex webhooks (`x-webhook-signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle log stream events"

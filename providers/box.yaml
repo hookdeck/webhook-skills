@@ -1,0 +1,75 @@
+name: box
+displayName: "Box"
+docs:
+  webhooks: https://developer.box.com/guides/webhooks/v2/
+  verification: https://developer.box.com/guides/webhooks/v2/signatures-v2/
+  events: https://developer.box.com/guides/webhooks/triggers/
+notes: >
+  Box V2 webhooks (created through the API per file or folder). V1 webhooks are unsigned and not
+  covered. Box (box.com), cloud content management. V2 webhooks are created per file or folder through
+  the API and report file, folder, comment, collaboration, metadata, shared-link, task, Box Sign and
+  Doc Gen events. Hookdeck's BOX source type (batch 14) is V2 webhooks, linking to
+  https://developer.box.com/guides/webhooks/v2/signatures-v2; V1 webhooks and Box Sign's own webhooks
+  are not covered. Delivery (from the docs): 2xx within 30 s; up to 5 retries over an hour ("could be
+  subject to change"). New BOX-DELIVERY-ID per retry. Box says: 'Box sends two signatures,
+  BOX-SIGNATURE-PRIMARY and BOX-SIGNATURE-SECONDARY (HMAC-SHA256, base64), computed over the request
+  body followed by the BOX-DELIVERY-TIMESTAMP header, keyed with the primary and secondary signature
+  keys.' SIGNATURE SCHEME (it must match Hookdeck's BOX source exactly: HMAC controller, algorithm
+  sha256, header box-signature-primary, encoding base64, signed_content_template
+  "{body}{header:box-delivery-timestamp}"). The BOX-SIGNATURE-PRIMARY header carries the bare standard
+  base64 (padded) digest, no prefix. The signature is standard base64 (padded) HMAC-SHA256, keyed with
+  the secret, over: the raw request body bytes, then the BOX-DELIVERY-TIMESTAMP header value. Where
+  two parts are adjacent above there is NO separator between them. Build the signed message as BYTES,
+  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
+  is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character
+  padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded bytes or the strings in
+  constant time. Compare the WHOLE header value as one digest (no list splitting, no prefix parsing).
+  Secret: the app's PRIMARY signature key from the Box Developer Console (Webhooks tab > Manage
+  signature keys), used as a UTF-8 string. Env var: BOX_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
+  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  opt-in tolerance (an env var such as BOX_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (BOX-DELIVERY-TIMESTAMP is an RFC 3339 date; Box suggests a 10-minute
+  window, and Box's SDK helper always enforces it, which is why the examples verify by hand). Verify
+  BOX-SIGNATURE-PRIMARY ONLY, against the primary key, exactly as Hookdeck's Box source does; do not
+  fall back to BOX-SIGNATURE-SECONDARY. During key rotation the user pastes the key that currently
+  signs the primary header. Body FIRST, then the timestamp header, no separator. Do not use the Box
+  SDK's WebhookValidator / validateMessage in the examples (it checks both keys and enforces a
+  10-minute window); mention it as an option in verification.md. Note that Box's own sample code
+  compares the primary-key digest with the SECONDARY header; the prose (primary with primary) is
+  right. Events: the JSON body is {type: 'webhook_event', id, created_at, trigger, webhook,
+  created_by, source, additional_info}; dispatch on `trigger` (e.g. FILE.UPLOADED, FILE.DOWNLOADED,
+  FILE.TRASHED, FOLDER.CREATED, COMMENT.CREATED, COLLABORATION.CREATED, SIGN_REQUEST.COMPLETED, 46 in
+  all). `id` is stable across retries and is the dedupe key (BOX-DELIVERY-ID changes per retry).
+  Methods: Box's docs don't name the HTTP method ("Box makes an HTTP call to the `address`"). Hookdeck's Box
+  source pre-selects POST without managing the method (the user can change it). The examples must NOT
+  be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
+  route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify
+  the signature first for every method, and treat a missing body as empty bytes. Say in SKILL.md and
+  setup.md that Hookdeck's Box source pre-selects POST without managing the method, so any other
+  method the sender uses must also be allowed on the source. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/b14-merge/samples-doc/providers/box/latest/ (FILE.UPLOADED.json); base
+  the examples' test payloads on them. Hookdeck's source type is BOX, labelled 'Box'. Hookdeck shows
+  this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
+  thing, verbatim: "Paste the primary signature key from the Box Developer Console; only the primary
+  signature is verified, so during key rotation paste the key that signs it. Only V2 webhooks are
+  signed."
+testScenario:
+  events:
+    - "FILE.UPLOADED"
+    - "FILE.DOWNLOADED"
+    - "FOLDER.CREATED"
+catalog:
+  summary: "Verify Box V2 webhooks (`BOX-SIGNATURE-PRIMARY`: base64 HMAC-SHA256 of the body followed by `BOX-DELIVERY-TIMESTAMP`), handle file, folder, comment and collaboration triggers"

@@ -7,8 +7,9 @@ notes: >
   Argo CD Notifications webhook service (argocd-notifications-cm). Config: service.webhook.<name>
   with url, headers (name/value list) and basicAuth; templates set webhook.<name>.method and body.
   The notifications engine sets every configured header on each request and defaults the method to
-  GET ('method: POST # one of: GET, POST, PUT, PATCH. Default value: GET'). basicAuth is not covered
-  by Hookdeck's Argo CD source; say so. No signature: requests are unsigned. Authenticate with a
+  GET ('method: POST # one of: GET, POST, PUT, PATCH. Default value: GET'). basicAuth sends
+  'Authorization: Basic <base64>' on every request; with Hookdeck's Argo CD source enter header name
+  Authorization and the full 'Basic <base64>' value; say so. No signature: requests are unsigned. Authenticate with a
   secret header the user adds to the webhook service (service.webhook.<name>.headers in
   argocd-notifications-cm). The header name is user-chosen, so the examples read the header name
   from ARGO_CD_WEBHOOK_HEADER (default 'Authorization') and the expected value from
@@ -25,7 +26,8 @@ notes: >
   shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
   same thing, verbatim: "Argo CD sends GET unless the notification template sets a method: set
   method: POST in the template, or allow GET on this source." Methods: the template chooses GET,
-  POST, PUT or PATCH and the default is GET, which sends no body. The examples must not be
+  POST, PUT or PATCH and the default is GET; the engine sends the template body with any method,
+  GET included (webhook.go: bytes.NewBufferString(r.body)). The examples must not be
   POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
   route per method; Next.js: export a handler for each; FastAPI: api_route with those methods),
   check the credential first for every method, and handle an empty body. Say in SKILL.md and

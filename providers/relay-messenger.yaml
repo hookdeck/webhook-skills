@@ -1,0 +1,59 @@
+name: 'relay-messenger'
+displayName: 'Relay'
+docs:
+  webhooks: 'https://docs.relayapp.im/webhooks'
+  verification: 'https://docs.relayapp.im/webhooks/verify-signatures'
+  events: 'https://docs.relayapp.im/events'
+notes: >-
+  Relay (relayapp.im), a messenger where people chat with AI agents. An agent's webhook subscription receives
+  message, reaction, participant, chat, contact, call, payment, location and rating events, signed with
+  Standard Webhooks (webhook-* headers). The core label is 'Relay'; the registry slug is relay-messenger.
+  Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: Per subscription: `signing_secret` in the create
+  response only, never readable again. Format `whsec_<base64>`: Relay strips `whsec_` and base64-decodes
+  the rest as the HMAC key. Research: whsec_ (https://docs.relayapp.im/webhooks/verify-signatures: 'Relay
+  strips the whsec_ prefix, base64-decodes the key'). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. RELAY_MESSENGER_WEBHOOK_SECRET holds the full whsec_ value. Verify with the
+  standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Relay source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: `webhook-id` is the stable event ID; a retry reuses id and body under a new timestamp (so a new
+  signature). A 401 from the receiver is terminal. Body: {api_version, webhook_version, event_type, event_id,
+  created_at, trace_id, agent_id, data}. `event_id` is stable across retries and WebSocket replays. Event
+  type: Top-level `event_type` of the envelope `{api_version, webhook_version, event_type, event_id, created_at,
+  trace_id, agent_id, data}`; only `data` varies by type. Event types (27 documented, list may not be
+  exhaustive): message.sent, message.received, message.delivered, message.read, message.failed, reaction.added,
+  reaction.removed, participant.added, participant.removed, chat.created, chat.group_name_updated, chat.group_icon_updated,
+  chat.typing_indicator.started, chat.typing_indicator.stopped, contact.added, contact.removed, call.created,
+  call.updated, call.ended, payment.succeeded, payment.canceled, payment.expired, location.sharing.started,
+  location.sharing.stopped, rating.created, rating.updated, rating.deleted. Transport: JSON envelope;
+  public HTTPS targets only; redirects are terminal. Delivery: One immediate attempt plus up to 10 retries,
+  10 s per attempt, backoff 2 s doubling to a 600 s cap (about 27 minutes in all). 2xx succeeds; 429,
+  5xx, timeouts and network errors retry; 3xx and any other status (401 included) are terminal. Setup:
+  Per agent: POST /v1/webhook-subscriptions with `target_url` and `subscribed_events` (names from the
+  catalog; others rejected with code 1005). Each event goes to every active matching subscription. No
+  challenge. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified; parse the body only after the check. Hookdeck's source
+  type is RELAY_MESSENGER, labelled 'Relay'.
+testScenario:
+  events:
+  - 'message.failed'
+  - 'message.sent'
+  - 'message.received'
+catalog:
+  summary: >-
+    Verify Relay webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard Webhooks
+    HMAC-SHA256, `whsec_` secret), handle message.received, message.sent, message.failed, reaction and participant events

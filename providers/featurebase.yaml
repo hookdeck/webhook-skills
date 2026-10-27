@@ -1,0 +1,62 @@
+name: featurebase
+displayName: "Featurebase"
+docs:
+  webhooks: https://help.featurebase.app/api-reference/1754068-receive-events-with-webhooks
+  verification: https://help.featurebase.app/api-reference/1754068-receive-events-with-webhooks
+  events: https://help.featurebase.app/api-reference/1022304-webhook-events-reference
+notes: >
+  Featurebase webhooks (Growth plan and higher). The old developers.featurebase.app security page
+  redirects; the current guide is on help.featurebase.app. Featurebase (featurebase.app), a feedback,
+  roadmap, changelog and customer-support platform. Webhooks (Growth plan and higher) report requests
+  (posts), tickets, comments, Updates (changelogs) and inbox conversations. Delivery (from the docs):
+  200/201/202/204 within 5 s (the API can raise the timeout to 30 s); anything else fails. Up to 3
+  retries. Paused after 100 consecutive failures (5 min, doubling to 4 h); disabled after 500 failures
+  or 3 pauses in 24 h. Events are not kept while paused or disabled. Featurebase says:
+  'X-Webhook-Signature: an HMAC-SHA256 signature, as a hex string. X-Webhook-Timestamp: the Unix time,
+  in seconds, when Featurebase sent the request.' 'Join the timestamp and the raw body with a dot:
+  {timestamp}.{rawBody}. Compute an HMAC-SHA256 of that string with your signing secret, as a hex
+  string.' 'Copy the signing secret. It starts with whsec_.' SIGNATURE SCHEME (it must match
+  Hookdeck's FEATUREBASE source exactly: HMAC controller, algorithm sha256, header
+  x-webhook-signature, encoding hex, signed_content_template "{header:x-webhook-timestamp}.{body}").
+  The X-Webhook-Signature header carries the bare lowercase hex digest, no prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over: the X-Webhook-Timestamp header value, then a
+  literal ".", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
+  signing secret, used WHOLE as a plain UTF-8 HMAC key including its `whsec_` prefix. This is NOT
+  Standard Webhooks: nothing is base64-decoded, there is no id header, and the digest is hex. Do not
+  use the standardwebhooks or svix libraries; say so explicitly. Env var: FEATUREBASE_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS, unset
+  or 0 = off) and say so in SKILL.md and verification.md (X-Webhook-Timestamp is Unix seconds).
+  Featurebase wants 200/201/202/204 within 5 s. Events: dispatch on the body's `topic` field.
+  Documented event types (27): post.created, post.updated, post.deleted, post.voted, ticket.created,
+  ticket.updated, ticket.deleted, comment.created, comment.updated, comment.deleted,
+  changelog.published, conversation.user.created, conversation.admin.assigned,
+  conversation.admin.closed (and 13 more). Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Featurebase source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is FEATUREBASE,
+  labelled 'Featurebase'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the whole secret, including
+  the whsec_ prefix. Featurebase uses it as a plain HMAC key."
+testScenario:
+  events:
+    - "post.created"
+    - "comment.created"
+    - "changelog.published"
+catalog:
+  summary: "Verify Featurebase webhooks (`X-Webhook-Signature`: hex HMAC-SHA256 of `{X-Webhook-Timestamp}.{body}`, `whsec_` secret used as-is), handle post, ticket, comment, changelog and conversation events"

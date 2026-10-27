@@ -1,0 +1,54 @@
+name: surveymethods
+displayName: "SurveyMethods"
+docs:
+  webhooks: https://surveymethods.com/kb/webhooks/
+  verification: https://surveymethods.com/kb/webhooks/
+notes: >
+  SurveyMethods (surveymethods.com), the online survey platform. Webhooks (Professional, Team
+  Professional and Enterprise plans) are created under Account > Webhooks or with `/api/v1/webhooks`,
+  for all surveys or one. Delivery (from the docs): A 2xx within 30 s acknowledges; otherwise (or
+  unreachable) retried, up to 5 attempts in all with growing spacing. At-least-once (dedupe on
+  `eventId`). Delivery logs in Account > Webhooks. SurveyMethods's docs say:
+  'X-SurveyMethods-Signature is sha256= followed by the hex HMAC-SHA256 of the raw request body ,
+  keyed with the secret.' 'expected = "sha256=" + hmac.new(secret, request.get_data(),
+  hashlib.sha256).hexdigest()' 'Save it, then copy the signing secret you’re shown and store it
+  securely.' From the docs (registry summary): `X-SurveyMethods-Signature: sha256=<hex>`, lowercase
+  hex HMAC-SHA256 of the raw body keyed with the webhook's secret (the Node, Python and C# samples
+  agree; C# lower-cases explicitly). Each webhook has its own secret. No test vector. SIGNATURE SCHEME
+  (it must match Hookdeck's SURVEYMETHODS source exactly: HMAC controller, algorithm "sha256",
+  header_key "x-surveymethods-signature", encoding "hex"). The X-SurveyMethods-Signature header
+  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser
+  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The webhook's signing
+  secret, shown once after saving in the dashboard, or returned once in the reply to the API call that
+  creates the webhook. Use it as UTF-8 bytes. Env var: SURVEYMETHODS_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: dispatch on
+  the body's `eventType` field. Top-level `eventType` carries the Events table value; the
+  `X-SurveyMethods-Event-Type` header repeats it ("The event, e.g. response.completed"). `eventId` is
+  the event id, also sent as `X-SurveyMethods-Event-Id`. Documented event types (4):
+  response.completed, response.created, survey.created, collector.created. Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's SurveyMethods source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/surveymethods/ (latest/response.completed.json);
+  base the examples' test payloads on them. Hookdeck's source type is SURVEYMETHODS, labelled
+  'SurveyMethods'.
+testScenario:
+  events:
+    - "response.completed"
+    - "survey.created"
+    - "collector.created"
+catalog:
+  summary: "Verify SurveyMethods webhooks (`X-SurveyMethods-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle survey response and survey events"

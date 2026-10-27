@@ -1,0 +1,73 @@
+name: khipu
+displayName: "Khipu"
+docs:
+  webhooks: https://docs.khipu.com/en/payment-solutions/instant-payments/payment-webhook
+  verification: https://docs.khipu.com/en/payment-solutions/instant-payments/payment-webhook
+notes: >
+  Khipu (khipu.com), the Chilean bank-transfer payment service. With instant payments API 3.0, a
+  collection created with `notify_url` and `notify_api_version` "3.0" gets a POST carrying the
+  payment's data when it is reconciled (notifications API 3.0). The older notifications API 1.3 sent
+  only a `notification_token` and is not described here. Delivery (from the docs): One POST per event
+  to the collection's `notify_url`; retries and acknowledgement are not documented. Khipu's docs say:
+  'Each message sent to a webhook is accompanied by a `x-khipu-signature` header containing a
+  timestamp and the signature value you should verify. The timestamp value prefix is `t=` and the
+  signature value prefix is `s=`. The attributes are separated by a comma `,`.' 'Create a text string
+  by concatenating: The value of timestamp (converted to text) The dot . The JSON object received in
+  the message body.' 'Make sure not to manipulate the content of the message body before performing
+  the verification. Avoid ordering, indenting, or transforming the JSON object.' 'hmac_signature =
+  hmac.new(secret_bytes, hash_bytes, hashlib.sha256).digest() hmac_base64 =
+  base64.b64encode(hmac_signature).decode('utf-8')' From the docs (registry summary):
+  `x-khipu-signature: t=<unix ms>,s=<base64>`; s = base64(HMAC-SHA256(merchant secret, "<t>.<raw
+  body>")), the secret used as UTF-8 bytes. The page's worked Python example (secret, header and
+  payload given) reproduces, checked by harvest_khipu.py. Its payload differs from the JSON example
+  shown above it (amounts as strings, escaped slashes, another payer_name), which underlines that the
+  exact received bytes must be hashed. SIGNATURE SCHEME (it must match Hookdeck's KHIPU source
+  exactly: HMAC controller, algorithm "sha256", header_key "x-khipu-signature", encoding "base64",
+  delimiter ".", prefix_data_with_timestamp true). The x-khipu-signature header is
+  `t=<timestamp>,s=<base64>` (comma-separated key=value pairs). The signature is standard base64
+  (padded) HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header
+  (a string; never parse it to a number and re-format it), then a literal ".", then the raw request
+  body bytes. The header may carry more than one s= entry (for example during key rotation): accept
+  the delivery if ANY s= entry matches, and ignore other keys. A header with no t= value fails. Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
+  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
+  but Hookdeck rejects it, so the skill must reject it too. Secret: The merchant secret of the
+  collecting account (the account used to create the collection). Use it as UTF-8 bytes. Env var:
+  KHIPU_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  KHIPU_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
+  Unix MILLISECONDS). Only notifications API 3.0 (`notify_api_version` "3.0") is signed this way;
+  version 1.3 sends a notification_token instead. Events: there is no event-name field or header; each
+  POST is a reconciled payment (`payment_id`, `amount`, `currency`, `conciliation_date`, ...). Method:
+  POST. Hookdeck's Khipu source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
+  Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON (secret,
+  body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/khipu.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (t=1711965600393,s=rq08YUGSaWa1D0RAwhMnJTRHMNmY4ToCn2Gd6G9LaDg=) with that secret. Name the vector
+  in references/verification.md. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/khipu/
+  (latest/reconciliation.json); base the examples' test payloads on them. Hookdeck's source type is
+  KHIPU, labelled 'Khipu'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Only notifications API version 3.0
+  is supported. Version 1.3 notifications aren't signed this way and fail verification."
+testScenario:
+  events:
+    - "reconciliation"
+catalog:
+  summary: "Verify Khipu webhooks (`x-khipu-signature`: `t=`/`s=` base64 HMAC-SHA256 of `{t}.{body}`), handle payment reconciliation notifications"

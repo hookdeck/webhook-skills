@@ -1,0 +1,51 @@
+name: 'general-translation'
+displayName: 'General Translation'
+docs:
+  webhooks: 'https://generaltranslation.com/en-US/docs/platform/dashboard/reference/webhooks'
+  verification: 'https://generaltranslation.com/en-US/docs/platform/dashboard/reference/webhooks'
+notes: >-
+  General Translation (generaltranslation.com), an AI localization platform: translated files and translation
+  jobs. Endpoints (up to 5 per organization, Starter or Enterprise plans) are added under Organization
+  > Developer > Webhooks. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: Per endpoint,
+  copied from the webhook detail page; `whsec_`-prefixed (step 2 strips the prefix). Research: whsec_
+  ("Base64-decode the secret after removing the whsec_ prefix to get the signing key." https://generaltranslation.com/en-US/docs/platform/dashboard/reference/webhooks).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. GENERAL_TRANSLATION_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's General Translation
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required. Body: {id, object, type, createdAt, apiVersion, data}. `id` (evt_) is the dedupe key
+  and equals webhook-id; `object` is always `event`. Event type: Top-level `type` in a Stripe-like envelope
+  (`id`, `object: event`, `type`, `createdAt`, `apiVersion`, `data.object`). `data.object.object` is the
+  resource kind (`translated_file` or `translation_job`), not the event. Event types (3 documented, list
+  may not be exhaustive): translated_file.completed, translated_file.edited, translation_job.completed.
+  Transport: HTTPS POST with a JSON body. Delivery: At-least-once; a non-2xx or no response within 10
+  s is retried with exponential backoff up to 10 attempts; manual retry from the Webhook Events page.
+  Resource fields are frozen at event creation. No ordering statement. Setup: Per endpoint in the dashboard,
+  one or more event types; endpoints can be disabled. No challenge is documented, so the row has no handshake
+  block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified; parse the body only after the check. Hookdeck's source type
+  is GENERAL_TRANSLATION, labelled 'General Translation'.
+testScenario:
+  events:
+  - 'translated_file.completed'
+  - 'translated_file.edited'
+  - 'translation_job.completed'
+catalog:
+  summary: >-
+    Verify General Translation webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle translated file and translation job events

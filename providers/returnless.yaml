@@ -1,0 +1,53 @@
+name: returnless
+displayName: "Returnless"
+docs:
+  webhooks: https://support.returnless.com/article/994-signing-webhook-requests
+  verification: https://support.returnless.com/article/994-signing-webhook-requests
+notes: >
+  Returnless (returnless.com), returns management for e-commerce. Webhooks are added in the Returnless
+  panel (Integrations -> Webhooks), each with an endpoint, selected events, a test-mode switch and a
+  signing secret. Delivery (from the docs): Success is any 2XX. Otherwise up to 10 retries with
+  exponential backoff over 15 hours, then a notification email and the event is marked failed. 24
+  hours after that email, a webhook with 5 or more failed events is disabled automatically. The
+  endpoint's TLS certificate is validated. Returnless's docs say: 'We generate a HMAC SHA-256 hash of
+  the full request body. The hash is created using your webhook’s signing secret. The resulting hash
+  is included in the X-Signature header of the request.' '$payload = file_get_contents('php://input');
+  $hash = hash_hmac('sha256', $payload, $secret); ... digest = hmac.new(secret.encode(), request.body,
+  hashlib.sha256).hexdigest()' From the docs (registry summary): Header `X-Signature: <hex>`, no
+  prefix. MAC = lowercase hex of HMAC-SHA256(key = the webhook's signing secret, message = the full
+  raw request body). PHP compares with `!==`, Python with `hmac.compare_digest`, Node with
+  `crypto.timingSafeEqual`. SIGNATURE SCHEME (it must match Hookdeck's RETURNLESS source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-signature", encoding "hex"). The X-Signature header
+  carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
+  list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
+  signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: One signing secret per webhook, received when the webhook is created
+  in the panel. Use it as UTF-8 bytes. Env var: RETURNLESS_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Events: dispatch on the
+  X-Event-Name header. Header `X-Event-Name`, `<resource>.<action>`. The body is a JSON:API resource
+  object (`data` with `id`, `resource_type`, ...) and carries no event name. Documented event types
+  (17): request.approved_with_manual_shipment, request.approved_without_shipment, request.approved,
+  request.created, return.created, return.notes.added, request.rejected, request.status_changed,
+  request.deleted, return.deleted, return.product.qty_received_changed,
+  return.product.marked_as_received, return.status_changed, shipment.created (and 3 more). Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Returnless source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is RETURNLESS, labelled 'Returnless'.
+testScenario:
+  events:
+    - "return.created"
+    - "request.approved"
+    - "shipment.delivered"
+catalog:
+  summary: "Verify Returnless webhooks (`X-Signature`: hex HMAC-SHA256 of the raw body), handle return request, return and shipment events"

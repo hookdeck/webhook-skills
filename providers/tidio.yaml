@@ -1,0 +1,58 @@
+name: tidio
+displayName: "Tidio"
+docs:
+  webhooks: https://developers.tidio.com/docs/webhooks-introduction
+  verification: https://developers.tidio.com/docs/webhooks-signature-verification
+  events: https://developers.tidio.com/reference/events
+notes: >
+  Tidio webhooks (Plus and Premium plans), Settings > Developer > Webhooks. Tidio (tidio.com),
+  customer-service live chat, chatbots (Lyro) and ticketing. Delivery (from the docs): Anything but
+  2xx, a timeout (4 s) or a connection error is retried 9 times (5 s, 10 s, 30 s, 1 min, 3 min, 10
+  min, 30 min, 1 h, 3 h; about 4 h 45 min in all). No ordering guarantee (order by `created_at`);
+  duplicates are possible (dedupe on `webhook_id`). Changes made through the OpenAPI do not trigger
+  webhooks. Tidio says: 'x-tidio-signature:
+  t=1680652800,s=c64b17322c4519dd324a6014658c518df231ec3e2c6ac8ac19fced7ee4d54014,s=44565a4390252ed0692e1bb55b4ca2c7f581bbf919fec54f797fa8a1647969cd
+  ... Where `t` is the signing timestamp and s are signatures for each secret generated.' 'the request
+  body and signing timestamp should be merged like so: {request_body}_{signing_timestamp} And then
+  hash it by `HMAC` using `SHA256` algorithm with a webhook secret.' SIGNATURE SCHEME (it must match
+  Hookdeck's TIDIO source exactly: HMAC controller, algorithm sha256, header x-tidio-signature,
+  encoding hex, signed_content_template "{body}_{timestamp}"). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over: the raw request body bytes, then a literal "_", then the
+  t= value parsed from the signature header. Build the signed message as BYTES, exactly as Hookdeck's
+  template does: literal separators as UTF-8, header values as the exact header string encoded latin1
+  (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed,
+  parsed or re-formatted), and the raw body bytes as received, concatenated with Buffer.concat /
+  b''.join. Never decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: the webhook secret
+  from Tidio's webhook settings, used as UTF-8. Env var: TIDIO_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject
+  old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp,
+  and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer
+  an opt-in tolerance (an env var such as TIDIO_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
+  so in SKILL.md and verification.md (t is Unix seconds). x-tidio-signature is `t=<unix
+  seconds>,s=<hex>[,s=<hex>...]` (one s per webhook secret). Parse it like Hookdeck: take the t= value
+  and every s= value; the signed bytes are the raw body, then a literal UNDERSCORE, then the t value
+  (body FIRST); valid when ANY s matches (64 hex chars, case-insensitive). Missing t or s: 401. Dedupe
+  on `webhook_id`. Events: dispatch on the body's `topic` field. Documented event types (15):
+  contact.updated, contact.created, conversation.solved_by_operator, conversation.solved_by_lyro,
+  conversation.solved_automatically, conversation.operator_replied, ticket.created,
+  ticket.status_updated, ticket.operator_assigned, ticket.operator_replied, ticket.contact_replied,
+  ticket.internal_note_added, ticket.replied, ticket.holder_changed, customer_satisfaction.rated. Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Tidio source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is TIDIO, labelled 'Tidio'.
+testScenario:
+  events:
+    - "contact.created"
+    - "conversation.solved_by_operator"
+    - "ticket.created"
+catalog:
+  summary: "Verify Tidio webhooks (`x-tidio-signature`: `t=...,s=` hex HMAC-SHA256 of `{body}_{t}`), handle contact, conversation, ticket and satisfaction events"

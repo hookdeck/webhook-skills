@@ -1,0 +1,51 @@
+name: meetgeek
+displayName: "MeetGeek"
+docs:
+  webhooks: https://docs.meetgeek.ai/api/api-reference/v1/appendix-webhooks
+  verification: https://docs.meetgeek.ai/api/api-reference/v1/appendix-webhooks
+notes: >
+  MeetGeek (meetgeek.ai), the AI meeting recorder and note taker. One webhook URL per user is set in
+  the Public API section of the Integrations page; it is notified when a meeting's analysis finishes.
+  Delivery (from the docs): Up to three POSTs, the second and third only as retries when the first is
+  not acknowledged with 200 OK (no body). For team-shared meetings, every team member with view access
+  gets the webhook. MeetGeek's docs say: 'To ensure the authenticity and integrity of webhook
+  payloads, MeetGeek adds a new header: X-MG-Signature: <hex_hmac_of_body>' 'MeetGeek computes an HMAC
+  SHA-256 of the exact raw request body (`body_bytes`), using the configured secret;' 'expected =
+  hmac.new( key=secret.encode(), msg=body, digestmod=hashlib.sha256 ).hexdigest()' From the docs
+  (registry summary): `X-MG-Signature: <hex_hmac_of_body>`, bare lowercase hex HMAC-SHA256(secret, raw
+  body); the Python, Go, Node and Java samples all hex-encode and key with the secret's UTF-8 bytes.
+  No test vector. SIGNATURE SCHEME (it must match Hookdeck's MEETGEEK source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-mg-signature", encoding "hex"). The X-MG-Signature header carries
+  the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: "The configured secret": the page does not say where it is set or shown (presumably
+  next to the webhook URL in the Public API section). Hookdeck's alert asks for the secret configured
+  for the Public API. Use it as UTF-8 bytes. Env var: MEETGEEK_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: there is no
+  event-name field or header; the body is `{message, meeting_id}` on success or `{message}` on
+  failure. Branch on `meeting_id`. Method: POST. Hookdeck's MeetGeek source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/meetgeek/ (latest/failed-analysis.json,
+  latest/successful-analysis.json); base the examples' test payloads on them. Hookdeck's source type
+  is MEETGEEK, labelled 'MeetGeek'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the webhook secret
+  configured for the MeetGeek Public API. Deliveries without a signature fail verification."
+testScenario:
+  events:
+    - "successful-analysis"
+    - "failed-analysis"
+catalog:
+  summary: "Verify MeetGeek webhooks (`X-MG-Signature`: hex HMAC-SHA256 of the raw body), handle meeting analysis notifications"

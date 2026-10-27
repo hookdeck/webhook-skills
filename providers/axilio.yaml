@@ -1,0 +1,55 @@
+name: 'axilio'
+displayName: 'Axilio'
+docs:
+  webhooks: 'https://docs.axilio.ai/webhooks/overview'
+  verification: 'https://docs.axilio.ai/webhooks/overview#verify-the-signature'
+  events: 'https://docs.axilio.ai/webhooks/events'
+notes: >-
+  Axilio (axilio.ai), real-phone automation: workflow runs, live sessions, files, billing and phone rentals.
+  Destinations are registered under Settings > Webhooks in the dashboard. Standard Webhooks signature
+  with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more
+  space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. SECRET: Per destination, `whsec_`-prefixed, shown once at registration.
+  Research: whsec_ (https://docs.axilio.ai/webhooks/overview: "Copy the signing secret. It starts with
+  `whsec_` and is shown once."). It starts with whsec_; the key is the base64-decoding of the part after
+  whsec_. AXILIO_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks library
+  (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp and webhook-signature.
+  HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when
+  webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as
+  Hookdeck does; then hand the library (or manual check) the three values under the header names it expects
+  (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Axilio source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required. Body: {id, type, occurred_at, test, data}. `id` equals webhook-id
+  and is `<type>:<resource id>[:<time>]`; `test` is true only for dashboard tests. Payloads carry ids,
+  statuses, reasons and timestamps, never content. Event type: Top-level `type` in `{id, type, occurred_at,
+  test, data}`; `data` is the resource with API field names. Event types (28 documented, list may not
+  be exhaustive): run.started, run.completed, run.failed, run.cancelled, session.started, session.ended,
+  session.recording_ready, balance.low, balance.depleted, balance.recovered, invoice.paid, invoice.payment_failed,
+  subscription.updated, subscription.canceled, auto_recharge.succeeded, auto_recharge.failed, file.ready,
+  file.capture_failed, file.delivered, file.delivery_failed, phone.maintenance_started, phone.maintenance_ended,
+  phone.offline, phone.online, phone.rental.activated, phone.rental.past_due, phone.rental.canceled, webhook.test.
+  Transport: POST with a JSON body. Delivery: At least once; any non-2xx or no response is retried after
+  30 s, 2 min, 5 min, 15 min and 1 h. Duplicates possible; order not guaranteed (compare `occurred_at`).
+  Failed deliveries can be replayed from the dashboard. No timeout stated. Setup: Per destination, chosen
+  event types or all. A dashboard test sends the type's example with `"test": true`; no challenge is documented,
+  so the row has no handshake block. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is AXILIO, labelled 'Axilio'.
+testScenario:
+  events:
+  - 'run.completed'
+  - 'run.started'
+  - 'run.failed'
+catalog:
+  summary: >-
+    Verify Axilio webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks HMAC-SHA256, `whsec_` secret), handle run.completed, run.failed and session.ended events

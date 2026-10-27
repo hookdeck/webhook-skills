@@ -1,0 +1,56 @@
+name: 'nitrosend'
+displayName: 'Nitrosend'
+docs:
+  webhooks: 'https://docs.nitrosend.com/integrations/webhooks'
+  verification: 'https://docs.nitrosend.com/integrations/webhooks'
+notes: >-
+  Nitrosend (nitrosend.com), a transactional and marketing email platform with an agent inbox. Webhooks
+  report transactional-email outcomes, inbound replies and account events (campaigns, sending limits,
+  imports, domains), signed in the Standard Webhooks format (webhook-* headers). Standard Webhooks signature
+  with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more
+  space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. SECRET: Per webhook: returned in full on create as `whsec_...`;
+  later reads mask it (reveal with `?reveal=true` or in the dashboard). Key = base64-decode of the part
+  after `whsec_`. Research: whsec_ (https://docs.nitrosend.com/integrations/webhooks: 'The response includes
+  the endpoint's signing secret (whsec_...) in full.'). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. NITROSEND_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Nitrosend source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: replay_window_seconds 300 is Nitrosend's instruction ("Reject the request if `webhook-timestamp`
+  is more than 5 minutes from now"). `webhook-id` is `evt_...` and stays the same across retries. Body:
+  {type, timestamp, data}. Test events carry `"test": true` in `data` with null ids. Event type: Top-level
+  `type` of `{type, timestamp, data}`. `data.bounce.type` (`hard`) is the bounce kind, not the event type.
+  Event types (21 documented, list may not be exhaustive): email.sent, email.delivered, email.bounced,
+  email.complained, email.opened, email.clicked, email.failed, email.received, campaign.completed, campaign.failed,
+  campaign.stopped, flow.paused, sending.paused, sending.limit_approaching, sending.limit_reached, import.completed,
+  import.failed, domain.verified, domain.verification_lost, domain.dns_degraded, webhook.disabled. Transport:
+  HTTPS public URLs only, no credentials in the URL; redirects are not followed. Delivery: Any 2xx within
+  10 s; other statuses, timeouts and redirects fail. Retries after 1 min, 5 min, 30 min, 2 h, 8 h and
+  24 h, then failed; after 3 days of continuous failure the endpoint is turned off (webhook.disabled)
+  and events during the outage are not sent. Setup: Per webhook (up to 10 per brand): URL + events. The
+  dashboard lists email events; account events are added through the API. sending.* reach every brand's
+  webhooks. No challenge. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified; parse the body only after the check. Hookdeck's
+  source type is NITROSEND, labelled 'Nitrosend'.
+testScenario:
+  events:
+  - 'email.bounced'
+  - 'email.sent'
+  - 'email.delivered'
+catalog:
+  summary: >-
+    Verify Nitrosend webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle email, campaign and flow events

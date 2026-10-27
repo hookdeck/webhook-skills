@@ -80,11 +80,12 @@ allows GET and POST.
 - `app/webhooks/argo-cd/route.ts`: one handler exported as `GET`, `POST`, `PUT`, `PATCH` and `DELETE`
 
 1. The configured header is checked before the body is read. Failure returns `401`.
-2. An empty body (the GET default) returns `200 {"received": true}`.
+2. An empty body returns `200 {"received": true}`. Next.js drops GET request bodies, so set
+   `method: POST` in the Argo CD template.
 3. Otherwise the body must be a JSON object (`400` otherwise).
 4. The handler dispatches on the illustrative `trigger` field: `on-sync-succeeded`,
    `on-sync-failed`, `on-health-degraded`.
 5. It returns `200 {"received": true}`.
 
-`basicAuth` on the Argo CD webhook service is not covered by Hookdeck's Argo CD source; use a
-header.
+`basicAuth` on the Argo CD webhook service sends `Authorization: Basic <base64>`; set
+`ARGO_CD_WEBHOOK_SECRET` (and the Hookdeck source's header value) to that full value.

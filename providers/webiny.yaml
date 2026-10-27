@@ -1,0 +1,67 @@
+name: 'webiny'
+displayName: 'Webiny'
+docs:
+  webhooks: 'https://www.webiny.com/docs/reference/sdk/webhooks'
+  verification: 'https://www.webiny.com/docs/reference/sdk/webhooks'
+notes: >-
+  Webiny (webiny.com), an open-source serverless headless CMS. Webiny 6.x webhooks POST a JSON envelope
+  for events registered at runtime by the installed apps, signed with the standardwebhooks library (webhook-*
+  headers) using an admin-entered signing secret. Standard Webhooks signature with webhook-* headers:
+  webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64
+  output. Hookdeck core notes: The secret is a free-form string used as UTF-8 bytes, so it is pasted as-is.
+  SECRET: Admin-entered free text, per webhook or a global default in Webhook settings; NOT a `whsec_`
+  value. The 6.5.0 signer base64-encodes the secret's UTF-8 bytes and prefixes `whsec_` before handing
+  it to standardwebhooks, so the HMAC key is the secret's raw UTF-8 bytes (a value already starting `whsec_`
+  is used as Standard Webhooks base64). Research: user-chosen string; Webiny uses it as raw UTF-8 bytes
+  unless it already starts with whsec_ (source: "if (secret.startsWith(\"whsec_\")) return secret; const
+  encoded = Buffer.from(secret).toString(\"base64\"); return `whsec_${encoded}`;" @webiny/webhooks@6.5.0
+  api/features/WebhookSignPayload/WebhookSignPayload.js). The HMAC key is the secret's raw UTF-8 bytes,
+  NOT a whsec_/base64 secret. Do NOT verify with the standardwebhooks or svix libraries (they base64-decode
+  the secret, so the key would be wrong). Implement Standard Webhooks by hand exactly as Hookdeck's controller
+  does: key = base64-decode of the part after 'whsec_' when the secret starts with whsec_, otherwise the
+  secret's UTF-8 bytes; reject an empty key (fail closed); require all three headers; require the timestamp
+  to be a plain positive integer (/^[1-9][0-9]*$/); HMAC-SHA256 over the bytes '{id}.{timestamp}.' followed
+  by the raw body bytes, base64; split the signature header on spaces and accept any 'v1,<sig>' entry
+  that matches in constant time (Node: length check then crypto.timingSafeEqual on equal-length Buffers;
+  Python: hmac.compare_digest on bytes); ignore other versions. No timestamp window by default, because
+  Hookdeck retries and replays resend the original timestamp; an optional WEBINY_WEBHOOK_TOLERANCE_SECONDS
+  env var opts in. WEBINY_WEBHOOK_SECRET holds the secret exactly as entered/shown (no whsec_ prefix added).
+  HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when
+  webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as
+  Hookdeck does; then hand the library (or manual check) the three values under the header names it expects.
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Webiny source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). Missing headers or a bad signature: 400 or 401; handlers fail closed when the
+  secret env var is unset. Hookdeck's configuration alert for this source reads exactly: "Paste the signing
+  secret exactly as entered: the Webiny webhook's own secret (Webiny 6), or the global webhook secret
+  if the webhook has none. With neither set, Webiny signs with an empty key and deliveries fail verification."
+  SKILL.md and references/setup.md must state this requirement, quoting the alert verbatim. Conditional
+  signing: Signed with the webhook's secret, else the global one, else an empty string (vendor-source:
+  `webhook.signingSecret || settingsResult.value.signingSecret || ""`). With no secret the signer still
+  runs on `"whsec_"`, which the standardwebhooks library apparently decodes to an empty HMAC key (inference);
+  core's configuration alert (08147aba) says such deliveries fail verification and names the global-secret
+  fallback. Verification notes: The docs never state the secret format; the row takes it from the signer
+  source. The docs' verifier is @webiny/sdk's createVerifyWebhookPayload (standardwebhooks underneath).
+  Body: {id, event, timestamp, webhookId, deliveryId, tenant, data}. `id` is the background task id, also
+  sent as webhook-id; `data` is the event payload. Event type: Top-level `event` of `{id, event, timestamp,
+  webhookId, deliveryId, tenant, data}` (vendor-source: SendWebhookTask builds this object and signs its
+  JSON). No event name is documented, so there is no example value. Event types: open vocabulary: events
+  are registered at runtime by the installed Webiny apps (@webiny/api-core WebhookProvider) and listed
+  in the admin; no public page names them. Transport: JSON POST with Content-Type application/json (vendor-source).
+  Delivery: 6.5.0 sender: 10-minute timeout; network errors, 429 and 5xx retried up to 3 times (1 s, 2
+  s, 4 s); any other status ends the attempt, and any HTTP status at all marks the delivery "delivered"
+  in the log. Deliveries can be resent from the admin. Setup: Per webhook in the Webiny admin: endpoint
+  URL, events, optional signing secret (global default in Webhook settings). No challenge. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified; parse the body only after the check. Hookdeck's source type is WEBINY, labelled 'Webiny'.
+testScenario:
+  events:
+  - 'headless CMS entry event (event name from the admin list)'
+  - 'delivery with the global signing secret'
+catalog:
+  summary: >-
+    Verify Webiny webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    secret used as raw UTF-8 bytes), handle Webiny 6 app events

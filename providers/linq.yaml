@@ -1,0 +1,59 @@
+name: 'linq'
+displayName: 'Linq'
+docs:
+  webhooks: 'https://docs.linqapp.com/guides/webhooks'
+  verification: 'https://docs.linqapp.com/guides/webhooks'
+notes: >-
+  Linq (linqapp.com), a partner API for iMessage/RCS/SMS lines: messages, reactions, polls, chats, calls,
+  payments and account changes. Webhook subscriptions are created via the API with a target URL and event
+  list. This row covers the iMessage channel docs. Standard Webhooks signature with webhook-* headers:
+  webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64
+  output. SECRET: One signing secret per webhook subscription, returned on create: `whsec_` + base64 random
+  bytes. Research: whsec_ ("Signing secrets use the Standard Webhooks format: a whsec_ prefix followed
+  by base64-encoded random bytes" https://docs.linqapp.com/guides/webhooks). It starts with whsec_; the
+  key is the base64-decoding of the part after whsec_. LINQ_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads
+  webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks and the manual
+  verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the svix-* headers
+  (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual check)
+  the three values under the header names it expects (for the standardwebhooks library, pass them as webhook-id,
+  webhook-timestamp and webhook-signature). Include a test that a delivery signed the same way but sent
+  with the other prefix's headers is accepted. This matches Hookdeck's Linq source (Standard Webhooks,
+  headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any other secret used
+  as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp window;
+  core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces a fixed
+  5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp,
+  so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required ("do not parse and
+  re-serialize"). Body: {api_version, webhook_version, event_type, event_id, created_at, trace_id, partner_id,
+  data}. `event_id` is the dedupe key (same on retries and across subscriptions). Event type: Top-level
+  `event_type` in the shared envelope (`api_version`, `webhook_version`, `event_type`, `event_id`, `created_at`,
+  `trace_id`, `partner_id`, `data`). The deprecated `X-Webhook-Event` header carries the same value, but
+  the body field is the documented, non-deprecated carrier. Event types (76 documented, list may not be
+  exhaustive): message.sent, message.received, message.read, message.delivered, message.failed, message.edited,
+  reaction.added, reaction.removed, poll.received, poll.failed, poll.sent, poll.delivered, poll.read,
+  poll.updated, poll.vote.added, poll.vote.removed, poll.reaction.added, participant.added, participant.removed,
+  chat.created, chat.group_name_updated, chat.group_icon_updated, chat.group_name_update_failed, chat.group_icon_update_failed,
+  chat.background_updated, chat.background_update_failed, chat.typing_indicator.started, chat.typing_indicator.stopped,
+  phone_number.status_updated, phone_number.assigned and 46 more. Transport: JSON POST to the subscription's
+  target URL. Delivery: 10 s response timeout; about 10 retries with exponential backoff and jitter (capped
+  at 10 min) within 30 min of the event's creation. Retried: 5xx, 429, timeouts, refused connections,
+  redirect loops. Not retried: other 4xx, DNS failures, https->http redirects. At-least-once; dedupe on
+  `event_id`. No ordering guarantee for account events. Setup: Per subscription (API): target URL, `subscribed_events`,
+  optional phone-number filter and routing headers, and a version pinned via `?version=`. No challenge
+  or validation request is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is LINQ, labelled 'Linq'.
+testScenario:
+  events:
+  - 'message.received'
+  - 'message.sent'
+  - 'message.read'
+catalog:
+  summary: >-
+    Verify Linq webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_`
+    secret, HMAC-SHA256), handle message.received, message.sent, message.delivered and reaction.added events

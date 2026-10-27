@@ -1,0 +1,57 @@
+name: 'camel-ai'
+displayName: 'camelAI'
+docs:
+  webhooks: 'https://camelai.com/docs/camelrun/webhooks'
+  verification: 'https://camelai.com/docs/camelrun/webhooks'
+notes: >-
+  camelAI (camelai.com); camelRun is its hosted agent runtime. Webhooks report run, input, usage, voice-session,
+  billing and end-user-credit events and are signed per Standard Webhooks. Not CAMEL-AI.org, the open-source
+  multi-agent framework. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: One `whsec_`
+  secret per endpoint (up to 16 endpoints), returned once when the endpoint is created via `POST /v1/webhooks`;
+  `POST /v1/webhooks/{webhookId}/secret` replaces it and the old one also signs for 24 hours. Research:
+  whsec_ ('its signing `secret` (`whsec_...`), shown only this once') https://camelai.com/docs/camelrun/webhooks.
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. CAMEL_AI_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's camelAI source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required ("pass the raw body, before parsing it"). Body: {id, type, created, data}. `id` (`evt_...`)
+  is also the webhook-id and is kept across retries; `created` is Unix seconds. The example elides ids,
+  so it is not exported. Event type: Top-level `type` of the `id`/`type`/`created`/`data` envelope (the
+  example's `type` is `run.completed`). The deprecated usage webhook (`PUT /v1/usage-webhook`) is not
+  an envelope and carries no `type` — see gaps. Event types (20 documented, list may not be exhaustive):
+  run.started, run.completed, run.failed, input.requested, input.resolved, usage.recorded, voice.session.started,
+  voice.session.ended, voice.session.error, voice.utterance, voice.speech.started, voice.speech.ended,
+  billing.balance.low, billing.balance.depleted, end_user.balance.low, end_user.credit.exhausted, end_user.credit.granted,
+  end_user.credit.refunded, end_user.credit.adjusted, end_user.allowance.low. Transport: JSON envelope;
+  no method or Content-Type is printed beyond the Standard Webhooks convention. Delivery: At least once.
+  2xx within 10 s; anything else retried with exponential backoff, 5 s to an hour apart, for 3 days. Retries
+  can reorder — order by `created`, dedupe by `id`. An endpoint receives runs that begin after it is made.
+  Setup: Endpoints (at most 16) are registered by API (`POST /v1/webhooks` with the event types) or the
+  console, and managed with GET/PATCH/DELETE; OAuth apps cannot create or change them. No challenge or
+  validation request is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is CAMEL_AI, labelled 'camelAI'.
+testScenario:
+  events:
+  - 'run.completed'
+  - 'run.started'
+  - 'run.failed'
+catalog:
+  summary: >-
+    Verify camelAI webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle run, input, voice session and billing events

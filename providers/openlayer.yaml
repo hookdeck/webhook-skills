@@ -1,0 +1,53 @@
+name: 'openlayer'
+displayName: 'Openlayer'
+docs:
+  webhooks: 'https://docs.openlayer.com/security/webhooks/verify-signatures'
+  verification: 'https://docs.openlayer.com/security/webhooks/verify-signatures'
+  events: 'https://docs.openlayer.com/security/webhooks/events'
+notes: >-
+  Openlayer (openlayer.com), an AI evaluation and observability platform. Workspace webhooks report test
+  lifecycle changes and test-suite run results, signed per the Standard Webhooks spec (webhook-* headers).
+  Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: Per subscription, returned once at creation (dashboard
+  or POST, `secret`); cannot be retrieved later. Format `whsec_<base64>` (example `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`);
+  the key is the base64-decoded remainder after `whsec_`. Research: whsec_ (https://docs.openlayer.com/security/webhooks/verify-signatures:
+  'The key is your subscription's signing secret with the whsec_ prefix removed and the remainder Base64-decoded').
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. OPENLAYER_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Openlayer
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body required. `webhook-id` is constant across retries of one event (idempotency key). Body: {type,
+  timestamp, data}. `data.test` for test.*; `data.tests` (run summary) for tests.result.updated. Event
+  type: Top-level `type` of the shared envelope `{type, timestamp, data}`. `data.test.type` (`integrity`)
+  is the test's own category, not the event type. Event types (4 documented, list may not be exhaustive):
+  test.created, test.updated, test.deleted, tests.result.updated. Transport: HTTPS only; connection timeout
+  5 s, response timeout 10 s; redirects not followed (3xx = failure). Delivery: Initial attempt plus up
+  to 3 retries with exponential backoff and up to 10% jitter (about 5 s, 5 min, 30 min); then the event
+  is marked failed. Any 2xx succeeds; events and delivery records kept 90 days. Setup: Per subscription
+  (workspace admin): an HTTPS URL plus one or more event types; dashboard or REST API. No challenge. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified; parse the body only after the check. Hookdeck's source type is OPENLAYER,
+  labelled 'Openlayer'.
+testScenario:
+  events:
+  - 'test.created'
+  - 'test.updated'
+  - 'test.deleted'
+catalog:
+  summary: >-
+    Verify Openlayer webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle test and test result events

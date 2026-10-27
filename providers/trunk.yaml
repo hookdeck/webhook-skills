@@ -1,0 +1,63 @@
+name: 'trunk'
+displayName: 'Trunk'
+docs:
+  webhooks: 'https://docs.trunk.io/setup-and-administration/apis/webhooks'
+  verification: 'https://docs.trunk.io/flaky-tests/webhooks'
+  events: 'https://docs.trunk.io/merge-queue/webhooks'
+notes: >-
+  Trunk (trunk.io), CI developer tooling: Merge Queue (pull_request.* and pull_request_batch.* lifecycle
+  events) and Flaky Tests (test_case.* status, monitor, quarantine and AI-investigation events). Webhooks
+  are configured in the Svix App Portal embedded in the Trunk web app (Merge Queue > Settings > Webhooks,
+  or Settings > Organization > Webhooks). Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. Header names are not documented; svix-* is the Svix default. SECRET: One signing secret per
+  endpoint, shown in the Svix App Portal inside the Trunk web app. Trunk does not show its format; Svix
+  secrets are `whsec_`-prefixed. Research: whsec_ (Svix App Portal; "Svix powers webhooks for Trunk" https://docs.trunk.io/flaky-tests/webhooks).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. TRUNK_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Trunk source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body is required (Svix). Body: {type, timestamp}.
+  Flat bodies: `type` plus the resource fields (Merge Queue: `action`, `status`, `pr_number`, `repository`,
+  ...; Flaky Tests: `test_case`, `repository`, `monitor`/`triggered_by`). Collection events add `test_collection`.
+  No event id in the body; svix-id is the per-message id. Event type: Top-level `type` on every event.
+  The Flaky Tests page's field tables say so for its three types; the Svix catalog's JSON Schemas give
+  every one of the 20 types (Merge Queue included) a `type` const equal to the event name. Merge Queue
+  bodies also carry `action` (the lifecycle step without the family prefix), which is not the carrier.
+  Event types (20 documented, list may not be exhaustive): pull_request.canceled, pull_request.failed,
+  pull_request.merged, pull_request.pending_failure, pull_request.queued, pull_request.submitted, pull_request.testing,
+  pull_request_batch.canceled, pull_request_batch.failed, pull_request_batch.merged, pull_request_batch.pending_failure,
+  pull_request_batch.queued, pull_request_batch.submitted, pull_request_batch.testing, test_case.investigation_completed,
+  test_case.monitor_status_changed, test_case.quarantining_setting_changed, test_case.status_changed,
+  v2.test_case.quarantining_setting_changed, v2.test_case.status_changed. Transport: JSON POST via Svix.
+  Delivery: Delivered by Svix. Trunk retries with exponential backoff when the delivery provider rate-limits
+  it; no endpoint retry schedule or timeout is printed (gaps). Order by the payload `timestamp`, not receive
+  time, since retries and out-of-order delivery happen. Setup: Per endpoint in the Svix App Portal; Merge
+  Queue's two families must each be subscribed explicitly. Collection events are behind one organization-level
+  switch while migrating to test collections. No challenge is documented, so the row has no handshake
+  block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified; parse the body only after the check. Hookdeck's source type
+  is TRUNK, labelled 'Trunk'.
+testScenario:
+  events:
+  - 'v2.test_case.status_changed'
+  - 'pull_request.canceled'
+  - 'pull_request.failed'
+catalog:
+  summary: >-
+    Verify Trunk webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle pull_request.merged, pull_request_batch.pending_failure and v2.test_case.status_changed events

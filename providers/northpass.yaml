@@ -1,0 +1,62 @@
+name: northpass
+displayName: "Northpass"
+docs:
+  webhooks: https://developers.northpass.com/docs/getting-started-webhooks
+  verification: https://developers.northpass.com/docs/webhook-verification
+notes: >
+  Northpass (northpass.com, now Gainsight Customer Education), the customer education LMS. Webhooks
+  (Premium plan, Webhooks app) report learner creation, invitations and activations, course
+  publishing, enrollments, course/activity/quiz completions, ILT registrations and learning-path
+  progress. Delivery (from the docs): A failed delivery is retried every hour for 24 hours; if it
+  still fails, ALL the school's webhooks are disabled and the admin is notified. Failed messages can
+  be listed with the List all sent webhooks endpoint. Northpass's docs say: 'Each Webhook request
+  includes an `X-Northpass-Hmac-SHA256` header which is generated using your school’s shared secret,
+  along with the data sent in the body of the request.' 'hmac_obj = hmac.new(SHARED_SECRET, data,
+  hashlib.sha256) calculated_hmac = base64.b64encode(hmac_obj.digest()).decode().strip()' '# The
+  Northpass app's shared secret, viewable from the Webhooks app' From the docs (registry summary):
+  `X-Northpass-Hmac-SHA256: <base64>` = base64 HMAC-SHA256(shared secret, raw body), Shopify-style
+  (the Ruby and Python samples `Base64.encode64(OpenSSL::HMAC.digest(...)).strip` /
+  `base64.b64encode(...)`). No test vector. SIGNATURE SCHEME (it must match Hookdeck's NORTHPASS
+  source exactly: HMAC controller, algorithm "sha256", header_key "x-northpass-hmac-sha256", encoding
+  "base64"). The X-Northpass-Hmac-SHA256 header carries the bare standard base64 (padded) digest, no
+  prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over the raw request body
+  bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
+  body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as Hookdeck does): require
+  the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the strings, or the
+  decoded bytes AND the re-encoded string, in constant time. Decoding alone is not enough: a value
+  whose last character carries stray low bits decodes to the same bytes but Hookdeck rejects it, so
+  the skill must reject it too. Secret: The school's shared secret, shown in the Webhooks app. Use it
+  as UTF-8 bytes. Env var: NORTHPASS_WEBHOOK_SECRET. Validate the signature's format before decoding
+  it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `data.type` field.
+  JSON:API-style body; `data.type` is the subscription name (`..._events`), `data.id` the event id,
+  `data.included` the related people/courses. Two examples disagree with the subscription list (see
+  gaps). No header names the type. Documented event types (14): activity_completed_events,
+  course_completed_events, course_published_events, learner_created_events,
+  learner_enrolled_to_course_events, learner_registered_to_ilt_session_events,
+  learner_started_course_events, learning_path_completed_events, learning_path_item_completed_events,
+  learning_path_learner_enrolled_events, learning_path_started_events, person_activated_events,
+  person_invited_events, quiz_completed_events. Handle a few common ones and log the rest. Method:
+  POST. Hookdeck's Northpass source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/northpass/ (v2/course_completed_events.json,
+  v2/course_published_events.json, v2/learner_created_events.json,
+  v2/learner_enrolled_to_course_events.json, ...); base the examples' test payloads on them.
+  Hookdeck's source type is NORTHPASS, labelled 'Northpass'.
+testScenario:
+  events:
+    - "course_completed_events"
+    - "learner_created_events"
+    - "learner_enrolled_to_course_events"
+catalog:
+  summary: "Verify Northpass webhooks (`X-Northpass-Hmac-SHA256`: base64 HMAC-SHA256 of the raw body), handle learner, course and learning path events"

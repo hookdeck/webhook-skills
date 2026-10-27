@@ -1,0 +1,60 @@
+name: 'isnap'
+displayName: 'iSnap'
+docs:
+  webhooks: 'https://docs.isnap.ai/webhooks/overview'
+  verification: 'https://docs.isnap.ai/webhooks/verifying-signatures'
+notes: >-
+  iSnap (isnap.ai), an iMessage/SMS line API: messages, reactions, typing, lines (BYOD, rented, shared),
+  trials, pre-orders, hosted macOS sessions and bindings. Subscriptions are created with POST /v1/webhooks
+  (url, events filter, optional line_ids). Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: One signing secret per subscription, returned by POST /v1/webhooks: `whsec_` + 64 base64 characters
+  (48 bytes). Rotation is covered on the delivery page. Research: whsec_ ("The base64 decoding of the
+  secret without its whsec_ prefix: 48 bytes." https://docs.isnap.ai/webhooks/verifying-signatures). It
+  starts with whsec_; the key is the base64-decoding of the part after whsec_. ISNAP_WEBHOOK_SECRET holds
+  the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's iSnap source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required; never answer 410 to a failed verification (410 turns the subscription off). Body:
+  {api_version, event_id, event_type, created_at, trace_id, data}. `event_id` (evt_) equals the webhook-id
+  header and is the dedupe key; `data` always holds `metadata` and `line_metadata`. Event type: Top-level
+  `event_type` in the envelope (`api_version`, `event_id`, `event_type`, `created_at`, `trace_id`, `data`).
+  The unsigned `X-iSnap-Event` header repeats it; iSnap says to read the type from the verified body.
+  Event types (37 documented, list may not be exhaustive): message.queued, message.scheduled, message.sent,
+  message.delivered, message.read, message.failed, message.received, message.cancelled, message.fallback_triggered,
+  reaction.added, reaction.received, reaction.removed, typing_indicator.started, typing_indicator.stopped,
+  line.connected, line.disconnected, line.offline, line.degraded, line.apple_id_flagged, line.quota_warning,
+  line.quota_exceeded, line.capability_changed, line.terminated, line.variant_changed, line.variant_scheduled,
+  line.variant_unscheduled, trial.linked, trial.dormant, trial.reactivated, trial.bind_conflict and 7
+  more. Transport: POST, compact UTF-8 JSON, one event per body. Delivery: 2xx within 10 s succeeds; 3xx/4xx
+  (incl. 429)/5xx, timeouts and network errors are retried (Retry-After ignored); 410 turns the subscription
+  off. 7 attempts per schedule (~14.6 h); 10 deliveries in a row failing suspend the subscription until
+  a webhook.test probe succeeds. At least once, unordered; dedupe on event_id. Setup: API-managed subscriptions
+  (POST /v1/webhooks) with an event filter (exact types, family wildcards or `*`) and an optional line
+  filter. Probes (`webhook.test`, X-iSnap-Probe: 1) test or resume a subscription; they are signed deliveries,
+  not a challenge to echo, so the row has no handshake block. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is ISNAP, labelled 'iSnap'.
+testScenario:
+  events:
+  - 'message.received'
+  - 'message.delivered'
+  - 'line.offline'
+catalog:
+  summary: >-
+    Verify iSnap webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle message.received, message.delivered and line.offline events

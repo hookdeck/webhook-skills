@@ -1,0 +1,56 @@
+name: micetribe
+displayName: "MICEtribe"
+docs:
+  webhooks: https://developer.micetribe.com/webhooks-10150906f0
+  verification: https://developer.micetribe.com/webhooks-10150906f0
+notes: >
+  MICEtribe registration webhooks, created through the Integrations management API. MICEtribe
+  (micetribe.com), event registration, badge printing and check-in. Delivery (from the docs): 2xx is
+  success; 3xx and above, network errors and timeouts (10 s) fail. Up to 5 retries, 15 min, 30 min, 3
+  h, 6 h and 12 h apart (a dispatcher runs every 15 minutes). Process idempotently on registration_id
+  + meta.trigger + X-Request-Id. MICEtribe says: 'signature = HMAC-SHA256( secret, timestamp + "." +
+  raw_request_body ) secret — the signing secret you configured on the webhook timestamp — value of
+  X-Timestamp (string) raw_request_body — exact JSON bytes in the POST body (no re-encoding)' 'Compare
+  the result (hex) to X-Signature using a constant-time comparison.' SIGNATURE SCHEME (it must match
+  Hookdeck's MICETRIBE source exactly: HMAC controller, algorithm sha256, header x-signature, encoding
+  hex, signed_content_template "{header:x-timestamp}.{body}"). The X-Signature header carries the bare
+  lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over: the X-Timestamp header value, then a literal ".", then the raw request body bytes. Build the
+  signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header
+  values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the signing secret set on the webhook, used as UTF-8. Env var:
+  MICETRIBE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  MICETRIBE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
+  (X-Timestamp is Unix seconds). Dedupe on registration_id + meta.trigger + X-Request-Id. Events:
+  dispatch on the body's `meta.trigger` field. Documented event types (5): registration.created,
+  registration.updated, registration.deleted, registration.attended, registration.printed. Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's MICEtribe source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/micetribe/latest/ (registration.updated.json);
+  base the examples' test payloads on them. Hookdeck's source type is MICETRIBE, labelled 'MICEtribe'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "MICEtribe signs webhooks only when the webhook has a signing secret.
+  Set one on the webhook and paste it here."
+testScenario:
+  events:
+    - "registration.created"
+    - "registration.updated"
+    - "registration.attended"
+catalog:
+  summary: "Verify MICEtribe webhooks (`X-Signature`: hex HMAC-SHA256 of `{X-Timestamp}.{body}`), handle registration created, updated, deleted, attended and printed events"

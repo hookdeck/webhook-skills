@@ -1,0 +1,55 @@
+name: 'voiceflow'
+displayName: 'Voiceflow'
+docs:
+  webhooks: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
+  verification: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
+  events: 'https://www.voiceflow.com/docs/api-reference/webhooks/org-events'
+notes: >-
+  Voiceflow (voiceflow.com), an AI-agent building platform. Organization events webhooks report project
+  and project-environment lifecycle changes (created, published, merged, deleted); Svix delivers and signs
+  them. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. Organization event
+  webhooks. SECRET: One secret per organization webhook URL, shown in Settings > Organization once a URL
+  is set; regenerating keeps the old secret valid for 24 h. No value is printed; Svix secrets are `whsec_<base64>`.
+  Research: whsec_ (inferred: docs link to Svix manual verification and say events come from Svix IPs;
+  the literal secret is not printed). It starts with whsec_; the key is the base64-decoding of the part
+  after whsec_. VOICEFLOW_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix library (npm
+  'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature and falls
+  back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks and
+  the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Voiceflow source
+  (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and any other
+  secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp
+  window; core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces
+  a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original
+  timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Hookdeck's configuration alert for this source reads exactly:
+  "Only organization event webhooks are supported. The project-level session webhook doesn't document
+  this signing scheme and may fail verification." SKILL.md and references/setup.md must state this requirement,
+  quoting the alert verbatim. Verification notes: Voiceflow names no headers; it links Svix's manual verification
+  guide. Body: {type, data, resource, time}. `resource` is `organization-<organizationID>`; `time` is
+  Unix ms. Event type: Top-level `type` of `{type, data, resource (organization-<id>), time (ms)}`. Event
+  types (6 documented, list may not be exhaustive): organization.project.created, organization.project.deleted,
+  organization.project.environment.created, organization.project.environment.published, organization.project.environment.merged,
+  organization.project.environment.deleted. Transport: JSON via Svix. Delivery: Voiceflow states no acknowledgement,
+  timeout or retry policy. Setup: One URL per organization (Settings > Organization); every organization
+  event is sent. No challenge. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is VOICEFLOW, labelled 'Voiceflow'.
+testScenario:
+  events:
+  - 'organization.project.created'
+  - 'organization.project.deleted'
+  - 'organization.project.environment.created'
+catalog:
+  summary: >-
+    Verify Voiceflow organization webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`,
+    `svix-signature`, HMAC-SHA256, `whsec_` secret), handle organization.project.created,
+    organization.project.environment.published and organization.project.environment.merged events

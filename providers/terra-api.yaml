@@ -1,0 +1,62 @@
+name: terra-api
+displayName: "Terra API"
+docs:
+  webhooks: https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
+  verification: https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
+notes: >
+  Terra (tryterra.co), the wearables and health-data API. A webhook destination receives
+  authentication lifecycle events and normalised data (activity, sleep, body, daily, ...) for
+  connected users. Delivery (from the docs): A 2xx within 8 s succeeds. Otherwise up to 10 retries
+  with exponential backoff from 30 s (about 8 hours in all), then the event is dropped without notice.
+  A per-destination circuit breaker pauses data events (not auth events) during sustained failure;
+  paused cycles count toward the 10. Terra API's docs say: 'Every webhook sent by Terra includes an
+  HMAC-based signature header terra-signature , which takes the form:
+  t=1723808700,v1=a5ee9dba96b4f65aeff6c841aa50121b1f73ec7990d28d53b201523776d4eb00' 'The
+  signed_payload string is created by concatenating: The timestamp (as a string) The character . The
+  actual JSON payload (that is, the request body)' 'Terra generates signatures using a hash-based
+  message authentication code ( HMAC ) with SHA-256 . ... Terra requires the raw, unaltered body of
+  the request to perform signature verification.' From the docs (registry summary): Header
+  `terra-signature: t=<unix seconds>,v1=<sig>[,v0=<sig>]`. MAC = HMAC-SHA256(key = the endpoint
+  signing secret, message = `<t>.<raw body>`); compare against every `v1` and ignore other schemes
+  (the manual example also shows a `v0`). The page never says "hex": hex is read from the example
+  values (64 lowercase hex characters). SIGNATURE SCHEME (it must match Hookdeck's TERRA_API source
+  exactly: HMAC controller, algorithm "sha256", header_key "terra-signature", encoding "hex",
+  delimiter ".", prefix_data_with_timestamp true). The terra-signature header is
+  `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header (a string;
+  never parse it to a number and re-format it), then a literal ".", then the raw request body bytes.
+  The header may carry more than one v1= entry (for example during key rotation): accept the delivery
+  if ANY v1= entry matches, and ignore other keys such as v0. A header with no t= value fails. Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: One signing secret per destination, shown on the dashboard
+  Connections page. Use it as UTF-8 bytes. Env var: TERRA_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps
+  by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck
+  itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in
+  tolerance (an env var such as TERRA_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (t is Unix seconds). Events: dispatch on the body's `type` field.
+  Top-level body field `type`; every per-type Format block on the event-types page starts with it, and
+  each block's value equals its Slug. `status` (success, warning, error, ...) qualifies it. In ping
+  mode a data delivery instead carries `"type": "s3_payload"` and a download URL (see the `events.s3`
+  conflict). Documented event types (20): auth, deauth, user_reauth, access_revoked, connection_error,
+  google_no_datasource, processing, large_request_sending, rate_limit_hit, large_request_processing,
+  activity, athlete, body, daily (and 6 more). Handle a few common ones and log the rest. Method:
+  POST. Hookdeck's Terra API source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Hookdeck's source type is TERRA_API,
+  labelled 'Terra API'.
+testScenario:
+  events:
+    - "auth"
+    - "activity"
+    - "sleep"
+catalog:
+  summary: "Verify Terra API webhooks (`terra-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle auth lifecycle and health data events"

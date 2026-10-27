@@ -1,0 +1,27 @@
+{
+  "name": "sohar-health-webhooks-nextjs-example",
+  "version": "1.0.0",
+  "description": "Next.js example for receiving Sohar Health webhooks",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "svix": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

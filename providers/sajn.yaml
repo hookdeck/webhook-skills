@@ -1,0 +1,65 @@
+name: 'sajn'
+displayName: 'sajn'
+docs:
+  webhooks: 'https://docs.sajn.se/webhooks/overview'
+  verification: 'https://docs.sajn.se/webhooks/verify-signatures'
+  events: 'https://docs.sajn.se/webhooks/events'
+notes: >-
+  sajn (sajn.se), a Swedish e-signature and identity-check platform. Webhooks report document, party,
+  approval, identity-check, contact, company, template, form, member, usage, security and sajn Login events
+  per workspace. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix
+  seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: `secret` (`whsec_` + base64) in the create-webhook
+  response and on rotation only; one per endpoint and environment. The test-request script uses `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`.
+  Research: whsec_ ("The HMAC key is the base64 decoding of the part of the secret after the `whsec_`
+  prefix", https://docs.sajn.se/webhooks/verify-signatures). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. SAJN_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's sajn source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Create the sajn webhook endpoint on API version
+  2026-10 or later. Endpoints on the deprecated 2026-09 version sign with X-Sajn-Signature instead of
+  Standard Webhooks and fail verification." SKILL.md and references/setup.md must state this requirement,
+  quoting the alert verbatim. Verification notes: Raw body is required ("Read the request body as bytes,
+  before any framework parses it as JSON"). Body: {id, type, createdAt, apiVersion, workspaceId, environment,
+  actor, data}. 2026-10 envelope; `data.object` is the resource (some events add `data.party`, `data.previousAttributes`
+  and similar). 2026-09: `{ event, payload, createdAt, webhookEndpoint, apiVersion }`. Event type: Top-level
+  `type` (API version 2026-10). Endpoints on 2026-09 carry `event` with uppercase names (DOCUMENT_COMPLETED,
+  DOCUMENT_SIGNED for document.fully_signed, ID_* for identity checks) and `payload` instead of `data`.
+  Event types (64 documented, list may not be exhaustive): document.created, document.sent, document.fully_signed,
+  document.completed, document.rejected, document.expired, document.expiring_soon, document.expiration_extended,
+  document.withdrawn, document.updated, document.deleted, document.restored, document.archived, document.unarchived,
+  document.comment.created, document.party.sent, document.party.delivery_failed, document.party.opened,
+  document.party.read, document.party.verified, document.party.auth_failed, document.party.signed, document.party.rejected,
+  document.party.delegated, document.party.updated, document.party.added, document.party.removed, document.party.reminded,
+  approval_request.created, approval_request.approved and 34 more. Transport: POST, `Content-Type` application/json.
+  Delivery: 2xx within 30 s; up to 12 attempts over about three days (6 s, 36 s, ~4 min, ~22 min, ~2 h,
+  then 12 h each); 410 stops retries and pauses the endpoint; 429 honours Retry-After; redirects are not
+  followed. Endpoints failing for 72 h with 5+ consecutive failures are paused. At-least-once, unordered.
+  Setup: Per workspace (or, on 2026-10, organization-wide) endpoints created in the dashboard or via `POST
+  /api/v1/webhooks` with an `events` list. `POST /api/v1/webhooks/{id}/test` sends a signed webhook.test.
+  No challenge or validation request is documented, so the row has no handshake block. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified; parse the body only after the check. Hookdeck's source type is SAJN, labelled 'sajn'.
+testScenario:
+  events:
+  - 'document.completed'
+  - 'document.created'
+  - 'document.sent'
+catalog:
+  summary: >-
+    Verify sajn webhook signatures (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    HMAC-SHA256, `whsec_` secret), handle document.completed, document.party.signed and document.party.delivery_failed
+    events

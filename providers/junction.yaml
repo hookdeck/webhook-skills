@@ -1,0 +1,60 @@
+name: 'junction'
+displayName: 'Junction'
+docs:
+  webhooks: 'https://docs.junction.com/webhooks/introduction'
+  verification: 'https://docs.junction.com/webhooks/introduction'
+notes: >-
+  Junction (junction.com, formerly Vital), a health-data API for wearables, lab testing and continuous
+  queries. Webhooks push connection lifecycle, historical-backfill completion, daily data, lab order/result
+  and continuous-query events; delivery and signing are Svix's. Standard Webhooks signature with svix-*
+  headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint, in the dashboard (Webhooks > Endpoint
+  > Signing Secret); also readable and rotatable through the team-webhook API. Junction prints no secret
+  value; its form is Svix's default (`whsec_<base64>`), not stated by Junction. Research: whsec_ (Svix-issued;
+  Junction is delivered by Svix, see the 'Svix API' debugging page; the docs do not print the prefix).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. JUNCTION_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Junction source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body required (Svix). Body: {event_type, data,
+  team_id, user_id, client_user_id}. Summary events put the summary object at `data` (identified by `data.id`).
+  Event type: Top-level `event_type`; the envelope also carries `team_id`, `user_id` and `client_user_id`.
+  Wearable data events add `data.source` (`name`, `slug`, `logo`). Event types (185 documented, list may
+  not be exhaustive): provider.connection.created, provider.connection.error, provider.device.created,
+  provider.device.updated, daily.data.activity.created, daily.data.activity.updated, historical.data.activity.created,
+  daily.data.body.created, daily.data.body.updated, historical.data.body.created, daily.data.meal.created,
+  daily.data.meal.updated, historical.data.meal.created, daily.data.menstrual_cycle.created, daily.data.menstrual_cycle.updated,
+  historical.data.menstrual_cycle.created, daily.data.profile.created, daily.data.profile.updated, historical.data.profile.created,
+  daily.data.electrocardiogram.created, daily.data.electrocardiogram.updated, historical.data.electrocardiogram.created,
+  daily.data.sleep.created, daily.data.sleep.updated, historical.data.sleep.created, daily.data.sleep_cycle.created,
+  daily.data.sleep_cycle.updated, historical.data.sleep_cycle.created, daily.data.workouts.created, daily.data.workouts.updated
+  and 155 more. Transport: JSON via Svix. Delivery: 2xx within 15 s; anything else (3xx included) fails.
+  Retries immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h; then Failed (and message.attempt.exhausted).
+  Endpoints failing for 5 days are disabled; Recover replays failed messages. Setup: Endpoints and event
+  filters in the dashboard's Webhooks section (a Svix portal); ETL Pipelines are an alternative destination.
+  No challenge. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified; parse the body only after the check. Hookdeck's source
+  type is JUNCTION, labelled 'Junction'.
+testScenario:
+  events:
+  - 'provider.connection.created'
+  - 'daily.data.sleep.created'
+  - 'historical.data.workouts.created'
+catalog:
+  summary: >-
+    Verify Junction webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, delivered
+    by Svix), handle provider.connection.created, daily.data.sleep.created and historical.data.workouts.created events

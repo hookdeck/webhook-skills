@@ -1,0 +1,50 @@
+name: 'agntix'
+displayName: 'Agntix'
+docs:
+  webhooks: 'https://docs.agntix.ai/webhooks/overview'
+  verification: 'https://docs.agntix.ai/webhooks/verify-signatures'
+  events: 'https://docs.agntix.ai/webhooks/events'
+notes: >-
+  Agntix (agntix.ai), a voice and chat AI-agent platform. Webhooks report session start and end (with
+  post-call analysis); further events are documented as planned but not delivered. Delivered and signed
+  by Svix. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint,
+  from the dashboard's Developer section (Svix). Agntix prints no secret value; its form is Svix's default
+  (`whsec_<base64>`), not stated by Agntix. Research: whsec_ (Svix-issued; 'Agentix delivers webhooks
+  via Svix' in https://docs.agntix.ai/llms-full.txt; prefix not printed). It starts with whsec_; the key
+  is the base64-decoding of the part after whsec_. AGNTIX_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Agntix source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after
+  the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such
+  as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: replay_window_seconds 300: "The `svix-timestamp` is enforced ±5 minutes" (by the Svix verifier).
+  Raw body required. Body: {id, eventType, type, platform, direction, state, agentId, createdAt, metadata}.
+  Flat; session.ended adds `lastActivityAt`, `endedAt`, `analysis` and `recordingUrl`. Event type: Top-level
+  `eventType` of a flat envelope (no `data`); top-level `type` is the session kind (`VOICE` | `CHAT`),
+  not the event type, and `id` is the session UUID. Event types (2 documented, list may not be exhaustive):
+  session.created, session.ended. Transport: JSON via Svix; public HTTPS endpoints only. Delivery: At-least-once;
+  2xx within 15 s; exponential backoff for up to 24 h, then dead-lettered. Setup: Per endpoint (Developer
+  > + Add Endpoint): URL, optional rate limit, events. No challenge. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is AGNTIX, labelled 'Agntix'.
+testScenario:
+  events:
+  - 'session.created'
+  - 'session.ended'
+catalog:
+  summary: >-
+    Verify Agntix webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
+    secret), handle session.created and session.ended events

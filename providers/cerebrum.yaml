@@ -1,0 +1,55 @@
+name: 'cerebrum'
+displayName: 'Cerebrum'
+docs:
+  webhooks: 'https://docs.cerebrum.com/docs/webhook-guides'
+  verification: 'https://docs.cerebrum.com/docs/validation'
+notes: >-
+  Cerebrum (cerebrum.com), a background-check and identity-verification (vID / vouchers) API. Webhooks
+  POST order, voucher and monitoring notifications to the integration's `postbackWebhookUrl`; delivery,
+  signing and the portal are Svix's. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. SECRET: One secret per webhook, from the Svix Portal access Cerebrum provides (portal on request).
+  Cerebrum prints no secret value; its form is Svix's default (`whsec_<base64>`), not stated by Cerebrum.
+  Research: whsec_ (Svix-issued; secret obtained from the Svix Portal per https://docs.cerebrum.com/docs/validation).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. CEREBRUM_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Cerebrum source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body required (Svix). Body: {id, idType, additionalMetadata,
+  event, eventDate, svixAppId, metadata}. From the JSON Schema (`additionalProperties: false`); `metadata.delta`
+  is a JSON-Patch-style change list on some order updates. Event type: Top-level `event` (required) in
+  the payload JSON Schema `{id, idType, additionalMetadata, event, eventDate, svixAppId, metadata}`. No
+  example body is published, so no value is shown; the schema enum is upper snake case like the Event
+  Types list. The delta page speaks of `order.updated` events, a name in neither list. Event types (9
+  documented, list may not be exhaustive): ORDER_STATUS_CHANGE, ORDER_SCORE_CHANGE, ORDER_CUSTOM_SCORE_CHANGE,
+  ORDER_DISPUTE_RESOLVED, VOUCHER_STARTED, VOUCHER_REDEEMED, VOUCHER_EXPIRED, MONITORING_REPORT_GENERATED,
+  BEAM_INPUT_CREATED. Transport: JSON (per the payload schema) via Svix. Delivery: Any 2xx within 30 s
+  succeeds; anything else (3xx included) or a timeout is retried: immediately, 5 s, 5 min, 30 min, 2 h,
+  5 h, 10 h, 10 h, then dropped. Setup: One `postbackWebhookUrl` per integration; the Svix webhook portal
+  (subscriptions, replay, logs) is available on request. No challenge. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is CEREBRUM, labelled 'Cerebrum'.
+testScenario:
+  events:
+  - 'ORDER_STATUS_CHANGE'
+  - 'ORDER_SCORE_CHANGE'
+  - 'ORDER_CUSTOM_SCORE_CHANGE'
+catalog:
+  summary: >-
+    Verify Cerebrum webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `whsec_` secret), handle ORDER_STATUS_CHANGE, ORDER_SCORE_CHANGE, ORDER_DISPUTE_RESOLVED
+    and VOUCHER_REDEEMED events

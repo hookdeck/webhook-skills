@@ -1,0 +1,56 @@
+name: 'pinata'
+displayName: 'Pinata'
+docs:
+  webhooks: 'https://docs.pinata.cloud/account-management/webhooks'
+  verification: 'https://docs.pinata.cloud/account-management/webhooks'
+notes: >-
+  Pinata (pinata.cloud), IPFS file storage and pinning. Webhooks report private/public IPFS file and pin-by-CID
+  events for an account and are delivered through Svix (Svix Play, the Svix library and a Svix-hosted
+  event catalog). Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix
+  seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: One secret per endpoint, revealed on the Webhook
+  Dashboard's right sidebar. The sample shows a `whsec_` value. Research: whsec_ (sample secret "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
+  Svix-delivered) https://docs.pinata.cloud/account-management/webhooks. It starts with whsec_; the key
+  is the base64-decoding of the part after whsec_. PINATA_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the webhook-* headers and, when webhook-id is absent,
+  fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand
+  the library (or manual check) the three values under the header names it expects (the svix library accepts
+  either set itself, so pass it both sets of headers rather than only svix-*). Include a test that a delivery
+  signed the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Pinata
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required (Svix). Body: {event_type, timestamp, workspace_id, data}. Four top-level keys in every
+  hand-written catalog example; `data.object` (or `data.new_file` for pin_by_cid_succeeded) holds the
+  file. No event id in the body; the webhook-id header identifies the message. The two CAR-import types'
+  examples are generated from their schemas and name the field `event` instead, so the carrier is not
+  uniform across the catalog (see gaps). The catalog is the only place either appears; Pinata's prose
+  never names the field. Event types (11 documented, list may not be exhaustive): ipfs.private.file_added,
+  ipfs.private.file_deleted, ipfs.private.file_updated, ipfs.public.car_import_failed, ipfs.public.car_import_succeeded,
+  ipfs.public.file_added, ipfs.public.file_deleted, ipfs.public.file_updated, ipfs.public.pin_by_cid_added,
+  ipfs.public.pin_by_cid_failed, ipfs.public.pin_by_cid_succeeded. Transport: JSON bodies per the catalog
+  examples; Pinata states no method or Content-Type. POST is Svix's delivery method, recorded from Svix's
+  docs (method_evidence), the delivery platform's statement rather than Pinata's. Delivery: Delivery runs
+  on Svix (endpoint dashboard with logs, rate limiting); Pinata states no timeout, retry schedule or ordering
+  (see gaps). Setup: Endpoints are added on the Pinata App's Webhooks tab (a Svix portal) with the events
+  to subscribe to, an optional description and rate limiting. No challenge or validation request is documented,
+  so the row has no handshake block. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is PINATA, labelled 'Pinata'.
+testScenario:
+  events:
+  - 'ipfs.private.file_added'
+  - 'ipfs.private.file_deleted'
+  - 'ipfs.private.file_updated'
+catalog:
+  summary: >-
+    Verify Pinata webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256
+    via Svix), handle ipfs.public.file_added and ipfs.public.pin_by_cid_succeeded events

@@ -1,0 +1,65 @@
+name: complycube
+displayName: "ComplyCube"
+docs:
+  webhooks: https://docs.complycube.com/documentation/guides/webhooks
+  verification: https://docs.complycube.com/documentation/guides/webhooks#signature-verification
+  events: https://docs.complycube.com/documentation/api-reference/other-resources/webhooks#event-types
+notes: >
+  ComplyCube (complycube.com), KYC/AML and identity verification. Webhook endpoints are configured in
+  the portal or via the API, each subscribed to event types (workflow sessions, checks, clients,
+  documents, addresses). Delivery (from the docs): Acknowledge with a 20x within 15 seconds; otherwise
+  up to 10 retries with exponential backoff (60 s, 120 s, 480 s, ...), after which the webhook is
+  disabled. Duplicates possible; order not guaranteed. ComplyCube's docs say: 'ComplyCube signs the
+  webhook events it sends to your endpoints by including a signature in each event's
+  `ComplyCube-Signature` header.' 'Determine the expected signature by computing an HMAC with the
+  SHA256 hash function. Use your webhook's secret as the key, and use the `request body` string as the
+  message.' 'const givenSignature = Buffer.from(signature, "hex"); const hmac =
+  crypto.createHmac("sha256", this.secret); hmac.update(requestBody); const eventSignature =
+  hmac.digest();' From the docs (registry summary): Header `ComplyCube-Signature: <hex>`, no prefix.
+  MAC = HMAC-SHA256(key = the endpoint's webhook secret, message = the request body string). The docs
+  never name the encoding; the official Node SDK (@complycube/api 1.1.14) decodes the header as hex
+  and compares with `timingSafeEqual`. Caveat: the guide's Node sample passes
+  `JSON.stringify(request.body)` after `bodyParser.json()`, a re-serialisation that only matches the
+  raw body when the sender's JSON is compact with the same key order; the Python, PHP and .NET samples
+  pass the raw body. SIGNATURE SCHEME (it must match Hookdeck's COMPLYCUBE source exactly: HMAC
+  controller, algorithm "sha256", header_key "complycube-signature", encoding "hex"). The
+  ComplyCube-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One secret per webhook endpoint,
+  from the developer console (or the webhook create API). Use it as UTF-8 bytes. Env var:
+  COMPLYCUBE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Note that ComplyCube's Node sample signs
+  JSON.stringify(request.body) after parsing; that only works by accident. Verify the raw body.
+  Events: dispatch on the body's `type` field. Top-level body field `type`, dotted and sometimes
+  three-deep with the outcome (`check.completed.clear`). `resourceType` names the object in `payload`.
+  A completed check fires both `check.completed` and the outcome-specific type if subscribed to both.
+  No header names the event. Documented event types (25): workflow.session.started,
+  workflow.session.cancelled, workflow.session.processing, workflow.session.completed,
+  workflow.session.updated, check.pending, check.completed, check.completed.clear,
+  check.completed.attention, check.completed.rejected, check.completed.match_confirmed,
+  check.monitoring.attention, check.failed, check.updated (and 11 more). Handle a few common ones and
+  log the rest. Method: POST. Hookdeck's ComplyCube source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/complycube/ (latest/check.completed.clear.json);
+  base the examples' test payloads on them. Hookdeck's source type is COMPLYCUBE, labelled
+  'ComplyCube'.
+testScenario:
+  events:
+    - "check.completed"
+    - "client.created"
+    - "workflow.session.completed"
+catalog:
+  summary: "Verify ComplyCube webhooks (`ComplyCube-Signature`: hex HMAC-SHA256 of the raw body), handle check, client, document and workflow session events"

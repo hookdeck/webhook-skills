@@ -1,0 +1,59 @@
+name: 'pipecat-cloud'
+displayName: 'Pipecat Cloud'
+docs:
+  webhooks: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhooks'
+  verification: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhooks'
+  events: 'https://docs.pipecat.ai/pipecat-cloud/guides/webhook-events'
+notes: >-
+  Pipecat Cloud (pipecat.daily.co), Daily's hosted platform for Pipecat voice and multimodal agents. Webhooks
+  report build, deployment, service, spend, session, organization, API-key and secret events for an organization,
+  signed per Standard Webhooks with svix-* header names. Standard Webhooks signature with svix-* headers:
+  svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck
+  core notes: Delivered by Svix. SECRET: One signing secret per endpoint, revealed with the key icon on
+  the endpoint's row (dashboard Settings > Webhooks). Deleting and recreating an endpoint issues a new
+  secret. Research: whsec_ ('It looks like `whsec_...`') https://docs.pipecat.ai/pipecat-cloud/guides/webhooks.
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. PIPECAT_CLOUD_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Pipecat Cloud source (Standard Webhooks, headers_prefix
+  'svix', a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes,
+  every v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other
+  prefix's headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window.
+  SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so the library rejects
+  late retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256
+  over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry
+  in constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body is required ("Pass the library the raw
+  request body exactly as received"). Body: {event_type, org, created_at, data}. `org` is the organization
+  name, `created_at` ISO 8601 UTC. No event id in the body; `svix-id` is the stable message id. session.started
+  spells the service field `service`, not `service_name`. No header carries the type. Event types (20
+  documented, list may not be exhaustive): build.started, build.succeeded, build.failed, build.timeout,
+  deployment.created, deployment.updated, service.suspended, service.resumed, spend.threshold_reached,
+  spend.limit_reached, spend.limit_cleared, session.started, org.trial_started, org.trial_ended, api_key.created,
+  api_key.rotated, api_key.deleted, secret.created, secret.updated, secret.deleted. Transport: POST of
+  a signed JSON payload (the samples parse `application/json` raw bodies). Delivery: Any 2xx is success,
+  anything else is retried (no schedule given). At least once; periodic-job events (`org.trial_ended`,
+  `spend.*`) carry an idempotency key, and deployment events can be lost if a process restarts after the
+  deploy commits. Delivery history covers 90 days, with manual re-dispatch. Setup: Endpoints are managed
+  per organization in the dashboard only (Settings > Webhooks; no CLI or API), each subscribed to at least
+  one event type. A "send test event" action delivers a schema-generated sample with `webhook-test` true.
+  No challenge or validation request is documented, so the row has no handshake block. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified; parse the body only after the check. Hookdeck's source type is PIPECAT_CLOUD, labelled
+  'Pipecat Cloud'.
+testScenario:
+  events:
+  - 'build.succeeded'
+  - 'build.started'
+  - 'build.failed'
+catalog:
+  summary: >-
+    Verify Pipecat Cloud webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle build.succeeded, deployment.updated, service.suspended and spend.limit_reached events

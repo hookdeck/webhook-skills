@@ -1,0 +1,64 @@
+name: 'memos'
+displayName: 'Memos'
+docs:
+  webhooks: 'https://usememos.com/docs/integrations/webhooks'
+  verification: 'https://usememos.com/docs/integrations/webhooks'
+notes: >-
+  Memos (usememos.com), an open-source self-hosted note-taking app. Per-user webhooks fire when memos
+  are created, updated, deleted or commented on; since 0.31 they are signed in the Standard Webhooks format
+  (webhook-* headers) when the webhook has a signing secret. Standard Webhooks signature with webhook-*
+  headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated
+  'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256,
+  base64 output. Hookdeck core notes: Memos treats a response without JSON {"code":0} as a failed delivery.
+  SECRET: Per webhook. New webhooks get a generated `whsec_<base64>` secret (32 random bytes, shown at
+  creation, revealable later in the edit dialog); older webhooks stay unsigned until a secret is generated
+  there. The v0.31.0 sender base64-decodes a whsec_ secret and uses any other value as raw bytes, exactly
+  as Hookdeck's controller does. Research: whsec_ (https://usememos.com/docs/integrations/webhooks: 'New
+  webhooks receive a Standard Webhooks-compatible signing secret in the form whsec_<base64>'). It starts
+  with whsec_; the key is the base64-decoding of the part after whsec_. MEMOS_WEBHOOK_SECRET holds the
+  full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Memos source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
+  alert for this source reads exactly: "Generate a signing secret in the Memos webhook edit dialog. Older
+  webhooks are unsigned until you do. Memos treats any response without JSON {"code":0} as failed, so
+  set a custom response with body {"code":0} on this source." SKILL.md and references/setup.md must state
+  this requirement, quoting the alert verbatim. Conditional signing: Signed only when the webhook has
+  a signing secret. New webhooks get one; older ones are unsigned until a secret is generated in the edit
+  dialog. Verification notes: Signing happens only when the webhook has a secret (vendor-source: `if requestPayload.SigningSecret
+  != ""`). Body: {url, activityType, creator, memo}. The docs name activityType, creator and memo; `url`
+  (the destination) is in the v0.31.0 struct. Event type: Top-level `activityType` of `{url, activityType,
+  creator, memo}`. The docs name the field but no values; the values are the strings the v0.31.0 dispatchers
+  pass (`memos.memo.created|updated|deleted`, `memos.memo.comment.created`). Event types (4 documented,
+  list may not be exhaustive): memos.memo.created, memos.memo.updated, memos.memo.deleted, memos.memo.comment.created.
+  Transport: JSON POST; the v0.31.0 sender sets Content-Type: application/json (vendor-source). Delivery:
+  The receiver must answer 2xx WITH a JSON body whose `code` is 0, e.g. `{"code": 0}`; a non-2xx status,
+  invalid JSON or a nonzero code is a delivery failure. A plain `200 OK` with an empty body therefore
+  fails. The v0.31.0 client times out after 30 s (vendor-source). Setup: Per user, in Settings; every
+  webhook gets every memo event (no per-event selection documented). Private-network destinations need
+  an allowlist flag in 0.31. No challenge. Every accepted delivery must be answered with HTTP 200 and
+  the JSON body {"code":0} (Memos treats any other response as a failed delivery); the examples return
+  {"code":0} on success. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified; parse the body only after the check. Hookdeck's
+  source type is MEMOS, labelled 'Memos'.
+testScenario:
+  events:
+  - 'memos.memo.created'
+  - 'memos.memo.updated'
+  - 'memos.memo.deleted'
+catalog:
+  summary: >-
+    Verify Memos webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle memo and comment events

@@ -48,7 +48,8 @@ async function handler(request: NextRequest) {
     );
   }
 
-  // Read as text so any content type is accepted; GET (the default) has no body.
+  // Read as text so any content type is accepted. Argo CD sends the template body with
+  // GET too, but Next.js drops GET request bodies: set `method: POST` in the template.
   const raw = await request.text();
   if (raw.trim() === '') {
     console.log(`Argo CD ${request.method} request with an empty body`);

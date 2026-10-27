@@ -1,0 +1,55 @@
+name: 'terminal-telematics'
+displayName: 'Terminal'
+docs:
+  webhooks: 'https://docs.withterminal.com/guides/webhooks'
+  verification: 'https://docs.svix.com/receiving/verifying-payloads/how'
+  events: 'https://docs.withterminal.com/api-reference/webhook-events/overview'
+notes: >-
+  Terminal (withterminal.com), a unified telematics/ELD data API (connections to fleet providers, syncs,
+  vehicles, drivers, trailers, safety events). Webhooks run on Svix. Standard Webhooks signature with
+  svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated
+  'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256,
+  base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Not described by Terminal (endpoints
+  are registered in Terminal's dashboard); Svix secrets are `whsec_`-prefixed. Research: whsec_ (Svix-issued;
+  docs state Svix delivery but print no literal secret). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. TERMINAL_TELEMATICS_WEBHOOK_SECRET holds the full whsec_ value. Verify with
+  the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature
+  and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Terminal source
+  (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and any other
+  secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp
+  window; core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces
+  a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original
+  timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required (Svix). Body: {id,
+  type, detail}. `detail` holds the full related entities (e.g. `connection`, `sync`). Event type: Top-level
+  `type` beside `id` (`evt_...`) and `detail` (the related entities, e.g. `connection` and `sync`). The
+  guide's example `type` is sync.completed. Event types (32 documented, list may not be exhaustive): connection.created,
+  connection.disconnected, connection.reconnected, connection.completed, connection.updated, connection.pending_deletion,
+  connection.deleted, sync.requested, sync.started, sync.completed, sync.failed, connection.first_sync_completed,
+  delivery.requested, delivery.started, delivery.failed, delivery.completed, issue.reported, issue.resolved,
+  provider.availability_updated, unsupported_provider.requested, link.analytics_event_emitted, vehicle.added,
+  vehicle.modified, vehicle.removed, driver.added, driver.modified, driver.removed, trailer.added, trailer.modified,
+  trailer.removed and 2 more. Transport: HTTP POST with a JSON payload. Delivery: Non-2xx responses count
+  as failures and may be retried; the dashboard shows delivery status and can replay messages. No schedule
+  or timeout is stated. Setup: Endpoints are registered in Terminal's dashboard; some event types need
+  configuration by Terminal support. No challenge or validation request is documented, so the row has
+  no handshake block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified; parse the body only after the check. Hookdeck's
+  source type is TERMINAL_TELEMATICS, labelled 'Terminal'.
+testScenario:
+  events:
+  - 'sync.completed'
+  - 'connection.created'
+  - 'connection.disconnected'
+catalog:
+  summary: >-
+    Verify Terminal webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix),
+    handle sync.completed, connection.created and connection.disconnected events

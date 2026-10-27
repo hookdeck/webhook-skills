@@ -1,0 +1,57 @@
+name: 'globalstack'
+displayName: 'GlobalStack'
+docs:
+  webhooks: 'https://docs.globalstack.io/webhooks/events'
+  verification: 'https://docs.globalstack.io/webhooks/verify-signatures'
+notes: >-
+  GlobalStack (globalstack.io), a stablecoin/fiat money-movement API: onramps, offramps, conversions,
+  transfers, deposits and KYC. Endpoints are created via POST /v1/notifications/webhooks (subscribed by
+  category, created inactive) and delivered by Svix. Standard Webhooks signature with svix-* headers:
+  svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck
+  core notes: Delivered by Svix. SECRET: Per endpoint, `whsec_`-prefixed, shown once in the create (or
+  rotate) response as `signing_secret`. Research: whsec_ ("Your signing secret (prefixed whsec_) is shown
+  in plaintext once" https://docs.globalstack.io/webhooks/verify-signatures). It starts with whsec_; the
+  key is the base64-decoding of the part after whsec_. GLOBALSTACK_WEBHOOK_SECRET holds the full whsec_
+  value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's GlobalStack source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: Raw body is required. Body: {event_id, event_type, event_category, event_developer_id, api_version,
+  event_created_at, event_object_id, event_object_status, event_object_changes, event_object}. `event_id`
+  (evt_) is stable across retries; `event_object` is the REST resource plus event-only fields. Event type:
+  Top-level `event_type` in a flat envelope that also carries `event_category` (the subscription family),
+  `event_object_status` and the resource in `event_object`. Event types (27 documented, list may not be
+  exhaustive): onramp.awaiting_deposit, onramp.funds_received, onramp.processing, onramp.success, onramp.failed,
+  onramp.returned, offramp.created, offramp.funds_received, offramp.processing, offramp.success, offramp.failed,
+  offramp.returned, conversion.created, conversion.funds_received, conversion.processing, conversion.success,
+  conversion.failed, conversion.returned, transfer.processing, transfer.success, transfer.failed, deposit.received,
+  deposit.held, deposit.confirmed, deposit.failed, kyc.approved, kyc.rejected. Transport: JSON POST via
+  Svix. Delivery: At-least-once; dedupe on `event_id`. Not ordered: use `event_object_status`/`event_object_changes`.
+  A resource emits a given event at most once. Logs, queued events and replay are API endpoints. No retry
+  schedule or timeout is printed (see gaps). Setup: Endpoints subscribe to categories (onramp, offramp,
+  conversion, transfer, deposit, kyc), not single events, and are created inactive until PATCHed `{"active":
+  true}`. No challenge is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is GLOBALSTACK, labelled 'GlobalStack'.
+testScenario:
+  events:
+  - 'conversion.success'
+  - 'onramp.awaiting_deposit'
+  - 'onramp.funds_received'
+catalog:
+  summary: >-
+    Verify GlobalStack webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle onramp.success, conversion.success, transfer.success and deposit.confirmed events

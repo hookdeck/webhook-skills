@@ -1,0 +1,61 @@
+name: hyperswitch
+displayName: "Hyperswitch"
+docs:
+  webhooks: https://docs.hyperswitch.io/integration-guide/webhooks
+  verification: https://docs.hyperswitch.io/integration-guide/webhooks
+notes: >
+  Hyperswitch (Juspay's open-source payments switch). Outgoing webhooks report payment, refund,
+  dispute, mandate, payout and invoice state changes to one endpoint per business profile and mode.
+  The same guide also covers INCOMING connector callbacks into Hyperswitch, which are out of scope
+  here. Delivery (from the docs): A 2xx succeeds. 16 retries over roughly 24 hours: 1 min after the
+  original attempt, then 5 min (x2), 10 min (x5), 1 h (x5), 6 h (x3). Duplicates are possible (dedupe
+  on `event_id`) and order is not guaranteed. No timeout is stated. Hyperswitch's docs say:
+  'Hyperswitch signs the serialized webhook body with HMAC-SHA512 and sends the hex-encoded digest in
+  `X-Webhook-Signature-512`.' 'Read the raw request body before parsing it. ... Generate an
+  HMAC-SHA512 digest from the raw body with `payment_response_hash_key`.' 'Set
+  `payment_response_hash_key` on the business profile and store it securely.' From the docs (registry
+  summary): Header `X-Webhook-Signature-512: <hex>`, no prefix. MAC = hex of HMAC-SHA512(key = the
+  business profile's `payment_response_hash_key`, message = the raw request body). Compare in constant
+  time. SIGNATURE SCHEME (it must match Hookdeck's HYPERSWITCH source exactly: HMAC controller,
+  algorithm "sha512", header_key "x-webhook-signature-512", encoding "hex"). The
+  X-Webhook-Signature-512 header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA512, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One key per business profile
+  (`payment_response_hash_key`), set on the profile; the docs do not say whether Hyperswitch generates
+  it or the merchant chooses it. Use it as UTF-8 bytes. Env var: HYPERSWITCH_WEBHOOK_SECRET. Validate
+  the signature's format before decoding it (exact length and alphabet), then compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. HMAC-SHA512 (128 hex
+  characters), not SHA-256. Dedupe on `event_id`. Events: dispatch on the body's `event_type` field.
+  Top-level body field `event_type`, one of the 33 "event wire values" the page lists. The page
+  publishes no example body, so no documented payload shows a value in the field: the pairing of field
+  and list is the page's, the join is untested. `content.type` (payment_details, refund_details,
+  dispute_details, mandate_details, payout_details, subscription_details) names the resource shape in
+  `content.object`; it is a coarser sub-discriminator, not the event. Documented event types (33):
+  payment_succeeded, payment_failed, payment_processing, payment_cancelled,
+  payment_cancelled_post_capture, payment_authorized, payment_partially_authorized, payment_captured,
+  payment_expired, action_required, refund_succeeded, refund_failed, refund_review, dispute_opened
+  (and 19 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's Hyperswitch
+  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is HYPERSWITCH, labelled 'Hyperswitch'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Set payment_response_hash_key on the Hyperswitch business profile
+  and paste it here. Without it, deliveries are unsigned and fail verification. Live-mode webhook URLs
+  must be allowlisted by Hyperswitch."
+testScenario:
+  events:
+    - "payment_succeeded"
+    - "refund_succeeded"
+    - "dispute_opened"
+catalog:
+  summary: "Verify Hyperswitch webhooks (`X-Webhook-Signature-512`: hex HMAC-SHA512 of the raw body), handle payment, refund, dispute, mandate and payout events"

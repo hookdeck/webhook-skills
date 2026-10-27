@@ -1,0 +1,51 @@
+name: 'supertab'
+displayName: 'Supertab'
+docs:
+  webhooks: 'https://docs.supertab.co/merchant-api/webhooks/consuming-webhooks'
+  verification: 'https://docs.supertab.co/merchant-api/webhooks/consuming-webhooks'
+  events: 'https://www.svix.com/event-types/eu/org_2m1kyxXSEnLSeEprUkWs7ksPdgf/'
+notes: >-
+  Supertab (supertab.co), micropayments and paywall tooling for publishers: purchases, time passes and
+  One-Time Offerings. Endpoints are added under Webhooks in the Business Portal (a Svix portal); the Svix
+  event catalog is public. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix
+  seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. Header names are
+  not documented; svix-* is the Svix default. SECRET: Per endpoint, in the Business Portal's Webhooks
+  section. Supertab does not show the format; Svix secrets are `whsec_`-prefixed. Research: whsec_ (Svix-hosted:
+  event catalog lives on svix.com under Supertab's Svix org; Svix issues whsec_ secrets. Supertab's page
+  does not print the secret.). It starts with whsec_; the key is the base64-decoding of the part after
+  whsec_. SUPERTAB_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix library (npm 'svix',
+  pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature and falls back to
+  webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks and the manual
+  verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-* headers (webhook-id,
+  -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual check) the three
+  values under the header names it expects (the svix library accepts either set itself, so pass it both
+  sets of headers rather than only svix-*). Include a test that a delivery signed the same way but sent
+  with the other prefix's headers is accepted. This matches Hookdeck's Supertab source (Standard Webhooks,
+  headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and any other secret used as
+  its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp window;
+  core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces a fixed
+  5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp,
+  so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required. Body: {type, data}.
+  From the catalog JSON Schemas (`type`, `data`); the purchase example also has a top-level `metadata`.
+  Event type: Top-level `type` in `{type, data}` per the catalog schemas; the version is a suffix of the
+  name (`_2025-04-01`). The catalog's purchase.completed_2025-04-01 example carries `"type": "purchase.completed"`
+  without the suffix (see gaps). Event types (2 documented, list may not be exhaustive): onetime_offering.purchasing_completed_2025-04-01,
+  purchase.completed_2025-04-01. Transport: JSON POST via Svix. Delivery: Delivered by Svix; Supertab
+  states no retry schedule, timeout or ordering. Setup: Per endpoint in the Business Portal, choosing
+  (versioned) event types. No challenge is documented, so the row has no handshake block. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified; parse the body only after the check. Hookdeck's source type is SUPERTAB, labelled 'Supertab'.
+testScenario:
+  events:
+  - 'onetime_offering.purchasing_completed_2025-04-01'
+  - 'purchase.completed_2025-04-01'
+catalog:
+  summary: >-
+    Verify Supertab webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256, `webhook-*` fallback), handle purchase.completed and
+    onetime_offering.purchasing_completed events

@@ -1,0 +1,59 @@
+name: checkout-page
+displayName: "Checkout Page"
+docs:
+  webhooks: https://checkoutpage.com/docs/api/v1/webhooks/signature
+  verification: https://checkoutpage.com/docs/api/v1/webhooks/signature
+notes: >
+  Checkout Page (checkoutpage.com), the hosted checkout, booking and form builder. Store-level
+  webhooks (Store settings > Integrations > Webhooks) send the signed `<resource>.<action>` events of
+  this row; page-level webhooks (a page's After payment > Integrations) send a separate `conversion`
+  event. Delivery (from the docs): Deliveries may be retried (dedupe on `eventId`); the attempt number
+  is in `x-webhook-delivery-attempt`. Deliveries rejected after a secret rotation are "retried briefly
+  and then not sent again". Checkout Page's docs say: 'Checkout Page generates a signature using
+  HMAC-SHA256 with your webhook secret. The signature is sent in the x-webhook-signature header with
+  every webhook request in the format sha256=<hex-digest>' 'return crypto. createHmac ( 'sha256' ,
+  secret). update (payload). digest ( 'hex' );' 'Taking the raw webhook payload as a string ... Verify
+  the request body exactly as it arrived, before parsing it. Use express.raw() on the webhook route'
+  'sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' From the docs (registry
+  summary): `x-webhook-signature: sha256=<64 hex>`, hex HMAC-SHA256(webhook secret, raw body); the
+  Node sample is `createHmac('sha256', secret).update(payload).digest('hex')`. `x-webhook-timestamp`
+  is sent but NOT part of the signed content. No test vector. SIGNATURE SCHEME (it must match
+  Hookdeck's CHECKOUT_PAGE source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-webhook-signature", encoding "hex"). The x-webhook-signature header carries `sha256=<hex>`. Strip
+  a leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
+  accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The webhook's signing secret, shown in Settings > Webhooks > View
+  signing secret. Rotation is immediate (the old secret stops working, retries of earlier events are
+  re-signed with the new one). Use it as UTF-8 bytes. Env var: CHECKOUT_PAGE_WEBHOOK_SECRET. Validate
+  the signature's format before decoding it (exact length and alphabet), then compare in constant
+  time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields.
+  `x-webhook-timestamp` is sent but is NOT part of the signed content. Dedupe on `eventId`. Events:
+  dispatch on the body's `event` field. Top-level `event` carries the type: each event page's rendered
+  schema pins it to the page's own value. The envelope is `sellerId` (and deprecated `seller_id`),
+  `timestamp`, `eventId` (and deprecated `event_id`), `event` and `data` (the resource under its own
+  key, e.g. `data.booking`). No header names the type. Page-level webhooks also use `event` (always
+  `conversion`) but a different body (`object`, `data.fields`, ...). Documented event types (23):
+  booking.abandoned, booking.created, booking.paid, checkout_page.created, checkout_page.updated,
+  customer.created, customer.updated, payment.abandoned, payment.created, payment.paid,
+  product.created, product.updated, submission.created, submission.updated (and 9 more). Handle a few
+  common ones and log the rest. Method: POST. Hookdeck's Checkout Page source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is CHECKOUT_PAGE, labelled 'Checkout Page'.
+testScenario:
+  events:
+    - "payment.paid"
+    - "booking.created"
+    - "subscription.canceled"
+catalog:
+  summary: "Verify Checkout Page webhooks (`x-webhook-signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle booking, payment, subscription and customer events"

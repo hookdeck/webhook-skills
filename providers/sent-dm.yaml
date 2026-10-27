@@ -1,0 +1,53 @@
+name: sent-dm
+displayName: "Sent"
+docs:
+  webhooks: https://docs.sent.dm/build/webhook-receiver
+  verification: https://docs.sent.dm/build/signature-verification
+  events: https://docs.sent.dm/start/webhooks/event-types
+notes: >
+  Sent (sent.dm) multi-channel messaging webhooks. Sent (sent.dm), a multi-channel messaging API (SMS,
+  WhatsApp, RCS, voice). Webhooks report message statuses and inbound messages, template, channel
+  (sender registration), contact consent, link and call events; Sender Profiles can receive clones.
+  Delivery (from the docs): Non-2xx, timeout (per webhook 5-120 s, default 30) or connection failure
+  fails; retries (retry_count 1-5, default 3) start ~1 min after and double up to 60 min apart. 10
+  consecutive failed events disable the webhook. Sent says: 'key = base64_decode( secret without the
+  "whsec_" prefix ) signed_content = "{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw_body}" expected =
+  "v1," + base64( HMAC_SHA256(key, signed_content) )' 'Sent signs webhooks Svix-style: the same HMAC
+  scheme used by Svix' SIGNATURE SCHEME (it must match Hookdeck's SENT_DM source exactly:
+  STANDARD_WEBHOOKS controller with headers_prefix 'x-webhook'). Standard Webhooks on X-Webhook-*
+  headers: X-Webhook-ID, X-Webhook-Timestamp (Unix seconds), X-Webhook-Signature (one or more
+  space-separated `v1,<base64>` entries). Signed content '{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw
+  body}', HMAC-SHA256, key = base64-decode of the secret after `whsec_`, base64 output; valid when any
+  v1 entry matches. X-Webhook-ID is the webhook configuration's UUID (constant across events), not a
+  message id, but it is still signed. Secret: the webhook's signing secret (`whsec_...`, env
+  SENT_WEBHOOK_SECRET). Verify with the standardwebhooks library (npm 'standardwebhooks', pip
+  'standardwebhooks') by mapping x-webhook-id/-timestamp/-signature to the
+  webhook-id/-timestamp/-signature names the library reads; do not use the svix library's svix-*
+  headers. The library always enforces a fixed 5-minute timestamp window; SKILL.md must say that
+  Hookdeck retries and replays resend the original timestamp (and Hookdeck applies no window), so the
+  library rejects late retries after 5 minutes, and point to a manual verifier in
+  references/verification.md where the window is off by default or can be widened (HMAC over the
+  signed content with the decoded key, constant-time compare of every space-separated v1,<base64>
+  entry, base64-decode with validation, timestamp must be a plain positive integer, like Hookdeck's
+  /^[1-9]\d*$/ check). Hookdeck reads the x-webhook-* headers and falls back to webhook-* and svix-*
+  names; the manual verifier may do the same. A secret without the whsec_ prefix is used as raw UTF-8
+  bytes by Hookdeck. Missing headers or a bad signature: 401. Sent sends one signature today; split on
+  spaces anyway. Events: dispatch on the body's `event` field. Documented event types (38):
+  message.queued, message.routed, message.sent, message.delivered, message.read, message.failed,
+  message.scheduled, message.cancelled, message.filtered, message.blocked, message.received,
+  templates.pending, templates.approved, templates.rejected (and 24 more). Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Sent source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/sent-dm/latest/ (call.completed.json,
+  channel.activated.json, contact.opt_out.json, link.clicked.json, ...); base the examples' test
+  payloads on them. Hookdeck's source type is SENT_DM, labelled 'Sent'.
+testScenario:
+  events:
+    - "message.delivered"
+    - "message.received"
+    - "message.failed"
+catalog:
+  summary: "Verify Sent (sent.dm) webhook signatures (`X-Webhook-Signature`, Standard Webhooks HMAC-SHA256 with a `whsec_` secret), handle message.delivered, message.failed, message.received and templates.approved events"

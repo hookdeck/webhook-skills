@@ -1,0 +1,60 @@
+name: usesend
+displayName: "useSend"
+docs:
+  webhooks: https://docs.usesend.com/guides/webhooks
+  verification: https://docs.usesend.com/guides/webhooks
+notes: >
+  useSend (open-source email platform, formerly Unsend) webhooks. useSend (usesend.com), an
+  open-source email sending platform. Delivery (from the docs): 2xx within 10 s acknowledges;
+  otherwise 6 attempts in all (immediately, then about 5, 10, 20, 40, 80 s). A webhook is disabled
+  after 30 consecutive failed calls and re-enabled from the dashboard. Duplicates are possible.
+  useSend says: 'X-UseSend-Signature | HMAC-SHA256 signature for verification; X-UseSend-Timestamp |
+  Unix timestamp in milliseconds' 'The signature is computed as: HMAC-SHA256(secret,
+  "${timestamp}.${rawBody}")' 'const expected = Buffer.from(`v1=${expectedSignature}`, "utf8");'
+  SIGNATURE SCHEME (it must match Hookdeck's USESEND source exactly: HMAC controller, algorithm
+  sha256, header x-usesend-signature, encoding hex, signed_content_template
+  "{header:x-usesend-timestamp}.{body}"). The X-UseSend-Signature header carries `v1=<hex>`. The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the X-UseSend-Timestamp header
+  value, then a literal ".", then the raw request body bytes. Build the signed message as BYTES,
+  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
+  is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Strip a leading `v1=` before validating the digest; Hookdeck's parser also accepts the bare digest,
+  so accept the value with or without the prefix. Secret: the webhook signing secret, used WHOLE as a
+  plain UTF-8 HMAC key including its `whsec_` prefix. This is NOT Standard Webhooks (nothing is
+  base64-decoded, hex digest); do not use the standardwebhooks or svix libraries and say so. Env var:
+  USESEND_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  USESEND_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
+  (X-UseSend-Timestamp is Unix MILLISECONDS; the useSend SDK's default tolerance is 5 minutes, which
+  is why the examples verify by hand). The test event is webhook.test. Events: dispatch on the body's
+  `type` field. Documented event types (21): email.queued, email.sent, email.delivered,
+  email.delivery_delayed, email.bounced, email.rejected, email.rendering_failure, email.complained,
+  email.failed, email.cancelled, email.suppressed, email.opened, email.clicked, contact.created (and 7
+  more). Handle a few common ones and log the rest. Method: POST. Hookdeck's useSend source manages
+  the method as POST, so the examples handle POST on the webhook route. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are
+  verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only
+  after the check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's
+  docs show it) are in /home/user/regwt/b14-merge/samples-doc/providers/usesend/latest/
+  (email.delivered.json); base the examples' test payloads on them. Hookdeck's source type is USESEND,
+  labelled 'useSend'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the whole secret, including
+  the whsec_ prefix. useSend uses it as a plain HMAC key."
+testScenario:
+  events:
+    - "email.delivered"
+    - "email.bounced"
+    - "contact.created"
+catalog:
+  summary: "Verify useSend webhooks (`X-UseSend-Signature`: `v1=` hex HMAC-SHA256 of `{X-UseSend-Timestamp}.{body}`, `whsec_` secret used as-is), handle email, contact and domain events"

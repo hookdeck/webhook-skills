@@ -1,0 +1,55 @@
+name: agora
+displayName: "Agora"
+docs:
+  webhooks: https://docs.agora.io/en/video-calling/advanced-features/receive-notifications
+  verification: https://docs.agora.io/en/video-calling/advanced-features/receive-notifications
+notes: >
+  Agora (agora.io), real-time voice/video. Agora Notifications (NCS) posts RTC channel events (channel
+  create/destroy, joins, leaves, role changes) to a webhook configured per project in Agora Console.
+  The same envelope serves other products (`productId` 3/4/5: Cloud Recording, Media Pull, Media
+  Push), whose event codes are on their own pages and not recorded here. Delivery (from the docs):
+  Respond 200 within 10 seconds with a JSON body; otherwise resent immediately, then at growing
+  intervals, at most three retries. Duplicates and out-of-order deliveries happen by design. Agora's
+  docs say: 'Notifications generates two signature values from the secret using HMAC/SHA1 and
+  HMAC/SHA256 algorithms. These signatures are added as Agora-Signature and Agora-Signature-V2 to the
+  HTTPS request header.' 'To verify Agora-Signature-V2 , use the secret, the raw request body, and the
+  crypto/sha256 algorithm.' 'mac := hmac.New(sha1.New, []byte(secret)) mac.Write([]byte(payload))
+  return hex.EncodeToString(mac.Sum(nil))' From the docs (registry summary): Every delivery carries
+  two headers over the same input: `Agora-Signature` = lowercase hex of HMAC-SHA1(key = the Signing
+  Secret, message = the raw request body), and `Agora-Signature-V2` = HMAC-SHA256 of the same. The Go
+  sample (V1 only) uses `hex.EncodeToString`; no V2 sample or V2 encoding is shown. The sample
+  compares with `==`. SIGNATURE SCHEME (it must match Hookdeck's AGORA source exactly: HMAC
+  controller, algorithm "sha1", header_key "agora-signature", encoding "hex"). The Agora-Signature
+  header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
+  digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA1, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 40 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The Signing Secret shown when creating the webhook in Agora Console
+  (Webhooks -> New Webhook). Use it as UTF-8 bytes. Env var: AGORA_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Every delivery
+  carries Agora-Signature (HMAC-SHA1) and Agora-Signature-V2 (HMAC-SHA256). Verify Agora-Signature
+  (SHA-1, 40 hex characters) only, as Hookdeck does. Agora wants a 200 with a JSON body within 10
+  seconds. Events: dispatch on the body's `eventType` field. Top-level body field `eventType`, a JSON
+  number (101-112 for RTC); recorded as strings here. `productId` (1 = RTC) scopes the code space, so
+  it is the sub-discriminator. The event name ("channel create") is not on the wire. Documented event
+  types (10): 101, 102, 103, 104, 105, 106, 107, 108, 111, 112. Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's Agora source manages the method as POST, so the examples handle POST
+  on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Hookdeck's source type is
+  AGORA, labelled 'Agora'.
+testScenario:
+  events:
+    - "101"
+    - "103"
+    - "104"
+catalog:
+  summary: "Verify Agora webhooks (`Agora-Signature`: hex HMAC-SHA1 of the raw body), handle RTC channel events (by numeric eventType)"

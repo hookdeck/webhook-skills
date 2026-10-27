@@ -1,0 +1,74 @@
+name: convox
+displayName: "Convox"
+docs:
+  webhooks: https://docs.convox.com/configuration/webhooks
+  verification: https://docs.convox.com/console/webhook-signing
+notes: >
+  Convox (convox.com), the PaaS that runs Racks on the customer's cloud. A Rack POSTs app-level
+  webhooks (app create, build/release lifecycle, budget caps, auto-shutdown, scale and trigger
+  overrides) to URLs set per app in the Console or in convox.yml for budget-cap events. Signed since
+  Rack 3.24.6 when the `webhook_signing_key` Rack parameter is set. Delivery (from the docs):
+  Best-effort, fire-and-forget, never retried (not even on 5xx). Default dispatch timeout 30 s for a
+  plain-URL receiver; a JSON receiver config (3.24.6+) can set its own. Events can arrive out of order
+  or twice. Convox's docs say: 'Convox-Signature: t=<unix-ts>,v1=<hex1>[,v1=<hex2>] ... v1=<hex> is a
+  hex-encoded HMAC-SHA256 signature.' 'The signed input is fmt.Sprintf("%d.%s", t, body) , that is,
+  the timestamp, a literal . , then the raw response body bytes.' 'The Rack uses the value as-is, so
+  any string of sufficient entropy works. ... Pass signingKey as a UTF-8 string and body as the raw
+  (unparsed) request body bytes. mac := hmac.New(sha256.New, []byte(signingKey))' 'When unset (the
+  default), no signature header is emitted ... the feature is purely opt-in.' From the docs (registry
+  summary): Header `Convox-Signature: t=<unix seconds>,v1=<hex>[,v1=<hex>...]`. MAC = hex of
+  HMAC-SHA256(key = the `webhook_signing_key` value as its UTF-8 string, message =
+  `fmt.Sprintf("%d.%s", t, body)`). During key rotation the Rack signs with every active key (up to 4)
+  and sends one `v1=` per key; a receiver accepts ANY match. SIGNATURE SCHEME (it must match
+  Hookdeck's CONVOX source exactly: HMAC controller, algorithm "sha256", header_key
+  "convox-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  Convox-Signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature
+  is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the
+  header (a string; never parse it to a number and re-format it), then a literal ".", then the raw
+  request body bytes. The header may carry more than one v1= entry (for example during key rotation):
+  accept the delivery if ANY v1= entry matches, and ignore other keys such as v0. A header with no t=
+  value fails. Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The `webhook_signing_key` Rack
+  parameter, chosen by the operator (Convox suggests `openssl rand -hex 32`) and used as-is, not
+  hex-decoded. Up to 4 active keys for rotation; the Console manages it under Rack > Settings (reveal
+  needs Admin). Use it as UTF-8 bytes. Env var: CONVOX_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps
+  by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck
+  itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in
+  tolerance (an env var such as CONVOX_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (t is Unix seconds). During key rotation the Rack signs with every
+  active key (up to 4) and sends one `v1=` per key; accept if any matches. The key is used as its
+  UTF-8 string even though Convox suggests a hex value (`openssl rand -hex 32`): never hex-decode it.
+  Events: dispatch on the body's `action` field. Top-level body field `action`, colon-separated
+  (`app:budget:auto-shutdown:fired`, `build:create`). `status` qualifies some events
+  (`success`/`error` on build:create, `start` on release:promote, `skipped` on
+  release:prometheus-skipped). The docs tell receivers to ignore unknown actions. Documented event
+  types (35): app:create, build:create, build:import-image:start, build:import-image:done,
+  build:cancel, release:create, release:promote, app:promote:completed, app:promote:errored,
+  app:promote:cancelled, release:autoscale-disabled, release:manifest-advisory,
+  release:prometheus-skipped, release:imperative-patch-note (and 21 more). Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Convox source manages the method as POST, so the examples
+  handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
+  request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/convox/
+  (latest/app.budget.auto-shutdown.cancelled.json); base the examples' test payloads on them.
+  Hookdeck's source type is CONVOX, labelled 'Convox'. Hookdeck shows this setup note for the source,
+  and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Signing is
+  opt-in: set the webhook_signing_key rack parameter (Rack 3.24.6 or later) and paste the same value.
+  Without it, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "build:create"
+    - "release:promote"
+    - "app:budget:cap"
+catalog:
+  summary: "Verify Convox webhooks (`Convox-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle app, build, release and budget events"

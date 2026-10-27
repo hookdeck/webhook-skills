@@ -1,0 +1,61 @@
+name: komoju
+displayName: "KOMOJU"
+docs:
+  webhooks: https://docs.komoju.com/en/docs/introduction/webhooks
+  verification: https://docs.komoju.com/en/docs/introduction/webhooks#secret-token
+notes: >
+  KOMOJU (komoju.com, by Degica), the Japanese payment gateway. Webhooks are created in the dashboard
+  (Manage > Webhooks); Payments API callers can also attach per-payment webhooks, which are sent in
+  addition to the central ones. Delivery (from the docs): A non-success status or a connection failure
+  is retried 25 times with growing intervals (the last 100 hours), the final attempt about 25 days
+  later. Deliveries can be resent from the dashboard (from a payment's page). KOMOJU's docs say: '|
+  X-Komoju-Signature | Computed SHA-2 HMAC using your security token and the request body of the
+  webhook |' 'When the secret token is set requests will contain the customer header
+  `X-Komoju-Signature` which is the computed HMAC of the request body using the secret token as the
+  key.' '# NOTE: it's important to use the raw, unmodified request body here. ... signature =
+  OpenSSL::HMAC.hexdigest('sha256', WEBHOOK_SECRET_TOKEN, request_body)' 'we compute a SHA-2 HMAC
+  signature using the secret token you provide when creating or updating a webhook on KOMOJU.' From
+  the docs (registry summary): Header `X-Komoju-Signature: <hex>` (bare, 64 hex chars in the
+  examples). The prose says "SHA-2 HMAC"; the Ruby sample fixes it as
+  `OpenSSL::HMAC.hexdigest('sha256', WEBHOOK_SECRET_TOKEN, request_body)`. No test vector (the
+  examples' signatures cannot be checked without their secret). SIGNATURE SCHEME (it must match
+  Hookdeck's KOMOJU source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-komoju-signature", encoding "hex"). The X-Komoju-Signature header carries the bare lowercase hex
+  digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
+  parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
+  body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
+  raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: The secret token the merchant sets when creating or updating the webhook (or `secret_key` on
+  a per-payment webhook). Use it as UTF-8 bytes. Env var: KOMOJU_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: dispatch on
+  the body's `type` field. The type travels twice, in the `X-Komoju-Event` header and in the body's
+  `type`; both example deliveries carry the same value in each. `data` is the resource (its `resource`
+  key names it, e.g. `payment`, `webhook`). Documented event types (18): ping, payment.authorized,
+  payment.captured, payment.updated, payment.expired, payment.cancelled, payment.refund.created,
+  payment.refunded, payment.failed, customer.created, customer.updated, customer.deleted,
+  subscription.created, subscription.captured (and 4 more). Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's KOMOJU source manages the method as POST, so the examples handle POST on
+  the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/komoju/ (latest/payment.authorized.json,
+  latest/ping.json); base the examples' test payloads on them. Hookdeck's source type is KOMOJU,
+  labelled 'KOMOJU'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a secret token on the KOMOJU
+  webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "payment.captured"
+    - "payment.refunded"
+    - "subscription.created"
+catalog:
+  summary: "Verify KOMOJU webhooks (`X-Komoju-Signature`: hex HMAC-SHA256 of the raw body), handle payment, customer and subscription events"

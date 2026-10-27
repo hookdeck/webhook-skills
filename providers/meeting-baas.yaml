@@ -1,0 +1,58 @@
+name: 'meeting-baas'
+displayName: 'Meeting BaaS'
+docs:
+  webhooks: 'https://docs.meetingbaas.com/api-v2/getting-started/webhooks'
+  verification: 'https://docs.meetingbaas.com/api-v2/getting-started/webhooks'
+notes: >-
+  Meeting BaaS (meetingbaas.com), a meeting-recording bot API for Zoom, Google Meet and Teams. In API
+  v2, account-level webhooks report bot status, completion, chat and failure plus calendar sync events,
+  delivered and signed by Svix (svix-* headers). Per-bot callbacks are a separate, unsigned channel. Standard
+  Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. v2 account-level webhooks
+  only. SECRET: Per endpoint in account settings (Svix). Meeting BaaS prints no secret; Svix endpoint
+  secrets are `whsec_<base64>`, unconfirmed here. Research: whsec_ (inferred: docs state v2 account webhooks
+  are sent via Svix; the literal secret is not printed). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. MEETING_BAAS_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix
+  library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature
+  and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Meeting BaaS
+  source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and
+  any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
+  alert for this source reads exactly: "Only Meeting BaaS v2 account-level webhooks are supported. Per-bot
+  callbacks and v1 API webhooks aren't signed this way and fail verification." SKILL.md and references/setup.md
+  must state this requirement, quoting the alert verbatim. Verification notes: Meeting BaaS names Svix's
+  libraries and manual procedure; no tolerance stated. Body: {event, data}. `data.extra` echoes the bot's
+  `extra`; bot events carry `data.event_id`. Event type: (The quote is the HTML <pre> as rendered to text.)
+  Top-level `event` beside `data` in every example (`{event, data}`; bot.chat_message puts `extra` beside
+  `data`). Event types (12 documented, list may not be exhaustive): bot.status_change, bot.completed,
+  bot.chat_message, bot.failed, calendar.connection_created, calendar.connection_updated, calendar.connection_deleted,
+  calendar.connection_error, calendar.events_synced, calendar.event_created, calendar.event_updated, calendar.event_cancelled.
+  Transport: JSON POST via Svix. Delivery: Only 2xx succeeds (3xx/4xx/5xx retried). 30 s timeout. 7 attempts
+  within ~3 h (0, 5 s, 10 s, 5 min, 15 min, 30 min, 2 h; +/-20% jitter), kept inside the 4 h validity
+  of bot.completed's signed URLs; 429/timeouts add a 60 s minimum delay. Endpoints failing every delivery
+  for 5 days are disabled and later messages dropped. Resend via POST /v2/bots/:bot_id/resend-webhook.
+  Setup: Account-level endpoints in account settings (not via the API); every endpoint receives all bot
+  and calendar events. No challenge. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is MEETING_BAAS, labelled 'Meeting BaaS'.
+testScenario:
+  events:
+  - 'bot.status_change'
+  - 'bot.completed'
+  - 'bot.chat_message'
+catalog:
+  summary: >-
+    Verify Meeting BaaS webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret), handle bot.completed, bot.status_change, bot.chat_message, bot.failed and calendar.event_created events

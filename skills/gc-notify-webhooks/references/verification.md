@@ -83,7 +83,7 @@ def verify_gc_notify_request(headers, configured=None) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `GC_NOTIFY_WEBHOOK_SECRET` unset or different from the token set in GC Notify |
-| 401 after changing the token | Token changed in GC Notify but not in your environment or Hookdeck source |
+| 401 after changing the token | Token changed in GC Notify but not in your environment (a Hookdeck source with the old token returns `200` and records the request as failed verification) |
 | 401 only behind a proxy | The proxy strips or rewrites the `Authorization` header |
 | 400 after authentication | Body isn't a JSON object |
 | Callbacks stop arriving | Repeated errors led GC Notify to suspend callbacks; fix the endpoint and contact GC Notify |

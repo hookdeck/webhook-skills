@@ -1,0 +1,49 @@
+name: 'outhire'
+displayName: 'Outhire'
+docs:
+  webhooks: 'https://docs.outhire.ai/webhooks/overview'
+  verification: 'https://docs.outhire.ai/webhooks/verifying-signatures'
+notes: >-
+  Outhire (outhire.ai), an AI recruiting platform. Outbound webhooks push candidate lifecycle events;
+  admins add endpoints under Settings > Webhooks, choose event types and may add up to 10 custom headers.
+  Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: Per webhook, generated on save and viewable in the
+  settings page; `whsec_`-prefixed. Research: whsec_ ("Outhire generates a signing secret (prefixed with
+  whsec_)" https://docs.outhire.ai/webhooks/overview). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. OUTHIRE_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Outhire source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required. Body: {event, occurred_at}. No event id in the body; the webhook-id
+  header identifies the delivery. Outhire dedupes on an internal event key (e.g. `candidate.applied:{webhookId}:{candidateId}`).
+  Event type: Top-level `event`; every payload also carries `occurred_at`. Resources sit in `candidate`,
+  `job`, `company` (and `stage_change`). Event types (3 documented, list may not be exhaustive): candidate.applied,
+  candidate.stage_changed, webhook.ping. Transport: POST with a JSON body. Delivery: 2xx within 10 s succeeds.
+  Each delivery has an event key and a successfully delivered key is not resent, but receivers should
+  still be idempotent. Retries and ordering are not described. Setup: Admin-only endpoints in Settings
+  > Webhooks, one per URL per company, subscribed to one or both events. The test ping is a signed delivery,
+  not a challenge, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is OUTHIRE, labelled 'Outhire'.
+testScenario:
+  events:
+  - 'candidate.applied'
+  - 'candidate.stage_changed'
+  - 'webhook.ping'
+catalog:
+  summary: >-
+    Verify Outhire webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle candidate events

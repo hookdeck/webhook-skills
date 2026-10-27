@@ -1,0 +1,50 @@
+name: 'prividium'
+displayName: 'Prividium'
+docs:
+  webhooks: 'https://docs.prividium.zksync.io/developers/webhooks/overview'
+  verification: 'https://docs.prividium.zksync.io/developers/webhooks/verifying-signatures'
+notes: >-
+  Prividium (ZKsync), a private/permissioned ZKsync chain product. Its webhook service notifies on on-chain
+  activity: event webhooks (one contract + topic0) and address webhooks (a set of addresses), created
+  via the UI or /api/v1/event-webhook and /api/v1/address-webhook on the deployment's permissions API,
+  so the sender varies per deployment. Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: One signing key per webhook, returned once in the create response (`signing_key`); not returned
+  on reads. Rotation runs an overlap window during which several keys sign. Research: whsec_ (https://docs.prividium.zksync.io/developers/webhooks/verifying-signatures:
+  WEBHOOK_SECRET = "whsec_..."; https://docs.prividium.zksync.io/developers/webhooks/event-webhooks-api
+  example "signing_key": "whsec_0f71ea60..."). It starts with whsec_; the key is the base64-decoding of
+  the part after whsec_. PRIVIDIUM_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Prividium source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required. Body: see docs. Dispatch on unknown:None ex=None sub=None.
+  Event types: no event types retrievable from first-party docs — see provider.yaml source_research.not_found
+  Transport: Signed HTTPS request to the endpoint URL; the body format is not printed. Delivery: Retries
+  happen (webhook-id is stable across them) but are not described; a failed verification should get a
+  4xx. No ordering statement. Setup: Two resource types, each one endpoint with one subscription: event
+  webhooks (`contract`, `topic0`, `decode_events`, optional `from_block`) and address webhooks (one or
+  more addresses, optional `from_block`). Managed via the UI or the authenticated API. No challenge is
+  documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is PRIVIDIUM, labelled 'Prividium'.
+testScenario:
+  events:
+  - 'event webhook delivery (contract log)'
+  - 'address webhook delivery'
+catalog:
+  summary: >-
+    Verify Prividium webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle event and address webhooks

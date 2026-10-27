@@ -1,0 +1,54 @@
+name: rewardful
+displayName: "Rewardful"
+docs:
+  webhooks: https://developers.rewardful.com/webhooks/overview
+  verification: https://developers.rewardful.com/webhooks/signed-webhooks
+notes: >
+  Rewardful (getrewardful.com), affiliate and referral tracking for Stripe SaaS. Webhook endpoints
+  added on the dashboard's Webhooks page receive the event types selected for them (affiliates, links,
+  coupons, referrals, sales, commissions, payouts). Delivery (from the docs): Only a 200 counts as
+  success (any other code is a failure). Failures are retried with exponential backoff for 3 days,
+  then dropped. Rewardful's docs say: 'The signature is contained in the HTTP header
+  X-Rewardful-Signature .' 'expected_signature = OpenSSL::HMAC . hexdigest ( ' sha256 ' , '
+  my-rewardful-signing-secret ' , request . raw_post )' 'You can view your endpoint's Signing Secret
+  from the Webhooks page in your Rewardful dashboard.' From the docs (registry summary): Header
+  `X-Rewardful-Signature: <hex>`, no prefix. MAC = lowercase hex of HMAC-SHA256(key = the endpoint's
+  Signing Secret, message = the raw request body: `request.raw_post` in Rails, `php://input` in PHP,
+  `request.body` in Django). The samples compare with `==`/`!==`. SIGNATURE SCHEME (it must match
+  Hookdeck's REWARDFUL source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-rewardful-signature", encoding "hex"). The X-Rewardful-Signature header carries the bare
+  lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
+  prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
+  request body bytes only (no timestamp, id or other header is signed). Build the signed message as
+  BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
+  JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Secret: One Signing Secret per endpoint, shown on the dashboard's Webhooks page. Use it as UTF-8
+  bytes. Env var: REWARDFUL_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the body's `event.type` field. Nested
+  body field `event.type`, `<object>.<action>`. `event` is the event metadata block (`id`, `type`,
+  `created_at`, `api_version`); `object` is the record. No header names the event. Documented event
+  types (31): affiliate.created, affiliate.confirmed, affiliate.updated, affiliate.deleted,
+  affiliate_link.created, affiliate_link.updated, affiliate_link.deleted, affiliate_coupon.created,
+  affiliate_coupon.updated, affiliate_coupon.activated, affiliate_coupon.deactivated,
+  affiliate_coupon.deleted, referral.created, referral.lead (and 17 more). Handle a few common ones
+  and log the rest. Method: POST. Hookdeck's Rewardful source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/rewardful/ (v1/affiliate.confirmed.json); base the
+  examples' test payloads on them. Hookdeck's source type is REWARDFUL, labelled 'Rewardful'.
+testScenario:
+  events:
+    - "referral.converted"
+    - "commission.created"
+    - "affiliate.created"
+catalog:
+  summary: "Verify Rewardful webhooks (`X-Rewardful-Signature`: hex HMAC-SHA256 of the raw body), handle affiliate, referral, sale, commission and payout events"

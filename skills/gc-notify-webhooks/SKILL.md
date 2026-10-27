@@ -73,9 +73,13 @@ token; Hookdeck matches the `Bearer ` scheme itself.
 Callbacks have **no `event` field**. Every body is a delivery receipt; dispatch on `status`. All
 values are strings.
 
+The docs list 10 statuses but only 9 descriptions, so they don't pair one-to-one; use `status`,
+not `status_description`. Matched by meaning and notification-api's labels:
+
 | `status` | Meaning (`status_description`) |
 |----------|--------------------------------|
-| `created`, `sending`, `pending`, `sent` | In transit |
+| `created`, `sending`, `pending` | In transit |
+| `sent` | Not paired in the docs; notification-api labels it `Delivered` for email, `Sent` for SMS |
 | `delivered` | Delivered |
 | `permanent-failure` | Blocked, No such number, or No such address |
 | `temporary-failure` | Content or inbox issue, or Carrier issue |

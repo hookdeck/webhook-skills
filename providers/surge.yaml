@@ -1,0 +1,55 @@
+name: 'surge'
+displayName: 'Surge'
+docs:
+  webhooks: 'https://docs.surge.app/api-reference/webhooks'
+  verification: 'https://docs.surge.app/api-reference/webhooks/signature-validation'
+  events: 'https://docs.surge.app/receiving/events'
+notes: >-
+  Surge (surge.app), an SMS/MMS and voice messaging API for businesses. Project-level webhooks report
+  message, contact, conversation, campaign, phone-number, link and call events, signed per Standard Webhooks
+  (webhook-* headers, whsec_ secrets). Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: Per endpoint, on the dashboard's Webhooks page. Format `whsec_<base64-encoded-bytes>`; key =
+  base64-decode after stripping `whsec_`. Several secrets can be live during rotation. Research: whsec_
+  ("The secret is base64-encoded and prefixed with `whsec_` in the dashboard." https://docs.surge.app/api-reference/webhooks/signature-validation).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. SURGE_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Surge source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: replay_window_seconds
+  300: "Surge recommends rejecting requests where `webhook-timestamp` is more than five minutes old".
+  Older versions sent `surge-signature` (deprecated). Body: {id, type, timestamp, account_id, data}. `data`
+  varies by type; see envelope.id gap on whether `id` is present. Event type: Top-level `type` of the
+  envelope `{id, type, timestamp, account_id, data}` (the OpenAPI examples carry `{account_id, data, timestamp,
+  type}`, without `id`). Event types (17 documented, list may not be exhaustive): message.sent, message.delivered,
+  message.failed, message.received, contact.opted_in, contact.opted_out, conversation.created, campaign.approved,
+  phone_number.imported, phone_number.attached_to_campaign, link.followed, call.ended, recording.completed,
+  voicemail.received, campaign.rejected, campaign.submitted, campaign.warning. Transport: JSON POST, one
+  endpoint per project. Delivery: 2xx within the (unstated) timeout; otherwise exponential back-off retries.
+  At-least-once. Setup: One endpoint per project (dashboard > Webhooks), receiving events from every account
+  under the project for the subscribed types. No challenge. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse the body
+  only after the check. Hookdeck's source type is SURGE, labelled 'Surge'.
+testScenario:
+  events:
+  - 'message.received'
+  - 'message.sent'
+  - 'message.delivered'
+catalog:
+  summary: >-
+    Verify Surge webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret, HMAC-SHA256), handle message.received, message.delivered, message.failed and
+    contact.opted_out events

@@ -1,0 +1,52 @@
+name: chameleon
+displayName: "Chameleon"
+docs:
+  webhooks: https://developers.chameleon.io/webhooks/outgoing
+  verification: https://developers.chameleon.io/webhooks/outgoing
+notes: >
+  Chameleon (chameleon.io), in-app product tours, microsurveys, embeds, HelpBar and demos. Outgoing
+  webhooks are configured at app.chameleon.io/integrations/webhooks, each endpoint with selected
+  topics. Delivery (from the docs): Sent right away from AWS us-east with a 7-second timeout. Any 2xx
+  is success; a non-200 is retried 9 times over 43 hours. Chameleon sends `ping` to gauge endpoint
+  health. Chameleon's docs say: '`X-Chameleon-Signature` | 5a17b.... | The SHA256-HMAC of the raw
+  request body' 'expected = OpenSSL::HMAC.hexdigest('SHA256', secret, request.raw_post)' From the docs
+  (registry summary): Header `X-Chameleon-Signature: <hex>`, no prefix. MAC = lowercase hex of
+  HMAC-SHA256(key = the Webhook Secret, message = the raw request body, `request.raw_post` in Rails).
+  The Rails sample compares with `secure_compare`, then checks the body's `sent_at` is within 5
+  minutes. SIGNATURE SCHEME (it must match Hookdeck's CHAMELEON source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-chameleon-signature", encoding "hex"). The X-Chameleon-Signature
+  header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
+  digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The account's Webhook Secret, on the Integrations -> Webhooks page.
+  Use it as UTF-8 bytes. Env var: CHAMELEON_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Chameleon's sample also checks the body's `sent_at` is
+  within 5 minutes; that is an opt-in extra check after verification, off by default. Events: dispatch
+  on the body's `kind` field. Top-level body field `kind`, the topic (`tour.started`). `data` holds
+  the included models (singular or plural keys). No header names the topic. Documented event types
+  (27): ping, response.finished, alert.triggered, helpbar.answer, helpbar.search, helpbar.item.action,
+  helpbar.item.error, tour.started, tour.completed, tour.exited, tour.snoozed, tour.button.clicked,
+  survey.started, survey.completed (and 13 more). Handle a few common ones and log the rest. Method:
+  POST. Hookdeck's Chameleon source manages the method as POST, so the examples handle POST on the
+  webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/chameleon/ (latest/ping.json); base the examples'
+  test payloads on them. Hookdeck's source type is CHAMELEON, labelled 'Chameleon'.
+testScenario:
+  events:
+    - "tour.completed"
+    - "survey.completed"
+    - "response.finished"
+catalog:
+  summary: "Verify Chameleon webhooks (`X-Chameleon-Signature`: hex HMAC-SHA256 of the raw body), handle tour, survey, embed, demo and HelpBar events"

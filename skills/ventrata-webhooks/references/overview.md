@@ -13,15 +13,15 @@ Delivery is always an HTTP `POST`. Whether failed deliveries are retried is set 
 
 ## Common Event Types
 
-| Event | Also written as | Triggered When | Common Use Cases |
-|-------|-----------------|----------------|------------------|
-| `order_update` | `order.updated` | An order changes | Sync orders to your system |
-| `booking_update` | `booking.updated` | A booking changes | Update reservations, send confirmations |
-| `availability_update` | `availability.updated` | Availability for a departure changes | Refresh inventory and calendars |
-| `product_update` | `product.updated` | A product changes | Re-sync the product catalogue |
+| Event | Triggered When | Common Use Cases |
+|-------|----------------|------------------|
+| `order_update` | An order changes | Sync orders to your system |
+| `booking_update` | A booking changes | Update reservations, send confirmations |
+| `availability_update` | Availability for a departure changes | Refresh inventory and calendars |
+| `product_update` | A product changes | Re-sync the product catalogue |
 
-The capability page lists the `_update` names while its examples write `booking.updated`, so
-accept both forms and dispatch on `event`. For `order_update`, `octo/cart` is always included
+The capability page lists the `_update` names while its payload examples write `booking.updated`
+(no dotted form is shown for the other three), so accept both spellings and dispatch on `event`. For `order_update`, `octo/cart` is always included
 automatically.
 
 ## Event Payload Structure

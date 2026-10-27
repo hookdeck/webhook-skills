@@ -1,0 +1,61 @@
+name: 'dodo-payments'
+displayName: 'Dodo Payments'
+docs:
+  webhooks: 'https://docs.dodopayments.com/developer-resources/webhooks'
+  verification: 'https://docs.dodopayments.com/developer-resources/webhooks#verifying-signatures'
+notes: >-
+  Dodo Payments (dodopayments.com), a merchant-of-record payments platform: payments, refunds, disputes,
+  subscriptions, license keys, entitlements, credits, dunning and payouts. Endpoints (or no-code connectors)
+  are added under Developer > Webhooks; the dashboard's portal offers testing, replay, throttling, custom
+  headers and transformations. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: Per endpoint,
+  on the endpoint's Overview tab (DODO_PAYMENTS_WEBHOOK_KEY); `whsec_`-prefixed. Rotation keeps the old
+  secret valid for 24 hours. Research: whsec_ (https://docs.dodopayments.com/developer-resources/build-with-ai-coding-agents:
+  "DODO_PAYMENTS_WEBHOOK_KEY": "whsec_..."; https://docs.dodopayments.com/developer-resources/convex-component:
+  DODO_PAYMENTS_WEBHOOK_SECRET=whsec_...). It starts with whsec_; the key is the base64-decoding of the
+  part after whsec_. DODO_PAYMENTS_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Dodo Payments source (Standard Webhooks, headers_prefix 'webhook', a whsec_
+  secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry
+  tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required. Mock events from `dodo wh trigger` are unsigned. Body: {business_id,
+  type, timestamp, data}. `data.payload_type` is one of Payment, Subscription, Refund, Dispute, LicenseKey,
+  CreditLedgerEntry, CreditBalanceLow, AbandonedCheckout, DunningAttempt, EntitlementGrant, Payout. No
+  event id in the body; webhook-id is the idempotency key. The page's example has a `// ...` comment.
+  Event type: Top-level `type` in a `{business_id, type, timestamp, data}` envelope; `data.payload_type`
+  names the resource kind (Payment, Subscription, ...), not the event. Event types (48 documented, list
+  may not be exhaustive): payment.succeeded, payment.failed, payment.processing, payment.cancelled, refund.succeeded,
+  refund.failed, dispute.opened, dispute.challenged, dispute.accepted, dispute.cancelled, dispute.expired,
+  dispute.won, dispute.lost, subscription.active, subscription.updated, subscription.past_due, subscription.on_hold,
+  subscription.paused, subscription.unpaused, subscription.renewed, subscription.plan_changed, subscription.update_payment_method,
+  subscription.cancelled, subscription.failed, subscription.expired, license_key.created, entitlement_grant.created,
+  entitlement_grant.delivered, entitlement_grant.failed, entitlement_grant.revoked and 18 more. Transport:
+  JSON POST. Delivery: 2xx acknowledges; anything else is retried on the schedule (8 attempts). 30 s connect
+  and read timeout. Manual replay and bulk recovery in the dashboard; optional per-endpoint throttling
+  queues rather than drops. Out-of-order delivery is possible (use `timestamp`); payout events are neither
+  terminal nor ordered. Setup: Per endpoint, individual events or whole resources; deselecting all events
+  subscribes to every type. No challenge is documented, so the row has no handshake block. Express examples
+  must read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified; parse the body only after the check. Hookdeck's source type is DODO_PAYMENTS, labelled
+  'Dodo Payments'.
+testScenario:
+  events:
+  - 'payment.succeeded'
+  - 'payment.failed'
+  - 'payment.processing'
+catalog:
+  summary: >-
+    Verify Dodo Payments webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle payment, refund, dispute and subscription events

@@ -1,0 +1,54 @@
+name: 'helcim'
+displayName: 'Helcim'
+docs:
+  webhooks: 'https://devdocs.helcim.com/docs/webhooks'
+  verification: 'https://devdocs.helcim.com/docs/webhooks#verifying-a-webhook-event'
+notes: >-
+  Helcim (helcim.com), a Canadian/US card payment processor. Webhooks are switched on under All Tools
+  > Integrations > Webhooks with one HTTPS Deliver URL (which may not contain "Helcim") and the chosen
+  events; the verifierToken is shown there. Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  Hookdeck core notes: The verifierToken is bare base64; it is pasted with a whsec_ prefix. SECRET: The
+  verifierToken from the Webhooks settings page: bare base64 with no `whsec_` prefix. Core base64-decodes
+  only `whsec_` secrets, hence the configuration alert to paste `whsec_` + the token. Research: raw base64
+  verifierToken, no whsec_ (https://devdocs.helcim.com/docs/webhooks: "// Need to base64 decode the verifierToken").
+  The HMAC key is the base64-decoding of the secret as Helcim shows it (no whsec_ prefix). HELCIM_WEBHOOK_SECRET
+  holds the value exactly as Helcim shows it. Verify with the standardwebhooks library (npm 'standardwebhooks',
+  pip 'standardwebhooks'): it strips a whsec_ prefix if present and otherwise base64-decodes the whole
+  secret, so both the bare value and the whsec_-prefixed form Hookdeck needs give the same key. HEADER
+  FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when webhook-id
+  is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does;
+  then hand the library (or manual check) the three values under the header names it expects (for the
+  standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature). Include
+  a test that a delivery signed the same way but sent with the other prefix's headers is accepted. This
+  matches Hookdeck's Helcim source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Paste your verifierToken as whsec_ followed by the
+  token, or verification fails." SKILL.md and references/setup.md must state this requirement, quoting
+  the alert verbatim. Verification notes: No timestamp tolerance is documented. Body: {type}. Thin notifications:
+  cardTransaction is `{id, type}` (fetch the rest with Get Card Transaction by ID); terminalCancel is
+  `{data, type}`. Event type: Top-level `type`. cardTransaction carries only `id` (the card transaction
+  ID) beside it; terminalCancel carries the cancelled payment under `data`. Event types (2 documented,
+  list may not be exhaustive): cardTransaction, terminalCancel. Transport: JSON POST to the Deliver URL.
+  Delivery: Until a 2xx: immediately, then 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h after each failure
+  (the Svix default schedule). Sent for approved and declined card transactions and for cancellations
+  on a device in API mode. Setup: One Deliver URL per account with per-event toggles. No challenge is
+  documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is HELCIM, labelled 'Helcim'.
+testScenario:
+  events:
+  - 'cardTransaction'
+  - 'terminalCancel'
+catalog:
+  summary: >-
+    Verify Helcim webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256
+    with the base64 verifierToken), handle cardTransaction and terminalCancel events

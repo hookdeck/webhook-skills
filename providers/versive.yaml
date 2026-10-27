@@ -1,0 +1,47 @@
+name: 'versive'
+displayName: 'Versive'
+docs:
+  webhooks: 'https://docs.getversive.com/api-reference/webhooks'
+  verification: 'https://docs.getversive.com/api-reference/webhooks'
+notes: >-
+  Versive (getversive.com, formerly Mirio), an AI-moderated user-interview research platform. An organisation-level
+  webhook (provisioned by Versive support) reports completed interviews; Svix signs and delivers it. Standard
+  Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint ("your
+  endpoint secret"), handed over by Versive support when the destination is provisioned. No value or format
+  is printed; Svix secrets are `whsec_<base64>`. Research: whsec_ (inferred: "Deliveries are signed by
+  Svix"; the literal secret is not printed). It starts with whsec_; the key is the base64-decoding of
+  the part after whsec_. VERSIVE_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix library
+  (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature and
+  falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Versive source
+  (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and any other
+  secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp
+  window; core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces
+  a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original
+  timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Hookdeck's configuration alert for this source reads exactly:
+  "Versive support sets up webhooks. Ask them for the endpoint's signing secret." SKILL.md and references/setup.md
+  must state this requirement, quoting the alert verbatim. Verification notes: Versive says to "reject
+  stale timestamps" without a number. Body: {event_type, interview, study}. No event id in the body; dedupe
+  on svix-id. Event type: Top-level `event_type` beside `interview` and `study`. Event types (1 documented,
+  list may not be exhaustive): interview.completed. Transport: HTTPS POST via Svix. Delivery: 2xx once
+  accepted; retried otherwise (schedule unstated). Setup: One organisation-level destination provisioned
+  by Versive support; not in the public v1 API. No challenge. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is VERSIVE, labelled 'Versive'.
+testScenario:
+  events:
+  - 'interview.completed'
+catalog:
+  summary: >-
+    Verify Versive webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
+    secret), handle interview.completed events

@@ -1,0 +1,79 @@
+name: socotra
+displayName: "Socotra"
+docs:
+  webhooks: https://docs.socotra.com/configuration/general-topics/webhooks
+  verification: https://docs.socotra.com/configuration/general-topics/webhooks
+notes: >
+  Socotra Insurance Suite (socotra.com), the policy administration platform. Webhooks push the same
+  events as its Event Stream (accounts, quotes, policy transactions, billing, documents, tasks, FNOL,
+  producers and configuration-defined `custom.*` events) to endpoints created through the Webhook API.
+  Delivery (from the docs): Timeout 10 000 ms. Retries are opt-in per webhook (`failureHandling`:
+  triggers 4xx/5xx/specific codes/timeout, 1-10 attempts, default 3, linear or exponential interval,
+  optional suspend, divert to the Diverted Events API, alert endpoint). The default strategy makes no
+  retries. Socotra's docs say: 'The `socotra-signature` header takes the following form:
+  socotra-signature: t=<timestamp>,v1=<signature>,tag=<tag>' '`signature` is the SHA-256 HMAC-hashed
+  signature of the concatenated values `timestamp.JSONpayload.tag`. If there is no tag associated with
+  the shared secret, then the value is derived from `timestamp.JSONpayload`.'
+  'hmac.write(`${timestamp}.${jsonPayload}.${tag}`); hmac.end(); const hash =
+  hmac.read().toString('hex');' 'An `hmacEnabled` flag that determines whether the `socotra-signature`
+  should be derived and sent in message headers. ... The `tag` is optional, intended as a convenience
+  that can facilitate secret rotations' From the docs (registry summary): `socotra-signature:
+  t=<ms>,v1=<hex>[,tag=<tag>]`; v1 = hex HMAC-SHA256(endpoint `secret`, `<t>.<body>`), or
+  `<t>.<body>.<tag>` when the endpoint's secret has a `tag`. Sent only when the endpoint has
+  `hmacEnabled`. The JavaScript sample (tagged, `.digest`-style `toString('hex')`) prints no expected
+  value, so it is not a test vector. SIGNATURE SCHEME (it must match Hookdeck's SOCOTRA source
+  exactly: HMAC controller, algorithm "sha256", header_key "socotra-signature", encoding "hex",
+  delimiter ".", prefix_data_with_timestamp true). The socotra-signature header is
+  `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header (a string;
+  never parse it to a number and re-format it), then a literal ".", then the raw request body bytes.
+  The header may carry more than one v1= entry (for example during key rotation): accept the delivery
+  if ANY v1= entry matches, and ignore other keys such as v0. A header with no t= value fails. Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The `secret` you set on the endpoint (8-64 alphanumerics or
+  underscores), with an optional `tag` (2-32 characters) naming it for rotation; `hmacEnabled` turns
+  signing on. Use it as UTF-8 bytes. Env var: SOCOTRA_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps
+  by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck
+  itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in
+  tolerance (an env var such as SOCOTRA_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (t is Unix MILLISECONDS). A tagged endpoint sends `,tag=<tag>` and
+  signs `<t>.<body>.<tag>`, which Hookdeck cannot verify: leave the tag unset (say so). Events:
+  dispatch on the body's `type` field. Webhooks deliver an EventResponse (`locator`, `requestId`,
+  `userLocator`, `timestamp`, `type`, `data`), the Event Stream's shape, and the Event Definitions
+  page lists the `type` values. The only body in the docs, the signing sample's, has
+  `"type":"login.success"`, which is not a listed type, inside another envelope (`id`,
+  `transactionId`, `timestamp`, `data`, `type`, `username`), so it is not used as the example.
+  Documented event types (226): policy.account.anonymize, policy.account.create,
+  policy.account.discard, policy.account.update, policy.account.validate, policy.quote.accept,
+  policy.quote.anonymize, policy.quote.create, policy.quote.discard, policy.quote.issue,
+  policy.quote.manualunderwrite, policy.quote.price, policy.quote.refuse, policy.quote.reset (and 212
+  more). Handle a few common ones and log the rest. Methods: Socotra's docs don't name the HTTP
+  method. Hookdeck's Socotra source pre-selects POST without managing the method (the user can change
+  it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook
+  route (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI:
+  api_route with those methods), verify the signature first for every method, and treat a missing body
+  as empty bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged
+  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that
+  Hookdeck's Socotra source pre-selects POST without managing the method, so any other method the
+  sender uses must also be allowed on the source. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is SOCOTRA, labelled 'Socotra'. Hookdeck shows this setup note for the
+  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Turn on
+  HMAC (hmacEnabled) for the Socotra endpoint and leave its tag unset. With a tag, Socotra signs a
+  different string and deliveries fail verification."
+testScenario:
+  events:
+    - "policy.quote.issue"
+    - "policy.account.create"
+    - "billing.invoice.generate"
+catalog:
+  summary: "Verify Socotra webhooks (`socotra-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle policy, quote and billing events"

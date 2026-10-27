@@ -1,0 +1,59 @@
+name: 'storekit'
+displayName: 'Storekit'
+docs:
+  webhooks: 'https://storekit.com/docs/developers/webhooks/overview'
+  verification: 'https://storekit.com/docs/developers/webhooks/verifying-signatures'
+  events: 'https://storekit.com/docs/developers/webhooks/webhook-events'
+notes: >-
+  storekit (storekit.com), online ordering, payments and in-store tooling for restaurants: orders, store
+  status, menu availability, payouts, payment links and cloud printers. Endpoints are added in the dashboard's
+  embedded webhooks portal (Settings > Webhooks), delivered by Svix. Standard Webhooks signature with
+  svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated
+  'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256,
+  base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint, from the dashboard's webhooks
+  portal; `whsec_`-prefixed (the manual sample strips it). Research: whsec_ (https://storekit.com/docs/developers/webhooks/verifying-signatures:
+  "Your secret from the dashboard (remove the 'whsec_' prefix)"). It starts with whsec_; the key is the
+  base64-decoding of the part after whsec_. STOREKIT_WEBHOOK_SECRET holds the full whsec_ value. Verify
+  with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and
+  svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Storekit source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: Raw body is required; disable CSRF protection on the endpoint. Body: {event, data}. `{event,
+  data}`; the illustration has a `// Event-specific data` comment. No event id in the body; svix-id is
+  the message id. Event type: Top-level `event`, with the resource in `data`. Two documented exceptions:
+  the order.refund.* events put `order`/`customer`/`venue`/`refund` beside `event`, and the legacy `order.created`
+  sends the bare order object with no `event` at all (no body carrier; see gaps). Event types (27 documented,
+  list may not be exhaustive): order.created.v2, order.created, order.accepted, order.rejected, order.canceled,
+  order.preparing, order.ready_for_pickup, order.out_for_delivery, order.pos.dispatch.failed, order.rating.updated,
+  order.completed, order.refund.created, order.refund.succeeded, order.refund.failed, store.opened, store.closed,
+  store.opening_hours.updated, item.out_of_stock, payments.payout.created, bill.payment.created, payment_link.created,
+  payment_link.paid, payment_link.refund.created, payment_link.refund.succeeded, payment_link.refund.failed,
+  printer.status.offline, printer.status.online. Transport: JSON POST via Svix. Delivery: 2xx within 15
+  s succeeds; non-2xx, timeouts and connection failures are retried over about 3 days (last gap 24 h,
+  not Svix's default 10 h), then marked failed. An endpoint failing every attempt for 5 consecutive days
+  is disabled. Manual retry and time-window recovery in the portal. Duplicates possible; no ordering statement.
+  Setup: Endpoints in the dashboard's embedded Svix portal, usually one per service listening to all event
+  types. No challenge is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is STOREKIT, labelled 'Storekit'.
+testScenario:
+  events:
+  - 'order.created.v2'
+  - 'order.created'
+  - 'order.accepted'
+catalog:
+  summary: >-
+    Verify Storekit webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix),
+    handle order.created.v2, order.refund.succeeded, store.closed and item.out_of_stock events

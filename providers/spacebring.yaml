@@ -1,0 +1,61 @@
+name: 'spacebring'
+displayName: 'Spacebring'
+docs:
+  webhooks: 'https://www.spacebring.com/docs/webhooks'
+  verification: 'https://www.spacebring.com/docs/webhooks/verifying'
+  events: 'https://webhooks.spacebring.com/'
+notes: >-
+  Spacebring (spacebring.com), a coworking and flexible-workspace management platform. Webhooks (API &
+  webhooks add-on) report bookings, companies, events and tickets, memberships, locations, resources,
+  shop orders, subscriptions and visitors, delivered through Svix. Standard Webhooks signature with svix-*
+  headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  Hookdeck core notes: Delivered by Svix. SECRET: The signing secret on the webhooks management page (Network
+  settings > Developers > Webhooks); `whsec_` + base64. Research: whsec_ ("the base64 portion of your
+  signing secret (this is the part after the whsec_ prefix)", https://www.spacebring.com/docs/webhooks/verifying).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. SPACEBRING_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Spacebring source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body is required ("The `payload` is the raw
+  (string) body of the request"). Body: {type}. Usually `type` plus one resource object named for the
+  domain (`booking`, `company`, `event`, `ticket`, `membership`, `order`, `application`); subscription.*
+  bodies are the bare subscription object and visitors.* bodies carry `visit` only. Event type: Most catalog
+  schemas have a top-level `type` string beside the resource object (`booking`, `company`, `event`, `ticket`,
+  `membership`, `order`, `application`), but no example or description gives its value (the generated
+  examples say "some string"). The subscription.* schemas (a bare subscription object) and visitors.*
+  schemas (`visit` only) have no `type`, and location.*, resource.* and invoice.issued have no schema.
+  Svix's headers carry no event type. Event types (32 documented, list may not be exhaustive): benefit.application.created,
+  booking.created, booking.deleted, booking.paid, booking.updated, company.created, company.deleted, event.canceled,
+  event.created, event.deleted, event.ticket.created, event.ticket.paid, event.updated, invoice.issued,
+  location.created, location.deleted, location.updated, membership.created, membership.invited, resource.created,
+  resource.deleted, resource.updated, shop.order.created, shop.order.paid, subscription.created, subscription.deleted,
+  subscription.purchased, subscription.updated, support.ticket.created, visitors.request.approved and
+  2 more. Transport: POST; JSON per the catalog's examples. Delivery: Endpoints must answer POSTs with
+  2xx; no retry schedule or timeout is stated. Setup: The network owner registers endpoints under Network
+  settings > Developers > Webhooks (API & webhooks add-on required). No challenge or validation request
+  is documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is SPACEBRING, labelled 'Spacebring'.
+testScenario:
+  events:
+  - 'benefit.application.created'
+  - 'booking.created'
+  - 'booking.deleted'
+catalog:
+  summary: >-
+    Verify Spacebring webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256 via Svix,
+    `whsec_` secret), handle booking.created, membership.created and shop.order.paid events

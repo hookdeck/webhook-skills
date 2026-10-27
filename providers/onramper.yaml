@@ -1,0 +1,56 @@
+name: onramper
+displayName: "Onramper"
+docs:
+  webhooks: https://docs.onramper.com/docs/optional-webhook-setup
+  verification: https://docs.onramper.com/docs/optional-webhook-setup
+notes: >
+  Onramper (onramper.com), the fiat-to-crypto on-ramp aggregator. Transaction status webhooks are
+  enabled per ApiKey by the partner's Customer Success Manager; each delivery is the transaction's
+  current state. Delivery (from the docs): Nothing about timeouts, expected responses or retries is
+  documented. Onramper's docs say: 'This signature is then included in the headers of every request
+  under the name X-Onramper-Webhook-Signature.' 'const hash = crypto.createHmac('sha256',
+  secret).update(body).digest('hex');' 'Upon request for webhook registration, Onramper will provide
+  you with a secret key.' From the docs (registry summary): Header `X-Onramper-Webhook-Signature:
+  <hex>`, no prefix. MAC = hex of HMAC-SHA256(key = the secret Onramper issues at registration,
+  message = the body). The prose says only "HMAC hex digest"; SHA-256 comes from the TypeScript
+  sample, which also compares with `===` rather than a constant-time compare. SIGNATURE SCHEME (it
+  must match Hookdeck's ONRAMPER source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-onramper-webhook-signature", encoding "hex"). The X-Onramper-Webhook-Signature header carries the
+  bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: Issued by Onramper when webhooks are registered (through the Customer Success
+  Manager), one per registration. No format or rotation is documented. Use it as UTF-8 bytes. Env var:
+  ONRAMPER_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the body's `status` field. Onramper sends no
+  event name: every delivery is one shape, a transaction snapshot, and the only field that varies by
+  "what happened" is `status`, whose six values the page tables as "Webhook Status". Those six values
+  are recorded as the event list, keyed on `status`. `transactionType` (`buy` or `offramp`) splits the
+  direction and is recorded as the sub-discriminator. No header carries a type. Documented event types
+  (6): completed, paid, pending, new, failed, canceled. Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Onramper source manages the method as POST, so the examples handle POST on
+  the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/onramper/ (latest/pending.json); base the examples'
+  test payloads on them. Hookdeck's source type is ONRAMPER, labelled 'Onramper'. Hookdeck shows this
+  setup note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Onramper turns on webhooks through your Customer Success Manager. Send them the Hookdeck
+  URL and paste the secret key they issue."
+testScenario:
+  events:
+    - "completed"
+    - "pending"
+    - "failed"
+catalog:
+  summary: "Verify Onramper webhooks (`X-Onramper-Webhook-Signature`: hex HMAC-SHA256 of the raw body), handle transaction status updates"

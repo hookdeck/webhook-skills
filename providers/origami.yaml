@@ -1,0 +1,56 @@
+name: 'origami'
+displayName: 'Origami'
+docs:
+  webhooks: 'https://docs.origami.chat/webhooks/overview'
+  verification: 'https://docs.origami.chat/webhooks/signatures'
+notes: >-
+  Origami (origami.chat), an AI sales prospecting, enrichment and outbound-sequencing platform. Webhooks
+  (beta) report v3 Job status changes, table enrichment runs and sequencer activity (messages, replies,
+  LinkedIn connections and comments). Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: A `whsec_…` secret per endpoint, from Settings → Developers → Webhooks or `POST /api/v3/account/webhooks`.
+  The docs print only `whsec_XXXXXXXX`. Research: whsec_ ("using your `whsec_…` secret as the HMAC key",
+  https://docs.origami.chat/webhooks/signatures). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. ORIGAMI_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Origami source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required. Body: {type, id, timestamp, data}. `id` equals the webhook-id
+  header (stable across retries); `timestamp` is the event time; `data` holds the event (sequencer payloads
+  carry `campaign_id` and `sender.id`; Job payloads echo the caller's `metadata` and a monotonic `sequence`).
+  Event type: Top-level `type` beside `id` (equal to the webhook-id header), `timestamp` (event time)
+  and `data`. Every envelope schema fixes `type` with a `const` equal to its event name. Event types (11
+  documented, list may not be exhaustive): job.succeeded, job.failed, job.cancelled, job.needs_input,
+  table.run.completed, sequence.message.sent, sequence.reply.received, sequence.connection.requested,
+  sequence.connection.accepted, sequence.comment.posted, webhook.test. Transport: POST of a signed JSON
+  envelope. Delivery: At-least-once; 10 attempts (immediate, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 14 h,
+  20 h, 24 h; ±15% jitter, ~75 h). 408/429/5xx/timeouts (30 s) retry; other 4xx and 3xx are dropped; 410
+  auto-disables; ~100 consecutive failures auto-disable. Redeliver from the dashboard keeps the webhook-id.
+  Setup: Endpoints in Settings → Developers → Webhooks or `POST /api/v3/account/webhooks`, subscribing
+  to types or wildcards (`job.*`, `table.*`, `sequence.*`, `sequence.connection.*`, `*`); webhook.test
+  is always delivered. No challenge or validation request is documented, so the row has no handshake block.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified; parse the body only after the check. Hookdeck's source type is ORIGAMI,
+  labelled 'Origami'.
+testScenario:
+  events:
+  - 'sequence.message.sent'
+  - 'job.succeeded'
+  - 'job.failed'
+catalog:
+  summary: >-
+    Verify Origami webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle job, table run and sequence events

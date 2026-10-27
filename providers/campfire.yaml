@@ -1,0 +1,29 @@
+name: campfire
+displayName: "Campfire"
+docs:
+  webhooks: https://docs.campfire.ai/guides/webhooks
+  verification: https://docs.campfire.ai/guides/webhooks#verifying-the-signature
+  events: https://docs.campfire.ai/guides/webhooks#topics
+notes: >
+  Campfire (campfire.ai, app.meetcampfire.com), the AI accounting and ERP platform; not 37signals'
+  Campfire chat. Webhooks report created, updated and deleted invoices, bills, credit and debit
+  memos (and lines), journal entries and contracts, plus invoice and bill payments. Signature:
+  Campfire-Webhook-Signature-v1 carries the bare lowercase hex HMAC-SHA256 (no prefix) of
+  "{Campfire-Webhook-Request-Timestamp}:{raw request body}" (a colon, not a dot), keyed with the
+  webhook's 50-character signing secret (`token`) used as UTF-8 text. Timestamp header is Unix
+  seconds. Hookdeck's CAMPFIRE source: HMAC, sha256, hex, signed_content_template
+  "{header:campfire-webhook-request-timestamp}:{body}". Build the signed message as bytes (header
+  latin1, raw body untouched); validate 64 hex characters before decoding; constant-time compare;
+  missing or invalid signature returns 401. No timestamp window by default (Hookdeck retries and
+  replays resend the original timestamp); offer opt-in CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS. Dispatch
+  on the body's `topic` (28 documented topics, e.g. Invoice.created, Invoice.payment, Invoice.paid,
+  Bill.created, Bill.paid, JournalEntry.created). Method POST. Retries up to 5 times about a minute
+  apart (404 not retried), each re-signed; unordered, duplicates possible. Express examples read the
+  raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - "Invoice.created"
+    - "Invoice.paid"
+    - "Bill.created"
+catalog:
+  summary: "Verify Campfire webhooks (`Campfire-Webhook-Signature-v1`: hex HMAC-SHA256 of `{timestamp}:{body}`), handle invoice, bill, memo, journal entry and contract events"

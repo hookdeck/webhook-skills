@@ -1,0 +1,64 @@
+name: 'superwall'
+displayName: 'Superwall'
+docs:
+  webhooks: 'https://superwall.com/docs/integrations/webhooks'
+  verification: 'https://superwall.com/docs/integrations/webhooks/verify'
+  events: 'https://superwall.com/docs/integrations/webhooks/v2'
+notes: >-
+  Superwall (superwall.com), subscription infrastructure and paywalls for iOS, Android and Web. Webhooks
+  report subscription lifecycle events (purchases, renewals, cancellations, refunds, expirations) and
+  are delivered through Svix. Webhooks V2 is the current format; webhooks created before V2 stay Legacy
+  and keep their older payload. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. SECRET: One signing secret per webhook endpoint (Copy Secret in the webhook details; V2 shows
+  it once, at creation, and on Rotate secret, which takes effect immediately). The API returns it on create
+  and rotate. Format `whsec_` + base64. Research: whsec_ (verify page troubleshooting: 'Make sure your
+  secret includes the full value (it should start with whsec_)' https://superwall.com/docs/integrations/webhooks/verify).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. SUPERWALL_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Superwall source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body is required ("Ensure you're using the
+  raw request body"). Body: {id, api_version, type, occurred_at, project_id, app_user_id, ordering_key,
+  is_family_share, pointer_mismatch, event_data, subscription, previous, subscriber}. V2 envelope. `id`
+  (`evt_` + 32 hex) is stable across redelivery; dedupe on it. Legacy bodies are `object` ("event"), `type`,
+  `projectId`, `applicationId`, `timestamp`, `data` (camelCase). Event type: Top-level `type` in both
+  formats (V2 envelope and the legacy `object`/`type`/`projectId`/`data` body), lowercase on the wire;
+  `event_data.name` (V2) and `data.name` (legacy) repeat the store event name. The uppercase names (`RENEWAL`)
+  are only the dashboard/API subscription filter. Legacy and V2 are told apart by the `superwall_version`
+  header, not by `type`. Event types (12 documented, list may not be exhaustive): initial_purchase, renewal,
+  non_renewing_purchase, product_change, cancellation, uncancellation, refund, billing_issue, subscription_paused,
+  subscription_extended, expiration, transferred. Transport: POST with a JSON body, snake_case fields,
+  millisecond timestamps (V2). No Content-Type is printed. Delivery: Return 2xx quickly; any other status
+  or a timeout is retried with exponential backoff (no schedule given). At least once and unordered —
+  dedupe on `id`, order by `occurred_at`. Events with no known owner are held up to 48 h. A paused webhook
+  does not get the events missed while paused. No test events for V2 (use a sandbox purchase). Setup:
+  Webhooks are created in the dashboard (Integrations → Webhooks; requires revenue tracking) or via the
+  API with `format=superwall_v2`, choosing the event types (all by default; omitting `filter_types` also
+  receives types added later). No challenge or validation request is documented, so the row has no handshake
+  block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified; parse the body only after the check. Hookdeck's source type
+  is SUPERWALL, labelled 'Superwall'.
+testScenario:
+  events:
+  - 'renewal'
+  - 'initial_purchase'
+  - 'non_renewing_purchase'
+catalog:
+  summary: >-
+    Verify Superwall webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
+    secret), handle subscription lifecycle events (purchase, renewal, cancellation, refund)

@@ -1,0 +1,74 @@
+name: sinch
+displayName: "Sinch"
+docs:
+  webhooks: https://developers.sinch.com/docs/conversation/callbacks
+  verification: https://developers.sinch.com/docs/conversation/callbacks#hmac
+notes: >
+  Sinch Conversation API callbacks only (SMS, Voice, Numbers and Verification APIs sign callbacks
+  differently and are not covered). Sinch (sinch.com), a communications platform. This row covers the
+  Conversation API's callbacks (omnichannel messaging: SMS, WhatsApp, RCS, Messenger, Viber and more),
+  the product Sinch's SMS, Voice and Numbers callbacks are other products with other schemes. Links to
+  https://developers.sinch.com/docs/conversation/callbacks#hmac. Delivery (from the docs): 2xx is
+  success. Network errors, timeouts, 5xx, 429 (and 401/403 while fetching an OAuth2 token) are retried
+  with exponential backoff; other 4xx are not, nor are callbacks to known test domains (webhook.site,
+  ngrok, ...). Best-effort dedup; duplicates possible; order not guaranteed. Sinch says: 'The HMAC
+  signature is calculated over the concatenation of the **raw HTTP request body**, the **nonce**, and
+  the **timestamp**, separated by dots (`.`).' 'var signedData = rawBody + '.' + nonce + '.' +
+  timestamp var signature = crypto.createHmac('sha256', secret).update(signedData).digest('base64')'
+  SIGNATURE SCHEME (it must match Hookdeck's SINCH source exactly: HMAC controller, algorithm sha256,
+  header x-sinch-webhook-signature, encoding base64, signed_content_template
+  "{body}.{header:x-sinch-webhook-signature-nonce}.{header:x-sinch-webhook-signature-timestamp}"). The
+  x-sinch-webhook-signature header carries the bare standard base64 (padded) digest, no prefix. The
+  signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the raw request body
+  bytes, then a literal ".", then the x-sinch-webhook-signature-nonce header value, then a literal
+  ".", then the x-sinch-webhook-signature-timestamp header value. Build the signed message as BYTES,
+  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
+  is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character
+  padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded bytes or the strings in
+  constant time. Compare the WHOLE header value as one digest (no list splitting, no prefix parsing).
+  Secret: the `secret` set on the Conversation API webhook, used as UTF-8. Env var:
+  SINCH_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
+  or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
+  SINCH_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
+  (x-sinch-webhook-signature-timestamp is Unix seconds). Body FIRST, then nonce, then timestamp,
+  joined by dots. Callbacks are signed only when the webhook has a secret. OAuth2 callback auth is a
+  separate option, not covered. Events: there is no type field. Each callback has common fields
+  (project_id, app_id, accepted_time, event_time, message_metadata, correlation_id) plus exactly one
+  callback-specific top-level object whose key is the type: message, message_delivery_report, event,
+  conversation_start_notification, contact_create_notification, opt_in_notification and others (19 in
+  all). Dispatch on which key is present. Method: POST. Hookdeck's Sinch source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs give a worked
+  example, saved verbatim as JSON (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/sinch.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts those headers and secret and computes
+  6bpJoRmFoXVjfJIVglMoJzYXxnoxRujzR4k2GOXewOE=. Add references/verification.md text naming the vector.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/b14-merge/samples-doc/providers/sinch/latest/
+  (batch_status_update_notification.json, capability_notification.json,
+  contact_create_notification.json, contact_delete_notification.json, ...); base the examples' test
+  payloads on them. Hookdeck's source type is SINCH, labelled 'Sinch'. Hookdeck shows this setup note
+  for the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
+  "For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it
+  here; other Sinch APIs sign callbacks differently."
+testScenario:
+  events:
+    - "message"
+    - "message_delivery_report"
+    - "contact_create_notification"
+catalog:
+  summary: "Verify Sinch Conversation API callbacks (`x-sinch-webhook-signature`: base64 HMAC-SHA256 of `{body}.{nonce}.{timestamp}`), handle message, delivery report and contact callbacks"

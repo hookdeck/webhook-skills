@@ -1,0 +1,50 @@
+name: typefully
+displayName: "Typefully"
+docs:
+  webhooks: https://typefully.com/docs/api
+  verification: https://typefully.com/docs/api
+notes: >
+  Typefully API v2 webhooks (draft lifecycle events). Typefully (typefully.com), a tool for writing
+  and scheduling social posts. Delivery (from the docs): Any 2xx acknowledges; non-2xx is retried with
+  exponential backoff up to 4 times (5 attempts) over 1 hour. A webhook is disabled after 100
+  consecutive failures (email notice), and is re-enabled from the API settings. Typefully says:
+  'X-Typefully-Timestamp : Unix timestamp when the event was generated X-Typefully-Signature :
+  HMAC-SHA256 signature for verification (format: sha256=<hex> )' 'signature_payload =
+  f"{timestamp}.{payload_body.decode('utf-8')}"' SIGNATURE SCHEME (it must match Hookdeck's TYPEFULLY
+  source exactly: HMAC controller, algorithm sha256, header x-typefully-signature, encoding hex,
+  signed_content_template "{header:x-typefully-timestamp}.{body}"). The X-Typefully-Signature header
+  carries `sha256=<hex>`. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the
+  X-Typefully-Timestamp header value, then a literal ".", then the raw request body bytes. Build the
+  signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header
+  values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Strip a leading `sha256=` before validating the digest; Hookdeck's
+  parser also accepts the bare digest, so accept the value with or without the prefix. Secret: the
+  webhook secret from Typefully's API settings, used as UTF-8. Env var: TYPEFULLY_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS, unset or
+  0 = off) and say so in SKILL.md and verification.md (X-Typefully-Timestamp is Unix seconds). Events:
+  dispatch on the body's `event` field. Documented event types (7): draft.created, draft.planned,
+  draft.scheduled, draft.published, draft.status_changed, draft.tags_changed, draft.deleted. Handle a
+  few common ones and log the rest. Method: POST. Hookdeck's Typefully source manages the method as
+  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is TYPEFULLY, labelled 'Typefully'.
+testScenario:
+  events:
+    - "draft.created"
+    - "draft.scheduled"
+    - "draft.published"
+catalog:
+  summary: "Verify Typefully webhook signatures (`X-Typefully-Signature` `sha256=<hex>`, HMAC-SHA256 over `{X-Typefully-Timestamp}.{body}`), handle draft events like draft.created, draft.scheduled and draft.published"

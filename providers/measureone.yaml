@@ -10,8 +10,9 @@ notes: >
   header the user adds there. The header name is user-chosen, so examples read it from
   MEASUREONE_WEBHOOK_HEADER (default Authorization) and compare the whole value with
   MEASUREONE_WEBHOOK_SECRET (no Bearer parsing) in constant time. Basic and JWT options exist;
-  Hookdeck's MeasureOne source does not cover Basic, and the JWT option fetches a new token for
-  every delivery and cannot be checked. A static header authenticates the sender only: no body
+  Basic is a fixed Authorization value, so it works as the static header (header name Authorization,
+  full 'Basic <base64>' value), and the JWT option fetches a new token for every delivery and cannot
+  be checked. A static header authenticates the sender only: no body
   integrity, no replay protection. Dispatch on the event field. Any 2xx succeeds; retried up to 10
   times with exponential backoff. Express examples read the raw body with
   express.raw({ type: '*/*' }).

@@ -99,6 +99,14 @@ describe('methods', () => {
     expect(res.body).toEqual({ received: true });
   });
 
+  it('reads the templated body on GET (Argo CD sends it with every method)', async () => {
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const res = await send('get', { [HEADER]: SECRET }, JSON.stringify(payloadFor('on-sync-failed')));
+    expect(res.status).toBe(200);
+    expect(spy.mock.calls.some(([m]) => String(m).startsWith('Sync failed: guestbook'))).toBe(true);
+    spy.mockRestore();
+  });
+
   it('handles an empty POST body', async () => {
     const res = await request(app).post('/webhooks/argo-cd').set(HEADER, SECRET);
     expect(res.status).toBe(200);

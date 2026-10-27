@@ -1,0 +1,55 @@
+name: 'sohar-health'
+displayName: 'Sohar Health'
+docs:
+  webhooks: 'https://docs.soharhealth.com/documentation/webhooks/security'
+  verification: 'https://docs.soharhealth.com/documentation/webhooks/security'
+  events: 'https://docs.soharhealth.com/documentation/webhooks/events'
+notes: >-
+  Sohar Health (soharhealth.com), an insurance eligibility-verification and patient-intake API for behavioral-health
+  providers. Webhooks report verification, discovery and Flow Run updates for production and sandbox (sandbox.*
+  twins); delivered through Svix. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. SECRET: Per endpoint, in the Svix Portal (dashboard Webhooks > endpoint > Open Svix Portal).
+  Sohar prints no secret value, so its form is Svix's default (`whsec_<base64>`), not stated by Sohar.
+  Research: whsec_ (Svix-issued; secrets live in the Svix Portal per https://docs.soharhealth.com/documentation/webhooks/security;
+  the docs do not print the prefix). It starts with whsec_; the key is the base64-decoding of the part
+  after whsec_. SOHAR_HEALTH_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix library
+  (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature and
+  falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Sohar Health
+  source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and
+  any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body required ("even minor changes can invalidate the cryptographic signature"). Body: {event, id, status}.
+  Flat bodies: `event` plus the resource id (`verificationId` | `discoveryId` | `flowRunId`), `id` and
+  `status`; flow.callback carries `input` (a JSON Schema) instead of `status`. Event type: Top-level `event`
+  on every example; bodies are flat (`{event, <resource>Id, id, status}`). `status` is the resource's
+  state, not the event type. Event types (10 documented, list may not be exhaustive): verification.updated,
+  sandbox.verification.updated, verification.pending, sandbox.verification.pending, discovery.updated,
+  sandbox.discovery.updated, flow.updated, sandbox.flow.updated, flow.callback, sandbox.flow.callback.
+  Transport: JSON over HTTPS via Svix. Delivery: Acknowledge with 200; no retry schedule is stated. Setup:
+  API-managed with production credentials: Create Webhook registers the endpoint (`endpointId`), Create
+  Event subscribes it to event types; any endpoint can take production and sandbox events. No challenge.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified; parse the body only after the check. Hookdeck's source type is SOHAR_HEALTH,
+  labelled 'Sohar Health'.
+testScenario:
+  events:
+  - 'verification.updated'
+  - 'sandbox.verification.updated'
+  - 'verification.pending'
+catalog:
+  summary: >-
+    Verify Sohar Health webhook signatures (Svix: `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256),
+    handle verification.updated, verification.pending, discovery.updated, flow.updated and flow.callback events

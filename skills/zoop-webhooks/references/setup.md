@@ -33,8 +33,10 @@ Webhooks can also be registered from the Zoop dashboard. The URL must be public.
 
 ## Activation (the ping)
 
-Right after creation Zoop sends a `ping` event with your `Authorization` header. Return `200`.
-Only then does the webhook become `active`. If it stays `registred`, the ping was rejected or
+Right after creation Zoop sends a `ping` event. Return `200`. Only then does the webhook become
+`active`. Zoop's docs don't say whether the ping carries your `Authorization` header, and the
+examples require it on every request, so confirm on a real ping: if your logs show a 401 for it,
+the ping arrived without the header. If the webhook stays `registred`, the ping was rejected or
 unreachable: check the URL and that `ZOOP_AUTHORIZATION` matches, then list the marketplace
 webhooks and look at `status`.
 

@@ -1,0 +1,60 @@
+name: 'omnara'
+displayName: 'Omnara'
+docs:
+  webhooks: 'https://docs.omnara.com/events/webhooks'
+  verification: 'https://docs.omnara.com/agents/configuration#event-webhook'
+notes: >-
+  Omnara (omnara.com), a platform for hosted AI agents. An agent's `event_webhook` sends its timeline
+  events (inputs, model outputs, tool results, context checkpoints) and tool-call updates to an HTTPS
+  endpoint; signing per Standard Webhooks is opt-in. Standard Webhooks signature with webhook-* headers:
+  webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64
+  output. Hookdeck core notes: The secret is bare base64; it is pasted with a whsec_ prefix. SECRET: Receiver-chosen:
+  a project-available generic secret referenced by `event_webhook.signing_secret_id`, generated with `openssl
+  rand -base64 32` (bare base64, no `whsec_`). Research: raw base64 ("Set `event_webhook.signing_secret_id`
+  to a project-available generic secret, generated with `openssl rand -base64 32`", https://docs.omnara.com/agents/configuration).
+  The HMAC key is the base64-decoding of the secret as Omnara shows it (no whsec_ prefix). OMNARA_WEBHOOK_SECRET
+  holds the value exactly as Omnara shows it. Verify with the standardwebhooks library (npm 'standardwebhooks',
+  pip 'standardwebhooks'): it strips a whsec_ prefix if present and otherwise base64-decodes the whole
+  secret, so both the bare value and the whsec_-prefixed form Hookdeck needs give the same key. HEADER
+  FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when webhook-id
+  is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does;
+  then hand the library (or manual check) the three values under the header names it expects (for the
+  standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature). Include
+  a test that a delivery signed the same way but sent with the other prefix's headers is accepted. This
+  matches Hookdeck's Omnara source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Signing is opt-in per agent: set event_webhook.signing_secret_id,
+  then paste that secret here as whsec_ followed by the secret. Unsigned deliveries fail verification."
+  SKILL.md and references/setup.md must state this requirement, quoting the alert verbatim. Conditional
+  signing: Signing is opt-in per agent. Deliveries carry `Webhook-Signature` only when the agent config's
+  `event_webhook.signing_secret_id` names a signing secret; without one they still carry `Webhook-Id`
+  and `Webhook-Timestamp` but cannot be verified. Verification notes: Raw body is required. Body: {event,
+  data}. `data` is the event-stream object: timeline events carry ids (event, org, project, agent, turn),
+  `sequence`, `event_kind` and `created_at`; tool_call_update carries a state snapshot and optional `interaction_update`.
+  Event type: Top-level `event` beside `data`; timeline events also repeat the type in `data.event_kind`.
+  Every example's `event` is its own type. Event types (5 documented, list may not be exhaustive): agent_input,
+  model_output, tool_result, context_checkpoint, tool_call_update. Transport: JSON POST with `event` and
+  `data`. Delivery: Queued up to ten minutes with a five-second request timeout; failures retried with
+  exponential backoff and jitter within that window. At-least-once, unordered. Deliveries for deleted
+  projects and organizations are suppressed. Setup: Per agent, in its config's `event_webhook` (`url`,
+  required nonempty `events` allowlist, optional `signing_secret_id`); self-subagents inherit it. No challenge
+  or validation request is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is OMNARA, labelled 'Omnara'.
+testScenario:
+  events:
+  - 'agent_input'
+  - 'model_output'
+  - 'tool_result'
+catalog:
+  summary: >-
+    Verify Omnara webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    base64 secret), handle agent timeline and tool-call events

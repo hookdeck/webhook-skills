@@ -1,0 +1,66 @@
+name: learnupon
+displayName: "LearnUpon"
+docs:
+  webhooks: https://docs.learnupon.com/webhooks/v2/
+  verification: https://docs.learnupon.com/webhooks/v2/
+notes: >
+  LearnUpon (learnupon.com), the learning management system. Webhooks version 2.0 report users,
+  courses, modules, enrollments, purchases, badges, learning paths, live-learning sessions and
+  learning journeys; support must enable webhooks for the portal. Version 1 is a separate, older
+  scheme. Delivery (from the docs): Answer 2xx (ideally within 2 s); no response within 7+ s is a
+  failure. Failed webhooks are resent for 72 hours at 10 min, 3 h, 12 h, 24 h and 48 h. Webhooks are
+  retained 45 days. LearnUpon's docs say: 'Get the raw body of the request Extract the signature
+  header value X-Webhook-Signature Calculate the hash of the raw body using the SHA-256 hash function
+  and the secret Convert the result to a hexadecimal string Compare the encoded hash with the one sent
+  in the X-Webhook-Signature signature header.' 'digest = hmac.new(secret.encode('utf-8'),
+  raw_body.encode('utf-8'), digestmod=hashlib.sha256).hexdigest()' 'Contact the support team to turn
+  on webhooks for your portal.' 'X-Webhook-Signature Hash of the JSON data you receive (without the
+  signature attribute), with a secret key that is set on your webhook configuration settings' From the
+  docs (registry summary): `X-Webhook-Signature: <hex>` = hex HMAC-SHA256(secret as UTF-8, raw body).
+  The page's Java and Python samples (secret `00000AB00C0D0E00F0A`, a one-enrollment body, signature
+  `a4037591...af45`) reproduce (checked by harvest_learnupon.py). The header table's "without the
+  signature attribute" and the troubleshooting note about "the colon" read like leftovers from v1.
+  SIGNATURE SCHEME (it must match Hookdeck's LEARNUPON source exactly: HMAC controller, algorithm
+  "sha256", header_key "x-webhook-signature", encoding "hex"). The X-Webhook-Signature header carries
+  the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: The secret key you set in the portal's webhook configuration. Use it as UTF-8
+  bytes. Env var: LEARNUPON_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. `X-LearnUpon-TimeStamp` is sent but not signed. Events:
+  the body is `{"data": [...]}` (up to 10 events of one type) and the `X-Webhook-Type` header names
+  the type (user_created, course_completion, course_enrollment, module_complete, badge_awarded, ...).
+  Loop over `data`. Method: POST. Hookdeck's LearnUpon source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  PUBLISHED TEST VECTOR (verified against Hookdeck's controller): the vendor's docs give a worked
+  example, saved verbatim as JSON (secret, body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/learnupon.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (a403759157e609bf3852001ff9d83db59b454a82841c4369b0e65d066035af45) with that secret. Name the vector
+  in references/verification.md. Documented sample payloads (each JSON file's `body` is the payload as
+  the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/learnupon/
+  (2.0/course_completion.json, 2.0/course_enrollment.json, 2.0/course_unenrollment.json,
+  2.0/event_session_canceled.json, ...); base the examples' test payloads on them. Hookdeck's source
+  type is LEARNUPON, labelled 'LearnUpon'. Hookdeck shows this setup note for the source, and SKILL.md
+  and references/setup.md must tell the user the same thing, verbatim: "Only Webhooks v2.0 are
+  supported. Ask LearnUpon support to turn them on."
+testScenario:
+  events:
+    - "course_completion"
+    - "course_enrollment"
+    - "user_created"
+catalog:
+  summary: "Verify LearnUpon webhooks (`X-Webhook-Signature`: hex HMAC-SHA256 of the raw body), handle user, course, enrollment and learning path events"

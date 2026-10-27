@@ -1,0 +1,70 @@
+name: purchasely
+displayName: "Purchasely"
+docs:
+  webhooks: https://docs.purchasely.com/docs/webhook
+  verification: https://docs.purchasely.com/docs/webhook
+  events: https://docs.purchasely.com/docs/lifecycle-events
+notes: >
+  Purchasely server events (subscription lifecycle, offer, transactional and entitlement events).
+  Purchasely (purchasely.com), in-app subscription and paywall management. Delivery (from the docs):
+  Exactly HTTP 200 acknowledges; ANY other code (including other 2xx) is retried, 25 times over about
+  20 days. A non-200 also pauses later webhooks for that user until the first succeeds (ordering per
+  user). Purchasely says: 'X-PURCHASELY-REQUEST-SIGNATURE : request signature; X-PURCHASELY-TIMESTAMP
+  : request timestamp ... Do not use the deprecated X-PURCHASELY-SIGNATURE header' 'const dataToSign =
+  xPurchaselyTimestamp + body; const computedSignature = crypto.createHmac("sha256",
+  webhookSharedSecret).update(dataToSign).digest("hex");' SIGNATURE SCHEME (it must match Hookdeck's
+  PURCHASELY source exactly: HMAC controller, algorithm sha256, header x-purchasely-request-signature,
+  encoding hex, signed_content_template "{header:x-purchasely-timestamp}{body}"). The
+  X-PURCHASELY-REQUEST-SIGNATURE header carries the bare lowercase hex digest, no prefix. The
+  signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the X-PURCHASELY-TIMESTAMP
+  header value, then the raw request body bytes. Where two parts are adjacent above there is NO
+  separator between them. Build the signed message as BYTES, exactly as Hookdeck's template does:
+  literal separators as UTF-8, header values as the exact header string encoded latin1 (Node
+  Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
+  re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
+  decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
+  The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Compare the WHOLE header value as one digest
+  (no list splitting, no prefix parsing). Secret: the webhook shared secret from the Purchasely
+  console, used as UTF-8. Env var: PURCHASELY_WEBHOOK_SECRET. Validate the signature's format before
+  decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as PURCHASELY_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-PURCHASELY-TIMESTAMP is Unix seconds). Timestamp FIRST, then the body, NO
+  separator. Purchasely acknowledges ONLY HTTP 200 (any other code, other 2xx included, is retried and
+  pauses later webhooks for that user), so the examples answer exactly 200. Events: dispatch on the
+  body's `event_name` field. Documented event types (47): SUBSCRIPTION_STARTED,
+  RETENTION_MESSAGE_REQUESTED, RENEWAL_DISABLED, RENEWAL_ENABLED, SUBSCRIPTION_TERMINATED,
+  FAMILY_SHARED_REVOKED, GRACE_PERIOD_STARTED, GRACE_PERIOD_TERMINATED,
+  SUBSCRIPTION_CANCELLED_DURING_GRACE_PERIOD, SUBSCRIPTION_RECOVERED_FROM_GRACE_PERIOD,
+  ENTERED_BILLING_RETRY, SUBSCRIPTION_RECOVERED_FROM_BILLING_RETRY, SUBSCRIPTION_RENEWED,
+  SUBSCRIPTION_DEFERRED (and 33 more). Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Purchasely source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
+  Hookdeck's template): the vendor's docs give a worked example, saved verbatim as JSON (secret, body
+  string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/purchasely.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts those headers and secret and computes
+  f3c2a452e9ea72f41107321aeaf7999f1054148866a710c9b23f9f501785e2a4. Add references/verification.md
+  text naming the vector. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/b14-merge/samples-doc/providers/purchasely/latest/
+  (ACTIVATE.json, INSTALLMENT_PAID.json, RETENTION_MESSAGE_REQUESTED.json, SUBSCRIPTION_RENEWED.json,
+  ...); base the examples' test payloads on them. Hookdeck's source type is PURCHASELY, labelled
+  'Purchasely'.
+testScenario:
+  events:
+    - "SUBSCRIPTION_STARTED"
+    - "SUBSCRIPTION_RENEWED"
+    - "SUBSCRIPTION_TERMINATED"
+catalog:
+  summary: "Verify Purchasely webhooks (`X-PURCHASELY-REQUEST-SIGNATURE`: hex HMAC-SHA256 of `X-PURCHASELY-TIMESTAMP` followed by the body), handle subscription, offer and entitlement events"

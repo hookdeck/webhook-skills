@@ -1,0 +1,61 @@
+name: bugsmash
+displayName: "BugSmash"
+docs:
+  webhooks: https://docs.bugsmash.io/api/webhooks/create-webhook
+  verification: https://docs.bugsmash.io/api/webhooks/verify-webhook-signatures
+notes: >
+  BugSmash workspace webhooks, created only through API v2 (POST /webhook). BugSmash (bugsmash.io), a
+  visual feedback and review tool for websites, images, video and documents. Delivery (from the docs):
+  Not documented (see gaps). BugSmash says: 'signed_payload =
+  `${X-Webhook-Timestamp}.${raw_request_body}` signature = HMAC_SHA256(secret_key, signed_payload)'
+  'The resulting hex-encoded signature is sent in the `X-BugSmash-Signature` header. The Unix
+  timestamp used during signing is sent in the `X-Webhook-Timestamp` header.' SIGNATURE SCHEME (it
+  must match Hookdeck's BUGSMASH source exactly: HMAC controller, algorithm sha256, header
+  x-bugsmash-signature, encoding hex, signed_content_template "{header:x-webhook-timestamp}.{body}").
+  The X-BugSmash-Signature header carries the bare lowercase hex digest, no prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over: the X-Webhook-Timestamp header value, then a
+  literal ".", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
+  webhook's `secret_key`, returned only once by the create-webhook API call, used whole as the HMAC
+  key including its `bgsmsh_` prefix. Env var: BUGSMASH_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
+  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  opt-in tolerance (an env var such as BUGSMASH_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
+  so in SKILL.md and verification.md (X-Webhook-Timestamp is Unix seconds). Note the timestamp header
+  is the generic X-Webhook-Timestamp, not an X-BugSmash- name. BugSmash's Node example signs
+  JSON.stringify(payload) of the parsed body; the same page says to sign the raw body, which is what
+  Hookdeck does and what the examples must do. Events: the docs list new_comment, comment_replied,
+  status_changed and comment_updated but document no delivery body, so the field that carries the
+  event name is unknown. The examples read it defensively (e.g. `event` or `type`) from a clearly
+  labelled illustrative payload, and say so. Methods: BugSmash's docs don't name the HTTP method.
+  Hookdeck's BugSmash source pre-selects POST without managing the method (the user can change it).
+  The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
+  (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
+  with those methods), verify the signature first for every method, and treat a missing body as empty
+  bytes. Say in SKILL.md and setup.md that Hookdeck's BugSmash source pre-selects POST without
+  managing the method, so any other method the sender uses must also be allowed on the source. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is BUGSMASH, labelled 'BugSmash'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "BugSmash returns the secret_key only once, when you create the
+  webhook through the API. Paste the whole value, including the bgsmsh_ prefix."
+testScenario:
+  events:
+    - "new_comment"
+    - "comment_replied"
+    - "status_changed"
+catalog:
+  summary: "Verify BugSmash webhooks (`X-BugSmash-Signature`: hex HMAC-SHA256 of `{X-Webhook-Timestamp}.{body}` with the `bgsmsh_` secret key), handle comment and status events"

@@ -91,7 +91,7 @@ def verify_celcoin_auth(authorization, username, password) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | Environment variables don't match the subscription's `login` / `pwd`, or the subscription was created with `auth.type` `jwt` |
-| 401 after changing credentials | The subscription was updated but the endpoint (or Hookdeck source) still has the old values |
+| 401 after changing credentials | The subscription was updated but the endpoint still has the old values (a Hookdeck source with old values returns `200` and records the request as failed verification) |
 | 401 with a password containing `:` | The header was split on the last colon instead of the first |
 | No notifications arrive | The subscription is `active: false`, the entity isn't subscribed, or `webhookUrl` is wrong (query with `GET .../webhook/subscription`) |
 | Requests rejected by Hookdeck | The source only allows POST and Celcoin uses another method |

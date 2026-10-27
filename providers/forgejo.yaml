@@ -1,0 +1,66 @@
+name: forgejo
+displayName: "Forgejo"
+docs:
+  webhooks: https://forgejo.org/docs/latest/user/webhooks/
+  verification: https://forgejo.org/docs/latest/user/webhooks/
+notes: >
+  Forgejo (forgejo.org; runs Codeberg), the self-hosted Git forge forked from Gitea. Repository,
+  organization and instance-wide webhooks report repository, issue, pull-request, release, package and
+  Actions events. Delivery (from the docs): The settings page has a Test Delivery button and a list of
+  Recent Deliveries; timeouts and retries are not documented (instance settings). Forgejo's docs say:
+  '$header_signature = isset($_SERVER['HTTP_X_FORGEJO_SIGNATURE']) ?
+  $_SERVER['HTTP_X_FORGEJO_SIGNATURE'] : '';' '$payload_signature = hash_hmac('sha256', $payload,
+  $secret_key, false);' 'sig256 := hmac.New(sha256.New, secret) ... signatureSHA256 =
+  hex.EncodeToString(sig256.Sum(nil))' 'req.Header.Add("X-Forgejo-Signature", signatureSHA256) ...
+  req.Header.Add("X-Gitea-Signature", signatureSHA256) ... req.Header.Add("X-Hub-Signature-256",
+  "sha256="+signatureSHA256)' From the docs (registry summary): `X-Forgejo-Signature: <lowercase hex>`
+  = HMAC-SHA256(secret, JSON payload); the same digest is sent as X-Gitea-Signature, X-Gogs-Signature
+  and `X-Hub-Signature-256: sha256=<hex>`, plus a SHA-1 `X-Hub-Signature: sha1=<hex>`. With an empty
+  secret the headers are still sent, empty. The digest is always over the JSON payload, so it equals
+  the raw body only for POST + application/json. SIGNATURE SCHEME (it must match Hookdeck's FORGEJO
+  source exactly: HMAC controller, algorithm "sha256", header_key "x-forgejo-signature", encoding
+  "hex"). The X-Forgejo-Signature header carries the bare lowercase hex digest, no prefix. Compare the
+  WHOLE header value as one digest (no list splitting or prefix parsing). The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The webhook's Secret, set by whoever
+  creates the webhook; signing happens only when it is non-empty. Use it as UTF-8 bytes. Env var:
+  FORGEJO_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Forgejo also sends the same digest as X-Gitea-Signature,
+  X-Gogs-Signature and `X-Hub-Signature-256: sha256=<hex>`; verify `X-Forgejo-Signature` (bare hex),
+  as Hookdeck does. Events: dispatch on the X-Forgejo-Event-Type header. Two header levels, as in
+  Gitea. X-Forgejo-Event-Type is `string(t.EventType)`, the exact HookEventType (`issue_assign`);
+  X-Forgejo-Event is the coarser `Event()` group (`issues`), which is empty for package, schedule and
+  workflow_dispatch. pull_request_comment goes out as X-Forgejo-Event `issue_comment`,
+  pull_request_review_comment as `pull_request_comment`. Most bodies also carry an `action`.
+  X-Gitea-*, X-Gogs-* and X-GitHub-* repeat the values. The guide's example shows only
+  `X-Forgejo-Event: push`. Documented event types (41): create, delete, fork, push, issues,
+  issue_assign, issue_label, issue_milestone, issue_comment, pull_request, pull_request_assign,
+  pull_request_label, pull_request_milestone, pull_request_comment (and 27 more). Handle a few common
+  ones and log the rest. Method: POST. Hookdeck's Forgejo source manages the method as POST, so the
+  examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
+  in /home/user/regwt/main-ro/samples-doc/providers/forgejo/ (latest/push.json); base the examples'
+  test payloads on them. Hookdeck's source type is FORGEJO, labelled 'Forgejo'. Hookdeck shows this
+  setup note for the source, and SKILL.md and references/setup.md must tell the user the same thing,
+  verbatim: "Set a secret on the Forgejo webhook. Without one, deliveries are unsigned and fail
+  verification. Set the webhook's HTTP method to POST and its content type to application/json.
+  Form-encoded and GET deliveries sign the JSON payload rather than the request body and fail
+  verification."
+testScenario:
+  events:
+    - "push"
+    - "pull_request"
+    - "issues"
+catalog:
+  summary: "Verify Forgejo webhooks (`X-Forgejo-Signature`: hex HMAC-SHA256 of the raw body), handle push, issue, pull request and release events"

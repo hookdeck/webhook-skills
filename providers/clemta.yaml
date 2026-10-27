@@ -1,0 +1,59 @@
+name: 'clemta'
+displayName: 'Clemta'
+docs:
+  webhooks: 'https://docs.clemta.com/partner/webhooks'
+  verification: 'https://docs.clemta.com/partner/webhooks'
+notes: >-
+  Clemta (clemta.com), a US company-formation and compliance API for partners: companies, tax filings,
+  service orders, requirements, files, calendar reminders and invoices. Endpoints are managed from the
+  Webhooks page of the partner dashboard; the same events can be polled from GET /events. Standard Webhooks
+  signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Also sends Clemta-Webhook-* copies
+  of the headers; v1a (Ed25519) entries are skipped. SECRET: Per endpoint: a `whsec_` signing secret shown
+  once at creation (rolled from the dashboard with an email-confirmed overlap) and an ed25519 keypair
+  whose `whpk_` public half is readable on the endpoint. Research: whsec_ ("Every endpoint has its own
+  signing secret (whsec_...)" https://docs.clemta.com/partner/webhooks). It starts with whsec_; the key
+  is the base64-decoding of the part after whsec_. CLEMTA_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads
+  webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks and the manual
+  verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the svix-* headers
+  (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual check)
+  the three values under the header names it expects (for the standardwebhooks library, pass them as webhook-id,
+  webhook-timestamp and webhook-signature). Include a test that a delivery signed the same way but sent
+  with the other prefix's headers is accepted. This matches Hookdeck's Clemta source (Standard Webhooks,
+  headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any other secret used
+  as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp window;
+  core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces a fixed
+  5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp,
+  so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required. Each attempt is re-signed
+  with its own timestamp. Body: {type, data}. `data.object` is the resource in its API shape; its `object`
+  field names the resource kind. Event type: Top-level `type`; the resource is in `data.object`, whose
+  own `object` field names the resource kind. Event types (27 documented, list may not be exhaustive):
+  company.created, company.status.changed, company.verified, company.incorporated, company.onboarding.completed,
+  company.name.changed, company.ein.assigned, company.document.received, company.entitlements.changed,
+  company.updated, company.dissolved, tax_filing.created, tax_filing.status.changed, service_order.status.changed,
+  service_order.completed, service_order.updated, service_order.quoted, service_order.renewal_canceled,
+  service_order.renewal_cancel_denied, requirement.created, requirement.fulfilled, requirement.canceled,
+  requirement.signature.viewed, requirement.signature.signed, file.created, calendar.reminder, invoice.finalized.
+  Transport: JSON POST to the registered endpoint. Delivery: Up to 20 retries with jittered exponential
+  backoff (15 s to 6 h apart). Per endpoint, ordered best-effort (an event that keeps failing is set aside)
+  and paced one at a time; a fresh delivery starts a couple of seconds after its event. Retry-After on
+  429/503 is honoured; 410 Gone disables the endpoint; 3xx is a failure. Endpoints failing continuously
+  for three days are disabled. Missed events can be replayed from GET /events. Setup: Endpoints are created
+  in the partner dashboard, optionally restricted to event types and pinned to an API version. No challenge
+  or validation request is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is CLEMTA, labelled 'Clemta'.
+testScenario:
+  events:
+  - 'company.created'
+  - 'company.status.changed'
+  - 'company.verified'
+catalog:
+  summary: >-
+    Verify Clemta webhook signatures (`webhook-signature`, Standard Webhooks HMAC-SHA256, `whsec_` secret), handle company.created, company.incorporated, service_order.completed and requirement.created events

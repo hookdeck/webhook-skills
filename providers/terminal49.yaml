@@ -1,0 +1,61 @@
+name: terminal49
+displayName: "Terminal49"
+docs:
+  webhooks: https://terminal49.com/docs/api-docs/in-depth-guides/webhooks
+  verification: https://terminal49.com/docs/api-docs/in-depth-guides/webhooks
+notes: >
+  Terminal49 (terminal49.com), the container and shipment tracking API. Webhooks are created in the
+  developer dashboard or with `POST /v2/webhooks` and notify tracking-request, transport-milestone,
+  ETA, container-update and document-processing events as JSON:API documents. Delivery (from the
+  docs): 200, 201, 202 or 204 accept; any other response or a timeout is retried, up to 12 times, then
+  the notification is marked failed. Missed notifications cannot be replayed (re-fetch state from the
+  REST API). Terminal49's docs say: 'Terminal49 signs every webhook delivery with an HMAC SHA-256
+  digest of the raw request body and sends the digest in the `X-T49-Webhook-Signature` header.'
+  'digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()' 'The webhook
+  response includes a `secret` attribute. Store it in your secrets manager.' From the docs (registry
+  summary): Header `X-T49-Webhook-Signature: <hex>`, bare hex HMAC-SHA256(webhook secret, raw body);
+  the Ruby, Node, Python and Go samples all hex-encode and key with the secret string as-is. No test
+  vector. SIGNATURE SCHEME (it must match Hookdeck's TERMINAL49 source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-t49-webhook-signature", encoding "hex"). The
+  X-T49-Webhook-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The `secret` attribute returned when
+  the webhook is created (API or dashboard). Use it as UTF-8 bytes. Env var:
+  TERMINAL49_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. Events: dispatch on the body's `data.attributes.event` field.
+  `data.type` is always `webhook_notification`; the event name is `data.attributes.event`.
+  `data.relationships.reference_object.data.type` names the object that caused it (`transport_event`,
+  `container_updated_event`, ...), and `included` carries the related records. No header names the
+  type. Documented event types (47): tracking_request.succeeded, tracking_request.failed,
+  tracking_request.awaiting_manifest, tracking_request.tracking_stopped,
+  container.transport.empty_out, container.transport.full_in, container.transport.vessel_loaded,
+  container.transport.vessel_departed, container.transport.transshipment_arrived,
+  container.transport.transshipment_discharged, container.transport.transshipment_loaded,
+  container.transport.transshipment_departed, container.transport.feeder_arrived,
+  container.transport.feeder_discharged (and 33 more). Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Terminal49 source manages the method as POST, so the examples handle POST
+  on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Documented sample payloads
+  (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/terminal49/ (latest/container.created.json,
+  latest/container.pickup_appointment.changed.json, latest/container.pickup_lfd.changed.json,
+  latest/container.pickup_lfd_rail.changed.json, ...); base the examples' test payloads on them.
+  Hookdeck's source type is TERMINAL49, labelled 'Terminal49'.
+testScenario:
+  events:
+    - "tracking_request.succeeded"
+    - "container.transport.vessel_arrived"
+    - "container.updated"
+catalog:
+  summary: "Verify Terminal49 webhook signatures (`X-T49-Webhook-Signature`, hex HMAC-SHA256 of the raw body), handle tracking_request.succeeded, container.transport.vessel_arrived and container.updated events"

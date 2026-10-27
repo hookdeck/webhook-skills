@@ -1,0 +1,63 @@
+name: idenfy
+displayName: "iDenfy"
+docs:
+  webhooks: https://documentation.idenfy.com/guides/webhooks-overview
+  verification: https://documentation.idenfy.com/security/callback-signing
+notes: >
+  iDenfy (idenfy.com), the identity verification, KYB and AML platform. Webhooks ("system
+  notifications") report KYC verification results, company (KYB) reviews, AML monitoring, bank,
+  bank-card, facial-authentication and age-estimation results. Each webhook is configured per event
+  type in the dashboard. Delivery (from the docs): A 2xx within 10 s acknowledges; anything else is
+  retried the configured number of times at a fixed interval, then a failure email (if configured) and
+  a manual Resend in the dashboard. Dedupe on `scanRef` (KYC) or `id` (bank card). iDenfy's docs say:
+  'Every webhook request from iDenfy includes an `Idenfy-Signature` header containing an
+  **HMAC-SHA256** digest of the raw HTTP body.' 'When a webhook fires, iDenfy computes
+  `HMAC-SHA256(secret, raw_body)` and attaches the hex-encoded result in the `Idenfy-Signature`
+  header.' 'In the iDenfy dashboard, navigate to **Settings → System notifications** and click the
+  webhook you want to protect to expand it. Then go to the **Headers** section and set the **Signing
+  key** field.' From the docs (registry summary): `Idenfy-Signature: <hex>` = lowercase hex
+  HMAC-SHA256(signing key, raw body) (the samples use `hexdigest()` / `digest("hex")`; 64 characters),
+  compared constant-time. Sent only when the webhook has a signing key: the signing page says every
+  request carries it, but its own troubleshooting and the KYC header table make it conditional on the
+  key. SIGNATURE SCHEME (it must match Hookdeck's IDENFY source exactly: HMAC controller, algorithm
+  "sha256", header_key "idenfy-signature", encoding "hex"). The Idenfy-Signature header carries the
+  bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
+  splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
+  message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
+  never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
+  compare. Secret: A signing key you set per webhook in the dashboard (Settings -> System
+  notifications -> the webhook -> Headers -> Signing key); iDenfy does not generate one. Each event
+  type's webhook can have its own. Use it as UTF-8 bytes. Env var: IDENFY_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Each event type's
+  webhook can have its own signing key; one Hookdeck source verifies one key. Events: dispatch on the
+  Idenfy-Event-Type header. Header `Idenfy-Event-Type`; each API Reference webhook declares it as a
+  one-value enum. The dashboard shows the same events under display names (`ID VERIFICATION AUTO
+  FINISHED`, `COMPANY REVIEW`, ...), and the legacy IDENTIFICATION page calls the newer events
+  `ID_VERIFICATION_*`; the header enums say `IDENTIFICATION_*`. The KYC body's `final` flag says
+  whether more webhooks follow for the verification. Documented event types (23): IDENTIFICATION,
+  IDENTIFICATION_AUTO_FINISHED, IDENTIFICATION_MANUAL_FINISHED, IDENTIFICATION_EXPIRED,
+  IDENTIFICATION_CANCELLED, IDENTIFICATION_RESUBMITTED, DOCUMENT_EXPIRATION, VIDEO_CALL_FINISHED,
+  COMPANY_REVIEW, COMPANY_DELETE, COMPANY_AML_REVIEW, COMPANY_INFO_REQUEST, COMPANY_EXPIRATION,
+  COMPANY_SUBMIT (and 9 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  iDenfy source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is IDENFY, labelled 'iDenfy'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Set a signing key on the iDenfy webhook. Without one, deliveries are unsigned
+  and fail verification."
+testScenario:
+  events:
+    - "IDENTIFICATION_AUTO_FINISHED"
+    - "AML_MONITORING"
+    - "COMPANY_REVIEW"
+catalog:
+  summary: "Verify iDenfy webhooks (`Idenfy-Signature`: hex HMAC-SHA256 of the raw body), handle KYC, KYB and AML results"

@@ -1,0 +1,64 @@
+name: greenshades
+displayName: "Greenshades"
+docs:
+  webhooks: https://developer.greenshades.com/reference/createwebhooksubscription
+  verification: https://developer.greenshades.com/docs/security-1
+notes: >
+  Greenshades payroll/HR webhook subscriptions, created per workspace through the webhook-subscription
+  API. Greenshades (greenshades.com), a payroll, HR and tax platform. API clients subscribe to payroll
+  and employee events (pay runs, pay schedules, employees, earning codes) per workspace through the
+  webhook-subscription API. Delivery (from the docs): No delivery, retry or timeout policy is
+  documented. Greenshades says: 'Greenshades will sign each webhook event using HMAC-SHA256 and the
+  key you provide. The key can be anything, but we recommend using a strong password of your
+  choosing.' 'To generate the HMAC hash, use the concatenation result of [`timestamp`]\n[`request
+  body`].' 'var content = $"{timestamp}\n{body}";' SIGNATURE SCHEME (it must match Hookdeck's
+  GREENSHADES source exactly: HMAC controller, algorithm sha256, header x-gs-signature, encoding hex,
+  signed_content_template "{header:x-gs-timestamp}\n{body}"). The X-GS-SIGNATURE header carries the
+  bare lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the
+  secret, over: the X-GS-TIMESTAMP header value, then one newline character (LF, "\n", a real 0x0A
+  byte, not the two characters backslash-n), then the raw request body bytes. Build the signed message
+  as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header values as the
+  exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the `hmacKey` the user chose when creating the subscription, used as
+  UTF-8. Env var: GREENSHADES_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as GREENSHADES_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (the X-GS-TIMESTAMP format is not documented, so only parse it when the user opts
+  in). The separator is a single real newline (LF, 0x0A). In JS use '\n' in a normal string literal
+  (or Buffer.from([0x0a])); in Python b'\n'; a unit test must assert that the signed bytes contain
+  byte 0x0A and not the two characters backslash and n. Greenshades' C# recipe encodes key and content
+  as ASCII; Hookdeck (and the examples) sign the UTF-8 body bytes, which only differs for a non-ASCII
+  body (say so). The recipe's Response Example hash uses placeholder inputs and is not a test vector.
+  Events: subscriptions name events such as payRun.completed, payRun.payRecords.completed,
+  paySchedule.updated, employee.added, employee.updated, employee.directDeposit.updated,
+  employee.earningCode.added (12 in all), but no delivery body is documented, so the field carrying
+  the event name is unknown. The examples read it defensively from a clearly labelled illustrative
+  payload and say so. Methods: Greenshades' docs don't name the HTTP method. Hookdeck's Greenshades
+  source pre-selects POST without managing the method (the user can change it). The examples must NOT
+  be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
+  route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify
+  the signature first for every method, and treat a missing body as empty bytes. Say in SKILL.md and
+  setup.md that Hookdeck's Greenshades source pre-selects POST without managing the method, so any
+  other method the sender uses must also be allowed on the source. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Hookdeck's source type is GREENSHADES, labelled 'Greenshades'.
+testScenario:
+  events:
+    - "payRun.completed"
+    - "employee.added"
+    - "employee.updated"
+catalog:
+  summary: "Verify Greenshades webhooks (`X-GS-SIGNATURE`: hex HMAC-SHA256 of `X-GS-TIMESTAMP`, a newline, then the body), handle pay run, pay schedule and employee events"

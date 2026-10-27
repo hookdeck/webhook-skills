@@ -1,0 +1,58 @@
+name: baseten
+displayName: "Baseten"
+docs:
+  webhooks: https://docs.baseten.co/inference/async
+  verification: https://docs.baseten.co/inference/async
+notes: >
+  Baseten (baseten.co), the model inference platform. Its webhooks are per-request callbacks for async
+  inference: `/async_predict` takes a `webhook_endpoint`, and Baseten POSTs the model output there
+  when the request completes. Delivery (from the docs): Best effort. 2 attempts in total (1 retry
+  about 2 s later), 10 s timeout per attempt, retried only on 500, 502, 503 and 504. If both fail the
+  output is lost (the request status becomes `WEBHOOK_FAILED`). Baseten's docs say: 'When configured,
+  Baseten includes an `X-BASETEN-SIGNATURE` header: X-BASETEN-SIGNATURE: v1=abc123...' 'expected =
+  hmac.new(secret.encode(), body, hashlib.sha256).hexdigest() actual = signature.replace("v1=",
+  "").split(",")[0]' 'The function computes an HMAC-SHA256 hash of the raw request body using your
+  webhook secret. It extracts the signature value after `v1=`' 'The `X-BASETEN-SIGNATURE` header is
+  only included if a webhook secret is configured. ... During rotation, both old and new secrets
+  remain valid for 24 hours.' From the docs (registry summary): Header `X-BASETEN-SIGNATURE:
+  v1=<hex>`. The Python sample computes `hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()`
+  and compares it with the value after `v1=`, cut at the first comma (`.split(",")[0]`), which
+  suggests several comma-separated values can be sent, e.g. during rotation; the page does not say so.
+  No test vector. SIGNATURE SCHEME (it must match Hookdeck's BASETEN source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-baseten-signature", encoding "hex"). The X-BASETEN-SIGNATURE
+  header carries `v1=<hex>`. Strip a leading `v1=` before validating the digest; Hookdeck's parser
+  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: A webhook secret
+  created in the workspace's Secrets tab. During rotation the old and new secrets are both valid for
+  24 hours. Use it as UTF-8 bytes. Env var: BASETEN_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. During secret rotation the
+  header may hold several comma-separated values; accept if any `v1=` entry matches, as Hookdeck does.
+  Events: dispatch on the body's `type` field. The body's `type` is `async_request_completed` in the
+  only example, and no other value is documented: success and failure share it, told apart by `data`
+  (output or null) and `errors` (empty or error objects). It names the callback kind rather than
+  choosing among events. No header names a type. Documented event types (1): async_request_completed.
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's Baseten source manages the
+  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/main-ro/samples-doc/providers/baseten/
+  (latest/async_request_completed.json); base the examples' test payloads on them. Hookdeck's source
+  type is BASETEN, labelled 'Baseten'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Create a webhook secret in the
+  Baseten Secrets tab and paste it here. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "async_request_completed"
+catalog:
+  summary: "Verify Baseten webhooks (`X-BASETEN-SIGNATURE`: `v1=` hex HMAC-SHA256 of the raw body), handle async inference results"

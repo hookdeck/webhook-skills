@@ -1,0 +1,57 @@
+name: affonso
+displayName: "Affonso"
+docs:
+  webhooks: https://docs.affonso.io/webhooks
+  verification: https://docs.affonso.io/webhooks/setup#verifying-webhook-signatures
+notes: >
+  Affonso affiliate-program webhooks. Affonso (affonso.io), an affiliate-program platform for SaaS.
+  Webhooks report affiliate, referral, transaction (commission) and payout changes. Delivery (from the
+  docs): Non-2xx or no response within 10 s fails; exponential backoff for up to 48 h, 11 attempts in
+  all, then marked failed. Affonso says: 'Affonso signs the string `{timestamp}.{rawBody}` with
+  HMAC-SHA256 using your endpoint secret and sends the lowercase hex digest, without any prefix, in
+  X-Affonso-Signature. The timestamp is sent in X-Affonso-Timestamp.' 'The secret is a 64-character
+  hex string. Use it as-is as a string key; do not hex-decode it.' SIGNATURE SCHEME (it must match
+  Hookdeck's AFFONSO source exactly: HMAC controller, algorithm sha256, header x-affonso-signature,
+  encoding hex, signed_content_template "{header:x-affonso-timestamp}.{body}"). The
+  X-Affonso-Signature header carries the bare lowercase hex digest, no prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over: the X-Affonso-Timestamp header value, then a
+  literal ".", then the raw request body bytes. Build the signed message as BYTES, exactly as
+  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
+  trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
+  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
+  endpoint's signing secret, a 64-character hex string used as a UTF-8 string key (do NOT hex-decode
+  it). Env var: AFFONSO_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as AFFONSO_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (X-Affonso-Timestamp is Unix seconds). Events: dispatch on the body's `type` field.
+  Documented event types (21): affiliate.created, affiliate.confirmed, affiliate.updated,
+  affiliate.deleted, referral.updated, referral.lead, referral.converted, referral.deleted,
+  transaction.created, transaction.updated, transaction.approved, transaction.paid,
+  transaction.rejected, transaction.deleted, payout.created, payout.updated, payout.paid,
+  payout.failed, payout.deleted, coupon.created, coupon.deleted. Handle a few common ones and log the rest.
+  Method: POST. Hookdeck's Affonso source manages the method as POST, so the examples handle POST on
+  the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
+  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
+  await request.body()); parse the body only after the check. Documented sample payloads (each JSON
+  file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/b14-merge/samples-doc/providers/affonso/latest/ (affiliate.confirmed.json,
+  affiliate.created.json, affiliate.deleted.json, affiliate.updated.json, ...); base the examples'
+  test payloads on them. Hookdeck's source type is AFFONSO, labelled 'Affonso'.
+testScenario:
+  events:
+    - "referral.converted"
+    - "transaction.created"
+    - "payout.paid"
+catalog:
+  summary: "Verify Affonso webhooks (`X-Affonso-Signature`: hex HMAC-SHA256 of `{X-Affonso-Timestamp}.{body}`), handle affiliate, referral, transaction and payout events"

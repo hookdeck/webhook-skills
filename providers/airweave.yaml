@@ -1,0 +1,58 @@
+name: 'airweave'
+displayName: 'Airweave'
+docs:
+  webhooks: 'https://docs.airweave.ai/webhooks/setup'
+  verification: 'https://docs.airweave.ai/webhooks/setup'
+notes: >-
+  Airweave (airweave.ai), an open-source context-retrieval layer that syncs apps into searchable collections
+  for agents. Webhooks (beta) report sync-job, source-connection and collection lifecycle events; Svix
+  delivers and signs them. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix
+  seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per subscription:
+  GET /webhooks/subscriptions/{id}?include_secret=true returns `secret` as `whsec_...`. A custom `secret`
+  (minimum 24 characters) may be supplied at creation, but what must be pasted into a verifier is the
+  returned whsec_ value (Hookdeck's configuration alert says the same). Research: whsec_ (https://docs.airweave.ai/webhooks/setup:
+  'The response includes a secret field in the format whsec_...'). It starts with whsec_; the key is the
+  base64-decoding of the part after whsec_. AIRWEAVE_WEBHOOK_SECRET holds the full whsec_ value. Verify
+  with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and
+  svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Airweave source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "If you set a custom secret, paste the whsec_ secret
+  Airweave returns for the subscription, not the value you sent." SKILL.md and references/setup.md must
+  state this requirement, quoting the alert verbatim. Verification notes: Airweave's own manual-verification
+  snippets split `svix-signature` on `,` and take the last space-separated token, which is not the Svix
+  parsing (space-delimited `v1,<sig>` entries); they only work for a single signature. Svix's libraries,
+  which the page recommends for production, parse it correctly. Body: {event_type, timestamp}. Flat, per-domain
+  bodies; the common keys are `event_type` and `timestamp` (plus ids per domain). Event type: Top-level
+  `event_type` on every example; bodies are flat per domain (sync: `sync_id`, `sync_job_id`, `collection_*`,
+  `source_type`, `timestamp`). Event types (11 documented, list may not be exhaustive): sync.pending,
+  sync.running, sync.completed, sync.failed, sync.cancelled, source_connection.created, source_connection.auth_completed,
+  source_connection.deleted, collection.created, collection.updated, collection.deleted. Transport: Svix
+  POST; Content-Type always application/json. Delivery: 2xx = delivered; 4xx, 5xx and a 30 s timeout are
+  retried. 5 attempts: immediate, 5 s, 5 min, 30 min, 2 h; then failed (recoverable via the recover endpoint
+  or `recover_since`). Setup: Subscriptions API (URL + event types; enable/disable, recover). No challenge.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified; parse the body only after the check. Hookdeck's source type is AIRWEAVE,
+  labelled 'Airweave'.
+testScenario:
+  events:
+  - 'sync.pending'
+  - 'sync.running'
+  - 'sync.completed'
+catalog:
+  summary: >-
+    Verify Airweave webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
+    secret), handle sync, source connection and collection events

@@ -85,6 +85,12 @@ class TestMethods:
         assert res.status_code == 200
         assert res.json() == {"received": True}
 
+    def test_reads_templated_body_on_get(self, capsys):
+        # Argo CD sends the template body with every method, GET included.
+        res = send("GET", {HEADER: SECRET}, json.dumps(payload_for("on-sync-failed")))
+        assert res.status_code == 200
+        assert "Sync failed: guestbook" in capsys.readouterr().out
+
     def test_empty_post_body(self):
         assert send("POST", {HEADER: SECRET}).status_code == 200
 

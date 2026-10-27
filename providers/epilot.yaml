@@ -1,0 +1,64 @@
+name: 'epilot'
+displayName: 'epilot'
+docs:
+  webhooks: 'https://docs.epilot.io/docs/integrations/webhooks/overview'
+  verification: 'https://docs.epilot.io/docs/integrations/webhooks/security'
+notes: >-
+  epilot (epilot.cloud), a cloud CRM/commerce platform for energy utilities. Webhook configs subscribe
+  to one organization event each (automation trigger, portal activity, entity/file events, Event Catalog
+  events) and are signed per Standard Webhooks with an extra Ed25519 `v1a` signature. Standard Webhooks
+  signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: The v1a (Ed25519) signature entry is
+  skipped; v1 verifies. SECRET: Per webhook, `whsec_<base64>` (the API's example: `whsec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD`),
+  returned ONLY in the create response; a lost secret means recreating the webhook. Research: whsec_ ("Verified
+  using the whsec_... signing secret you received when the webhook was created." https://docs.epilot.io/docs/integrations/webhooks/security).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. EPILOT_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's epilot source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
+  alert for this source reads exactly: "Use the webhook's whsec_ signing secret, not API key, Basic or
+  OAuth authentication. File deliveries in binary_multipart mode sign per-file metadata and fail verification."
+  SKILL.md and references/setup.md must state this requirement, quoting the alert verbatim. Verification
+  notes: replay_window_seconds 300 is the docs' sample ("reject requests older than 5 minutes"). The symmetric
+  sample takes `split(" ")[1]`, i.e. assumes `v1a` comes first. Endpoint auth (X-API-Key, Basic, OAuth
+  bearer) can be configured alongside. Body: {metadata, entity, relations, activity, changed_attributes}.
+  Default (no JSONata) shape; `metadata` carries webhook_id, organization_id, correlation_id and optional
+  automation/user ids. The example block has `//` comments, so it does not parse. Event type: Only the
+  Payload Structure example shows `metadata.event_type`; the field table under it does not list it, and
+  the portal example's `metadata` has only webhook_id and organization_id. `metadata.webhook_id` (one
+  webhook config = one eventName) is the reliable join key. Event types: per-organization vocabulary:
+  each webhook config subscribes to one `eventName` returned by GET /v1/webhooks/events for that organization
+  (e.g. `customer_request_created`, the Automation Trigger Webhook, portal activities, Event Catalog `event_*`
+  events). Transport: JSON by default, sent with Transfer-Encoding: chunked; file events can instead go
+  as `multipart/form-data` (`binary_multipart`) or with Base64 file bytes in the JSON (`json_base64`).
+  A JSONata expression can reshape the JSON body. The config's httpMethod is configurable. Delivery: retryPolicy
+  (new webhooks: enabled, maxAttempts 3, max 5) retries 5xx, 429 and connection errors on the Standard
+  Webhooks schedule 5 s, 5 min, 30 min, 2 h, 5 h; webhooks created before the feature have no retries.
+  webhook-id is stable across retries. Events are logged for 4 weeks and can be replayed. Setup: One webhook
+  config per eventName (UI or Webhooks API): URL, HTTP method, auth, filter, optional JSONata, retry policy,
+  delivery mode. No challenge. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is EPILOT, labelled 'epilot'.
+testScenario:
+  events:
+  - automation_trigger_webhook
+  - customer_request_created
+  - FileCreated
+catalog:
+  summary: >-
+    Verify epilot webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle automation_trigger_webhook, customer_request_created and FileCreated events

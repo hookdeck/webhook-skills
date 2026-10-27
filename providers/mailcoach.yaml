@@ -1,0 +1,55 @@
+name: mailcoach
+displayName: "Mailcoach"
+docs:
+  webhooks: https://www.mailcoach.app/resources/learn-mailcoach/advanced/webhooks/
+  verification: https://www.mailcoach.app/resources/learn-mailcoach/advanced/webhooks/
+notes: >
+  Mailcoach (mailcoach.app, by Spatie), email marketing, hosted and self-hosted. Webhooks are
+  configured on the settings Webhooks screen and sent with spatie/laravel-webhook-server. Delivery
+  (from the docs): A webhook can be disabled after too many consecutive failures (`maximum_attempts`,
+  e.g. 5, with `disable_failed_webhooks` opted in on self-hosted); retries do not count toward that.
+  Success criteria and retry timing are not stated. Mailcoach's docs say: 'On the details page of a
+  webhook, you can enter a secret. This secret will be used to calculate a signature that will be
+  added in the Signature header to all requests from Mailcoach to your app.' '$payloadJson =
+  json_encode($payload); $signature = hash_hmac('sha256', $payloadJson, $secret);' 'public function
+  calculateSignature(string $webhookUrl, string $body, string $secret): string { return
+  hash_hmac('sha256', $body, $secret); }' From the docs (registry summary): Header `Signature: <hex>`,
+  no prefix. MAC = PHP `hash_hmac('sha256', ...)` (lowercase hex by default) keyed with the webhook
+  secret. The guide computes it over `json_encode($payload)`, i.e. a re-encoding of the decoded body;
+  spatie/laravel-webhook-server, which Mailcoach sends with, signs the exact body string it sends
+  (`DefaultSigner::calculateSignature(..., string $body, ...)`), and that body is itself `json_encode`
+  of the payload, so the raw body is what is signed. SIGNATURE SCHEME (it must match Hookdeck's
+  MAILCOACH source exactly: HMAC controller, algorithm "sha256", header_key "signature", encoding
+  "hex"). The Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: A secret the user enters on the
+  webhook details page. Use it as UTF-8 bytes. Env var: MAILCOACH_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. The header is
+  literally named `Signature`. Events: dispatch on the body's `event` field. Top-level body field
+  `event`, the PHP event class name (`SubscribedEvent`). Each Payloads section lists `event` first,
+  then the subscriber or campaign fields flat beside it. No header names the event. Documented event
+  types (4): UnconfirmedSubscriberCreatedEvent, SubscribedEvent, UnsubscribedEvent, CampaignSentEvent.
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's Mailcoach source manages the
+  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Hookdeck's source type is MAILCOACH, labelled 'Mailcoach'. Hookdeck shows this setup note for
+  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Set a
+  secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "SubscribedEvent"
+    - "UnsubscribedEvent"
+    - "CampaignSentEvent"
+catalog:
+  summary: "Verify Mailcoach webhooks (`Signature`: hex HMAC-SHA256 of the raw body), handle subscriber and campaign events"

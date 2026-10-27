@@ -129,7 +129,7 @@ integrity, but it is an extra; the basic auth check remains the one Hookdeck per
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | Env vars unset, or the webhook has no basic auth credentials |
-| 401 on GET/PUT/PATCH/DELETE only | The method isn't allowed on the Hookdeck source (it pre-selects POST) |
+| GET/PUT/PATCH/DELETE deliveries never reach you | The method isn't allowed on the Hookdeck source (it pre-selects POST) |
 | 401 for some passwords | Splitting on every colon instead of the first |
 | 401 only behind a proxy | The proxy strips the `Authorization` header |
 | Rebilly keeps retrying | The response wasn't exactly `200`, or took longer than 20 seconds |

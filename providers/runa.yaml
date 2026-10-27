@@ -1,0 +1,53 @@
+name: 'runa'
+displayName: 'Runa'
+docs:
+  webhooks: 'https://docs.runa.io/reference/webhooks'
+  verification: 'https://docs.runa.io/reference/webhooks#signature-verification'
+notes: >-
+  Runa (runa.io), a payouts network for gift cards, prepaid cards and push-to-card. Webhooks report order
+  completion and product-catalog changes; endpoints are added in a Svix webhook portal opened from the
+  API section of the Runa account. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. SECRET: Per endpoint, from the Svix portal. The sample secret is Svix's documentation sample
+  (`whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`). Research: whsec_ (https://docs.runa.io/reference/webhooks:
+  const secret = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"; Svix-powered portal). It starts with whsec_;
+  the key is the base64-decoding of the part after whsec_. RUNA_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Runa source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after
+  the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such
+  as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: Raw body is required. Body: see docs. No envelope: order.completion is the order summary (or
+  `{id, status}` when FAILED); product.update is `{product_code, old_state, new_state, timestamp}`. Event
+  type: No body field names the event. The OpenAPI `webhooks` schemas are bare resources: order.completion
+  is an order summary with `status` COMPLETED or a `{id, status: FAILED}` stub (OpenAPI discriminator
+  on `status`, which distinguishes outcome, not event), product.update is `{product_code, old_state, new_state,
+  timestamp}`. Each endpoint subscribes to exactly one event type, so the endpoint URL identifies the
+  event. Event types (2 documented, list may not be exhaustive): order.completion, product.update. Transport:
+  JSON POST via Svix. Delivery: Any 2xx within 15 s succeeds; otherwise the Svix schedule applies. Endpoints
+  failing every attempt for 5 days are disabled. Manual resend and time-range recovery in the portal.
+  Order is not guaranteed (product.update page). Setup: One event type per endpoint in the Svix portal
+  (add more endpoints for more types). Webhooks are not available in the playground environment. No challenge
+  is documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is RUNA, labelled 'Runa'.
+testScenario:
+  events:
+  - 'order.completion'
+  - 'product.update'
+catalog:
+  summary: >-
+    Verify Runa webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_` secret),
+    handle order.completion and product.update events

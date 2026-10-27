@@ -1,0 +1,72 @@
+name: cryptoprocessing
+displayName: "CryptoProcessing"
+docs:
+  webhooks: https://docs.cryptoprocessing.com/api-reference/callbacks/callbacks-overview
+  verification: https://docs.cryptoprocessing.com/api-reference/callbacks/callbacks-overview
+notes: >
+  CryptoProcessing (cryptoprocessing.com, by CoinsPaid), the crypto payment gateway. Callbacks report
+  status changes of deposits, withdrawals, exchanges, payment requests and legacy invoices to one
+  callback URL set in the merchant portal. Delivery (from the docs): Only HTTP 200 stops delivery;
+  otherwise 12 retries after the initial attempt (+1, +5, +15, +30, +60, +90, +120, +180, then +240
+  minutes four times), not configurable. Answer a duplicate successful callback with 201 to stop its
+  retries. CryptoProcessing's docs say: 'Read the Master API key from the `X-Processing-Key` header.
+  Generate an HMAC-SHA512 signature for the exact callback request body using the secret key of that
+  Master key, then compare it with the value in the `X-Processing-Signature` header.' 'Compute the
+  HMAC signature using the SHA-512 algorithm and encode the result as a lowercase hexadecimal string.'
+  'Only the active Master key is used to sign callbacks. After you activate a different Master key,
+  verify subsequent callbacks with the new key's secret. Custom keys are never used to sign
+  callbacks.' From the docs (registry summary): `X-Processing-Signature: <hex>` = lowercase hex
+  HMAC-SHA512(Master API key secret, raw body). `X-Processing-Key` carries the Master API key (public
+  part) that signed. The authentication page's test vector (secret `AbCdEfG123456`, body
+  `{"currency":"BTC","foreign_id":"123456"}`) reproduces; it is written for signing API requests,
+  which use the same scheme. SIGNATURE SCHEME (it must match Hookdeck's CRYPTOPROCESSING source
+  exactly: HMAC controller, algorithm "sha512", header_key "x-processing-signature", encoding "hex").
+  The X-Processing-Signature header carries the bare lowercase hex digest, no prefix. Compare the
+  WHOLE header value as one digest (no list splitting or prefix parsing). The signature is lowercase
+  hex HMAC-SHA512, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The secret of the account's ACTIVE
+  Master API key; custom keys never sign callbacks, and activating another Master key changes the
+  secret. Use it as UTF-8 bytes. Env var: CRYPTOPROCESSING_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. HMAC-SHA512 (128 hex
+  characters). `X-Processing-Key` names the Master API key that signed. Events: dispatch on the body's
+  `type` field. Top-level `type` names the transaction kind (the five callback schemas' enums), and
+  `status` its new state (`confirmed`, `not_confirmed`, `cancelled`, `pending`, `paid`, `expired`,
+  `failed`, ... per kind). A callback fires on every status change, so a router needs both. No header
+  names the type. Documented event types (10): deposit, deposit_exchange, deposit_wallet_client,
+  withdrawal, withdrawal_exchange, withdrawal_instant, withdrawal_instant_exchange, exchange,
+  payment_request, invoice. Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  CryptoProcessing source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
+  Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON (secret,
+  body string, headers) in
+  /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/cryptoprocessing.json.
+  Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or
+  paste the exact body bytes (json.load the file, or copy the string exactly; do not pretty-print or
+  re-serialise), and assert that the verifier accepts that header value
+  (03c25fcf7cd35e7d995e402cd5d51edd72d48e1471e865907967809a0c189ba55b90815f20e2bb10f82c7a9e9d865546fda58989c2ae9e8e2ff7bc29195fa1ec)
+  with that secret. Name the vector in references/verification.md. Documented sample payloads (each
+  JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/cryptoprocessing/ (latest/deposit.json,
+  latest/deposit_exchange.json, latest/deposit_wallet_client.json, latest/exchange.json, ...); base
+  the examples' test payloads on them. Hookdeck's source type is CRYPTOPROCESSING, labelled
+  'CryptoProcessing'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Paste the secret key of your
+  active Master API key. Rotating that key changes the callback secret."
+testScenario:
+  events:
+    - "deposit"
+    - "withdrawal"
+    - "exchange"
+catalog:
+  summary: "Verify CryptoProcessing webhooks (`X-Processing-Signature`: hex HMAC-SHA512 of the raw body), handle deposit, withdrawal and exchange callbacks"

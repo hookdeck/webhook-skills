@@ -1,0 +1,62 @@
+name: 'recurrente'
+displayName: 'Recurrente'
+docs:
+  webhooks: 'https://docs.recurrente.com/guias-espanol/comenzar/webhooks'
+  verification: 'https://docs.recurrente.com/guias-espanol/comenzar/webhooks'
+  events: 'https://docs.recurrente.com/referencia-api/api-reference/webhook-events/intent-succeeded-webhook'
+notes: >-
+  Recurrente (recurrente.com), a Guatemalan payments platform (cards, bank transfer, crypto, balance,
+  cash; subscriptions; transfers and withdrawals; connected accounts). Docs are in Spanish. Endpoints
+  are registered in the dashboard (Configuración > Desarrolladores y API > Webhooks) or via POST /api/webhook_endpoints
+  and delivered by Svix. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix
+  seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: One secret
+  per endpoint, returned once as `signingSecret` by POST /api/webhook_endpoints or read in the Svix dashboard;
+  the documented example is Svix's sample `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`. Research: whsec_ (https://docs.recurrente.com/guias-espanol/comenzar/webhooks:
+  "con el formato `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`"). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. RECURRENTE_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix
+  library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature
+  and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
+  headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual
+  check) the three values under the header names it expects (the svix library accepts either set itself,
+  so pass it both sets of headers rather than only svix-*). Include a test that a delivery signed the
+  same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Recurrente source
+  (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded after the prefix and any other
+  secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp
+  window; core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces
+  a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original
+  timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required. The timestamp check
+  is optional per the docs ("unos minutos", no number). Body: {type, event_type, api_version, id, legacy_id,
+  receipt_number, status, raw_status, created_at, customer, amount_in_cents, currency, product, checkout,
+  payment, details}. Unified intent payload. Legacy and non-intent events (subscription.*, transfer.*,
+  ...) have their own flat shapes, each with `event_type` and `api_version`. Event type: Top-level `event_type`
+  in both the unified (`intent.*`) and the legacy per-method payloads. In the unified payload `type` is
+  the payment method (`payment`, `bank_transfer`, ...), not the event. Event types (49 documented, list
+  may not be exhaustive): verification.completed, verification.rejected, tax_invoice_settings.enabled,
+  intent.succeeded, intent.pending, intent.failed, intent.canceled, intent.paid, subscription.create,
+  subscription.past_due, subscription.pause, subscription.unpause, subscription.reactivate, subscription.update,
+  subscription.item_added, subscription.item_removed, subscription.invoice_item_added, subscription.cancel,
+  setup_intent.succeeded, setup_intent.cancelled, automated_bank_transfer_intent.succeeded, cash_intent.succeeded,
+  refund.create, dispute.create, dispute.update, account_connection.create, partner_commission_invoice.issued,
+  partner_commission_invoice.failed, transfer.sent, transfer.received and 19 more. Transport: JSON POST
+  via Svix. Delivery: Non-2xx is retried immediately after the first failure, then 1 min, 5 min, 30 min,
+  2 h and 6 h later (the page does not say whether each delay is from the previous attempt). No timeout
+  or ordering statement; duplicates possible. Setup: Endpoints receive every event (no per-endpoint filter
+  is described); several URLs can be registered and each gets every event. No challenge is documented,
+  so the row has no handshake block. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is RECURRENTE, labelled 'Recurrente'.
+testScenario:
+  events:
+  - 'intent.succeeded'
+  - 'verification.completed'
+  - 'verification.rejected'
+catalog:
+  summary: >-
+    Verify Recurrente webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), handle intent.succeeded, subscription and verification events

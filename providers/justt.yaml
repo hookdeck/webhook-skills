@@ -1,0 +1,58 @@
+name: 'justt'
+displayName: 'Justt'
+docs:
+  webhooks: 'https://developers.justt.ai/docs/webhook-introduction'
+  verification: 'https://developers.justt.ai/docs/signature-verification'
+notes: >-
+  Justt (justt.ai), chargeback management and dispute automation for merchants. Webhooks report chargeback,
+  pre-chargeback alert and CRM-subscription-cancellation events, signed with webhook-* headers (Standard
+  Webhooks; the docs' dashboard, message ids and retry/recovery tooling are Svix's). Not available to
+  every customer yet. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: One signing
+  secret per endpoint, copied from the webhook dashboard's endpoint settings. Its prefix is never printed;
+  the sample's `split('_')[1]` base64 decode implies `whsec_<base64>`. Research: whsec_ (Svix app portal
+  shown in docs screenshot; sample decodes secret.split('_')[1] as base64) https://developers.justt.ai/docs/signature-verification.
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. JUSTT_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Justt source
+  (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any
+  other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required ("The signature is calculated using the exact raw request body"). Body: {type, timestamp,
+  data}. `timestamp` is ISO 8601; `data` is the event-specific object. No event id in the body; `webhook-id`
+  (`msg_...`) identifies the message. Event type: Top-level `type` of a `type`/`timestamp`/`data` body,
+  an enum of the event's own name in every reference schema. The signature page's code sample uses a `ping`
+  body with `event_type` instead; that sample is not one of the reference payloads. Event types (11 documented,
+  list may not be exhaustive): chargeback.created, chargeback.updated, chargeback.status.updated, chargeback.evidence.submitted,
+  chargeback.accepted, pre_chargeback_alert.received, pre_chargeback_alert.refund.succeeded, pre_chargeback_alert.refund.failed,
+  pre_chargeback_alert.transaction_matched, subscription.cancel_immediately.success, subscription.cancel_immediately.failed.
+  Transport: POST with an application/json body (the reference requestBody content type). Delivery: 2xx
+  within 15 s (retry page and introduction; the reference spec says 30 s). 4xx except 410, 5xx, timeouts
+  and connection failures are retried on an 8-attempt schedule (about 27.6 h); 410 Gone is permanent.
+  An endpoint failing for 5 consecutive days is disabled. The dashboard can resend one message or recover
+  failed ones since a date. Setup: Endpoints are added in Justt's webhook dashboard, subscribing to all
+  events (the default) or selected types. No challenge or validation request is documented, so the row
+  has no handshake block. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  any content type works and the exact bytes are verified; parse the body only after the check. Hookdeck's
+  source type is JUSTT, labelled 'Justt'.
+testScenario:
+  events:
+  - 'chargeback.created'
+  - 'chargeback.updated'
+  - 'chargeback.status.updated'
+catalog:
+  summary: >-
+    Verify Justt webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle chargeback, pre-chargeback alert and subscription events

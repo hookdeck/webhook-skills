@@ -1,0 +1,24 @@
+name: optimizely
+displayName: "Optimizely"
+docs:
+  webhooks: https://docs.developers.optimizely.com/feature-experimentation/docs/configure-webhooks
+  verification: https://docs.developers.optimizely.com/feature-experimentation/docs/configure-webhooks
+notes: >
+  Optimizely Feature Experimentation project webhooks (Settings -> Webhooks): a POST when the
+  datafile of an environment updates, and change-history notifications for the entity/action pairs
+  selected on the webhook. Only Feature Experimentation is in scope (not Web Experimentation or the
+  CMS products). Nothing about timeouts or retries is documented. Signature: header
+  `X-Hub-Signature: sha1=<hex>`, hex HMAC-SHA1 keyed with the webhook's secret token (UTF-8 bytes,
+  as-is) over the raw request body only; no timestamp is signed. The secret is generated per webhook
+  and shown once right after creation. The docs publish a test vector (secret
+  `yIRFMTpsBcAKKRjJPCIykNo6EkNxJn_nq01-_r3S8i4`, a datafile body,
+  `sha1=b2493723c6ea6973fbda41573222c8ecb1c82666`) that every example's tests include. Matches
+  Hookdeck's OPTIMIZELY source (HMAC, sha1, x-hub-signature, hex, POST). Events: dispatch on the body's
+  `event` field; documented values are project.datafile_updated and project.ruleset_updated. For
+  change-history events `data` is an array of change records; for the datafile event it is an object.
+testScenario:
+  events:
+    - "project.datafile_updated"
+    - "project.ruleset_updated"
+catalog:
+  summary: "Verify Optimizely webhooks (`X-Hub-Signature`: `sha1=` hex HMAC-SHA1 of the raw body), handle datafile and change-history events"

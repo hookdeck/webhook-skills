@@ -1,0 +1,55 @@
+name: 'skovik'
+displayName: 'Skovik'
+docs:
+  webhooks: 'https://developer.skovik.com/docs/api-webhooks-receiving'
+  verification: 'https://developer.skovik.com/docs/api-webhooks-receiving'
+  events: 'https://developer.skovik.com/reference/api-webhooks'
+notes: >-
+  Skovik (skovik.com), an operations platform whose API exposes users, branches and export orders. Webhook
+  endpoints are managed in the settings UI; each delivery is a thin JSON:API-style notification pointing
+  at the related resource. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: One secret
+  per endpoint, managed (and regenerated, invalidating the old one immediately) in the settings page;
+  `whsec_` + base64 random value. Research: whsec_ (https://developer.skovik.com/docs/api-webhooks-receiving:
+  "the prefix whsec_ followed by a base64-encoded random value"). It starts with whsec_; the key is the
+  base64-decoding of the part after whsec_. SKOVIK_WEBHOOK_SECRET holds the full whsec_ value. Verify
+  with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id,
+  webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier):
+  read the webhook-* headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id,
+  -timestamp, -signature), exactly as Hookdeck does; then hand the library (or manual check) the three
+  values under the header names it expects (for the standardwebhooks library, pass them as webhook-id,
+  webhook-timestamp and webhook-signature). Include a test that a delivery signed the same way but sent
+  with the other prefix's headers is accepted. This matches Hookdeck's Skovik source (Standard Webhooks,
+  headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix and any other secret used
+  as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored, no timestamp window;
+  core also reads the other prefix's headers, webhook-* or svix-*). The library always enforces a fixed
+  5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend the original timestamp,
+  so the library rejects late retries after 5 minutes, and point to a manual verifier in references/verification.md
+  (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
+  entry in constant time after a length check, require the timestamp to be a plain positive integer) where
+  the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
+  closed when the secret env var is unset. Verification notes: Raw body is required. Each attempt is re-signed
+  with a fresh webhook-timestamp. Body: {id, type, timestamp, data}. `id` is the delivery id (= webhook-id);
+  `data.id` is the event id (dedupe key across endpoints). The illustration uses `<...>` placeholders.
+  Event type: Top-level `type`; `data.attributes.name` repeats it and `data.type` is always `webhook_events`.
+  The related resource is only linked (`data.relationships.related_object`). Event types (10 documented,
+  list may not be exhaustive): users.created, users.updated, users.archived, export_orders.created, export_orders.completed,
+  export_orders.failed, branches.created, branches.updated, branches.archived, misc.ping. Transport: JSON
+  POST; User-Agent `Skovik-Webhook (+https://developer.skovik.com)`. Delivery: 2xx within 5 s succeeds;
+  anything else (timeouts, connection errors) is retried with exponential backoff and jitter over about
+  three days, then abandoned. 410 Gone stops delivery to the endpoint; an endpoint failing for an extended
+  period is disabled. misc.ping is never retried. No ordering statement. Setup: Endpoints in the settings
+  UI (HTTPS only), each with its own secret. misc.ping is a signed test delivery, not a challenge, so
+  the row has no handshake block. Express examples must read the raw body with express.raw({ type: '*/*'
+  }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is SKOVIK, labelled 'Skovik'.
+testScenario:
+  events:
+  - 'export_orders.completed'
+  - 'users.created'
+  - 'users.updated'
+catalog:
+  summary: >-
+    Verify Skovik webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle users.created, export_orders.completed and branches.updated events

@@ -1,0 +1,60 @@
+name: 'trackstar'
+displayName: 'Trackstar'
+docs:
+  webhooks: 'https://docs.trackstarhq.com/how-to-guides/webhooks/webhooks'
+  verification: 'https://docs.trackstarhq.com/how-to-guides/webhooks/webhooks'
+notes: >-
+  Trackstar (trackstarhq.com), a unified API for WMS, cart, carrier and freight systems. Webhooks fire
+  on resource changes detected at each resource's sync frequency and on connection/admin events; endpoints
+  are configured in the Trackstar dashboard (a Svix portal with filtering and transformations). Standard
+  Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint, from
+  the Trackstar dashboard's webhook portal. Trackstar does not show the format; Svix secrets are `whsec_`-prefixed.
+  Research: whsec_ (Svix-hosted: Trackstar uses Svix as its webhook provider and Svix Transformations;
+  Svix issues whsec_ secrets. No Trackstar page prints the secret.). It starts with whsec_; the key is
+  the base64-decoding of the part after whsec_. TRACKSTAR_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Trackstar source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification
+  notes: Raw body is required. Body: {connection_id, data, event_type, integration_name, previous_attributes}.
+  `previous_attributes` only on updated events, with dot-joined paths for nested changes. The sample has
+  trailing commas. Event type: Top-level `event_type`, with `connection_id`, `integration_name`, `data`
+  and (on updates) `previous_attributes`. Event names mostly use hyphens in the resource part (`inbound-shipment.updated`)
+  but the guide's own sample writes `inbound_shipment.updated`, and the inventory ledger events use an
+  underscore. Event types (47 documented, list may not be exhaustive): connection.created, connection.deleted,
+  connection-error.created, connection-error.deleted, connection-error.updated, connection.force-sync-completed,
+  connection.historical-sync-completed, connection.schedule-stuck, connection.sync-job-completed, connection.sync-job-stuck,
+  install.failed, carrier-file.created, carrier-invoice-line-item.created, carrier-invoice-line-item.updated,
+  cart-order.created, cart-order.cart-shipment.created, cart-order.updated, cart-product.created, cart-product.updated,
+  cart-warehouse.created, cart-warehouse.updated, freight-shipment.created, freight-shipment.updated,
+  bill.created, bill.updated, inbound-shipment.created, inbound-shipment.receipt.created, inbound-shipment.updated,
+  inventory.created, inventory_ledger.created and 17 more. Transport: JSON POST via Svix. Delivery: Resource
+  webhooks fire at the resource's sync frequency and are not sent during a connection's initial sync (connection.historical-sync-completed
+  marks its end). No retry, timeout or ordering statement. Setup: Endpoints in the Trackstar dashboard
+  (Svix portal) with event-type, connection and resource-ID filters and optional JavaScript transformations.
+  No challenge is documented, so the row has no handshake block. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is TRACKSTAR, labelled 'Trackstar'.
+testScenario:
+  events:
+  - 'order.created'
+  - 'connection.historical-sync-completed'
+  - 'connection.deleted'
+catalog:
+  summary: >-
+    Verify Trackstar webhook signatures (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`,
+    HMAC-SHA256), handle order.created, order.updated and connection.historical-sync-completed events

@@ -1,0 +1,59 @@
+name: langfuse
+displayName: "Langfuse"
+docs:
+  webhooks: https://langfuse.com/docs/prompt-management/features/webhooks-slack-integrations
+  verification: https://langfuse.com/docs/prompt-management/features/webhooks-slack-integrations
+notes: >
+  Langfuse (langfuse.com), the open-source LLM engineering platform. Prompt-management Automations
+  with a "Webhook Call" action POST a JSON notification when a prompt version is created, updated
+  (labels or tags) or deleted; a Slack action is the other option. Delivery (from the docs): A 2xx
+  confirms receipt; otherwise Langfuse may retry with exponential back-off until it succeeds. No
+  timeout or attempt limit is documented. Langfuse's docs say: 'x-langfuse-signature:
+  t=<timestamp>,v1=<signature> (see note on HMAC signature verification below)' 'message =
+  f"{timestamp}.{raw_body}".encode("utf-8") expected_sig_hex = hmac.new( secret.encode("utf-8"),
+  message, hashlib.sha256 ).hexdigest()' 'Retrieve the secret when you create the webhook (you can
+  regenerate it later).' From the docs (registry summary): Header `x-langfuse-signature:
+  t=<timestamp>,v1=<hex>`. MAC = hex of HMAC-SHA256(key = the signing secret as UTF-8, message =
+  `<timestamp>.<raw body>`). Both the Python and the TS sample split on `,` and `=` and compare the
+  decoded digests in constant time. SIGNATURE SCHEME (it must match Hookdeck's LANGFUSE source
+  exactly: HMAC controller, algorithm "sha256", header_key "x-langfuse-signature", encoding "hex",
+  delimiter ".", prefix_data_with_timestamp true). The x-langfuse-signature header is
+  `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header (a string;
+  never parse it to a number and re-format it), then a literal ".", then the raw request body bytes.
+  The header may carry more than one v1= entry (for example during key rotation): accept the delivery
+  if ANY v1= entry matches, and ignore other keys such as v0. A header with no t= value fails. Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: A signing secret per webhook automation, shown when it is created and
+  regenerable later. Use it as UTF-8 bytes. Env var: LANGFUSE_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps
+  by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck
+  itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in
+  tolerance (an env var such as LANGFUSE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
+  SKILL.md and verification.md (t is Unix seconds). Events: dispatch on the body's `action` field.
+  Top-level body field `action`, the prompt-version action. The only documented object is `"type":
+  "prompt-version"`, so `type` is constant today and `action` is what varies. The automation UI lists
+  the actions as Created / Updated / Deleted; only `created` is shown in a body, so the lowercase wire
+  spelling of `updated` and `deleted` is by analogy. An `updated` change fires two deliveries (version
+  gaining and version losing the label/tag). Documented event types (3): created, updated, deleted.
+  Handle a few common ones and log the rest. Method: POST. Hookdeck's Langfuse source manages the
+  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
+  (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
+  check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show
+  it) are in /home/user/regwt/main-ro/samples-doc/providers/langfuse/ (v1/created.json); base the
+  examples' test payloads on them. Hookdeck's source type is LANGFUSE, labelled 'Langfuse'.
+testScenario:
+  events:
+    - "created"
+    - "updated"
+    - "deleted"
+catalog:
+  summary: "Verify Langfuse webhooks (`x-langfuse-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle prompt version created, updated and deleted events"

@@ -1,0 +1,69 @@
+name: 'velt'
+displayName: 'Velt'
+docs:
+  webhooks: 'https://docs.velt.dev/webhooks/advanced'
+  verification: 'https://docs.velt.dev/webhooks/advanced'
+  events: 'https://docs.velt.dev/webhooks/advanced'
+notes: >-
+  Velt (velt.dev), an SDK for in-app collaboration (comments, huddles, CRDT sync, recordings, review workflows).
+  Advanced (V2) webhooks, Enterprise only, are delivered through Svix and signed per Standard Webhooks;
+  Basic (V1) webhooks are unsigned. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: Per endpoint
+  in the Velt console's Advanced webhooks section; `whsec_` + base64 (the page's example secret is `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`).
+  Research: whsec_ ("the base64 portion of your signing secret (this is the part after the `whsec_` prefix)",
+  https://docs.velt.dev/webhooks/advanced). It starts with whsec_; the key is the base64-decoding of the
+  part after whsec_. VELT_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Velt source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Only Velt Advanced (V2) webhooks, available on Enterprise,
+  are signed. Basic (V1) webhooks send an auth token instead and fail verification." SKILL.md and references/setup.md
+  must state this requirement, quoting the alert verbatim. Conditional signing: Only Advanced (V2) webhooks,
+  which are available to Enterprise customers only, are HMAC-signed. Basic (V1) webhooks document no signature,
+  only an optional auth token sent in the `Authorization` header as `Basic <token>`, and core's configuration
+  alert says they fail verification. Verification notes: Raw body is required ("you should *not* change
+  the body in any way before verifying"). Payload encryption, when enabled, is layered on the body; the
+  signature still covers the raw delivered body. Body: {actionType, data, event, platform, source, webhookId}.
+  WebhookV2Payload; `data` carries `actionUser`, the feature object (`commentAnnotation`, `crdtData`,
+  ...) and `metadata` (apiKey, document, organization, pageInfo). Event type: Top-level `event` beside
+  `actionType` (the verb, e.g. `updateData`, `add`), `source` (the feature), `platform`, `webhookId` and
+  `data`. Both samples' `event` is a listed type. Encoded or encrypted deliveries (opt-in) hide the body
+  behind base64 or `{encryptedData, encryptedKey, iv}`. Event types (33 documented, list may not be exhaustive):
+  comment_annotation.add, comment_annotation.assign, comment_annotation.status_change, comment_annotation.priority_change,
+  comment_annotation.custom_list_change, comment_annotation.subscribe, comment_annotation.unsubscribe,
+  comment_annotation.accept, comment_annotation.reject, comment_annotation.approve, comment_annotation.suggestion_accept,
+  comment_annotation.suggestion_reject, comment.add, comment.update, comment.delete, comment.reaction_add,
+  comment.reaction_delete, huddle.create, huddle.join, crdt.update_data, recorder.done, execution.dispatched,
+  execution.completed, execution.failed, execution.cancelled, step.awaiting-approval, step.completed,
+  step.failed, step.breached, step.cancelled and 3 more. Transport: JSON POST by default; optional Base64
+  payload encoding and optional AES-256-CBC payload encryption (RSA-OAEP wrapped key) change the body
+  format. Delivery: 2xx within 15 s (3xx counts as failure); retries immediately, 5 s, 5 min, 30 min,
+  2 h, 5 h, 10 h, 10 h, then the message is Failed and a `message.attempt.exhausted` webhook is sent.
+  Per-endpoint rate limits; manual retry and Recover in the console. Setup: Endpoints are added in the
+  Velt console with selected event types (none selected = all). Transformations can rewrite method, URL
+  and body in flight. No challenge or validation request is documented, so the row has no handshake block.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified; parse the body only after the check. Hookdeck's source type is VELT,
+  labelled 'Velt'.
+testScenario:
+  events:
+  - 'crdt.update_data'
+  - 'comment_annotation.add'
+  - 'comment_annotation.assign'
+catalog:
+  summary: >-
+    Verify Velt Advanced (V2) webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle comment_annotation.add, comment.add, crdt.update_data and recorder.done events

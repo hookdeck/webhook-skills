@@ -1,0 +1,55 @@
+name: taskade
+displayName: "Taskade"
+docs:
+  webhooks: https://docs.taskade.com/developers/webhooks
+  verification: https://docs.taskade.com/developers/webhooks#verify-delivery-signatures
+notes: >
+  Taskade (taskade.com), AI workspace and task management. Signed outbound webhooks are registered
+  with `POST /api/v2/webhooks` (Pro and above), or in Settings > API, with a target URL, events and
+  optional workspace scoping. Inbound automation webhooks and the no-code "automation + HTTP action"
+  route are different surfaces and are not this row. Delivery (from the docs): Target must be https
+  (SSRF-guarded fetch), at most 2,048 characters; up to 100 event-workspace combinations per account.
+  No retry or timeout is documented. Taskade's docs say: 'Every delivery carries an
+  `X-Taskade-Signature` header — `sha256=` followed by the hex HMAC-SHA256 of the **raw request
+  body**, keyed with your webhook's secret: X-Taskade-Signature:
+  sha256=5f4dcc3b5aa765d61d8327deb882cf99...' 'Registration returns a **signing secret exactly once**
+  — store it before anything else.' From the docs (registry summary): Header `X-Taskade-Signature:
+  sha256=<hex>`. MAC = lowercase hex of HMAC-SHA256(key = the webhook's signing secret, message = the
+  raw request body, before JSON parsing), prefixed `sha256=`. The TypeScript sample compares the whole
+  prefixed string with `timingSafeEqual` after a length check. SIGNATURE SCHEME (it must match
+  Hookdeck's TASKADE source exactly: HMAC controller, algorithm "sha256", header_key
+  "x-taskade-signature", encoding "hex"). The X-Taskade-Signature header carries `sha256=<hex>`. Strip
+  a leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
+  accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
+  the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
+  the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
+  re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
+  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  constant-time compare. Secret: The `secret` in the registration response, shown exactly once. Use it
+  as UTF-8 bytes. Env var: TASKADE_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. Events: dispatch on the payload. The page documents the
+  event names used to register (`"events": ["task.due", ...]`) but shows no delivery body or event
+  header for a registered webhook, so where a delivery names its event is not documented. The payloads
+  under "Receiving Taskade Events" belong to the no-code automation route, not to these deliveries.
+  Documented event types (6): task.due, task.assigned, comment.created, project.created,
+  project.assigned, project.joined. Handle a few common ones and log the rest. Method: POST.
+  Hookdeck's Taskade source manages the method as POST, so the examples handle POST on the webhook
+  route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is TASKADE, labelled
+  'Taskade'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
+  tell the user the same thing, verbatim: "Only webhooks registered through the Taskade public API
+  (Pro plan and above) are supported. Legacy webhooks are unsigned and fail verification."
+testScenario:
+  events:
+    - "task.due"
+    - "task.assigned"
+    - "project.created"
+catalog:
+  summary: "Verify Taskade webhooks (`X-Taskade-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle task, comment and project events"

@@ -1,0 +1,64 @@
+name: argyle
+displayName: "Argyle"
+docs:
+  webhooks: https://docs.argyle.com/api-guide/webhooks
+  verification: https://docs.argyle.com/api-guide/webhooks
+notes: >
+  Argyle (argyle.com), the payroll and income verification API. Webhooks report verification, account
+  and data-resource changes (paystubs, gigs, shifts, payroll documents, user uploads and more) for
+  every user of the API key. Delivery (from the docs): Answer 200 within 10 s. Without one, the
+  delivery is retried once after 30 s, and only for 429, 500, 502, 503 or 504. Deliveries can repeat,
+  so handlers must be idempotent. Bodies are not logged by Argyle; the subscription's `last_sent_at`
+  shows the last attempt. Argyle's docs say: 'When a subscription has a secret, deliveries include
+  X-Argyle-Signature.' 'Read the raw request body without parsing or reformatting it. Create an
+  HMAC-SHA512 digest using the subscription secret. Compare the hexadecimal digest with
+  X-Argyle-Signature using a timing-safe comparison.' 'const expected = crypto .createHmac('sha512',
+  secret) .update(rawBody) .digest('hex')' From the docs (registry summary): `X-Argyle-Signature:
+  <hex>` = hex HMAC-SHA512(subscription `secret`, raw body), compared timing-safe (the guide's Node
+  sample uses `createHmac('sha512', secret).update(rawBody).digest('hex')`). A subscription without a
+  `secret` gets no signature header at all. SIGNATURE SCHEME (it must match Hookdeck's ARGYLE source
+  exactly: HMAC controller, algorithm "sha512", header_key "x-argyle-signature", encoding "hex"). The
+  X-Argyle-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
+  value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA512, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The optional `secret` you set on the
+  subscription (Console or `POST /v2/webhooks`); Argyle does not generate one. Use it as UTF-8 bytes.
+  Env var: ARGYLE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
+  alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it
+  silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
+  base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
+  mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
+  unsigned headers or body fields. HMAC-SHA512 (128 hex characters). Events: dispatch on the body's
+  `event` field. Top-level `event` is the subscribed event name (`<resource>.<action>`); `name` is the
+  subscription's own name and `data` holds the ids (and `data.resource` with
+  `config.include_resource`). No header names the type. Documented event types (46): accounts.added,
+  accounts.connected, accounts.failed, accounts.removed, accounts.updated, gigs.added,
+  gigs.fully_synced, gigs.partially_synced, gigs.removed, gigs.updated, identities.added,
+  identities.updated, items.removed, items.updated (and 32 more). Handle a few common ones and log the
+  rest. Methods: Argyle's docs don't name the HTTP method. Hookdeck's Argyle source pre-selects POST
+  without managing the method (the user can change it). The examples must NOT be POST-only: accept
+  GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one route per method;
+  Next.js: export a handler for each; FastAPI: api_route with those methods), verify the signature
+  first for every method, and treat a missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it is acknowledged
+  with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's Argyle source pre-selects POST without
+  managing the method, so any other method the sender uses must also be allowed on the source. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/argyle/
+  (latest/accounts.connected.json); base the examples' test payloads on them. Hookdeck's source type
+  is ARGYLE, labelled 'Argyle'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a secret on the Argyle webhook
+  subscription. Without one, deliveries are unsigned and fail verification."
+testScenario:
+  events:
+    - "accounts.connected"
+    - "accounts.failed"
+    - "gigs.fully_synced"
+catalog:
+  summary: "Verify Argyle webhooks (`X-Argyle-Signature`: hex HMAC-SHA512 of the raw body), handle accounts.connected, accounts.failed and gigs.fully_synced events"

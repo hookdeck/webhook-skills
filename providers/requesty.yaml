@@ -1,0 +1,61 @@
+name: 'requesty'
+displayName: 'Requesty'
+docs:
+  webhooks: 'https://docs.requesty.ai/features/webhook-signatures'
+  verification: 'https://docs.requesty.ai/features/webhook-signatures'
+notes: >-
+  Requesty (requesty.ai), an LLM routing gateway. Organisation webhooks carry spending alerts (JSON, Slack
+  or Teams formats) and mirrored sample requests, signed in the Standard Webhooks format (webhook-* headers)
+  once the organisation has a signing secret. Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: One secret per organisation (Admin Panel > Alerts > Webhook signing secret), generated automatically
+  when a webhook URL is first saved; admins only. Format `whsec_<base64>`; key = base64-decode after the
+  prefix. Rotation keeps the old secret signing for a grace period (default 24 h; up to 5 active secrets),
+  so `webhook-signature` then carries several entries. Research: whsec_ ("The secret starts with `whsec_`."
+  https://docs.requesty.ai/features/webhook-signatures). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. REQUESTY_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Requesty source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Hookdeck's configuration alert for this source reads exactly: "Create a signing secret for your Requesty
+  organization. Until one exists, deliveries are unsigned and fail verification." SKILL.md and references/setup.md
+  must state this requirement, quoting the alert verbatim. Conditional signing: Unsigned until the organisation
+  has a signing secret; always signed after. Verification notes: Each retry is signed again (same webhook-id,
+  new timestamp and signature). replay_window_seconds 300 is Requesty's instruction ("more than 5 minutes
+  from the current time"). Body: {id, type, data}. Alerts only. sample.request is `{request_id, request,
+  response}` (OpenAI chat completion shapes) and may be answered with a `{feedback: {...}}` JSON body
+  that Requesty attaches to the request's log. Event type: `X-Requesty-Event` is the only carrier both
+  kinds share. Alert bodies also carry a top-level `type` equal to it (`{id, type, data}`); the sample-request
+  body has none. Event types (7 documented, list may not be exhaustive): user.budget.exceeded_percent,
+  user.budget.exceeded_absolute, group.budget.exceeded_percent, org.balance.below_absolute, apikey.budget.exceeded_percent,
+  apikey.budget.exceeded_absolute, sample.request. Transport: Alerts have three webhook types: JSON (the
+  `{id, type, data}` body this row describes), Slack (a Slack message) and Teams (an Adaptive Card); the
+  latter two are meant for those services' incoming-webhook URLs and carry no event name in the body.
+  Delivery: 15 s timeout per attempt; up to 3 retries with exponential backoff; dedupe on webhook-id.
+  Setup: One alert webhook per organisation (Admin Panel > Alerts): type JSON/Slack/Teams + URL; alert
+  thresholds are configured separately. Sample requests go to the `webhook_url` given per API request.
+  No challenge. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified; parse the body only after the check. Hookdeck's source
+  type is REQUESTY, labelled 'Requesty'.
+testScenario:
+  events:
+  - 'org.balance.below_absolute'
+  - 'user.budget.exceeded_percent'
+  - 'user.budget.exceeded_absolute'
+catalog:
+  summary: >-
+    Verify Requesty webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle budget and balance alerts

@@ -1,0 +1,66 @@
+name: 'flexprice'
+displayName: 'Flexprice'
+docs:
+  webhooks: 'https://docs.flexprice.io/developers/webhooks/set-up-an-endpoint'
+  verification: 'https://docs.flexprice.io/developers/webhooks/signature-verification'
+notes: >-
+  Flexprice (flexprice.io), open-source usage-based billing: customers, subscriptions, invoices, payments,
+  wallets, entitlements, checkout and usage ingestion. Endpoints are registered in the dashboard under
+  Developers > Webhooks. Flexprice Cloud delivers through Svix; self-hosted instances deliver natively
+  and unsigned unless Svix is enabled. Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp
+  (Unix seconds), svix-signature (one or more space-separated 'v1,<base64>' entries). Signed content is
+  '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered
+  by Svix. SECRET: One secret per endpoint, shown on the endpoint's dashboard page, `whsec_`-prefixed.
+  Research: whsec_ ("The secret is shown on the endpoint's page in the dashboard and starts with whsec_."
+  https://docs.flexprice.io/developers/webhooks/signature-verification). It starts with whsec_; the key
+  is the base64-decoding of the part after whsec_. FLEXPRICE_WEBHOOK_SECRET holds the full whsec_ value.
+  Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp
+  and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the svix-* headers and, when svix-id is absent,
+  fall back to the webhook-* headers (webhook-id, -timestamp, -signature), exactly as Hookdeck does; then
+  hand the library (or manual check) the three values under the header names it expects (the svix library
+  accepts either set itself, so pass it both sets of headers rather than only svix-*). Include a test
+  that a delivery signed the same way but sent with the other prefix's headers is accepted. This matches
+  Hookdeck's Flexprice source (Standard Webhooks, headers_prefix 'svix', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Only Flexprice Cloud signs webhooks. Self-hosted
+  Flexprice sends unsigned deliveries, which fail verification." SKILL.md and references/setup.md must
+  state this requirement, quoting the alert verbatim. Conditional signing: Flexprice Cloud always delivers
+  through Svix and signs every delivery. A self-hosted instance signs only when Svix is enabled in its
+  configuration; its default native delivery sends no signature (the docs offer a static secret header
+  from the tenant's webhook settings instead), and core's configuration alert says such deliveries fail
+  verification. Verification notes: Raw body is required. Body: {event_type}. `event_type` plus one resource-named
+  key holding the changed object. Event type: Top-level `event_type`; the changed object sits under a
+  resource-named key (`invoice`, `payment`, `subscription`, ...), not under `data`. Event types (60 documented,
+  list may not be exhaustive): customer.created, customer.updated, customer.deleted, subscription.created,
+  subscription.draft.created, subscription.activated, subscription.updated, subscription.paused, subscription.cancelled,
+  subscription.resumed, subscription.plan_changed, subscription.phase.created, subscription.phase.updated,
+  subscription.phase.deleted, subscription.spend.threshold_reached, subscription.spend.threshold_recovered,
+  subscription.line_item_spend.threshold_reached, subscription.line_item_spend.threshold_recovered, subscription.group_spend.threshold_reached,
+  subscription.group_spend.threshold_recovered, subscription.renewal.due, invoice.update.finalized, invoice.update.payment,
+  invoice.update.voided, invoice.update, invoice.payment.overdue, invoice.communication.triggered, payment.created,
+  payment.updated, payment.failed and 30 more. Transport: JSON POST (Cloud via Svix; self-hosted via a
+  native HTTP client). Delivery: Cloud (Svix): 2xx within 5 s is delivered; anything else, timeouts and
+  connection errors are retried on the schedule above (~28 h); no special 4xx handling, and 410 does not
+  disable. Endpoints failing for several days are disabled. Self-hosted native: 3 retries within 2 minutes.
+  At-least-once, sent in order but may arrive out of order. Setup: Per endpoint in the dashboard with
+  chosen events and its own secret. No challenge or validation request is documented, so the row has no
+  handshake block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified; parse the body only after the check. Hookdeck's source
+  type is FLEXPRICE, labelled 'Flexprice'.
+testScenario:
+  events:
+  - 'invoice.update.finalized'
+  - 'customer.created'
+  - 'customer.updated'
+catalog:
+  summary: >-
+    Verify Flexprice webhook signatures (`svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256, `whsec_`
+    secret; Cloud only), handle invoice.update.finalized, payment.success and subscription.cancelled events

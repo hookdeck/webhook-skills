@@ -1,0 +1,58 @@
+name: 'hirehive'
+displayName: 'HireHive'
+docs:
+  webhooks: 'https://docs.hirehive.com/api-reference/webhooks/introduction'
+  verification: 'https://docs.hirehive.com/api-reference/webhooks/validating-webhook-signatures'
+notes: >-
+  HireHive (hirehive.com), an applicant tracking system. Webhooks report job, application, candidate,
+  feedback and interview changes, signed per the Standard Webhooks specification. Standard Webhooks signature
+  with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more
+  space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. SECRET: One secret per webhook, from the webhook settings. The text
+  never shows its format; the library sample names the variable `base64_secret`. Research: whsec_ + base64
+  (visible in the docs' 'creating a webhook' video: 'Signing secret whsec_XgGh8Iqsem+obYW58vWPeZ7SdoGZyM9iTBJbRWKM2G4='
+  https://r2.docs.hirehive.com/creating-a-webhook.mp4). It starts with whsec_; the key is the base64-decoding
+  of the part after whsec_. HIREHIVE_WEBHOOK_SECRET holds the full whsec_ value. Verify with the standardwebhooks
+  library (npm 'standardwebhooks', pip 'standardwebhooks'), which reads webhook-id, webhook-timestamp
+  and webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's HireHive source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret
+  base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried,
+  other versions such as v1a ignored, no timestamp window; core also reads the other prefix's headers,
+  webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md must say
+  that Hookdeck retries and replays resend the original timestamp, so the library rejects late retries
+  after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw
+  body}' with the same key, compare every space-separated v1,<base64> entry in constant time after a length
+  check, require the timestamp to be a plain positive integer) where the window can be dropped or widened.
+  Missing headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset.
+  Verification notes: Raw body is required (Standard Webhooks). Body: {type, timestamp, data}. `timestamp`
+  is an ISO-8601 string; `data` holds the event's object. The example elides `data` (`....`), so it does
+  not parse as JSON. No event id in the body; `webhook-id` identifies the message. Event type: Top-level
+  `type` of a three-field body (`type`, `timestamp`, `data`). No header carries the type. Event types
+  (19 documented, list may not be exhaustive): job.created, job.updated, job.status.updated, job.deleted,
+  application.created, application.stage.updated, application.deleted, candidate.updated, candidate.note.created,
+  candidate.note.updated, candidate.note.deleted, candidate.tag.added, candidate.tag.removed, feedback.requested,
+  feedback.submitted, feedback.updated, interview.created, interview.updated, interview.cancelled. Transport:
+  JSON body of three properties. HireHive prints no Content-Type or method; it says it follows the Standard
+  Webhooks specification "for the header signature and payload of webhook request", and POST is recorded
+  from that spec (method_evidence, which says "should"), not from HireHive's own pages. Delivery: 2xx
+  within 30 s is success; anything else (non-2xx, timeouts, connection resets) is retried at +30 s, 5
+  min, 30 min, 2 h, 5 h, 10 h, 14 h, 20 h and 24 h (about 75.5 h after the first attempt). The dashboard
+  shows a request log and can resend. No disabling rule or ordering statement. Setup: Webhooks are created
+  in HireHive (requires the manage-webhooks permission), unlimited in number, each listening to one or
+  more events, and can be enabled/disabled with a request log. No challenge or validation request is documented,
+  so the row has no handshake block. Express examples must read the raw body with express.raw({ type:
+  '*/*' }) so any content type works and the exact bytes are verified; parse the body only after the check.
+  Hookdeck's source type is HIREHIVE, labelled 'HireHive'.
+testScenario:
+  events:
+  - 'application.created'
+  - 'job.created'
+  - 'job.updated'
+catalog:
+  summary: >-
+    Verify HireHive webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle job, application and candidate events

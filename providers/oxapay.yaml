@@ -1,0 +1,64 @@
+name: oxapay
+displayName: "OxaPay"
+docs:
+  webhooks: https://docs.oxapay.com/webhook
+  verification: https://docs.oxapay.com/webhook
+  events: https://docs.oxapay.com/webhook
+notes: >
+  OxaPay (oxapay.com), crypto payment gateway. Merchants pass a `callback_url` on payment (invoice,
+  white-label, static address, payment link, donation) and payout requests; OxaPay posts the
+  transaction's state there when it changes. Delivery (from the docs): Success is an HTTP 200 whose
+  body is `ok`. Up to 5 attempts: retries after about 1 min, then 3 min, 30 min and 3 h. Hookdeck's
+  configuration_alert says to set the source's custom response to `ok`. OxaPay's docs say: 'OxaPay
+  uses your `MERCHANT_API_KEY` as the HMAC shared secret key to generate an HMAC (sha512) signature of
+  the raw POST data. The HMAC signature is sent as an HTTP header called HMAC.' 'const calculatedHmac
+  = crypto .createHmac('sha512', apiSecretKey) .update(postData) .digest('hex');' 'Also for payout
+  Webhooks you must validate the signature using your `PAYOUT_API_KEY`.' From the docs (registry
+  summary): Header `HMAC: <hex>`, no prefix. MAC = lowercase hex of HMAC-SHA512(key = the
+  MERCHANT_API_KEY for payment callbacks or the PAYOUT_API_KEY for payout callbacks, message = the raw
+  POST body). The samples pick the key from `data.type` and compare with `===`/`==`. The Node and
+  Python samples test `type === 'payment'`, a value the examples never carry (payments are `invoice`
+  etc.), so as written they would pick the payout key for payments; the PHP sample tests `invoice`.
+  SIGNATURE SCHEME (it must match Hookdeck's OXAPAY source exactly: HMAC controller, algorithm
+  "sha512", header_key "hmac", encoding "hex"). The HMAC header carries the bare lowercase hex digest,
+  no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
+  signature is lowercase hex HMAC-SHA512, keyed with the secret, over the raw request body bytes only
+  (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: Two keys: the
+  merchant API key signs payment callbacks and the payout API key signs payout callbacks. One Hookdeck
+  source verifies one key, so the configuration_alert says to use a separate source for each. Use it
+  as UTF-8 bytes. Env var: OXAPAY_WEBHOOK_SECRET. Validate the signature's format before decoding it
+  (exact length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
+  value or mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent
+  one from unsigned headers or body fields. HMAC-SHA512 (128 hex characters). Payment callbacks are
+  signed with the merchant API key and payout callbacks with the payout API key, so use one Hookdeck
+  source (and one secret) per key. OxaPay treats a delivery as successful only when the response is
+  HTTP 200 with the body `ok`, so the examples answer a verified callback with 200 and the plain-text
+  body `ok`. Events: dispatch on the body's `status` field. OxaPay sends no event name: each callback
+  is the transaction's current state. `status` is the field that says what happened, so the five
+  values the examples show are the event list. `type` says which flow it is (`invoice`, `white_label`,
+  `static_address`, `payment_link`, `donation` for payments, `payout` for payouts) and is the
+  sub-discriminator. The examples capitalise the status (`"Paid"`) while the prose writes "paid"; the
+  examples' spelling is recorded. No header names the event. Documented event types (5): Paying, Paid,
+  Confirming, Confirmed, Failed. Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  OxaPay source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is OXAPAY, labelled 'OxaPay'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Paste your merchant API key for payment callbacks, or your payout API key for
+  payout callbacks, and use a separate source for each. OxaPay expects an "ok" response body, so set
+  the source's custom response to ok."
+testScenario:
+  events:
+    - "Paid"
+    - "Confirming"
+    - "Failed"
+catalog:
+  summary: "Verify OxaPay webhooks (`HMAC`: hex HMAC-SHA512 of the raw body), handle payment and payout status callbacks"

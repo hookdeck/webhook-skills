@@ -1,0 +1,63 @@
+name: 'speed'
+displayName: 'Speed'
+docs:
+  webhooks: 'https://apidocs.tryspeed.com/reference/webhooks'
+  verification: 'https://apidocs.tryspeed.com/reference/verify-signatures'
+  events: 'https://apidocs.tryspeed.com/reference/types-of-events'
+notes: >-
+  Speed (tryspeed.com), a Bitcoin / Lightning (and USDT on Ethereum & Tron) payments platform. Webhook
+  endpoints receive Speed event objects (payments, checkout sessions/links, payment links, withdrawals,
+  Connect), signed in the Standard Webhooks layout with webhook-* headers and a `wsec_` secret. Standard
+  Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Speed issues a wsec_<base64> secret;
+  it is pasted as whsec_<base64>. SECRET: Per endpoint: revealed on the endpoint in Webhooks settings
+  or returned by Get Webhook Endpoint By Id. Format `wsec_<base64>` (NOT `whsec_`): strip `wsec_` and
+  base64-decode the rest for the key. Research: wsec_ + base64 ("Get byte[] of the signing secret by removing
+  the prefix wsec_ ... decode using the Base64 decoder" https://apidocs.tryspeed.com/reference/verify-signatures).
+  The standardwebhooks library only strips whsec_, so the code must turn a leading 'wsec_' into 'whsec_'
+  (or strip it) before constructing Webhook; a value already starting whsec_ is used as is. SPEED_WEBHOOK_SECRET
+  holds the wsec_ value exactly as Speed shows it. Verify with the standardwebhooks library (npm 'standardwebhooks',
+  pip 'standardwebhooks'). HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Speed source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Speed shows the secret with a wsec_ prefix. Replace
+  wsec_ with whsec_ when you paste it here, or verification fails." SKILL.md and references/setup.md must
+  state this requirement, quoting the alert verbatim. Verification notes: Speed's Java sample has typos
+  (`HmacSHA256` unquoted, `:` for `;`, `StandardCharsets,UTF_8`) but the construction is unambiguous.
+  Speed calls verification optional. Body: {id, object, api_version, event_type, data, livemode, request,
+  created, modified}. `data.object` is the resource (payment, checkout_session, ...); Connect events add
+  `account_id`. Event type: Top-level `event_type` of the event object `{id (evt_), object: "events",
+  api_version, event_type, data: {object}, livemode, request, created, modified}`; top-level `object`
+  is always `events`. Event types (28 documented, list may not be exhaustive): payment.created, payment.paid,
+  payment.confirmed, payment.expired, payment.cancelled, checkout_session.created, checkout_session.paid,
+  checkout_session.payment_paid, checkout_session.deactivated, checkout_link.created, checkout_link.deactivated,
+  checkout_link.paid, payment_link.created, payment_link.deactivated, payment_link.paymentreceived, payment_address.paymentreceived,
+  payrequest.payment_paid, invoice.paid, withdraw.created, withdraw.paid, withdraw.failed, withdrawal_link.created,
+  withdrawal_link.paid, withdrawal_link.deactivated, withdraw_request.created, withdraw_request.deactivated,
+  withdraw_request.paid, connect.completed. Transport: JSON POST to a public HTTPS URL. Delivery: A non-2xx
+  reply triggers a retry, re-signed with a new webhook-id and timestamp. Setup: Per endpoint (dashboard
+  Developers > Webhooks, or the webhooks API): URL, API version, own vs connected account, `enabled_events`.
+  Several endpoints may share events and URLs. No challenge. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse the body
+  only after the check. Hookdeck's source type is SPEED, labelled 'Speed'.
+testScenario:
+  events:
+  - 'payment.created'
+  - 'payment.paid'
+  - 'payment.confirmed'
+catalog:
+  summary: >-
+    Verify Speed webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks with a `wsec_` secret), handle payment.paid, payment.confirmed and checkout_session.paid events

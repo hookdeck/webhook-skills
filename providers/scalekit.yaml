@@ -1,0 +1,61 @@
+name: 'scalekit'
+displayName: 'Scalekit'
+docs:
+  webhooks: 'https://docs.scalekit.com/guides/webhooks-best-practices/'
+  verification: 'https://docs.scalekit.com/guides/webhooks-best-practices/'
+notes: >-
+  Scalekit (scalekit.com), authentication for B2B SaaS (organizations, SSO, SCIM directory sync, RBAC,
+  sessions) and AI agents (connected accounts, tool calling). Webhooks report organization, user, directory,
+  SSO, role/permission and connected-account events, signed per Standard Webhooks. Standard Webhooks signature
+  with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more
+  space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. SECRET: One signing secret per endpoint, `whsec_…`, from the dashboard's
+  Webhooks endpoint page. Research: whsec_ + base64 ('Verify each request with the signing secret from
+  Dashboard > Webhooks > Any Endpoint (whsec_…)' https://docs.scalekit.com/guides/webhooks-best-practices/).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. SCALEKIT_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Scalekit
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required (the SDK is passed the raw body). Body: {spec_version, id, object, environment_id,
+  occurred_at, organization_id, type, data}. The guide's annotated example (with `//` comments, so not
+  JSON). `id` (`evt_…`) is unique per event and differs from `webhook-id`; `object` is omitted on domain
+  events; `organization_id` is not sent on user.* events. `object` names the data's type (e.g. `DirectoryUser`)
+  and is omitted on domain events; it is not the event type. Event types (43 documented, list may not
+  be exhaustive): organization.created, organization.updated, organization.deleted, organization.domain_created,
+  organization.domain_deleted, organization.domain_dns_verification_success, organization.domain_dns_verification_failed,
+  user.signup, user.login, user.logout, user.organization_invitation, user.organization_membership_created,
+  user.organization_membership_deleted, user.organization_membership_updated, organization.directory_created,
+  organization.directory_enabled, organization.directory_disabled, organization.directory_deleted, organization.directory.user_created,
+  organization.directory.user_updated, organization.directory.user_deleted, organization.directory.group_created,
+  organization.directory.group_updated, organization.directory.group_deleted, organization.sso_created,
+  organization.sso_enabled, organization.sso_disabled, organization.sso_deleted, role.created, role.updated
+  and 13 more. Transport: POST with an application/json body (the OpenAPI requestBody media type). Delivery:
+  2xx within 30 s (201 recommended). Any other status, including 4xx, is retried with exponential backoff
+  on 8 attempts (immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h; about 27 h 35 min). An endpoint
+  failing every delivery for 5 days is disabled. Setup: Endpoints are configured in the Scalekit dashboard
+  with the events to receive. No challenge or validation request is documented, so the row has no handshake
+  block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
+  works and the exact bytes are verified; parse the body only after the check. Hookdeck's source type
+  is SCALEKIT, labelled 'Scalekit'.
+testScenario:
+  events:
+  - 'organization.directory.user_created'
+  - 'organization.created'
+  - 'organization.updated'
+catalog:
+  summary: >-
+    Verify Scalekit webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle organization, user, directory and role events

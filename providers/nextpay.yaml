@@ -1,0 +1,55 @@
+name: 'nextpay'
+displayName: 'NextPay'
+docs:
+  webhooks: 'https://developers.nextpay.world/docs/guides/integration/verify-webhook-signatures'
+  verification: 'https://developers.nextpay.world/docs/guides/integration/verify-webhook-signatures'
+notes: >-
+  NextPay's NextAPI (nextpay.world), a Philippine payments API for collections (QRPH, cards, payment intents),
+  payouts and platform wallets. Webhooks are registered via POST /v2/webhooks and delivered by Svix. Standard
+  Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
+  body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Returned once in
+  the POST /v2/webhooks response (`secret`, e.g. `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`). Research:
+  whsec_ ("It is in whsec_<base64> format." https://developers.nextpay.world/docs/guides/integration/verify-webhook-signatures).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. NEXTPAY_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's NextPay source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: Raw body is required (the guides read it with
+  express.raw before verifying). Body: {type, data}. Payout/platform events: `{type, data}`. v2.* payment
+  events: `{event, payload}`. Event type: Two body shapes by event category: v2.* payment events carry
+  the name in top-level `event` (with `payload`), payout and platform events in top-level `type` (with
+  `data`). NextAPI's own handler reads `event.event || event.type`. Event types (16 documented, list may
+  not be exhaustive): v2.payment_intent.succeeded, v2.payment_intent.canceled, v2.payment_instrument.used,
+  v2.payment_instrument.payment_received, v2.payment_instrument.payment_settled, payout_request.creation_failed,
+  payout_request.queued, payout_request.queue_failed, payout_request.processed, payout.succeeded, payout.failed,
+  payout.processed, payout.processing_failed, deposit.confirmed, direct_transfer.received, legal_entity.verification_status_changed.
+  Transport: JSON POST via Svix; the setup guide parses it with express.raw({ type: 'application/json'
+  }). Delivery: 2xx is success; 4xx is not retried; 5xx is retried with exponential backoff (5 attempts
+  over ~2.5 h). A response slower than 30 s fails. At-least-once: dedupe on the event id. Ordering is
+  not stated. Setup: One registration per URL via POST /v2/webhooks with an `events` list. No challenge
+  or validation request is documented, so the row has no handshake block. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified;
+  parse the body only after the check. Hookdeck's source type is NEXTPAY, labelled 'NextPay'.
+testScenario:
+  events:
+  - 'payout_request.processed'
+  - 'v2.payment_intent.succeeded'
+  - 'v2.payment_intent.canceled'
+catalog:
+  summary: >-
+    Verify NextPay webhook signatures (Svix `svix-id`, `svix-timestamp`, `svix-signature`, HMAC-SHA256,
+    `whsec_` secret), handle v2.payment_intent.succeeded, payout_request.processed and payout.failed events

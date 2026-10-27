@@ -1,0 +1,60 @@
+name: flux-cd
+displayName: "Flux CD"
+docs:
+  webhooks: https://fluxcd.io/flux/components/notification/provider/
+  verification: https://fluxcd.io/flux/components/notification/provider/
+notes: >
+  Flux CD (fluxcd.io), the CNCF GitOps toolkit for Kubernetes. Its notification-controller forwards
+  events from Flux objects (Kustomizations, HelmReleases, sources) through an `Alert` to a `Provider`;
+  a Provider of `.spec.type` `generic` or `generic-hmac` POSTs each Event as JSON to `.spec.address`.
+  Flux is self-hosted, so every cluster is its own sender. Delivery (from the docs): One POST per
+  Event the Alert selects (by event source and severity); retries are not documented on the provider
+  page. Flux CD's docs say: 'When .spec.type is set to generic-hmac, the controller will send an HTTP
+  POST request to the provided Address for an Event, while including an X-Signature HTTP header
+  carrying the HMAC of the request body. ... The X-Signature header is calculated by generating an
+  HMAC of the request body using the token key from the referenced Secret.' 'X-Signature:
+  <hash-function>=<hash> <hash-function> denotes the hash function used to generate the HMAC and
+  currently defaults to sha256, which may change in the future. <hash> is the HMAC of the request
+  body, encoded as a hexadecimal string.' 'mac := hmac.New(newF, key) ... sum := fmt.Sprintf("%x",
+  mac.Sum(nil))' From the docs (registry summary): `X-Signature: <hash-function>=<hex>`, today
+  `sha256=<hex HMAC-SHA256(token, raw body)>`. The docs say the hash function "currently defaults to
+  sha256, which may change in the future", and the Go verification sample accepts `sha224`, `sha256`,
+  `sha384` and `sha512`. Only the `generic-hmac` Provider type signs; plain `generic` sends no
+  signature. No test vector. SIGNATURE SCHEME (it must match Hookdeck's FLUX_CD source exactly: HMAC
+  controller, algorithm "sha256", header_key "x-signature", encoding "hex"). The X-Signature header
+  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser
+  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
+  timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
+  exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
+  before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
+  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  both sides (or decode both to bytes) before the constant-time compare. Secret: The `token` key of
+  the Kubernetes Secret referenced by the Provider's `.spec.secretRef`, chosen by the cluster
+  operator. Use it as UTF-8 bytes. Env var: FLUX_CD_WEBHOOK_SECRET. Validate the signature's format
+  before decoding it (exact length and alphabet), then compare in constant time: Node checks lengths,
+  then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Only the `generic-hmac`
+  Provider type signs. Hookdeck verifies sha256 only: Flux says the hash 'may change in the future',
+  and a delivery signed with another hash fails. Events: there is no event-name field or header; each
+  delivery is a Flux Event (`involvedObject`, `severity`, `reason`, `message`, `reportingController`,
+  `metadata`, `timestamp`). Branch on `severity` and `reason`. Method: POST. Hookdeck's Flux CD source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Documented sample payloads (each JSON file's `body` is the payload as the
+  vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/flux-cd/
+  (latest/generic-webhook.json); base the examples' test payloads on them. Hookdeck's source type is
+  FLUX_CD, labelled 'Flux CD'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Use a Flux Provider of type
+  generic-hmac and paste the token from its Secret. Generic providers are unsigned and fail
+  verification."
+testScenario:
+  events:
+    - "info"
+    - "error"
+catalog:
+  summary: "Verify Flux CD webhooks (`X-Signature`: `sha256=` hex HMAC-SHA256 of the raw body), handle Flux events (by severity and reason)"

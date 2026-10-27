@@ -1,0 +1,55 @@
+name: bamboohr
+displayName: "BambooHR"
+docs:
+  webhooks: https://documentation.bamboohr.com/docs/webhooks
+  verification: https://documentation.bamboohr.com/docs/webhooks#security
+notes: >
+  BambooHR employee webhooks (Global and Permissioned webhooks). BambooHR (bamboohr.com), HR software
+  for small and medium businesses. Webhooks report employee records created, updated (monitored fields
+  changed) or deleted; Global webhooks are set up by admins in Settings, Permissioned webhooks through
+  the API. Delivery (from the docs): Up to 5 retries on network errors or a 5xx (not 4xx), each with
+  0-30 s of jitter. No timeout stated. Employees may be batched into one POST. BambooHR says:
+  '`X-BambooHR-Timestamp`: The timestamp when the request was sent. `X-BambooHR-Signature`: The
+  SHA-256 HMAC signature calculated using the payload, the timestamp, and your private key.'
+  '$calculatedHash = hash_hmac('SHA256', $data . $timestamp, $privateKey);' SIGNATURE SCHEME (it must
+  match Hookdeck's BAMBOOHR source exactly: HMAC controller, algorithm sha256, header
+  x-bamboohr-signature, encoding hex, signed_content_template "{body}{header:x-bamboohr-timestamp}").
+  The X-BambooHR-Signature header carries the bare lowercase hex digest, no prefix. The signature is
+  lowercase hex HMAC-SHA256, keyed with the secret, over: the raw request body bytes, then the
+  X-BambooHR-Timestamp header value. Where two parts are adjacent above there is NO separator between
+  them. Build the signed message as BYTES, exactly as Hookdeck's template does: literal separators as
+  UTF-8, header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1');
+  Python value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body
+  bytes as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the webhook's private key (generated in BambooHR's webhook settings, or
+  `privateKey` in the API response), used as a UTF-8 string. Env var: BAMBOOHR_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as BAMBOOHR_WEBHOOK_TOLERANCE_SECONDS, unset or
+  0 = off) and say so in SKILL.md and verification.md (BambooHR does not state the timestamp's format,
+  so only parse it when the user opts in). Body FIRST, then the timestamp, with no separator. Payloads
+  are JSON (recommended) or application/x-www-form-urlencoded, chosen per webhook; both sign the raw
+  body, so verify before parsing either. Events: the JSON body has an `employees` array; each entry
+  has `action` (Created, Updated or Deleted), `id`, `timestamp` and `fields` (and `changedFields` for
+  updates). Several employees may arrive in one POST; loop over them. Method: POST. Hookdeck's
+  BambooHR source manages the method as POST, so the examples handle POST on the webhook route.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is BAMBOOHR, labelled
+  'BambooHR'.
+testScenario:
+  events:
+    - "Created"
+    - "Updated"
+    - "Deleted"
+catalog:
+  summary: "Verify BambooHR webhooks (`X-BambooHR-Signature`: hex HMAC-SHA256 of the body followed by `X-BambooHR-Timestamp`), handle employee created, updated and deleted actions"

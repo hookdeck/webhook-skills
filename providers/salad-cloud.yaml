@@ -1,0 +1,52 @@
+name: 'salad-cloud'
+displayName: 'SaladCloud'
+docs:
+  webhooks: 'https://docs.salad.com/container-engine/how-to-guides/job-processing/webhook-signature'
+  verification: 'https://docs.salad.com/container-engine/how-to-guides/job-processing/webhook-signature'
+notes: >-
+  SaladCloud (salad.com), a distributed GPU cloud. Its Job Queue API can call a webhook URL with each
+  job's result; the secret key is shown in the portal. Standard Webhooks signature with webhook-* headers:
+  webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>'
+  entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64
+  output. Hookdeck core notes: The secret is bare base64; it is pasted with a whsec_ prefix. SECRET: The
+  webhook secret key from the portal: a bare base64 string with no `whsec_` prefix. Core base64-decodes
+  only `whsec_` secrets, hence the configuration alert to paste `whsec_` + the secret. Research: raw base64,
+  no whsec_ (https://docs.salad.com/container-engine/how-to-guides/job-processing/webhook-signature: "The
+  webhook secret key is a base64 string with no `whsec_` prefix."). The HMAC key is the base64-decoding
+  of the secret as SaladCloud shows it (no whsec_ prefix). SALAD_CLOUD_WEBHOOK_SECRET holds the value
+  exactly as SaladCloud shows it. Verify with the standardwebhooks library (npm 'standardwebhooks', pip
+  'standardwebhooks'): it strips a whsec_ prefix if present and otherwise base64-decodes the whole secret,
+  so both the bare value and the whsec_-prefixed form Hookdeck needs give the same key. HEADER FALLBACK
+  (all three frameworks and the manual verifier): read the webhook-* headers and, when webhook-id is absent,
+  fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand
+  the library (or manual check) the three values under the header names it expects (for the standardwebhooks
+  library, pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery
+  signed the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's SaladCloud
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
+  alert for this source reads exactly: "SaladCloud shows the secret without a prefix. Paste it as whsec_
+  followed by the secret, or verification fails." SKILL.md and references/setup.md must state this requirement,
+  quoting the alert verbatim. Verification notes: Raw body is required. Body: {type, timestamp, data}.
+  `data` is the job document (id, status, input, output, events, timestamps, webhook, organization/project/queue
+  names). Event type: Top-level `type` in a `{type, timestamp, data}` envelope; `data.events[].type` are
+  job lifecycle steps (`created`, `started`, `succeeded`), not the event. Event types (1 documented, list
+  may not be exhaustive): queue.job.succeeded. Transport: One JSON POST per finished job to the job's
+  webhook URL. Delivery: One POST per succeeded job, shortly after it finishes. Retries, timeout and ordering
+  are not described. Setup: The webhook URL is set per job (`webhook` field of the Job Queue job). No
+  challenge is documented, so the row has no handshake block. Express examples must read the raw body
+  with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
+  the body only after the check. Hookdeck's source type is SALAD_CLOUD, labelled 'SaladCloud'.
+testScenario:
+  events:
+  - 'queue.job.succeeded'
+catalog:
+  summary: >-
+    Verify SaladCloud webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks HMAC-SHA256, base64 secret), handle queue.job.succeeded events

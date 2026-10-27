@@ -1,0 +1,56 @@
+name: spree
+displayName: "Spree Commerce"
+docs:
+  webhooks: https://spreecommerce.org/docs/developer/core-concepts/webhooks
+  verification: https://spreecommerce.org/docs/developer/core-concepts/webhooks
+  events: https://spreecommerce.org/docs/api-reference/webhooks-events
+notes: >
+  Spree Commerce (open-source e-commerce, Spree 5/6) webhook endpoints, created in the admin or the
+  Admin API. Spree Commerce (spreecommerce.org), an open-source headless e-commerce platform (Spree
+  6). Each store's webhook endpoints, created in the admin or the Admin API, receive events for
+  orders, payments, fulfillments, catalog, customers, returns, marketplace sellers and more. Delivery
+  (from the docs): Any non-2xx, timeout or connection error fails; up to 5 attempts over about six
+  minutes with growing waits. 15 consecutive failures disable the endpoint. Manual re-send from the
+  delivery log. Spree Commerce says: '`X-Spree-Webhook-Timestamp` | Unix timestamp (seconds) generated
+  at send time; included in the HMAC-SHA256 signed string as `{timestamp}.{payload}`' 'expected =
+  OpenSSL::HMAC.hexdigest('SHA256', ENV['SPREE_WEBHOOK_SECRET'], "#{timestamp}.#{payload}")' SIGNATURE
+  SCHEME (it must match Hookdeck's SPREE source exactly: HMAC controller, algorithm sha256, header
+  x-spree-webhook-signature, encoding hex, signed_content_template
+  "{header:x-spree-webhook-timestamp}.{body}"). The X-Spree-Webhook-Signature header carries the bare
+  lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
+  over: the X-Spree-Webhook-Timestamp header value, then a literal ".", then the raw request body
+  bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal separators as
+  UTF-8, header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1');
+  Python value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body
+  bytes as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the endpoint's `secret_key` (a 64-character hex string shown once at
+  creation), used as a UTF-8 string, NOT hex-decoded. Env var: SPREE_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject
+  old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp,
+  and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer
+  an opt-in tolerance (an env var such as SPREE_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
+  so in SKILL.md and verification.md (X-Spree-Webhook-Timestamp is Unix seconds). Events: dispatch on
+  the body's `name` (order.placed, order.paid, order.canceled, payment.completed, fulfillment.fulfilled,
+  user.created, product.updated; about 250 in all). Method: POST. Hookdeck's Spree Commerce source
+  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
+  are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
+  only after the check. Hookdeck's source type is SPREE, labelled 'Spree Commerce'. Hookdeck shows
+  this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
+  thing, verbatim: "Spree shows the endpoint secret only once, when you create the webhook endpoint.
+  Paste it here."
+testScenario:
+  events:
+    - "order.placed"
+    - "order.paid"
+    - "fulfillment.fulfilled"
+catalog:
+  summary: "Verify Spree Commerce webhooks (`X-Spree-Webhook-Signature`: hex HMAC-SHA256 of `{X-Spree-Webhook-Timestamp}.{body}`), handle order, payment, fulfillment and customer events"

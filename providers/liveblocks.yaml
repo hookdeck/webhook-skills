@@ -1,0 +1,54 @@
+name: 'liveblocks'
+displayName: 'Liveblocks'
+docs:
+  webhooks: 'https://liveblocks.io/docs/platform/webhooks'
+  verification: 'https://liveblocks.io/docs/platform/webhooks'
+notes: >-
+  Liveblocks (liveblocks.io), realtime collaboration infrastructure (rooms, Storage, Yjs, Comments, notifications).
+  Endpoints are created in the project's webhooks dashboard and listen to all events or a filtered subset.
+  Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: One secret per endpoint, from the webhooks dashboard
+  (`whsec_...`). Research: whsec_ ("given the secret whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw you will want
+  to use MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw" https://liveblocks.io/docs/platform/webhooks). It starts with
+  whsec_; the key is the base64-decoding of the part after whsec_. LIVEBLOCKS_WEBHOOK_SECRET holds the
+  full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Liveblocks
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required. Body: {type, data}. `{type, data}` for every event. Event type: Top-level `type` (camelCase,
+  e.g. `userEntered`, `threadCreated`) in every event's schema and example, with the event fields under
+  `data`. The `notification` event is refined by `data.kind` (`thread`, `textMention`, or a custom `$`-prefixed
+  kind). Event types (18 documented, list may not be exhaustive): userEntered, userLeft, storageUpdated,
+  roomCreated, roomDeleted, ydocUpdated, commentCreated, commentEdited, commentDeleted, commentReactionAdded,
+  commentReactionRemoved, threadCreated, threadDeleted, threadMetadataUpdated, commentMetadataUpdated,
+  threadMarkedAsResolved, threadMarkedAsUnresolved, notification. Transport: JSON POST from the webhooks
+  dashboard's endpoints. Delivery: Non-2xx is retried on the schedule above; failed messages can be replayed
+  or bulk-recovered from the dashboard. An endpoint failing for 5 consecutive days is disabled. Some events
+  are throttled (storageUpdated 60 s, ydocUpdated); notification events fire 30 minutes after the activity
+  by default. No timeout or ordering statement. Setup: Per endpoint in the dashboard; all events by default,
+  narrowed via Message Filtering. A test endpoint option exists. No challenge or validation request is
+  documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is LIVEBLOCKS, labelled 'Liveblocks'.
+testScenario:
+  events:
+  - 'userEntered'
+  - 'userLeft'
+  - 'storageUpdated'
+catalog:
+  summary: >-
+    Verify Liveblocks webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle room, storage, Yjs, comment and thread events

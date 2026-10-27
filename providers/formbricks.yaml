@@ -1,0 +1,57 @@
+name: 'formbricks'
+displayName: 'Formbricks'
+docs:
+  webhooks: 'https://formbricks.com/docs/platform/features/integrations/webhooks'
+  verification: 'https://formbricks.com/docs/platform/features/integrations/webhooks'
+notes: >-
+  Formbricks (formbricks.com), an open-source (self-hostable) survey and experience-management platform.
+  Per-environment webhooks report survey responses being created, updated and finished, signed per Standard
+  Webhooks (webhook-* headers). Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
+  (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
+  is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: Per webhook,
+  generated automatically on creation (UI shows it; the API returns it in the create response). Format
+  `whsec_<base64>`; key = base64-decode after the prefix. Research: whsec_ ("The secret follows the Standard
+  Webhooks format: `whsec_` followed by a base64-encoded random value." https://formbricks.com/docs/platform/features/integrations/webhooks).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. FORMBRICKS_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Formbricks
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
+  alert for this source reads exactly: "Webhooks created before Formbricks added signing have no secret
+  and are unsigned. If yours has no secret, create a new webhook." SKILL.md and references/setup.md must
+  state this requirement, quoting the alert verbatim. Conditional signing: webhook-signature is present
+  "only if secret is configured"; webhooks created before signing shipped may have no secret. New webhooks
+  always get one. Verification notes: replay_window_seconds 300 is the docs' sample tolerance ("e.g.,
+  5 minutes"). The Node sample takes `split(",")[1]` of the header, so it would not handle several space-separated
+  entries; core does. Body: {data, event, webhookId}. `data` is the response object (with `survey` summary,
+  answers in `data.data`). Event type: Top-level `event` beside `data` (the response) and `webhookId`
+  in all three examples. Event types (3 documented, list may not be exhaustive): responseCreated, responseUpdated,
+  responseFinished. Transport: JSON POST; internal/private URLs are refused unless self-hosted with DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1.
+  Delivery: 2xx within 5 s (WEBHOOK_DELIVERY_TIMEOUT_MS when self-hosted). Network errors, timeouts, redirects,
+  408/429/5xx: up to 5 attempts at about 30 s, 1, 2, 4 min, then dropped. Other 4xx are not retried. webhook-id
+  is stable across attempts. Setup: Per environment (Configuration > Integrations > Webhooks, or the v2
+  Management API): URL, triggers, surveys. The UI's Test Endpoint must succeed before saving. No challenge.
+  Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
+  and the exact bytes are verified; parse the body only after the check. Hookdeck's source type is FORMBRICKS,
+  labelled 'Formbricks'.
+testScenario:
+  events:
+  - 'responseCreated'
+  - 'responseUpdated'
+  - 'responseFinished'
+catalog:
+  summary: >-
+    Verify Formbricks webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`, Standard
+    Webhooks HMAC-SHA256 with a `whsec_` secret), handle responseCreated, responseUpdated and responseFinished events

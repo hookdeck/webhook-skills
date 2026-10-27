@@ -1,0 +1,65 @@
+name: thinkific
+displayName: "Thinkific"
+docs:
+  webhooks: https://support.thinkific.dev/hc/en-us/articles/4422685850775
+  verification: https://support.thinkific.dev/hc/en-us/articles/4422685850775
+notes: >
+  Thinkific (thinkific.com), the online course platform. Webhooks report leads, orders, transactions,
+  subscriptions, users, enrollments, courses, lessons, quizzes, products and app uninstalls for one
+  Thinkific site, registered per topic through the Webhooks API or the admin UI. Delivery (from the
+  docs): A 2xx within 5 s acknowledges; otherwise up to 14 retries over 16 hours with growing delays
+  (10 s, 30 s, 1 min, 2 min, ... 1 h at the 11th, 8 h at the 14th). Webhooks that keep failing may be
+  deactivated. Delivery logs are kept 30 days. Thinkific's docs say: 'Each webhook request includes a
+  hexadecimal-encoded X-Thinkific-Hmac-Sha256 header generated using a signing secret which could one
+  of the following: Signing secret Site's API Key App Client Secret' 'data = request.body.read ...
+  calculated_hmac = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), MY_SIGNING_SECRET, data)'
+  'Under Signing Secret, enter your own signing secret (minimum 16 characters) or click Generate to
+  create one ... This feature is currently being rolled out to all sites - stay tuned!' From the docs
+  (registry summary): `X-Thinkific-Hmac-Sha256: <hex>` = hex HMAC-SHA256(key, raw body) (the Ruby
+  sample signs `request.body.read`; the Node sample `.digest('hex')`). The key is the webhook's
+  signing secret, the site's API key, or the app client secret, depending on how the webhook was
+  created. SIGNATURE SCHEME (it must match Hookdeck's THINKIFIC source exactly: HMAC controller,
+  algorithm "sha256", header_key "x-thinkific-hmac-sha256", encoding "hex"). The
+  X-Thinkific-Hmac-Sha256 header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
+  HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
+  header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
+  decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
+  is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: One of three: a per-webhook signing
+  secret (admin UI, at least 16 characters, typed or generated, shown once; still being rolled out),
+  the site's API key (webhooks created with an API key), or the OAuth app's client secret (webhooks an
+  app created). Use it as UTF-8 bytes. Env var: THINKIFIC_WEBHOOK_SECRET. Validate the signature's
+  format before decoding it (exact length and alphabet), then compare in constant time: Node checks
+  lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig,
+  'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
+  hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
+  signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
+  window to check; do not invent one from unsigned headers or body fields. Events: dispatch on the
+  body's `resource` field. The body carries the topic in two parts, `resource` and `action`. The
+  `X-Thinkific-Topic` header carries a topic string, but the guide's only example of it is
+  `orders.created` for the order.created topic (plural resource), so whether the header equals the
+  listed topic is untested. cart.abandoned follows a different (versioned, `name`/`data`) envelope.
+  Documented event types (27): lead.created, cart.abandoned, order.created,
+  order_transaction.succeeded, order_transaction.failed, order_transaction.refunded,
+  subscription.cancelled, subscription.past_due, subscription.unpaid, user.signup, user.signin,
+  user.updated, user.deleted, enrollment.trial (and 13 more). Handle a few common ones and log the
+  rest. Method: POST. Hookdeck's Thinkific source manages the method as POST, so the examples handle
+  POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Documented sample payloads
+  (each JSON file's `body` is the payload as the vendor's docs show it) are in
+  /home/user/regwt/main-ro/samples-doc/providers/thinkific/ (latest/app.uninstalled.json,
+  latest/course.created.json, latest/course.deleted.json, latest/course.updated.json, ...); base the
+  examples' test payloads on them. Hookdeck's source type is THINKIFIC, labelled 'Thinkific'. Hookdeck
+  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
+  same thing, verbatim: "Paste the webhook's signing secret. Older webhooks are signed with the site
+  API key, and OAuth app webhooks with the app client secret."
+testScenario:
+  events:
+    - "order.created"
+    - "enrollment.completed"
+    - "user.signup"
+catalog:
+  summary: "Verify Thinkific webhooks (`X-Thinkific-Hmac-Sha256`: hex HMAC-SHA256 of the raw body), handle order, enrollment, user and course events"

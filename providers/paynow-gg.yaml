@@ -1,0 +1,57 @@
+name: paynow-gg
+displayName: "PayNow"
+docs:
+  webhooks: https://docs.paynow.gg/webhooks/webhooks-introduction
+  verification: https://docs.paynow.gg/webhooks/validating-incoming-webhooks
+  events: https://docs.paynow.gg/webhooks/events/
+  examples: https://docs.paynow.gg/webhooks/integration-implementation-examples/
+notes: >
+  PayNow (paynow.gg, game-server stores; not PayNow Singapore or Paynow Zimbabwe) store webhooks of
+  the JSON v1 type (the Discord v1 type posts to Discord and is out of scope). PayNow (paynow.gg), a
+  payments and storefront platform for game servers and creators. Delivery (from the docs): 2xx
+  acknowledges; a status above 299 is retried with exponential backoff "for a reasonable period"
+  before the delivery is marked failed. PayNow says: 'Extract the Unix millisecond timestamp from the
+  `PayNow-Timestamp` header. Create a string by combining the timestamp from the header, followed by a
+  dot (".") and then the actual payload string from the webhook request. Then create an HMAC signature
+  using the resulting string and your signing secret.' 'const hmac = crypto.createHmac('sha256',
+  SIGNING_SECRET); hmac.update(payloadWithTimestamp); return hmac.digest('base64');' SIGNATURE SCHEME
+  (it must match Hookdeck's PAYNOW_GG source exactly: HMAC controller, algorithm sha256, header
+  paynow-signature, encoding base64, signed_content_template "{header:paynow-timestamp}.{body}"). The
+  PayNow-Signature header carries the bare standard base64 (padded) digest, no prefix. The signature
+  is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the PayNow-Timestamp header
+  value, then a literal ".", then the raw request body bytes. Build the signed message as BYTES,
+  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
+  is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
+  Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
+  JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character
+  padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the decoded bytes or the strings in
+  constant time. Compare the WHOLE header value as one digest (no list splitting, no prefix parsing).
+  Secret: the webhook's signing secret, used as UTF-8. Env var: PAYNOW_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject
+  old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp,
+  and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer
+  an opt-in tolerance (an env var such as PAYNOW_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
+  so in SKILL.md and verification.md (PayNow-Timestamp is Unix MILLISECONDS; see PayNow's Preventing
+  Replay Attacks page). Events: dispatch on the body's `event_type` field. Documented event types
+  (31): ON_CHARGEBACK, ON_CHARGEBACK_CLOSED, ON_CHARGEBACK_LIFECYCLE,
+  ON_DISCORD_ACCOUNT_LINKED_TO_CHECKOUT, ON_DELIVERY_ITEM_ADDED, ON_DELIVERY_ITEM_ACTIVATED,
+  ON_DELIVERY_ITEM_USED, ON_DELIVERY_ITEM_RENEWED, ON_DELIVERY_ITEM_EXPIRED, ON_DELIVERY_ITEM_REVOKED,
+  ON_ORDER_COMPLETED, ON_PAYMENT_COMPLETED, ON_PAYMENT_FAILED, ON_REFUND (and 17 more). Handle a few
+  common ones and log the rest. Method: POST. Hookdeck's PayNow source manages the method as POST, so
+  the examples handle POST on the webhook route. Express examples must read the raw body with
+  express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
+  await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
+  Hookdeck's source type is PAYNOW_GG, labelled 'PayNow'.
+testScenario:
+  events:
+    - "ON_ORDER_COMPLETED"
+    - "ON_PAYMENT_COMPLETED"
+    - "ON_REFUND"
+catalog:
+  summary: "Verify PayNow (paynow.gg) webhooks (`PayNow-Signature`: base64 HMAC-SHA256 of `{PayNow-Timestamp}.{body}`), handle order, payment, refund, delivery item and subscription events"

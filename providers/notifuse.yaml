@@ -1,0 +1,56 @@
+name: 'notifuse'
+displayName: 'Notifuse'
+docs:
+  webhooks: 'https://docs.notifuse.com/features/webhooks'
+  verification: 'https://docs.notifuse.com/features/webhooks'
+notes: >-
+  Notifuse (notifuse.com), an open-source (self-hostable) email marketing and transactional email platform.
+  Outgoing webhook subscriptions report contact, list, segment, email and custom-event changes, signed
+  per Standard Webhooks (webhook-* headers). Standard Webhooks signature with webhook-* headers: webhook-id,
+  webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries).
+  Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output.
+  SECRET: Per subscription, generated on creation, rotatable with `webhookSubscriptions.regenerateSecret`
+  (the old one is invalid at once); visible to the workspace owner only. The page never prints a value,
+  but every verification sample strips `whsec_` and base64-decodes the rest, i.e. `whsec_<base64>`. Research:
+  whsec_ (source: "// Output format is `whsec_<base64(32 random bytes)>`, per Standard Webhooks." https://raw.githubusercontent.com/Notifuse/notifuse/main/internal/service/webhook_subscription_service.go).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. NOTIFUSE_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Notifuse
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: replay_window_seconds
+  300 is the samples' check ("Check timestamp is within 5 minutes"). Body: {id, type, timestamp, workspace_id,
+  data}. `id` identifies the delivery (`delivery_...`); `timestamp` is ISO 8601. Event type: Top-level
+  `type` of `{id, type, timestamp, workspace_id, data}`; `id` is the delivery id. Event types (23 documented,
+  list may not be exhaustive): contact.created, contact.updated, contact.deleted, list.subscribed, list.unsubscribed,
+  list.confirmed, list.resubscribed, list.bounced, list.complained, list.pending, list.removed, segment.joined,
+  segment.left, email.sent, email.delivered, email.opened, email.clicked, email.bounced, email.complained,
+  email.unsubscribed, custom_event.created, custom_event.updated, custom_event.deleted. Transport: JSON
+  POST to a public address (private/loopback/metadata addresses refused unless self-hosted with WEBHOOK_DELIVERY_ALLOW_PRIVATE_HOSTS).
+  Delivery: 2xx within 30 s. Up to 10 retries over about 34 h (immediate, 30 s, 1 m, 2 m, 5 m, 15 m, 30
+  m, 1 h, 2 h, 6 h, final 24 h). 429 never counts as a failure; 410 retires the subscription at once;
+  20 consecutive failures spanning over 2 h auto-disable it, and events while disabled are dropped. Setup:
+  Per subscription (console or `webhookSubscriptions.create` API): URL, `event_types`, optional `list_ids`
+  / `segment_ids` / custom-event filters. No challenge. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is NOTIFUSE, labelled 'Notifuse'.
+testScenario:
+  events:
+  - 'contact.created'
+  - 'contact.updated'
+  - 'contact.deleted'
+catalog:
+  summary: >-
+    Verify Notifuse webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    `whsec_` secret), handle contact, list, segment and email events

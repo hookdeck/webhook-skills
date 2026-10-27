@@ -1,0 +1,49 @@
+name: 'doubleword'
+displayName: 'Doubleword'
+docs:
+  webhooks: 'https://docs.doubleword.ai/inference-api/batch-notifications-and-webhooks'
+  verification: 'https://docs.doubleword.ai/inference-api/batch-notifications-and-webhooks'
+notes: >-
+  Doubleword (doubleword.ai), a batch inference API. One webhook URL per user profile, notified when a
+  batch reaches a terminal state. The open-source control-layer implements the signing. Standard Webhooks
+  signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one
+  or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. SECRET: One signing key per user, copied from the profile
+  page; `whsec_` + base64 (the control-layer source generates 32 random bytes). Research: whsec_ ("Your
+  signing key is prefixed with whsec_ — strip that prefix and base64-decode it to get the raw key." https://docs.doubleword.ai/inference-api/batch-notifications-and-webhooks).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. DOUBLEWORD_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the standardwebhooks library (npm 'standardwebhooks', pip 'standardwebhooks'),
+  which reads webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
+  and the manual verifier): read the webhook-* headers and, when webhook-id is absent, fall back to the
+  svix-* headers (svix-id, -timestamp, -signature), exactly as Hookdeck does; then hand the library (or
+  manual check) the three values under the header names it expects (for the standardwebhooks library,
+  pass them as webhook-id, webhook-timestamp and webhook-signature). Include a test that a delivery signed
+  the same way but sent with the other prefix's headers is accepted. This matches Hookdeck's Doubleword
+  source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded after the prefix
+  and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions such as v1a ignored,
+  no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*). The library always
+  enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries and replays resend
+  the original timestamp, so the library rejects late retries after 5 minutes, and point to a manual verifier
+  in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
+  every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
+  to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Verification notes: Raw
+  body is required. Body: {type, timestamp, data}. `data` holds batch_id, status, request_counts, output/error
+  file ids and timestamps. The example has `//` comments, hence parses_cleanly false. Event type: Top-level
+  `type` in a `{type, timestamp, data}` envelope; `data.status` repeats the outcome (`completed`/`failed`).
+  Event types (2 documented, list may not be exhaustive): batch.completed, batch.failed. Transport: JSON
+  POST to the profile's webhook URL. Delivery: 2xx acknowledges; any other status or a timeout fails and
+  is retried with exponential backoff until the attempts run out. 10 consecutive failed deliveries disable
+  the webhook (re-enable in the profile). No schedule, timeout or ordering statement. Setup: One webhook
+  URL per user profile; both event types are always sent. No challenge is documented, so the row has no
+  handshake block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified; parse the body only after the check. Hookdeck's source
+  type is DOUBLEWORD, labelled 'Doubleword'.
+testScenario:
+  events:
+  - 'batch.completed'
+  - 'batch.failed'
+catalog:
+  summary: >-
+    Verify Doubleword webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`,
+    HMAC-SHA256, `whsec_` secret), handle batch.completed and batch.failed events

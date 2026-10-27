@@ -1,0 +1,59 @@
+name: creem
+displayName: "Creem"
+docs:
+  webhooks: https://docs.creem.io/code/webhooks
+  verification: https://docs.creem.io/code/webhooks#webhook-signatures
+notes: >
+  Creem (creem.io), the merchant-of-record payments platform for SaaS. Webhook endpoints are
+  registered in the dashboard (Developers) or through `/v1/webhooks` (SDK, CLI, MCP) and push
+  checkout, subscription, refund, dispute and customer-credit events. Delivery (from the docs): 5
+  attempts in total (initial, then after 30 s, 5 min, 30 min and 6 h); no retries after 24 hours.
+  At-least-once, so handlers should be idempotent. Events can be resent from the dashboard. Creem's
+  docs say: 'Creem signature is sent in the `creem-signature` header of the webhook request. The
+  signature is generated using the HMAC-SHA256 algorithm with the webhook secret as the key, and the
+  request payload as the message.' 'If you are not using the SDK, generate the signature with
+  HMAC-SHA256 using the raw request body and compare it with the `creem-signature` header.'
+  '.createHmac('sha256', secret) .update(payload) .digest('hex');' ''creem-signature':
+  'dd7bdd2cf1f6bac6e171c6c508c157b7cd3cc1fd196394277fb59ba0bdd9b87b'' From the docs (registry
+  summary): Header `creem-signature: <hex>` (bare, 64 hex chars in the sample header). Value = hex
+  HMAC-SHA256(webhook secret, raw body); the TypeScript snippet is `createHmac('sha256',
+  secret).update(payload).digest('hex')`. No test vector. SIGNATURE SCHEME (it must match Hookdeck's
+  CREEM source exactly: HMAC controller, algorithm "sha256", header_key "creem-signature", encoding
+  "hex"). The creem-signature header carries the bare lowercase hex digest, no prefix. Compare the
+  WHOLE header value as one digest (no list splitting or prefix parsing). The signature is lowercase
+  hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
+  other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
+  never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
+  HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
+  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  decode both to bytes) before the constant-time compare. Secret: The endpoint's signing secret, shown
+  on the dashboard's Developers > Webhook page and returned by the API on create (and by
+  `webhooks.getSecret`). Use it as UTF-8 bytes. Env var: CREEM_WEBHOOK_SECRET. Validate the
+  signature's format before decoding it (exact length and alphabet), then compare in constant time:
+  Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never calls
+  Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python
+  uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or
+  empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
+  replay window to check; do not invent one from unsigned headers or body fields. Events: dispatch on
+  the body's `eventType` field. Top-level `eventType` carries the section heading verbatim in every
+  sample; `object` holds the resource (its own `object` key names the resource kind, e.g. `checkout`,
+  `subscription`). `id` (`evt_...`) is the event id. No header names the type. Documented event types
+  (17): checkout.completed, subscription.active, subscription.paid, subscription.canceled,
+  subscription.scheduled_cancel, subscription.past_due, subscription.unpaid, subscription.expired,
+  refund.created, dispute.created, subscription.update, subscription.trialing, subscription.paused,
+  credits.granted (and 3 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
+  Creem source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Documented sample payloads (each JSON file's `body` is the
+  payload as the vendor's docs show it) are in /home/user/regwt/main-ro/samples-doc/providers/creem/
+  (latest/checkout.completed.json, latest/credits.auto_recharged.json, latest/credits.consumed.json,
+  latest/credits.granted.json, ...); base the examples' test payloads on them. Hookdeck's source type
+  is CREEM, labelled 'Creem'.
+testScenario:
+  events:
+    - "checkout.completed"
+    - "subscription.paid"
+    - "refund.created"
+catalog:
+  summary: "Verify Creem webhooks (`creem-signature`: hex HMAC-SHA256 of the raw body), handle checkout, subscription, refund and credit events"

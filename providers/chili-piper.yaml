@@ -1,0 +1,54 @@
+name: chili-piper
+displayName: "Chili Piper"
+docs:
+  webhooks: https://help.chilipiper.com/hc/en-us/articles/39402611091475-Custom-Webhook-Configuration
+  verification: https://help.chilipiper.com/hc/en-us/articles/39402611091475-Custom-Webhook-Configuration
+notes: >
+  Chili Piper custom webhooks (booked-meeting data, one webhook per action type, set up in the Command
+  Center's Integrations pane). The help page is behind a Cloudflare challenge; read it through the
+  Zendesk API: https://help.chilipiper.com/api/v2/help_center/en-us/articles/39402611091475.json.
+  Chili Piper (chilipiper.com), meeting scheduling and inbound lead routing. Delivery (from the docs):
+  Not documented (see gaps). Chili Piper says: 'X-Chili-Signature HMAC-SHA256 signature of the payload
+  (hex-encoded) X-Chili-Timestamp Unix timestamp (seconds) when the request was signed' 'Construct the
+  signed payload by concatenating the timestamp and the raw request body, separated by a period:
+  {timestamp}.{raw_request_body}' 'Email support@chilipiper.com to request your webhook signing
+  secret.' SIGNATURE SCHEME (it must match Hookdeck's CHILI_PIPER source exactly: HMAC controller,
+  algorithm sha256, header x-chili-signature, encoding hex, signed_content_template
+  "{header:x-chili-timestamp}.{body}"). The X-Chili-Signature header carries the bare lowercase hex
+  digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the
+  X-Chili-Timestamp header value, then a literal ".", then the raw request body bytes. Build the
+  signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header
+  values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the tenant's webhook signing secret, which Chili Piper support emails on
+  request (it is not shown in the Command Center), used as UTF-8. Env var: CHILI_PIPER_WEBHOOK_SECRET.
+  Validate the signature's format before decoding it (exact length and alphabet), then compare in
+  constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
+  calls Buffer.from(sig, 'hex'|'base64') on an unvalidated value (it silently drops bad characters);
+  Python uses hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True).
+  Missing or empty signature or signed header, malformed value or mismatch: 401. Timestamp window: do
+  NOT reject old timestamps by default. Hookdeck retries and replays resend the original headers and
+  timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+  retries. Offer an opt-in tolerance (an env var such as CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS, unset
+  or 0 = off) and say so in SKILL.md and verification.md (X-Chili-Timestamp is Unix seconds; Chili
+  Piper's example uses 300 s). Events: one webhook per action type (new, updated, canceled meeting);
+  the body's `type` is Created, Updated or Deleted. Dispatch on it. Method: POST. Hookdeck's Chili
+  Piper source manages the method as POST, so the examples handle POST on the webhook route. Express
+  examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
+  exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
+  parse the body only after the check. Hookdeck's source type is CHILI_PIPER, labelled 'Chili Piper'.
+  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
+  user the same thing, verbatim: "Chili Piper issues the signing secret on request: email Chili Piper
+  support for your tenant's secret and paste it here."
+testScenario:
+  events:
+    - "Created"
+    - "Updated"
+    - "Deleted"
+catalog:
+  summary: "Verify Chili Piper webhooks (`X-Chili-Signature`: hex HMAC-SHA256 of `{X-Chili-Timestamp}.{body}`), handle meeting created, updated and deleted events"

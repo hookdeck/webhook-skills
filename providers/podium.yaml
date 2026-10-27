@@ -1,0 +1,61 @@
+name: podium
+displayName: "Podium"
+docs:
+  webhooks: https://docs.podium.com/docs/webhooks
+  verification: https://docs.podium.com/docs/verifying-webhook-signatures
+  events: https://docs.podium.com/reference/the-webhook-object
+notes: >
+  Podium webhooks created through the webhook API for a location or organization. Podium (podium.com),
+  customer messaging, reviews and payments for local businesses. Delivery (from the docs): Responses
+  time out after 5 seconds. Events queue from webhook creation (even while disabled) and live in the
+  queue about 10 days. No retry schedule is documented. Podium says: 'When setting up a webhook you
+  can optionally add a secret, this will be used to sign all outgoing webhook requests. Any webhook
+  with no secret will not be signed.' 'The signed_payload string is created by linking the following
+  items in order: The timestamp (as a string) ... The character . The actual JSON payload (i.e., the
+  request body)' SIGNATURE SCHEME (it must match Hookdeck's PODIUM source exactly: HMAC controller,
+  algorithm sha256, header podium-signature, encoding hex, signed_content_template
+  "{header:podium-timestamp}.{body}"). The podium-signature header carries the bare lowercase hex
+  digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the
+  podium-timestamp header value, then a literal ".", then the raw request body bytes. Build the signed
+  message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header values as
+  the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
+  value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
+  as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
+  re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
+  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  before the constant-time compare. Compare the WHOLE header value as one digest (no list splitting,
+  no prefix parsing). Secret: the `secret` set when the webhook was created through the API, used as
+  UTF-8. Env var: PODIUM_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
+  length and alphabet), then compare in constant time: Node checks lengths, then
+  crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex'|'base64') on
+  an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
+  (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
+  malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
+  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
+  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  var such as PODIUM_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
+  verification.md (podium-timestamp is Unix MILLISECONDS, e.g. 1620936594591). Podium's text never
+  names the encoding; its screenshots show a 64-character lowercase hex podium-signature, which is
+  what Hookdeck checks. Podium times out after 5 s. Events: the body is {data, metadata: {event_type,
+  version}}; dispatch on `metadata.event_type` (message.received, message.sent, contact.created,
+  contact.updated, review.created, invoice.payment_succeeded, call.completed; 26 in all). Methods:
+  Podium's docs don't name the HTTP method. Hookdeck's Podium source pre-selects POST without managing
+  the method (the user can change it). The examples must NOT be POST-only: accept GET, POST, PUT,
+  PATCH and DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a
+  handler for each; FastAPI: api_route with those methods), verify the signature first for every
+  method, and treat a missing body as empty bytes. Say in SKILL.md and setup.md that Hookdeck's Podium
+  source pre-selects POST without managing the method, so any other method the sender uses must also
+  be allowed on the source. Express examples must read the raw body with express.raw({ type: '*/*' })
+  so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
+  FastAPI: await request.body()); parse the body only after the check. Hookdeck's source type is
+  PODIUM, labelled 'Podium'. Hookdeck shows this setup note for the source, and SKILL.md and
+  references/setup.md must tell the user the same thing, verbatim: "Set a secret when you create the
+  Podium webhook. Webhooks created without one are unsigned and fail verification."
+testScenario:
+  events:
+    - "message.received"
+    - "contact.created"
+    - "review.created"
+catalog:
+  summary: "Verify Podium webhooks (`podium-signature`: hex HMAC-SHA256 of `{podium-timestamp}.{body}`), handle message, contact, review, call and invoice events"

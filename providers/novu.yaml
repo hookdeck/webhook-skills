@@ -1,0 +1,58 @@
+name: 'novu'
+displayName: 'Novu'
+docs:
+  webhooks: 'https://docs.novu.co/platform/developer/webhooks'
+  verification: 'https://docs.novu.co/platform/developer/webhooks'
+  events: 'https://docs.novu.co/platform/developer/webhooks/event-types'
+notes: >-
+  Novu (novu.co), an open-source notification infrastructure platform. Outbound webhooks (Team and Enterprise
+  plans) report message delivery/engagement, preference and workflow changes and inbound email; delivered
+  through Svix with Standard Webhooks (webhook-*) headers. Standard Webhooks signature with webhook-*
+  headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated
+  'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256,
+  base64 output. Hookdeck core notes: White-labelled Svix: sends webhook-* headers. SECRET: Per endpoint
+  signing secret in the dashboard's Webhooks page (a Svix portal). Novu shows only a placeholder (`YOUR_WEBHOOK_SECRET_KEY`);
+  the form is Svix's (`whsec_<base64>`), not stated by Novu. Research: whsec_ (Svix-issued; Novu's repo
+  depends on svix and svix-react, i.e. the Svix App Portal embed; docs do not print the prefix). It starts
+  with whsec_; the key is the base64-decoding of the part after whsec_. NOVU_WEBHOOK_SECRET holds the
+  full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads
+  svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and webhook-signature.
+  HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-* headers and, when
+  webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature), exactly as
+  Hookdeck does; then hand the library (or manual check) the three values under the header names it expects
+  (the svix library accepts either set itself, so pass it both sets of headers rather than only svix-*).
+  Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
+  This matches Hookdeck's Novu source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
+  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
+  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
+  The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
+  and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
+  point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'
+  with the same key, compare every space-separated v1,<base64> entry in constant time after a length check,
+  require the timestamp to be a plain positive integer) where the window can be dropped or widened. Missing
+  headers or a bad signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's
+  configuration alert for this source reads exactly: "Novu outbound webhooks are available on the Team
+  and Enterprise plans." SKILL.md and references/setup.md must state this requirement, quoting the alert
+  verbatim. Verification notes: Raw body required ("Verify the payload exactly as it was sent"). Body:
+  {id, type, object, timestamp, environmentId, data}. `data.object` is the resource; update events add
+  `data.previousObject`. Event type: Top-level `type` of the envelope `{id (evt_), type, object, timestamp,
+  environmentId, data}`; top-level `object` is the resource kind (`message` | `workflow` | `preference`
+  | `email_inbound`), not the event type. Event types (17 documented, list may not be exhaustive): email.received,
+  message.archived, message.deleted, message.delivered, message.failed, message.read, message.seen, message.sent,
+  message.snoozed, message.unarchived, message.unread, message.unsnoozed, preference.updated, workflow.created,
+  workflow.deleted, workflow.published, workflow.updated. Transport: JSON POST (Svix). Delivery: Non-2xx
+  or no response within 15 s fails; retries immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h. Endpoints
+  failing for 5 consecutive days are disabled. Resend, recover and replay from the dashboard. Setup: Per
+  endpoint in the dashboard: event types, rate limit, custom headers, transformations; connectors can
+  deliver to warehouses/queues instead. No challenge. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is NOVU, labelled 'Novu'.
+testScenario:
+  events:
+  - 'message.failed'
+  - 'email.received'
+  - 'message.archived'
+catalog:
+  summary: >-
+    Verify Novu webhooks (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature`, `whsec_`
+    secret), handle email, message, preference and workflow events

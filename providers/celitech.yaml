@@ -1,0 +1,54 @@
+name: 'celitech'
+displayName: 'Celitech'
+docs:
+  webhooks: 'https://docs.celitech.com/webhooks/overview'
+  verification: 'https://docs.celitech.com/webhooks/security'
+notes: >-
+  CELITECH (celitech.com), a B2B eSIM connectivity API. Webhooks (enabled per account on request) report
+  data-usage thresholds and eSIM lifecycle changes on the device; delivered by Svix with svix-* headers.
+  Standard Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature
+  (one or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw
+  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Delivered by Svix. SECRET: Per endpoint,
+  under Developers -> Webhooks in the dashboard; rotatable there. The page never shows the value; Svix
+  endpoint secrets are `whsec_<base64>`, unconfirmed for CELITECH. Research: whsec_ (inferred from Svix
+  delivery: svix-* headers and the official Svix libraries; the literal secret is not shown on the page).
+  It starts with whsec_; the key is the base64-decoding of the part after whsec_. CELITECH_WEBHOOK_SECRET
+  holds the full whsec_ value. Verify with the svix library (npm 'svix', pip 'svix'), whose Webhook.verify
+  reads svix-id, svix-timestamp and svix-signature and falls back to webhook-id, webhook-timestamp and
+  webhook-signature. HEADER FALLBACK (all three frameworks and the manual verifier): read the svix-* headers
+  and, when svix-id is absent, fall back to the webhook-* headers (webhook-id, -timestamp, -signature),
+  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  names it expects (the svix library accepts either set itself, so pass it both sets of headers rather
+  than only svix-*). Include a test that a delivery signed the same way but sent with the other prefix's
+  headers is accepted. This matches Hookdeck's Celitech source (Standard Webhooks, headers_prefix 'svix',
+  a whsec_ secret base64-decoded after the prefix and any other secret used as its raw UTF-8 bytes, every
+  v1 entry tried, other versions such as v1a ignored, no timestamp window; core also reads the other prefix's
+  headers, webhook-* or svix-*). The library always enforces a fixed 5-minute timestamp window. SKILL.md
+  must say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
+  retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256 over
+  '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64> entry in
+  constant time after a length check, require the timestamp to be a plain positive integer) where the
+  window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail closed
+  when the secret env var is unset. Verification notes: The page describes the construction only in prose
+  ("over the delivery's svix-id, svix-timestamp, and raw body") and defers to the Svix libraries; no tolerance
+  is given ("too far in the past or future"). Body: {type, purchaseId, dataLimitInGB, dataUsageRemainingInGB,
+  actualPercentage, notificationPercentage}. Flat, no `data` wrapper. The fields shown are consumption.threshold.reached's;
+  the five esim.* events carry `type` and `iccid` only. Event type: Top-level `type` in every `x-webhooks`
+  request schema (a one-value enum per event); the rest of the body is flat (`purchaseId`, ... or `iccid`).
+  Event types (6 documented, list may not be exhaustive): consumption.threshold.reached, esim.downloaded,
+  esim.installed, esim.enabled, esim.disabled, esim.deleted. Transport: JSON POST via Svix; public HTTPS
+  endpoints only. Delivery: 2xx within about 15 s; otherwise retried with increasing delay over hours,
+  after which the endpoint may be disabled. Dedupe on svix-id. Dashboard example events are not retried.
+  Setup: Webhooks are enabled per account by CELITECH on request; then per endpoint in Developers -> Webhooks:
+  URL, description, event types. No challenge. Express examples must read the raw body with express.raw({
+  type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
+  the check. Hookdeck's source type is CELITECH, labelled 'Celitech'.
+testScenario:
+  events:
+  - 'consumption.threshold.reached'
+  - 'esim.downloaded'
+  - 'esim.installed'
+catalog:
+  summary: >-
+    Verify Celitech webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
+    secret), handle eSIM and consumption events
