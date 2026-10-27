@@ -8,6 +8,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -89,8 +95,8 @@ async def upload_post_webhook(
     elif event == "social_account_reauth_required":
         print(f"Reauth required: {payload.get('platform')} {payload.get('account_name')} ({payload.get('reason')})")
     elif event == "comment_received":
-        comment = payload.get("comment") or {}
-        post = payload.get("post") or {}
+        comment = _as_dict(payload.get("comment"))
+        post = _as_dict(payload.get("post"))
         print(f"Comment on {post.get('id')}: {comment.get('text')}")
     elif event == "dm_received":
         print(f"DM received on {payload.get('platform')}")

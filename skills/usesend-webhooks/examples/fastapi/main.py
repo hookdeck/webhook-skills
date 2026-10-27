@@ -9,6 +9,12 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -88,13 +94,13 @@ async def usesend_webhook(raw_body: bytes = Depends(verified_body)):
     if event_type == "email.delivered":
         print("Email delivered to:", data.get("to"))
     elif event_type == "email.bounced":
-        print("Email bounced:", data.get("id"), (data.get("bounce") or {}).get("type"))
+        print("Email bounced:", data.get("id"), _as_dict(data.get("bounce")).get("type"))
     elif event_type == "email.complained":
         print("Spam complaint for email:", data.get("id"))
     elif event_type == "email.opened":
         print("Email opened:", data.get("id"))
     elif event_type == "email.clicked":
-        print("Link clicked:", (data.get("click") or {}).get("url"))
+        print("Link clicked:", _as_dict(data.get("click")).get("url"))
     elif event_type == "contact.created":
         print("Contact created:", data.get("email"))
     elif event_type == "domain.verified":

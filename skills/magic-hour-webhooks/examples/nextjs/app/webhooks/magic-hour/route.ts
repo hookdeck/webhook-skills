@@ -32,8 +32,8 @@ function handleEvent(event: MagicHourEvent): void {
     case 'audio.completed':
       console.log(`${type}: job ${payload.id} complete`);
       // Download URLs expire: save the files from payload.downloads[].url promptly
-      for (const download of payload.downloads ?? []) {
-        console.log(`  download: ${download.url} (expires ${download.expires_at})`);
+      for (const download of Array.isArray(payload.downloads) ? payload.downloads : []) {
+        console.log(`  download: ${download?.url} (expires ${download?.expires_at})`);
       }
       break;
 

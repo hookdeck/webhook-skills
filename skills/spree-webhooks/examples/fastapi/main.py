@@ -10,6 +10,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -84,7 +90,7 @@ async def spree_webhook(request: Request):
     event = event if isinstance(event, dict) else {}
     name = event.get("name")
     event_id = event.get("id")
-    data = event.get("data") or {}
+    data = _as_dict(event.get("data"))
 
     # Dispatch on the body's name (also sent as X-Spree-Webhook-Event)
     if name == "order.placed":

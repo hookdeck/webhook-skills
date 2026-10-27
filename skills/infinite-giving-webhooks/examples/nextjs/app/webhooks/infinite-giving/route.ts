@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
   // Dispatch on the body's `event` field. X-IG-Webhook-Id (same as payload.id)
   // is unique per delivery: use it to dedupe retries.
   const deliveryId = request.headers.get('x-ig-webhook-id') || payload.id;
-  const { event, data = {} } = payload;
+  const { event } = payload;
+  const data = payload.data ?? {};
 
   switch (event) {
     case 'donation:created':

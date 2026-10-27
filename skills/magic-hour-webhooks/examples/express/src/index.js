@@ -75,7 +75,8 @@ function verifyMagicHourSignature(rawBody, headers, config = {}) {
  * Payloads carry no event ID: dedupe on `${payload.id}:${type}`.
  */
 function handleEvent(event) {
-  const { type, payload = {} } = event;
+  const { type } = event;
+  const payload = event.payload ?? {};
 
   switch (type) {
     case 'video.started':
@@ -89,8 +90,8 @@ function handleEvent(event) {
     case 'audio.completed':
       console.log(`${type}: job ${payload.id} complete`);
       // Download URLs expire: save the files from payload.downloads[].url promptly
-      for (const download of payload.downloads || []) {
-        console.log(`  download: ${download.url} (expires ${download.expires_at})`);
+      for (const download of Array.isArray(payload.downloads) ? payload.downloads : []) {
+        console.log(`  download: ${download?.url} (expires ${download?.expires_at})`);
       }
       break;
 

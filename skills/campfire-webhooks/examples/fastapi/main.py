@@ -13,6 +13,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -88,7 +94,7 @@ async def campfire_webhook(request: Request):
     # Campfire sends {webhook_uuid, topic, data, changes}. *.deleted topics
     # carry only {"id": ...} in data and null in changes.
     topic = event.get("topic")
-    data = event.get("data") or {}
+    data = _as_dict(event.get("data"))
 
     if topic == "Invoice.created":
         print(f"Invoice created: {data.get('id')} ({data.get('invoice_number')})")

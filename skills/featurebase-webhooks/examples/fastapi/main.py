@@ -12,6 +12,17 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -66,16 +77,16 @@ processed_event_ids: set[str] = set()
 
 def handle_event(event: dict) -> None:
     topic = event.get("topic")
-    data = event.get("data") or {}
-    item = data.get("item") or {}
+    data = _as_dict(event.get("data"))
+    item = _as_dict(data.get("item"))
 
     if topic == "post.created":
         print(f"Request created: {item.get('title')} ({item.get('id')})")
     elif topic == "post.updated":
-        fields = [c.get("field") for c in data.get("changes") or []]
+        fields = [str(c.get("field")) for c in _as_list(data.get("changes")) if isinstance(c, dict)]
         print(f"Request updated: {item.get('id')}, changed: {', '.join(fields) or 'n/a'}")
     elif topic == "post.voted":
-        voter = item.get("voter") or {}
+        voter = _as_dict(item.get("voter"))
         print(f"Request {item.get('postId')} vote {item.get('action')} by {voter.get('name')}")
     elif topic == "ticket.created":
         print(f"Ticket created: #{item.get('ticketNumber')} {item.get('title')}")
@@ -125,7 +136,7 @@ async def featurebase_webhook(request: Request):
     if not isinstance(event, dict):
         return JSONResponse({"error": "Invalid event"}, status_code=400)
 
-    event_id = event.get("id")
+    event_id = event.get("id") if isinstance(event.get("id"), str) else None
     if event_id and event_id in processed_event_ids:
         return {"received": True, "duplicate": True}
     if event_id:

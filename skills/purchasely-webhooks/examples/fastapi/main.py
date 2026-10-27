@@ -121,7 +121,7 @@ async def purchasely_webhook(request: Request):
     if not isinstance(event, dict):
         return JSONResponse({"error": "Expected a JSON object"}, status_code=400)
 
-    event_id = event.get("event_id")
+    event_id = event.get("event_id") if isinstance(event.get("event_id"), str) else None
     if event_id and event_id in processed:
         return JSONResponse({"received": True, "duplicate": True}, status_code=200)
 

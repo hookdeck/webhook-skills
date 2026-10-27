@@ -13,6 +13,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -102,10 +108,10 @@ async def infinite_giving_webhook(request: Request):
     # is unique per delivery: use it to dedupe retries.
     delivery_id = request.headers.get("x-ig-webhook-id") or payload.get("id")
     event = payload.get("event")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "donation:created":
-        org = (data.get("organization") or {}).get("name")
+        org = _as_dict(data.get("organization")).get("name")
         print(
             f"New {data.get('type')} donation {data.get('id')} "
             f"({data.get('identifier')}, qty {data.get('quantity')}) for {org}: "

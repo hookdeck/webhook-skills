@@ -11,6 +11,17 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_str(value):
+    """A JSON string field, or "" when the field is missing or another type."""
+    return value if isinstance(value, str) else ""
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -113,13 +124,13 @@ async def tidio_webhook(request: Request):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    webhook_id = event.get("webhook_id")
+    webhook_id = event.get("webhook_id") if isinstance(event.get("webhook_id"), str) else None
     if webhook_id:
         if webhook_id in processed_webhook_ids:
             return {"received": True, "duplicate": True}
         processed_webhook_ids.add(webhook_id)
 
-    handle_event(event.get("topic", ""), event.get("content") or {})
+    handle_event(_as_str(event.get("topic")), _as_dict(event.get("content")))
     return {"received": True}
 
 

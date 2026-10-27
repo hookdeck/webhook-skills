@@ -11,6 +11,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -91,7 +97,7 @@ async def paynow_webhook(raw_body: bytes = Depends(verified_body)):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event_type = event.get("event_type") if isinstance(event, dict) else None
-    data = event.get("body") or {} if isinstance(event, dict) else {}
+    data = _as_dict(event.get("body")) if isinstance(event, dict) else {}
 
     # Deduplicate on event["event_id"] in production: PayNow retries any non-2xx response
     if event_type == "ON_ORDER_COMPLETED":

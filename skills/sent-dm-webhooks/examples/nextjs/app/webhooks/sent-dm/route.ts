@@ -46,7 +46,8 @@ function verifySentWebhook(
 const processedEventIds = new Set<string>();
 
 function handleEvent(event: SentEvent): void {
-  const { event: type, payload = {} } = event; // dispatch on the body's `event` field
+  const { event: type } = event; // dispatch on the body's `event` field
+  const payload = event.payload ?? {};
 
   switch (type) {
     case 'message.delivered':

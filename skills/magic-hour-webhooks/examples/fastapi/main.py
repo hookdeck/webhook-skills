@@ -11,6 +11,17 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -75,7 +86,7 @@ def handle_event(event: dict) -> None:
     GET /v1/{video,image,audio}-projects/:id. Payloads carry no event ID:
     dedupe on f"{payload.id}:{type}"."""
     event_type = event.get("type")
-    payload = event.get("payload") or {}
+    payload = _as_dict(event.get("payload"))
 
     if event_type in ("video.started", "image.started", "audio.started"):
         print(f"{event_type}: job {payload.get('id')} is rendering")
@@ -83,11 +94,13 @@ def handle_event(event: dict) -> None:
     elif event_type in ("video.completed", "image.completed", "audio.completed"):
         print(f"{event_type}: job {payload.get('id')} complete")
         # Download URLs expire: save the files from payload["downloads"][*]["url"] promptly
-        for download in payload.get("downloads") or []:
+        for download in _as_list(payload.get("downloads")):
+            if not isinstance(download, dict):
+                continue
             print(f"  download: {download.get('url')} (expires {download.get('expires_at')})")
 
     elif event_type in ("video.errored", "image.errored", "audio.errored"):
-        error = payload.get("error") or {}
+        error = _as_dict(payload.get("error"))
         print(f"{event_type}: job {payload.get('id')} failed: {error.get('code')} {error.get('message')}")
 
     else:

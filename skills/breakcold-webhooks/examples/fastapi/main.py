@@ -14,6 +14,12 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -75,12 +81,12 @@ def _tolerance() -> float:
 def handle_event(payload: dict) -> None:
     """Dispatch on the body's `event` field. Runs after the 2xx response."""
     event = payload.get("event")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     if event == "record.created":
         logger.info("[record.created] %s: %s (%s)", data.get("objectTypeName") or data.get("objectType"), data.get("name"), data.get("id"))
     elif event == "record.updated":
-        logger.info("[record.updated] %s (%s) fields: %s", data.get("name"), data.get("id"), ", ".join((data.get("fields") or {}).keys()))
+        logger.info("[record.updated] %s (%s) fields: %s", data.get("name"), data.get("id"), ", ".join(_as_dict(data.get("fields")).keys()))
     elif event == "record.deleted":
         logger.info("[record.deleted] %s", data.get("id"))
     elif event in ("note.created", "note.updated", "note.deleted"):
@@ -127,7 +133,8 @@ async def breakcold_webhook(request: Request, background_tasks: BackgroundTasks)
         return JSONResponse({"error": "Invalid JSON"}, status_code=400)
 
     # 3. DEDUPE.
-    delivery_id = request.headers.get("x-webhook-delivery-id") or payload.get("eventId")
+    event_id = payload.get("eventId") if isinstance(payload.get("eventId"), str) else None
+    delivery_id = request.headers.get("x-webhook-delivery-id") or event_id
     if delivery_id:
         if delivery_id in processed_deliveries:
             return {"received": True, "duplicate": True}

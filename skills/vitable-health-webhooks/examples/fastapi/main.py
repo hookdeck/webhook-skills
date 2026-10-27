@@ -111,7 +111,7 @@ async def vitable_webhook(raw_body: bytes = Depends(verified_body)):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    event_id = event.get("event_id")
+    event_id = event.get("event_id") if isinstance(event.get("event_id"), str) else None
     if event_id and event_id in seen_events:
         return {"received": True, "duplicate": True}
 

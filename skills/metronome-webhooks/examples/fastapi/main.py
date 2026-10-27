@@ -106,8 +106,10 @@ async def metronome_webhook(request: Request):
         event = json.loads(raw_body)
     except ValueError:
         return JSONResponse(status_code=400, content={"error": "Invalid JSON"})
+    if not isinstance(event, dict):
+        return JSONResponse(status_code=400, content={"error": "Invalid payload"})
 
-    event_id = event.get("id") if isinstance(event, dict) else None
+    event_id = event.get("id") if isinstance(event.get("id"), str) else None
     if event_id:
         if event_id in seen_event_ids:
             return {"received": True, "duplicate": True}
@@ -115,8 +117,9 @@ async def metronome_webhook(request: Request):
 
     # Threshold, invoice and integration events nest data under `properties`;
     # contract, commit, credit and subscription events are flat.
-    data = (event.get("properties") or event) if isinstance(event, dict) else {}
-    event_type = event.get("type") if isinstance(event, dict) else None
+    properties = event.get("properties")
+    data = properties if isinstance(properties, dict) and properties else event
+    event_type = event.get("type")
 
     if event_type == "alerts.spend_threshold_reached":
         logger.info("Spend threshold reached: %s %s", data.get("customer_id"), data.get("current_spend"))

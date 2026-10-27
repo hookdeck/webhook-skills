@@ -11,6 +11,12 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -69,7 +75,7 @@ def handle_event(event: dict) -> None:
         print(f"Onboarding completed for employment {employment_id}")
         # TODO: provision accounts, notify the manager
     elif event_type == "employment.onboarding_task.completed":
-        task = event.get("completed_task") or {}
+        task = _as_dict(event.get("completed_task"))
         print(f"Onboarding task \"{task.get('name')}\" completed for employment {employment_id}")
         # TODO: update your onboarding checklist
     elif event_type == "timeoff.requested":

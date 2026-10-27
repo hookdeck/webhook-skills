@@ -12,6 +12,12 @@ import time
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 logger = logging.getLogger("spherepay-webhooks")
@@ -108,7 +114,7 @@ async def spherepay_webhook(raw_body: bytes = Depends(verified_body)):
 
     # Delivery is at-least-once and unordered: dedupe on event["id"], compare event["sequence"] for staleness
     event_type = event.get("type")
-    data = event.get("data") or {}
+    data = _as_dict(event.get("data"))
 
     if event_type in ("customer.created", "customer.pending"):
         logger.info("Customer %s (%s): %s", data.get("id"), event_type, data.get("status"))

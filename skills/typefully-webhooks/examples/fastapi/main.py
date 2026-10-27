@@ -13,6 +13,17 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_str(value):
+    """A JSON string field, or "" when the field is missing or another type."""
+    return value if isinstance(value, str) else ""
+
+
 load_dotenv()
 
 logger = logging.getLogger("typefully-webhooks")
@@ -98,10 +109,10 @@ async def typefully_webhook(
 
     # Envelope: {"event": "draft.created", "data": <draft>}
     event = payload.get("event")
-    draft = payload.get("data") or {}
+    draft = _as_dict(payload.get("data"))
 
     if event == "draft.created":
-        logger.info("Draft %s created: %s", draft.get("id"), draft.get("draft_title") or draft.get("preview", ""))
+        logger.info("Draft %s created: %s", draft.get("id"), draft.get("draft_title") or _as_str(draft.get("preview")))
     elif event == "draft.scheduled":
         logger.info("Draft %s scheduled for %s", draft.get("id"), draft.get("scheduled_date"))
     elif event == "draft.published":

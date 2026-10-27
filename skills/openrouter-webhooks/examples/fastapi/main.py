@@ -10,6 +10,17 @@ import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value):
+    """A nested JSON array, or [] when the field is missing or another type."""
+    return value if isinstance(value, list) else []
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -96,11 +107,11 @@ async def openrouter_webhook(request: Request):
     # Deduplicate retries on this header (e.g. "<job id>-completed")
     idempotency_key = request.headers.get("x-openrouter-idempotency-key")
     event_type = event.get("type") if isinstance(event, dict) else None
-    job = (event.get("data") if isinstance(event, dict) else None) or {}
+    job = _as_dict(event.get("data")) if isinstance(event, dict) else {}
 
     # Handle the event based on type
     if event_type == "video.generation.completed":
-        urls = job.get("unsigned_urls") or []
+        urls = _as_list(job.get("unsigned_urls"))
         print(f"Video ready: id={job.get('id')} key={idempotency_key} url={urls[0] if urls else None}")
         # TODO: Store the job and download the video (send your bearer token if the URL is on the OpenRouter API)
 

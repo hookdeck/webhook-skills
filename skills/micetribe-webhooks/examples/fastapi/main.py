@@ -13,6 +13,12 @@ from typing import Optional, Tuple
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -143,7 +149,7 @@ async def micetribe_webhook(request: Request, raw_body: bytes = Depends(verified
 
     if trigger == "registration.created":
         # A new registration was created. data.registration_data holds the attendee's fields.
-        email = (data.get("registration_data") or {}).get("email")
+        email = _as_dict(data.get("registration_data")).get("email")
         print(f"New registration for {email} ({meta.get('event_name')})")
     elif trigger == "registration.updated":
         # An existing registration changed. data.entry_status is e.g. "Approved".
@@ -152,10 +158,10 @@ async def micetribe_webhook(request: Request, raw_body: bytes = Depends(verified
         print(f"Registration {registration_id} deleted")
     elif trigger == "registration.attended":
         # Attendance recorded: data.checkin.attended / checkin_at.
-        print(f"Registration {registration_id} attended at {(data.get('checkin') or {}).get('checkin_at')}")
+        print(f"Registration {registration_id} attended at {_as_dict(data.get('checkin')).get('checkin_at')}")
     elif trigger == "registration.printed":
         # Badge printed: data.print.print_count / last_printed_at.
-        print(f"Registration {registration_id} badge printed ({(data.get('print') or {}).get('print_count')})")
+        print(f"Registration {registration_id} badge printed ({_as_dict(data.get('print')).get('print_count')})")
     else:
         print(f"Unhandled MICEtribe event: {trigger}")
 

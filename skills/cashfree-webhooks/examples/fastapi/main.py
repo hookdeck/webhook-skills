@@ -14,6 +14,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+
+def _as_dict(value):
+    """A nested JSON object, or {} when the field is missing or another type."""
+    return value if isinstance(value, dict) else {}
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -72,18 +78,18 @@ def verify_cashfree_signature(
 def handle_event(payload: dict) -> None:
     # Payment Gateway and Payouts V2 put the event in `type`; Secure ID and PPI use `event_type`.
     name = payload.get("type") or payload.get("event_type")
-    data = payload.get("data") or {}
+    data = _as_dict(payload.get("data"))
 
     # --- Payment Gateway (the overview samples abbreviate some names) -------
     if name in ("PAYMENT_SUCCESS_WEBHOOK", "PAYMENT_SUCCESS"):
-        print(f"Payment succeeded: order {(data.get('order') or {}).get('order_id')}, "
-              f"payment {(data.get('payment') or {}).get('cf_payment_id')}")
+        print(f"Payment succeeded: order {_as_dict(data.get('order')).get('order_id')}, "
+              f"payment {_as_dict(data.get('payment')).get('cf_payment_id')}")
     elif name in ("PAYMENT_FAILED_WEBHOOK", "PAYMENT_FAILED"):
-        print(f"Payment failed: order {(data.get('order') or {}).get('order_id')}")
+        print(f"Payment failed: order {_as_dict(data.get('order')).get('order_id')}")
     elif name in ("PAYMENT_USER_DROPPED_WEBHOOK", "PAYMENT_USER_DROPPED"):
-        print(f"Customer dropped payment: order {(data.get('order') or {}).get('order_id')}")
+        print(f"Customer dropped payment: order {_as_dict(data.get('order')).get('order_id')}")
     elif name == "REFUND_STATUS_WEBHOOK":
-        print(f"Refund status update: {(data.get('refund') or {}).get('refund_id')}")
+        print(f"Refund status update: {_as_dict(data.get('refund')).get('refund_id')}")
     elif name == "SETTLEMENT_STATUS_WEBHOOK":
         print("Settlement status update")
     # --- Payouts V2 --------------------------------------------------------

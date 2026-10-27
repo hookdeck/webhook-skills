@@ -25,7 +25,8 @@ function handleEvent(event: FeaturebaseEvent): void {
       console.log(`Request created: ${item.title} (${item.id})`);
       break;
     case 'post.updated': {
-      const fields = (event.data?.changes ?? []).map((c) => c.field);
+      const changes = event.data?.changes;
+      const fields = (Array.isArray(changes) ? changes : []).map((c) => c?.field);
       console.log(`Request updated: ${item.id}, changed: ${fields.join(', ') || 'n/a'}`);
       break;
     }
