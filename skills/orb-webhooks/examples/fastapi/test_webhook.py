@@ -141,7 +141,9 @@ class TestOrbWebhook:
             {
                 "id": "evt_valid",
                 "type": "invoice.issued",
-                "properties": {"invoice_id": "invoice_01"},
+                "payload_style": "standard",
+                "invoice": {"id": "invoice_01"},
+                "properties": {"automatically_marked_as_paid": False},
             }
         )
         signature, timestamp = generate_orb_signature(payload, WEBHOOK_SECRET)
@@ -157,6 +159,34 @@ class TestOrbWebhook:
         )
         assert response.status_code == 200
         assert response.json() == {"received": True}
+
+    def test_reads_resource_id_from_resource_key(self, capsys):
+        """`properties` never carries the resource ID — it lives under the
+        resource key matching the `resource_name` prefix of `type`."""
+        payload = json.dumps(
+            {
+                "id": "evt_resource_key",
+                "type": "invoice.issued",
+                "payload_style": "standard",
+                "invoice": {"id": "invoice_from_resource_key"},
+                "properties": {"automatically_marked_as_paid": False},
+            }
+        )
+        signature, timestamp = generate_orb_signature(payload, WEBHOOK_SECRET)
+
+        response = client.post(
+            "/webhooks/orb",
+            content=payload,
+            headers={
+                "Content-Type": "application/json",
+                "X-Orb-Signature": signature,
+                "X-Orb-Timestamp": timestamp,
+            },
+        )
+        assert response.status_code == 200
+        out = capsys.readouterr().out
+        assert "invoice_from_resource_key" in out
+        assert "standard" in out
 
     @pytest.mark.parametrize(
         "event_type",
@@ -176,10 +206,15 @@ class TestOrbWebhook:
         ],
     )
     def test_handles_event_types(self, event_type: str):
+        # Orb carries the resource under a key matching the `resource_name`
+        # prefix of `type`, so build that key from the event type.
+        resource_key = event_type.split(".")[0]
         payload = json.dumps(
             {
                 "id": f"evt_{event_type.replace('.', '_')}",
                 "type": event_type,
+                "payload_style": "standard",
+                resource_key: {"id": f"{resource_key}_01"},
                 "properties": {},
             }
         )

@@ -24,7 +24,13 @@ metadata:
 
 Orb signs every webhook with HMAC-SHA256 over the literal string `v1:{X-Orb-Timestamp}:{rawBody}`. The hex digest is delivered in `X-Orb-Signature` prefixed with `v1=` (e.g. `v1=abc123…`). The ISO 8601 timestamp arrives separately in `X-Orb-Timestamp`. Use the **raw** request body — don't `JSON.parse` first.
 
-The `orb-billing` SDK (npm and PyPI) does **not** expose an `unwrap()`/`constructEvent()` helper at this time, so manual HMAC verification is the canonical path in every framework.
+The `orb-billing` SDK does expose webhook helpers — `webhooks.verifySignature()`, plus `webhooks.unwrap()` and `webhooks.unwrapStandard()` which verify *and* parse (verified against `orb-billing@6.33.0`). The manual HMAC above is the dependency-free path and is what the examples use; either is fine.
+
+## Payload shape (important)
+
+Orb serializes the event's resource under a key matching the `resource_name` prefix of `type` — `invoice.issued` carries it under `invoice`, `subscription.created` under `subscription`. **The resource ID lives there, not in `properties`**, which holds only the extra fields specific to the event and is an empty object for many types.
+
+Every payload also carries `payload_style`: `"standard"` or `"expanded"`, configured per endpoint. Standard payloads summarize subscriptions and invoices (no line items, related objects as references); expanded payloads carry them in full. New endpoints default to `standard`, and retries of older events keep the style they were created with — so branch on `payload_style` rather than assuming one. See [references/overview.md](references/overview.md).
 
 Node:
 

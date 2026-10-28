@@ -137,7 +137,9 @@ describe('POST /webhooks/orb', () => {
     const payload = JSON.stringify({
       id: 'evt_valid',
       type: 'invoice.issued',
-      properties: { invoice_id: 'invoice_01' },
+      payload_style: 'standard',
+      invoice: { id: 'invoice_01' },
+      properties: { automatically_marked_as_paid: false },
     });
     const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);
 
@@ -150,6 +152,35 @@ describe('POST /webhooks/orb', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ received: true });
+  });
+
+  it('reads the resource ID from the resource key, not from properties', async () => {
+    // Orb serializes the resource under a key matching the `resource_name`
+    // prefix of `type`; `properties` never carries the resource ID.
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const payload = JSON.stringify({
+        id: 'evt_resource_key',
+        type: 'invoice.issued',
+        payload_style: 'standard',
+        invoice: { id: 'invoice_from_resource_key' },
+        properties: { automatically_marked_as_paid: false },
+      });
+      const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);
+
+      await request(app)
+        .post('/webhooks/orb')
+        .set('Content-Type', 'application/json')
+        .set('X-Orb-Signature', signature)
+        .set('X-Orb-Timestamp', timestamp)
+        .send(payload);
+
+      const logged = logSpy.mock.calls.map((args) => args.join(' ')).join('\n');
+      expect(logged).toContain('invoice_from_resource_key');
+      expect(logged).toContain('standard');
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 
   it('handles every documented event type', async () => {
@@ -169,9 +200,14 @@ describe('POST /webhooks/orb', () => {
     ];
 
     for (const eventType of eventTypes) {
+      // Orb carries the resource under a key matching the `resource_name`
+      // prefix of `type`, so build that key from the event type.
+      const resourceKey = eventType.split('.')[0];
       const payload = JSON.stringify({
         id: `evt_${eventType.replace(/\./g, '_')}`,
         type: eventType,
+        payload_style: 'standard',
+        [resourceKey]: { id: `${resourceKey}_01` },
         properties: {},
       });
       const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);

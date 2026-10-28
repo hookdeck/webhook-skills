@@ -138,7 +138,9 @@ describe('POST /webhooks/orb', () => {
     const payload = JSON.stringify({
       id: 'evt_valid',
       type: 'invoice.issued',
-      properties: { invoice_id: 'invoice_01' },
+      payload_style: 'standard',
+      invoice: { id: 'invoice_01' },
+      properties: { automatically_marked_as_paid: false },
     });
     const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);
 
@@ -176,9 +178,14 @@ describe('POST /webhooks/orb', () => {
     ];
 
     for (const eventType of eventTypes) {
+      // Orb carries the resource under a key matching the `resource_name`
+      // prefix of `type`, so build that key from the event type.
+      const resourceKey = eventType.split('.')[0];
       const payload = JSON.stringify({
         id: `evt_${eventType.replace(/\./g, '_')}`,
         type: eventType,
+        payload_style: 'standard',
+        [resourceKey]: { id: `${resourceKey}_01` },
         properties: {},
       });
       const { signature, timestamp } = generateOrbSignature(payload, webhookSecret);

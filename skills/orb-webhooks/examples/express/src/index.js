@@ -82,55 +82,92 @@ app.post(
       return res.status(400).send('Invalid JSON');
     }
 
+    // Orb serializes the resource under a key matching the `resource_name`
+    // prefix of `type` — `invoice.issued` carries it under `invoice`. The
+    // resource ID lives there, NOT in `properties` (which holds only the extra
+    // fields specific to the event, and is empty for many types).
+    //
+    // `event.payload_style` is "standard" or "expanded", set per endpoint.
+    // Standard payloads summarize subscriptions and invoices; see
+    // references/overview.md. Retries of older events keep the style they were
+    // created with, so a handler can see both.
+    const styleNote = event.payload_style ?? 'expanded'; // absent = pre-styles payload
+
     // Handle the event based on type
     switch (event.type) {
       case 'customer.created':
-        console.log('Customer created:', event.properties?.customer_id ?? event.id);
+        console.log('Customer created:', event.customer?.id, `(${styleNote})`);
         // TODO: Sync customer to CRM
         break;
 
       case 'customer.credit_balance_dropped':
-        console.log('Credit balance dropped for:', event.properties?.customer_id);
+        console.log(
+          'Credit balance dropped for:',
+          event.customer?.id,
+          'threshold:',
+          event.properties?.balance_threshold
+        );
         // TODO: Trigger top-up reminder
         break;
 
       case 'subscription.created':
-        console.log('Subscription created:', event.properties?.subscription_id);
+        console.log('Subscription created:', event.subscription?.id);
         // TODO: Provision access
         break;
 
       case 'subscription.started':
-        console.log('Subscription started:', event.properties?.subscription_id);
+        console.log('Subscription started:', event.subscription?.id);
         // TODO: Activate entitlements
         break;
 
       case 'subscription.ended':
-        console.log('Subscription ended:', event.properties?.subscription_id);
+        console.log('Subscription ended:', event.subscription?.id);
         // TODO: Revoke access
         break;
 
       case 'subscription.plan_changed':
-        console.log('Subscription plan changed:', event.properties?.subscription_id);
+        console.log(
+          'Subscription plan changed:',
+          event.subscription?.id,
+          'from plan:',
+          event.properties?.previous_plan_id
+        );
         // TODO: Update entitlements
         break;
 
       case 'subscription.usage_exceeded':
-        console.log('Usage exceeded for:', event.properties?.subscription_id);
+        console.log(
+          'Usage exceeded for:',
+          event.subscription?.id,
+          'metric:',
+          event.properties?.billable_metric_id
+        );
         // TODO: Notify customer / throttle
         break;
 
       case 'invoice.issued':
-        console.log('Invoice issued:', event.properties?.invoice_id);
+        // A standard payload omits line items — fetch the invoice if you need them.
+        console.log('Invoice issued:', event.invoice?.id, `(${styleNote})`);
         // TODO: Record receivable, email invoice
         break;
 
       case 'invoice.payment_succeeded':
-        console.log('Invoice paid:', event.properties?.invoice_id);
+        console.log(
+          'Invoice paid:',
+          event.invoice?.id,
+          'via:',
+          event.properties?.payment_provider
+        );
         // TODO: Mark paid internally
         break;
 
       case 'invoice.payment_failed':
-        console.log('Invoice payment failed:', event.properties?.invoice_id);
+        console.log(
+          'Invoice payment failed:',
+          event.invoice?.id,
+          'via:',
+          event.properties?.payment_provider
+        );
         // TODO: Start dunning
         break;
 

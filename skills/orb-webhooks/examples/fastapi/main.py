@@ -77,37 +77,65 @@ async def orb_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event_type = event.get("type")
+    # `properties` holds only the extra fields specific to the event — it is an
+    # empty object for many types and never carries the resource ID.
     props = event.get("properties") or {}
 
+    # Orb serializes the resource under a key matching the `resource_name`
+    # prefix of `type`, and that is where the resource ID lives.
+    def resource_id(key):
+        return (event.get(key) or {}).get("id")
+
+    # "standard" or "expanded", set per endpoint. Absent on payloads created
+    # before payload styles existed, which read as "expanded". Retries of older
+    # events keep their original style, so a handler can see both.
+    style = event.get("payload_style", "expanded")
+
     if event_type == "customer.created":
-        print(f"Customer created: {props.get('customer_id', event.get('id'))}")
+        print(f"Customer created: {resource_id('customer')} ({style})")
         # TODO: Sync customer to CRM
     elif event_type == "customer.credit_balance_dropped":
-        print(f"Credit balance dropped for: {props.get('customer_id')}")
+        print(
+            f"Credit balance dropped for: {resource_id('customer')} "
+            f"threshold: {props.get('balance_threshold')}"
+        )
         # TODO: Trigger top-up reminder
     elif event_type == "subscription.created":
-        print(f"Subscription created: {props.get('subscription_id')}")
+        print(f"Subscription created: {resource_id('subscription')}")
         # TODO: Provision access
     elif event_type == "subscription.started":
-        print(f"Subscription started: {props.get('subscription_id')}")
+        print(f"Subscription started: {resource_id('subscription')}")
         # TODO: Activate entitlements
     elif event_type == "subscription.ended":
-        print(f"Subscription ended: {props.get('subscription_id')}")
+        print(f"Subscription ended: {resource_id('subscription')}")
         # TODO: Revoke access
     elif event_type == "subscription.plan_changed":
-        print(f"Subscription plan changed: {props.get('subscription_id')}")
+        print(
+            f"Subscription plan changed: {resource_id('subscription')} "
+            f"from plan: {props.get('previous_plan_id')}"
+        )
         # TODO: Update entitlements
     elif event_type == "subscription.usage_exceeded":
-        print(f"Usage exceeded for: {props.get('subscription_id')}")
+        print(
+            f"Usage exceeded for: {resource_id('subscription')} "
+            f"metric: {props.get('billable_metric_id')}"
+        )
         # TODO: Notify customer / throttle
     elif event_type == "invoice.issued":
-        print(f"Invoice issued: {props.get('invoice_id')}")
+        # A standard payload omits line items — fetch the invoice if you need them.
+        print(f"Invoice issued: {resource_id('invoice')} ({style})")
         # TODO: Record receivable, email invoice
     elif event_type == "invoice.payment_succeeded":
-        print(f"Invoice paid: {props.get('invoice_id')}")
+        print(
+            f"Invoice paid: {resource_id('invoice')} "
+            f"via: {props.get('payment_provider')}"
+        )
         # TODO: Mark paid internally
     elif event_type == "invoice.payment_failed":
-        print(f"Invoice payment failed: {props.get('invoice_id')}")
+        print(
+            f"Invoice payment failed: {resource_id('invoice')} "
+            f"via: {props.get('payment_provider')}"
+        )
         # TODO: Start dunning
     elif event_type == "data_exports.transfer_success":
         print(f"Data export delivered: {event.get('id')}")
