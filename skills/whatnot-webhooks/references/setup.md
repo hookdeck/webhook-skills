@@ -1,42 +1,64 @@
 # Setting Up Whatnot Webhooks
 
+Source: [Webhooks guide](https://developers.whatnot.com/getting-started/webhooks).
+
 ## Prerequisites
 
-- A **Whatnot Seller API app** (you'll need its **App ID**). See
-  [Getting Started](https://developers.whatnot.com/docs/getting-started/introduction)
-  on the developer site.
+- A **client app** in the Whatnot developer dashboard.
 - A publicly reachable HTTPS endpoint. For local development, use the Hookdeck
   CLI (below).
-- The `read_customers` scope if you need `shipping_address`, `tracking_info`
-  or `label_url` in payloads.
+- The scopes for the topics you want (see below), held by **both** your app
+  and each seller's installation of it.
 
 ## Subscribing to Topics
 
-During the development preview there's **no dashboard or API** for creating
-webhook subscriptions. You request them from Whatnot by email. The address is
-on the [overview page](https://developers.whatnot.com/docs/webhooks/overview#creating-a-webhook)
-(it's obfuscated in the page source, so open the page in a browser).
+Subscriptions are per client app and managed in the **developer dashboard**:
 
-Include:
+1. Open your client app.
+2. Register the URL that will receive the POST requests.
+3. Choose the topics to subscribe to, e.g. `orders.created`.
 
-1. Your **App ID**
-2. The **URL** that will receive the POST requests
-3. The **topic** (or topics) to subscribe to, e.g. `order/created`
+There's no REST endpoint for creating or changing subscriptions; use the
+dashboard.
 
-See [overview.md](overview.md#topics-and-payloads) for the full topic list.
+## Scopes
+
+Each topic needs a scope. Your app must request it, and the seller's
+installation must have granted it. If either is missing, that seller's events
+for the topic aren't delivered.
+
+| Topics | Scope |
+|---|---|
+| `orders.created`, `orders.updated` | `read:orders` |
+| `shows.created`, `shows.updated`, `shows.started`, `shows.ended`, `shows.cancelled` | `read:shows` |
+| `merchandising.products.added_to_show`, `merchandising.products.removed_from_show` | `read:merchandising` |
+| `shipments.created`, `shipments.label_generated`, `shipments.tracking_code_added`, `shipments.parcel_updated`, `shipments.items.added`, `shipments.items.removed` | `read:shipments` |
+| `products.created`, `products.updated`, `products.deleted` | `read:inventory` |
+
+Add **`read:customers`** to receive `buyer` on orders, and `recipient` and
+`documents` on shipments. Destination addresses and shipping documents also
+need customer-address access: private apps have it, and public apps get it
+once Whatnot approves them. Without these the fields are `null`.
 
 ## Getting the Webhook Secret
 
-Whatnot's docs say the webhook secret key "will be provided to you by a
-Whatnot representative". There's nowhere in a dashboard to copy it from, so
-ask for it when you request your subscription, and store it as:
+Copy the webhook secret from your client app in the developer dashboard. It
+looks like this:
 
-```bash
-WHATNOT_WEBHOOK_SECRET=your_whatnot_webhook_secret
+```
+wn_wh_AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=
 ```
 
-Use it exactly as given, as a UTF-8 string HMAC key. Don't hex- or
-base64-decode it.
+Store it as-is:
+
+```bash
+WHATNOT_WEBHOOK_SECRET=wn_wh_your_base64_secret
+```
+
+To use it, strip the `wn_wh_` prefix and base64-decode the rest; the decoded
+bytes are the HMAC key. The examples do both. If you pass the secret to a
+Standard Webhooks library, strip `wn_wh_` first, because the library only
+recognises its own `whsec_` prefix. See [verification.md](verification.md).
 
 ## Local Development
 
@@ -45,27 +67,35 @@ npx hookdeck-cli listen 3000 whatnot --path /webhooks/whatnot
 ```
 
 The CLI prints a public HTTPS URL that forwards to
-`http://localhost:3000/webhooks/whatnot`. Give that URL to Whatnot as your
-webhook URL. No Hookdeck account is required; the CLI creates a guest account
-on first run and gives you a web UI showing each request's raw body and
-headers.
+`http://localhost:3000/webhooks/whatnot`. Register that URL in the dashboard.
+No Hookdeck account is required; the CLI creates a guest account on first run
+and gives you a web UI showing each request's raw body and headers.
 
-Because subscriptions go through Whatnot staff, changing your URL isn't
-instant. A stable Hookdeck URL that you point at different local or deployed
-destinations saves re-requesting the subscription each time.
+## Using Hookdeck in Front of Your Endpoint
 
-## Using a Hookdeck Source
+Hookdeck's `WHATNOT` source type was built for the legacy
+`X-Whatnot-Webhook-Signature` hex scheme. Check that it supports Standard
+Webhooks before enabling its signature verification; otherwise leave source
+verification off and verify in your handler, as the examples do.
 
-Hookdeck has a `WHATNOT` source type. Configure it with your webhook secret
-and Hookdeck verifies `X-Whatnot-Webhook-Signature` (HMAC-SHA256, hex, raw
-body) before forwarding. You can then also verify in your own handler with
-the same secret, as the examples here do.
+When you verify in your handler, remember that Hookdeck retries and replays
+resend Whatnot's original `webhook-timestamp`. They pass the 5-minute check
+only within 5 minutes of the original attempt.
+
+## Delivery Health
+
+Whatnot rate-limits an endpoint that keeps failing, emails a warning and
+eventually unsubscribes it. If that happens, fix the endpoint and re-subscribe
+from the dashboard. Events from the gap aren't redelivered once their 11
+attempts are used up, so reconcile through the API.
 
 ## Checklist
 
 - [ ] Webhook route reads the **raw** body (no JSON body parser ahead of it)
-- [ ] `WHATNOT_WEBHOOK_SECRET` set; handler fails closed without it
-- [ ] Handler returns **200** for every verified event, including unknown topics
-- [ ] Events deduped on envelope `id`
+- [ ] `WHATNOT_WEBHOOK_SECRET` set; handler strips `wn_wh_` and fails closed without it
+- [ ] Timestamp tolerance (5 minutes) enforced
+- [ ] Handler returns a **2xx** within 5 seconds for every verified event, including unknown types
+- [ ] Events deduped on the `webhook-id` header
+- [ ] Handlers don't assume ordering (`orders.updated` can precede `orders.created`)
 - [ ] Customer-data fields null-checked
 - [ ] Money `amount` kept as a string or decimal

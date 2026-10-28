@@ -1,146 +1,171 @@
 # Generated with: whatnot-webhooks skill
 # https://github.com/hookdeck/webhook-skills
-"""Whatnot Seller API webhook receiver for FastAPI.
+"""Whatnot webhook receiver for FastAPI.
 
-WHATNOT WEBHOOK VERIFICATION
-
-  header    : X-Whatnot-Webhook-Signature: <lowercase hex HMAC-SHA256>
-  algorithm : HMAC-SHA256, keyed with your app's webhook secret key
-              (provided by a Whatnot representative)
-  signed    : the RAW request body, nothing else (no timestamp, no prefix)
-  encoding  : hex digest, no "sha256=" prefix
-
-Whatnot's own Python sample compares with `==`. This uses
-hmac.compare_digest instead, so the check doesn't leak timing information.
+Whatnot signs webhooks with Standard Webhooks:
+  webhook-id         UUID, unique per event and reused on retries (dedupe key)
+  webhook-timestamp  Unix seconds when this attempt was sent (5-minute tolerance)
+  webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
+Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
+Key: base64-decode of the dashboard secret after its `wn_wh_` prefix.
+The library strips only its own `whsec_` prefix, so strip `wn_wh_` first:
+left on, it silently decodes to the wrong key and every check fails.
 """
 
-import hashlib
-import hmac
-import json
 import logging
 import os
-import re
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
+from standardwebhooks.webhooks import Webhook
 
 load_dotenv()
 
 logger = logging.getLogger("whatnot-webhooks")
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Whatnot Webhook Handler")
 
-_HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+SECRET_PREFIX = "wn_wh_"
+SIGNATURE_HEADERS = ("webhook-id", "webhook-timestamp", "webhook-signature")
+
+# In-memory dedupe for the demo. Use Redis or your database in production.
+# Delivery is at least once, and retries reuse the webhook-id header.
+processed_webhook_ids: set = set()
 
 
-def verify_whatnot_signature(raw_body: bytes, signature: Optional[str], secret: Optional[str]) -> bool:
-    """True only if `signature` is the hex HMAC-SHA256 of the exact raw body."""
-    if not signature or not secret:
-        return False
+def verify_whatnot_webhook(raw_body: bytes, headers: Dict[str, str], secret: str) -> Dict[str, Any]:
+    """Verify a Whatnot delivery with the Standard Webhooks library.
 
-    # Hex is case-insensitive; normalise before comparing.
-    received = signature.strip().lower()
-    if not _HEX_SHA256.match(received):  # rejects base64, prefixes, wrong length
-        return False
-
-    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(received, expected)
+    It checks the timestamp (fixed 5-minute tolerance), recomputes the HMAC
+    over the raw body and compares in constant time against every `v1,` entry.
+    Raises WebhookVerificationError on failure.
+    """
+    return Webhook(secret.removeprefix(SECRET_PREFIX)).verify(raw_body, headers)
 
 
-async def verified_whatnot_body(request: Request) -> bytes:
-    """FastAPI dependency: returns the raw body only if Whatnot signed it."""
+async def verified_whatnot_event(request: Request) -> Dict[str, Any]:
+    """FastAPI dependency: returns the verified Whatnot event or raises."""
     secret = os.environ.get("WHATNOT_WEBHOOK_SECRET")
+    # Fail closed: never accept unverified deliveries because a secret is missing.
     if not secret:
-        logger.error("WHATNOT_WEBHOOK_SECRET is not set")
+        logger.error("WHATNOT_WEBHOOK_SECRET is not set; rejecting delivery")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
-    signature = request.headers.get("x-whatnot-webhook-signature")
-    if not signature:
-        raise HTTPException(status_code=400, detail="Missing X-Whatnot-Webhook-Signature header")
+    headers = {name: request.headers.get(name) for name in SIGNATURE_HEADERS}
+    if not all(headers.values()):
+        raise HTTPException(
+            status_code=400, detail="Missing webhook-id, webhook-timestamp or webhook-signature header"
+        )
 
-    # Raw bytes: the HMAC is computed over exactly what Whatnot sent.
+    # Raw body: request.json() would re-serialise Whatnot's space-separated
+    # JSON and break the HMAC.
     raw_body = await request.body()
-    if not verify_whatnot_signature(raw_body, signature, secret):
+
+    try:
+        event = verify_whatnot_webhook(raw_body, headers, secret)
+    except Exception as err:  # WebhookVerificationError, malformed entries, bad base64
+        logger.error("Whatnot webhook verification failed: %s", err)
         raise HTTPException(status_code=400, detail="Invalid signature")
-    return raw_body
 
-
-# Idempotency: Whatnot retries any non-200 response up to 5 times over ~10
-# minutes, so the same envelope `id` can arrive more than once.
-# Use a database or Redis in production.
-processed_events: set = set()
+    return event
 
 
 def format_money(money: Optional[dict]) -> str:
-    # Money is {"amount": "12.34", "currency": "USD"}. Keep amount as a string
+    # Money is {"amount": "49.77", "currency": "USD"}. Keep amount as a string
     # (or decimal.Decimal), never a float.
     return f"{money['amount']} {money['currency']}" if money else "n/a"
 
 
-def handle_order(topic: str, order: dict) -> None:
-    logger.info("%s: order %s, total %s", topic, order.get("order_id"), format_money(order.get("total")))
-    if order.get("cancelled_at"):
-        logger.info("Order %s cancelled at %s", order.get("order_id"), order["cancelled_at"])
-    # shipping_address and tracking_info are only populated for apps with the
-    # read_customers scope. Otherwise they're null or missing.
-    address = order.get("shipping_address")
-    if address:
-        logger.info("Ship to %s, %s", address.get("city"), address.get("country"))
-    tracking = order.get("tracking_info")
-    if tracking:
-        logger.info("Tracking %s %s", tracking.get("courier"), tracking.get("tracking_code"))
+def handle_event(event: Dict[str, Any]) -> None:
+    event_type = event.get("type")
+    data = event.get("data") or {}
 
+    # --- Orders (read:orders) ------------------------------------------------
+    if event_type in ("orders.created", "orders.updated"):
+        # No ordering guarantee: orders.updated can arrive before orders.created.
+        # Compare data["updated_at"] with what you stored before overwriting.
+        total = (data.get("amounts") or {}).get("total")
+        logger.info("%s: order %s (%s), total %s", event_type, data.get("id"), data.get("status"), format_money(total))
+        if data.get("cancelled_at"):
+            logger.info("Order %s cancelled at %s", data.get("id"), data["cancelled_at"])
+        # buyer is None unless your app holds read:customers.
+        if data.get("buyer"):
+            logger.info("Buyer %s", data["buyer"].get("username"))
 
-def handle_event(event: dict, seller_id: Optional[str]) -> None:
-    topic = event.get("topic")
-    obj = event.get("object") or {}
+    # --- Shows (read:shows) --------------------------------------------------
+    elif event_type in ("shows.created", "shows.updated"):
+        # created excludes rehearsals; updated fires even when only updated_at changed.
+        logger.info('%s: show %s "%s" (%s)', event_type, data.get("id"), data.get("title"), data.get("status"))
+    elif event_type in ("shows.started", "shows.ended", "shows.cancelled"):
+        # started also fires when a stopped show resumes; ended includes
+        # Whatnot ending an abandoned show.
+        logger.info("%s: show %s", event_type, data.get("show_id"))
 
-    if topic == "product/sold":
-        # Decrement stock in your own system for product_id / variant_id.
-        logger.info("Product %s sold (qty %s), order %s", obj.get("product_id"), obj.get("quantity"), obj.get("order_id"))
-    elif topic == "bulk_operation/finished":
-        logger.info("Bulk operation %s finished with status %s", obj.get("id"), obj.get("status"))
-    elif topic in ("listing/created", "listing/updated"):
-        logger.info("%s: listing %s (%s, %s)", topic, obj.get("listing_id"), obj.get("transaction_type"), obj.get("listing_status"))
-    elif topic in ("order/created", "order/updated"):
-        handle_order(topic, obj)
-    elif topic == "livestream/created":
-        logger.info("Livestream %s created: %s", obj.get("livestream_id"), obj.get("title"))
-    elif topic == "livestream/stopped":
-        # Fires when a livestream ends OR is cancelled.
-        logger.info("Livestream %s stopped", obj.get("livestream_id"))
-    elif topic in ("livestream/product_added", "livestream/product_removed"):
-        logger.info("%s: listing %s in livestream %s", topic, obj.get("listing_id"), obj.get("livestream_id"))
-    elif topic == "shipment/label_created":
-        # BETA topic: Whatnot says it may change without notice.
-        # label_url needs the read_customers scope.
-        logger.info("Shipment %s label (%s): %s %s", obj.get("shipment_id"), obj.get("reason"), obj.get("courier"), obj.get("tracking_code"))
+    # --- Merchandising (read:merchandising) ----------------------------------
+    elif event_type in ("merchandising.products.added_to_show", "merchandising.products.removed_from_show"):
+        # removed_from_show also fires when the listing was deleted.
+        logger.info("%s: product %s in show %s", event_type, data.get("product_id"), data.get("show_id"))
+
+    # --- Shipments (read:shipments) ------------------------------------------
+    elif event_type == "shipments.created":
+        # recipient, destination_address and documents need read:customers.
+        logger.info("Shipment %s created (%s)", data.get("id"), data.get("status"))
+        if data.get("recipient"):
+            logger.info("Recipient %s", data["recipient"].get("username"))
+    elif event_type == "shipments.label_generated":
+        # documents is None without read:customers and customer-address access.
+        tracking = data.get("tracking") or {}
+        logger.info(
+            "Shipment %s label %s: %s %s",
+            data.get("shipment_id"), data.get("reason"), tracking.get("carrier"), tracking.get("tracking_code"),
+        )
+        documents = data.get("documents") or {}
+        if documents.get("label_url"):
+            logger.info("Label: %s", documents["label_url"])
+    elif event_type == "shipments.tracking_code_added":
+        tracking = data.get("tracking") or {}
+        logger.info("Shipment %s tracking: %s %s", data.get("shipment_id"), tracking.get("carrier"), tracking.get("tracking_code"))
+    elif event_type == "shipments.parcel_updated":
+        logger.info("Shipment %s parcel updated", data.get("shipment_id"))
+    elif event_type in ("shipments.items.added", "shipments.items.removed"):
+        # shipment_item_ids lists every item on the shipment after the change.
+        items = data.get("shipment_item_ids") or []
+        logger.info("%s: shipment %s now has %d items", event_type, data.get("shipment_id"), len(items))
+
+    # --- Products (read:inventory) -------------------------------------------
+    elif event_type in ("products.created", "products.updated"):
+        # products.updated doesn't say which fields changed.
+        logger.info('%s: product %s "%s"', event_type, data.get("id"), data.get("title"))
+    elif event_type == "products.deleted":
+        logger.info("Product %s deleted", data.get("id"))
+
     else:
-        # Whatnot is in development preview and may add topics. Acknowledge
-        # unknown ones with 200: an error would only trigger 5 retries.
-        logger.info("Unhandled Whatnot topic: %s", topic)
+        # Whatnot adds topics over time: acknowledge, don't fail (an error is retried).
+        logger.info("Unhandled Whatnot event type: %s", event_type)
 
-    if seller_id:
-        logger.info("(seller %s)", seller_id)
+    # seller_id is in the signed body; multi-seller apps route on it.
+    logger.info("(seller %s)", event.get("seller_id"))
 
 
 @app.post("/webhooks/whatnot")
-async def whatnot_webhook(request: Request, raw_body: bytes = Depends(verified_whatnot_body)):
-    try:
-        event = json.loads(raw_body)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-
-    event_id = event.get("id")
-    if event_id in processed_events:
+async def whatnot_webhook(request: Request, event: Dict[str, Any] = Depends(verified_whatnot_event)):
+    # Retries reuse webhook-id; acknowledge duplicates with a 2xx.
+    webhook_id = request.headers.get("webhook-id")
+    if webhook_id in processed_webhook_ids:
         return {"received": True, "duplicate": True}
 
-    # X-Whatnot-Seller-Id tells a multi-seller app which seller this is for.
-    handle_event(event, request.headers.get("x-whatnot-seller-id"))
-    processed_events.add(event_id)
+    try:
+        # Whatnot times out after 5 seconds. In production, enqueue the event
+        # here and process it asynchronously.
+        handle_event(event)
+        processed_webhook_ids.add(webhook_id)
+    except Exception:
+        logger.exception("Error handling Whatnot event")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    # Whatnot expects exactly 200 OK. Anything else is retried.
+    # Any 2xx counts as delivered.
     return {"received": True}
 
 

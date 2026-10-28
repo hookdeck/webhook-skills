@@ -1,152 +1,296 @@
 name: whatnot
 displayName: Whatnot
 docs:
-  webhooks: https://developers.whatnot.com/docs/webhooks/overview
-  verification: https://developers.whatnot.com/docs/webhooks/overview#validating-the-webhook
-  product_sold: https://developers.whatnot.com/docs/webhooks/product-sold
-  bulk_operation: https://developers.whatnot.com/docs/webhooks/bulk-operation
-  listing_created: https://developers.whatnot.com/docs/webhooks/listing-created
-  listing_updated: https://developers.whatnot.com/docs/webhooks/listing-updated
-  order_created: https://developers.whatnot.com/docs/webhooks/order-created
-  order_updated: https://developers.whatnot.com/docs/webhooks/order-updated
-  livestream_created: https://developers.whatnot.com/docs/webhooks/livestream-created
-  livestream_stopped: https://developers.whatnot.com/docs/webhooks/livestream-stopped
-  livestream_product_added: https://developers.whatnot.com/docs/webhooks/livestream-product-added
-  livestream_product_removed: https://developers.whatnot.com/docs/webhooks/livestream-product-removed
-  shipment_label_created: https://developers.whatnot.com/docs/webhooks/shipment-label-created
+  webhooks: https://developers.whatnot.com/getting-started/webhooks
+  verification: https://developers.whatnot.com/getting-started/webhooks#verifying-signatures
+  orders_created: https://developers.whatnot.com/webhooks/tag/orders/webhook/post/orders.created
+  orders_updated: https://developers.whatnot.com/webhooks/tag/orders/webhook/post/orders.updated
+  shows_created: https://developers.whatnot.com/webhooks/tag/shows/webhook/post/shows.created
+  shows_updated: https://developers.whatnot.com/webhooks/tag/shows/webhook/post/shows.updated
+  shows_started: https://developers.whatnot.com/webhooks/tag/shows/webhook/post/shows.started
+  shows_ended: https://developers.whatnot.com/webhooks/tag/shows/webhook/post/shows.ended
+  shows_cancelled: https://developers.whatnot.com/webhooks/tag/shows/webhook/post/shows.cancelled
+  merchandising_products_added_to_show: https://developers.whatnot.com/webhooks/tag/merchandising/webhook/post/merchandising.products.added-to-show
+  merchandising_products_removed_from_show: https://developers.whatnot.com/webhooks/tag/merchandising/webhook/post/merchandising.products.removed-from-show
+  shipments_created: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.created
+  shipments_label_generated: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.label-generated
+  shipments_tracking_code_added: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.tracking-code-added
+  shipments_parcel_updated: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.parcel-updated
+  shipments_items_added: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.items.added
+  shipments_items_removed: https://developers.whatnot.com/webhooks/tag/shipments/webhook/post/shipments.items.removed
+  products_created: https://developers.whatnot.com/webhooks/tag/products/webhook/post/products.created
+  products_updated: https://developers.whatnot.com/webhooks/tag/products/webhook/post/products.updated
+  products_deleted: https://developers.whatnot.com/webhooks/tag/products/webhook/post/products.deleted
+  standard_webhooks_spec: https://www.standardwebhooks.com
 notes: |
-  IDENTITY — Whatnot (whatnot.com), the live-shopping / livestream
-  auction marketplace. This skill covers the webhooks of the **Whatnot
-  Seller API** (developers.whatnot.com, a GraphQL API in "development
-  preview"). Hookdeck's `WHATNOT` source type links to exactly
-  https://developers.whatnot.com/docs/webhooks/overview, so there is no
-  variant ambiguity.
+  IDENTITY — Whatnot (whatnot.com), the live-shopping / livestream auction
+  marketplace. This skill covers the webhooks of the Whatnot developer
+  platform at developers.whatnot.com. Hookdeck's `WHATNOT` source type
+  (hookdeck.com/docs/sources) links to developers.whatnot.com, so there is no
+  product ambiguity. (Hookdeck's link still points at the now-dead
+  /docs/webhooks/overview path; the live page is
+  /getting-started/webhooks. Same product, new docs site.)
 
-  DOCS ARE A JS-RENDERED SPA — every code block (envelope, headers,
-  Python sample, payloads) is rendered client-side and is ABSENT from the
-  raw HTML. Everything below was read from the rendered page in a
-  browser on 2026-10-16. Do not conclude "no example exists" from a raw
-  fetch.
+  *** THIS IS A REWRITE: WHATNOT REPLACED ITS WEBHOOK SYSTEM (2026-10) ***
+  Everything in the previous version of this brief (and skill) is stale: the
+  old scheme was HMAC-SHA256 hex over the raw body in an
+  `X-Whatnot-Webhook-Signature` header, routed on a `topic` field holding
+  slash-notation names (`product/sold`, `order/created`, `livestream/*`),
+  with an `{id,timestamp,topic,object}` envelope. All three old doc URLs now
+  404. The current system is Standard Webhooks with a `type` discriminator,
+  dot-notation domain-first topics, and a `{type,timestamp,data,version,seller_id}`
+  envelope. Do not carry anything over from the old scheme except the
+  deprecation notice described under LEGACY below.
 
-  VERIFICATION — HMAC-SHA256 over the RAW request body, **lowercase hex**
-  digest, no prefix, no timestamp, no signed-content concatenation.
-    - Header: `X-Whatnot-Webhook-Signature: <HMAC SHA256 signature>`
-    - Key: the app's **webhook secret key**, which "will be provided to
-      you by a Whatnot representative" (there is no dashboard to copy it
-      from). Use env var WHATNOT_WEBHOOK_SECRET.
-    - Whatnot's own Python sample (verbatim from the rendered docs):
+  All facts below were read from the live docs on 2026-10-28. The docs are no
+  longer a JS-rendered SPA — the new site (Scalar) ships content, code blocks
+  and the per-topic reference in the raw HTML, so plain fetches work.
 
-        def validate_webhook(raw_request_body, signature, secret):
-            calculated_signature = hmac.new(
-              bytes(secret, 'utf-8'),
-              bytes(raw_request_body, 'utf-8'),
-              hashlib.sha256
-            ).hexdigest()
-            return calculated_signature == signature
+  VERIFICATION — the Standard Webhooks specification
+  (https://www.standardwebhooks.com), the same construction Svix uses, but
+  with Whatnot's own `wn_wh_` secret prefix.
 
-      Note the sample uses `==`; the skill must use a constant-time
-      compare (crypto.timingSafeEqual with a length check /
-      hmac.compare_digest) and should say it improves on the sample.
-    - CROSS-CHECK — hookdeck/core implements WHATNOT with the generic
-      HMAC controller: `server/integrations/index.ts` →
-      `{ controller: 'HMAC', configs: { algorithm: 'sha256',
-      header_key: 'x-whatnot-webhook-signature', encoding: 'hex' } }`,
-      no `prefix_data_with_timestamp`. `sourceTypeSchemas.ts` gives it
-      `generic_features.handled_hmac` + `http_method_managed_post`. That
-      is the same scheme, independently. Core compares hex
-      case-insensitively; doing the same (lower-casing the received
-      header) is harmless and fine.
-    - There is NO timestamp header and no replay protection documented.
-      Do NOT invent a timestamp tolerance check. The envelope has a
-      `timestamp` field, but it is not part of any signed string; the
-      skill may mention it as an optional application-level staleness
-      check, clearly labelled as the skill's suggestion, not Whatnot's.
-    - No handshake / validation challenge. No source IP allowlist is
-      documented — do not invent one.
+    Headers (all lowercase, unprefixed — there are NO `X-Whatnot-*` headers
+    any more; do not emit or expect any):
+      - `webhook-id`        — UUID, unique per event. Retries reuse it, so it
+                              is the dedupe key.
+      - `webhook-timestamp` — Unix seconds, when THIS attempt was sent (so it
+                              changes on every retry; distinct from the
+                              payload's ISO-8601 `timestamp`, which is stable).
+      - `webhook-signature` — space-separated list, each entry
+                              `v1,<base64 HMAC-SHA256>`. Multiple entries are
+                              possible (rotation); the delivery is valid if
+                              ANY entry matches. Split on space, compare the
+                              part after `v1,` in constant time.
+      - `Content-Type: application/json` always.
 
-  OTHER HEADERS — the docs list exactly one more Whatnot header:
-    `X-Whatnot-Seller-Id: <Seller ID>` — identifies which seller the
-    event belongs to (useful for multi-seller apps). Do not invent any
-    other X-Whatnot-* headers (no event-type header, no delivery-id
-    header); the topic lives in the body.
+    Signed content: the string `{webhook-id}.{webhook-timestamp}.{raw body}`
+    — dot-separated, body appended as the exact received bytes. HMAC-SHA256,
+    then base64 (standard base64, not base64url).
 
-  DELIVERY — HTTP POST. Respond with HTTP 200 OK. Any other status is
-  retried "up to 5 times over the next approximate 10 minutes". (Retries
-  can therefore deliver the same event id more than once — dedupe on
-  envelope `id`.) Note: the docs say 200 specifically, so return 200,
-  not 202/204.
+    KEY — the dashboard secret looks like
+    `wn_wh_AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=`. Strip the `wn_wh_`
+    prefix, then **base64-decode the remainder** and use those raw bytes as
+    the HMAC key. Both steps are load-bearing:
+      - Standard Webhooks libraries strip only their own `whsec_` prefix, so
+        passing the secret with `wn_wh_` still attached silently yields a
+        wrong key in some of them (the docs call out Python and Ruby: no
+        error raised, every check just fails).
+      - The key is the decoded bytes, not the base64 text. Do not HMAC with
+        the base64 string.
 
-  SUBSCRIBING — no API or dashboard: "During the preview period, please
-  reach out to <the email address on the overview page> ... include your App ID, the URL that
-  will receive POST requests, and the topic to subscribe to." The email
-  address is Cloudflare-obfuscated in the HTML; do not guess it — say
-  "contact Whatnot (the address on the overview page)".
+    TIMESTAMP TOLERANCE — REQUIRED here (unlike the old scheme, which had no
+    timestamp at all): reject when `webhook-timestamp` is more than 5 minutes
+    (300s) from the server's clock. Every retry is re-signed with a fresh
+    timestamp, so this does not drop legitimate retries even days later.
 
-  ENVELOPE (verbatim, rendered docs):
+    Whatnot's own no-library Python sample (verbatim from the docs) — the
+    skill should implement exactly this construction:
+
+        def verify(raw_body, headers, webhook_secret) -> bool:
+            key = base64.b64decode(webhook_secret.removeprefix("wn_wh_"))
+            msg_id = headers["webhook-id"]
+            timestamp = headers["webhook-timestamp"]
+            if abs(time.time() - int(timestamp)) > 5 * 60:
+                return False
+            signed_content = f"{msg_id}.{timestamp}.".encode() + raw_body
+            digest = hmac.digest(key, signed_content, hashlib.sha256)
+            expected = base64.b64encode(digest).decode()
+            for entry in headers["webhook-signature"].split(" "):
+                version, _, signature = entry.partition(",")
+                if version == "v1" and hmac.compare_digest(signature, expected):
+                    return True
+            return False
+
+    GOLDEN TEST VECTOR — the docs publish a fully-signed example delivery and
+    the secret that signed it. I recomputed the HMAC on 2026-10-28 and it
+    MATCHES, so this is a verified vector, not an illustration. Use it as a
+    real test case in every example suite:
+
+      secret:            wn_wh_AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=
+      webhook-id:        0b7e4f6c-3d1a-4a8e-9f2b-5c6d7e8f9a0b
+      webhook-timestamp: 1792512005
+      webhook-signature: v1,8m/VX9GLLqhNZJndMpPw7OTUKSDI4szDXAmIFY8ffBI=
+      body (EXACT bytes — note the spaces after `:` and `,`; this is not
+      compact JSON, and re-serializing it will break the signature):
+        {"type": "shows.started", "timestamp": "2026-10-20T16:00:00.123Z", "data": {"show_id": "9b2f6c1e-4d3a-4f8b-a1c2-3d4e5f6a7b8c"}, "version": "v2", "seller_id": "1234567"}
+
+      In JS tests the body MUST be a string literal — `JSON.stringify` emits
+      compact JSON and will not reproduce this signature. Skip the 5-minute
+      timestamp check for this vector (the docs say to; the timestamp is in
+      the past) by injecting a fixed clock / tolerance override, not by
+      deleting the check from the verifier.
+
+    RAW BODY — the docs are explicit: "Use the bytes exactly as received:
+    parsing and re-serializing the JSON can reorder keys or change
+    whitespace, and the signature won't match." Whatnot sends
+    space-separated JSON, so raw-vs-reserialized is NOT byte-identical here
+    — raw-body capture genuinely matters (express.raw / await req.text() /
+    await request.body()).
+
+    OFFICIAL LIBRARIES — Standard Webhooks ships verified-existing packages:
+    npm `standardwebhooks` (1.1.1), PyPI `standardwebhooks` (1.1.0), Go
+    `github.com/standard-webhooks/standard-webhooks/libraries/go`, gem
+    `standardwebhooks`, composer `standard-webhooks/standard-webhooks`,
+    NuGet `StandardWebhooks`. The examples should USE the library, matching
+    this repo's convention for Standard Webhooks providers (see
+    skills/sajn-webhooks: `standardwebhooks` ^1.1.1 in express/nextjs,
+    `standardwebhooks>=1.1.0` in fastapi). Construct it with the secret AFTER
+    stripping `wn_wh_` — the library strips only its own `whsec_` prefix.
+    Document the manual construction in references/verification.md for stacks
+    that can't take the dependency.
+
+    The library enforces a fixed 5-minute timestamp tolerance, so a test using
+    the golden vector below must freeze the clock (vitest/jest fake timers at
+    1792512005 * 1000, freezegun or a monkeypatched time in pytest) rather
+    than loosening the verifier.
+
+    No handshake, no validation challenge, no source-IP allowlist is
+    documented — do not invent any.
+
+  ENVELOPE (verbatim from the docs):
     {
-      "id": "<Event ID: UUID>",
-      "timestamp": "<Event Timestamp: ISO 8601 UTC>",
-      "topic": "<Event Topic>",
-      "object": { "...": "<Object type specific to topic>" }
+      "type": "shows.started",
+      "timestamp": "2026-10-20T16:00:00.123Z",
+      "data": { ... },
+      "version": "v2",
+      "seller_id": "1234567"
     }
-  Route on `topic`. The topic-specific payload is under `object`.
+    - `type`      — the topic. ROUTE ON THIS (the old `topic` field is gone).
+    - `timestamp` — ISO 8601 UTC, millisecond precision, pattern
+                    ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$. Stable
+                    across retries.
+    - `data`      — topic-specific. "Most topics send the same object the
+                    REST API returns, such as an order."
+    - `version`   — currently the constant `"v2"`.
+    - `seller_id` — the seller the event belongs to; part of the signed body,
+                    so the signature vouches for it. Multi-seller apps should
+                    route on it.
 
-  MONEY — monetary fields are `{ "amount": "12.34", "currency": "USD" }`
-  (string amount, ISO 4217 currency). Never parse to float in examples.
+  TOPICS — 18 documented, dot-notation, domain-first. Each requires a scope
+  that BOTH your app and the seller's installation must hold, or that
+  seller's events are not delivered. The docs call the table non-exhaustive
+  ("New topics and payload fields may be added over time"), so handlers must
+  log-and-2xx unknown types rather than erroring.
 
-  CUSTOMER DATA — `shipping_address`, `tracking_info`, `label_url` are
-  only populated for apps granted the `read_customers` scope; otherwise
-  omitted or null. Handlers must null-check them.
+    orders.created                            read:orders
+    orders.updated                            read:orders
+    shows.created                             read:shows
+    shows.updated                             read:shows
+    shows.started                             read:shows
+    shows.ended                                read:shows
+    shows.cancelled                            read:shows
+    merchandising.products.added_to_show       read:merchandising
+    merchandising.products.removed_from_show   read:merchandising
+    shipments.created                          read:shipments
+    shipments.label_generated                  read:shipments
+    shipments.tracking_code_added              read:shipments
+    shipments.parcel_updated                   read:shipments
+    shipments.items.added                      read:shipments
+    shipments.items.removed                    read:shipments
+    products.created                           read:inventory
+    products.updated                           read:inventory
+    products.deleted                           read:inventory
 
-  TOPICS (all 11 documented; exact strings, slash-separated):
-    product/sold                — { product_id, listing_id, order_id,
-                                    external_id, variant_id (nullable),
-                                    variant_external_id (nullable),
-                                    quantity, product_created_by_client_app_id (nullable) }
-    bulk_operation/finished     — { id, status } (status is a
-                                    BulkOperationStatus from the GraphQL schema)
-    listing/created             — { product_id (nullable), listing_id,
-    listing/updated               external_id (nullable), quantity,
-                                    transaction_type ("AUCTION" | "BUY_IT_NOW"),
-                                    listing_status, condition, category_name,
-                                    category_id (all nullable) } — same shape
-    order/created               — { product_id, listing_id, external_id (nullable),
-    order/updated                 order_id, quantity, subtotal, shipping_price,
-                                    taxation, customs (nullable), total  [all Money],
-                                    items: [{ product_id, listing_id, price, quantity,
-                                    subtotal, variant_id, variant_external_id }],
-                                    product_created_by_client_app_id (nullable),
-                                    shipping_address { address_line1, address_line2,
-                                    city, state, postal_code, country } (read_customers, else null),
-                                    tracking_info { tracking_code, courier, label_url }
-                                    (read_customers, else null),
-                                    cancelled_at (nullable) } — same shape
-    livestream/created          — { livestream_id, title, starts_at (nullable) }
-    livestream/stopped          — { livestream_id } (ends OR is cancelled)
-    livestream/product_added    — { product_id, livestream_id, listing_id,
-    livestream/product_removed    product_external_id (nullable) } — same shape
-    shipment/label_created      — BETA ("may change without notice; not
-                                    recommended for production use").
-                                    { shipment_id, reason ("label_generated" |
-                                    "label_regenerated"), tracking_code, courier,
-                                    label_url (read_customers, else null),
-                                    label_generated_at (ISO 8601 UTC) }
-  All IDs in payloads are Global IDs (GraphQL node IDs) unless noted.
-  The docs show placeholder values only — sample payloads in tests are
-  illustrative and must say so; do not present made-up ID formats as
-  Whatnot's real format.
+    Semantics worth documenting (docs wording): shows.created excludes
+    rehearsals; shows.updated fires even when only `updated_at` changed;
+    shows.started also fires when a stopped show resumes; shows.ended
+    includes Whatnot ending an abandoned show; products.updated does not say
+    which fields changed; merchandising.products.removed_from_show also fires
+    when the listing was deleted.
 
-  "Development preview": the docs say more topics may be added over time.
-  Handlers should log-and-200 unknown topics rather than erroring (an
-  error would just trigger 5 retries).
+    Note the per-topic reference URLs hyphenate sub-segments
+    (`.../post/shipments.label-generated`) while the topic STRING in the
+    payload uses underscores (`shipments.label_generated`). Use the
+    underscore form in code.
 
-  DEPENDENCIES — no official Whatnot SDK for webhook verification; use
-  node:crypto / Web Crypto / Python hmac+hashlib only. Do not add any
-  whatnot package to package.json or requirements.txt.
+  CUSTOMER DATA SCOPE — some payload fields are present only if the app holds
+  `read:customers`; without it they are null. Handlers must null-check:
+    orders.created / orders.updated     -> `buyer`
+    shipments.created                   -> `recipient`, `destination_address`,
+                                           `documents`
+    shipments.label_generated           -> `documents`
+  Destination addresses and shipping documents additionally need
+  customer-address access (private apps have it; public apps get it once
+  Whatnot approves them).
+
+  PAYLOAD SHAPES (from the per-topic reference pages, 2026-10-28; these are
+  the docs' own examples — present sample values as illustrative):
+    shows.started / shows.ended / shows.cancelled (ShowStatusChangeData):
+      { "show_id": "9b2f6c1e-..." }  — single field.
+    orders.created / orders.updated (Order, 9 properties): amounts, buyer,
+      cancelled_at, created_at, id, show_id, status, transaction_type,
+      updated_at. `amounts` holds Money objects
+      ({ "amount": "49.77", "currency": "USD" }) under applied_discount
+      (with its own `type`, e.g. "fixed_price"), shipping, subtotal, tax,
+      total. Example status "pending_fulfillment", transaction_type "auction".
+    shipments.created (Shipment, 16 properties): created_at, dimensions
+      ({height,length,width,unit:"inch"}), documents ({label_url,bundled_url}),
+      dropoff_due, fulfillment_method ("shipping"), hazardous_material
+      ("not_hazardous"), id, insurance ({amount: Money, contents}), recipient,
+      required_actions ([]), signature_required (bool), status
+      ("label_generated"), tracking ({carrier:"usps",
+      service:"usps_ground_advantage", tracking_code}), updated_at, weight
+      ({value, unit:"ounce"}).
+    shipments.label_generated (ShipmentLabelData): { shipment_id, reason
+      ("generated" in the docs' example), tracking { carrier, service,
+      tracking_code, last_mile_tracking_code }, documents { label_url,
+      bundled_url, commercial_invoice_url } }.
+    products.* (Product): title, attributes [{id,name,value}], category
+      {id,name}, created_at, description, dimension_profile
+      {active,dimensions,id,name,ownership,weight}, external_id, id, media
+      [{alt,id,url}], options [{id,name,values[]}], updated_at, url.
+
+  MONEY — always { "amount": "<decimal string>", "currency": "USD" }. Never
+  parse to float in examples.
+
+  DELIVERY — HTTPS POST, JSON body.
+    - At least once, NOT exactly once; no ordering guarantee (orders.updated
+      can arrive before orders.created for the same order). Reconcile on the
+      payload's own `timestamp`/state, never on arrival order.
+    - Dedupe on the `webhook-id` header (not a body field — the envelope has
+      no `id` any more).
+    - Only a 2xx counts as success; anything else, a timeout, or a connection
+      failure is retried. Whatnot times out at 5 SECONDS, so return 2xx
+      immediately and process asynchronously. (Any 2xx is fine — the examples
+      can return 204.)
+    - Retries: exponential backoff, up to 11 attempts over roughly 2.5 days
+      (~31s, ~1m, ~4.5m, ~17.5m, ~53m, ~2.2h, ~4.7h, ~9.1h, ~16.4h, ~1.2d),
+      then permanently failed.
+    - A persistently failing endpoint is rate-limited, emailed a warning, and
+      eventually unsubscribed (re-subscribe from the dashboard).
+    - Respond 4xx to a delivery that fails verification.
+
+  SUBSCRIBING — per client app from the Whatnot developer dashboard: register
+  a URL, choose topics. There is no REST endpoint for managing subscriptions
+  today. (The old "email a Whatnot representative during the preview" process
+  is gone — do not repeat it.)
+
+  LEGACY — DO NOT DELETE THE OLD EVENT NAMES. The skill must keep a short
+  "Deprecated: the pre-2026-10 webhook system" section listing the 11 old
+  topics, each marked deprecated as of 2026-10-24 (the date the replacement
+  was confirmed; Whatnot published no migration notice and no deprecation
+  date of its own, so attribute the date to our own observation):
+    product/sold, bulk_operation/finished, listing/created, listing/updated,
+    order/created, order/updated, livestream/created, livestream/stopped,
+    livestream/product_added, livestream/product_removed,
+    shipment/label_created
+  Say plainly that these names, the `topic` discriminator, the
+  `{id,timestamp,topic,object}` envelope and the
+  `X-Whatnot-Webhook-Signature` hex-HMAC scheme are no longer documented by
+  Whatnot (all three old doc URLs 404 as of 2026-10-28), that existing
+  integrations must migrate to Standard Webhooks, and that the old resource
+  model does not map one-to-one onto the new one (shows/orders/shipments/
+  merchandising/products vs product/listing/livestream/bulk_operation) — so
+  there is no mechanical rename table to offer. Do not assert an official
+  sunset date; none is published.
+
+  DEPENDENCIES — do not add any `whatnot` package to package.json or
+  requirements.txt; no official Whatnot SDK does webhook verification.
 testScenario:
   events:
-    - order/created
-    - product/sold
-    - livestream/stopped
+    - orders.created
+    - shows.started
+    - shipments.label_generated
 catalog:
-  summary: Verify Whatnot Seller API webhook signatures (`X-Whatnot-Webhook-Signature`, HMAC-SHA256 hex over the raw body), handle order/created, product/sold, listing/updated, and livestream/stopped events
+  summary: Verify Whatnot webhook signatures (Standard Webhooks — `webhook-signature`, base64 HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{body}`, with the `wn_wh_` secret prefix stripped and base64-decoded) and handle orders, shows, shipments, merchandising and products topics

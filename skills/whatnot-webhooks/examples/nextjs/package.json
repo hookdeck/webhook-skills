@@ -1,8 +1,9 @@
 {
   "name": "whatnot-webhooks-nextjs",
   "version": "1.0.0",
-  "description": "Whatnot Seller API webhook handler with Next.js App Router — verifies the X-Whatnot-Webhook-Signature HMAC-SHA256 (hex) over the raw body",
+  "description": "Whatnot webhook handler with Next.js App Router and Standard Webhooks signature verification",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +13,8 @@
   "dependencies": {
     "next": "^16.4.2",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "standardwebhooks": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

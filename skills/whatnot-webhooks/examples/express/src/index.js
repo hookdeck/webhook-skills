@@ -3,148 +3,173 @@
 
 require('dotenv').config({ quiet: true });
 const express = require('express');
-const crypto = require('crypto');
+const { Webhook } = require('standardwebhooks');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ---------------------------------------------------------------------------
+// Whatnot signs webhooks with Standard Webhooks:
+//   webhook-id         UUID, unique per event and reused on retries (dedupe key)
+//   webhook-timestamp  Unix seconds when this attempt was sent (5-minute tolerance)
+//   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
+// Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
+// Key: base64-decode of the dashboard secret after its `wn_wh_` prefix.
+// The library strips only its own `whsec_` prefix, so strip `wn_wh_` first.
+// ---------------------------------------------------------------------------
+
+const SECRET_PREFIX = 'wn_wh_';
+
 /**
- * WHATNOT WEBHOOK VERIFICATION
+ * Verify a Whatnot delivery with the Standard Webhooks library. It checks the
+ * timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw body
+ * and compares in constant time against every `v1,` entry.
  *
- *   header    : X-Whatnot-Webhook-Signature: <lowercase hex HMAC-SHA256>
- *   algorithm : HMAC-SHA256, keyed with your app's webhook secret key
- *               (provided by a Whatnot representative)
- *   signed    : the RAW request body, nothing else (no timestamp, no prefix)
- *   encoding  : hex digest, no "sha256=" prefix
- *
- * Whatnot's own Python sample compares with `==`. This uses a constant-time
- * compare instead, so the check doesn't leak timing information.
+ * @param {string} rawBody - the exact body Whatnot sent
+ * @param {object} headers - webhook-id / webhook-timestamp / webhook-signature
+ * @param {string} secret - the wn_wh_ secret from the developer dashboard
+ * @returns {object} the parsed, verified event
+ * @throws {Error} if verification fails
  */
-const HEX_SHA256 = /^[0-9a-f]{64}$/;
-
-function verifyWhatnotSignature(rawBody, signature, secret) {
-  if (!signature || !secret) return false;
-
-  // Hex is case-insensitive; normalise before comparing.
-  const received = signature.trim().toLowerCase();
-  if (!HEX_SHA256.test(received)) return false; // rejects base64, prefixes, wrong length
-
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
+function verifyWhatnotWebhook(rawBody, headers, secret = process.env.WHATNOT_WEBHOOK_SECRET) {
+  const key = secret.startsWith(SECRET_PREFIX) ? secret.slice(SECRET_PREFIX.length) : secret;
+  return new Webhook(key).verify(rawBody, headers); // returns the parsed JSON body
 }
 
-// --- Idempotency -----------------------------------------------------------
-// Whatnot retries any non-200 response up to 5 times over ~10 minutes, so the
-// same envelope `id` can arrive more than once. Use a database or Redis in
-// production.
-const processedEvents = new Set();
+// In-memory dedupe for the demo. Use Redis or your database in production.
+// Delivery is at least once, and retries reuse the webhook-id header.
+const processedWebhookIds = new Set();
 
-// --- Topic handlers --------------------------------------------------------
-// The payload for every topic is under `object`. IDs are GraphQL Global IDs.
-// Money fields are { amount: "12.34", currency: "USD" }: keep `amount` as a
-// string (or a decimal type), never a float.
-
+// Money is { amount: "49.77", currency: "USD" }: keep `amount` as a string
+// (or a decimal type), never a float.
 function formatMoney(money) {
   return money ? `${money.amount} ${money.currency}` : 'n/a';
 }
 
-function handleOrder(topic, order) {
-  console.log(`${topic}: order ${order.order_id}, total ${formatMoney(order.total)}`);
-  if (order.cancelled_at) {
-    console.log(`Order ${order.order_id} cancelled at ${order.cancelled_at}`);
-  }
-  // shipping_address and tracking_info are only populated for apps with the
-  // read_customers scope. Otherwise they're null or missing.
-  if (order.shipping_address) {
-    console.log(`Ship to ${order.shipping_address.city}, ${order.shipping_address.country}`);
-  }
-  if (order.tracking_info) {
-    console.log(`Tracking ${order.tracking_info.courier} ${order.tracking_info.tracking_code}`);
-  }
-}
+function handleEvent(event) {
+  const { type, data = {}, seller_id: sellerId } = event;
 
-function handleEvent(event, sellerId) {
-  const obj = event.object || {};
+  switch (type) {
+    // --- Orders (read:orders) ----------------------------------------------
+    case 'orders.created':
+    case 'orders.updated':
+      // No ordering guarantee: orders.updated can arrive before orders.created.
+      // Compare data.updated_at with what you stored before overwriting.
+      console.log(`${type}: order ${data.id} (${data.status}), total ${formatMoney(data.amounts?.total)}`);
+      if (data.cancelled_at) console.log(`Order ${data.id} cancelled at ${data.cancelled_at}`);
+      // buyer is null unless your app holds read:customers.
+      if (data.buyer) console.log(`Buyer ${data.buyer.username}`);
+      break;
 
-  switch (event.topic) {
-    case 'product/sold':
-      // Decrement stock in your own system for product_id / variant_id.
-      console.log(`Product ${obj.product_id} sold (qty ${obj.quantity}), order ${obj.order_id}`);
+    // --- Shows (read:shows) ------------------------------------------------
+    case 'shows.created': // excludes rehearsals
+    case 'shows.updated': // fires even when only updated_at changed
+      console.log(`${type}: show ${data.id} "${data.title}" (${data.status})`);
       break;
-    case 'bulk_operation/finished':
-      console.log(`Bulk operation ${obj.id} finished with status ${obj.status}`);
+    case 'shows.started': // also fires when a stopped show resumes
+    case 'shows.ended': // includes Whatnot ending an abandoned show
+    case 'shows.cancelled':
+      console.log(`${type}: show ${data.show_id}`);
       break;
-    case 'listing/created':
-    case 'listing/updated':
-      console.log(`${event.topic}: listing ${obj.listing_id} (${obj.transaction_type}, ${obj.listing_status})`);
+
+    // --- Merchandising (read:merchandising) --------------------------------
+    case 'merchandising.products.added_to_show':
+    case 'merchandising.products.removed_from_show': // also fires when the listing was deleted
+      console.log(`${type}: product ${data.product_id} in show ${data.show_id}`);
       break;
-    case 'order/created':
-    case 'order/updated':
-      handleOrder(event.topic, obj);
+
+    // --- Shipments (read:shipments) ----------------------------------------
+    case 'shipments.created':
+      // recipient, destination_address and documents need read:customers.
+      console.log(`Shipment ${data.id} created (${data.status})`);
+      if (data.recipient) console.log(`Recipient ${data.recipient.username}`);
       break;
-    case 'livestream/created':
-      console.log(`Livestream ${obj.livestream_id} created: ${obj.title}`);
+    case 'shipments.label_generated':
+      // documents is null without read:customers and customer-address access.
+      console.log(`Shipment ${data.shipment_id} label ${data.reason}: ${data.tracking?.carrier} ${data.tracking?.tracking_code}`);
+      if (data.documents?.label_url) console.log(`Label: ${data.documents.label_url}`);
       break;
-    case 'livestream/stopped':
-      // Fires when a livestream ends OR is cancelled.
-      console.log(`Livestream ${obj.livestream_id} stopped`);
+    case 'shipments.tracking_code_added':
+      console.log(`Shipment ${data.shipment_id} tracking: ${data.tracking?.carrier} ${data.tracking?.tracking_code}`);
       break;
-    case 'livestream/product_added':
-    case 'livestream/product_removed':
-      console.log(`${event.topic}: listing ${obj.listing_id} in livestream ${obj.livestream_id}`);
+    case 'shipments.parcel_updated':
+      console.log(`Shipment ${data.shipment_id} parcel updated`);
       break;
-    case 'shipment/label_created':
-      // BETA topic: Whatnot says it may change without notice.
-      // label_url needs the read_customers scope.
-      console.log(`Shipment ${obj.shipment_id} label (${obj.reason}): ${obj.courier} ${obj.tracking_code}`);
+    case 'shipments.items.added':
+    case 'shipments.items.removed':
+      // shipment_item_ids lists every item on the shipment after the change.
+      console.log(`${type}: shipment ${data.shipment_id} now has ${data.shipment_item_ids?.length ?? 0} items`);
       break;
+
+    // --- Products (read:inventory) -----------------------------------------
+    case 'products.created':
+    case 'products.updated': // doesn't say which fields changed
+      console.log(`${type}: product ${data.id} "${data.title}"`);
+      break;
+    case 'products.deleted':
+      console.log(`Product ${data.id} deleted`);
+      break;
+
     default:
-      // Whatnot is in development preview and may add topics. Acknowledge
-      // unknown ones with 200: an error would only trigger 5 retries.
-      console.log(`Unhandled Whatnot topic: ${event.topic}`);
+      // Whatnot adds topics over time: acknowledge, don't fail (an error is retried).
+      console.log(`Unhandled Whatnot event type: ${type}`);
   }
 
-  if (sellerId) console.log(`(seller ${sellerId})`);
+  // seller_id is in the signed body; multi-seller apps route on it.
+  console.log(`(seller ${sellerId})`);
 }
 
-// Raw body is required: the HMAC is computed over the exact bytes Whatnot sent.
+// Whatnot webhook endpoint. express.raw() keeps the exact bytes for the HMAC;
+// express.json() would re-serialise Whatnot's space-separated JSON and break it.
 app.post('/webhooks/whatnot', express.raw({ type: '*/*' }), (req, res) => {
-  const secret = process.env.WHATNOT_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error('WHATNOT_WEBHOOK_SECRET is not set');
+  // Fail closed: never accept unverified deliveries because a secret is missing.
+  if (!process.env.WHATNOT_WEBHOOK_SECRET) {
+    console.error('WHATNOT_WEBHOOK_SECRET is not set; rejecting delivery');
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
-  const signature = req.get('x-whatnot-webhook-signature');
-  if (!signature) {
-    return res.status(400).json({ error: 'Missing X-Whatnot-Webhook-Signature header' });
+  const headers = {
+    'webhook-id': req.get('webhook-id'),
+    'webhook-timestamp': req.get('webhook-timestamp'),
+    'webhook-signature': req.get('webhook-signature'),
+  };
+  if (!headers['webhook-id'] || !headers['webhook-timestamp'] || !headers['webhook-signature']) {
+    return res.status(400).json({ error: 'Missing webhook-id, webhook-timestamp or webhook-signature header' });
   }
 
-  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
-  if (!verifyWhatnotSignature(rawBody, signature, secret)) {
-    return res.status(400).json({ error: 'Invalid signature' });
-  }
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
 
   let event;
   try {
-    event = JSON.parse(rawBody.toString('utf8'));
-  } catch {
-    return res.status(400).json({ error: 'Invalid JSON' });
+    event = verifyWhatnotWebhook(rawBody, headers);
+  } catch (err) {
+    console.error('Whatnot webhook verification failed:', err.message);
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
-  if (processedEvents.has(event.id)) {
+  // Retries reuse webhook-id; acknowledge duplicates with a 2xx.
+  const webhookId = headers['webhook-id'];
+  if (processedWebhookIds.has(webhookId)) {
     return res.status(200).json({ received: true, duplicate: true });
   }
 
-  // X-Whatnot-Seller-Id tells a multi-seller app which seller this is for.
-  handleEvent(event, req.get('x-whatnot-seller-id'));
-  processedEvents.add(event.id);
+  try {
+    // Whatnot times out after 5 seconds. In production, enqueue the event
+    // here and process it asynchronously.
+    handleEvent(event);
+    processedWebhookIds.add(webhookId);
+  } catch (err) {
+    console.error('Error handling Whatnot event:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 
-  // Whatnot expects exactly 200 OK. Anything else is retried.
+  // Any 2xx counts as delivered.
   return res.status(200).json({ received: true });
 });
 
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -153,4 +178,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, verifyWhatnotSignature, processedEvents };
+module.exports = { app, verifyWhatnotWebhook, processedWebhookIds };

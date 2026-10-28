@@ -1,7 +1,7 @@
 {
   "name": "whatnot-webhooks-express",
   "version": "1.0.0",
-  "description": "Whatnot Seller API webhook handler with Express — verifies the X-Whatnot-Webhook-Signature HMAC-SHA256 (hex) over the raw body",
+  "description": "Whatnot webhook handler with Express and Standard Webhooks signature verification",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "dotenv": "^18.0.8",
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "standardwebhooks": "^1.1.1"
   },
   "devDependencies": {
     "jest": "^30.5.2",

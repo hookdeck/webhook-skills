@@ -1,13 +1,13 @@
 # Whatnot Webhooks - FastAPI Example
 
-Minimal example of receiving Whatnot Seller API webhooks with signature
-verification: HMAC-SHA256 over the raw body, lowercase hex, in
-`X-Whatnot-Webhook-Signature`.
+Minimal example of receiving Whatnot webhooks with Standard Webhooks signature
+verification (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 
 ## Prerequisites
 
 - Python 3.10+
-- Your app's **webhook secret key**, issued by a Whatnot representative
+- Your Whatnot webhook secret (`wn_wh_...`), from your client app in the
+  Whatnot developer dashboard
 
 ## Setup
 
@@ -25,7 +25,8 @@ verification: HMAC-SHA256 over the raw body, lowercase hex, in
    cp .env.example .env
    ```
 
-3. Set `WHATNOT_WEBHOOK_SECRET` in `.env` to the secret Whatnot gave you.
+3. Set `WHATNOT_WEBHOOK_SECRET` in `.env` to the secret from the dashboard,
+   `wn_wh_` prefix included.
 
 ## Run
 
@@ -41,11 +42,13 @@ Endpoint: `POST http://localhost:8000/webhooks/whatnot`
 pytest
 ```
 
-The tests sign payloads with the same algorithm Whatnot uses (hex HMAC-SHA256
-of the raw body) and check a fixed vector computed with Whatnot's own Python
-sample. They cover tampered bodies, wrong secrets, a missing header, uppercase
-hex, base64 digests, `sha256=` prefixes, duplicate event ids, unknown topics,
-null customer-data fields and the fail-closed path when the secret is unset.
+The tests check Whatnot's published golden vector byte for byte (with the
+clock frozen at its timestamp), then cover every topic, a `wn_wh_` prefix the
+library isn't told about, a stale timestamp, a signature list where only one
+entry is valid, re-serialised JSON, missing `webhook-*` headers, the legacy
+`X-Whatnot-Webhook-Signature` scheme, wrong secrets, tampered bodies,
+duplicate `webhook-id`s, unknown types, null customer data and the
+fail-closed path when the secret is unset.
 
 ## Receive real webhooks locally
 
@@ -53,28 +56,34 @@ null customer-data fields and the fail-closed path when the secret is unset.
 npx hookdeck-cli listen 8000 whatnot --path /webhooks/whatnot
 ```
 
-Give the printed HTTPS URL to Whatnot when you request your subscription (see
+Register the printed HTTPS URL in the Whatnot developer dashboard (see
 [../../references/setup.md](../../references/setup.md)). The CLI's web UI shows
 each request's raw body and headers.
 
 ## What this example demonstrates
 
-- **Raw-body verification.** A dependency reads `await request.body()` and verifies before parsing
-  JSON.
-- **Hex, no prefix, nothing but the body.** Whatnot signs only the raw body
-  and sends the digest as bare lowercase hex. The verifier rejects anything
-  that isn't 64 hex characters before comparing.
-- **Constant-time comparison.** Whatnot's sample uses `==`; this uses `hmac.compare_digest`.
-- **Fail closed.** An unset `WHATNOT_WEBHOOK_SECRET` returns 500; a missing or
-  invalid signature returns 400. Verification is never skipped.
-- **Dedupe on the envelope `id`.** Whatnot retries non-200 responses up to 5
-  times over about 10 minutes. The in-memory set is for demonstration; use a
-  database or Redis in production.
-- **Route on `topic`, read `object`.** All 11 documented topics are handled.
-  Unknown topics get a 200 so Whatnot doesn't retry them.
-- **Null-safe customer data.** `shipping_address`, `tracking_info` and
-  `label_url` need the `read_customers` scope.
-- **`X-Whatnot-Seller-Id`** is read so multi-seller apps know whose event it is.
+- **Standard Webhooks verification** with the `standardwebhooks` library:
+  base64 HMAC-SHA256 over `{webhook-id}.{webhook-timestamp}.{raw body}`,
+  compared in constant time against every `v1,` entry, with the 5-minute
+  timestamp tolerance.
+- **`wn_wh_` handling.** The secret is copied from the dashboard as-is; the
+  code strips `wn_wh_` before the library base64-decodes the rest. The library
+  only strips its own `whsec_` prefix.
+- **Raw-body verification.** A dependency reads `await request.body()` and verifies before
+  parsing JSON. Whatnot sends space-separated JSON, so re-serialising changes
+  the bytes.
+- **Fail closed.** An unset `WHATNOT_WEBHOOK_SECRET` returns 500; missing
+  `webhook-*` headers or an invalid signature return 400. Verification is never
+  skipped.
+- **Dedupe on the `webhook-id` header.** Delivery is at least once and retries
+  reuse the id. The in-memory set is for demonstration; use a database or
+  Redis in production.
+- **Route on `type`, read `data`.** All 18 documented topics are handled.
+  Unknown types get a 2xx so Whatnot doesn't retry them.
+- **Null-safe customer data.** `buyer`, `recipient` and `documents` are `null`
+  without the `read:customers` scope.
+- **`seller_id`** is read from the signed body so multi-seller apps know whose
+  event it is.
 
 See [../../references/verification.md](../../references/verification.md) for
 the scheme in detail.

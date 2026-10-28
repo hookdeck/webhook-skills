@@ -2,227 +2,252 @@
 
 ## What Are Whatnot Webhooks?
 
-Whatnot sends webhooks from its **Seller API** so your app can react to
-sales, listing changes, orders, livestreams and shipping labels without
-polling the GraphQL API. Whatnot describes the API as being in **development
-preview**, with "a growing set of event topics", so expect new topics to
-appear.
+Whatnot sends webhooks so your app can react to orders, shows, shipments,
+show merchandising and product changes for the sellers who installed it,
+without polling the API. Deliveries are signed with Standard Webhooks (see
+[verification.md](verification.md)).
 
-Source: [Webhooks overview](https://developers.whatnot.com/docs/webhooks/overview)
-and the per-topic pages linked from it.
+Sources: [Webhooks guide](https://developers.whatnot.com/getting-started/webhooks)
+and the per-topic reference, which is generated from Whatnot's webhooks
+[OpenAPI description](https://developers.whatnot.com/webhooks/openapi.json).
 
 ## Envelope
 
 ```json
 {
-  "id": "<Event ID: UUID>",
-  "timestamp": "<Event Timestamp: ISO 8601 UTC>",
-  "topic": "<Event Topic>",
-  "object": { "...": "<Object type specific to topic>" }
+  "type": "shows.started",
+  "timestamp": "2026-10-20T16:00:00.123Z",
+  "data": { "show_id": "9b2f6c1e-4d3a-4f8b-a1c2-3d4e5f6a7b8c" },
+  "version": "v2",
+  "seller_id": "1234567"
 }
 ```
 
 | Field | Meaning |
 |---|---|
-| `id` | Event ID (UUID). Use it as your idempotency key |
-| `timestamp` | When the event happened, ISO 8601 UTC |
-| `topic` | The topic string, e.g. `order/created`. Route on this |
-| `object` | The topic-specific payload |
+| `type` | The topic, e.g. `orders.created`. Route on this |
+| `timestamp` | When the event happened, ISO 8601 UTC with milliseconds. Stable across retries |
+| `data` | The topic-specific payload. Most topics send the same object the REST API returns |
+| `version` | Payload version, currently always `"v2"` |
+| `seller_id` | The seller the event belongs to. It's in the signed body, so multi-seller apps can route on it |
 
 Headers sent with every delivery:
 
 | Header | Value |
 |---|---|
-| `X-Whatnot-Seller-Id` | The seller the event is for |
-| `X-Whatnot-Webhook-Signature` | Hex HMAC-SHA256 of the raw body (see [verification.md](verification.md)) |
+| `webhook-id` | UUID, unique per event and reused on retries. **Dedupe on this** |
+| `webhook-timestamp` | Unix seconds when this attempt was sent |
+| `webhook-signature` | Space-separated `v1,<base64 HMAC-SHA256>` entries |
+| `Content-Type` | `application/json` |
+
+The body has no event `id`. Use the `webhook-id` header as your idempotency
+key. There are no `X-Whatnot-*` headers.
 
 ## Shared Conventions
 
-**IDs** are GraphQL Global IDs, which you can pass back to the Seller API's
-`node` / `order` / `listing` queries. `external_id` and `variant_external_id`
-are your own IDs, if you set them when creating the product.
-
-**Money** fields are objects with a string amount and an ISO 4217 currency:
+**Money** fields are objects with a decimal-string amount and an ISO 4217
+currency:
 
 ```json
-{ "amount": "12.34", "currency": "USD" }
+{ "amount": "49.77", "currency": "USD" }
 ```
 
-**Customer data**: `shipping_address`, `tracking_info` and `label_url` are
-only populated for apps granted the **`read_customers`** scope. Without it the
-fields are omitted or `null`.
+Keep `amount` as a string or decimal type, never a float.
 
-**Placeholders**: Whatnot's docs show placeholder values (`"<Product Global
-ID>"`), not real sample data. The payloads in this skill's tests are
-illustrative, so don't rely on their ID formats.
+**Customer data** needs the **`read:customers`** scope. Without it these
+fields are `null`:
+
+| Topic | Fields |
+|---|---|
+| `orders.created`, `orders.updated` | `buyer` |
+| `shipments.created` | `recipient`, `destination_address`, `documents` |
+| `shipments.label_generated` | `documents` |
+
+Destination addresses and shipping documents also need customer-address
+access. Private apps have it; public apps get it once Whatnot approves them.
+(The guide lists `destination_address` for `shipments.created`, though the
+current Shipment schema in the topic reference doesn't include it. Treat it as
+optional.)
+
+**Sample values** below come from Whatnot's reference examples or are
+illustrative. Don't rely on their ID formats.
 
 ## Topics and Payloads
 
-The shapes below are the `object` field of the envelope.
+Each topic needs a scope that both your app and the seller's installation
+hold. Without it, that seller's events aren't delivered. Whatnot says new
+topics and payload fields may be added over time.
 
-### `product/sold`
+### Orders (`read:orders`)
 
-Sent when a product is sold. Whatnot suggests using it to decrement your own
-inventory.
+#### `orders.created` and `orders.updated`
 
-```json
-{
-  "product_id": "<Product Global ID>",
-  "listing_id": "<Listing Global ID>",
-  "order_id": "<Order Global ID>",
-  "external_id": "<Product External ID>",
-  "variant_id": "<Variant Global ID, or null>",
-  "variant_external_id": "<Variant External ID, or null>",
-  "quantity": 1,
-  "product_created_by_client_app_id": "<Client App ID that created the product, or null>"
-}
-```
-
-### `bulk_operation/finished`
-
-Sent when a bulk operation completes. `status` is a `BulkOperationStatus`
-from the GraphQL schema. Use it to know when to fetch the result.
+`data` is an **Order**:
 
 ```json
 {
-  "id": "<Bulk Operation Global ID>",
-  "status": "<The Completion status of the Bulk Operation>"
-}
-```
-
-### `listing/created` and `listing/updated`
-
-Same shape for both. Includes a subset of listing fields;
-`transaction_type` tells you whether it's an auction.
-
-```json
-{
-  "product_id": "<Product Global ID, or null>",
-  "listing_id": "<Listing Global ID>",
-  "external_id": "<Product External ID, or null>",
-  "quantity": 1,
-  "transaction_type": "<Either AUCTION or BUY_IT_NOW>",
-  "listing_status": "<Listing status, or null>",
-  "condition": "<Listing condition, or null>",
-  "category_name": "<Category name, or null>",
-  "category_id": "<Category Global ID, or null>"
-}
-```
-
-### `order/created` and `order/updated`
-
-Same shape for both.
-
-```json
-{
-  "product_id": "<Product Global ID>",
-  "listing_id": "<Listing Global ID>",
-  "external_id": "<Product External ID, or null>",
-  "order_id": "<Order Global ID>",
-  "quantity": 1,
-  "subtotal": { "amount": "10.00", "currency": "USD" },
-  "shipping_price": { "amount": "5.00", "currency": "USD" },
-  "taxation": { "amount": "1.00", "currency": "USD" },
-  "customs": { "amount": "0.00", "currency": "USD" },
-  "total": { "amount": "16.00", "currency": "USD" },
-  "items": [
-    {
-      "product_id": "<Product Global ID>",
-      "listing_id": "<Listing Global ID>",
-      "price": { "amount": "10.00", "currency": "USD" },
-      "quantity": 1,
-      "subtotal": { "amount": "10.00", "currency": "USD" },
-      "variant_id": "<Variant Global ID, or null>",
-      "variant_external_id": "<Variant External ID, or null>"
-    }
-  ],
-  "product_created_by_client_app_id": "<Client App ID that created the product, or null>",
-  "shipping_address": {
-    "address_line1": "<Address line 1>",
-    "address_line2": "<Address line 2>",
-    "city": "<City>",
-    "state": "<State>",
-    "postal_code": "<Postal code>",
-    "country": "<Country code>"
+  "id": "<order id>",
+  "status": "pending_fulfillment",
+  "show_id": "9b2f6c1e-4d3a-4f8b-a1c2-3d4e5f6a7b8c",
+  "transaction_type": "auction",
+  "buyer": { "id": "<user id>", "username": "<username>", "display_name": null },
+  "amounts": {
+    "subtotal": { "amount": "40.00", "currency": "USD" },
+    "shipping": { "amount": "5.00", "currency": "USD" },
+    "tax": { "amount": "4.77", "currency": "USD" },
+    "applied_discount": null,
+    "total": { "amount": "49.77", "currency": "USD" }
   },
-  "tracking_info": {
-    "tracking_code": "<Tracking code>",
-    "courier": "<Courier>",
-    "label_url": "<Shipping label URL>"
-  },
+  "created_at": "2026-10-20T16:05:00.000Z",
+  "updated_at": "2026-10-20T16:05:00.000Z",
   "cancelled_at": null
 }
 ```
 
-- `customs` may be `null`.
-- `shipping_address` and `tracking_info` are `null` without `read_customers`.
-- `cancelled_at` is set when the order is cancelled. Watch for it on
-  `order/updated`.
+- `status`: `pending`, `pending_fulfillment`, `completed`, `cancelled` or
+  `failed`. Fulfil `pending_fulfillment` orders; `pending` ones aren't ready.
+- `transaction_type`: `buy_it_now`, `auction`, `giveaway`, `other` or `null`.
+- `show_id` is `null` for orders placed outside a show.
+- `applied_discount` is `null` or `{ "type": "fixed_price", "amount": Money }`
+  (there's also a percentage variant).
+- `buyer` needs `read:customers`.
+- Watch `cancelled_at` on `orders.updated`.
 
-### `livestream/created`
+### Shows (`read:shows`)
 
-Sent when a seller creates a livestream.
+#### `shows.created` and `shows.updated`
+
+`data` is a **Show**: `id`, `title`, `description`, `status` (`scheduled`,
+`live`, `stopped`, `ended`, `cancelled`), `visibility` (`public`, `private`),
+`scheduled_start_at`, `ended_at`, `thumbnail`, `created_at`, `updated_at`.
+
+- `shows.created` excludes rehearsals.
+- `shows.updated` fires even when only `updated_at` changed.
+
+#### `shows.started`, `shows.ended` and `shows.cancelled`
+
+```json
+{ "show_id": "9b2f6c1e-4d3a-4f8b-a1c2-3d4e5f6a7b8c" }
+```
+
+- `shows.started` also fires when a stopped show resumes.
+- `shows.ended` includes Whatnot ending an abandoned show.
+
+### Merchandising (`read:merchandising`)
+
+#### `merchandising.products.added_to_show` and `merchandising.products.removed_from_show`
+
+```json
+{ "product_id": "<product id>", "show_id": "<show id>" }
+```
+
+`removed_from_show` also fires when the listing was deleted.
+
+### Shipments (`read:shipments`)
+
+#### `shipments.created`
+
+`data` is a **Shipment**:
 
 ```json
 {
-  "livestream_id": "<Livestream Global ID>",
-  "title": "<Livestream title>",
-  "starts_at": "<ISO 8601 UTC scheduled start, or null>"
+  "id": "<shipment id>",
+  "status": "label_generated",
+  "fulfillment_method": "shipping",
+  "recipient": { "id": "<user id>", "username": "<username>", "display_name": null },
+  "weight": { "value": 8, "unit": "ounce" },
+  "dimensions": { "length": 6, "width": 4, "height": 2, "unit": "inch" },
+  "signature_required": false,
+  "hazardous_material": "not_hazardous",
+  "tracking": {
+    "carrier": "usps",
+    "service": "usps_ground_advantage",
+    "tracking_code": "<tracking code>",
+    "last_mile_tracking_code": null
+  },
+  "documents": { "label_url": "<url>", "bundled_url": "<url>", "commercial_invoice_url": null },
+  "insurance": { "amount": { "amount": "50.00", "currency": "USD" }, "contents": "<description>" },
+  "required_actions": [],
+  "dropoff_due": null,
+  "replacement_shipment_id": null,
+  "created_at": "2026-10-20T16:10:00.000Z",
+  "updated_at": "2026-10-20T16:10:00.000Z"
 }
 ```
 
-### `livestream/stopped`
+`recipient` and `documents` need `read:customers` (documents also need
+customer-address access).
 
-Sent when a livestream **ends or is cancelled**. The payload doesn't say
-which.
-
-```json
-{ "livestream_id": "<Livestream Global ID>" }
-```
-
-### `livestream/product_added` and `livestream/product_removed`
-
-Same shape for both. Sent when a listing is added to or removed from a
-livestream.
-
-```json
-{
-  "product_id": "<Product Global ID>",
-  "livestream_id": "<Livestream Global ID>",
-  "listing_id": "<Listing Global ID>",
-  "product_external_id": "<Product External ID, or null>"
-}
-```
-
-### `shipment/label_created` (Beta)
-
-Whatnot marks this topic **Beta**: its types, behavior and existence may
-change without notice, and it's not recommended for production use. Sent when
-a shipping label is generated or regenerated.
+#### `shipments.label_generated`
 
 ```json
 {
-  "shipment_id": "<Shipment ID>",
-  "reason": "<label_generated or label_regenerated>",
-  "tracking_code": "<Tracking code, or null>",
-  "courier": "<Courier, or null>",
-  "label_url": "<Shipping label URL, or null>",
-  "label_generated_at": "<ISO 8601 UTC>"
+  "shipment_id": "<shipment id>",
+  "reason": "generated",
+  "tracking": { "carrier": "usps", "service": "usps_ground_advantage", "tracking_code": "<code>", "last_mile_tracking_code": null },
+  "documents": { "label_url": "<url>", "bundled_url": "<url>", "commercial_invoice_url": null }
 }
 ```
 
-`label_url` requires `read_customers`.
+`reason` is `generated` (first label) or `regenerated` (replacement).
+`documents` is `null` without `read:customers` and customer-address access.
+
+#### `shipments.tracking_code_added`
+
+```json
+{ "shipment_id": "<shipment id>", "tracking": { "carrier": "usps", "service": null, "tracking_code": "<code>", "last_mile_tracking_code": null } }
+```
+
+#### `shipments.parcel_updated`
+
+`shipment_id`, `weight`, `dimensions`, `hazardous_material`,
+`signature_required` and `insurance`. Any of the objects can be `null`.
+
+#### `shipments.items.added` and `shipments.items.removed`
+
+```json
+{ "shipment_id": "<shipment id>", "shipment_item_ids": ["<item id>", "<item id>"] }
+```
+
+`shipment_item_ids` lists **every** item on the shipment after the change,
+including items that didn't change.
+
+### Products (`read:inventory`)
+
+#### `products.created` and `products.updated`
+
+`data` is a **Product**: `id`, `title`, `description`, `external_id`, `url`,
+`category` (`{ id, name }`), `attributes` (`[{ id, name, value }]`), `options`
+(`[{ id, name, values }]`), `media` (`[{ id, url, alt }]`),
+`dimension_profile`, `created_at`, `updated_at`.
+
+`products.updated` doesn't say which fields changed. Diff against your copy.
+
+#### `products.deleted`
+
+```json
+{ "id": "<product id>" }
+```
 
 ## Delivery and Retries
 
-- Deliveries are HTTP `POST` requests.
-- Respond with **HTTP 200 OK**. Whatnot's docs ask for 200 specifically.
-- Any other response is retried **up to 5 times over about 10 minutes**.
-  After that the event is not redelivered, so reconcile through the Seller
-  API if your endpoint was down for longer.
-- Because of retries, the same `id` can arrive more than once. Dedupe on it.
+- Deliveries are HTTPS `POST` requests with a JSON body.
+- **Any 2xx** counts as delivered. Whatnot times out after **5 seconds**, so
+  return 2xx immediately and process asynchronously.
+- Anything else (non-2xx, timeout, connection failure) is retried with
+  exponential backoff, **up to 11 attempts over roughly 2.5 days** (about 31 s,
+  1 min, 4.5 min, 17.5 min, 53 min, 2.2 h, 4.7 h, 9.1 h, 16.4 h, 1.2 d), then
+  marked permanently failed.
+- Each retry keeps the same `webhook-id` and gets a fresh `webhook-timestamp`
+  and signature.
+- **At least once, not exactly once, and unordered.** `orders.updated` can
+  arrive before `orders.created` for the same order. Reconcile on the
+  payload's own `timestamp`/`updated_at` and state, never on arrival order.
+- A persistently failing endpoint is rate-limited, emailed a warning and
+  eventually unsubscribed. Re-subscribe from the developer dashboard.
+- Respond 4xx to a delivery that fails verification.
 
 ## Handling Unknown Topics
 
-During the preview Whatnot may add topics. Log and return `200` for a topic
-you don't recognise. Returning an error only triggers 5 pointless retries.
+Log and return a 2xx for a `type` you don't recognise. An error only triggers
+retries for an event you'll never handle.

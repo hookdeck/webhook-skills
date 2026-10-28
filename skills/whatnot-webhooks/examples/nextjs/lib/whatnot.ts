@@ -1,36 +1,21 @@
 // Generated with: whatnot-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 
-import crypto from 'crypto';
+import { Webhook } from 'standardwebhooks';
 
-/**
- * WHATNOT WEBHOOK VERIFICATION
- *
- *   header    : X-Whatnot-Webhook-Signature: <lowercase hex HMAC-SHA256>
- *   algorithm : HMAC-SHA256, keyed with your app's webhook secret key
- *               (provided by a Whatnot representative)
- *   signed    : the RAW request body, nothing else (no timestamp, no prefix)
- *   encoding  : hex digest, no "sha256=" prefix
- *
- * Whatnot's own Python sample compares with `==`. This uses a constant-time
- * compare instead, so the check doesn't leak timing information.
- */
-const HEX_SHA256 = /^[0-9a-f]{64}$/;
+// ---------------------------------------------------------------------------
+// Whatnot signs webhooks with Standard Webhooks:
+//   webhook-id         UUID, unique per event and reused on retries (dedupe key)
+//   webhook-timestamp  Unix seconds when this attempt was sent (5-minute tolerance)
+//   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list)
+// Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
+// Key: base64-decode of the dashboard secret after its `wn_wh_` prefix.
+// The library strips only its own `whsec_` prefix, so strip `wn_wh_` first.
+// ---------------------------------------------------------------------------
 
-export function verifyWhatnotSignature(
-  rawBody: Buffer,
-  signature: string | null | undefined,
-  secret: string | undefined
-): boolean {
-  if (!signature || !secret) return false;
+const SECRET_PREFIX = 'wn_wh_';
 
-  // Hex is case-insensitive; normalise before comparing.
-  const received = signature.trim().toLowerCase();
-  if (!HEX_SHA256.test(received)) return false; // rejects base64, prefixes, wrong length
-
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(received, 'hex'), Buffer.from(expected, 'hex'));
-}
+export type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
 
 /** Money is a string amount + ISO 4217 currency. Never parse amount to a float. */
 export interface Money {
@@ -38,48 +23,52 @@ export interface Money {
   currency: string;
 }
 
+export interface UserSummary {
+  id: string;
+  username: string;
+  display_name: string | null;
+}
+
 export interface WhatnotEvent<T = Record<string, any>> {
-  id: string; // UUID — dedupe on this
-  timestamp: string; // ISO 8601 UTC
-  topic: string; // e.g. "order/created"
-  object: T; // topic-specific payload
+  type: string; // e.g. "orders.created" — route on this
+  timestamp: string; // ISO 8601 UTC, stable across retries
+  data: T; // topic-specific payload
+  version: string; // "v2"
+  seller_id: string; // signed, so multi-seller apps can route on it
 }
 
 export interface WhatnotOrder {
-  order_id: string;
-  product_id: string;
-  listing_id: string;
-  external_id?: string | null;
-  quantity: number;
-  subtotal: Money;
-  shipping_price: Money;
-  taxation: Money;
-  customs?: Money | null;
-  total: Money;
-  items: Array<{
-    product_id: string;
-    listing_id: string;
-    price: Money;
-    quantity: number;
+  id: string;
+  status: 'pending' | 'pending_fulfillment' | 'completed' | 'cancelled' | 'failed';
+  show_id: string | null;
+  transaction_type: 'buy_it_now' | 'auction' | 'giveaway' | 'other' | null;
+  buyer: UserSummary | null; // null without read:customers
+  amounts: {
     subtotal: Money;
-    variant_id?: string | null;
-    variant_external_id?: string | null;
-  }>;
-  product_created_by_client_app_id?: string | null;
-  // Only populated for apps with the read_customers scope.
-  shipping_address?: {
-    address_line1: string;
-    address_line2?: string | null;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-  } | null;
-  tracking_info?: { tracking_code: string; courier: string; label_url?: string | null } | null;
-  cancelled_at?: string | null;
+    shipping: Money;
+    tax: Money;
+    applied_discount: { type: string; amount: Money } | null;
+    total: Money;
+  };
+  created_at: string | null;
+  updated_at: string | null;
+  cancelled_at: string | null;
 }
 
-// Whatnot retries any non-200 response up to 5 times over ~10 minutes, so the
-// same envelope `id` can arrive more than once. Use a database or Redis in
-// production.
-export const processedEvents = new Set<string>();
+/**
+ * Verify a Whatnot delivery with the Standard Webhooks library. It checks the
+ * timestamp (fixed 5-minute tolerance), recomputes the HMAC over the raw body
+ * and compares in constant time against every `v1,` entry. Throws on failure.
+ */
+export function verifyWhatnotWebhook(
+  rawBody: string,
+  headers: SignatureHeaders,
+  secret = process.env.WHATNOT_WEBHOOK_SECRET as string
+): WhatnotEvent {
+  const key = secret.startsWith(SECRET_PREFIX) ? secret.slice(SECRET_PREFIX.length) : secret;
+  return new Webhook(key).verify(rawBody, headers) as WhatnotEvent;
+}
+
+// In-memory dedupe for the demo. Use Redis or your database in production.
+// Delivery is at least once, and retries reuse the webhook-id header.
+export const processedWebhookIds = new Set<string>();
