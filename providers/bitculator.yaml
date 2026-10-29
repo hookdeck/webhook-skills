@@ -8,13 +8,13 @@ notes: >
   alarms. Webhook endpoints are registered through the Data API v1 with a Bearer API key that has
   the data-api ability: POST /api/v1/webhooks with {"url": "https://...", "events":
   ["alarm.triggered"]} ('Registers an HTTPS endpoint (max 5 per account) for event deliveries. The
-  response includes the signing secret, which is only shown once, so it must be stored
+  response includes the signing secret - the ONLY time it is ever shown, so store it
   immediately.'). Public HTTPS hosts only. Other endpoints: GET /api/v1/webhooks (list), DELETE
   /api/v1/webhooks/{id}, POST /api/v1/webhooks/{id}/test ('Fires a signed alarm.triggered test event
   (test: true in the payload, real signature headers) so receivers can be verified end-to-end.') and
   GET /api/v1/webhooks/{id}/deliveries (delivery log kept 30 days: event, response_status, error,
   attempts, delivered_at). DOC ACCESS: bitculator.com/en/documentation/api/v1 shows non-browser
-  clients a Cloudflare challenge; the quotes here were read on that first-party page in a browser
+  clients a Cloudflare challenge; the quotes here were read on the first-party page
   (and its Context7 mirror). Do not add claims the quotes below do not support. Webhooks intro,
   verbatim: 'Bitculator POSTs each event as JSON with an HMAC signature header:
   X-Bitculator-Signature: t=<unix-ts>,v1=<hex hmac_sha256("<ts>.<raw-body>", secret)>

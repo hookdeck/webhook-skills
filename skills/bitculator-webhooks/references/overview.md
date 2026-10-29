@@ -56,7 +56,7 @@ The bodies in the example tests are illustrative, not Bitculator's documented fo
 
 The `alarm` object mirrors an item of `GET /api/v1/alarms` (`id`, `name`, `coin`, `metric`, `direction`, `target` as a string, `notification`, `status`, `created_at`). Capture a real delivery from `POST /api/v1/webhooks/{id}/test` (for example in the Hookdeck CLI web UI) before relying on any field.
 
-## Delivery Behavior
+## Delivery Behaviour
 
 - Method and format: POST with a JSON body. Hookdeck's Bitculator source manages the method as POST.
 - Retries: "Each delivery is attempted up to 3 times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed deliveries." The endpoint object's `consecutive_failures` and `disabled_at` fields show where an endpoint stands (`GET /api/v1/webhooks`). Because deliveries are retried, deduplicate in your handler.
