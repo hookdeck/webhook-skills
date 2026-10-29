@@ -14,7 +14,7 @@ description: >
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.2.0"
+  version: "0.2.1"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
@@ -182,10 +182,11 @@ In Express, use `express.raw()` on the webhook route; in Next.js,
 **Strip `wn_wh_`, then base64-decode.** HMAC with the decoded bytes, not the
 base64 text and not the full prefixed string.
 
-**The timestamp check is required.** Every Whatnot retry is re-signed with a
-fresh `webhook-timestamp`, so the 5-minute window doesn't drop legitimate
-retries. Requests replayed later by a proxy that keeps the original headers
-(Hookdeck retries and replays, for example) will fail it after 5 minutes.
+**Keep the timestamp check for direct deliveries.** Every Whatnot retry is
+re-signed with a fresh `webhook-timestamp`, so the 5-minute window doesn't drop
+legitimate retries. Requests replayed later by a proxy that keeps the original
+headers (Hookdeck retries and replays, for example) fail it after 5 minutes,
+so behind Hookdeck rely on the source's verification or widen the window.
 
 **Customer data needs `read:customers`.** Without it these are `null`, so
 null-check them: `buyer` on orders; `recipient`, `destination_address` and
