@@ -73,14 +73,18 @@ and gives you a web UI showing each request's raw body and headers.
 
 ## Using Hookdeck in Front of Your Endpoint
 
-Hookdeck's `WHATNOT` source type was built for the legacy
-`X-Whatnot-Webhook-Signature` hex scheme. Check that it supports Standard
-Webhooks before enabling its signature verification; otherwise leave source
-verification off and verify in your handler, as the examples do.
+Hookdeck's `WHATNOT` source type verifies Standard Webhooks signatures. Paste
+the webhook secret into the source's verification settings as the dashboard
+shows it, `wn_wh_` prefix included. It still accepts the legacy
+`X-Whatnot-Webhook-Signature` hex scheme, but current deliveries are signed
+with the new `wn_wh_` secret, so a source set up before Whatnot's change fails
+verification until you paste that secret.
 
-When you verify in your handler, remember that Hookdeck retries and replays
+If you also verify in your handler, remember that Hookdeck retries and replays
 resend Whatnot's original `webhook-timestamp`. They pass the 5-minute check
-only within 5 minutes of the original attempt.
+only within 5 minutes of the original attempt, so behind Hookdeck either rely
+on source verification and skip the window, or widen it to cover your retry
+schedule.
 
 ## Delivery Health
 

@@ -27,9 +27,9 @@ notes: |
   marketplace. This skill covers the webhooks of the Whatnot developer
   platform at developers.whatnot.com. Hookdeck's `WHATNOT` source type
   (hookdeck.com/docs/sources) links to developers.whatnot.com, so there is no
-  product ambiguity. (Hookdeck's link still points at the now-dead
-  /docs/webhooks/overview path; the live page is
-  /getting-started/webhooks. Same product, new docs site.)
+  product ambiguity. (Its link moved with hookdeck/core#6105 from the dead
+  /docs/webhooks/overview path to the live /getting-started/webhooks page, and
+  that PR made the source verify Standard Webhooks with the wn_wh_ secret.)
 
   *** THIS IS A REWRITE: WHATNOT REPLACED ITS WEBHOOK SYSTEM (2026-10) ***
   Everything in the previous version of this brief (and skill) is stale: the
