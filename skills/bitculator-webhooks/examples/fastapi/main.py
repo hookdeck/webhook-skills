@@ -111,37 +111,41 @@ def _str(x: Any) -> Optional[str]:
 
 
 @app.post("/webhooks/bitculator")
-async def bitculator_webhook(raw_body: bytes = Depends(verified_body)):
-    # The delivery body is not documented: parse it only if it is JSON, and don't depend on any field.
+async def bitculator_webhook(request: Request, raw_body: bytes = Depends(verified_body)):
+    # X-Bitculator-Event names the event (alarm.triggered). It is NOT covered by the signature, so read
+    # it only after verifying and use it as a routing label. Without it, assume alarm.triggered, the
+    # only event Bitculator offers. Acknowledge and skip events this handler doesn't know.
+    event_type = request.headers.get("x-bitculator-event") or "alarm.triggered"
+    if event_type != "alarm.triggered":
+        logger.info("Skipping unhandled event: %s", event_type)
+        return {"received": True}
+
+    # The body is documented as JSON, but its fields are not (only `test: true` on test deliveries):
+    # parse defensively and don't depend on any field.
     try:
         event = json.loads(raw_body)
-    except (json.JSONDecodeError, UnicodeDecodeError):
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError):
         logger.info("Verified Bitculator delivery with a non-JSON body")
         return {"received": True}
     if not isinstance(event, dict):
         logger.info("Verified Bitculator delivery whose JSON body is not an object")
         return {"received": True}
 
-    # Event name: a top-level string `event` (or `type`) when present, otherwise alarm.triggered, the
-    # only event Bitculator offers. `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
-    event_type = _str(event.get("event")) or _str(event.get("type")) or "alarm.triggered"
+    # `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
     is_test = event.get("test") is True
-
-    if event_type == "alarm.triggered":
-        # Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
-        data = event.get("data")
-        alarm = data.get("alarm") if isinstance(data, dict) else None
-        alarm = alarm if isinstance(alarm, dict) else {}
-        coin = alarm.get("coin") if isinstance(alarm.get("coin"), dict) else {}
-        parts = [_str(coin.get("symbol")), _str(alarm.get("direction")), _str(alarm.get("target"))]
-        logger.info(
-            "%salarm triggered: %s %s",
-            "Test " if is_test else "",
-            _str(alarm.get("name")) or "(unnamed)",
-            " ".join(p for p in parts if p),
-        )
-    else:
-        logger.info("Unhandled event: %s", event_type)
+    # Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
+    data = event.get("data")
+    alarm = data.get("alarm") if isinstance(data, dict) else None
+    alarm = alarm if isinstance(alarm, dict) else {}
+    coin = alarm.get("coin") if isinstance(alarm.get("coin"), dict) else {}
+    parts = [_str(coin.get("symbol")), _str(alarm.get("direction")), _str(alarm.get("target"))]
+    logger.info(
+        "%salarm triggered: %s %s",
+        "Test " if is_test else "",
+        _str(alarm.get("name")) or "(unnamed)",
+        " ".join(p for p in parts if p),
+    )
+    # TODO: notify, trade or update dashboards; deduplicate, since deliveries are retried
 
     return {"received": True}
 

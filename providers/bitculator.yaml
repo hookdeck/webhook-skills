@@ -5,19 +5,25 @@ docs:
   verification: https://bitculator.com/en/documentation/api/v1
 notes: >
   Bitculator (bitculator.com), crypto market data (prices, OHLCV, sentiment, indicators) with price
-  alarms. Webhook endpoints are registered through the Data API v1 with a Bearer API key that has the
-  data-api ability: POST /api/v1/webhooks with {"url": "https://...", "events": ["alarm.triggered"]}
-  ('Registers an HTTPS endpoint (max 5 per account) for event deliveries. The response includes the
-  signing secret, which is only shown once, so it must be stored immediately.'). Public HTTPS hosts
-  only. Other endpoints: GET /api/v1/webhooks (list), DELETE /api/v1/webhooks/{id}, POST
-  /api/v1/webhooks/{id}/test ('Fires a signed alarm.triggered test event (test: true in the payload,
-  real signature headers) so receivers can be verified end-to-end.') and GET
-  /api/v1/webhooks/{id}/deliveries (delivery log kept 30 days: event, response_status, error,
-  attempts, delivered_at). DOC ACCESS: bitculator.com/en/documentation/api/v1 answers non-browser
-  clients with a Cloudflare challenge; every quote here was read from the Context7 mirror of that page
-  (https://context7.com/websites/bitculator_en_api_v1/llms.txt), whose code blocks are verbatim. Do
-  not add claims the quotes below do not support. The vendor's verification example (PHP), verbatim:
-  "[$t, $v1] = sscanf($_SERVER['HTTP_X_BITCULATOR_SIGNATURE'], 't=%d,v1=%s'); $expected =
+  alarms. Webhook endpoints are registered through the Data API v1 with a Bearer API key that has
+  the data-api ability: POST /api/v1/webhooks with {"url": "https://...", "events":
+  ["alarm.triggered"]} ('Registers an HTTPS endpoint (max 5 per account) for event deliveries. The
+  response includes the signing secret, which is only shown once, so it must be stored
+  immediately.'). Public HTTPS hosts only. Other endpoints: GET /api/v1/webhooks (list), DELETE
+  /api/v1/webhooks/{id}, POST /api/v1/webhooks/{id}/test ('Fires a signed alarm.triggered test event
+  (test: true in the payload, real signature headers) so receivers can be verified end-to-end.') and
+  GET /api/v1/webhooks/{id}/deliveries (delivery log kept 30 days: event, response_status, error,
+  attempts, delivered_at). DOC ACCESS: bitculator.com/en/documentation/api/v1 shows non-browser
+  clients a Cloudflare challenge; the quotes here were read on that first-party page in a browser
+  (and its Context7 mirror). Do not add claims the quotes below do not support. Webhooks intro,
+  verbatim: 'Bitculator POSTs each event as JSON with an HMAC signature header:
+  X-Bitculator-Signature: t=<unix-ts>,v1=<hex hmac_sha256("<ts>.<raw-body>", secret)>
+  X-Bitculator-Event: alarm.triggered'. Delivery, verbatim: 'Each delivery is attempted up to 3
+  times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed
+  deliveries.' Creating an endpoint whose hostname doesn't resolve or resolves to a non-public
+  address 'fails without a retry'. The secret response is 'the ONLY time it is ever shown'; API keys
+  are 'Bearer-only and carry the data-api ability'. The vendor's verification example (PHP),
+  verbatim: "[$t, $v1] = sscanf($_SERVER['HTTP_X_BITCULATOR_SIGNATURE'], 't=%d,v1=%s'); $expected =
   hash_hmac('sha256', $t.'.'.file_get_contents('php://input'), $secret);
   abort_unless(hash_equals($expected, $v1) && abs(time() - $t) < 300, 403);". SIGNATURE SCHEME (it
   must match Hookdeck's BITCULATOR source exactly: HMAC controller, algorithm "sha256", header_key
@@ -31,8 +37,8 @@ notes: >
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. Secret: the `secret` returned once
   by POST /api/v1/webhooks, e.g. "whsec_k5cQ1x9jJ2mW7pR4tY8uB3nV6zA0sD5f". The HMAC key is the WHOLE
   string's UTF-8 bytes, whsec_ prefix included (the PHP example passes $secret as is); do NOT strip
-  the prefix and do NOT base64-decode it (this is not the Standard Webhooks scheme; do not mention or
-  link Standard Webhooks or Svix). Env var: BITCULATOR_WEBHOOK_SECRET. Hex is compared
+  the prefix and do NOT base64-decode it (this is not the Standard Webhooks scheme; do not mention
+  or link Standard Webhooks or Svix). Env var: BITCULATOR_WEBHOOK_SECRET. Hex is compared
   case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Validate the signature's format before
   decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
@@ -40,32 +46,33 @@ notes: >
   unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
   (never str, which raises TypeError on non-ASCII header values). Missing or empty signature header,
   malformed value or mismatch: 401. Timestamp window: the vendor's PHP example rejects timestamps
-  more than 300 s from now, but do NOT reject old timestamps by default. Hookdeck retries and replays
-  resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed
-  window would reject legitimate retries. Offer an opt-in tolerance (BITCULATOR_WEBHOOK_TOLERANCE_SECONDS,
-  unset or 0 = off; 300 matches the vendor's example when receiving directly) and say so in SKILL.md
-  and verification.md (t is Unix seconds; compare the absolute difference, as the vendor does). Never
-  say Hookdeck verifies 'at the edge'; say Hookdeck's source verifies the signature. EVENTS: one
-  subscribable event, alarm.triggered ('Events to subscribe to. Allowed values: alarm.triggered.').
-  The delivery body is NOT documented (no payload example, no documented event field or header), so
-  SKILL.md must say so plainly, and the examples must not depend on any body field: verify, parse the
-  JSON if it parses (a non-JSON body is acknowledged and logged, not a 500), treat a top-level string
-  `event` (or `type`) as the event name when present and otherwise assume alarm.triggered, and treat
-  `test: true` as a test delivery (the one documented body fact). For the tests use an ILLUSTRATIVE
-  body, labelled as such in comments and docs, e.g. {"event": "alarm.triggered", "test": true,
-  "data": {"alarm": {...}}} where the alarm object mirrors the documented GET /api/v1/alarms item: id,
-  name, coin {slug, symbol, name}, metric ("rate"), direction ("above"/"below"), target (a string,
-  e.g. "100000"), notification ("webhook"), status ("active"/"triggered"), created_at. After
-  verifying, treat every field of the parsed body as untrusted: check that the body and each nested
-  field is the expected type before reading into it (Express/Next.js: typeof / Array.isArray;
-  FastAPI: isinstance(x, dict) / isinstance(x, list) before .get() or iterating), so a wrong-typed
-  field is ignored or answered with 400, never a 500. Delivery: the method and Content-Type are not
-  documented; Hookdeck's Bitculator source manages the method as POST, so the examples handle POST on
-  the webhook route. Retries, timeout and auto-disable thresholds are not documented (the endpoint
-  object has consecutive_failures and disabled_at, which suggests repeated failures disable it); do
-  not invent numbers. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
-  content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
-  await request.body()); parse the body only after the check. Hookdeck's source type is BITCULATOR,
+  more than 300 s from now, but do NOT reject old timestamps by default. Hookdeck retries and
+  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  fixed window would reject legitimate retries. Offer an opt-in tolerance
+  (BITCULATOR_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off; 300 matches the vendor's example when
+  receiving directly) and say so in SKILL.md and verification.md (t is Unix seconds; compare the
+  absolute difference, as the vendor does). Never say Hookdeck verifies 'at the edge'; say
+  Hookdeck's source verifies the signature. EVENTS: one subscribable event, alarm.triggered ('Events
+  to subscribe to. Allowed values: alarm.triggered.'). The X-Bitculator-Event header names the event
+  (alarm.triggered) but is NOT covered by the signature: verify first, then route on it as a label;
+  assume alarm.triggered when it is absent, and acknowledge (200) and skip unknown events. The body
+  is JSON but its fields are NOT documented (no payload example; the one documented body fact is
+  test: true on test deliveries), so SKILL.md must say so plainly and the examples must not depend
+  on any body field: parse the JSON if it parses (a non-JSON body is acknowledged and logged, not a
+  500), and treat `test: true` as a test delivery. For the tests use an ILLUSTRATIVE body, labelled
+  as such in comments and docs, e.g. {"test": true, "data": {"alarm": {...}}} where the alarm object
+  mirrors the documented GET /api/v1/alarms item: id, name, coin {slug, symbol, name}, metric
+  ("rate"), direction ("above"/"below"), target (a string, e.g. "100000"), notification ("webhook"),
+  status ("active"/"triggered"), created_at. After verifying, treat every field of the parsed body
+  as untrusted: check that the body and each nested field is the expected type before reading into
+  it (Express/Next.js: typeof / Array.isArray; FastAPI: isinstance(x, dict) / isinstance(x, list)
+  before .get() or iterating), so a wrong-typed field is ignored or answered with 400, never a 500.
+  Delivery: POST with a JSON body, and Hookdeck's Bitculator source manages the method as POST, so
+  the examples handle POST on the webhook route. Retries and auto-disable as quoted above; the
+  backoff intervals, timeout, source IPs and any delivery ID are not documented, so do not invent
+  them. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
+  type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()); parse the body only after the check. Hookdeck's source type is BITCULATOR,
   labelled 'Bitculator'.
 testScenario:
   events:

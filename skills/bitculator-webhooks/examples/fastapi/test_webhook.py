@@ -38,18 +38,19 @@ def sign(body, timestamp=None, secret=SECRET) -> str:
     return f"t={ts},v1={v1_for(body, ts, secret)}"
 
 
-def post(body, signature=None, content_type="application/json"):
+def post(body, signature=None, content_type="application/json", event_name="alarm.triggered"):
     headers = {"Content-Type": content_type}
     if signature is not None:
         headers["X-Bitculator-Signature"] = signature
+    if event_name is not None:
+        headers["X-Bitculator-Event"] = event_name
     return client.post("/webhooks/bitculator", content=body, headers=headers)
 
 
 def event(**overrides) -> str:
-    # ILLUSTRATIVE body: Bitculator does not document the delivery payload. Only `test: true` is a
+    # ILLUSTRATIVE body: Bitculator documents a JSON body but not its fields. Only `test: true` is a
     # documented fact; data.alarm mirrors an item of GET /api/v1/alarms.
     body = {
-        "event": "alarm.triggered",
         "test": True,
         "data": {
             "alarm": {
@@ -88,15 +89,30 @@ class TestValidSignatures:
         body = event()
         assert post(body, sign(body), "text/plain").status_code == 200
 
-    def test_assumes_alarm_triggered_without_event_name(self, caplog):
+    def test_assumes_alarm_triggered_without_event_header(self, caplog):
         body = json.dumps({"something": "else"})
-        assert post(body, sign(body)).status_code == 200
+        assert post(body, sign(body), event_name=None).status_code == 200
         assert "alarm triggered: (unnamed)" in caplog.text
 
-    def test_reads_event_name_from_type(self, caplog):
-        body = json.dumps({"type": "alarm.other"})
+    def test_acknowledges_and_skips_unknown_event_header(self, caplog):
+        body = event()
+        res = post(body, sign(body), event_name="alarm.other")
+        assert res.status_code == 200
+        assert res.json() == {"received": True}
+        assert "Skipping unhandled event: alarm.other" in caplog.text
+        assert "alarm triggered" not in caplog.text
+
+    def test_verifies_before_reading_event_header(self, caplog):
+        # X-Bitculator-Event is not signed: a bad signature is rejected whatever it says
+        body = event()
+        res = post(body, sign(body, secret="whsec_wrong"), event_name="alarm.other")
+        assert res.status_code == 401
+        assert "Skipping" not in caplog.text
+
+    def test_ignores_body_event_field(self, caplog):
+        body = json.dumps({"event": "alarm.other", "data": {"alarm": {"name": "X"}}})
         assert post(body, sign(body)).status_code == 200
-        assert "Unhandled event: alarm.other" in caplog.text
+        assert "alarm triggered: X" in caplog.text
 
     def test_acknowledges_non_json_body(self):
         body = "not json at all"

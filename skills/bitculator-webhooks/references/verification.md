@@ -2,7 +2,16 @@
 
 ## How It Works
 
-Every delivery is signed in one header (the only delivery header Bitculator's docs name):
+Bitculator's docs: "Bitculator POSTs each event as JSON with an HMAC signature header". Every delivery carries two headers:
+
+```
+X-Bitculator-Signature: t=<unix-ts>,v1=<hex hmac_sha256("<ts>.<raw-body>", secret)>
+X-Bitculator-Event: alarm.triggered
+```
+
+Only the body and `t` are signed. `X-Bitculator-Event` is **not** covered by the signature: verify first, then use it only as a routing label.
+
+The signature header in practice:
 
 ```
 X-Bitculator-Signature: t=1700000000,v1=<64 lowercase hex characters>

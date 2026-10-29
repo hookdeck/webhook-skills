@@ -75,8 +75,8 @@ function verifyBitculator(rawBody, signatureHeader, secret) {
 const isObject = (x) => typeof x === 'object' && x !== null && !Array.isArray(x);
 const str = (x) => (typeof x === 'string' ? x : undefined);
 
-// Raw body is required: the signature covers the exact bytes Bitculator sent.
-// type: '*/*' verifies whatever Content-Type arrives.
+// Bitculator POSTs each event as JSON. Raw body is required: the signature covers the exact bytes
+// Bitculator sent, so read them with express.raw (type: '*/*' verifies whatever Content-Type arrives).
 app.post('/webhooks/bitculator', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.BITCULATOR_WEBHOOK_SECRET;
   if (!secret) {
@@ -91,7 +91,18 @@ app.post('/webhooks/bitculator', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(401).send('Unauthorized');
   }
 
-  // The delivery body is not documented: parse it only if it is JSON, and don't depend on any field.
+  // X-Bitculator-Event names the event (alarm.triggered). It is NOT covered by the signature, so read
+  // it only after verifying and use it as a routing label. Without it, assume alarm.triggered, the
+  // only event Bitculator offers. Acknowledge and skip events this handler doesn't know.
+  const header = req.headers['x-bitculator-event'];
+  const type = typeof header === 'string' && header !== '' ? header : 'alarm.triggered';
+  if (type !== 'alarm.triggered') {
+    console.log(`Skipping unhandled event: ${type}`);
+    return res.json({ received: true });
+  }
+
+  // The body is documented as JSON, but its fields are not (only `test: true` on test deliveries):
+  // parse defensively and don't depend on any field.
   let event;
   try {
     event = JSON.parse(rawBody.toString('utf8'));
@@ -104,25 +115,16 @@ app.post('/webhooks/bitculator', express.raw({ type: '*/*' }), (req, res) => {
     return res.json({ received: true });
   }
 
-  // Event name: a top-level string `event` (or `type`) when present, otherwise alarm.triggered, the
-  // only event Bitculator offers. `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
-  const type = str(event.event) ?? str(event.type) ?? 'alarm.triggered';
+  // `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
   const isTest = event.test === true;
-
-  switch (type) {
-    case 'alarm.triggered': {
-      // Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
-      const alarm = isObject(event.data) && isObject(event.data.alarm) ? event.data.alarm : {};
-      const coin = isObject(alarm.coin) ? alarm.coin : {};
-      console.log(
-        `${isTest ? 'Test ' : ''}alarm triggered: ${str(alarm.name) ?? '(unnamed)'} ` +
-          `${str(coin.symbol) ?? ''} ${str(alarm.direction) ?? ''} ${str(alarm.target) ?? ''}`.trimEnd()
-      );
-      break;
-    }
-    default:
-      console.log(`Unhandled event: ${type}`);
-  }
+  // Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
+  const alarm = isObject(event.data) && isObject(event.data.alarm) ? event.data.alarm : {};
+  const coin = isObject(alarm.coin) ? alarm.coin : {};
+  console.log(
+    `${isTest ? 'Test ' : ''}alarm triggered: ${str(alarm.name) ?? '(unnamed)'} ` +
+      `${str(coin.symbol) ?? ''} ${str(alarm.direction) ?? ''} ${str(alarm.target) ?? ''}`.trimEnd()
+  );
+  // TODO: notify, trade or update dashboards; deduplicate, since deliveries are retried
 
   res.json({ received: true });
 });

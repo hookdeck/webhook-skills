@@ -31,7 +31,7 @@ Server runs on http://localhost:3000 (the route is `/webhooks/bitculator`)
 
 The route reads the raw body with `await request.arrayBuffer()` (verification lives in `lib/bitculator.ts`) and checks `v1` = HMAC-SHA256 (hex) of `<t>.<raw body>`. Failures return 401. The timestamp window is off by default (`BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` unset or `0`); set `300` to match Bitculator's own example when Bitculator calls you directly. Behind Hookdeck leave it off: retries and replays resend the original timestamp.
 
-Bitculator does not document the delivery body, so the handler depends on no body field: a non-JSON body is acknowledged and logged, a top-level string `event` (or `type`) is the event name when present (otherwise `alarm.triggered`), and `test: true` marks a test delivery.
+After verifying, the handler routes on the `X-Bitculator-Event` header (not signed, so it is read only after the signature check; `alarm.triggered` when absent) and acknowledges and skips unknown events. Bitculator POSTs JSON but doesn't document the body's fields, so the handler depends on no body field: a non-JSON body is acknowledged and logged, and `test: true` marks a test delivery.
 
 ## Test
 

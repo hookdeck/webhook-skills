@@ -88,15 +88,22 @@ The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is un
 
 `POST /api/v1/webhooks/{id}/test` sends a signed `alarm.triggered` test event with `test: true` in the payload and real signature headers, so you can verify your receiver end to end.
 
-**The delivery body is not documented.** Bitculator's docs give no payload example and no documented event field or header, so the examples verify first, parse the JSON only if it is JSON, and depend on no body field. They treat a top-level string `event` (or `type`) as the event name when present, otherwise assume `alarm.triggered`, and treat `test: true` as a test delivery (the one documented body fact). Treat every parsed field as untrusted and check its type before reading into it. The example bodies in the tests are illustrative only. See [references/overview.md](references/overview.md).
+**Route on the `X-Bitculator-Event` header, after verifying.** Bitculator names the event in `X-Bitculator-Event: alarm.triggered`. That header is **not** covered by the signature, so verify first and use it only as a routing label. The examples assume `alarm.triggered` when it is absent, and acknowledge (`200`) and skip any event they don't know.
+
+**The body is JSON, but its fields are not documented.** The only documented body fact is `test: true` on test deliveries. The examples parse defensively (a non-JSON body is acknowledged and logged, not a 500), check every field's type before reading into it, and use an illustrative `data.alarm` shape in their tests. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
 | `X-Bitculator-Signature` | `t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>` |
+| `X-Bitculator-Event` | The event name, `alarm.triggered`. Not signed: a routing label to read after verifying |
 
-The HTTP method and `Content-Type` of deliveries are not documented. Hookdeck's Bitculator source manages the method as POST, so the examples handle `POST` on `/webhooks/bitculator` and read the body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`), which verifies any content type.
+Bitculator POSTs each event as JSON ("Bitculator POSTs each event as JSON with an HMAC signature header"), and Hookdeck's Bitculator source manages the method as POST. The examples handle `POST` on `/webhooks/bitculator` and read the raw body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`) so the exact signed bytes are verified.
+
+## Delivery and Retries
+
+Bitculator's docs: "Each delivery is attempted up to 3 times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed deliveries." Return a 2xx quickly, process asynchronously, and deduplicate, since a retried delivery repeats. The backoff intervals, timeout, source IPs and any delivery ID are not documented.
 
 ## Environment Variables
 

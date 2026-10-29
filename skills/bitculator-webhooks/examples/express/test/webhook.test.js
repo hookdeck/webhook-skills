@@ -19,17 +19,17 @@ function sign(body, timestamp = now(), secret = SECRET) {
   return `t=${timestamp},v1=${v1For(body, timestamp, secret)}`;
 }
 
-function post(body, signature, contentType = 'application/json') {
+function post(body, signature, contentType = 'application/json', eventName = 'alarm.triggered') {
   const req = request(app).post('/webhooks/bitculator').set('Content-Type', contentType);
   if (signature !== undefined) req.set('X-Bitculator-Signature', signature);
+  if (eventName !== undefined) req.set('X-Bitculator-Event', eventName);
   return req.send(body);
 }
 
-// ILLUSTRATIVE body: Bitculator does not document the delivery payload. Only `test: true` is a
+// ILLUSTRATIVE body: Bitculator documents a JSON body but not its fields. Only `test: true` is a
 // documented fact; data.alarm mirrors an item of GET /api/v1/alarms.
 const event = (overrides = {}) =>
   JSON.stringify({
-    event: 'alarm.triggered',
     test: true,
     data: {
       alarm: {
@@ -84,18 +84,34 @@ describe('Bitculator webhook', () => {
     expect(res.status).toBe(200);
   });
 
-  it('assumes alarm.triggered when the body names no event', async () => {
+  it('assumes alarm.triggered when X-Bitculator-Event is absent', async () => {
     const body = JSON.stringify({ something: 'else' });
-    const res = await post(body, sign(body));
+    const res = await post(body, sign(body), 'application/json', undefined);
     expect(res.status).toBe(200);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('alarm triggered: (unnamed)'));
   });
 
-  it('reads the event name from `type` when `event` is absent', async () => {
-    const body = JSON.stringify({ type: 'alarm.other' });
+  it('acknowledges and skips an unknown X-Bitculator-Event', async () => {
+    const body = event();
+    const res = await post(body, sign(body), 'application/json', 'alarm.other');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect(logSpy).toHaveBeenCalledWith('Skipping unhandled event: alarm.other');
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('alarm triggered'));
+  });
+
+  it('verifies the signature before looking at X-Bitculator-Event (it is not signed)', async () => {
+    const body = event();
+    const res = await post(body, sign(body, now(), 'whsec_wrong'), 'application/json', 'alarm.other');
+    expect(res.status).toBe(401);
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('Skipping'));
+  });
+
+  it('ignores a body `event` field: the header is the routing label', async () => {
+    const body = JSON.stringify({ event: 'alarm.other', data: { alarm: { name: 'X' } } });
     const res = await post(body, sign(body));
     expect(res.status).toBe(200);
-    expect(logSpy).toHaveBeenCalledWith('Unhandled event: alarm.other');
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('alarm triggered: X'));
   });
 
   it('acknowledges a verified non-JSON body', async () => {
