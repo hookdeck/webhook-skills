@@ -1,0 +1,125 @@
+name: scaleway-topics-and-events
+displayName: "Scaleway Topics and Events"
+docs:
+  webhooks: https://www.scaleway.com/en/docs/topics-and-events/how-to/create-manage-subscriptions/
+  verification: https://www.scaleway.com/en/docs/topics-and-events/reference-content/verifying-webhooks/
+  events: https://www.scaleway.com/en/docs/topics-and-events/api-cli/python-node-topics-events/
+notes: >
+  Scaleway Topics and Events is Scaleway's "in-house implementation of AWS SNS protocol" ("does not
+  have any dependencies on the AWS SNS infrastructure"). Every Scaleway docs page has a Markdown
+  twin: append .md to the path without the trailing slash (e.g.
+  https://www.scaleway.com/en/docs/topics-and-events/reference-content/verifying-webhooks.md,
+  .../reference-content/topics-and-events-support.md, .../api-cli/python-node-topics-events.md,
+  .../api-cli/topics-events-aws-cli.md, .../faq.md). Do not add claims the quotes below do not
+  support, and say plainly where Scaleway's docs are silent. ENVELOPE: HTTP/HTTPS subscribers
+  receive HTTP POSTs with a JSON body in the SNS envelope format. The only envelope Scaleway
+  documents is the SubscriptionConfirmation: {"Type": "SubscriptionConfirmation", "Token": "...",
+  "MessageId": "...", "TopicArn": "arn:scw:sns:fr-par:<project-id>:MyTopic", "Message": "You have
+  chosen to subscribe to the topic arn:scw:sns:fr-par:<id>:MyTopic.\nTo confirm the subscription,
+  visit the SubscribeURL included in this message.", "Timestamp": "2022-06-29T10:03:34Z",
+  "SignatureVersion": "1", "Signature": "<base64>", "SigningCertURL":
+  "https://messaging.s3.fr-par.scw.cloud/fr-par/sns/sns_certificate_[certSerialNumber].crt",
+  "SubscribeURL": "<THE-CONFIRMATION-LINK>"}. SubscribeURL form, verbatim from the docs:
+  https://sns.mnq.{region}.scaleway.com/?Action=ConfirmSubscription&TopicArn={your-topic-arn}&Token={your-subscription-token}.
+  Notification envelopes are NOT shown in Scaleway's docs; Scaleway points to AWS's SNS
+  documentation for verification, so assume the AWS SNS Notification fields (Type "Notification",
+  MessageId, TopicArn, Subject (optional), Message (a string), Timestamp, SignatureVersion,
+  Signature, SigningCertURL, UnsubscribeURL) and SAY this is inferred from the SNS protocol, not
+  shown by Scaleway. Publish supports Message, Subject, MessageAttributes and
+  MessageDeduplicationId; MessageStructure is not supported. RawMessageDelivery is NOT supported
+  ("N"), so the envelope is always present. SignatureVersion: "Version 1 is always used, version 2
+  is not supported" (so RSA PKCS#1 v1.5 with SHA1). Regions: fr-par and nl-ams (the two with
+  published trust chains; Hookdeck accepts only these). HANDSHAKE: an HTTP or HTTPS subscription
+  stays Pending until confirmed; 'To confirm the subscription, make a request to the SubscribeURL
+  using your browser or curl.' The console alternative: Topics and Events > Topics > topic > more
+  menu > Confirm subscription, then paste the SubscribeURL from the confirmation message. The docs
+  don't say whether the confirmation message is sent when the subscription is created or when you
+  choose Confirm subscription in the console; say so. HOW HOOKDECK HANDLES IT (Hookdeck source type
+  SCALEWAY_TOPICS_AND_EVENTS, labelled 'Scaleway Topics and Events'; handshake is built in and
+  required; method managed as POST): when a POST arrives with header x-amz-sns-message-type:
+  SubscriptionConfirmation (case-insensitive), Hookdeck parses the JSON body, checks Type is
+  SubscriptionConfirmation, Token is a non-empty string, TopicArn matches
+  arn:scw:sns:(fr-par|nl-ams):<project>:<topic>, and SubscribeURL is exactly https, host
+  sns.mnq.<same region>.scaleway.com, no credentials/port/fragment, path '/', exactly one Action
+  (=ConfirmSubscription), one TopicArn (= the body's TopicArn) and one Token (= the body's Token).
+  It then GETs the SubscribeURL unchanged (no redirects followed, 5 s timeout) and, on HTTP 200,
+  answers Scaleway 200 and does NOT forward the confirmation to your destination. If the payload or
+  URL is invalid, or Scaleway answers anything but 200, Hookdeck answers Scaleway 500 and records
+  the request as rejected (it is not forwarded); the subscription stays Pending and you can confirm
+  it manually with the SubscribeURL from the request shown in Hookdeck's request log (or re-send
+  from the console). Notification and UnsubscribeConfirmation messages (and anything without that
+  header) are forwarded to your destination unchanged, body bytes and headers included. Hookdeck
+  does NOT verify Scaleway's message signature for this source type (there is no signature
+  verification for it); never claim it does, and never say 'at the edge'. So: BEHIND HOOKDECK the
+  receiver never sees the SubscriptionConfirmation (Hookdeck confirmed it), must handle
+  Notification (and UnsubscribeConfirmation if Scaleway sends one; Scaleway doesn't document it),
+  and should verify the SNS signature itself because the envelope arrives unchanged and anyone who
+  knows the source URL can POST to it. A DIRECT receiver must also handle SubscriptionConfirmation:
+  verify the signature, validate the SubscribeURL the way Hookdeck does (above), then GET it
+  (redirects off, short timeout, success = 200), and answer 200. SIGNATURE VERIFICATION
+  (reference-content/verifying-webhooks): 'clients must verify the authenticity of incoming messages
+  using digital signatures.' 'The signing certificate used for webhook messages is rotated at least
+  once per year.' 'Your application should not directly trust the certificate pointed to by
+  SigningCertURL. Instead, you must validate that this certificate was issued by our trusted
+  Certificate Authority (CA), using the CA trust chain.' Trust chain (valid until 2032): fr-par
+  https://messaging.s3.fr-par.scw.cloud/fr-par/sns/sns-trust-chain.pem and nl-ams
+  https://messaging.s3.fr-par.scw.cloud/nl-ams/sns/sns-trust-chain.pem. Each PEM currently holds two
+  CA certificates: a self-signed root 'CN = Scaleway MnQ Root' (2022-06-28 to 2032-06-25) and an
+  intermediate 'CN = Scaleway MnQ' issued by it (2024-12-05 to 2027-12-05). 'Then, for each incoming
+  message: Check if the SigningCertURL has changed. If so, download the new certificate. Verify that
+  the certificate is signed by the trusted CA (using the .pem file above). Only then use it to
+  verify the message signature.' 'we recommend that you cache the certificate locally. You can use
+  the unique ID in the SigningCertURL as a cache key.' 'During certificate rollover, you may receive
+  messages signed by both old and new certificates ... Your system must accept messages signed by
+  any currently valid certificate (i.e., those issued by the trusted CA).' The examples must: load
+  the trust-chain PEM from a local file (env SCALEWAY_SNS_TRUST_CHAIN_PATH, downloaded once by the
+  user; do not fetch it per request), fetch SigningCertURL only over https and only from an
+  allowlisted host (default messaging.s3.fr-par.scw.cloud, the host in Scaleway's docs and trust
+  chain URLs; env SCALEWAY_SNS_CERT_HOSTS, comma-separated, to override) to avoid SSRF, cache certs
+  by URL, build the chain leaf -> issuer(s) in the bundle -> a self-signed root that is in the
+  bundle (check each link's signature, issuer/subject match, that issuers are CAs, and each cert's
+  validity window), then RSA-SHA1 verify the base64 Signature over the AWS SNS canonical string:
+  'Key\nValue\n' for each present field in this order - Notification: Message, MessageId, Subject
+  (only if present), Timestamp, TopicArn, Type; SubscriptionConfirmation and
+  UnsubscribeConfirmation: Message, MessageId, SubscribeURL, Timestamp, Token, TopicArn, Type. Reject
+  SignatureVersion other than "1", missing required fields, non-string fields, unknown Type. Node:
+  crypto.X509Certificate (checkIssued, verify(issuer.publicKey), ca, validFrom/validTo) and
+  crypto.verify('RSA-SHA1', ...); do NOT use the sns-validator npm package (it only trusts
+  amazonaws.com cert hosts). Python: the cryptography package (x509.load_pem_x509_certificate,
+  verify_directly_issued_by, BasicConstraints, not_valid_before_utc/not_valid_after_utc,
+  public_key().verify(sig, data, padding.PKCS1v15(), hashes.SHA1())) and httpx for fetches. Tests
+  must not hit the network: generate a throwaway root + intermediate + leaf in the test, sign
+  envelopes with the leaf, and inject the cert fetcher; test tampered Message, wrong
+  key, cert not chaining to the trust root, disallowed cert host, http cert URL, SignatureVersion
+  "2", and the confirmation URL checks. State in SKILL.md that the canonical string follows AWS SNS
+  SignatureVersion 1, which Scaleway's docs point to, and that the examples were tested against
+  locally generated certificates, not a live Scaleway delivery. The x-amz-sns-message-type header:
+  Hookdeck relies on it to detect confirmations, but Scaleway's docs don't mention headers; route on
+  the signed body Type, not on the header. Content-Type is not documented (AWS sends text/plain), so
+  accept any content type and JSON.parse the raw body. Timestamp window: none by default (Hookdeck
+  retries and replays resend the original envelope); offer opt-in
+  SCALEWAY_SNS_MAX_AGE_SECONDS (unset/0 = off) checked against the signed Timestamp. Delivery and
+  retry policy: DeliveryPolicy is not supported and Scaleway documents no retry schedule, timeout
+  or source IPs; Standard topics are 'at-least-once' ('it is possible under rare circumstances
+  that the same message may be received more than once'), so dedupe on MessageId; FIFO topics
+  preserve order without duplicates. Respond 2xx quickly. TOPIC PINNING: a valid signature proves
+  Scaleway sent the message, not that it came from the receiver's topic (anyone can subscribe a URL
+  to their own topic), so the examples accept only the ARNs in SCALEWAY_SNS_TOPIC_ARNS (403
+  otherwise), checked before confirming; log a warning at startup when none are configured.
+  Responses: invalid JSON or envelope 400; bad signature, untrusted cert, or a cert URL answering
+  4xx 401; certificate download network error or 5xx 503; unexpected topic 403; invalid
+  SubscribeURL 400; a failed confirmation GET 502 so Scaleway can retry if it does. Look up the
+  signed-field list with an own-property check (a Type of "constructor"/"__proto__" must not throw);
+  treat "Subject": null as absent; reject a SigningCertURL with a query string or fragment (the cache
+  is keyed by URL). Two doc samples show SigningCertURL as http://<REDACTED-URL>/SNStest.crt; the
+  examples accept https only and say so. After verifying, Message is an arbitrary string the publisher chose: try JSON.parse
+  but treat it as untrusted and type-check before reading into it. Express examples must read the
+  raw body with express.raw({ type: '*/*' }) (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()). Hookdeck CLI: npx hookdeck-cli listen 3000 scaleway-topics-and-events --path
+  /webhooks/scaleway-topics-and-events. Do not mention or link Standard Webhooks or Svix.
+testScenario:
+  events:
+    - Notification
+    - SubscriptionConfirmation
+catalog:
+  summary: "Verify Scaleway Topics and Events (SNS-compatible) messages against Scaleway's CA trust chain, confirm HTTP/S subscriptions, handle Notification envelopes"
