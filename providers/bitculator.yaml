@@ -69,7 +69,6 @@ notes: >
   labelled 'Bitculator'.
 testScenario:
   events:
-    - "alarm.triggered"
-    - "alarm.triggered (test event, test: true)"
+    - alarm.triggered
 catalog:
   summary: "Verify Bitculator webhooks (`X-Bitculator-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle alarm.triggered price alarm events"
