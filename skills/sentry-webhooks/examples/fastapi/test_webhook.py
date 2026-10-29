@@ -211,7 +211,7 @@ def test_empty_body_signed_over_empty_string():
 
 
 def test_reserializing_a_parsed_body_breaks_verification():
-    """THE BUG IN SENTRY'S OWN SNIPPET: json.dumps(request.body).
+    """Why Sentry's docs say never to re-serialize: json.dumps(parsed_body).
 
     Sentry signs compact, ASCII-escaped JSON. Re-serializing with json.dumps
     defaults (", " separators) -- or with ensure_ascii=False -- produces

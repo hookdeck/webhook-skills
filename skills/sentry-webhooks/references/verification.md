@@ -116,24 +116,18 @@ def verify_sentry_signature(raw_body: bytes, headers, client_secret: str | None)
 
 ## Common Gotchas
 
-### Sentry's published snippets are subtly wrong
+### Never re-serialize a parsed body
 
-The documented JavaScript snippet is:
+Sentry's docs are explicit: *"Compute the digest over the raw body as received.
+Don't parse the JSON and serialize it again, because the result won't always
+match the bytes Sentry signed."* Their JavaScript snippet takes the raw body
+from `express.raw({ type: "application/json" })`, and the Python one passes
+Flask's `request.get_data()`.
 
-```javascript
-hmac.update(JSON.stringify(request.body), "utf8");   // ← re-serializes
-```
-
-and the Python one:
-
-```python
-body = json.dumps(request.body)                       # ← re-serializes
-```
-
-Both reconstruct a byte string from a **parsed** body. The Python one fails on
-**every** payload: `json.dumps` defaults to `", "` / `": "` separators, while
-Sentry signs compact JSON. The JS one coincides with Sentry's bytes **only for
-ASCII-only payloads**:
+The reason is byte-level. Rebuilding the string from a **parsed** body with
+Python's `json.dumps` fails on **every** payload: it defaults to `", "` / `": "`
+separators, while Sentry signs compact JSON. `JSON.stringify` coincides with
+Sentry's bytes **only for ASCII-only payloads**:
 
 - Sentry serializes with simplejson configured `separators=(",", ":")` — compact,
   which *does* match `JSON.stringify` (see `_default_encoder` in
@@ -143,10 +137,9 @@ ASCII-only payloads**:
   `JSON.stringify` emits the literal UTF-8 character.
 
 So an issue title, a comment, or a username containing an accent or an emoji
-produces a **different byte string**, and the JS snippet **rejects a
+produces a **different byte string**, and a re-serializing handler **rejects a
 perfectly valid delivery**. Float and large-integer formatting can diverge too.
 
-This is a latent bug in the published snippets, not a subtlety you can ignore.
 **Verify against the raw body in every framework:**
 
 | Framework | Raw body |
@@ -232,8 +225,9 @@ token is for calling Sentry's API, not for verifying webhooks.
 
 Node's `crypto.timingSafeEqual` raises if the two buffers differ in length.
 Guard lengths first (as above) or wrap in `try`/`catch`. An uncaught throw
-becomes a 500 — and because repeated failures trip Sentry's circuit breaker,
-500s can get your webhook **disabled**, not retried.
+becomes a 500. Sentry retries a 500 only a few times (up to 3 attempts, 5
+minutes apart), and repeated failures trip its circuit breaker, which can get
+your webhook **disabled**.
 
 Python's `hmac.compare_digest` tolerates unequal lengths but raises `TypeError`
 on `str` arguments containing non-ASCII characters. Starlette decodes headers as

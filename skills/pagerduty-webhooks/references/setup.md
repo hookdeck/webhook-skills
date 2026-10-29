@@ -114,7 +114,7 @@ account is a lot of traffic.
 ## Choosing Events
 
 The `events` array can be any subset of the
-[30 V3 event types](overview.md#common-event-types). **Subscribe only to what
+[31 V3 event types](overview.md#common-event-types). **Subscribe only to what
 you handle** — every extra event type is traffic you pay for in latency and
 log noise.
 

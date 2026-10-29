@@ -272,13 +272,15 @@ notes: |
     incident.action_invocation.updated    -> incident_action_invocation
     incident.workflow.started             -> incident_workflow_instance
     incident.workflow.completed           -> incident_workflow_instance
+    scribe.summary.created                -> scribe_summary   (ONLY delivered to account_reference subscriptions)
     service.created                       -> service
     service.custom_field_values.updated   -> service_field_values
     service.deleted                       -> service
     service.updated                       -> service
-  Scoped-OAuth read scopes: `incidents.read` for all `incident.*` except
+  Scoped-OAuth scopes: `incidents.read` for all `incident.*` except
   `incident.workflow.*` which needs `incident_workflows.read`;
-  `services.read` for `service.*`.
+  `services.read` for `service.*`; `pd_advance.write` for
+  `scribe.summary.created`.
   Naming traps to get right: `incident.service_updated` (underscore) vs
   `service.updated`; `incident.role.assigned` covers unassignment too;
   `incident.annotated` (not `incident.note.created`).
@@ -288,7 +290,7 @@ notes: |
   incident_field_values, incident_note, incident_role_assignment,
   incident_status_update, incident_responder, incident_task,
   incident_workflow_instance, service, service_field_values,
-  incident_action_invocation. Key `incident` fields: id, type, self,
+  incident_action_invocation, scribe_summary. Key `incident` fields: id, type, self,
   html_url, number, status (`triggered`|`acknowledged`|`resolved`),
   incident_key, created_at, reopened_at, title, incident_type{name},
   service{...}, assignees[], escalation_policy{}, teams[], priority{} (can
@@ -310,4 +312,4 @@ testScenario:
     - incident.priority_updated
     - service.updated
 catalog:
-  summary: 'Verify PagerDuty V3 webhook subscriptions: `X-PagerDuty-Signature` carries one or MORE comma-separated `v1=<hex>` HMAC-SHA256 digests over the raw body (multiple entries = zero-downtime secret rotation, so accept a match against ANY of them), with no timestamp or nonce and therefore no replay window; de-duplicate on `X-Webhook-Id`, respond 202 inside the 5s budget, and handle all 30 `incident.*` / `service.*` event types'
+  summary: 'Verify PagerDuty V3 webhook subscriptions: `X-PagerDuty-Signature` carries one or MORE comma-separated `v1=<hex>` HMAC-SHA256 digests over the raw body (multiple entries = zero-downtime secret rotation, so accept a match against ANY of them), with no timestamp or nonce and therefore no replay window; de-duplicate on `X-Webhook-Id`, respond 202 inside the 5s budget, and handle all 31 `incident.*` / `service.*` / `scribe.*` event types'

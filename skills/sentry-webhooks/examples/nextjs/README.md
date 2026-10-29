@@ -72,8 +72,9 @@ Sentry sends **no handshake, challenge or validation request**.
   it sent. `request.json()` first would consume the body, and it throws on
   Sentry's legitimate **empty body**. App Router Route Handlers give you the raw
   body directly; there is no `bodyParser: false` to set.
-- **Raw-body verification, not Sentry's published snippet.** The documented
-  `JSON.stringify(request.body)` approach only matches ASCII-only payloads —
+- **Raw-body verification, never a re-serialized body.** Sentry's docs say to
+  compute the digest over the raw body and not to parse and re-serialize the
+  JSON. `JSON.stringify` of a parsed body only matches ASCII-only payloads —
   Sentry emits `\uXXXX` escapes (`ensure_ascii=True`). There is a test for it.
 - **Both signature headers** — `Sentry-Hook-Signature`, falling back to
   `Sentry-App-Signature` (UI-component external requests).
@@ -96,7 +97,8 @@ Sentry sends **no handshake, challenge or validation request**.
   `export const runtime = 'edge'`.
 - **Respond within 1 second.** This example handles the event inline because
   the work is trivial logging; for real work, enqueue it (or use `after()` from
-  `next/server`) and return immediately. Sentry does **not** retry, and repeated
+  `next/server`) and return immediately. Sentry retries only a few times (up to
+  3 attempts, 5 minutes apart; none for a 4xx or a 503/504), and repeated
   failures can **disable** the webhook.
 - For the signature scheme in detail, see
   [../../references/verification.md](../../references/verification.md).

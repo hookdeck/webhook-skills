@@ -273,8 +273,8 @@ def handle_event(event: Dict[str, Any]) -> None:
     """Dispatch a verified PagerDuty V3 event.
 
     Route on ``event["event_type"]``; use ``event["data"]["type"]`` to pick the
-    data schema. ``event["resource_type"]`` is the root resource (incident or
-    service) and can differ from the more specific ``data["type"]``.
+    data schema. ``event["resource_type"]`` is the root resource (incident,
+    service or scribe) and can differ from the more specific ``data["type"]``.
     """
     # TODO: check the X-Webhook-Id / event["id"] against your store and return
     # early if seen. Keep ids for 48+ hours.

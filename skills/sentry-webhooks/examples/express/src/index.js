@@ -65,12 +65,12 @@ function verifySentrySignature(rawBody, headers, clientSecret) {
     headers['sentry-hook-signature'] || headers['sentry-app-signature'];
   if (!received) return false;
 
-  // RAW BODY BYTES. Sentry's documented snippets re-serialize a parsed body
-  // (JSON.stringify(request.body) / json.dumps(request.body)) and that is a
-  // LATENT BUG: Sentry serializes with ensure_ascii=True, emitting \uXXXX
-  // escapes, while JSON.stringify emits literal UTF-8. Any accent or emoji in
-  // an issue title, comment or username therefore produces different bytes and
-  // the re-serializing snippet rejects a VALID delivery.
+  // RAW BODY BYTES. Sentry's docs: "Compute the digest over the raw body as
+  // received. Don't parse the JSON and serialize it again." Sentry serializes
+  // with ensure_ascii=True, emitting \uXXXX escapes, while JSON.stringify
+  // emits literal UTF-8. Any accent or emoji in an issue title, comment or
+  // username therefore produces different bytes, and a re-serializing
+  // verifier rejects a VALID delivery.
   //
   // `rawBody ?? ''` is deliberate: an empty body is legitimate.
   const body = Buffer.isBuffer(rawBody)
@@ -85,8 +85,9 @@ function verifySentrySignature(rawBody, headers, clientSecret) {
   const a = Buffer.from(String(received).trim(), 'utf8');
   const b = Buffer.from(expected, 'utf8');
   // Length FIRST — timingSafeEqual THROWS on mismatched lengths, and an
-  // uncaught throw becomes a 500. Sentry does not retry 500s; repeated
-  // failures trip a circuit breaker that can DISABLE the webhook.
+  // uncaught throw becomes a 500. Sentry retries a 500 only a few times (up
+  // to 3 attempts, 5 minutes apart); repeated failures trip a circuit breaker
+  // that can DISABLE the webhook.
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
@@ -208,8 +209,9 @@ app.post('/webhooks/sentry', express.raw({ type: '*/*' }), (req, res) => {
 
   // Acknowledge inside Sentry's 1-SECOND budget, then work asynchronously.
   // Sentry: "Webhooks should respond within 1 second. Otherwise, the response
-  // is considered a timeout." Sentry does NOT retry, and repeated failures trip
-  // a circuit breaker that can disable the webhook.
+  // is considered a timeout." Sentry retries only a few times (none for a 4xx
+  // or a 503/504), and repeated failures trip a circuit breaker that can
+  // disable the webhook.
   res.status(200).json({ received: true });
 
   setImmediate(() => {
