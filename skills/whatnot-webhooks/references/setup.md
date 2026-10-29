@@ -75,9 +75,10 @@ and gives you a web UI showing each request's raw body and headers.
 
 Hookdeck's `WHATNOT` source type verifies Standard Webhooks signatures. Paste
 the webhook secret into the source's verification settings as the dashboard
-shows it, `wn_wh_` prefix included. It also still accepts the legacy
-`X-Whatnot-Webhook-Signature` hex scheme, so a source created before Whatnot's
-change keeps working until you paste the new secret.
+shows it, `wn_wh_` prefix included. It still accepts the legacy
+`X-Whatnot-Webhook-Signature` hex scheme, but current deliveries are signed
+with the new `wn_wh_` secret, so a source set up before Whatnot's change fails
+verification until you paste that secret.
 
 If you also verify in your handler, remember that Hookdeck retries and replays
 resend Whatnot's original `webhook-timestamp`. They pass the 5-minute check
