@@ -1,0 +1,95 @@
+name: better-stack
+displayName: "Better Stack"
+docs:
+  webhooks: https://betterstack.com/docs/uptime/webhooks/
+  verification: https://betterstack.com/docs/uptime/api/create-outgoing-webhook-integration/
+  events: https://betterstack.com/docs/uptime/api/update-outgoing-webhook-integration/
+notes: >
+  Better Stack (betterstack.com) Uptime / incident management outgoing webhooks, set up under
+  Incidents -> Integrations -> Exporting data -> Outgoing webhooks, or with POST
+  /api/v2/outgoing-webhooks. Three kinds (trigger_type): Incident webhook (incident_change), Monitor
+  webhook (monitor_change) and On-call change webhook (on_call_change). Better Stack's Errors product
+  has separate outgoing webhooks with a different body; they are out of scope. NO SIGNATURE: Better
+  Stack does not sign these webhooks. The create-webhook API's custom_webhook_template_attributes are
+  http_method, auth_username, auth_password, headers_template and body_template; none is a signing
+  secret. A webhook can carry two kinds of static credential, and Hookdeck's Better Stack source
+  (verification is optional) offers both: (1) BASIC AUTH, the default: 'auth_username: The username
+  to use for basic authentication. Set both auth_username and auth_password, or neither.' The user
+  enters the same username and password on the Hookdeck source. Hookdeck parses 'Authorization:
+  Basic base64(username:password)' and compares username and password; the header must be on the
+  request (Hookdeck never answers with a 401 challenge). Better Stack's docs do NOT say whether the
+  Basic credentials are sent preemptively on the first request or only after a 401
+  WWW-Authenticate challenge. Say that honestly in SKILL.md, setup.md and verification.md, and
+  recommend option (2) as the more robust choice; if Basic auth deliveries are rejected, switch to
+  the custom header. (2) CUSTOM HEADER (Hookdeck: 'Custom header', an API key check): a static header
+  the user adds to the webhook's headers_template ('The headers to send with the webhook.', each
+  header an object with name and value, e.g. { "name": "X-Better-Stack-Secret", "value": "<long
+  random secret>" }). The header name is user-chosen; Hookdeck asks for the header name (placeholder
+  X-Better-Stack-Secret) and its value, finds the header case-insensitively and compares the WHOLE
+  value verbatim (no prefix stripping, no trimming). Examples: env vars BETTER_STACK_WEBHOOK_USERNAME
+  and BETTER_STACK_WEBHOOK_PASSWORD (Basic), BETTER_STACK_WEBHOOK_HEADER (header name, default
+  X-Better-Stack-Secret) and BETTER_STACK_WEBHOOK_SECRET (its exact value). Accept a request that
+  passes EITHER configured method; a method that is not configured is never used, and with neither
+  configured every request is rejected (fail closed, say so in the README). Basic parsing: scheme
+  'Basic' case-insensitive, then strict base64 (validate the alphabet and padding before decoding;
+  Node's Buffer.from(x, 'base64') silently skips bad characters, Python uses
+  base64.b64decode(..., validate=True)), decode as UTF-8, split on the FIRST colon so a password may
+  contain ':', compare the username and the password each in constant time and evaluate both before
+  deciding (no short-circuit). Missing header, wrong scheme, malformed value or mismatch: 401.
+  Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
+  (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides;
+  never pass str, which raises TypeError on non-ASCII). SKILL.md and verification.md must say plainly
+  that a static shared credential authenticates the sender, not the body, and gives no replay
+  protection (no signature, no timestamp), so use HTTPS, use a long random value and rotate it if it
+  leaks. Never say Hookdeck verifies 'at the edge'; say Hookdeck's source checks the credential.
+  Model on the prometheus-alertmanager (two credential forms), rudderstack, new-relic and argo-cd
+  skills on main. METHODS: 'The HTTP method to use when sending the webhook. One of get, post, put,
+  patch, head, or options, defaulting to post.' Hookdeck's Better Stack source pre-selects POST
+  without managing the method, so any other method the webhook uses must also be allowed on the
+  source; Hookdeck sources can allow GET, HEAD, POST, PUT and PATCH but not OPTIONS, so say a webhook
+  routed through Hookdeck should not use options. The examples must NOT be POST-only: accept GET,
+  HEAD, POST, PUT, PATCH and OPTIONS on the webhook route (Express: app.all or one route per method;
+  Next.js: export a handler for each; FastAPI: api_route with those methods), check the credential
+  first for every method, and treat a missing body as empty (once authenticated, an empty body is
+  acknowledged with 200, not rejected as invalid JSON). BODY: the body is a user-editable template
+  (body_template) and no default Content-Type is documented, so Express examples must read the raw
+  body with express.raw({ type: '*/*' }) (Next.js: await request.arrayBuffer(); FastAPI: await
+  request.body()) and parse JSON only after the credential check; a non-JSON body (custom template)
+  is acknowledged and logged, not a 500. Default templates (from the create-webhook API page):
+  incident_change {"data": {"id", "type": "incident", "attributes": {name, url, http_method, cause,
+  started_at, acknowledged_at, resolved_at, response_content, response_url, screenshot_url}}};
+  monitor_change {"data": {"id", "type": "monitor", "attributes": {url, pronounceable_name,
+  monitor_type, required_keyword, verify_ssl, check_frequency, call, sms, email, team_wait,
+  http_method, request_timeout, recovery_period, request_body, paused_at, last_checked_at}}};
+  on_call_change {"data": {message, emails (array), on_holiday_emails (array), change, calendar_id,
+  calendar_name, primary_calendar}}. EVENTS: the only documented wire value of an event field is the
+  top-level "event": "comment" in the API page's 'Example incident_change payload when event is
+  comment', whose body also has a top-level `comment` object (id, type incident_comment, attributes
+  {content, created_at, updated_at, user_id, user_email}) next to `data`. Incident webhooks fire when
+  an incident starts, is acknowledged, resolved, reopened or commented on (API toggles
+  on_incident_started, on_incident_acknowledged, on_incident_resolved, on_incident_reopened,
+  on_incident_comment, each defaulting to true); whether the non-comment deliveries carry `event`,
+  and with what values, is NOT documented, so never invent event names such as
+  'incident.started'. Monitor webhooks fire when a monitor is created, updated, paused, unpaused or
+  deleted and document no event field. On-call webhooks carry data.change: 'The change field is
+  holiday when only a holiday started or ended, and on_call otherwise.' So the examples dispatch on
+  the shape: data.type 'incident' (event 'comment' when the top-level event is 'comment', else derive
+  the state from attributes: resolved_at set -> resolved, acknowledged_at set -> acknowledged, else
+  started/open, and say this is an inference), data.type 'monitor' (paused_at set -> paused), and
+  data.change 'on_call' / 'holiday' for on-call webhooks; anything else is logged. Say in SKILL.md
+  that only `comment` is a documented wire value and that a customised body_template may carry none
+  of these fields. Use the API page's comment example (verbatim) and the default templates rendered
+  with plausible values as test payloads. After authenticating, treat every field of the parsed body
+  as untrusted: check that the body and each nested field is the expected type before reading into
+  it (Express/Next.js: typeof / Array.isArray; FastAPI: isinstance(x, dict) / isinstance(x, list)
+  before .get() or iterating), so a wrong-typed field is ignored or answered with 400, never a 500.
+  Delivery: the Uptime pages document no timeout, retry policy or IP list; do not invent any. Answer
+  quickly with 2xx and process asynchronously. Hookdeck's source type is BETTER_STACK, labelled
+  'Better Stack'.
+testScenario:
+  events:
+    - "incident comment (event: comment)"
+    - "incident resolved (incident_change, resolved_at set)"
+    - "on-call change (data.change: on_call)"
+catalog:
+  summary: "Authenticate Better Stack Uptime webhooks (unsigned: HTTP Basic auth or a custom secret header, compared in constant time), handle incident, monitor and on-call change notifications"
