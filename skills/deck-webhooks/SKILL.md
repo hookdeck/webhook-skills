@@ -30,6 +30,7 @@ metadata:
 - Why is my Deck `webhook-signature` verification failing?
 - How do I rotate a Deck webhook secret without downtime?
 - My Deck destination is stuck in `pending_verification`. What's wrong?
+- Why did my Deck destination switch to `inactive`?
 
 ## The Secret Is Yours to Generate
 
@@ -48,6 +49,8 @@ curl -X POST https://api.deck.co/v2/event-destinations \
        "webhook":{"url":"https://your-app.com/webhooks/deck","secret":"whsec_..."},
        "events":["credential.verified","task_run.completed","task_run.failed"]}'
 ```
+
+Add an optional `filter` to deliver only matching events, for example `"filter": {"data": {"agent_id": {"$in": ["agt_..."]}}}` (operators include `$eq`, `$neq`, `$in`, `$nin`, `$gt`, `$startsWith`, `$exist`, `$and`, `$or`, `$not`). It applies to retries and `test.ping` too.
 
 New destinations start as `pending_verification` and become `active` (firing `event_destination.activated`) once your endpoint returns a `2xx`. Deck doesn't document a challenge or handshake. Your endpoint has to be reachable and return a `2xx`. See [references/setup.md](references/setup.md).
 
@@ -102,7 +105,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
 | `credential.verified` / `credential.invalid` | Deck Vault credential worked / was rejected by the source |
 | `workflow_run.completed` / `workflow_run.failed` / `workflow_run.paused` | Workflow run state changes |
 | `storage.created` | A file was captured during a task run |
-| `event_destination.activated` / `event_destination.deactivated` | Destination status changed |
+| `event_destination.activated` / `event_destination.deactivated` | Destination status changed. `deactivated` also fires when Deck auto-deactivates a destination after 100 consecutive failures |
 | `test.ping` | Console **Send test ping** or `POST /v2/event-destinations/{id}/test`. Not subscribable, never retried. Return a `2xx` |
 
 Also: `agent.*`, `source.*`, `credential.created|unverified|deleted`, `session.*`, `task.*`, `task_run.queued|running|canceling|canceled`, `workflow.*`, `workflow_run.queued|running|canceling|canceled`, and `storage.deleted`. [references/overview.md](references/overview.md) lists all of them with payloads.
@@ -112,10 +115,11 @@ To answer an interaction, read `data.interaction.fields` and call `POST /v2/task
 ## Delivery Semantics
 
 - Return a `2xx` within **5 seconds**, or Deck counts the delivery as failed and retries it even if your original request is still running. Enqueue the event and acknowledge it; do the processing asynchronously.
-- Up to **10 retries** with exponential backoff (base 2, starting at 30s). Failures don't auto-disable the destination. Inspect them with `GET /v2/event-destinations/{id}/event-deliveries?status=failure`.
+- Up to **10 retries** with exponential backoff (base 2, starting at 30s). Inspect failures with `GET /v2/event-destinations/{id}/event-deliveries?status=failure`.
+- **Auto-deactivation:** if deliveries to a destination fail **100 times in a row**, Deck sets it to `inactive` and stops delivering (a success resets the count). Deck emits `event_destination.deactivated`, so subscribe a *different* destination to it. Once the endpoint is fixed, `PATCH /v2/event-destinations/{id}` with `{"status": "active"}`.
 - **At-least-once delivery.** Dedupe on the event `id` (`evt_...`) and return `200` for duplicates.
 - **Order isn't guaranteed.** Compare the event's `created_at` with your last-seen state and drop stale updates.
-- Static delivery IPs (`34.139.110.242`, `35.237.129.153`, `34.24.255.163`, plus the previous set until the Oct 28, 2026 cutover) are optional defence in depth and don't replace signature checks.
+- Static delivery IPs (`34.139.110.242`, `35.237.129.153`, `34.24.255.163`) are optional defence in depth and don't replace signature checks.
 
 ## Environment Variables
 
@@ -136,7 +140,7 @@ Use the printed URL as `webhook.url`. Deck's own docs recommend Hookdeck for loc
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Full event catalog, payload shapes, interactions
-- [references/setup.md](references/setup.md) - Generating the secret, creating the destination, activation, rotation, IPs
+- [references/setup.md](references/setup.md) - Generating the secret, creating the destination, filters, activation, auto-deactivation, rotation, IPs
 - [references/verification.md](references/verification.md) - SDK and manual verification, gotchas, debugging
 
 ## Attribution

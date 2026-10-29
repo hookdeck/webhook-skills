@@ -24,11 +24,19 @@ notes: >
   account_selection / security_question), answered via
   POST /v2/task-runs/{id}/interaction {"input": {...}} within 5 minutes.
   test.ping (data {"ok": true}) is not subscribable and never retried.
-  2xx within 5s; up to 10 retries, exponential base 2 from 30s; no
-  auto-disable; at-least-once (dedupe on event id); out-of-order (use
-  created_at). Static IPs 34.139.110.242, 35.237.129.153, 34.24.255.163
-  (previous 136.107.35.242, 34.86.136.110, 136.107.63.48 until 2026-10-28).
-  Native "hookdeck" destination type also exists (hookdeck.token).
+  2xx within 5s; up to 10 retries, exponential base 2 from 30s;
+  auto-deactivation: after 100 consecutive failed deliveries Deck sets the
+  destination inactive (a success resets the count) and emits
+  event_destination.deactivated (subscribe another destination to it);
+  re-enable with PATCH status "active". At-least-once (dedupe on event id);
+  out-of-order (use created_at). Static IPs 34.139.110.242, 35.237.129.153,
+  34.24.255.163 (the previous set's 2026-10-28 cutover has passed; no longer
+  listed). Ten destination types: webhook, aws_sqs, aws_kinesis, aws_s3,
+  aws_eventbridge, gcp_pubsub, azure_servicebus, rabbitmq, hookdeck
+  (hookdeck.token), cloudflare_queues; only webhook is Standard Webhooks
+  signed. Optional per-destination payload "filter" ($eq, $neq, $gt, $gte,
+  $lt, $lte, $in, $nin, $startsWith, $endsWith, $exist, $and, $or, $not), applied to
+  retries and test.ping too; replaced via PATCH, null or {} removes it.
 testScenario:
   events:
     - task_run.completed

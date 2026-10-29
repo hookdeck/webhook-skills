@@ -63,7 +63,7 @@ These are all the documented subscribable types (`"events": ["*"]` subscribes to
 | Workflows | `workflow.created`, `workflow.updated`, `workflow.deleted` |
 | Workflow runs | `workflow_run.queued`, `workflow_run.running`, `workflow_run.paused`, `workflow_run.completed`, `workflow_run.failed`, `workflow_run.canceling`, `workflow_run.canceled` |
 | Storage | `storage.created`, `storage.deleted` |
-| Event destinations | `event_destination.activated`, `event_destination.deactivated` |
+| Event destinations | `event_destination.activated`, `event_destination.deactivated` (set by you, or automatic after 100 consecutive delivery failures) |
 
 There's also **`test.ping`**, with `data: {"ok": true}`. You can't subscribe to it. It's sent only from **Send test ping** in the Console or `POST /v2/event-destinations/{destination_id}/test`, it's delivered once and it's never retried. Return a `2xx`.
 
@@ -192,7 +192,7 @@ These payloads have **no `id` field**: use `workflow_run_id`. `result` is `null`
 |-----------|--------|
 | Acknowledge | Return a `2xx` within **5 seconds**. Anything else is a failure and gets retried |
 | Retries | Up to **10**, exponential backoff, base 2, starting at 30 seconds |
-| Auto-disable | **No.** Persistent failures pile up as `failure` deliveries instead |
+| Auto-deactivation | **Yes.** After **100 consecutive failed deliveries** Deck sets the destination to `inactive` and stops delivering. A successful delivery resets the count. Deck emits `event_destination.deactivated` (subscribe another destination to it) |
 | Guarantee | **At least once.** Dedupe on event `id` and return `200` for duplicates |
 | Ordering | **Not guaranteed.** `task_run.completed` can arrive before `task_run.running`. Compare `created_at` and skip anything stale |
 

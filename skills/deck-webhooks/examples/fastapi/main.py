@@ -176,6 +176,9 @@ def handle_event(event: Dict[str, Any]) -> None:
         logger.info("Session %s -> %s", data.get("id"), data.get("status"))
 
     # --- Event destinations --------------------------------------------------
+    # `deactivated` also fires when Deck auto-deactivates a destination after
+    # 100 consecutive failed deliveries. Subscribe a different destination to
+    # it, since the failing one may not receive it.
     elif event_type in ("event_destination.activated", "event_destination.deactivated"):
         logger.info("Destination %s is now %s", data.get("id"), data.get("status"))
 
