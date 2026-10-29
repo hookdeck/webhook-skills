@@ -96,7 +96,7 @@ const SIGNED_FIELDS: Record<string, string[]> = {
 /** Signs an envelope the way SNS SignatureVersion 1 does: RSA-SHA1 over "Key\nValue\n" pairs. */
 export function signEnvelope(msg: Record<string, unknown>, privateKey: crypto.KeyObject) {
   const canonical = SIGNED_FIELDS[msg.Type as string]
-    .filter((key) => msg[key] !== undefined)
+    .filter((key) => msg[key] !== undefined && msg[key] !== null)
     .map((key) => `${key}\n${msg[key]}\n`)
     .join('');
   return { ...msg, Signature: crypto.sign('RSA-SHA1', Buffer.from(canonical, 'utf8'), privateKey).toString('base64') };

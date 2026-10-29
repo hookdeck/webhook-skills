@@ -37,8 +37,8 @@ The handler reads the raw body with `express.raw({ type: '*/*' })`. Verification
 For every message the handler:
 
 1. Parses the JSON envelope (400 if it isn't one). Content-Type is ignored.
-2. Verifies `Signature` (SignatureVersion `1`, RSA-SHA1 over the SNS canonical string) with the certificate at `SigningCertURL`, after checking that the URL is https on an allowed host and that the certificate chains to the trust chain. Failures return 401; a certificate that can't be downloaded returns 503.
-3. Rejects topics not in `SCALEWAY_SNS_TOPIC_ARNS` with 403, when that's set.
+2. Verifies `Signature` (SignatureVersion `1`, RSA-SHA1 over the SNS canonical string) with the certificate at `SigningCertURL`, after checking that the URL is https on an allowed host (no query string or fragment) and that the certificate chains to the trust chain. Failures return 401, including a certificate URL that answers 4xx; a network error or 5xx while downloading the certificate returns 503.
+3. Rejects topics not in `SCALEWAY_SNS_TOPIC_ARNS` with 403. When it's unset, the app logs a warning at startup: it then accepts, and confirms subscriptions to, any topic.
 4. Routes on the signed `Type`:
    - `SubscriptionConfirmation`: checks `SubscribeURL` (https, `sns.mnq.<region>.scaleway.com`, matching `TopicArn` and `Token`) and GETs it. 200 on success, 502 if Scaleway doesn't answer 200.
    - `Notification`: logs `MessageId`, `Subject` and whether `Message` is JSON. Deduplicate on `MessageId`.

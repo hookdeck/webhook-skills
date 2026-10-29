@@ -21,7 +21,7 @@ export interface HandlerOptions {
   allowedCertHosts?: string[];
   topicArns?: string[];
   maxAgeSeconds?: number;
-  fetchCert?: (url: string) => Promise<string>;
+  fetchCert?: (url: string) => Promise<string | null>;
   confirmSubscription?: (url: string) => Promise<boolean>;
   now?: () => number;
 }
@@ -46,6 +46,12 @@ export function createHandler(options: HandlerOptions = {}) {
     now: options.now,
   });
   const topicArns = options.topicArns ?? list(process.env.SCALEWAY_SNS_TOPIC_ARNS);
+  if (topicArns.length === 0) {
+    console.warn(
+      'SCALEWAY_SNS_TOPIC_ARNS is not set: messages from ANY Scaleway topic are accepted, and ' +
+        'subscriptions to any topic are confirmed. Set it to your topic ARNs.'
+    );
+  }
   const maxAgeSeconds = options.maxAgeSeconds ?? Number(process.env.SCALEWAY_SNS_MAX_AGE_SECONDS || 0);
   const confirm = options.confirmSubscription ?? defaultConfirm;
   const now = options.now ?? (() => Date.now());

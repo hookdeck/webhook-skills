@@ -6,6 +6,9 @@ import os
 import tempfile
 from urllib.parse import urlencode
 
+import asyncio
+
+import httpx
 import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -61,7 +64,13 @@ _chain_file.close()
 os.environ["SCALEWAY_SNS_TRUST_CHAIN_PATH"] = _chain_file.name
 
 from main import create_app  # noqa: E402
-from scaleway_sns import CertFetchError, canonical_string, is_valid_subscribe_url  # noqa: E402
+from scaleway_sns import (  # noqa: E402
+    CertFetchError,
+    allowed_cert_url,
+    canonical_string,
+    fetch_certificate_pem,
+    is_valid_subscribe_url,
+)
 
 CERT_HOST = "messaging.s3.fr-par.scw.cloud"
 CERT_URL = f"https://{CERT_HOST}/fr-par/sns/sns_certificate_01.crt"
@@ -78,6 +87,8 @@ CERTS = {
     f"https://{CERT_HOST}/fr-par/sns/self-signed.crt": SELF_SIGNED_LEAF,
     f"https://{CERT_HOST}/fr-par/sns/child.crt": CHILD_OF_LEAF,
     f"https://{CERT_HOST}/fr-par/sns/garbage.crt": b"not a certificate",
+    # The host answered 4xx: the default fetcher returns None
+    f"https://{CERT_HOST}/fr-par/sns/missing.crt": None,
 }
 
 SIGNED_FIELDS = {
@@ -89,7 +100,7 @@ SIGNED_FIELDS = {
 
 def signed(msg, key=LEAF_KEY):
     """Sign an envelope the way SNS SignatureVersion 1 does: RSA-SHA1 over "Key\\nValue\\n" pairs."""
-    canonical = "".join(f"{k}\n{msg[k]}\n" for k in SIGNED_FIELDS[msg["Type"]] if k in msg)
+    canonical = "".join(f"{k}\n{msg[k]}\n" for k in SIGNED_FIELDS[msg["Type"]] if msg.get(k) is not None)
     signature = key.sign(canonical.encode("utf-8"), padding.PKCS1v15(), hashes.SHA1())
     return {**msg, "Signature": base64.b64encode(signature).decode()}
 
@@ -187,6 +198,15 @@ class TestCanonicalString:
         s = canonical_string(confirmation())
         assert f"SubscribeURL\n{SUBSCRIBE_URL}\n" in s and f"Token\n{TOKEN}\n" in s
 
+    def test_null_subject_is_absent(self):
+        with_null = {**notification(), "Subject": None}
+        without = {k: v for k, v in notification().items() if k != "Subject"}
+        assert canonical_string(with_null) == canonical_string(without)
+
+    @pytest.mark.parametrize("type_", ["constructor", "toString", "__proto__", "__class__", "get"])
+    def test_prototype_like_types(self, type_):
+        assert canonical_string({**notification(), "Type": type_}) is None
+
     def test_unknown_type_or_non_string_field(self):
         assert canonical_string({"Type": "Other"}) is None
         assert canonical_string(notification(Message={"a": 1})) is None
@@ -229,12 +249,101 @@ class TestSubscribeUrl:
     def test_rejects(self, url):
         assert not is_valid_subscribe_url(confirmation(SubscribeURL=url))
 
+    @pytest.mark.parametrize(
+        "url",
+        [SUBSCRIBE_URL.replace(".com/?", ".com?"), SUBSCRIBE_URL.replace(".com/", ".com:443/")],
+        ids=["no-path", "default-port"],
+    )
+    def test_accepts_what_hookdeck_accepts(self, url):
+        assert is_valid_subscribe_url(confirmation(SubscribeURL=url))
+
     def test_rejects_aws_or_unsupported_region_arn(self):
         assert not is_valid_subscribe_url(confirmation(TopicArn="arn:aws:sns:fr-par:p:t"))
         assert not is_valid_subscribe_url(confirmation(TopicArn="arn:scw:sns:pl-waw:p:t"))
 
 
+class TestAllowedCertUrl:
+    def test_accepts_https_on_allowed_host(self):
+        assert allowed_cert_url(CERT_URL, [CERT_HOST])
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            CERT_URL + "?x=1",
+            CERT_URL + "?",
+            CERT_URL + "#x",
+            CERT_URL + "#",
+            f"https://{CERT_HOST}:8443/c.crt",
+            CERT_URL.replace("https", "http"),
+            "https://example.com/c.crt",
+            f"https://u:p@{CERT_HOST}/c.crt",
+            "not a url",
+        ],
+        ids=["query", "empty-query", "fragment", "empty-fragment", "port", "http", "host", "credentials", "garbage"],
+    )
+    def test_rejects(self, url):
+        assert not allowed_cert_url(url, [CERT_HOST])
+
+
+class TestDefaultFetcher:
+    @staticmethod
+    def fetch(status=None, exc=None, body=b"pem"):
+        seen = []
+
+        def handler(request):
+            seen.append(request)
+            if exc:
+                raise exc
+            return httpx.Response(status, content=body)
+
+        result = asyncio.run(fetch_certificate_pem(CERT_URL, transport=httpx.MockTransport(handler)))
+        return result, seen
+
+    def test_returns_body_on_200(self):
+        assert self.fetch(200, body=LEAF)[0] == LEAF
+
+    @pytest.mark.parametrize("status", [404, 403, 302])
+    def test_returns_none_on_non_200_below_500(self, status):
+        assert self.fetch(status)[0] is None
+
+    @pytest.mark.parametrize("status", [500, 503])
+    def test_raises_on_5xx(self, status):
+        with pytest.raises(CertFetchError):
+            self.fetch(status)
+
+    def test_raises_on_network_error(self):
+        with pytest.raises(CertFetchError):
+            self.fetch(exc=httpx.ConnectError("down"))
+
+
 class TestWebhook:
+    def test_warns_without_topic_arns(self, make_client, caplog):
+        make_client(topic_arns=[])
+        assert "SCALEWAY_SNS_TOPIC_ARNS is not set" in caplog.text
+
+    def test_no_warning_with_topic_arns(self, make_client, caplog):
+        make_client(topic_arns=[TOPIC_ARN])
+        assert "SCALEWAY_SNS_TOPIC_ARNS is not set" not in caplog.text
+
+    def test_null_subject_is_accepted(self, make_client):
+        msg = signed({**notification(), "Subject": None})
+        assert msg["Subject"] is None
+        assert post(make_client(), msg).status_code == 200
+
+    @pytest.mark.parametrize("type_", ["constructor", "toString", "__proto__", "__class__"])
+    def test_prototype_like_type_is_401(self, make_client, fakes, type_):
+        assert post(make_client(), {**notification(), "Type": type_, "Signature": "AAAA"}).status_code == 401
+        assert fakes.fetches == []
+
+    def test_cert_url_4xx_is_401(self, make_client):
+        msg = signed(notification(SigningCertURL=f"https://{CERT_HOST}/fr-par/sns/missing.crt"))
+        assert post(make_client(), msg).status_code == 401
+
+    @pytest.mark.parametrize("url", [CERT_URL + "?v=1", CERT_URL + "#x"], ids=["query", "fragment"])
+    def test_cert_url_with_query_or_fragment_is_401_without_fetch(self, make_client, fakes, url):
+        assert post(make_client(), signed(notification(SigningCertURL=url))).status_code == 401
+        assert fakes.fetches == []
+
     def test_signed_notification(self, make_client, caplog):
         res = post(make_client(), signed(notification()), "Notification")
         assert res.status_code == 200

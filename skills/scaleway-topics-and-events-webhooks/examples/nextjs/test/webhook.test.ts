@@ -4,7 +4,13 @@ import os from 'os';
 import path from 'path';
 
 import { createHandler, type HandlerOptions } from '../lib/handler';
-import { CertFetchError, canonicalString, isValidSubscribeUrl } from '../lib/scaleway-sns';
+import {
+  CertFetchError,
+  allowedCertUrl,
+  canonicalString,
+  fetchCertificatePem,
+  isValidSubscribeUrl,
+} from '../lib/scaleway-sns';
 import { createPki, signEnvelope } from './pki';
 
 const pki = createPki();
@@ -19,24 +25,27 @@ const SUBSCRIBE_URL = `https://sns.mnq.fr-par.scaleway.com/?${new URLSearchParam
 })}`;
 
 // Certificates "published" at each URL; the app fetches through this map, never the network
-const certs: Record<string, string> = {
+const certs: Record<string, string | null> = {
   [CERT_URL]: pki.leaf,
   [`https://${CERT_HOST}/fr-par/sns/expired.crt`]: pki.expiredLeaf,
   [`https://${CERT_HOST}/fr-par/sns/rogue.crt`]: pki.rogueLeaf,
   [`https://${CERT_HOST}/fr-par/sns/self-signed.crt`]: pki.selfSignedLeaf,
   [`https://${CERT_HOST}/fr-par/sns/child.crt`]: pki.leafIssuedByLeaf,
   [`https://${CERT_HOST}/fr-par/sns/garbage.crt`]: 'not a certificate',
+  // The host answered 4xx: the default fetcher returns null
+  [`https://${CERT_HOST}/fr-par/sns/missing.crt`]: null,
 };
 
 let fetchCert: ReturnType<typeof vi.fn>;
 let confirmSubscription: ReturnType<typeof vi.fn>;
 let logSpy: ReturnType<typeof vi.spyOn>;
+let warnSpy: ReturnType<typeof vi.spyOn>;
 
 type Handler = (request: Request) => Promise<Response>;
 function makeApp(overrides: HandlerOptions = {}): Handler {
   return createHandler({
     trustChainPem: pki.trustChainPem,
-    fetchCert: fetchCert as unknown as (url: string) => Promise<string>,
+    fetchCert: fetchCert as unknown as (url: string) => Promise<string | null>,
     confirmSubscription: confirmSubscription as unknown as (url: string) => Promise<boolean>,
     ...overrides,
   });
@@ -50,6 +59,7 @@ beforeEach(() => {
   confirmSubscription = vi.fn(async () => true);
   logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -111,6 +121,17 @@ describe('canonicalString', () => {
     expect(s).toContain(`Token\n${TOKEN}\n`);
   });
 
+  it('treats a null Subject as absent', () => {
+    expect(canonicalString(notification({ Subject: null }))).toBe(canonicalString(notification({ Subject: undefined })));
+  });
+
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'])(
+    'returns null for a Type of %s without throwing',
+    (type) => {
+      expect(canonicalString({ ...notification(), Type: type })).toBeNull();
+    }
+  );
+
   it('returns null for unknown types and non-string fields', () => {
     expect(canonicalString({ Type: 'Other' })).toBeNull();
     expect(canonicalString(notification({ Message: { a: 1 } }))).toBeNull();
@@ -145,13 +166,103 @@ describe('isValidSubscribeUrl', () => {
     expect(isValidSubscribeUrl(confirmation({ SubscribeURL: u.toString() }))).toBe(false);
   });
 
+  it('accepts the forms Hookdeck accepts: no path, and the default port', () => {
+    expect(isValidSubscribeUrl(confirmation({ SubscribeURL: SUBSCRIBE_URL.replace('.com/?', '.com?') }))).toBe(true);
+    expect(isValidSubscribeUrl(confirmation({ SubscribeURL: SUBSCRIBE_URL.replace('.com/', '.com:443/') }))).toBe(true);
+  });
+
   it('rejects an AWS or unsupported-region TopicArn', () => {
     expect(isValidSubscribeUrl(confirmation({ TopicArn: 'arn:aws:sns:fr-par:p:t' }))).toBe(false);
     expect(isValidSubscribeUrl(confirmation({ TopicArn: 'arn:scw:sns:pl-waw:p:t' }))).toBe(false);
   });
 });
 
+describe('allowedCertUrl', () => {
+  const hosts = [CERT_HOST];
+  it('accepts an https URL on an allowed host', () => {
+    expect(allowedCertUrl(CERT_URL, hosts)).toBe(true);
+  });
+  it.each([
+    ['a query string', `${CERT_URL}?x=1`],
+    ['an empty query string', `${CERT_URL}?`],
+    ['a fragment', `${CERT_URL}#x`],
+    ['an empty fragment', `${CERT_URL}#`],
+    ['a port', `https://${CERT_HOST}:8443/c.crt`],
+    ['http', CERT_URL.replace('https', 'http')],
+    ['another host', 'https://example.com/c.crt'],
+    ['not a URL', 'not a url'],
+  ])('rejects %s', (_name, url) => {
+    expect(allowedCertUrl(url, hosts)).toBe(false);
+  });
+});
+
+describe('fetchCertificatePem (default fetcher)', () => {
+  const stub = (impl: () => Promise<Response>) => {
+    const spy = vi.fn(impl);
+    vi.stubGlobal('fetch', spy);
+    return spy;
+  };
+
+  it('returns the body on 200, without following redirects', async () => {
+    const spy = stub(async () => new Response(pki.leaf, { status: 200 }));
+    await expect(fetchCertificatePem(CERT_URL)).resolves.toBe(pki.leaf);
+    expect(spy).toHaveBeenCalledWith(CERT_URL, expect.objectContaining({ redirect: 'manual' }));
+  });
+
+  it.each([404, 403, 302])('returns null on HTTP %s (no such certificate: 401, no retry)', async (status) => {
+    stub(async () => new Response('nope', { status }));
+    await expect(fetchCertificatePem(CERT_URL)).resolves.toBeNull();
+  });
+
+  it.each([500, 503])('throws CertFetchError on HTTP %s (retryable: 503)', async (status) => {
+    stub(async () => new Response('down', { status }));
+    await expect(fetchCertificatePem(CERT_URL)).rejects.toBeInstanceOf(CertFetchError);
+  });
+
+  it('throws CertFetchError on a network error', async () => {
+    stub(async () => {
+      throw new TypeError('fetch failed');
+    });
+    await expect(fetchCertificatePem(CERT_URL)).rejects.toBeInstanceOf(CertFetchError);
+  });
+});
+
 describe('POST /webhooks/scaleway-topics-and-events', () => {
+  it('warns at startup when no topic ARNs are configured', () => {
+    makeApp({ topicArns: [] });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SCALEWAY_SNS_TOPIC_ARNS is not set'));
+  });
+
+  it('does not warn when topic ARNs are configured', () => {
+    makeApp({ topicArns: [TOPIC_ARN] });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('accepts a signed Notification whose Subject is null', async () => {
+    const res = await post(makeApp(), signed(notification({ Subject: null })));
+    expect(res.status).toBe(200);
+  });
+
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    'returns 401, not 500, for a Type of %s',
+    async (type) => {
+      const res = await post(makeApp(), JSON.stringify({ ...notification(), Type: type, Signature: 'AAAA' }));
+      expect(res.status).toBe(401);
+      expect(fetchCert).not.toHaveBeenCalled();
+    }
+  );
+
+  it('returns 401 (not 503) when the certificate URL answers 4xx', async () => {
+    const res = await post(makeApp(), signed(notification({ SigningCertURL: `https://${CERT_HOST}/fr-par/sns/missing.crt` })));
+    expect(res.status).toBe(401);
+  });
+
+  it.each([`${CERT_URL}?v=1`, `${CERT_URL}#x`])('returns 401 for SigningCertURL %s without fetching it', async (url) => {
+    const res = await post(makeApp(), signed(notification({ SigningCertURL: url })));
+    expect(res.status).toBe(401);
+    expect(fetchCert).not.toHaveBeenCalled();
+  });
+
   it('accepts a signed Notification', async () => {
     const res = await post(makeApp(), signed(notification()), 'Notification');
     expect(res.status).toBe(200);

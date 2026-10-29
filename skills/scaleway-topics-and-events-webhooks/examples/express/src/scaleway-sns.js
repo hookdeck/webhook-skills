@@ -10,8 +10,8 @@
 
 const crypto = require('crypto');
 
-// Fields covered by the signature, in the (byte-sorted) order they are signed. A field that is
-// absent is skipped (only Subject is optional).
+// Fields covered by the signature, in the (byte-sorted) order they are signed. Only Subject is
+// optional: it is skipped when absent or null.
 const SIGNED_FIELDS = {
   Notification: ['Message', 'MessageId', 'Subject', 'Timestamp', 'TopicArn', 'Type'],
   SubscriptionConfirmation: ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type'],
@@ -30,12 +30,13 @@ const isObject = (x) => typeof x === 'object' && x !== null && !Array.isArray(x)
 
 /** "Key\nValue\n" for each signed field that is present; null if a field is missing or not a string. */
 function canonicalString(msg) {
+  // Object.hasOwn: a Type of "constructor" or "__proto__" must not reach Object.prototype
+  if (typeof msg.Type !== 'string' || !Object.hasOwn(SIGNED_FIELDS, msg.Type)) return null;
   const fields = SIGNED_FIELDS[msg.Type];
-  if (!fields) return null;
   let out = '';
   for (const key of fields) {
     const value = msg[key];
-    if (value === undefined && OPTIONAL_FIELDS.has(key)) continue;
+    if ((value === undefined || value === null) && OPTIONAL_FIELDS.has(key)) continue;
     if (typeof value !== 'string') return null;
     out += `${key}\n${value}\n`;
   }
@@ -74,7 +75,10 @@ function chainsToTrustedRoot(leaf, trustChain, now = Date.now()) {
   return false;
 }
 
+// No query string or fragment: the cache is keyed by URL, and "?x=1", "?x=2", ... would each fetch
+// and cache the same certificate.
 function allowedCertUrl(url, allowedHosts) {
+  if (url.includes('?') || url.includes('#')) return false;
   try {
     const u = new URL(url);
     return u.protocol === 'https:' && !u.username && !u.password && !u.port && allowedHosts.includes(u.hostname);
@@ -83,15 +87,21 @@ function allowedCertUrl(url, allowedHosts) {
   }
 }
 
-/** Default certificate fetcher: HTTPS only, no redirects, 5 s timeout, small responses only. */
+/**
+ * Default certificate fetcher: HTTPS only, no redirects, 5 s timeout, small responses only.
+ * Returns the PEM, or null when the host answers anything but 200 below 500 (e.g. 404: there is no
+ * such certificate, so the message is rejected with 401). Throws CertFetchError for network errors
+ * and 5xx, which are worth retrying (503).
+ */
 async function fetchCertificatePem(url) {
   let res;
   try {
-    res = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(5000) });
+    res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(5000) });
   } catch (err) {
     throw new CertFetchError(`Could not fetch ${url}: ${err.message}`);
   }
-  if (res.status !== 200) throw new CertFetchError(`Fetching ${url} returned HTTP ${res.status}`);
+  if (res.status >= 500) throw new CertFetchError(`Fetching ${url} returned HTTP ${res.status}`);
+  if (res.status !== 200) return null;
   const text = await res.text();
   if (text.length > 64 * 1024) throw new CertFetchError(`Certificate at ${url} is too large`);
   return text;
@@ -110,12 +120,16 @@ function createVerifier({
 }) {
   const trustChain = loadTrustChain(trustChainPem);
   if (trustChain.length === 0) throw new Error('The trust chain PEM holds no certificates');
+  // Only certificates that chain to the trust chain are cached, so this holds Scaleway's real
+  // signing certificates; the cap is a backstop.
   const cache = new Map();
+  const MAX_CACHED_CERTS = 50;
 
   async function signingCert(url) {
     const cached = cache.get(url);
     if (cached && chainsToTrustedRoot(cached, trustChain, now())) return cached;
     const pem = await fetchCert(url);
+    if (typeof pem !== 'string') return null;
     let cert;
     try {
       cert = new crypto.X509Certificate(pem);
@@ -123,13 +137,14 @@ function createVerifier({
       return null;
     }
     if (cert.publicKey.asymmetricKeyType !== 'rsa' || !chainsToTrustedRoot(cert, trustChain, now())) return null;
+    if (cache.size >= MAX_CACHED_CERTS) cache.delete(cache.keys().next().value);
     cache.set(url, cert);
     return cert;
   }
 
   /**
    * Returns { ok: true } or { ok: false, reason }. Throws CertFetchError when the certificate
-   * can't be downloaded (a transient failure: answer 5xx, not 401).
+   * can't be downloaded because of a network error or a 5xx (transient: answer 503, not 401).
    */
   return async function verifyMessage(msg) {
     if (!isObject(msg)) return { ok: false, reason: 'not an object' };
@@ -143,7 +158,7 @@ function createVerifier({
       return { ok: false, reason: 'SigningCertURL is not an allowed https URL' };
     }
     const cert = await signingCert(msg.SigningCertURL);
-    if (!cert) return { ok: false, reason: 'signing certificate does not chain to the trust chain' };
+    if (!cert) return { ok: false, reason: 'signing certificate is unavailable or does not chain to the trust chain' };
     const ok = crypto.verify('RSA-SHA1', Buffer.from(canonical, 'utf8'), cert.publicKey, Buffer.from(msg.Signature, 'base64'));
     return ok ? { ok: true } : { ok: false, reason: 'signature mismatch' };
   };
@@ -186,10 +201,12 @@ async function confirmSubscription(subscribeUrl) {
 module.exports = {
   CertFetchError,
   DEFAULT_CERT_HOSTS,
+  allowedCertUrl,
   canonicalString,
   chainsToTrustedRoot,
   confirmSubscription,
   createVerifier,
+  fetchCertificatePem,
   isValidSubscribeUrl,
   loadTrustChain,
 };

@@ -105,9 +105,14 @@ notes: >
   preserve order without duplicates. Respond 2xx quickly. TOPIC PINNING: a valid signature proves
   Scaleway sent the message, not that it came from the receiver's topic (anyone can subscribe a URL
   to their own topic), so the examples accept only the ARNs in SCALEWAY_SNS_TOPIC_ARNS (403
-  otherwise), checked before confirming. Responses: invalid JSON or envelope 400; bad signature or
-  untrusted cert 401; certificate download failure 503; unexpected topic 403; invalid SubscribeURL
-  400; a failed confirmation GET 502 so Scaleway can retry if it does. After verifying, Message is an arbitrary string the publisher chose: try JSON.parse
+  otherwise), checked before confirming; log a warning at startup when none are configured.
+  Responses: invalid JSON or envelope 400; bad signature, untrusted cert, or a cert URL answering
+  4xx 401; certificate download network error or 5xx 503; unexpected topic 403; invalid
+  SubscribeURL 400; a failed confirmation GET 502 so Scaleway can retry if it does. Look up the
+  signed-field list with an own-property check (a Type of "constructor"/"__proto__" must not throw);
+  treat "Subject": null as absent; reject a SigningCertURL with a query string or fragment (the cache
+  is keyed by URL). Two doc samples show SigningCertURL as http://<REDACTED-URL>/SNStest.crt; the
+  examples accept https only and say so. After verifying, Message is an arbitrary string the publisher chose: try JSON.parse
   but treat it as untrusted and type-check before reading into it. Express examples must read the
   raw body with express.raw({ type: '*/*' }) (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()). Hookdeck CLI: npx hookdeck-cli listen 3000 scaleway-topics-and-events --path

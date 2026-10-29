@@ -40,7 +40,7 @@ def create_app(
     allowed_cert_hosts: Optional[List[str]] = None,
     topic_arns: Optional[List[str]] = None,
     max_age_seconds: Optional[int] = None,
-    fetch_cert: Callable[[str], Awaitable[bytes]] = fetch_certificate_pem,
+    fetch_cert: Callable[[str], Awaitable[Optional[bytes]]] = fetch_certificate_pem,
     confirm: Callable[[str], Awaitable[bool]] = confirm_subscription,
     now: Callable[[], float] = time.time,
 ) -> FastAPI:
@@ -65,6 +65,11 @@ def create_app(
         now=now,
     )
     allowed_topics = topic_arns if topic_arns is not None else _list(os.getenv("SCALEWAY_SNS_TOPIC_ARNS"))
+    if not allowed_topics:
+        logger.warning(
+            "SCALEWAY_SNS_TOPIC_ARNS is not set: messages from ANY Scaleway topic are accepted, and "
+            "subscriptions to any topic are confirmed. Set it to your topic ARNs."
+        )
     max_age = max_age_seconds if max_age_seconds is not None else _max_age(os.getenv("SCALEWAY_SNS_MAX_AGE_SECONDS"))
 
     app = FastAPI()

@@ -39,12 +39,12 @@ Scaleway's docs show only the `SubscriptionConfirmation` envelope. The `Notifica
 Scaleway: "Your application should **not** directly trust the certificate pointed to by `SigningCertURL`. Instead, you must validate that this certificate was issued by our trusted Certificate Authority (CA), using the CA trust chain." So, for each message:
 
 1. Download the trust chain once (`https://messaging.s3.fr-par.scw.cloud/fr-par/sns/sns-trust-chain.pem`; the `nl-ams` file is currently identical). It holds the root `Scaleway MnQ Root` (valid to 2032) and the intermediate `Scaleway MnQ` (valid to 5 December 2027).
-2. Fetch `SigningCertURL` only over https from an allowed host (`messaging.s3.fr-par.scw.cloud` in Scaleway's docs), and cache it by URL.
+2. Fetch `SigningCertURL` only over https from an allowed host (`messaging.s3.fr-par.scw.cloud`, the host of the fr-par `SigningCertURL` in Scaleway's docs), with no query string or fragment, and cache it by URL. A 4xx from that host means the message is rejected (401); a network error or 5xx is worth a retry (503).
 3. Check that the certificate chains to that root, then RSA-SHA1 verify `Signature` over the SNS canonical string.
 
 ```javascript
 const crypto = require('crypto');
-// Signed fields, in this order; skip a field only if it's absent (only Subject is optional)
+// Signed fields, in this order; only Subject is optional (skipped when absent or null)
 const FIELDS = {
   Notification: ['Message', 'MessageId', 'Subject', 'Timestamp', 'TopicArn', 'Type'],
   SubscriptionConfirmation: ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type'],
@@ -52,10 +52,11 @@ const FIELDS = {
 FIELDS.UnsubscribeConfirmation = FIELDS.SubscriptionConfirmation;
 
 function verifySignature(msg, signingCert /* X509Certificate that chains to the trust chain */) {
-  if (msg.SignatureVersion !== '1' || !FIELDS[msg.Type]) return false;
+  // Object.hasOwn: a Type such as "constructor" must not reach Object.prototype
+  if (msg.SignatureVersion !== '1' || typeof msg.Type !== 'string' || !Object.hasOwn(FIELDS, msg.Type)) return false;
   let canonical = '';
   for (const k of FIELDS[msg.Type]) {
-    if (k === 'Subject' && msg[k] === undefined) continue;
+    if (k === 'Subject' && (msg[k] === undefined || msg[k] === null)) continue;
     if (typeof msg[k] !== 'string') return false;
     canonical += `${k}\n${msg[k]}\n`;
   }
@@ -67,7 +68,7 @@ The chain check (leaf → intermediate → self-signed root, each a CA, each in 
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-**Pin your topics.** A valid signature proves Scaleway sent the message, not that it came from *your* topic: anyone with a Scaleway account can subscribe your URL to their own topic. The examples accept only the ARNs in `SCALEWAY_SNS_TOPIC_ARNS` (403 otherwise), and check this before confirming a subscription.
+**Pin your topics.** A valid signature proves Scaleway sent the message, not that it came from *your* topic: anyone with a Scaleway account can subscribe your URL to their own topic. The examples accept only the ARNs in `SCALEWAY_SNS_TOPIC_ARNS` (403 otherwise), and check this before confirming a subscription. When it's unset they log a warning at startup, because they'll then accept, and confirm subscriptions to, any topic.
 
 ## Behind Hookdeck vs Direct
 
@@ -117,6 +118,8 @@ npx hookdeck-cli listen 3000 scaleway-topics-and-events --path /webhooks/scalewa
 ## What Isn't Verified Here
 
 The examples were tested against locally generated certificates that copy Scaleway's layout (root → intermediate → signing certificate), not against a live Scaleway delivery. The canonical string follows AWS SNS SignatureVersion 1, which Scaleway's docs point to. If real messages fail verification, log the failure reason and compare the envelope's fields with the canonical string in [references/verification.md](references/verification.md).
+
+Scaleway's docs disagree about `SigningCertURL`. One sample shows `https://messaging.s3.fr-par.scw.cloud/fr-par/sns/sns_certificate_[certSerialNumber].crt`; two others (the Python SDK and AWS CLI pages) show `http://<REDACTED-URL>/SNStest.crt`. The examples accept only https URLs on an allowed host, so if real deliveries carry an http URL or another host, they fail with "SigningCertURL is not an allowed https URL". Only fr-par's certificate URL appears in the docs; the nl-ams host is assumed to be the same.
 
 ## Reference Materials
 

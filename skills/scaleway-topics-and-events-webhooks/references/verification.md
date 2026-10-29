@@ -21,7 +21,7 @@ For the signature itself Scaleway points to AWS's SNS documentation, so the cano
 
 ## Canonical String
 
-Concatenate `Key\nValue\n` for each field below, in this order (byte order of the names). Skip `Subject` when it's absent; every other field must be present and a string.
+Concatenate `Key\nValue\n` for each field below, in this order (byte order of the names). Skip `Subject` when it's absent or `null`; every other field must be present and a string. Look the field list up with an own-property check (`Object.hasOwn` or a `Map`) so a `Type` such as `constructor` or `__proto__` is rejected instead of reaching `Object.prototype`.
 
 | `Type` | Fields |
 |--------|--------|
@@ -32,8 +32,8 @@ Use the values exactly as they appear in the parsed JSON (UTF-8). `UnsubscribeUR
 
 ## Certificate Checks
 
-1. **URL.** `SigningCertURL` must be `https`, with no credentials or port, on an allowed host. Scaleway's docs only show `messaging.s3.fr-par.scw.cloud` (for both regions), so that's the default. This blocks requests to arbitrary hosts (SSRF) before anything is downloaded. Scaleway doesn't promise the host will never change; `SCALEWAY_SNS_CERT_HOSTS` overrides it.
-2. **Download.** No redirects, a short timeout, a size limit. Cache by URL.
+1. **URL.** `SigningCertURL` must be `https`, with no credentials, no port other than 443, and no query string or fragment, on an allowed host. The only https `SigningCertURL` in Scaleway's docs is fr-par's, on `messaging.s3.fr-par.scw.cloud`, so that's the default. (Two other doc samples show `http://<REDACTED-URL>/SNStest.crt`; the examples reject http.) This blocks requests to arbitrary hosts (SSRF) before anything is downloaded, and rejecting `?`/`#` keeps one certificate from being cached under endless URL variants. Scaleway doesn't promise the host will never change; `SCALEWAY_SNS_CERT_HOSTS` overrides it.
+2. **Download.** No redirects, a short timeout, a size limit. A 4xx (or any non-200 below 500) means there's no such certificate: reject the message with 401, so a sender doesn't retry junk. A network error or 5xx is transient: answer 503. Cache only certificates that pass the chain check, keyed by URL (the examples also cap the cache at 50 entries).
 3. **Chain.** Walk from the signing certificate to an issuer in the trust-chain bundle, then on to a self-signed root that is also in the bundle. At each step check that the issuer is a CA (`basicConstraints CA:TRUE`), that names match and the signature verifies, and that the certificate is within its validity window. Scaleway's bundle has a root (`Scaleway MnQ Root`, to June 2032) and an intermediate (`Scaleway MnQ`, to 5 December 2027).
 4. **Key.** The signing certificate must have an RSA key.
 
