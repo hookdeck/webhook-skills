@@ -72,10 +72,11 @@ Sentry sends **no handshake, challenge or validation request**.
 - **`await request.body()` before anything else** — no Pydantic body model, no
   `await request.json()`. Sentry signs the exact bytes it sent, and some
   requests arrive with an **empty body** that a JSON parser would reject.
-- **Raw-body verification, not Sentry's published snippet.** The documented
-  `json.dumps(request.body)` re-serializes a parsed body. With Python's default
-  `", "` separators it doesn't even match ASCII payloads, and with
-  `ensure_ascii=False` it breaks on any accent or emoji. There is a test for it.
+- **Raw-body verification, never a re-serialized body.** Sentry's docs say to
+  compute the digest over the raw body and not to parse and re-serialize the
+  JSON. `json.dumps` of a parsed body with Python's default `", "` separators
+  doesn't even match ASCII payloads, and with `ensure_ascii=False` it breaks on
+  any accent or emoji. There is a test for it.
 - **Both signature headers** — `Sentry-Hook-Signature`, falling back to
   `Sentry-App-Signature` (UI-component external requests).
 - **`hmac.compare_digest`** for constant-time comparison; unlike Node's
@@ -94,7 +95,9 @@ Sentry sends **no handshake, challenge or validation request**.
 
 - **No SDK does this.** `sentry-sdk` is an error-reporting SDK and ships no
   webhook verification helper. Don't add it for this.
-- **Sentry does not retry.** A dropped delivery is lost — backfill via Sentry's
-  API. Repeated failures can **disable** the webhook.
+- **Sentry retries only briefly.** Up to 3 attempts, 5 minutes apart, for
+  connection errors, timeouts and 5xx other than 503/504; a 4xx or a 503/504
+  is not retried. After that a delivery is lost — backfill via Sentry's API.
+  Repeated failures can **disable** the webhook.
 - For the signature scheme in detail, see
   [../../references/verification.md](../../references/verification.md).

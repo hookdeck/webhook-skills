@@ -275,19 +275,30 @@ signature is **cryptographically valid forever**. Deduplication on `Request-ID`
 is the real replay protection — a timestamp tolerance check is at best a cheap
 dampener.
 
-## Delivery: 1 Second, and No Retries
+## Delivery: 1 Second, a Few Short Retries, Then Lost
 
 - **Respond within 1 second.** Sentry: *"Webhooks should respond within 1
   second. Otherwise, the response is considered a timeout."* Server-side this
   is the adjustable `sentry-apps.webhook.timeout.sec` option with a hard
   timeout alarm; treat 1s as the contract. Verify, enqueue, return 2xx, work
   afterwards.
-- **Sentry does not retry.** There is no documented retry schedule for
-  Integration Platform webhooks.
+- **Sentry retries a little, then gives up.** The docs don't describe a retry
+  schedule, but Sentry's webhook tasks run under
+  `Retry(times=3, delay=60 * 5)` on `RequestException` / `InnerTimeoutError`
+  ([`src/sentry/sentry_apps/tasks/sentry_apps.py`](https://github.com/getsentry/sentry/blob/5b39cf9bdbeb909c1cba5b13ad94d82fddc3ffec/src/sentry/sentry_apps/tasks/sentry_apps.py#L194-L199)):
+  up to **3 attempts, 5 minutes apart**.
+
+  | Your endpoint's result | Retried? |
+  |---|---|
+  | Connection error, request timeout | Yes |
+  | 5xx other than 503/504 | Yes |
+  | 4xx (including a 401 from a failed signature check) | No (`ClientError`) |
+  | 503 or 504 | No (`ApiHostError` / `ApiTimeoutError`) |
+  | Hard-deadline timeout (`WebhookTimeoutError`) | No |
 - **Repeated failures disable your webhook.** Failures trip a **circuit breaker
   per integration** and can disable the webhook entirely, with an email to the
   integration owner (`_notify_webhook_disabled` / `SentryAppWebhookDisabled`).
-- **So a dropped delivery is genuinely lost.** Design for it: ack fast, process
+- **After those few retries a delivery is lost.** Design for it: ack fast, process
   asynchronously, and **backfill via the Sentry API** (list issues, incidents,
   comments) rather than hoping for a redelivery.
 - Past deliveries are inspectable under the integration's **Dashboard /

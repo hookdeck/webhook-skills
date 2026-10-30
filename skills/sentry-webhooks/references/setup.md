@@ -60,8 +60,8 @@ subscribes you to **every action** of that resource.
 
 **Start with `issue` and `comment`.** Do not tick `error` unless you genuinely
 want every error event — it is a firehose, it requires a Business plan, and
-Sentry's 1-second response budget plus absence of retries makes it an
-unforgiving first subscription.
+Sentry's 1-second response budget plus its short retry window (a few retries,
+then the delivery is lost) makes it an unforgiving first subscription.
 
 ## Get Your Client Secret
 
@@ -89,7 +89,7 @@ delivery), not for verifying webhooks.
 
 > **Rotating the secret** invalidates signatures immediately. Support both the
 > old and new value during a rotation window if you cannot afford dropped
-> deliveries — Sentry does not retry.
+> deliveries — the resulting 401 is a 4xx, which Sentry does not retry.
 
 ## There Is No Handshake
 
@@ -145,8 +145,9 @@ webhook requests view: recent deliveries with the response status code your
 endpoint returned. This is where you confirm whether a delivery was attempted
 at all and what Sentry saw back.
 
-Because Sentry **does not retry**, this view is diagnostic only — you cannot
-replay from it. Backfill a missed event through Sentry's API instead.
+This view is diagnostic only — you cannot replay from it, and Sentry's own
+retries stop after a few attempts (none at all for a 4xx or a 503/504).
+Backfill a missed event through Sentry's API instead.
 
 ## Self-Hosted Sentry
 

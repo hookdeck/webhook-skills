@@ -106,19 +106,19 @@ add `@sentry/node` as a dependency for this.
 
 ## Gotchas That Actually Bite
 
-**Sentry's own published snippets are subtly wrong — use the raw body.** The
-documented JS snippet is `hmac.update(JSON.stringify(request.body), "utf8")`
-and the Python one is `body = json.dumps(request.body)`. Both **re-serialize a
-parsed body**. The Python one fails on any payload, because `json.dumps`
-defaults to `", "` / `": "` separators and Sentry signs compact JSON. The JS
-one only coincides with Sentry's bytes for ASCII-only payloads: Sentry
-serializes with simplejson configured `separators=(",", ":")` (compact,
-matching `JSON.stringify`) but leaves `ensure_ascii=True` in place, so Sentry
-emits `\uXXXX` escapes for any non-ASCII character while `JSON.stringify`
-emits the literal UTF-8 character. An issue title, comment or username with an
-accent or an emoji therefore produces a different byte string and the JS
-snippet **rejects a perfectly valid delivery**. Float and large-int formatting
-can diverge too.
+**Never re-serialize a parsed body — use the raw bytes.** Sentry's docs say so
+explicitly: *"Compute the digest over the raw body as received. Don't parse the
+JSON and serialize it again, because the result won't always match the bytes
+Sentry signed."* Their JS snippet takes the raw body from
+`express.raw({ type: "application/json" })` and the Python one passes
+`request.get_data()`. The reason is byte-level: Sentry serializes with
+simplejson configured `separators=(",", ":")` (compact) but leaves
+`ensure_ascii=True` in place, so it emits `\uXXXX` escapes for any non-ASCII
+character. Python's `json.dumps` defaults to `", "` / `": "` separators (never
+matches), and `JSON.stringify` emits the literal UTF-8 character, so an issue
+title, comment or username with an accent or an emoji produces a different
+byte string and a re-serializing handler **rejects a perfectly valid
+delivery**. Float and large-int formatting can diverge too.
 Verify against the raw body: `express.raw()`, `await request.text()`,
 `await request.body()`.
 
@@ -271,18 +271,24 @@ webhooks. They are the reason the `Sentry-App-Signature` header exists.
 - **`comment.*`** — `data.comment` (the text), `data.comment_id`,
   `data.issue_id`, `data.project_slug`, `data.timestamp`.
 
-## Delivery: Respond in 1 Second, There Are No Retries
+## Delivery: Respond in 1 Second, a Few Short Retries, Then Lost
 
 - **Respond within 1 second.** Sentry: *"Webhooks should respond within 1
   second. Otherwise, the response is considered a timeout."* (Server-side this
   is the adjustable `sentry-apps.webhook.timeout.sec` option with a hard
   timeout alarm — treat 1s as the contract.) Verify, enqueue, return 2xx.
-- **Sentry does not retry a failed Integration Platform webhook.** There is no
-  retry schedule. Repeated failures instead trip a **circuit breaker per
-  integration** and can **disable the webhook**, emailing the integration owner
+- **Sentry retries only briefly, and only some failures.** The docs don't
+  describe retries, but Sentry's webhook tasks run under
+  `Retry(times=3, delay=60 * 5)` on `RequestException` / `InnerTimeoutError`
+  ([`src/sentry/sentry_apps/tasks/sentry_apps.py`](https://github.com/getsentry/sentry/blob/5b39cf9bdbeb909c1cba5b13ad94d82fddc3ffec/src/sentry/sentry_apps/tasks/sentry_apps.py#L194-L199)):
+  up to **3 attempts, 5 minutes apart**, for connection errors, timeouts and
+  5xx responses **other than 503/504**. A **4xx**, a **503 or 504**, and the
+  hard-deadline timeout are **not retried**.
+- Repeated failures also trip a **circuit breaker per integration** and can
+  **disable the webhook**, emailing the integration owner
   (`_notify_webhook_disabled` / `SentryAppWebhookDisabled`).
-- **A dropped delivery is genuinely lost.** Ack fast, process asynchronously,
-  and **backfill via the Sentry API** rather than relying on redelivery.
+- **After those few retries a delivery is lost.** Ack fast, process
+  asynchronously, and **backfill via the Sentry API** for anything you missed.
 - Past deliveries are inspectable under the integration's **Dashboard /
   webhook requests** view, which records the status code.
 
@@ -345,9 +351,9 @@ an issue to get a real, signed delivery. (Use `8000` for the FastAPI example.)
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) — Envelope, the header-plus-action routing rule, every resource and action, payload shapes, delivery and the no-retry circuit breaker
+- [references/overview.md](references/overview.md) — Envelope, the header-plus-action routing rule, every resource and action, payload shapes, delivery, the short retry window and the circuit breaker
 - [references/setup.md](references/setup.md) — Creating an internal vs public integration, finding the Client Secret, selecting resources, self-hosted, the other webhook surfaces
-- [references/verification.md](references/verification.md) — `Sentry-Hook-Signature` byte by byte, `Sentry-App-Signature`, raw body vs the docs' broken snippets, empty bodies, replay, debugging failures
+- [references/verification.md](references/verification.md) — `Sentry-Hook-Signature` byte by byte, `Sentry-App-Signature`, raw body vs re-serialized JSON, empty bodies, replay, debugging failures
 
 ## Attribution
 
@@ -360,12 +366,12 @@ When using this skill, add this comment at the top of generated files:
 
 ## Recommended: webhook-handler-patterns
 
-We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one. Sentry's 1-second budget and **complete absence of retries** make these especially relevant:
+We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one. Sentry's 1-second budget and **short retry window** (a few retries, then the delivery is lost) make these especially relevant:
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle asynchronously third
 - [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Key on the `Request-ID` header; the body has no delivery id
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
-- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Sentry retries nothing, so your own queue *is* the retry layer
+- [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Sentry retries only a few times over ~10 minutes, so your own queue is the real retry layer
 
 ## Related Skills
 
@@ -384,4 +390,4 @@ We recommend installing the [webhook-handler-patterns](https://github.com/hookde
 - [openai-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/openai-webhooks) — Standard Webhooks (`webhook-id`/`webhook-timestamp`/`webhook-signature`), which Sentry does **not** use
 - [supabase-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/supabase-webhooks) — Another developer-platform provider
 - [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) — Handler sequence, idempotency, error handling, retry logic
-- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) — Webhook infrastructure that replaces your queue — guaranteed delivery, automatic retries, replay, rate limiting, and observability for your webhook handlers. Especially valuable for Sentry, which retries nothing itself
+- [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) — Webhook infrastructure that replaces your queue — guaranteed delivery, automatic retries, replay, rate limiting, and observability for your webhook handlers. Especially valuable for Sentry, which retries only briefly itself

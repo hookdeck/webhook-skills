@@ -328,7 +328,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * Dispatch a verified PagerDuty V3 event.
  *
  * Route on `event.event_type`; use `event.data.type` to pick the data schema.
- * `event.resource_type` is the root resource (incident or service) and can
+ * `event.resource_type` is the root resource (incident, service or scribe) and can
  * differ from the more specific `data.type`.
  */
 export async function handleEvent(event: PagerDutyEvent): Promise<void> {

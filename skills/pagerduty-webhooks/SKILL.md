@@ -198,7 +198,7 @@ A V3 payload contains exactly **one** `event` object by design.
 |---|---|---|
 | `event.id` | String | Unique event id. Usable for de-duplication. |
 | `event.event_type` | String | e.g. `incident.priority_updated`. **Route on this.** |
-| `event.resource_type` | String | Root resource — currently `incident` or `service`. Can differ from `data.type`. |
+| `event.resource_type` | String | Root resource — currently `incident`, `service` or `scribe`. Can differ from `data.type`. |
 | `event.occurred_at` | DateTime | ISO 8601. |
 | `event.agent` | Object or `null` | [Resource Reference](https://docs.pagerduty.com/developer/resource-references) for who/what initiated it. `null` often means automation. |
 | `event.client` | Object or `null` | e.g. `{"name": "PagerDuty"}`. |
@@ -279,6 +279,7 @@ an unrecognised `event_type`.**
 | `incident.action_invocation.terminated` | `incident_action_invocation` | Action invocation terminated |
 | `incident.workflow.started` | `incident_workflow_instance` | Incident workflow started |
 | `incident.workflow.completed` | `incident_workflow_instance` | Incident workflow completed |
+| `scribe.summary.created` | `scribe_summary` | Scribe Agent generated (or failed to generate) a meeting summary. **Only for `account_reference` subscriptions** |
 | `service.created` | `service` | Service created |
 | `service.updated` | `service` | Service updated |
 | `service.deleted` | `service` | Service deleted |
@@ -290,9 +291,9 @@ documented event — when someone calls
 `POST /webhook_subscriptions/{id}/ping`. It must fall through your default
 branch.
 
-Scoped-OAuth read scopes: `incidents.read` for every `incident.*` **except**
+Scoped-OAuth scopes: `incidents.read` for every `incident.*` **except**
 `incident.workflow.*`, which needs `incident_workflows.read`; `services.read`
-for `service.*`.
+for `service.*`; `pd_advance.write` for `scribe.summary.created`.
 
 ## Delivery Semantics
 
@@ -429,7 +430,7 @@ validation request — that ping is the only unsolicited delivery you can trigge
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) — Envelope, all 30 event types, every `event.data` shape, delivery semantics, idempotency
+- [references/overview.md](references/overview.md) — Envelope, all 31 event types, every `event.data` shape, delivery semantics, idempotency
 - [references/setup.md](references/setup.md) — Creating a subscription, capturing the secret, filters, custom headers, re-enabling a disabled subscription, secret rotation
 - [references/verification.md](references/verification.md) — `X-PagerDuty-Signature` byte by byte, multi-signature rotation, mutual TLS config, OAuth, IP safelists, debugging failures
 

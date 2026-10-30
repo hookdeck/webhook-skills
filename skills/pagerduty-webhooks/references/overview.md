@@ -34,7 +34,7 @@ common to every event; the inner `event.data` differs by `event.event_type`.
 | `event` | Object | The event that triggered the webhook. |
 | `event.id` | String | The unique id of the event. |
 | `event.event_type` | String | The type of the event, e.g. `incident.priority_updated`. **Route on this.** |
-| `event.resource_type` | String | The root resource type (leftmost part of `event_type`) — currently `incident` or `service`. **Can differ from the more specific `data.type`.** |
+| `event.resource_type` | String | The root resource type (leftmost part of `event_type`) — currently `incident`, `service` or `scribe`. **Can differ from the more specific `data.type`.** |
 | `event.occurred_at` | DateTime | An ISO 8601 datetime indicating when the event occurred. |
 | `event.agent` | [Resource Reference](https://docs.pagerduty.com/developer/resource-references) or `null` | Who or what initiated the event. A `null` value might indicate an event triggered via automation rather than a specific person. |
 | `event.client` | Object or `null` | Information about where the event was triggered, e.g. `{"name": "PagerDuty"}`. |
@@ -213,6 +213,15 @@ default branch and never throw on an unrecognised `event_type`.**
 | `service.deleted` | `service` | A service is deleted |
 | `service.custom_field_values.updated` | `service_field_values` | A service's custom field values are updated |
 
+### Scribe
+
+| Event | `data.type` | Triggered when |
+|---|---|---|
+| `scribe.summary.created` | `scribe_summary` | Scribe Agent generates (or fails to generate) a meeting summary |
+
+PagerDuty: *"Available only for `account_reference` webhooks."* A
+`service_reference` or `team_reference` subscription never receives it.
+
 ### Not subscribable: `pagey.ping`
 
 `pagey.ping` is **not** in the list above and cannot be put in a subscription's
@@ -225,13 +234,14 @@ end-to-end test of your verification path — carrying a `resource_type` and
 `data` shape unlike any documented event. **It has to fall through your default
 branch**, not throw.
 
-### Scoped OAuth read scopes
+### Scoped OAuth scopes
 
 | Events | Scope |
 |---|---|
 | All `incident.*` except `incident.workflow.*` | `incidents.read` |
 | `incident.workflow.started`, `incident.workflow.completed` | `incident_workflows.read` |
 | All `service.*` | `services.read` |
+| `scribe.summary.created` | `pd_advance.write` |
 
 ### Naming traps
 
@@ -457,6 +467,36 @@ current state.
     { "data_type": "string", "field_type": "single_value", "id": "P7DNIMB", "name": "example_field", "type": "field_value", "value": "Some old value" }
   ],
   "type": "service_field_values"
+}
+```
+
+### `scribe_summary`
+
+Sent with `scribe.summary.created`. On a summary-generation failure PagerDuty
+still emits the event, but *"`meeting_summary`/`key_points`/`next_steps`/`is_truncated`
+all set to `null`, and an `error` string instead"* — check `error` before
+reading the summary fields.
+
+```json
+{
+  "type": "scribe_summary",
+  "scribe_id": "60d4739b-4d24-436a-b514-dcbf2f4d90db",
+  "incident": {
+    "id": "PBAZLIU",
+    "type": "incident_reference",
+    "self": "https://api.pagerduty.com/incidents/PBAZLIU",
+    "html_url": "https://acme.pagerduty.com/incidents/PBAZLIU",
+    "summary": null
+  },
+  "meeting": { "id": "meeting-123", "type": "zoom" },
+  "meeting_summary": "The team discussed the ongoing incident and agreed on next steps.",
+  "key_points": "Root cause identified. Fix is being deployed.",
+  "next_steps": "Monitor error rates for the next hour.",
+  "is_truncated": false,
+  "meeting_participants": [
+    { "name": "Software Engineer", "email": "sw.engineer@example.com" }
+  ],
+  "error": null
 }
 ```
 

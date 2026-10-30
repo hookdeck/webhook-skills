@@ -85,20 +85,22 @@ is an ordinary signed event. (For a public integration the first one is
   exact bytes it sent. Mounting `express.json()` ahead of this route destroys
   the raw body *and* turns Sentry's legitimate **empty body** into `{}`, so
   `"{}"` gets signed instead of `""` and verification fails every time.
-- **Raw-body verification, not Sentry's published snippet.** The documented
-  `JSON.stringify(request.body)` approach re-serializes a parsed body and only
-  matches for ASCII-only payloads — Sentry emits `\uXXXX` escapes
-  (`ensure_ascii=True`) where `JSON.stringify` emits literal UTF-8. One accent
-  or emoji in an issue title and the snippet rejects a valid delivery. There is
-  a test for exactly this.
+- **Raw-body verification, never a re-serialized body.** Sentry's docs say to
+  compute the digest over the raw body and not to parse and re-serialize the
+  JSON. `JSON.stringify(req.body)` only matches for ASCII-only payloads —
+  Sentry emits `\uXXXX` escapes (`ensure_ascii=True`) where `JSON.stringify`
+  emits literal UTF-8. One accent or emoji in an issue title and a
+  re-serializing verifier rejects a valid delivery. There is a test for
+  exactly this.
 - **Both signature headers.** `Sentry-Hook-Signature` on subscribed webhooks,
   `Sentry-App-Signature` on UI-component external requests
   (`select_options.requested`, `external_issue.*`,
   `alert_rule_action.requested`) — same digest, different name. Sentry's own
   reference app checks both.
 - **Length guard before `crypto.timingSafeEqual`** — it throws on mismatched
-  lengths, and an uncaught throw becomes a 500. Sentry does not retry 500s;
-  repeated failures trip a circuit breaker that can **disable** your webhook.
+  lengths, and an uncaught throw becomes a 500. Sentry retries a 500 only a few
+  times; repeated failures trip a circuit breaker that can **disable** your
+  webhook.
 - **Fail closed** — an unset `SENTRY_CLIENT_SECRET` returns 500 (your server is
   misconfigured), a bad signature returns 401 (the request is wrong).
   Verification is never silently skipped.
@@ -124,8 +126,10 @@ is an ordinary signed event. (For a public integration the first one is
 - **No SDK does this.** `@sentry/*` are error-reporting SDKs and ship no
   webhook-signature verification helper, so verification here is a manual HMAC
   with `node:crypto`. Don't add `@sentry/node` for this.
-- **Sentry does not retry.** A dropped delivery is lost — backfill via Sentry's
-  API rather than waiting for a redelivery. Past deliveries and their status
+- **Sentry retries only briefly.** Up to 3 attempts, 5 minutes apart, for
+  connection errors, timeouts and 5xx other than 503/504; a 4xx or a 503/504
+  is not retried. After that a delivery is lost — backfill via Sentry's API
+  rather than waiting for a redelivery. Past deliveries and their status
   codes are visible under the integration's Dashboard.
 - For the signature scheme in detail, the empty-body case and the other Sentry
   webhook surfaces (service hooks, the unsigned legacy WebHooks plugin), see

@@ -77,10 +77,10 @@ def verify_sentry_signature(
     if not received:
         return False
 
-    # RAW BODY BYTES. Sentry's documented snippet is
-    # ``json.dumps(request.body)`` -- re-serializing a parsed body. Python's
+    # RAW BODY BYTES. Sentry's docs: "Compute the digest over the raw body as
+    # received. Don't parse the JSON and serialize it again." Python's
     # json.dumps defaults to ", " / ": " separators while Sentry signs compact
-    # JSON, so that snippet does not even match ASCII payloads here. Never
+    # JSON, so a re-serialized body does not even match ASCII payloads. Never
     # re-serialize; sign exactly what arrived.
     if raw_body is None:
         raw_body = b""
@@ -218,8 +218,9 @@ async def sentry_webhook(
     )
 
     # Acknowledge inside Sentry's 1-SECOND budget, then work asynchronously.
-    # Sentry does NOT retry, and repeated failures trip a circuit breaker that
-    # can disable the webhook. For real workloads, push to a proper queue.
+    # Sentry retries only a few times (none for a 4xx or a 503/504), and
+    # repeated failures trip a circuit breaker that can disable the webhook.
+    # For real workloads, push to a proper queue.
     background_tasks.add_task(handle_event, token, event)
 
     return _json_response({"received": True}, status.HTTP_200_OK)

@@ -109,28 +109,27 @@ notes: |
     The skill's verifier should try `sentry-hook-signature` and fall back
     to `sentry-app-signature`, comparing both in constant time.
 
-  - **RAW BODY IS MANDATORY — the docs' own snippets are subtly wrong.**
-    The documented JS snippet is
-    `hmac.update(JSON.stringify(request.body), "utf8")` and the Python one
-    is `body = json.dumps(request.body)`. Both re-serialize a parsed body.
-    The documented **Python** snippet never matches: stdlib `json.dumps`
-    defaults to `", "` / `": "` separators while Sentry signs compact JSON,
-    so it diverges on any payload with more than one key. The **JS**
-    snippet coincides with Sentry's bytes only for ASCII-only payloads,
-    because Sentry serializes with simplejson configured
-    `separators=(",", ":")` (compact, matching `JSON.stringify`) — see
-    `_default_encoder` in `src/sentry/utils/json.py` — but that encoder
-    leaves simplejson's `ensure_ascii=True` default in place, so Sentry
-    emits `\uXXXX` escapes for any non-ASCII character while
-    `JSON.stringify` emits the literal UTF-8 character. An issue title, a
-    comment, or a username containing an accent or an emoji therefore
-    produces a different byte string and the re-serializing snippet
-    rejects a perfectly valid delivery. Float and large-int formatting can
-    diverge too. **Every example in the skill must verify against the raw
-    body** (`express.raw()` / `req.rawBody`, `await request.text()`,
-    `await request.body()` / `request.get_data()`), and the skill should
-    say explicitly that the published snippets' re-serialization is a
-    latent bug rather than silently diverging from the docs.
+  - **RAW BODY IS MANDATORY — never re-serialize a parsed body.** The
+    docs say so explicitly: "Compute the digest over the raw body as
+    received. Don't parse the JSON and serialize it again, because the
+    result won't always match the bytes Sentry signed." The documented JS
+    snippet takes the raw body from `express.raw({ type: "application/json" })`
+    and the Python one passes Flask's `request.get_data()`. The byte-level
+    reason: stdlib `json.dumps` defaults to `", "` / `": "` separators while
+    Sentry signs compact JSON, so a Python re-serialization diverges on any
+    payload with more than one key. `JSON.stringify` coincides with
+    Sentry's bytes only for ASCII-only payloads, because Sentry serializes
+    with simplejson configured `separators=(",", ":")` (compact, matching
+    `JSON.stringify`) — see `_default_encoder` in `src/sentry/utils/json.py`
+    — but that encoder leaves simplejson's `ensure_ascii=True` default in
+    place, so Sentry emits `\uXXXX` escapes for any non-ASCII character
+    while `JSON.stringify` emits the literal UTF-8 character. An issue
+    title, a comment, or a username containing an accent or an emoji
+    therefore produces a different byte string and a re-serializing
+    verifier rejects a perfectly valid delivery. Float and large-int
+    formatting can diverge too. **Every example in the skill must verify
+    against the raw body** (`express.raw()` / `req.rawBody`,
+    `await request.text()`, `await request.body()` / `request.get_data()`).
 
   - **EMPTY-BODY DELIVERIES ARE REAL.** Some Sentry requests arrive with an
     empty body (`b''`) and `Content-Type: application/json`; the signature
@@ -314,16 +313,21 @@ notes: |
   DELIVERY — **respond within 1 second**; the docs state anything slower
   "is considered a timeout" (the server-side budget is an adjustable
   `sentry-apps.webhook.timeout.sec` option with a hard timeout alarm, so
-  treat 1s as the contract and ack immediately, queueing work). Sentry does
-  **not** retry a failed integration-platform webhook — there is no
-  documented retry schedule, and repeated failures instead trip a
-  circuit breaker per integration and can **disable the webhook**, with an
-  email to the integration owner (`_notify_webhook_disabled` /
-  `SentryAppWebhookDisabled` in
-  `src/sentry/utils/sentry_apps/webhooks.py`). So a dropped delivery is
-  genuinely lost: the skill should recommend acking fast, processing
-  asynchronously, and backfilling via the Sentry API rather than relying on
-  redelivery. Past deliveries are inspectable under the integration's
+  treat 1s as the contract and ack immediately, queueing work). Retries
+  are undocumented but short: the webhook tasks in
+  `src/sentry/sentry_apps/tasks/sentry_apps.py` run under
+  `Retry(times=3, delay=60 * 5)` on `RequestException` /
+  `InnerTimeoutError`, i.e. up to 3 attempts, 5 minutes apart, for
+  connection errors, timeouts and 5xx other than 503/504. A 4xx
+  (`ClientError`), a 503/504 (`ApiHostError` / `ApiTimeoutError`) and the
+  hard-deadline timeout (`WebhookTimeoutError`) are not retried. Repeated
+  failures also trip a circuit breaker per integration and can **disable
+  the webhook**, with an email to the integration owner
+  (`_notify_webhook_disabled` / `SentryAppWebhookDisabled` in
+  `src/sentry/utils/sentry_apps/webhooks.py`). So after a few short
+  retries a delivery is lost: the skill should recommend acking fast,
+  processing asynchronously, and backfilling via the Sentry API rather
+  than relying on redelivery. Past deliveries are inspectable under the integration's
   Dashboard / webhook requests view, which records the status code.
 testScenario:
   events:

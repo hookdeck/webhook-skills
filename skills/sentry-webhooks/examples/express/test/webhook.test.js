@@ -303,7 +303,7 @@ describe('verifySentrySignature (unit)', () => {
   });
 
   it('verifies a non-ASCII payload from the RAW bytes', () => {
-    // THE BUG IN SENTRY'S OWN SNIPPETS. Sentry serializes with
+    // WHY SENTRY'S DOCS SAY NOT TO RE-SERIALIZE. Sentry serializes with
     // ensure_ascii=True, so it emits \uXXXX escapes; JSON.stringify emits
     // literal UTF-8. Re-serializing a parsed body therefore produces different
     // bytes and rejects a VALID delivery. Verifying the raw bytes always works,
