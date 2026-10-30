@@ -136,6 +136,9 @@ function handleEvent(event: DeckEvent): void {
       break;
 
     // --- Event destinations ------------------------------------------------
+    // `deactivated` also fires when Deck auto-deactivates a destination after
+    // 100 consecutive failed deliveries. Subscribe a different destination to
+    // it, since the failing one may not receive it.
     case 'event_destination.activated':
     case 'event_destination.deactivated':
       console.log(`Destination ${data.id} is now ${data.status}`);

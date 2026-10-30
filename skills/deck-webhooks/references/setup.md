@@ -44,8 +44,24 @@ curl -X POST https://api.deck.co/v2/event-destinations \
 | `webhook.secret` | No | Your `whsec_` secret. **Omit it and you can't verify signatures** |
 | `webhook.custom_headers` | No | A **JSON-encoded string** of extra headers sent on every request, e.g. `"{\"X-Env\":\"prod\"}"` |
 | `events` | Yes | Event types to subscribe to, or `["*"]` for everything |
+| `filter` | No | Payload filter; only matching events are delivered (see below) |
 
 You can also create destinations in the Deck Console.
+
+`webhook` is one of ten destination types. The others are `aws_sqs`, `aws_kinesis`, `aws_s3`, `aws_eventbridge`, `gcp_pubsub`, `azure_servicebus`, `rabbitmq`, `hookdeck` and `cloudflare_queues`. Only `webhook` uses Standard Webhooks signing.
+
+### Optional: Filter Events
+
+On top of the `events` list, a destination can carry a `filter` matched against each event as you receive it (top-level `type`, `data`, and so on). Fields listed together must all match:
+
+```json
+{
+  "events": ["task_run.completed", "task_run.failed"],
+  "filter": { "data": { "agent_id": { "$in": ["agt_a1b2c3d4", "agt_e5f6g7h8"] } } }
+}
+```
+
+Operators: `$eq`, `$neq`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$startsWith`, `$endsWith`, `$exist`, `$and`, `$or`, `$not`. The filter applies to every delivery, including retries. A filter that excludes `test.ping` means test pings aren't delivered (the test call's status stays `pending`). Credential, session and source events carry no task or agent ID, so you can't route them by task or agent. Change it by sending a new `filter` in `PATCH /v2/event-destinations/{id}` (it replaces the old one); send `null` or `{}` to remove it.
 
 **Created a destination without a secret?** Deliveries to it can't be verified. Either create a new destination with a secret and delete the old one, or set a secret on the existing one. The OpenAPI spec's `PATCH /v2/event-destinations/{id}` request accepts a write-only `webhook.secret`, and `webhook.url` is required in that object:
 
@@ -67,7 +83,7 @@ Deck doesn't document the verification request's body or headers, and there's **
 |--------|---------|
 | `pending_verification` | Waiting for a successful response from your endpoint |
 | `active` | Receiving deliveries |
-| `inactive` | Disabled. `PATCH /v2/event-destinations/{id}` with `{"status": "active"}` resumes it |
+| `inactive` | Not receiving deliveries, either because you set it or because Deck [auto-deactivated](#maintenance-and-monitoring) it after repeated failures. `PATCH /v2/event-destinations/{id}` with `{"status": "active"}` resumes it |
 
 ## Step 4: Send a Test Event
 
@@ -130,12 +146,14 @@ Deck's prose docs describe the 24-hour rollover window but don't say which API c
 
 Webhook deliveries come from fixed IPs. If your endpoint is behind a firewall, allowlist them. **This is defence in depth. Always verify signatures as well.**
 
-- Current: `34.139.110.242`, `35.237.129.153`, `34.24.255.163`
-- Previous set, which may still be used until the **October 28, 2026** cutover: `136.107.35.242`, `34.86.136.110`, `136.107.63.48`
+- `34.139.110.242`
+- `35.237.129.153`
+- `34.24.255.163`
 
-Allowlist both sets until the cutover, then remove the old ones. Static IPs apply to webhook destinations only.
+Static IPs apply to webhook destinations only. Deck's docs previously listed a second set (`136.107.35.242`, `34.86.136.110`, `136.107.63.48`) as in use until an October 28, 2026 cutover. That date has passed and the current docs list only the three addresses above.
 
 ## Maintenance and Monitoring
 
 - **Planned downtime:** set the destination to `inactive` and back to `active` afterwards.
-- **Failed deliveries:** `GET /v2/event-destinations/{id}/event-deliveries?status=failure`. A delivery is marked `failure` once all retries (up to 10, exponential backoff from 30s) are exhausted. Persistent failures **don't** auto-disable a destination.
+- **Failed deliveries:** `GET /v2/event-destinations/{id}/event-deliveries?status=failure`. A delivery is marked `failure` once all retries (up to 10, exponential backoff from 30s) are exhausted.
+- **Automatic deactivation:** Deck's docs: *"If deliveries to a destination fail 100 times in a row, Deck sets the destination to `inactive` and stops delivering to it. A successful delivery resets the count."* Deck then sends `event_destination.deactivated`. The failing destination may not receive it, so subscribe a **different** destination (for example a queue or a second webhook) to that event and alert on it. To resume, fix the endpoint, then `PATCH /v2/event-destinations/{id}` with `{"status": "active"}`.
