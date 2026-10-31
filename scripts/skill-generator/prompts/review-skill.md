@@ -17,7 +17,15 @@ For each item in the checklist below, verify against {{PROVIDER}}'s official web
 
 ## Review Checklist
 
-### Signature Verification (CRITICAL - most common source of bugs)
+### Provider Authentication Method (determine FIRST)
+
+Before applying the checks below, identify {{PROVIDER}}'s actual webhook authentication method from its official documentation: signature verification (HMAC, etc.), URL-based token, basic auth, IP allowlisting, or none.
+
+- [ ] **Actual method documented** - Does the skill correctly document the provider's actual authentication method?
+- [ ] **Signature checks are conditional** - If the provider does NOT use signature verification (e.g. Postmark, which uses URL-based token authentication or basic auth), the Signature Verification items below are NOT APPLICABLE. Do not flag missing signature verification as critical for such providers; instead verify the skill documents the actual method correctly.
+- [ ] **verification.md matches the method** - `references/verification.md` must document the provider's actual authentication method. For providers without signature verification it must not claim signature verification exists.
+
+### Signature Verification (CRITICAL - most common source of bugs, only when the provider uses it)
 
 - [ ] **Algorithm is correct** - Is it HMAC-SHA256, HMAC-SHA1, ECDSA, or something else?
 - [ ] **Encoding is correct** - Is the signature hex-encoded or base64-encoded?
@@ -57,7 +65,7 @@ If the provider uses Standard Webhooks (Svix), verify:
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/SKILL.md` - Main skill file
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/overview.md` - Webhook overview
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/setup.md` - Setup instructions
-- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/verification.md` - Signature verification
+- [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/references/verification.md` - Authentication / verification for the provider's actual method (signature verification where applicable)
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/express/` - Express example (all files)
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/nextjs/` - Next.js example (all files)
 - [ ] `skills/{{PROVIDER_KEBAB}}-webhooks/examples/fastapi/` - FastAPI example (all files)
@@ -145,7 +153,7 @@ After reviewing, end your reply with a single fenced `json` block containing you
 
 **ALWAYS mark as CRITICAL:**
 - Missing required files (overview.md, setup.md, verification.md, examples)
-- Signature verification errors (wrong algorithm, wrong header, etc.)
+- Signature verification errors (wrong algorithm, wrong header, etc. — only when the provider actually uses signature verification)
 - Non-existent package versions (e.g., vitest 5.x, pytest 10.x)
 - Known security vulnerabilities
 
