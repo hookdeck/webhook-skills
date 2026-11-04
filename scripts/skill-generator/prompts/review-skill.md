@@ -19,10 +19,12 @@ For each item in the checklist below, verify against {{PROVIDER}}'s official web
 
 ### Provider Authentication Method (determine FIRST)
 
-Before applying the checks below, identify {{PROVIDER}}'s actual webhook authentication method from its official documentation: signature verification (HMAC, etc.), URL-based token, basic auth, IP allowlisting, or none.
+Before applying the checks below, identify {{PROVIDER}}'s actual webhook authentication method from its official documentation: signature verification (HMAC, etc.), URL-based token, basic auth, IP allowlisting, or none. Start from the "Important context" notes injected above (providers.yaml notes state the method for many providers) and confirm against the official docs linked above, citing the doc URL used to decide the method.
 
 - [ ] **Actual method documented** - Does the skill correctly document the provider's actual authentication method?
-- [ ] **Signature checks are conditional** - If the provider does NOT use signature verification (e.g. Postmark, which uses URL-based token authentication or basic auth), the Signature Verification items below are NOT APPLICABLE. Do not flag missing signature verification as critical for such providers; instead verify the skill documents the actual method correctly.
+- [ ] **Signature checks are conditional** - If the provider does NOT use signature verification, the Signature Verification items below are NOT APPLICABLE. Do not flag missing signature verification as critical for such providers; instead verify the skill documents the actual method correctly.
+- [ ] **Optional signing handled** - If signing is optional and off by default, the skill must document both states: no signature by default, and what changes when signing is enabled. Do not force a uses / doesn't-use verdict.
+- [ ] **Wrong method is critical** - If the skill claims the provider does not sign but it actually does, flag as CRITICAL: a missing verification check leaves webhooks unauthenticated. Cite the doc URL that establishes the real method.
 - [ ] **verification.md matches the method** - `references/verification.md` must document the provider's actual authentication method. For providers without signature verification it must not claim signature verification exists.
 
 ### Signature Verification (CRITICAL - most common source of bugs, only when the provider uses it)
@@ -80,11 +82,11 @@ If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplet
 
 ### Code Quality
 
-- [ ] **Raw body handling is correct per framework**
+- [ ] **Raw body handling is correct per framework** - only where the provider uses signature verification; otherwise verify the actual method's handling (URL token, basic auth, IP allowlist)
   - Express: `express.raw({ type: 'application/json' })`
   - Next.js: Reading from `request.text()` before `request.json()`
   - FastAPI: `await request.body()` before any JSON parsing
-- [ ] **Error responses use appropriate status codes** - 400 for invalid signature, not 500
+- [ ] **Error responses use appropriate status codes** - 400 for invalid signature, 401 for failed basic auth or token where that is the method, not 500
 - [ ] **Examples are idiomatic** - Code follows framework conventions
 
 ### Dependency Versions
@@ -113,7 +115,7 @@ If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplet
 
 ### SKILL.md inline-code shape (see AGENTS.md "Content Guidelines")
 
-- [ ] **Inline code is verification-core only** — `SKILL.md` should NOT contain the full Express/Next.js/FastAPI handler (route wiring, `app.post(...)`, event-type dispatch, error responses, env loading). Those belong in `examples/<framework>/`. Flag any full-handler block in `SKILL.md` and propose replacing it with the verification core (~10-20 lines per language: HMAC compute, header parse, timing-safe compare) plus a pointer to the examples.
+- [ ] **Inline code is verification-core only** — `SKILL.md` should NOT contain the full Express/Next.js/FastAPI handler (route wiring, `app.post(...)`, event-type dispatch, error responses, env loading). Those belong in `examples/<framework>/`. Flag any full-handler block in `SKILL.md` and propose replacing it with the verification core (~10-20 lines per language: the provider's actual authentication check — HMAC compute, header parse, timing-safe compare where the provider signs; token or basic-auth check otherwise) plus a pointer to the examples.
 - [ ] **Pointer to examples present** — directly after the verification snippet(s), `SKILL.md` should include a link block of the form:
 
   ```markdown
@@ -122,7 +124,7 @@ If ANY of these files are missing, flag as **CRITICAL** - the skill is incomplet
 
   If the pointer is missing, flag it and propose adding it.
 
-When fixing a violation: keep the verification snippet's algorithm/header parse/timing-safe compare exactly as it is in the example handler (this is the part that must match — verified by the "SKILL.md code snippets match example code" check above). Strip everything around it (route registration, switch statements over event types, response sending) and replace with the pointer block. Reference `skills/stripe-webhooks/SKILL.md`, `skills/github-webhooks/SKILL.md`, and `skills/shopify-webhooks/SKILL.md` for the worked pattern.
+When fixing a violation: keep the verification snippet's authentication check exactly as it is in the example handler (this is the part that must match — verified by the "SKILL.md code snippets match example code" check above). Strip everything around it (route registration, switch statements over event types, response sending) and replace with the pointer block. Reference `skills/stripe-webhooks/SKILL.md`, `skills/github-webhooks/SKILL.md`, and `skills/shopify-webhooks/SKILL.md` for the worked pattern.
 
 ## Output Format
 
@@ -154,6 +156,7 @@ After reviewing, end your reply with a single fenced `json` block containing you
 **ALWAYS mark as CRITICAL:**
 - Missing required files (overview.md, setup.md, verification.md, examples)
 - Signature verification errors (wrong algorithm, wrong header, etc. — only when the provider actually uses signature verification)
+- Wrong authentication method (skill claims no signing where the provider actually signs)
 - Non-existent package versions (e.g., vitest 5.x, pytest 10.x)
 - Known security vulnerabilities
 
@@ -162,7 +165,7 @@ After reviewing, end your reply with a single fenced `json` block containing you
 
 **Categories:**
 - `structure` - Missing required files or directories
-- `verification` - Signature verification issues
+- `verification` - Authentication/verification issues (signature verification only where the provider signs)
 - `events` - Event type or payload issues
 - `documentation` - Documentation accuracy issues
 - `code` - Code quality or correctness issues
