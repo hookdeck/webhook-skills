@@ -133,7 +133,7 @@ describe('Postmark Webhook Route', () => {
       const openEvent = {
         RecordType: 'Open',
         MessageID: 'test-message-id',
-        Email: 'user@example.com',
+        Recipient: 'user@example.com',
         ReceivedAt: '2024-01-15T10:30:00Z',
         Platform: 'Gmail',
         UserAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -150,8 +150,8 @@ describe('Postmark Webhook Route', () => {
       const clickEvent = {
         RecordType: 'Click',
         MessageID: 'test-message-id',
-        Email: 'user@example.com',
-        ClickedAt: '2024-01-15T10:30:00Z',
+        Recipient: 'user@example.com',
+        ReceivedAt: '2024-01-15T10:30:00Z',
         OriginalLink: 'https://example.com/verify',
         ClickLocation: 'HTML',
         Platform: 'Gmail',
@@ -168,7 +168,7 @@ describe('Postmark Webhook Route', () => {
       const deliveryEvent = {
         RecordType: 'Delivery',
         MessageID: 'test-message-id',
-        Email: 'user@example.com',
+        Recipient: 'user@example.com',
         DeliveredAt: '2024-01-15T10:30:00Z',
         ServerID: 23,
         Details: 'Test details',
@@ -184,7 +184,7 @@ describe('Postmark Webhook Route', () => {
       const subscriptionEvent = {
         RecordType: 'SubscriptionChange',
         MessageID: 'test-message-id',
-        Email: 'user@example.com',
+        Recipient: 'user@example.com',
         ChangedAt: '2024-01-15T10:30:00Z',
         SuppressionReason: 'ManualSuppression',
       };

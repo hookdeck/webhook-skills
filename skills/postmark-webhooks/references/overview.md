@@ -49,7 +49,7 @@ Postmark sends one event per webhook request (not batched). All events include:
 
 ### Open Event Fields
 
-- `Email` - Recipient email address
+- `Recipient` - Recipient email address
 - `ReceivedAt` - When the email was opened
 - `Platform` - Email client platform
 - `UserAgent` - Browser/client user agent
@@ -57,8 +57,8 @@ Postmark sends one event per webhook request (not batched). All events include:
 
 ### Click Event Fields
 
-- `Email` - Recipient email address
-- `ClickedAt` - When the link was clicked
+- `Recipient` - Recipient email address
+- `ReceivedAt` - When the link was clicked
 - `OriginalLink` - The actual link URL
 - `Platform` - Email client platform
 - `UserAgent` - Browser user agent
@@ -66,7 +66,7 @@ Postmark sends one event per webhook request (not batched). All events include:
 
 ### Inbound Event Fields
 
-- `Email` - Sender email address
+- `From` - Sender email address
 - `FromFull` - Full sender info (name and email)
 - `ToFull` - Full recipient info array
 - `Subject` - Email subject line

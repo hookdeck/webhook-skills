@@ -53,7 +53,7 @@ class SpamComplaintEvent(PostmarkEvent):
 
 class OpenEvent(PostmarkEvent):
     RecordType: Literal["Open"]
-    Email: str
+    Recipient: str
     ReceivedAt: str
     Platform: Optional[str] = None
     UserAgent: Optional[str] = None
@@ -61,8 +61,8 @@ class OpenEvent(PostmarkEvent):
 
 class ClickEvent(PostmarkEvent):
     RecordType: Literal["Click"]
-    Email: str
-    ClickedAt: str
+    Recipient: str
+    ReceivedAt: str
     OriginalLink: str
     ClickLocation: Optional[str] = None
     Platform: Optional[str] = None
@@ -71,14 +71,14 @@ class ClickEvent(PostmarkEvent):
 
 class DeliveryEvent(PostmarkEvent):
     RecordType: Literal["Delivery"]
-    Email: str
+    Recipient: str
     DeliveredAt: str
     Details: Optional[str] = None
 
 
 class SubscriptionChangeEvent(PostmarkEvent):
     RecordType: Literal["SubscriptionChange"]
-    Email: str
+    Recipient: str
     ChangedAt: str
     SuppressionReason: Optional[str] = None
 
@@ -191,7 +191,7 @@ async def handle_spam_complaint(event: SpamComplaintEvent):
 
 async def handle_open(event: OpenEvent):
     """Process email open events."""
-    logger.info(f"Email opened: {event.Email}")
+    logger.info(f"Email opened: {event.Recipient}")
     logger.info(f"  Opened at: {event.ReceivedAt}")
     if event.Platform:
         logger.info(f"  Platform: {event.Platform}")
@@ -206,8 +206,8 @@ async def handle_open(event: OpenEvent):
 
 async def handle_click(event: ClickEvent):
     """Process link click events."""
-    logger.info(f"Link clicked: {event.Email}")
-    logger.info(f"  Clicked at: {event.ClickedAt}")
+    logger.info(f"Link clicked: {event.Recipient}")
+    logger.info(f"  Clicked at: {event.ReceivedAt}")
     logger.info(f"  Link: {event.OriginalLink}")
     if event.ClickLocation:
         logger.info(f"  Click location: {event.ClickLocation}")
@@ -220,7 +220,7 @@ async def handle_click(event: ClickEvent):
 
 async def handle_delivery(event: DeliveryEvent):
     """Process delivery events."""
-    logger.info(f"Email delivered: {event.Email}")
+    logger.info(f"Email delivered: {event.Recipient}")
     logger.info(f"  Delivered at: {event.DeliveredAt}")
     logger.info(f"  Server: {event.ServerID}")
 
@@ -232,7 +232,7 @@ async def handle_delivery(event: DeliveryEvent):
 
 async def handle_subscription_change(event: SubscriptionChangeEvent):
     """Process subscription change events."""
-    logger.info(f"Subscription change: {event.Email}")
+    logger.info(f"Subscription change: {event.Recipient}")
     logger.info(f"  Changed at: {event.ChangedAt}")
     if event.SuppressionReason:
         logger.info(f"  Suppression reason: {event.SuppressionReason}")

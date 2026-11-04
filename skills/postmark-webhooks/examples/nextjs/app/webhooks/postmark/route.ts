@@ -32,7 +32,7 @@ interface SpamComplaintEvent extends PostmarkEvent {
 
 interface OpenEvent extends PostmarkEvent {
   RecordType: 'Open';
-  Email: string;
+  Recipient: string;
   ReceivedAt: string;
   Platform?: string;
   UserAgent?: string;
@@ -40,8 +40,8 @@ interface OpenEvent extends PostmarkEvent {
 
 interface ClickEvent extends PostmarkEvent {
   RecordType: 'Click';
-  Email: string;
-  ClickedAt: string;
+  Recipient: string;
+  ReceivedAt: string;
   OriginalLink: string;
   ClickLocation?: string;
   Platform?: string;
@@ -50,14 +50,14 @@ interface ClickEvent extends PostmarkEvent {
 
 interface DeliveryEvent extends PostmarkEvent {
   RecordType: 'Delivery';
-  Email: string;
+  Recipient: string;
   DeliveredAt: string;
   Details?: string;
 }
 
 interface SubscriptionChangeEvent extends PostmarkEvent {
   RecordType: 'SubscriptionChange';
-  Email: string;
+  Recipient: string;
   ChangedAt: string;
   SuppressionReason?: string;
 }
@@ -148,7 +148,7 @@ async function handleSpamComplaint(event: SpamComplaintEvent) {
 }
 
 async function handleOpen(event: OpenEvent) {
-  console.log(`Email opened: ${event.Email}`);
+  console.log(`Email opened: ${event.Recipient}`);
   console.log(`  Opened at: ${event.ReceivedAt}`);
   if (event.Platform) console.log(`  Platform: ${event.Platform}`);
   if (event.UserAgent) console.log(`  User Agent: ${event.UserAgent}`);
@@ -160,8 +160,8 @@ async function handleOpen(event: OpenEvent) {
 }
 
 async function handleClick(event: ClickEvent) {
-  console.log(`Link clicked: ${event.Email}`);
-  console.log(`  Clicked at: ${event.ClickedAt}`);
+  console.log(`Link clicked: ${event.Recipient}`);
+  console.log(`  Clicked at: ${event.ReceivedAt}`);
   console.log(`  Link: ${event.OriginalLink}`);
   if (event.ClickLocation) console.log(`  Click location: ${event.ClickLocation}`);
 
@@ -172,7 +172,7 @@ async function handleClick(event: ClickEvent) {
 }
 
 async function handleDelivery(event: DeliveryEvent) {
-  console.log(`Email delivered: ${event.Email}`);
+  console.log(`Email delivered: ${event.Recipient}`);
   console.log(`  Delivered at: ${event.DeliveredAt}`);
   console.log(`  Server: ${event.ServerID}`);
 
@@ -183,7 +183,7 @@ async function handleDelivery(event: DeliveryEvent) {
 }
 
 async function handleSubscriptionChange(event: SubscriptionChangeEvent) {
-  console.log(`Subscription change: ${event.Email}`);
+  console.log(`Subscription change: ${event.Recipient}`);
   console.log(`  Changed at: ${event.ChangedAt}`);
   if (event.SuppressionReason) console.log(`  Suppression reason: ${event.SuppressionReason}`);
 

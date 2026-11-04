@@ -44,7 +44,7 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
   }
 
   // Process event
-  console.log(`Received ${event.RecordType} event for ${event.Email}`);
+  console.log(`Received ${event.RecordType} event for message ${event.MessageID}`);
 
   res.sendStatus(200);
 });
@@ -86,27 +86,27 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
       break;
 
     case 'Open':
-      console.log(`Email opened: ${event.Email} at ${event.ReceivedAt}`);
+      console.log(`Email opened: ${event.Recipient} at ${event.ReceivedAt}`);
       // Track engagement
       break;
 
     case 'Click':
-      console.log(`Link clicked: ${event.Email} - ${event.OriginalLink}`);
+      console.log(`Link clicked: ${event.Recipient} - ${event.OriginalLink}`);
       // Track click-through rate
       break;
 
     case 'Delivery':
-      console.log(`Delivered: ${event.Email} at ${event.DeliveredAt}`);
+      console.log(`Delivered: ${event.Recipient} at ${event.DeliveredAt}`);
       // Confirm delivery
       break;
 
     case 'SubscriptionChange':
-      console.log(`Subscription change: ${event.Email} - ${event.ChangedAt}`);
+      console.log(`Subscription change: ${event.Recipient} - ${event.ChangedAt}`);
       // Update subscription preferences
       break;
 
     case 'Inbound':
-      console.log(`Inbound email from: ${event.Email} - Subject: ${event.Subject}`);
+      console.log(`Inbound email from: ${event.From} - Subject: ${event.Subject}`);
       // Process incoming email
       break;
 
@@ -129,11 +129,11 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 |-------|------------|-------------|------------|
 | Bounce | `Bounce` | Hard/soft bounce or blocked email | Email, Type, TypeCode, Description |
 | Spam Complaint | `SpamComplaint` | Recipient marked as spam | Email, BouncedAt |
-| Open | `Open` | Email opened (requires open tracking) | Email, ReceivedAt, Platform, UserAgent |
-| Click | `Click` | Link clicked (requires click tracking) | Email, ClickedAt, OriginalLink |
-| Delivery | `Delivery` | Successfully delivered | Email, DeliveredAt, Details |
-| Subscription Change | `SubscriptionChange` | Unsubscribe/resubscribe | Email, ChangedAt, SuppressionReason |
-| Inbound | `Inbound` | Incoming email received | Email, FromFull, Subject, TextBody, HtmlBody |
+| Open | `Open` | Email opened (requires open tracking) | Recipient, ReceivedAt, Platform, UserAgent |
+| Click | `Click` | Link clicked (requires click tracking) | Recipient, ReceivedAt, OriginalLink |
+| Delivery | `Delivery` | Successfully delivered | Recipient, DeliveredAt, Details |
+| Subscription Change | `SubscriptionChange` | Unsubscribe/resubscribe | Recipient, ChangedAt, SuppressionReason |
+| Inbound | `Inbound` | Incoming email received | From, FromFull, Subject, TextBody, HtmlBody |
 | SMTP API Error | `SMTP API Error` | SMTP API call failed | Email, Error, ErrorCode, MessageID |
 
 ## Environment Variables

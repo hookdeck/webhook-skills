@@ -82,7 +82,7 @@ function handleSpamComplaint(event) {
 }
 
 function handleOpen(event) {
-  console.log(`Email opened: ${event.Email}`);
+  console.log(`Email opened: ${event.Recipient}`);
   console.log(`  Opened at: ${event.ReceivedAt}`);
   console.log(`  Platform: ${event.Platform}`);
   console.log(`  User Agent: ${event.UserAgent}`);
@@ -94,8 +94,8 @@ function handleOpen(event) {
 }
 
 function handleClick(event) {
-  console.log(`Link clicked: ${event.Email}`);
-  console.log(`  Clicked at: ${event.ClickedAt}`);
+  console.log(`Link clicked: ${event.Recipient}`);
+  console.log(`  Clicked at: ${event.ReceivedAt}`);
   console.log(`  Link: ${event.OriginalLink}`);
   console.log(`  Click location: ${event.ClickLocation}`);
 
@@ -106,7 +106,7 @@ function handleClick(event) {
 }
 
 function handleDelivery(event) {
-  console.log(`Email delivered: ${event.Email}`);
+  console.log(`Email delivered: ${event.Recipient}`);
   console.log(`  Delivered at: ${event.DeliveredAt}`);
   console.log(`  Server: ${event.ServerID}`);
 
@@ -117,7 +117,7 @@ function handleDelivery(event) {
 }
 
 function handleSubscriptionChange(event) {
-  console.log(`Subscription change: ${event.Email}`);
+  console.log(`Subscription change: ${event.Recipient}`);
   console.log(`  Changed at: ${event.ChangedAt}`);
   console.log(`  Suppression reason: ${event.SuppressionReason}`);
 

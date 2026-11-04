@@ -126,7 +126,7 @@ class TestPostmarkWebhook:
         open_event = {
             "RecordType": "Open",
             "MessageID": "test-message-id",
-            "Email": "user@example.com",
+            "Recipient": "user@example.com",
             "ReceivedAt": "2024-01-15T10:30:00Z",
             "Platform": "Gmail",
             "UserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -143,8 +143,8 @@ class TestPostmarkWebhook:
         click_event = {
             "RecordType": "Click",
             "MessageID": "test-message-id",
-            "Email": "user@example.com",
-            "ClickedAt": "2024-01-15T10:30:00Z",
+            "Recipient": "user@example.com",
+            "ReceivedAt": "2024-01-15T10:30:00Z",
             "OriginalLink": "https://example.com/verify",
             "ClickLocation": "HTML",
             "Platform": "Gmail",
@@ -162,7 +162,7 @@ class TestPostmarkWebhook:
         delivery_event = {
             "RecordType": "Delivery",
             "MessageID": "test-message-id",
-            "Email": "user@example.com",
+            "Recipient": "user@example.com",
             "DeliveredAt": "2024-01-15T10:30:00Z",
             "ServerID": 23,
             "Details": "Test details"
@@ -178,7 +178,7 @@ class TestPostmarkWebhook:
         subscription_event = {
             "RecordType": "SubscriptionChange",
             "MessageID": "test-message-id",
-            "Email": "user@example.com",
+            "Recipient": "user@example.com",
             "ChangedAt": "2024-01-15T10:30:00Z",
             "SuppressionReason": "ManualSuppression",
             "ServerID": 23
