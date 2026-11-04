@@ -157,6 +157,7 @@ After reviewing, end your reply with a single fenced `json` block containing you
 - Missing required files (overview.md, setup.md, verification.md, examples)
 - Signature verification errors (wrong algorithm, wrong header, etc. — only when the provider actually uses signature verification)
 - Wrong authentication method (skill claims no signing where the provider actually signs)
+- Authentication bypass in the provider's actual method (the check fails open, e.g. accepts requests when the token or credentials env var is unset, or a token/basic-auth check that never rejects)
 - Non-existent package versions (e.g., vitest 5.x, pytest 10.x)
 - Known security vulnerabilities
 
