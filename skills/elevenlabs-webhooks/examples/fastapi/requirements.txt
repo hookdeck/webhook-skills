@@ -3,4 +3,4 @@ uvicorn[standard]==0.24.0
 python-dotenv==1.0.0
 httpx>=0.28.1
 pytest>=9.0.2
-pytest-asyncio==0.21.1
+pytest-asyncio>=0.25.0
