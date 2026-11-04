@@ -6,7 +6,7 @@ process.env.GITEA_WEBHOOK_SECRET = 'test_gitea_secret';
 
 const { app, verifyGiteaWebhook } = require('../src/index');
 
-// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the raw body
+// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the JSON payload (the raw body for POST + application/json)
 function sign(payload, secret) {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }

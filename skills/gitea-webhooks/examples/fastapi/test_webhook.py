@@ -16,7 +16,7 @@ SECRET = os.environ["GITEA_WEBHOOK_SECRET"]
 
 
 def sign(payload: bytes, secret: str = SECRET) -> str:
-    """Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the raw body."""
+    """Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the JSON payload (the raw body for POST + application/json)."""
     return hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
 

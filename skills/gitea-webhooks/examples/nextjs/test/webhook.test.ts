@@ -9,7 +9,7 @@ beforeAll(() => {
   process.env.GITEA_WEBHOOK_SECRET = secret;
 });
 
-// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the raw body
+// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the JSON payload (the raw body for POST + application/json)
 function sign(payload: string, key: string): string {
   return crypto.createHmac('sha256', key).update(payload).digest('hex');
 }
