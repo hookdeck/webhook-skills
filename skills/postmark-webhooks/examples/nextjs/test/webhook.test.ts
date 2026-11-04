@@ -64,6 +64,20 @@ describe('Postmark Webhook Route', () => {
 
       expect(response.status).toBe(401);
     });
+
+    it('should reject requests when no token is configured', async () => {
+      delete process.env.POSTMARK_WEBHOOK_TOKEN;
+
+      const payload = {
+        RecordType: 'Bounce',
+        MessageID: 'test',
+      };
+
+      const request = createRequest(payload);
+      const response = await POST(request);
+
+      expect(response.status).toBe(401);
+    });
   });
 
   describe('Payload Validation', () => {

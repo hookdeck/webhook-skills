@@ -56,8 +56,10 @@ https://yourdomain.com/webhooks/postmark?token=your-secret-token
 // Express
 app.post('/webhooks/postmark', express.json(), (req, res) => {
   const token = req.query.token;
+  const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
-  if (token !== process.env.POSTMARK_WEBHOOK_TOKEN) {
+  // Fail closed: never accept a request when no token is configured
+  if (!expectedToken || token !== expectedToken) {
     return res.status(401).send('Unauthorized');
   }
 
@@ -80,8 +82,10 @@ While not officially documented, you can implement your own header-based authent
 app.post('/webhooks/postmark', express.json(), (req, res) => {
   // Could also check a custom header if you proxy the request
   const token = req.headers['x-webhook-token'] || req.query.token;
+  const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
-  if (token !== process.env.POSTMARK_WEBHOOK_TOKEN) {
+  // Fail closed: never accept a request when no token is configured
+  if (!expectedToken || token !== expectedToken) {
     return res.status(401).send('Unauthorized');
   }
 
