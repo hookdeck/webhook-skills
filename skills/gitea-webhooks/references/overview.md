@@ -27,7 +27,7 @@ Other events: `fork`, `wiki`, `repository`, `package`, `status`, `workflow_run`,
 | `X-Gitea-Delivery` | Unique delivery UUID |
 | `X-Gitea-Event` | Normalized event name |
 | `X-Gitea-Event-Type` | Specific trigger |
-| `X-Gitea-Signature` | Hex HMAC-SHA256 of the raw body |
+| `X-Gitea-Signature` | Hex HMAC-SHA256 of the JSON payload (the raw body for `POST` + JSON) |
 | `X-Hub-Signature-256` | `sha256=<hex>`, GitHub-compatible |
 | `X-Hub-Signature` | `sha1=<hex>`, legacy |
 | `X-Gogs-*`, `X-GitHub-*` | Compatibility copies |
@@ -41,7 +41,7 @@ JSON payloads share these top-level fields (varies per event):
 - `sender` - the user who triggered the event
 - event-specific object: `issue`, `pull_request`, `release`, `comment`, or for `push`: `ref`, `before`, `after`, `commits`, `head_commit`, `pusher`; for `create`/`delete`: `ref`, `ref_type`
 
-Payloads can be `application/json` or form-encoded (JSON inside a `payload` field), depending on the webhook's **POST Content Type**.
+Payloads can be `application/json` or form-encoded (JSON inside a `payload` field), depending on the webhook's **POST Content Type**. Only `application/json` deliveries verify against the raw body, so use that.
 
 ## Full Event Reference
 

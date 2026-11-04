@@ -23,7 +23,8 @@ function verifyGiteaWebhook(rawBody: string, signature: string | null, secret: s
 }
 
 export async function POST(request: NextRequest) {
-  // request.text() returns the raw body for any content type
+  // Raw body. Gitea signs the JSON payload, which matches the body only for
+  // POST + application/json; form-encoded deliveries fail verification.
   const body = await request.text();
   const signature = request.headers.get('x-gitea-signature');
   const event = request.headers.get('x-gitea-event');
@@ -34,14 +35,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Parse after verification: JSON, or form-encoded with JSON in `payload`
+  // Parse after verification
   let payload;
   try {
-    const contentType = request.headers.get('content-type') || '';
-    const json = contentType.includes('application/x-www-form-urlencoded')
-      ? new URLSearchParams(body).get('payload')
-      : body;
-    payload = JSON.parse(json as string);
+    payload = JSON.parse(body);
   } catch {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }

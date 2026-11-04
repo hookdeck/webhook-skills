@@ -2,7 +2,6 @@ import os
 import hmac
 import hashlib
 import json
-from urllib.parse import parse_qs
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 
@@ -27,17 +26,10 @@ def verify_gitea_webhook(raw_body: bytes, signature: str | None, secret: str | N
     return hmac.compare_digest(signature.encode(), expected.encode())
 
 
-def parse_payload(raw_body: bytes, content_type: str) -> dict:
-    """Parse after verification: JSON, or form-encoded with JSON in `payload`."""
-    text = raw_body.decode("utf-8")
-    if "application/x-www-form-urlencoded" in content_type:
-        text = parse_qs(text)["payload"][0]
-    return json.loads(text)
-
-
 @app.post("/webhooks/gitea")
 async def gitea_webhook(request: Request):
-    # Raw body for signature verification (any content type)
+    # Raw body for signature verification. Gitea signs the JSON payload, which
+    # matches the body only for POST + application/json; form deliveries fail.
     raw_body = await request.body()
     signature = request.headers.get("x-gitea-signature")
     event = request.headers.get("x-gitea-event")
@@ -47,8 +39,8 @@ async def gitea_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     try:
-        payload = parse_payload(raw_body, request.headers.get("content-type", ""))
-    except (ValueError, KeyError, IndexError):
+        payload = json.loads(raw_body)
+    except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
     action = payload.get("action")
 

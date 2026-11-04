@@ -12,7 +12,7 @@
 2. Click **Add Webhook → Gitea**.
 3. Set **Target URL** to your endpoint, e.g. `https://example.com/webhooks/gitea`.
 4. Set **HTTP Method** to `POST`.
-5. Choose **POST Content Type**: `application/json` (recommended) or `application/x-www-form-urlencoded`.
+5. Set **POST Content Type** to `application/json`. Form-encoded deliveries are signed over the JSON payload, not the form body, so they fail verification.
 6. Enter a **Secret**.
 7. Under **Trigger On**, pick **Push Events**, **All Events**, or a custom selection (push, pull request, issues, issue comment, create, delete, release, ...).
 8. Optionally set a **Branch Filter** (glob; applies only to ref-bearing events like `push`, `create`, `delete`).

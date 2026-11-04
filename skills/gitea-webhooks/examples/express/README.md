@@ -29,7 +29,7 @@ npm start
 
 Server runs on http://localhost:3000 and receives webhooks at `POST /webhooks/gitea`.
 
-The route reads the raw body with `express.raw({ type: '*/*' })`, so both `application/json` and `application/x-www-form-urlencoded` deliveries verify.
+The route reads the raw body with `express.raw({ type: '*/*' })` and verifies it before parsing. Set the Gitea webhook to `POST` with `application/json`: form-encoded deliveries are signed over the JSON payload rather than the form body, so they fail verification.
 
 ## Test
 

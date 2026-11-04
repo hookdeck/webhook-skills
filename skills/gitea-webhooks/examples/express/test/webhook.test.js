@@ -89,10 +89,15 @@ describe('Gitea Webhook Endpoint', () => {
       expect(response.text).toBe('OK');
     });
 
-    it('verifies form-encoded deliveries over the raw body', async () => {
-      const body = 'payload=' + encodeURIComponent(JSON.stringify({ ref: 'refs/heads/main' }));
-      const response = await send('push', body, { contentType: 'application/x-www-form-urlencoded' });
-      expect(response.status).toBe(200);
+    it('rejects form-encoded deliveries, which Gitea signs over the JSON payload', async () => {
+      const json = JSON.stringify({ ref: 'refs/heads/main' });
+      const body = 'payload=' + encodeURIComponent(json);
+      const response = await send('push', body, {
+        contentType: 'application/x-www-form-urlencoded',
+        signature: sign(json, secret),
+      });
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid signature');
     });
 
     it('returns 400 for a validly signed body that is not JSON', async () => {
