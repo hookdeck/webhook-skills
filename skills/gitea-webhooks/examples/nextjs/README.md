@@ -47,4 +47,4 @@ Then add the Hookdeck URL as the Target URL under **Settings → Webhooks → Ad
 
 ## Endpoint
 
-- `POST /webhooks/gitea` - Receives and verifies Gitea webhook events. The body is read with `request.text()`, so JSON and form-encoded deliveries both verify.
+- `POST /webhooks/gitea` - Receives and verifies Gitea webhook events. The raw body is read with `request.text()` and verified before parsing. Only `POST` + `application/json` deliveries verify; form-encoded deliveries are signed over the JSON payload rather than the form body.

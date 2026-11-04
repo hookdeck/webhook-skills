@@ -30,20 +30,9 @@ function verifyGiteaWebhook(rawBody, signature, secret) {
   }
 }
 
-/**
- * Parse the payload after verification. Gitea sends either JSON or a
- * form-encoded body with the JSON in a `payload` field.
- */
-function parsePayload(rawBody, contentType) {
-  const text = rawBody.toString('utf8');
-  if ((contentType || '').includes('application/x-www-form-urlencoded')) {
-    return JSON.parse(new URLSearchParams(text).get('payload'));
-  }
-  return JSON.parse(text);
-}
-
-// Gitea webhook endpoint - raw body of any content type, so the signature
-// verifies for both application/json and form-encoded deliveries
+// Gitea webhook endpoint - configure the webhook as POST + application/json.
+// Gitea signs the JSON payload, which is the raw body only for JSON deliveries;
+// form-encoded deliveries (payload=<url-encoded JSON>) fail verification.
 app.post('/webhooks/gitea',
   express.raw({ type: '*/*' }),
   (req, res) => {
@@ -58,7 +47,7 @@ app.post('/webhooks/gitea',
 
     let payload;
     try {
-      payload = parsePayload(req.body, req.headers['content-type']);
+      payload = JSON.parse(req.body.toString('utf8'));
     } catch {
       return res.status(400).send('Invalid payload');
     }

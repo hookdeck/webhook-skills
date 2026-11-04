@@ -2,7 +2,7 @@
 
 ## How It Works
 
-1. Gitea computes HMAC-SHA256 over the **raw request body** using the webhook Secret.
+1. Gitea computes HMAC-SHA256 over the **JSON payload** using the webhook Secret. For `POST` + `application/json` that payload is the raw request body.
 2. It sends the lowercase hex digest in `X-Gitea-Signature` (no prefix).
 3. It also sends `X-Hub-Signature-256` as `sha256=<hex>` (same digest) and legacy `X-Hub-Signature` (`sha1=<hex>`).
 4. You recompute the digest over the exact bytes received and compare in constant time.
@@ -45,7 +45,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 
 - **Empty signature**: with no Secret configured, `X-Gitea-Signature` is present but empty. Reject it; never treat "empty equals empty" as valid.
 - **Raw body**: verify before parsing. Re-serialized JSON will not match.
-- **Form-encoded payloads**: when the content type is `application/x-www-form-urlencoded`, the signature is over the whole raw body (`payload=...`), not the decoded JSON. In Express use `express.raw({ type: '*/*' })` so any content type reaches the verifier as a Buffer; then parse `payload` yourself.
+- **Form-encoded and GET deliveries**: a form delivery's body is `payload=<url-encoded JSON>` and a `GET` puts the payload in the query string, but Gitea still signs the JSON payload (`body = []byte(t.PayloadContent)` in `services/webhook/deliver.go`). The signature never matches the bytes received, so set the webhook to `POST` + `application/json`.
 - **No prefix**: `X-Gitea-Signature` has no `sha256=`. Only `X-Hub-Signature-256` does.
 - **Event name**: read `X-Gitea-Event`; the JSON body has no event field.
 - **Old payloads**: very old Gitea versions put a `secret` field in the body. Current versions do not; always use the signature.

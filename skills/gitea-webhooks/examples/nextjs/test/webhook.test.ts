@@ -9,7 +9,7 @@ beforeAll(() => {
   process.env.GITEA_WEBHOOK_SECRET = secret;
 });
 
-// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the raw body
+// Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the JSON payload (the raw body for POST + application/json)
 function sign(payload: string, key: string): string {
   return crypto.createHmac('sha256', key).update(payload).digest('hex');
 }
@@ -68,10 +68,14 @@ describe('Gitea webhook route', () => {
     expect(await res.json()).toEqual({ received: true });
   });
 
-  it('verifies form-encoded deliveries over the raw body', async () => {
-    const body = 'payload=' + encodeURIComponent(JSON.stringify({ ref: 'refs/heads/main' }));
-    const res = await POST(makeRequest('push', body, { contentType: 'application/x-www-form-urlencoded' }));
-    expect(res.status).toBe(200);
+  it('rejects form-encoded deliveries, which Gitea signs over the JSON payload', async () => {
+    const json = JSON.stringify({ ref: 'refs/heads/main' });
+    const body = 'payload=' + encodeURIComponent(json);
+    const res = await POST(makeRequest('push', body, {
+      contentType: 'application/x-www-form-urlencoded',
+      signature: sign(json, secret),
+    }));
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 for a validly signed body that is not JSON', async () => {

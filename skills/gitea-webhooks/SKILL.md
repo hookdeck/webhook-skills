@@ -19,11 +19,11 @@ metadata:
 - How do I verify the `X-Gitea-Signature` header?
 - Why is my Gitea webhook signature verification failing?
 - How do I handle `push`, `pull_request`, `issues`, `issue_comment`, `create`, `delete` or `release` events from Gitea?
-- How do I handle Gitea webhooks sent as `application/x-www-form-urlencoded`?
+- Why do Gitea webhooks sent as `application/x-www-form-urlencoded` fail verification?
 
 ## Verification (core)
 
-Gitea signs the **raw request body** with HMAC-SHA256 keyed on the webhook **Secret**. `X-Gitea-Signature` is the bare lowercase hex digest (no `sha256=` prefix). If no secret is configured, the header is still sent but empty, so reject an empty signature. Gitea also sends the GitHub-style `X-Hub-Signature-256` (`sha256=<hex>`) with the same digest; this skill verifies `X-Gitea-Signature`.
+Gitea signs the **JSON payload** with HMAC-SHA256 keyed on the webhook **Secret**. That payload is the raw request body only for `POST` + `application/json`, so configure the webhook that way. `X-Gitea-Signature` is the bare lowercase hex digest (no `sha256=` prefix). If no secret is configured, the header is still sent but empty, so reject an empty signature. Gitea also sends the GitHub-style `X-Hub-Signature-256` (`sha256=<hex>`) with the same digest; this skill verifies `X-Gitea-Signature`.
 
 Node:
 
@@ -53,7 +53,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
     return hmac.compare_digest(signature.encode(), expected.encode())
 ```
 
-Gitea can send JSON (`application/json`) or form-encoded (`application/x-www-form-urlencoded`, JSON in a `payload` field). The signature covers the raw body either way, so read the raw bytes for any content type (in Express: `express.raw({ type: '*/*' })`) and parse only after verifying.
+Use `POST` with `application/json`, read the raw bytes, and parse only after verifying. Gitea can also send form-encoded deliveries (`payload=<url-encoded JSON>`) or `GET` deliveries (payload in the query string), but the signature still covers the JSON payload rather than the bytes you receive, so those never verify against the request body.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -82,7 +82,7 @@ Other events include `fork`, `wiki`, `repository`, `package`, `status`, `workflo
 
 | Header | Description |
 |--------|-------------|
-| `X-Gitea-Signature` | Hex HMAC-SHA256 of the raw body (empty if no secret) |
+| `X-Gitea-Signature` | Hex HMAC-SHA256 of the JSON payload, the raw body for `POST` + JSON (empty if no secret) |
 | `X-Hub-Signature-256` | Same digest as `sha256=<hex>` (GitHub-compatible) |
 | `X-Gitea-Event` | Event name (`push`, `issues`, ...) |
 | `X-Gitea-Event-Type` | Specific trigger, e.g. `issue_assign` |

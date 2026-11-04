@@ -16,7 +16,7 @@ SECRET = os.environ["GITEA_WEBHOOK_SECRET"]
 
 
 def sign(payload: bytes, secret: str = SECRET) -> str:
-    """Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the raw body."""
+    """Gitea's X-Gitea-Signature is the bare hex HMAC-SHA256 of the JSON payload (the raw body for POST + application/json)."""
     return hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
 
@@ -84,10 +84,13 @@ class TestWebhookEndpoint:
         assert r.status_code == 200
         assert r.json() == {"received": True}
 
-    def test_form_encoded_delivery(self):
-        body = ("payload=" + quote(json.dumps({"ref": "refs/heads/main"}))).encode()
-        r = send("push", body, content_type="application/x-www-form-urlencoded")
-        assert r.status_code == 200
+    def test_form_encoded_delivery_fails_verification(self):
+        # Gitea signs the JSON payload, not the form body it sends
+        payload = json.dumps({"ref": "refs/heads/main"})
+        body = ("payload=" + quote(payload)).encode()
+        r = send("push", body, signature=sign(payload.encode()),
+                 content_type="application/x-www-form-urlencoded")
+        assert r.status_code == 400
 
     def test_signed_non_json_body(self):
         r = send("push", b"not json")
