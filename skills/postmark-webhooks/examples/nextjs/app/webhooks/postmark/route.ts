@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 interface PostmarkEvent {
   RecordType: 'Bounce' | 'SpamComplaint' | 'Open' | 'Click' | 'Delivery' | 'SubscriptionChange';
   MessageID: string;
-  ServerID: number;
+  // Open and Click events don't include ServerID
+  ServerID?: number;
   MessageStream?: string;
   Tag?: string;
   Metadata?: Record<string, any>;
@@ -32,7 +33,7 @@ interface SpamComplaintEvent extends PostmarkEvent {
 
 interface OpenEvent extends PostmarkEvent {
   RecordType: 'Open';
-  Email: string;
+  Recipient: string;
   ReceivedAt: string;
   Platform?: string;
   UserAgent?: string;
@@ -40,8 +41,8 @@ interface OpenEvent extends PostmarkEvent {
 
 interface ClickEvent extends PostmarkEvent {
   RecordType: 'Click';
-  Email: string;
-  ClickedAt: string;
+  Recipient: string;
+  ReceivedAt: string;
   OriginalLink: string;
   ClickLocation?: string;
   Platform?: string;
@@ -50,19 +51,32 @@ interface ClickEvent extends PostmarkEvent {
 
 interface DeliveryEvent extends PostmarkEvent {
   RecordType: 'Delivery';
-  Email: string;
+  Recipient: string;
   DeliveredAt: string;
   Details?: string;
 }
 
 interface SubscriptionChangeEvent extends PostmarkEvent {
   RecordType: 'SubscriptionChange';
-  Email: string;
+  Recipient: string;
   ChangedAt: string;
   SuppressionReason?: string;
 }
 
-type WebhookEvent = BounceEvent | SpamComplaintEvent | OpenEvent | ClickEvent | DeliveryEvent | SubscriptionChangeEvent;
+// Inbound webhooks have no RecordType or ServerID
+interface InboundEvent {
+  MessageID: string;
+  MessageStream?: string;
+  From: string;
+  FromFull: { Email: string; Name: string; MailboxHash: string };
+  Subject: string;
+  TextBody?: string;
+  HtmlBody?: string;
+  StrippedTextReply?: string;
+  Tag?: string;
+}
+
+type WebhookEvent = BounceEvent | SpamComplaintEvent | OpenEvent | ClickEvent | DeliveryEvent | SubscriptionChangeEvent | InboundEvent;
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,15 +95,22 @@ export async function POST(request: NextRequest) {
     const event: WebhookEvent = await request.json();
 
     // Validate payload structure
-    if (!event.RecordType || !event.MessageID) {
+    // Inbound webhooks have no RecordType, so identify them by FromFull
+    const recordType = 'RecordType' in event
+      ? event.RecordType
+      : 'FromFull' in event
+        ? 'Inbound'
+        : undefined;
+
+    if (!recordType || !event.MessageID) {
       console.error('Invalid payload structure:', event);
       return NextResponse.json({ error: 'Invalid payload structure' }, { status: 400 });
     }
 
     // Process the event
-    console.log(`Received ${event.RecordType} event for message ${event.MessageID}`);
+    console.log(`Received ${recordType} event for message ${event.MessageID}`);
 
-    switch (event.RecordType) {
+    switch (recordType) {
       case 'Bounce':
         await handleBounce(event as BounceEvent);
         break;
@@ -114,8 +135,12 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionChange(event as SubscriptionChangeEvent);
         break;
 
+      case 'Inbound':
+        await handleInbound(event as InboundEvent);
+        break;
+
       default:
-        console.log(`Unknown event type: ${event.RecordType}`);
+        console.log(`Unknown event type: ${recordType}`);
     }
 
     // Always return 200 to acknowledge receipt
@@ -150,7 +175,7 @@ async function handleSpamComplaint(event: SpamComplaintEvent) {
 }
 
 async function handleOpen(event: OpenEvent) {
-  console.log(`Email opened: ${event.Email}`);
+  console.log(`Email opened: ${event.Recipient}`);
   console.log(`  Opened at: ${event.ReceivedAt}`);
   if (event.Platform) console.log(`  Platform: ${event.Platform}`);
   if (event.UserAgent) console.log(`  User Agent: ${event.UserAgent}`);
@@ -162,8 +187,8 @@ async function handleOpen(event: OpenEvent) {
 }
 
 async function handleClick(event: ClickEvent) {
-  console.log(`Link clicked: ${event.Email}`);
-  console.log(`  Clicked at: ${event.ClickedAt}`);
+  console.log(`Link clicked: ${event.Recipient}`);
+  console.log(`  Clicked at: ${event.ReceivedAt}`);
   console.log(`  Link: ${event.OriginalLink}`);
   if (event.ClickLocation) console.log(`  Click location: ${event.ClickLocation}`);
 
@@ -174,7 +199,7 @@ async function handleClick(event: ClickEvent) {
 }
 
 async function handleDelivery(event: DeliveryEvent) {
-  console.log(`Email delivered: ${event.Email}`);
+  console.log(`Email delivered: ${event.Recipient}`);
   console.log(`  Delivered at: ${event.DeliveredAt}`);
   console.log(`  Server: ${event.ServerID}`);
 
@@ -185,7 +210,7 @@ async function handleDelivery(event: DeliveryEvent) {
 }
 
 async function handleSubscriptionChange(event: SubscriptionChangeEvent) {
-  console.log(`Subscription change: ${event.Email}`);
+  console.log(`Subscription change: ${event.Recipient}`);
   console.log(`  Changed at: ${event.ChangedAt}`);
   if (event.SuppressionReason) console.log(`  Suppression reason: ${event.SuppressionReason}`);
 
@@ -193,4 +218,14 @@ async function handleSubscriptionChange(event: SubscriptionChangeEvent) {
   // - Update subscription preferences
   // - Log for compliance
   // - Trigger preference center update
+}
+
+async function handleInbound(event: InboundEvent) {
+  console.log(`Inbound email from: ${event.From}`);
+  console.log(`  Subject: ${event.Subject}`);
+
+  // In a real application:
+  // - Match the reply to a conversation
+  // - Parse the content and attachments
+  // - Trigger automated responses
 }

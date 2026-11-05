@@ -38,13 +38,13 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 
   const event = req.body;
 
-  // Validate expected fields exist
-  if (!event.RecordType || !event.MessageID) {
+  // Validate expected fields exist (Inbound payloads have no RecordType)
+  if (!event.MessageID || !(event.RecordType || event.FromFull)) {
     return res.status(400).send('Invalid payload structure');
   }
 
   // Process event
-  console.log(`Received ${event.RecordType} event for ${event.Email}`);
+  console.log(`Received ${event.RecordType || 'Inbound'} event for message ${event.MessageID}`);
 
   res.sendStatus(200);
 });
@@ -63,7 +63,7 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
   }
 
   const event = req.body;
-  console.log(`Received ${event.RecordType} event`);
+  console.log(`Received ${event.RecordType || 'Inbound'} event`);
 
   res.sendStatus(200);
 });
@@ -76,7 +76,10 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 app.post('/webhooks/postmark', express.json(), (req, res) => {
   const event = req.body;
 
-  switch (event.RecordType) {
+  // Inbound webhooks have no RecordType, so identify them by FromFull
+  const recordType = event.RecordType || (event.FromFull ? 'Inbound' : undefined);
+
+  switch (recordType) {
     case 'Bounce':
       console.log(`Bounce: ${event.Email} - ${event.Type} - ${event.Description}`);
       // Update contact as undeliverable
@@ -88,37 +91,39 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
       break;
 
     case 'Open':
-      console.log(`Email opened: ${event.Email} at ${event.ReceivedAt}`);
+      console.log(`Email opened: ${event.Recipient} at ${event.ReceivedAt}`);
       // Track engagement
       break;
 
     case 'Click':
-      console.log(`Link clicked: ${event.Email} - ${event.OriginalLink}`);
+      console.log(`Link clicked: ${event.Recipient} - ${event.OriginalLink}`);
       // Track click-through rate
       break;
 
     case 'Delivery':
-      console.log(`Delivered: ${event.Email} at ${event.DeliveredAt}`);
+      console.log(`Delivered: ${event.Recipient} at ${event.DeliveredAt}`);
       // Confirm delivery
       break;
 
     case 'SubscriptionChange':
-      console.log(`Subscription change: ${event.Email} - ${event.ChangedAt}`);
+      console.log(`Subscription change: ${event.Recipient} - ${event.ChangedAt}`);
       // Update subscription preferences
       break;
 
     case 'Inbound':
-      console.log(`Inbound email from: ${event.Email} - Subject: ${event.Subject}`);
+      console.log(`Inbound email from: ${event.From} - Subject: ${event.Subject}`);
       // Process incoming email
       break;
 
     case 'SMTP API Error':
+      // Postmark publishes no sample payload for this webhook: check these
+      // names against a real delivery
       console.log(`SMTP API error: ${event.Email} - ${event.Error}`);
       // Handle API error, maybe retry
       break;
 
     default:
-      console.log(`Unknown event type: ${event.RecordType}`);
+      console.log(`Unknown event type: ${recordType}`);
   }
 
   res.sendStatus(200);
@@ -131,12 +136,14 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 |-------|------------|-------------|------------|
 | Bounce | `Bounce` | Hard/soft bounce or blocked email | Email, Type, TypeCode, Description |
 | Spam Complaint | `SpamComplaint` | Recipient marked as spam | Email, BouncedAt |
-| Open | `Open` | Email opened (requires open tracking) | Email, ReceivedAt, Platform, UserAgent |
-| Click | `Click` | Link clicked (requires click tracking) | Email, ClickedAt, OriginalLink |
-| Delivery | `Delivery` | Successfully delivered | Email, DeliveredAt, Details |
-| Subscription Change | `SubscriptionChange` | Unsubscribe/resubscribe | Email, ChangedAt, SuppressionReason |
-| Inbound | `Inbound` | Incoming email received | Email, FromFull, Subject, TextBody, HtmlBody |
+| Open | `Open` | Email opened (requires open tracking) | Recipient, ReceivedAt, Platform, UserAgent |
+| Click | `Click` | Link clicked (requires click tracking) | Recipient, ReceivedAt, OriginalLink |
+| Delivery | `Delivery` | Successfully delivered | Recipient, DeliveredAt, Details |
+| Subscription Change | `SubscriptionChange` | Unsubscribe/resubscribe | Recipient, ChangedAt, SuppressionReason |
+| Inbound | None | Incoming email received | From, FromFull, Subject, TextBody, HtmlBody |
 | SMTP API Error | `SMTP API Error` | SMTP API call failed | Email, Error, ErrorCode, MessageID |
+
+Inbound payloads have no `RecordType`, so identify them by `FromFull`. Postmark publishes no sample payload for SMTP API Error, so check that row's `RecordType` and fields against a real delivery.
 
 ## Environment Variables
 

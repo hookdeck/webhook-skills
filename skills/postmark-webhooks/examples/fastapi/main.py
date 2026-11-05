@@ -25,7 +25,8 @@ if not POSTMARK_WEBHOOK_TOKEN:
 class PostmarkEvent(BaseModel):
     RecordType: str
     MessageID: str
-    ServerID: int
+    # Open and Click events don't include ServerID
+    ServerID: Optional[int] = None
     MessageStream: Optional[str] = None
     Tag: Optional[str] = None
     Metadata: Optional[Dict[str, Any]] = None
@@ -53,7 +54,7 @@ class SpamComplaintEvent(PostmarkEvent):
 
 class OpenEvent(PostmarkEvent):
     RecordType: Literal["Open"]
-    Email: str
+    Recipient: str
     ReceivedAt: str
     Platform: Optional[str] = None
     UserAgent: Optional[str] = None
@@ -61,8 +62,8 @@ class OpenEvent(PostmarkEvent):
 
 class ClickEvent(PostmarkEvent):
     RecordType: Literal["Click"]
-    Email: str
-    ClickedAt: str
+    Recipient: str
+    ReceivedAt: str
     OriginalLink: str
     ClickLocation: Optional[str] = None
     Platform: Optional[str] = None
@@ -71,16 +72,29 @@ class ClickEvent(PostmarkEvent):
 
 class DeliveryEvent(PostmarkEvent):
     RecordType: Literal["Delivery"]
-    Email: str
+    Recipient: str
     DeliveredAt: str
     Details: Optional[str] = None
 
 
 class SubscriptionChangeEvent(PostmarkEvent):
     RecordType: Literal["SubscriptionChange"]
-    Email: str
+    Recipient: str
     ChangedAt: str
     SuppressionReason: Optional[str] = None
+
+
+# Inbound webhooks have no RecordType or ServerID
+class InboundEvent(BaseModel):
+    MessageID: str
+    MessageStream: Optional[str] = None
+    From: str
+    FromFull: Dict[str, Any]
+    Subject: str
+    TextBody: Optional[str] = None
+    HtmlBody: Optional[str] = None
+    StrippedTextReply: Optional[str] = None
+    Tag: Optional[str] = None
 
 
 # Union type for all webhook events
@@ -91,6 +105,7 @@ WebhookEvent = Union[
     ClickEvent,
     DeliveryEvent,
     SubscriptionChangeEvent,
+    InboundEvent,
     PostmarkEvent  # For unknown event types
 ]
 
@@ -120,8 +135,11 @@ async def handle_webhook(
             detail="Invalid JSON payload"
         )
 
+    # Inbound webhooks have no RecordType, so identify them by FromFull
+    record_type = body.get("RecordType") or ("Inbound" if body.get("FromFull") else None)
+
     # Validate required fields
-    if not body.get("RecordType") or not body.get("MessageID"):
+    if not record_type or not body.get("MessageID"):
         logger.error(f"Invalid payload structure: {body}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -129,7 +147,6 @@ async def handle_webhook(
         )
 
     # Process the event
-    record_type = body["RecordType"]
     message_id = body["MessageID"]
 
     logger.info(f"Received {record_type} event for message {message_id}")
@@ -154,6 +171,9 @@ async def handle_webhook(
         elif record_type == "SubscriptionChange":
             event = SubscriptionChangeEvent(**body)
             await handle_subscription_change(event)
+        elif record_type == "Inbound":
+            event = InboundEvent(**body)
+            await handle_inbound(event)
         else:
             logger.warning(f"Unknown event type: {record_type}")
             # Still return 200 for unknown events
@@ -191,7 +211,7 @@ async def handle_spam_complaint(event: SpamComplaintEvent):
 
 async def handle_open(event: OpenEvent):
     """Process email open events."""
-    logger.info(f"Email opened: {event.Email}")
+    logger.info(f"Email opened: {event.Recipient}")
     logger.info(f"  Opened at: {event.ReceivedAt}")
     if event.Platform:
         logger.info(f"  Platform: {event.Platform}")
@@ -206,8 +226,8 @@ async def handle_open(event: OpenEvent):
 
 async def handle_click(event: ClickEvent):
     """Process link click events."""
-    logger.info(f"Link clicked: {event.Email}")
-    logger.info(f"  Clicked at: {event.ClickedAt}")
+    logger.info(f"Link clicked: {event.Recipient}")
+    logger.info(f"  Clicked at: {event.ReceivedAt}")
     logger.info(f"  Link: {event.OriginalLink}")
     if event.ClickLocation:
         logger.info(f"  Click location: {event.ClickLocation}")
@@ -220,7 +240,7 @@ async def handle_click(event: ClickEvent):
 
 async def handle_delivery(event: DeliveryEvent):
     """Process delivery events."""
-    logger.info(f"Email delivered: {event.Email}")
+    logger.info(f"Email delivered: {event.Recipient}")
     logger.info(f"  Delivered at: {event.DeliveredAt}")
     logger.info(f"  Server: {event.ServerID}")
 
@@ -232,7 +252,7 @@ async def handle_delivery(event: DeliveryEvent):
 
 async def handle_subscription_change(event: SubscriptionChangeEvent):
     """Process subscription change events."""
-    logger.info(f"Subscription change: {event.Email}")
+    logger.info(f"Subscription change: {event.Recipient}")
     logger.info(f"  Changed at: {event.ChangedAt}")
     if event.SuppressionReason:
         logger.info(f"  Suppression reason: {event.SuppressionReason}")
@@ -241,6 +261,17 @@ async def handle_subscription_change(event: SubscriptionChangeEvent):
     # - Update subscription preferences
     # - Log for compliance
     # - Trigger preference center update
+
+
+async def handle_inbound(event: InboundEvent):
+    """Process inbound email events."""
+    logger.info(f"Inbound email from: {event.From}")
+    logger.info(f"  Subject: {event.Subject}")
+
+    # In a real application:
+    # - Match the reply to a conversation
+    # - Parse the content and attachments
+    # - Trigger automated responses
 
 
 @app.get("/health")
