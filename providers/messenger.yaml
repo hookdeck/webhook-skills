@@ -7,8 +7,8 @@ docs:
 notes: >
   Facebook Messenger Platform webhooks for a Facebook Page. Meta signs every notification: header
   X-Hub-Signature-256: 'sha256=<hex>', HMAC-SHA256 hex of the payload keyed with the app's App Secret
-  (App settings > Basic). Meta signs the escaped-unicode payload (äöå as äöå): verify
-  over the raw bytes as received, never re-serialized JSON. Require and strip the sha256= prefix.
+  (App settings > Basic). Meta signs the escaped-unicode payload (äöå as \u00e4\u00f6\u00e5): verify
+  over the raw bytes as received, never re-serialised JSON. Require and strip the sha256= prefix.
   Body is {object: 'page', entry[]} with entry.messaging[] (or entry.standby[] under the handover
   protocol); each item has sender, recipient, timestamp and one event key: message (messages; is_echo
   for message_echoes), postback (messaging_postbacks), read (message_reads), delivery

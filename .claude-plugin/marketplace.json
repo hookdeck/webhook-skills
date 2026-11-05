@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 804 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 802 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -6870,27 +6870,6 @@
       ]
     },
     {
-      "name": "instagram-webhooks",
-      "description": "Receive and verify Instagram (Meta) webhooks. Use when setting up Instagram webhook handlers, completing the GET hub.challenge handshake, debugging X-Hub-Signature-256 signature verification, or handling Instagram comments, live_comments, mentions, story_insights, messages, message_reactions, messaging_postbacks, messaging_referral, and messaging_seen notifications.",
-      "source": "./skills/instagram-webhooks",
-      "strict": false,
-      "skills": [
-        "./"
-      ],
-      "category": "integration",
-      "license": "MIT",
-      "author": {
-        "name": "Hookdeck",
-        "email": "phil@hookdeck.com"
-      },
-      "repository": "https://github.com/hookdeck/webhook-skills",
-      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/instagram-webhooks",
-      "keywords": [
-        "webhooks",
-        "instagram"
-      ]
-    },
-    {
       "name": "instantly-webhooks",
       "description": "Receive and authenticate Instantly (Instantly.ai cold email) webhooks. Use when setting up an Instantly webhook handler, securing it with the custom headers Instantly lets you attach (e.g. Authorization: Basic ... or a secret header), debugging why the header check fails, or handling campaign events like email_sent, email_opened, reply_received, email_bounced, lead_interested, lead_unsubscribed and lead_meeting_booked. Instantly does not sign webhooks: there is no signature header or HMAC.",
       "source": "./skills/instantly-webhooks",
@@ -8572,27 +8551,6 @@
       "keywords": [
         "webhooks",
         "mercury"
-      ]
-    },
-    {
-      "name": "messenger-webhooks",
-      "description": "Receive and verify Facebook Messenger Platform webhooks. Use when setting up Messenger webhook handlers for a Facebook Page, completing the GET hub.challenge handshake, debugging X-Hub-Signature-256 signature verification (escaped-unicode raw body), or handling messages, messaging_postbacks, message_reads, message_deliveries, message_reactions, messaging_optins, messaging_referrals, and message_echoes events.",
-      "source": "./skills/messenger-webhooks",
-      "strict": false,
-      "skills": [
-        "./"
-      ],
-      "category": "integration",
-      "license": "MIT",
-      "author": {
-        "name": "Hookdeck",
-        "email": "phil@hookdeck.com"
-      },
-      "repository": "https://github.com/hookdeck/webhook-skills",
-      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/messenger-webhooks",
-      "keywords": [
-        "webhooks",
-        "messenger"
       ]
     },
     {
@@ -17348,7 +17306,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 807 provider skills (Stripe, Shopify, GitHub, and 804 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 812 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 805 provider skills (Stripe, Shopify, GitHub, and 802 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 810 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17674,7 +17632,6 @@
         "./skills/increase-webhooks",
         "./skills/infinite-giving-webhooks",
         "./skills/ingenious-build-webhooks",
-        "./skills/instagram-webhooks",
         "./skills/instantly-webhooks",
         "./skills/intercom-webhooks",
         "./skills/invoice-ninja-webhooks",
@@ -17754,7 +17711,6 @@
         "./skills/memos-webhooks",
         "./skills/meraki-webhooks",
         "./skills/mercury-webhooks",
-        "./skills/messenger-webhooks",
         "./skills/metabase-webhooks",
         "./skills/metronome-webhooks",
         "./skills/mews-pos-webhooks",

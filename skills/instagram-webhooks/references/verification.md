@@ -60,7 +60,7 @@ def verify_instagram_signature(raw_body: bytes, signature_header: str, app_secre
 ## Common Gotchas
 
 - **Use the raw body.** Meta signs the bytes it sends. Non-ASCII text can arrive as escaped
-  unicode (`ä`), and `JSON.stringify(JSON.parse(body))` turns that into `ä`, which
+  unicode (`\u00e4`), and `JSON.stringify(JSON.parse(body))` turns that into `ä`, which
   changes the bytes and breaks the signature. In Express use `express.raw({ type: '*/*' })`;
   in Next.js read `request.arrayBuffer()`; in FastAPI `await request.body()`.
 - **Wrong secret.** App Secret vs Instagram app secret; never the verify token or an access token.

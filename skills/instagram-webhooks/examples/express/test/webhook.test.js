@@ -107,7 +107,7 @@ describe('POST /webhooks/instagram (signature verification)', () => {
   });
 
   it('verifies the escaped-unicode bytes Meta signs', async () => {
-    // Meta signs e.g. "äöå" as "äöå"; verify over those exact bytes.
+    // Meta signs e.g. "äöå" as "\u00e4\u00f6\u00e5"; verify over those exact bytes.
     const body = changeBody('comments', { id: '1', text: 'PLACEHOLDER' }).replace(
       'PLACEHOLDER',
       '\\u00e4\\u00f6\\u00e5'

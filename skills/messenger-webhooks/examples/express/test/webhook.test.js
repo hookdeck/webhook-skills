@@ -31,7 +31,7 @@ function body(item, key = 'messaging') {
 
 const textBody = body({ message: { mid: 'mid.1457764197618:41d102a3e1ae206a38', text: 'hello, world!' } });
 
-// Meta signs the escaped-unicode payload: "äöå" as "äöå".
+// Meta signs the escaped-unicode payload: "äöå" as "\u00e4\u00f6\u00e5".
 const escapedBody = body({ message: { mid: 'm_1', text: 'PLACEHOLDER' } }).replace(
   'PLACEHOLDER',
   '\\u00e4\\u00f6\\u00e5'
@@ -99,7 +99,7 @@ describe('POST /webhooks/messenger (signature verification)', () => {
   });
 
   it('rejects a signature computed over the decoded (re-serialized) payload', async () => {
-    const decoded = JSON.stringify(JSON.parse(escapedBody)); // "ä" becomes "ä"
+    const decoded = JSON.stringify(JSON.parse(escapedBody)); // "\u00e4" becomes "ä"
     expect(decoded).toContain('äöå');
     expect((await post(escapedBody, sign(decoded))).status).toBe(401);
   });

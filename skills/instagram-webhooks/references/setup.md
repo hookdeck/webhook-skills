@@ -32,9 +32,11 @@ Open Webhooks for your API setup:
 
 - **Unified Login:** **Configure webhooks** on the **API setup with Unified login** tab.
 - **Instagram Login:** **Instagram > API setup with Instagram login**, section
-  **Configure webhooks** > **Configure**. New apps are subscribed by default to `comments`,
-  `live_comments`, `message_reactions`, `messages`, `messaging_optins`,
-  `messaging_postbacks`, `messaging_referral` and `messaging_seen`.
+  **Configure webhooks** > **Configure**. Meta's
+  [Create a Meta app for the Instagram API](https://developers.facebook.com/documentation/instagram-platform/create-an-instagram-app)
+  guide (Step 8) says you're subscribed by default to all available webhooks for the
+  Instagram product: `comments`, `live_comments`, `message_reactions`, `messages`,
+  `messaging_optins`, `messaging_postbacks`, `messaging_referral` and `messaging_seen`.
 - **Facebook Login / Messenger Platform:** the Webhooks product (or Messenger >
   Instagram settings for Instagram messaging).
 
@@ -71,8 +73,9 @@ Paste your Meta app's App Secret (App settings > Basic). If your app uses Instag
 Instagram Login and verification fails, use the Instagram app secret from the Instagram
 product's API setup page instead.
 
-Hookdeck's edge answers the `hub.challenge` handshake itself, so the destination doesn't need
-to handle the GET. Use the Hookdeck source URL as the Callback URL.
+Hookdeck answers the `hub.challenge` handshake itself without checking the Verify Token, so
+any value you enter in the Meta dashboard works. The destination doesn't need to handle the
+GET. Use the Hookdeck source URL as the Callback URL.
 
 For local development:
 

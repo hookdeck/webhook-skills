@@ -23,12 +23,12 @@ token matches `MESSENGER_VERIFY_TOKEN`; otherwise `403`. (Hookdeck's edge answer
 Meta's docs: "we generate the signature using an *escaped unicode* version of the payload,
 with lowercase hex digits. If you just calculate against the decoded bytes, you will end up
 with a different signature. For example, the string `äöå` should be escaped to
-`äöå`."
+`\u00e4\u00f6\u00e5`."
 
 The note describes the signed form, not the wire format, but the practical rule is the same:
-HMAC the body bytes exactly as they arrive and never a decoded or re-serialized copy.
+HMAC the body bytes exactly as they arrive and never a decoded or re-serialised copy.
 `JSON.stringify(JSON.parse(body))` (or Python's `json.dumps(..., ensure_ascii=False)`) turns
-`ä` into `ä`, the bytes change, and the signature no longer matches. Meta's own sample
+`\u00e4` into `ä`, the bytes change, and the signature no longer matches. Meta's own sample
 computes the HMAC over the raw `buf` passed to its body-parser verify function.
 
 ### Node.js
@@ -77,6 +77,6 @@ def verify_messenger_signature(raw_body: bytes, signature_header: str, app_secre
 | Symptom | Likely cause |
 |---------|--------------|
 | Handshake never succeeds | Returning JSON instead of the raw `hub.challenge`, or verify token mismatch |
-| Fails only for messages with emoji/accents | HMAC computed over decoded or re-serialized JSON instead of the raw bytes |
+| Fails only for messages with emoji/accents | HMAC computed over decoded or re-serialised JSON instead of the raw bytes |
 | Signature always invalid | Body parsed by a JSON middleware first, or the wrong app's secret |
 | Only your own test messages arrive | App has Standard Access; customers need Advanced Access |

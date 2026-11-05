@@ -150,8 +150,9 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the
 3. Enable notifications for each account with `POST /<ACCOUNT_OR_PAGE_ID>/subscribed_apps?subscribed_fields=...`.
 4. **Hookdeck setup:** Paste your Meta app's App Secret (App settings > Basic). If your app
    uses Instagram API with Instagram Login and verification fails, use the Instagram app
-   secret from the Instagram product's API setup page instead. Hookdeck answers the
-   `hub.challenge` handshake itself.
+   secret from the Instagram product's API setup page instead.
+   Hookdeck answers the `hub.challenge` handshake itself without checking the Verify Token,
+   so any value you enter in the Meta dashboard works.
 
 See [references/setup.md](references/setup.md) for per-setup tokens, hosts and permissions.
 

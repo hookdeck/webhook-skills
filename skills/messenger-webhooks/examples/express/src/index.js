@@ -13,7 +13,7 @@ const SIGNATURE_PATTERN = /^sha256=([0-9a-f]{64})$/i;
  *
  * Meta sends X-Hub-Signature-256: sha256=<hex>, the HMAC-SHA256 hex digest of
  * the request body keyed with the App Secret. Meta signs the escaped-unicode
- * payload (e.g. "ä" rather than "ä"), so the HMAC must run over the RAW
+ * payload (e.g. "\u00e4" rather than "ä"), so the HMAC must run over the RAW
  * bytes as received, never over re-serialized JSON. The pattern check
  * guarantees 64 hex characters before Buffer.from(x, 'hex'), then the two
  * 32-byte digests are compared in constant time.

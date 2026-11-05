@@ -46,8 +46,8 @@ each entry carries a `messaging[]` array (or `standby[]` under the handover prot
 
 Meta sends `X-Hub-Signature-256: sha256=<hex>`, the HMAC-SHA256 hex digest of the request
 body keyed with your **App Secret** (App settings > Basic). Meta signs an **escaped-unicode**
-form of the payload (`äöå` as `äöå`), so verify over the **raw bytes**
-exactly as received; re-serializing parsed JSON produces different bytes. Require the
+form of the payload (`äöå` as `\u00e4\u00f6\u00e5`), so verify over the **raw bytes**
+exactly as received; re-serialising parsed JSON produces different bytes. Require the
 `sha256=` prefix, check the digest is 64 hex characters, compare in constant time.
 
 Node:
@@ -144,8 +144,9 @@ MESSENGER_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the
    Token, then subscribe to fields (`messages`, `messaging_postbacks`, ...).
 3. Subscribe each Page: `POST /<PAGE_ID>/subscribed_apps?subscribed_fields=messages,...` with
    a Page access token (`pages_messaging`, `pages_manage_metadata`).
-4. **Hookdeck setup:** Paste your Meta app's App Secret (App settings > Basic). Hookdeck
-   answers the `hub.challenge` handshake itself.
+4. **Hookdeck setup:** Paste your Meta app's App Secret (App settings > Basic).
+   Hookdeck answers the `hub.challenge` handshake itself without checking the Verify Token,
+   so any value you enter in the Meta dashboard works.
 
 See [references/setup.md](references/setup.md).
 

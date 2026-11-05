@@ -55,7 +55,7 @@ COMMENT = change_body(
     },
 )
 
-# Meta signs an escaped-unicode payload: "äöå" arrives as "äöå".
+# Meta signs an escaped-unicode payload: "äöå" arrives as "\u00e4\u00f6\u00e5".
 ESCAPED = change_body("comments", {"id": "1", "text": "äöå"}, ensure_ascii=True)
 
 

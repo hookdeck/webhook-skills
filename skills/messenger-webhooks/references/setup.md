@@ -54,8 +54,9 @@ Every messaging app for the business must be subscribed to the messaging webhook
 
 Paste your Meta app's App Secret (App settings > Basic).
 
-Hookdeck's edge answers the `hub.challenge` handshake itself, so the destination doesn't need
-to handle the GET. Use the Hookdeck source URL as the Callback URL. Hookdeck acknowledges Meta
+Hookdeck answers the `hub.challenge` handshake itself without checking the Verify Token, so
+any value you enter in the Meta dashboard works. The destination doesn't need to handle the
+GET. Use the Hookdeck source URL as the Callback URL. Hookdeck acknowledges Meta
 quickly, which helps you stay inside Meta's 5-second response window and avoid the 1-hour
 **Webhooks Disabled** unsubscribe.
 
