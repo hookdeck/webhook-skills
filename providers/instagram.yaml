@@ -1,0 +1,39 @@
+name: instagram
+displayName: 'Instagram'
+docs:
+  webhooks: https://developers.facebook.com/documentation/instagram-platform/webhooks/setup
+  events: https://developers.facebook.com/documentation/instagram-platform/webhooks/fields
+  examples: https://developers.facebook.com/documentation/instagram-platform/webhooks/examples
+  overview: https://developers.facebook.com/documentation/instagram-platform/webhooks
+  messaging: https://developers.facebook.com/documentation/business-messaging/instagram-messaging/webhooks
+  reference_impl: https://github.com/fbsamples/graph-api-webhooks-samples
+notes: >
+  Instagram (Meta) webhooks for Instagram professional accounts. Meta signs every notification:
+  header X-Hub-Signature-256: 'sha256=<hex>', HMAC-SHA256 hex of the raw payload keyed with the app
+  secret. Require and strip the sha256= prefix. The setup guide says the key is "your app's App
+  Secret" (App settings > Basic). Apps on Instagram API with Instagram Login also have an Instagram
+  app secret (Instagram > API setup with Instagram login > Business login settings); the docs don't
+  say whether webhooks for those apps are signed with it, so say so, start with the App Secret and
+  try the Instagram app secret if verification fails. Three API setups (Unified Login, Instagram
+  Login, Facebook Login) differ in token, host, permissions and field availability; cover the fields
+  matrix. Body is {object: 'instagram', entry[]}; entries carry changes[] (comments, live_comments,
+  mentions, story_insights) or messaging[] (message incl. is_echo/is_deleted, reaction, postback,
+  referral, read for messaging_seen, message_edit), plus standby[] under the handover protocol.
+  Comment samples use value.id (Instagram Login) or value.comment_id (Unified/Facebook Login). Some
+  examples-page samples are wrapped in a JSON array; accept both. Compare in constant time: in Node
+  check /^sha256=([0-9a-f]{64})$/i before any Buffer.from(x, 'hex'), then crypto.timingSafeEqual on
+  equal-length buffers; in Python use hmac.compare_digest on bytes so a non-ASCII header gives 401.
+  No timestamp window. Setup also needs the GET verification handshake: respond to hub.mode=subscribe
+  with hub.challenge when hub.verify_token matches (examples use INSTAGRAM_VERIFY_TOKEN; Hookdeck's
+  edge answers the challenge itself). Hookdeck setup (say this in SKILL.md's setup section and in
+  references/setup.md): Paste your Meta app's App Secret (App settings > Basic). If your app uses
+  Instagram API with Instagram Login and verification fails, use the Instagram app secret from the
+  Instagram product's API setup page instead. Express examples must read the raw body with
+  express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'comments'
+    - 'mentions'
+    - 'messages'
+catalog:
+  summary: 'Verify Instagram (Meta) webhook signatures (`X-Hub-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw body keyed with the app secret), answer the `hub.challenge` handshake, handle `comments`, `live_comments`, `mentions`, `story_insights` and messaging events (`messages`, `message_reactions`, `messaging_postbacks`, `messaging_seen`)'

@@ -1,0 +1,31 @@
+name: messenger
+displayName: 'Facebook Messenger'
+docs:
+  webhooks: https://developers.facebook.com/documentation/business-messaging/messenger-platform/webhooks
+  events: https://developers.facebook.com/documentation/business-messaging/messenger-platform/webhooks/webhook-events
+  reference_impl: https://github.com/fbsamples/original-coast-clothing
+notes: >
+  Facebook Messenger Platform webhooks for a Facebook Page. Meta signs every notification: header
+  X-Hub-Signature-256: 'sha256=<hex>', HMAC-SHA256 hex of the payload keyed with the app's App Secret
+  (App settings > Basic). Meta signs the escaped-unicode payload (äöå as \u00e4\u00f6\u00e5): verify
+  over the raw bytes as received, never re-serialised JSON. Require and strip the sha256= prefix.
+  Body is {object: 'page', entry[]} with entry.messaging[] (or entry.standby[] under the handover
+  protocol); each item has sender, recipient, timestamp and one event key: message (messages; is_echo
+  for message_echoes), postback (messaging_postbacks), read (message_reads), delivery
+  (message_deliveries), reaction (message_reactions), optin (messaging_optins), referral
+  (messaging_referrals), message_edit (message_edits), account_linking (messaging_account_linking).
+  Respond 200 within 5 seconds; an hour of failed deliveries unsubscribes the app (Webhooks Disabled).
+  Compare in constant time: in Node check /^sha256=([0-9a-f]{64})$/i before any Buffer.from(x,
+  'hex'), then crypto.timingSafeEqual on equal-length buffers; in Python use hmac.compare_digest on
+  bytes. No timestamp window. Setup also needs the GET verification handshake: respond to
+  hub.mode=subscribe with hub.challenge when hub.verify_token matches (examples use
+  MESSENGER_VERIFY_TOKEN; Hookdeck's edge answers the challenge itself). Hookdeck setup (say this in
+  SKILL.md's setup section and in references/setup.md): Paste your Meta app's App Secret (App settings
+  > Basic). Express examples must read the raw body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'messages'
+    - 'messaging_postbacks'
+    - 'message_reads'
+catalog:
+  summary: 'Verify Facebook Messenger webhook signatures (`X-Hub-Signature-256` `sha256=<hex>`, HMAC-SHA256 of the raw escaped-unicode body keyed with the App Secret), answer the `hub.challenge` handshake, handle `messages`, `messaging_postbacks`, `message_reads`, `message_deliveries`, `message_reactions`, `messaging_optins` and `messaging_referrals`'
