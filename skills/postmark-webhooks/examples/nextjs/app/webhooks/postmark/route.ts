@@ -69,8 +69,10 @@ export async function POST(request: NextRequest) {
     // Verify authentication token
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
+    const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
-    if (token !== process.env.POSTMARK_WEBHOOK_TOKEN) {
+    // Fail closed: never accept a request when no token is configured
+    if (!expectedToken || token !== expectedToken) {
       console.error('Invalid webhook token');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

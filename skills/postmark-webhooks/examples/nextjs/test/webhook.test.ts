@@ -64,6 +64,36 @@ describe('Postmark Webhook Route', () => {
 
       expect(response.status).toBe(401);
     });
+
+    it('should reject requests when no token is configured', async () => {
+      delete process.env.POSTMARK_WEBHOOK_TOKEN;
+
+      const payload = {
+        RecordType: 'Bounce',
+        MessageID: 'test',
+      };
+
+      const request = createRequest(payload);
+      const response = await POST(request);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should reject an empty token when the configured token is empty', async () => {
+      process.env.POSTMARK_WEBHOOK_TOKEN = '';
+
+      // createRequest omits an empty token, so build the ?token= URL directly
+      const request = new NextRequest('http://localhost:3000/webhooks/postmark?token=', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ RecordType: 'Bounce', MessageID: 'test' }),
+      });
+      const response = await POST(request);
+
+      expect(response.status).toBe(401);
+    });
   });
 
   describe('Payload Validation', () => {
