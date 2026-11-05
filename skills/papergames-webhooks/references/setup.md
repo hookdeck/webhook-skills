@@ -4,20 +4,20 @@ Webhook endpoints are managed in the Papergames developer tools only. There is n
 
 ## Prerequisites
 
-- A Papergames developer account at [developers.papergames.io](https://developers.papergames.io) (email or social login)
+- A Papergames developer account, created in the developer tools at [papergames.io/en/developers/apikeys](https://papergames.io/en/developers/apikeys) (email or social login). The docs themselves live at [developers.papergames.io](https://developers.papergames.io) — that host is documentation only, not the dashboard.
 - An API key (create one per environment, e.g. dev / test / prod)
 - A publicly reachable HTTPS URL for your handler (use the Hookdeck CLI below for local development)
 
 ## How Do I Create an API Key?
 
-1. Sign in to the developer tools at developers.papergames.io.
-2. Create an API key and name it after its environment.
+1. Sign in to the developer tools at [papergames.io/en/developers/apikeys](https://papergames.io/en/developers/apikeys).
+2. Click **Create API Key**, and name it after its environment.
 
 The API key is sent as the `X-Api-Key` header on calls **you make** to the Papergames REST API (for example to create game sessions). It is not used to authenticate inbound webhooks. Its only link to webhooks is that each endpoint belongs to an API key.
 
 ## How Do I Register a Webhook Endpoint?
 
-1. In the developer tools, open **webhook management**.
+1. In the developer tools, open **webhook management** at [papergames.io/en/developers/webhooks](https://papergames.io/en/developers/webhooks). (The Managing Webhooks docs page links there via a typo'd host, `papergmaes.io`, which does not resolve — use `papergames.io`.)
 2. Click **Create endpoint** and fill in the form:
    - **url**: the public URL of your endpoint, e.g. `https://example.com/webhooks/papergames`
    - **webhook name**: a description such as `dev`, `test` or `prod`

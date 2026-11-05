@@ -101,7 +101,9 @@ app.post('/webhooks/papergames', express.raw({ type: '*/*' }), (req, res) => {
   const envelope = body.webhookPayload && typeof body.webhookPayload === 'object' ? body.webhookPayload : body;
   const { eventType } = envelope;
   const session = envelope.payload && typeof envelope.payload === 'object' ? envelope.payload : {};
-  const players = Array.isArray(session.players) ? session.players : [];
+  const players = (Array.isArray(session.players) ? session.players : []).filter(
+    (p) => p && typeof p === 'object'
+  );
 
   // svix-id is the same on every retry of a message: deduplicate on it. Ordering is not guaranteed,
   // so key game state on session.uid + session.gamesPlayed rather than on arrival order.

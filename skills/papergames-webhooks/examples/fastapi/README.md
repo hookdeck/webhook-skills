@@ -2,14 +2,14 @@
 
 Minimal example of receiving Papergames webhooks with signature verification. Papergames delivers webhooks
 through Svix, so the handler verifies the `svix-id`, `svix-timestamp` and `svix-signature` headers
-(HMAC-SHA256, base64) by hand with Node/Python built-ins. The official Svix library
+(HMAC-SHA256, base64) by hand with Python's `hmac` and `hashlib`. The official Svix library
 ([`svix`](https://www.npmjs.com/package/svix) on npm, [`svix`](https://pypi.org/project/svix/) on PyPI) is a
 supported alternative.
 
 ## Prerequisites
 
 - Python 3.9+
-- A Papergames developer account (developers.papergames.io) with an API key and a webhook endpoint secret (`whsec_...`)
+- A Papergames developer account (developer tools at https://papergames.io/en/developers/apikeys) with an API key and a webhook endpoint secret (`whsec_...`)
 
 ## Setup
 
@@ -57,7 +57,7 @@ Start a tunnel with the Hookdeck CLI (no account required):
 npx hookdeck-cli listen 8000 papergames --path /webhooks/papergames
 ```
 
-1. In the Papergames developer tools (developers.papergames.io), open **webhook management** for your API key,
+1. In the Papergames developer tools (https://papergames.io/en/developers/webhooks), open **webhook management** for your API key,
    click **Create endpoint**, paste the tunnel URL, and subscribe to `game.started` and `game.finished`.
 2. Copy the webhook secret shown after creation into `.env` as `PAPERGAMES_WEBHOOK_SECRET` (it is shown once).
 3. Create a game session (`POST /api/v2/game-session/player-vs-player`) and play a game through its `playUrl`.

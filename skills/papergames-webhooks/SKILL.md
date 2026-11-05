@@ -112,7 +112,7 @@ PAPERGAMES_WEBHOOK_TOLERANCE_SECONDS=300       # optional; 0 disables the timest
 npx hookdeck-cli listen 3000 papergames --path /webhooks/papergames
 ```
 
-Register the printed URL in the Papergames developer tools under **webhook management** → **Create endpoint**.
+Register the printed URL in the Papergames developer tools at [papergames.io/en/developers/webhooks](https://papergames.io/en/developers/webhooks) under **webhook management** → **Create endpoint**. (API keys live at [/en/developers/apikeys](https://papergames.io/en/developers/apikeys); `developers.papergames.io` is the docs site, not the dashboard.)
 
 ## Reference Materials
 
