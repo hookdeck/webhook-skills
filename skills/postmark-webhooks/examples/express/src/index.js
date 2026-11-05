@@ -19,15 +19,18 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
   // Validate payload structure
   const event = req.body;
 
-  if (!event.RecordType || !event.MessageID) {
+  // Inbound webhooks have no RecordType, so identify them by FromFull
+  const recordType = event.RecordType || (event.FromFull ? 'Inbound' : undefined);
+
+  if (!recordType || !event.MessageID) {
     console.error('Invalid payload structure:', event);
     return res.status(400).send('Invalid payload structure');
   }
 
   // Process the event based on type
-  console.log(`Received ${event.RecordType} event for message ${event.MessageID}`);
+  console.log(`Received ${recordType} event for message ${event.MessageID}`);
 
-  switch (event.RecordType) {
+  switch (recordType) {
     case 'Bounce':
       handleBounce(event);
       break;
@@ -52,8 +55,12 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
       handleSubscriptionChange(event);
       break;
 
+    case 'Inbound':
+      handleInbound(event);
+      break;
+
     default:
-      console.log(`Unknown event type: ${event.RecordType}`);
+      console.log(`Unknown event type: ${recordType}`);
   }
 
   // Always return 200 to acknowledge receipt
@@ -127,6 +134,16 @@ function handleSubscriptionChange(event) {
   // - Update subscription preferences
   // - Log for compliance
   // - Trigger preference center update
+}
+
+function handleInbound(event) {
+  console.log(`Inbound email from: ${event.From}`);
+  console.log(`  Subject: ${event.Subject}`);
+
+  // In a real application:
+  // - Match the reply to a conversation
+  // - Parse the content and attachments
+  // - Trigger automated responses
 }
 
 // Health check endpoint

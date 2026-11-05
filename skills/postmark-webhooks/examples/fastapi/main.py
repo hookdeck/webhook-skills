@@ -25,7 +25,8 @@ if not POSTMARK_WEBHOOK_TOKEN:
 class PostmarkEvent(BaseModel):
     RecordType: str
     MessageID: str
-    ServerID: int
+    # Open and Click events don't include ServerID
+    ServerID: Optional[int] = None
     MessageStream: Optional[str] = None
     Tag: Optional[str] = None
     Metadata: Optional[Dict[str, Any]] = None
@@ -83,6 +84,19 @@ class SubscriptionChangeEvent(PostmarkEvent):
     SuppressionReason: Optional[str] = None
 
 
+# Inbound webhooks have no RecordType or ServerID
+class InboundEvent(BaseModel):
+    MessageID: str
+    MessageStream: Optional[str] = None
+    From: str
+    FromFull: Dict[str, Any]
+    Subject: str
+    TextBody: Optional[str] = None
+    HtmlBody: Optional[str] = None
+    StrippedTextReply: Optional[str] = None
+    Tag: Optional[str] = None
+
+
 # Union type for all webhook events
 WebhookEvent = Union[
     BounceEvent,
@@ -91,6 +105,7 @@ WebhookEvent = Union[
     ClickEvent,
     DeliveryEvent,
     SubscriptionChangeEvent,
+    InboundEvent,
     PostmarkEvent  # For unknown event types
 ]
 
@@ -120,8 +135,11 @@ async def handle_webhook(
             detail="Invalid JSON payload"
         )
 
+    # Inbound webhooks have no RecordType, so identify them by FromFull
+    record_type = body.get("RecordType") or ("Inbound" if body.get("FromFull") else None)
+
     # Validate required fields
-    if not body.get("RecordType") or not body.get("MessageID"):
+    if not record_type or not body.get("MessageID"):
         logger.error(f"Invalid payload structure: {body}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -129,7 +147,6 @@ async def handle_webhook(
         )
 
     # Process the event
-    record_type = body["RecordType"]
     message_id = body["MessageID"]
 
     logger.info(f"Received {record_type} event for message {message_id}")
@@ -154,6 +171,9 @@ async def handle_webhook(
         elif record_type == "SubscriptionChange":
             event = SubscriptionChangeEvent(**body)
             await handle_subscription_change(event)
+        elif record_type == "Inbound":
+            event = InboundEvent(**body)
+            await handle_inbound(event)
         else:
             logger.warning(f"Unknown event type: {record_type}")
             # Still return 200 for unknown events
@@ -241,6 +261,17 @@ async def handle_subscription_change(event: SubscriptionChangeEvent):
     # - Update subscription preferences
     # - Log for compliance
     # - Trigger preference center update
+
+
+async def handle_inbound(event: InboundEvent):
+    """Process inbound email events."""
+    logger.info(f"Inbound email from: {event.From}")
+    logger.info(f"  Subject: {event.Subject}")
+
+    # In a real application:
+    # - Match the reply to a conversation
+    # - Parse the content and attachments
+    # - Trigger automated responses
 
 
 @app.get("/health")

@@ -115,8 +115,13 @@ Since there's no signature to verify, validate the expected payload structure:
 ```javascript
 function isValidPostmarkPayload(payload) {
   // Check required fields
-  if (!payload.RecordType || !payload.MessageID) {
+  if (!payload.MessageID) {
     return false;
+  }
+
+  // Inbound payloads have no RecordType, so identify them by FromFull
+  if (!payload.RecordType) {
+    return Boolean(payload.FromFull);
   }
 
   // Validate RecordType is expected

@@ -14,20 +14,18 @@ Postmark webhooks are HTTP callbacks that notify your application in real-time w
 | `Click` | Link in email is clicked | Monitor CTR, track user behavior |
 | `Delivery` | Email successfully delivered | Confirm delivery, update status |
 | `SubscriptionChange` | User unsubscribes/resubscribes | Manage subscription preferences |
-| `Inbound` | Incoming email received | Process replies, parse email content, automate responses |
+| Inbound (no `RecordType`) | Incoming email received | Process replies, parse email content, automate responses |
 | `SMTP API Error` | SMTP API call fails | Handle API errors, retry failed operations |
 
 ## Event Payload Structure
 
-Postmark sends one event per webhook request (not batched). All events include:
+Postmark sends one event per webhook request (not batched). The fields vary by event. Outbound events share these:
 
 ```json
 {
   "RecordType": "Bounce",
   "MessageID": "883953f4-6105-42a2-a16a-77a8eac79483",
   "MessageStream": "outbound",
-  "ServerID": 23,
-  "From": "sender@example.com",
   "Tag": "welcome-email",
   "Metadata": {
     "user_id": "12345",
@@ -35,6 +33,8 @@ Postmark sends one event per webhook request (not batched). All events include:
   }
 }
 ```
+
+`ServerID` is sent on Bounce, SpamComplaint, Delivery and SubscriptionChange events, but not on Open, Click or Inbound. `From` is sent on Bounce, SpamComplaint and Inbound events.
 
 ### Bounce Event Fields
 
@@ -66,6 +66,8 @@ Postmark sends one event per webhook request (not batched). All events include:
 
 ### Inbound Event Fields
 
+Inbound payloads have no `RecordType`, so identify them by `FromFull`. Postmark retries Inbound deliveries up to 10 times on any non-200 response, and stops retrying on a 403.
+
 - `From` - Sender email address
 - `FromFull` - Full sender info (name and email)
 - `ToFull` - Full recipient info array
@@ -77,6 +79,8 @@ Postmark sends one event per webhook request (not batched). All events include:
 - `MessageStream` - Always "inbound"
 
 ### SMTP API Error Event Fields
+
+Postmark publishes no sample payload for this webhook, so check these names against a real delivery.
 
 - `Error` - Error message from the API
 - `ErrorCode` - Numeric error code
