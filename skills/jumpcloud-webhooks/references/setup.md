@@ -49,5 +49,5 @@ curl -X POST http://localhost:3000/webhooks/jumpcloud \
 
 ## Network Notes
 
-JumpCloud publishes region-specific FQDNs and IP addresses (see "JumpCloud Data Centers") if you
-need a firewall allowlist. The Basic credentials remain the authentication.
+JumpCloud's Data Centers article lists LDAP and RADIUS endpoints but no addresses that webhooks are
+sent from, so don't plan on an IP allowlist. The Basic credentials remain the authentication.

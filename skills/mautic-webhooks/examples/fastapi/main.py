@@ -48,7 +48,7 @@ def handle_event(event_type: str, event: dict) -> None:
     elif event_type == "mautic.email_on_send":
         print(f"Email sent to contact: {(event.get('contact') or {}).get('id')}")
     elif event_type == "mautic.email_on_open":
-        print(f"Email opened by contact: {(event.get('contact') or {}).get('id')}")
+        print(f"Email opened by contact: {((event.get('stat') or {}).get('lead') or {}).get('id')}")
     elif event_type == "mautic.form_on_submit":
         print(f"Form submitted: {(event.get('submission') or {}).get('id')}")
         # TODO: Create a ticket, notify sales, etc.

@@ -11,13 +11,16 @@ you add a custom header with a secret value and check it on your side.
 
 | Type | Triggered When | Common Use Cases |
 |------|----------------|------------------|
-| `Deployment.failed` | A deployment fails (the example in Railway's docs) | Alert the team, open a ticket |
+| `Deployment.failed` | A build or deploy fails (the example in Railway's docs) | Alert the team, open a ticket |
+| `Deployment.crashed` | A running deployment crashes | Page on-call if it repeats |
+| `Deployment.oom_killed` | A deployment is stopped for running out of memory | Review memory limits |
 | `Deployment.<state>` | Any other deployment status change | Update a deploy dashboard, notify a channel |
 | alert types | A volume usage or CPU/RAM monitor alert fires | Page on-call, scale up |
 
-Railway's docs name only `Deployment.failed` verbatim. Deployment states are listed in its
-Deployments reference, and alert type strings are not enumerated, so match on the
-`Deployment.` prefix and log anything you don't recognize.
+Railway's webhook docs name only `Deployment.failed` verbatim, and its own agent skill adds
+`Deployment.crashed` and `Deployment.oom_killed`. Deployment states are listed in its Deployments
+reference without their `type` spelling, and alert type strings are not enumerated, so match on
+the `Deployment.` prefix and log anything you don't recognize.
 
 ## Event Payload Structure
 

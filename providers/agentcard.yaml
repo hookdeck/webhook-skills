@@ -11,7 +11,7 @@ notes: >
   whsec_... but this is NOT Standard Webhooks: the HMAC key is the whole secret string including
   whsec_, as UTF-8. Do NOT use the standardwebhooks or svix libraries and do not strip or
   base64-decode the whsec_ prefix. t=<ts>,v1=<hex> header: split on ',' and trim each part (allow a
-  space after the comma), take t and every v1 (several are sent during secret rotation) and accept if
+  space after the comma), take t and every v1 and accept if
   any v1 matches; reject a header with no t or no v1. Compare in constant time: in Node, check the
   received value is exactly 64 hex chars (/^[0-9a-f]{64}$/i) before any Buffer.from(x, 'hex') (invalid
   hex silently truncates), or compare the lowercase hex strings as equal-length UTF-8 Buffers with
@@ -21,7 +21,7 @@ notes: >
   AGENTCARD_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the mercury-webhooks skill does.
   SKILL.md must say that Hookdeck retries and replays resend the original timestamp, so a 5-minute
   window rejects late retries, and point to references/verification.md, which shows where the window
-  can be dropped or widened. A legacy X-AgentCard-Signature: sha256=<hex> header signs the body alone;
+  can be dropped or widened. A legacy X-AgentCard-Signature: sha256=... header signs the body alone;
   Hookdeck uses AgentCard-Signature, so the examples verify AgentCard-Signature only and say the
   legacy header is not used. Events include card.created, card.updated, card.closed,
   transaction.authorized, approval.requested, checkout_authorization.approved, balance.low. Hookdeck

@@ -51,7 +51,7 @@ missing Basic credentials. To try it by hand:
 curl -X POST http://localhost:8000/webhooks/proxyclick \
   -u "$PROXYCLICK_WEBHOOK_USERNAME:$PROXYCLICK_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"visitor":{"firstName":"Ada"},"visit":{"id":"illustrative-1"}}'
+  -d '{"object":"visit","id":"illustrative-1","visitor":{"object":"visitor","firstname":"Ada"}}'
 ```
 
 ## Receive Proxyclick Webhooks Locally

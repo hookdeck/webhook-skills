@@ -7,13 +7,13 @@
 
 ## Choose HMAC (Lago Defaults to JWT)
 
-Lago's default signature algorithm is `jwt`. This skill only handles `hmac`, so select it when creating the endpoint. The algorithm is chosen at creation.
+Lago's default signature algorithm is `jwt`. This skill only handles `hmac`, so select it when creating the endpoint.
 
 **Dashboard:**
-1. Developers > Webhooks tab > **Add a webhook**
+1. Developers > Webhooks tab > **Add an endpoint**
 2. Enter a name and your URL
 3. Set the signature to **HMAC**
-4. Tick the events to receive, then **Add webhook**
+4. Tick the events to receive, then **Create endpoint**
 
 **API:**
 
@@ -24,7 +24,7 @@ curl --location --request POST "$LAGO_URL/api/v1/webhook_endpoints" \
   --data-raw '{ "webhook_endpoint": { "webhook_url": "https://example.com/webhooks/lago", "signature_algo": "hmac" } }'
 ```
 
-If an existing endpoint uses `jwt`, create a new endpoint with `hmac` instead.
+If an existing endpoint uses `jwt`, switch it with `PUT /api/v1/webhook_endpoints/{lago_id}` and `"signature_algo": "hmac"`.
 
 ## Get Your HMAC Signature Token
 
@@ -40,4 +40,4 @@ Use the printed URL as your endpoint URL.
 
 ## Webhook Logs
 
-Developers > Webhooks > your endpoint shows each event with its timestamp, unique key, type, response code and retry count. Failed events can be retried from there.
+Developers > Webhooks > your endpoint > **Deliveries** shows each event with its timestamp, unique key, type, response code and retry count. Failed events can be retried from there.

@@ -89,9 +89,7 @@ function handleEvent(event) {
   const { type, data = {} } = event;
 
   switch (type) {
-    // customer.products.updated is the older name for plan changes.
-    case 'billing.updated':
-    case 'customer.products.updated': {
+    case 'billing.updated': {
       const changes = data.plan_changes ?? [];
       for (const change of changes) {
         const plan = (change.subscription ?? change.purchase)?.plan_id;
@@ -105,6 +103,10 @@ function handleEvent(event) {
       }
       break;
     }
+    // A separate event with its own shape and no plan_changes.
+    case 'customer.products.updated':
+      console.log(`Customer products ${data.scenario}: ${data.updated_product?.id} for ${data.customer?.id}`);
+      break;
     case 'balances.limit_reached':
       console.log(`Limit reached (${data.limit_type}) on ${data.feature_id} for ${data.customer_id}`);
       break;

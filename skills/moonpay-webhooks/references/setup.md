@@ -8,7 +8,7 @@
 ## Get Your Webhook API Key
 
 1. Open the [Developers page](https://dashboard.moonpay.com/developers/) of the MoonPay dashboard.
-2. Copy the **webhook API key** (e.g. `wk_test_...` for test mode, `wk_live_...` for live mode).
+2. Copy the **webhook API key** (MoonPay's sample is `wk_test_123`).
 3. Store it server-side as `MOONPAY_WEBHOOK_API_KEY`. It is the HMAC key and must never reach the client.
 
 ## Register Your Endpoint
@@ -16,7 +16,7 @@
 1. Go to [Webhook settings](https://dashboard.moonpay.com/developers/#webhooks) and click **Add Endpoint**.
 2. Enter your HTTPS URL.
 3. Choose all event types or specific ones (e.g. `transaction_created`, `transaction_updated`, `transaction_failed`, `sell_transaction_created`, `identity_check_updated`).
-4. Create one setting for test mode and one for live mode; they can share a URL, but verify each with its own key.
+4. Create one setting for test mode and one for live mode; they can share a URL. MoonPay's docs don't say whether the key differs by mode, so check on the Developers page.
 
 ## Test Mode vs Live Mode
 

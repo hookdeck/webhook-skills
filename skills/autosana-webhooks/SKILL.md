@@ -3,7 +3,7 @@ name: autosana-webhooks
 description: >
   Receive and verify Autosana webhooks. Use when setting up Autosana webhook
   handlers, debugging X-Autosana-Signature-256 signature verification, or
-  handling the batch.completed event sent when a batch of AI mobile app test
+  handling the batch.completed event sent when a batch of AI end-to-end test
   flow runs finishes.
 license: MIT
 metadata:
@@ -14,7 +14,7 @@ metadata:
 
 # Autosana Webhooks
 
-Autosana (AI mobile app testing) sends an HTTP POST to your HTTPS endpoint when a batch of flow runs completes. If you set a signing secret on the webhook, each payload is signed with HMAC-SHA256.
+Autosana (AI end-to-end testing for mobile apps and websites) sends an HTTP POST to your HTTPS endpoint when a batch of flow runs completes. If you set a signing secret on the webhook, each payload is signed with HMAC-SHA256.
 
 ## When to Use This Skill
 

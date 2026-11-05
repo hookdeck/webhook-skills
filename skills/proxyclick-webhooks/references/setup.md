@@ -45,5 +45,5 @@ The body below is **illustrative**, not Proxyclick's documented schema:
 curl -X POST http://localhost:3000/webhooks/proxyclick \
   -u "$PROXYCLICK_WEBHOOK_USERNAME:$PROXYCLICK_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"visitor":{"firstName":"Ada"},"visit":{"id":"illustrative-1"}}'
+  -d '{"object":"visit","id":"illustrative-1","visitor":{"object":"visitor","firstname":"Ada"}}'
 ```

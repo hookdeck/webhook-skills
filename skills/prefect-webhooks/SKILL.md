@@ -92,7 +92,7 @@ PREFECT_WEBHOOK_SECRET=Bearer your-shared-secret  # exact whole header value
 
 ## Local Development
 
-Prefect can't reach `localhost`. Tunnel with the Hookdeck CLI (no account required):
+Prefect Cloud can't reach `localhost`. Tunnel with the Hookdeck CLI (no account required):
 
 ```bash
 npx hookdeck-cli listen 3000 prefect --path /webhooks/prefect

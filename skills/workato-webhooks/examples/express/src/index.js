@@ -102,7 +102,7 @@ app.all('/webhooks/workato', express.raw({ type: '*/*' }), (req, res) => {
     handleEvent(payload);
   } catch (err) {
     console.error('Error handling Workato request:', err);
-    // A non-2xx fails the recipe step (and retries, if the step has retries on).
+    // A non-2xx stops the job unless a Handle errors step catches it.
     return res.status(500).json({ error: 'Handler error' });
   }
 

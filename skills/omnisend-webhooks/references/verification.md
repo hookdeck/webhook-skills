@@ -71,6 +71,8 @@ def verify_omnisend_request(headers, header_name=None, secret=None) -> bool:
 - **Compare the whole value.** If the value is `Bearer abc`, the secret is `Bearer abc`. Don't
   strip or parse a prefix.
 - **Fail closed.** If `OMNISEND_WEBHOOK_SECRET` is unset, reject everything.
+- **The API can read the secret.** The Automations API returns header values verbatim under the
+  `automations.read` scope, so treat such keys as able to read your secret.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths; encode both sides to bytes for `hmac.compare_digest`.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then

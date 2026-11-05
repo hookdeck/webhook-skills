@@ -47,12 +47,14 @@ Register the printed URL as the endpoint `url`. For FastAPI, use port `8000`.
 
 ## Send a Test Payload
 
-Oyster can send a test payload to a registered endpoint:
+Oyster can send a test payload to a registered endpoint. The request body needs a `data` object with at least one property:
 
 ```bash
 curl --request POST \
      --url https://api.oysterhr.com/v1/webhooks/<ENDPOINT ID>/test \
-     --header 'authorization: Bearer <ACCESS TOKEN>'
+     --header 'authorization: Bearer <ACCESS TOKEN>' \
+     --header 'content-type: application/json' \
+     --data '{"data": {"foo": "bar", "baz": "qux"}}'
 ```
 
 You can also simulate a delivery yourself:

@@ -53,7 +53,7 @@ def handle_event(job_id, status, content_type: str, body: bytes) -> None:
 
     elif status == "error":
         print(f"Job failed: {job_id} ({describe_body(content_type, body)})")
-        # TODO: only jobinfo is sent on error; read the job's errors from the API
+        # TODO: outputs that are not available are left out on error; read the job's errors from the API
 
     elif status == "fetch_error":
         print(f"Could not fetch the data file for job: {job_id}")

@@ -75,7 +75,8 @@ The event type is in the `action` field (there is no event type header). Payload
 
 ## Delivery Semantics
 
-- Return a `200` once processed. Failed deliveries are retried up to 10 times with exponential backoff (5 minutes, capped at 1 hour).
+- Return a `2xx` within 10 seconds. Sendcloud makes up to 10 attempts over about an hour and a half: the first retry is within 5 minutes and later waits grow to roughly half an hour.
+- Timeouts, an unreachable endpoint, `406`, `408`, `409`, `429` and `5xx` are retried. Any other `4xx`, such as `400`, `401`, `404` or `422`, stops delivery with no retry, so return a `5xx` for temporary problems. Every failed attempt appears in the connection issue log.
 - Webhooks can arrive **out of order**. Use the payload `timestamp` to find the latest parcel update, and make handlers idempotent.
 - Read the body raw (Express: `express.raw({ type: '*/*' })`) so any content type verifies.
 

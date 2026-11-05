@@ -16,7 +16,7 @@ metadata:
 
 project44 (supply chain visibility) pushes shipment updates to an HTTPS endpoint you host. The
 webhook is configured through the API with `PUT /api/v4/webhooks` and an authentication method of
-`API_KEY`, `BASIC`, `OAUTH2` or `MTLS`. This skill covers **`API_KEY`**: project44 adds a header
+`API_KEY`, `BASIC`, `OAUTH2`, `MTLS` or `AD_OAUTH2_CERT`. This skill covers **`API_KEY`**: project44 adds a header
 you name, with a value you choose, to every request.
 
 project44 webhooks are **not signed**. There is no HMAC and no timestamp. Your endpoint

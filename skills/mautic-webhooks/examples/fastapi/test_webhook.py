@@ -61,7 +61,7 @@ class TestEndpoint:
                 {"submission": {"id": 2}, "timestamp": "2026-01-01T12:00:01+00:00"},
             ],
             "mautic.email_on_open": [
-                {"email": {"id": 3}, "contact": {"id": 4}, "timestamp": "2026-01-01T12:00:02+00:00"}
+                {"stat": {"id": 3, "lead": {"id": 4}}, "timestamp": "2026-01-01T12:00:02+00:00"}
             ],
             "mautic.unknown_event": [{"timestamp": "2026-01-01T12:00:03+00:00"}],
         })

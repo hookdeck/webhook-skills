@@ -16,8 +16,8 @@ function safeEqual(a: string, b: string): boolean {
  * Workspace ONE UEM does not sign event notifications. It sends the User Name and
  * Password from the Event Notifications rule as HTTP Basic auth:
  *   Authorization: Basic base64(username:password)
- * The credentials must be on the first request; a 401 + WWW-Authenticate challenge
- * flow won't work (Hookdeck verifies the request as received).
+ * Omnissa's page doesn't say whether they arrive on the first request or only after
+ * a 401 challenge, so check the headers of a test notification.
  */
 export function verifyWorkspaceOneRequest(
   headers: Headers,

@@ -46,4 +46,4 @@ Create a prospect in Outreach (or a task and complete it) and watch the delivery
 ## Gotchas
 
 - No secret means no signature header, so verification always fails.
-- A hostname that resolves to a private IP disables the webhook for an hour; an unresolvable hostname disables it for a minute; a week of failures disables it permanently.
+- A hostname that resolves to a private IP disables the webhook for an hour; an unresolvable hostname disables it for a minute; a webhook that can't recover from either for a week or more is disabled permanently.

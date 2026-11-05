@@ -56,7 +56,7 @@ curl -L -X POST "$SPEECHMATICS_BATCH_API_URL/jobs/" \
 | `url` | yes | Up to 3 URLs per job |
 | `auth_headers` | no | Free-form `Name: value` strings sent with the request |
 | `contents` | no | `transcript`, `transcript.json-v2`, `transcript.txt`, `transcript.srt`, `data`, `jobinfo` |
-| `method` | no | `POST` (default) or `PUT` |
+| `method` | no | `post` (default) or `put` |
 
 `SPEECHMATICS_BATCH_API_URL` is the batch API base URL for your account and region; see the
 Speechmatics batch API reference. Submit with whichever client you already use (the API, an SDK or

@@ -22,7 +22,7 @@ app = FastAPI()
 # v1 is HMAC-SHA256 (hex) of "<t>.<raw body>". The key is the endpoint's WHOLE secret string,
 # including the whsec_ prefix, as UTF-8. This is NOT Standard Webhooks: don't strip the prefix or
 # base64-decode it, and don't use the standardwebhooks or svix libraries.
-# The legacy X-AgentCard-Signature (sha256=<hex>, body only) header is not used here.
+# The legacy X-AgentCard-Signature (sha256=..., body only) header is not used here.
 # https://docs.agentcard.com/webhooks/overview
 
 # Optional replay window in seconds. Off by default (0): retries and replays, including

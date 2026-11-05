@@ -28,9 +28,8 @@ SavvyCal signs the **raw request body** with HMAC-SHA256, keyed with the webhook
 secret, and sends the result in the **`x-savvycal-signature`** header. There is no
 timestamp and no SDK helper, so verify manually.
 
-The docs disagree with themselves on the format: the header example is
-`sha256=<UPPERCASE hex>`, while the Elixir sample compares the bare uppercase digest.
-Accept both: strip an optional `sha256=` prefix and compare the hex case-insensitively.
+The header is `sha256=` followed by uppercase hex, and most HMAC libraries output
+lowercase. Strip the `sha256=` prefix and compare the hex case-insensitively.
 
 ```javascript
 const crypto = require('crypto');
@@ -73,7 +72,7 @@ The payload is JSON with a top-level `type` (the event name) and `id` (`payload_
 | `poll.response.created` / `poll.response.updated` | A poll response is created or updated |
 | `workflow.action.triggered` | A workflow action fires |
 
-> **For the full event reference**, see [references/overview.md](references/overview.md) and [SavvyCal's webhook documentation](https://developers.savvycal.com/webhooks).
+> **For the full event reference**, see [references/overview.md](references/overview.md) and [SavvyCal's webhook documentation](https://docs.savvycal.com/developers/webhooks).
 
 ## Environment Variables
 

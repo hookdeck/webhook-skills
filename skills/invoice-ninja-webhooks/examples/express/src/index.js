@@ -43,8 +43,8 @@ function verifyInvoiceNinjaRequest(
  */
 function detectEntity(payload) {
   if (Array.isArray(payload.line_items)) return 'document'; // invoice, quote, credit, purchase order
-  if ('applied' in payload || 'transaction_reference' in payload) return 'payment';
-  if (Array.isArray(payload.contacts)) return 'client';
+  if ('applied' in payload) return 'payment';
+  if (Array.isArray(payload.contacts) && 'paid_to_date' in payload) return 'client'; // vendors have contacts too
   return 'unknown';
 }
 
@@ -74,7 +74,7 @@ function handleEntity(event, payload) {
 }
 
 // Read the body raw (any content type) so the request is authenticated before parsing.
-// Never answer 404, 405 or 410: Invoice Ninja deletes the webhook subscription when it sees them.
+// Never answer 404, 405 or 410: Invoice Ninja archives the webhook subscription when it sees them.
 app.all('/webhooks/invoice-ninja', express.raw({ type: '*/*' }), (req, res) => {
   if (!verifyInvoiceNinjaRequest(req.headers)) {
     return res.status(401).json({ error: 'Invalid or missing webhook credential' });

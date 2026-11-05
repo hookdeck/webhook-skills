@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Every Agentcard delivery carries `AgentCard-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the endpoint's **whole** secret string, `whsec_` prefix included, as UTF-8. **This is not Standard Webhooks**: don't use the `standardwebhooks` or `svix` libraries, and don't strip or base64-decode the prefix. `roll_secret` signs deliveries with the new secret from the next event, and Agentcard documents no overlap period, so update your secret promptly; the examples accept the header if any `v1` matches, which is harmless. The legacy `X-AgentCard-Signature: sha256=<hex>` header signs the body alone and is not used by the examples.
+Every Agentcard delivery carries `AgentCard-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the endpoint's **whole** secret string, `whsec_` prefix included, as UTF-8. **This is not Standard Webhooks**: don't use the `standardwebhooks` or `svix` libraries, and don't strip or base64-decode the prefix. `roll_secret` signs deliveries with the new secret from the next event, and Agentcard documents no overlap period, so update your secret promptly; the examples accept the header if any `v1` matches, which is harmless. The legacy `X-AgentCard-Signature: sha256=…` header signs the body alone and is not used by the examples.
 
 ### Verification (Node.js)
 
@@ -74,7 +74,7 @@ def verify_agentcard(raw_body: bytes, header: str, secret: str) -> bool:
 
 ### Timestamp window: off by default
 
-Agentcard suggests rejecting timestamps older than a few minutes. **Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late retries.** The examples therefore skip the freshness check unless you set `AGENTCARD_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (default `0` = off). Use the event `id` for idempotency instead. [references/verification.md](references/verification.md) shows exactly where the window can be dropped or widened.
+Agentcard suggests rejecting timestamps older than a few minutes. **Hookdeck retries and replays resend the original timestamp, so a 5-minute window rejects late retries.** The examples therefore skip the freshness check unless you set `AGENTCARD_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds (default `0` = off). Use the event `id` for idempotency instead. Agentcard's own `verifyAgentcardWebhook` in `@agent-cards/commerce-sdk` defaults to a 300-second tolerance, so pass a larger `toleranceSeconds` if you use it behind Hookdeck. [references/verification.md](references/verification.md) shows exactly where the window can be dropped or widened.
 
 ## Setup with Hookdeck
 
@@ -82,7 +82,7 @@ Paste the endpoint's whole secret, including the `whsec_` prefix, into the Hookd
 
 ## Event Envelope and Types
 
-Every event is `{ id, type, created, livemode, data }`. Branch on `type`; delivery is at least once, so dedupe on `id`.
+Every event is `{ id, type, created, livemode, data }`. Branch on `type`; delivery is at least once, so dedupe on `id`. Agentcard waits 10 seconds for your answer, and redelivers after anything other than a `2xx`.
 
 | Event | Triggered When |
 |-------|----------------|
@@ -100,8 +100,8 @@ See [references/overview.md](references/overview.md) for payloads and the other 
 
 | Header | Description |
 |--------|-------------|
-| `AgentCard-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>`; one `v1` per active secret |
-| `X-AgentCard-Signature` | Legacy `sha256=<hex>` over the body alone; not used here |
+| `AgentCard-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` |
+| `X-AgentCard-Signature` | Legacy `sha256=…` over the body alone; not used here |
 
 ## Environment Variables
 

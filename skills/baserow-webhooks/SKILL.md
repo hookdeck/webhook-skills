@@ -62,14 +62,14 @@ function verifyBaserowRequest(headers, name = process.env.BASEROW_WEBHOOK_HEADER
 **A static shared credential authenticates the sender, not the body, and gives no replay protection**
 (no signature, no timestamp). Serve the endpoint over HTTPS only, and rotate the secret (update the
 Baserow header and `BASEROW_WEBHOOK_SECRET` together) if it leaks. Make handlers idempotent, but
-not on `event_id` alone: a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call), so key on `event_id` + `batch_id`.
+not on `event_id` alone: a large `view.rows_entered` call, or a `rows.updated` call caused by a linked table, is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call), so key on `event_id` + `batch_id`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
 The payload has an `event_type` field, plus `event_id`, `table_id`, `database_id` and `workspace_id`.
-Row events carry an `items` array of affected rows.
+Row events carry an `items` array of affected rows, except `rows.deleted`, which carries only `row_ids`. Route on the body's `event_type`: on a call caused by a linked table, the `X-Baserow-Event` header can name a different event.
 
 | `event_type` | Sent When |
 |--------------|-----------|
@@ -82,10 +82,11 @@ Row events carry an `items` array of affected rows.
 | `field.created` | A field is added |
 | `field.updated` | A field's properties change |
 | `field.deleted` | A field is removed |
+| `view.rows_entered` | Rows start matching a chosen view's filters (enterprise feature; not in Send everything) |
 
 The older `row.created`, `row.updated` and `row.deleted` types are deprecated in favour of the
-batch `rows.*` types. Baserow also offers conditional row update and row-enters-view triggers; log
-the `event_type` you receive before relying on them. See [references/overview.md](references/overview.md).
+batch `rows.*` types, and Baserow's current source no longer registers them. A conditional row update
+is `rows.updated` limited to chosen fields. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 

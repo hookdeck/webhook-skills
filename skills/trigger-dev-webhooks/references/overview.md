@@ -21,7 +21,7 @@ Every payload shares these properties:
 
 | Field | Description |
 |-------|-------------|
-| `id` | Unique identifier for this webhook event (use it for idempotency) |
+| `id` | Unique identifier for this webhook event. Use it for idempotency on run and deployment alerts. On `alert.error` it changes on each delivery attempt, so key on `object.error.fingerprint`, `object.classification` and `object.error.lastSeen` |
 | `created` | When the event was created |
 | `webhookVersion` | Version of the payload format |
 | `type` | One of the event types above |
@@ -32,9 +32,9 @@ Every payload shares these properties:
 - **`alert.run.failed`**: `task` (`id`, `filePath`, `exportName`, `version`), `run` (`id`, `number`, `status`, `error`, `isOutOfMemoryError`, `machine`, `dashboardUrl`, `tags`, ...), `environment`, `organization`, `project`
 - **`alert.deployment.success`**: `deployment` (`id`, `status`, `version`, `shortCode`, `deployedAt`), `tasks`, optional `git` and `vercel`, plus `environment`, `organization`, `project`
 - **`alert.deployment.failed`**: `deployment` (with `failedAt`), `error` (`name`, `message`, optional `stack`, `stderr`), optional `git` and `vercel`, plus `environment`, `organization`, `project`
-- **`alert.error`**: `classification` (`new_issue`, `regression` or `unignored`), `error` (`fingerprint`, `type`, `message`, `stackTrace`, ...)
+- **`alert.error`**: `classification` (`new_issue`, `regression` or `unignored`), `error` (`fingerprint`, `type`, `message`, `stackTrace`, ...), `environment` (`id` and `name` only), `organization`, `project`, `dashboardUrl`
 
-`environment.type` is `PRODUCTION`, `STAGING` or `PREVIEW`.
+On run and deployment alerts, `environment.type` is `PRODUCTION`, `STAGING` or `PREVIEW`.
 
 ## Full Event Reference
 

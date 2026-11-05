@@ -61,4 +61,4 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 - Confirm the secret in your env var (and in Hookdeck) matches the one on the Autosana webhook exactly, with no stray whitespace.
 - Make sure no middleware (`express.json()`, body parsers) consumed the body first.
 - Log the raw body length and compare with what your tunnel or proxy received.
-- The Test button sends a payload from Autosana's API; it should still be signed if a secret is set.
+- The Test button sends a payload from Autosana's API. The docs don't say whether that delivery is signed, so check a real `batch.completed` delivery before concluding your code is wrong.

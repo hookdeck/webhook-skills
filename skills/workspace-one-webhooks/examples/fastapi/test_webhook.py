@@ -1,12 +1,10 @@
 import base64
-import json
 import os
 
 # Set test environment variables before importing the app
 os.environ["WORKSPACE_ONE_WEBHOOK_USERNAME"] = "ws1-notify"
 os.environ["WORKSPACE_ONE_WEBHOOK_PASSWORD"] = "p@ss:word-with-colon"
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app, verify_workspace_one_request
@@ -16,24 +14,16 @@ client = TestClient(app)
 USER = os.environ["WORKSPACE_ONE_WEBHOOK_USERNAME"]
 PASS = os.environ["WORKSPACE_ONE_WEBHOOK_PASSWORD"]
 
-EVENTS = [
-    "Check-in/Check-out", "Device Attribute Change", "Device Compliance Status Change",
-    "Device Compromised Status Change", "Device Delete", "Device Enrollment",
-    "Device Unenrolled Enterprise Wipe", "Device Wipe",
-]
-
-
 def basic(user, password, scheme="Basic"):
     return f"{scheme} " + base64.b64encode(f"{user}:{password}".encode("utf-8")).decode()
 
 
-# Illustrative body: Omnissa's page does not document the payload.
-def sample_payload(event_type="Device Enrollment"):
-    return {"EventType": event_type, "DeviceId": 4821, "EnrollmentUserName": "jdoe"}
+# Placeholder body: Omnissa's page does not document the payload.
+BODY = '{"placeholder":"not a Workspace ONE payload"}'
 
 
 def post(auth=None, body=None, content_type="application/json"):
-    content = body if body is not None else json.dumps(sample_payload())
+    content = body if body is not None else BODY
     headers = {"Content-Type": content_type}
     if auth is not None:
         headers["Authorization"] = auth
@@ -79,27 +69,17 @@ class TestBasicAuthVerification:
 
 
 class TestBodyHandling:
-    @pytest.mark.parametrize("event_type", EVENTS)
-    def test_handles_event(self, event_type):
-        res = post(basic(USER, PASS), json.dumps(sample_payload(event_type)))
-        assert res.status_code == 200
-
-    def test_accepts_unknown_event_type(self):
-        assert post(basic(USER, PASS), json.dumps(sample_payload("Something New"))).status_code == 200
+    def test_accepts_json_body(self):
+        assert post(basic(USER, PASS)).status_code == 200
 
     def test_accepts_xml_body(self):
-        xml = "<Event><EventType>Device Wipe</EventType><DeviceId>4821</DeviceId></Event>"
-        assert post(basic(USER, PASS), xml, "application/xml").status_code == 200
+        assert post(basic(USER, PASS), "<placeholder/>", "application/xml").status_code == 200
 
     def test_accepts_any_content_type(self):
-        res = post(basic(USER, PASS), json.dumps(sample_payload()), "text/plain")
-        assert res.status_code == 200
+        assert post(basic(USER, PASS), BODY, "text/plain").status_code == 200
 
-    def test_rejects_invalid_json_after_auth(self):
-        assert post(basic(USER, PASS), "{not json").status_code == 400
+    def test_stores_unparseable_body_rather_than_rejecting(self):
+        assert post(basic(USER, PASS), "{not json").status_code == 200
 
-    def test_rejects_non_object_json(self):
-        assert post(basic(USER, PASS), "[1,2]").status_code == 400
-
-    def test_unauthenticated_invalid_body_is_401(self):
+    def test_unauthenticated_body_is_401(self):
         assert post(None, "{not json").status_code == 401

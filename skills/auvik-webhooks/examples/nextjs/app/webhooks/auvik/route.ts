@@ -5,6 +5,7 @@ import { verifyAuvikRequest } from '../../../lib/verify-auvik';
 
 interface AuvikAlert {
   alertId?: string;
+  correlationId?: string;
   alertName?: string;
   alertStatus?: number;
   alertStatusString?: string;
@@ -22,12 +23,12 @@ function handleAlert(payload: AuvikAlert): void {
   switch (alertStatusString) {
     case 'Triggered':
       console.log(`Alert triggered: ${alertName} on ${entityName} (${companyName})`);
-      // TODO: open an incident or ticket (payload.alertId, payload.alertDescription, payload.link)
+      // TODO: open an incident or ticket (payload.correlationId, payload.alertDescription, payload.link)
       break;
 
     case 'Cleared':
       console.log(`Alert cleared: ${alertName} on ${entityName} (${companyName})`);
-      // TODO: resolve the matching incident (payload.alertId)
+      // TODO: resolve the matching incident (payload.correlationId)
       break;
 
     default:

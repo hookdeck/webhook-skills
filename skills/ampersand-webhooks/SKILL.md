@@ -37,7 +37,7 @@ base64-decoded secret after the `whsec_` prefix, base64 output. The secret is th
 ```javascript
 import { Webhook } from 'svix';
 
-// rawBody: Buffer/string exactly as received (express.raw({ type: '*/*' }))
+// rawBody: Buffer/string exactly as received (express.raw({ type: '*/*', limit: '350kb' }))
 new Webhook(process.env.AMPERSAND_WEBHOOK_SECRET).verify(rawBody, {
   'svix-id': req.headers['svix-id'],
   'svix-timestamp': req.headers['svix-timestamp'],

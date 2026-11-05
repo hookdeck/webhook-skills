@@ -25,7 +25,7 @@ The body has `resourceType` and `operationType`. Dispatch on `` `${resourceType}
 - `resourceType`: `transaction`, `checkingAccount`, `savingsAccount`, `treasuryAccount`, `investmentAccount`, `creditAccount`
 - `operationType`: `create`, `update`, `delete` (the [Events API](https://docs.mercury.com/reference/events) values; note they are not `created`/`updated`)
 
-So a delivery for the subscribed `transaction.created` has `resourceType: "transaction"`, `operationType: "create"`, and `checkingAccount.balance.updated` arrives as `checkingAccount` + `update`.
+So a delivery for the subscribed `transaction.created` has `resourceType: "transaction"`, `operationType: "create"`, and `checkingAccount.balance.updated` should arrive as `checkingAccount` + `update`. Mercury's docs list those `resourceType` values but publish no balance event body, so log your first delivery of each type to confirm.
 
 ## Event Payload Structure
 

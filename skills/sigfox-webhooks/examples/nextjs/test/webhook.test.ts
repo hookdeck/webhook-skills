@@ -17,6 +17,7 @@ const CALLBACKS: Record<string, Record<string, unknown>> = {
   'service acknowledge': { device: '1A2B3C', time: 1700000000, infoCode: 0, downlinkAck: true },
   'service repeater': { device: '1A2B3C', time: 1700000000, batt: 3.1, repeatedMsg: 12 },
   error: { device: '1A2B3C', time: 1700000000, info: 'last message 2h ago', severity: 'ERROR' },
+  event: { sourceId: '1A2B3C', time: 1700000000, eventType: 'OFF_CONTRACT', severity: 'ERROR' },
 };
 
 beforeAll(() => {

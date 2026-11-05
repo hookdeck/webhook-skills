@@ -14,13 +14,16 @@ base64(username:password)` using the credentials entered on the REST Service.
 
 - **On creation only.** Your data is sent to the external server only when a submission is
   created. Nothing is sent when data is edited.
-- **Retries.** On failure the background task retries 3 times: after 60 seconds, 600 seconds and
-  6,000 seconds. Email notifications can be enabled to receive a failure report.
+- **Retries.** KoboToolbox documents 3 retries: after 60 seconds, 600 seconds and 6,000 seconds. The
+  open-source `kpi` sender declares a backoff capped at 1,200 seconds instead, and retries only `502`,
+  `503`, `504` and read timeouts; any other failure is final. Email notifications can be enabled to
+  receive a failure report.
 
 ## Event Types
 
 There are none. KoboToolbox does not name events: every request is a new submission. If you need
-to tell projects apart, use `_xform_id_string` (form ID) or a custom wrapper.
+to tell projects apart, use `_xform_id_string` (form ID, unless a subset of fields leaves it out) or a
+custom wrapper.
 
 ## Payload Structure
 
@@ -43,7 +46,7 @@ The body is the submission. In the default JSON format:
 |--------|--------|
 | Type: JSON | Submission as a JSON object |
 | Type: XML | Submission as the form's XML; the body is not JSON, so don't reject it |
-| Subset of fields | Only the listed fields (plus metadata) are sent |
+| Subset of fields | Only the listed fields are sent; metadata such as `_uuid` is left out unless you list it |
 | Custom wrapper | JSON only: wrap the submission in a template of your own |
 
 ## Full Reference

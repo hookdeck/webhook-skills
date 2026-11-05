@@ -45,7 +45,7 @@ function handleEvent({ jobId, status, contentType, body }) {
 
     case 'error':
       console.log(`Job failed: ${jobId} (${describeBody(contentType, body)})`);
-      // TODO: only jobinfo is sent on error; read the job's errors from the API
+      // TODO: outputs that are not available are left out on error; read the job's errors from the API
       break;
 
     case 'fetch_error':

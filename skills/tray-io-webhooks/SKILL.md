@@ -65,8 +65,9 @@ function verifyTrayRequest(headers, {
   accept an empty body (for example a `GET`). Hookdeck's Tray.io source pre-selects `POST` without
   managing the method, so allow whichever method your HTTP Client step uses on the source too.
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse JSON only after the credential check.
-  Set the HTTP Client step's body type to JSON, because Tray defaults to
-  `application/x-www-form-urlencoded` when none is chosen.
+  Use the HTTP Client step's `raw` body type and set `Content-Type: application/json` as a header,
+  because Tray has no JSON body type and defaults to `application/x-www-form-urlencoded` when none is
+  chosen.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

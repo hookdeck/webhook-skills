@@ -5,7 +5,7 @@ Minimal example of receiving Mercury webhooks with `Mercury-Signature` verificat
 ## Prerequisites
 
 - Python 3.9+
-- Mercury account with API access, and a webhook endpoint created through the API (`POST /webhooks`) so you have its `secretKey`
+- Mercury account with API access, and a webhook endpoint created through the API (`POST /webhooks`) so you have its `secret`
 
 ## Setup
 
@@ -19,7 +19,7 @@ Minimal example of receiving Mercury webhooks with `Mercury-Signature` verificat
    cp .env.example .env
    ```
 
-3. Add the endpoint's `secretKey` to `.env` (`MERCURY_WEBHOOK_SECRET`). Mercury returns it only when the endpoint is created.
+3. Add the endpoint's `secret` to `.env` (`MERCURY_WEBHOOK_SECRET`). Mercury returns it only when the endpoint is created.
 
 ## Run
 

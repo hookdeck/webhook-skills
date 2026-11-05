@@ -70,7 +70,7 @@ def verify_luma_webhook(raw_body: bytes, header: str | None, secret: str) -> boo
     return any(hmac.compare_digest(s, expected) for s in sigs)
 ```
 
-Luma suggests rejecting timestamps more than a few minutes old. The examples leave that off by default, because Luma's retries and Hookdeck's retries and replays keep the original `t`. Set `LUMA_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to opt in.
+Luma suggests rejecting timestamps more than a few minutes old. The examples leave that off by default, because Hookdeck's retries and replays keep the original `t`, and Luma doesn't say whether its own retries send a new one. Set `LUMA_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to opt in.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

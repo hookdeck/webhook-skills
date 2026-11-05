@@ -16,7 +16,7 @@ client = TestClient(app)
 
 # ILLUSTRATIVE body: Proxyclick's attribute reference is not documented here, so
 # this is NOT its real schema. Only the Basic credential check is under test.
-ILLUSTRATIVE = {"visitor": {"firstName": "Ada"}, "visit": {"id": "illustrative-1"}}
+ILLUSTRATIVE = {"object": "visit", "id": "illustrative-1", "visitor": {"object": "visitor", "firstname": "Ada"}}
 
 
 def basic(user, password):

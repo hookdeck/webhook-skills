@@ -83,7 +83,7 @@ In code, it is the `toleranceSeconds` / `tolerance` argument of the verify funct
 
 - **Raw body**: sign the exact bytes. Parsing and re-serializing JSON breaks the signature. In Express use `express.raw({ type: '*/*' })` so any content type reaches the verifier as a Buffer.
 - **Use `t` verbatim** in the signed string.
-- **Right key per mode**: test and live endpoints have different keys.
+- **Right key**: use the webhook API key from the Developers page, in the mode you're testing. The legacy header's signing secret is a different key.
 - **Missing `Moonpay-Signature-V2`**: you may only see the legacy `Moonpay-Signature` if a proxy dropped headers; do not fall back to it.
 - **GET callbacks** sign the query string, not the body.
 - **Respond within 5 seconds** with a 2xx; do heavy work after responding.
@@ -92,7 +92,7 @@ In code, it is the `toleranceSeconds` / `tolerance` argument of the verify funct
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Always invalid | Parsed body used instead of raw body, or wrong key (test vs live) |
+| Always invalid | Parsed body used instead of raw body, or wrong key (signing secret or another mode's key) |
 | Invalid only on retries/replays | Timestamp window enabled and `t` is old |
 | Header missing | Request not from MoonPay, or a proxy stripped it |
 | Invalid on GET requests | GET callbacks sign the search string, not a body |

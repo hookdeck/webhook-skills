@@ -69,9 +69,10 @@ Python and Next.js equivalents are in [references/verification.md](references/ve
 ## Webhook Triggers
 
 Proxyclick's docs name six trigger events, only as labels in the webhook settings UI. They
-document **no event-type field** in the payload, and the attribute reference pages were not
-reachable when this skill was written, so no event field is documented here and the examples
-dispatch on nothing. Their handlers use a clearly labelled **illustrative** body.
+document **no event-type field** in the payload, and the
+[attribute reference](https://api.proxyclick.com/v1/docs/) shows API objects rather than a webhook
+body, so the examples dispatch on nothing. Their handlers use a clearly labelled **illustrative**
+body.
 
 | Trigger (UI label) | Fires when |
 |--------------------|------------|

@@ -14,8 +14,8 @@ load_dotenv()
 
 app = FastAPI()
 
-# Optional replay window in seconds. Off by default (0): retries and replays, including
-# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Optional replay window in seconds. Off by default (0): Hookdeck's retries and replays carry
+# the original timestamp, so a window would reject late redeliveries.
 # Set LUMA_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 # treated as 0, with a warning.
 _warned_invalid_tolerance = False
@@ -61,7 +61,7 @@ def verify_luma_webhook(
     if not t or not (t.isascii() and t.isdigit()) or not signatures:
         return False
 
-    # Luma suggests rejecting old timestamps, but retries (and Hookdeck's) carry the
+    # Luma suggests rejecting old timestamps, but Hookdeck's retries and replays carry the
     # original `t`, so the window is opt-in (tolerance > 0).
     if tolerance is None:
         tolerance = timestamp_tolerance_seconds()

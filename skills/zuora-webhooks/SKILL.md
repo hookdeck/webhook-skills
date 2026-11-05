@@ -16,8 +16,9 @@ metadata:
 
 Zuora calls them **callouts**: event-based HTTP requests that Zuora sends to a URL you choose
 when something happens in your tenant, such as a payment processed or an invoice posted. You
-build them as callout templates in **Extension Studio > Events & Notifications**. This skill
-covers callout notifications, not Workflow callouts.
+build them as callout templates in **Extension Studio > Events & Notifications**, and an active
+notification definition has to select the template before anything is sent. This skill covers
+callout notifications, not Workflow callouts.
 
 Callouts are **not signed**. The sender is authenticated with HTTP Basic auth
 (`Authorization: Basic base64(username:password)`) set on the template.

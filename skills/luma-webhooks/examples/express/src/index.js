@@ -6,8 +6,8 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Optional replay window in seconds. Off by default (0): Hookdeck's retries and replays carry
+// the original timestamp, so a window would reject late redeliveries.
 // Set LUMA_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 // treated as 0, with a warning.
 let warnedInvalidTolerance = false;
@@ -52,7 +52,7 @@ function verifyLumaWebhook(
   const signatures = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t || !/^\d+$/.test(t) || signatures.length === 0) return false;
 
-  // Luma suggests rejecting old timestamps, but retries (and Hookdeck's) carry the
+  // Luma suggests rejecting old timestamps, but Hookdeck's retries and replays carry the
   // original `t`, so the window is opt-in (toleranceSeconds > 0).
   if (toleranceSeconds > 0 && Math.abs(nowSeconds - Number(t)) > toleranceSeconds) return false;
 

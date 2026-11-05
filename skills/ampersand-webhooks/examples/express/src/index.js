@@ -81,7 +81,8 @@ function handleResult(message) {
 
 // IMPORTANT: express.raw({ type: '*/*' }) keeps the exact bytes for any content type,
 // which is what the signature covers. Parse the body only after verification.
-app.post('/webhooks/ampersand', express.raw({ type: '*/*' }), (req, res) => {
+// The limit allows Ampersand's 300 KB messages; Express defaults to 100 KB.
+app.post('/webhooks/ampersand', express.raw({ type: '*/*', limit: '350kb' }), (req, res) => {
   const secret = process.env.AMPERSAND_WEBHOOK_SECRET;
   if (!secret || !secret.startsWith('whsec_')) {
     console.error('Invalid webhook secret configuration');

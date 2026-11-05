@@ -35,7 +35,7 @@ function handleEntity(event: string | null, payload: InvoiceNinjaEntity): void {
 
 // The method is the Invoice Ninja subscription's rest_method, which its server validates as
 // post (the default) or put, so the same handler serves POST and PUT.
-// Never answer 404, 405 or 410: Invoice Ninja deletes the webhook subscription when it sees them.
+// Never answer 404, 405 or 410: Invoice Ninja archives the webhook subscription when it sees them.
 async function handle(request: NextRequest) {
   // Authenticate before reading or parsing the body.
   if (!verifyInvoiceNinjaRequest(request.headers)) {

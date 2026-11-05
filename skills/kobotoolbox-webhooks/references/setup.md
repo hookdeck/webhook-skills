@@ -39,6 +39,8 @@ curl -X POST http://localhost:3000/webhooks/kobotoolbox \
 
 ## Failures
 
-If your endpoint returns an error, KoboToolbox retries 3 times (after 60, 600 and 6,000 seconds).
+KoboToolbox documents 3 retries (after 60, 600 and 6,000 seconds). In the open-source `kpi` sender the
+schedule is a backoff capped at 1,200 seconds, and only `502`, `503`, `504` and read timeouts are retried:
+a `401` or `500` fails at once, and you retry it from the service's log after fixing the problem.
 Enable email notifications on the REST Service to receive a failure report. Editing a submission
 sends nothing, so don't expect update events.

@@ -25,7 +25,6 @@ Send `PUT /api/v4/webhooks` with an `API_KEY` authentication method (see the
   "url": "https://example.com/webhooks/project44",
   "method": "POST",
   "methodParams": {},
-  "authType": "API_KEY",
   "authenticationMethods": [
     {
       "type": "API_KEY",
@@ -38,8 +37,8 @@ Send `PUT /api/v4/webhooks` with an `API_KEY` authentication method (see the
 
 Notes:
 
-- The docs describe the value field as `api_key_value`, but their example payload uses `api_key`.
-  Follow the example, and check the response if the header doesn't arrive.
+- The Webhook Guide's field list says `api_key_value`, but its example payload and the OpenAPI spec
+  use `api_key`. Send `api_key`, and check the response if the header doesn't arrive.
 - A header is created for each key (max 2).
 - `webhookConfiguration.webhookEventType` selects a granular webhook. Create one configuration per
   event type you need.
@@ -53,7 +52,7 @@ Notes:
 curl -X POST http://localhost:3000/webhooks/project44 \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: $PROJECT44_WEBHOOK_SECRET" \
-  -d '{"eventId":"1","eventType":"shipments.v1.shipment.created","dataType":"Shipment","context":{"shipment":{"shipmentId":"abc"}},"data":{}}'
+  -d '{"eventId":"1","eventType":"shipments.v1.shipment.created","dataType":"Empty","context":{"shipment":{"shipmentId":"abc"}},"data":{}}'
 ```
 
 ## Network Notes

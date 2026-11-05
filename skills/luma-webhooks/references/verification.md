@@ -31,7 +31,7 @@ Luma ships no verification SDK, so this is manual in every language. Tested vers
 
 - **Raw body.** Re-serialized JSON changes bytes and breaks the signature. Express: `express.raw({ type: '*/*' })`; Next.js: `await request.text()`; FastAPI: `await request.body()`.
 - **Don't decode the secret.** Unlike Standard Webhooks, `whsec_` is part of the key.
-- **Timestamp window is opt-in.** Luma's docs suggest rejecting timestamps more than a few minutes old. Luma's retries (1, 2, 4 minutes) and Hookdeck's retries and replays keep the original `t`, so a default window would reject legitimate redeliveries. Set `LUMA_TIMESTAMP_TOLERANCE_SECONDS` to a positive whole number to enable it; any other value is treated as `0` with a warning.
+- **Timestamp window is opt-in.** Luma's docs suggest rejecting timestamps more than a few minutes old. Hookdeck's retries and replays keep the original `t`, so a default window would reject legitimate redeliveries, and Luma doesn't say whether its own retries (1, 2, 4 minutes) send a new one. Set `LUMA_TIMESTAMP_TOLERANCE_SECONDS` to a positive whole number to enable it; any other value is treated as `0` with a warning.
 - **Duplicates.** Deduplicate on `Webhook-Id`.
 - **Return 2xx fast** (within 5 seconds). A `410` pauses the webhook, so don't use it for transient errors.
 

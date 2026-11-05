@@ -64,7 +64,7 @@ def verify_invoice_ninja_request(headers, secret=None, header_name=None) -> bool
 - **Compare the whole value.** If you set `Authorization: Bearer abc123`, the stored secret is
   `Bearer abc123`. Don't strip, split or parse the `Bearer ` prefix.
 - **The header name is yours.** Read it from configuration and match case-insensitively.
-- **Never answer 404, 405 or 410.** Invoice Ninja deletes the subscription. Bad credentials are
+- **Never answer 404, 405 or 410.** Invoice Ninja archives the subscription. Bad credentials are
   `401`, bad bodies `400`.
 - **A 401 is not retried.** Only connection errors and `429` are retried, so a wrong secret drops
   events. Fix the value and trigger the event again.
@@ -81,6 +81,6 @@ def verify_invoice_ninja_request(headers, secret=None, header_name=None) -> bool
 |---------|--------------|
 | 401 on every request | Env var unset, header name mismatch, or the value differs (check a `Bearer ` prefix and trailing spaces) |
 | 401 only behind a proxy | The proxy strips or renames the header (some strip `Authorization`) |
-| Events stop arriving | Subscription was deleted after a 404/405/410, or a 401 period dropped them |
+| Events stop arriving | Subscription was archived after a 404/405/410, or a 401 period dropped them |
 | 400 after authentication | Body isn't a JSON object |
 | Can't tell which event fired | The body has no event field: use `?event=` per subscription |

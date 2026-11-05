@@ -23,7 +23,7 @@ metadata:
 ## Essential Code (USE THIS)
 
 tawk.to signs every webhook with **HMAC-SHA1 over the raw request body**, keyed with the
-webhook's secret key (shown when you create the webhook in the dashboard). The lowercase hex
+webhook's secret key. The lowercase hex
 digest is sent in the `X-Tawk-Signature` header. There is no timestamp and no prefix.
 
 ### Verification (core)
@@ -72,7 +72,7 @@ as your idempotency key. Respond with any 2XX within 30 seconds; failures are re
 ## Environment Variables
 
 ```bash
-# Secret key shown when you create the webhook (Admin > Settings > Webhooks)
+# The webhook's secret key (webhooks are under Administration > Settings > Webhooks)
 TAWK_WEBHOOK_SECRET=your_webhook_secret_key
 ```
 

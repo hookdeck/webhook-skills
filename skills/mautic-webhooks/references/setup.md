@@ -25,7 +25,7 @@ Cog icon → **Configuration** → **Webhook Settings** tab:
 
 ## Test the Webhook
 
-Edit the webhook and click **Send Test Payload**. Mautic sends an example request to your URL. You can also trigger a real event, such as submitting a form.
+Edit the webhook and click **Send Test Payload**. Mautic posts its fixture files to your URL, signed with the secret in the form. Fixture bodies differ from real deliveries: `mautic.form_on_submit`, `mautic.page_on_hit` and `mautic.email_on_open` arrive as a bare object rather than an array, so the example handlers skip them, and events with no fixture are left out. Trigger a real event, such as submitting a form, to test your handling.
 
 ## Local Development
 

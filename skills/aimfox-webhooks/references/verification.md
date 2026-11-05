@@ -2,7 +2,7 @@
 
 ## How Does Aimfox Authenticate Webhooks?
 
-Aimfox does not sign payloads. There is no HMAC, no timestamp and no signature header. When you
+Aimfox does not sign payloads. There is no HMAC, no signed timestamp and no signature header. When you
 add a webhook you can set an **Authentication Header** (Basic, or a custom header such as a Bearer
 token). The API stores it as a free-form `headers` object, e.g. `{"Authorization": "Bearer 123"}`.
 Aimfox sends that header with every delivery and your endpoint checks it.
@@ -19,7 +19,7 @@ or `Basic ` prefix; whatever you typed in Aimfox is the value you compare.
 
 A static shared credential authenticates the **sender**, not the **body**. Nothing is signed, so a
 modified body from someone who has the credential looks identical to a real one, and there is no
-timestamp or nonce, so a captured request can be replayed. Mitigate:
+signed timestamp or nonce, so a captured request can be replayed. Mitigate:
 
 - Serve the endpoint over HTTPS only.
 - Rotate the credential if it leaks (change it in Aimfox and in your environment together).

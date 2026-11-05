@@ -73,17 +73,18 @@ The default body is a JSON object; dispatch on `alertStatusString`.
 
 | Field | Meaning |
 |-------|---------|
-| `alertId` | Alert identifier |
+| `alertId` | Alert identifier. Differs between a trigger and its clear in Auvik's examples |
+| `correlationId` | Identifier of the alert trigger, shared by a trigger and its clear in Auvik's examples |
 | `alertName` | Name of the alert |
-| `alertStatus` | Numeric status, `0` or `1` |
+| `alertStatus` | Numeric status: `0` Triggered, `1` Cleared |
 | `alertStatusString` | `Triggered` or `Cleared` |
 | `alertDescription` | Description of the alert |
-| `entityName` | Device or entity the alert is about |
-| `companyName` | Company (client) the entity belongs to |
-| `date` | When the alert occurred |
+| `entityName` | Asset that triggered the alert |
+| `companyName` | Site the asset is located in |
+| `date` | When the occurrence was detected, in UTC |
 | `link` | Link to the alert in Auvik |
 
-More fields may be present. An optional JSONata expression on the integration can reshape the
+More fields may be present. Test Connection sends `{"my-api-test-field":"my-api-test-value"}`, so return `200` for a body with no alert fields. An optional JSONata expression on the integration can reshape the
 body, in which case these field names will differ.
 
 | Event (`alertStatusString`) | Sent When |

@@ -52,7 +52,7 @@ def verify_salesloft_signature(raw_body: bytes, signature, callback_token) -> bo
 - **SHA-1, not SHA-256.** A SHA-256 HMAC will never match.
 - **Key is the `callback_token`,** not an OAuth token or API key.
 - **No timestamp.** Salesloft doesn't sign one, so use idempotency to cope with replays and retries.
-- **Don't trust the echoed token.** The `callback_token` also appears in the payload; the HMAC header is the check.
+- **Don't rely on a token in the body.** Salesloft's schema says the `callback_token` is in the payload, but the one published body doesn't show it; the HMAC header is the check.
 
 ## Debugging Verification Failures
 

@@ -24,7 +24,7 @@ metadata:
 
 ## Set a Secret or Nothing Is Signed
 
-Outreach signs a delivery **only if the webhook has a `secret` attribute**. Without one there is no `Outreach-Webhook-Signature` header, and a verifier (including Hookdeck's Outreach source) has nothing to check and rejects every request. Webhooks are created through the API (`POST /api/v2/webhooks`), not a dashboard form, so **include `secret` in the create request** (or `PATCH` it onto an existing webhook). See [references/setup.md](references/setup.md).
+Outreach signs a delivery **only if the webhook has a `secret` attribute**. Without one there is no `Outreach-Webhook-Signature` header, and a verifier (including Hookdeck's Outreach source) has nothing to check and rejects every request. Outreach's docs create webhooks through the API (`POST /api/v2/webhooks`), so **include `secret` in the create request** (or `PATCH` it onto an existing webhook). See [references/setup.md](references/setup.md).
 
 The signature is the **bare lowercase hex** HMAC-SHA256 of the **raw request body**, keyed with the secret. There is no timestamp, no prefix, and no base64.
 

@@ -104,7 +104,7 @@ function handleEvent(eventType, event) {
       break;
 
     case 'mautic.email_on_open':
-      console.log('Email opened by contact:', event.contact?.id);
+      console.log('Email opened by contact:', event.stat?.lead?.id);
       break;
 
     case 'mautic.form_on_submit':

@@ -42,7 +42,7 @@ npm test
 POST http://localhost:3000/webhooks/ampersand
 ```
 
-The route reads the body with `express.raw({ type: '*/*' })`, verifies `svix-id`, `svix-timestamp`
+The route reads the body with `express.raw({ type: '*/*', limit: '350kb' })`, verifies `svix-id`, `svix-timestamp`
 and `svix-signature`, then dispatches on `notificationType` (notifications) or treats the body as a
 read/subscribe result.
 

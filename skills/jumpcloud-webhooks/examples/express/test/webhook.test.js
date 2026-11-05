@@ -18,7 +18,7 @@ const samplePayload = () => ({
   alert_id: 'alert-0001',
   alert_title: 'Illustrative alert',
   category: 'illustrative',
-  di_event: 'illustrative_event',
+  di_event: { event_type: 'illustrative_event' },
   event_description: 'Illustrative description',
   priority: 'High',
   rule_id: 'rule-0001',

@@ -36,7 +36,7 @@ Return `401` on a missing or wrong token, and `500` if `TRUEWORK_WEBHOOK_TOKEN` 
 - **Recreated webhook = new token**: update `TRUEWORK_WEBHOOK_TOKEN` or every delivery returns 401 and is retried for 48 hours.
 - **Sandbox vs Production tokens differ.**
 - **Don't parse before authenticating**; reading the raw body with `express.raw({ type: '*/*' })` works for any content type.
-- **Duplicates happen**: dedupe on `hook.id` plus `data` (for example `order_id` and `verification_request_id` and `state`).
+- **Duplicates happen**: `hook.id` is the webhook's ID, not an event ID, so dedupe on `hook.event` plus `data` (for example `order_id` and `verification_request_id` and `state`).
 
 ## Optional: IP Allowlist
 

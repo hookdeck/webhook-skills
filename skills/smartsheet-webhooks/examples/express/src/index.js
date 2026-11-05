@@ -72,10 +72,9 @@ app.post('/webhooks/smartsheet', express.raw({ type: '*/*' }), (req, res) => {
   if (payload.newWebhookStatus) {
     // Status change callback (webhook automatically disabled or re-enabled)
     console.log('Webhook status changed:', payload.newWebhookStatus);
-  } else {
-    for (const event of payload.events || []) {
-      handleEvent(event);
-    }
+  }
+  for (const event of payload.events || []) {
+    handleEvent(event);
   }
 
   // Any 200 acknowledges the callback

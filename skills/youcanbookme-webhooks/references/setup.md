@@ -29,7 +29,8 @@ YOUCANBOOKME_WEBHOOK_SECRET=change-me-long-random-value
 5. Under **Request Headers**, add a key/value pair: the header name and the secret value from above.
 6. Write the body with shorthand codes and add an `event` field that names the trigger, e.g.
    `{"event": "booking_made", "email": "{EMAIL}"}`.
-7. Save. Repeat per trigger, each with its own `event` value.
+7. Save. Repeat per trigger, each with its own `event` value. Rescheduling and cancelling each have
+   two triggers, by who initiates, so add an action to both.
 
 ## Test
 

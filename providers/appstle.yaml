@@ -3,11 +3,13 @@ displayName: 'Appstle Subscriptions'
 docs:
   webhooks: https://developers.appstle.com/subscription/webhooks
 notes: >
-  Appstle Subscriptions (Shopify subscriptions app). Delivered by Svix: svix-id, svix-timestamp,
-  svix-signature ('v1,<base64>', space-separated during rotation), HMAC-SHA256 over
+  Appstle Subscriptions (Shopify subscriptions app). Svix's scheme: svix-id, svix-timestamp,
+  svix-signature ('v1,<base64>', space-separated when there are several), HMAC-SHA256 over
   '{svix-id}.{svix-timestamp}.{raw body}', key = base64-decode of the secret after whsec_. The secret
-  is in Settings > Webhooks in the Appstle dashboard. Use the svix library as Appstle's docs do. The
-  standardwebhooks / svix libraries always enforce a fixed 5-minute timestamp window. SKILL.md must
+  is in the webhook portal: More > Webhook Integration > Launch webhook portal > your endpoint. Appstle's
+  docs show a manual verifier that rejects timestamps over five minutes off, and each of Appstle's own
+  retries carries a new timestamp. The standardwebhooks / svix libraries implement the same scheme and
+  always enforce a fixed 5-minute timestamp window. SKILL.md must
   say that Hookdeck retries and replays resend the original timestamp, so the library rejects late
   retries after 5 minutes, and point to a manual verifier in references/verification.md (HMAC-SHA256
   over '{id}.{timestamp}.{raw body}', key = base64-decode of the secret after whsec_, compare every

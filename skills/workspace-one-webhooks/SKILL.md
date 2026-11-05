@@ -59,12 +59,12 @@ function verifyWorkspaceOneRequest(headers, user, pass) {
 - Compare username and password each in constant time (Node: `crypto.timingSafeEqual` on
   equal-length buffers or SHA-256 digests; Python: `hmac.compare_digest` on **bytes**, never
   `str`, which raises on non-ASCII).
-- Missing or malformed header, or a mismatch: `401`. A body that isn't JSON or XML: `400`. Handled: `200`.
-- The Omnissa page doesn't say whether Basic credentials are sent preemptively. The credentials
-  must arrive on the first request: a `401` + `WWW-Authenticate` challenge flow won't work, and
-  it won't work through Hookdeck either, which verifies the request as received.
+- Missing or malformed header, or a mismatch: `401`. Stored: `200`.
+- The Omnissa page doesn't show the header on a request, or say whether Basic credentials are sent
+  on the first request or only after a `401` challenge. Log the headers of a test notification to
+  see what arrives.
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, and authenticate
-  before parsing it.
+  before reading it.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
 > protection** (no signature, no timestamp). Anyone who captures a request can resend it.
@@ -82,16 +82,17 @@ Settings > System > Advanced > API > Event Notifications):
 | `Check-in/Check-out` | A multi-user device is checked in or out |
 | `Device Attribute Change` | A selected device attribute changes (asset number, friendly name, MCC, ownership, organization group ID, operating system, phone number, user email address) |
 | `Device Compliance Status Change` | A device's compliance status changes |
-| `Device Compromised Status Change` | An Android device is rooted or an iOS device is jailbroken (or the reverse) |
+| `Device Compromised Status Change` | A device's compromised status changes: an Android device is rooted or an iOS device is jailbroken |
 | `Device Delete` | A device is deleted from Workspace ONE UEM |
 | `Device Enrollment` | A device enrolls into Workspace ONE Intelligent Hub or Workspace ONE UEM |
 | `Device Unenrolled Enterprise Wipe` | A device is enterprise wiped |
 | `Device Wipe` | A device is wiped |
 
-**The page documents no payload and no wire-level event strings.** The examples dispatch on an
-`EventType` field using an illustrative JSON body (`EventType`, `DeviceId`, `EnrollmentUserName`)
-and read `<EventType>` from XML. Capture a real delivery (for example with the Hookdeck CLI) and
-adjust the field names and values to what your tenant sends.
+**The page documents no payload and no wire-level event strings, so these labels are not values
+to switch on.** The examples store the raw body and don't read any field. Capture real deliveries
+for each event you select (for example with the Hookdeck CLI), then write your parser from what
+your tenant sends. A rule per event type, each with its own Target URL path, tells your handler
+which event it selected without reading the body.
 
 ## Environment Variables
 

@@ -50,7 +50,7 @@ Payload version 1 (default):
 
 ## Delivery
 
-Respond `200` within 5 seconds. Outreach does not retry on any HTTP status code, only on network failures (4 attempts, 1 second apart). Redirects are not followed. Webhooks that cannot be delivered for a week or more are disabled permanently.
+Respond `200` within 5 seconds. Outreach does not retry on any HTTP status code, only on network failures (4 attempts, 1 second apart). Redirects are not followed. A webhook disabled because its hostname can't be resolved to a public IP, and that can't recover for a week or more, is disabled permanently. HTTP errors don't disable it.
 
 ## Full Event Reference
 

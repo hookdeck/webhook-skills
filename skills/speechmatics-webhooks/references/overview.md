@@ -23,7 +23,7 @@ User-Agent: Speechmatics-API/2.0
 | `status` | Triggered When | Common Use Cases |
 |----------|----------------|------------------|
 | `success` | The job was processed successfully | Store the transcript, trigger summaries or search indexing |
-| `error` | Something went wrong with job processing (only `jobinfo` is sent) | Read the job's errors, alert, resubmit |
+| `error` | Something went wrong with job processing (outputs that aren't available are left out) | Read the job's errors, alert, resubmit |
 | `fetch_error` | Speechmatics failed to fetch a data file from a URL | Check the `fetch_data` URL and its access, resubmit |
 | `trim_error` | Speechmatics failed to process the audio file before transcription | Check the audio file, re-encode, resubmit |
 
@@ -37,8 +37,14 @@ The body is whatever `contents` you requested:
 |----------------------|--------------|------|
 | exactly one of `transcript`, `transcript.json-v2`, `jobinfo` | `application/json` | the JSON itself |
 | exactly one of `transcript.srt`, `transcript.txt` | `text/plain` | the SRT or text transcript |
-| `data`, or two or more items | `multipart/form-data` | one part per item |
-| none | none | empty body; only `id` and `status` in the query |
+| two or more items | `multipart/form-data` | one part per item |
+| `data` alone | `multipart/form-data` on the notifications page; `application/octet-stream` or similar in the API reference | the docs disagree, so branch on `Content-Type` |
+| `[]` (empty list) | none | empty body; only `id` and `status` in the query |
+| field left out | see below | the API reference says the `transcript` as a `data_file` attachment; the notifications page says no body |
+
+Always set `contents`, so you don't depend on which page is right. On a failed job, the
+notifications page says only `jobinfo` is sent, and the API reference says outputs that aren't
+available are left out while the format rules still apply.
 
 `contents` values: `transcript` / `transcript.json-v2` (JSON v2 transcript), `transcript.txt`,
 `transcript.srt`, `data` (the submitted media) and `jobinfo` (the job config, also present in the
@@ -47,13 +53,13 @@ JSON v2 transcript). A callback with a single item sends that item as the raw re
 
 ## Delivery Behavior
 
-- The method is `POST` unless the job sets `"method": "PUT"`.
+- The method is `POST` unless the job sets `"method": "put"`.
 - A job can list up to 3 URLs, and several notifications with different `contents`. They run in
   parallel and may complete in any order.
 - If the response isn't 2xx, Speechmatics keeps retrying until its timeout. That includes `413`
   (body too large for your server) and `401`.
 - Failures are recorded on the job: `GET /jobs/{id}` shows an `errors` array, and the transcript
-  stays retrievable from the API.
+  stays retrievable from the API for the 7-day retention period.
 - Deliveries come from published egress IPs per region (see [setup.md](setup.md)).
 
 ## Full Event Reference

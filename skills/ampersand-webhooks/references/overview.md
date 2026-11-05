@@ -34,7 +34,7 @@ destinations by default.
 | `write.async.done` | An asynchronous write finished (success or failure per record) | Reconcile written records |
 | `subscribe.create.success` / `subscribe.update.success` / `subscribe.delete.success` | A subscribe action became active, was updated or was removed | Track subscription state |
 | `subscribe.create.error` / `subscribe.update.error` / `subscribe.delete.error` | A subscribe action could not be created, updated or torn down | Alert; delete errors may leave a live subscription at the provider |
-| `destination.webhook.disabled` | Your webhook destination was disabled, e.g. after repeated failed deliveries | Fix the endpoint and re-enable it |
+| `destination.webhook.disabled` | Your webhook destination was disabled, e.g. after repeated failed deliveries | Fix the endpoint and check the destination in the dashboard |
 | `destination.delivery.error` | Delivery to a destination failed after all retries | Alert and backfill |
 
 ## Event Payload Structure

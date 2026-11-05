@@ -20,7 +20,7 @@ INVOICE = {"id": "Opnel5aKBz", "number": "0001", "client_id": "Wpmbk5ezJn", "amo
            "line_items": [{"product_key": "x", "cost": 100, "quantity": 1}]}
 PAYMENT = {"id": "AS3df3A", "number": "0002", "client_id": "Wpmbk5ezJn", "amount": 100,
            "applied": 100, "transaction_reference": "abc"}
-CLIENT = {"id": "Wpmbk5ezJn", "name": "Acme", "contacts": [{"id": "c1", "email": "a@example.com"}]}
+CLIENT = {"id": "Wpmbk5ezJn", "name": "Acme", "paid_to_date": 0, "contacts": [{"id": "c1", "email": "a@example.com"}]}
 
 NO_BODY = object()
 

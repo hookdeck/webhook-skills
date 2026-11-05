@@ -100,7 +100,7 @@ def verify_kobotoolbox_request(headers, username=None, password=None) -> bool:
 
 | Symptom | Likely cause |
 |---------|--------------|
-| 401 on every request | Env vars unset, or they differ from the REST Service credentials |
+| 401 on every request | Env vars unset, or they differ from the REST Service credentials. `kpi` doesn't retry a `401`, so retry those deliveries from the service's log once fixed |
 | 401 with the right credentials | Proxy strips `Authorization`, or the password has surrounding whitespace |
 | 401 only for passwords with `:` | Header split on every colon instead of the first |
 | `TypeError` in Python | Passed `str` (non-ASCII) to `compare_digest` |

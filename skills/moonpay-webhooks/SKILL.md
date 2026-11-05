@@ -61,7 +61,7 @@ verification SDK; verification is manual in every framework.
 
 ## Common Event Types
 
-Widget webhooks have a body of `{ "type", "data", "externalCustomerId"? }`; Platform webhooks add `id` and `timestamp`. Route on `type`:
+Widget webhooks have a body of `{ "type", "data", "externalCustomerId"? }`, or `{ "type", "body" }` for virtual account events; the Platform KYC webhook is `{ "id", "type", "timestamp", "data" }`. Route on `type`:
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|

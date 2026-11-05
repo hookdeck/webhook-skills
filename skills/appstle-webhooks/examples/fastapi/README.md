@@ -1,12 +1,12 @@
 # Appstle Webhooks - FastAPI Example
 
 Minimal example of receiving Appstle Subscriptions webhooks with signature verification using the
-official [`svix`](https://pypi.org/project/svix/) library (Appstle's webhooks are delivered by Svix).
+official [`svix`](https://pypi.org/project/svix/) library (Appstle's webhooks follow Svix's signing scheme).
 
 ## Prerequisites
 
 - Python 3.9+
-- Appstle account with access to **Settings → Webhooks** and an endpoint signing secret (`whsec_...`)
+- Appstle store on a plan with webhooks, and an endpoint signing secret (`whsec_...`) from the webhook portal
 
 ## Setup
 
@@ -53,9 +53,9 @@ Start a tunnel with the Hookdeck CLI (no account required):
 npx hookdeck-cli listen 8000 appstle --path /webhooks/appstle
 ```
 
-1. In Appstle, go to **Settings → Webhooks**, add an endpoint and paste the tunnel URL.
-2. Copy the endpoint's **Signing Secret** into `.env`.
-3. Open the endpoint and use **Send Example** to send a sample event.
+1. In Appstle, go to **More → Webhook Integration**, click **Launch webhook portal**, add an endpoint and paste the tunnel URL.
+2. Copy the endpoint's signing secret into `.env`.
+3. Open the endpoint and send it an example event.
 
 ## Timestamp Window
 

@@ -3,9 +3,10 @@
 ## What Are Zuora Callouts?
 
 Zuora's documentation calls callouts "also known as webhooks": event-based API calls that Zuora
-makes out to other systems. You create a **callout template** tied to a standard or custom event
-(Billing, Finance, Payments or System categories) and Zuora sends a request to the template's URL
-each time the event fires. This skill covers callout notifications from Events and Notifications,
+makes out to other systems. You create a **callout template** for a standard or custom event
+(Billing, Finance, Payments or System categories) and select it in a **notification definition**.
+Zuora sends a request to the template's URL each time the event fires. A template sends nothing
+until an active notification selects it. This skill covers callout notifications from Events and Notifications,
 not Workflow callouts.
 
 ## What Does a Callout Look Like?
@@ -36,7 +37,9 @@ in this skill assume an illustrative JSON body:
 | `PaymentProcessed` | A payment-processed event | Mark an invoice paid in your system |
 | `InvoicePosted` | An invoice-posted event | Send or sync the invoice |
 
-These strings are conventions you write into each template, not names defined by Zuora. Zuora's
+These strings are conventions you write into each template, not names defined by Zuora. To carry
+Zuora's own name for the event, use the system merge field `{{Event.Category}}`, which holds a
+value such as `Invoice Posted`. Zuora's
 guidance is that callout data is non-sensitive, typically an ID, and the receiver then
 authenticates back to the Zuora API to fetch the details.
 
@@ -47,7 +50,9 @@ authenticates back to the Zuora API to fetch the details.
 - **Success:** respond with HTTP `200`. Anything else is a failure.
 - **Retried** only for response codes `1xx`, `403`, `408`, `429`, `5xx` and negative codes, and
   only if **Retriable** is ticked on the template (default 3 attempts, 30 minutes apart; configurable).
-  A `401` or `400` is not retried, so a wrong credential drops that notification.
+  A `400` is not on that list. Zuora's docs differ on a `401`: the response code list leaves it
+  out, while the callout template overview says a Retriable template retries when authentication
+  fails. Don't depend on either.
 - **Optional success parsing:** with "Confirm success by parsing response content", a `200` only
   counts if the response is `application/json` with `"success": true`. The examples return
   `{"received": true, "success": true}`.

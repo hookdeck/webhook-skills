@@ -25,10 +25,9 @@ def verify_savvycal_signature(
     """Verify a SavvyCal webhook signature.
 
     SavvyCal sends an ``x-savvycal-signature`` header containing the HMAC-SHA256
-    of the raw request body, keyed with the webhook's secret. The docs' header
-    example is ``sha256=<UPPERCASE hex>``, while their Elixir sample compares the
-    bare uppercase digest, so accept both: strip an optional ``sha256=`` prefix
-    and compare the hex case-insensitively.
+    of the raw request body, keyed with the webhook's secret. The value is
+    ``sha256=<UPPERCASE hex>``, and most HMAC libraries output lowercase, so strip
+    the prefix if present and compare the hex case-insensitively.
     """
     if not header or not secret:
         return False

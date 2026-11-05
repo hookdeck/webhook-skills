@@ -81,7 +81,7 @@ runs, and the body is never read, for unauthenticated requests.
   first, then read the body raw (Express: `express.raw({ type: '*/*' })`). Parse JSON only after
   the check, and only if the content type says JSON.
 - **Accept POST and PUT.** The method is set per notification.
-- **The body may be empty.** A notification with no `contents` is just a request with
+- **The body may be empty.** A notification with `"contents": []` is just a request with
   `?id=...&status=...`.
 - **A 401 is retried.** Speechmatics retries any non-2xx response until its timeout, so a
   misconfigured secret produces repeated failed attempts; the job's `errors` array records them.

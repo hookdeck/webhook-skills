@@ -18,7 +18,7 @@ Generate a long random value and store it as `OMNISEND_WEBHOOK_SECRET`. If you w
 
 ## Add the Webhook Action
 
-In the Omnisend automation editor, add a **Send webhook** action, enter your URL, add the header
+In the Omnisend automation editor, drag a **Webhook** block into the workflow, enter your URL, add the header
 (name and value above) and write the JSON body. Or use the API:
 
 ```bash

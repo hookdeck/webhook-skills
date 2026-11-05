@@ -13,7 +13,7 @@ AgentCard-Signature: t=1757264400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0
 - Key: the endpoint's **whole** secret string, including `whsec_`, as UTF-8
 - Signed message: `"<t>.<raw request body>"`
 
-A legacy `X-AgentCard-Signature: sha256=<hex>` header signs the body alone. Hookdeck uses `AgentCard-Signature`, and the examples verify only that header; the legacy header is not used.
+A legacy `X-AgentCard-Signature: sha256=…` header signs the body alone. Hookdeck uses `AgentCard-Signature`, and the examples verify only that header; the legacy header is not used.
 
 ## This Is Not Standard Webhooks
 
@@ -40,7 +40,7 @@ ok = any(hmac.compare_digest(s.lower().encode(), expected) for s in v1_values)
 
 ## Where Does the Timestamp Window Go?
 
-Agentcard's docs suggest rejecting timestamps older than a few minutes. The examples don't do this by default. **Hookdeck retries and replays resend the original request, including the original `t`**, so a 5-minute window rejects a legitimate late redelivery (for example after your receiver was down, or when you replay an event from the dashboard). Agentcard's own retries run for over an hour.
+Agentcard's docs suggest rejecting timestamps older than a few minutes. The examples don't do this by default. **Hookdeck retries and replays resend the original request, including the original `t`**, so a 5-minute window rejects a legitimate late redelivery (for example after your receiver was down, or when you replay an event from the dashboard). Agentcard's own retries run for over an hour. Agentcard's `verifyAgentcardWebhook` (`@agent-cards/commerce-sdk`) rejects a timestamp more than 300 seconds from now unless you pass `toleranceSeconds`.
 
 The check is opt-in: set `AGENTCARD_TIMESTAMP_TOLERANCE_SECONDS` to a positive whole number of seconds. In each example it lives in one place:
 

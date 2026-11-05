@@ -27,7 +27,9 @@ same prefix in `AUVIK_WEBHOOK_SECRET`: the whole value is compared.
    header"). Do not choose Basic Authentication or OAuth 2.0.
 4. Enter the header **Key** and **Value** from above.
 5. Optionally add a JSONata expression to reshape the body (leave blank for the default body).
-6. Save, then trigger or wait for an alert.
+6. Click **Test Connection**, then **Save**. A passing test posts `{"my-api-test-field":"my-api-test-value"}` to your URL.
+7. Create a notification channel for the integration and associate it with the alerts to send. No alert
+   reaches the webhook until you do.
 
 Menu names may differ slightly between Auvik releases; follow Auvik's
 [webhook article](https://support.auvik.com/hc/en-us/articles/216977386-Integrating-Auvik-with-a-webhook).

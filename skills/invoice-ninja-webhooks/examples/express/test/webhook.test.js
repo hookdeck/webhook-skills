@@ -13,7 +13,7 @@ const URL = '/webhooks/invoice-ninja';
 
 const INVOICE = { id: 'Opnel5aKBz', number: '0001', client_id: 'Wpmbk5ezJn', amount: 100, balance: 100, line_items: [{ product_key: 'x', cost: 100, quantity: 1 }] };
 const PAYMENT = { id: 'AS3df3A', number: '0002', client_id: 'Wpmbk5ezJn', amount: 100, applied: 100, transaction_reference: 'abc' };
-const CLIENT = { id: 'Wpmbk5ezJn', name: 'Acme', contacts: [{ id: 'c1', email: 'a@example.com' }] };
+const CLIENT = { id: 'Wpmbk5ezJn', name: 'Acme', paid_to_date: 0, contacts: [{ id: 'c1', email: 'a@example.com' }] };
 
 function send(method, { headers = { [HEADER]: SECRET }, body = JSON.stringify(INVOICE), contentType = 'application/json', query = '' } = {}) {
   let req = request(app)[method](URL + query).set(headers);

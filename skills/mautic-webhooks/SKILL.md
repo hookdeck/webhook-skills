@@ -91,6 +91,7 @@ The body is an object **keyed by event type**; each value is an array of events,
 | `mautic.form_on_submit` | Form submitted |
 | `mautic.page_on_hit` | Landing page or tracked page visited |
 | `mautic.sms_on_send` | Text message sent to a contact |
+| `mautic.lead_list_change` | Contact added to or removed from a segment (in Mautic's sender, not its docs) |
 
 > **For payload fields**, see [Mautic webhook events and payloads](https://devdocs.mautic.org/en/5.x/webhooks/events/index.html).
 

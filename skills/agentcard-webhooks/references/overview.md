@@ -4,7 +4,7 @@
 
 Agentcard issues virtual cards for AI agents. Everything that happens to your connected users reaches your server as a webhook: a card created, a charge authorized, a checkout approved. SDK callbacks are UI signals; webhooks are the record. Delivery is at least once, so deduplicate on the event `id`.
 
-You register an endpoint with `POST https://api.agentcard.sh/api/v2/webhook_endpoints` (or in the dashboard under Developers → Webhooks) and list the events it should receive in `enabled_events`: exact names, prefix wildcards such as `card.*`, or `["*"]`. Endpoints are scoped to one mode: a sandbox token makes a sandbox endpoint (`livemode: false`), a production token a production one.
+You register an endpoint with `POST https://api.agentcard.sh/api/v2/webhook_endpoints` (or in the dashboard under Developers → Webhooks) and list the events it should receive in `enabled_events`: exact names, prefix wildcards such as `card.*`, or `["*"]`. `["*"]` alone does not turn on `purchase.message`: list it by name or as `purchase.*`. Endpoints are scoped to one mode: a sandbox token makes a sandbox endpoint (`livemode: false`), a production token a production one.
 
 ## Common Event Types
 
@@ -18,7 +18,7 @@ You register an endpoint with `POST https://api.agentcard.sh/api/v2/webhook_endp
 | `checkout_authorization.approved` | The user approved a paused checkout with their passkey and the processor answered | Continue the purchase, reconcile `charged_amount` |
 | `balance.low` | A card's remaining balance dropped below its threshold | Top up or alert |
 
-Other events exist and the examples log them as unhandled: `transaction.cleared`, `transaction.declined`, `transaction.voided`, `connection.created`, `vault.*`, `order.*`, `identity.verification.updated`, other `checkout_authorization.*` (submitted, declined, expired, amount_mismatch, settled, settlement_unconfirmed, refused, watched), `reward.*`, `merchant.connected`, and company-wallet events.
+Other events exist and the examples log them as unhandled: `transaction.cleared`, `transaction.declined`, `transaction.voided`, `connection.created`, `vault.*`, `order.*`, `plan.updated`, `plan.item.updated`, `purchase.message`, `identity.verification.updated`, other `checkout_authorization.*` (submitted, declined, expired, amount_mismatch, settled, settlement_unconfirmed, refused, watched), `reward.*`, `merchant.connected`, and company-wallet events.
 
 ## Event Payload Structure
 
@@ -46,7 +46,7 @@ Every event has the same envelope; branch on `type` directly (it is part of the 
 
 ## Delivery and Retries
 
-Return a `2xx` quickly and do slow work afterwards. Failed deliveries retry up to five times: immediately, then after 1 minute, 5 minutes, 30 minutes and 1 hour. Each retry is a resend of the original request.
+Agentcard waits 10 seconds for an answer, so return a `2xx` quickly and do slow work afterwards. Any other answer counts as a failure. Failed deliveries retry up to five times: immediately, then after 1 minute, 5 minutes, 30 minutes and 1 hour. The event `id` is the same on every redelivery.
 
 ## Full Event Reference
 

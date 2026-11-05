@@ -1,7 +1,7 @@
 const request = require('supertest');
 const crypto = require('crypto');
 
-// Mercury's secretKey is an opaque string used as-is; this one is only for tests
+// Mercury's secret is an opaque string used as-is; this one is only for tests
 const SECRET = 'test_mercury_secret_key_8f3a1c';
 process.env.MERCURY_WEBHOOK_SECRET = SECRET;
 
@@ -73,7 +73,7 @@ describe('Mercury webhook signature verification', () => {
     expect((await post(txUpdate, header)).status).toBe(400);
   });
 
-  it('accepts an old timestamp by default (retries and replays keep the original)', async () => {
+  it('accepts an old timestamp by default (Hookdeck retries and replays keep the original)', async () => {
     const old = Math.floor(Date.now() / 1000) - 3600;
     const res = await post(txUpdate, sign(txUpdate, old));
     expect(res.status).toBe(200);

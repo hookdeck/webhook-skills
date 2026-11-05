@@ -8,7 +8,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-# Mercury's secretKey is an opaque string used as-is; this one is only for tests
+# Mercury's secret is an opaque string used as-is; this one is only for tests
 SECRET = "test_mercury_secret_key_8f3a1c"
 os.environ["MERCURY_WEBHOOK_SECRET"] = SECRET
 
@@ -73,7 +73,7 @@ class TestSignatureVerification:
         assert post(TX_UPDATE, header).status_code == 400
 
     def test_accepts_old_timestamp_by_default(self):
-        # Retries and replays (including Hookdeck's) keep the original timestamp
+        # Hookdeck's retries and replays keep the original timestamp
         old = int(time.time()) - 3600
         assert post(TX_UPDATE, sign(TX_UPDATE, old)).status_code == 200
 
