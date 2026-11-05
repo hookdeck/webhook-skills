@@ -55,8 +55,10 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 
 app.post('/webhooks/postmark', express.json(), (req, res) => {
   const token = req.query.token;
+  const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
-  if (token !== process.env.POSTMARK_WEBHOOK_TOKEN) {
+  // Fail closed: never accept a request when no token is configured
+  if (!expectedToken || token !== expectedToken) {
     return res.status(401).send('Unauthorized');
   }
 

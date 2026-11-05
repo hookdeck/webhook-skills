@@ -8,8 +8,10 @@ const port = process.env.PORT || 3000;
 app.post('/webhooks/postmark', express.json(), (req, res) => {
   // Verify authentication token
   const token = req.query.token;
+  const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
-  if (token !== process.env.POSTMARK_WEBHOOK_TOKEN) {
+  // Fail closed: never accept a request when no token is configured
+  if (!expectedToken || token !== expectedToken) {
     console.error('Invalid webhook token');
     return res.status(401).send('Unauthorized');
   }
