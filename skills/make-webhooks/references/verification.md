@@ -96,6 +96,7 @@ for unauthenticated requests.
 | `401` on every run | Key in the keychain differs from `MAKE_WEBHOOK_SECRET` (watch for a missing `Bearer ` prefix or trailing whitespace) |
 | `401` only with a custom header | **API key parameter name** differs from `MAKE_WEBHOOK_HEADER` |
 | `401` with query placement | Key is in the query string, not a header |
+| `401` with the right key and header | Endpoint's origin may be missing from **Allowed service origins** on the keychain, so Make isn't sending the key |
 | `400 Invalid JSON body` | **Body content type** isn't JSON, or the JSON string expression produced invalid JSON |
 | Module error about the URL | Make requires `https://`; use a public URL or `npx hookdeck-cli listen` |
 

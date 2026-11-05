@@ -87,10 +87,12 @@ def verify_rudderstack_request(headers, expected_user, expected_pass) -> bool:
 - **Python: encode to bytes.** `hmac.compare_digest` raises `TypeError` for non-ASCII `str`.
 - **Fail closed.** If either environment variable is unset, reject everything.
 - **Other auth types aren't covered.** Bearer Token and API Key sends a different header.
-- **Method and body vary.** The method is user-chosen (a `GET` has no body), so accept
+- **Method and body vary.** The method is user-chosen, so accept
   `POST`, `PUT`, `PATCH`, `GET` and `DELETE`, read the body raw (`express.raw({ type: '*/*' })`)
   and parse JSON only after the credential check.
 - **Batches are arrays.** With batching on, the body is a JSON array.
+- **A `4XX` isn't retried.** RudderStack aborts the event, while `5XX` and `429` are retried for
+  3 hours. A password changed on one side only loses events, so change both together.
 
 ## Debugging Verification Failures
 

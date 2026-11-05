@@ -65,11 +65,11 @@ If you receive Autumn webhooks through Hookdeck, or want to replay old events, u
 
 ## The Signing Secret Is Shown Once
 
-Autumn returns the `whsec_` secret only when a webhook is created, by `webhooks.create` or `webhooks.sync`, or when you add the endpoint in the dashboard. `webhooks.get` and `webhooks.list` never return it, so store it immediately. Lost it? Create a new webhook. Details in [references/setup.md](references/setup.md).
+The API returns the `whsec_` secret only when a webhook is created, by `webhooks.create` or `webhooks.sync`. `webhooks.get` never returns it, so store it immediately. Lost it? Create a new webhook. Autumn's docs don't say where the dashboard shows the secret for an endpoint added there. Details in [references/setup.md](references/setup.md).
 
 ## Payload and Event Types
 
-Every body is `{ "type": "<event>", "data": { ... } }`. Dispatch on `type`. Auto top-up events also carry a top-level `id` and `occurred_at`. Timestamps inside payloads are milliseconds since the Unix epoch.
+Autumn's example bodies are `{ "type": "<event>", "data": { ... } }`. Dispatch on `type`. Its reference pages for `invoice.finalized` and `vercel.*` list fields without showing the envelope. Auto top-up events also carry a top-level `id` and `occurred_at`. Timestamps inside payloads are milliseconds since the Unix epoch.
 
 | Event | Fired when |
 |-------|------------|
@@ -80,7 +80,7 @@ Every body is `{ "type": "<event>", "data": { ... } }`. Dispatch on `type`. Auto
 | `billing.auto_topup_failed` | An auto top-up was blocked, declined or failed; branch on `data.reason` |
 | `invoice.finalized` | A Stripe invoice is finalized and its line items reconciled |
 
-Older docs and changelog entries also mention `customer.products.updated`, the earlier name for plan changes; the examples treat it like `billing.updated`. Unknown types should get a `200`. See [references/overview.md](references/overview.md) for payload details.
+The API also accepts `customer.products.updated` and `customer.threshold_reached`, which have no reference page. Autumn's older docs give `customer.products.updated` its own shape (`data.scenario`, `data.customer`, `data.updated_product`, no `plan_changes`), and its changelog shows it firing alongside `billing.updated`, so don't handle the two alike. Unknown types should get a `200`. See [references/overview.md](references/overview.md) for payload details.
 
 ## Delivery Semantics
 
@@ -91,7 +91,7 @@ Older docs and changelog entries also mention `customer.products.updated`, the e
 ## Environment Variables
 
 ```bash
-AUTUMN_WEBHOOK_SECRET=whsec_xxxxx              # Returned once by webhooks.create / sync, or shown in the dashboard
+AUTUMN_WEBHOOK_SECRET=whsec_xxxxx              # Returned once by webhooks.create / sync
 AUTUMN_TIMESTAMP_TOLERANCE_SECONDS=            # Optional: seconds, or "off". Unset = svix library (fixed 5 minutes)
 ```
 

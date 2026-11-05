@@ -127,8 +127,7 @@ def handle_event(event: Dict[str, Any]) -> None:
     event_type = event.get("type")
     data = event.get("data") or {}
 
-    # customer.products.updated is the older name for plan changes.
-    if event_type in ("billing.updated", "customer.products.updated"):
+    if event_type == "billing.updated":
         for change in data.get("plan_changes") or []:
             plan = (change.get("subscription") or change.get("purchase") or {}).get("plan_id")
             entity = f"/{data['entity_id']}" if data.get("entity_id") else ""
@@ -138,6 +137,14 @@ def handle_event(event: Dict[str, Any]) -> None:
                 logger.info("Cancellation set for %s; deprovision when the plan expires", data.get("customer_id"))
         if "trial_ended" in (data.get("tags") or []):
             logger.info("Trial ended for %s", data.get("customer_id"))
+    # A separate event with its own shape and no plan_changes.
+    elif event_type == "customer.products.updated":
+        logger.info(
+            "Customer products %s: %s for %s",
+            data.get("scenario"),
+            (data.get("updated_product") or {}).get("id"),
+            (data.get("customer") or {}).get("id"),
+        )
     elif event_type == "balances.limit_reached":
         logger.info(
             "Limit reached (%s) on %s for %s", data.get("limit_type"), data.get("feature_id"), data.get("customer_id")

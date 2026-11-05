@@ -29,4 +29,4 @@ Use the printed URL as the Webhook url.
 
 ## Delivery and Retries
 
-Failed deliveries are retried up to 10 times with exponential backoff starting at 5 minutes, capped at 1 hour. After that Sendcloud stops and logs the failure in the connection issue log.
+Your endpoint must return a `2xx` within 10 seconds. Sendcloud makes up to 10 attempts in total over about an hour and a half: the first retry is within 5 minutes and later waits grow to roughly half an hour. Timeouts, an unreachable endpoint, `406`, `408`, `409`, `429` and `5xx` are retried. Any other `4xx`, such as `400`, `401`, `404` or `422`, stops delivery with no retry. Every failed attempt is logged in the connection issue log. Sendcloud follows redirects, sending the same request with the same body to the new URL.

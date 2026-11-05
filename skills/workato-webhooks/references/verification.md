@@ -2,8 +2,8 @@
 
 ## How It Works
 
-Workato **does not sign requests**: there is no HMAC, timestamp or signature header. The HTTP
-connection's **Basic** authentication adds:
+Workato **does not sign requests**: there is no HMAC, timestamp or signature header. With the
+HTTP connection's **Basic** authentication, expect:
 
 ```
 Authorization: Basic base64(username:password)
@@ -105,6 +105,7 @@ runs for unauthenticated requests.
 |--------------------|--------------|
 | `401` on every job | Username or password in the HTTP connection differs from your `.env` (watch for trailing whitespace/newlines) |
 | `401` and the connection uses a different auth type | Connection **Authentication type** isn't **Basic** (None sends no header) |
+| `401` with no `Authorization` header in your log | Workato's docs don't say whether Basic credentials go on the first request or only after a challenge. Log the headers of a test request to see what arrives |
 | `400 Invalid JSON body` | Request body isn't a JSON object, or the mapped JSON is invalid |
 | `404` | Request URL path doesn't match `/webhooks/workato` |
 | Connection refused / timeout | Workato can't reach `localhost`: use a public URL or `npx hookdeck-cli listen` |

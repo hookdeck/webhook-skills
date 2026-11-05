@@ -24,7 +24,7 @@ If your endpoint sits behind a firewall, allowlist the `flow_runners.virtual_run
 
 ## Test Mode vs Live Mode
 
-Autosana has no separate test environment for webhooks. Use the webhook's Test button, or run a suite and wait for `batch.completed`.
+Autosana's docs don't describe a separate test environment for webhooks. Use the webhook's Test button, or run a suite and wait for `batch.completed`.
 
 ## Local Development
 

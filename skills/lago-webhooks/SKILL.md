@@ -23,7 +23,7 @@ metadata:
 
 ## Scope: HMAC mode only (not the JWT default)
 
-Lago lets you pick a signature algorithm when you create a webhook endpoint: `hmac` or `jwt`. **Lago's default is `jwt`** (an RS256 JWT checked with the public key from `/api/v1/webhooks/json_public_key`). **This skill covers `hmac` only.** Choose HMAC when you create the endpoint (dashboard: Developers > Webhooks > Add a webhook, or `"signature_algo": "hmac"` in `POST /api/v1/webhook_endpoints`). Every delivery carries `X-Lago-Signature-Algorithm`; the examples reject anything other than `hmac`.
+Lago lets you pick a signature algorithm when you create a webhook endpoint: `hmac` or `jwt`. **Lago's default is `jwt`** (an RS256 JWT checked with the public key from `/api/v1/webhooks/json_public_key`). **This skill covers `hmac` only.** Choose HMAC when you create the endpoint (dashboard: Developers > Webhooks > Add an endpoint, or `"signature_algo": "hmac"` in `POST /api/v1/webhook_endpoints`). Every delivery carries `X-Lago-Signature-Algorithm`; the examples reject anything other than `hmac`.
 
 ## Verification (core)
 

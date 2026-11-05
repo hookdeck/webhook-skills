@@ -22,8 +22,8 @@ without it. Your endpoint authenticates the request by comparing that header wit
 stored.
 
 > **A static shared credential authenticates the sender, not the body.** There is no signature and
-> no timestamp, so the check gives no replay protection and does not prove the payload is
-> unmodified. Use HTTPS, and rotate the header value if it leaks. Treat a webhook as a prompt to
+> the body's `timestamp` isn't signed, so the check gives no replay protection and does not prove
+> the payload is unmodified. Use HTTPS, and rotate the header value if it leaks. Treat a webhook as a prompt to
 > act, not a source of truth: Railway delivery is best-effort and unordered, so reconcile against
 > the Railway API when you need certainty.
 
@@ -72,12 +72,15 @@ function verifyRailwayRequest(
 ## Event Types
 
 The body has a `type` of the form `<Resource>.<state>`, plus `details`, `resource`, `severity` and
-`timestamp`. Railway's docs give one example type and say deployment states are listed in the
-Deployments reference; alert types are not enumerated.
+`timestamp`. Railway's webhook docs give one example type and point to the Deployments reference
+for states, without saying how each is written in `type`. Railway's own agent skill also names
+`Deployment.crashed` and `Deployment.oom_killed`. Alert types are not enumerated.
 
 | Type | Sent When |
 |------|-----------|
-| `Deployment.failed` | A deployment fails (the docs' example payload) |
+| `Deployment.failed` | A build or deploy fails (the docs' example payload) |
+| `Deployment.crashed` | A running deployment crashes |
+| `Deployment.oom_killed` | A deployment is stopped for running out of memory |
 | `Deployment.<state>` | Other deployment status changes; see Railway's Deployments reference for states |
 | alert types | A volume usage or CPU/RAM monitor alert fires; names not documented, so log unknown types |
 

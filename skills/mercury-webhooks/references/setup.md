@@ -21,11 +21,11 @@ curl -X POST https://api.mercury.com/api/v1/webhooks \
 
 - `url` (required): the HTTPS URL that receives events.
 - `eventTypes` (optional): any of `transaction.created`, `transaction.updated`, `checkingAccount.balance.updated`, `savingsAccount.balance.updated`, `treasuryAccount.balance.updated`, `investmentAccount.balance.updated`, `creditAccount.balance.updated`. Omit to receive all.
-- `filterPaths` (optional): field paths such as `["status", "amount"]`. Events are sent only when one of these fields changes.
+- `filterPaths` (optional): field paths. Events are sent only when one of these fields changes. Mercury's Webhooks page shows `["status", "amount"]`, while its API schema lists `transaction.status`, `checkingAccount.availableBalance` and so on, so check the response to see what was stored.
 
 ## Get Your Signing Secret
 
-The response includes the endpoint's `secretKey`. **Mercury returns it only on creation**, so store it right away as `MERCURY_WEBHOOK_SECRET`. Use it exactly as returned; do not base64-decode it or strip a prefix. If you lose it, create a new endpoint.
+The response includes the endpoint's signing secret in the `secret` field (Mercury's Webhooks page calls it `secretKey`, but `secret` is the field name in the API schema). **Mercury returns it only on creation**, so store it right away as `MERCURY_WEBHOOK_SECRET`. Use it exactly as returned; do not base64-decode it or strip a prefix. If you lose it, create a new endpoint.
 
 ## Testing
 

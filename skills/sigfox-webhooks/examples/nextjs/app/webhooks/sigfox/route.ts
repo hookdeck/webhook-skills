@@ -44,6 +44,11 @@ function handleCallback(payload: Payload): string {
       // TODO: alert that the device missed its keep-alive
       break;
 
+    case 'event':
+      console.log(`Event ${payload.eventType} for ${payload.sourceId}`);
+      // TODO: react to the device's lifecycle or subscription change
+      break;
+
     default:
       console.log('Unhandled Sigfox callback');
   }

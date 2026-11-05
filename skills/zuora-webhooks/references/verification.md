@@ -105,8 +105,8 @@ def verify_zuora_request(headers, username=None, password=None) -> bool:
 - **Fail closed.** If either env var is unset, reject everything.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, and parse
   JSON only after the credential check. A `GET` has an empty body.
-- **Respond `200`.** Zuora counts any other status as a failure; `401` and `400` aren't retried,
-  but `403` and `5xx` are.
+- **Respond `200`.** Zuora counts any other status as a failure; `400` isn't retried, but `403`
+  and `5xx` are. Its docs differ on `401`, so don't depend on it being retried or not.
 - **Don't send `WWW-Authenticate` hoping for the challenge flow.** The examples include it on a
   `401` as good HTTP practice, but rely on Preemptive Authentication.
 

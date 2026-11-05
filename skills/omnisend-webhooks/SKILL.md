@@ -75,7 +75,7 @@ by hand for an automation triggered by the `subscribed to marketing` event.
 | `event` value | Where it comes from |
 |---------------|---------------------|
 | `subscribed` | Value hard-coded in the guide's example body (trigger: `subscribed to marketing`) |
-| `placed order` | Example value for an automation triggered by the `placed order` event |
+| `placed order` | Illustrative: Omnisend's docs use this as a trigger name, so it arrives only if your template sets it |
 | anything else | Whatever your template sets; use `[[event.raw.<property>]]` for trigger event data |
 
 The examples dispatch on `event` and log unknown values, so add a case per automation.

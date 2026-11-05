@@ -68,9 +68,9 @@ Nothing is signed, so no raw-body handling is needed for verification. The examp
 | Event (`hook.event`) | Triggered When | Notes |
 |---|---|---|
 | `order.completed` | All verifications on the order are completed or canceled | `data.order_id`; fetch results from the API. Recommended for Credentials and Documents verification |
-| `verification_request.state.change` | A verification request within an order changes state | `data.order_id`, `data.verification_request_id`, `data.state` (`pending-approval`, `processing`, `action-required`, `completed`, `canceled`, `invalid`), `data.metadata`. Recommended for Smart Outreach |
+| `verification_request.state.change` | A verification request within an order changes state | `data.order_id`, `data.verification_request_id`, `data.credentials_session_token`, `data.state` (`pending-approval`, `processing`, `action-required`, `completed`, `canceled`, `invalid`; the event reference page spells it `action-requred`, so accept both), `data.metadata`. Recommended for Smart Outreach |
 
-Payload: `{ "version", "hook": { "id", "event", "target" }, "data": { ... } }`. Dispatch on `hook.event`.
+Payload: `{ "version", "hook": { "id", "event", "target", "triggered_at" }, "data": { ... } }`. Dispatch on `hook.event`. `hook.id` is the webhook's ID, not an event ID.
 
 Webhooks can be delivered more than once, so handlers must be idempotent. Failed deliveries are retried for 48 hours, and Truework emails the service account about failures.
 

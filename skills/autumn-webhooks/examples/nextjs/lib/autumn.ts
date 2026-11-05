@@ -90,9 +90,7 @@ export function handleEvent(event: AutumnEvent): void {
   const data = event.data ?? {};
 
   switch (type) {
-    // customer.products.updated is the older name for plan changes.
-    case 'billing.updated':
-    case 'customer.products.updated': {
+    case 'billing.updated': {
       for (const change of data.plan_changes ?? []) {
         const plan = (change.subscription ?? change.purchase)?.plan_id;
         console.log(`Plan ${change.action}: ${plan} for ${data.customer_id}${data.entity_id ? `/${data.entity_id}` : ''}`);
@@ -105,6 +103,10 @@ export function handleEvent(event: AutumnEvent): void {
       }
       break;
     }
+    // A separate event with its own shape and no plan_changes.
+    case 'customer.products.updated':
+      console.log(`Customer products ${data.scenario}: ${data.updated_product?.id} for ${data.customer?.id}`);
+      break;
     case 'balances.limit_reached':
       console.log(`Limit reached (${data.limit_type}) on ${data.feature_id} for ${data.customer_id}`);
       break;

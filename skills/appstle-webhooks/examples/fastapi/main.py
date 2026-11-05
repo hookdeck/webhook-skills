@@ -38,9 +38,9 @@ async def appstle_webhook(
     raw_body = await request.body()
     try:
         # Checks HMAC-SHA256 over "{svix-id}.{svix-timestamp}.{body}" against every
-        # v1, signature and enforces a fixed 5-minute timestamp window. Retries and
-        # replays keep the original timestamp, so see references/verification.md for
-        # a manual verifier with no window.
+        # v1, signature and enforces a fixed 5-minute timestamp window. Appstle's own
+        # retries carry a new timestamp, but Hookdeck retries and replays keep the original,
+        # so see references/verification.md for a manual verifier with no window.
         Webhook(secret).verify(
             raw_body,
             {

@@ -75,7 +75,9 @@ There is no event type. The body is the submission:
 | question fields | Your form's answers, keyed by question name |
 
 The REST Service can also send XML, only a subset of fields, or (JSON only) a custom wrapper
-around the submission. Failed deliveries are retried 3 times (after 60, 600 and 6,000 seconds).
+around the submission. KoboToolbox documents 3 retries (after 60, 600 and 6,000 seconds), though the open-source
+`kpi` sender declares a backoff capped at 1,200 seconds and retries only `502`, `503`, `504` and read timeouts,
+so a `401` or `500` fails at once. Return `503` for a temporary problem.
 
 ## Environment Variables
 

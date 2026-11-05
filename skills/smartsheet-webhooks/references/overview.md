@@ -47,7 +47,7 @@ Fields shown beyond `scopeObjectId`, `events`, `objectType`, `eventType` and `ne
 
 ## Delivery and Retries
 
-Respond with `200` to acknowledge. For sheet webhooks, Smartsheet retries up to 14 times on 4xx (except 410), 5xx and timeouts: the first seven with exponential backoff, then every three hours. Other statuses (2xx other than 200, 3xx, 410) are not retried. When retries run out or retrying is disqualified, the webhook is disabled with status `DISABLED_CALLBACK_FAILED`. A webhook waits for the current callback to finish before sending the next. Smartsheet de-duplicates identical webhooks (same object, owner, `callbackUrl`, `subscope`).
+Respond with `200` to acknowledge. For sheet webhooks, Smartsheet retries up to 14 times on 4xx (except 410), 5xx and timeouts: the first seven with exponential backoff, then every three hours. Other statuses (2xx other than 200, 3xx, 410) are not retried. Plan webhooks retry only 408, 429, 502, 503, 504 and timeouts. When retries run out or retrying is disqualified, the webhook is disabled with status `DISABLED_CALLBACK_FAILED`. A webhook waits for the current callback to finish before sending the next. Smartsheet de-duplicates identical webhooks (same object, owner, `callbackUrl`, `subscope`).
 
 Callbacks and challenges come from the `webhooks.smartsheet.com` domain. The `callbackUrl` must be HTTPS with a CA-signed certificate, not a private IP, on port 443, 8000, 8008, 8080 or 8443.
 

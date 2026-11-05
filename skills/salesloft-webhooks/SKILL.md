@@ -41,7 +41,7 @@ function verifySalesloftSignature(rawBody, signature, callbackToken) {
 }
 ```
 
-In Express read the body with `express.raw({ type: '*/*' })` so any content type verifies. The `callback_token` is also echoed in the payload, but don't rely on that; the header HMAC is the check.
+In Express read the body with `express.raw({ type: '*/*' })` so any content type verifies. Salesloft's schema says the `callback_token` is also in the payload, but the one published body (`link_swap`) doesn't show it, so don't rely on that; the header HMAC is the check.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -59,6 +59,8 @@ The event type is the `event_type` you subscribed to, delivered in the `x-salesl
 | `cadence_membership_created` | A person is added to a cadence |
 
 Salesloft publishes more (accounts, cadences, notes, steps, tasks, users, conversations); see [references/overview.md](references/overview.md).
+
+`link_swap` is different: Salesloft waits for your response and reads replacement links from it. See [references/overview.md](references/overview.md#link_swap).
 
 ## Important Headers
 

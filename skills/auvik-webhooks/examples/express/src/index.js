@@ -38,12 +38,12 @@ function handleAlert(payload) {
   switch (alertStatusString) {
     case 'Triggered':
       console.log(`Alert triggered: ${alertName} on ${entityName} (${companyName})`);
-      // TODO: open an incident or ticket (payload.alertId, payload.alertDescription, payload.link)
+      // TODO: open an incident or ticket (payload.correlationId, payload.alertDescription, payload.link)
       break;
 
     case 'Cleared':
       console.log(`Alert cleared: ${alertName} on ${entityName} (${companyName})`);
-      // TODO: resolve the matching incident (payload.alertId)
+      // TODO: resolve the matching incident (payload.correlationId)
       break;
 
     default:

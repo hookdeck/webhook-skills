@@ -28,23 +28,13 @@ These are the notification events listed on the Omnissa page, by their UI labels
 
 ## Event Payload Structure
 
-**The Omnissa page does not document a payload.** It points to the "AirWatch API Event
-Notification Guide" on docs.omnissa.com for details. The examples in this skill use a clearly
-illustrative body so the handlers have something to dispatch on:
-
-```json
-{
-  "EventType": "Device Enrollment",
-  "DeviceId": 4821,
-  "EnrollmentUserName": "jdoe"
-}
-```
-
-With the XML format, the handlers read the text of an `<EventType>` element. Treat the field
-names and `EventType` values as placeholders: capture a real delivery from your tenant and
-adjust the handler to match.
+**The Omnissa page does not document a payload.** Older versions of the page (2406 and earlier)
+point to an "AirWatch API Event Notification Guide" on docs.omnissa.com, but the SaaS and 2410
+versions no longer do, and we couldn't find the guide. The examples in this skill store the raw
+body and don't read any field. Capture a real delivery from your tenant and write your parser
+from it.
 
 ## Full Event Reference
 
-See Omnissa's [Event Notifications System Settings](https://docs.omnissa.com/SystemSettings-V2406/EventNotificationsSystemSettings)
-page and the AirWatch API Event Notification Guide it references.
+See Omnissa's [Event Notifications System Settings](https://docs.omnissa.com/SystemSettings-VSaaS/EventNotificationsSystemSettings)
+page.

@@ -2,20 +2,20 @@
 
 ## Prerequisites
 
-- An Appstle Subscriptions account with access to **Settings → Webhooks**
+- An Appstle Subscriptions store on a plan with webhooks (Enterprise or Enterprise Plus, or ask support@appstle.com)
 - A publicly reachable **HTTPS** endpoint (use the Hookdeck CLI tunnel for local work)
 
 ## How Do I Register an Appstle Webhook Endpoint?
 
-1. In the Appstle dashboard, go to **Settings → Webhooks**.
-2. Add your webhook endpoint URL, e.g. `https://example.com/webhooks/appstle`.
-3. Select the events you want to receive (for example `subscription.created`,
+1. In the Appstle dashboard, go to **More → Webhook Integration** and click **Enable Webhook**.
+2. Click **Launch webhook portal**.
+3. Add your webhook endpoint URL, e.g. `https://example.com/webhooks/appstle`.
+4. Select the events you want to receive (for example `subscription.created`,
    `subscription.cancelled`, `subscription.billing-failure`).
-4. Save the endpoint.
 
 ## Where Do I Find the Signing Secret?
 
-Open the endpoint in **Settings → Webhooks** and copy its signing secret. It starts with
+Open the endpoint in the webhook portal and copy its signing secret. It starts with
 `whsec_`. Store it as `APPSTLE_WEBHOOK_SECRET`:
 
 ```bash
@@ -41,8 +41,8 @@ Use the printed URL as the endpoint URL in Appstle.
 
 ## How Do I Send a Test Event?
 
-1. Go to **Settings → Webhooks** in your Appstle dashboard and click your endpoint.
-2. Use **Send Example** (Svix Play) to send a sample event.
+1. Go to **More → Webhook Integration** in your Appstle dashboard and click **Launch webhook portal**.
+2. Open your endpoint and send it an example event.
 3. Check that your endpoint receives and verifies it.
 
 ## Endpoint Requirements
@@ -56,6 +56,6 @@ Use the printed URL as the endpoint URL in Appstle.
 
 ## How Do I Recover Missed Events?
 
-In **Settings → Webhooks → Message Logs** you can see every delivery attempt and retry
+In the webhook portal you can see every delivery attempt and retry
 failed deliveries manually. For help, email support@appstle.com with your endpoint URL
 and the `svix-id` of the failing message.

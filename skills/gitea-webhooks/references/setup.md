@@ -4,7 +4,7 @@
 
 - A Gitea instance (self-hosted or Gitea Cloud) and admin access to the repository, organization, or instance
 - Your application's webhook endpoint URL (use `npx hookdeck-cli listen 3000 gitea --path /webhooks/gitea` locally)
-- If the instance restricts outbound hosts, your endpoint host must be allowed (see `ALLOWED_HOST_LIST` in the `[webhook]` section of `app.ini`)
+- If the instance restricts outbound hosts, your endpoint host must be allowed (see `EGRESS_MODE` and `ALLOWED_HOST_LIST` in the `[security]` section of `app.ini`)
 
 ## Register Your Endpoint
 

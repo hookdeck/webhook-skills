@@ -13,7 +13,7 @@ Lago has no official helper for HMAC webhook verification, so verify manually.
 
 ## Which Algorithm Is My Endpoint Using?
 
-Lago's default is `jwt`: `X-Lago-Signature` is then an RS256 JWT, verified with the public key from `/api/v1/webhooks/json_public_key`. That mode is **not covered** by this skill. If `X-Lago-Signature-Algorithm` is `jwt`, recreate the endpoint with `hmac`.
+Lago's default is `jwt`: `X-Lago-Signature` is then an RS256 JWT, verified with the public key from `/api/v1/webhooks/json_public_key`. That mode is **not covered** by this skill. If `X-Lago-Signature-Algorithm` is `jwt`, switch the endpoint to `hmac`.
 
 ## Implementation
 
@@ -57,4 +57,4 @@ def verify_lago_signature(raw_body: bytes, signature_header: str | None, secret:
 1. Check `X-Lago-Signature-Algorithm` is `hmac`.
 2. Log the length of the raw body and make sure no middleware parsed it.
 3. Confirm `LAGO_HMAC_KEY` matches the token shown in the Lago dashboard, with no stray whitespace.
-4. Return `400` on failure; Lago will retry up to 3 times.
+4. Return `400` on failure; Lago makes up to 3 attempts in total.

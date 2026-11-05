@@ -37,7 +37,8 @@ the examples log them as unhandled.
 - **Batching:** a JSON array of events, `[{Event1},{Event2},...]`, up to 100 per request,
   flushed after at most 5 seconds. JSON body format only.
 - **Other body formats:** XML and form bodies aren't JSON; the examples parse JSON only.
-- **Method:** can be `POST`, `PUT`, `PATCH`, `GET` or `DELETE`, and a `GET` has an empty body.
+- **Method:** can be `POST`, `PUT`, `PATCH`, `GET` or `DELETE`. The docs don't say what a `GET`
+  carries, so don't assume a body.
 
 ## Full Reference
 

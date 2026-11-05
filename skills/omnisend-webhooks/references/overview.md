@@ -31,7 +31,7 @@ template. The official example does exactly that:
 | `event` value | Meaning |
 |---------------|---------|
 | `subscribed` | From the guide's example: automation triggered by `subscribed to marketing` |
-| `placed order` | Example: automation triggered by `placed order` |
+| `placed order` | Illustrative: a trigger name in Omnisend's docs, sent only if your template sets it |
 
 Automation trigger events (the `trigger.condition.event` value, such as `subscribed to marketing`
 or `placed order`) are not sent as a field unless you template them in.

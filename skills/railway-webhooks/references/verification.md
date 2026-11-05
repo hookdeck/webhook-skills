@@ -16,13 +16,13 @@ or
 Authorization: Bearer your-long-random-token
 ```
 
-There is no HMAC, timestamp or algorithm to verify. Compare the header you configured with the
+There is no HMAC, signed timestamp or algorithm to verify. Compare the header you configured with the
 value you stored.
 
 ## Security Limits of This Check
 
 A static shared credential authenticates the **sender**, not the **body**. There is no signature
-over the payload and no timestamp, so:
+over the payload and the body's `timestamp` isn't signed, so:
 
 - a request body can't be proven unmodified;
 - there is **no replay protection**: anyone who captures one valid request can resend it.

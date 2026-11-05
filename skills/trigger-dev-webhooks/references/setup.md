@@ -10,7 +10,7 @@
 1. Open your project in the Trigger.dev dashboard and go to the **Alerts** page.
 2. Create a new alert channel and choose the **webhook** type.
 3. Enter your endpoint URL, e.g. `https://example.com/webhooks/trigger-dev`.
-4. Choose which alerts it receives: failed runs, deployment success, deployment failure, and error group alerts.
+4. Choose which alerts it receives: a run fails, a deployment fails, a deployment succeeds. Error group alerts are created separately, from **Configure alerts...** on the **Errors** page.
 5. Copy the webhook secret. It is shown on the Alerts page when you create the webhook alert. Store it as `TRIGGER_DEV_WEBHOOK_SECRET`.
 
 Menu labels may change; the Trigger.dev [alerts docs](https://trigger.dev/docs/troubleshooting-alerts) are the source of truth.
@@ -29,4 +29,4 @@ Use the URL the CLI prints as the webhook URL of your alert channel (FastAPI exa
 
 ## Environments
 
-Alerts are tied to a project and its environments (`PRODUCTION`, `STAGING`, `PREVIEW`). The `object.environment.type` field in the payload tells you which one fired, so you can route or filter by it in your handler.
+Alerts are tied to a project and its environments (`PRODUCTION`, `STAGING`, `PREVIEW`). On run and deployment alerts, the `object.environment.type` field tells you which one fired, so you can route or filter by it in your handler. `alert.error` carries only the environment's `id` and `name`.

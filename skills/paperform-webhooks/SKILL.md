@@ -75,7 +75,8 @@ Paperform has no event-type strings and the body has no `type` field. What diffe
 | New Submission | A form is submitted |
 | Partial Submission | A partial response has gone 30 minutes without an update and hasn't been submitted |
 
-Both send the same shape:
+Paperform documents one payload and shows no separate Partial Submission example, so capture one
+before relying on a partial delivery's shape:
 
 ```json
 {

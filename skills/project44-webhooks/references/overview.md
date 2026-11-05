@@ -40,20 +40,36 @@ named by `webhookConfiguration.webhookEventType`. The message carries the same v
     "shipment": {
       "shipmentId": "ac694c91-e308-4329-9584-ee10acb937b3",
       "identifiers": [{ "type": "BILL_OF_LADING", "value": "BOL123" }],
-      "attributes": [],
-      "createdDateTime": "2025-03-31T17:01:42.92601441Z",
-      "lastModifiedDateTime": "2025-03-31T17:01:42.92601441Z",
-      "shipmentShareLink": "..."
+      "attributes": []
     }
   },
-  "data": {}
+  "data": {
+    "eventNotification": {
+      "event": {
+        "id": "a76f6a37-5485-47eb-9220-882b92029cee",
+        "dateTime": "2025-03-31T17:01:42Z",
+        "type": "INFO",
+        "description": "Newly added event",
+        "dateTimes": [
+          {
+            "type": "ACTUAL",
+            "dateTime": "2025-03-31T17:01:42Z",
+            "source": "P44",
+            "selected": true,
+            "sequence": 1
+          }
+        ]
+      }
+    }
+  }
 }
 ```
 
-- `eventId` is unique per message: use it for idempotency (project44 can redeliver after a lost
-  response).
+- The OpenAPI spec calls `eventId` a unique identifier for the event: use it for idempotency
+  (project44 can redeliver after a lost response).
 - `context` holds the shipment by default; `includeContext` can add `ROUTE` and `RELATED_SHIPMENTS`.
-- `data` is the event-specific change.
+- `data` is the event-specific change. It's empty on `shipments.v1.shipment.created` and
+  `shipments.v1.shipment.deleted`, whose `dataType` is `Empty`.
 - Standard (non-granular) shipment webhooks use a different payload with no `eventType`.
 
 ## Delivery Behavior
@@ -62,7 +78,8 @@ named by `webhookConfiguration.webhookEventType`. The message carries the same v
   to 48 hours, in order. Everything else (`3xx`, other `4xx` including `401`, `500`) is **not
   retried** and the message is dropped.
 - Responses should return within a few seconds; the timeout is 20 seconds.
-- project44 may send up to about 12 concurrent requests for unrelated messages.
+- project44 may send unrelated messages concurrently, and recommends supporting up to 12 concurrent
+  requests.
 
 ## Full Event Reference
 

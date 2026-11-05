@@ -7,12 +7,10 @@
 
 ## How Do I Get My Signing Secret?
 
-The `whsec_` secret is returned **once**:
+- **API:** the response of `webhooks.create` (`POST /v1/webhooks.create`) includes `secret`, and `webhooks.sync` includes it for each webhook it creates, **once**. `webhooks.get` **never** returns it.
+- **Dashboard:** Autumn's docs don't say where the secret appears for an endpoint added under Developer → Webhooks, so look on the endpoint after you add it.
 
-- **Dashboard:** when you add the endpoint (Developer → Webhooks), copy it then.
-- **API:** the response of `webhooks.create` (`POST /v1/webhooks.create`) or `webhooks.sync` includes `secret` for each webhook it creates. `webhooks.get` and `webhooks.list` **never** return it.
-
-Store it immediately, for example as `AUTUMN_WEBHOOK_SECRET`. If you lose it, create a new webhook (the `id` can't be changed, and there's no way to read the secret back).
+Store it immediately, for example as `AUTUMN_WEBHOOK_SECRET`. If you lose an API-created secret, create a new webhook (the `id` can't be changed, and there's no way to read the secret back).
 
 ## How Do I Register an Endpoint?
 
@@ -21,7 +19,7 @@ Store it immediately, for example as `AUTUMN_WEBHOOK_SECRET`. If you lose it, cr
 1. Go to **Developer** → **Webhooks** tab.
 2. Click **Add Endpoint** and enter your URL.
 3. Choose all events or specific ones.
-4. Save, copy the secret, then use **Send Test Event**.
+4. Save, then use **Send Test Event**.
 
 ### With the API
 

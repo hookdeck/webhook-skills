@@ -39,6 +39,9 @@ app's `.env` as `MAKE_WEBHOOK_SECRET`.
      the examples.)
    - **API key parameter name**: the header name, e.g. `Authorization` or `X-Webhook-Secret`.
      Set `MAKE_WEBHOOK_HEADER` in your app to the same name (default `Authorization`).
+   - **Restrict requests to service URLs**: if on, add your endpoint's origin to **Allowed
+     service origins**, e.g. `https://your-app.example.com` (no path). Make sends the key only
+     to the HTTPS origins listed there.
 
 Make's docs recommend putting credentials in the Credentials field rather than in **Headers**
 or query parameters: it keeps keys out of the request definition and lets you rotate them in

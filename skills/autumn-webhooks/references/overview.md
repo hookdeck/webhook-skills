@@ -15,7 +15,7 @@
 | `billing.auto_topup_failed` | An auto top-up is blocked, declined or fails | Dunning, notify the customer |
 | `invoice.finalized` | A Stripe invoice is finalized and its line items reconciled | Accounting sync, invoice emails |
 
-`customer.products.updated` appears in Autumn's changelog as the earlier name for plan-change events. Current docs list `billing.updated`. Handle both if you've been subscribed a long time.
+`customer.products.updated` and `customer.threshold_reached` are accepted by the API but have no reference page. Autumn's [older docs](https://github.com/useautumn/docs/blob/main/mintlify/documentation/webhooks.mdx) show them with their own shapes: `customer.products.updated` has `data.scenario`, `data.customer` and `data.updated_product`, with no `plan_changes`. Autumn's changelog shows it still firing in September 2026, alongside `billing.updated` on trial expiry. A webhook subscribed to every event can receive both, so don't process the same change twice.
 
 In the dashboard you can subscribe to all events or a subset. Through the API, leaving `events` out sends every event. `vercel.*` events (Vercel Marketplace) can't be mixed with other events on the same webhook.
 
@@ -64,7 +64,7 @@ Dispatch on the body's `type`:
             "usage_alert": { "name": "80% usage warning", "threshold": 80, "threshold_type": "usage_percentage" } } }
 ```
 
-`threshold_type` is `usage` (absolute count) or `usage_percentage`.
+`threshold_type` is `usage`, `usage_percentage`, `remaining` or `remaining_percentage`.
 
 ```json
 { "type": "billing.auto_topup_failed", "id": "evt_auto_topup_failed_2abc123", "occurred_at": 1761840000000,

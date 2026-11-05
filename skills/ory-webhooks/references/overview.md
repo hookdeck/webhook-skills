@@ -47,8 +47,10 @@ renders to:
 
 ## Retries
 
-On the Ory Network a failed delivery is attempted up to three times, 30 seconds apart, so make
-handlers idempotent (use `identity.id` plus the flow).
+On the Ory Network a delivery is attempted up to three times. Each attempt times out after 30
+seconds, with waits of 1 second and then 2 seconds between attempts. Ory retries after a timeout,
+a connection failure, a `429` or a `5xx` other than `501`, so make handlers idempotent (use
+`identity.id` plus the flow).
 
 ## Full Reference
 

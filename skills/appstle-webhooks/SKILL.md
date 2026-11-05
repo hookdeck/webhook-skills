@@ -14,10 +14,11 @@ metadata:
 
 # Appstle Webhooks
 
-Appstle Subscriptions (a Shopify subscriptions app) sends webhooks through
-[Svix](https://www.svix.com/). Every delivery is an HTTP `POST` with a JSON body shaped
-`{ "type": "subscription.created", "data": { ... } }` and three signature headers:
-`svix-id`, `svix-timestamp`, and `svix-signature`.
+Appstle Subscriptions (a Shopify subscriptions app) sends webhooks signed with
+[Svix](https://www.svix.com/)'s scheme. Every delivery is an HTTP `POST` with a JSON body
+shaped `{ "type": "subscription.created", "data": { ... } }` and three signature headers:
+`svix-id`, `svix-timestamp`, and `svix-signature`. Webhooks are included in Appstle's
+Enterprise and Enterprise Plus plans.
 
 ## When to Use This Skill
 
@@ -31,9 +32,10 @@ Appstle Subscriptions (a Shopify subscriptions app) sends webhooks through
 
 Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. Svix signs it with
 HMAC-SHA256 using the base64-decoded secret (the part after `whsec_`), base64-encodes
-the result, and sends one or more space-delimited `v1,<signature>` entries (several
-during secret rotation). Appstle's docs use the official `svix` library, which compares
-in constant time.
+the result, and sends one or more space-separated `v1,<signature>` entries. Appstle's
+docs show a hand-written verifier that also rejects a `svix-timestamp` more than five
+minutes from your clock. The official `svix` library implements the same scheme and check,
+and compares in constant time.
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
@@ -60,9 +62,10 @@ wh.verify(raw_body, {"svix-id": msg_id, "svix-timestamp": ts, "svix-signature": 
 ### Timestamp window and Hookdeck retries
 
 The `svix` (and `standardwebhooks`) libraries always enforce a fixed **5-minute** timestamp
-window and offer no option to change it. Hookdeck retries and replays resend the
-**original** `svix-timestamp`, so a retry or replay that arrives more than 5 minutes after
-the event fails library verification even though the signature is valid. If you receive
+window and offer no option to change it. Appstle's own retries carry a new timestamp, but
+Hookdeck retries and replays resend the **original** `svix-timestamp`, so a retry or replay
+that arrives more than 5 minutes after the event fails library verification even though the
+signature is valid. If you receive
 Appstle webhooks through Hookdeck, or otherwise need to accept late retries, use the
 manual verifier in [references/verification.md](references/verification.md): HMAC-SHA256
 over `{id}.{timestamp}.{raw body}`, key = base64-decode of the secret after `whsec_`,
@@ -83,9 +86,9 @@ The `type` field of the body carries the event name. Appstle documents these:
 | `subscription.next-order-date-changed` | The next order date is changed | Subscription contract |
 | `subscription.billing-interval-changed` | The billing frequency changes | Subscription contract |
 | `subscription.billing-success` | A payment is processed | Billing attempt |
-| `subscription.billing-failure` | A payment fails | Billing attempt |
+| `subscription.billing-failure` | A payment try fails (sent after every failed try) | Billing attempt |
 | `subscription.billing-skipped` | A billing cycle is skipped | Billing attempt |
-| `subscription.upcoming-order-notification` | An upcoming order reminder is sent | Billing attempt |
+| `subscription.upcoming-order-notification` | A queued order comes inside its notice period | Billing attempt with contract fields |
 
 Always branch on `type` and ignore types you don't handle: the list can grow. See
 [references/overview.md](references/overview.md) for payload fields.
@@ -93,7 +96,7 @@ Always branch on `type` and ignore types you don't handle: the list can grow. Se
 ## Environment Variables
 
 ```bash
-# Settings → Webhooks → your endpoint → Signing Secret (starts with whsec_)
+# More → Webhook Integration → Launch webhook portal → your endpoint (starts with whsec_)
 APPSTLE_WEBHOOK_SECRET=whsec_xxxxx
 ```
 
@@ -104,8 +107,8 @@ APPSTLE_WEBHOOK_SECRET=whsec_xxxxx
 npx hookdeck-cli listen 3000 appstle --path /webhooks/appstle
 ```
 
-Register the tunnel URL in the Appstle dashboard under **Settings → Webhooks**, then use
-**Send Example** on the endpoint to send a sample event.
+Register the tunnel URL in the webhook portal (**More → Webhook Integration → Launch webhook
+portal**), then open the endpoint and send it an example event.
 
 ## Reference Materials
 

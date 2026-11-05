@@ -46,8 +46,8 @@ with booking data:
 ```
 
 Check the help articles for the full list of shorthand codes. The method is also yours to pick
-(`POST`, `PUT`, `PATCH`, `DELETE` or `GET`), and a `GET` has no body, so handlers must accept
-all of them and tolerate an empty body.
+(`POST`, `PUT`, `PATCH`, `DELETE` or `GET`), and the help articles don't say whether a `GET`
+carries the payload, so handlers must accept all of them and tolerate an empty body.
 
 ## Full Reference
 

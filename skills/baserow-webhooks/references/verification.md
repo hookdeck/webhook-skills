@@ -73,7 +73,7 @@ def verify_baserow_request(headers, name=None, secret=None) -> bool:
   webhook uses.
 - **Return `200`.** The docs say success requires `200 OK` and failed calls are retried a limited
   number of times (Baserow's source accepts any status below 400). Duplicates can happen; dedupe on
-  `event_id` + `batch_id`, because a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
+  `event_id` + `batch_id`, because a large `view.rows_entered` call, or a `rows.updated` call caused by a linked table, is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
 
 ## Debugging 401s
 

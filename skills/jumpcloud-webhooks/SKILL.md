@@ -71,15 +71,15 @@ in the channel settings (and your environment variables) if it leaks.
 
 ## Alert Payload
 
-JumpCloud documents the payload fields but no example body and no `category` values, so treat any
-sample you see (including the ones in the tests) as illustrative.
+JumpCloud documents the payload fields and one sample body (in its Azure walk-through), but no
+`category` values, so treat any sample you see (including the ones in the tests) as illustrative.
 
 | Field | Description |
 |-------|-------------|
 | `alert_id` | ID of the alert |
 | `alert_title` | Title of the alert |
 | `category` | Category of the alert |
-| `di_event` | DI event associated with the alert |
+| `di_event` | DI event associated with the alert, an object carrying `event_type` |
 | `event_description` | Description of the event that triggered the alert |
 | `priority` | Critical, High, Medium or Low |
 | `status` | Open, Acknowledged, Resolved or Auto-Resolved |
@@ -87,8 +87,13 @@ sample you see (including the ones in the tests) as illustrative.
 
 Other documented fields: `description`, `in_console_alert`, `initiated_by`, `occurred_at`,
 `organization_name`, `previous_alert_status`, `source_id`, `source_name`, `source_type`,
-`source_url`, `update_at`. There is no `event` type field; branch on `priority`, `status`,
-`category` or `di_event`.
+`source_url`, `update_at`.
+
+The event name is `di_event.event_type`, a Directory Insights type such as `user_update` (see
+[Create an Insights Rule](https://jumpcloud.com/support/create-an-insights-rule#events-insight-alerts)
+and [Manage Access Requests](https://jumpcloud.com/support/manage-access-requests)). Access Request
+details (`workflow`, `access_request_id`, `access_request_state`) are also nested under `di_event`.
+Device monitoring rules aren't on those lists, so fall back to `rule_id` or `category`.
 
 ## Environment Variables
 

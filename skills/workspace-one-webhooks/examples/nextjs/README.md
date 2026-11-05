@@ -6,8 +6,8 @@ HTTP Basic credentials.
 Workspace ONE does not sign payloads, so there is no HMAC to verify. The handler parses
 `Authorization: Basic base64(username:password)`, splits on the first colon and compares the
 username and the password each in constant time. The route reads the body with
-`request.text()`, so any content type works, and parses JSON (or XML) only after
-the credentials check out.
+`request.text()`, so any content type works, and reads it only after the
+credentials check out.
 
 A static shared credential authenticates the sender, not the body, and gives no replay protection
 (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
@@ -46,16 +46,16 @@ Server runs on http://localhost:3000 and accepts requests at `POST /webhooks/wor
 npm test
 ```
 
-The tests send every documented event with correct, wrong and missing credentials. No Workspace
+The tests send placeholder bodies with correct, wrong and missing credentials. No Workspace
 ONE account is needed.
 
-To try it by hand (the body is illustrative; Omnissa doesn't document a payload):
+To try it by hand (the body is a placeholder; Omnissa doesn't document a payload):
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/workspace-one \
   -u "$WORKSPACE_ONE_WEBHOOK_USERNAME:$WORKSPACE_ONE_WEBHOOK_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"EventType":"Device Enrollment","DeviceId":4821,"EnrollmentUserName":"jdoe"}'
+  -d '{"placeholder":"not a Workspace ONE payload"}'
 ```
 
 ## Receive Webhooks Locally
@@ -67,17 +67,15 @@ no install):
 npx hookdeck-cli listen 3000 workspace-one --path /webhooks/workspace-one
 ```
 
-Put the printed URL in the rule's Target URL. The credentials must arrive on the first request:
-a `401` + `WWW-Authenticate` challenge flow won't work through Hookdeck.
+Put the printed URL in the rule's Target URL. Omnissa's page doesn't say whether the credentials
+arrive on the first request, so check the headers of a test notification.
 
 ## How It Works
 
 - `lib/verify-workspace-one.ts`: `verifyWorkspaceOneRequest()`
 - `app/webhooks/workspace-one/route.ts`: the `POST /webhooks/workspace-one` route
 
-1. The `Authorization` header is checked before the body is parsed. Failure returns `401`.
-2. The body must be a JSON object or XML (`400` otherwise).
-3. The handler dispatches on `EventType`: `Check-in/Check-out`, `Device Attribute Change`,
-   `Device Compliance Status Change`, `Device Compromised Status Change`, `Device Delete`,
-   `Device Enrollment`, `Device Unenrolled Enterprise Wipe`, `Device Wipe`.
-4. It returns `200 {"received": true}`.
+1. The `Authorization` header is checked before the body is read. Failure returns `401`.
+2. The raw body and `Content-Type` are stored. Nothing is parsed, because Omnissa documents no
+   payload. Write your parser from real notifications.
+3. It returns `200 {"received": true}`.

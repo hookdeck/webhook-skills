@@ -1,6 +1,6 @@
 # Setting Up Smartsheet Webhooks
 
-Smartsheet webhooks are created through the API; there is no webhook screen in the Smartsheet UI.
+Smartsheet's docs create webhooks through the API.
 
 ## Prerequisites
 

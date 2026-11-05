@@ -4,7 +4,7 @@
 
 SavvyCal sends an HTTP POST with a JSON body to the URL you register whenever something happens in your account: a meeting is booked, rescheduled or canceled, a paid booking's checkout changes state, a poll gets a response, or a workflow action fires. Each request is signed with the webhook's secret in the `x-savvycal-signature` header.
 
-Respond with `200 OK` quickly and process the body asynchronously. Non-2xx responses are retried with exponential backoff.
+Respond with `200 OK` quickly and process the body asynchronously. Non-2xx responses and failed connections are retried with exponential backoff, up to 20 attempts in all.
 
 ## Common Event Types
 
@@ -43,4 +43,4 @@ Request headers include `x-savvycal-signature`, `x-savvycal-webhook-id` (`wh_...
 
 ## Full Event Reference
 
-For the complete list of events and their schemas, see [SavvyCal's webhook documentation](https://developers.savvycal.com/webhooks).
+For the complete list of events and their schemas, see [SavvyCal's webhook documentation](https://docs.savvycal.com/developers/webhooks).

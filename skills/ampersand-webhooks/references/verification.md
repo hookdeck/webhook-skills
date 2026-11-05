@@ -125,7 +125,7 @@ def verify_ampersand_webhook(body: bytes, headers: dict, secret: str, tolerance_
 
 ## Common Signature Verification Errors
 
-- **Parsed body.** Re-serialized JSON changes the bytes. Use `express.raw({ type: '*/*' })` (any
+- **Parsed body.** Re-serialized JSON changes the bytes. Use `express.raw({ type: '*/*', limit: '350kb' })` (any
   content type), `await request.text()` in Next.js, or `await request.body()` in FastAPI.
 - **Using the literal secret as the key.** The key is the base64-decoded part after `whsec_`.
 - **Wrong destination's secret.** Each destination, and each dev/prod project, has its own secret.

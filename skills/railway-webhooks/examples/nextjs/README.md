@@ -8,7 +8,7 @@ value) in **Project Settings > Webhooks**; the handler reads the header name fro
 `RAILWAY_WEBHOOK_SECRET` in constant time. The route reads the body as text, so any content type works.
 
 > A static shared credential authenticates the sender, not the body, and gives no replay
-> protection (no signature, no timestamp). Use HTTPS and rotate the value if it leaks.
+> protection (no signature, and the body's timestamp isn't signed). Use HTTPS and rotate the value if it leaks.
 
 ## Prerequisites
 

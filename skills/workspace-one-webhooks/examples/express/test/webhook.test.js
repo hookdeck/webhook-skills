@@ -10,20 +10,12 @@ const { verifyWorkspaceOneRequest } = require('../src/index');
 const USER = process.env.WORKSPACE_ONE_WEBHOOK_USERNAME;
 const PASS = process.env.WORKSPACE_ONE_WEBHOOK_PASSWORD;
 
-const EVENTS = [
-  'Check-in/Check-out', 'Device Attribute Change', 'Device Compliance Status Change',
-  'Device Compromised Status Change', 'Device Delete', 'Device Enrollment',
-  'Device Unenrolled Enterprise Wipe', 'Device Wipe'
-];
-
 const basic = (user, pass) => 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 
-// Illustrative body: Omnissa's page does not document the payload.
-function samplePayload(eventType = 'Device Enrollment') {
-  return { EventType: eventType, DeviceId: 4821, EnrollmentUserName: 'jdoe' };
-}
+// Placeholder body: Omnissa's page does not document the payload.
+const BODY = '{"placeholder":"not a Workspace ONE payload"}';
 
-function post(body = JSON.stringify(samplePayload()), contentType = 'application/json') {
+function post(body = BODY, contentType = 'application/json') {
   return request(app)
     .post('/webhooks/workspace-one')
     .set('Content-Type', contentType)
@@ -87,41 +79,27 @@ describe('Workspace ONE webhook endpoint', () => {
   });
 
   describe('Body handling', () => {
-    it.each(EVENTS)('handles %s', async (eventType) => {
-      const res = await post(JSON.stringify(samplePayload(eventType))).set(
-        'Authorization', basic(USER, PASS));
-      expect(res.status).toBe(200);
-    });
-
-    it('accepts an unknown event type', async () => {
-      const res = await post(JSON.stringify(samplePayload('Something New'))).set(
-        'Authorization', basic(USER, PASS));
+    it('accepts a JSON body', async () => {
+      const res = await post().set('Authorization', basic(USER, PASS));
       expect(res.status).toBe(200);
     });
 
     it('accepts an XML body', async () => {
-      const xml = '<Event><EventType>Device Wipe</EventType><DeviceId>4821</DeviceId></Event>';
-      const res = await post(xml, 'application/xml').set('Authorization', basic(USER, PASS));
+      const res = await post('<placeholder/>', 'application/xml').set('Authorization', basic(USER, PASS));
       expect(res.status).toBe(200);
     });
 
     it('accepts any content type', async () => {
-      const res = await post(JSON.stringify(samplePayload()), 'text/plain').set(
-        'Authorization', basic(USER, PASS));
+      const res = await post(BODY, 'text/plain').set('Authorization', basic(USER, PASS));
       expect(res.status).toBe(200);
     });
 
-    it('rejects invalid JSON with 400 after authenticating', async () => {
+    it('stores a body it could not parse rather than rejecting it', async () => {
       const res = await post('{not json').set('Authorization', basic(USER, PASS));
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
     });
 
-    it('rejects a non-object JSON body with 400', async () => {
-      const res = await post('[1,2]').set('Authorization', basic(USER, PASS));
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 401, not 400, for an unauthenticated invalid body', async () => {
+    it('returns 401 for an unauthenticated body', async () => {
       const res = await post('{not json');
       expect(res.status).toBe(401);
     });

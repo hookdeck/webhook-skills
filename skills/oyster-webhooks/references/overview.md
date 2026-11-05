@@ -36,20 +36,20 @@ Every webhook has the same shape:
 | Event | Triggered When | `data` keys |
 |-------|----------------|-------------|
 | `hiring.employment_engaged` | An EOR employment is engaged | `engagementId` |
-| `hiring.employment_submitted` | An employment is submitted | |
-| `hiring.employment_onboarding_completed` | Onboarding is completed | |
-| `expenses.expense_created` | An expense is created | |
+| `hiring.employment_submitted` | An employment is submitted | `engagementId` |
+| `hiring.employment_onboarding_completed` | Onboarding is completed | `employmentId` |
+| `expenses.expense_created` | An expense is created | `expenseId` |
 | `expenses.expense_approved` | An expense is approved | `expenseId`, `reviewState`, `previousReviewState` |
-| `expenses.expense_declined` | An expense is declined | |
+| `expenses.expense_declined` | An expense is declined | `expenseId`, `reviewState`, `previousReviewState` |
 | `contract.change_applied` | A contract change is applied | `engagementChangeId`, `changeType`, `state` |
-| `contract.change_approved` | A contract change is approved | |
+| `contract.change_approved` | A contract change is approved | `engagementChangeId`, `changeType`, `state` |
 | `benefits.enrollment_enrolled` | A benefits enrollment is enrolled | `engagementId`, `enrollmentId` |
-| `benefits.enrollment_opted_out` | An employee opts out | |
-| `offboarding.engagement_terminated` | An engagement is terminated | |
-| `payments.charge_paid` | A charge is paid | |
+| `benefits.enrollment_opted_out` | An enrollment is opted out of | `engagementId`, `enrollmentId` |
+| `offboarding.engagement_terminated` | An engagement is terminated | `terminationId`, `engagementId`, `terminationState` |
+| `payments.charge_paid` | A charge is paid | `chargeId` |
 
-`data` keys are listed only where Oyster's reference documents them for the event. Treat
-unlisted keys as open.
+`data` keys come from each event's schema in Oyster's reference, which gives key names and
+types but no example values.
 
 ## Event Namespaces
 

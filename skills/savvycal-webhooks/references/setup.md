@@ -16,7 +16,7 @@
 
 ### Via the REST API
 
-See the Webhooks section of the [SavvyCal API reference](https://developers.savvycal.com) for creating and managing webhooks programmatically.
+See the Webhooks section of the [SavvyCal API reference](https://docs.savvycal.com/developers/v1/api/create-webhook) for creating and managing webhooks programmatically.
 
 ## Get Your Signing Secret
 
@@ -36,4 +36,4 @@ Use the tunnel URL as the webhook URL, then book or cancel a meeting on one of y
 
 ## Delivery
 
-Respond with `200 OK` quickly and enqueue work. Non-2xx responses are retried with exponential backoff, so make handlers idempotent (the payload `id` is a convenient dedupe key).
+Respond with `200 OK` quickly and enqueue work. Non-2xx responses and failed connections are retried with exponential backoff, up to 20 attempts in all, and there is no resend after the last one. Make handlers idempotent: record the payload `id`, and key side effects on the event's own id too, because the docs don't say whether `id` repeats across retries.

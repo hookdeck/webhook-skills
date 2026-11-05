@@ -6,8 +6,8 @@ MoonPay (a crypto on/off ramp) sends HTTP `POST` requests with a JSON body to en
 
 There are two families:
 
-- **Widget webhooks**: body `{ "type": "<event>", "data": { ... }, "externalCustomerId"?: "..." }`.
-- **Platform webhooks**: body `{ "id", "type", "timestamp", "data" }`; `id` matches the `webhook-id` header.
+- **Widget webhooks**: body `{ "type": "<event>", "data": { ... }, "externalCustomerId"?: "..." }`. Virtual account events are `{ "type": "<event>", "body": { ... } }` instead.
+- **Platform webhooks**: the KYC event's body is `{ "id", "type", "timestamp", "data" }`; `id` matches the `webhook-id` header.
 
 ## Common Event Types
 
@@ -25,13 +25,13 @@ There are two families:
 | `virtual_account_status_updated` | A virtual account's status changes | Account lifecycle |
 | `virtual_account_transaction_status_updated` | A virtual account transaction's status changes | Reconciliation |
 
-The Platform `transaction_updated` event (a different payload: `eventTime` + `data` with `sourceAmount`, `destinationAmount`, ...) also exists. The dashboard may list `swap_*` events that never fire for widget accounts.
+MoonPay's docs disagree about Platform buy updates: the Platform overview points to the widget `transaction_updated` body, while the Platform OpenAPI file shows `eventTime` + `data` (with `sourceAmount`, `destinationAmount`, ...) and no `type`, and declares an `X-Signature` header. Check one test mode delivery before relying on either. The dashboard may list `swap_*` events that never fire for widget accounts.
 
 ## Delivery
 
 - Respond 2xx within 5 seconds; non-2xx, timeout and connection errors are failures.
 - Failed deliveries are retried with exponential backoff (1s, roughly doubling), up to 9 retries (10 attempts).
-- Delivery is at-least-once and unordered: dedupe on `type` + `data.id` + `data.updatedAt` and use `updatedAt` (Platform: `timestamp`) to pick the newer state.
+- Delivery is at-least-once and unordered: dedupe on `webhook-id` (Platform) or `type` + `data.id` + `data.updatedAt` (widget), and use `updatedAt` (Platform KYC event: `timestamp`) to pick the newer state.
 - Webhooks come from fixed IPv4 addresses (`34.76.118.184`, `34.77.238.249`, `34.79.17.44`, `34.89.242.107`, `34.140.248.51`, `34.159.58.44`, `34.159.89.69`, `35.246.202.26`); no IPv6.
 
 ## Full Event Reference

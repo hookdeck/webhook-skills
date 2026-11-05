@@ -6,7 +6,7 @@ docs:
   events: https://docs.mercury.com/reference/createwebhook
 notes: >
   Business banking. Header Mercury-Signature: t=<unix seconds>,v1=<hex>. v1 = HMAC-SHA256 hex over
-  "<t>.<raw body>" keyed with the endpoint's secretKey used as-is. Endpoints are created via the API
+  "<t>.<raw body>" keyed with the endpoint's secret used as-is. Endpoints are created via the API
   (POST /webhooks); the secret is only returned on creation, so save it then. Hookdeck retries and
   replays resend the original timestamp, so a 5-minute window rejects late retries: the timestamp
   freshness check must be opt-in via MERCURY_TIMESTAMP_TOLERANCE_SECONDS (default 0 = off), as the

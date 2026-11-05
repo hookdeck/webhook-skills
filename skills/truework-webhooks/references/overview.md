@@ -18,8 +18,13 @@ Truework's recommendations by verification method: Instant needs no webhook, Cre
 ```json
 {
   "version": "2023-10-30",
-  "hook": { "id": 1, "event": "order.completed", "target": "https://example.com/webhooks/truework" },
-  "data": { "order_id": "ord_123" }
+  "hook": {
+    "id": 123,
+    "event": "order.completed",
+    "target": "https://example.com/your-webhook-endpoint",
+    "triggered_at": "2025-01-01T12:00:00Z"
+  },
+  "data": { "order_id": "order_123", "metadata": { "test_key": "test_value" } }
 }
 ```
 
@@ -28,15 +33,16 @@ Truework's recommendations by verification method: Instant needs no webhook, Cre
 ```json
 {
   "data": {
-    "order_id": "ord_123",
-    "verification_request_id": "vr_456",
-    "state": "action-required",
-    "metadata": {}
+    "order_id": "order_123",
+    "state": "completed",
+    "verification_request_id": "verification_request_456",
+    "credentials_session_token": "credentials_session_token_789",
+    "metadata": { "test_key": "test_value" }
   }
 }
 ```
 
-`state` is one of `pending-approval`, `processing`, `action-required`, `completed`, `canceled`, `invalid`. `completed` means new data is available on the order; `canceled` means the verification could not be completed but may hold applicant-provided information or documents.
+`state` is one of `pending-approval`, `processing`, `action-required`, `completed`, `canceled`, `invalid`. The event reference page spells one `action-requred`, so accept both until you've seen a delivery. `completed` means new data is available on the order; `canceled` means the verification could not be completed but may hold applicant-provided information or documents.
 
 ## Delivery
 

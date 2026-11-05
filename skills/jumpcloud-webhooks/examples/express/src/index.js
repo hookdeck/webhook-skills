@@ -49,12 +49,12 @@ function verifyJumpCloudRequest(
   return userOk && passOk;
 }
 
-// JumpCloud documents the field names but no example body or category values.
+// JumpCloud documents the field names, but no category values. The event name is di_event.event_type.
 function handleAlert(alert) {
   const { alert_id, alert_title, priority, status, category, di_event } = alert;
   console.log(
     `JumpCloud alert ${alert_id} "${alert_title}" [${priority}/${status}] ` +
-      `category=${category} di_event=${di_event}`
+      `category=${category} event_type=${di_event?.event_type}`
   );
   // TODO: open or update a ticket keyed on alert_id; route on priority and status
 }

@@ -6,8 +6,10 @@ docs:
 notes: >
   Sales engagement platform. Header x-salesloft-signature: HMAC-SHA1 hex digest of the raw request
   body, keyed with the subscription's callback_token (any string you choose when creating the
-  subscription through the Webhook Subscriptions API). The token is also echoed in the payload; the
-  header HMAC is the check to use. Subscriptions are API-only. Event types include person_created,
+  subscription through the Webhook Subscriptions API). The schema says the token is also in the
+  payload, but the one published body (link_swap) doesn't show it; the header HMAC is the check to
+  use. link_swap is synchronous: Salesloft waits for a JSON links map in the response. Subscriptions
+  are made through the API. Event types include person_created,
   person_updated, call_created, email_updated, meeting_booked, cadence_membership_created and
   others; check the docs. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type verifies.

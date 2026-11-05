@@ -66,7 +66,8 @@ Other fields may be present; inspect a real delivery (the **Test** button) to se
 - If your URL can't be reached repeatedly, Paperform disables the webhook and emails the team
   owner and admin seats.
 - Paperform doesn't record whether a delivery succeeded in the submission's webhook history.
-- Paperform's help center describes resending webhooks and integration actions separately.
+- To resend a past submission: form results > **Actions** > **Resend webhook** > **Send**. It uses the
+  webhook's current configuration. Paperform doesn't document a retry schedule.
 
 ## Full Reference
 

@@ -2,7 +2,7 @@
 
 ## What Are Salesloft Webhooks?
 
-Salesloft webhooks notify you about changes to your Salesloft data. When a subscribed event fires, Salesloft sends an HTTP POST to the subscription's configured URL. Subscriptions are made on behalf of a team and are created only through the Webhook Subscriptions API (`POST /v2/webhook_subscriptions`) with a valid OAuth token or API key; there is no dashboard UI for this.
+Salesloft webhooks notify you about changes to your Salesloft data. When a subscribed event fires, Salesloft sends an HTTP POST to the subscription's configured URL. Subscriptions are made on behalf of a team and are created through the Webhook Subscriptions API (`POST /v2/webhook_subscriptions`) with a valid OAuth token or API key; Salesloft's developer docs describe no dashboard UI for this.
 
 Each delivery carries two special headers:
 
@@ -34,7 +34,33 @@ Subscribe with the exact string as the `event_type`. The authorized user also ne
 
 ## Event Payload Structure
 
-The body is JSON containing the resource object named in the event description (for example the new person for `person_created`). Dispatch on the `x-salesloft-event` header, and treat field names as per the Salesloft API reference for that resource. The `callback_token` is also echoed in the payload; use the signature header for authentication.
+The body is JSON containing the resource object named in the event description (for example the new person for `person_created`). Dispatch on the `x-salesloft-event` header, and treat field names as per the Salesloft API reference for that resource. Salesloft's schema says the `callback_token` is also in the payload, but the one published body doesn't show it; use the signature header for authentication.
+
+## link_swap
+
+`link_swap` is the only synchronous event. Salesloft sends a `POST` with the email's links and waits for your response, so don't queue it or send it through a gateway that answers for you. The [link swap guide](https://developers.salesloft.com/docs/platform/guides/link-swap/) shows this body:
+
+```json
+{
+  "user": { "id": 1, "email": "myteammember@salesloft.com" },
+  "team": { "id": 123456 },
+  "mailing": { "id": 30 },
+  "email": { "id": 30 },
+  "person": { "id": 1, "email": "myteammember3@example.com" },
+  "links": ["http://OLD-LINK.COM", "http://ANOTHER-OLD-LINK.COM"]
+}
+```
+
+Return JSON with each old link as a key and its new link as the value:
+
+```json
+{
+  "links": {
+    "http://OLD-LINK.COM": "http://NEW-LINK.com",
+    "http://ANOTHER-OLD-LINK.COM": "http://ANOTHER-NEW-LINK.com"
+  }
+}
+```
 
 ## Retries
 

@@ -2,7 +2,7 @@
 
 ## What Are Autosana Webhooks?
 
-Autosana (AI mobile app testing) sends an HTTP `POST` with a JSON body to your HTTPS endpoint when it completes a batch of flow runs, so your CI, chat or dashboards can react without polling. Webhooks are configured under Settings > Integrations > Webhooks.
+Autosana (AI end-to-end testing for mobile apps and websites) sends an HTTP `POST` with a JSON body to your HTTPS endpoint when it completes a batch of flow runs, so your CI, chat or dashboards can react without polling. Webhooks are configured under Settings > Integrations > Webhooks.
 
 ## Common Event Types
 
@@ -42,7 +42,7 @@ Autosana (AI mobile app testing) sends an HTTP `POST` with a JSON body to your H
 
 - `git` is only present when the app build has git metadata (for example uploaded from CI/CD with commit info).
 - `summary` counts run groups; each entry in `run_groups` carries its own `runs`.
-- There is no delivery or event ID in the documented payload, so deduplicate on your own key (for example the group URLs plus `timestamp`).
+- There is no delivery or event ID in the documented payload, so deduplicate on your own key (for example the `run_groups[].url` values, each of which holds that group's ID). The docs don't say whether `timestamp` stays the same if a delivery is repeated.
 
 ## Delivery Notes
 

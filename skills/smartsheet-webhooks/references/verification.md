@@ -42,9 +42,9 @@ Smartsheet's official SDKs do not include a webhook verification helper, so this
 
 - **Raw body**: hash the exact bytes received. In Express use `express.raw({ type: '*/*' })` so any content type verifies; in Next.js use `request.text()`; in FastAPI use `await request.body()`.
 - **Challenge first**: a handler that requires a signature on every request fails the handshake and gets the webhook disabled.
-- **Status codes**: Smartsheet retries 4xx responses (except 410) as well as 5xx, so a rejected callback is redelivered up to 14 times before the webhook is disabled. Reject forged requests, but expect retries of failures.
-- **Status change callbacks** have no `events` array; they carry `newWebhookStatus`.
-- **No replay protection** in the signature: use the callback `nonce` or your own idempotency key.
+- **Status codes differ by scope**: sheet webhooks retry 4xx (except 410) and 5xx, so a rejected callback is redelivered up to 14 times before the webhook is disabled. Plan webhooks retry only 408, 429, 502, 503, 504 and timeouts, so a 400 or 500 from a plan webhook's handler disables it at once. Return 503 for a temporary failure, because both scopes retry it.
+- **Status change callbacks** carry a non-null `newWebhookStatus`. The docs don't say whether they also have an `events` array, so check the field and treat `events` as optional.
+- **No replay protection** in the signature: the body's `timestamp` and `nonce` are signed, but Smartsheet prescribes no check and doesn't say whether a retried callback keeps its `nonce`. Prefer your own idempotency key built from the event's content.
 - **Secret per webhook**: a handler serving several webhooks needs the secret for the matching `webhookId`.
 
 ## Debugging Verification Failures

@@ -3,12 +3,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJumpCloudRequest } from '../../../lib/verify-jumpcloud';
 
-// JumpCloud documents the field names but no example body or category values.
+// JumpCloud documents the field names, but no category values. The event name is di_event.event_type.
 interface JumpCloudAlert {
   alert_id?: string;
   alert_title?: string;
   category?: string;
-  di_event?: string;
+  di_event?: { event_type?: string; [key: string]: unknown };
   event_description?: string;
   priority?: string;
   rule_id?: string;
@@ -20,7 +20,7 @@ function handleAlert(alert: JumpCloudAlert): void {
   const { alert_id, alert_title, priority, status, category, di_event } = alert;
   console.log(
     `JumpCloud alert ${alert_id} "${alert_title}" [${priority}/${status}] ` +
-      `category=${category} di_event=${di_event}`
+      `category=${category} event_type=${di_event?.event_type}`
   );
   // TODO: open or update a ticket keyed on alert_id; route on priority and status
 }

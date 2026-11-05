@@ -3,8 +3,8 @@
 ## How Does Workspace ONE Authenticate Event Notifications?
 
 Workspace ONE UEM does not sign payloads. There is no signature header, no HMAC and no
-timestamp. Each Event Notifications rule has a User Name and Password, and every request carries
-them as HTTP Basic auth:
+timestamp. Omnissa says event notifications use "basic user authentication" and each rule has a
+User Name and Password, which arrive as HTTP Basic auth:
 
 ```
 Authorization: Basic base64(username:password)
@@ -88,11 +88,10 @@ def verify_workspace_one_request(headers, username=None, password=None) -> bool:
   non-ASCII input, which would turn a bad request into a 500.
 - **Split on the first colon.** Passwords may contain `:`; the user name may not (RFC 7617).
 - **Scheme is case-insensitive.** Accept `Basic`, `basic` and `BASIC`.
-- **No challenge flow.** The docs don't say whether credentials are sent preemptively, so the
-  credentials must arrive on the first request. A `401` + `WWW-Authenticate` response won't make
-  Workspace ONE retry with credentials, and Hookdeck verifies the request as received.
+- **First request.** The docs don't say whether credentials are sent on the first request or only
+  after a `401` challenge. Log the headers of a test notification to see what arrives.
 - **Read the body raw.** Use `express.raw({ type: '*/*' })` (or `request.text()` /
-  `request.body()`) so JSON and XML both arrive, and parse only after the credential check.
+  `request.body()`) so JSON and XML both arrive, and read it only after the credential check.
 - **Fail closed.** If either environment variable is unset, reject every request.
 
 ## How Do I Debug Verification Failures?
@@ -102,5 +101,4 @@ def verify_workspace_one_request(headers, username=None, password=None) -> bool:
 | `401` on every request | Env vars unset, or the rule's User Name / Password differ from them |
 | `401` only for some passwords | Password contains `:` and the header was split on every colon, or unusual characters were re-encoded |
 | `401` through a proxy | The proxy strips or rewrites `Authorization`; check what reaches your app |
-| `400` after a successful auth | Body isn't a JSON object or XML; check the rule's Format and the captured body |
 | `500` on non-ASCII credentials in Python | `compare_digest` was called with `str`; encode to bytes |

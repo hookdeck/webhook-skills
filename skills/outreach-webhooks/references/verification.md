@@ -43,7 +43,7 @@ def verify_outreach_signature(raw_body: bytes, signature_header, secret) -> bool
 
 - **Use the raw body.** Re-serialising parsed JSON changes whitespace and key order. In Express use `express.raw({ type: '*/*' })` so every content type, including `application/vnd.api+json`, stays unparsed.
 - **Set a secret first.** A missing header usually means the webhook was created without `secret`.
-- **No replay protection.** There is no timestamp in the signature, so make handlers idempotent (for example key on `data.id` + `meta.eventName` + `meta.deliveredAt`).
+- **No replay protection.** There is no timestamp in the signature, so make handlers idempotent (for example key on `meta.eventName` + `data.type` + `data.id` + the changed attributes; the docs don't say whether `meta.deliveredAt` stays the same across attempts).
 - **Constant-time compare** and check lengths first, because `timingSafeEqual` throws on unequal lengths.
 - **Invalid signatures get no retry.** Outreach never retries on an HTTP status, so a wrongly rejected delivery is lost. Fix the secret before going live.
 

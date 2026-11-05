@@ -42,6 +42,8 @@ async def require_sigfox_credential(request: Request) -> None:
 
 def classify_callback(p: dict) -> str:
     """The callback type isn't in the request, so infer it from the variables present."""
+    if "eventType" in p:  # Event callbacks also carry severity
+        return "event"
     if "severity" in p:
         return "error"
     if "infoCode" in p:
@@ -89,6 +91,10 @@ def handle_callback(payload: dict) -> str:
     elif callback_type == "error":
         print(f"Error for {payload.get('device')}: {payload.get('info')} ({payload.get('severity')})")
         # TODO: alert that the device missed its keep-alive
+
+    elif callback_type == "event":
+        print(f"Event {payload.get('eventType')} for {payload.get('sourceId')}")
+        # TODO: react to the device's lifecycle or subscription change
 
     else:
         print("Unhandled Sigfox callback")

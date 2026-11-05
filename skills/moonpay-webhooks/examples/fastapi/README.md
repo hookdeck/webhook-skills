@@ -19,7 +19,7 @@ Minimal example of receiving MoonPay webhooks with `Moonpay-Signature-V2` verifi
    cp .env.example .env
    ```
 
-3. Add your webhook API key (`wk_test_...` or `wk_live_...`) to `.env` as `MOONPAY_WEBHOOK_API_KEY`.
+3. Add your webhook API key (`wk_test_...`) to `.env` as `MOONPAY_WEBHOOK_API_KEY`.
 
 ## Run
 

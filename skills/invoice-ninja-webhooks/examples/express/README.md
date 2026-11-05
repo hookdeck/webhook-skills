@@ -73,7 +73,7 @@ Put the printed URL (plus `?event=create_invoice`, for example) in the webhook's
 - `src/index.js`: `verifyInvoiceNinjaRequest()`, `detectEntity()` and the `/webhooks/invoice-ninja` route
 
 1. The secret header is checked before the body is read. Failure returns `401`, never `404`,
-   `405` or `410` (Invoice Ninja deletes the webhook subscription on those).
+   `405` or `410` (Invoice Ninja archives the webhook subscription on those).
 2. Invoice Ninja always sends a JSON body; an empty body is still acknowledged. A non-empty body must be a JSON object (`400` otherwise).
 3. The body is the entity itself and has no event field. The handler uses `?event=` from the target
    URL (`create_invoice`, `create_payment`, `update_client`) and otherwise detects the entity by

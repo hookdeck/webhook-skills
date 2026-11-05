@@ -48,7 +48,7 @@ There is no fixed schema. The body is what you write:
 ## Delivery Notes
 
 - Rate limits, concurrency limits and error handling are configured per sync in Hightouch.
-- Syncs can be retried (see Hightouch's "Sync retries" docs), so make handlers idempotent (see
+- Failed rows are retried, including on later sync runs (see Hightouch's "Retry strategy" docs), so make handlers idempotent (see
   webhook-handler-patterns).
 - Hightouch publishes its outbound IP addresses in its networking docs, but the secret header is
   the credential this skill checks.

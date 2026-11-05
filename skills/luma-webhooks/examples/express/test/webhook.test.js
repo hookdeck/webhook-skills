@@ -48,7 +48,7 @@ describe('verifyLumaWebhook', () => {
     expect(verifyLumaWebhook(Buffer.from(body), sign(body), SECRET)).toBe(true);
   });
 
-  test('accepts an old timestamp by default (retries keep the original t)', () => {
+  test('accepts an old timestamp by default (Hookdeck retries keep the original t)', () => {
     delete process.env.LUMA_TIMESTAMP_TOLERANCE_SECONDS;
     const old = Math.floor(Date.now() / 1000) - 86400;
     expect(verifyLumaWebhook(body, sign(body, SECRET, old), SECRET)).toBe(true);

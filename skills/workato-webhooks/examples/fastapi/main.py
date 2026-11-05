@@ -101,7 +101,7 @@ async def workato_webhook(request: Request):
         handle_event(payload)
     except Exception as err:  # noqa: BLE001
         print(f"Error handling Workato request: {err}")
-        # A non-2xx fails the recipe step (and retries, if the step has retries on).
+        # A non-2xx stops the job unless a Handle errors step catches it.
         raise HTTPException(status_code=500, detail="Handler error")
 
     return {"received": True}

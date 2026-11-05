@@ -75,9 +75,9 @@ PAYLOADS = {
         "tags": ["trial_ended"],
     },
     "customer.products.updated": {
-        "customer_id": "user_123",
-        "plan_changes": [{"action": "activated", "purchase": {"plan_id": "credits_pack", "status": "active"}}],
-        "tags": [],
+        "scenario": "new",
+        "customer": {"id": "user_123"},
+        "updated_product": {"id": "pro_plan"},
     },
     "balances.limit_reached": {"customer_id": "user_123", "feature_id": "api_calls", "limit_type": "included"},
     "balances.usage_alert_triggered": {

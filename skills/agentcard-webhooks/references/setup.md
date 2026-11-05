@@ -20,7 +20,7 @@ curl -X POST https://api.agentcard.sh/api/v2/webhook_endpoints \
 ```
 
 - `url` (required): an HTTPS URL you control.
-- `enabled_events` (required): exact names, prefix wildcards (`card.*`), or `["*"]`. An endpoint receives only what it lists; unknown types are rejected.
+- `enabled_events` (required): exact names, prefix wildcards (`card.*`), or `["*"]`. An endpoint receives only what it lists; unknown types are rejected. `["*"]` alone does not turn on `purchase.message`: list it by name or as `purchase.*`.
 - `description` (optional, up to 255 characters).
 
 ## Get Your Signing Secret
@@ -41,7 +41,7 @@ npx hookdeck-cli listen 3000 agentcard --path /webhooks/agentcard
 
 ## Testing
 
-Sandbox events deliver exactly like production, with `livemode: false`. If a sandbox integration completes actions but nothing arrives, check that the endpoint was created with a sandbox token. The Agentcard CLI can also forward signed events to your machine (`agent-cards companies webhooks listen --forward-to localhost:4000/webhooks`) and send a test event (`agent-cards companies webhooks test`).
+Sandbox events deliver exactly like production, with `livemode: false`. If a sandbox integration completes actions but nothing arrives, check that the endpoint was created with a sandbox token. To trigger events, `POST /api/v2/cards/{card_id}/test_charge` simulates a charge on a sandbox card and sends the same webhooks a real charge does.
 
 Recent deliveries, with payloads and response codes, are listed by `GET /api/v2/webhook_endpoints/{id}/deliveries` and in the dashboard.
 

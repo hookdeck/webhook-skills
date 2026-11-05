@@ -18,11 +18,11 @@ app = FastAPI()
 
 # Mercury signs every delivery with a Mercury-Signature header:
 #   t=<unix seconds>,v1=<hex>
-# v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the endpoint's secretKey as-is.
+# v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the endpoint's secret as-is.
 # https://docs.mercury.com/reference/webhooks#verifying-webhook-signatures
 
-# Optional replay window in seconds. Off by default (0): retries and replays, including
-# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Optional replay window in seconds. Off by default (0): Hookdeck's retries and replays
+# carry the original timestamp, so a window would reject late redeliveries.
 # Set MERCURY_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 # treated as 0, with a warning.
 _warned_invalid_tolerance = False
@@ -75,7 +75,7 @@ def verify_mercury(raw_body: bytes, signature_header, secret: str) -> bool:
         return False
 
     signed = t.encode() + b"." + raw_body
-    # secretKey used as-is, not decoded
+    # secret used as-is, not decoded
     expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
     return hmac.compare_digest(v1.encode(), expected.encode())
 

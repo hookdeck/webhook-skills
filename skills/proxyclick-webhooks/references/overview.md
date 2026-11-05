@@ -32,10 +32,12 @@ Select at least one trigger when you add the webhook.
 
 ## Event Payload Structure
 
-Proxyclick documents the payload as two attribute references: one for visitor check-in and
-check-out, one for visit created, updated and deleted. Those reference pages were not reachable
-when this skill was written, so **no event field is documented here**, and the examples use a
-clearly labelled illustrative body and don't dispatch on any key.
+Proxyclick documents the payload as two attribute references: the
+[visit attributes](https://api.proxyclick.com/v1/docs/#visits) for visitor check-in and check-out,
+and the [meeting attributes](https://api.proxyclick.com/v1/docs/#meetings) for visit created,
+updated and deleted. It links none for Visitor on-site. Those pages describe API objects and show
+no webhook body, and neither lists a field naming the trigger, so **no event field is documented
+here**, and the examples use a clearly labelled illustrative body and don't dispatch on any key.
 
 Proxyclick states it only provides backward compatibility for attributes in its public
 documentation, and recommends not relying on other keys that appear in the JSON. Capture a real

@@ -28,6 +28,7 @@ Each request is signed with a `Webhook-Signature` header (see [verification.md](
 | `mautic.form_on_submit` | A Contact submits a Form | Create tickets or issues, notify sales |
 | `mautic.page_on_hit` | A Contact visits a Landing Page or tracked page | Behaviour tracking |
 | `mautic.sms_on_send` | Mautic sends a text message | SMS logging |
+| `mautic.lead_list_change` | A Contact joins or leaves a Segment (registered by Mautic's sender, missing from its docs) | Audience sync |
 
 ## Event Payload Structure
 
@@ -47,7 +48,7 @@ The body is keyed by event type. Each value is an array of event objects, and ea
 }
 ```
 
-Event-specific keys: `contact` (lead events, email/SMS events), `company`, `submission` (form), `hit` (page), `email`, `points` (`old_points`, `new_points`), `channel`/`old_status`/`new_status`, `added` (company change). Delete events carry `id` instead of a full object.
+Event-specific keys: `contact` (lead events, `mautic.email_on_send`, SMS), `company`, `submission` (form), `hit` (page), `email`, `stat` (`mautic.email_on_open`, with the contact in `stat.lead`, per Mautic's sender and fixture; the docs point to the send event's properties instead), `points` (`old_points`, `new_points`), `channel`/`old_status`/`new_status`, `added` (company change). Delete events carry `id`, plus the object with a null `id`.
 
 ## Full Event Reference
 

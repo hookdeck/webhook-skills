@@ -60,13 +60,16 @@ function verifySigfoxRequest(headers, secret = process.env.SIGFOX_WEBHOOK_SECRET
 - The request method is also yours to choose: accept `GET`, `POST` and `PUT`, and handle an empty
   body (a `GET` carries its variables in the query string).
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse only after the credential check.
+- Answer within 10 seconds. After a timeout or error code, Sigfox retries 1, 2 and 4 minutes later, so
+  deduplicate on `device`, `seqNumber` and `time` (`seqNumber` restarts after 4096 messages).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Callback Types
 
 The request does not say which callback type sent it; the variables in your URL or body template
-decide the shape. The examples infer the type from the fields present.
+decide the shape. The examples infer the type from the fields present. Event callbacks are created
+under Event configuration, and carry `eventType` only if your template includes `{eventType}`.
 
 | Callback type | Sent When | Telltale variables |
 |---------------|-----------|--------------------|
@@ -77,6 +80,7 @@ decide the shape. The examples infer the type from the fields present.
 | `SERVICE ACKNOWLEDGE` | The network confirms a downlink | `infoCode`, `downlinkAck` |
 | `SERVICE REPEATER` | A repeater reports status | `repeatedMsg`, `whitelistDevices` |
 | `ERROR` | A device breaches its keep-alive delay | `severity`, `info` |
+| `EVENT` | A device lifecycle or subscription event occurs | `eventType` (for example `OFF_CONTRACT`), `sourceId`, `severity` |
 
 ## Environment Variables
 

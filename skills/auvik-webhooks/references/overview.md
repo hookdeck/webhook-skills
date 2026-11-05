@@ -35,11 +35,12 @@ The default body:
 }
 ```
 
-- `alertStatus` is numeric (`0` or `1`); `alertStatusString` is the readable `Triggered` or `Cleared`.
+- `alertStatus` is numeric (`0` Triggered, `1` Cleared); `alertStatusString` is the readable form.
+- Pair a clear with its trigger on `correlationId`: in Auvik's examples the two share it, while `alertId` differs.
 - More fields can be present; read the ones you need and ignore the rest.
 - An optional JSONata expression on the integration can reshape the body. If you use one, keep
   `alertStatusString` (or adapt the handler) so events can still be told apart.
-- The example values above are illustrative.
+- The example values above are illustrative, and the example omits fields such as `correlationId`.
 
 ## Full Event Reference
 

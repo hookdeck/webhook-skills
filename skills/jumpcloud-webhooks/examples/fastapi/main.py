@@ -68,11 +68,13 @@ async def require_jumpcloud_basic_auth(request: Request) -> None:
 
 
 def handle_alert(alert: dict) -> None:
-    # JumpCloud documents the field names but no example body or category values.
+    # JumpCloud documents the field names, but no category values. The event name is di_event.event_type.
+    di_event = alert.get("di_event")
+    event_type = di_event.get("event_type") if isinstance(di_event, dict) else None
     print(
         f"JumpCloud alert {alert.get('alert_id')} \"{alert.get('alert_title')}\" "
         f"[{alert.get('priority')}/{alert.get('status')}] "
-        f"category={alert.get('category')} di_event={alert.get('di_event')}"
+        f"category={alert.get('category')} event_type={event_type}"
     )
     # TODO: open or update a ticket keyed on alert_id; route on priority and status
 

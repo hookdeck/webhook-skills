@@ -35,7 +35,7 @@ export function verifyInvoiceNinjaRequest(
  */
 export function detectEntity(payload: Record<string, unknown>): 'document' | 'payment' | 'client' | 'unknown' {
   if (Array.isArray(payload.line_items)) return 'document'; // invoice, quote, credit, purchase order
-  if ('applied' in payload || 'transaction_reference' in payload) return 'payment';
-  if (Array.isArray(payload.contacts)) return 'client';
+  if ('applied' in payload) return 'payment';
+  if (Array.isArray(payload.contacts) && 'paid_to_date' in payload) return 'client'; // vendors have contacts too
   return 'unknown';
 }

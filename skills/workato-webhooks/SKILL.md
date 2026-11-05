@@ -16,7 +16,7 @@ metadata:
 # Workato Webhooks
 
 Workato is an automation platform with no native outbound webhooks. A recipe pushes data to
-your app with an **HTTP connector action** that uses an HTTP connection set to **Basic**
+your app with the HTTP connector's **Send request via HTTP** action, using an HTTP connection set to **Basic**
 authentication. Workato does not sign these requests, so your endpoint authenticates them
 with the Basic auth username and password and routes them by an `event` field you put in the
 body.
@@ -102,7 +102,7 @@ Workato can't reach `localhost`. Tunnel with the Hookdeck CLI (no account requir
 npx hookdeck-cli listen 3000 workato --path /webhooks/workato
 ```
 
-Use the printed URL as the HTTP action's request URL.
+Use the printed URL as the HTTP connection's **Base URL**.
 
 ## Resources
 

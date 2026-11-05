@@ -34,7 +34,7 @@ describe('verifySavvyCalSignature', () => {
     expect(verifySavvyCalSignature(payload, sign(payload), SECRET)).toBe(true);
   });
 
-  it('accepts a bare uppercase hex digest (Elixir sample style)', () => {
+  it('accepts a bare uppercase hex digest', () => {
     expect(verifySavvyCalSignature(payload, sign(payload).toUpperCase(), SECRET)).toBe(true);
   });
 

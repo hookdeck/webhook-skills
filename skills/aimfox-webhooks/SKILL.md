@@ -54,7 +54,7 @@ function verifyAimfoxRequest(headers, secret = process.env.AIMFOX_WEBHOOK_SECRET
   the prefix.
 - Look the header up case-insensitively. Return `401` when it is missing or differs.
 - A static shared credential authenticates the sender, not the body. There is no signature and no
-  timestamp, so nothing stops a captured request being replayed. Use HTTPS and rotate the
+  signed timestamp, so nothing stops a captured request being replayed. Use HTTPS and rotate the
   credential if it leaks.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it. Return
   `400` for a body that isn't a JSON object, `200` once handled.

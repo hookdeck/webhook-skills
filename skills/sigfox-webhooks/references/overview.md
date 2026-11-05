@@ -38,6 +38,7 @@ decide the shape, so the examples infer the type from the fields present.
 | `SERVICE ACKNOWLEDGE` | The network confirms a downlink | `time`, `device`, `infoCode`, `infoMessage`, `downlinkAck`, `downlinkOverusage` |
 | `SERVICE REPEATER` | A repeater reports status | `time`, `device`, `batt`, `repeatedMsg`, `whitelistDevices`, ... |
 | `ERROR` | A device breaches its keep-alive delay | `time`, `device`, `info`, `severity` (`ERROR`) |
+| `EVENT` | A device lifecycle or subscription event occurs | `time`, `severity`, `sourceId`, `sourceType`, `eventType`, plus per-event variables |
 
 Notes:
 
@@ -46,6 +47,14 @@ Notes:
   service is discontinued in April 2027.
 - `device` and `deviceTypeId` are hexadecimal strings of up to 8 characters; `time` is epoch
   seconds; `data` is hexadecimal.
+
+## Delivery
+
+Your server must return a status code within 10 seconds. After a timeout or error code, Sigfox
+retries 1, 2 and 4 minutes later, and recommends deduplicating because a late reply also triggers a
+retry. `seqNumber` restarts after 4096 messages, so key on `device`, `seqNumber` and `time`. See
+[callback integration](https://support.sigfox.com/docs/callback-integration), which also publishes
+the source range `185.110.96.0/22`.
 
 ## Full Reference
 

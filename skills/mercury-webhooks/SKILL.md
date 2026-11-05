@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Every Mercury delivery carries `Mercury-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the endpoint's `secretKey` **as-is** (a plain string, not decoded). Mercury returns `secretKey` only when you create the endpoint (`POST /webhooks`), so save it then.
+Every Mercury delivery carries `Mercury-Signature: t=<unix seconds>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`, keyed with the endpoint's `secret` **as-is** (a plain string, not decoded). Mercury returns `secret` only when you create the endpoint (`POST /webhooks`), so save it then.
 
 ### Verification (Node.js)
 
@@ -38,7 +38,7 @@ function verifyMercury(rawBody, signatureHeader, secret) {
     signatureHeader.split(',').map((kv) => kv.trim().split(/=(.*)/s).slice(0, 2))
   );
   if (!parts.t || !parts.v1) return false;
-  // Optional replay window, off by default: retries and replays keep the original timestamp
+  // Optional replay window, off by default: Hookdeck's retries and replays keep the original timestamp
   const expected = crypto.createHmac('sha256', secret)
     .update(`${parts.t}.`).update(rawBody).digest('hex');
   const a = Buffer.from(parts.v1), b = Buffer.from(expected);
@@ -82,6 +82,8 @@ The event names you subscribe to (`eventTypes` such as `transaction.created`) **
 | `creditAccount.balance.updated` | `creditAccount` + `update` |
 | `investmentAccount.balance.updated` | `investmentAccount` + `update` |
 
+The `resourceType` values come from Mercury's Events API enum. Mercury publishes no balance event body, so log your first delivery of each type to confirm the pair.
+
 See [references/overview.md](references/overview.md) for the payload.
 
 ## Important Headers
@@ -93,7 +95,7 @@ See [references/overview.md](references/overview.md) for the payload.
 ## Environment Variables
 
 ```bash
-MERCURY_WEBHOOK_SECRET=your_webhook_secret_key   # secretKey returned by POST /webhooks
+MERCURY_WEBHOOK_SECRET=your_webhook_secret_key   # secret returned by POST /webhooks
 MERCURY_TIMESTAMP_TOLERANCE_SECONDS=0            # optional; a positive value opts in to the replay window
 ```
 

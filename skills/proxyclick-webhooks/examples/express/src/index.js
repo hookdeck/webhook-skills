@@ -51,9 +51,9 @@ function verifyProxyclickRequest(headers, config = process.env) {
 }
 
 /**
- * ILLUSTRATIVE handler. Proxyclick's documented attribute reference was not
- * reachable when this skill was written and no event-type field is documented,
- * so nothing here dispatches on a field. Check a real delivery in your Hookdeck
+ * ILLUSTRATIVE handler. Proxyclick's attribute reference shows API objects, not
+ * a webhook body, and no event-type field is documented, so nothing here
+ * dispatches on a field. Check a real delivery in your Hookdeck
  * or Proxyclick logs before relying on any key.
  */
 function handleEvent(payload) {

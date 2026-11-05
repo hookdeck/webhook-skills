@@ -6,12 +6,9 @@ SavvyCal computes an HMAC-SHA256 of the **raw request body**, keyed with the web
 
 ## What Format Is the Header?
 
-The docs are inconsistent:
+The sample request shows `x-savvycal-signature: sha256=6CAA4DEF...`: a `sha256=` prefix, then **uppercase** hex. The Elixir sample builds the same form with `"sha256=" <> Base.encode16(...)`.
 
-- The sample request shows `x-savvycal-signature: sha256=6CAA4DEF...` (prefix, **uppercase** hex).
-- The Elixir sample computes `Base.encode16()` (uppercase hex) and compares it to the header with no prefix handling.
-
-So accept both. Strip an optional `sha256=` prefix and compare the hex digest case-insensitively. Reject anything that is not 64 hex characters after that.
+Strip the `sha256=` prefix and compare the hex digest case-insensitively, because most HMAC libraries output lowercase. Reject anything that is not 64 hex characters after that.
 
 ## Implementation (manual)
 
@@ -48,9 +45,10 @@ def verify_savvycal_signature(raw_body: bytes, header: str | None, secret: str) 
 
 - **Use the raw body.** Re-serialized JSON changes whitespace and key order and breaks the HMAC. In Express use `express.raw({ type: '*/*' })` so any content type verifies; in Next.js use `request.text()`; in FastAPI use `await request.body()`.
 - **Don't compare case-sensitively.** The documented digest is uppercase; most HMAC libraries emit lowercase.
-- **Don't forget the `sha256=` prefix.** Strip it if present, but don't require it.
+- **Don't forget the `sha256=` prefix.** Strip it before comparing.
 - **No replay window.** The signature has no timestamp, so dedupe on the payload `id` if replays matter.
 - **Secret is per webhook.** If you run several webhooks, each has its own secret.
+- **Regenerating takes effect at once.** Every request from then on uses the new secret, including retries of payloads that already failed.
 
 ## Debugging Verification Failures
 

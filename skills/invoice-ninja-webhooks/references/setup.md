@@ -17,7 +17,7 @@ Invoice Ninja does not sign requests, so you add a secret header yourself:
 
 ## Register Your Endpoint
 
-1. In Invoice Ninja go to **Settings → Account Management → Webhooks** (the menu path can differ
+1. In Invoice Ninja go to **Settings → Account Management → API Webhooks** (the menu path can differ
    slightly between versions and between the admin portal and the legacy UI).
 2. Add a webhook:
    - **Target URL:** your endpoint, for example `https://example.com/webhooks/invoice-ninja?event=create_invoice`
@@ -35,5 +35,6 @@ Invoice Ninja's system log.
 
 ## If the Subscription Disappears
 
-Invoice Ninja deletes a subscription when your endpoint answers `404`, `405` or `410`. Check your
-route, method handling and any proxy rules, then re-create the webhook.
+Invoice Ninja soft-deletes a subscription, the same state as archiving, when your endpoint answers
+`404`, `405` or `410`. Check your route, method handling and any proxy rules, then restore the
+webhook from the archived list, or with `POST /api/v1/webhooks/bulk` and the `restore` action.

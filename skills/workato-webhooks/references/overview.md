@@ -17,9 +17,10 @@ Things that differ from provider webhooks such as Stripe or GitHub:
   action sends. Add an `event` field to the body so one endpoint can route several recipes.
 - **The method is your choice.** The HTTP action can be `GET`, `POST`, `PUT`, `PATCH` or
   `DELETE`, and a `GET` has no body. The endpoint should accept all of them.
-- **Failures are visible in the job.** A non-2xx response fails the HTTP action, and the
-  recipe's error handling (or a retry setting on the step) decides what happens next. Make
-  your handler idempotent.
+- **Failures are visible in the job.** A non-2xx response is an error that stops the job
+  unless a **Handle errors** step catches it, which can retry up to three times. The action
+  retries by itself only when `GET`, `HEAD`, `PUT` and `DELETE` requests time out. Make your
+  handler idempotent.
 
 ## Suggested Payload Shape
 

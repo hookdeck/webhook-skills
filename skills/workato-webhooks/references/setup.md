@@ -26,15 +26,17 @@ Put it in your app's `.env` as `WORKATO_WEBHOOK_PASSWORD`, and choose a username
 2. **Authentication type**: **Basic**.
 3. **Basic auth user**: the value of `WORKATO_WEBHOOK_USERNAME`.
 4. **Basic auth password**: the value of `WORKATO_WEBHOOK_PASSWORD`.
-5. Click **Connect**.
+5. **Base URL**: your endpoint's origin. Recipes can't override it.
+6. Click **Connect**.
 
-Workato sends `Authorization: Basic base64(user:password)` on every request made with this
-connection.
+Your endpoint should then see `Authorization: Basic base64(user:password)`. Workato's docs
+don't say whether the credentials go on the first request or only after a `401` challenge, so
+check the first test request for the header.
 
 ## 3. Add the HTTP Action
 
-1. Add an HTTP action (for example **Send request**) using that connection.
-2. **Request URL**: your endpoint, e.g. `https://your-app.example.com/webhooks/workato`.
+1. Add the **Send request via HTTP** action using that connection.
+2. **Request URL**: the path relative to the Base URL, e.g. `webhooks/workato`.
 3. **Request method**: whichever fits. The examples accept `POST`, `PUT`, `PATCH`, `GET` and
    `DELETE`.
 4. For methods with a body, set the request body to JSON and include an `event` field:

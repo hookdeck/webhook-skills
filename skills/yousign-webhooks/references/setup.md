@@ -30,4 +30,4 @@ Use port `8000` for FastAPI. Put the Hookdeck URL in your webhook subscription.
 
 ## Optional: IP Allowlist
 
-Yousign documents the sending ranges `57.130.41.144/28` and `51.38.96.112/28`. Signature verification is the primary control; check the docs for the current list.
+Yousign documents the sending addresses `57.130.41.144/28`, `51.38.96.112/28`, `5.39.7.128/28`, `52.143.162.31` and `51.103.81.166`. Signature verification is the primary control; check the docs for the current list.

@@ -28,9 +28,11 @@ source code checks for any status below 400); failed calls are retried a limited
 | `field.deleted` | A field is removed | Keep a schema mirror current |
 
 `rows.created`, `rows.updated`, `rows.deleted` and `view.created` appear verbatim in Baserow's
-documentation; the other view and field strings follow the same `<object>.<action>` pattern.
-Deprecated `row.created`, `row.updated` and `row.deleted` still exist; migrate to the `rows.*`
-batch types. Baserow also has conditional row update and row-enters-view triggers.
+documentation; the other view and field strings are in its event-type classes.
+`row.created`, `row.updated` and `row.deleted` are deprecated, and Baserow's current source no longer
+registers them; migrate to the `rows.*` batch types. A conditional row update is `rows.updated`
+limited to chosen fields. Row enters view sends `view.rows_entered`, an enterprise feature that Send
+everything doesn't include; its rows arrive in `rows`.
 
 ## Event Payload Structure
 
@@ -48,10 +50,14 @@ Example for `view.created`:
 ```
 
 - `event_type` and `event_id` describe what happened. For idempotency use `event_id` together
-  with `batch_id`: a large `rows.*` payload is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
+  with `batch_id`: a large `view.rows_entered` call, or a `rows.updated` call caused by a linked table, is split into several calls that share one `event_id` and carry `batch_id` 1, 2, ... (Baserow source; `batch_id` is absent when there is one call).
 - `table_id`, `database_id` and `workspace_id` identify the source.
-- Row events carry an `items` array with the full affected rows; view and field events carry the
-  object itself.
+- `rows.created` and `rows.updated` carry an `items` array with the full affected rows, and
+  `rows.deleted` carries only `row_ids`. View and field events carry the object itself, or just
+  `view_id` or `field_id` on delete.
+- Route on the body's `event_type`. On a call caused by a change in a linked table, the body says
+  `rows.updated`, there is no `old_items`, and the `X-Baserow-Event` header can name the event from
+  the other table.
 - To learn who made a change, add a **Last Modified By** field to the table; row payloads then
   include it.
 

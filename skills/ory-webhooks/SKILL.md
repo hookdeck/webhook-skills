@@ -3,8 +3,8 @@ name: ory-webhooks
 description: >
   Receive and authenticate Ory Actions webhooks (Ory Network identity flows). Use when
   setting up an endpoint for Ory webhooks, authenticating the api_key header you
-  configured, debugging 401s, or handling registration.after, login.after and
-  settings.after events from a Jsonnet request body.
+  configured, debugging 401s, or routing on an event name you add to the Jsonnet
+  request body.
 license: MIT
 metadata:
   author: hookdeck
@@ -28,7 +28,7 @@ the identity or interrupt the flow, are out of scope.
 
 - How do I receive Ory Actions webhooks?
 - How do I authenticate an Ory webhook? Does Ory sign webhook payloads? (No: use the `api_key` header)
-- How do I handle `registration.after`, `login.after` or `settings.after` events?
+- How do I tell a registration from a login or settings webhook? (Ory adds no event name: add your own)
 - What is in the request body? (Whatever your Jsonnet template produces)
 - Why does my Ory webhook endpoint return 401?
 

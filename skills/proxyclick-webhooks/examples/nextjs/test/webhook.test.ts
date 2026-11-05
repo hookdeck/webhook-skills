@@ -14,7 +14,7 @@ beforeAll(() => {
 
 // ILLUSTRATIVE body: Proxyclick's attribute reference is not documented here, so
 // this is NOT its real schema. Only the Basic credential check is under test.
-const illustrative = { visitor: { firstName: 'Ada' }, visit: { id: 'illustrative-1' } };
+const illustrative = { object: 'visit', id: 'illustrative-1', visitor: { object: 'visitor', firstname: 'Ada' } };
 
 const basic = (user: string, pass: string) =>
   'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');

@@ -52,11 +52,11 @@ def handle_alert(payload: dict) -> None:
 
     if status == "Triggered":
         print(f"Alert triggered: {name} on {entity} ({company})")
-        # TODO: open an incident or ticket (payload["alertId"], payload["alertDescription"], payload["link"])
+        # TODO: open an incident or ticket (payload["correlationId"], payload["alertDescription"], payload["link"])
 
     elif status == "Cleared":
         print(f"Alert cleared: {name} on {entity} ({company})")
-        # TODO: resolve the matching incident (payload["alertId"])
+        # TODO: resolve the matching incident (payload["correlationId"])
 
     else:
         print(f"Unhandled alert status: {status}")

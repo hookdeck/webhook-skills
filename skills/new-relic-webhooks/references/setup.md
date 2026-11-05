@@ -18,7 +18,7 @@ Pick a username and a long random password and store them as `NEW_RELIC_WEBHOOK_
    - **Webhook name**: a reference name.
    - **Endpoint URL**: your endpoint, e.g. `https://example.com/webhooks/new-relic`.
    - **Use authorization**: enable **Basic authentication** and enter the username and password.
-     Do not pick Bearer Token (it sends a different header and this skill doesn't cover it).
+     Do not pick Bearer Token (it sends a different credential and this skill doesn't cover it).
 4. Save the destination.
 
 ## Add It to a Workflow

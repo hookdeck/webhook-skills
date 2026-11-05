@@ -69,7 +69,7 @@ There is no event-type field. Speechmatics appends `?id=<job id>&status=<status>
 | `status` | Sent When |
 |----------|-----------|
 | `success` | The job was processed successfully |
-| `error` | Something went wrong processing the job (only `jobinfo` is sent) |
+| `error` | Something went wrong processing the job (outputs that aren't available are left out) |
 | `fetch_error` | Speechmatics failed to fetch the data file from a URL |
 | `trim_error` | Speechmatics failed to process the audio file before transcription |
 
@@ -82,12 +82,14 @@ These are not the same as the job status values (`running`, `done`, ...). The us
 |----------------------|------|
 | one of `transcript`, `transcript.json-v2`, `jobinfo` | `application/json` |
 | one of `transcript.srt`, `transcript.txt` | `text/plain` |
-| `data`, or two or more items | `multipart/form-data` |
-| none | empty: just the job ID and status in the query |
+| two or more items | `multipart/form-data` |
+| `data` alone | `multipart/form-data` per the notifications page; a raw body such as `application/octet-stream` per the API reference, so branch on `Content-Type` |
+| `[]` (empty list) | empty: just the job ID and status in the query |
+| field left out | the API reference says the transcript, as a `data_file` attachment; the notifications page says no body, so always set `contents` |
 
 ## Delivery Behavior
 
-The method is `POST` unless the job sets `"method": "PUT"`, so accept both. Return a 2xx once
+The method is `POST` unless the job sets `"method": "put"`, so accept both. Return a 2xx once
 received: Speechmatics keeps retrying any other response (including 401 and 413) until its
 timeout, so make sure your body size limit fits the media you request. Callbacks run in
 parallel and may arrive in any order.

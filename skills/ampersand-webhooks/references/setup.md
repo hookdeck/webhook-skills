@@ -31,6 +31,6 @@ Every destination has its own secret. To rotate it, open the destination, view t
 
 ## Test Mode vs Live Mode
 
-Dev and prod are separate Ampersand projects, each with its own destinations and signing secrets. Use
+Ampersand recommends separate dev and prod projects, each with its own destinations and signing secrets. Use
 the matching secret per environment. [play.svix.com](https://play.svix.com) gives you a disposable
 endpoint to look at payloads before your handler exists.

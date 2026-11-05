@@ -11,7 +11,7 @@ Trigger.dev sends one signature header:
 - **Signed content:** the raw request body, exactly as received
 - **Key:** the alert webhook secret, used as a UTF-8 string (not base64-decoded, no prefix to strip)
 - **Encoding:** bare hex, with no `sha256=` prefix
-- **No timestamp or message ID** is signed, so there is no built-in replay window. Use the payload `id` for idempotency.
+- **No timestamp or message ID** is signed, so there is no built-in replay window. Use the payload `id` for idempotency on run and deployment alerts. `alert.error` gets a new `id` on each delivery attempt, so key on `object.error.fingerprint`, `object.classification` and `object.error.lastSeen`.
 
 ## Implementation
 
@@ -31,7 +31,7 @@ try {
   }
 } catch (err) {
   if (err instanceof WebhookError) {
-    // missing header, invalid signature, or unparseable payload
+    // missing header, invalid signature, unparseable payload, or a `type` outside the SDK's list
     return new Response(err.message, { status: 400 });
   }
   throw err;

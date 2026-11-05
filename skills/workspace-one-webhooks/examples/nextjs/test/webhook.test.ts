@@ -6,12 +6,6 @@ import { verifyWorkspaceOneRequest } from '../lib/verify-workspace-one';
 const USER = 'ws1-notify';
 const PASS = 'p@ss:word-with-colon';
 
-const EVENTS = [
-  'Check-in/Check-out', 'Device Attribute Change', 'Device Compliance Status Change',
-  'Device Compromised Status Change', 'Device Delete', 'Device Enrollment',
-  'Device Unenrolled Enterprise Wipe', 'Device Wipe',
-];
-
 beforeAll(() => {
   process.env.WORKSPACE_ONE_WEBHOOK_USERNAME = USER;
   process.env.WORKSPACE_ONE_WEBHOOK_PASSWORD = PASS;
@@ -20,14 +14,12 @@ beforeAll(() => {
 const basic = (user: string, pass: string) =>
   'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 
-// Illustrative body: Omnissa's page does not document the payload.
-function samplePayload(eventType = 'Device Enrollment') {
-  return { EventType: eventType, DeviceId: 4821, EnrollmentUserName: 'jdoe' };
-}
+// Placeholder body: Omnissa's page does not document the payload.
+const BODY = '{"placeholder":"not a Workspace ONE payload"}';
 
 function makeRequest(
   headers: Record<string, string> = {},
-  body: string = JSON.stringify(samplePayload()),
+  body: string = BODY,
   contentType = 'application/json'
 ): NextRequest {
   return new NextRequest('http://localhost:3000/webhooks/workspace-one', {
@@ -91,44 +83,27 @@ describe('POST /webhooks/workspace-one', () => {
   });
 
   describe('Body handling', () => {
-    it.each(EVENTS)('handles %s', async (eventType) => {
-      const res = await POST(
-        makeRequest({ Authorization: basic(USER, PASS) }, JSON.stringify(samplePayload(eventType)))
-      );
-      expect(res.status).toBe(200);
-    });
-
-    it('accepts an unknown event type', async () => {
-      const res = await POST(
-        makeRequest({ Authorization: basic(USER, PASS) }, JSON.stringify(samplePayload('Something New')))
-      );
+    it('accepts a JSON body', async () => {
+      const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }));
       expect(res.status).toBe(200);
     });
 
     it('accepts an XML body', async () => {
-      const xml = '<Event><EventType>Device Wipe</EventType><DeviceId>4821</DeviceId></Event>';
-      const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }, xml, 'application/xml'));
+      const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }, '<placeholder/>', 'application/xml'));
       expect(res.status).toBe(200);
     });
 
     it('accepts any content type', async () => {
-      const res = await POST(
-        makeRequest({ Authorization: basic(USER, PASS) }, JSON.stringify(samplePayload()), 'text/plain')
-      );
+      const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }, BODY, 'text/plain'));
       expect(res.status).toBe(200);
     });
 
-    it('rejects invalid JSON with 400 after authenticating', async () => {
+    it('stores a body it could not parse rather than rejecting it', async () => {
       const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }, '{not json'));
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
     });
 
-    it('rejects a non-object JSON body with 400', async () => {
-      const res = await POST(makeRequest({ Authorization: basic(USER, PASS) }, '[1,2]'));
-      expect(res.status).toBe(400);
-    });
-
-    it('returns 401, not 400, for an unauthenticated invalid body', async () => {
+    it('returns 401 for an unauthenticated body', async () => {
       expect((await POST(makeRequest({}, '{not json'))).status).toBe(401);
     });
   });

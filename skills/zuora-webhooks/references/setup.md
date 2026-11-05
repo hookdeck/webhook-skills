@@ -25,9 +25,19 @@
      first request with no `Authorization` header and waits for a `401` challenge, which does not
      work through Hookdeck and makes every request fail the check in this skill.
 7. Additional settings: tick **Retriable** if you want retries (default 3 attempts, 30 minutes
-   apart). Leave the optional **HMAC** section off: its algorithm, encoding, data and header are all
+   apart; Callout Settings allow up to 5 attempts and 1440 minutes). Leave the optional **HMAC** section off: its algorithm, encoding, data and header are all
    user-defined and this skill doesn't verify it.
 8. Optionally **preview the callout request**, then **Save**.
+
+## Create the Notification
+
+A callout template sends nothing on its own. A notification definition ties the event to it:
+
+1. On the **Notifications** tab, click **+ Add New Notification**.
+2. Choose the trigger type and select the related event.
+3. Under **Delivered By Callout**, select your callout template.
+4. Assign one or more communication profiles. Only accounts with those profiles are targeted.
+5. Switch the notification to **Active**. Zuora doesn't send inactive notifications.
 
 ## Test
 

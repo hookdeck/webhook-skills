@@ -62,7 +62,7 @@ The body shape is illustrative: it is your block's `json_data` or `form_data` te
 
 ## Receive Webhooks Locally
 
-Prefect can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account,
+Prefect Cloud can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no account,
 no install):
 
 ```bash

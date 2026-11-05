@@ -2,9 +2,10 @@
 
 ## What Are Aimfox Webhooks?
 
-Aimfox is a LinkedIn automation platform. Workspace webhooks (beta) push an HTTP `POST` with a JSON
-body to your endpoint when events happen in the workspace, so you don't have to poll the API. You
-can configure several webhooks and pick which events each one receives.
+Aimfox is a LinkedIn automation platform. Workspace webhooks (beta) push a JSON body to your
+endpoint when events happen in the workspace, so you don't have to poll the API. You can configure
+several webhooks and pick which events each one receives. The docs don't name the HTTP method, so
+the examples here assume `POST`.
 
 Webhooks are not signed. The only authentication is the optional **Authentication Header** on the
 webhook, sent with every request. See [verification.md](verification.md).
@@ -43,6 +44,10 @@ campaign message, and `new_reply` on any reply to any message on a workspace acc
 - `event_type`: one of the types above
 - `workspace`: details of your workspace
 - `event`: event-specific object
+
+The docs list those four fields, and every example on the events endpoint also has a top-level ISO 8601
+`timestamp`. `event.timestamp` is ISO 8601 in the examples too, except on `account_logged_out`, where it
+is a number in milliseconds. Nothing authenticates either value.
 
 ## Retries
 

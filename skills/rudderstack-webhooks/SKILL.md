@@ -55,9 +55,10 @@ function verifyRudderstackRequest(headers, user, pass) {
 - Header: `Authorization: Basic base64(username:password)`; the scheme is case-insensitive.
 - Python: `hmac.compare_digest` on **bytes** (encode both sides; `str` raises on non-ASCII).
 - Return `401` on a missing, malformed or mismatched header, `400` for an unparseable body,
-  `200` once handled.
+  `200` once handled. RudderStack aborts a `4XX` with no retries and retries `5XX` and `429` for
+  3 hours, so return `503` for a temporary problem.
 - The method is user-chosen: accept `POST`, `PUT`, `PATCH`, `GET` and `DELETE`, and accept an
-  empty body (e.g. `GET`).
+  empty body.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - Bearer Token and API Key auth types are not covered.
 

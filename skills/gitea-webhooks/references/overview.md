@@ -13,7 +13,7 @@ The event name is sent in the `X-Gitea-Event` header.
 | `push` | Commits are pushed to a branch or tag | CI/CD, deploys, mirroring |
 | `pull_request` | A PR is opened, closed, reopened, edited, or deleted | Checks, review notifications |
 | `issues` | An issue is opened, closed, reopened, edited, or deleted | Triage, tracker sync |
-| `issue_comment` | A comment is added to an issue | Bot commands, notifications |
+| `issue_comment` | A comment on an issue or pull request is created, edited, or deleted | Bot commands, notifications |
 | `create` | A branch or tag is created | Environment setup |
 | `delete` | A branch or tag is deleted | Cleanup |
 | `release` | A release is published, updated, or deleted | Deploy, changelog |

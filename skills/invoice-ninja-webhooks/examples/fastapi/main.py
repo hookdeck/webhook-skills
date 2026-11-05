@@ -39,7 +39,7 @@ def verify_invoice_ninja_request(headers, secret: Optional[str] = None, header_n
 
 async def require_invoice_ninja_credential(request: Request) -> None:
     """FastAPI dependency: reject the request before the body is read or parsed.
-    401, never 404/405/410: Invoice Ninja deletes the webhook subscription on those."""
+    401, never 404/405/410: Invoice Ninja archives the webhook subscription on those."""
     if not verify_invoice_ninja_request(request.headers):
         raise HTTPException(status_code=401, detail="Invalid or missing webhook credential")
 
@@ -50,9 +50,9 @@ def detect_entity(payload: dict) -> str:
     ?event=create_invoice to the target URL) or fall back to the entity's shape."""
     if isinstance(payload.get("line_items"), list):
         return "document"  # invoice, quote, credit, purchase order
-    if "applied" in payload or "transaction_reference" in payload:
+    if "applied" in payload:
         return "payment"
-    if isinstance(payload.get("contacts"), list):
+    if isinstance(payload.get("contacts"), list) and "paid_to_date" in payload:  # vendors have contacts too
         return "client"
     return "unknown"
 

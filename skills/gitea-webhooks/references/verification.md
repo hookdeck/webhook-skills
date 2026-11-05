@@ -7,7 +7,7 @@
 3. It also sends `X-Hub-Signature-256` as `sha256=<hex>` (same digest) and legacy `X-Hub-Signature` (`sha1=<hex>`).
 4. You recompute the digest over the exact bytes received and compare in constant time.
 
-There is no timestamp in the signed content. Use `X-Gitea-Delivery` for idempotency.
+There is no timestamp in the signed content. `X-Gitea-Delivery` is unique per attempt, so a redelivery gets a new value: build idempotency keys from what changed, such as a push's `after` SHA.
 
 ## Implementation
 
@@ -47,7 +47,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 - **Raw body**: verify before parsing. Re-serialized JSON will not match.
 - **Form-encoded and GET deliveries**: a form delivery's body is `payload=<url-encoded JSON>` and a `GET` puts the payload in the query string, but Gitea still signs the JSON payload (`body = []byte(t.PayloadContent)` in `services/webhook/deliver.go`). The signature never matches the bytes received, so set the webhook to `POST` + `application/json`.
 - **No prefix**: `X-Gitea-Signature` has no `sha256=`. Only `X-Hub-Signature-256` does.
-- **Event name**: read `X-Gitea-Event`; the JSON body has no event field.
+- **Event name**: `X-Gitea-Event` is the group and `X-Gitea-Event-Type` the exact trigger; the JSON body has no event field.
 - **Old payloads**: very old Gitea versions put a `secret` field in the body. Current versions do not; always use the signature.
 
 ## Debugging Verification Failures

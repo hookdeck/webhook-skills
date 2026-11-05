@@ -101,6 +101,7 @@ def verify_propelauth(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_s
 - **Timestamp window.** The SDK rejects timestamps more than 5 minutes off. Check your server clock if valid requests fail with a timestamp error.
 - **One secret per endpoint.** Test and production endpoints have different secrets.
 - **CSRF middleware** must be disabled on the webhook route.
+- **Header prefix.** PropelAuth doesn't say which prefix its deliveries use, and Svix can white-label `svix-*` headers as `webhook-*`. If `svix-id` is missing, read the `webhook-*` headers; the signed content is the same and the Svix libraries support both.
 
 ## Debugging Verification Failures
 

@@ -33,6 +33,7 @@ export function verifySigfoxRequest(
  * The callback type isn't in the request, so infer it from the variables present.
  */
 export function classifyCallback(p: Record<string, unknown>): string {
+  if ('eventType' in p) return 'event'; // Event callbacks also carry severity
   if ('severity' in p) return 'error';
   if ('infoCode' in p) return 'service acknowledge';
   if ('repeatedMsg' in p) return 'service repeater';

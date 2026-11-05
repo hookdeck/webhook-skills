@@ -37,6 +37,7 @@ function verifySigfoxRequest(
  * The callback type isn't in the request, so infer it from the variables present.
  */
 function classifyCallback(p) {
+  if ('eventType' in p) return 'event'; // Event callbacks also carry severity
   if ('severity' in p) return 'error';
   if ('infoCode' in p) return 'service acknowledge';
   if ('repeatedMsg' in p) return 'service repeater';
@@ -84,6 +85,11 @@ function handleCallback(payload) {
     case 'error':
       console.log(`Error for ${payload.device}: ${payload.info} (${payload.severity})`);
       // TODO: alert that the device missed its keep-alive
+      break;
+
+    case 'event':
+      console.log(`Event ${payload.eventType} for ${payload.sourceId}`);
+      // TODO: react to the device's lifecycle or subscription change
       break;
 
     default:

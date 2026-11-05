@@ -34,7 +34,7 @@ Server runs on http://localhost:8000 and accepts `POST /webhooks/tawk-to`.
 npx hookdeck-cli listen 8000 tawk-to --path /webhooks/tawk-to
 ```
 
-Use the printed URL as the webhook URL in the tawk.to dashboard (`Admin` section).
+Use the printed URL as the webhook URL in the tawk.to dashboard (Administration > Settings > Webhooks).
 
 ## Test
 

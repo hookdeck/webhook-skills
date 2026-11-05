@@ -31,7 +31,9 @@ through the module's **API key** keychain, and routes them by an `event` field y
 
 Create an **API key** keychain on the module with **API key placement** `In the header`, an
 **API key parameter name** of your choice, and a **Key** that Make sends exactly as entered
-(including any prefix such as `Bearer `). The endpoint compares the whole header value:
+(including any prefix such as `Bearer `). If **Restrict requests to service URLs** is on, add your
+endpoint's origin to **Allowed service origins**, because Make sends the key only to the origins
+listed there. The endpoint compares the whole header value:
 
 ```javascript
 const crypto = require('crypto');

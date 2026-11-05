@@ -24,7 +24,7 @@ access token (this skill covers Basic).
 | `onOutForDelivery` | Consignment is out for delivery (a window may be given) | "Arriving today" notice |
 | `onDelay` | Any delay or delivery issue; `data.exception_code` has the reason | Alert support |
 | `onInternalDelay` | Consignment not shipped in time (breach of `send_date`) | Warehouse escalation |
-| `onFailedAttempt` | Delivery attempted, recipient not met or location inaccessible; `data.next_action` is `NewAttemptToday`, `NewAttemptNextDay` or `PickupReady` | Customer outreach |
+| `onFailedAttempt` | Delivery attempted, recipient not met or location inaccessible; `data.next_action` is `NewAttemptToday`, `NewAttemptNextDay` or `PickUpReady` | Customer outreach |
 | `onPickupReady` | Ready for collection at an access point or locker; `data.pickup_location_address` | Pickup reminder |
 | `onDelivered` | Final: delivered; `data.delivery_information` may hold details | Close the order |
 | `onReturn` | Final: failed delivery, returning to sender; `data.return_reason` | Start refund or reship |

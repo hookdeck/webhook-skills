@@ -70,9 +70,8 @@ async def smartsheet_webhook(request: Request):
     if payload.get("newWebhookStatus"):
         # Status change callback (webhook automatically disabled or re-enabled)
         print("Webhook status changed:", payload["newWebhookStatus"])
-    else:
-        for event in payload.get("events", []):
-            handle_event(event)
+    for event in payload.get("events", []):
+        handle_event(event)
 
     # Any 200 acknowledges the callback
     return {"received": True}

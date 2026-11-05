@@ -24,7 +24,7 @@ header that you add to the webhook subscription (Headers key/value) and check on
 - How do I receive Invoice Ninja webhooks?
 - How do I verify an Invoice Ninja webhook? (There is no signature: use a secret header)
 - How do I handle `create_invoice`, `create_payment` or `update_client` webhooks?
-- Why did my Invoice Ninja webhook subscription get deleted?
+- Why did my Invoice Ninja webhook subscription get archived?
 - Why does my endpoint return 401 for Invoice Ninja requests?
 
 ## Verification (core)
@@ -68,7 +68,8 @@ function verifyInvoiceNinjaRequest(
 ## Never Answer 404, 405 or 410
 
 If your endpoint responds `404`, `405` or `410`, Invoice Ninja treats the URL as gone and
-**deletes the webhook subscription**. Use `401` for bad credentials and `400` for bad bodies.
+**soft-deletes the webhook subscription**, the same state as archiving, so it stops sending until
+you restore it. Use `401` for bad credentials and `400` for bad bodies.
 Check that your framework or proxy doesn't return one of these for an unexpected method or path.
 Other 4xx and 5xx responses are logged and **not retried** (only connection errors and `429` are
 retried, up to 5 tries), so a wrong secret loses events instead of delaying them.
@@ -86,7 +87,8 @@ retried, up to 5 tries), so a wrong secret loses events instead of delaying them
 
 The event key names the subscription only; it is not sent in the request. Route by URL (one
 subscription per event, for example `https://example.com/webhooks/invoice-ninja?event=create_invoice`)
-or by entity shape (`line_items` for documents, `applied` for payments, `contacts` for clients).
+or by entity shape (`line_items` for documents, `applied` for payments, `contacts` plus
+`paid_to_date` for clients, because vendors have `contacts` too).
 The examples support both.
 
 ## Event Keys

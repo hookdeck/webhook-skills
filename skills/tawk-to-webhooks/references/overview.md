@@ -28,6 +28,7 @@ Every payload has `event` (the event name), `time` (ISO 8601), and a `property` 
   "chatId": "70fe3290-99ad-11e9-a30a-51567162179f",
   "time": "2019-06-28T14:03:04.646Z",
   "domain": "tawk.to",
+  "referrer": "https://www.google.com/",
   "message": { "text": "Sample message", "type": "msg", "sender": { "type": "visitor" } },
   "visitor": { "name": "V1561719148780935", "email": "hello@test.com", "city": "jelgava", "country": "LV" },
   "property": { "id": "58ca8453b8a7e060cd3b1ecb", "name": "Bobs Burgers" }

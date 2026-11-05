@@ -2,12 +2,12 @@
 
 ## How Does Appstle Sign Webhooks?
 
-Appstle's webhooks are delivered by Svix. Each request includes:
+Appstle's signing follows Svix's scheme. Each request includes:
 
 | Header | Contents |
 |--------|----------|
 | `svix-id` | Unique message ID (also your idempotency key) |
-| `svix-timestamp` | Attempt time, Unix seconds |
+| `svix-timestamp` | Attempt time, Unix seconds. Each retry from Appstle carries a new one |
 | `svix-signature` | Space-delimited list of `v1,<base64 signature>` entries |
 
 The algorithm:
@@ -17,13 +17,16 @@ The algorithm:
 3. Compute HMAC-SHA256 of the signed content with the decoded key.
 4. Base64-encode the digest.
 5. Compare it (constant time) against each `v1,` entry in `svix-signature`. Any match
-   passes. Several entries appear during secret rotation.
+   passes.
+6. Reject the request if `svix-timestamp` is more than five minutes from your server's clock.
 
-The secret is in **Settings → Webhooks** in the Appstle dashboard.
+The secret is in the webhook portal: **More → Webhook Integration → Launch webhook portal**,
+then open your endpoint.
 
 ## SDK Verification (recommended)
 
-Appstle's docs use the official Svix libraries (`svix` on npm and PyPI).
+Appstle's docs show a hand-written verifier. The official Svix libraries (`svix` on npm and
+PyPI) implement the same scheme.
 
 ### Node.js
 
@@ -39,9 +42,8 @@ wh.verify(rawBody, {
 // svix 2.x verify() returns undefined; parse rawBody yourself afterwards.
 ```
 
-Appstle's own snippet calls `wh.verify(JSON.stringify(req.body), headers)`. That
-re-serializes the parsed JSON and can differ byte-for-byte from what was signed. Verify
-the raw bytes instead (`express.raw({ type: '*/*' })`).
+Verify the raw bytes (`express.raw({ type: '*/*' })`). Serializing parsed JSON again can
+change them, for example `15.0` becomes `15`.
 
 ### Python
 
@@ -65,8 +67,8 @@ The `svix` and `standardwebhooks` libraries always enforce a fixed 5-minute time
 window (timestamps more than 5 minutes old or in the future are rejected) and expose no
 option to change it.
 
-Hookdeck retries and replays resend the **original** request, including the original
-`svix-timestamp`. A retry or replay that happens more than 5 minutes after the event
+Appstle's own retries carry a new `svix-timestamp`. Hookdeck retries and replays resend the
+**original** request, including the original `svix-timestamp`. A retry or replay that happens more than 5 minutes after the event
 carries a valid signature but a stale timestamp, so library verification rejects it
 ("Message timestamp too old"). Use the manual verifier below if you need to accept
 them: pass `toleranceSeconds = null` to drop the window, or a larger number to widen it.
@@ -91,7 +93,7 @@ function verifyAppstle(rawBody, svixId, svixTimestamp, svixSignature, secret, to
     .update(rawBody) // Buffer or string, exactly as received
     .digest('base64');
 
-  // Check every entry: there is more than one during secret rotation
+  // Check every entry: the header can hold more than one
   let valid = false;
   for (const entry of svixSignature.split(' ')) {
     const [version, sig] = entry.split(',');
@@ -134,7 +136,7 @@ def verify_appstle(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sign
   `await request.body()` (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the
   literal string.
-- **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,`
+- **Multiple signatures.** The header can hold more than one. Split `svix-signature` on spaces and accept any matching `v1,`
   entry. Don't compare the whole header.
 - **Timestamp window.** The SDK rejects timestamps more than 5 minutes off, which also
   rejects late retries and replays. Check your server clock if fresh requests fail.
@@ -151,5 +153,5 @@ def verify_appstle(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sign
 | "Timestamp too old" / "too new" | Server clock drift, or a retry/replay of an old delivery |
 | Missing headers | Something in front of your app dropped `svix-*` headers |
 
-Use **Send Example** on the endpoint in **Settings → Webhooks** to send a correctly signed
+Send an example event from your endpoint in the webhook portal to get a correctly signed
 request while debugging.

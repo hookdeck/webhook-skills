@@ -11,7 +11,7 @@ Because the workflow builder configures the step, you decide:
 
 - the method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
 - the headers, including the secret header that authenticates the call
-- the body (JSON, form data, binary) and the `Content-Type`
+- the body (raw, form-data, form-urlencoded or binary) and the `Content-Type`
 
 ## Authentication, Not Signing
 
@@ -46,8 +46,9 @@ accept an empty body and return `400` for a non-empty body that isn't a JSON obj
 ## Content-Type Default
 
 Tray sets `Content-Type` from the body you provide and falls back to
-`application/x-www-form-urlencoded` if no body type is selected. Choose a JSON body type so the
-examples can parse it.
+`application/x-www-form-urlencoded` if no body type is selected. An explicit `Content-Type` header
+overrides it. Use the `raw` body type and set `Content-Type: application/json` so the examples can
+parse it.
 
 ## Full Reference
 

@@ -16,7 +16,7 @@ Taken from Invoice Ninja's `WebhookSingle` job:
 | 2xx | Success, logged |
 | Connection error | Retried with backoff (up to 5 tries) |
 | `429` | Retried with backoff |
-| `404`, `405`, `410` | **Deletes the webhook subscription** |
+| `404`, `405`, `410` | **Soft-deletes (archives) the webhook subscription** |
 | Other 4xx (including `401`, `400`) | Logged as a failure, not retried |
 | 5xx | Logged as a failure, not retried |
 
@@ -41,8 +41,9 @@ The body is the entity as produced by its transformer, with no envelope and **no
 
 Because the event isn't in the body, route by URL (one subscription per event, with
 `?event=create_invoice` on the target URL) or by entity shape: `line_items` is a document
-(invoice, quote, credit or purchase order), `applied` / `transaction_reference` a payment,
-`contacts` a client.
+(invoice, quote, credit or purchase order), `applied` a payment, and `contacts` with
+`paid_to_date` a client. Expenses also have `transaction_reference`, and vendors also have
+`contacts`, so neither is enough alone.
 
 ## Common Event Types
 
