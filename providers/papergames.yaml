@@ -1,0 +1,31 @@
+name: papergames
+displayName: Papergames
+docs:
+  webhooks: https://developers.papergames.io/docs/webhooks/
+  verification: https://developers.papergames.io/docs/webhooks/security
+  events: https://developers.papergames.io/docs/webhooks/events
+notes: >
+  papergames.io online multiplayer board-game platform with an embeddable games API (create a game
+  session over REST, embed playUrl/watchUrl in an iframe). Not Paperform, PaperCut or Paper; the
+  vendor domain is papergames.io. Hookdeck source type PAPERGAMES uses the STANDARD_WEBHOOKS
+  controller with headers_prefix 'svix' ("Delivered by Svix"). Headers svix-id (stable across
+  retries; idempotency key), svix-timestamp (seconds), svix-signature (space-delimited v1,<base64>;
+  accept any v1 entry, ignore other version tags, no v2 scheme). HMAC-SHA256 over
+  "<svix-id>.<svix-timestamp>.<raw body>", standard base64; key is the base64-decoded part after
+  whsec_ (whole value base64-decoded if unprefixed; reject an empty key). Examples verify manually
+  and name the svix npm/PyPI library as the alternative. No published timestamp tolerance: default
+  300 s, configurable via PAPERGAMES_WEBHOOK_TOLERANCE_SECONDS (0 disables), with the trade-off
+  against the retry schedule (immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h). Body is
+  {eventType, payload}, not Standard Webhooks type/data. Only two documented events, game.started
+  and game.finished, both carrying the game session {uid, gamesPlayed, players[{externalId?, name,
+  score}], status, createdAt, updatedAt}. status stays "playing" on game.finished; no winner field
+  (compare scores); externalId only present when externalUserId was passed on the iframe URL. Docs
+  prose mentions a webhookPayload root wrapper that the JSON examples lack; tolerate both.
+  message.attempt.exhausted is Svix's operational event with no documented payload. No inbound
+  API key, bearer token, IP allowlist or handshake; endpoints are dashboard-managed only.
+testScenario:
+  events:
+    - game.started
+    - game.finished
+catalog:
+  summary: 'Verify Papergames webhook signatures (delivered via Svix: `svix-id`/`svix-timestamp`/`svix-signature`, HMAC-SHA256 base64), handle game.started and game.finished game session events'
