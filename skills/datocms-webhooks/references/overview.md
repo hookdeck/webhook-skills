@@ -29,7 +29,7 @@ A webhook has triggers; each is an `entity_type` plus one or more `event_type` v
 | `item_type` | `create`, `update`, `delete` | A model changes, including its fields | Schema sync |
 | `upload` | `create`, `update`, `delete` | A media asset changes | Sync to a CDN |
 | `build_trigger` | `deploy_started`, `deploy_succeeded`, `deploy_failed` | A build trigger deploys | Deploy notifications |
-| `environment` | `deploy_started`, `deploy_succeeded`, `deploy_failed` | An environment deploys | Environment monitoring |
+| `environment` | `promote` | A sandbox environment is promoted to primary | Repoint builds and caches |
 | `maintenance_mode` | `change` | An admin activates or deactivates maintenance mode | Pause integrations |
 | `sso_user` | `create` | An SSO user is added as a collaborator | Audit access |
 | `cda_cache_tags` | `invalidate` | CDA cache tags need invalidating | Purge a cache |

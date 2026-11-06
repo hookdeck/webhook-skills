@@ -61,7 +61,8 @@ Every delivery is an envelope: `id` (`evt_…`), `timestamp`, `event`, `session`
 |-------|----------------|
 | `message` | Incoming message (text, audio, files) |
 | `message.any` | Any message created, including ones you sent |
-| `message.ack` | Message reached server/device, was read or played (`ackName`: `ERROR`, `PENDING`, `SERVER`, `DEVICE`, `READ`, `PLAYED`) |
+| `message.ack` | Direct-chat message reached server/device, was read or played (`ackName`: `ERROR`, `PENDING`, `SERVER`, `DEVICE`, `READ`, `PLAYED`) |
+| `message.ack.group` | Group participant received, read or played a message |
 | `message.reaction` | A message was reacted to (`payload.reaction.text`, `payload.reaction.messageId`) |
 | `session.status` | Session status changes (`STARTING`, `SCAN_QR_CODE`, `WORKING`, `FAILED`, `STOPPED`, …) |
 | `group.v2.join` | You joined or were added to a group |

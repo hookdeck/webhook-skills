@@ -15,6 +15,7 @@ list of event types. Every delivery is signed in the `X-Hook-Signature` header.
 | `candidateAdded` | A candidate enters the system (apply, source, recruit, refer) | Sync to HRIS, notify hiring team |
 | `candidateStatusUpdated` | A candidate moves to another pipeline stage (not fired on first entry) | Trigger interview scheduling, background checks |
 | `candidateDeleted` | A candidate is deleted in the web app (not fired by GDPR auto-delete) | Remove data from downstream systems |
+| `candidateResumeAdded`, `candidateResumeUpdated` | In the API reference's event enum only; trigger and body aren't documented | Log a real delivery first |
 | `companyPositionAdded` | A position is created | Post to job boards |
 | `companyPositionUpdated` | Position details change (not state) | Refresh job listings |
 | `companyPositionDeleted` | A position is deleted | Unpublish listings |
@@ -42,15 +43,19 @@ All events share one envelope:
   `candidate`, `stage` (and `stage_was`, `time_in_previous_stage` on
   `candidateStatusUpdated`), `acting_user`, `source`. Position events carry
   `company`, `position`, `acting_user` (and `state_is` / `state_was` on
-  `companyPositionStateUpdated`). Note events carry `company_id`, `position`,
-  `candidate` and `note_id`.
+  `companyPositionStateUpdated`). `companyNotePosted` and `companyNoteUpdated`
+  carry `company_id`, `position`, `candidate`, `acting_user` and `body`, and only
+  the update has `note_id`. `companyNoteDeleted` carries just `note_id`,
+  `company_id` and `acting_user`.
 - `creation_date` - when the event was created
 
 ## Delivery Behavior
 
 - HTTPS only, public hosts only, 30 second timeout per attempt
 - Any non-2xx response (or timeout) is a failure; 10 attempts with exponential
-  backoff (1s, 2s, 4s, 8s, 16s, 32s, then 60s)
+  backoff (1s, 2s, 4s, 8s, 16s, 32s, then 60s), then the delivery is abandoned
+- Repeated failures disable the endpoint automatically; the threshold isn't
+  published, and the resume call clears it
 - Limit of 10 endpoints per customer
 - Duplicates are possible; deduplicate on `_id`
 

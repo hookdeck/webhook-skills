@@ -48,6 +48,7 @@ def verify_heygen_signature(raw_body: bytes, signature: str | None, secret: str)
 - **Header name is just `signature`.** Frameworks lowercase header names; look it up case-insensitively.
 - **Secret shown once.** If you lost it, rotate it (`POST /v3/webhooks/endpoints/{id}/rotate-secret`).
 - **Rotation window.** The old secret stops working immediately; failed verifications during rollover are expected.
+- **`callback_url` deliveries aren't signed.** The `signature` header is sent only to registered endpoints, so a per-job callback can't pass this check.
 
 ## Debugging Verification Failures
 

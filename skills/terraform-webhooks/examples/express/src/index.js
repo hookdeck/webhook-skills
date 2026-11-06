@@ -42,7 +42,7 @@ function verifyTerraformSignature(rawBody, signatureHeader, token) {
  * List the triggers carried by a payload.
  * - Run payloads (payload_version 1) have a notifications[] array.
  * - Workspace payloads (payload_version "2") have a top-level trigger.
- * - Change request payloads have no trigger; they are team:change_request.
+ * - Change request payloads have no trigger; they are change_request:created.
  */
 function getTriggers(payload) {
   if (Array.isArray(payload.notifications)) {
@@ -52,7 +52,7 @@ function getTriggers(payload) {
     return [payload.trigger];
   }
   if (payload.change_request_url) {
-    return ['team:change_request'];
+    return ['change_request:created'];
   }
   return [];
 }
@@ -143,8 +143,9 @@ function handleTerraformEvent(trigger, payload) {
 
     case 'workspace:auto_destroy_reminder':
     case 'workspace:auto_destroy_run_results':
+    case 'workspace:auto_destroy_results': // spelling in HashiCorp's sample payloads
     case 'workspace:deleted':
-    case 'team:change_request':
+    case 'change_request:created':
       console.log(`Received ${trigger}`);
       break;
 

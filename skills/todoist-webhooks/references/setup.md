@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - A Todoist account
-- A Todoist app in the [App Management Console](https://developer.todoist.com/appconsole.html)
+- A Todoist app in the [App Management Console](https://app.todoist.com/app/settings/integrations/app-management)
 - A public HTTPS endpoint with no port (e.g. `https://example.com/webhooks/todoist`)
 
 ## Get Your Signing Secret
@@ -23,7 +23,7 @@ Todoist has no separate webhook secret. Webhooks are signed with your app's **Cl
 
 ## Activate Webhooks for Your Own Account
 
-Webhooks do not fire for the user who created the app until that user completes the app's OAuth flow. For personal use: open the authorization URL in a browser, capture the `code` from the redirect, then POST it to the token endpoint (`https://todoist.com/oauth/access_token`, e.g. via Postman or curl). Users who authorize your app afterwards are activated automatically.
+Webhooks do not fire for the user who created the app until that user completes the app's OAuth flow. For personal use: open the authorization URL in a browser, capture the `code` from the redirect, then POST it to the token endpoint (`https://api.todoist.com/oauth/access_token`, e.g. via Postman or curl). Users who authorize your app afterwards are activated automatically.
 
 ## Local Testing
 
@@ -31,9 +31,9 @@ Webhooks do not fire for the user who created the app until that user completes 
 npx hookdeck-cli listen 3000 todoist --path /webhooks/todoist
 ```
 
-Use the Hookdeck URL as the callback URL. Because there is a single URL per app and no test mode, use a separate Todoist app for development and production.
+Use the Hookdeck URL as the callback URL. Todoist's docs describe no test mode, so use a separate Todoist app for development and production.
 
 ## Constraints
 
 - HTTPS only; ports in the URL are rejected
-- Respond 200 within a reasonable time; non-200 triggers a retry (15 minutes, up to 3 times)
+- Respond with HTTP 200; no timeout is published, and anything else triggers a retry (15 minutes, up to 3 times)

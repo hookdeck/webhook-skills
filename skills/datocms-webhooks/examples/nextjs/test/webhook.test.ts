@@ -15,8 +15,7 @@ const EVENTS: [string, string][] = [
   ['item', 'unpublish'], ['item_type', 'create'], ['item_type', 'update'],
   ['item_type', 'delete'], ['upload', 'create'], ['upload', 'update'], ['upload', 'delete'],
   ['build_trigger', 'deploy_started'], ['build_trigger', 'deploy_succeeded'],
-  ['build_trigger', 'deploy_failed'], ['environment', 'deploy_started'],
-  ['environment', 'deploy_succeeded'], ['environment', 'deploy_failed'],
+  ['build_trigger', 'deploy_failed'], ['environment', 'promote'],
   ['maintenance_mode', 'change'], ['sso_user', 'create'], ['cda_cache_tags', 'invalidate'],
 ];
 

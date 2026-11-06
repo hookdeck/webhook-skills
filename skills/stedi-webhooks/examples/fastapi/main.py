@@ -162,7 +162,7 @@ def handle_event(event: Dict[str, Any]) -> None:
 
 @app.post("/webhooks/stedi")
 async def stedi_webhook(request: Request, event: Dict[str, Any] = Depends(verified_stedi_event)):
-    # Retries and manual recoveries reuse the same webhook-id; acknowledge duplicates with 200.
+    # Retries reuse the same webhook-id; acknowledge duplicates with 200. An event recovered through the API has no webhook-id, only its id.
     msg_id = request.state.webhook_id
     if msg_id in processed_message_ids:
         return {"received": True, "duplicate": True}

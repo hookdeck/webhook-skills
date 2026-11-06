@@ -14,11 +14,10 @@ Shortcut has no event-type header. Each action in the `actions` array carries an
 |-------|----------------|------------------|
 | `story create` | A story is created | Notify a Slack channel, create a branch |
 | `story update` | A story changes (state, owner, estimate, epic, iteration) | Trigger CI at Ready for Deploy, notify on estimate change |
-| `story delete` | A story is deleted | Remove it from your own records |
+| `epic create` | An epic is created | Notify stakeholders |
 | `epic update` | An epic changes | Sync status, notify stakeholders |
-| `story-comment create` | A comment is added | Bot replies, command parsing |
 
-The docs show `entity_type` values like `story` and `epic` and `action` values like `create` and `update`; they do not publish a complete list. Comments and tasks use the REST API's entity types (`story-comment`, `story-task`); check a real delivery if in doubt, and log unknown combinations rather than failing on them.
+The docs show `entity_type` values like `story` and `epic` and `action` values like `create` and `update`; they do not publish a complete list. Deletes and changes to comments and tasks also fire, but the docs don't show their strings, so capture a real delivery before you depend on them, and log unknown combinations rather than failing on them.
 
 ## Event Payload Structure
 

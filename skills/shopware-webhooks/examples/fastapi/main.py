@@ -13,7 +13,7 @@ app = FastAPI()
 
 
 def get_shop_secret(shop_id: str) -> Optional[str]:
-    """Look up the app secret for a shop.
+    """Look up the shop secret for a shop.
 
     Each shop has its own secret, assigned during the registration handshake.
     Replace with a database lookup in production.

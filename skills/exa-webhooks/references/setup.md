@@ -29,6 +29,8 @@ Put the returned `secret` in `EXA_WEBHOOK_SECRET`.
 
 If you lose the secret, create a new webhook and delete the old one.
 
+A Monitors API monitor sets its webhook on `POST https://api.exa.ai/monitors` with `webhook: { url, events }`, and returns the secret once as `webhookSecret`. The URL must be HTTPS and can't point to localhost or a private IP range.
+
 ## Test Mode vs Live Mode
 
-Exa has no separate test mode for webhooks. Create a webhook pointing at a Hookdeck tunnel URL, then create a small Webset to generate `webset.created` and `webset.item.created` events.
+Exa documents no separate test mode for webhooks. Create a webhook pointing at a Hookdeck tunnel URL, then create a small Webset to generate `webset.created` and `webset.item.created` events. For a monitor, `POST /monitors/{id}/trigger` starts a run immediately.

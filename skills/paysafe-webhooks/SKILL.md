@@ -23,7 +23,7 @@ metadata:
 
 ## Verification (core)
 
-Paysafe sends a `Signature` header containing the base64 HMAC-SHA256 of the **raw JSON request body**, keyed with the HMAC key from the Business Portal. Use the key as a **raw UTF-8 string** (do not base64-decode it). There is no timestamp in the signed content.
+Paysafe sends a `Signature` header containing the base64 HMAC-SHA256 of the **raw JSON request body**, keyed with your `hmacKey`. Use the key as a **raw UTF-8 string** (do not base64-decode it). There is no timestamp in the signed content.
 
 ```javascript
 const crypto = require('crypto');
@@ -55,7 +55,7 @@ def verify_paysafe_webhook(raw_body: bytes, signature_header: str | None, secret
 
 ## Common Event Types
 
-Payload fields: `payload`, `attemptNumber`, `type`, `resourceId`, `links`, `eventDate`, `eventName`.
+Every enveloped example has `eventName`, `attemptNumber`, `resourceId`, `eventDate` and `payload`. Other fields vary by docs page (see [references/overview.md](references/overview.md)).
 
 | `eventName` | Description |
 |-------------|-------------|
@@ -70,19 +70,19 @@ Payload fields: `payload`, `attemptNumber`, `type`, `resourceId`, `links`, `even
 | `SETTLEMENT_COMPLETED` | Settlement request completed |
 | `SETTLEMENT_FAILED` | Settlement failed or was declined |
 
-Other categories include void authorization (`VOIDAUTH_*`), registration, refunds, original/standalone credits, and payment scheduler. See [Paysafe webhook events](https://developer.paysafe.com/en/api-docs/paysafe-checkout/webhook-events/).
+Per-method pages also name `PAYMENT_PENDING` and `SA_CREDIT_RETURN_COMPLETED`, which the events tables omit, so return 2xx for names you don't recognize. Other categories include void authorization (`VOIDAUTH_*`), registration, refunds, original/standalone credits, and payment scheduler. See [Paysafe webhook events](https://developer.paysafe.com/en/api-docs/paysafe-checkout/webhook-events/).
 
 ## Notes
 
-- Payloads are minimal; use `links` / `resourceId` to fetch the full resource from the Paysafe API.
-- Paysafe's doc example shows the resource body rather than the `eventName` envelope, so handle both and dispatch on `eventName` when present (see [references/overview.md](references/overview.md)).
+- Paysafe describes payloads as minimal and recommends one GET call to reconfirm the status a webhook reports.
+- Paysafe's docs show three body shapes, one a bare resource with no `eventName`, so dispatch on `eventName` when present (see [references/overview.md](references/overview.md)).
 - Return 2xx to acknowledge. On a 4xx or 5xx response Paysafe retries up to three times.
-- Webhooks are configured in the Business Portal; Paysafe strongly recommends them for redirect-flow payment methods.
+- Webhooks are configured through the Business Portal (the Paysafe Checkout docs say to open a service request there); Paysafe strongly recommends them for redirect-flow payment methods.
 
 ## Environment Variables
 
 ```bash
-PAYSAFE_WEBHOOK_SECRET=your_paysafe_hmac_key_here   # HMAC key from the Business Portal
+PAYSAFE_WEBHOOK_SECRET=your_paysafe_hmac_key_here   # the hmacKey Paysafe's signature uses
 ```
 
 ## Local Development

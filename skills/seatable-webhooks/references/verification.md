@@ -56,7 +56,7 @@ def verify(raw_body: bytes, signature_header: str | None, secret: str | None) ->
 - **Strip the `sha256=` prefix** before comparing hex, or add it to your computed value (as the n8n guide does).
 - **Header name casing.** Frameworks lowercase it: read `x-seatable-signature`.
 - **Keep the secret a string.** Do not base64- or hex-decode it.
-- **Failures disable the webhook.** SeaTable marks the webhook `invalid` after 5 consecutive non-200 responses, so a wrong secret in your config eventually stops deliveries. Re-save the webhook to reactivate.
+- **Failures disable the webhook.** SeaTable marks the webhook `invalid` after 5 consecutive non-2xx responses, so a wrong secret in your config eventually stops deliveries. Re-save the webhook to reactivate.
 
 ## How Do I Debug Verification Failures?
 

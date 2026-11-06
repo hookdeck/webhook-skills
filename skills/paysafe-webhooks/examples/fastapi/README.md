@@ -5,7 +5,7 @@ Minimal example of receiving Paysafe Payments API webhooks with signature verifi
 ## Prerequisites
 
 - Python 3.10+
-- Paysafe account with a webhook configured in the Business Portal (provides the HMAC key)
+- Paysafe account with a webhook configured in the Business Portal and its `hmacKey`
 
 ## Setup
 

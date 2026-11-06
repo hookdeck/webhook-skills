@@ -84,11 +84,11 @@ fields, Contacts workflows offer Contact and primary Account fields, Accounts wo
 Account fields):
 
 ```json
-{ "deal": { "id": "{{deal.id}}", "name": "{{deal.name}}", "amount": "{{deal.amount}}" } }
+{ "deal": { "id": "{{deal.id}}" } }
 ```
 
 ```json
-{ "contact": { "id": "{{contact.id}}", "email": "{{contact.email}}" } }
+{ "contact": { "id": "{{contact.id}}" } }
 ```
 
 | Payload shape | Meaning in the examples |
@@ -96,7 +96,9 @@ Account fields):
 | top-level `deal` | A deal workflow fired (illustrative) |
 | top-level `contact` | A contact workflow fired (illustrative) |
 
-This `deal` / `contact` shape is a convention of the examples, not something Freshsales sends. If
+This `deal` / `contact` shape is a convention of the examples, not something Freshsales sends. Its docs
+name only the `{{deal.id}}`, `{{contact.id}}` and `{{sales_account.id}}` placeholders, so take any other
+field's placeholder from the workflow editor. If
 you need to tell "created" from "updated", add a literal field to each workflow's body.
 
 ## Environment Variables

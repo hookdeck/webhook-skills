@@ -24,7 +24,7 @@ The examples don't check the timestamp by default: retries and replays (includin
 - **Raw body:** sign the exact bytes (`express.raw({ type: '*/*' })`, `request.text()`, `await request.body()`). Re-serialised JSON fails.
 - **Don't decode the secret.** Decoding `54vFWvaSbbzYpxXPeB4YEw==` gives the wrong key.
 - **Separate secrets** for live and test webhooks.
-- **Secret shown once:** if lost, create a new webhook.
+- **Secret shown once:** if lost, delete the webhook for that mode and create a new one. Duffel allows one per mode, and documents no rotation.
 - **Header order:** don't assume `t` comes first; parse by name.
 
 ## Debugging Verification Failures

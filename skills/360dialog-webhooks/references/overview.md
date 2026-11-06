@@ -6,8 +6,9 @@
 whenever a customer messages your number, a message you sent changes status, or an operational
 error occurs. A valid webhook URL is required to receive messages at all.
 
-Webhooks carry **no signature**. The only authentication is an `Authorization: Basic` header
-you configure yourself (see [verification.md](verification.md)).
+The authentication you configure yourself is an `Authorization: Basic` header. A signature
+header, `x-360dialog-signature`, is only sent when a signing secret is configured for the
+number (see [verification.md](verification.md)).
 
 ## Delivery Behaviour
 
@@ -17,7 +18,7 @@ you configure yourself (see [verification.md](verification.md)).
   this may vary" (reference page). Don't depend on either; make handlers idempotent.
 - Acknowledge immediately and process asynchronously.
 - Sending one message can produce several callbacks (`sent`, `delivered`, `read`); expect about
-  3x outbound volume in status webhooks. Order isn't guaranteed: use `timestamp`.
+  3x outbound volume in status webhooks. Arrival order may not reflect the real timing: use `timestamp`.
 - Webhooks can be set per phone number (primary, recommended) or per WABA (used when no number
   webhook exists).
 

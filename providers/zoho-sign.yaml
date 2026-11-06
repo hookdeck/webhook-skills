@@ -1,9 +1,9 @@
 name: zoho-sign
 displayName: Zoho Sign
 docs:
-  webhooks: https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/articles/webhooks-management
+  webhooks: https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/webhooks/articles/webhooks-management
   verification: https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/webhooks/articles/securing-zoho-sign-webhooks-with-hmac-authentication
-  events: https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/articles/webhooks-management
+  events: https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/webhooks/articles/webhooks-management
 notes: >
   Zoho Sign e-signature. HMAC is opt-in per webhook (HMAC signature checkbox; secret key
   is entered or generated and cannot be retrieved later). Header X-ZS-WEBHOOK-SIGNATURE is

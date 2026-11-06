@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A HeyGen account with an API key (`X-Api-Key`) or OAuth access token
+- A HeyGen account with an API key (`X-Api-Key`)
 - A publicly reachable HTTPS URL for your endpoint (use the Hookdeck CLI for local development)
 
 ## Register Your Endpoint (v3 API)
@@ -36,7 +36,7 @@ The create response includes `data.secret` (e.g. `whsec_k7x9m2...`). **It is sho
 
 ## Callbacks Instead of Endpoints
 
-Pass `callback_url` (and optionally `callback_id`) when creating a video, Video Agent session, or translation for a one-off notification without registering an endpoint.
+Pass `callback_url` (and optionally `callback_id`) when creating a video, Video Agent session, or translation for a one-off notification without registering an endpoint. These deliveries are not HMAC-signed, so HeyGen says to verify TLS and match the echoed `callback_id`. Register an endpoint if you need a signed payload.
 
 ## Local Development
 

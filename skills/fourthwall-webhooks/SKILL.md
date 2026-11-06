@@ -94,11 +94,11 @@ Dispatch on the body's `type` field (there is no event-type header). Treat a rep
 | `PRODUCT_CREATED` | Product created |
 | `PRODUCT_UPDATED` | Product updated |
 
-See [references/overview.md](references/overview.md) for the full list of 21 event types.
+See [references/overview.md](references/overview.md) for the full list of 29 event types.
 
 ## Response Requirements
 
-Respond `200 OK` within 2 seconds; any other status or a slow response counts as a failed delivery and is retried. Do slow work asynchronously.
+Respond `200 OK` within 2 seconds. Any other status counts as a failed delivery and is retried, and a response slower than 2000 ms may fail. Do slow work asynchronously.
 
 ## Environment Variables
 

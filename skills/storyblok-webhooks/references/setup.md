@@ -35,11 +35,11 @@ Your endpoint must respond with `2xx` and `content-type: application/json`.
 | Experiments | Paid plan; enable **Experiments** in **Settings → Labs** |
 | Releases | Paid plan; install the Releases app |
 | Pipelines | Paid plan; install the Pipelines app |
-| Task triggers | Install the Tasks app; unsigned (see below) |
+| Task triggers | Install the Tasks app; no secret support (see below) |
 
-## Task (Tasks App) Webhooks Are Unsigned
+## Task (Tasks App) Webhooks Don't Support Secrets
 
-Webhooks fired by the Tasks app do not support secrets and carry no `webhook-signature`. Their requests are logged under **Settings → Webhook Logs** as "Task Triggered Hook". To authenticate them, add a secret in the task's **User dialog** field; it arrives in `dialog_values` and you check it in your application. Handle tasks on a separate route from the signed webhook.
+Webhooks fired by the Tasks app do not support secrets, so there is no signature you can verify. Their requests are logged under **Settings → Webhook Logs** as "Task Triggered Hook". To authenticate them, add a secret in the task's **User dialog** field; it arrives in `dialog_values` and you check it in your application. Handle tasks on a separate route from the signed webhook.
 
 ## Restrict by IP (Alternative or Extra Layer)
 

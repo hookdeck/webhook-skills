@@ -71,7 +71,7 @@ app.post('/webhooks/toggl', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Time entry updated:', event.payload?.id);
       break;
     case 'time_entry.deleted':
-      console.log('Time entry deleted:', event.payload?.id ?? event.metadata?.model_id);
+      console.log('Time entry deleted:', event.payload?.id);
       break;
     case 'project.created':
       console.log('Project created:', event.payload?.name);
@@ -80,7 +80,7 @@ app.post('/webhooks/toggl', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Project updated:', event.payload?.name);
       break;
     case 'project.deleted':
-      console.log('Project deleted:', event.payload?.id ?? event.metadata?.model_id);
+      console.log('Project deleted:', event.payload?.id);
       break;
     default:
       console.log(`Unhandled Toggl event: ${eventType}`);

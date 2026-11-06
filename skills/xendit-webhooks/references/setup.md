@@ -11,7 +11,7 @@
 2. Copy the **webhook verification token**.
 3. Store it as `XENDIT_CALLBACK_TOKEN`. Keep it secret: anyone with it can forge webhooks.
 
-Xendit sends this exact value in the `x-callback-token` header of every webhook, for every product.
+Xendit sends this exact value in the `x-callback-token` header of each webhook. Bill Payments callbacks are the exception: they're signed with `X-Callback-Signature` instead.
 
 ## Register Your Endpoint
 

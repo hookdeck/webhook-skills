@@ -8,7 +8,7 @@ Printify is a print-on-demand platform. Webhooks notify your app when something 
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `order:created` | An order was created (no data sent) | Fetch and store the order |
+| `order:created` | An order was created (no order details sent) | Fetch and store the order |
 | `order:updated` | An order's status changed | Sync production status |
 | `order:line-item:canceled` | A single line item was canceled | Notify the customer, restock |
 | `order:sent-to-production` | An order was sent to production | Mark as in production |
@@ -20,6 +20,7 @@ Printify is a print-on-demand platform. Webhooks notify your app when something 
 | `product:deleted` | A product was deleted | Remove the listing |
 | `shop:disconnected` | The shop was disconnected | Stop syncing, flag the account |
 | `personalization-preview-task:processed` | A preview task completed, was corrupt or failed | Fetch mockups or retry |
+| `support-request:updated` | A support request changed, such as its status or outcome | Update the order's support status |
 
 ## Event Payload Structure
 
@@ -42,8 +43,8 @@ Printify is a print-on-demand platform. Webhooks notify your app when something 
 ```
 
 - `id` is unique per event: use it for idempotency.
-- `resource.type` is one of `shop`, `product`, `order`, `personalization-preview-task`.
-- `resource.data` varies by event; `order:created`, `order:sent-to-production` and `shop:disconnected` send none.
+- `resource.type` is one of `shop`, `product`, `order`, `personalization-preview-task`, `support-request`.
+- `resource.data` varies by event. `shop:disconnected` sends none. The docs say `order:created` and `order:sent-to-production` send none too, but their payload examples have `shop_id`, so read it defensively.
 - For `product:publish:started`, `data.action` is `create`, `update` or `delete`; `delete` carries only `action`.
 
 ## Full Event Reference

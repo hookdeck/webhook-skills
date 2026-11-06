@@ -2,7 +2,7 @@
 
 ## What Are Paysafe Webhooks?
 
-Paysafe's Payments API sends asynchronous POST requests with a JSON payload to a URL you configure in the Business Portal whenever a resource changes state. Payloads are minimal and include links to the API resource, so fetch the resource for full details. Paysafe strongly recommends webhooks for redirect-flow payment methods such as Skrill, Paysafecard, PaysafeCash, iACH, PayPal, Interac, VIP Preferred, and Play+ (Sightline).
+Paysafe's Payments API sends asynchronous POST requests with a JSON payload to a URL you configure in the Business Portal whenever a resource changes state. Paysafe describes payloads as minimal and recommends one GET call to reconfirm the status a webhook reports. Paysafe strongly recommends webhooks for redirect-flow payment methods such as Skrill, Paysafecard, PaysafeCash, iACH, PayPal, Interac, VIP Preferred, and Play+ (Sightline).
 
 If your endpoint returns a 4xx or 5xx response, Paysafe retries the webhook up to three times.
 
@@ -22,23 +22,24 @@ If your endpoint returns a 4xx or 5xx response, Paysafe retries the webhook up t
 | `SETTLEMENT_COMPLETED` | Settlement completed | Reconciliation |
 | `SETTLEMENT_FAILED` | Settlement failed or declined | Alert finance |
 
-Also available: `PAYMENT_PROCESSING`, `PAYMENT_RECEIVED`, `SETTLEMENT_RECEIVED`, `SETTLEMENT_PENDING`, `SETTLEMENT_PROCESSING`, `SETTLEMENT_CANCELLED`, `VOIDAUTH_*`, and event categories for registration, refunds, original credits, standalone credits and payment scheduler.
+Also available: `PAYMENT_PROCESSING`, `PAYMENT_RECEIVED`, `PAYMENT_PENDING`, `SETTLEMENT_RECEIVED`, `SETTLEMENT_PENDING`, `SETTLEMENT_PROCESSING`, `SETTLEMENT_CANCELLED`, `VOIDAUTH_*`, and event categories for registration, refunds, original credits, standalone credits and payment scheduler.
 
 ## Event Payload Structure
 
 ```json
 {
   "payload": { "id": "a49ba790-...", "status": "COMPLETED", "paymentType": "CARD" },
-  "attemptNumber": 1,
-  "type": "PAYMENT_HANDLE",
+  "attemptNumber": "1",
+  "eventType": "PAYMENT_HANDLE_COMPLETED",
   "resourceId": "a49ba790-...",
-  "links": [{ "rel": "payment_handle", "href": "https://api.paysafe.com/paymenthub/v1/paymenthandles/a49ba790-..." }],
-  "eventDate": "2026-01-15T10:00:00Z",
+  "links": [{ "rel": "payment_handle", "href": "https://api.test.paysafe.com/alternatepayments/v1/..." }],
+  "eventDate": "2025-03-24T15:31:11Z",
+  "mode": "live",
   "eventName": "PAYMENT_HANDLE_COMPLETED"
 }
 ```
 
-Paysafe's documentation example shows the resource body (`id`, `status`, `type`, `paymentType`, ...) rather than this envelope; handle both defensively and dispatch on `eventName` when present.
+This is the shape on the per-method webhook pages, trimmed. Paysafe's SDK pages show `type` instead of `eventType`, `links` and `mode`, and the configure-webhooks page shows a bare resource (`id`, `status`, `type`, `paymentType`, ...) with no event name. Handle these defensively and dispatch on `eventName` when present.
 
 ## Full Event Reference
 

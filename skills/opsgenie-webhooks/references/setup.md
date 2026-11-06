@@ -52,5 +52,6 @@ curl -X POST http://localhost:3000/webhooks/opsgenie \
 
 ## Network Notes
 
-Atlassian publishes an outbound traffic static IP list for Opsgenie, which you may use as an
-additional filter, but the secret header is the primary check.
+Atlassian's outbound traffic article for Opsgenie points to its Atlassian Cloud IP ranges and AWS
+CloudFront's global ranges, and says the list is dynamic. You may use it as an additional filter, but
+the secret header is the primary check.

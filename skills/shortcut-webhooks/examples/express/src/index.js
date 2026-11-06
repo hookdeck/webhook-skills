@@ -73,9 +73,9 @@ app.post('/webhooks/shortcut',
           // TODO: React to workflow_state_id, owner_ids, estimate changes, etc.
           break;
 
-        case 'story delete':
-          console.log(`Story deleted: ${item.id}`);
-          // TODO: Remove the story from your own records
+        case 'epic create':
+          console.log(`Epic created: ${item.name} (${item.id})`);
+          // TODO: Notify stakeholders, etc.
           break;
 
         case 'epic update':
@@ -83,12 +83,9 @@ app.post('/webhooks/shortcut',
           // TODO: Sync epic status, notify stakeholders, etc.
           break;
 
-        case 'story-comment create':
-          console.log(`Comment created: ${item.id}`);
-          // TODO: Bot replies, command parsing, etc.
-          break;
-
         default:
+          // Deletes, comments and tasks also fire, but Shortcut doesn't document their
+          // strings. Log what arrives and acknowledge it before you write a case for it.
           console.log(`Unhandled action: ${item.entity_type} ${item.action}`);
       }
     }

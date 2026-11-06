@@ -71,7 +71,7 @@ Release Management webhooks carry a `trigger_event` string. A selection:
 
 | `trigger_event` | Sent When |
 |-----------------|-----------|
-| `app_version_added` | An app version is added to a release |
+| `app_version_added` | An app version is added |
 | `testflight_upload_started` | A TestFlight upload starts |
 | `testflight_upload_completed` | A TestFlight upload completes |
 | `testflight_upload_failed` | A TestFlight upload fails |

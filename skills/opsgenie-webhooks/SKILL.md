@@ -19,8 +19,9 @@ action happens: an alert is created, acknowledged, closed, escalated and so on. 
 authenticates each request by comparing that header with the value you stored.
 
 > **Opsgenie is end-of-sale and Atlassian support ends in April 2027.** Customers are being moved
-> to Jira Service Management and Compass. Existing Webhook integrations keep working until then;
-> plan to re-point alert automation at the replacement product.
+> to Jira Service Management and Compass. Webhook integrations stop working when Opsgenie is turned
+> off, which happens automatically 120 days after a site's migration date, and on the end of support
+> date otherwise. Plan to re-point alert automation at the replacement product.
 
 ## When to Use This Skill
 

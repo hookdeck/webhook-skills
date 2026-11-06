@@ -1,6 +1,6 @@
 # Setting Up Toggl Track Webhooks
 
-Toggl webhooks are configured through the API (there is no dashboard form).
+These steps use the Webhooks API.
 
 ## Prerequisites
 

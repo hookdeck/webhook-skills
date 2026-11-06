@@ -73,5 +73,5 @@ To fetch results after `ACTOR.RUN.SUCCEEDED`, call
 
 ## Full Event Reference
 
-See [Apify's webhook documentation](https://docs.apify.com/platform/integrations/webhooks) and
-[event types](https://docs.apify.com/platform/integrations/webhooks/events).
+See [Apify's webhook documentation](https://docs.apify.com/integrations/webhooks) and
+[event types](https://docs.apify.com/integrations/webhooks/events).

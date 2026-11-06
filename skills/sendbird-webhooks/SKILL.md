@@ -65,7 +65,7 @@ See [references/overview.md](references/overview.md) for the full category list.
 | `x-signature` | Legacy; mismatches on non-ASCII bodies, do not use |
 | `user-agent: SendBird` | Sender identification |
 
-Sendbird waits 5 seconds and retries up to three times: respond `200` fast and process asynchronously.
+Sendbird waits 5 seconds and sends the request up to three times: respond `200` fast and process asynchronously.
 
 ## Environment Variables
 

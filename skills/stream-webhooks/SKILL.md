@@ -26,7 +26,7 @@ Stream here means **Stream (getstream.io)**: Chat, Activity Feeds, Video and Mod
 
 ## Verification (core)
 
-Stream signs the **raw request body** with HMAC-SHA256, keyed with your app's **API secret** (the full secret, used as a UTF-8 string), and sends the lowercase hex digest in `X-Signature`. There is no timestamp and no prefix in the header. Compare timing-safe.
+Stream signs the **uncompressed request body** with HMAC-SHA256, keyed with your app's **API secret** (the full secret, used as a UTF-8 string), and sends the lowercase hex digest in `X-Signature`. Without Payload Compression, that's the raw body. With it, gunzip first (see below). There is no timestamp and no prefix in the header. Compare timing-safe.
 
 ```javascript
 const crypto = require('crypto');
@@ -50,7 +50,7 @@ def verify_stream_webhook(raw_body: bytes, signature: str, api_secret: str) -> b
     return hmac.compare_digest(signature or "", expected)
 ```
 
-**SDK option:** every Stream server SDK can do this for you, e.g. `client.verifyAndParseWebhook(rawBody, signature)` (Node `stream-chat` / `@stream-io/node-sdk`) or `verify_and_parse_webhook(body, signature, secret)` (Python `getstream`). Keep a manual check like the above when you need to verify without a client, or in an edge function.
+**SDK option:** every Stream server SDK can do this for you, e.g. `client.verifyAndParseWebhook(rawBody, signature)` in Node or `client.verify_and_parse_webhook(body, signature)` in Python. Stateless helpers take the secret as a third argument: `Webhook.verifyAndParseWebhook(rawBody, signature, secret)` from `@getstream/node`, or `webhook.verify_and_parse_webhook(body, signature, secret)` from Python's `getstream`. Keep a manual check like the above when you need to verify without a client, or in an edge function.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -76,13 +76,13 @@ If you receive webhooks directly and keep compression on, gunzip the body first 
 | `user.updated` | A user is updated |
 | `member.added` | A user is added to a channel |
 
-> **For the full event list**, see [Stream webhook events](https://getstream.io/chat/docs/node/webhook_events/).
+> **For the full event list**, see [Stream webhook events](https://getstream.io/chat/docs/node/webhook-events/).
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
-| `X-Signature` | Hex HMAC-SHA256 of the raw body, keyed with the app API secret |
+| `X-Signature` | Hex HMAC-SHA256 of the uncompressed body, keyed with the app API secret |
 | `X-Webhook-Id` | Unique ID of the call; identical across retries, use it to dedupe |
 | `X-Api-Key` | Your app's API key (not the secret); check it matches your app |
 | `X-Webhook-Attempt` | Attempt number, starting at 1 |

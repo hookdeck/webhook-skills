@@ -51,7 +51,7 @@ export interface TerraformPayload {
  * List the triggers carried by a payload.
  * - Run payloads (payload_version 1) have a notifications[] array.
  * - Workspace payloads (payload_version "2") have a top-level trigger.
- * - Change request payloads have no trigger; they are team:change_request.
+ * - Change request payloads have no trigger; they are change_request:created.
  */
 export function getTriggers(payload: TerraformPayload): string[] {
   if (Array.isArray(payload.notifications)) {
@@ -61,7 +61,7 @@ export function getTriggers(payload: TerraformPayload): string[] {
     return [payload.trigger];
   }
   if (payload.change_request_url) {
-    return ['team:change_request'];
+    return ['change_request:created'];
   }
   return [];
 }

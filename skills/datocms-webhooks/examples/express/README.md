@@ -74,6 +74,6 @@ Put the printed URL, with the same username and password, in the DatoCMS webhook
 1. The Basic credentials are checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
 3. The handler dispatches on `entity_type` + `event_type` (`item` create/update/delete/publish/
-   unpublish, `item_type`, `upload`, `build_trigger` and `environment` deploy events,
+   unpublish, `item_type`, `upload`, `build_trigger` deploy events, `environment` promote,
    `maintenance_mode` change, `sso_user` create, `cda_cache_tags` invalidate).
 4. It returns `200 {"received": true}`.

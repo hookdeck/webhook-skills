@@ -44,7 +44,7 @@ async function handle(request: NextRequest) {
     );
   }
 
-  // Read as text so any content type is accepted; GET and DELETE usually have no body.
+  // Read as text so any content type is accepted; a GET or DELETE may have no body.
   const raw = await request.text();
   if (raw.trim() === '') {
     return NextResponse.json({ received: true });

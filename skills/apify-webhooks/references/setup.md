@@ -53,5 +53,5 @@ curl -X POST http://localhost:3000/webhooks/apify \
 ## Network Notes
 
 Apify sends webhooks from static IPs, listed on the
-[webhook actions page](https://docs.apify.com/platform/integrations/webhooks/actions). You can
+[webhook actions page](https://docs.apify.com/integrations/webhooks/actions). You can
 allowlist them at a firewall as an extra layer, but the header check is still the authentication.

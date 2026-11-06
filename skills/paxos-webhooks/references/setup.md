@@ -22,7 +22,7 @@ PAXOS_WEBHOOK_SECRET=<the value>
 4. Select the **Event Types** to receive (Identity, Transfer, Orchestration, ...).
 5. Set the **Rate Limit** (1-100 RPS, default 10) and click **Create**.
 
-Webhooks can't be edited. To rotate the credential, create a new webhook with the new value, switch your endpoint, then delete the old one. If approvals are enabled under Admin > Approvals, creation and deletion need approval.
+To rotate the credential, click **View** then **Edit** on the webhook, change **Auth Type and Credentials**, and update your stored value together. If approvals are enabled under Admin > Approvals, creating, updating and deleting a webhook need approval, and an update takes effect only once it's approved, so accept both values during the change.
 
 ## Test
 
@@ -43,4 +43,4 @@ The payload is thin. Call the Get Event API with the event `id` (an authenticate
 
 ## Network Notes
 
-Paxos documents no IP allowlist for webhook deliveries, so rely on the API Key header and HTTPS.
+Paxos delivers from fixed IP addresses per environment. If your endpoint sits behind a firewall, [allowlist them](https://docs.paxos.com/guides/webhooks#allowlist-paxos-ip-addresses), including both regions. Allowlisting supplements the API Key check; it doesn't replace it.

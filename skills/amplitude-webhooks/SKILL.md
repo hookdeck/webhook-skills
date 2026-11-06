@@ -78,7 +78,8 @@ Amplitude does not use a fixed list of webhook event names. The default payloads
 
 An [Apache FreeMarker](https://freemarker.apache.org/) template can emit any JSON instead, which
 changes these shapes. The examples handle the default format; adapt the dispatch if you use a
-template.
+template. Amplitude's docs print no default user body, so check a real user update in the sync's
+Live Log tab before relying on `event_type` being absent.
 
 ## Environment Variables
 

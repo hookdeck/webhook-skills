@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Retries and manual recoveries reuse the same webhook-id; acknowledge duplicates with 200.
+  // Retries reuse the same webhook-id; acknowledge duplicates with 200. An event recovered through the API has no webhook-id, only its id.
   if (processedMessageIds.has(id)) {
     return NextResponse.json({ received: true, duplicate: true });
   }

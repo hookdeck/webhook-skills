@@ -4,7 +4,7 @@
 
 Exa's Websets API can push events to your HTTPS endpoint as a Webset runs: when it is created, when searches finish, when items are found and enriched. You register a webhook with `POST /v0/webhooks` (base URL `https://api.exa.ai/websets`), choosing which events it receives. Every delivery is signed with `Exa-Signature`.
 
-The same signing scheme is used by Monitors, which deliver `monitor.*` events.
+The same signing scheme is used by the Monitors API (`POST https://api.exa.ai/monitors`), which delivers `monitor.*` events. Its `monitor.run.*` `data` differs from a Websets monitor run: it has `output`, `failReason` and `metadata`, while the Websets run has `object`, `type` and no results.
 
 ## Common Event Types
 

@@ -95,9 +95,9 @@ def verify_socure_request(headers, username=None, password=None) -> bool:
   username.
 - **Split on the first colon.** Passwords can contain `:`.
 - **Scheme is case-insensitive** (`Basic`, `basic`).
-- **No challenge flow.** Socure's docs don't say whether Basic credentials are sent preemptively.
-  They must arrive on the first request; a `401` + `WWW-Authenticate` challenge won't work
-  through Hookdeck, which verifies the request as received.
+- **No challenge flow.** Socure's docs say RiskOS includes the configured credentials in every
+  outbound webhook request. A `401` + `WWW-Authenticate` challenge won't work through Hookdeck,
+  which verifies the request as received.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, and parse
   JSON only after the credential check.
 - **Credentials are fixed.** RiskOS can't change auth credentials on an existing webhook; delete

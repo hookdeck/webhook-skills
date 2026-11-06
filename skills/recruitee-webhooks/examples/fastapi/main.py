@@ -60,8 +60,9 @@ async def recruitee_webhook(request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # Test request (signed): acknowledge without processing.
-    if is_test_request(event):
+    # Test and Test payload requests (signed): acknowledge without processing. A Test
+    # payload body is an example event plus `test`, so check this before dispatch.
+    if isinstance(event, dict) and event.get("test") is True:
         return {"received": True}
 
     # The event name is in the body: event_type (+ event_subtype), NOT a header.

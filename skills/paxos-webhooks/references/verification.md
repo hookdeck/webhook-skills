@@ -15,7 +15,7 @@ Your endpoint compares that header with the value you stored. The header name is
 A static shared credential authenticates the **sender**, not the **body**, and gives **no replay protection**: there is no signature over the payload and no timestamp. Anyone who captures one request (or learns the credential) can replay it or send forged events. So:
 
 - Accept the endpoint over HTTPS only.
-- Rotate the credential if it leaks (create a new webhook, delete the old one).
+- Rotate the credential if it leaks (edit it on the webhook in Dashboard and change your stored value together).
 - Treat events as notifications: fetch the full object with Get Event before acting, which also defeats forged payload contents.
 - Dedupe on the event `id`.
 
@@ -63,7 +63,7 @@ def verify_paxos_request(headers, secret=None, header_name=None) -> bool:
 - **Fail closed.** If `PAXOS_WEBHOOK_SECRET` is unset, reject everything.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, then `JSON.parse` after the credential check.
 - **Ignore test events.** `is_test: true` comes only from the Dashboard Test feature.
-- **OAuth is different.** With OAuth auth, Paxos obtains a token from your OAuth server and sends it as a bearer token; this skill doesn't cover that.
+- **OAuth is different.** With OAuth auth, Paxos obtains a token from your OAuth server with the client credentials grant. The docs don't say how it presents the token on a delivery, and this skill doesn't cover that.
 
 ## Debugging Verification Failures
 
@@ -72,5 +72,5 @@ def verify_paxos_request(headers, secret=None, header_name=None) -> bool:
 | 401 on every request | `PAXOS_WEBHOOK_SECRET` unset, or `PAXOS_WEBHOOK_HEADER` differs from the Dashboard header name |
 | 401 but values look equal | Missing `Bearer ` prefix, or trailing whitespace copied into the value |
 | 401 only behind a proxy | The proxy strips or renames the header (common with `Authorization`) |
-| 401 after rotating | Old webhook still active and sending the old credential |
+| 401 after rotating | The update is waiting for approval, so the old credential is still being sent |
 | 400 after authentication | Body isn't a JSON object with a string `type` |

@@ -44,4 +44,4 @@ The Svix dashboard shows every delivery, its payload, and the **Event catalog** 
 ## Testing
 
 Use the endpoint's testing tab in the Svix dashboard to send an example event, or trigger a real action
-(create a product or order) in a non-production tenant. The Svix-Shared monthly cap of 5000 events applies to tests too.
+(create a product or order) in a non-production tenant.

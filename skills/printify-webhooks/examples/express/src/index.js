@@ -118,6 +118,10 @@ app.post('/webhooks/printify',
         console.log('Personalization preview processed:', data.task_id, data.status);
         // TODO: fetch mockups on completed, retry on failed
         break;
+      case 'support-request:updated':
+        console.log('Support request updated:', resource?.id, data.status, data.outcome);
+        // TODO: update the order's support status
+        break;
       default:
         console.log('Unhandled Printify event:', type);
     }

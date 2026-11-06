@@ -44,4 +44,4 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 8000 duffel --path /webhooks/duffel
 ```
 
-Use the Hookdeck URL as the `url` when creating the webhook, then trigger a `ping.triggered` event with `POST /air/webhooks/id/{id}/actions/ping`.
+Use the Hookdeck URL as the `url` when creating the webhook, then trigger a `ping.triggered` event with `POST /air/webhooks/{id}/actions/ping`.

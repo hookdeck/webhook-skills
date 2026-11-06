@@ -41,9 +41,11 @@ async def unit_webhook(request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # `data` is an array of events (up to 64 with AtLeastOnce delivery).
-    events = payload.get("data") if isinstance(payload, dict) else None
-    for event in events if isinstance(events, list) else []:
+    # `data` is an array of events (up to 64 with AtLeastOnce delivery). A few of Unit's
+    # documented examples show a single object, so handle both shapes.
+    data = payload.get("data") if isinstance(payload, dict) else None
+    events = data if isinstance(data, list) else [data] if isinstance(data, dict) else []
+    for event in events:
         # TODO: dedupe on event["id"] (Unit retries AtLeastOnce deliveries)
         event_type = event.get("type")
         relationships = event.get("relationships") or {}

@@ -23,7 +23,7 @@ metadata:
 
 ## Verification (core)
 
-Shortcut signs a webhook **only if you entered a secret** when creating it. The `Payload-Signature` header is the hex-encoded HMAC-SHA256 of the **raw request body** (UTF-8), keyed with that secret string. There is no timestamp and no prefix. Shortcut has no webhook verification SDK, so verify manually and compare timing-safe.
+Shortcut signs a webhook **only if you entered a secret** when creating it. The `Payload-Signature` header is the hex-encoded HMAC-SHA256 of the **raw request body** (UTF-8), keyed with that secret string. There is no timestamp and no prefix. Verify manually and compare timing-safe, or in JavaScript use `verifyShortcutWebhookSignature(secret, rawBody, signature)` from `@shortcut/client/webhooks` (3.5.0+), which checks `Payload-Signature` alone. That package's `ShortcutWebhookClient` is for Custom Agent deliveries, a separate webhook with a different envelope and a `Shortcut-Signature` header.
 
 Node:
 
@@ -65,11 +65,10 @@ Each delivery is one JSON event: `{ id, changed_at, primary_id?, member_id, vers
 |----------------------|-------------|
 | `story create` | A story was created |
 | `story update` | A story changed (see `changes`, e.g. `workflow_state_id`, `owner_ids`) |
-| `story delete` | A story was deleted |
+| `epic create` | An epic was created |
 | `epic update` | An epic changed |
-| `story-comment create` | A comment was added |
 
-Shortcut fires for story and epic create, update and delete, including their comments and tasks. See [references/overview.md](references/overview.md) for details.
+Shortcut fires for story and epic create, update and delete, including their comments and tasks, but its docs don't show the strings for deletes, comments or tasks. Log unknown pairs and acknowledge them. See [references/overview.md](references/overview.md) for details.
 
 ## Environment Variables
 

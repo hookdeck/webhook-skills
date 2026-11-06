@@ -75,7 +75,7 @@ window can be dropped or widened.
 ## Common Event Types
 
 Event types are dotted strings. Emporix documents each event's **payload** schema but no envelope, and
-Svix sends no event-type header, so the examples read `eventType` from the body if present and otherwise
+no event-type header is documented, so the examples read `eventType` from the body if present and otherwise
 from an `?eventType=` query parameter on the endpoint URL (an example convention: register one Svix
 endpoint per event type).
 

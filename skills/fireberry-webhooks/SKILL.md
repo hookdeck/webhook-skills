@@ -92,8 +92,8 @@ FIREBERRY_WEBHOOK_SECRET="Bearer your-long-random-secret"  # exact whole value, 
 
 ## Failed Webhooks
 
-Fireberry does not retry a request. But if the action gets **5 consecutive error responses over more
-than 24 hours, or 1,000 consecutive within 24 hours**, the whole automation is set to **Draft** and stops
+Fireberry's docs don't mention retries, so treat a failed request as possibly lost. If the action gets
+**5 consecutive error responses over more than 24 hours, or 1,000 consecutive within 24 hours**, the whole automation is set to **Draft** and stops
 running, and an email goes to the creator and the primary system user. Return 2xx for requests you
 choose to ignore, and fix 401s (a wrong secret) promptly.
 

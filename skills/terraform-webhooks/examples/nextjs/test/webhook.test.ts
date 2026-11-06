@@ -94,7 +94,7 @@ describe('getTriggers', () => {
   });
 
   it('identifies change request payloads', () => {
-    expect(getTriggers({ change_request_url: 'https://app.terraform.io/x' })).toEqual(['team:change_request']);
+    expect(getTriggers({ change_request_url: 'https://app.terraform.io/x' })).toEqual(['change_request:created']);
   });
 });
 

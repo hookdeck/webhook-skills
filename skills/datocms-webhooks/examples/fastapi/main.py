@@ -97,13 +97,9 @@ def handle_event(payload: dict) -> None:
         print(f"Build trigger {event_type}: {entity_id}")
         # TODO: post a deploy notification
 
-    elif key in (
-        "environment deploy_started",
-        "environment deploy_succeeded",
-        "environment deploy_failed",
-    ):
-        print(f"Environment {event_type}: {entity_id}")
-        # TODO: post a deploy notification
+    elif key == "environment promote":
+        print(f"Environment promoted: {entity_id}")
+        # TODO: repoint builds and caches at the new primary environment
 
     elif key == "maintenance_mode change":
         print("Maintenance mode changed")

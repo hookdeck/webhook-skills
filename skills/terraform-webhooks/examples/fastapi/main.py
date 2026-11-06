@@ -39,14 +39,14 @@ def get_triggers(payload: dict) -> list:
 
     - Run payloads (payload_version 1) have a notifications[] array.
     - Workspace payloads (payload_version "2") have a top-level trigger.
-    - Change request payloads have no trigger; they are team:change_request.
+    - Change request payloads have no trigger; they are change_request:created.
     """
     if isinstance(payload.get("notifications"), list):
         return [n.get("trigger") for n in payload["notifications"]]
     if payload.get("trigger"):
         return [payload["trigger"]]
     if payload.get("change_request_url"):
-        return ["team:change_request"]
+        return ["change_request:created"]
     return []
 
 
@@ -94,8 +94,9 @@ def handle_terraform_event(trigger: str, payload: dict) -> None:
     elif trigger in (
         "workspace:auto_destroy_reminder",
         "workspace:auto_destroy_run_results",
+        "workspace:auto_destroy_results",  # spelling in HashiCorp's sample payloads
         "workspace:deleted",
-        "team:change_request",
+        "change_request:created",
     ):
         print(f"Received {trigger}")
 

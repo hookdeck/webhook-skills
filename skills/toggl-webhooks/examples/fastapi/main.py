@@ -59,13 +59,13 @@ async def toggl_webhook(request: Request):
     elif event_type == "time_entry.updated":
         print(f"Time entry updated: {payload.get('id')}")
     elif event_type == "time_entry.deleted":
-        print(f"Time entry deleted: {payload.get('id') or metadata.get('model_id')}")
+        print(f"Time entry deleted: {payload.get('id')}")
     elif event_type == "project.created":
         print(f"Project created: {payload.get('name')}")
     elif event_type == "project.updated":
         print(f"Project updated: {payload.get('name')}")
     elif event_type == "project.deleted":
-        print(f"Project deleted: {payload.get('id') or metadata.get('model_id')}")
+        print(f"Project deleted: {payload.get('id')}")
     else:
         print(f"Unhandled Toggl event: {event_type}")
 

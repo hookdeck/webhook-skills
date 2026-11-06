@@ -16,13 +16,14 @@ openssl rand -hex 32
 ```
 
 Put the value in your app's environment as `FRESHSALES_WEBHOOK_SECRET`. Use a hex value: Freshsales
-doesn't run the trigger when a header contains spaces, so avoid values like `Bearer abc`. If you
+doesn't run the trigger when a header name contains spaces, and its docs don't say whether a space in
+the value is safe, so avoid values like `Bearer abc`. If you
 do include a prefix anyway, store the exact whole string, since the examples compare the whole
 header value.
 
 ## Create the Workflow and Webhook Action
 
-1. In Freshsales go to **Admin Settings → Workflows** and create a workflow for the module you
+1. In Freshsales go to **Admin settings → Teams & Territories → Workflows** and create a workflow for the module you
    care about (Contacts, Accounts or Deals), with its trigger and conditions.
 2. Add the action **Trigger webhook**.
 3. **Request type:** choose `POST` (or `PUT`, `PATCH`, `GET`, `DELETE`). The examples accept all five.
@@ -40,9 +41,7 @@ header value.
    ```json
    {
      "deal": {
-       "id": "{{deal.id}}",
-       "name": "{{deal.name}}",
-       "amount": "{{deal.amount}}"
+       "id": "{{deal.id}}"
      }
    }
    ```

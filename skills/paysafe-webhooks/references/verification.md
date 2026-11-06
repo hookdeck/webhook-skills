@@ -13,7 +13,7 @@ The result is sent in the `Signature` header, for example `Signature: UMaQ4h635w
 
 ## Implementation
 
-Paysafe's official Payments API SDKs (Java, PHP) use the HMAC key as a raw UTF-8 string. No Node or Python SDK covers this, so all three examples use manual verification. (The legacy Alternate Payments v1 SDK base64-decoded the key; that is not covered here.)
+Paysafe's official Payments API SDKs (Java, PHP) use the HMAC key as a raw UTF-8 string. No Node or Python SDK covers this, so all three examples use manual verification. (The older Alternate Payments v1 sample base64-decodes the key; that is not covered here.)
 
 ### Node.js
 

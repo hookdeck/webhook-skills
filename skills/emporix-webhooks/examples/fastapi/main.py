@@ -17,8 +17,8 @@ app = FastAPI(title="Emporix Webhook Handler")
 def get_event_type(body: Any, query_event_type: Optional[str]) -> Optional[str]:
     """Return the event type.
 
-    Emporix documents each event's payload schema but not an envelope, and Svix
-    sends no event-type header. Use `eventType` from the body if present,
+    Emporix documents each event's payload schema but not an envelope, and no event-type header
+    is documented. Use `eventType` from the body if present,
     otherwise from the `?eventType=` query string on the endpoint URL registered
     in the Svix dashboard.
     """

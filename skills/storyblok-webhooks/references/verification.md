@@ -2,7 +2,7 @@
 
 ## How It Works
 
-When a **Webhook secret** is set, every request carries a `webhook-signature` header:
+Storyblok's docs say every webhook request includes a `webhook-signature` header. Once you set a **Webhook secret**, you can verify it:
 
 - Algorithm: **HMAC-SHA1**
 - Key: the Webhook secret string, used as-is
@@ -53,7 +53,7 @@ FastAPI: `await request.body()` gives the raw bytes.
 - **Raw body.** Storyblok sends JSON as raw text; parsing and re-serializing changes bytes and breaks the hash. In Express use `express.raw({ type: '*/*' })` so any content type is captured as a `Buffer`; do not put `express.json()` ahead of the route.
 - **Secret mismatch.** The secret is a plain string. Do not base64-decode it, and watch for stray whitespace or quotes in `.env`.
 - **SHA-1, not SHA-256.** `createHmac('sha256', ...)` will never match.
-- **No signature on free plans or task webhooks.** Webhook secrets need a paid plan. Task (Tasks app) webhooks are never signed; authenticate them with a secret in the **User dialog** (`dialog_values`) and a separate route.
+- **Nothing to verify on free plans or task webhooks.** Webhook secrets need a paid plan, and Task (Tasks app) webhooks don't support them; authenticate tasks with a secret in the **User dialog** (`dialog_values`) and a separate route.
 - **No event header.** Read `action` from the JSON body, after verification, and disambiguate with the entity field.
 - **Response format.** Return `2xx` with `content-type: application/json`, including after verification success. Storyblok does not retry failures.
 - **Verify first.** Reject before parsing or acting; use 400 for a missing or bad signature.
@@ -63,5 +63,5 @@ FastAPI: `await request.body()` gives the raw bytes.
 1. Open **Settings → Webhooks → View logs** and compare the logged payload with what your server received.
 2. Log the byte length of the raw body and the computed vs received digest. If lengths differ from the log, middleware is altering the body.
 3. Confirm the secret in your env var equals the one in the webhook settings (re-save it if unsure).
-4. Confirm a Webhook secret is set at all. With none, there is no `webhook-signature` header to verify.
+4. Confirm a Webhook secret is set at all. With none, there is nothing to verify the header against.
 5. Reproduce locally: `printf '%s' "$BODY" | openssl dgst -sha1 -hmac "$SECRET"` should print the same hex as the header.

@@ -14,15 +14,17 @@ You choose the username and password. Generate a long random password and store 
 
 ## Create the Connection
 
-1. Open the EventBridge console and go to **API destinations > Connections > Create connection**.
-2. Enter a name and select **Basic** as the authorization type.
+1. Open the EventBridge console. In the left navigation pane, under **Integration**, choose
+   **Connections**, then **Create connection**.
+2. Enter a name, choose **Custom configuration** and select **Basic** as the authorization type.
 3. Enter the username and password from above and create the connection.
+4. Wait for the connection to reach the `AUTHORIZED` state before you create the API destination.
 
 EventBridge sends them as `Authorization: Basic base64(username:password)` on every request.
 
 ## Create the API Destination
 
-1. Go to **API destinations > Create API destination**.
+1. In the left navigation pane, choose **API destinations**, then **Create API destination**.
 2. Enter your endpoint URL (e.g. `https://example.com/webhooks/aws-eventbridge`).
 3. Choose the HTTP method. Your endpoint should accept POST, PUT, PATCH, GET and DELETE.
 4. Select the Connection and create the destination.
@@ -32,7 +34,7 @@ EventBridge sends them as `Authorization: Basic base64(username:password)` on ev
 1. Create a rule on the event bus with an event pattern, for example:
    `{"source": ["aws.ec2"], "detail-type": ["EC2 Instance State-change Notification"]}`
 2. Choose **EventBridge API destination** as the target and select your destination.
-3. Optionally add an input transformer. Without one the body is the full event envelope.
+3. Optionally add an input transformer. Without one a rule sends the full event envelope.
 
 ## Test
 

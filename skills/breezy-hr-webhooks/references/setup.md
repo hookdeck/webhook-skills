@@ -8,7 +8,7 @@
 
 ## How Do I Create a Webhook Endpoint?
 
-There is no dashboard form; endpoints are created through the API.
+Breezy's docs describe creating endpoints only through the API.
 
 1. Find your company ID:
 
@@ -59,3 +59,4 @@ and register the tunnel URL, because Breezy blocks localhost URLs.
 - The endpoint is subscribed to the event type you expect
 - The URL is public HTTPS with a valid certificate
 - `failed_deliveries` is not climbing
+- `auto_disabled_at` is empty; if not, fix the failures and call the resume endpoint

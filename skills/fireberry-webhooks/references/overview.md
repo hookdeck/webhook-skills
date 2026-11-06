@@ -47,7 +47,8 @@ Hard-code the `event` string in each automation's body so your endpoint can tell
 ## Delivery Behaviour
 
 - Fireberry adds a system log to the related record's stream each time a webhook is sent.
-- There is no retry. Instead, if the action receives **5 consecutive error responses over more than
+- Retries aren't documented, so treat a failed request as possibly lost. If the action receives
+  **5 consecutive error responses over more than
   24 hours, or 1,000 consecutive within 24 hours**, the automation is set to **Draft**: it stops completely
   (including its other actions) and an email goes to the creator and the primary system user.
 

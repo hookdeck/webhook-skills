@@ -38,15 +38,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  let payload: { data?: UnitEvent[] };
+  let payload: { data?: UnitEvent | UnitEvent[] };
   try {
     payload = JSON.parse(rawBody.toString('utf8'));
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // `data` is an array of events (up to 64 with AtLeastOnce delivery).
-  const events = Array.isArray(payload.data) ? payload.data : [];
+  // `data` is an array of events (up to 64 with AtLeastOnce delivery). A few of Unit's
+  // documented examples show a single object, so handle both shapes.
+  const events = [payload.data ?? []].flat();
 
   for (const event of events) {
     // TODO: dedupe on event.id (Unit retries AtLeastOnce deliveries)

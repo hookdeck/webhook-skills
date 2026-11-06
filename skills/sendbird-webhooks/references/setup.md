@@ -13,7 +13,7 @@ Sendbird has no separate webhook signing secret. Signatures are keyed with the a
 2. Go to **Settings > Application > General** and copy the **master API token**.
 3. Store it as `SENDBIRD_API_TOKEN` in your server environment.
 
-Secondary API tokens will not produce valid signatures. The master token is a full-access credential for the application: keep it server-side, never ship it in client apps or commit it, and rotate it if exposed.
+Secondary API tokens will not produce valid signatures. The master token is a full-access credential for the application: keep it server-side, and never ship it in client apps or commit it. Sendbird says it can't be revoked or changed, so it can't be rotated if it leaks.
 
 ## Register Your Endpoint
 
@@ -21,7 +21,7 @@ Secondary API tokens will not produce valid signatures. The master token is a fu
 2. Turn webhooks on and enter your endpoint URL (e.g. `https://example.com/webhooks/sendbird`).
 3. Select the categories to receive. Good starting set: `group_channel:message_send`, `group_channel:create`, `group_channel:join`, `open_channel:message_send`, `user:block`.
 
-The endpoint must support HTTP/1.1 and keep-alive, accept POST, and parse JSON. Sendbird waits 5 seconds and retries up to three times, so return `200` immediately.
+The endpoint must support HTTP/1.1 and keep-alive, accept POST, and parse JSON. Sendbird waits 5 seconds and sends the request up to three times, so return `200` immediately.
 
 ## Test Mode vs Live Mode
 

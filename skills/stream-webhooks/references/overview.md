@@ -26,8 +26,8 @@ Every event has `type` and usually `created_at`. Chat events carry `cid` (`<chan
 {
   "type": "message.new",
   "cid": "messaging:general",
-  "message": { "id": "8bffc454-...", "text": "hello", "user": { "id": "tommaso" } },
-  "user": { "id": "tommaso" },
+  "message": { "id": "8bffc454-...", "text": "hello", "user": { "id": "alice" } },
+  "user": { "id": "alice" },
   "created_at": "2026-05-01T10:12:00.378448Z"
 }
 ```
@@ -41,11 +41,11 @@ Every event has `type` and usually `created_at`. Chat events carry `cid` (`<chan
 
 | Header | Description |
 |--------|-------------|
-| `X-Signature` | Hex HMAC-SHA256 of the request body, keyed with the app API secret |
+| `X-Signature` | Hex HMAC-SHA256 of the uncompressed request body, keyed with the app API secret |
 | `X-Webhook-Id` | Unique ID of the call, consistent across retries |
 | `X-Webhook-Attempt` | Attempt number starting at 1 |
 | `X-Api-Key` | Your app's API key |
 
 ## Full Event Reference
 
-See [Stream webhook events](https://getstream.io/chat/docs/node/webhook_events/) and [webhooks overview](https://getstream.io/chat/docs/node/webhooks_overview/).
+See [Stream webhook events](https://getstream.io/chat/docs/node/webhook-events/) and the [webhooks guide](https://getstream.io/docs/platform/webhooks/).

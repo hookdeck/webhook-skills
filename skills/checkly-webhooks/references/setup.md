@@ -34,4 +34,4 @@ Use the test message option in the webhook editor to inspect the rendered reques
 
 - The signature covers the body after rendering, so any edit to the template is automatically covered.
 - Use triple braces (`{{{VAR}}}`) to avoid HTML escaping of variable values.
-- Checkly retries up to 5 times (20 seconds apart) on a response above 399.
+- Checkly retries up to 5 times, after 10, 20, 40, 80 and 160 seconds, on a response above 399, a network error or no response within 5 seconds.

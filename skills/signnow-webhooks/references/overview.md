@@ -56,6 +56,8 @@ Other documented families follow the same pattern: `user.document.*`
   `group_id`, `signer_email`, ...).
 - `meta.metadata` appears only if the subscription sets `include_metadata: true`;
   it is an object, or an empty array `[]` when the entity has none.
+- `meta.access_token` is added only when the subscription sets `delete_access_token`
+  to `false` (the default is `true`). SignNow's examples print it masked.
 - Handle both missing fields and unknown events: acknowledge with 200.
 
 ## Delivery and Retries
@@ -67,7 +69,9 @@ Other documented families follow the same pattern: `user.document.*`
   comes before the last retry; if it fails, the subscription is cancelled.
 - 4xx: no retries; 10+ errors in 10 minutes sends a warning email, and 30+ in 60 minutes
   unsubscribes the webhook.
-- Missed events: `GET /v2/event-subscriptions/{id}/callbacks` lists deliveries.
+- Missed events: `GET /v2/event-subscriptions/{id}/callbacks` lists deliveries, and
+  `POST /v2/event-subscriptions/{id}/callbacks/{callback_id}/resend` resends a failed one
+  while the subscription is active.
 
 Because deliveries repeat, make handlers idempotent.
 

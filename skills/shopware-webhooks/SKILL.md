@@ -3,7 +3,7 @@ name: shopware-webhooks
 description: >
   Receive and verify Shopware app system webhooks. Use when setting up Shopware
   webhook handlers, debugging shopware-shop-signature verification, handling
-  per-shop app secrets, or processing events like checkout.order.placed,
+  per-shop secrets, or processing events like checkout.order.placed,
   product.written, order.written, and customer.written.
 license: MIT
 metadata:
@@ -24,7 +24,7 @@ metadata:
 
 ## Verification (core)
 
-Shopware signs the **raw request body** with HMAC-SHA256 and sends the lowercase hex digest in `shopware-shop-signature` (no prefix). The key is the **per-shop app secret** your app returned during the registration handshake, so you look the secret up by `source.shopId` before verifying. Compare timing-safe.
+Shopware signs the **raw request body** with HMAC-SHA256 and sends the lowercase hex digest in `shopware-shop-signature` (no prefix). The key is the **shop secret** your app returned during the registration handshake, so you look the secret up by `source.shopId` before verifying. Compare timing-safe.
 
 Node:
 
@@ -81,9 +81,9 @@ Express must read the body with `express.raw({ type: '*/*' })` so any content ty
 | Event | Description |
 |-------|-------------|
 | `checkout.order.placed` | An order was placed |
-| `product.written` | Product inserted or updated (payload has `primaryKey`s, fetch via API) |
-| `order.written` | Order inserted or updated |
-| `customer.written` | Customer inserted or updated |
+| `product.written` | Product inserted, updated or deleted (payload has `primaryKey`s, fetch via API) |
+| `order.written` | Order inserted, updated or deleted |
+| `customer.written` | Customer inserted, updated or deleted |
 | `state_enter.order.state.completed` | Order entered the completed state |
 | `state_enter.order_transaction.state.paid` | Payment transaction entered paid |
 
@@ -93,7 +93,7 @@ Express must read the body with `express.raw({ type: '*/*' })` so any content ty
 
 | Header | Description |
 |--------|-------------|
-| `shopware-shop-signature` | Hex HMAC-SHA256 of the raw body, keyed with the shop's app secret |
+| `shopware-shop-signature` | Hex HMAC-SHA256 of the raw body, keyed with the shop's shop secret |
 | `sw-version` | Shopware version (6.4.1.0+) |
 | `sw-context-language` | Language ID of the context (6.4.5.0+) |
 | `sw-user-language` | Locale of the user or context language (6.4.5.0+) |
@@ -101,7 +101,7 @@ Express must read the body with `express.raw({ type: '*/*' })` so any content ty
 ## Environment Variables
 
 ```bash
-SHOPWARE_APP_SECRETS={"<shopId>":"<appSecret>"}   # JSON map of shop ID to app secret (use a database in production)
+SHOPWARE_APP_SECRETS={"<shopId>":"<appSecret>"}   # JSON map of shop ID to shop secret (use a database in production)
 SHOPWARE_APP_SECRET=your_app_secret               # Optional single-shop fallback for local testing
 ```
 

@@ -60,9 +60,11 @@ function verifySocureRequest(headers, user = process.env.SOCURE_WEBHOOK_USERNAME
 - Return `401` for a missing or malformed header or any mismatch, `400` for a body that isn't a
   JSON object, `200` once handled.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
-- The credentials must arrive on the **first** request. Socure's docs don't say whether Basic
-  credentials are sent preemptively, so don't rely on a `401` + `WWW-Authenticate` challenge flow:
-  it won't work through Hookdeck, which verifies the request as received.
+- Socure's docs say RiskOS includes the configured credentials in every outbound webhook request.
+  Don't rely on a `401` + `WWW-Authenticate` challenge flow: it won't work through Hookdeck, which
+  verifies the request as received.
+- Webhooks made in the **Watchlist Alerts** tab don't use Basic. Their optional Secret Key arrives
+  as `Authorization: Bearer <secret>`, so this check rejects them.
 - **Security:** a static shared credential authenticates the sender, not the body, and gives no
   replay protection (no signature, no timestamp). Use HTTPS only, deduplicate on `event_id`, and
   rotate the credential if it leaks. RiskOS can't edit credentials on an existing webhook: delete
@@ -73,7 +75,8 @@ function verifySocureRequest(headers, user = process.env.SOCURE_WEBHOOK_USERNAME
 ## Event Types
 
 The payload is an envelope: `event_id` (UUID, use for idempotency), `event_at`, `event_type` and
-`data` (varies by event). Available types depend on your account entitlements.
+`data` (varies by event). Available types depend on your account entitlements, and evaluation
+events are only sent for asynchronous workflows.
 
 | Event | Sent When |
 |-------|-----------|

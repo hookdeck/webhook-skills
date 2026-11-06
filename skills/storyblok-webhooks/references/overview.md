@@ -25,7 +25,7 @@ There is no event-type header. The event is the `action` field in the body. `act
 | Experiment | `experiment.created`, `experiment.started`, `experiment.resumed`, `experiment.paused`, `experiment.completed`, `experiment.winner_selected`, `experiment.deleted` | Experiment lifecycle (paid plans, enable in Settings → Labs) | Analytics sync |
 | Release | `merged` | A release was published (Releases app, paid plans) | Rebuild site |
 | Pipeline | `deployed` | A pipeline stage was deployed (Pipelines app, paid plans) | Trigger downstream deploys |
-| Task | `task_execution` | A user ran a task (Tasks app) | Manual triggers. **Unsigned** |
+| Task | `task_execution` | A user ran a task (Tasks app) | Manual triggers. **No secret support** |
 
 ## Event Payload Structure
 
@@ -33,10 +33,11 @@ Universal fields on every payload: `text` (human-readable summary), `action`, `s
 
 ```json
 {
-  "text": "The user joy.bringer@storyblok.com moved the Story Home 2 (marketing-articles/home-2)\nhttps://app.storyblok.com/#/me/spaces/184738/stories/0/0/166888799188279",
+  "text": "The user user1@example.com moved the Story Home 2 (marketing-articles/home-2)\nhttps://app.storyblok.com/#/me/spaces/184738/stories/0/0/166888799188279",
   "action": "moved",
   "space_id": 184738,
   "story_id": 166888799188279,
+  "story_uuid": "9a3f1c2e-5b7d-4e8a-b6c4-2d1f0e9a7b35",
   "full_slug": "marketing-articles/home-2",
   "old_full_slug": "home-2"
 }
@@ -44,11 +45,11 @@ Universal fields on every payload: `text` (human-readable summary), `action`, `s
 
 | Entity | Fields beyond `text`, `action`, `space_id` |
 |--------|--------------------------------------------|
-| Story | `story_id`, `full_slug`, `old_full_slug` (moved only) |
+| Story | `story_id`, `story_uuid`, `full_slug`, `old_full_slug` (moved only) |
 | Asset | `asset_id` |
 | Workflow | `story_id`, `workflow_name`, `workflow_stage_name` |
 | User | `user_id` |
-| Datasource | `datasource_slug` |
+| Datasource | `datasource_slug`, `dimension` (`entries_updated` only, when a value changes in a single dimension) |
 | Discussion | `id`, `lang`, `title`, `story_id`, `block_uid`, `component`, `fieldname` |
 | Experiment | `experiment_id`, `status` |
 | Release | `release_id` |

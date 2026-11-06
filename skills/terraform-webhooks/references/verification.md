@@ -67,10 +67,12 @@ def verify_terraform_signature(raw_body: bytes, signature_header: str, token: st
   re-serialize and break the match.
 - **The token can't be read back.** If you lose it, edit the configuration and set
   a new one.
-- **Verification request is signed too.** If your handler rejects it (wrong or
-  missing token), the configuration can't be enabled.
-- **Two payload shapes.** Run payloads have `notifications[].trigger`; workspace
-  payloads have a top-level `trigger`. Don't assume the array exists.
+- **Verification request.** HashiCorp says all generic notification requests are
+  signed, without naming this one. If your handler rejects it, the configuration
+  can't be enabled.
+- **Three payload shapes.** Run payloads have `notifications[].trigger`; workspace
+  payloads have a top-level `trigger`; change request payloads have no trigger.
+  Don't assume the array exists.
 - **Compare as bytes.** Hex case can differ across implementations; decode or
   lowercase before comparing.
 

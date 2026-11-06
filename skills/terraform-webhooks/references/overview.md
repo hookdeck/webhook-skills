@@ -22,16 +22,23 @@ project) and team level (change requests).
 | `run:created` | A run is created and enters Pending | Track run queue |
 | `run:planning` | A run acquires the lock and starts | Update dashboards |
 | `run:needs_attention` | Plan has changes and needs approval or policy override | Ping an approver |
+| `run:pending_apply_approval` | A run waits for approval before applying | Ping an approver |
+| `run:cost_estimated` | Cost estimation finishes | Track run costs |
+| `run:policy_override_required` | A run needs a policy override | Ping a policy owner |
+| `run:policies_checked` | Policy checks finish | Record policy results |
 | `run:applying` | A run enters the Apply stage | Change-freeze tracking |
 | `run:completed` | A run completes successfully | Kick off downstream deploys |
-| `run:errored` | A run ends early from an error or cancellation | Alert on-call |
+| `run:errored` | A run ends early (the state sent in `trigger`) | Alert on-call |
+| `run:run_errored` | An error stops a run (in `trigger_type`) | Alert on-call |
+| `run:run_canceled` | A run is canceled (in `trigger_type`) | Record the cancellation |
+| `run:policy_soft_failed` | A soft-mandatory policy check fails (in `trigger_type`) | Alert policy owners |
 | `assessment:drifted` | Drift detected (health assessments on) | Open a drift ticket |
 | `assessment:check_failure` | Continuous validation checks failed | Alert owners |
 | `assessment:failed` | A health assessment failed | Investigate assessment logs |
 | `workspace:auto_destroy_reminder` | Automatic destroy run is imminent (12 and 24 hours ahead) | Warn owners |
 | `workspace:auto_destroy_run_results` | Automatic destroy run attempted | Report outcome |
 | `workspace:deleted` | A workspace is deleted | Clean up references |
-| `team:change_request` | Change request sent to a workspace the team can access | Route to a team |
+| `change_request:created` | Change request created on a workspace the team can access | Route to a team |
 | `verification` | Test request on enable / "Send a test" | Return 2xx |
 
 Health assessments need the HCP Terraform Standard or Premium edition.
@@ -58,6 +65,7 @@ There are three payload shapes.
     {
       "message": "Run Canceled",
       "trigger": "run:errored",
+      "trigger_type": "run:run_canceled",
       "run_status": "canceled",
       "run_updated_at": "2019-01-25T18:37:04.000Z",
       "run_updated_by": "sample-user"
@@ -67,7 +75,8 @@ There are three payload shapes.
 ```
 
 `notifications` is always a single event today, but treat it as a list: HCP
-Terraform may roll several into one request in future.
+Terraform may roll several into one request in future. `trigger` holds the run's
+state, and `trigger_type` holds the value from the configuration's `triggers` array.
 
 **Workspace events** (`payload_version: "2"`; assessment and auto destroy) have no
 `notifications` array. They carry `notification_configuration_url`, `trigger_scope`

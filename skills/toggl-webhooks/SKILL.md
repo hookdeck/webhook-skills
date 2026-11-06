@@ -58,7 +58,7 @@ A subscription receives events only once it is **enabled and validated**. PING e
 
 ## Common Event Types
 
-Events are an entity plus an action (`created`, `updated`, `deleted`, or `*` in filters). The delivery has `metadata.model` and `metadata.action`; the examples dispatch on `<model>.<action>`.
+Events are an entity plus an action (`created`, `updated`, `deleted`, or `*` in filters). The delivery has `metadata.model` and `metadata.action` (shown in Toggl's archived API docs, not on its current webhook pages, so confirm them on a real delivery); the examples dispatch on `<model>.<action>`.
 
 | Event | Description |
 |-------|-------------|

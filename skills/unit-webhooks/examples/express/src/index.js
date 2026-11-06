@@ -41,8 +41,9 @@ app.post('/webhooks/unit', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid JSON');
   }
 
-  // `data` is an array of events (up to 64 with AtLeastOnce delivery).
-  const events = Array.isArray(payload.data) ? payload.data : [];
+  // `data` is an array of events (up to 64 with AtLeastOnce delivery). A few of Unit's
+  // documented examples show a single object, so handle both shapes.
+  const events = [payload.data ?? []].flat();
 
   for (const event of events) {
     // TODO: dedupe on event.id (Unit retries AtLeastOnce deliveries)

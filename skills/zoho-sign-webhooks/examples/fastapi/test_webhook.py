@@ -41,7 +41,7 @@ def payload(operation_type: str) -> str:
     return json.dumps(
         {
             "notifications": {
-                "performed_by_email": "testuser@zoho.com",
+                "performed_by_email": "user1@example.com",
                 "performed_at": 1555062604837,
                 "reason": "reason given if any",
                 "activity": "Document has been signed",

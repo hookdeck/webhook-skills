@@ -76,7 +76,8 @@ Read the body as raw bytes regardless of content type (Express:
 
 When you click **Test** or **Verify and create**, Recruitee POSTs `{"test":true}`
 and the endpoint **must answer 200** for the webhook to be created. Handle this
-before event dispatch.
+before event dispatch. **Test payload** buttons send an example event with `test`
+added, so check `test` first or the example is processed as a real event.
 
 ## Common Event Types
 

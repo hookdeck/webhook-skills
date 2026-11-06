@@ -7,7 +7,7 @@
 
 ## Create a Webhook and Get Your Secret
 
-Webhooks are created through the API, not the dashboard:
+Create a webhook through the API, or manage webhooks on the Duffel Dashboard:
 
 ```bash
 curl -X POST "https://api.duffel.com/air/webhooks" \
@@ -29,9 +29,9 @@ The access token decides the mode: a test token creates a test webhook (`live_mo
 ## Send a Test Event
 
 ```bash
-curl -X POST "https://api.duffel.com/air/webhooks/id/$WEBHOOK_ID/actions/ping" \
-  -H "Accept: application/json" -H "Content-Type: application/json" \
-  -H "Duffel-Version: v2" -H "Authorization: Bearer $DUFFEL_ACCESS_TOKEN" -d '{}'
+curl -X POST "https://api.duffel.com/air/webhooks/$WEBHOOK_ID/actions/ping" \
+  -H "Accept: application/json" \
+  -H "Duffel-Version: v2" -H "Authorization: Bearer $DUFFEL_ACCESS_TOKEN"
 ```
 
 Your endpoint receives a `ping.triggered` event.

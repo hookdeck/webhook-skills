@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
 
   switch (data.op_type) {
     case 'insert_row':
-    case 'create_row':
       console.log(`Row created in ${data.table_name}${rowCount}:`, data.row_id);
       // TODO: Sync the new row, notify, enrich, etc.
       break;
@@ -73,10 +72,19 @@ export async function POST(request: NextRequest) {
       // TODO: Remove from downstream systems
       break;
 
+    case 'add_link':
+    case 'remove_link':
+    case 'update_links':
+    case 'update_rows_links':
+      // Link bodies have no row_id or row_data
+      console.log(`Links changed: ${data.op_type}`);
+      // TODO: Update relations downstream
+      break;
+
     default:
       console.log(`Unhandled ${payload.event} op_type: ${data.op_type}`);
   }
 
-  // SeaTable disables the webhook after 5 consecutive non-200 responses
+  // SeaTable disables the webhook after 5 consecutive non-2xx responses
   return NextResponse.json({ received: true });
 }

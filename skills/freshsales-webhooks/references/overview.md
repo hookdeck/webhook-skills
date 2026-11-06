@@ -28,7 +28,7 @@ The method is user-chosen, so a receiver should accept all five and handle an em
 
 - **Encoding type:** JSON, XML or X-FORM-ENCODED. The examples parse JSON, so choose JSON.
 - **Content:** **Simple** sends selected fields of the record in a predefined format. **Advanced**
-  sends content you write, with placeholders (`{{deal.id}}`, `{{contact.email}}`,
+  sends content you write, with placeholders (`{{deal.id}}`, `{{contact.id}}`,
   `{{sales_account.id}}`).
 - Placeholders available: Contacts workflows offer Contact and the linked primary Account fields;
   Accounts workflows offer Account fields; Deals workflows offer Deal and related account fields.

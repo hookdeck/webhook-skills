@@ -46,12 +46,12 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 
 ## Common Gotchas
 
-- **Use the raw body.** Checkly's own Node sample calls `JSON.stringify(request.body)`, which only matches if your template renders compact JSON with the same key order. Verifying the raw bytes always works.
+- **Use the raw body.** The signature covers the exact bytes Checkly sends, so compute it before parsing. Parsing and re-serializing can change the bytes and break the comparison.
 - **The secret is optional.** With no secret there is no signature header. Reject requests with a missing header rather than skipping verification.
-- **The body is user-defined.** It can be JSON, form data or plain text, so don't restrict the content type when reading the raw body.
+- **The body is user-defined.** Checkly's docs name JSON and plain text bodies, and your template decides which, so don't restrict the content type when reading the raw body.
 - **Whitespace and escaping.** Handlebars HTML-escapes `{{VAR}}` values; the signature covers whatever was actually rendered.
-- **Unsigned timestamp.** Don't treat `x-checkly-timestamp` as authenticated. Retries re-send the same payload, so make handlers idempotent instead of enforcing a tight window.
-- **Retries.** A response above 399 triggers up to 5 retries, 20 seconds apart.
+- **Unsigned timestamp.** Don't treat `x-checkly-timestamp` as authenticated. Its format isn't documented, and neither is whether a retry keeps the first attempt's value, so make handlers idempotent instead of enforcing a tight window.
+- **Retries.** A response above 399, a network error or no response within 5 seconds triggers up to 5 retries, after 10, 20, 40, 80 and 160 seconds.
 
 ## Debugging Verification Failures
 

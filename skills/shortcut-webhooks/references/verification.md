@@ -9,7 +9,7 @@ If you provide a secret when creating the Outgoing Webhook, each request include
 - The message is the HTTP request body encoded in UTF-8
 - The key is the secret string you provided, encoded in UTF-8
 
-So: `hex(HMAC_SHA256(key = secret, message = raw body))`. There is no `sha256=` prefix, no timestamp in the signed content, and no SDK helper.
+So: `hex(HMAC_SHA256(key = secret, message = raw body))`. There is no `sha256=` prefix and no timestamp in the signed content. In JavaScript, `verifyShortcutWebhookSignature(secret, rawBody, signature)` from `@shortcut/client/webhooks` (3.5.0+) checks this header. The same package's `ShortcutWebhookClient` is for Custom Agent deliveries, which use a different envelope and a `Shortcut-Signature` header.
 
 ## Implementation
 

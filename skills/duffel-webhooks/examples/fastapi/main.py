@@ -115,8 +115,8 @@ async def duffel_webhook(raw_body: bytes = Depends(verified_body)):
         logger.info("Airline change detected on order: %s", obj.get("id"))
     elif event_type == "order_cancellation.confirmed":
         logger.info("Order cancellation confirmed: %s", obj.get("id"))
-    elif event_type == "payment.succeeded":
-        logger.info("Payment succeeded: %s", obj.get("id"))
+    elif event_type == "air.payment.succeeded":
+        logger.info("Payment succeeded: %s", obj.get("payment_id"))
     else:
         logger.info("Unhandled event: %s", event_type)
 

@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const app = express();
 
 /**
- * Look up the app secret for a shop. Each shop has its own secret, assigned
+ * Look up the shop secret for a shop. Each shop has its own secret, assigned
  * during the registration handshake. Replace with a database lookup in production.
  */
 function getShopSecret(shopId) {
@@ -22,7 +22,7 @@ function getShopSecret(shopId) {
  * Verify Shopware webhook signature
  * @param {Buffer} rawBody - Raw request body
  * @param {string} signature - shopware-shop-signature header value (hex)
- * @param {string} secret - App secret for the shop
+ * @param {string} secret - Shop secret for the shop
  * @returns {boolean} - Whether signature is valid
  */
 function verifyShopwareWebhook(rawBody, signature, secret) {

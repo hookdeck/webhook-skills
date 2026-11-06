@@ -98,7 +98,7 @@ class TestGetTriggers:
         assert get_triggers(DRIFT_PAYLOAD) == ["assessment:drifted"]
 
     def test_change_request(self):
-        assert get_triggers({"change_request_url": "https://app.terraform.io/x"}) == ["team:change_request"]
+        assert get_triggers({"change_request_url": "https://app.terraform.io/x"}) == ["change_request:created"]
 
 
 class TestWebhookEndpoint:

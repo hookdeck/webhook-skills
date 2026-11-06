@@ -4,7 +4,7 @@ description: >
   Receive and verify Duffel webhooks. Use when setting up Duffel flight API
   webhook handlers, debugging X-Duffel-Signature verification, or handling
   events like order.created, order.airline_initiated_change_detected,
-  order_cancellation.confirmed, payment.succeeded, or ping.triggered.
+  order_cancellation.confirmed, air.payment.succeeded, or ping.triggered.
 license: MIT
 metadata:
   author: hookdeck
@@ -78,11 +78,11 @@ The event name is the `type` field in the JSON body.
 | `order.created` | An order was created |
 | `order.airline_initiated_change_detected` | An airline changed the schedule of an order |
 | `order_cancellation.confirmed` | An order cancellation was confirmed |
-| `payment.succeeded` | A payment succeeded |
+| `air.payment.succeeded` | An air payment succeeded (`data.object.payment_id`) |
 
-Duffel's guide also uses `order.updated`. Retries can deliver duplicates, so dedupe on `idempotency_key`. See [references/overview.md](references/overview.md).
+`data.object` holds identifiers only, and the id field differs by event, so fetch the full record from the API. Duffel's sample handler also mentions `order.updated`, which isn't in the current list of event types. Retries can deliver duplicates, so dedupe on `idempotency_key`. See [references/overview.md](references/overview.md).
 
-> **For the full event reference**, see [Duffel receiving webhooks](https://duffel.com/docs/guides/receiving-webhooks).
+> **For the full event reference**, see [Duffel webhook events](https://duffel.com/docs/api/v2/webhook-events).
 
 ## Important Headers
 

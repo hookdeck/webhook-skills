@@ -69,8 +69,9 @@ app.post('/webhooks/recruitee',
       return res.status(400).send('Invalid JSON');
     }
 
-    // Test request (signed): acknowledge without processing.
-    if (event.test === true && !event.event_type) {
+    // Test and Test payload requests (signed): acknowledge without processing. A Test
+    // payload body is an example event plus `test`, so check this before dispatch.
+    if (event.test === true) {
       return res.status(200).send('OK');
     }
 

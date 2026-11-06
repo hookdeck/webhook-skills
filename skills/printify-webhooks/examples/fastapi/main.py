@@ -96,6 +96,9 @@ async def printify_webhook(request: Request):
     elif event_type == "personalization-preview-task:processed":
         print("Personalization preview processed:", data.get("task_id"), data.get("status"))
         # TODO: fetch mockups on completed, retry on failed
+    elif event_type == "support-request:updated":
+        print("Support request updated:", resource.get("id"), data.get("status"), data.get("outcome"))
+        # TODO: update the order's support status
     else:
         print("Unhandled Printify event:", event_type)
 

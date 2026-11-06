@@ -83,7 +83,7 @@ app.all('/webhooks/aws-eventbridge', express.raw({ type: '*/*' }), (req, res) =>
     return res.status(401).json({ error: 'Invalid or missing Basic credentials' });
   }
 
-  // GET and DELETE usually have no body.
+  // A GET or DELETE may have no body.
   const raw = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '';
   if (raw.trim() === '') {
     return res.status(200).json({ received: true });

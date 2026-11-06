@@ -44,7 +44,7 @@ describe('POST /webhooks/seatable', () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it.each(['insert_row', 'create_row', 'modify_row', 'delete_row'])(
+  it.each(['insert_row', 'modify_row', 'delete_row', 'add_link'])(
     'accepts a signed %s event',
     async (opType) => {
       const body = makePayload(opType);

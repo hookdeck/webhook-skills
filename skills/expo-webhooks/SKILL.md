@@ -14,6 +14,8 @@ metadata:
 
 # Expo (EAS) Webhooks
 
+Expo renamed EAS to Expo Services, EAS Build to Expo Build and EAS Submit to Expo Submit. The `eas` CLI keeps its name, and older docs still say EAS.
+
 ## When to Use This Skill
 
 - How do I receive Expo EAS Build or EAS Submit webhooks?
@@ -68,7 +70,7 @@ Both carry `id`, `accountName`, `projectName`, `platform` (`ios` or `android`), 
 | Header | Description |
 |--------|-------------|
 | `expo-signature` | `sha1=` followed by the hex HMAC-SHA1 of the raw body |
-| `Content-Type` | JSON; do not rely on it for body parsing |
+| `Content-Type` | Not documented; do not rely on it for body parsing |
 
 ## Environment Variables
 

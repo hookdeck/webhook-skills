@@ -109,8 +109,8 @@ app.post('/webhooks/duffel', express.raw({ type: '*/*' }), (req, res) => {
     case 'order_cancellation.confirmed':
       console.log(`Order cancellation confirmed: ${event.data?.object?.id}`);
       break;
-    case 'payment.succeeded':
-      console.log(`Payment succeeded: ${event.data?.object?.id}`);
+    case 'air.payment.succeeded':
+      console.log(`Payment succeeded: ${event.data?.object?.payment_id}`);
       break;
     default:
       console.log(`Unhandled event: ${event.type}`);

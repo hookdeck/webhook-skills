@@ -29,7 +29,7 @@ For signer actions (`RequestViewed`, `RequestSigningSuccess`, `RequestRejected`,
 ```json
 {
   "notifications": {
-    "performed_by_email": "testuser@zoho.com",
+    "performed_by_email": "user1@example.com",
     "performed_at": 1555062604837,
     "reason": "reason given if any",
     "activity": "Document has been signed",
@@ -56,4 +56,4 @@ so build an idempotency key from `request_id`, `operation_type`, `action_id` and
 
 ## Full Event Reference
 
-See [Zoho Sign webhooks](https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/articles/webhooks-management).
+See [Zoho Sign webhooks](https://help.zoho.com/portal/en/kb/zoho-sign/admin-guide/webhooks/articles/webhooks-management).

@@ -2,7 +2,7 @@
 
 ## What Are Checkly Webhooks?
 
-Checkly is a synthetic monitoring platform. Its webhook alert channel sends an HTTP POST to any endpoint whenever a check changes state (fails, recovers, degrades). You define the URL and the request body as a Handlebars template, so the payload shape is yours, not fixed by Checkly. Webhooks can be attached to individual checks or groups, and group-level variables are available in the template.
+Checkly is a synthetic monitoring platform. Its webhook alert channel sends an HTTP request (`POST` by default) to any endpoint when a check alerts (fails, recovers, degrades). You define the URL and the request body as a Handlebars template, so the payload shape is yours, not fixed by Checkly. Webhooks can be attached to individual checks or groups, and group-level variables are available in the template.
 
 ## Common Event Types
 
@@ -37,10 +37,11 @@ Other variables include `CHECK_TYPE`, `CHECK_ERROR_MESSAGE`, `RUN_LOCATION`, `RE
 
 ## Delivery
 
-- Method: `POST`, body exactly as rendered from your template.
+- Method: `POST` by default, and you can choose another. The body is exactly as rendered from your template.
 - Headers: `x-checkly-signature` (when a secret is set) and `x-checkly-timestamp`.
-- Retries: up to 5 times, 20 seconds apart, when your endpoint returns a status above 399.
-- For checks on a 1-minute schedule a failure and its recovery can overlap, so deliveries may arrive out of order.
+- Timeout: 5 seconds. No response in that time counts as a failed request.
+- Retries: up to 5 times, after 10, 20, 40, 80 and 160 seconds (about 5 minutes in total), on a status above 399, a network error or a timeout.
+- For checks on a 1-minute schedule a failure and its recovery can overlap, so deliveries may arrive out of order. Template `{{STARTED_AT}}` into the body and ignore anything older than the latest run you've processed for that check.
 
 ## Full Event Reference
 

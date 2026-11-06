@@ -43,7 +43,7 @@ def verify_stigg_secret(header, secret):
 - **Fail closed.** If `STIGG_WEBHOOK_SECRET` isn't set, return `500` rather than accepting everything.
 - **Secret per webhook.** Each webhook has its own secret. If you register several, keep a secret per endpoint.
 - **Header casing.** HTTP headers are case-insensitive; frameworks usually lowercase them (`stigg-webhooks-secret`).
-- **De-duplicate on `messageId`.** Retries re-send the same event.
+- **De-duplicate on `messageId`.** Stigg can deliver the same webhook more than once.
 - **Add the IP.** Optionally restrict to `18.119.35.43` at your firewall as a second layer.
 
 ## Debugging Verification Failures
