@@ -7,8 +7,7 @@ docs:
 notes: >
   Global HR/EOR. Webhooks are registered with POST /v1/webhooks {url, sharedSecret}; Oyster sends
   the sharedSecret as 'Authorization: Bearer <sharedSecret>' (e.g. 'Bearer 12345'); 5s timeout. No
-  signature. The credential is the Authorization header. Hookdeck's Oyster source compares the WHOLE
-  Authorization header value to the configured key, so the examples read OYSTER_AUTHORIZATION = the
+  signature. The credential is the Authorization header. Hookdeck's Oyster source takes the bare sharedSecret in its Shared Secret field and accepts the header with or without 'Bearer '. The examples read OYSTER_AUTHORIZATION = the
   full value as Oyster sends it (e.g. 'Bearer <sharedSecret>'), including the scheme prefix, and
   compare the whole Authorization header to it; do not strip or parse the prefix (Coterie pattern).
   Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then

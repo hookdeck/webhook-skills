@@ -76,7 +76,8 @@ def safe_equal(a: str, b: str) -> bool:
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Header disabled**: if requests arrive with no `Authentication` header, the optional header
   has not been enabled yet. Ask your Coterie contact; don't switch verification off.
-- **Hookdeck**: a Hookdeck Coterie source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck Coterie source verifies the same header. Paste the bare GUID into its
+  **Token** field; it accepts the header with or without the `token ` prefix.
 
 ## Debugging 401s
 

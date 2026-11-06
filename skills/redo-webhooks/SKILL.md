@@ -29,10 +29,9 @@ generate and supply when you create the webhook subscription.
 
 ## Verification (core)
 
-Redo sends `Authorization: Bearer <your-subscriber-secret>`. Hookdeck's Redo source compares the
-**whole header value** to the configured key, and so do the examples: set `REDO_AUTHORIZATION`
-to the full value as Redo sends it, **including the `Bearer ` prefix**. Don't strip, parse or
-base64-decode anything.
+Redo sends `Authorization: Bearer <your-subscriber-secret>`. The examples compare the **whole
+header value** to the configured key: set `REDO_AUTHORIZATION` to the full value as Redo sends
+it, **including the `Bearer ` prefix**. Don't strip, parse or base64-decode anything.
 
 ```javascript
 const crypto = require('crypto');
@@ -68,10 +67,12 @@ the credential check. Python and Next.js equivalents are in
 
 ## Hookdeck Source Setup
 
-In Hookdeck, create a source of type **Redo** (`REDO`). Hookdeck shows this setup note, and it
-is the same thing you configure in your own handler:
+In Hookdeck, create a source of type **Redo** (`REDO`). Hookdeck shows this setup note:
 
-> Paste the full Authorization header value Redo sends: "Bearer " followed by your subscription secret.
+> Paste the secret set on the Redo webhook subscription.
+
+Paste the bare secret into the **Subscription Secret** field, without `Bearer `. Hookdeck accepts
+the `Authorization` header with or without the `Bearer ` prefix.
 
 ## Event Types
 

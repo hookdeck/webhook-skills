@@ -40,7 +40,7 @@ Don't put credentials in the URL; OpenClaw rejects `user:password@` URLs.
 
 ### 3. Receive Through Hookdeck (Optional)
 
-Create a Hookdeck connection with an **OpenClaw** source and use its URL as the `--webhook` target. Set the source's API key to the full header value, `Bearer your-generated-token`. Hookdeck verifies the header, then queues, retries and forwards to your app. OpenClaw itself doesn't retry an ambiguous send.
+Create a Hookdeck connection with an **OpenClaw** source and use its URL as the `--webhook` target. Paste the bare token, `your-generated-token`, into the source's **Webhook Token** field, without `Bearer `. Hookdeck verifies the header, then queues, retries and forwards to your app. OpenClaw itself doesn't retry an ambiguous send.
 
 For local development:
 

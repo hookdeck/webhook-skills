@@ -7,9 +7,10 @@ notes: >
   Small business insurance API (Postman documenter; collection JSON at
   docs.coterieinsurance.com/api/collections/8605509/SVn3ra1i). No signature. The only auth is an
   opt-in static header named Authentication (not Authorization), turned on by request via your
-  Coterie contact, sent as 'Authentication: token <guid>'. The key is the WHOLE header value
-  including the 'token ' prefix: compare the full header to COTERIE_AUTHENTICATION (e.g. 'token
-  1234-...'), as Hookdeck's Coterie source does. No payload signature. Verify the shared token with
+  Coterie contact, sent as 'Authentication: token <guid>'. The examples compare the WHOLE header
+  value, including the 'token ' prefix, to COTERIE_AUTHENTICATION (e.g. 'token 1234-...').
+  Hookdeck's Coterie source takes the bare GUID in its Token field and accepts the header with or
+  without 'token '. No payload signature. Verify the shared token with
   a constant-time compare (crypto.timingSafeEqual / hmac.compare_digest, hashing both sides or
   checking lengths first), like the batch 1 n8n, zapier and brevo skills. The docs define no
   event-type strings: webhooks are application, quote and policy payloads with no event field,

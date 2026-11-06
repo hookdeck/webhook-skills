@@ -22,7 +22,7 @@ updated. They are documented in the Ready REST docs (secure.saashr.com). This sk
 Payloads are **not signed**. The only credential is the `Authorization` header, set by the
 subscription's Authentication option: Basic, OAuth, Bearer Token or No Authentication.
 
-> Choose Bearer Token authentication on the UKG Ready webhook, not Basic, and paste the whole Authorization value, including "Bearer ".
+> Choose Bearer Token authentication on the UKG Ready webhook, not Basic, and paste the token.
 
 ## When to Use This Skill
 
@@ -72,9 +72,10 @@ credential if it leaks.
 
 ## Hookdeck
 
-Hookdeck's source type is **UKG_READY** (label "UKG Ready"). It compares the whole
-`Authorization` header to the configured key, so only **Bearer Token** works. Basic and OAuth
-are not covered by Hookdeck's UKG Ready source.
+Hookdeck's source type is **UKG_READY** (label "UKG Ready"). Paste the bare token into its
+**Bearer Token** field; it accepts the `Authorization` header with or without the `Bearer `
+prefix. Only **Bearer Token** works. Basic and OAuth are not covered by Hookdeck's UKG Ready
+source.
 
 ## Webhook Payloads
 

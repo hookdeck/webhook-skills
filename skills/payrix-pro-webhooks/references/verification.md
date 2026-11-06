@@ -63,7 +63,7 @@ def verify_payrix_pro_request(headers, secret=None, header_name=None) -> bool:
 
 - **Compare the whole value.** If the Header Value is `Bearer abc123`, `PAYRIX_PRO_WEBHOOK_SECRET`
   must be `Bearer abc123`. Don't strip or parse the prefix. This matches Hookdeck's Payrix Pro
-  source (Header Name + exact whole Header Value).
+  source (API Key Header + exact whole API Key).
 - **Every action needs the header.** Actions without one send nothing to verify.
 - **Every method.** Check the credential first for GET, POST, PUT, PATCH and DELETE alike.
 - **Empty bodies.** Some requests may have no body; don't fail on that.

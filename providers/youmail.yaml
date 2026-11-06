@@ -8,8 +8,7 @@ notes: >
   YouMail Protective Services API webhooks (data.youmail.com/docs; curl may get 403,
   https://r.jina.ai/https://data.youmail.com/docs can read it). A webhook's auth is 'Basic'
   (username and password) or 'Bearer' (token), or none; method 'will default to POST and cannot be
-  modified'. No signature. The credential is the Authorization header. Hookdeck's YouMail source
-  compares the WHOLE Authorization header value to the configured key, so the examples read
+  modified'. No signature. The credential is the Authorization header. Hookdeck's YouMail source takes the bare token in its Bearer Token field and accepts the header with or without 'Bearer '. The examples read
   YOUMAIL_AUTHORIZATION = the full value as YouMail sends it (e.g. 'Bearer <token>'), including the
   'Bearer ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
   base64-decode the prefix (Coterie pattern). Cover the Bearer scheme: the value is 'Bearer ' + the
@@ -21,9 +20,7 @@ notes: >
   sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
   and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
   main. Hookdeck's source type is YOUMAIL, labelled 'YouMail'. Hookdeck shows this setup note for
-  the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
-  "Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole
-  Authorization value, including "Bearer "." Body: no common envelope and no type field; each
+  the source, and SKILL.md and references/setup.md must tell the user to choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the token into the Bearer Token field. Body: no common envelope and no type field; each
   webhook is created for one eventType (CALL_EVENT sends callEvents; PHONE_INSIGHTS sends *Summaries
   arrays; PROVIDER_TN_REPORT_STATUS a TN report status object; WATCHLIST_SCORE_THRESHOLD a phone
   number with old/new scores; WATCHLIST_PHONE_SCORE_THRESHOLD is deprecated). Tell the user to give

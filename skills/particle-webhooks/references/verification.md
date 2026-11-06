@@ -16,7 +16,7 @@ A static shared credential authenticates the sender, not the body, and gives no 
 - Look the header up case-insensitively.
 - Compare the **whole** value. Do not strip or parse a `Bearer ` prefix: if you typed
   `Bearer 12345` in the integration, `PARTICLE_WEBHOOK_SECRET` is `Bearer 12345`. This matches
-  Hookdeck's Particle source (API key verification with Header Name and the exact whole Header Value).
+  Hookdeck's Particle source (API key verification with API Key Header and the exact whole API Key).
 - Missing header or mismatch: `401`. Apply the check to every method before reading the body.
 - Use a constant-time compare.
 

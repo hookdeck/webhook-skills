@@ -62,5 +62,6 @@ curl -X POST http://localhost:3000/webhooks/measureone \
 
 ## In Hookdeck
 
-Create a source of type **MeasureOne** and enter the Header Name and the exact whole Header Value.
+Create a source of type **MeasureOne** and enter the header name in **API Key Header** and
+the exact whole value in **API Key**.
 Add a static header to delivery_details.headers on the Data Request and enter it here. The JWT option fetches a new token for every delivery and cannot be checked.

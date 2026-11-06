@@ -8,7 +8,7 @@ send `Authorization: Bearer <token>` (YouMail doesn't print the header; if deliv
 rejected, capture one and set the expected value exactly as received). The handler compares the **whole header value**, including
 the `Bearer ` prefix, with a constant-time comparison. Basic auth is not covered.
 
-> Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole Authorization value, including "Bearer ".
+> Choose the Bearer auth scheme on the YouMail webhook, not Basic.
 
 A static credential authenticates the sender, not the body, and gives no replay protection.
 Use HTTPS and rotate the credential if it leaks.

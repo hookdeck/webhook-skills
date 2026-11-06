@@ -23,7 +23,7 @@ Hookdeck shows this note for the source:
 
 > Paste the bearer token you set for the callback in GC Notify.
 
-Paste just the token. Hookdeck sends and matches the `Bearer ` scheme itself.
+Paste just the token. Hookdeck matches the `Bearer ` scheme itself.
 
 ## Register Your Endpoint
 

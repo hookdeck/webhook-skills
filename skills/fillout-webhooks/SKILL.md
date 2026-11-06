@@ -137,8 +137,8 @@ npx hookdeck-cli listen 3000 fillout --path /webhooks/fillout
 No account required. The CLI creates a guest account on first run and gives you a public
 URL and a web UI for inspecting requests. Use port `8000` for the FastAPI example.
 
-Hookdeck's Fillout source type checks the header for you. Set **Header Name** to
-`Authorization` and **Header Value** to the full value, including `Bearer `.
+Hookdeck's Fillout source type checks the header for you. Set **API Key Header** to
+`Authorization` and **API Key** to the full value, including `Bearer `.
 
 ## Reference Materials
 

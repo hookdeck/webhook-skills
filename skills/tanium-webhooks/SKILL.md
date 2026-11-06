@@ -62,8 +62,8 @@ function verifyTaniumRequest(
   parse.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the secret if it leaks.
-- Hookdeck's Tanium source (type `TANIUM`) checks exactly this: Header Name plus exact whole Header
-  Value. The destination's **Basic Authentication** and **OAuth2 Client Credentials** options are
+- Hookdeck's Tanium source (type `TANIUM`) checks exactly this: API Key Header plus exact whole API
+  Key. The destination's **Basic Authentication** and **OAuth2 Client Credentials** options are
   not covered by it; use Header Authentication.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

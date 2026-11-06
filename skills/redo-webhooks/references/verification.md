@@ -12,9 +12,9 @@ Authorization: Bearer your-subscriber-secret
 Points that cause most failures:
 
 - The credential is the `Authorization` header. There is no other header to read.
-- The key is the **whole header value including the `Bearer ` prefix**. Hookdeck's Redo source
-  compares the full header, and so do the examples: set `REDO_AUTHORIZATION` to
-  `Bearer your-subscriber-secret`. Don't strip, parse or base64-decode the prefix.
+- In the examples, the key is the **whole header value including the `Bearer ` prefix**: set
+  `REDO_AUTHORIZATION` to `Bearer your-subscriber-secret`. Don't strip, parse or base64-decode
+  the prefix. (Hookdeck's Redo source takes the bare secret instead.)
 - Missing header or mismatch: respond `401`.
 
 ## What Does a Static Credential Protect?
@@ -85,15 +85,15 @@ def safe_equal(a: str, b: str) -> bool:
 
 ## Common Gotchas
 
-- **Missing prefix**: the stored secret must include `Bearer `. Storing only the secret fails.
-- **Double prefix**: Hookdeck's note says paste `Bearer ` followed by the secret, not
-  `Bearer Bearer ...`.
+- **Missing prefix**: `REDO_AUTHORIZATION` must include `Bearer `. Storing only the secret fails
+  in these examples.
 - **Unconfigured secret**: reject everything if `REDO_AUTHORIZATION` is empty, otherwise an empty
   header would "match".
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Slow responses**: reply 2xx within 5 seconds and process asynchronously, or Redo retries.
-- **Hookdeck**: a Hookdeck Redo source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck Redo source verifies the same header. Paste the bare secret into its
+  **Subscription Secret** field; it accepts the header with or without the `Bearer ` prefix.
 
 ## Debugging 401s
 

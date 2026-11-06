@@ -22,8 +22,8 @@ whole value** as `REBRANDLY_WEBHOOK_SECRET`. If you typed `Bearer abc`, the secr
 
 ## Hookdeck Source
 
-In Hookdeck choose the **Rebrandly** source type. It uses API key verification: Header Name plus
-the exact whole Header Value. Hookdeck's Rebrandly source pre-selects POST without managing the
+In Hookdeck choose the **Rebrandly** source type. It uses API key verification: API Key Header plus
+the exact whole API Key. Hookdeck's Rebrandly source pre-selects POST without managing the
 method, so if Rebrandly uses PUT (or any other method), allow that method on the source too.
 
 ## Test

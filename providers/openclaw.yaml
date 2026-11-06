@@ -7,8 +7,7 @@ docs:
 notes: >
   Open-source autonomous AI agent platform. Automations (cron jobs) in webhook
   delivery mode POST the finished run event as JSON. Not signed: cron.webhookToken
-  is sent as Authorization: Bearer <token>, and Hookdeck's OPENCLAW source
-  compares the whole header value, so verify with a constant-time compare
+  is sent as Authorization: Bearer <token>, and Hookdeck's OPENCLAW source takes the bare token in its Webhook Token field (with or without 'Bearer '). The examples verify with a constant-time compare
   against "Bearer <webhookToken>". Failure alerts in webhook mode use the same
   token. Secondary: the Gateway's inbound /hooks/agent and /hooks/wake endpoints,
   which the Gateway verifies (hooks.token via Authorization: Bearer or

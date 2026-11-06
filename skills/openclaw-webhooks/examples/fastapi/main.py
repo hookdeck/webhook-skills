@@ -20,7 +20,7 @@ def verify_openclaw_webhook(authorization_header: Optional[str], webhook_token: 
     OpenClaw docs: "`webhookToken` is sent as `Authorization: Bearer <token>` on
     automation webhook POSTs." The body is not signed, so the header is the whole
     check. Compare the entire header value with "Bearer <webhookToken>" in constant
-    time, the same way Hookdeck's OpenClaw source does.
+    time.
     """
     if not authorization_header or not webhook_token:
         return False

@@ -29,7 +29,7 @@ OpenClaw automations (cron jobs) can deliver their output to a URL. From [Manage
 
 > `webhookToken` is sent as `Authorization: Bearer <token>` on automation webhook POSTs.
 
-The body is JSON and is **not signed**, so the `Authorization` header is the whole check. Compare the **entire header value** with `Bearer <webhookToken>` in constant time. That's also what Hookdeck's OpenClaw source does: you enter `Bearer <webhookToken>` as its API key. OpenClaw only sends the header when `cron.webhookToken` is set, so always set it.
+The body is JSON and is **not signed**, so the `Authorization` header is the whole check. Compare the **entire header value** with `Bearer <webhookToken>` in constant time. In Hookdeck's OpenClaw source, paste the bare `webhookToken` into the **Webhook Token** field; Hookdeck accepts the header with or without the `Bearer ` prefix. OpenClaw only sends the header when `cron.webhookToken` is set, so always set it.
 
 ### Token Verification (JavaScript)
 
