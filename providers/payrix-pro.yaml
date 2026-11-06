@@ -13,7 +13,7 @@ notes: >
   expected value from PAYRIX_PRO_WEBHOOK_SECRET (the exact, whole header value, including any
   'Bearer ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE
   value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Payrix Pro source does
-  (API key verification: Header Name + exact whole Header Value). Missing header or mismatch: 401.
+  (API key verification: API Key Header + exact whole API Key value). Missing header or mismatch: 401.
   Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
   (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
   sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly
