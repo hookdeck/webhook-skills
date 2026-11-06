@@ -47,9 +47,9 @@ A **custom action** executed on an alert sends its own name as `action` (for exa
     "tinyId": "23",
     "alias": "aliastest",
     "message": "test alert",
-    "username": "fili@ifountain.com",
+    "username": "user1@example.com",
     "userId": "daed1180-0ce8-438b-8f8e-57e1a5920a2d",
-    "source": "fili@ifountain.com",
+    "source": "user1@example.com",
     "entity": "",
     "tags": ["tag1", "tag2"],
     "createdAt": 1420452191104,
@@ -67,10 +67,12 @@ A **custom action** executed on an alert sends its own name as `action` (for exa
 - `Escalate` is shaped differently: `alert` holds only `alertId`, and the top level has
   `escalationId`, `escalationName`, `escalationNotify` (`name`, `id`, `type`, `entity`),
   `escalationTime` and `repeatCount`. It has no `source` object.
-- `UpdatePriority`, `UpdateDescription` and `UpdateMessage` also include `integrationType`.
-- Alert `description` and `details` can be added to `Create` and custom actions only, and are
-  truncated to 1000 characters.
-- `createdAt` is milliseconds; `updatedAt` is in nanoseconds in the documented samples.
+- `TakeOwnership`, `UpdatePriority`, `UpdateDescription` and `UpdateMessage` also include
+  `integrationType`.
+- The checkboxes that send alert `description` and `details` apply to `Create` and custom actions
+  only, and both are truncated to 1000 characters. The `UpdateDescription` and `UpdateMessage`
+  examples carry both as well.
+- `createdAt` has 13 digits and `updatedAt` 19 in the documented samples. The docs don't state units.
 
 ## Full Event Reference
 

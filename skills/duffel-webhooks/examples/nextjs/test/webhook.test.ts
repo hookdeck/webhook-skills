@@ -43,7 +43,7 @@ describe('Duffel webhook', () => {
     'order.created',
     'order.airline_initiated_change_detected',
     'order_cancellation.confirmed',
-    'payment.succeeded',
+    'air.payment.succeeded',
     'order.unknown',
   ])('accepts a valid signature for %s', async (type) => {
     const body = event(type);

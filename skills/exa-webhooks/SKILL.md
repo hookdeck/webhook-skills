@@ -24,7 +24,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Exa signs every delivery with HMAC-SHA256. The `Exa-Signature` header looks like `t=<unix seconds>,v1=<hex>` and may carry **several `v1` values**; the request is valid if any one matches. The signed content is `"<t>.<raw body>"`, and the key is the webhook `secret` as a UTF-8 string (returned **only** in the response that creates the webhook, so store it then).
+Exa signs every delivery with HMAC-SHA256. The `Exa-Signature` header looks like `t=<unix seconds>,v1=<hex>` and may carry **several `v1` values**; the request is valid if any one matches. The signed content is `"<t>.<raw body>"`, and the key is the webhook `secret` as a UTF-8 string (returned **only** in the response that creates the webhook, so store it then). A Monitors API monitor signs the same way with its `webhookSecret`, also returned once.
 
 ### Verification (Node.js)
 

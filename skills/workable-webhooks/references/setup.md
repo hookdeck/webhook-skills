@@ -22,10 +22,10 @@ Subscriptions are created through the API, not a dashboard form. Authenticate wi
 curl -X POST "https://YOUR_SUBDOMAIN.workable.com/spi/v3/subscriptions" \
   -H "Authorization: Bearer $WORKABLE_SIGNING_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"target": "https://example.com/webhooks/workable", "event": "candidate_created", "args": {"account_id": "YOUR_ACCOUNT_ID"}}'
+  -d '{"target": "https://example.com/webhooks/workable", "event": "candidate_created", "args": {"account_id": "YOUR_SUBDOMAIN", "job_shortcode": "", "stage_slug": ""}}'
 ```
 
-Check the exact request fields (and the optional `job_shortcode` / `stage_slug` filters) on the [subscriptions endpoint reference](https://workable.readme.io/reference/webhook-subscriptions-candidates-employees). Create one subscription per event, for example `candidate_created`, `candidate_moved`, `employee_created`, `employee_updated`, `employee_published`.
+`args` is optional for candidate events, but if you include it, `account_id` (the account subdomain), `job_shortcode` and `stage_slug` are all required: use an empty string for all jobs or all stages. Leave `args` out for employee events. See the [subscriptions endpoint reference](https://workable.readme.io/reference/webhook-subscriptions). Create one subscription per event, for example `candidate_created`, `candidate_moved`, `employee_created`, `employee_updated`, `employee_published`. Target URLs must be unique, and a duplicate gets `409 Conflict`, so give each subscription its own path or query string.
 
 ## Testing
 

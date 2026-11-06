@@ -15,15 +15,17 @@ metadata:
 # 360dialog Webhooks
 
 360dialog (WhatsApp Business API provider) sends webhooks to your server for inbound WhatsApp
-messages, message status changes and errors. Bodies follow Meta's Cloud API format. Webhooks
-are **not signed**: the only authentication is an `Authorization: Basic base64(USER:PASS)`
-header that you set yourself in the `headers` object when you set the webhook URL.
+messages, message status changes and errors. Bodies follow Meta's Cloud API format. The
+authentication you can set from 360dialog's docs is an `Authorization: Basic base64(USER:PASS)`
+header in the `headers` object when you set the webhook URL. 360dialog also describes an
+optional `x-360dialog-signature` header, sent only when a signing secret is configured for the
+number; see [references/verification.md](references/verification.md).
 
 ## When to Use This Skill
 
 - How do I receive 360dialog webhooks?
 - How do I authenticate 360dialog webhooks with Basic auth?
-- Does 360dialog sign webhook payloads? (No: static Basic credential only)
+- Does 360dialog sign webhook payloads? (Only when a signing secret is configured for the number)
 - Why does my 360dialog webhook endpoint return 401?
 - How do I tell inbound messages from status updates (`messages` vs `statuses`)?
 - How do I handle Coexistence events (`smb_message_echoes`, `history`, `smb_app_state_sync`)?
@@ -65,7 +67,7 @@ Return `401` when this fails, `400` for a body that isn't a JSON object, and `20
 Python and Next.js equivalents are in [references/verification.md](references/verification.md).
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
-protection (no signature, no timestamp).** Anyone who learns it can forge requests, and a
+protection (no timestamp).** Anyone who learns it can forge requests, and a
 captured request can be replayed. Use HTTPS, treat the credential like a password, rotate it
 (set the webhook URL again with new headers) if it leaks, and dedupe on message IDs.
 
@@ -85,6 +87,8 @@ Dispatch on `entry[].changes[].field`, and within `messages` on which array is p
 | `smb_message_echoes` | `message_echoes` | Coexistence: messages the business sent from the WhatsApp Business app |
 | `history` | `history` | Coexistence: chat history shared after onboarding |
 | `smb_app_state_sync` | `state_sync` | Coexistence: business contacts added or changed |
+| `calls` | `calls` | A WhatsApp call connects or ends |
+| `standby` | `standby` | Meta Business Agent numbers: customer messages and agent replies while the agent holds the conversation |
 
 The docs show `history` and `smb_app_state_sync` as `{ id, event, data }` envelopes (partner
 webhooks); the examples accept both shapes.

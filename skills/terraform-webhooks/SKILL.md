@@ -70,34 +70,46 @@ verifies whatever `Content-Type` the request carries.
 When you save a configuration with **Enabled** on, or click **Send a test**, HCP
 Terraform POSTs a test payload whose `notifications[0].trigger` is `"verification"`
 (run fields are `null`). Return any **2xx**; the configuration can't be enabled
-otherwise. The request is signed like any other when a token is set, so the token
-must already be configured in your handler.
+otherwise. HashiCorp says all generic notification requests are signed when a token
+is set, so have the token in your handler first. The docs don't mention this request
+by name, so check **Last Response** if enabling fails.
 
 ## Triggers
 
-Run payloads (`payload_version: 1`) carry the trigger in `notifications[].trigger`.
-Workspace payloads (`payload_version: "2"`) carry it in a top-level `trigger`.
+Run payloads (`payload_version: 1`) carry the trigger in `notifications[].trigger`,
+which holds the run's state, and the configured trigger in
+`notifications[].trigger_type`. HashiCorp's example pairs `run:errored` with
+`run:run_canceled`. Workspace payloads (`payload_version: "2"`) carry it in a
+top-level `trigger`.
 
 | Trigger | Fires When |
 |---------|------------|
 | `run:created` | A run is created and enters the Pending stage |
 | `run:planning` | A run acquires the lock and starts executing |
 | `run:needs_attention` | A plan has changes and needs approval or a policy override |
+| `run:pending_apply_approval` | A run waits for approval before applying |
+| `run:cost_estimated` | Cost estimation finishes |
+| `run:policy_override_required` | A run needs a policy override to proceed |
+| `run:policies_checked` | Policy checks finish |
 | `run:applying` | A run enters the Apply stage |
 | `run:completed` | A run completes successfully |
-| `run:errored` | A run ends early from an error or cancellation |
+| `run:errored` | A run ends early (the state sent in `trigger`) |
+| `run:run_errored` | An error stops a run (in `trigger_type`) |
+| `run:run_canceled` | A run is canceled (in `trigger_type`) |
+| `run:policy_soft_failed` | A soft-mandatory policy check fails (in `trigger_type`) |
 | `assessment:drifted` | Drift detected (health assessments enabled) |
 | `assessment:check_failure` | Continuous validation checks failed |
 | `assessment:failed` | A health assessment itself failed |
 | `workspace:auto_destroy_reminder` | An automatic destroy run is imminent |
-| `workspace:auto_destroy_run_results` | An automatic destroy run was attempted |
+| `workspace:auto_destroy_run_results` | An automatic destroy run was attempted (HashiCorp's sample payloads say `workspace:auto_destroy_results`, so accept both) |
 | `workspace:deleted` | A workspace was deleted |
+| `change_request:created` | A change request is created (team configurations; the payload has no trigger field) |
 | `verification` | Test request sent on enable / "Send a test" |
 
 Run payload fields: `payload_version`, `notification_configuration_id`, `run_url`,
 `run_id`, `run_message`, `run_created_at`, `run_created_by`, `workspace_id`,
 `workspace_name`, `organization_name`, and `notifications[]` (`message`, `trigger`,
-`run_status`, `run_updated_at`, `run_updated_by`).
+`trigger_type`, `run_status`, `run_updated_at`, `run_updated_by`).
 
 > **For the full payload reference**, see [Notification configurations API](https://developer.hashicorp.com/terraform/cloud-docs/api-docs/notification-configurations).
 

@@ -66,7 +66,7 @@ class TestVerify:
 
 
 class TestWebhookEndpoint:
-    @pytest.mark.parametrize("op_type", ["insert_row", "create_row", "modify_row", "delete_row"])
+    @pytest.mark.parametrize("op_type", ["insert_row", "modify_row", "delete_row", "add_link"])
     def test_accepts_signed_events(self, op_type):
         body = make_payload(op_type)
         res = post(body, {"x-seatable-signature": sign(body)})

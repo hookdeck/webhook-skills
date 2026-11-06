@@ -72,7 +72,7 @@ function verifyAwsEventbridgeRequest(headers, user = process.env.AWS_EVENTBRIDGE
 
 ## Event Types
 
-Without an input transformer the body is the event envelope (`version`, `id`, `detail-type`,
+Without an input transformer a rule sends the event envelope (`version`, `id`, `detail-type`,
 `source`, `account`, `time`, `region`, `resources`, `detail`). Dispatch on `source` + `detail-type`:
 
 | `source` | `detail-type` | Sent When |
@@ -93,7 +93,7 @@ AWS_EVENTBRIDGE_WEBHOOK_PASSWORD=your-connection-password   # Connection > Basic
 
 ## Local Development
 
-EventBridge can't reach `localhost` and requires a public HTTPS endpoint. Tunnel with the Hookdeck
+EventBridge can't reach `localhost`, and the endpoint must use HTTPS with a publicly trusted certificate. Tunnel with the Hookdeck
 CLI (no account required):
 
 ```bash

@@ -79,7 +79,7 @@ class TestWebhookEndpoint:
         assert post(STORY_UPDATE, sign(STORY_UPDATE), "text/plain").status_code == 200
 
     @pytest.mark.parametrize("kind", [
-        "story create", "story delete", "epic update", "story-comment create", "label create",
+        "story create", "epic create", "epic update", "label create",
     ])
     def test_acknowledges_actions(self, kind):
         entity_type, action = kind.split(" ")

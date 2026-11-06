@@ -79,12 +79,12 @@ function handleEvent(payload) {
       return;
 
     case 'refund.succeeded':
-      console.log(`Refund succeeded: ${data.id}`);
+      console.log(`Refund succeeded: ${data.refund_id}`);
       // TODO: mark the refund as completed
       return;
 
     case 'refund.failed':
-      console.log(`Refund failed: ${data.id}`);
+      console.log(`Refund failed: ${data.refund_id}`);
       // TODO: alert support
       return;
   }

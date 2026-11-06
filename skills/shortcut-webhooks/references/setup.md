@@ -17,10 +17,12 @@ Store it as `SHORTCUT_WEBHOOK_SECRET`.
 
 ## Register Your Endpoint
 
-1. In Shortcut, open the Outgoing Webhook settings (see Shortcut's Help Center article on Webhooks for screenshots and the current menu location)
+1. In Shortcut, go to Settings > Integrations > Webhooks and click **+ Add New Webhook**
 2. Enter your endpoint URL (for example `https://your-app.com/webhooks/shortcut`)
 3. Enter the secret you generated
 4. Save
+
+To register one from code, send `POST https://api.app.shortcut.com/api/v3/integrations/webhook` with a `Shortcut-Token` header and a `webhook_url` and `secret` in the JSON body. See [Shortcut's Webhooks help page](https://www.shortcut.com/help/admin/webhooks).
 
 Shortcut notifies the URL about story and epic changes (including comments and tasks). The API docs describe no per-event filter, so ignore actions you don't need in your handler.
 

@@ -56,8 +56,8 @@ The secret is a plain string (use it as-is; no base64 decoding). Read the body a
 
 ## Plan and signing caveats
 
-- **Webhook secrets need a paid plan.** On plans without one, webhooks are delivered unsigned and there is nothing to verify; restrict by Storyblok's static IPs instead (see [setup](references/setup.md)).
-- **Task (Tasks app) webhooks are unsigned.** They never carry a `webhook-signature`. Put your own secret in the task's **User dialog** field and check `dialog_values` in your endpoint. Use a separate route so you don't weaken the signed one.
+- **Webhook secrets need a paid plan.** Without a secret there is nothing to verify against, so restrict by Storyblok's static IPs instead (see [setup](references/setup.md)). Storyblok's docs say every webhook request includes `webhook-signature`, but not what it holds when no secret is set, so don't treat its presence as proof of signing.
+- **Task (Tasks app) webhooks can't be verified with a signature.** They don't support secrets. Put your own secret in the task's **User dialog** field and check `dialog_values` in your endpoint. Use a separate route so you don't weaken the signed one.
 - Experiments, Releases, and Pipelines triggers are also paid-plan features.
 
 ## Payload and Event Types
@@ -66,25 +66,26 @@ Every payload has `text`, `action`, and `space_id`, plus entity fields. There is
 
 | Entity | `action` values | Entity fields |
 |--------|-----------------|---------------|
-| Story | `published`, `unpublished`, `deleted`, `moved` | `story_id`, `full_slug` (`moved` adds `old_full_slug`) |
+| Story | `published`, `unpublished`, `deleted`, `moved` | `story_id`, `story_uuid`, `full_slug` (`moved` adds `old_full_slug`) |
 | Asset | `created`, `replaced`, `deleted`, `restored` | `asset_id` |
 | Workflow | `stage.changed` | `story_id`, `workflow_name`, `workflow_stage_name` |
 | User | `added`, `removed`, `roles_updated` | `user_id` |
-| Datasource | `entries_updated`, `entries_deleted` | `datasource_slug` |
+| Datasource | `entries_updated`, `entries_deleted` | `datasource_slug` (`entries_updated` adds `dimension` when a value changes in a single dimension) |
 | Discussion | `created`, `resolved`, `comment_created`, `comment_deleted`, `comment_updated` | `id`, `story_id`, `block_uid`, `component`, `fieldname` |
 | Experiment | `experiment.created`, `experiment.started`, `experiment.resumed`, `experiment.paused`, `experiment.completed`, `experiment.winner_selected`, `experiment.deleted` | `experiment_id`, `status` |
 | Release | `merged` | `release_id` |
 | Pipeline | `deployed` | `branch_id` |
-| Task | `task_execution` (unsigned) | `task`, `dialog_values` |
+| Task | `task_execution` (no secret support) | `task`, `dialog_values` |
 
 Example (story published):
 
 ```json
 {
-  "text": "The user joy.bringer@storyblok.com published the Story Home 2 (marketing-articles/home-2)\nhttps://app.storyblok.com/#/me/spaces/184738/stories/0/0/166888799188279",
+  "text": "The user user1@example.com published the Story Home 2 (marketing-articles/home-2)\nhttps://app.storyblok.com/#/me/spaces/184738/stories/0/0/166888799188279",
   "action": "published",
   "space_id": 184738,
   "story_id": 166888799188279,
+  "story_uuid": "9a3f1c2e-5b7d-4e8a-b6c4-2d1f0e9a7b35",
   "full_slug": "marketing-articles/home-2"
 }
 ```
@@ -107,7 +108,7 @@ Because there are no retries, acknowledge fast and process asynchronously.
 
 | Header | Description |
 |--------|-------------|
-| `webhook-signature` | Lowercase hex HMAC-SHA1 of the raw body (only when a Webhook secret is set) |
+| `webhook-signature` | Lowercase hex HMAC-SHA1 of the raw body. Verify it against your Webhook secret |
 
 ## Environment Variables
 

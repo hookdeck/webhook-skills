@@ -11,8 +11,8 @@ dotenv.config({ quiet: true });
 export const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Emporix documents each event's payload schema but not an envelope, and Svix sends no
-// event-type header. Use `eventType` from the body if present, otherwise from the
+// Emporix documents each event's payload schema but not an envelope, and no event-type
+// header is documented. Use `eventType` from the body if present, otherwise from the
 // `?eventType=` query string on the endpoint URL registered in the Svix dashboard.
 export function getEventType(body, query = {}) {
   if (body && typeof body.eventType === 'string') return body.eventType;

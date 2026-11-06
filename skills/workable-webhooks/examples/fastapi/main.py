@@ -40,7 +40,7 @@ async def workable_webhook(request: Request):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    event_type = payload.get("event_type") or payload.get("event")
+    event_type = payload.get("event_type")
     if event_type == "candidate_created":
         print("Candidate created:", payload.get("id"))
     elif event_type == "candidate_moved":

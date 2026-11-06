@@ -20,11 +20,11 @@ You choose it. The secret key is a shared secret between you and SeaTable; paste
 
 ## Which Events Are Sent?
 
-Every row insert, modify and delete in the base. There is no event filter. Structural changes (columns, views, comments, row locks) are not sent.
+Every row insert, modify and delete in the base, and every link change. There is no event filter. Structural changes (columns, views, comments, row locks) are not sent.
 
 ## What Happens When My Endpoint Fails?
 
-SeaTable sets the webhook to `invalid` after 5 consecutive non-200 responses. Fix the endpoint, then open the webhook, save it again without changes, and it becomes active.
+SeaTable sets the webhook to `invalid` after 5 consecutive errors (a status outside 200 to 299, a redirect, or no response within 30 seconds), or on the first error if it can't deliver at all (DNS failure, connection refused, certificate error, non-public URL). It doesn't retry. Fix the endpoint, then open the webhook, save it again without changes, and it becomes active.
 
 ## Testing
 

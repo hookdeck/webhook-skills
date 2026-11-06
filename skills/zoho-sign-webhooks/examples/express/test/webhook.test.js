@@ -14,7 +14,7 @@ function sign(body, secret = TEST_SECRET) {
 function payload(operationType, extra = {}) {
   return JSON.stringify({
     notifications: {
-      performed_by_email: 'testuser@zoho.com',
+      performed_by_email: 'user1@example.com',
       performed_at: 1555062604837,
       reason: 'reason given if any',
       activity: 'Document has been signed',

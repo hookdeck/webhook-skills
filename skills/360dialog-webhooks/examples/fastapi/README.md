@@ -3,7 +3,7 @@
 Minimal example of receiving 360dialog (WhatsApp Business API) webhooks and authenticating
 them with HTTP Basic auth.
 
-360dialog does not sign webhooks. You set `Authorization: Basic base64(USER:PASS)` in the
+The documented authentication is a static header. You set `Authorization: Basic base64(USER:PASS)` in the
 `headers` object when you set the webhook URL, and 360dialog sends it with every request. The
 handler decodes it, splits on the first colon and compares the username and the password each
 in constant time, evaluating both before deciding. A static credential authenticates the

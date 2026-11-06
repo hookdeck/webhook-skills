@@ -29,7 +29,7 @@ Printify webhooks are created **through the API** (`POST /v1/shops/{shop_id}/web
 
 ## Verification (core)
 
-Every request carries `X-Pfy-Signature: sha256=<hex>`. The value is the **hex** HMAC-SHA256 of the **raw request body**, keyed with your secret as a UTF-8 string (not base64-decoded). Strip the `sha256=` prefix before comparing. Printify has no webhook SDK, so verify manually against the raw body (don't `JSON.parse` first).
+When a webhook has a secret, each request carries `X-Pfy-Signature: sha256=<hex>`. The value is the **hex** HMAC-SHA256 of the **raw request body**, keyed with your secret as a UTF-8 string (not base64-decoded). Strip the `sha256=` prefix before comparing. Printify has no webhook SDK, so verify manually against the raw body (don't `JSON.parse` first).
 
 ```javascript
 const crypto = require('crypto');
@@ -56,10 +56,10 @@ The payload is `{ id, type, created_at, resource: { id, type, data } }`. The eve
 
 | Event | Triggered When | `resource.data` contains |
 |-------|----------------|--------------------------|
-| `order:created` | An order was created | Nothing |
+| `order:created` | An order was created | Documented as nothing, but Printify's payload example has `shop_id` |
 | `order:updated` | An order's status changed | `shop_id`, `status` |
 | `order:line-item:canceled` | A single line item was canceled | `line_item_id`, `status`, `status_details` |
-| `order:sent-to-production` | An order was sent to production | Nothing |
+| `order:sent-to-production` | An order was sent to production | Documented as nothing, but Printify's payload example has `shop_id` |
 | `order:shipment:created` | Some or all items were fulfilled | `shipped_at`, `carrier`, `skus` |
 | `order:shipment:delivered` | Some or all items were delivered | `delivered_at`, `carrier`, `skus` |
 | `product:created` | A product was created | `shop_id` |
@@ -67,7 +67,8 @@ The payload is `{ id, type, created_at, resource: { id, type, data } }`. The eve
 | `product:publish:started` | Publishing to the storefront began | `action`, `publish_details` |
 | `product:deleted` | A product was deleted | `shop_id` |
 | `shop:disconnected` | A shop was disconnected | Nothing |
-| `personalization-preview-task:processed` | A preview task reached a terminal state | `task_id`, `status`, `mockups` |
+| `personalization-preview-task:processed` | A preview task reached a terminal state | `task_id`, `status`, and `mockups` or `error` |
+| `support-request:updated` | A support request changed, such as its status or outcome | `order_id`, `type`, `status`, `status_details`, `outcome` |
 
 > **For the full event reference**, see [Printify's webhook documentation](https://developers.printify.com/#webhooks).
 

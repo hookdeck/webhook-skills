@@ -49,4 +49,4 @@ Then set the Hookdeck URL as the **Endpoint URL** in **Settings → Webhooks** a
 
 - `POST /webhooks/storyblok` - Reads the raw body with `request.text()`, verifies `webhook-signature` (helpers in `lib/storyblok.ts`), then dispatches on `action` plus the entity id field.
 
-Task (Tasks app) webhooks are unsigned and are not handled by this route.
+Task (Tasks app) webhooks do not support secrets and are not handled by this route.

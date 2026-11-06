@@ -10,7 +10,7 @@ const app = express();
  * The HMAC key is used as a raw UTF-8 string (it is NOT base64-decoded).
  * @param {Buffer|string} rawBody - Raw request body, exactly as received
  * @param {string} signatureHeader - Value of the `Signature` header
- * @param {string} secret - HMAC key from the Business Portal
+ * @param {string} secret - Paysafe's hmacKey
  * @returns {boolean}
  */
 function verifyPaysafeWebhook(rawBody, signatureHeader, secret) {

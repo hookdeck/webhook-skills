@@ -14,11 +14,15 @@ Add this to `~/taiga-back/settings/local.py` and restart taiga-back:
 WEBHOOKS_ENABLED = True
 ```
 
-Optionally block webhook calls to private and reserved addresses (this also blocks `localhost` targets):
+taiga-back's Docker config turns this on by default, through the `WEBHOOKS_ENABLED` environment variable.
+
+taiga-back blocks webhook calls to private and reserved addresses by default, including `localhost` targets. To allow them (Taiga's docs still name an older `WEBHOOKS_BLOCK_PRIVATE_ADDRESS` setting, but the current code reads this one):
 
 ```python
-WEBHOOKS_BLOCK_PRIVATE_ADDRESS = True
+WEBHOOKS_ALLOW_PRIVATE_ADDRESS = True
 ```
+
+Redirects are blocked by default too, and a 3xx response is logged as a failure. Register the final URL, or set `WEBHOOKS_ALLOW_REDIRECTS = True`.
 
 Hosted Taiga needs no setting.
 

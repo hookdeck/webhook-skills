@@ -30,6 +30,10 @@ The body is a JSON:API document. `data` is an **array** of event resources:
 
 With `includeResources: true` the full related resource is included as well.
 
+A few of Unit's documented examples (`assignment.*`, `cardFraudCase.*`, `repayment.*` and
+`wireDrawdown.created`) show `data` as a single object, so handle both shapes. Unit also
+says `payment.canceled` can arrive as `payment.Canceled`.
+
 ## Delivery Modes and Retries
 
 | `deliveryMode` | Behavior |

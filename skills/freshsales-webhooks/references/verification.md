@@ -68,8 +68,9 @@ def verify_freshsales_request(headers, secret=None, header_name=None) -> bool:
 ## Common Gotchas
 
 - **Don't expect a signature.** There's no `X-Freshsales-Signature` or similar header.
-- **No spaces in the header.** Freshsales doesn't run the trigger if the custom header contains
-  spaces in between. Use a hex secret, not `Bearer abc`. A header with several values needs
+- **No spaces in the header name.** Freshsales doesn't run the trigger if the name contains spaces,
+  as in `X-Sample Custom Header1`. Its docs don't say whether a space in the value is safe, so use a
+  hex secret, not `Bearer abc`. A header with several values needs
   delimiters other than comma or colon.
 - **Compare the whole value.** If you typed a prefix such as `Bearer `, it's part of the secret.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which

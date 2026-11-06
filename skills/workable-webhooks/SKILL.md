@@ -54,7 +54,7 @@ def verify(raw_body: bytes, signature_header: str, key: str) -> bool:
     return hmac.compare_digest((signature_header or "").lower().encode(), expected.encode())
 ```
 
-Read the raw body regardless of content type (Express: `express.raw({ type: '*/*' })`). There is no timestamp header, so make handlers idempotent.
+Read the raw body regardless of content type (Express: `express.raw({ type: '*/*' })`). There is no timestamp header, so make handlers idempotent. Workable's employee examples reuse the top-level `id` across different events, so key on `event_type`, `id` and `fired_at` rather than `id` alone.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -71,7 +71,7 @@ Read the raw body regardless of content type (Express: `express.raw({ type: '*/*
 | `employee_updated` | An employee record was updated |
 | `employee_published` | An employee record was published |
 
-Workable also documents `candidate_deleted`, `job_deleted`, `onboarding_completed` and `timeoff_updated`. See [references/overview.md](references/overview.md).
+Workable also documents `candidate_deleted`, `job_deleted`, `onboarding_completed` and `timeoff_updated`. You subscribe to `timeoff_updated`, but Workable's examples carry an `event_type` of `timeoff_request_approved` or `timeoff_request_reverted`, so route on those. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 

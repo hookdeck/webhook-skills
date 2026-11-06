@@ -65,8 +65,9 @@ def verify_breezy_signature(raw_body: bytes, signature: str | None, secret: str)
 - **Whole secret.** Keep the `whsec_` prefix.
 - **Length check.** `crypto.timingSafeEqual` throws on unequal lengths, so check
   length first.
-- **Status codes.** Return 400 for a bad or missing signature and 2xx on success;
-  Breezy retries anything else up to 10 times.
+- **Status codes.** Return 400 for a bad or missing signature and 2xx on success.
+  Breezy treats every non-2xx as a failure, including that 400, so it retries up to
+  10 times, and repeated failures can disable the endpoint.
 
 ## Debugging Verification Failures
 

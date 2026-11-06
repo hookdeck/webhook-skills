@@ -10,13 +10,14 @@
 |-------|----------------|------------------|
 | `message` | Incoming message (text, audio, files) | Chatbots, inbox sync |
 | `message.any` | Any message created, including your own | Full conversation mirror |
-| `message.ack` | Message sent to server/device, read or played | Delivery and read receipts |
+| `message.ack` | Direct-chat message sent to server/device, read or played | Delivery and read receipts |
+| `message.ack.group` | Group participant received, read or played a message | Group receipts (WAHA's code sends these only on this event, although the docs' example shows `message.ack`) |
 | `message.reaction` | A message was reacted to | Engagement tracking |
 | `session.status` | Session status changes | QR code login flow, health alerts |
 | `group.v2.join` | You joined or were added to a group | Group onboarding |
 | `presence.update` | Chat presence changes | Typing/online indicators |
 
-Other events listed in the docs: `engine.event`, `state.change`, `message.waiting`, `message.edited`, `message.revoked`, `chat.archive`, `group.v2.leave`, `group.v2.participants`, `group.v2.participants.join-request`, `group.v2.update`, `label.upsert`, `label.deleted`, `label.chat.added`, `label.chat.deleted`, `poll.vote`, `poll.vote.failed`, `call.received`, `call.accepted`, `call.rejected`. Some are engine-specific (WEBJS, WPP, NOWEB, GOWS). `group.join` and `group.leave` are deprecated.
+Other events listed in the docs: `engine.event`, `message.waiting`, `message.edited`, `message.revoked`, `chat.archive`, `group.v2.leave`, `group.v2.participants`, `group.v2.participants.join-request`, `group.v2.participants.tag`, `group.v2.update`, `label.upsert`, `label.deleted`, `label.chat.added`, `label.chat.deleted`, `poll.vote`, `poll.vote.failed`, `event.response`, `event.response.failed`, `call.received`, `call.accepted`, `call.rejected`. Some are engine-specific (WEBJS, WPP, NOWEB, GOWS). `group.join`, `group.leave` and `state.change` are deprecated.
 
 ## Event Payload Structure
 
@@ -40,7 +41,7 @@ Other events listed in the docs: `engine.event`, `state.change`, `message.waitin
 
 ## Retries
 
-Configure `retries` per webhook: `policy` (`constant`, `linear`, `exponential` with 20% jitter), `delaySeconds`, `attempts`. Retried deliveries resend the same event, so handlers must be idempotent.
+Configure `retries` per webhook: `policy` (`constant`, `linear`, `exponential` with 20% jitter), `delaySeconds`, `attempts`. The docs don't state defaults; [WAHA's sender](https://github.com/devlikeapro/waha/blob/core/src/modules/waha-webhook/WebhookPlugin.sender.ts) uses `constant`, 2 seconds, 15 retries, on any non-2xx or network error, and drops the event after that. Retried deliveries resend the same event, so handlers must be idempotent.
 
 ## Full Event Reference
 

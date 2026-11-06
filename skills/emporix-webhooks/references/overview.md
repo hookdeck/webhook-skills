@@ -56,8 +56,8 @@ exact string your tenant uses.
 Payloads are the event schemas from the event reference, and you choose which attributes are included
 when you subscribe. Examples: `order.created` has `id`, `status`, `entries`, and so on; `customer.created`
 has `customerNumber`, `id`, `contactEmail`, `firstName`, `lastName`; `product.created` has `id`, `code`,
-`name`, `productType`, `published`, `media`. Emporix documents no `eventType` field in the body and Svix
-sends no event-type header, so the examples fall back to an `?eventType=` query parameter on the endpoint URL.
+`name`, `productType`, `published`, `media`. Emporix documents no `eventType` field in the body and no event-type header,
+so the examples fall back to an `?eventType=` query parameter on the endpoint URL.
 
 `index-item.updated` is emitted once per site a product's prices are assigned to, so one product update can
 produce several events.

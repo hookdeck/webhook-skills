@@ -2,16 +2,16 @@
 
 ## What Are Shopware Webhooks?
 
-Shopware apps subscribe to events in a shop through `<webhook>` entries in the app manifest. When the event fires, the shop sends a `POST` with a JSON body to the URL you declared. Each request is signed with the app secret that your app assigned to that shop during registration.
+Shopware apps subscribe to events in a shop through `<webhook>` entries in the app manifest. When the event fires, the shop sends a `POST` with a JSON body to the URL you declared. Each request is signed with the shop secret that your app assigned to that shop during registration.
 
 ## Common Event Types
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `checkout.order.placed` | An order is placed | Fulfilment, ERP sync |
-| `product.written` | A product is inserted or updated | Catalogue sync |
-| `order.written` | An order is inserted or updated | Order sync |
-| `customer.written` | A customer is inserted or updated | CRM sync |
+| `product.written` | A product is inserted, updated or deleted | Catalogue sync |
+| `order.written` | An order is inserted, updated or deleted | Order sync |
+| `customer.written` | A customer is inserted, updated or deleted | CRM sync |
 | `state_enter.order.state.completed` | An order enters the completed state | Notifications, invoicing |
 | `state_enter.order_transaction.state.paid` | A payment transaction is paid | Release goods |
 

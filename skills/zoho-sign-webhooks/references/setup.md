@@ -14,11 +14,13 @@
 4. To sign deliveries, enable the **HMAC signature** checkbox and enter a secret key of your
    own, or click **Generate**.
 5. Save. **The secret cannot be retrieved afterwards**, so store it immediately as
-   `ZOHO_SIGN_WEBHOOK_SECRET`. If you lose it, edit the webhook and set a new one.
+   `ZOHO_SIGN_WEBHOOK_SECRET`. Zoho's articles don't describe changing a key, so a lost one may
+   mean recreating the webhook.
 
 ## What Does Zoho Sign Send?
 
-- `POST` with a JSON body (`notifications` and `requests`)
+- A JSON body (`notifications` and `requests`). Zoho's articles don't state the HTTP method or
+  `Content-Type`, so the examples accept `POST` and read the body as raw bytes
 - With HMAC enabled: `X-ZS-WEBHOOK-SIGNATURE: <base64 HMAC-SHA256 of the raw body>`
 - Without HMAC enabled, no signature header is sent and nothing can be verified. Enable it.
 

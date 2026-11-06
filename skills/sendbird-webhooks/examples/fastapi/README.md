@@ -46,5 +46,5 @@ Then set the Hookdeck URL as the webhook URL in Sendbird Dashboard > Settings > 
 ## Notes
 
 - Verification uses the **raw body** and the `x-sendbird-signature` header. Do not use the legacy `x-signature` header: its value never matches when the body contains non-ASCII characters (such as emoji).
-- Sendbird waits 5 seconds for a response and retries up to three times, so respond fast and process asynchronously.
+- Sendbird waits 5 seconds for a response and sends the request up to three times, so respond fast and process asynchronously.
 - The handler reads `await request.body()` before any JSON parsing.

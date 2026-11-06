@@ -15,6 +15,11 @@ You register a webhook for one or more **event categories**. Each notification c
 | `single_payment.iso_status.updated` | A single payment's ISO 20022 status (`statusDetails.isoStatus`) changes; can fire several times | Detailed status tracking (e.g. `ACSC`, `RJCT`) |
 | `hosted_pis.payment_status.completed.v1` | A Hosted Pages payment completed successfully | Fulfil an order |
 | `hosted_pis.payment_status.failed.v1` | A Hosted Pages payment failed to execute | Notify customer, offer retry |
+| `sweeping_vrp.payment_status.completed.v1`, `commercial_vrp.payment_status.completed.v1` | A VRP payment completed | Record the payment |
+| `sweeping_vrp.payment_status.failed.v1`, `commercial_vrp.payment_status.failed.v1` | A VRP payment failed | Alert or retry |
+| `transactions.categorisation.completed` | A categorisation finished; results are available for 30 minutes | Fetch the results straight away |
+| `transactions.categorisation.failed` | A categorisation failed | Check `event.error.issues` |
+| `categorisation.feedback_status.updated.v1` | Categorisation feedback changed status | Update your feedback record |
 
 Other categories exist (for example async data-access processing). List the categories enabled for your application with `GET /webhook/events/categories`. Treat any `type` you don't handle as a no-op and return 200.
 
@@ -50,3 +55,6 @@ Notes from Yapily's docs: payment webhooks are for single payments only; the pay
 - [Webhooks introduction](https://docs.yapily.com/tools-and-services/webhooks/introduction)
 - [Payment notifications](https://docs.yapily.com/payments/payment-resources/payment-notifications)
 - [Hosted payment webhooks](https://docs.yapily.com/tools-and-services/hosted-pages/payment-webhooks)
+- [VRP webhooks](https://docs.yapily.com/payments/vrps/get-started)
+- [Categorisation webhooks](https://docs.yapily.com/data/data-plus/tutorial-categorisation)
+- [Categorisation feedback webhooks](https://docs.yapily.com/data/data-plus/categorisation-feedback)

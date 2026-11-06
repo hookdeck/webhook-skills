@@ -100,7 +100,7 @@ app.post('/webhooks/sendbird',
         console.log(`Unhandled event: ${category}`);
     }
 
-    // Respond quickly: Sendbird waits 5 seconds and retries up to 3 times
+    // Respond quickly: Sendbird waits 5 seconds and sends the request up to 3 times
     res.status(200).send('OK');
   }
 );

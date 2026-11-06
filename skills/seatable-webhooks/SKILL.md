@@ -3,7 +3,7 @@ name: seatable-webhooks
 description: >
   Receive and verify SeaTable webhooks. Use when setting up SeaTable webhook
   handlers, debugging X-Seatable-Signature verification, or handling base
-  change events (insert_row, modify_row, delete_row).
+  change events (insert_row, modify_row, delete_row, link changes).
 license: MIT
 metadata:
   author: hookdeck
@@ -55,8 +55,9 @@ Every delivery has `event` (currently always `update`) and `data`. What changed 
 | `insert_row` | A row is added or duplicated (UI, form or API) |
 | `modify_row` | A row's content changes; `data.row_data` holds `column_name`, `value`, `old_value` |
 | `delete_row` | A row is deleted |
+| `add_link`, `remove_link`, `update_links`, `update_rows_links` | A link between rows changes. These bodies have no `row_id` or `row_data` |
 
-SeaTable's docs list `insert_row` as the value, but one sample on the secret-key page shows `create_row`. The examples accept both. Structural changes (new columns, views, comments, row locks) send nothing. A multi-row paste in the web editor sends one webhook with an extra `data.row_count`.
+Structural changes (new columns, views, comments, row locks) send nothing. One operation that changes several rows, in the web editor or through one API call, sends one webhook with an extra `data.row_count`, and its other fields describe a single row.
 
 ## Environment Variables
 

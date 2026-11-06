@@ -34,7 +34,7 @@ with `aws.`) and `detail-type` is a free-form string.
 
 ## Event Payload Structure
 
-Without an input transformer the body is the event envelope:
+Without an input transformer a rule sends the event envelope:
 
 ```json
 {
@@ -43,16 +43,17 @@ Without an input transformer the body is the event envelope:
   "detail-type": "EC2 Instance State-change Notification",
   "source": "aws.ec2",
   "account": "123456789012",
-  "time": "2019-10-02T17:40:17Z",
+  "time": "2015-11-11T21:29:54Z",
   "region": "us-east-1",
   "resources": ["arn:aws:ec2:us-east-1:123456789012:instance/i-abcd1111"],
-  "detail": { "instance-id": "i-abcd1111", "state": "pending" }
+  "detail": { "instance-id": "i-0123456789", "state": "RUNNING" }
 }
 ```
 
 With an [input transformer](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html)
 the body is whatever the template builds (JSON or plain text), so don't assume the envelope.
-GET and DELETE requests normally have no body.
+AWS doesn't describe a body for GET or DELETE requests, so handle an empty one. A pipe uses an
+input template to shape what it sends, so don't assume the envelope there either.
 
 ## Delivery and Retries
 
@@ -60,7 +61,8 @@ GET and DELETE requests normally have no body.
 - It retries `401`, `407`, `409`, `429` and `5xx` responses (event buses: up to 24 hours and 185
   attempts by default). Other `4xx` responses are not retried. It honors `Retry-After`.
 - Failed events go to a dead-letter queue if one is configured, otherwise they are dropped.
-- Delivery is at-least-once, so handlers must be idempotent (use the envelope `id`).
+- AWS states no delivery guarantee for rule targets, but timed-out requests are retried, so the
+  same event can arrive twice. Make handlers idempotent (use the envelope `id`).
 
 ## Full Event Reference
 

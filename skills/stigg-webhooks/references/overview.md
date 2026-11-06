@@ -29,7 +29,7 @@ The event name is in the payload's `type` field.
 | `entitlement.usage_exceeded` | Usage passes an entitlement limit | Upsell, throttling |
 | `promotionalEntitlement.granted` / `.updated` / `.revoked` / `.ends_soon` / `.expired` | Promotional entitlement lifecycle | Access gates |
 
-Catalog events (`product.*`, `plan.*`, `addon.*`, `feature.*`, `feature_group.*`, `coupon.*`) and credit events (`credits.granted`, `credits.balance.updated`, and others) also exist, along with `sync.failed` and `data_export.sync_failed`.
+Catalog events (`product.*`, `plan.*`, `addon.*`, `feature.*`, `feature_group.*`, `coupon.*`) and credit events (`credit_grant.*`, `credit_balance.*`, `automatic_recharge.*`) also exist, along with governance entity events (`entity_type.*`, `entity.*`), `sync.failed` and `data_export.sync_failed`.
 
 ## Event Payload Structure
 
@@ -49,7 +49,7 @@ Every event shares an envelope:
 }
 ```
 
-`timestamp` can be omitted on some events. Use `messageId` to de-duplicate: retries and resends reuse it. Stigg does not guarantee delivery order.
+`timestamp` can be omitted on some events. Use `messageId` to de-duplicate: Stigg can deliver the same webhook more than once. Some documented examples show no `messageId`, so keep a fallback key. Stigg does not guarantee delivery order.
 
 ## Retries
 

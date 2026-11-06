@@ -58,18 +58,9 @@ Every Release Management webhook has these fields:
 | `webhook_config_id` | The outgoing webhook configuration |
 | `webhook_event_unique_id` | `WEBHOOK_ID@TRIGGER_TIMESTAMP_NANO`; use it for idempotency |
 
-```json
-{
-  "trigger_event": "testflight_upload_completed",
-  "release_id": "…",
-  "app_id": "…",
-  "triggered_by": "Automation",
-  "webhook_event_unique_id": "…@1730000000000000000",
-  "file_name": "MyApp.ipa",
-  "version": "1.4.0",
-  "version_code": "42"
-}
-```
+Each event adds its own fields, such as `file_name`, `version` and `version_code` on upload events.
+Bitrise documents all of these as field tables with no example body, so confirm the nesting and
+value types against a real delivery under **Recent deliveries**.
 
 **CI build event payloads are undocumented.** The docs only say a build event is a build being
 started or ending, and publish no payload schema, field names or type field for them. The examples

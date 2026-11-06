@@ -6,7 +6,7 @@ Paxos webhooks deliver asynchronous events from the Paxos Platform to an HTTPS P
 
 Paxos **does not sign** webhook events. Events are also **thin**: the payload identifies the event but does not carry the full object. Fetch it with the authenticated Get Event API using the event `id`. This skill covers the **API Key** auth type; OAuth (client credentials) is not covered.
 
-Each entity can have at most 10 active webhooks, names must be unique, and webhooks can't be updated (create a new one and delete the old one).
+Each entity can have at most 10 active webhooks, and names must be unique. Update a webhook's URL, event types, credentials or rate limit in Dashboard.
 
 ## Payload Fields
 
@@ -36,7 +36,7 @@ Each entity can have at most 10 active webhooks, names must be unique, and webho
 
 - **Identity:** `identity.documents_required`, `identity.documents_accepted`, `identity.documents_denied`, `identity.approved`, `identity.denied`, `identity.disabled`, `identity.kyc_refresh.started`, `identity.kyc_refresh.completed`, `identity.kyc_refresh.expired`, `identity.control.created`, `identity.control.deleted`, `identity.tax_documentation.status_changed`
 - **Transfers:** `transfer.<method>.<status>` where method is one of `act_deposit`, `act_withdrawal`, `banking_circle_intrabank_deposit`, `banking_circle_intrabank_withdrawal`, `bny_intrabank_deposit`, `bny_intrabank_withdrawal`, `crypto_deposit`, `crypto_withdrawal`, `cubix_deposit`, `cubix_withdrawal`, `rtp_deposit`, `scb_intrabank_deposit`, `scb_intrabank_withdrawal`, `wire_deposit`, `wire_withdrawal`, and status is `pending`, `completed` or `failed` (RTP has deposits only). `transfer.internal_transfer_debit.completed` and `transfer.internal_transfer_credit.completed` have no pending/failed variants.
-- **Orchestrations:** `orchestration.processing`, `orchestration.pending`, `orchestration.rejected`, `orchestration.completed`, `orchestration.failed`, and granular `orchestration.status_details.pending_customer_approval`, `.conversion_in_progress`, `.destination_transfer_in_progress`, `.conversion_failed`, `.destination_transfer_failed`, `.policy_rejected`
+- **Orchestrations:** `orchestration.processing`, `orchestration.pending`, `orchestration.rejected`, `orchestration.completed`, `orchestration.failed`, and granular `orchestration.status_details.pending_customer_approval`, `.conversion_in_progress`, `.destination_transfer_in_progress`, `.travel_rule_info_required`, `.conversion_failed`, `.destination_transfer_failed`, `.policy_rejected`
 
 ## Delivery
 

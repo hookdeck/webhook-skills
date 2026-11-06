@@ -83,7 +83,7 @@ describe('POST /webhooks/shortcut', () => {
     expect(res.status).toBe(200);
   });
 
-  it.each(['story create', 'story delete', 'epic update', 'story-comment create', 'label create'])(
+  it.each(['story create', 'epic create', 'epic update', 'label create'])(
     'acknowledges %s',
     async (kind) => {
       const [entity_type, action] = kind.split(' ');

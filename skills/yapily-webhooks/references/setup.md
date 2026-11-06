@@ -11,7 +11,7 @@ Yapily webhooks are registered through the API, not a dashboard form.
 ## How Do I Get the Webhook Secret?
 
 1. List the available categories: `GET /webhook/events/categories`
-2. Register the webhook: `POST /webhook/events` with `categories` (one or more), `callbackUrl.main.url`, optional `callbackUrl.backup.url`, and optional `metadata`
+2. Register the webhook: `POST /webhook/events` with `applicationId`, `categories` (one or more), `callbackUrl.main.url`, optional `callbackUrl.backup.url`, and optional `metadata`
 3. Read `webhookSecret` from the 201 response and store it as `YAPILY_WEBHOOK_SECRET`
 
 **This is the only call that returns the secret.** You cannot retrieve it later; if it is lost or compromised, reset it.
@@ -23,6 +23,7 @@ curl -X POST https://api.yapily.com/webhook/events \
   -u "$YAPILY_APPLICATION_UUID:$YAPILY_APPLICATION_SECRET" \
   -H "Content-Type: application/json" \
   -d '{
+    "applicationId": "<your application or sub-application ID>",
     "categories": ["<category from GET /webhook/events/categories>"],
     "callbackUrl": { "main": { "url": "https://example.com/webhooks/yapily" } },
     "metadata": { "env": "production" }
@@ -35,11 +36,11 @@ Limits: up to 10 webhooks per application (more returns 406), no query parameter
 
 - List: `GET /webhook/events`
 - Delete: `DELETE /webhook/events/{webhook_id}`
-- Reset secret: `POST /webhook/secrets/{webhook_id}`. Optionally supply a delay; for that period Yapily sends both `webhook-signature` and `webhook-rotation-signature` so you can switch secrets with no downtime.
+- Reset secret: `POST /webhook/secrets/{webhook_id}` with a `delay` of 0 to 86400 seconds; for that period Yapily sends both `webhook-signature` and `webhook-rotation-signature` so you can switch secrets with no downtime.
 
 ## Test Mode vs Live Mode
 
-Use the Yapily sandbox (for example the `mock-sandbox` institution) to generate payment events before going live. Webhooks are registered per application, so register separately for each environment.
+Yapily's hosted payment examples use the `mock-sandbox` institution, but its docs don't say which sandbox flows send webhooks, so confirm with Yapily if nothing arrives. Webhooks are registered per application, so register separately for each environment.
 
 ## Local Development
 

@@ -83,4 +83,4 @@ def verify_builder_request(headers, header=None, secret=None) -> bool:
 | 401 only with a `Bearer ` value | Secret env var lacks the `Bearer ` prefix typed in Builder |
 | 401 began suddenly | The header value was edited or rotated in Builder |
 | 401 only behind a proxy | The proxy strips or renames the header (common for `Authorization`) |
-| 400 after authentication | Body isn't a JSON object |
+| 400 after authentication | Body isn't a JSON object. Builder's docs don't say what **Disable payload** leaves in the body, so accept an empty one if you use it |

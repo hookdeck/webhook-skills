@@ -19,7 +19,8 @@ can forge requests, and anyone who captures a valid request can replay it, becau
 the credential to the payload or to a point in time. So:
 
 - Serve your endpoint over **HTTPS** only.
-- **Rotate** the header value if it leaks (update the webhook in Bitrise and your environment).
+- **Rotate** the header value if it leaks (update the webhook in Bitrise and your environment). A
+  hidden value can't be changed, so keep that in mind before you tick **Hide**.
 - Treat webhook payloads as notifications, and fetch authoritative state from the Bitrise API
   before taking high-impact actions.
 - Deduplicate on `webhook_event_unique_id` for Release Management events.
@@ -76,7 +77,8 @@ def verify_bitrise_request(headers, secret=None, header_name=None) -> bool:
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `hmac.compare_digest` on bytes, never on `str`.
 - **Fail closed.** If `BITRISE_WEBHOOK_SECRET` is unset, reject everything.
-- **Hidden values can't be read back.** If you tick **Hide** and lose the value, set a new one.
+- **Hidden values can't be read back.** If you tick **Hide**, you can't view or change the value
+  again, so keep your own copy.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the header check.
 - **Telling payloads apart.** `trigger_event` identifies Release Management events. Bitrise

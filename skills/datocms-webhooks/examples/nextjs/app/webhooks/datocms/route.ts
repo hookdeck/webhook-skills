@@ -61,11 +61,9 @@ function handleEvent(payload: DatoCmsPayload): void {
       // TODO: post a deploy notification
       break;
 
-    case 'environment deploy_started':
-    case 'environment deploy_succeeded':
-    case 'environment deploy_failed':
-      console.log(`Environment ${eventType}: ${entity?.id}`);
-      // TODO: post a deploy notification
+    case 'environment promote':
+      console.log(`Environment promoted: ${entity?.id}`);
+      // TODO: repoint builds and caches at the new primary environment
       break;
 
     case 'maintenance_mode change':

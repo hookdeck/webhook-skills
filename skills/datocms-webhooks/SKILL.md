@@ -77,7 +77,7 @@ dispatches on the pair.
 | `item_type` | `create`, `update`, `delete` | A model changes (including its fields) |
 | `upload` | `create`, `update`, `delete` | A media asset changes |
 | `build_trigger` | `deploy_started`, `deploy_succeeded`, `deploy_failed` | A build trigger deploys |
-| `environment` | `deploy_started`, `deploy_succeeded`, `deploy_failed` | An environment deploys |
+| `environment` | `promote` | A sandbox environment is promoted to primary |
 | `maintenance_mode` | `change` | An admin turns maintenance mode on or off |
 | `sso_user` | `create` | An SSO user is added as a collaborator |
 | `cda_cache_tags` | `invalidate` | CDA cache tags need invalidating |

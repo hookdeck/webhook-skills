@@ -50,7 +50,7 @@ async def seatable_webhook(request: Request):
     op_type = data.get("op_type")
     row_count = f" ({data['row_count']} rows)" if data.get("row_count") else ""
 
-    if op_type in ("insert_row", "create_row"):
+    if op_type == "insert_row":
         print(f"Row created in {data.get('table_name')}{row_count}: {data.get('row_id')}")
         # TODO: Sync the new row, notify, enrich, etc.
 
@@ -64,10 +64,15 @@ async def seatable_webhook(request: Request):
         print(f"Row deleted in {data.get('table_name')}{row_count}: {data.get('row_id')}")
         # TODO: Remove from downstream systems
 
+    elif op_type in ("add_link", "remove_link", "update_links", "update_rows_links"):
+        # Link bodies have no row_id or row_data
+        print(f"Links changed: {op_type}")
+        # TODO: Update relations downstream
+
     else:
         print(f"Unhandled {payload.get('event')} op_type: {op_type}")
 
-    # SeaTable disables the webhook after 5 consecutive non-200 responses
+    # SeaTable disables the webhook after 5 consecutive non-2xx responses
     return {"received": True}
 
 

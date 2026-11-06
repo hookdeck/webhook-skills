@@ -40,13 +40,13 @@ Other documented events: `invoice.overpaid`, `estimate.approved`, `estimate.view
 }
 ```
 
-- `event_id` is stable per event, so use it for idempotency.
+- Use `event_id` for idempotency. Wave's guide doesn't say it stays the same across automatic retries, though **Re-trigger event** resubmits the same payload.
 - Amounts are strings. `data` keys vary by event (for example `invoice_balance` on `invoice.overdue`, `checkout_id` and `email` on `checkout.paid`), so read them defensively.
 - IDs in payloads are raw UUIDs. To use them in Wave's API they must be formatted as `Business:{business_id};Invoice:{invoice_id}` and Base64 encoded.
 
 ## Delivery and Retries
 
-- Wave retries 5xx responses, timeouts, and connection errors up to 6 times over about 14 hours (roughly 1 min, 5 min, 30 min, 2 h, 12 h between attempts), then moves the delivery to a dead letter queue.
+- Wave retries 5xx responses, timeouts, and connection errors with up to 6 delivery attempts over about 14 hours (roughly 1 min, 5 min, 30 min, 2 h, 12 h before attempts 2 to 6), then moves the delivery to a dead letter queue.
 - 4xx responses are **not** retried and mark the delivery as failed.
 - After 10 consecutive failures the subscription is suspended until you reactivate it under Tools > Webhooks.
 - `invoice.viewed` and `estimate.viewed` don't fire when you view the document while logged into the business that created it.

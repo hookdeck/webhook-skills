@@ -11,7 +11,7 @@
 2. Find the **secret key** assigned to your shop. It looks like `e3f93c7c-c92b-4b8f-a9b1-5b70e0891abc`.
 3. Store it as `FOURTHWALL_WEBHOOK_SECRET`. Use the value exactly as shown (as UTF-8 text); do not base64-decode or hex-decode it.
 
-If you create webhooks through the API, the create response includes the same value in its `secret` field. Store it then.
+If you create webhooks through the API, the create response includes a `secret` field. Store it then, and use it to verify that webhook's deliveries.
 
 ## Register Your Endpoint
 
@@ -33,7 +33,7 @@ curl -u "your_username:your_password" \
   }'
 ```
 
-The Platform API authenticates with HTTP Basic Auth. Webhook deliveries to your endpoint carry no API key or basic auth; the HMAC signature is the authentication. The API also supports `GET /webhooks`, `GET /webhooks/{id}`, `PUT /webhooks/{id}` and `DELETE /webhooks/{id}`.
+The Platform API authenticates with HTTP Basic Auth. Check the HMAC signature to authenticate deliveries to your endpoint. The API also supports `GET /webhooks`, `GET /webhooks/{id}`, `PUT /webhooks/{id}` and `DELETE /webhooks/{id}`.
 
 ## Testing
 
@@ -42,7 +42,7 @@ The Platform API authenticates with HTTP Basic Auth. Webhook deliveries to your 
 
 ## Platform App Webhooks
 
-Webhooks for Platform Apps are configured in the app's settings and signed with the app's HMAC key in the `X-Fourthwall-Hmac-Apps-SHA256` header. This skill does not cover them; the algorithm is the same, only the header and key differ.
+Webhooks for Platform Apps are signed with the HMAC key from the app's settings, in the `X-Fourthwall-Hmac-Apps-SHA256` header. This skill does not cover them; the algorithm is the same, only the header and key differ.
 
 ## Delivery Behavior
 

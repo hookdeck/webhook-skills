@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 /**
- * Look up the app secret for a shop. Each shop has its own secret, assigned
+ * Look up the shop secret for a shop. Each shop has its own secret, assigned
  * during the registration handshake. Replace with a database lookup in production.
  */
 export function getShopSecret(shopId: string): string | null {

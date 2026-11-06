@@ -52,7 +52,7 @@ return user_ok and pass_ok
 ## Common Gotchas
 
 - **Not POST-only**: the API destination method is configurable. Accept POST, PUT, PATCH, GET and
-  DELETE on the route, and handle an empty body (GET and DELETE usually have none).
+  DELETE on the route, and handle an empty body, because AWS doesn't describe one for GET or DELETE.
 - **Any content type**: the default is `application/json; charset=utf-8`, but you can override it.
   Use `express.raw({ type: '*/*' })` in Express, `request.text()` in Next.js, `request.body()` in
   FastAPI, and parse JSON only after authenticating.

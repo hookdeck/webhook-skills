@@ -30,20 +30,20 @@ function makeRequest(body: string, signature?: string, contentType = 'applicatio
 
 const buildPayload = {
   id: '147a3212-49fd-446f-b4e3-a6519acf264a',
-  accountName: 'dsokal',
+  accountName: 'example-account',
   projectName: 'example',
-  buildDetailsPageUrl: 'https://expo.dev/accounts/dsokal/projects/example/builds/147a3212-49fd-446f-b4e3-a6519acf264a',
+  buildDetailsPageUrl: 'https://expo.dev/accounts/example-account/projects/example/builds/147a3212-49fd-446f-b4e3-a6519acf264a',
   platform: 'android',
   status: 'finished',
-  artifacts: { buildUrl: 'https://expo.dev/artifacts/eas/wyodu9tua2ZuKKiaJ1Nbkn.aab' },
+  artifacts: { buildUrl: 'https://expo.dev/artifacts/eas/example.aab' },
   metadata: { appVersion: '1.0.2', buildProfile: 'production' },
 };
 
 const submitPayload = {
   id: '0374430d-7776-44ad-be7d-8513629adc54',
-  accountName: 'dsokal',
+  accountName: 'example-account',
   projectName: 'example',
-  submissionDetailsPageUrl: 'https://expo.dev/accounts/dsokal/projects/example/builds/0374430d-7776-44ad-be7d-8513629adc54',
+  submissionDetailsPageUrl: 'https://expo.dev/accounts/example-account/projects/example/builds/0374430d-7776-44ad-be7d-8513629adc54',
   archiveUrl: 'http://archive.url/abc.apk',
   platform: 'android',
   status: 'errored',

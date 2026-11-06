@@ -8,7 +8,7 @@
 
 ## Get Your Signing Secret
 
-Webhooks use no dashboard secret. Each shop gets its own **app secret** during the registration handshake:
+Webhooks use no dashboard secret. Each shop gets its own **shop secret** during the registration handshake:
 
 1. The shop sends a signed `GET` to your app's **registration URL** (not the webhook URL).
 2. Your app responds with a `proof` and its own `secret` for that shop.

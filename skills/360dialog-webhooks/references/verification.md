@@ -2,8 +2,7 @@
 
 ## How It Works
 
-360dialog **does not sign webhooks**: there is no HMAC, timestamp or signature header. The only
-authentication is the header you set when you set the webhook URL:
+The authentication you can set from 360dialog's docs is the header you set with the webhook URL:
 
 ```
 Authorization: Basic base64(USER:PASS)
@@ -18,12 +17,25 @@ Points that cause most failures:
 ## What Basic Auth Does Not Give You
 
 A static shared credential authenticates the **sender**, not the **body**, and gives **no replay
-protection** (no signature, no timestamp). Anyone who learns the credential can forge requests,
+protection** (no timestamp). Anyone who learns the credential can forge requests,
 and a captured request can be replayed. So:
 
 - Use HTTPS only and treat the credential like a password.
 - Rotate it if it leaks (set the webhook URL again with new headers).
 - Make handlers idempotent on message and status IDs.
+
+## The Optional Signature
+
+360dialog's [Meta Business Agent](https://docs.360dialog.com/docs/mba/webhooks) and
+[RCS](https://docs.360dialog.com/docs/messaging-api/api-reference/rcs-webhooks) pages describe an
+`x-360dialog-signature` header on WhatsApp webhooks: the hex HMAC-SHA256 of the raw body, keyed
+with the number's signing secret, sent only when a secret is configured. They don't say how to set
+that secret, and the webhook configuration API only takes `url` and `headers`, so ask 360dialog
+support. If your deliveries carry the header, also compare it over the exact bytes you received:
+
+```javascript
+const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+```
 
 ## Implementation
 

@@ -25,7 +25,7 @@ function samplePayload(action = 'Create') {
       alias: 'aliastest',
       tinyId: '23',
       tags: ['tag1', 'tag2'],
-      username: 'fili@ifountain.com',
+      username: 'user1@example.com',
       entity: ''
     },
     action,
@@ -149,7 +149,7 @@ describe('Opsgenie webhook endpoint', () => {
         action: 'Escalate',
         alert: { alertId: '7ba97e3a-d328-4b5e-8f9a-39e945a3869a' },
         escalationName: 'test_esc',
-        escalationNotify: { name: 'test@ifountain.com', type: 'default', entity: 'user' }
+        escalationNotify: { name: 'user3@example.com', type: 'default', entity: 'user' }
       };
       const res = await post(JSON.stringify(body)).set(HEADER, SECRET);
       expect(res.status).toBe(200);

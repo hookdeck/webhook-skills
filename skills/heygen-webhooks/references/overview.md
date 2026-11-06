@@ -4,7 +4,7 @@
 
 Instead of polling `GET /v3/videos/{video_id}`, you register a webhook endpoint with the v3 API (`https://api.heygen.com/v3/webhooks/endpoints`) and HeyGen sends a `POST` with a JSON body when a video finishes rendering, a translation completes, or a job fails. Each endpoint has its own signing secret; every delivery carries a `signature` header (hex HMAC-SHA256 of the raw body).
 
-You can also pass a one-off `callback_url` (and `callback_id`) when creating a video, Video Agent session, or video translation. The `callback_id` is echoed back in the payload.
+You can also pass a one-off `callback_url` (and `callback_id`) when creating a video, Video Agent session, or video translation. The `callback_id` is echoed back in the payload. These per-job deliveries are not HMAC-signed: the `signature` header is sent only to registered endpoints.
 
 ## Common Event Types
 
@@ -16,7 +16,7 @@ You can also pass a one-off `callback_url` (and `callback_id`) when creating a v
 | `video_translate.fail` | Video translation failed | Mark failed, alert |
 | `video_agent.success` / `video_agent.fail` | Video Agent session completed / failed | Fetch the session's videos |
 
-Other documented event types: `avatar_video_gif.success|fail`, `avatar_video_caption.success|fail`, `personalized_video`, `instant_avatar.success|fail`, `photo_avatar_generation.success|fail`, `photo_avatar_train.success|fail`, `photo_avatar_add_motion.success|fail`, `proofread_creation.success|fail`, `live_avatar.success|fail`. List them with `GET /v3/webhooks/event-types`.
+Other documented event types: `avatar_video_gif.success|fail`, `avatar_video_caption.success|fail`, `personalized_video`, `instant_avatar.success|fail`, `photo_avatar_generation.success|fail`, `photo_avatar_train.success|fail`, `photo_avatar_add_motion.success|fail`, `proofread_creation.success|fail`, `live_avatar.success|fail`, `hyperframes_video.success|fail`, `ai_clipping.success|fail`, `filler_word_removal.success|fail`, `video_translate.preflight.validation_failed`, `video_translate.preflight.download_failed`, `batch.finished`. List them with `GET /v3/webhooks/event-types`.
 
 ## Event Payload Structure
 

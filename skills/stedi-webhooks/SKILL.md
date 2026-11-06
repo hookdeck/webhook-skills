@@ -55,7 +55,7 @@ function verifyStediWebhook(rawBody, headers, secret) {
 }
 ```
 
-The `standardwebhooks` package (`new Webhook(secret).verify(rawBody, headers)`; Python: `from standardwebhooks.webhooks import Webhook`) implements the same check, but it hard-codes a 5-minute timestamp window. Stedi retries for up to 48 hours with the original creation timestamp, so the package rejects every retry and every manual recovery. The examples verify manually with an optional window (`STEDI_TIMESTAMP_TOLERANCE_SECONDS`, off by default). Details in [references/verification.md](references/verification.md).
+The `standardwebhooks` package (`new Webhook(secret).verify(rawBody, headers)`; Python: `from standardwebhooks.webhooks import Webhook`) implements the same check, but it hard-codes a 5-minute timestamp window. Stedi retries for up to 48 hours with the original creation timestamp, so the package rejects every retry, automatic or manual. The examples verify manually with an optional window (`STEDI_TIMESTAMP_TOLERANCE_SECONDS`, off by default). Details in [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -92,7 +92,7 @@ Some events add `relatedResources` (for example the transaction type and executi
 
 - Only `2xx` counts as success. Redirects (3xx) are failures, so point the destination straight at the receiver (HTTPS required).
 - Retries after 5 minutes, 30 minutes, 2 hours, 8 hours, 24 hours and 48 hours. If all fail, Stedi disables the destination until you re-enable it.
-- Order isn't guaranteed. Duplicates happen (retries, manual recovery). Both reuse the same `webhook-id`.
+- Order isn't guaranteed. Duplicates happen (retries, manual recovery). Retries reuse the same `webhook-id`. An event you recover through the API has only its `id` (`evt_...`, also the `event-id` header), so store that too.
 - Allowlist the `Stedi-Events/` User-Agent prefix if a WAF or CDN blocks the requests. Other delivery headers: `event-id`, `destination-id`, `attempt-number`, `attempt-type`.
 
 ## Environment Variables

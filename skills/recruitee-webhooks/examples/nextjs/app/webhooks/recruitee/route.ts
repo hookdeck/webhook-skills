@@ -59,8 +59,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Test request (signed): acknowledge without processing.
-  if (isTestRequest(event)) {
+  // Test and Test payload requests (signed): acknowledge without processing. A Test
+  // payload body is an example event plus `test`, so check this before dispatch.
+  if (event?.test === true) {
     return NextResponse.json({ received: true });
   }
 

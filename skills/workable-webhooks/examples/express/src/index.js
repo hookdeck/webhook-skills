@@ -40,7 +40,7 @@ app.post('/webhooks/workable', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid JSON');
   }
 
-  const eventType = payload.event_type || payload.event;
+  const eventType = payload.event_type;
   switch (eventType) {
     case 'candidate_created':
       console.log('Candidate created:', payload.id);

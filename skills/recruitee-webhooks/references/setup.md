@@ -17,7 +17,7 @@
 ## Get Your Signing Secret
 
 The webhook secret is shown under **Settings → Apps and Plugins → Webhooks**.
-Store it as `RECRUITEE_WEBHOOK_SECRET`. Recruitee generates it; you do not choose it.
+Store it as `RECRUITEE_WEBHOOK_SECRET`.
 
 ## Testing
 

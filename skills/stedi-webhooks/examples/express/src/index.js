@@ -153,7 +153,7 @@ app.post('/webhooks/stedi', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
 
-  // Retries and manual recoveries reuse the same webhook-id; acknowledge duplicates with 200.
+  // Retries reuse the same webhook-id; acknowledge duplicates with 200. An event recovered through the API has no webhook-id, only its id.
   const messageId = headers['webhook-id'];
   if (processedMessageIds.has(messageId)) {
     return res.status(200).json({ received: true, duplicate: true });

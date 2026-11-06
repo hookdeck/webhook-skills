@@ -42,7 +42,9 @@ In a forwarded event, `event_type` is the name of **your own** event (for exampl
 | `uuid`, `$insert_id` | Identifiers usable for deduplication |
 
 User updates follow the user format: `user_id` and/or `device_id` (depending on how Identify was
-called, `user_id` may be absent) plus `user_properties`.
+called, `user_id` may be absent) plus `user_properties`. Amplitude's docs print no default user
+body, and their user template example reads `input.event_time`, so check a real update in the
+sync's Live Log tab before relying on `event_type` being absent.
 
 ## Custom Payloads (FreeMarker)
 
@@ -54,8 +56,8 @@ the default format.
 ## Retries
 
 Amplitude tries each event or user once, then makes nine more attempts over 4 hours on failure,
-regardless of the error. Within each attempt it also retries 5xx and 429 responses up to 3 times
-with exponential backoff (100 ms initial, doubling, 50% jitter), giving up after 4 seconds. Make
+regardless of the error. Within each attempt it also retries 5xx and 429 responses, at most 3
+attempts, with exponential backoff (100 ms initial, doubling, 50% jitter), and nothing after 4 seconds. Make
 the handler idempotent (for example key on `uuid` or `$insert_id`) and return `2xx` quickly.
 
 ## Full Reference

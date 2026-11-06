@@ -36,12 +36,12 @@ There is no event-type field in the payload. The type (`BUILD` or `SUBMIT`) is c
 ```json
 {
   "id": "147a3212-49fd-446f-b4e3-a6519acf264a",
-  "accountName": "dsokal",
+  "accountName": "example-account",
   "projectName": "example",
-  "buildDetailsPageUrl": "https://expo.dev/accounts/dsokal/projects/example/builds/147a3212-49fd-446f-b4e3-a6519acf264a",
+  "buildDetailsPageUrl": "https://expo.dev/accounts/example-account/projects/example/builds/147a3212-49fd-446f-b4e3-a6519acf264a",
   "platform": "android",
   "status": "finished",
-  "artifacts": { "buildUrl": "https://expo.dev/artifacts/eas/wyodu9tua2ZuKKiaJ1Nbkn.aab" },
+  "artifacts": { "buildUrl": "https://expo.dev/artifacts/eas/example.aab" },
   "metadata": { "appVersion": "1.0.2", "buildProfile": "production", "distribution": "store" }
 }
 ```
@@ -64,9 +64,9 @@ There is no event-type field in the payload. The type (`BUILD` or `SUBMIT`) is c
 ```json
 {
   "id": "0374430d-7776-44ad-be7d-8513629adc54",
-  "accountName": "dsokal",
+  "accountName": "example-account",
   "projectName": "example",
-  "submissionDetailsPageUrl": "https://expo.dev/accounts/dsokal/projects/example/builds/0374430d-7776-44ad-be7d-8513629adc54",
+  "submissionDetailsPageUrl": "https://expo.dev/accounts/example-account/projects/example/builds/0374430d-7776-44ad-be7d-8513629adc54",
   "platform": "android",
   "status": "errored",
   "submissionInfo": {

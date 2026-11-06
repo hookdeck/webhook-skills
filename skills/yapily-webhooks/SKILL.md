@@ -76,6 +76,13 @@ Subscribe by event category with `POST /webhook/events`; list the categories ava
 | `single_payment.iso_status.updated` | Single payment ISO 20022 status changed (can transition several times) |
 | `hosted_pis.payment_status.completed.v1` | Hosted payment completed successfully |
 | `hosted_pis.payment_status.failed.v1` | Hosted payment failed |
+| `sweeping_vrp.payment_status.completed.v1` | Sweeping VRP payment completed |
+| `sweeping_vrp.payment_status.failed.v1` | Sweeping VRP payment failed |
+| `commercial_vrp.payment_status.completed.v1` | Commercial VRP payment completed |
+| `commercial_vrp.payment_status.failed.v1` | Commercial VRP payment failed |
+| `transactions.categorisation.completed` | Categorisation finished; results are available for 30 minutes |
+| `transactions.categorisation.failed` | Categorisation failed |
+| `categorisation.feedback_status.updated.v1` | Categorisation feedback changed status |
 
 Async data-access completion and other categories also use this envelope; handlers should log and return 200 for types they don't recognise.
 

@@ -57,16 +57,15 @@ async def shortcut_webhook(request: Request):
         elif kind == "story update":
             print(f"Story updated: {item.get('name')} ({item.get('id')})", list((item.get("changes") or {}).keys()))
             # TODO: React to workflow_state_id, owner_ids, estimate changes, etc.
-        elif kind == "story delete":
-            print(f"Story deleted: {item.get('id')}")
-            # TODO: Remove the story from your own records
+        elif kind == "epic create":
+            print(f"Epic created: {item.get('name')} ({item.get('id')})")
+            # TODO: Notify stakeholders, etc.
         elif kind == "epic update":
             print(f"Epic updated: {item.get('name')} ({item.get('id')})")
             # TODO: Sync epic status, notify stakeholders, etc.
-        elif kind == "story-comment create":
-            print(f"Comment created: {item.get('id')}")
-            # TODO: Bot replies, command parsing, etc.
         else:
+            # Deletes, comments and tasks also fire, but Shortcut doesn't document their
+            # strings. Log what arrives and acknowledge it before you write a branch for it.
             print(f"Unhandled action: {kind}")
 
     return {"received": True}

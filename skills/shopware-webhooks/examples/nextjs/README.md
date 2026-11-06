@@ -1,11 +1,11 @@
 # Shopware Webhooks - Next.js Example
 
-Minimal example of receiving Shopware app webhooks with signature verification (`shopware-shop-signature`, HMAC-SHA256 hex over the raw body, keyed with the per-shop app secret) using the App Router.
+Minimal example of receiving Shopware app webhooks with signature verification (`shopware-shop-signature`, HMAC-SHA256 hex over the raw body, keyed with the shop secret) using the App Router.
 
 ## Prerequisites
 
 - Node.js 18+
-- A Shopware app registered on a shop, with the app secret stored for that shop
+- A Shopware app registered on a shop, with the shop secret stored for that shop
 
 ## Setup
 
@@ -19,7 +19,7 @@ Minimal example of receiving Shopware app webhooks with signature verification (
    cp .env.example .env.local
    ```
 
-3. Add the app secret for each shop to `SHOPWARE_APP_SECRETS` (keyed by shop ID). For a single shop, `SHOPWARE_APP_SECRET` works as a fallback.
+3. Add the shop secret for each shop to `SHOPWARE_APP_SECRETS` (keyed by shop ID). For a single shop, `SHOPWARE_APP_SECRET` works as a fallback.
 
 ## Run
 

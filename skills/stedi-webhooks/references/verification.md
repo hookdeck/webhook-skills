@@ -79,7 +79,7 @@ from standardwebhooks.webhooks import Webhook
 Webhook(secret).verify(raw_body, {"webhook-id": ..., "webhook-timestamp": ..., "webhook-signature": ...})
 ```
 
-It handles rotation and constant-time comparison, but its timestamp window is fixed at 5 minutes (no option to turn it off). That's fine if you only want fresh deliveries. Stedi's `webhook-timestamp` is the **event creation** time, and automatic retries (5 min, 30 min, 2 h, 8 h, 24 h, 48 h) and manual recoveries keep it, so the library rejects all of them. Stedi's docs even note recovered events will "likely be outside your normal tolerance window". If you use the library, return 2xx only after verifying with your own check for those cases, or use the manual version above.
+It handles rotation and constant-time comparison, but its timestamp window is fixed at 5 minutes (no option to turn it off). That's fine if you only want fresh deliveries. Stedi's `webhook-timestamp` is the **event creation** time, and automatic retries (5 min, 30 min, 2 h, 8 h, 24 h, 48 h) and manual retries keep it, so the library rejects all of them. Stedi's docs even note recovered events will "likely be outside your normal tolerance window". If you use the library, return 2xx only after verifying with your own check for those cases, or use the manual version above.
 
 ## Common Gotchas
 
@@ -95,7 +95,7 @@ It handles rotation and constant-time comparison, but its timestamp window is fi
 | Symptom | Likely cause |
 |---------|--------------|
 | Always fails | Body parsed and re-serialised, or key not base64-decoded |
-| Fails only on retries or recovered events | A 5-minute window (library default) against a creation timestamp |
+| Fails only on retries | A 5-minute window (library default) against a creation timestamp |
 | Fails right after rotating | Old secret still in use after its expiry, or only the first signature checked |
 | Works for ping, fails in production | Using the wrong destination's secret (each destination has its own) |
 | Fails behind a proxy | Middleware altering the body, or a WAF blocking `Stedi-Events/` requests |

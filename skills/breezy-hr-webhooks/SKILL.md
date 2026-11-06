@@ -72,6 +72,7 @@ Every payload is an envelope: `{ "_id", "type", "object", "creation_date" }`.
 | `candidateAdded` | A candidate enters the system (applied, sourced, recruited, referred) |
 | `candidateStatusUpdated` | A candidate moves to a different pipeline stage |
 | `candidateDeleted` | A candidate is deleted in the web app |
+| `candidateResumeAdded`, `candidateResumeUpdated` | In the API reference's event enum only; trigger and body aren't documented |
 | `companyPositionAdded` | A position is created |
 | `companyPositionUpdated` | Position details change |
 | `companyPositionDeleted` | A position is deleted |
@@ -82,7 +83,8 @@ Every payload is an envelope: `{ "_id", "type", "object", "creation_date" }`.
 
 Deduplicate on the envelope `_id`; Breezy can occasionally deliver an event more
 than once. Respond with a 2xx within 30 seconds; failures are retried up to 10
-times with exponential backoff.
+times with exponential backoff, and repeated failures can disable the endpoint
+automatically (see `auto_disabled_at`; the resume call clears it).
 
 ## Environment Variables
 

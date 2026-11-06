@@ -50,4 +50,4 @@ Then set the Hookdeck URL as the **Endpoint URL** in **Settings → Webhooks** a
 - `POST /webhooks/storyblok` - Verifies `webhook-signature`, then dispatches on `action` plus the entity id field. Reads the body with `express.raw({ type: '*/*' })` so any content type verifies.
 - `GET /health` - Health check
 
-Task (Tasks app) webhooks are unsigned and are not handled by this route.
+Task (Tasks app) webhooks do not support secrets and are not handled by this route.

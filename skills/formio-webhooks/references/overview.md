@@ -53,14 +53,17 @@ Example (abridged from the docs, form with `textField` and `number`):
 ```
 
 A **Transform Payload** script can replace the body entirely, so a customised action may send a
-different shape. DELETE and GET requests may have an empty body.
+different shape. The docs show no DELETE or GET body, so handle an empty one.
 
 ## Other Behaviour
 
 - **Forward Headers** forwards the headers received by the Form.io server to your endpoint.
 - **Wait for Webhook Response** makes the submission wait for your response; errors then stop the
   submission and are shown to the form user.
-- **Retry Request** retries a failed call (constant, linear, exponential or jitter delay).
+- **Retry Request** retries a failed call (constant, linear, exponential, jitter or exponentially
+  jitter delay).
+- **Handler** set to both Before and After runs the action twice, once before the submission is saved
+  and once after.
 
 ## Full Reference
 

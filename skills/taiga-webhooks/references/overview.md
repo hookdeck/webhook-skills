@@ -16,6 +16,7 @@ The event is identified by the body's `type` (the object) and `action` (what hap
 | `task create` / `task change` / `task delete` | Task lifecycle | Time tracking, chat alerts |
 | `issue create` / `issue change` / `issue delete` | Issue lifecycle | Bug triage |
 | `epic create` / `epic change` / `epic delete` | Epic lifecycle (sent by taiga-back; not on the docs page) | Roadmap sync |
+| `relateduserstory create` / `relateduserstory change` / `relateduserstory delete` | Link between an epic and a user story (sent by taiga-back; not on the docs page) | Roadmap sync |
 | `milestone create` / `milestone change` / `milestone delete` | Sprint lifecycle | Sprint dashboards |
 | `wikipage create` / `wikipage change` / `wikipage delete` | Wiki page lifecycle | Docs sync |
 | `test test` | The "test" button on the webhook | Connectivity check |
@@ -34,11 +35,11 @@ The event is identified by the body's `type` (the object) and `action` (what hap
 ```
 
 - `action`: `create`, `change`, `delete` or `test`
-- `type`: `userstory`, `task`, `issue`, `epic`, `milestone`, `wikipage` or `test`
+- `type`: `userstory`, `task`, `issue`, `epic`, `relateduserstory`, `milestone`, `wikipage` or `test`
 - `by`: the user who caused the notification
 - `date`: when the notification was generated
 - `data`: the current object
-- `change`: only present on `change` notifications (some `change` examples on the docs page also omit `date`)
+- `change`: only present on `change` notifications
 
 Taiga sends no event ID, so deduplicate on `type` + `data.id` + `date` or make handlers idempotent.
 

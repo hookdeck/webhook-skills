@@ -72,10 +72,13 @@ function verifyFormioRequest(headers, user = process.env.FORMIO_WEBHOOK_USERNAME
 
 | Method | Operation (Match) | Body |
 |--------|-------------------|------|
-| `POST` | Submission create | `{ request, response, submission, params }` |
-| `PUT` / `PATCH` | Submission update | `{ request, response, submission, params }` |
-| `DELETE` | Submission delete | May be empty; `params` arrive as a query string |
-| `GET` | Only if chosen in the action | Empty |
+| `POST` | Submission create | `{ request, submission, params }` (`WebhookAction.js` can add `response`) |
+| `PUT` / `PATCH` | Submission update | No example in the docs; `WebhookAction.js` sends the same object |
+| `DELETE` | Submission delete | No example in the docs; `WebhookAction.js` sends the same object and puts `params` in the query string |
+| `GET` | A fixed Get method, or Match with Read or Index selected | Not documented; treat an empty body as `{}` |
+
+The action's **Method** setting selects which operations fire it. A **Handler** set to both Before and
+After runs it twice, once before the submission is saved and once after.
 
 ## Environment Variables
 

@@ -73,7 +73,7 @@ def verify_formio_request(headers, user, pwd):
 - **Methods.** The route must accept POST, PUT, PATCH, GET and DELETE. A POST-only route 404s or
   405s every update and delete. The verb is the operation (Match: POST create, PUT update,
   DELETE delete).
-- **Empty bodies.** GET and some DELETE requests have no body. Treat an empty body as `{}` after
+- **Empty bodies.** The docs show no GET or DELETE body. Treat an empty body as `{}` after
   authenticating; don't fail on `JSON.parse('')`.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the credential check.

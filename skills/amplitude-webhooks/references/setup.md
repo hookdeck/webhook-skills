@@ -49,6 +49,6 @@ name or value doesn't match what your endpoint expects (see
 
 ## Rotating the Secret
 
-Change the header value in the destination and `AMPLITUDE_WEBHOOK_SECRET` together. Requests
-still in Amplitude's retry window (up to 4 hours) carry whichever value was current when they
-were attempted, so expect a few `401`s during the switch, or briefly accept both values.
+Change the header value in the destination and `AMPLITUDE_WEBHOOK_SECRET` together. Amplitude's
+docs don't say which value a retry in its 4-hour window carries, so expect a few `401`s during
+the switch, or accept both values for that long.

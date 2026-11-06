@@ -49,7 +49,7 @@ def event(type_: str) -> str:
         "order.created",
         "order.airline_initiated_change_detected",
         "order_cancellation.confirmed",
-        "payment.succeeded",
+        "air.payment.succeeded",
         "order.unknown",
     ],
 )

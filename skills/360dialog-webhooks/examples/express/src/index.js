@@ -32,7 +32,7 @@ function parseBasicAuth(header) {
 }
 
 /**
- * 360dialog does not sign webhooks. You set `Authorization: Basic base64(USER:PASS)` in the
+ * The documented authentication is a static header. You set `Authorization: Basic base64(USER:PASS)` in the
  * `headers` object when setting the webhook URL, and 360dialog sends it with every request.
  * Compare username and password separately, evaluating both before deciding.
  */

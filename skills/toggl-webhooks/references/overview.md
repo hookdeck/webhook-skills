@@ -8,7 +8,7 @@ Plan limits per workspace: Free 1 webhook (3 events), Starter 2 (6 events), Prem
 
 ## Event Types
 
-Events are identified by an **entity** and an **action**. Subscriptions filter on `{"entity": ..., "action": ...}`; `*` matches all. The delivered event carries the same pair in `metadata.model` and `metadata.action`. This skill's handlers dispatch on `<model>.<action>`.
+Events are identified by an **entity** and an **action**. Subscriptions filter on `{"entity": ..., "action": ...}`; `*` matches all. The delivered event carries the same pair in `metadata.model` and `metadata.action`. Toggl's current webhook pages don't show an entity event: those two fields come from the stored event record in [Toggl's archived API docs](https://github.com/toggl/toggl_api_docs/blob/master/webhooks.md), so confirm them on a real delivery. This skill's handlers dispatch on `<model>.<action>`.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -20,7 +20,7 @@ Events are identified by an **entity** and an **action**. Subscriptions filter o
 | `project.deleted` | A project is deleted | Archive externally |
 | `ping` | You call the ping endpoint, or validation runs | Test delivery, validate subscription |
 
-Other entities (for example `client`) use the same `created` / `updated` / `deleted` actions. The authoritative list is `GET https://api.track.toggl.com/webhooks/api/v1/event_filters`.
+`client`, `project_group`, `project_user`, `tag`, `task`, `timesheet` and `workspace_user` use the same `created` / `updated` / `deleted` actions, and `workspace` has `updated` only. The authoritative list is `GET https://api.track.toggl.com/webhooks/api/v1/event_filters`.
 
 ## Event Payload Structure
 

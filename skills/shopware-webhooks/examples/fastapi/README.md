@@ -1,11 +1,11 @@
 # Shopware Webhooks - FastAPI Example
 
-Minimal example of receiving Shopware app webhooks with signature verification (`shopware-shop-signature`, HMAC-SHA256 hex over the raw body, keyed with the per-shop app secret).
+Minimal example of receiving Shopware app webhooks with signature verification (`shopware-shop-signature`, HMAC-SHA256 hex over the raw body, keyed with the shop secret).
 
 ## Prerequisites
 
 - Python 3.9+
-- A Shopware app registered on a shop, with the app secret stored for that shop
+- A Shopware app registered on a shop, with the shop secret stored for that shop
 
 ## Setup
 
@@ -21,7 +21,7 @@ Minimal example of receiving Shopware app webhooks with signature verification (
    cp .env.example .env
    ```
 
-3. Add the app secret for each shop to `SHOPWARE_APP_SECRETS` in `.env` (keyed by shop ID). For a single shop, `SHOPWARE_APP_SECRET` works as a fallback.
+3. Add the shop secret for each shop to `SHOPWARE_APP_SECRETS` in `.env` (keyed by shop ID). For a single shop, `SHOPWARE_APP_SECRET` works as a fallback.
 
 ## Run
 

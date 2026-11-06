@@ -74,14 +74,15 @@ any other status means the event is never retried.
 
 ## Common Event Types
 
-Each item in `data` has `id`, `type`, `attributes` and `relationships`.
+Each item in `data` has `id`, `type`, `attributes` and `relationships`. A few of Unit's
+documented examples show `data` as a single object, so handle both shapes.
 
 | Event | Triggered When |
 |-------|----------------|
 | `application.approved` | An application is approved and the customer is created |
 | `application.denied` | An application is denied |
 | `customer.created` | A customer is created |
-| `account.created` | A deposit account is created |
+| `account.created` | An account is created |
 | `transaction.created` | A transaction is posted to an account |
 | `payment.clearing` | An ACH payment moves to clearing |
 | `payment.returned` | A payment is returned |

@@ -27,14 +27,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  let payload: { id?: string; event_type?: string; event?: string };
+  let payload: { id?: string; event_type?: string };
   try {
     payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const eventType = payload.event_type ?? payload.event;
+  const eventType = payload.event_type;
   switch (eventType) {
     case 'candidate_created':
       console.log('Candidate created:', payload.id);

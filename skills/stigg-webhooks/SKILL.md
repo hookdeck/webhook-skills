@@ -62,7 +62,7 @@ The event name is in the payload's `type` field. Use `messageId` to de-duplicate
 | `entitlements.updated` | A customer's effective entitlements change |
 | `entitlement.usage_exceeded` | Usage passes an entitlement limit |
 
-Stigg also sends catalog (`plan.*`, `feature.*`, `addon.*`), credit, and promotional entitlement events. See [references/overview.md](references/overview.md).
+Stigg also sends catalog (`plan.*`, `feature.*`, `addon.*`), credit (`credit_grant.*`, `credit_balance.*`), governance entity, and promotional entitlement events. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 

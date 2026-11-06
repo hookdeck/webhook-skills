@@ -24,7 +24,8 @@ openssl rand -hex 32
 3. Set **Destination** to **Webhook** (the generic type).
 4. Enter a **Name**, your **Webhook URL**, and the **Token**.
 5. Choose **Workspace Events** and **Run Events**, either all or specific ones:
-   - Run: Created, Planning, Needs Attention, Applying, Completed, Errored
+   - Run: Created, Planning, Needs Attention, Applying, Completed, Errored. The API
+     has more trigger values, listed in [overview.md](overview.md)
    - Workspace: Check failed, Drift detected, Health assessment errored, Auto destroy
      reminder, Auto destroy results
 6. Click **Create a notification**.
@@ -43,8 +44,9 @@ if your endpoint answers **2xx**. If verification fails, the error is shown and 
 configuration stays disabled. Open the **Last Response** box to see what your
 endpoint returned, or use **Send a test** to re-send.
 
-The verification request is signed when a token is set, so the handler must already
-hold the token and verify it like any other request.
+HashiCorp says all generic notification requests are signed when a token is set, so
+the handler should already hold the token. The docs don't mention this request by
+name, so check **Last Response** if enabling fails.
 
 ## Test Mode vs Live Mode
 

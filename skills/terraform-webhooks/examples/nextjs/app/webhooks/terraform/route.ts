@@ -88,8 +88,9 @@ function handleTerraformEvent(trigger: string, payload: TerraformPayload) {
 
     case 'workspace:auto_destroy_reminder':
     case 'workspace:auto_destroy_run_results':
+    case 'workspace:auto_destroy_results': // spelling in HashiCorp's sample payloads
     case 'workspace:deleted':
-    case 'team:change_request':
+    case 'change_request:created':
       console.log(`Received ${trigger}`);
       break;
 

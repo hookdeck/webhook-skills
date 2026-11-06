@@ -84,9 +84,8 @@ describe('POST /webhooks/shortcut', () => {
 
   it.each([
     ['story create'],
-    ['story delete'],
+    ['epic create'],
     ['epic update'],
-    ['story-comment create'],
     ['label create'],
   ])('acknowledges %s', async (kind) => {
     const [entity_type, action] = kind.split(' ');

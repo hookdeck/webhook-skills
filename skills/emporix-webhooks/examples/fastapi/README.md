@@ -69,7 +69,7 @@ The handler routes these events and logs anything else:
 - `product.created`
 - `product.updated`
 
-Emporix documents each event's payload schema but no envelope, and Svix sends no event-type header.
+Emporix documents each event's payload schema but no envelope, and no event-type header is documented.
 The handler takes the event type from an `eventType` field in the body if present, otherwise from an
 `?eventType=` query parameter. That query parameter is this example's convention, not an Emporix feature:
 register one Svix endpoint per event type with the parameter on its URL.

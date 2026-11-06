@@ -77,6 +77,7 @@ Every payload is `{action, type, by, date, data, change}`. There is no event hea
 | `task` | Task |
 | `issue` | Issue |
 | `epic` | Epic (sent by taiga-back; not listed on the docs page) |
+| `relateduserstory` | Link between an epic and a user story (sent by taiga-back; not listed on the docs page) |
 | `milestone` | Sprint |
 | `wikipage` | Wiki page |
 | `test` | Test payload |

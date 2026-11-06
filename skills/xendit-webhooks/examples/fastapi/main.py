@@ -83,11 +83,11 @@ def handle_event(payload: dict) -> None:
         # TODO: remove the stored token
 
     elif event == "refund.succeeded":
-        print(f"Refund succeeded: {data.get('id')}")
+        print(f"Refund succeeded: {data.get('refund_id')}")
         # TODO: mark the refund as completed
 
     elif event == "refund.failed":
-        print(f"Refund failed: {data.get('id')}")
+        print(f"Refund failed: {data.get('refund_id')}")
         # TODO: alert support
 
     elif not event and payload.get("status") == "PAID":
