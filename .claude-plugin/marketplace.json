@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 802 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 805 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -1075,7 +1075,7 @@
     },
     {
       "name": "autosana-webhooks",
-      "description": "Receive and verify Autosana webhooks. Use when setting up Autosana webhook handlers, debugging X-Autosana-Signature-256 signature verification, or handling the batch.completed event sent when a batch of AI mobile app test flow runs finishes.",
+      "description": "Receive and verify Autosana webhooks. Use when setting up Autosana webhook handlers, debugging X-Autosana-Signature-256 signature verification, or handling the batch.completed event sent when a batch of AI end-to-end test flow runs finishes.",
       "source": "./skills/autosana-webhooks",
       "strict": false,
       "skills": [
@@ -4300,7 +4300,7 @@
     },
     {
       "name": "duffel-webhooks",
-      "description": "Receive and verify Duffel webhooks. Use when setting up Duffel flight API webhook handlers, debugging X-Duffel-Signature verification, or handling events like order.created, order.airline_initiated_change_detected, order_cancellation.confirmed, payment.succeeded, or ping.triggered.",
+      "description": "Receive and verify Duffel webhooks. Use when setting up Duffel flight API webhook handlers, debugging X-Duffel-Signature verification, or handling events like order.created, order.airline_initiated_change_detected, order_cancellation.confirmed, air.payment.succeeded, or ping.triggered.",
       "source": "./skills/duffel-webhooks",
       "strict": false,
       "skills": [
@@ -6870,6 +6870,27 @@
       ]
     },
     {
+      "name": "instagram-webhooks",
+      "description": "Receive and verify Instagram (Meta) webhooks. Use when setting up Instagram webhook handlers, completing the GET hub.challenge handshake, debugging X-Hub-Signature-256 signature verification, or handling Instagram comments, live_comments, mentions, story_insights, messages, message_reactions, messaging_postbacks, messaging_referral, and messaging_seen notifications.",
+      "source": "./skills/instagram-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/instagram-webhooks",
+      "keywords": [
+        "webhooks",
+        "instagram"
+      ]
+    },
+    {
       "name": "instantly-webhooks",
       "description": "Receive and authenticate Instantly (Instantly.ai cold email) webhooks. Use when setting up an Instantly webhook handler, securing it with the custom headers Instantly lets you attach (e.g. Authorization: Basic ... or a secret header), debugging why the header check fails, or handling campaign events like email_sent, email_opened, reply_received, email_bounced, lead_interested, lead_unsubscribed and lead_meeting_booked. Instantly does not sign webhooks: there is no signature header or HMAC.",
       "source": "./skills/instantly-webhooks",
@@ -8554,6 +8575,27 @@
       ]
     },
     {
+      "name": "messenger-webhooks",
+      "description": "Receive and verify Facebook Messenger Platform webhooks. Use when setting up Messenger webhook handlers for a Facebook Page, completing the GET hub.challenge handshake, debugging X-Hub-Signature-256 signature verification (escaped-unicode raw body), or handling messages, messaging_postbacks, message_reads, message_deliveries, message_reactions, messaging_optins, messaging_referrals, and message_echoes events.",
+      "source": "./skills/messenger-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/messenger-webhooks",
+      "keywords": [
+        "webhooks",
+        "messenger"
+      ]
+    },
+    {
       "name": "metabase-webhooks",
       "description": "Receive and authenticate Metabase alert webhooks. Use when setting up a Metabase webhook endpoint, checking the HTTP Basic Authorization header, debugging 401s, or handling alert payloads with question results (alert_id, question_url, raw_data, base64 PNG visualization).",
       "source": "./skills/metabase-webhooks",
@@ -10013,7 +10055,7 @@
     },
     {
       "name": "ory-webhooks",
-      "description": "Receive and authenticate Ory Actions webhooks (Ory Network identity flows). Use when setting up an endpoint for Ory webhooks, authenticating the api_key header you configured, debugging 401s, or handling registration.after, login.after and settings.after events from a Jsonnet request body.",
+      "description": "Receive and authenticate Ory Actions webhooks (Ory Network identity flows). Use when setting up an endpoint for Ory webhooks, authenticating the api_key header you configured, debugging 401s, or routing on an event name you add to the Jsonnet request body.",
       "source": "./skills/ory-webhooks",
       "strict": false,
       "skills": [
@@ -10226,6 +10268,27 @@
       "keywords": [
         "webhooks",
         "paperform"
+      ]
+    },
+    {
+      "name": "papergames-webhooks",
+      "description": "Receive and verify Papergames (papergames.io) webhooks, delivered by Svix. Use when setting up a Papergames webhook handler for the embeddable games API, debugging svix-id / svix-timestamp / svix-signature verification (HMAC-SHA256, base64, whsec_ secret), or handling game session events game.started and game.finished (eventType / payload envelope, scores, externalId).",
+      "source": "./skills/papergames-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/papergames-webhooks",
+      "keywords": [
+        "webhooks",
+        "papergames"
       ]
     },
     {
@@ -12787,7 +12850,7 @@
     },
     {
       "name": "seatable-webhooks",
-      "description": "Receive and verify SeaTable webhooks. Use when setting up SeaTable webhook handlers, debugging X-Seatable-Signature verification, or handling base change events (insert_row, modify_row, delete_row).",
+      "description": "Receive and verify SeaTable webhooks. Use when setting up SeaTable webhook handlers, debugging X-Seatable-Signature verification, or handling base change events (insert_row, modify_row, delete_row, link changes).",
       "source": "./skills/seatable-webhooks",
       "strict": false,
       "skills": [
@@ -13191,7 +13254,7 @@
     },
     {
       "name": "shopware-webhooks",
-      "description": "Receive and verify Shopware app system webhooks. Use when setting up Shopware webhook handlers, debugging shopware-shop-signature verification, handling per-shop app secrets, or processing events like checkout.order.placed, product.written, order.written, and customer.written.",
+      "description": "Receive and verify Shopware app system webhooks. Use when setting up Shopware webhook handlers, debugging shopware-shop-signature verification, handling per-shop secrets, or processing events like checkout.order.placed, product.written, order.written, and customer.written.",
       "source": "./skills/shopware-webhooks",
       "strict": false,
       "skills": [
@@ -17306,7 +17369,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 805 provider skills (Stripe, Shopify, GitHub, and 802 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 810 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 808 provider skills (Stripe, Shopify, GitHub, and 805 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 813 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17632,6 +17695,7 @@
         "./skills/increase-webhooks",
         "./skills/infinite-giving-webhooks",
         "./skills/ingenious-build-webhooks",
+        "./skills/instagram-webhooks",
         "./skills/instantly-webhooks",
         "./skills/intercom-webhooks",
         "./skills/invoice-ninja-webhooks",
@@ -17711,6 +17775,7 @@
         "./skills/memos-webhooks",
         "./skills/meraki-webhooks",
         "./skills/mercury-webhooks",
+        "./skills/messenger-webhooks",
         "./skills/metabase-webhooks",
         "./skills/metronome-webhooks",
         "./skills/mews-pos-webhooks",
@@ -17790,6 +17855,7 @@
         "./skills/pagerduty-webhooks",
         "./skills/palmetto-finance-webhooks",
         "./skills/paperform-webhooks",
+        "./skills/papergames-webhooks",
         "./skills/paragon-webhooks",
         "./skills/parcellab-webhooks",
         "./skills/particle-webhooks",
