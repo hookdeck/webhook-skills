@@ -86,7 +86,8 @@ def safe_equal(a: str, b: str) -> bool:
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before
   parsing; `express.raw({ type: '*/*' })` accepts any content type.
 - **5 second timeout**: acknowledge fast and do slow work asynchronously, or Oyster retries.
-- **Hookdeck**: a Hookdeck Oyster source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck Oyster source verifies the same header. Paste the bare `sharedSecret`
+  into its **Shared Secret** field; it accepts the header with or without the `Bearer ` prefix.
 
 ## Debugging 401s
 

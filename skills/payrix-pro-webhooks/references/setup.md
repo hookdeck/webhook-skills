@@ -30,9 +30,10 @@ PAYRIX_PRO_WEBHOOK_SECRET=replace-with-a-long-random-secret   # exact, whole val
 
 ## Hookdeck
 
-In Hookdeck, create a source of type **Payrix Pro** and set the same Header Name and Header Value
-(exact whole value). Hookdeck's Payrix Pro source pre-selects POST without managing the method, so
-if Payrix sends any other method (GET, PUT, PATCH, DELETE), allow that method on the source too.
+In Hookdeck, create a source of type **Payrix Pro** and set **API Key Header** and **API Key** to
+the same Header Name and Header Value (exact whole value). Hookdeck's Payrix Pro source pre-selects
+POST without managing the method, so if Payrix sends any other method (GET, PUT, PATCH, DELETE),
+allow that method on the source too.
 
 ## Test
 

@@ -98,8 +98,8 @@ is idempotent so the catch-up doesn't double-process.
 
 1. In Hookdeck, create a Connection with a **Freshdesk** source.
 2. Turn on verification and enter:
-   - **Header Name:** `X-Freshdesk-Webhook-Secret` (the custom header you added)
-   - **Header Value:** your secret, exactly as entered in Freshdesk
+   - **API Key Header:** `X-Freshdesk-Webhook-Secret` (the custom header you added)
+   - **API Key:** your secret, exactly as entered in Freshdesk
 3. Paste the Hookdeck Source URL into the rule's **Callback URL**.
 
 Hookdeck rejects requests whose header doesn't match. It also queues and

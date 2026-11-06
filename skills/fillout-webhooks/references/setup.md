@@ -89,7 +89,7 @@ Use the public URL the CLI prints as the webhook URL in Fillout, then click **Te
 Hookdeck's Fillout source type authenticates the header at ingestion. In the source's
 verification settings:
 
-- **Header Name:** `Authorization`
-- **Header Value:** `Bearer <your token>` (the whole value, including `Bearer `)
+- **API Key Header:** `Authorization`
+- **API Key:** `Bearer <your token>` (the whole value, including `Bearer `)
 
 The source accepts `POST` only, so keep the Fillout webhook on `POST`.

@@ -36,10 +36,11 @@ are not covered here or by Hookdeck's Tanium source.
 
 ## Using Hookdeck
 
-Create a **Tanium** source in Hookdeck (type `TANIUM`), set the same Header Name and Header Value
-(the exact whole value), and use the Hookdeck source URL as the destination URL. The source
-pre-selects `POST` without managing the method: if the destination uses another method (for
-example `PUT` or `PATCH`), also allow that method on the source.
+Create a **Tanium** source in Hookdeck (type `TANIUM`), set **API Key Header** and **API Key** to
+the same Auth Header Name and Secret (the exact whole value), and use the Hookdeck source URL as
+the destination URL. The source pre-selects `POST` without managing the method: if the
+destination uses another method (for example `PUT` or `PATCH`), also allow that method on the
+source.
 
 ## Test
 

@@ -80,15 +80,15 @@ def safe_equal(a: str, b: str) -> bool:
 
 - **Basic scheme**: Basic (expected as `Authorization: Basic base64(user:pass)`) would need a different expected value
   and is not covered by Hookdeck's YouMail source. Switch the webhook to Bearer.
-- **Missing prefix**: the stored secret must include the prefix (expected to be `Bearer `).
+- **Missing prefix**: `YOUMAIL_AUTHORIZATION` must include the prefix (expected to be `Bearer `).
 - **Unconfigured secret**: reject everything if `YOUMAIL_AUTHORIZATION` is empty, otherwise an
   empty header would "match".
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Status codes**: missing header or mismatch returns `401`; a body that isn't a JSON object `400`.
-- **Hookdeck**: a Hookdeck YouMail source verifies the same header (full value). Choose the Bearer
-  auth scheme on the YouMail webhook, not Basic, and paste the whole Authorization value,
-  including "Bearer ".
+- **Hookdeck**: a Hookdeck YouMail source verifies the same header. Choose the Bearer auth
+  scheme on the YouMail webhook, not Basic, and paste the bare token into the source's
+  **Bearer Token** field; it accepts the header with or without the `Bearer ` prefix.
 
 ## Debugging 401s
 

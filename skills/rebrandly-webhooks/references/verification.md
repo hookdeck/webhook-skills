@@ -12,7 +12,7 @@ value). There is no HMAC, timestamp or event-type header.
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Anyone who captures a request can replay it. Use HTTPS,
 and rotate the credential if it leaks. Matches Hookdeck's Rebrandly source: API key verification
-with Header Name plus the exact whole Header Value.
+with API Key Header plus the exact whole API Key.
 
 ## Implementation
 

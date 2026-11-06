@@ -88,7 +88,8 @@ def safe_equal(a: str, b: str) -> bool:
   Basic and set a callback key.
 - **Timeouts**: respond `2xx` within the callback timeout (20 seconds in the docs) and do slow
   work, such as downloading signed documents, asynchronously.
-- **Hookdeck**: a Hookdeck OneSpan source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck OneSpan source verifies the same header. Paste the bare callback key
+  into its **Callback Key** field; it accepts the header with or without the `Basic ` prefix.
 
 ## Debugging 401s
 

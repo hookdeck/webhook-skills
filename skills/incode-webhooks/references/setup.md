@@ -9,8 +9,8 @@
 
 Add a custom header in Dashboard > Configuration > Webhooks and enter it here. Incode retries unless it gets a 200 with a JSON content type, or a 204, so keep any custom source response JSON.
 
-(This is the setup note Hookdeck shows for its Incode source, type `INCODE`: *Header Name* and
-*Header Value* are the custom header you create below.)
+(This is the setup note Hookdeck shows for its Incode source, type `INCODE`: *API Key Header* and
+*API Key* take the custom header you create below.)
 
 ## Add the Custom Header
 

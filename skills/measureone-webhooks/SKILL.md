@@ -113,7 +113,7 @@ npx hookdeck-cli listen 3000 measureone --path /webhooks/measureone
 ```
 
 Use the printed URL as the `url` in `delivery_details`. In Hookdeck, the source type is
-**MeasureOne** (API key verification: Header Name plus the exact whole Header Value).
+**MeasureOne** (API key verification: API Key Header plus the exact whole API Key).
 
 ## Resources
 

@@ -7,7 +7,9 @@
 
 ## Auth Scheme for Hookdeck
 
-Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the whole Authorization value, including "Bearer ".
+Choose the Bearer auth scheme on the YouMail webhook, not Basic, and paste the token into the
+Hookdeck source's **Bearer Token** field, without the `Bearer ` prefix. Hookdeck accepts the
+header with or without the prefix.
 
 YouMail supports three auth options on a webhook: none, `Basic` (username and password) and
 `Bearer` (token). Hookdeck's YouMail source and these examples cover **Bearer** only. Basic is

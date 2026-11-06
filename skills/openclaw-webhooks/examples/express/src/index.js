@@ -13,7 +13,7 @@ const app = express();
  * OpenClaw docs: "`webhookToken` is sent as `Authorization: Bearer <token>` on
  * automation webhook POSTs." The body is not signed, so the header is the whole
  * check. Compare the entire header value with "Bearer <webhookToken>" in constant
- * time, the same way Hookdeck's OpenClaw source does.
+ * time.
  *
  * @param {string|undefined} authorizationHeader - Authorization header value
  * @param {string} webhookToken - cron.webhookToken from the Gateway config

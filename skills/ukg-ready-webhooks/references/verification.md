@@ -21,9 +21,9 @@ if it leaks.
 
 Points that cause most failures:
 
-- Hookdeck's UKG Ready source compares the **whole** `Authorization` value to the configured
-  key, so `UKG_READY_AUTHORIZATION` is the full value, e.g. `Bearer <token>`. Don't strip,
-  parse or base64-decode the prefix.
+- These examples compare the **whole** `Authorization` value to the configured key, so
+  `UKG_READY_AUTHORIZATION` is the full value, e.g. `Bearer <token>`. Don't strip, parse or
+  base64-decode the prefix. (Hookdeck's UKG Ready source takes the bare token instead.)
 - Choose **Bearer Token** on the subscription, not Basic. Basic and OAuth are not covered by
   Hookdeck's UKG Ready source.
 

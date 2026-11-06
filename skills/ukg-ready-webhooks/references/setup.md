@@ -1,6 +1,6 @@
 # Setting Up UKG Ready Webhooks
 
-> Choose Bearer Token authentication on the UKG Ready webhook, not Basic, and paste the whole Authorization value, including "Bearer ".
+> Choose Bearer Token authentication on the UKG Ready webhook, not Basic, and paste the token.
 
 ## Prerequisites
 

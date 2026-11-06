@@ -21,9 +21,10 @@ Store the **full header value** (`Bearer ` followed by the secret) as `REDO_AUTH
 
 If Hookdeck receives the webhooks, create a source of type **Redo**. Hookdeck shows this note:
 
-> Paste the full Authorization header value Redo sends: "Bearer " followed by your subscription secret.
+> Paste the secret set on the Redo webhook subscription.
 
-Paste `Bearer your-subscriber-secret`, with the `Bearer ` prefix.
+Paste `your-subscriber-secret` into the **Subscription Secret** field, without the `Bearer `
+prefix. Hookdeck accepts the `Authorization` header with or without the prefix.
 
 ## Create the Subscription
 

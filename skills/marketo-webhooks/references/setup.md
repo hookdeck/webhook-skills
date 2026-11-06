@@ -90,8 +90,8 @@ payload in a queue.
 
 1. In Hookdeck, create a Connection with a **Marketo** source.
 2. Turn on verification and enter:
-   - **Header Name:** `X-Webhook-Secret` (the custom header you added)
-   - **Header Value:** your secret, exactly as entered in Marketo
+   - **API Key Header:** `X-Webhook-Secret` (the custom header you added)
+   - **API Key:** your secret, exactly as entered in Marketo
 3. Paste the Hookdeck Source URL into the webhook's **URL** field.
 
 Hookdeck rejects requests whose header doesn't match. It also acknowledges
