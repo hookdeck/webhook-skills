@@ -7,8 +7,7 @@ notes: >
   E-signature (OneSpan Sign). The callback key registered with the callback URL (POST /api/callback
   {url, key, events}) is sent as 'Authorization: Basic {callbackKey}', the raw key, NOT
   base64(user:pass), so don't decode it as HTTP Basic. No signature. The credential is the
-  Authorization header. Hookdeck's OneSpan source compares the WHOLE Authorization header value to
-  the configured key, so the examples read ONESPAN_AUTHORIZATION = the full value as OneSpan sends
+  Authorization header. Hookdeck's OneSpan source takes the bare key in its Callback Key field and accepts the header with or without 'Basic '. The examples read ONESPAN_AUTHORIZATION = the full value as OneSpan sends
   it (e.g. 'Basic <callback key>'), including the scheme prefix, and compare the whole Authorization
   header to it; do not strip or parse the prefix (Coterie pattern). Missing header or mismatch: 401.
   Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
