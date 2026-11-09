@@ -39,7 +39,8 @@ const TOLERANCE_SECONDS = 5 * 60;
 
 function verifyPylonWebhook(rawBody, timestamp, signature, secret) {
   if (!timestamp || !signature || !secret) return false;
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > TOLERANCE_SECONDS) return false;
+  const sentAt = Number(timestamp);
+  if (!Number.isFinite(sentAt) || Math.abs(Date.now() / 1000 - sentAt) > TOLERANCE_SECONDS) return false;
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -65,11 +66,15 @@ TOLERANCE_SECONDS = 5 * 60
 def verify_pylon_webhook(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool:
     if not timestamp or not signature or not secret:
         return False
-    if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+    try:
+        if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+            return False
+    except ValueError:
         return False
     signed = timestamp.encode() + b"." + raw_body
     expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
+    # Compare bytes: compare_digest raises on non-ASCII str input
+    return hmac.compare_digest(expected.encode(), signature.encode())
 ```
 
 ## Legacy `X-Pylon-Signature`

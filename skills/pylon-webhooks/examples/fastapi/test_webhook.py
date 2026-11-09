@@ -61,6 +61,13 @@ class TestVerifyPylonWebhook:
         sig = sign_pylon(self.body, self.timestamp, SECRET)
         assert not verify_pylon_webhook(self.body, self.timestamp, sig, SECRET, self.now + 301)
 
+    def test_non_numeric_timestamp(self):
+        sig = sign_pylon(self.body, "abc", SECRET)
+        assert not verify_pylon_webhook(self.body, "abc", sig, SECRET, self.now)
+
+    def test_non_ascii_signature(self):
+        assert not verify_pylon_webhook(self.body, self.timestamp, "é" * 64, SECRET, self.now)
+
     def test_missing_headers(self):
         sig = sign_pylon(self.body, self.timestamp, SECRET)
         assert not verify_pylon_webhook(self.body, None, sig, SECRET, self.now)

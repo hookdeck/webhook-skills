@@ -25,7 +25,8 @@ function verifyPylonWebhook(
     return false;
   }
 
-  if (Math.abs(nowSeconds - Number(timestamp)) > TOLERANCE_SECONDS) {
+  const sentAt = Number(timestamp);
+  if (!Number.isFinite(sentAt) || Math.abs(nowSeconds - sentAt) > TOLERANCE_SECONDS) {
     return false;
   }
 

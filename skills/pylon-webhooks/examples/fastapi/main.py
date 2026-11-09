@@ -47,8 +47,8 @@ def verify_pylon_webhook(
     signed = timestamp.encode("utf-8") + b"." + raw_body
     expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
 
-    # Timing-safe comparison
-    return hmac.compare_digest(expected, signature)
+    # Timing-safe comparison on bytes (compare_digest raises on non-ASCII str input)
+    return hmac.compare_digest(expected.encode("utf-8"), signature.encode("utf-8"))
 
 
 # Pylon lets you pick the method per webhook; POST is the default.

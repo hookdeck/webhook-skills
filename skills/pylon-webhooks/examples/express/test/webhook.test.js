@@ -61,6 +61,11 @@ describe('Pylon Webhook Endpoint', () => {
       expect(verifyPylonWebhook(body, timestamp, signature, secret, now + 301)).toBe(false);
     });
 
+    it('rejects a non-numeric timestamp', () => {
+      const signature = signPylon(body, 'abc', secret);
+      expect(verifyPylonWebhook(body, 'abc', signature, secret, now)).toBe(false);
+    });
+
     it('rejects missing headers', () => {
       const signature = signPylon(body, timestamp, secret);
       expect(verifyPylonWebhook(body, undefined, signature, secret, now)).toBe(false);
