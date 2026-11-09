@@ -1,38 +1,36 @@
 name: pylon
 displayName: Pylon
 docs:
-  webhooks: https://getpylon.com/developers/guides/using-webhooks/
-  verification: https://getpylon.com/developers/guides/using-webhooks/#event-signatures
+  webhooks: https://docs.usepylon.com/pylon-docs/developer/webhooks
+  verification: https://docs.usepylon.com/pylon-docs/developer/webhooks#verifying-webhooks
 notes: >
-  B2B customer support platform. No official SDK — verify manually. Signs each delivery
-  with HMAC-SHA256: the Pylon-Webhook-Signature header is "hs256=<hex-digest>" where the
-  digest is HMAC-SHA256 over concat(Pylon-Webhook-Timestamp, ".", raw body), keyed with the
-  destination's signing secret (shown ONCE at destination creation). Companion headers:
-  Pylon-Webhook-Timestamp (unix seconds) and Pylon-Webhook-Version (e.g. 2021-07). Verify
-  against the RAW body — do not re-serialize; include the "timestamp." prefix in the signed
-  content; keep/compare the "hs256=" prefix; compare timing-safe. NOT Standard Webhooks
-  (custom hs256= prefix and Pylon-Webhook-* headers). A legacy support-article scheme uses
-  X-Pylon-Signature (hex HMAC-SHA256 of the raw body only, no timestamp) — mention as legacy,
-  do not implement as the main path. Retries: up to 5 attempts with exponential backoff, final
-  ~31h after event creation; a destination flips to "inactive" after 7 days with no successful
-  deliveries — process idempotently. IMPORTANT: event-type names are UNCONFIRMED — the canonical
-  list is auth-gated at app.getpylon.com/docs/api#event-types. issue.created / issue.updated are
-  known to exist but the token format is not publicly verified; present event names as
-  illustrative and tell readers to confirm against their own destination configuration.
+  Pylon the B2B customer support platform (usepylon.com), NOT Pylon the solar design platform
+  (getpylon.com, which signs Pylon-Webhook-Signature: hs256=...). No official SDK — verify
+  manually. Webhooks are created in Settings > Integrations & dev > Webhooks and sent by workflow
+  triggers and macros (Send webhook action) with a JSON body the customer writes as a template, so
+  there are NO event types and no event-type field or header; the Test button sends
+  {"data":{"type":"ping"}}. Every template value arrives as a string. Signing: X-Pylon-Signature-V2
+  is the hex HMAC-SHA256 of X-Pylon-Timestamp + "." + the raw body, keyed with the webhook secret
+  used as a UTF-8 string (do not hex-decode it); the secret is shown once at creation and can't be
+  rotated. Reject timestamps more than 5 minutes from now (the docs prescribe it; retries are
+  re-signed with a fresh timestamp). X-Pylon-Signature is legacy (body only, no timestamp) — mention
+  it, don't implement it. Tests sent from the create dialog are unsigned. Retries: up to 3 attempts
+  (about 4 s then 8 s), X-Pylon-Retry-Number on retries, 20 s timeout, at-least-once, unordered, no
+  event ID header. The method defaults to POST (GET/PUT/PATCH/DELETE are selectable). Express
+  examples must read the raw body with express.raw({ type: '*/*' }).
 testScenario:
   events:
-    - issue.created
-    - issue.updated
+    - 'trigger webhook (your JSON template, e.g. issue_id and title)'
+    - 'test ping ({"data":{"type":"ping"}})'
   prompt: >
-    Create a {framework} webhook handler for Pylon. Verify the Pylon-Webhook-Signature header:
-    compute "hs256=" + hex HMAC-SHA256 over Pylon-Webhook-Timestamp + "." + the raw request body
-    using the destination signing secret, and compare timing-safe. Verify against the raw body
-    (do not parse first). Return 400 for a missing/invalid signature and 200 once verified, then
-    dispatch on the payload's event-type field (e.g. issue.created, issue.updated) — treat the
-    event names as illustrative and note they must be confirmed against the Pylon destination
-    configuration. If you use any skills to help with this, add a comment noting which skill(s)
-    you referenced.
+    Create a {framework} webhook handler for Pylon (usepylon.com). Verify the X-Pylon-Signature-V2
+    header: compute the hex HMAC-SHA256 of X-Pylon-Timestamp + "." + the raw request body using the
+    webhook secret as a string, compare timing-safe, and reject timestamps more than 5 minutes from
+    now. Verify against the raw body (do not parse first). Return 400 for a missing/invalid signature
+    and 200 once verified. Pylon has no event types: the body is the customer's JSON template, so
+    handle the {"data":{"type":"ping"}} test body and log fields from the template. If you use any
+    skills to help with this, add a comment noting which skill(s) you referenced.
 catalog:
-  summary: Verify Pylon webhook signatures (`Pylon-Webhook-Signature`, `hs256=` HMAC-SHA256 over `timestamp.body`), handle B2B support issue events like `issue.created` and `issue.updated`
+  summary: Verify Pylon (usepylon.com) webhook signatures (`X-Pylon-Signature-V2`, hex HMAC-SHA256 over `timestamp.body`), handle the JSON bodies workflow triggers and macros send
   marketplace:
-    description: Receive and verify Pylon webhooks. Use when setting up Pylon webhook handlers, debugging Pylon signature verification (Pylon-Webhook-Signature, hs256= HMAC-SHA256 over timestamp.body), or handling B2B support events like issue.created and issue.updated.
+    description: Receive and verify Pylon webhooks (Pylon the B2B support platform, usepylon.com). Use when setting up Pylon webhook handlers, debugging Pylon signature verification (X-Pylon-Signature-V2, hex HMAC-SHA256 over X-Pylon-Timestamp + "." + body), or handling the JSON bodies Pylon workflow triggers and macros send.

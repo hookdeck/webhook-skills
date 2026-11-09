@@ -2,105 +2,110 @@
 
 ## How It Works
 
-Pylon signs every webhook delivery with **HMAC-SHA256**. The signed content is
-the concatenation of the timestamp header, a literal `.`, and the **raw** request
-body:
+Pylon signs every delivery from a trigger or macro, and every test sent from a saved
+webhook, with HMAC-SHA256:
 
 ```
-signed_content = Pylon-Webhook-Timestamp + "." + raw_body
-signature      = "hs256=" + hex( HMAC_SHA256(secret, signed_content) )
+signed_content = X-Pylon-Timestamp + "." + raw_body
+signature      = hex( HMAC_SHA256(webhook_secret, signed_content) )
 ```
 
-The result is sent in the `Pylon-Webhook-Signature` header, prefixed with
-`hs256=`. Two companion headers travel with it:
+The result is sent in `X-Pylon-Signature-V2`, with no prefix. `X-Pylon-Timestamp` is
+the send time in Unix seconds.
 
-- `Pylon-Webhook-Timestamp` — Unix seconds, and part of the signed content.
-- `Pylon-Webhook-Version` — payload schema version (e.g. `2021-07`).
+To verify a delivery (from Pylon's docs):
 
-To verify, recompute the HMAC over `timestamp + "." + rawBody` with your
-destination's secret, prepend `hs256=`, and compare against the header with a
-timing-safe comparison.
+1. Read `X-Pylon-Timestamp` and reject the request if it is more than 5 minutes from
+   your server's current time.
+2. Build the signed string: the timestamp, a period (`.`), and the raw request body
+   exactly as received, before any JSON parsing.
+3. Compute the HMAC-SHA256 of that string with your webhook secret as the key, and
+   hex-encode it. Use the secret string as-is; don't hex-decode it.
+4. Compare your result to `X-Pylon-Signature-V2` with a constant-time comparison.
 
-There is **no official Pylon SDK**, so verify manually in every language.
+Retries are signed again with a fresh timestamp, so a retried delivery passes the
+timestamp check.
+
+There is no official Pylon SDK, so verify manually in every language.
 
 ## Implementation
 
-### Node.js (manual, `node:crypto`)
+### Node.js (`node:crypto`)
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyPylonWebhook(rawBody, timestamp, signatureHeader, secret) {
-  if (!signatureHeader || !timestamp) return false;
+const TOLERANCE_SECONDS = 5 * 60;
 
-  // Pylon signs timestamp + "." + rawBody. rawBody must be the unparsed body.
-  const expected = 'hs256=' + crypto
+function verifyPylonWebhook(rawBody, timestamp, signature, secret) {
+  if (!timestamp || !signature || !secret) return false;
+  const sentAt = Number(timestamp);
+  if (!Number.isFinite(sentAt) || Math.abs(Date.now() / 1000 - sentAt) > TOLERANCE_SECONDS) return false;
+
+  const expected = crypto
     .createHmac('sha256', secret)
     .update(`${timestamp}.`)
     .update(rawBody)
     .digest('hex');
 
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signatureHeader),
-      Buffer.from(expected)
-    );
-  } catch {
-    return false; // different lengths → invalid
-  }
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 ```
 
-### Python (manual, `hmac`)
+### Python (`hmac`)
 
 ```python
-import hmac, hashlib
+import hashlib
+import hmac
+import time
 
-def verify_pylon_webhook(raw_body: bytes, timestamp: str,
-                         signature_header: str, secret: str) -> bool:
-    if not signature_header or not timestamp:
+TOLERANCE_SECONDS = 5 * 60
+
+def verify_pylon_webhook(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool:
+    if not timestamp or not signature or not secret:
+        return False
+    try:
+        if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+            return False
+    except ValueError:
         return False
     signed = timestamp.encode() + b"." + raw_body
-    expected = "hs256=" + hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature_header, expected)
+    expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+    # Compare bytes: compare_digest raises on non-ASCII str input
+    return hmac.compare_digest(expected.encode(), signature.encode())
 ```
 
-> Note: Pylon's published Python snippet passes a `str` secret straight to
-> `hmac.new`, which raises in Python 3. Encode the secret and the signed content
-> to bytes as shown above.
+## Legacy `X-Pylon-Signature`
+
+`X-Pylon-Signature` is a hex HMAC-SHA256 of the body only. Because it covers no
+timestamp, a captured request verifies indefinitely. Pylon still sends it for
+existing integrations, but new integrations should verify `X-Pylon-Signature-V2`
+together with the timestamp.
 
 ## Common Gotchas
 
-- **Use the raw body.** Compute the HMAC over the exact bytes Pylon sent. If you
-  `JSON.parse` and re-serialize, key order/whitespace changes and the signature
-  will not match. In Express use `express.raw()`; in Next.js use
-  `await request.text()`; in FastAPI use `await request.body()`.
-- **Include the timestamp.** The signed content is `timestamp + "." + body`, not
-  the body alone. Forgetting the `timestamp.` prefix is the most common failure.
-- **Keep the `hs256=` prefix.** The header value includes `hs256=`. You can either
-  compare the full `hs256=<hex>` strings (as above) or strip the prefix from both
-  sides — just be consistent.
-- **Timing-safe compare.** Use `crypto.timingSafeEqual` /
-  `hmac.compare_digest`, not `===`/`==`. `timingSafeEqual` throws on length
-  mismatch, so wrap it in try/catch and return `false`.
-- **Secret is shown once.** Pylon reveals the destination secret only at creation
-  time. Store it securely; you cannot read it back later.
-
-## Legacy `X-Pylon-Signature` Scheme
-
-An older Pylon support article documents a different header,
-`X-Pylon-Signature`: a hex HMAC-SHA256 of the **raw body only** — no timestamp,
-no `hs256=` prefix. This is legacy. Implement the `Pylon-Webhook-Signature`
-scheme above as your primary path; only fall back to `X-Pylon-Signature` if your
-destination predates the current format.
+- **Use the raw body.** If you parse and re-serialize the JSON, whitespace and key
+  order change and the signature won't match. In Express use `express.raw()`, in
+  Next.js `await request.text()`, and in FastAPI `await request.body()`.
+- **Include the timestamp.** The signed content is `timestamp + "." + body`, not the
+  body alone.
+- **Don't hex-decode the secret.** Use it as a UTF-8 string key.
+- **Constant-time compare.** Use `crypto.timingSafeEqual` (check lengths first; it
+  throws on a mismatch) or `hmac.compare_digest`.
+- **Create-dialog tests are unsigned.** Send tests from Edit on the saved webhook.
+- **Keep a body-carrying method.** Pylon lets you choose GET or DELETE, but a
+  bodyless request can't carry the signed body your handler needs.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
-| Signature never matches | Body was parsed/re-serialized — verify against the raw bytes |
-| Signature never matches | Signed content omitted the `timestamp.` prefix |
-| Signature never matches | Compared against `X-Pylon-Signature` (legacy) instead of `Pylon-Webhook-Signature` |
-| `timingSafeEqual` throws | Buffers differ in length — catch and return `false` |
-| Works locally, fails in prod | Wrong `PYLON_WEBHOOK_SECRET` (per-destination secret mismatch) |
-| Python `TypeError` | `str` passed to `hmac.new`; encode secret/content to bytes |
+| Signature never matches | The body was parsed or re-serialized before verifying |
+| Signature never matches | The signed content left out the `timestamp.` prefix |
+| Signature never matches | Compared against the legacy `X-Pylon-Signature` |
+| Signature never matches | The secret was hex-decoded instead of used as a string |
+| Test requests fail, real ones pass | The test was sent from the create dialog (unsigned) |
+| Rejected as stale | Server clock drift beyond 5 minutes |
+| Works locally, fails in prod | Wrong `PYLON_WEBHOOK_SECRET` (each webhook has its own) |

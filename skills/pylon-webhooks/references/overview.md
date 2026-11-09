@@ -2,69 +2,73 @@
 
 ## What Are Pylon Webhooks?
 
-[Pylon](https://usepylon.com) is a B2B customer support platform (issues,
-shared inboxes, accounts, and knowledge base). Webhooks let Pylon push events to
-your application in real time so you can sync issues to your own systems, trigger
-automations, notify teams, or update analytics — instead of polling the API.
+[Pylon](https://usepylon.com) is a B2B customer support platform (issues, shared
+inboxes, accounts, and a knowledge base). Its webhooks are user-defined HTTP
+callbacks: you create a webhook (target URL, method, optional custom headers),
+then fire it from a **workflow trigger** or a **macro** with a **Send webhook**
+action. Each delivery is signed with HMAC-SHA256 so you can confirm it came from
+Pylon. See the [Webhooks docs](https://docs.usepylon.com/pylon-docs/developer/webhooks).
 
-You configure a **webhook destination** (a URL + a set of event types) in Pylon's
-API settings. When a subscribed event fires, Pylon POSTs a JSON payload to your
-URL, signed with HMAC-SHA256 so you can verify it came from Pylon.
+> Pylon the solar design platform (getpylon.com) is a different company with a
+> different signature scheme (`Pylon-Webhook-Signature: hs256=…`). This skill is
+> for usepylon.com.
 
-## Common Event Types
+## No Event Types
 
-> ⚠️ **These event names are illustrative, not a verified catalog.** Pylon's
-> canonical event-type list lives behind an authenticated account at
-> `https://app.getpylon.com/docs/api#event-types`. Only `issue.created` and
-> `issue.updated` are known to exist as concepts, and the exact token format
-> (`issue.created` vs `issue_created` vs a trigger-based name) is **not** publicly
-> documented. **Always confirm the event types against the event list shown in
-> your own Pylon destination configuration** before relying on them in code.
+Pylon doesn't send a fixed event catalog, and there is no event-type field or
+header. A trigger's **conditions** control when the webhook fires (for example,
+an issue is created or its status changes), and the **JSON payload** you write in
+the Send webhook action controls what it carries.
 
-| Event (illustrative) | Triggered when | Common use cases |
-|----------------------|----------------|------------------|
-| `issue.created` | A new support issue/ticket is opened | Mirror tickets into your DB, alert on-call, create a linked task |
-| `issue.updated` | An issue's status, assignee, or fields change | Keep an external mirror in sync, trigger SLA automations |
-| `issue.closed` **(example shape only — not confirmed to exist)** | An issue is resolved/closed | Send CSAT surveys, update reporting, close linked tasks |
+If one endpoint receives several triggers, add your own discriminator to each
+template, for example `"trigger": "issue_created"`.
 
-## Event Payload Structure
+## Payload Structure
 
-Pylon delivers a JSON body. The exact schema is versioned via the
-`Pylon-Webhook-Version` header (e.g. `2021-07`) and is documented in Pylon's
-authenticated API docs. In practice a payload carries an event-type discriminator
-and the affected resource, for example:
+You write the body as JSON with template variables. Pylon's docs show:
 
 ```json
 {
-  "event_type": "issue.created",
-  "data": {
-    "id": "issue_01H...",
-    "title": "Login is broken",
-    "state": "new",
-    "account_id": "acc_01H..."
-  }
+  "issue_id": "{{ issue.id }}",
+  "number": "{{ issue.number }}",
+  "title": "{{ issue.title }}",
+  "tags": "{{ issue.tags }}",
+  "requester_email": "{{ issue.requester.email }}",
+  "last_message_id": "{{ issue.last_message.id }}",
+  "last_message_html": "{{ issue.last_message.body_html }}",
+  "last_message_author": "{{ issue.last_message.author.name }}"
 }
 ```
 
-Because the discriminator field name is **not publicly confirmed**, the handlers
-in this skill read `event_type` and fall back to `type`. Adapt these to whatever
-your destination actually sends.
+Rules from the docs:
 
-## Delivery, Retries, and Inactive Destinations
+- The template must be valid JSON before variables are filled in.
+- Put every variable inside a JSON string: `"id": "{{issue.id}}"` works, and
+  `"id": {{issue.id}}` does not. Pylon escapes each value but doesn't add quotes.
+- Every value arrives as a string, including numbers, dates and `true`/`false`.
+- Lists such as `{{ issue.tags }}` arrive as one comma-separated string, and
+  missing values arrive as `""`.
+- Variables can also go in the Target URL, where they are **not** URL-encoded.
 
-- Respond quickly — Pylon does not document a delivery timeout, so acknowledge as
-  soon as the signature verifies and do heavy work asynchronously.
-- Failed deliveries are retried with exponential backoff, up to **5 total
-  attempts**, with the final attempt roughly **31 hours** after the event was
-  created.
-- If a destination has **no successful deliveries for 7 days**, Pylon flips it to
-  the `inactive` state and stops sending — monitor delivery health.
+The variables available depend on the trigger's object; see Pylon's Template
+variables page for the full list.
 
-Because retries can deliver the same event more than once, process events
-**idempotently** (dedupe on a stable id from the payload).
+The **Test** button sends `{"data":{"type":"ping"}}`.
 
-## Full Event Reference
+## Delivery and Retries
 
-The complete, authoritative event list is in Pylon's API docs (requires a Pylon
-account): `https://app.getpylon.com/docs/api#event-types`. See also the public
-[webhooks guide](https://getpylon.com/developers/guides/using-webhooks/).
+- **Timeout:** each attempt waits up to 20 seconds.
+- **Success:** any status below 400.
+- **Retries:** up to 3 attempts in total. After a 4xx, 5xx, timeout or connection
+  failure, Pylon retries after about 4 seconds, then about 8 seconds. Retries carry
+  `X-Pylon-Retry-Number`.
+- **At-least-once and unordered:** a delivery can arrive more than once or out of
+  order.
+- **No event ID header:** to de-duplicate, include an identifier such as
+  `{{issue.id}}` with the field that changed in your template.
+- Every request is sent with `Content-Type: application/json`.
+- Private and internal network addresses are blocked as targets. If your endpoint
+  is behind a firewall, allowlist Pylon's IP addresses for your region.
+
+The **Logs** tab on the Webhooks page lists every attempt with its status, method,
+payload, response, duration and request ID.

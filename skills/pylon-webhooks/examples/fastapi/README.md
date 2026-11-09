@@ -5,7 +5,7 @@ Minimal example of receiving Pylon webhooks with signature verification.
 ## Prerequisites
 
 - Python 3.9+
-- A Pylon webhook destination with its signing secret
+- A Pylon webhook (Settings > Integrations & dev > Webhooks) and its secret
 
 ## Setup
 
@@ -21,8 +21,8 @@ Minimal example of receiving Pylon webhooks with signature verification.
    cp .env.example .env
    ```
 
-3. Add your Pylon destination signing secret to `.env` as `PYLON_WEBHOOK_SECRET`
-   (Pylon shows the secret only once, when you create the destination).
+3. Add your Pylon webhook secret to `.env` as `PYLON_WEBHOOK_SECRET`
+   (Pylon shows the secret only once, when you create the webhook).
 
 ## Run
 
@@ -34,7 +34,7 @@ Server runs on http://localhost:8000
 
 ## Test
 
-Run the test suite (generates real `hs256=` signatures):
+Run the test suite (generates real `X-Pylon-Signature-V2` signatures):
 
 ```bash
 pytest test_webhook.py -v
@@ -49,21 +49,23 @@ required — it creates a guest account on first run):
 npx hookdeck-cli listen 8000 pylon --path /webhooks/pylon
 ```
 
-Put the URL Hookdeck prints into your Pylon destination's URL field, then trigger
-an event in Pylon (e.g. create or update an issue).
+Put the URL Hookdeck prints into your Pylon webhook's Target URL, add a trigger
+with a Send webhook action, then click Test on the saved webhook (tests sent
+while creating a webhook are unsigned).
 
 ## How It Works
 
 - Reads the **raw body** with `await request.body()` for verification.
-- Verifies the `Pylon-Webhook-Signature` header: `hs256=` + hex HMAC-SHA256 over
-  `Pylon-Webhook-Timestamp + "." + rawBody`, compared with `hmac.compare_digest`.
+- Verifies the `X-Pylon-Signature-V2` header: hex HMAC-SHA256 over
+  `X-Pylon-Timestamp + "." + rawBody`, compared with `hmac.compare_digest`.
 - Returns `400` on a missing/invalid signature, `200` once verified.
+- Rejects a timestamp more than 5 minutes from now, as Pylon's docs advise.
 
-> Event names (`issue.created`, `issue.updated`, …) are **illustrative**. Confirm
-> the real event types and the payload's event-type field against your own Pylon
-> destination configuration.
+> Pylon has no event types: the body is the JSON template you write in the
+> trigger's Send webhook action. The handler logs fields from the template in
+> Pylon's docs; change them to match yours.
 
 ## Endpoints
 
-- `POST /webhooks/pylon` - Receives and verifies Pylon webhook events
+- `POST /webhooks/pylon` - Receives and verifies Pylon webhooks
 - `GET /health` - Health check
