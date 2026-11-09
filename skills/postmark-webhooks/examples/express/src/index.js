@@ -24,7 +24,9 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 
   // MessageID is null on SubscriptionChange events for manual suppressions
   // (Origin Customer or Admin) and reactivations. Postmark drops any event
-  // that gets a 4xx, so rejecting those would lose them for good.
+  // that gets a 4xx, so rejecting those would lose them for good. (Postmark
+  // publishes no SMTP API Error payload, so whether it always has a MessageID
+  // is unverified.)
   const messageIdRequired = recordType !== 'SubscriptionChange';
 
   if (!recordType || (messageIdRequired && !event.MessageID)) {

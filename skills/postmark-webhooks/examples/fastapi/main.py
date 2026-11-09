@@ -142,7 +142,8 @@ async def handle_webhook(
 
     # Validate required fields. MessageID is null on SubscriptionChange events for
     # manual suppressions and reactivations. Postmark drops any event that gets a
-    # 4xx, so rejecting those would lose them for good.
+    # 4xx, so rejecting those would lose them for good. (Postmark publishes no
+    # SMTP API Error payload, so whether it always has a MessageID is unverified.)
     message_id_required = record_type != "SubscriptionChange"
 
     if not record_type or (message_id_required and not body.get("MessageID")):

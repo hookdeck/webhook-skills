@@ -25,7 +25,7 @@ metadata:
 
 ### Authentication
 
-Postmark does NOT use signature verification. Instead, webhooks are authenticated by including credentials in the webhook URL itself.
+Postmark does NOT use signature verification. Instead, webhooks are authenticated with credentials you configure on the webhook: Basic Auth or a token in the URL (shown below), or a custom header set with `HttpHeaders` (see [references/verification.md](references/verification.md)).
 
 ```javascript
 // Express - Basic Auth in URL

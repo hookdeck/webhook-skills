@@ -103,6 +103,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
+    // Valid JSON that isn't an object (e.g. null or a string) can't be an event
+    if (typeof event !== 'object' || event === null) {
+      console.error('Invalid payload structure:', event);
+      return NextResponse.json({ error: 'Invalid payload structure' }, { status: 400 });
+    }
+
     // Validate payload structure
     // Inbound webhooks have no RecordType, so identify them by FromFull
     const recordType = 'RecordType' in event
@@ -113,7 +119,8 @@ export async function POST(request: NextRequest) {
 
     // MessageID is null on SubscriptionChange events for manual suppressions
     // and reactivations. Postmark drops any event that gets a 4xx, so rejecting
-    // those would lose them for good.
+    // those would lose them for good. (Postmark publishes no SMTP API Error
+    // payload, so whether it always has a MessageID is unverified.)
     const messageIdRequired = recordType !== 'SubscriptionChange';
 
     if (!recordType || (messageIdRequired && !event.MessageID)) {

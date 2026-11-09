@@ -27,6 +27,8 @@
    https://yourdomain.com/webhooks/postmark?token=your-secret-token
    ```
 
+   **Option C: Custom header.** Keep the URL plain and add a custom HTTP header with the token in the webhook's settings, or with `HttpHeaders` in the [Webhooks API](https://postmarkapp.com/developer/api/webhooks-api). This keeps the secret out of URLs and access logs. See [verification.md](verification.md#method-3-custom-header-token).
+
 3. Select the events you want to receive:
    - **Bounce** - Hard bounces, soft bounces, and blocked emails
    - **Spam Complaint** - When recipients mark email as spam
@@ -79,22 +81,24 @@ Configure webhooks per stream or for all streams.
 
 ## Retry Behavior
 
-Outbound webhooks (Bounce, Delivery, Open, Click, SpamComplaint, SubscriptionChange) use one retry schedule for every event type: up to 6 retries, 1, 5, 10, 10, 10 and 15 minutes after the previous attempt (about 51 minutes in total). After that, Postmark drops the event. Inbound webhooks are retried separately.
+Outbound and inbound webhooks retry differently.
 
-Which responses are retried:
+**Outbound** (Bounce, Delivery, Open, Click, SpamComplaint, SubscriptionChange) use one schedule for every event type: six retry attempts, 1, 5, 10, 10, 10 and 15 minutes after the previous attempt (roughly 50 minutes in total). After that, Postmark drops the event.
 - **Retried:** 5xx, 408 Request Timeout, 429 Too Many Requests, timeouts and connection failures
 - **Not retried (event dropped):** any other 4xx, such as 400, 401, 403 or 404
+
+**Inbound** is retried after any non-200 response, 10 times: 1, 5, 10, 10, 10, 15 and 30 minutes, then 1, 2 and 6 hours. A 403 stops the retries. See [Errors and retries](https://postmarkapp.com/developer/webhooks/inbound-webhook) on the inbound webhook page.
 
 Your endpoint should:
 - Return 200 once the event is processed or handed to a durable queue
 - Return 5xx when processing fails and a retry could succeed
-- Only return 4xx when a retry can never succeed. A 4xx loses the event, so don't reject valid events, such as a SubscriptionChange with `"MessageID": null`
+- Only return 4xx when a retry can never succeed. For outbound events a 4xx loses the event, so don't reject valid events, such as a SubscriptionChange with `"MessageID": null`
 
-Every request includes an `X-PM-Retries-Remaining` header, and an `X-PM-Webhook-Trace-Id` header that stays the same across retries of one event. Use it, or `MessageID` when it isn't null, to skip duplicates.
+Every outbound request includes an `X-PM-Retries-Remaining` header, and an `X-PM-Webhook-Trace-Id` header that stays the same across retries of one event. Use the trace ID to skip duplicates. Don't dedupe on `MessageID` alone: one message produces several events (Delivery, Open, Clicks) with the same `MessageID`. If you key on payload fields, combine `MessageID` with `RecordType` and the event's timestamp.
 
 If an event type fails every delivery attempt, Postmark emails a warning. If nothing gets through for 48 hours, it disables that event type until you verify the webhook again.
 
-See [Retry attempts](https://postmarkapp.com/developer/webhooks/webhooks-overview) in Postmark's webhooks overview.
+See [Retry attempts](https://postmarkapp.com/developer/webhooks/webhooks-overview) in Postmark's webhooks overview for outbound.
 
 ## Multiple Endpoints
 

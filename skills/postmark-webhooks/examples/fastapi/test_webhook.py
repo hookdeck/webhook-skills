@@ -111,6 +111,29 @@ class TestPostmarkWebhook:
         assert response.status_code == 200
         assert "Subscription change: user@example.com" in caplog.text
 
+    def test_subscription_change_without_message_id(self, caplog):
+        """SubscriptionChange without a MessageID field is accepted too."""
+        with caplog.at_level(logging.INFO):
+            response = client.post(
+                f"{WEBHOOK_URL}?token={VALID_TOKEN}",
+                json={
+                    "RecordType": "SubscriptionChange",
+                    "ChangedAt": "2026-11-05T16:33:54.9070259Z",
+                    "Recipient": "user@example.com",
+                    "SuppressSending": False,
+                },
+            )
+        assert response.status_code == 200
+        assert "Subscription change: user@example.com" in caplog.text
+
+    def test_other_event_null_message_id_rejected(self):
+        """Only SubscriptionChange is documented as sending MessageID: null."""
+        response = client.post(
+            f"{WEBHOOK_URL}?token={VALID_TOKEN}",
+            json={"RecordType": "Bounce", "MessageID": None},
+        )
+        assert response.status_code == 400
+
     def test_bounce_event(self, caplog):
         """Test handling of bounce events."""
         bounce_event = {

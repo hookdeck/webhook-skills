@@ -5,7 +5,7 @@
 Unlike many webhook providers, Postmark does NOT use cryptographic signature verification (no HMAC, no public key cryptography). Instead, Postmark relies on:
 
 1. **HTTPS** - Encrypted transport
-2. **Authentication credentials in the URL** - Basic auth or token
+2. **Credentials you configure on the webhook** - Basic auth or a token in the URL, or a custom header (`HttpHeaders`) or Basic Auth (`HttpAuth`) set on the webhook
 3. **IP allowlisting** - Optional firewall rules
 
 ## Authentication Methods
@@ -110,26 +110,23 @@ openssl rand -base64 24
 Since there's no signature to verify, validate the expected payload structure:
 
 ```javascript
+// Postmark drops an outbound event that gets a 4xx (other than 408/429), so only
+// reject payloads that can never be valid. Unknown RecordTypes are accepted, so a
+// new event type isn't lost; route them to a default handler instead.
 function isValidPostmarkPayload(payload) {
-  // Check required fields
-  if (!payload.MessageID) {
+  if (typeof payload !== 'object' || payload === null) {
     return false;
   }
 
   // Inbound payloads have no RecordType, so identify them by FromFull
-  if (!payload.RecordType) {
-    return Boolean(payload.FromFull);
-  }
-
-  // Validate RecordType is expected
-  const validTypes = ['Bounce', 'SpamComplaint', 'Open',
-                     'Click', 'Delivery', 'SubscriptionChange'];
-  if (!validTypes.includes(payload.RecordType)) {
+  const recordType = payload.RecordType || (payload.FromFull ? 'Inbound' : undefined);
+  if (!recordType) {
     return false;
   }
 
-  // Validate timestamp format
-  if (payload.BouncedAt && !isValidISO8601(payload.BouncedAt)) {
+  // MessageID is null on SubscriptionChange events for manual suppressions
+  // (Origin Customer or Admin) and reactivations
+  if (recordType !== 'SubscriptionChange' && !payload.MessageID) {
     return false;
   }
 

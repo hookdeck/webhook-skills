@@ -136,6 +136,37 @@ describe('Postmark Webhook Route', () => {
       expect(logSpy).toHaveBeenCalledWith('Subscription change: user@example.com');
       logSpy.mockRestore();
     });
+
+    it('should accept SubscriptionChange without a MessageID field', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const request = createRequest({
+        RecordType: 'SubscriptionChange',
+        ChangedAt: '2026-11-05T16:33:54.9070259Z',
+        Recipient: 'user@example.com',
+        SuppressSending: false,
+      }, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      logSpy.mockRestore();
+    });
+
+    // Only SubscriptionChange is documented as sending MessageID: null
+    it('should reject other event types with a null MessageID', async () => {
+      const request = createRequest({ RecordType: 'Bounce', MessageID: null }, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Invalid payload structure');
+    });
+
+    it('should reject JSON that is not an object', async () => {
+      const request = createRequest(null, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('Event Processing', () => {
