@@ -1,143 +1,127 @@
-import os
-import json
-import hmac
 import hashlib
-import pytest
+import hmac
+import json
+import os
+import time
+
 from fastapi.testclient import TestClient
 
 # Set test environment variables before importing app
 os.environ["PYLON_WEBHOOK_SECRET"] = "test_pylon_secret"
 
-from main import app, verify_pylon_webhook
+from main import app, verify_pylon_webhook  # noqa: E402
 
 client = TestClient(app)
 
-TIMESTAMP = "1624235417"
 SECRET = os.environ["PYLON_WEBHOOK_SECRET"]
+ISSUE_PAYLOAD = json.dumps(
+    {
+        "issue_id": "b7c1a1d2-0000-4000-8000-000000000001",
+        "number": "42",
+        "title": "Login is broken",
+        "tags": "bug,urgent",
+        "requester_email": "customer@example.com",
+    }
+)
 
 
-def generate_pylon_signature(payload: str, timestamp: str, secret: str) -> str:
-    """Generate a valid Pylon signature for testing.
+def sign_pylon(payload: bytes, timestamp: str, secret: str) -> str:
+    """Sign the way Pylon signs X-Pylon-Signature-V2: hex HMAC-SHA256 of
+    `timestamp + "." + body`, keyed with the secret string."""
+    signed = timestamp.encode("utf-8") + b"." + payload
+    return hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
 
-    Signs `timestamp + "." + payload` with HMAC-SHA256, hex, "hs256=" prefix.
-    """
-    signed = timestamp.encode("utf-8") + b"." + payload.encode("utf-8")
-    digest = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
-    return f"hs256={digest}"
+
+def now_timestamp() -> str:
+    return str(int(time.time()))
 
 
 class TestVerifyPylonWebhook:
-    """Tests for the Pylon signature verification function."""
+    timestamp = "1731150000"
+    now = 1731150010
+    body = ISSUE_PAYLOAD.encode("utf-8")
 
-    def test_valid_signature_returns_true(self):
-        payload = b'{"event_type":"issue.created"}'
-        signature = generate_pylon_signature(payload.decode(), TIMESTAMP, SECRET)
-        assert verify_pylon_webhook(payload, TIMESTAMP, signature, SECRET) is True
+    def test_valid_signature(self):
+        sig = sign_pylon(self.body, self.timestamp, SECRET)
+        assert verify_pylon_webhook(self.body, self.timestamp, sig, SECRET, self.now)
 
-    def test_invalid_signature_returns_false(self):
-        payload = b'{"event_type":"issue.created"}'
-        assert verify_pylon_webhook(payload, TIMESTAMP, "hs256=deadbeef", SECRET) is False
+    def test_wrong_secret(self):
+        sig = sign_pylon(self.body, self.timestamp, "wrong_secret")
+        assert not verify_pylon_webhook(self.body, self.timestamp, sig, SECRET, self.now)
 
-    def test_missing_signature_returns_false(self):
-        payload = b'{"event_type":"issue.created"}'
-        assert verify_pylon_webhook(payload, TIMESTAMP, None, SECRET) is False
+    def test_changed_timestamp(self):
+        sig = sign_pylon(self.body, self.timestamp, SECRET)
+        assert not verify_pylon_webhook(self.body, "1731150001", sig, SECRET, self.now)
 
-    def test_missing_timestamp_returns_false(self):
-        payload = b'{"event_type":"issue.created"}'
-        signature = generate_pylon_signature(payload.decode(), TIMESTAMP, SECRET)
-        assert verify_pylon_webhook(payload, None, signature, SECRET) is False
+    def test_legacy_body_only_signature(self):
+        legacy = hmac.new(SECRET.encode("utf-8"), self.body, hashlib.sha256).hexdigest()
+        assert not verify_pylon_webhook(self.body, self.timestamp, legacy, SECRET, self.now)
 
-    def test_tampered_timestamp_returns_false(self):
-        payload = b'{"event_type":"issue.created"}'
-        signature = generate_pylon_signature(payload.decode(), TIMESTAMP, SECRET)
-        assert verify_pylon_webhook(payload, "9999999999", signature, SECRET) is False
+    def test_old_timestamp(self):
+        sig = sign_pylon(self.body, self.timestamp, SECRET)
+        assert not verify_pylon_webhook(self.body, self.timestamp, sig, SECRET, self.now + 301)
 
-    def test_wrong_secret_returns_false(self):
-        payload = b'{"event_type":"issue.created"}'
-        signature = generate_pylon_signature(payload.decode(), TIMESTAMP, SECRET)
-        assert verify_pylon_webhook(payload, TIMESTAMP, signature, "wrong_secret") is False
+    def test_missing_headers(self):
+        sig = sign_pylon(self.body, self.timestamp, SECRET)
+        assert not verify_pylon_webhook(self.body, None, sig, SECRET, self.now)
+        assert not verify_pylon_webhook(self.body, self.timestamp, None, SECRET, self.now)
 
 
 class TestPylonWebhookEndpoint:
-    """Tests for the Pylon webhook endpoint."""
-
-    def test_missing_signature_returns_400(self):
+    def test_missing_signature(self):
         response = client.post(
             "/webhooks/pylon",
-            content='{"event_type":"issue.created"}',
-            headers={
-                "Content-Type": "application/json",
-                "Pylon-Webhook-Timestamp": TIMESTAMP,
-            },
+            content=ISSUE_PAYLOAD,
+            headers={"Content-Type": "application/json", "X-Pylon-Timestamp": now_timestamp()},
         )
         assert response.status_code == 400
-        assert "Invalid signature" in response.json()["detail"]
 
-    def test_invalid_signature_returns_400(self):
-        payload = json.dumps({"event_type": "issue.created"})
+    def test_tampered_payload(self):
+        timestamp = now_timestamp()
+        sig = sign_pylon(ISSUE_PAYLOAD.encode("utf-8"), timestamp, SECRET)
         response = client.post(
             "/webhooks/pylon",
-            content=payload,
+            content=ISSUE_PAYLOAD.replace("Login is broken", "Nothing to see"),
             headers={
                 "Content-Type": "application/json",
-                "Pylon-Webhook-Signature": "hs256=deadbeef",
-                "Pylon-Webhook-Timestamp": TIMESTAMP,
+                "X-Pylon-Timestamp": timestamp,
+                "X-Pylon-Signature-V2": sig,
             },
         )
         assert response.status_code == 400
 
-    def test_tampered_payload_returns_400(self):
-        original = json.dumps({"event_type": "issue.created", "data": {"id": "1"}})
-        signature = generate_pylon_signature(original, TIMESTAMP, SECRET)
-        tampered = json.dumps({"event_type": "issue.created", "data": {"id": "999"}})
+    def test_signed_delivery(self):
+        timestamp = now_timestamp()
+        sig = sign_pylon(ISSUE_PAYLOAD.encode("utf-8"), timestamp, SECRET)
         response = client.post(
             "/webhooks/pylon",
-            content=tampered,
+            content=ISSUE_PAYLOAD,
             headers={
                 "Content-Type": "application/json",
-                "Pylon-Webhook-Signature": signature,
-                "Pylon-Webhook-Timestamp": TIMESTAMP,
-            },
-        )
-        assert response.status_code == 400
-
-    def test_valid_issue_created_returns_200(self):
-        payload = json.dumps(
-            {"event_type": "issue.created", "data": {"id": "issue_1", "title": "Login is broken"}}
-        )
-        signature = generate_pylon_signature(payload, TIMESTAMP, SECRET)
-        response = client.post(
-            "/webhooks/pylon",
-            content=payload,
-            headers={
-                "Content-Type": "application/json",
-                "Pylon-Webhook-Signature": signature,
-                "Pylon-Webhook-Timestamp": TIMESTAMP,
-                "Pylon-Webhook-Version": "2021-07",
+                "X-Pylon-Timestamp": timestamp,
+                "X-Pylon-Signature-V2": sig,
             },
         )
         assert response.status_code == 200
         assert response.json() == {"received": True}
 
-    def test_valid_issue_updated_returns_200(self):
-        payload = json.dumps(
-            {"event_type": "issue.updated", "data": {"id": "issue_1", "state": "closed"}}
-        )
-        signature = generate_pylon_signature(payload, TIMESTAMP, SECRET)
+    def test_signed_ping(self):
+        ping = '{"data":{"type":"ping"}}'
+        timestamp = now_timestamp()
         response = client.post(
             "/webhooks/pylon",
-            content=payload,
+            content=ping,
             headers={
                 "Content-Type": "application/json",
-                "Pylon-Webhook-Signature": signature,
-                "Pylon-Webhook-Timestamp": TIMESTAMP,
+                "X-Pylon-Timestamp": timestamp,
+                "X-Pylon-Signature-V2": sign_pylon(ping.encode("utf-8"), timestamp, SECRET),
             },
         )
         assert response.status_code == 200
 
 
 class TestHealth:
-    def test_health_returns_ok(self):
+    def test_health(self):
         response = client.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}

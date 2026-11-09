@@ -7,143 +7,125 @@ process.env.PYLON_WEBHOOK_SECRET = 'test_pylon_secret';
 const { app, verifyPylonWebhook } = require('../src/index');
 
 /**
- * Generate a valid Pylon signature for testing.
- * Signs `timestamp + "." + payload` with HMAC-SHA256, hex, "hs256=" prefix.
+ * Sign the way Pylon signs X-Pylon-Signature-V2:
+ * hex HMAC-SHA256 of `timestamp + "." + body`, keyed with the secret string.
  */
-function generatePylonSignature(payload, timestamp, secret) {
-  const digest = crypto
+function signPylon(payload, timestamp, secret) {
+  return crypto
     .createHmac('sha256', secret)
     .update(`${timestamp}.`)
     .update(payload)
     .digest('hex');
-  return `hs256=${digest}`;
 }
 
+const nowTimestamp = () => String(Math.floor(Date.now() / 1000));
+
+const issuePayload = JSON.stringify({
+  issue_id: 'b7c1a1d2-0000-4000-8000-000000000001',
+  number: '42',
+  title: 'Login is broken',
+  tags: 'bug,urgent',
+  requester_email: 'customer@example.com',
+});
+
 describe('Pylon Webhook Endpoint', () => {
-  const webhookSecret = process.env.PYLON_WEBHOOK_SECRET;
-  const timestamp = '1624235417';
+  const secret = process.env.PYLON_WEBHOOK_SECRET;
 
   describe('verifyPylonWebhook', () => {
-    it('should return true for valid signature', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
+    const timestamp = '1731150000';
+    const now = 1731150010;
+    const body = Buffer.from(issuePayload);
 
-      expect(verifyPylonWebhook(payload, timestamp, signature, webhookSecret)).toBe(true);
+    it('accepts a valid signature', () => {
+      const signature = signPylon(body, timestamp, secret);
+      expect(verifyPylonWebhook(body, timestamp, signature, secret, now)).toBe(true);
     });
 
-    it('should return false for invalid signature', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-
-      expect(verifyPylonWebhook(payload, timestamp, 'hs256=deadbeef', webhookSecret)).toBe(false);
+    it('rejects a wrong secret', () => {
+      const signature = signPylon(body, timestamp, 'wrong_secret');
+      expect(verifyPylonWebhook(body, timestamp, signature, secret, now)).toBe(false);
     });
 
-    it('should return false for missing signature', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-
-      expect(verifyPylonWebhook(payload, timestamp, null, webhookSecret)).toBe(false);
+    it('rejects a changed timestamp', () => {
+      const signature = signPylon(body, timestamp, secret);
+      expect(verifyPylonWebhook(body, '1731150001', signature, secret, now)).toBe(false);
     });
 
-    it('should return false for missing timestamp', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
-
-      expect(verifyPylonWebhook(payload, null, signature, webhookSecret)).toBe(false);
+    it('rejects a body-only signature (the legacy X-Pylon-Signature scheme)', () => {
+      const legacy = crypto.createHmac('sha256', secret).update(body).digest('hex');
+      expect(verifyPylonWebhook(body, timestamp, legacy, secret, now)).toBe(false);
     });
 
-    it('should return false when timestamp is tampered', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
-
-      expect(verifyPylonWebhook(payload, '9999999999', signature, webhookSecret)).toBe(false);
+    it('rejects a timestamp more than 5 minutes old', () => {
+      const signature = signPylon(body, timestamp, secret);
+      expect(verifyPylonWebhook(body, timestamp, signature, secret, now + 301)).toBe(false);
     });
 
-    it('should return false for wrong secret', () => {
-      const payload = Buffer.from('{"event_type":"issue.created"}');
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
-
-      expect(verifyPylonWebhook(payload, timestamp, signature, 'wrong_secret')).toBe(false);
+    it('rejects missing headers', () => {
+      const signature = signPylon(body, timestamp, secret);
+      expect(verifyPylonWebhook(body, undefined, signature, secret, now)).toBe(false);
+      expect(verifyPylonWebhook(body, timestamp, undefined, secret, now)).toBe(false);
     });
   });
 
   describe('POST /webhooks/pylon', () => {
-    it('should return 400 for missing signature', async () => {
+    it('returns 400 for a missing signature', async () => {
       const response = await request(app)
         .post('/webhooks/pylon')
         .set('Content-Type', 'application/json')
-        .set('Pylon-Webhook-Timestamp', timestamp)
-        .send('{"event_type":"issue.created"}');
+        .set('X-Pylon-Timestamp', nowTimestamp())
+        .send(issuePayload);
 
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid signature');
     });
 
-    it('should return 400 for invalid signature', async () => {
-      const payload = JSON.stringify({ event_type: 'issue.created' });
+    it('returns 400 when the payload is tampered', async () => {
+      const timestamp = nowTimestamp();
+      const signature = signPylon(issuePayload, timestamp, secret);
 
       const response = await request(app)
         .post('/webhooks/pylon')
         .set('Content-Type', 'application/json')
-        .set('Pylon-Webhook-Signature', 'hs256=deadbeef')
-        .set('Pylon-Webhook-Timestamp', timestamp)
-        .send(payload);
+        .set('X-Pylon-Timestamp', timestamp)
+        .set('X-Pylon-Signature-V2', signature)
+        .send(issuePayload.replace('Login is broken', 'Nothing to see'));
 
       expect(response.status).toBe(400);
     });
 
-    it('should return 400 when the payload is tampered', async () => {
-      const original = JSON.stringify({ event_type: 'issue.created', data: { id: '1' } });
-      const signature = generatePylonSignature(original, timestamp, webhookSecret);
-      const tampered = JSON.stringify({ event_type: 'issue.created', data: { id: '999' } });
+    it('returns 200 for a signed delivery', async () => {
+      const timestamp = nowTimestamp();
+      const signature = signPylon(issuePayload, timestamp, secret);
 
       const response = await request(app)
         .post('/webhooks/pylon')
         .set('Content-Type', 'application/json')
-        .set('Pylon-Webhook-Signature', signature)
-        .set('Pylon-Webhook-Timestamp', timestamp)
-        .send(tampered);
-
-      expect(response.status).toBe(400);
-    });
-
-    it('should return 200 for a valid issue.created event', async () => {
-      const payload = JSON.stringify({
-        event_type: 'issue.created',
-        data: { id: 'issue_1', title: 'Login is broken' }
-      });
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
-
-      const response = await request(app)
-        .post('/webhooks/pylon')
-        .set('Content-Type', 'application/json')
-        .set('Pylon-Webhook-Signature', signature)
-        .set('Pylon-Webhook-Timestamp', timestamp)
-        .set('Pylon-Webhook-Version', '2021-07')
-        .send(payload);
+        .set('X-Pylon-Timestamp', timestamp)
+        .set('X-Pylon-Signature-V2', signature)
+        .send(issuePayload);
 
       expect(response.status).toBe(200);
       expect(response.text).toBe('OK');
     });
 
-    it('should return 200 for a valid issue.updated event', async () => {
-      const payload = JSON.stringify({
-        event_type: 'issue.updated',
-        data: { id: 'issue_1', state: 'closed' }
-      });
-      const signature = generatePylonSignature(payload, timestamp, webhookSecret);
+    it('returns 200 for a signed test ping', async () => {
+      const ping = '{"data":{"type":"ping"}}';
+      const timestamp = nowTimestamp();
 
       const response = await request(app)
         .post('/webhooks/pylon')
         .set('Content-Type', 'application/json')
-        .set('Pylon-Webhook-Signature', signature)
-        .set('Pylon-Webhook-Timestamp', timestamp)
-        .send(payload);
+        .set('X-Pylon-Timestamp', timestamp)
+        .set('X-Pylon-Signature-V2', signPylon(ping, timestamp, secret))
+        .send(ping);
 
       expect(response.status).toBe(200);
     });
   });
 
   describe('GET /health', () => {
-    it('should return health status', async () => {
+    it('returns health status', async () => {
       const response = await request(app).get('/health');
 
       expect(response.status).toBe(200);

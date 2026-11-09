@@ -2,73 +2,56 @@
 
 ## Prerequisites
 
-- A Pylon account with access to **API settings** (admin-level access).
-- Your application's public webhook endpoint URL (e.g.
-  `https://your-app.com/webhooks/pylon`). For local development use the Hookdeck
+- A Pylon account with access to **Settings > Integrations & dev**.
+- Your application's public webhook URL (for example
+  `https://your-app.com/webhooks/pylon`). For local development, use the Hookdeck
   CLI tunnel (see below).
 
-## Create a Webhook Destination
+## Create the Webhook
 
-1. Sign in to Pylon and open **Settings → API** (the developer/API settings area).
-2. Go to **Webhooks / Webhook destinations** and create a new destination.
-3. Enter your endpoint **URL** (the route your handler listens on, e.g.
-   `/webhooks/pylon`).
-4. Select **one or more event types** you want delivered (e.g. issue events).
-   > The exact event names are shown in this configuration screen — treat the
-   > list here as the source of truth, since the public docs do not enumerate a
-   > confirmed catalog.
-5. Save the destination.
+1. Go to **Settings > Integrations & dev > Webhooks** and click **Create Webhook**.
+2. Enter a **Name** and the **Target URL**.
+3. Pick the **HTTP method**. POST is the default; GET, PUT, PATCH and DELETE are
+   also available. Keep a body-carrying method (POST, PUT or PATCH) so the signed
+   body reaches your handler intact.
+4. Optionally add **Custom headers**, for example an `Authorization` header. Turn on
+   **Secret** for a header to encrypt its value and hide it after saving.
+5. Click **Create** and **copy the webhook secret**. Pylon shows it only once.
 
-## Get Your Signing Secret
-
-When you create the destination, Pylon displays the **secret** for that
-destination **once, on screen**. Copy it immediately and store it securely —
-you cannot retrieve it again later (you would have to rotate/recreate the
-destination).
-
-Set it as an environment variable for your handler:
+The secret can't be viewed again or rotated. To replace it, create a new webhook,
+point your triggers at it, and delete the old one.
 
 ```bash
 PYLON_WEBHOOK_SECRET=<the-secret-shown-once>
 ```
 
-Each destination has its own secret. If you run multiple destinations, keep a
-secret per destination.
+## Send It From a Trigger or Macro
 
-## Headers Pylon Sends
+1. Go to **Settings > Workflows > Triggers** and create a trigger with a **Send
+   webhook** action (macros can send webhooks too).
+2. Use the trigger's conditions to control when the webhook fires.
+3. Write the request body in **JSON payload**. Type `{` to insert variables such as
+   `{{ issue.id }}`. See [overview.md](overview.md) for the template rules.
 
-Every delivery includes:
+## Test
 
-| Header | Example | Notes |
-|--------|---------|-------|
-| `Pylon-Webhook-Signature` | `hs256=9f8c…` | HMAC-SHA256, `hs256=` prefix + hex digest |
-| `Pylon-Webhook-Timestamp` | `1624235417` | Unix seconds; part of the signed content |
-| `Pylon-Webhook-Version` | `2021-07` | Payload schema version |
-| `Content-Type` | `application/json` | |
+Click **Test** in the edit dialog of the **saved** webhook. It sends
+`{"data":{"type":"ping"}}`, signed. Tests sent from the **create** dialog are
+**unsigned**, because the secret doesn't exist yet, so they fail verification.
 
-## Verify Deliveries
+## Local Development
 
-Your endpoint should return a `2xx` quickly once the signature is verified —
-Pylon does not document a delivery timeout, so do not rely on a generous one.
-Verify against the **raw** request body — see
-[verification.md](verification.md).
-
-## Test Mode / Local Development
-
-Pylon does not provide a separate test-mode secret; a destination is either
-active or `inactive`. To develop locally, forward events through the Hookdeck CLI
-so you get a public URL that tunnels to `localhost`:
+Forward deliveries to localhost with the Hookdeck CLI:
 
 ```bash
 npx hookdeck-cli listen 3000 pylon --path /webhooks/pylon
 ```
 
-Put the URL Hookdeck prints into your Pylon destination's URL field, then trigger
-an event in Pylon (e.g. create or update an issue) to see a delivery.
+Put the URL Hookdeck prints into the webhook's Target URL, save it, then click
+**Test** from Edit.
 
 ## Monitoring
 
-- A destination flips to **`inactive`** after **7 days** with no successful
-  deliveries — check the destination's status if events stop arriving.
-- Pylon retries failed deliveries up to **5 times** with exponential backoff
-  (final attempt ~31h after the event), so make your handler idempotent.
+The **Logs** tab on the Webhooks page lists every attempt, including retries, with
+status, method, payload, response, duration and request ID. Payloads and responses
+over about 65 KB are truncated in the log.

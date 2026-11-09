@@ -6,50 +6,54 @@ const crypto = require('crypto');
 
 const app = express();
 
+// Pylon's docs tell receivers to reject a timestamp more than 5 minutes from now.
+// Retries are re-signed with a fresh timestamp, so they pass this check.
+const TOLERANCE_SECONDS = 5 * 60;
+
 /**
- * Verify a Pylon webhook signature.
+ * Verify a Pylon webhook (X-Pylon-Signature-V2).
  *
- * Pylon signs `timestamp + "." + rawBody` with HMAC-SHA256 and sends the result
- * in the Pylon-Webhook-Signature header, prefixed with "hs256=".
+ * Pylon signs `timestamp + "." + rawBody` with HMAC-SHA256, keyed with the webhook
+ * secret used as-is (do not hex-decode it), and sends the hex digest in
+ * X-Pylon-Signature-V2. The timestamp is in X-Pylon-Timestamp (Unix seconds).
  *
  * @param {Buffer} rawBody - Raw, unparsed request body
- * @param {string} timestamp - Pylon-Webhook-Timestamp header (unix seconds)
- * @param {string} signatureHeader - Pylon-Webhook-Signature header ("hs256=<hex>")
- * @param {string} secret - Destination signing secret
+ * @param {string} timestamp - X-Pylon-Timestamp header
+ * @param {string} signature - X-Pylon-Signature-V2 header (hex)
+ * @param {string} secret - The webhook secret Pylon showed once at creation
+ * @param {number} [nowSeconds] - Current time, injectable for tests
  * @returns {boolean}
  */
-function verifyPylonWebhook(rawBody, timestamp, signatureHeader, secret) {
-  if (!signatureHeader || !timestamp) {
+function verifyPylonWebhook(rawBody, timestamp, signature, secret, nowSeconds = Date.now() / 1000) {
+  if (!timestamp || !signature || !secret) {
     return false;
   }
 
-  // Signed content is `timestamp + "." + rawBody`, hex digest, "hs256=" prefix.
-  const expected = 'hs256=' + crypto
+  if (Math.abs(nowSeconds - Number(timestamp)) > TOLERANCE_SECONDS) {
+    return false;
+  }
+
+  const expected = crypto
     .createHmac('sha256', secret)
     .update(`${timestamp}.`)
     .update(rawBody)
     .digest('hex');
 
   // Timing-safe comparison; timingSafeEqual throws on length mismatch.
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signatureHeader),
-      Buffer.from(expected)
-    );
-  } catch {
-    return false;
-  }
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Pylon webhook endpoint - must use raw body for signature verification
+// Pylon webhook endpoint - must use the raw body for signature verification.
+// Pylon lets you pick the method per webhook; POST is the default.
 app.post('/webhooks/pylon',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   async (req, res) => {
-    const signature = req.headers['pylon-webhook-signature'];
-    const timestamp = req.headers['pylon-webhook-timestamp'];
-    const version = req.headers['pylon-webhook-version'];
+    const timestamp = req.headers['x-pylon-timestamp'];
+    const signature = req.headers['x-pylon-signature-v2'];
+    const retryNumber = req.headers['x-pylon-retry-number']; // present on retries only
 
-    // Verify webhook signature against the raw body
     if (!verifyPylonWebhook(req.body, timestamp, signature, process.env.PYLON_WEBHOOK_SECRET)) {
       console.error('Pylon webhook signature verification failed');
       return res.status(400).send('Invalid signature');
@@ -58,37 +62,23 @@ app.post('/webhooks/pylon',
     // Parse the payload only after verification succeeds
     const payload = JSON.parse(req.body.toString());
 
-    // NOTE: Pylon's event-type field and token format are not publicly
-    // documented. Confirm these against your own destination configuration.
-    const eventType = payload.event_type || payload.type;
-    const data = payload.data || payload;
-
-    console.log(`Received Pylon event: ${eventType} (version: ${version})`);
-
-    // Handle the event based on type (event names are illustrative)
-    switch (eventType) {
-      case 'issue.created':
-        console.log('Issue created:', data.id, data.title);
-        // TODO: Mirror the issue, alert on-call, create a linked task, etc.
-        break;
-
-      case 'issue.updated':
-        console.log('Issue updated:', data.id, data.state);
-        // TODO: Sync fields, trigger SLA automations, etc.
-        break;
-
-      // Example shape only — a close event is NOT confirmed to exist under this
-      // (or any) name. Replace with the real types from your destination.
-      case 'issue.closed':
-        console.log('Issue closed:', data.id);
-        // TODO: Send CSAT survey, update reporting, close linked tasks, etc.
-        break;
-
-      default:
-        console.log(`Unhandled event type: ${eventType}`);
+    // Pylon's "Test" button sends this body.
+    if (payload.data && payload.data.type === 'ping') {
+      console.log('Received Pylon test ping');
+      return res.status(200).send('OK');
     }
 
-    // Return 2xx quickly to acknowledge receipt (Pylon documents no timeout)
+    // The body is the JSON template you wrote in the trigger's Send webhook
+    // action, so these field names are yours. Every value arrives as a string.
+    // This example uses the template from Pylon's docs.
+    console.log(
+      `Received Pylon webhook for issue ${payload.issue_id} (#${payload.number}): ${payload.title}` +
+      (retryNumber ? ` [retry ${retryNumber}]` : '')
+    );
+
+    // TODO: Pylon sends no event ID, so de-duplicate on fields from your
+    // template (for example issue_id plus the field that changed).
+
     res.status(200).send('OK');
   }
 );

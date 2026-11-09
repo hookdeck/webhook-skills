@@ -1,107 +1,125 @@
 ---
 name: pylon-webhooks
 description: >
-  Receive and verify Pylon webhooks. Use when setting up Pylon webhook
-  handlers, debugging Pylon signature verification (Pylon-Webhook-Signature,
-  hs256= HMAC-SHA256 over timestamp.body), or handling B2B support events
-  such as issue lifecycle changes (Pylon's event-type catalog is not public —
-  confirm the exact names in your own destination configuration).
+  Receive and verify Pylon webhooks (Pylon the B2B support platform, usepylon.com).
+  Use when setting up Pylon webhook handlers, debugging Pylon signature verification
+  (X-Pylon-Signature-V2, hex HMAC-SHA256 over X-Pylon-Timestamp + "." + body), or
+  handling the JSON bodies Pylon workflow triggers and macros send.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.2.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
 # Pylon Webhooks
 
-Pylon is a B2B customer support platform. It delivers webhooks to a **webhook
-destination** you configure, signed with HMAC-SHA256. There is **no official
-Pylon SDK** — verify manually in every framework.
+[Pylon](https://usepylon.com) is a B2B customer support platform. Its webhooks are
+sent by **workflow triggers and macros**, with a JSON body **you write** as a
+template. Each delivery is signed with HMAC-SHA256. There is **no official Pylon
+SDK**, so verify manually in every framework.
+
+> Not to be confused with Pylon the solar design platform (getpylon.com), which signs
+> with `Pylon-Webhook-Signature: hs256=…`. This skill covers usepylon.com.
 
 ## When to Use This Skill
 
 - How do I receive Pylon webhooks?
-- How do I verify Pylon webhook signatures?
-- Why is my Pylon `Pylon-Webhook-Signature` verification failing?
-- How do I handle Pylon issue events like `issue.created` or `issue.updated`?
+- How do I verify Pylon webhook signatures (`X-Pylon-Signature-V2`)?
+- Why is my Pylon signature verification failing?
+- What does a Pylon webhook body look like, and how do I tell deliveries apart?
 
 ## Verification (core)
 
-Pylon sends three headers with every delivery:
+Pylon sends these headers with every delivery:
 
-| Header | Example | Purpose |
-|--------|---------|---------|
-| `Pylon-Webhook-Signature` | `hs256=9f8c…` | HMAC-SHA256 signature, `hs256=` prefix + hex digest |
-| `Pylon-Webhook-Timestamp` | `1624235417` | Unix seconds, part of the signed content |
-| `Pylon-Webhook-Version` | `2021-07` | Payload schema version |
+| Header | Value |
+|--------|-------|
+| `X-Pylon-Timestamp` | Time the request was sent, in Unix seconds |
+| `X-Pylon-Signature-V2` | Hex HMAC-SHA256 of `<timestamp>.<body>`, keyed with your webhook secret |
+| `X-Pylon-Signature` | Legacy: hex HMAC-SHA256 of the body only. Don't use it for new integrations |
+| `X-Pylon-Retry-Number` | Present on retries only: `1` on the first retry, `2` on the second |
 
-The signed content is `timestamp + "." + rawBody`. Compute HMAC-SHA256 with your
-destination's **secret** (shown only once when you create the destination),
-prefix with `hs256=`, and compare against the header using a timing-safe check.
-Always verify against the **raw** request body — do not `JSON.parse` first.
+To verify:
+
+1. Reject the request if `X-Pylon-Timestamp` is more than 5 minutes from now.
+2. Build the signed string: the timestamp, a `.`, then the **raw** body exactly as
+   received (before any JSON parsing).
+3. HMAC-SHA256 it with the webhook secret **as a string** (don't hex-decode it), hex-encode.
+4. Compare with `X-Pylon-Signature-V2` using a constant-time comparison.
+
+Retries are signed again with a fresh timestamp, so they pass the timestamp check.
 
 Node (`node:crypto`, no dependency):
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyPylonWebhook(rawBody, timestamp, signatureHeader, secret) {
-  if (!signatureHeader || !timestamp) return false;
-  const expected = 'hs256=' + crypto
+function verifyPylonWebhook(rawBody, timestamp, signature, secret) {
+  if (!timestamp || !signature || !secret) return false;
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
+  const expected = crypto
     .createHmac('sha256', secret)
-    .update(`${timestamp}.`)      // Pylon signs timestamp + "." + rawBody
-    .update(rawBody)              // rawBody is a Buffer/string, never parsed JSON
+    .update(`${timestamp}.`)
+    .update(rawBody)              // Buffer/string, never parsed JSON
     .digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
-  } catch {
-    return false; // length mismatch = invalid
-  }
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 ```
 
 Python (`hmac`, no dependency):
 
 ```python
-import hmac, hashlib
+import hashlib, hmac, time
 
-def verify_pylon_webhook(raw_body: bytes, timestamp: str, signature_header: str, secret: str) -> bool:
-    if not signature_header or not timestamp:
+def verify_pylon_webhook(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool:
+    if not timestamp or not signature or not secret:
         return False
-    signed = timestamp.encode() + b"." + raw_body  # timestamp + "." + rawBody
-    expected = "hs256=" + hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature_header, expected)
+    if abs(time.time() - int(timestamp)) > 300:
+        return False
+    signed = timestamp.encode() + b"." + raw_body
+    expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
 ```
 
-> **For complete handlers with route wiring, event dispatch, and tests**, see:
+> **For complete handlers with route wiring and tests**, see:
 > - [examples/express/](examples/express/)
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
-## Common Event Types
+## Payloads (no event types)
 
-> ⚠️ **Event names are illustrative, not a documented catalog.** Pylon's
-> canonical event-type list is behind an authenticated account
-> (`app.getpylon.com/docs/api#event-types`). `issue.created` and `issue.updated`
-> are known to exist, but the exact token format is **not** publicly confirmed.
-> **Confirm the event types against your own Pylon destination configuration**
-> before hard-coding them.
+Pylon defines no event types and adds no event-type field. A trigger's conditions
+decide **when** a webhook fires; the JSON template in its Send webhook action
+decides **what** it carries. Insert template variables such as `{{ issue.id }}`
+inside JSON strings. Every value arrives as a string, lists arrive as one
+comma-separated string, and missing values arrive as `""`.
 
-| Event (illustrative) | Fires when |
-|----------------------|------------|
-| `issue.created` | A new support issue/ticket is opened |
-| `issue.updated` | An issue's fields, status, or assignee change |
-| `issue.closed` | An issue is resolved/closed — **example shape only**, not confirmed to exist |
+Pylon's docs show this template:
 
-Handlers in this skill read the event type from a payload field
-(`event_type` / `type`) and fall back to logging unknown types — adapt the field
-and values to what your destination actually sends.
+```json
+{
+  "issue_id": "{{ issue.id }}",
+  "number": "{{ issue.number }}",
+  "title": "{{ issue.title }}",
+  "tags": "{{ issue.tags }}",
+  "requester_email": "{{ issue.requester.email }}",
+  "last_message_id": "{{ issue.last_message.id }}",
+  "last_message_html": "{{ issue.last_message.body_html }}",
+  "last_message_author": "{{ issue.last_message.author.name }}"
+}
+```
+
+To route several triggers to one endpoint, add your own field (for example
+`"trigger": "issue_created"`) to each template. The **Test** button sends
+`{"data":{"type":"ping"}}`.
 
 ## Environment Variables
 
 ```bash
-PYLON_WEBHOOK_SECRET=whsec_or_raw_secret   # Shown once when the destination is created
+PYLON_WEBHOOK_SECRET=your_webhook_secret   # Shown once when the webhook is created
 ```
 
 ## Local Development
@@ -111,18 +129,10 @@ PYLON_WEBHOOK_SECRET=whsec_or_raw_secret   # Shown once when the destination is 
 npx hookdeck-cli listen 3000 pylon --path /webhooks/pylon
 ```
 
-## Legacy signature scheme
-
-An older Pylon support article documents an `X-Pylon-Signature` header — a hex
-HMAC-SHA256 of the **raw body only**, with no timestamp and no `hs256=` prefix.
-Treat it as legacy: implement the `Pylon-Webhook-Signature` scheme above as the
-primary path, and only fall back to `X-Pylon-Signature` if your destination
-predates the current format.
-
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Pylon webhook concepts and events
-- [references/setup.md](references/setup.md) - Create a destination, get the secret
+- [references/overview.md](references/overview.md) - How Pylon webhooks work, payloads, and delivery
+- [references/setup.md](references/setup.md) - Create a webhook and a trigger, get the secret
 - [references/verification.md](references/verification.md) - Signature verification details and gotchas
 
 ## Attribution
@@ -139,7 +149,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing across Pylon's up-to-5 retries
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Pylon sends no event ID and retries up to 3 attempts, so de-duplicate on your own fields
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

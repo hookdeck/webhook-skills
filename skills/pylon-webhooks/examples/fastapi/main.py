@@ -1,11 +1,14 @@
 # Generated with: pylon-webhooks skill
 # https://github.com/hookdeck/webhook-skills
-import os
-import hmac
 import hashlib
+import hmac
 import json
+import os
+import time
+from typing import Optional
+
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 
 load_dotenv()
 
@@ -13,69 +16,73 @@ app = FastAPI()
 
 pylon_secret = os.environ.get("PYLON_WEBHOOK_SECRET", "")
 
+# Pylon's docs tell receivers to reject a timestamp more than 5 minutes from now.
+# Retries are re-signed with a fresh timestamp, so they pass this check.
+TOLERANCE_SECONDS = 5 * 60
+
 
 def verify_pylon_webhook(
-    raw_body: bytes, timestamp: str, signature_header: str, secret: str
+    raw_body: bytes,
+    timestamp: Optional[str],
+    signature: Optional[str],
+    secret: str,
+    now: Optional[float] = None,
 ) -> bool:
-    """Verify a Pylon webhook signature.
+    """Verify a Pylon webhook (X-Pylon-Signature-V2).
 
-    Pylon signs `timestamp + "." + raw_body` with HMAC-SHA256 and sends the
-    result in the Pylon-Webhook-Signature header, prefixed with "hs256=".
+    Pylon signs `timestamp + "." + raw_body` with HMAC-SHA256, keyed with the
+    webhook secret used as-is (do not hex-decode it), and sends the hex digest in
+    X-Pylon-Signature-V2. The timestamp is in X-Pylon-Timestamp (Unix seconds).
     """
-    if not signature_header or not timestamp:
+    if not timestamp or not signature or not secret:
         return False
 
-    # Signed content is `timestamp + "." + raw_body`, hex digest, "hs256=" prefix.
+    try:
+        sent_at = int(timestamp)
+    except ValueError:
+        return False
+    if abs((time.time() if now is None else now) - sent_at) > TOLERANCE_SECONDS:
+        return False
+
     signed = timestamp.encode("utf-8") + b"." + raw_body
-    expected = "hs256=" + hmac.new(
-        secret.encode("utf-8"), signed, hashlib.sha256
-    ).hexdigest()
+    expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
 
     # Timing-safe comparison
-    return hmac.compare_digest(signature_header, expected)
+    return hmac.compare_digest(expected, signature)
 
 
+# Pylon lets you pick the method per webhook; POST is the default.
 @app.post("/webhooks/pylon")
 async def pylon_webhook(request: Request):
     # Read the raw body for signature verification (do not parse first)
     raw_body = await request.body()
-    signature = request.headers.get("pylon-webhook-signature")
-    timestamp = request.headers.get("pylon-webhook-timestamp")
-    version = request.headers.get("pylon-webhook-version")
+    timestamp = request.headers.get("x-pylon-timestamp")
+    signature = request.headers.get("x-pylon-signature-v2")
+    retry_number = request.headers.get("x-pylon-retry-number")  # retries only
 
-    # Verify webhook signature against the raw body
     if not verify_pylon_webhook(raw_body, timestamp, signature, pylon_secret):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     # Parse the payload only after verification succeeds
     payload = json.loads(raw_body)
 
-    # NOTE: Pylon's event-type field and token format are not publicly
-    # documented. Confirm these against your own destination configuration.
-    event_type = payload.get("event_type") or payload.get("type")
-    data = payload.get("data", payload)
+    # Pylon's "Test" button sends this body.
+    if isinstance(payload.get("data"), dict) and payload["data"].get("type") == "ping":
+        print("Received Pylon test ping")
+        return {"received": True}
 
-    print(f"Received Pylon event: {event_type} (version: {version})")
+    # The body is the JSON template you wrote in the trigger's Send webhook
+    # action, so these field names are yours. Every value arrives as a string.
+    # This example uses the template from Pylon's docs.
+    retry = f" [retry {retry_number}]" if retry_number else ""
+    print(
+        f"Received Pylon webhook for issue {payload.get('issue_id')} "
+        f"(#{payload.get('number')}): {payload.get('title')}{retry}"
+    )
 
-    # Handle the event based on type (event names are illustrative)
-    if event_type == "issue.created":
-        print(f"Issue created: {data.get('id')} {data.get('title')}")
-        # TODO: Mirror the issue, alert on-call, create a linked task, etc.
+    # TODO: Pylon sends no event ID, so de-duplicate on fields from your
+    # template (for example issue_id plus the field that changed).
 
-    elif event_type == "issue.updated":
-        print(f"Issue updated: {data.get('id')} {data.get('state')}")
-        # TODO: Sync fields, trigger SLA automations, etc.
-
-    # Example shape only — a close event is NOT confirmed to exist under this
-    # (or any) name. Replace with the real types from your destination.
-    elif event_type == "issue.closed":
-        print(f"Issue closed: {data.get('id')}")
-        # TODO: Send CSAT survey, update reporting, close linked tasks, etc.
-
-    else:
-        print(f"Unhandled event type: {event_type}")
-
-    # Return 2xx quickly to acknowledge receipt (Pylon documents no timeout)
     return {"received": True}
 
 
