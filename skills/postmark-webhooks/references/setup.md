@@ -79,15 +79,22 @@ Configure webhooks per stream or for all streams.
 
 ## Retry Behavior
 
-Postmark will retry failed webhook deliveries:
-- Retries occur at increasing intervals
-- Different retry schedules for different event types
-- Webhooks are retried for up to 10 hours
+Outbound webhooks (Bounce, Delivery, Open, Click, SpamComplaint, SubscriptionChange) use one retry schedule for every event type: up to 6 retries, 1, 5, 10, 10, 10 and 15 minutes after the previous attempt (about 51 minutes in total). After that, Postmark drops the event. Inbound webhooks are retried separately.
+
+Which responses are retried:
+- **Retried:** 5xx, 408 Request Timeout, 429 Too Many Requests, timeouts and connection failures
+- **Not retried (event dropped):** any other 4xx, such as 400, 401, 403 or 404
 
 Your endpoint should:
-- Return 2xx status codes for successful processing
-- Return 4xx for invalid requests (won't retry)
-- Return 5xx for temporary failures (will retry)
+- Return 200 once the event is processed or handed to a durable queue
+- Return 5xx when processing fails and a retry could succeed
+- Only return 4xx when a retry can never succeed. A 4xx loses the event, so don't reject valid events, such as a SubscriptionChange with `"MessageID": null`
+
+Every request includes an `X-PM-Retries-Remaining` header, and an `X-PM-Webhook-Trace-Id` header that stays the same across retries of one event. Use it, or `MessageID` when it isn't null, to skip duplicates.
+
+If an event type fails every delivery attempt, Postmark emails a warning. If nothing gets through for 48 hours, it disables that event type until you verify the webhook again.
+
+See [Retry attempts](https://postmarkapp.com/developer/webhooks/webhooks-overview) in Postmark's webhooks overview.
 
 ## Multiple Endpoints
 

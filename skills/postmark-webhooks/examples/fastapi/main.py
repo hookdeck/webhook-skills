@@ -79,6 +79,8 @@ class DeliveryEvent(PostmarkEvent):
 
 class SubscriptionChangeEvent(PostmarkEvent):
     RecordType: Literal["SubscriptionChange"]
+    # Null for manual suppressions (Origin Customer or Admin) and reactivations
+    MessageID: Optional[str] = None
     Recipient: str
     ChangedAt: str
     SuppressionReason: Optional[str] = None
@@ -138,8 +140,12 @@ async def handle_webhook(
     # Inbound webhooks have no RecordType, so identify them by FromFull
     record_type = body.get("RecordType") or ("Inbound" if body.get("FromFull") else None)
 
-    # Validate required fields
-    if not record_type or not body.get("MessageID"):
+    # Validate required fields. MessageID is null on SubscriptionChange events for
+    # manual suppressions and reactivations. Postmark drops any event that gets a
+    # 4xx, so rejecting those would lose them for good.
+    message_id_required = record_type != "SubscriptionChange"
+
+    if not record_type or (message_id_required and not body.get("MessageID")):
         logger.error(f"Invalid payload structure: {body}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -147,7 +153,7 @@ async def handle_webhook(
         )
 
     # Process the event
-    message_id = body["MessageID"]
+    message_id = body.get("MessageID")
 
     logger.info(f"Received {record_type} event for message {message_id}")
 

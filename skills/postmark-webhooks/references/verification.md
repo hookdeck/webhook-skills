@@ -72,16 +72,13 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 
 ### Method 3: Custom Header Token
 
-While not officially documented, you can implement your own header-based authentication:
+Postmark can send custom HTTP headers with every webhook request. Set them per webhook with `HttpHeaders` (a list of `Name`/`Value` pairs) in the [Webhooks API](https://postmarkapp.com/developer/api/webhooks-api) or in the webhook's settings. A header keeps the secret out of the URL, so it doesn't end up in access logs. The Webhooks API also accepts `HttpAuth` (`Username`/`Password`) as an alternative to putting Basic Auth credentials in the URL.
 
 ```javascript
-// Configure webhook URL with token:
-// https://yourdomain.com/webhooks/postmark?token=your-secret-token
-// Then validate it as a custom header
+// Webhook configured with HttpHeaders: [{ "Name": "X-Webhook-Token", "Value": "your-secret-token" }]
 
 app.post('/webhooks/postmark', express.json(), (req, res) => {
-  // Could also check a custom header if you proxy the request
-  const token = req.headers['x-webhook-token'] || req.query.token;
+  const token = req.headers['x-webhook-token'];
   const expectedToken = process.env.POSTMARK_WEBHOOK_TOKEN;
 
   // Fail closed: never accept a request when no token is configured
@@ -158,11 +155,12 @@ Configure your firewall to only accept webhook requests from Postmark's IP addre
 ```nginx
 # Nginx example
 location /webhooks/postmark {
-    # Postmark publishes their IP ranges
-    # Check their documentation for current IPs
-    allow 50.31.156.0/24;
-    allow 50.31.156.104/32;
-    # ... add all Postmark IPs
+    # Postmark's webhook IPs, from https://postmarkapp.com/support/article/800-ips-for-firewalls
+    # These cover every webhook type. Check that page for changes.
+    allow 3.134.147.250;
+    allow 50.31.156.6;
+    allow 50.31.156.77;
+    allow 18.217.206.57;
     deny all;
 
     proxy_pass http://your-app;

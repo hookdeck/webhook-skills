@@ -38,8 +38,10 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
 
   const event = req.body;
 
-  // Validate expected fields exist (Inbound payloads have no RecordType)
-  if (!event.MessageID || !(event.RecordType || event.FromFull)) {
+  // Validate expected fields exist (Inbound payloads have no RecordType).
+  // SubscriptionChange can have MessageID: null, and a 4xx makes Postmark drop the event.
+  const recordType = event.RecordType || (event.FromFull ? 'Inbound' : undefined);
+  if (!recordType || (recordType !== 'SubscriptionChange' && !event.MessageID)) {
     return res.status(400).send('Invalid payload structure');
   }
 
