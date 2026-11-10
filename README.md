@@ -845,6 +845,14 @@ Framework-agnostic best practices for webhook handling, applicable across any we
 |-------|--------------|
 | [`webhook-handler-patterns`](skills/webhook-handler-patterns/) | Implement webhook idempotency, error handling, retry logic, async processing |
 
+### Webhook Operations Skills
+
+Runbooks for operating webhook ingestion under peak load and recovering from incidents.
+
+| Skill | What It Does |
+|-------|--------------|
+| [`bfcm-webhook-playbook`](skills/bfcm-webhook-playbook/) | Black Friday / Cyber Monday (BFCM) playbook: prepare webhooks for peak traffic, and when webhooks are failing, capture, replay in near-original order and rate-limit recovery with the Hookdeck Event Gateway (CLI, API and Terraform) |
+
 ### Webhook Infrastructure Skills
 
 Skills for webhook infrastructure products — routing, queuing, delivery, and observability.
