@@ -56,7 +56,9 @@ interface DeliveryEvent extends PostmarkEvent {
   Details?: string;
 }
 
-interface SubscriptionChangeEvent extends PostmarkEvent {
+// MessageID is null for manual suppressions (Origin Customer or Admin) and reactivations
+interface SubscriptionChangeEvent extends Omit<PostmarkEvent, 'MessageID'> {
+  MessageID: string | null;
   RecordType: 'SubscriptionChange';
   Recipient: string;
   ChangedAt: string;
@@ -91,8 +93,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse the webhook payload
-    const event: WebhookEvent = await request.json();
+    // Parse the webhook payload. Malformed JSON is a 400, not a 500:
+    // Postmark retries 5xx responses, and a bad body won't parse next time either.
+    let event: WebhookEvent;
+    try {
+      event = await request.json();
+    } catch {
+      console.error('Invalid JSON payload');
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+    }
+
+    // Valid JSON that isn't an object (e.g. null or a string) can't be an event
+    if (typeof event !== 'object' || event === null) {
+      console.error('Invalid payload structure:', event);
+      return NextResponse.json({ error: 'Invalid payload structure' }, { status: 400 });
+    }
 
     // Validate payload structure
     // Inbound webhooks have no RecordType, so identify them by FromFull
@@ -102,7 +117,13 @@ export async function POST(request: NextRequest) {
         ? 'Inbound'
         : undefined;
 
-    if (!recordType || !event.MessageID) {
+    // MessageID is null on SubscriptionChange events for manual suppressions
+    // and reactivations. Postmark drops any event that gets a 4xx, so rejecting
+    // those would lose them for good. (Postmark publishes no SMTP API Error
+    // payload, so whether it always has a MessageID is unverified.)
+    const messageIdRequired = recordType !== 'SubscriptionChange';
+
+    if (!recordType || (messageIdRequired && !event.MessageID)) {
       console.error('Invalid payload structure:', event);
       return NextResponse.json({ error: 'Invalid payload structure' }, { status: 400 });
     }

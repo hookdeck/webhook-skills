@@ -22,7 +22,14 @@ app.post('/webhooks/postmark', express.json(), (req, res) => {
   // Inbound webhooks have no RecordType, so identify them by FromFull
   const recordType = event.RecordType || (event.FromFull ? 'Inbound' : undefined);
 
-  if (!recordType || !event.MessageID) {
+  // MessageID is null on SubscriptionChange events for manual suppressions
+  // (Origin Customer or Admin) and reactivations. Postmark drops any event
+  // that gets a 4xx, so rejecting those would lose them for good. (Postmark
+  // publishes no SMTP API Error payload, so whether it always has a MessageID
+  // is unverified.)
+  const messageIdRequired = recordType !== 'SubscriptionChange';
+
+  if (!recordType || (messageIdRequired && !event.MessageID)) {
     console.error('Invalid payload structure:', event);
     return res.status(400).send('Invalid payload structure');
   }

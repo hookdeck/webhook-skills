@@ -72,6 +72,54 @@ describe('Postmark Webhook Handler', () => {
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid payload structure');
     });
+
+    // Postmark sends MessageID: null for manual suppressions and reactivations,
+    // and drops any event that gets a 4xx
+    it('should accept SubscriptionChange with a null MessageID', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const response = await request(app)
+        .post(webhookUrl)
+        .send({
+          RecordType: 'SubscriptionChange',
+          MessageID: null,
+          ServerID: 23,
+          MessageStream: 'outbound',
+          ChangedAt: '2026-11-05T16:33:54.9070259Z',
+          Recipient: 'user@example.com',
+          Origin: 'Customer',
+          SuppressSending: true,
+          SuppressionReason: 'ManualSuppression'
+        });
+
+      expect(response.status).toBe(200);
+      expect(logSpy).toHaveBeenCalledWith('Subscription change: user@example.com');
+      logSpy.mockRestore();
+    });
+
+    it('should accept SubscriptionChange without a MessageID field', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const response = await request(app)
+        .post(webhookUrl)
+        .send({
+          RecordType: 'SubscriptionChange',
+          ChangedAt: '2026-11-05T16:33:54.9070259Z',
+          Recipient: 'user@example.com',
+          SuppressSending: false
+        });
+
+      expect(response.status).toBe(200);
+      logSpy.mockRestore();
+    });
+
+    // Only SubscriptionChange is documented as sending MessageID: null
+    it('should reject other event types with a null MessageID', async () => {
+      const response = await request(app)
+        .post(webhookUrl)
+        .send({ RecordType: 'Bounce', MessageID: null });
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid payload structure');
+    });
   });
 
   describe('Event Processing', () => {

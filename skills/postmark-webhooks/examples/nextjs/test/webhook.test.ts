@@ -114,6 +114,59 @@ describe('Postmark Webhook Route', () => {
       const data = await response.json();
       expect(data.error).toBe('Invalid payload structure');
     });
+
+    // Postmark sends MessageID: null for manual suppressions and reactivations,
+    // and drops any event that gets a 4xx
+    it('should accept SubscriptionChange with a null MessageID', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const request = createRequest({
+        RecordType: 'SubscriptionChange',
+        MessageID: null,
+        ServerID: 23,
+        MessageStream: 'outbound',
+        ChangedAt: '2026-11-05T16:33:54.9070259Z',
+        Recipient: 'user@example.com',
+        Origin: 'Customer',
+        SuppressSending: true,
+        SuppressionReason: 'ManualSuppression',
+      }, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(logSpy).toHaveBeenCalledWith('Subscription change: user@example.com');
+      logSpy.mockRestore();
+    });
+
+    it('should accept SubscriptionChange without a MessageID field', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const request = createRequest({
+        RecordType: 'SubscriptionChange',
+        ChangedAt: '2026-11-05T16:33:54.9070259Z',
+        Recipient: 'user@example.com',
+        SuppressSending: false,
+      }, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      logSpy.mockRestore();
+    });
+
+    // Only SubscriptionChange is documented as sending MessageID: null
+    it('should reject other event types with a null MessageID', async () => {
+      const request = createRequest({ RecordType: 'Bounce', MessageID: null }, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Invalid payload structure');
+    });
+
+    it('should reject JSON that is not an object', async () => {
+      const request = createRequest(null, validToken);
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('Event Processing', () => {
@@ -394,7 +447,8 @@ describe('Postmark Webhook Route', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle JSON parsing errors', async () => {
+    // 400, not 500: Postmark retries 5xx, and a malformed body won't parse on retry
+    it('should return 400 for malformed JSON', async () => {
       const request = new NextRequest(`http://localhost:3000/webhooks/postmark?token=${validToken}`, {
         method: 'POST',
         headers: {
@@ -404,7 +458,7 @@ describe('Postmark Webhook Route', () => {
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
     });
   });
 });
