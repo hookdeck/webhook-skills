@@ -5,7 +5,7 @@ Work through this checklist in the weeks before the peak, not the day before. Ea
 ```sh
 export HOOKDECK_API_KEY=...
 export API=https://api.hookdeck.com/2026-09-01
-hookdeck ci --api-key "$HOOKDECK_API_KEY" && hookdeck whoami   # confirm the project
+hookdeck ci --api-key "$HOOKDECK_API_KEY" && hookdeck whoami   # confirm the project (ci also prints it)
 ```
 
 ## 1. Make the handler peak-ready
@@ -90,13 +90,14 @@ Both are valid. Standby is the lower-risk change to make shortly before a peak.
    ```sh
    hookdeck gateway connection upsert bfcm-recovery \
      --source-name bfcm-recovery --source-type WEBHOOK \
-     --source-api-key "$(openssl rand -hex 32)" \
+     --source-config "{\"auth_type\":\"API_KEY\",\"auth\":{\"header_key\":\"x-api-key\",\"api_key\":\"$(openssl rand -hex 32)\"}}" \
      --destination-name orders-api-recovery --destination-type HTTP \
      --destination-url https://api.example.com/webhooks/shopify \
      --destination-rate-limit 10 --destination-rate-limit-period second \
-     --rule-retry-strategy exponential --rule-retry-count 10 \
-     --rule-retry-interval 60000 --rule-retry-response-status-codes "429,500-599"
+     --rules '[{"type":"retry","strategy":"exponential","count":10,"interval":60000,"response_status_codes":["429","500-599"]}]'
    ```
+
+   Use `--source-config` and `--rules` exactly as above. The shortcuts don't work here: `--source-api-key` on a `WEBHOOK` source is rejected (`source.config.auth is not allowed`), and `--rule-retry-response-status-codes` only accepts single codes, not ranges like `500-599`.
 
    The recovery source requires an API key nobody uses: its connection delivers straight to production with a valid Hookdeck signature, so it must not accept requests from anyone. Replay skips source verification, so the key doesn't block replays.
 
@@ -110,8 +111,7 @@ hookdeck gateway connection upsert shopify-orders \
   --destination-name orders-api --destination-type HTTP \
   --destination-url https://api.example.com/webhooks/shopify \
   --destination-rate-limit 50 --destination-rate-limit-period second \
-  --rule-retry-strategy exponential --rule-retry-count 10 \
-  --rule-retry-interval 60000 --rule-retry-response-status-codes "429,500-599"
+  --rules '[{"type":"retry","strategy":"exponential","count":10,"interval":60000,"response_status_codes":["429","500-599"]}]'
 ```
 
 - Set the rate to the sustained rate from step 2. Peaks above it queue in Hookdeck instead of hitting the endpoint.

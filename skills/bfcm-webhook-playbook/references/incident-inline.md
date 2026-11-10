@@ -21,7 +21,13 @@ hookdeck whoami
 hookdeck gateway connection get "$CONN" --output json | jq '{id, name, paused_at, destination: .destination.id}'
 ```
 
-Get the user to confirm the project and the connection before changing anything. To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
+Get the user to confirm the project and the connection before changing anything. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.) To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
+
+Record the destination's current delivery policy before changing it, so it can be restored exactly in step 5:
+
+```sh
+curl -sS "$API/destinations/$DEST" -H "Authorization: Bearer $HOOKDECK_API_KEY" | jq -c '.config.delivery_policy'
+```
 
 ## Step 1 — Stop hammering the endpoint
 
@@ -61,15 +67,16 @@ Unpausing re-queues held events in blocks of up to 5,000 that share one queue ti
 Events that exhausted their retries during the outage stay `FAILED` until retried. Filter on `last_attempt_at`, not `created_at`: an event created before `T0` that was still queued or retrying when the endpoint went down also failed during the outage. Dry-run, confirm the count with the user, then retry:
 
 ```sh
-curl -sS -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+curl -sS --fail-with-body -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   --data-urlencode "query[webhook_id]=$CONN" \
   --data-urlencode "query[status]=FAILED" \
   --data-urlencode "query[last_attempt_at][gte]=$T0" | jq '.estimated_count'
 
-export OP_ID=$(curl -sS -X POST "$API/bulk/events/retry" \
+# Only if estimated_count > 0: a bulk operation that matches nothing returns 422, and .id would be empty
+export OP_ID=$(curl -sS --fail-with-body -X POST "$API/bulk/events/retry" \
   -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
   -d "{\"query\": {\"webhook_id\": \"$CONN\", \"status\": \"FAILED\", \"last_attempt_at\": {\"gte\": \"$T0\"}}}" \
-  | jq -r '.id'); echo "$OP_ID"
+  | jq -r '.id // empty'); echo "${OP_ID:-no operation created}"
 ```
 
 The CLI equivalent filter for checking what's left is `hookdeck gateway event list --connection-id "$CONN" --status FAILED --last-attempt-at-after "$T0"`.
@@ -87,7 +94,14 @@ hookdeck gateway event list --connection-id "$CONN" --status FAILED --limit 20 -
 
 ## Step 5 — Mop up
 
-1. Restore the normal delivery rate. If the destination is Terraform-managed, apply the intended value from code rather than leaving CLI drift.
+1. Restore the delivery policy recorded in step 0. If it had a rate, set it back with `hookdeck gateway destination update "$DEST" --rate-limit <rate> --rate-limit-period <period>`. If it had none, remove the limit through the API (`--rate-limit 0` is rejected as "no updates"):
+
+   ```sh
+   curl -sS --fail-with-body -X PUT "$API/destinations/$DEST" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+     -H "Content-Type: application/json" -d '{"config": {"delivery_policy": null}}' | jq -c '.config.delivery_policy'
+   ```
+
+   Do this even if the destination is Terraform-managed: the provider doesn't detect a rate changed outside Terraform, so `terraform apply` won't put it back.
 2. Reconcile critical objects for the outage window against the provider's API.
 3. Record `T0`, the bulk retry ID, the counts and any events left `FAILED`.
 
@@ -96,7 +110,7 @@ hookdeck gateway event list --connection-id "$CONN" --status FAILED --limit 20 -
 If you also see rejected requests on the source (for example `VERIFICATION_FAILED` after a secret rotation), those created no events. After fixing the cause, retry them in bulk. Retrying a rejected request keeps its ID and re-routes it to the source's current connections:
 
 ```sh
-curl -sS -G "$API/bulk/requests/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+curl -sS --fail-with-body -G "$API/bulk/requests/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   --data-urlencode "query[source_id]=$SRC" --data-urlencode "query[rejection_cause]=VERIFICATION_FAILED" \
   --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
 
@@ -105,4 +119,4 @@ curl -sS -X POST "$API/bulk/requests/retry" \
   -d "{\"query\": {\"source_id\": \"$SRC\", \"rejection_cause\": \"VERIFICATION_FAILED\", \"created_at\": {\"gte\": \"$T0\"}}}"
 ```
 
-Bound the window with `created_at[gte]` (never `gt`, which is ignored for requests). Without it, every `VERIFICATION_FAILED` request in retention is retried, including genuine forgeries from long before the incident; those simply fail verification again.
+Bound the window with `created_at[gte]` (never `gt`, which is ignored). After changing a source's secret, wait about 5 minutes before retrying: verification keeps the old secret for a few minutes, and a retry during that window fails again. Judge the result by `rejection_cause`, not by the operation's `failed_count`. Without it, every `VERIFICATION_FAILED` request in retention is retried, including genuine forgeries from long before the incident; those simply fail verification again.

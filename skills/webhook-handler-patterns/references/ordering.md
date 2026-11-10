@@ -79,4 +79,4 @@ function shouldApply(currentState, incomingState) {
 
 ## After an outage
 
-A recovery backlog arrives approximately oldest first. Events delivered live after the fix may arrive before older backlog events for the same resource. Patterns 1, 2 and 4 make that safe. For how Hookdeck keeps a recovery backlog close to its original order, see [bfcm-webhook-playbook › ordering](https://github.com/hookdeck/webhook-skills/blob/main/skills/bfcm-webhook-playbook/references/ordering.md).
+A recovery backlog may arrive in exact order or only roughly oldest first, depending on how it is replayed. Events delivered live after the fix may arrive before older backlog events for the same resource. Patterns 1, 2 and 4 make that safe. For how Hookdeck keeps a recovery backlog close to its original order, see [bfcm-webhook-playbook › ordering](https://github.com/hookdeck/webhook-skills/blob/main/skills/bfcm-webhook-playbook/references/ordering.md).

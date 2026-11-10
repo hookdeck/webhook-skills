@@ -4,6 +4,8 @@ Use Terraform for the **standing** setup: standby source, recovery lane, provide
 
 Provider: [`hookdeck/hookdeck`](https://registry.terraform.io/providers/hookdeck/hookdeck/latest/docs) v3. Resources are named `hookdeck_gateway_*`; the older `hookdeck_source` / `hookdeck_destination` / `hookdeck_connection` names are deprecated.
 
+**Version pin:** as of November 2026, the only v3 release on the registry is `3.0.0-rc.1`. A constraint like `~> 3.0` never matches a pre-release, so `terraform init` fails with "no available releases match". Pin `3.0.0-rc.1` exactly until 3.0.0 is released (2.x only has the legacy resource names). The configuration below was applied and destroyed against a live project with that pin.
+
 ## Standby source plus pre-provisioned recovery lane
 
 ```hcl
@@ -11,7 +13,7 @@ terraform {
   required_providers {
     hookdeck = {
       source  = "hookdeck/hookdeck"
-      version = "~> 3.0"
+      version = "3.0.0-rc.1" # the hookdeck_gateway_* resources are only in v3; see note below
     }
   }
 }
@@ -164,7 +166,7 @@ resource "hookdeck_gateway_destination" "orders" {
 ## Drift during an incident
 
 - **Pause is not a Terraform argument.** `paused_at` is read-only on `hookdeck_gateway_connection`, so pausing or unpausing with the CLI does not create drift, and `terraform apply` won't undo it.
-- **Delivery rate is.** It lives in the destination's `config.delivery_policy`. If the incident runbook changes it with `hookdeck gateway destination update --rate-limit`, the next `terraform apply` puts back the value in code. Either change the variable and apply, or record the CLI change and reconcile code after the incident.
+- **A delivery-rate change is invisible to Terraform.** The rate lives in the destination's `config` (a sensitive JSON attribute), and the provider doesn't detect a change made outside Terraform. After `hookdeck gateway destination update --rate-limit 3`, `terraform plan` reported no changes and `apply` left the rate at 3. Reset it explicitly after the incident: set it back with the CLI, or change the variable so Terraform sends a new config.
 
 ## Alerting
 

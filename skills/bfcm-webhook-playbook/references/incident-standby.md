@@ -19,7 +19,7 @@ Bulk replay can target a connection on a **different** source, so the backlog go
 These are easy to get wrong, and getting them wrong replays the wrong requests to production:
 
 - **Filter on `rejection_cause=NO_CONNECTION` only.** Don't add `status=rejected`: the API turns `status=rejected` into "any rejection cause", which replaces the `NO_CONNECTION` filter. Forged or unverifiable requests (`VERIFICATION_FAILED`) would then be replayed too.
-- **Use `created_at[gte]` and `created_at[lte]` only.** `created_at[gt]` and `[lt]` are accepted but **ignored** for requests. A window written with `gt` has no lower bound and replays everything in retention.
+- **Use `created_at[gte]` and `created_at[lte]` only.** `created_at[gt]` and `[lt]` are accepted but **ignored**, for requests and events alike. A window written with `gt` has no lower bound and replays everything in retention.
 - **Stored timestamps are more precise than filters.** Filters are applied at millisecond precision; stored `created_at` values carry microseconds. A `gte` equal to a request's own `created_at` includes that request.
 
 ## Variables used below
@@ -40,7 +40,7 @@ hookdeck ci --api-key "$HOOKDECK_API_KEY"
 hookdeck whoami
 ```
 
-Show the `whoami` output to the user and get confirmation that this is the right organization and project before going further. Then resolve IDs from names:
+Show the output to the user and get confirmation that this is the right organization and project before going further. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.) Then resolve IDs from names:
 
 ```sh
 export STANDBY_SRC=$(hookdeck gateway source get shopify-standby --output json | jq -r .id)
@@ -84,18 +84,17 @@ Skip this if it was pre-provisioned in preparation ([terraform.md](terraform.md)
 ```sh
 hookdeck gateway connection upsert bfcm-recovery \
   --source-name bfcm-recovery --source-type WEBHOOK \
-  --source-api-key "$(openssl rand -hex 32)" \
+  --source-config "{\"auth_type\":\"API_KEY\",\"auth\":{\"header_key\":\"x-api-key\",\"api_key\":\"$(openssl rand -hex 32)\"}}" \
   --destination-name orders-api-recovery --destination-type HTTP \
   --destination-url https://api.example.com/webhooks/shopify \
   --destination-rate-limit 10 --destination-rate-limit-period second \
-  --rule-retry-strategy exponential --rule-retry-count 10 \
-  --rule-retry-interval 60000 --rule-retry-response-status-codes "429,500-599"
+  --rules '[{"type":"retry","strategy":"exponential","count":10,"interval":60000,"response_status_codes":["429","500-599"]}]'
 
 export RECOVERY_CONN=$(hookdeck gateway connection get bfcm-recovery --output json | jq -r .id)
 export RECOVERY_DEST=$(hookdeck gateway connection get bfcm-recovery --output json | jq -r .destination.id)
 ```
 
-- **The recovery source must require authentication** (`--source-api-key` above; the key itself is never used). Its connection delivers straight to production with a valid Hookdeck signature, so an open source would let anyone with its URL inject webhooks. Replay skips source verification, so the key doesn't block replays.
+- **The recovery source must require authentication** (API-key auth via `--source-config` above; the key itself is never used). Don't use the `--source-api-key` shortcut: on a `WEBHOOK` source the API rejects it (`source.config.auth is not allowed`). Likewise, pass retry status-code ranges like `500-599` via `--rules` JSON; `--rule-retry-response-status-codes` only accepts single codes. Its connection delivers straight to production with a valid Hookdeck signature, so an open source would let anyone with its URL inject webhooks. Replay skips source verification, so the key doesn't block replays.
 - Set the rate from what the endpoint can take **on top of live traffic**, not its total capacity. Live traffic is still arriving directly.
 - Keep the recovery destination separate from any live destination so its rate limit and pausing don't affect live delivery.
 - Don't add deduplication or delay rules to the recovery connection; they would drop or hold replayed events.
@@ -130,22 +129,68 @@ Expect `SUCCESSFUL`. If the event is retrying or `FAILED`, stop and diagnose bef
 | `5xx` or timeout | Endpoint not actually healthy | Back to step 2 |
 | `409 DATA_ARCHIVED` from the replay call | Payload is outside the retention window | Use provider resend or API reconciliation for that period |
 
-## Step 5 — Dry run, then bulk replay
+## Step 5 — Replay the backlog
 
-The window starts **at** the canary's `created_at` (`gte`), so the canary request is delivered a second time. That's deliberate: excluding it would need a `gt` bound, which the API ignores. An idempotent handler absorbs the duplicate.
+Choose a mode with the user first (see [ordering.md](ordering.md)):
+
+- **5a. Ordered replay:** exact original order, about 4 requests a second (around 14,000 an hour). Use it when handlers are order-sensitive or the backlog is modest.
+- **5b. Bulk replay:** one API call, much faster to enqueue. Order is kept between batches of 100 but is effectively random within each batch. Use it for large backlogs with order-tolerant handlers.
+
+Either way, **wait about a minute after `T1` before counting or replaying.** Requests from the last few seconds can be missing from counts and listings.
+
+### Dry run (both modes)
+
+The window starts **at** the canary's `created_at` (`gte`). Bulk replay therefore delivers the canary a second time, which is deliberate: excluding it would need a `gt` bound, and the API ignores `gt`. Ordered replay skips it by ID instead.
 
 ```sh
-curl -sS -G "$API/bulk/requests/replay/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+curl -sS --fail-with-body -G "$API/bulk/requests/replay/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   --data-urlencode "query[source_id]=$STANDBY_SRC" \
   --data-urlencode "query[rejection_cause]=NO_CONNECTION" \
   --data-urlencode "query[created_at][gte]=$FIRST_AT" \
   --data-urlencode "query[created_at][lte]=$T1" | jq '{estimated_count, estimated_batch}'
 ```
 
-**Sanity-check `estimated_count` before asking for confirmation.** Compare it with what the outage should have produced: normal webhook rate × outage length, or the provider dashboard's count for the window. If it is far higher, the window is wrong (a missing lower bound, or the wrong source). Stop and recheck the query. Then show the count to the user and get explicit confirmation.
+**Sanity-check `estimated_count` before asking for confirmation.** Compare it with what the outage should have produced: normal webhook rate × outage length, or the provider dashboard's count for the window. If it is far higher, the window is wrong (a missing lower bound, or the wrong source). Stop and recheck the query. If it is 0, there is nothing to replay; don't create an operation. Otherwise show the count and the chosen mode to the user and get explicit confirmation.
+
+### 5a. Ordered replay
+
+Set the recovery destination to deliver one event at a time, then replay each request in turn, oldest first. Each replay completes before the next starts, so events queue in their original order.
 
 ```sh
-OP=$(curl -sS -X POST "$API/bulk/requests/replay" \
+hookdeck gateway destination update "$RECOVERY_DEST" --rate-limit 1 --rate-limit-period concurrent
+
+: > replayed.log                                   # one line per replayed request: id created_at
+NEXT=""
+while :; do
+  PAGE=$(hookdeck gateway request list --source-id "$STANDBY_SRC" --rejection-cause NO_CONNECTION \
+    --created-after "$FIRST_AT" --created-before "$T1" --order-by created_at --dir asc --limit 100 \
+    ${NEXT:+--next "$NEXT"} --output json)
+  for ROW in $(echo "$PAGE" | jq -r '.models[] | "\(.id)|\(.created_at)"'); do
+    ID=${ROW%%|*}; AT=${ROW#*|}
+    [ "$ID" = "$FIRST_ID" ] && continue            # already replayed as the canary
+    while :; do
+      CODE=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$API/requests/$ID/replay" \
+        -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
+        -d "{\"webhook_ids\": [\"$RECOVERY_CONN\"]}")
+      [ "$CODE" = 429 ] && { sleep 5; continue; }   # API rate limit: wait and retry the same request
+      break
+    done
+    [ "$CODE" = 200 ] || { echo "Replay of $ID failed with $CODE; stopping"; break 2; }
+    echo "$ID $AT" >> replayed.log
+  done
+  NEXT=$(echo "$PAGE" | jq -r '.pagination.next // empty'); [ -n "$NEXT" ] || break
+done
+wc -l < replayed.log
+```
+
+- `replayed.log` is the resume point. If the loop stops, fix the cause, then restart it with `--created-after` set to the last `created_at` in the log. That request is then replayed once more; everything before it is not.
+- The count in `replayed.log` plus the canary should equal the dry-run `estimated_count`.
+- If `T1` isn't fixed yet, use the loop's start time for `--created-before`, then run another window later (see [Replaying in more than one window](#replaying-in-more-than-one-window)).
+
+### 5b. Bulk replay
+
+```sh
+OP=$(curl -sS --fail-with-body -X POST "$API/bulk/requests/replay" \
   -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
   -d "{
     \"query\": {
@@ -155,12 +200,13 @@ OP=$(curl -sS -X POST "$API/bulk/requests/replay" \
       \"target\": { \"webhook_ids\": [\"$RECOVERY_CONN\"] }
     }
   }")
-export OP_ID=$(echo "$OP" | jq -r '.id'); echo "$OP_ID"
+echo "$OP" | jq '{id, estimated_count}'          # on an error, this prints the API's message instead
+export OP_ID=$(echo "$OP" | jq -r '.id // empty'); [ -n "$OP_ID" ] || echo "No operation created; read the error above"
 ```
 
 If `T1` isn't fixed yet, drop `query[created_at][lte]` from the plan and the `"lte"` key from the body. Don't pass an empty value; the API rejects it.
 
-Record `OP_ID`, `FIRST_ID`, `FIRST_AT`, `T0` and `T1` (or the operation's `created_at`, if no `lte`) in the incident notes now.
+Record the mode, `OP_ID` (bulk) or `replayed.log` (ordered), `FIRST_ID`, `FIRST_AT`, `T0` and `T1` (or the operation's `created_at`, if there was no `lte`) in the incident notes now.
 
 ## Step 6 — Watch and control the pace
 
@@ -186,6 +232,8 @@ hookdeck gateway connection pause bfcm-recovery
 hookdeck gateway connection unpause bfcm-recovery
 ```
 
+For ordered replay (5a), watch the loop's output and the recovery lane's events; the rest of this section is about bulk replay.
+
 **If progress stalls** (`completed_count` unchanged for 10+ minutes while `in_progress` is true):
 
 1. Cancel the operation: `curl -sS -X POST "$API/bulk/requests/replay/$OP_ID/cancel" -H "Authorization: Bearer $HOOKDECK_API_KEY"`.
@@ -196,7 +244,7 @@ hookdeck gateway connection unpause bfcm-recovery
 
 ## Step 7 — Mop up
 
-Wait until the operation reports `completed_at` and the recovery lane has drained (no `QUEUED` events left for the connection):
+Wait until the replay has finished (bulk: the operation reports `completed_at`; ordered: the loop has ended) and the recovery lane has drained (no `QUEUED` events left for the connection):
 
 ```sh
 hookdeck gateway event list --connection-id "$RECOVERY_CONN" --status QUEUED --limit 1 --output json | jq '.models | length'
@@ -205,23 +253,24 @@ hookdeck gateway event list --connection-id "$RECOVERY_CONN" --status QUEUED --l
 1. **Retry deliveries that failed on the recovery lane during this recovery**, bounded to this run, so failures from earlier incidents aren't retried:
 
    ```sh
-   curl -sS -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+   curl -sS --fail-with-body -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
      --data-urlencode "query[webhook_id]=$RECOVERY_CONN" --data-urlencode "query[status]=FAILED" \
      --data-urlencode "query[created_at][gte]=$FIRST_AT" | jq '.estimated_count'
 
-   curl -sS -X POST "$API/bulk/events/retry" \
+   # Only if estimated_count > 0: a bulk operation that matches nothing returns 422
+   curl -sS --fail-with-body -X POST "$API/bulk/events/retry" \
      -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
      -d "{\"query\": {\"webhook_id\": \"$RECOVERY_CONN\", \"status\": \"FAILED\", \"created_at\": {\"gte\": \"$FIRST_AT\"}}}" \
      | jq -r '.id'
    ```
 
-   Here `FIRST_AT` works as a lower bound because every event on the recovery lane from this run was created after the canary replay.
+   Here `FIRST_AT` works as a lower bound because every event on the recovery lane from this run was created after the canary replay. Bulk event retry shuffles order within blocks of up to 5,000 (see [ordering.md](ordering.md)); for a handful of order-sensitive failures, retry them one at a time instead with `hookdeck gateway event retry <id>`, oldest first.
 
 2. **Reconcile critical objects** (orders, payments, refunds) for `T0`–`T1` against the provider's API. Replay restores webhooks Hookdeck captured; reconciliation catches anything that never reached it.
 3. **Expect some duplicates.** They come from the canary, the `T1` margin, and the provider's own retries redelivering outage-window webhooks directly after the fix. Idempotent handlers absorb them.
-4. **Record the outcome**: the window, `OP_ID`, counts and failures. Requests created by the replay can be listed by filtering requests on `bulk_retry_id=$OP_ID` via the API.
-5. **Leave the standby source connection-less** so it keeps capturing (unless you moved to inline in step 2). If the recovery lane was created ad hoc, keep it (an idle lane costs nothing) or, with the user's approval, delete it by ID: `hookdeck gateway connection delete "$RECOVERY_CONN"` (it asks for confirmation; `--force` skips that).
-6. If you changed a Terraform-managed rate limit with the CLI, update the Terraform variable to match, or the next `terraform apply` resets it.
+4. **Record the outcome**: the window, mode, `OP_ID` or `replayed.log`, counts and failures. Requests created by a bulk replay can be listed with `GET $API/requests?bulk_retry_id=$OP_ID`.
+5. **Leave the standby source connection-less** so it keeps capturing (unless you moved to inline in step 2). If the recovery lane was created ad hoc, keep it (an idle lane costs nothing) or, with the user's approval, delete it by ID: `hookdeck gateway connection delete "$RECOVERY_CONN" --force`. The command can't prompt without a terminal, so an agent needs `--force`, and must get the user's approval before running it.
+6. **Reset any rate limit you changed** (for example, the `concurrent` 1 used by ordered replay). If the destination is Terraform-managed, don't rely on `terraform apply` to fix it: the provider doesn't detect a rate changed outside Terraform. Set the value back with the CLI, or change the variable and apply.
 
 ## Replaying in more than one window
 
@@ -234,14 +283,27 @@ Because filters are millisecond-precise and stored values microsecond-precise, a
 
 ## VERIFICATION_FAILED on the standby source
 
-If the standby source's secret was wrong, genuine webhooks were captured as `VERIFICATION_FAILED` instead of `NO_CONNECTION`, and step 5 won't replay them. After fixing the secret on the source, retry them on the standby source: retry re-runs verification, and with no connection they become `NO_CONNECTION`. Then they are picked up by the replay window.
+If the standby source's secret was wrong, genuine webhooks were captured as `VERIFICATION_FAILED` instead of `NO_CONNECTION`, and step 5 won't replay them. Retrying them on the standby source re-runs verification; with no connection they then become `NO_CONNECTION` and fall inside the replay window.
 
-```sh
-curl -sS -G "$API/bulk/requests/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
-  --data-urlencode "query[source_id]=$STANDBY_SRC" \
-  --data-urlencode "query[rejection_cause]=VERIFICATION_FAILED" \
-  --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
-```
+1. **Fix the secret:** `hookdeck gateway source upsert <standby name> --webhook-secret "$CORRECT_SECRET"`.
+2. **Wait about 5 minutes.** The edge picks up the new secret at once, but verification in Hookdeck's processing keeps the old one for a few minutes. A retry during that window fails again.
+3. **Confirm the fix:** trigger a provider test webhook and check it is stored as `NO_CONNECTION`, not `VERIFICATION_FAILED`.
+4. **Retry, with no upper bound**, so the window also covers requests captured while the secret was propagating:
+
+   ```sh
+   curl -sS --fail-with-body -G "$API/bulk/requests/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
+     --data-urlencode "query[source_id]=$STANDBY_SRC" \
+     --data-urlencode "query[rejection_cause]=VERIFICATION_FAILED" \
+     --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
+
+   # After the user confirms the count:
+   curl -sS --fail-with-body -X POST "$API/bulk/requests/retry" \
+     -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
+     -d "{\"query\": {\"source_id\": \"$STANDBY_SRC\", \"rejection_cause\": \"VERIFICATION_FAILED\", \"created_at\": {\"gte\": \"$T0\"}}}" \
+     | jq -r '.id'
+   ```
+
+5. **Check the outcome by rejection cause, not by the operation's `failed_count`.** `failed_count` counts every request that is still rejected afterwards, and `NO_CONNECTION` is a rejection too, so it reads 100% even when the retry worked. List the window again with `--rejection-cause NO_CONNECTION` and `--rejection-cause VERIFICATION_FAILED` and compare.
 
 Requests that still fail verification after this are genuinely not from the provider. Leave them.
 
@@ -262,7 +324,7 @@ When webhooks are failing and there is no Hookdeck in the path, the first goal i
    For Stripe, register the endpoint first (step 2), then set the source's secret to **that endpoint's** signing secret (`whsec_...`). Each Stripe endpoint has its own: `hookdeck gateway source upsert stripe-standby --type STRIPE --webhook-secret "$STANDBY_WHSEC"`.
 
 2. Add `$STANDBY_URL` at the provider as an **additional** webhook endpoint or subscription for the same topics and, for Stripe, the same API version as the direct one. Keep the existing one so direct delivery resumes on its own once fixed. Shopify, Stripe, BigCommerce and PayPal all allow more than one endpoint per topic (see [provider-notes.md](provider-notes.md)).
-3. Confirm capture with step 1, using the time you registered the URL as `T0`. For about the first minute after a source is created, the edge may answer `200` with `"status": "NOTICE"` ("Unknown source ... it can take a minute to propagate") instead of `SUCCESS`. The request is still processed; check the request list rather than the response body.
+3. Confirm capture with step 1, using the time you registered the URL as `T0`. For up to a minute after a source is created, the edge may answer `200` with `"status": "NOTICE"` ("Unknown source ... it can take a minute to propagate") instead of `SUCCESS`. The request is still processed; check the request list rather than the response body.
 4. Fix the endpoint, then follow steps 2–7.
 
 Webhooks that failed **before** the standby existed are not in Hookdeck. Recover them with the provider's resend tools where they exist (Stripe, PayPal), or by reconciling against the provider's API (Shopify, BigCommerce, WooCommerce).
