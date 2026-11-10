@@ -4,7 +4,7 @@ description: >
   Receive and authenticate Coterie small business insurance webhooks. Use when
   setting up a Coterie webhook endpoint, checking the opt-in Authentication
   header (token <guid>), debugging 401s, or handling Coterie application,
-  quote and policy updates such as Status ReadyToQuote or Pending.
+  quote and policy updates such as Status ReadyToQuote or Active.
 license: MIT
 metadata:
   author: hookdeck
@@ -59,14 +59,15 @@ Python and Next.js equivalents are in [references/verification.md](references/ve
 
 ## Webhook Types
 
-Coterie's docs name three webhook actions but no event-type field. Tell them apart by the
-identifier key in the payload (the examples do this):
+Coterie's docs name three webhook kinds, but no body field or header names the kind. Each
+body's `eventType` describes the change (only `Created` is documented), not the kind. Tell
+them apart by the identifier key in the payload (the examples do this):
 
 | Kind | Identifier key | Documented status example |
 |------|----------------|---------------------------|
 | `application` | `applicationId` (no `quoteId`) | `Status: "ReadyToQuote"` |
 | `quote` | `quoteId` | `PolicyType`, `Premium`, `LineItems` |
-| `policy` | `PolicyId` | `Status: "Pending"`, `PolicyNumber` |
+| `policy` | `PolicyId` | `Status: "Active"`, `PolicyNumber` |
 
 Quote payloads also carry `applicationId`, so check `quoteId` first.
 

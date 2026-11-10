@@ -11,7 +11,7 @@ interface BlandPayload {
   call_id?: string;
   conversation_id?: string;
   status?: string;
-  event_type?: string; // "citations" | "post_transfer_transcript" | "evals" | "multiple"
+  event_type?: string; // "citations" | "post_transfer_transcript" | "dispositions" | "multiple"
   contents?: string[];
   error_message?: string | null;
   call_length?: number;
@@ -22,7 +22,7 @@ interface BlandPayload {
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
 // The same call_id can legitimately arrive more than once (post-call, then
-// citations / evals), so the key includes the payload's event_type.
+// citations / dispositions), so the key includes the payload's event_type.
 const processedKeys = new Set<string>();
 
 function dedupeKey(payload: BlandPayload): string | null {
@@ -43,8 +43,8 @@ function handlePayload(payload: BlandPayload): void {
     case 'post_transfer_transcript':
       console.log(`Call ${payload.call_id}: post-transfer transcript received`);
       return;
-    case 'evals':
-      console.log(`Call ${payload.call_id}: eval scores received`);
+    case 'dispositions':
+      console.log(`Call ${payload.call_id}: disposition results received`);
       return;
     case 'multiple':
       console.log(`Call ${payload.call_id}: combined payload (${(payload.contents || []).join(', ')})`);

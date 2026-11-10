@@ -34,7 +34,7 @@ X-BoldSign-Signature: t=1668708521, s0=c10e26bf...54ab, s1=62a1abe1...21f6   (du
 - `t` is the Unix timestamp (seconds) of the event; note the **space after each comma**.
 - `s0` is HMAC-SHA256 (hex) of `"<t>.<raw body>"` keyed with the webhook **signing secret** (reveal it on the webhook's overview page).
 - `s1` is the same HMAC made with the old key, present only while a rolled-over secret is still valid. Accept a match on either.
-- The event name is in `event.eventType` in the JSON body (also sent in the `X-BoldSign-Event` header).
+- The event name is in `event.eventType` in the JSON body. BoldSign's docs only show the `X-BoldSign-Event` header with the value `Verification`, so route other events on the body.
 - Setup sends a `Verification` POST (`X-BoldSign-Event: Verification`). Answer it with a `200` within 10 seconds; no event processing is needed.
 
 ### Verification (Node.js)
@@ -102,7 +102,7 @@ The type is in `event.eventType`. Subscribe to the ones you need when creating t
 | `Revoked` | Sender revokes the signature request |
 | `Expired` | The signature request expires without completion |
 
-Others include `Edited`, `Reassigned`, `Reminder`, `DeliveryFailed`, `SendFailed`, `AuthenticationFailed`, identity verification and KBA events, sender identity events, and template events. See [references/overview.md](references/overview.md).
+Others include `Edited`, `Reassigned`, `Reminder`, `DeliveryFailed`, `SendFailed`, `AuthenticationFailed`, identity verification events, KBA events (in BoldSign's SDKs, not on its events page), sender identity events, and template events. See [references/overview.md](references/overview.md).
 
 > **For the full event reference**, see [BoldSign available events](https://developers.boldsign.com/webhooks/available-events/).
 
@@ -111,7 +111,7 @@ Others include `Edited`, `Reassigned`, `Reminder`, `DeliveryFailed`, `SendFailed
 | Header | Description |
 |--------|-------------|
 | `X-BoldSign-Signature` | `t=<unix seconds>, s0=<hex>[, s1=<hex>]` |
-| `X-BoldSign-Event` | Event type; `Verification` during webhook setup |
+| `X-BoldSign-Event` | `Verification` during webhook setup; the docs show no other value |
 
 ## Environment Variables
 

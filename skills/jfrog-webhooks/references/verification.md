@@ -55,8 +55,11 @@ signing, confirm the header against a real delivery first.
 - **Any content type**: read the body raw (`express.raw({ type: '*/*' })`) and parse it
   yourself, so a content type JFrog or a custom webhook sets never skips the handler.
 - **Header names are case-insensitive**: Node lowercases them (`x-jfrog-event-auth`).
-- **Custom webhooks**: if you add your own headers, `X-JFrog-Event-Auth` is still the secret
-  header when signing is off.
+- **Extra headers**: if you add your own HTTP headers to a predefined webhook,
+  `X-JFrog-Event-Auth` is still the secret header when signing is off.
+- **Custom webhooks have no secret token**: the `secret` and `use_secret_for_signing` fields
+  exist only on the predefined (`webhook`) handler, so a custom webhook doesn't use
+  `X-JFrog-Event-Auth`. Check whatever header your custom template sets instead.
 
 ## Debugging 401s
 

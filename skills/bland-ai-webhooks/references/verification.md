@@ -13,7 +13,7 @@ Bland computes an HMAC with SHA-256 over the request body, keyed with your accou
 | Key | The signing secret, used as-is (Dev Portal → Account Settings → Keys → Replace Secret) |
 | Standard Webhooks? | No (`webhook-id` / `webhook-timestamp` headers are not used) |
 
-Bland's docs only show Node.js and sign `JSON.stringify(req.body)`. Use the raw body bytes instead. For the compact JSON Bland sends the two are identical, but the raw body doesn't depend on how your framework re-serialises.
+Bland's docs only show Node.js and sign `JSON.stringify(req.body)`. Use the raw body bytes instead. The prose says "the request body", and the two match only if Bland sends compact JSON that `JSON.stringify` reproduces exactly, which the docs don't say. Check your first signed delivery.
 
 ## Implementation
 

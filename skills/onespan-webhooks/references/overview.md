@@ -35,6 +35,7 @@ Notifications page.
 | `PACKAGE_ATTACHMENT` | A signer uploads an attachment; `message` is the attachment name |
 | `PACKAGE_READY_FOR_COMPLETE` | A DO_NOT_AUTOCOMPLETE package needs the sender to complete it |
 | `PACKAGE_DISPUTE` | A Recipient Specifier disputes (declines) a specification |
+| `RECIPIENTS_SPECIFIED` | A Recipient Specifier assigns signers to placeholder roles (added in release 26.R6) |
 | `DOCUMENT_SIGNED` | A document is signed, or Consent/Disclosure agreements are accepted; `documentId` is set (e.g. `default-consent`) |
 | `DOCUMENT_VIEWED` | A document is viewed |
 | `SIGNER_COMPLETE` | A signer completes all their documents |
@@ -51,7 +52,8 @@ Notifications page.
 
 Doc inconsistencies to be aware of: the `EDEPOSIT_FAILURE_ATTEMPT` row's sample payload shows
 `"name": "EDEPOSIT_ATTEMPT_FAILURE"`, and the `PACKAGE_DISPUTE` sample uses `creationDate`
-instead of `createdDate`. Treat `name` as an open string and don't assume the list is closed.
+instead of `createdDate`. OneSpan's Java SDK `NotificationEvent` enum also has `PACKAGE_OPT_OUT`,
+which no docs table describes. Treat `name` as an open string and don't assume the list is closed.
 
 ## Event Payload Structure
 

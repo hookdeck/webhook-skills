@@ -66,7 +66,7 @@ and `timestamp`, plus one typed field.
 | `call_turn` | Each conversational turn | `turn` |
 | `post_call_analysis` | Async analysis finishes (summary) | `analysis` |
 
-Cartesia retries up to 3 times on network errors and `403`, `408`, `429` and `5xx` responses, so
+Cartesia makes up to 3 delivery attempts on network errors and `403`, `408`, `429` and `5xx` responses, so
 dedupe on `webhook_request_id` (stable across retries of one event).
 
 ## Environment Variables

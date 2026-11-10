@@ -12,7 +12,10 @@ Header you add to the webhook (see [verification.md](verification.md)).
 
 ## Common Event Types
 
-The event type is in the body as `webhook_type`.
+The Webhooks Index names each webhook's `webhook_type`, and many reference examples carry it in the
+body. Some default examples, including Order Created and Customer Created, don't show it, while
+Flexible Webhook examples wrap the resource (`task`, `way_point`, ...) beside `webhook_type` and
+`merchant_id`. Registering each webhook on its own URL path lets you route without the field.
 
 | `webhook_type` | Triggered When | Common Use Cases |
 |----------------|----------------|------------------|
@@ -38,7 +41,6 @@ shape, so test the receiver after changing it.
 
 ```json
 {
-  "webhook_type": "task_created",
   "id": 8503585,
   "title": "50 cases of Best Brand Soda",
   "status": 0,

@@ -17,7 +17,7 @@ There is no API for creating the subscription; you create it under **Developers 
 | `11` | User Changed Password | Revoke sessions, notify the user |
 | `22` | User Added an MFA Device | Audit new factors |
 
-The complete list of event types is available from the Event Types API. Unknown IDs should be acknowledged with `200`.
+The complete list of event types (590) is on OneLogin's [Event Type Lookup](https://developers.onelogin.com/api-docs/1/events/event-type-lookup/) page and available from the Event Types API. Unknown IDs should be acknowledged with `200`.
 
 ## Event Payload Structure
 

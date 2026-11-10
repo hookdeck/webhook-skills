@@ -81,7 +81,7 @@ Every payload has `eventType` (also called the event ID), `publisherId`, `messag
 | `git.push` | Code is pushed to a Git repository |
 | `git.pullrequest.created` | A pull request is created |
 | `git.pullrequest.updated` | A pull request is updated |
-| `git.pullrequest.merged` | A pull request is merged |
+| `git.pullrequest.merged` | A pull request merge is attempted (check `resource.mergeStatus`) |
 | `workitem.created` | A work item is created |
 | `workitem.updated` | A work item changes |
 | `workitem.commented` | A work item is commented on |

@@ -53,6 +53,9 @@ function verifyHoneybadgerRequest(headers, token = process.env.HONEYBADGER_TOKEN
   settings. It exists only for services that reject requests without an `Authorization`
   header; check `Honeybadger-Token`.
 - Return `401` on mismatch, `400` for a body that isn't a JSON object, `200` once handled.
+  Honeybadger counts any 2xx as delivered and retries a 5xx. Any other response, a timeout or a
+  refused connection turns the integration off and emails the account, so a stale token after an
+  API key reset disables the webhook. Respond quickly and do slow work after responding.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
@@ -75,7 +78,12 @@ The payload has an `event` field and a human-readable `message`; the rest depend
 | `up` | An uptime check succeeds after being down |
 | `cert_will_expire` | An SSL certificate is about to expire |
 | `check_in_missing` | An expected check-in is missing |
-| `check_in_reporting` | A check-in reports successfully |
+| `check_in_reporting` | A missing check-in reports again |
+| `alarm_alert` | An Insights alarm is triggered |
+| `alarm_ok` | An Insights alarm returns to normal |
+
+These are the v2 payloads, the default. The integration's **Payload version** setting also offers
+v3, in preview, whose bodies add a `payload_version` field and can change before general availability.
 
 ## Environment Variables
 

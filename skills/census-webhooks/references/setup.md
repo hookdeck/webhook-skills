@@ -2,20 +2,13 @@
 
 ## Prerequisites
 
-- A Census / Fivetran Activations workspace with permission to manage webhooks
+- A Census / Fivetran Activations account with permission to manage webhooks
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 census --path /webhooks/census` for local development)
 
 ## Get Your Signing Secret
 
-1. In the workspace, open the **Webhooks** tab and click **Add Webhook**.
-2. Fill in:
-   - **Name** (required)
-   - **Description** (optional)
-   - **Endpoint** (required): the URL Activations should send payloads to
-   - **Events** (required): subscribe to at least one event type
-3. Click **Create**. A **one-time secret** is shown. Copy it now; it can't be viewed again. Store it as `CENSUS_WEBHOOK_SECRET`.
-
-Webhooks can also be managed through the API; see the Activations developer docs.
+1. Create the webhook on a group through the Activations REST API ([create a webhook](https://fivetran.com/docs/activations/rest-api/api-reference/v2/activations-apis/webhooks/create-webhook)), with your endpoint URL and the events to subscribe to.
+2. Store the secret from the creation flow server-side as `CENSUS_WEBHOOK_SECRET`. The docs don't say whether it can be viewed again later, so copy it when it's shown.
 
 ## Register Your Endpoint
 
@@ -28,8 +21,8 @@ Recommended events:
 
 ## Testing
 
-The docs don't describe a dedicated test event. Trigger a sync run (or let a sync alert fire) to produce real deliveries, and inspect them with the Hookdeck CLI. Your handler should return 200 for any correctly signed event, including names it doesn't recognise.
+The docs don't describe a dedicated test event. Trigger a sync run with the Sync Trigger API (`POST /syncs/[ID]/trigger`), or let a sync alert fire, to produce real deliveries, and inspect them with the Hookdeck CLI. Your handler should return 200 for any correctly signed event, including names it doesn't recognise.
 
 ## If You Lose the Secret
 
-The secret is shown only at creation. If it's lost, create a new webhook (and delete the old one) to get a new secret.
+The docs don't describe retrieving or rotating the secret. If it's lost, create a new webhook (and delete the old one) to get a new secret.

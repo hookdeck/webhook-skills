@@ -17,7 +17,7 @@ def verify_census_webhook(raw_body: bytes, signature_header: Optional[str], secr
     """Verify a Census (Fivetran Activations) webhook signature.
 
     X-Signature is the standard base64 HMAC-SHA256 of the raw body, keyed with the
-    secret shown once when the webhook was created.
+    secret from the webhook creation flow.
     """
     if not signature_header or not secret:
         return False

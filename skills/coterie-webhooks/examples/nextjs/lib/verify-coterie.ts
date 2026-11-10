@@ -35,7 +35,7 @@ export function verifyCoterieRequest(
 export type CoterieKind = 'application' | 'quote' | 'policy';
 
 /**
- * Coterie webhooks have no event-type field. The three kinds are told apart by
+ * No Coterie body field names the kind (`eventType` is the change). The three kinds are told apart by
  * their identifier key.
  */
 export function classify(payload: Record<string, unknown>): CoterieKind | null {

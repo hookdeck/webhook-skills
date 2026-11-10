@@ -2,7 +2,7 @@
 
 ## What Are Codat Webhooks?
 
-[Codat](https://www.codat.io) is a business data API (accounting, banking and commerce data). Its webhooks notify your systems when companies and connections are created or connected, when data reads finish, and when writes succeed.
+[Codat](https://www.codat.io) is a business data API (accounting, banking and commerce data). Its webhooks notify your systems when companies and connections are created or connected, when data reads finish, and when writes succeed or fail.
 
 Codat delivers webhooks through [Svix](https://www.svix.com), using the Standard Webhooks header names `webhook-id`, `webhook-timestamp` and `webhook-signature` (not `svix-*`). You manage endpoints (called consumers) in the Codat Portal under **Monitor > Webhooks > Events**.
 
@@ -16,7 +16,7 @@ This skill covers the current Svix-delivered webhooks. Codat's legacy rule-based
 | `connection.created` | A data connection is created for a company | Track onboarding progress |
 | `connection.connected` | A connection becomes connected to the data source | Kick off the first data read |
 | `read.completed` | A data read finishes | Fetch fresh data, update dashboards |
-| `write.successful` | A write to the data source succeeds | Mark the push as complete in your system |
+| `{dataType}.write.successful` | A write succeeds; arrives with the data type filled in, e.g. `bills.write.successful` | Mark the write as complete in your system |
 
 For the full list of event types, see [Codat's event types](https://docs.codat.io/using-the-api/webhooks/event-types).
 

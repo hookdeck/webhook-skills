@@ -72,3 +72,7 @@ def verify_honeybadger_request(headers, token=None) -> bool:
 | 401 began suddenly | The project API key was reset; copy the new token |
 | 401 only behind a proxy | The proxy strips or renames `Honeybadger-Token` |
 | 400 after authentication | Body isn't a JSON object |
+
+Honeybadger turns the integration off after any response that isn't a 2xx or 5xx, so a run of 401s
+ends with the webhook disabled and an email to the account. Fix the token, then turn the
+integration back on.

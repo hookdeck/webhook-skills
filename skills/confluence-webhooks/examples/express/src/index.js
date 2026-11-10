@@ -48,7 +48,8 @@ app.post('/webhooks/confluence', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid JSON');
   }
 
-  // The event name is in the body's "event" field.
+  // The event name is in the body's "event" field. Confluence documents one
+  // payload, page_trashed's (`page.id`), so other events log the whole body.
   switch (payload.event) {
     case 'page_created':
       console.log('Page created:', payload.page && payload.page.id);
@@ -60,13 +61,13 @@ app.post('/webhooks/confluence', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Page removed (trashed):', payload.page && payload.page.id);
       break;
     case 'blog_created':
-      console.log('Blog post created:', payload.blog && payload.blog.id);
+      console.log('Blog post created:', payload);
       break;
     case 'comment_created':
-      console.log('Comment created:', payload.comment && payload.comment.id);
+      console.log('Comment created:', payload);
       break;
     case 'space_created':
-      console.log('Space created:', payload.space && payload.space.key);
+      console.log('Space created:', payload);
       break;
     default:
       console.log('Unhandled event:', payload.event);

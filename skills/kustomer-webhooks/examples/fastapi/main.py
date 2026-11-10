@@ -69,5 +69,5 @@ async def kustomer_webhook(
     else:
         print(f"Unhandled event: {name}")
 
-    # Respond 2xx quickly: Kustomer disables the webhook after 10 consecutive failures.
+    # Respond 2xx quickly: Kustomer disables a webhook whose deliveries keep failing.
     return {"received": True}

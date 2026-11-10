@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 3000;
 // Bland signs deliveries with HMAC-SHA256:
 //   X-Webhook-Signature: hex( HMAC-SHA256(signing secret, request body) )
 // There is no timestamp or message id. Bland's docs sign JSON.stringify(req.body);
-// signing the raw bytes is equivalent for the compact JSON Bland sends and
-// is the safer choice because it doesn't depend on re-serialisation.
+// the prose says the request body. Signing the raw bytes follows the prose; the two
+// match only if Bland sends compact JSON that JSON.stringify reproduces exactly.
 //
 // The signing secret is created in Dev Portal > Account Settings > Keys
 // ("Replace Secret"), shown once, and covers every webhook on the account.
@@ -43,7 +43,7 @@ function verifyBlandSignature(rawBody, signature, secret) {
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
 // The same call_id can legitimately arrive more than once (post-call, then
-// citations / evals), so the key includes the payload's event_type.
+// citations / dispositions), so the key includes the payload's event_type.
 const processedKeys = new Set();
 
 function dedupeKey(payload) {
@@ -67,8 +67,8 @@ function handlePayload(payload) {
     case 'post_transfer_transcript':
       console.log(`Call ${payload.call_id}: post-transfer transcript received`);
       return;
-    case 'evals':
-      console.log(`Call ${payload.call_id}: eval scores received`);
+    case 'dispositions':
+      console.log(`Call ${payload.call_id}: disposition results received`);
       return;
     case 'multiple':
       console.log(`Call ${payload.call_id}: combined payload (${(payload.contents || []).join(', ')})`);

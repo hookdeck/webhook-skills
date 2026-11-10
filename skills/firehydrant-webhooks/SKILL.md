@@ -13,8 +13,8 @@ metadata:
 
 # FireHydrant Webhooks
 
-FireHydrant (incident management) sends an HTTP `POST` with a JSON body to your
-endpoint whenever a subscribed event happens. Each request carries an `fh-signature`
+FireHydrant (incident management) sends a JSON body to your endpoint whenever a
+subscribed event happens. Its docs don't name the HTTP method; these examples accept `POST`. Each request carries an `fh-signature`
 header: the hex-encoded HMAC-SHA256 of the raw request body, keyed with the
 **Secret** you set when creating the webhook.
 

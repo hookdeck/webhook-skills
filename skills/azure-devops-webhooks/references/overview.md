@@ -15,7 +15,7 @@ can confirm the request came from your subscription.
 | `git.push` | `tfs` | Code is pushed to a Git repository | Trigger builds, sync mirrors |
 | `git.pullrequest.created` | `tfs` | A pull request is created | Start review workflows |
 | `git.pullrequest.updated` | `tfs` | A pull request is updated | Refresh review state |
-| `git.pullrequest.merged` | `tfs` | A pull request is merged | Deploy, close tickets |
+| `git.pullrequest.merged` | `tfs` | A pull request merge is attempted | Deploy or close tickets once `resource.mergeStatus` is `succeeded` |
 | `workitem.created` | `tfs` | A work item is created | Sync to another tracker |
 | `workitem.updated` | `tfs` | A work item changes | Mirror field changes |
 | `workitem.commented` | `tfs` | A work item is commented on | Sync comments |

@@ -50,7 +50,7 @@ Store it immediately (for example as `BIRD_WEBHOOK_SECRET`). It can't be retriev
 
 ## Test Your Endpoint
 
-- `POST /v1/webhooks/{webhook_id}/test` sends a signed synthetic event and returns whether your endpoint accepted it. Pass `{"event_type": "email.delivered"}` to choose the type. The body is a minimal stub with only the event type, not a real payload. Your endpoint has 10 seconds to respond.
+- `POST /v1/webhooks/{webhook_id}/test` sends a signed synthetic event and returns whether your endpoint accepted it. Pass `{"event_type": "email.delivered"}` to choose the type. The body is a stub with the event `type` and `test: true` (plus a filtered endpoint's equality fields in `data`), not a real payload, so check `test` before acting on it. Your endpoint has 10 seconds to respond.
 - For end-to-end testing with real payloads, send to Bird's sandbox addresses, which emit real webhook events.
 - Local development: `npx hookdeck-cli listen 3000 bird --path /webhooks/bird` (use `8000` for FastAPI) and register the printed URL as the endpoint.
 

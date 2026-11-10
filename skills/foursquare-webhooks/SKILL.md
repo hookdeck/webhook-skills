@@ -61,10 +61,10 @@ Dispatch on the payload's `eventType` field:
 |-------------|--------|----------------|
 | `placeArrival` | Visit | User arrives at a place |
 | `placeDeparture` | Visit | User leaves a place |
-| `placeHistorical` | Visit | A visit is reported after the fact |
+| `placeHistorical` | Visit | A historical visit, with arrival and departure times |
 | `geofenceEnter` | Geofence | User enters a geofence |
 | `geofenceDwell` | Geofence | User stays inside a geofence |
-| `geofencePresence` | Geofence | User is found inside a geofence |
+| `geofencePresence` | Geofence | Device is inside a geofence during a location request |
 | `geofenceExit` | Geofence | User leaves a geofence |
 | `journeysInProgress`, `journeysApproaching`, `journeysArrived`, `journeysCompleted`, `journeysCanceled` | Journeys | Journey status changes |
 

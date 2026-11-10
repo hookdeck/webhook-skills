@@ -39,7 +39,7 @@ function handleEvent(payload) {
   switch (event) {
     case 'CUSTOMER_STATUS_WEBHOOK':
       console.log(`Customer ${payload.customerHashId} status: ${payload.status}/${payload.subStatus}`);
-      // TODO: update the customer's onboarding state; check payload.resubmissionAllowed on rejection
+      // TODO: update the customer's onboarding state; check payload.isResubmissionAllowed (a string, such as "true") on rejection
       break;
 
     case 'CUSTOMER_ODD_STATUS_WEBHOOK':

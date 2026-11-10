@@ -6,7 +6,7 @@ description: >
   setting up a Codat webhook endpoint, getting the whsec_ signing secret from
   the Codat Portal, debugging signature verification, or handling events like
   company.created, connection.created, connection.connected, read.completed
-  and write.successful.
+  and {dataType}.write.successful (e.g. bills.write.successful).
 license: MIT
 metadata:
   author: hookdeck
@@ -23,7 +23,7 @@ metadata:
 - How do I receive Codat webhooks?
 - How do I verify a Codat webhook signature?
 - Where do I find my Codat webhook signing secret?
-- How do I handle `company.created`, `connection.connected`, `read.completed` or `write.successful`?
+- How do I handle `company.created`, `connection.connected`, `read.completed` or `bills.write.successful`?
 - Why is my Codat `webhook-signature` verification failing?
 - How do I dedupe Codat webhook retries?
 
@@ -62,7 +62,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
 | `connection.created` | A data connection is created |
 | `connection.connected` | A connection becomes connected |
 | `read.completed` | A data read finishes |
-| `write.successful` | A write to the data source succeeds |
+| `{dataType}.write.successful` | A write succeeds; arrives with the data type, e.g. `bills.write.successful` |
 
 > **Full list:** [references/overview.md](references/overview.md) and [Codat's event types](https://docs.codat.io/using-the-api/webhooks/event-types).
 

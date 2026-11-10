@@ -11,7 +11,7 @@ Increase follows the Standard Webhooks spec for headers and signed content:
 
 ## Why Not the standardwebhooks Library?
 
-Standard Webhooks secrets look like `whsec_<base64>` and the libraries base64-decode the part after the prefix to get the key. Increase's `shared_secret` is used directly as **raw UTF-8 bytes**, so passing it to the library as-is decodes it into the wrong key and every valid webhook fails. Increase's own sample is `OpenSSL::HMAC.digest('SHA256', signing_secret, signed_payload)`. Verify manually, as the examples do.
+Standard Webhooks secrets look like `whsec_<base64>` and the libraries base64-decode the part after the prefix to get the key. Increase's `shared_secret` is used directly as **raw UTF-8 bytes**, so passing it to the library as-is decodes it into the wrong key and every valid webhook fails. Increase's own sample is `OpenSSL::HMAC.digest('SHA256', signing_secret, signed_payload)`. Verify manually, as the examples do, or use Increase's SDKs: `client.events.unwrap()` in [increase-typescript](https://github.com/Increase/increase-typescript#webhook-verification) passes the library `whsec_` plus the base64 of your secret, and in [increase-python](https://github.com/Increase/increase-python#webhook-verification) passes the secret as UTF-8 bytes, so both verify with the raw key.
 
 Hookdeck's Increase source does the same: a secret that doesn't start with `whsec_` is used as UTF-8 bytes. So use the secret Increase generates, or a custom one that doesn't begin with `whsec_`.
 

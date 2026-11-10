@@ -2,7 +2,7 @@
 
 ## What Are Census Webhooks?
 
-Census is now Fivetran Activations (reverse ETL: warehouse data synced out to SaaS tools). A workspace can register webhook endpoints that Activations POSTs to when a sync changes state. There are two categories: **sync run lifecycle events** and **sync alert events**. Each webhook subscribes to at least one event type.
+Census is now Fivetran Activations (reverse ETL: warehouse data synced out to SaaS tools). Webhooks are configured on a group, and Activations sends them to your endpoint when a sync changes state. There are two categories: **sync run lifecycle events** and **sync alert events**. Each webhook subscribes to at least one event type.
 
 These are not Fivetran's REST API webhooks (`sync_end`, `X-Fivetran-Signature-256`); see the fivetran-webhooks skill for those.
 
@@ -20,7 +20,9 @@ These are not Fivetran's REST API webhooks (`sync_end`, `X-Fivetran-Signature-25
 
 ## Event Payload Structure
 
-Always present: `workspace_id`, `sync_id`, `sync_run_id`, `event`.
+Always present: `group_id` (a string), `sync_id`, `sync_run_id`, `event`.
+
+`workspace_id` is listed as a deprecated field present in legacy webhook payloads. Read `group_id` and treat `workspace_id` as optional.
 
 `sync.completed` adds `status`: `"ok"` on success, `"emergency"` if the run failed.
 
@@ -28,7 +30,7 @@ Always present: `workspace_id`, `sync_id`, `sync_run_id`, `event`.
 
 ```json
 {
-  "workspace_id": 3167,
+  "group_id": "lazy_unicorn",
   "sync_id": 3167956,
   "sync_run_id": 324399613,
   "event": "sync.completed",
@@ -38,7 +40,7 @@ Always present: `workspace_id`, `sync_id`, `sync_run_id`, `event`.
 
 ```json
 {
-  "workspace_id": 3167,
+  "group_id": "lazy_unicorn",
   "sync_id": 3167956,
   "sync_run_id": 324402082,
   "alert_instance_id": 626248,
@@ -50,7 +52,7 @@ Always present: `workspace_id`, `sync_id`, `sync_run_id`, `event`.
 }
 ```
 
-The IDs and messages above are examples; values vary per workspace and alert configuration.
+The IDs and messages above are examples; values vary per group and alert configuration.
 
 ## Full Event Reference
 

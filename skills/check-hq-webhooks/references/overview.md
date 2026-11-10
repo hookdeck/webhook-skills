@@ -2,7 +2,7 @@
 
 ## What Are Check Webhooks?
 
-[Check](https://www.checkhq.com) is a payroll API. It sends an HTTP POST to your endpoint when something changes asynchronously: payroll lifecycle moves, payment processing, bank account validation, employee onboarding. You register an endpoint as a Webhook Config, and every active config receives every webhook.
+[Check](https://www.checkhq.com) is a payroll API. It sends an HTTP POST to your endpoint when something changes asynchronously: payroll lifecycle moves, payment processing, bank account validation, employee onboarding. You register an endpoint as a Webhook Config, and each active config receives only the event types selected for it in Console. A new config has none selected.
 
 Your endpoint must accept POST and return a 2XX within 5 seconds. Check recommends returning 2XX even for events you ignore, and fetching the current object from the API instead of trusting the payload, which may be stale.
 

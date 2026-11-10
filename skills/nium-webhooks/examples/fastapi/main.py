@@ -44,7 +44,7 @@ def handle_event(payload: dict) -> None:
 
     if event == "CUSTOMER_STATUS_WEBHOOK":
         print(f"Customer {payload.get('customerHashId')} status: {payload.get('status')}/{payload.get('subStatus')}")
-        # TODO: update the customer's onboarding state; check payload["resubmissionAllowed"] on rejection
+        # TODO: update the customer's onboarding state; check payload["isResubmissionAllowed"] (a string, such as "true") on rejection
 
     elif event == "CUSTOMER_ODD_STATUS_WEBHOOK":
         print(f"Customer ODD status changed: {payload.get('customerHashId')}")

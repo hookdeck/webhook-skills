@@ -12,7 +12,7 @@ SECRET = "census_test_secret_8f2d1c"
 
 client = TestClient(app)
 
-BASE = {"workspace_id": 3167, "sync_id": 3167956, "sync_run_id": 324399613}
+BASE = {"group_id": "lazy_unicorn", "sync_id": 3167956, "sync_run_id": 324399613}
 
 
 @pytest.fixture(autouse=True)
@@ -94,7 +94,7 @@ class TestEndpoint:
         assert post(body, sign(body), "text/plain").status_code == 200
 
     def test_exact_bytes_with_whitespace(self):
-        body = b'{ "workspace_id" : 3167 , "event" : "sync.started" }'
+        body = b'{ "group_id" : "lazy_unicorn" , "event" : "sync.started" }'
         assert post(body, sign(body)).status_code == 200
 
     def test_unknown_event_accepted_once_signed(self):

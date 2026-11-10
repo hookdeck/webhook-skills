@@ -15,7 +15,8 @@ Bland doesn't name the standard post-call webhook; there is no event-type field.
 | Post-call | `call_id`, `status` (e.g. `completed`), no `event_type` | A call ends. Sent to the `webhook` on the call, or the webhook on the inbound number | Store transcripts, update CRM, trigger follow-ups |
 | `citations` | `event_type: "citations"` | Separate webhook after the call when `citations` is in `webhook_events` | Extracted variables linked to utterances |
 | `post_transfer_transcript` | `event_type: "post_transfer_transcript"` | The call was transferred to a human and `post_transfer_transcript` is in `webhook_events` (limited rollout) | Transcript of the conversation after transfer |
-| `evals` | `event_type: "evals"` | An attached evals workbench finishes a run; `evals` in `webhook_events` | Quality scores |
+| `dispositions` | `event_type: "dispositions"` and `agent_dispositions` | A disposition set to Follow-up event finishes (enterprise feature) | Call outcome answers |
+| `evals` | Not documented: Bland shows no body for it | An attached evals workbench finishes a run; `evals` in `webhook_events` | Quality scores |
 | `multiple` | `event_type: "multiple"` and `contents` | One payload carries more than one enrichment (`contents` can list `citations`, `corrected_transcript`, `dispositions`, `post_transfer_transcript`, `live_translation_transcript`) | Combined delivery |
 | SMS message / status | `conversation_id`, `channel`, `sender` / `status` (`ended`, `timeout`, `human_handoff`, ...) | An SMS, RCS or WhatsApp message or conversation status change | SMS agents |
 
@@ -38,7 +39,7 @@ Common fields (the full set is in [Post Call Webhooks](https://docs.bland.ai/tut
 
 ## Streaming events (`webhook_events`)
 
-The Send Call API's `webhook_events` array (`queue`, `call`, `latency`, `webhook`, `tool`, `dynamic_data`, `citations`, `evals`, `post_transfer_transcript`) streams log-style events to the call's webhook during the call. These carry `message`, `call_id`, `category` and `log_level` rather than the call record.
+The Send Call API's `webhook_events` array (`queue`, `call`, `latency`, `webhook`, `tool`, `dynamic_data`, `citations`, `evals`, `post_transfer_transcript`) opts the call's webhook into extra deliveries. The first six stream log-style events during the call, carrying `message`, `call_id`, `category` and `log_level` rather than the call record; their examples show only the `queue`, `call` and `latency` categories. `citations`, `evals` and `post_transfer_transcript` arrive after the call.
 
 ## Delivery
 

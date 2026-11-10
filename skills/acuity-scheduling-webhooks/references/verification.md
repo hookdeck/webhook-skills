@@ -9,7 +9,10 @@ or message ID, so replay protection comes from idempotency (see webhook-handler-
 
 ## Implementation
 
-Acuity has no SDK verification helper, so verification is manual in every framework.
+Acuity's [JavaScript](https://github.com/AcuityScheduling/acuity-js/blob/master/src/index.js) and
+[PHP](https://github.com/AcuityScheduling/acuity-php/blob/master/src/AcuityScheduling.php) toolkits
+have a `verifyMessageSignature` helper, but it compares with `!==`, which isn't constant-time. The
+examples here verify manually instead.
 
 ### Node.js
 

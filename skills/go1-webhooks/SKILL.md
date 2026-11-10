@@ -3,7 +3,7 @@ name: go1-webhooks
 description: >
   Receive and verify Go1 webhooks. Use when setting up Go1 learning platform
   webhook handlers, debugging Go1-Signature verification, or handling events
-  like enrollment.create, enrollment.update, and enrollment.delete.
+  like enrollment.create, enrollment.complete, and content.library.add.
 license: MIT
 metadata:
   author: hookdeck
@@ -17,7 +17,7 @@ metadata:
 
 - How do I receive Go1 webhooks?
 - How do I verify the `Go1-Signature` header?
-- How do I handle `enrollment.create`, `enrollment.update`, or `enrollment.delete` events?
+- How do I handle `enrollment.create`, `enrollment.complete`, or `enrollment.delete` events?
 - Why is my Go1 webhook signature verification failing?
 - Why does the Go1 timestamp look like it is in the wrong unit?
 
@@ -83,9 +83,12 @@ The event name is in the `event_type` field of the JSON body.
 
 | Event | Description |
 |-------|-------------|
-| `enrollment.create` | A learner was enrolled in a learning object |
-| `enrollment.update` | An enrollment changed (e.g. progress or status) |
-| `enrollment.delete` | An enrollment was removed |
+| `enrollment.create` | A learner starts, or is assigned, a learning object |
+| `enrollment.complete` | A learner completes a learning object |
+| `enrollment.delete` | An enrollment is deleted |
+| `content.library.add` | A learning object is added to a portal's curated Library |
+| `content.library.remove` | A learning object is removed from a portal's curated Library |
+| `content.decommission` | A learning object is decommissioned and stops accepting new enrollments |
 
 > **For the full event reference**, see [Go1 webhooks](https://developers.go1.com/docs/developer-tools/webhooks/overview-webhooks/). More detail in [references/overview.md](references/overview.md).
 

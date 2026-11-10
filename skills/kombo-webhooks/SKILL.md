@@ -72,8 +72,18 @@ Payload shape: `{ "id": "...", "type": "<event>", "data": { ... } }`.
 | `connection-flow-failed` | An error occurred in the connection flow (can still succeed later) |
 | `issue-status-changed` | Kombo raises or resolves an issue (`change`: `raised` / `resolved`) |
 | `assessment:order-received` | An assessment is ordered for a candidate in the customer's tool |
+| `inline-assessment:order-received` | An inline assessment is ordered; reply with an `assessment_url` (see below) |
+| `ai-apply-data-changed` | AI Apply job postings changed; debounced to one per 30s |
+| `ai-apply-application-status-updated` | An AI Apply application is `SUBMITTED`, `DUPLICATE` or `FAILED` |
+| `ai-apply-job-posting-status-updated` | A job posting's availability changed (**deprecated**; use `ai-apply-data-changed`) |
 
 Treat `type` as an open set: acknowledge unknown events with 200.
+
+`inline-assessment:order-received` is the exception to a plain acknowledgement:
+Kombo needs the response body to contain a link to your platform where the
+candidate takes the assessment, as `{"assessment_url": "https://app.acme.com/assessment/:test_id"}`.
+Most ATSs give up on the order after 15 to 30 seconds, so return it right away.
+The examples return Kombo's placeholder URL: replace it with your own link.
 
 > **For the full event reference**, see [Kombo webhook docs](https://docs.kombo.dev/hris/guides/webhooks).
 

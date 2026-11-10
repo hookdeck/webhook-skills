@@ -22,7 +22,7 @@ Steps:
 
 ## Implementation
 
-Go1 documents no verification SDK, so verification is manual in every language. See [examples/express/](../examples/express/), [examples/nextjs/](../examples/nextjs/) and [examples/fastapi/](../examples/fastapi/) for tested versions.
+For Node.js, Go1 publishes [`@go1/webhook-verifier-js`](https://www.npmjs.com/package/@go1/webhook-verifier-js) and says to use version 1.0.9 or later so its timestamp tolerance handles millisecond timestamps. The examples verify manually so the same logic works in every language. See [examples/express/](../examples/express/), [examples/nextjs/](../examples/nextjs/) and [examples/fastapi/](../examples/fastapi/) for tested versions.
 
 ### Node.js
 

@@ -33,4 +33,4 @@ Use the URL the CLI prints as the callback URL. FastAPI examples run on port 800
 - The event name arrives in `X-HelpScout-Event`, not in the body.
 - Respond with a 2xx quickly. Return 400 for a failed signature check, never 410, which deletes the webhook.
 - `customer.created` fires for every customer created globally and cannot be filtered by inbox.
-- If ten or more events are discarded after failed retries, Help Scout deactivates the webhook, so re-enable it after an outage.
+- If ten or more events are discarded after failed retries, Help Scout deactivates the webhook. After an outage, check each webhook's `state` with the Inbox API's `GET /v2/webhooks`; the docs don't describe resending discarded events.

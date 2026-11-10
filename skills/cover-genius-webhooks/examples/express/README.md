@@ -71,4 +71,4 @@ Give the printed URL to your CSE as the webhook listener URL.
 3. The handler dispatches on `event`: `BOOKING_CREATED`, `BOOKING_UPDATED`,
    `BOOKING_CANCELLED`, `RENEWAL_CREATED`, `RENEWAL_NOTIFICATION`, `RENEWAL_DUE`,
    `RENEWAL_EXPIRED`. Unknown events get `200` so new event types don't trigger retries.
-4. It returns `200`. Any other response makes Cover Genius retry, up to 3 times.
+4. It returns `200`. Any other response counts as a failure, and Cover Genius tries a webhook up to 3 times.

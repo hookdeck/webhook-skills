@@ -41,6 +41,7 @@ Every delivery has the same top-level structure; every envelope field is always 
 | `call.resumed` | A call is taken off hold | Hold-time reporting (can arrive unpaired) |
 | `call.ended` | A call finishes, with final details | Log calls in a CRM or helpdesk, follow-ups |
 | `call.recording_ready` | A recording or voicemail is stored (async, after `call.ended`) | Fetch and archive recordings |
+| `call.completed` | Once per call, the post-call data in one event (sent when every expected section arrives, or 30 minutes after the call ended) | One CRM write per call instead of joining events on `call_uuid` |
 | `call.tags_modified` | Tags are added to or removed from a call | Sync tags to a CRM |
 | `contact.created` | A contact is added | CRM sync |
 | `contact.updated` | A contact changes (full current profile) | CRM sync |
@@ -51,6 +52,7 @@ Every delivery has the same top-level structure; every envelope field is always 
 | `user.status_changed` | A user's availability changes (`status`, `sub_status`, `sub_status_id`) | Workforce dashboards |
 | `message.sent` | An SMS, MMS or WhatsApp message is sent from your number | Conversation logging |
 | `message.received` | A message arrives on your number | Inbound routing, bots |
+| `message.delivery_updated` | An outbound message's delivery status changes (status change only; match `message_id` to `message.sent`'s `id`) | Retry failed texts, flag wrong numbers |
 | `transcript.ready` | A call transcript is available | Search, QA |
 | `cidata.ready` | AI analysis (summary, sentiment, topics, talk ratio, call score) is ready | Coaching, CRM notes |
 | `voice_agent.extracted_data_ready` | An AI Voice Agent hands over extracted data | Lead capture |

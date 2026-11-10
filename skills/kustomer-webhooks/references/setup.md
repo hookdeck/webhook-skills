@@ -10,7 +10,7 @@
 1. Go to **Settings > Platform > Outbound webhooks**.
 2. Select **Add Outbound Webhook**.
 3. Enter a **name** and the **Destination URL**.
-4. Under **Webhook Trigger Events**, choose any of: Conversation Create/Update, Customer Create/Update, Message Create/Update, Team Create/Update, User Create/Update.
+4. Under **Webhook Trigger Events**, choose any of: Conversation Create/Update, Customer Create/Update, Message Create/Update, Team Create/Update, User Create/Update. The developer docs list `kustomer.tag.create` and `kustomer.tag.update` too.
 5. Select **Save Changes**.
 6. The secret is generated only after the first save. Reopen the webhook with **Edit** and scroll to **Header Information** to copy it.
 
@@ -30,7 +30,7 @@ Use the Hookdeck URL it prints as the Destination URL.
 
 ## Keep It Enabled
 
-Kustomer disables a webhook after 10 consecutive failed deliveries (about 80 minutes) and does not notify you. Return a 2xx within a few seconds, process in the background, and re-enable under **Settings > Platform > Outbound Webhooks** if it stops. Diagnose failures in **Settings > Platform > Org Logging** or `GET /v1/logs/search/outbound-webhook`.
+Kustomer disables a webhook whose deliveries keep failing (the help center says after 10 consecutive failures, the developer docs after about 20 minutes of sustained failures), and events aren't queued while it's off. Return a 2xx within a few seconds, process in the background, and re-enable under **Settings > Platform > Outbound Webhooks** if it stops. Diagnose failures in **Settings > Platform > Org Logging** or `GET /v1/logs/search/outbound-webhook`.
 
 ## Testing
 

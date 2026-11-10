@@ -46,6 +46,13 @@ function handleEvent(event) {
   const type = event.eventType || event.type;
   const payload = event.payload || {};
 
+  // Write events name the data type: {dataType}.write.successful arrives as
+  // e.g. bills.write.successful, so match the suffix, not the template.
+  if (type?.endsWith('.write.successful')) {
+    console.log(`Write successful for ${type.split('.')[0]}`);
+    return;
+  }
+
   switch (type) {
     case 'company.created':
       console.log(`Company created: ${payload.referenceCompany?.id ?? payload.companyId ?? 'unknown'}`);
@@ -55,10 +62,7 @@ function handleEvent(event) {
       console.log(`${type}: ${payload.connection?.id ?? payload.connectionId ?? 'unknown'}`);
       break;
     case 'read.completed':
-      console.log(`Read completed${payload.dataType ? ` for ${payload.dataType}` : ''}`);
-      break;
-    case 'write.successful':
-      console.log('Write successful');
+      console.log(`Read completed for ${payload.dataTypes?.length ?? 0} data type(s)`);
       break;
     default:
       console.log(`Unhandled Codat event type: ${type}`);

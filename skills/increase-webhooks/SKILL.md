@@ -25,7 +25,7 @@ metadata:
 
 ## Essential Code (USE THIS)
 
-Increase uses the [Standard Webhooks](https://www.standardwebhooks.com/) header names and signed content, **but not the key format**. The Event Subscription's `shared_secret` (1-100 characters, random by default) is the HMAC key as **raw UTF-8 bytes**. It is not `whsec_`-prefixed and not base64. The `standardwebhooks` library base64-decodes the key, so it rejects valid Increase webhooks when given the secret as-is. Verify manually.
+Increase uses the [Standard Webhooks](https://www.standardwebhooks.com/) header names and signed content, **but not the key format**. The Event Subscription's `shared_secret` (1-100 characters, random by default) is the HMAC key as **raw UTF-8 bytes**. It is not `whsec_`-prefixed and not base64. The `standardwebhooks` library base64-decodes a string key, so it rejects valid Increase webhooks when given the secret as-is. Verify manually, as below, or use Increase's own SDKs: `client.events.unwrap(body, { headers })` in [increase-typescript](https://github.com/Increase/increase-typescript#webhook-verification) and `client.events.unwrap(payload, headers=headers)` in [increase-python](https://github.com/Increase/increase-python#webhook-verification) wrap the key correctly before calling the Standard Webhooks library.
 
 | Header | Description |
 |--------|-------------|
@@ -93,7 +93,7 @@ The payload is a thin Event: `{id, category, associated_object_type, associated_
 | `inbound_ach_transfer.created` | An ACH debit or credit arrived |
 | `wire_transfer.updated` | A Wire Transfer changed status |
 
-Increase has about 120 categories, all of the form `<object>.created` or `<object>.updated`, and may add more, so ignore unknown ones gracefully. See [references/overview.md](references/overview.md) and the [Events API](https://increase.com/documentation/api/events).
+Increase has more than 120 categories. Most are `<object>.created` or `<object>.updated`, but some are not (`oauth_connection.deactivated`, `group.heartbeat`, `real_time_decision.card_authorization_requested` and the other `real_time_decision.*_requested` categories), and Increase may add more, so ignore unknown ones gracefully. See [references/overview.md](references/overview.md) and the [Events API](https://increase.com/documentation/api/events).
 
 ## Environment Variables
 

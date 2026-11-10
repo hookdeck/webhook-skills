@@ -30,7 +30,7 @@ Use the printed URL as the endpoint. For FastAPI, use port `8000`.
 
 ## Test Environment
 
-The documented sample `ApplicationUrl` points at `quote-test.coterieinsurance.com`, so
+The documented sample `ApplicationUrl` points at `quote-sandbox.coterieinsurance.com`, so
 Coterie runs a separate test environment. Confirm with your contact which environment sends
 to which endpoint, and configure the token for each.
 
@@ -40,5 +40,5 @@ to which endpoint, and configure the token for each.
 curl -X POST http://localhost:3000/webhooks/coterie \
   -H "Content-Type: application/json" \
   -H "Authentication: $COTERIE_AUTHENTICATION" \
-  -d '{"PolicyId":"b6a4f634-a78f-40a2-bede-8bd352435d19","PolicyNumber":"CSANDSB-00080305-00","Status":"Pending"}'
+  -d '{"PolicyId":"b6a4f634-a78f-40a2-bede-8bd352435d19","PolicyNumber":"CSANDSB-00080305-00","Status":"Active"}'
 ```

@@ -8,7 +8,7 @@ const app = express();
  * Verify a Census (Fivetran Activations) webhook signature
  * @param {Buffer} rawBody - Raw request body
  * @param {string} signatureHeader - X-Signature header value
- * @param {string} secret - One-time secret shown when the webhook was created
+ * @param {string} secret - Secret from the webhook creation flow
  * @returns {boolean} - Whether signature is valid
  */
 function verifyCensusWebhook(rawBody, signatureHeader, secret) {

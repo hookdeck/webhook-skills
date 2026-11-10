@@ -42,7 +42,7 @@ Provide your CSE with:
 ## 3. Respond Correctly
 
 Return `200 OK` once the event is handled. Anything else is treated as a failure and the webhook
-is retried up to 3 times.
+is tried up to 3 times.
 
 ## Testing
 

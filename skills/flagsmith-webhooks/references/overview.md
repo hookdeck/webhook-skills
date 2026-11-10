@@ -20,7 +20,7 @@ All three sign the body the same way when you set a secret (see [verification.md
 
 Identity webhooks carry no `event_type`; recognise them by the top-level `identity` key.
 
-`NEW_VERSION_PUBLISHED` also exists in Flagsmith's source (feature versioning v2) but isn't listed in the docs, so treat it as an unknown event and return 200.
+Environments with Feature Versioning v2 also send `NEW_VERSION_PUBLISHED`, once per published version, to environment webhooks only ([Feature Versioning](https://docs.flagsmith.com/managing-flags/feature-versioning)). `FLAG_DELETED` (with `new_state: null` and the deleted state in `previous_state`) and the `AUDIT_LOG_CREATED` wrapper come from Flagsmith's source code rather than its docs: the audit log docs show the entry as the whole body, so check for `event_type` before assuming the shape.
 
 ## Event Payload Structure
 

@@ -66,6 +66,6 @@ export async function POST(request: NextRequest) {
       console.log('Unhandled event:', event.name);
   }
 
-  // Respond 2xx quickly: Kustomer disables the webhook after 10 consecutive failures.
+  // Respond 2xx quickly: Kustomer disables a webhook whose deliveries keep failing.
   return NextResponse.json({ received: true });
 }

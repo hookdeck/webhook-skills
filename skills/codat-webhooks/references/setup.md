@@ -9,7 +9,7 @@
 
 1. In the Codat Portal, go to **Monitor > Webhooks > Events**.
 2. Add an endpoint (consumer) with your URL, for example `https://your-app.com/webhooks/codat`.
-3. Select the event types to subscribe to, for example `company.created`, `connection.connected`, `read.completed` and `write.successful`.
+3. Select the event types to subscribe to, for example `company.created`, `connection.connected`, `read.completed` and `bills.write.successful` (Codat lists write events as `{dataType}.write.successful`).
 4. Save the endpoint.
 
 See [Create a webhook consumer](https://docs.codat.io/using-the-api/webhooks/create-consumer).

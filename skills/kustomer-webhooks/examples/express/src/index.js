@@ -67,7 +67,7 @@ app.post('/webhooks/kustomer', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Unhandled event:', event.name);
   }
 
-  // Respond 2xx quickly: Kustomer disables the webhook after 10 consecutive failures.
+  // Respond 2xx quickly: Kustomer disables a webhook whose deliveries keep failing.
   res.json({ received: true });
 });
 

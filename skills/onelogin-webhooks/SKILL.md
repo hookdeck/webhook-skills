@@ -64,7 +64,7 @@ Choose the **JSON Array** format type in the broadcaster configuration, as OneLo
 | `11` | User Changed Password |
 | `22` | User Added an MFA Device |
 
-These are the examples OneLogin documents. The complete list comes from the [Event Types API](https://developers.onelogin.com/api-docs/1/events/event-resource); acknowledge unknown IDs with `200`.
+These are the examples OneLogin documents. OneLogin's [Event Type Lookup](https://developers.onelogin.com/api-docs/1/events/event-type-lookup/) lists every type (590) by ID and name, and the [Event Types API](https://developers.onelogin.com/api-docs/1/events/event-resource) returns the same list; acknowledge unknown IDs with `200`.
 
 ## Responses and Retries
 

@@ -28,7 +28,7 @@ FLAG_UPDATED = json.dumps({
         "previous_state": {"enabled": False, "feature": {"id": 1, "name": "my_feature"}},
     },
 }).encode()
-FLAG_DELETED = json.dumps({"event_type": "FLAG_DELETED", "data": {"feature": {"id": 1, "name": "my_feature"}}}).encode()
+FLAG_DELETED = json.dumps({"event_type": "FLAG_DELETED", "data": {"new_state": None, "previous_state": {"enabled": True, "feature": {"id": 1, "name": "my_feature"}}}}).encode()
 AUDIT_LOG = json.dumps({
     "event_type": "AUDIT_LOG_CREATED",
     "data": {"log": "New Flag / Remote Config created: my_feature", "related_object_type": "FEATURE"},

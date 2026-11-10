@@ -36,6 +36,7 @@ Other documented domains and events:
 | `destination` | `received`, `delete_started`, `delete_completed`, `delete_failed` |
 | `user` | `locked` |
 | `release_bundle_v2` | `release_bundle_v2_started`, `release_bundle_v2_failed`, `release_bundle_v2_completed` |
+| `release_bundle_v2_promotion` | `release_bundle_v2_promotion_started`, `release_bundle_v2_promotion_failed`, `release_bundle_v2_promotion_completed` |
 | `xray_scan_status` | `done`, `failed`, `partial`, `not_supported` |
 | `app_trust` | entry/exit gate, release, version and application events |
 

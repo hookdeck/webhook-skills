@@ -25,7 +25,7 @@ const flagUpdated = JSON.stringify({
 });
 const flagDeleted = JSON.stringify({
   event_type: 'FLAG_DELETED',
-  data: { feature: { id: 1, name: 'my_feature' } },
+  data: { new_state: null, previous_state: { enabled: true, feature: { id: 1, name: 'my_feature' } } },
 });
 const auditLog = JSON.stringify({
   event_type: 'AUDIT_LOG_CREATED',

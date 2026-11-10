@@ -5,8 +5,8 @@
 Bland signs deliveries with HMAC-SHA256:
   X-Webhook-Signature: hex( HMAC-SHA256(signing secret, request body) )
 There is no timestamp or message id. Bland's docs sign JSON.stringify(req.body);
-signing the raw bytes is equivalent for the compact JSON Bland sends and
-doesn't depend on re-serialisation.
+the prose says the request body. Signing the raw bytes follows the prose; the two
+match only if Bland sends compact JSON that JSON.stringify reproduces exactly.
 
 The signing secret is created in Dev Portal > Account Settings > Keys
 ("Replace Secret"), shown once, and covers every webhook on the account.
@@ -31,7 +31,7 @@ app = FastAPI(title="Bland AI Webhook Handler")
 
 # In-memory dedupe for the demo. Use Redis or your database in production.
 # The same call_id can legitimately arrive more than once (post-call, then
-# citations / evals), so the key includes the payload's event_type.
+# citations / dispositions), so the key includes the payload's event_type.
 processed_keys: set = set()
 
 
@@ -91,8 +91,8 @@ def handle_payload(payload: Dict[str, Any]) -> None:
         logger.info("Call %s: %d citations", call_id, len(payload.get("citations") or []))
     elif event_type == "post_transfer_transcript":
         logger.info("Call %s: post-transfer transcript received", call_id)
-    elif event_type == "evals":
-        logger.info("Call %s: eval scores received", call_id)
+    elif event_type == "dispositions":
+        logger.info("Call %s: disposition results received", call_id)
     elif event_type == "multiple":
         logger.info("Call %s: combined payload (%s)", call_id, ", ".join(payload.get("contents") or []))
     elif payload.get("error_message"):

@@ -8,7 +8,7 @@ When a secret is defined, Confluence signs each request with an HMAC (default HM
 
 - Signed content: the raw request body, unmodified
 - Algorithm: HMAC-SHA256, hex digest
-- No timestamp is signed and there is no delivery ID header, so make handlers idempotent
+- No timestamp is signed and no delivery ID header is documented, so make handlers idempotent
 
 ## Implementation
 

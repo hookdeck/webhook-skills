@@ -31,7 +31,7 @@ metadata:
 |--------|-------|
 | `X-Webhook-Signature` | Hex-encoded HMAC-SHA256 of the request body, keyed with your account webhook signing secret |
 
-There is no timestamp and no message id in the signature. Bland's docs sign `JSON.stringify(req.body)`; use the **raw body bytes** instead. They are identical for the compact JSON Bland sends, and raw bytes don't depend on re-serialisation.
+There is no timestamp and no message id in the signature. Bland's docs sign `JSON.stringify(req.body)`; use the **raw body bytes** instead. Bland's prose says "the request body", and the two match only if Bland sends compact JSON that `JSON.stringify` reproduces exactly, which the docs don't say. Check your first signed delivery.
 
 ```javascript
 const crypto = require('crypto');
@@ -85,7 +85,8 @@ Failed calls (busy, number not found, ...) still arrive as a `200` delivery with
 | Post-call | `call_id` + `status` (e.g. `completed`), no `event_type` | The call ends (the `webhook` set on the call or inbound number) |
 | `citations` | `event_type: "citations"` | Separate webhook after the call, if `citations` is in `webhook_events`. With the dashboard "Delay post call webhook" toggle, citations and `corrected_transcript` are merged into the post-call payload instead |
 | `post_transfer_transcript` | `event_type: "post_transfer_transcript"` | Call was transferred to a human and `post_transfer_transcript` is in `webhook_events` (limited rollout) |
-| `evals` | `event_type: "evals"` | Eval scores from an attached workbench; separate webhook when the run completes |
+| `dispositions` | `event_type: "dispositions"` and `agent_dispositions` | A disposition set to Follow-up event finishes (enterprise feature) |
+| `evals` | Not documented: Bland describes a separate `evals` webhook but shows no body | Eval scores from an attached workbench, when the run completes |
 | `multiple` | `event_type: "multiple"` + `contents` array | One payload carries more than one enrichment |
 | SMS | `conversation_id` instead of `call_id` | Each SMS/RCS/WhatsApp message and conversation status change |
 
@@ -94,7 +95,7 @@ See [references/overview.md](references/overview.md) for the details.
 ## Delivery Semantics
 
 - Return any `2xx` to acknowledge. `4xx`, `429` and `5xx` count as delivery failures and Bland retries automatically (the retry schedule isn't documented).
-- A call's `call_id` can appear in several webhooks (post-call, citations, evals), so dedupe on `call_id` plus `event_type`, not `call_id` alone.
+- A call's `call_id` can appear in several webhooks (post-call, citations, dispositions, evals), so dedupe on `call_id` plus `event_type`, not `call_id` alone.
 - No timestamp is signed, so a captured delivery can be replayed; idempotent handling is your protection.
 
 ## Environment Variables

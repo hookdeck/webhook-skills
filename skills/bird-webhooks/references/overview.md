@@ -26,6 +26,7 @@ Other types in the catalog (always check the [official event catalog](https://bi
 - Voice: `voice_call.initiated`, `voice_call.answered`, `voice_call.ended`
 - Realtime: `realtime.channel_occupied`, `realtime.channel_vacated`, `realtime.member_added`, `realtime.member_removed`, `realtime.client_event`
 - Preferences: `preference.deleted`
+- Also in the API's event-type list: `email_mailbox.*` (mailbox messages and threads), `email_suppression.created`, `domain.verified` / `domain.failed`, and Apple Messages for Business (`amb.*`)
 
 Event names are never renamed and new types are added as products ship, so ignore types your handler doesn't recognise.
 

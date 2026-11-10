@@ -54,7 +54,7 @@ def verify_pilgrim_secret(header_value, expected_secret):
 - **Fail closed.** If `FOURSQUARE_PILGRIM_SECRET` isn't set, return `500`; never skip the check.
 - **Accept any content type.** Foursquare documents `application/json`, but read the body raw (`express.raw({ type: '*/*' })`) and parse after authenticating so a proxy that changes the content type doesn't break you.
 - **Header names are case-insensitive.** Express and Next.js lowercase them (`pilgrim-secret`); FastAPI maps `pilgrim_secret` to `Pilgrim-Secret`.
-- **A leaked secret can't be told apart from Foursquare.** Rotate it in the console if exposed, and use HTTPS only.
+- **A leaked secret can't be told apart from Foursquare.** Foursquare documents no rotation, so keep it out of logs and use HTTPS only.
 
 ## Debugging Verification Failures
 

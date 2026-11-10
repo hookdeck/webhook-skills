@@ -30,8 +30,8 @@ function handleEvent(payload: AzureDevOpsPayload): void {
       break;
 
     case 'git.pullrequest.merged':
-      console.log(`Pull request merged: ${text}`);
-      // TODO: deploy or close linked tickets
+      console.log(`Pull request merge attempted: ${text}`);
+      // TODO: check resource.mergeStatus is "succeeded" before you deploy or close linked tickets
       break;
 
     case 'workitem.created':

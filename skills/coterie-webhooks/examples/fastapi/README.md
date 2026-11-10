@@ -68,6 +68,6 @@ Give the printed URL to your Coterie contact as the webhook URL.
 1. The `require_coterie_auth` dependency compares `Authentication` with
    `COTERIE_AUTHENTICATION` before the body is read. Failure returns `401`.
 2. The raw body is parsed as JSON, so any content type works. It must be an object (`400` otherwise).
-3. Coterie payloads have no event-type field, so the handler classifies them by identifier:
+3. No Coterie body field names the kind, so the handler classifies them by identifier:
    `quoteId` (quote), `PolicyId` (policy), `applicationId` (application).
 4. It returns `200 {"received": true}`.

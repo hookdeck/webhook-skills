@@ -72,7 +72,7 @@ Payload: `{ "event_id", "event_type", "note_id", "occurred_at" }`. Fetch the not
 |--------|-------------|
 | `webhook-id` | Event ID; unchanged on retries, use it for idempotency |
 | `webhook-timestamp` | Unix seconds of this delivery attempt |
-| `webhook-signature` | `v1,<base64>` entries, space-delimited (several during rotation) |
+| `webhook-signature` | `v1,<base64>` entries, space-delimited; check each one |
 
 ## Environment Variables
 

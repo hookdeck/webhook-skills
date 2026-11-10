@@ -60,7 +60,7 @@ async def flagsmith_webhook(
     if event_type == "FLAG_UPDATED":
         print(f"Flag updated: {(data.get('new_state') or {}).get('feature', {}).get('name')}")
     elif event_type == "FLAG_DELETED":
-        feature = data.get("feature") or (data.get("new_state") or {}).get("feature") or {}
+        feature = (data.get("previous_state") or {}).get("feature") or {}
         print(f"Flag deleted: {feature.get('name')}")
     elif event_type == "AUDIT_LOG_CREATED":
         print(f"Audit log: {data.get('log')}")

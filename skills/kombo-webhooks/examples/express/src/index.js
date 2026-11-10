@@ -95,6 +95,14 @@ app.post('/webhooks/kombo',
         console.log('Assessment ordered:', data?.id, data?.package_id);
         break;
 
+      case 'inline-assessment:order-received': {
+        // The ATS is waiting on this response (most give up after 15 to 30 seconds),
+        // so answer now with the link where the candidate takes the assessment.
+        // TODO: create the assessment on your platform and use its link here.
+        const assessmentUrl = 'https://app.acme.com/assessment/:test_id'; // Kombo's docs example
+        return res.status(200).json({ assessment_url: assessmentUrl });
+      }
+
       default:
         // Kombo adds event types over time: acknowledge unknown ones
         console.log(`Unhandled event: ${type}`);
