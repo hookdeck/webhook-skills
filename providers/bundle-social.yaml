@@ -21,7 +21,22 @@ notes: >
   conversation.message.created, conversation.message.updated. Webhooks without an event filter get
   new types automatically, so return 2xx for unknown types. 15 s timeout, 3 attempts (exponential
   backoff from 30 s), auto-disabled after 7 days without a success; no event ID, de-duplicate on
-  type + data.id + data.status + data.updatedAt.
+  type + data.id + data.status + data.updatedAt - except for the conversation.* DM events, where
+  the vendor says NOT to dedupe on status (edits, unsends and reactions change a message without
+  changing its status) and to use data.id + data.updatedAt instead.
+  SCHEME PROVENANCE (checked 2026-11-10): the main webhooks page names only the header and
+  "HMAC-SHA256" and links a "#security-verify-its-us" section that is NOT published, so it never
+  states the encoding or the signed content. Three independent primary sources agree and settle it:
+  bundle.social's own Express example on
+  https://info.bundle.social/api-reference/direct-messages/webhooks (the one page that writes the
+  scheme out: createHmac('sha256', secret).update(req.body).digest('hex') vs x-signature, compared
+  with timingSafeEqual, 401 on mismatch); the official bundlesocial npm package v2.70.0, whose
+  Webhooks.verifySignature is literally that hex HMAC over the raw body (and which declares
+  verifySignature `private`, so constructEvent is the only public entry point); and Hookdeck's own
+  BUNDLE_SOCIAL source config - controller HMAC, algorithm sha256, header_key x-signature,
+  encoding hex. Docs live on Mintlify: append `.md` to any path for raw markdown, index at
+  https://info.bundle.social/llms.txt. Because no timestamp is sent, a replay/stale-time check is
+  impossible - do not add one or invent a timestamp header.
 testScenario:
   events:
     - post.published

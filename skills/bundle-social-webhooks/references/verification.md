@@ -33,8 +33,10 @@ const event = bundle.webhooks.constructEvent(rawBody, signature, secret);
 ```
 
 - `constructEvent(rawBody: string, signature: string, secret: string)` returns the
-  parsed event. `bundle.webhooks.verifySignature(body, signature, secret)` returns a
-  boolean instead.
+  parsed event, or throws. It's the only public verification entry point: the
+  underlying `verifySignature` is declared `private` in the package's type
+  definitions, so calling it from TypeScript won't compile. If you want a boolean
+  rather than an exception, catch the throw or use the manual version below.
 - Pass a **string**. If you pass an object, the SDK `JSON.stringify`s it, which
   rarely reproduces the original bytes, and verification fails.
 - The SDK compares with `===`, not a constant-time comparison. If that matters to
@@ -101,5 +103,18 @@ def verify_bundle_social_signature(raw_body: bytes, signature: str | None, secre
   `401`; any non-2xx counts as a failed delivery).
 - Valid: return `2xx` within 15 seconds, including for event types you don't handle.
 
-Reference: [bundle.social Webhooks](https://info.bundle.social/api-reference/webhooks),
-[SDK](https://info.bundle.social/api-reference/sdk).
+## Sources
+
+The main [Webhooks](https://info.bundle.social/api-reference/webhooks) page names the
+header and the algorithm but links to a "Security" section that isn't actually
+published, so it never spells out the encoding or the signed content. The scheme
+above is confirmed from three other places that agree:
+
+- [DM Webhooks](https://info.bundle.social/api-reference/direct-messages/webhooks) —
+  bundle.social's own Express example, the one doc page that writes the scheme out
+  in full: `createHmac('sha256', secret).update(req.body).digest('hex')` compared
+  against `x-signature` with `timingSafeEqual`.
+- The official [`bundlesocial`](https://www.npmjs.com/package/bundlesocial) npm
+  package (v2.70.0), whose verification helper is exactly that hex HMAC.
+- Hookdeck's own `BUNDLE_SOCIAL` source verification: HMAC, `sha256`,
+  header `x-signature`, encoding `hex`.
