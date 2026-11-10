@@ -21,7 +21,7 @@ hookdeck whoami
 hookdeck gateway connection get "$CONN" --output json | jq '{id, name, paused_at, destination: .destination.id}'
 ```
 
-Get the user to confirm the project and the connection before changing anything.
+Get the user to confirm the project and the connection before changing anything. To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
 
 ## Step 1 — Stop hammering the endpoint
 
@@ -58,19 +58,21 @@ Unpausing re-queues held events in blocks of up to 5,000 that share one queue ti
 
 ## Step 4 — Retry what failed
 
-Events that exhausted their retries during the outage stay `FAILED` until retried. Dry-run, confirm the count with the user, then retry:
+Events that exhausted their retries during the outage stay `FAILED` until retried. Filter on `last_attempt_at`, not `created_at`: an event created before `T0` that was still queued or retrying when the endpoint went down also failed during the outage. Dry-run, confirm the count with the user, then retry:
 
 ```sh
 curl -sS -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   --data-urlencode "query[webhook_id]=$CONN" \
   --data-urlencode "query[status]=FAILED" \
-  --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
+  --data-urlencode "query[last_attempt_at][gte]=$T0" | jq '.estimated_count'
 
-curl -sS -X POST "$API/bulk/events/retry" \
+export OP_ID=$(curl -sS -X POST "$API/bulk/events/retry" \
   -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
-  -d "{\"query\": {\"webhook_id\": \"$CONN\", \"status\": \"FAILED\", \"created_at\": {\"gte\": \"$T0\"}}}" \
-  | jq '.id'
+  -d "{\"query\": {\"webhook_id\": \"$CONN\", \"status\": \"FAILED\", \"last_attempt_at\": {\"gte\": \"$T0\"}}}" \
+  | jq -r '.id'); echo "$OP_ID"
 ```
+
+The CLI equivalent filter for checking what's left is `hookdeck gateway event list --connection-id "$CONN" --status FAILED --last-attempt-at-after "$T0"`.
 
 Bulk retry walks events oldest first. Like unpause, it queues each block of up to 5,000 events with a shared timestamp. Retried events queue alongside live events, so increase the rate temporarily if the backlog is large and the endpoint has headroom.
 
@@ -96,9 +98,11 @@ If you also see rejected requests on the source (for example `VERIFICATION_FAILE
 ```sh
 curl -sS -G "$API/bulk/requests/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   --data-urlencode "query[source_id]=$SRC" --data-urlencode "query[rejection_cause]=VERIFICATION_FAILED" \
-  | jq '.estimated_count'
+  --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
 
 curl -sS -X POST "$API/bulk/requests/retry" \
   -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
-  -d "{\"query\": {\"source_id\": \"$SRC\", \"rejection_cause\": \"VERIFICATION_FAILED\"}}"
+  -d "{\"query\": {\"source_id\": \"$SRC\", \"rejection_cause\": \"VERIFICATION_FAILED\", \"created_at\": {\"gte\": \"$T0\"}}}"
 ```
+
+Bound the window with `created_at[gte]` (never `gt`, which is ignored for requests). Without it, every `VERIFICATION_FAILED` request in retention is retried, including genuine forgeries from long before the incident; those simply fail verification again.

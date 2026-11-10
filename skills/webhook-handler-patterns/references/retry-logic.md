@@ -13,10 +13,9 @@ Different providers have different retry behaviors. Understanding these helps yo
 
 ### Shopify
 
-- Retries **8 times over 4 hours** with increasing intervals
-- 5-second timeout for the whole request (1-second connection timeout)
-- After 8 consecutive failures, subscriptions created through the Admin API are **deleted** (app-configuration subscriptions are not)
-- [Shopify Webhook Troubleshooting](https://shopify.dev/docs/apps/build/webhooks/troubleshooting-webhooks)
+- Retries up to **8 times over 4 hours** with increasing intervals
+- 5-second timeout for the whole request ([troubleshooting](https://shopify.dev/docs/apps/build/webhooks/troubleshooting-webhooks)); 1-second connection timeout ([verifying deliveries](https://shopify.dev/docs/apps/build/webhooks/verify-deliveries))
+- After repeated failures, subscriptions created through the Admin API are **deleted**; app-configuration subscriptions are not ([subscribing](https://shopify.dev/docs/apps/build/webhooks/subscribe))
 
 ### GitHub
 

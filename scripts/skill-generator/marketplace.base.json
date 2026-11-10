@@ -135,7 +135,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: {providerCount} provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all {skillCount} skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: {providerCount} provider skills (Stripe, Shopify, GitHub, and {otherProviderCount} others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all {skillCount} skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": "{allSkills}",

@@ -47,7 +47,7 @@ Ask (or work out) two things before running anything.
 
 | Setup | What it looks like | Runbook |
 |-------|--------------------|---------|
-| **Standby** | The provider sends to your endpoint directly **and** to a Hookdeck source that has **no connection**. Hookdeck records every request but delivers nothing. | [references/incident-standby.md](references/incident-standby.md) |
+| **Standby** | The provider sends to your endpoint directly **and** to a Hookdeck source that has **no connection**. Hookdeck verifies and records every request but delivers nothing. | [references/incident-standby.md](references/incident-standby.md) |
 | **Inline** | The provider sends only to Hookdeck; a connection delivers to your endpoint. | [references/incident-inline.md](references/incident-inline.md) |
 | **None** | The provider sends straight to your endpoint. | [references/incident-standby.md § No Hookdeck yet](references/incident-standby.md#no-hookdeck-yet-emergency-capture): create a standby source **now** to stop further loss, then follow the standby runbook |
 
@@ -59,14 +59,16 @@ These are not optional. Recovery commands change production delivery.
 2. **Dry-run every bulk operation.** Call the bulk operation's `/plan` endpoint, show the `estimated_count`, and get explicit human confirmation before creating it.
 3. **Record every ID and timestamp** you use (`T0`, `T1`, source/connection/destination IDs, bulk operation IDs) in the incident notes as you go.
 4. **Never run a bulk replay twice over the same window.** Replay creates new requests and events every time it runs; a second run delivers everything again.
-5. **Prefer lowering the delivery rate over pausing.** See [references/ordering.md](references/ordering.md) for why unpausing a large backlog disturbs order.
-6. **Install the Hookdeck CLI first** (`npm i -g hookdeck-cli` or `brew install hookdeck/hookdeck/hookdeck`) and authenticate non-interactively with `hookdeck ci --api-key "$HOOKDECK_API_KEY"`.
+5. **Filter replays on `rejection_cause=NO_CONNECTION` and `created_at[gte]`/`[lte]` only.** `status=rejected` overrides the cause filter and matches forged (`VERIFICATION_FAILED`) requests too. `created_at[gt]`/`[lt]` are ignored for requests, which silently removes the bound. Sanity-check every dry-run count against the expected outage volume.
+6. **Prefer lowering the delivery rate over pausing.** See [references/ordering.md](references/ordering.md) for why unpausing a large backlog disturbs order.
+7. **Install the Hookdeck CLI first** (`npm i -g hookdeck-cli` or `brew install hookdeck/hookdeck/hookdeck`) and authenticate non-interactively with `hookdeck ci --api-key "$HOOKDECK_API_KEY"`.
 
 ## Key Facts the Runbooks Rely On
 
-- **A source with no connection still records requests.** The ingestion edge returns `200` (`{"status":"SUCCESS"}`) to the provider, so the provider counts the delivery as successful and will not retry or disable the subscription. The request is stored with status `rejected` and rejection cause `NO_CONNECTION`. This is what makes the standby setup work.
+- **A source with no connection still records requests.** For a genuine webhook, the ingestion edge returns `200` (`{"status":"SUCCESS"}`), so the provider counts the delivery as successful and won't retry or disable the subscription. The request is stored as rejected with cause `NO_CONNECTION`. This is what makes the standby setup work.
+- **Every source in these runbooks verifies its input.** The standby source verifies the provider signature: forged requests get `401` and are stored as `VERIFICATION_FAILED`, so recovery never replays them. The recovery source requires an API key nobody sends, because its connection delivers straight to production. Replay skips source verification, so neither blocks a replay.
 - **Retry vs replay.** *Retry* re-delivers an existing event (or re-processes a rejected request on its own source). *Replay* re-ingests a stored request as a brand-new request, and can target **another source's connections**. Bulk replay is how recovery delivers captured requests to a recovery connection.
-- **Bulk replay processes requests oldest first** (`created_at` ascending, in batches of 100), and only includes requests created before the operation started.
+- **Bulk replay processes requests oldest first** (`created_at` ascending, in batches of 100). It only includes requests created before the operation started, and runs once: a second operation over the same window delivers everything again.
 - **Order is approximate, never guaranteed** — by Hookdeck or by the providers (Shopify and Stripe both document that delivery order is not guaranteed). Handlers must tolerate out-of-order and duplicate events. See [references/ordering.md](references/ordering.md).
 - **Payload retention is finite.** Replaying a request whose payload is outside your plan's retention window fails with `409 DATA_ARCHIVED`. Check retention before relying on a standby source.
 
