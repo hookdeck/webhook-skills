@@ -1,0 +1,47 @@
+name: bundle-social
+displayName: bundle.social
+docs:
+  webhooks: https://info.bundle.social/api-reference/webhooks
+  verification: https://info.bundle.social/api-reference/sdk
+  events: https://info.bundle.social/api-reference/webhooks#events
+notes: >
+  Social media scheduling/publishing API (bundle.social, docs at info.bundle.social). Webhooks are
+  organization-level, added at https://bundle.social/dashboard/organization/webhooks, HTTPS only.
+  Every delivery is a POST with Content-Type application/json, User-Agent bundlesocial, and an
+  x-signature header: the lowercase hex HMAC-SHA256 of the raw body keyed with the webhook's Signing
+  Secret. No timestamp, no prefix, not Standard Webhooks. Official Node SDK `bundlesocial`:
+  new Bundlesocial(apiKey).webhooks.constructEvent(rawBody: string, signature, secret) returns
+  { type, data } or throws Error('Invalid signature'); it compares with === (not constant-time) and
+  JSON.stringifies non-string bodies, so always pass the raw string. No Python SDK. Body shape is
+  { "type": "<event>", "data": {...} }. Core events: post.published (check data.status POSTED vs
+  ERROR), post.externally-deleted, comment.published, social-account.created,
+  social-account.updated (data.socialAction with deleteOn on disconnection/refresh failure),
+  social-account.deleted, team.created, team.updated, team.deleted. Feature-gated (DMs/Automations):
+  comment.received, conversation.created, conversation.updated, conversation.read.updated,
+  conversation.message.created, conversation.message.updated. Webhooks without an event filter get
+  new types automatically, so return 2xx for unknown types. 15 s timeout, 3 attempts (exponential
+  backoff from 30 s), auto-disabled after 7 days without a success; no event ID, de-duplicate on
+  type + data.id + data.status + data.updatedAt.
+testScenario:
+  events:
+    - post.published
+    - social-account.updated
+    - team.updated
+  prompt: >
+    Create a {framework} webhook handler for bundle.social. Verify the x-signature header: the hex
+    HMAC-SHA256 of the raw request body keyed with the webhook signing secret (use the bundlesocial
+    SDK's webhooks.constructEvent in Node, manual HMAC with a timing-safe compare in Python). Verify
+    against the raw body (do not parse first). Return 400 for a missing/invalid signature and 200
+    once verified. Handle post.published (check data.status POSTED vs ERROR), social-account.updated
+    and team.updated, and return 200 for unknown event types. If you use any skills to help with
+    this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify bundle.social webhook signatures (`x-signature`, hex HMAC-SHA256 of the raw body), handle post.published, social-account.updated and team.updated events
+  marketplace:
+    description: Receive and verify bundle.social webhooks. Use when setting up bundle.social webhook handlers, debugging x-signature verification (hex HMAC-SHA256 of the raw body), or handling post.published, comment.published, social-account.updated and team.updated events.
+    keywords:
+    - webhooks
+    - bundle-social
+    - social-media
+    - publishing
+    - scheduling
