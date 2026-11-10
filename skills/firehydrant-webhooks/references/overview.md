@@ -2,8 +2,8 @@
 
 ## What Are FireHydrant Webhooks?
 
-FireHydrant lets you create webhooks (Settings → Webhooks) that send an HTTP `POST` with a
-JSON body to one destination URL when internal events occur. Each webhook has a URL, a
+FireHydrant lets you create webhooks (Settings → Webhooks) that send a JSON body to one
+destination URL when internal events occur. The docs don't name the HTTP method. Each webhook has a URL, a
 Secret, an Active/Inactive status, and event subscriptions. The Secret is used to sign
 every request in the `fh-signature` header.
 

@@ -12,17 +12,19 @@ event ID, so make handlers idempotent.
 
 ## What Webhook Types Does Coterie Send?
 
-The docs define no event-type strings and the payloads have no event-type field. The three
+No body field or header names the kind. Every documented sample ends with `eventType`
+(`Created` in all three; no other value is documented), `eventTimestamp` and
+`eventTimestampMilliseconds`, but `eventType` describes the change, not the kind. The three
 kinds are distinguished by their identifier key:
 
 | Kind | Identifier key | Key fields (from the documented samples) |
 |------|----------------|------------------------------------------|
 | `application` | `applicationId` | `Status` (sample: `ReadyToQuote`), `BusinessName`, `ApplicationTypes` (e.g. `PL`, `BOP`), `ApplicationUrl`, `Metadata`, `Locations` |
 | `quote` | `quoteId` | `PolicyType`, `Premium`, `MonthlyPremium`, `IsEstimate`, `isExpired`, `LineItems`, `applicationId`, `RatingEngine` |
-| `policy` | `PolicyId` | `PolicyNumber`, `Status` (sample: `Pending`), `StatusDate`, `PolicyType`, `StartDate`, `EndDate`, `Premium`, `InsuranceCarrier`, `Locations` |
+| `policy` | `PolicyId` | `PolicyNumber`, `Status` (sample: `Active`), `StatusDate`, `PolicyType`, `StartDate`, `EndDate`, `Premium`, `InsuranceCarrier`, `Locations` |
 
-Only the status values `ReadyToQuote` (application) and `Pending` (policy) appear in the
-docs; treat `Status` as an open string and don't assume a closed list.
+Only the status values `ReadyToQuote` (application) and `Active` (policy) appear in the
+webhook samples; treat `Status` as an open string and don't assume a closed list.
 
 Quote payloads include `applicationId` too, so classify on `quoteId` and `PolicyId` before
 `applicationId`.
@@ -41,9 +43,9 @@ contact to enable these."
 
 ## Application `Metadata`
 
-`Metadata` is a JSON string you supplied when creating the application (the sample holds
-`partner_id`, `lead_id` and `customer_id`). Parse it yourself to map the webhook back to your
-records.
+`Metadata` is the metadata you supplied when creating the application, which Coterie's API
+docs describe as a single-encoded JSON object sent as a string (the webhook samples show
+`null`). Parse it yourself to map the webhook back to your records.
 
 ## Full Reference
 

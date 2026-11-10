@@ -61,11 +61,11 @@ Environment and audit-log webhooks wrap the data in `{ "event_type": "...", "dat
 | Event / payload | Webhook type | Triggered when |
 |-----------------|--------------|----------------|
 | `FLAG_UPDATED` | Environment | A flag's state or value changes (`data.new_state`, `data.previous_state`) |
-| `FLAG_DELETED` | Environment | A flag is deleted |
+| `FLAG_DELETED` | Environment | A flag is deleted (`data.new_state` is `null`, the deleted state is in `data.previous_state`; from Flagsmith's source, not the docs) |
 | `AUDIT_LOG_CREATED` | Audit log (organisation) | Any admin action is logged (`data.log`, `data.related_object_type`) |
 | `{ identity, flags, traits, segments }` | Identity | The Get Identity Flags endpoint evaluates an identity |
 
-Flagsmith's open-source code also emits `NEW_VERSION_PUBLISHED` (feature versioning v2) which the docs don't list; handle unknown `event_type` values with a 200.
+Environments with Feature Versioning v2 also send `NEW_VERSION_PUBLISHED`, once per published version, to environment webhooks only ([Feature Versioning](https://docs.flagsmith.com/managing-flags/feature-versioning)). `FLAG_DELETED` and the `AUDIT_LOG_CREATED` wrapper come from Flagsmith's source code: the audit log docs show the entry as the whole body, so check for `event_type` before assuming the shape. Handle unknown `event_type` values with a 200.
 
 ## Important Headers
 

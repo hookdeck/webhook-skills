@@ -92,7 +92,7 @@ app.post('/webhooks/cover-genius', express.raw({ type: '*/*' }), (req, res) => {
     handleEvent(body);
   } catch (err) {
     console.error('Error handling Cover Genius event:', err);
-    // Anything other than 200 makes Cover Genius retry (up to 3 times).
+    // Anything other than 200 is a failure; Cover Genius tries a webhook up to 3 times.
     return res.status(500).json({ error: 'Handler error' });
   }
 

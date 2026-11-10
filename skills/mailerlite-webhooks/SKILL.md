@@ -56,7 +56,7 @@ def verify(raw_body: bytes, signature_header: str | None, secret: str | None) ->
     return hmac.compare_digest(signature_header.strip().lower().encode(), expected.encode())
 ```
 
-In Express use `express.raw({ type: '*/*' })` so the raw bytes are available whatever content type is sent. MailerLite has no official webhook verification SDK, so verification is manual.
+In Express use `express.raw({ type: '*/*' })` so the raw bytes are available whatever content type is sent. MailerLite's Rust SDK (`mailerlite-rs`, `webhook-signatures` feature) has `verify_signature`; in Node and Python, verify manually as above.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)

@@ -76,6 +76,12 @@ class TestWebhookEndpoint:
         body = payload(event_type, data)
         assert post(body, {"X-Kombo-Signature": sign(body)}).status_code == 200
 
+    def test_inline_assessment_returns_assessment_url(self):
+        body = payload("inline-assessment:order-received", {"id": "B5KQKhAgTv6ZwzrfAbqbhipd", "package_id": "typescript_test"})
+        res = post(body, {"X-Kombo-Signature": sign(body)})
+        assert res.status_code == 200
+        assert isinstance(res.json()["assessment_url"], str)
+
     def test_verifies_regardless_of_content_type(self):
         body = payload("data-changed", {})
         res = post(body, {"X-Kombo-Signature": sign(body)}, content_type="text/plain")

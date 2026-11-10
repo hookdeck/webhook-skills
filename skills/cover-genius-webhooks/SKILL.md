@@ -50,7 +50,7 @@ function verifyCoverGeniusRequest(headers, apiKey = process.env.COVER_GENIUS_API
 ```
 
 Return `401` when this fails, `400` for a body that isn't a JSON object, and `200` once handled
-(any other status makes Cover Genius retry up to 3 times). There is no body signature, so the
+(Cover Genius tries a webhook up to 3 times until it gets a `200`). There is no body signature, so the
 raw body isn't needed for verification, but authenticate before parsing it. In Express, read the
 body with `express.raw({ type: '*/*' })` so every content type is checked.
 

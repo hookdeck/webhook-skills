@@ -17,7 +17,7 @@ If no `secret_key` is set, requests have no `Go1-Signature` header and cannot be
 
 ## Register Your Endpoint
 
-1. Create the webhook with your endpoint URL, the `secret_key`, and the events you want. Recommended: `enrollment.create`, `enrollment.update`, `enrollment.delete`.
+1. Create the webhook with your endpoint URL, the `secret_key`, and the events you want. For enrollments: `enrollment.create`, `enrollment.complete`, `enrollment.delete`.
 2. Confirm the first delivery arrives with a `Go1-Signature` header.
 
 ## Local Development

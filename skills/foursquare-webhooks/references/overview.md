@@ -20,10 +20,10 @@ The payload's `eventType` field identifies the event.
 |-------|----------------|------------------|
 | `placeArrival` | User arrives at a place | Send a notification, log a visit |
 | `placeDeparture` | User leaves a place | Close out a visit, measure dwell time |
-| `placeHistorical` | A visit is reported after the fact | Backfill visit history |
+| `placeHistorical` | A historical visit, with arrival and departure times | Backfill visit history |
 | `geofenceEnter` | User enters a geofence | Trigger a location-based offer |
 | `geofenceDwell` | User stays inside a geofence | Dwell-based engagement |
-| `geofencePresence` | User is found inside a geofence | Presence checks |
+| `geofencePresence` | Device is inside a geofence during a location request | Presence checks |
 | `geofenceExit` | User leaves a geofence | End a location-based session |
 | `journeysInProgress` | Journey underway | Track a trip |
 | `journeysApproaching` | User nearing the destination | Pre-arrival prompts |

@@ -66,8 +66,10 @@ the docs' examples), `start_date`, `notification_date`, `due_date`, `expiry_date
 
 ## Delivery and Retries
 
-Cover Genius retries a webhook up to 3 times when your endpoint doesn't answer `200 OK`. Dedupe
-on `payload.id` (plus `event`) so a retry doesn't repeat side effects.
+Cover Genius tries a webhook up to 3 times when your endpoint doesn't answer `200 OK`. Dedupe
+on `payload.id` (plus `event`) so a retry doesn't repeat side effects. `BOOKING_UPDATED` is sent
+whenever a confirmed Offer is updated, so one booking can send it more than once: compare the
+payload with what you stored rather than dropping every repeat of `id` and `event`.
 
 ## Full Event Reference
 

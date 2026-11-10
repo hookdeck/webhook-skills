@@ -53,7 +53,7 @@ The `events` filter in the webhook config uses the short names (`started`, `page
 | `type` | Event type, e.g. `crawl.page` |
 | `id` | Job ID |
 | `webhookId` | Unique ID for this delivery (crawl, batch scrape, extract, monitor events; not agent events). Useful for idempotency |
-| `data` | Array of event-specific data (empty for `*.started` and `crawl.completed`) |
+| `data` | Array of event-specific data (empty in the docs' `*.started`, `crawl.completed` and `batch_scrape.completed` examples) |
 | `metadata` | Custom metadata from your webhook config |
 | `error` | Error message when `success` is `false` |
 

@@ -83,7 +83,7 @@ def test_handles_failed_call():
     [
         {"event_type": "citations", "citations": [{"variable_name": "firstName", "value": "James"}]},
         {"event_type": "post_transfer_transcript", "post_transfer_transcript": []},
-        {"event_type": "evals"},
+        {"event_type": "dispositions", "agent_dispositions": []},
         {"event_type": "multiple", "contents": ["citations", "post_transfer_transcript"]},
     ],
 )

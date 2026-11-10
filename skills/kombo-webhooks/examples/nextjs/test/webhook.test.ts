@@ -76,6 +76,13 @@ describe('POST /webhooks/kombo', () => {
     expect(res.status).toBe(200);
   });
 
+  it('answers inline-assessment:order-received with an assessment_url', async () => {
+    const body = payload('inline-assessment:order-received', { id: 'B5KQKhAgTv6ZwzrfAbqbhipd', package_id: 'typescript_test' });
+    const res = await POST(makeRequest(body, { 'x-kombo-signature': sign(body) }));
+    expect(res.status).toBe(200);
+    expect(typeof (await res.json()).assessment_url).toBe('string');
+  });
+
   it('verifies regardless of Content-Type', async () => {
     const body = payload('data-changed', {});
     const res = await POST(makeRequest(body, { 'content-type': 'text/plain', 'x-kombo-signature': sign(body) }));

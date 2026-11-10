@@ -36,7 +36,7 @@ def verify_coterie_request(headers, config=os.environ) -> bool:
 
 
 def classify(payload: dict):
-    """Coterie webhooks have no event-type field. The three kinds are told apart
+    """No Coterie body field names the kind (eventType is the change). The three kinds are told apart
     by their identifier key."""
     keys = {k.lower() for k in payload}
     if "quoteid" in keys:

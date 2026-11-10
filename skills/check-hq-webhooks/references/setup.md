@@ -26,7 +26,11 @@ Options on a config:
 
 - `active` - set `false` via `PATCH /webhook_configs/{id}` to pause (events generated while paused are not sent later)
 - `api_version` - pin the payload shape to an API version
-- Multiple configs are allowed and each receives every webhook
+- Multiple configs are allowed; each receives only the event types selected for it
+
+## Select Event Types
+
+A new config receives nothing until you select event types. In Console, go to **Developers > Webhooks**, open the config and click **Edit event types**. Do this separately in sandbox and production. Event types Check adds later aren't added to existing configs.
 
 ## Send a Test Ping
 
@@ -36,7 +40,7 @@ curl --request POST \
   --header 'Authorization: Bearer YOUR_API_KEY'
 ```
 
-Your endpoint receives `{"message": "Test webhook"}` with a valid `Check-Signature` and `Check-Topic: ping`.
+Your endpoint receives `{"message": "Test webhook"}` with a valid `Check-Signature` and `Check-Topic: ping`. A ping is sent even when no event types are selected, so a passing ping doesn't mean the config will receive anything else.
 
 ## Sandbox vs Live
 

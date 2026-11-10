@@ -83,7 +83,7 @@ describe('Bland AI webhook', () => {
   test.each([
     ['citations', { event_type: 'citations', citations: [{ variable_name: 'firstName', value: 'James' }] }],
     ['post_transfer_transcript', { event_type: 'post_transfer_transcript', post_transfer_transcript: [] }],
-    ['evals', { event_type: 'evals' }],
+    ['dispositions', { event_type: 'dispositions', agent_dispositions: [] }],
     ['multiple', { event_type: 'multiple', contents: ['citations', 'post_transfer_transcript'] }],
   ])('handles %s enrichment payloads', async (_name, extra) => {
     const res = await postSigned(postCall(extra));

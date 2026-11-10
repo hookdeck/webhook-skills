@@ -72,7 +72,7 @@ See [references/overview.md](references/overview.md) for the full list.
 |--------|-------------|
 | `X-Hub-Signature` | HMAC of the raw body, `sha256=<hex>` (only sent when a secret is set) |
 
-`X-Event-Key` is not documented on the Confluence page, so read the event from the body; treat that header as an unverified fallback only.
+No event header is documented, so read the event from the body's `event` field.
 
 ## Environment Variables
 

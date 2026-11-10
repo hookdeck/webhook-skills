@@ -8,7 +8,7 @@ Events are deliberately thin. To get the amount of a Transaction, `GET` it from 
 
 ## Common Event Types
 
-The event name is the `category` field in the body. Categories are `<object>.created` or `<object>.updated` (about 120 in all, and Increase may add more).
+The event name is the `category` field in the body. Most categories are `<object>.created` or `<object>.updated`, with exceptions such as `oauth_connection.deactivated`, `group.heartbeat` and the `real_time_decision.*_requested` categories (more than 120 in all, and Increase may add more).
 
 | Category | Triggered When | Common Use Cases |
 |----------|----------------|------------------|

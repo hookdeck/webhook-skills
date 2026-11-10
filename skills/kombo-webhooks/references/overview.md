@@ -21,6 +21,10 @@ Every request is a `POST` with a JSON body signed in the `X-Kombo-Signature` hea
 | `connection-flow-failed` | An error occurs in the connection flow (the flow can still succeed afterwards) | Analytics and support; not an alert |
 | `issue-status-changed` | Kombo raises or resolves an issue (`change`: `raised` or `resolved`) | Surface integration issues to customers |
 | `assessment:order-received` | An assessment is ordered for a candidate from the end customer's tool | Start an assessment for the candidate |
+| `inline-assessment:order-received` | An inline assessment is ordered when a candidate applies via a career page | Reply with `{"assessment_url": ...}` linking to your platform; most ATSs give up after 15 to 30 seconds |
+| `ai-apply-data-changed` | AI Apply job postings changed (availability, archival, URL, job code, career site or application form). Debounced: at most one per 30 seconds | Fetch job postings with `updated_after` |
+| `ai-apply-application-status-updated` | An AI Apply application becomes `SUBMITTED`, `DUPLICATE` or `FAILED` | Update the application's status; the payload includes the application |
+| `ai-apply-job-posting-status-updated` | A job posting becomes `APPLYABLE`, `UNAVAILABLE` or `ARCHIVED`. **Deprecated** | Existing setups only; use `ai-apply-data-changed` |
 
 ## Event Payload Structure
 

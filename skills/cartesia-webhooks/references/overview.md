@@ -11,7 +11,7 @@ Things that differ from signed providers such as Stripe or GitHub:
 
 - **No payload signature.** Cartesia sends the secret you chose, unchanged, in the
   `x-webhook-secret` header. See [verification.md](verification.md).
-- **At-least-once delivery.** A delivery is retried up to 3 times on network errors and on
+- **At-least-once delivery.** A delivery is attempted up to 3 times on network errors and on
   `403`, `408`, `429` and `5xx` responses. Other `4xx` responses (including `401`) are
   permanent failures. Deduplicate on `webhook_request_id`.
 - Your endpoint must accept `POST` with `application/json`.

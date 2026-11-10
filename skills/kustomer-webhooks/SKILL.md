@@ -63,7 +63,7 @@ Read the body as raw bytes (`express.raw({ type: '*/*' })`) so any content type 
 
 ## Common Event Types
 
-The event type is the `name` field in the JSON body (there is no event-type header).
+The event type is the `name` field in the JSON body. Kustomer also sends it in the `X-Kustomer-Webhook-Event` header.
 
 | Event | Description |
 |-------|-------------|
@@ -75,14 +75,16 @@ The event type is the `name` field in the JSON body (there is no event-type head
 | `kustomer.message.update` | Message updated |
 | `kustomer.team.create` / `kustomer.team.update` | Team created / updated |
 | `kustomer.user.create` / `kustomer.user.update` | User created / updated |
+| `kustomer.tag.create` / `kustomer.tag.update` | Tag created / renamed, recolored or deleted |
 
-> **For payload samples**, see [Kustomer outbound webhooks](https://developer.kustomer.com/kustomer-apps-platform/docs/outbound-webhooks)
+> **For payload samples**, see the [Kustomer event catalog](https://developer.kustomer.com/docs/events/event-catalog)
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
 | `X-Kustomer-Webhook-Signature` | Hex HMAC-SHA256 of the raw body |
+| `X-Kustomer-Webhook-Event` | The event name, the same value as the body's `name` |
 
 ## Environment Variables
 

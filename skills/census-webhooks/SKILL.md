@@ -26,7 +26,7 @@ Census is now Fivetran Activations (getcensus.com redirects to fivetran.com). It
 
 ## Verification (core)
 
-Census signs the **raw request body** with HMAC-SHA256, keyed with the one-time secret shown when you create the webhook (used as raw bytes, no `whsec_` handling), and sends the digest as **standard base64** (not hex) in `X-Signature`. There is no timestamp and no prefix.
+Census signs the **raw request body** with HMAC-SHA256, keyed with the secret from the webhook creation flow (used as raw bytes, no `whsec_` handling), and sends the digest as **standard base64** (not hex) in `X-Signature`. There is no timestamp and no prefix.
 
 Node:
 
@@ -67,7 +67,7 @@ In Express, read the body with `express.raw({ type: '*/*' })` so the bytes are i
 
 ## Common Event Types
 
-The event name is in the JSON body (`event`); there is no event-type header. Every payload has `workspace_id`, `sync_id`, `sync_run_id`, and `event`.
+The event name is in the JSON body (`event`); there is no event-type header. Every payload has `group_id` (a string), `sync_id`, `sync_run_id`, and `event`. `workspace_id` is a deprecated field that only legacy payloads carry, so don't depend on it.
 
 | Event | Description |
 |-------|-------------|
@@ -87,14 +87,14 @@ The event name is in the JSON body (`event`); there is no event-type header. Eve
 |------|-------|
 | Signature header | `X-Signature` |
 | Algorithm | HMAC-SHA256 of the raw body, standard base64 |
-| Secret | Shown **once** when the webhook is created; copy it then |
-| Setup | Webhooks tab in the workspace (Add Webhook), or the Census API |
+| Secret | From the webhook creation flow; store it server-side |
+| Setup | Configured on a group through the Activations REST API |
 | Test event | The docs don't describe one; accept and log unknown `event` values after verifying |
 
 ## Environment Variables
 
 ```bash
-CENSUS_WEBHOOK_SECRET=your_webhook_secret   # One-time secret shown when the webhook is created
+CENSUS_WEBHOOK_SECRET=your_webhook_secret   # Secret from the webhook creation flow
 ```
 
 ## Local Development

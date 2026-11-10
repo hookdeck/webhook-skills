@@ -15,7 +15,7 @@ hash_hmac('sha256', $jsonPayload, $secret);  // hex by default
 - Encoding: bare hex, no `sha256=` prefix
 - No timestamp, so no replay window. Use idempotent handlers
 
-MailerLite provides no webhook verification SDK, so verify manually.
+MailerLite's Rust SDK, [`mailerlite-rs`](https://github.com/mailerlite/mailerlite-rust#receiving-webhooks), provides `verify_signature` behind its `webhook-signatures` feature. It accepts only a header of exactly 64 hex characters. There is no verification helper for Node or Python, so verify manually there.
 
 ## Implementation
 

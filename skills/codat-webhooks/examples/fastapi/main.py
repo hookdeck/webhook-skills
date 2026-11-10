@@ -81,9 +81,10 @@ def handle_event(event: Dict[str, Any]) -> None:
         connection = payload.get("connection") or {}
         logger.info("%s: %s", event_type, connection.get("id") or payload.get("connectionId") or "unknown")
     elif event_type == "read.completed":
-        logger.info("Read completed%s", f" for {payload['dataType']}" if payload.get("dataType") else "")
-    elif event_type == "write.successful":
-        logger.info("Write successful")
+        logger.info("Read completed for %d data type(s)", len(payload.get("dataTypes") or []))
+    elif event_type and event_type.endswith(".write.successful"):
+        # {dataType}.write.successful arrives as e.g. bills.write.successful
+        logger.info("Write successful for %s", event_type.split(".")[0])
     else:
         logger.info("Unhandled Codat event type: %s", event_type)
 

@@ -78,6 +78,12 @@ async def kombo_webhook(
         print("Issue", data.get("change"), (data.get("issue") or {}).get("type"))
     elif event_type == "assessment:order-received":
         print("Assessment ordered:", data.get("id"), data.get("package_id"))
+    elif event_type == "inline-assessment:order-received":
+        # The ATS is waiting on this response (most give up after 15 to 30 seconds),
+        # so answer now with the link where the candidate takes the assessment.
+        # TODO: create the assessment on your platform and use its link here.
+        assessment_url = "https://app.acme.com/assessment/:test_id"  # Kombo's docs example
+        return {"assessment_url": assessment_url}
     else:
         # Kombo adds event types over time: acknowledge unknown ones
         print(f"Unhandled event: {event_type}")

@@ -82,7 +82,7 @@ class TestValidSignatures:
 
     @pytest.mark.parametrize(
         "event_type",
-        ["connection.created", "connection.connected", "read.completed", "write.successful"],
+        ["connection.created", "connection.connected", "read.completed", "bills.write.successful"],
     )
     def test_other_events(self, event_type):
         body = json.dumps(event(event_type, {"connection": {"id": "conn-1"}, "dataType": "invoices"}))

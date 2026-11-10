@@ -92,7 +92,7 @@ class TestVerify:
 class TestEndpoint:
     @pytest.mark.parametrize(
         "event_type",
-        ["enrollment.create", "enrollment.update", "enrollment.delete", "something.new"],
+        ["enrollment.create", "enrollment.complete", "enrollment.delete", "something.new"],
     )
     def test_valid_event(self, event_type):
         body = json.dumps(event(event_type))

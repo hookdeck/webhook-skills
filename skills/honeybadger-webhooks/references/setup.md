@@ -22,7 +22,8 @@ The token is derived from the project API key. **It changes if you reset the API
 3. Enter your URL, including the protocol (e.g. `https://example.com/webhooks/honeybadger`).
 4. Leave the **Bearer token** field blank. It only adds an `Authorization: Bearer` header for
    services that insist on one; this skill checks `Honeybadger-Token`, which is always sent.
-5. Save. Honeybadger posts to the URL when events occur in the project.
+5. Leave **Payload version** on v2, the default. v3 is in preview and its fields can change.
+6. Save. Honeybadger posts to the URL when events occur in the project.
 
 ## Test
 

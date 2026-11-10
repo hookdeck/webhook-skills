@@ -66,7 +66,9 @@ code and are not covered here.
 
 ## Event Types
 
-Every body has a `webhook_type`. The examples handle:
+Bringg's Webhooks Index gives each webhook a `webhook_type`. Many reference examples carry it in the
+body, but the default Order Created and Customer Created examples don't show it, so if you rely on
+it, register each webhook on its own URL path as a fallback. The examples handle:
 
 | `webhook_type` | Sent When |
 |----------------|-----------|

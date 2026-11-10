@@ -80,9 +80,9 @@ describe('Confluence webhook', () => {
   it.each([
     ['page_updated', { page: { id: 1 } }],
     ['page_removed', { page: { id: 1 } }],
-    ['blog_created', { blog: { id: 2 } }],
-    ['comment_created', { comment: { id: 3 } }],
-    ['space_created', { space: { key: 'DOC' } }],
+    ['blog_created', {}],
+    ['comment_created', {}],
+    ['space_created', {}],
     ['label_added', {}],
   ])('handles %s', async (event, extra) => {
     const body = JSON.stringify({ timestamp: 1, event, ...extra });

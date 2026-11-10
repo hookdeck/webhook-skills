@@ -101,8 +101,8 @@ async def go1_webhook(request: Request):
     event_type = event.get("event_type")
     if event_type == "enrollment.create":
         print(f"Enrollment created: {event.get('id')}")
-    elif event_type == "enrollment.update":
-        print(f"Enrollment updated: {event.get('id')}")
+    elif event_type == "enrollment.complete":
+        print(f"Enrollment completed: {event.get('id')}")
     elif event_type == "enrollment.delete":
         print(f"Enrollment deleted: {event.get('id')}")
     else:

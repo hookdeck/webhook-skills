@@ -6,7 +6,7 @@ Kustomer outbound webhooks POST a JSON Kustomer Event object to a URL you choose
 
 ## Common Event Types
 
-The event type is the `name` field in the request body.
+The event type is the `name` field in the request body, also sent in the `X-Kustomer-Webhook-Event` header.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -18,6 +18,7 @@ The event type is the `name` field in the request body.
 | `kustomer.message.update` | A message is updated | Track edits and delivery state |
 | `kustomer.team.create` / `kustomer.team.update` | A team is created / updated | Directory sync |
 | `kustomer.user.create` / `kustomer.user.update` | A user is created / updated | Directory sync |
+| `kustomer.tag.create` / `kustomer.tag.update` | A tag is created / renamed, recolored or deleted | Keep a tag ID-to-name map |
 
 Org-level events such as `org.user.login`, `org.permission.update`, `app.install` and `app.uninstall` are not available for outbound webhooks.
 
@@ -43,8 +44,8 @@ Org-level events such as `org.user.login`, `org.permission.update`, `app.install
 
 ## Delivery and Retries
 
-Kustomer attempts each event 10 times over about 80 minutes. After 10 consecutive failures (timeouts, non-2xx, connection errors) the webhook is turned off and must be re-enabled manually in **Settings > Platform > Outbound Webhooks**. No notification is sent when this happens. Return 2xx quickly and process asynchronously.
+Kustomer waits up to 30 seconds for a 2xx. A timeout, connection error or any status of 400 or higher is a failure, so a 4xx is retried too. The [developer docs](https://developer.kustomer.com/docs/events/delivery-and-retries) give 8 attempts over about 64 minutes and disable a webhook after failures build for about 20 minutes; the [help center](https://help.kustomer.com/en_us/outbound-webhooks-rkUQvela8) says 10 attempts over about 80 minutes and 10 consecutive failures. An event that runs out of attempts is dropped, and events aren't queued while a webhook is off. Re-enable it in **Settings > Platform > Outbound Webhooks** or with `PATCH /v1/outbound-webhooks/{id}`. Delivery is at least once and unordered: deduplicate on `id` and compare `data.attributes.updatedAt`.
 
 ## Full Event Reference
 
-See [Kustomer outbound webhooks](https://help.kustomer.com/outbound-webhooks-rkUQvela8) and the [developer docs with sample payloads](https://developer.kustomer.com/kustomer-apps-platform/docs/outbound-webhooks).
+See [Kustomer outbound webhooks](https://help.kustomer.com/en_us/outbound-webhooks-rkUQvela8) and the [event catalog with sample payloads](https://developer.kustomer.com/docs/events/event-catalog).

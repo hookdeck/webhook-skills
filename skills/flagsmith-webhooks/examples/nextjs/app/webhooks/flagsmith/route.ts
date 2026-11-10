@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       console.log('Flag updated:', payload.data?.new_state?.feature?.name);
       break;
     case 'FLAG_DELETED':
-      console.log('Flag deleted:', payload.data?.feature?.name ?? payload.data?.new_state?.feature?.name);
+      console.log('Flag deleted:', payload.data?.previous_state?.feature?.name);
       break;
     case 'AUDIT_LOG_CREATED':
       console.log('Audit log:', payload.data?.log);

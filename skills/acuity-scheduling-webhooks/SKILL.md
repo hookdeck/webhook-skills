@@ -27,8 +27,9 @@ metadata:
 Acuity signs the **raw request body** with **HMAC-SHA256**, base64 encoded, and sends it in the
 **`X-Acuity-Signature`** header. The key is your **Acuity API key**, not a separate webhook secret:
 the main admin's API key for static webhooks (Integrations settings), or your user's API key for
-webhooks created through the API. There is no timestamp in the signature. Acuity has no SDK
-verification helper, so verify manually, using the raw body (before any form parsing).
+webhooks created through the API. There is no timestamp in the signature. Acuity's JavaScript
+(`acuityscheduling` on npm) and PHP toolkits have a `verifyMessageSignature` helper, but it compares
+with `!==`, so verify manually in constant time, using the raw body (before any form parsing).
 
 ```javascript
 const crypto = require('crypto');

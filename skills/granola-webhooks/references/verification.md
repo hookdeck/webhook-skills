@@ -8,7 +8,7 @@ Granola follows the [Standard Webhooks](https://www.standardwebhooks.com/) speci
 |--------|-------------|
 | `webhook-id` | The event ID (matches `event_id` in the payload) |
 | `webhook-timestamp` | Unix timestamp in seconds of this delivery attempt |
-| `webhook-signature` | `v1,<base64>`; several space-delimited entries may appear (e.g. during secret rotation) |
+| `webhook-signature` | `v1,<base64>`; the header can hold several space-delimited entries, and Granola's sample code accepts a match on any `v1` entry |
 
 The signature is `base64(HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{raw body}"))`, where `key` is the **base64-decoded** part of the signing secret after the `whsec_` prefix.
 

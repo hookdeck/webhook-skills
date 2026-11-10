@@ -48,7 +48,8 @@ async def confluence_webhook(request: Request):
     except ValueError:
         return PlainTextResponse("Invalid JSON", status_code=400)
 
-    # The event name is in the body's "event" field.
+    # The event name is in the body's "event" field. Confluence documents one
+    # payload, page_trashed's (`page.id`), so other events log the whole body.
     event = payload.get("event") if isinstance(payload, dict) else None
     if event == "page_created":
         print("Page created:", (payload.get("page") or {}).get("id"))
@@ -57,11 +58,11 @@ async def confluence_webhook(request: Request):
     elif event == "page_removed":
         print("Page removed (trashed):", (payload.get("page") or {}).get("id"))
     elif event == "blog_created":
-        print("Blog post created:", (payload.get("blog") or {}).get("id"))
+        print("Blog post created:", payload)
     elif event == "comment_created":
-        print("Comment created:", (payload.get("comment") or {}).get("id"))
+        print("Comment created:", payload)
     elif event == "space_created":
-        print("Space created:", (payload.get("space") or {}).get("key"))
+        print("Space created:", payload)
     else:
         print("Unhandled event:", event)
 

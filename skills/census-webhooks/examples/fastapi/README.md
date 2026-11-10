@@ -5,7 +5,7 @@ Minimal example of receiving Census (Fivetran Activations) sync webhooks with si
 ## Prerequisites
 
 - Python 3.9+
-- A Census / Fivetran Activations workspace with a webhook created (Webhooks tab > Add Webhook), and its one-time secret
+- A Census / Fivetran Activations webhook created on a group through the Activations REST API, and its secret
 
 ## Setup
 
@@ -21,7 +21,7 @@ Minimal example of receiving Census (Fivetran Activations) sync webhooks with si
    cp .env.example .env
    ```
 
-3. Set `CENSUS_WEBHOOK_SECRET` in `.env` to the secret shown when you created the webhook. It is displayed once, so copy it then.
+3. Set `CENSUS_WEBHOOK_SECRET` in `.env` to the secret from the webhook creation flow.
 
 ## Run
 

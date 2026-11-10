@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Invalid JSON', { status: 400 });
   }
 
-  // The event name is in the body's "event" field.
+  // The event name is in the body's "event" field. Confluence documents one
+  // payload, page_trashed's (`page.id`), so other events log the whole body.
   switch (payload.event) {
     case 'page_created':
       console.log('Page created:', payload.page?.id);
@@ -39,13 +40,13 @@ export async function POST(request: NextRequest) {
       console.log('Page removed (trashed):', payload.page?.id);
       break;
     case 'blog_created':
-      console.log('Blog post created:', payload.blog?.id);
+      console.log('Blog post created:', payload);
       break;
     case 'comment_created':
-      console.log('Comment created:', payload.comment?.id);
+      console.log('Comment created:', payload);
       break;
     case 'space_created':
-      console.log('Space created:', payload.space?.key);
+      console.log('Space created:', payload);
       break;
     default:
       console.log('Unhandled event:', payload.event);

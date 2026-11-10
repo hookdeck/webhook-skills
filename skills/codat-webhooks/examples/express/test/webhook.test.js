@@ -68,7 +68,7 @@ describe('valid signatures', () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Company created'));
   });
 
-  it.each(['connection.created', 'connection.connected', 'read.completed', 'write.successful'])(
+  it.each(['connection.created', 'connection.connected', 'read.completed', 'bills.write.successful'])(
     'accepts %s',
     async (type) => {
       const body = JSON.stringify(event(type, { connection: { id: 'conn-1' }, dataType: 'invoices' }));

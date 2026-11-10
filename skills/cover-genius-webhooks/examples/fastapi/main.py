@@ -91,7 +91,7 @@ async def cover_genius_webhook(request: Request):
         handle_event(body)
     except Exception as err:  # noqa: BLE001
         print(f"Error handling Cover Genius event: {err}")
-        # Anything other than 200 makes Cover Genius retry (up to 3 times).
+        # Anything other than 200 is a failure; Cover Genius tries a webhook up to 3 times.
         raise HTTPException(status_code=500, detail="Handler error")
 
     return {"received": True}

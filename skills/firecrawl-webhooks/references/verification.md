@@ -49,8 +49,8 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 - **Use the raw body.** Parsing JSON and re-serializing changes bytes. In Express use `express.raw({ type: '*/*' })` (not `express.json()`); in Next.js use `request.text()`; in FastAPI use `await request.body()`.
 - **Don't depend on Content-Type.** `express.raw({ type: 'application/json' })` skips other content types and leaves `req.body` unparsed; `'*/*'` always yields a Buffer.
 - **Strip the `sha256=` prefix** before comparing, and split on the first `=` only.
-- **One secret per account**, shared by every job. Rotating it in settings invalidates the old secret immediately.
-- **No replay protection.** The signature has no timestamp, so dedupe on `webhookId` (see the handler-patterns idempotency reference).
+- **One secret per account**, shared by every job. You can regenerate it in account settings, and Firecrawl documents no overlap period, so update every receiver at once.
+- **No replay protection.** The signature has no timestamp, so dedupe on `webhookId` where it's present; agent events don't carry it (see the handler-patterns idempotency reference).
 - **Custom `headers`** in the webhook config are not signed; don't treat them as authentication.
 
 ## Debugging Verification Failures

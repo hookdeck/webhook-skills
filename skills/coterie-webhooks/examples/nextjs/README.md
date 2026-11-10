@@ -68,6 +68,6 @@ Give the printed URL to your Coterie contact as the webhook URL.
 1. The body is read with `request.text()`, so any content type works.
 2. `Authentication` is compared with `COTERIE_AUTHENTICATION`. Failure returns `401`.
 3. The body must be a JSON object (`400` otherwise).
-4. Coterie payloads have no event-type field, so the handler classifies them by identifier:
+4. No Coterie body field names the kind, so the handler classifies them by identifier:
    `quoteId` (quote), `PolicyId` (policy), `applicationId` (application).
 5. It returns `200 {"received": true}`.

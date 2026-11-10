@@ -101,8 +101,8 @@ app.post('/webhooks/go1', express.raw({ type: '*/*' }), (req, res) => {
     case 'enrollment.create':
       console.log(`Enrollment created: ${event.id}`);
       break;
-    case 'enrollment.update':
-      console.log(`Enrollment updated: ${event.id}`);
+    case 'enrollment.complete':
+      console.log(`Enrollment completed: ${event.id}`);
       break;
     case 'enrollment.delete':
       console.log(`Enrollment deleted: ${event.id}`);

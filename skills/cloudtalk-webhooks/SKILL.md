@@ -87,10 +87,12 @@ Delivery is at-least-once, so de-duplicate on `event_id` (same on every retry; c
 | `call.held` / `call.resumed` | A call is put on or taken off hold |
 | `call.ended` | A call finishes, with durations, contacts and the handling user |
 | `call.recording_ready` | A recording or voicemail is stored (async, after `call.ended`) |
+| `call.completed` | Once per call: the call's post-call data (call, recording and transcript references, AI results, Voice Agent data, Dialer disposition) in one event |
 | `call.tags_modified` | Tags are added to or removed from a call |
 | `contact.created` / `contact.updated` / `contact.deleted` | A contact changes (`deleted` carries the id only) |
 | `user.created` / `user.updated` / `user.deleted` / `user.status_changed` | Team changes and user availability |
 | `message.sent` / `message.received` | An SMS, MMS or WhatsApp message is sent or arrives |
+| `message.delivery_updated` | An outbound message's delivery status changes (`queued`, `sent`, `delivered`, `not_delivered`, `failed`, `seen`); match `message_id` to `message.sent`'s `id` |
 | `transcript.ready` / `cidata.ready` | Transcript, or AI analysis (summary, sentiment, topics, score), is ready |
 | `voice_agent.extracted_data_ready` | An AI Voice Agent hands over extracted data |
 | `dialer.disposition_created` / `dialer.survey_filled` | Dialer campaign disposition or survey response |
@@ -120,7 +122,7 @@ Add the printed URL as an endpoint under **Settings → Webhooks**, then use **S
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Envelope, all 22 event types, payload highlights
+- [references/overview.md](references/overview.md) - Envelope, all 24 event types, payload highlights
 - [references/setup.md](references/setup.md) - Creating an endpoint, signing secret, test events, replay
 - [references/verification.md](references/verification.md) - SDK and manual verification, gotchas, debugging
 

@@ -7,8 +7,8 @@ import crypto from 'node:crypto';
 // Bland signs deliveries with HMAC-SHA256:
 //   X-Webhook-Signature: hex( HMAC-SHA256(signing secret, request body) )
 // There is no timestamp or message id. Bland's docs sign JSON.stringify(req.body);
-// signing the raw bytes is equivalent for the compact JSON Bland sends and
-// doesn't depend on re-serialisation.
+// the prose says the request body. Signing the raw bytes follows the prose; the two
+// match only if Bland sends compact JSON that JSON.stringify reproduces exactly.
 // ---------------------------------------------------------------------------
 
 /**

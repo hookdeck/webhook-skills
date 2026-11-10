@@ -2,7 +2,7 @@
 
 ## How It Works
 
-Each request carries an `X-Signature` header: the **standard base64** encoding of the HMAC-SHA256 digest of the **raw request body**, keyed with the one-time secret from webhook creation. The secret is used as plain bytes (the official Python example uses `b'<secret>'`), with no base64 decoding or `whsec_` prefix handling. There is no timestamp, no signed ID, and no prefix on the header value.
+Each request carries an `X-Signature` header: the **standard base64** encoding of the HMAC-SHA256 digest of the **raw request body**, keyed with the secret from the webhook creation flow. The secret is used as plain bytes (the official Python example uses `b'<secret>'`), with no base64 decoding or `whsec_` prefix handling. There is no timestamp, no signed ID, and no prefix on the header value.
 
 Because only the body is signed, nothing in the signature protects against replays. Dedupe on `sync_run_id` plus `event` (and `alert_instance_id` for alert events) if duplicate processing matters.
 
@@ -54,7 +54,7 @@ def verify(raw_body: bytes, signature_header, secret: str) -> bool:
 - **Raw body only.** Verify the exact bytes received. Re-serialising parsed JSON changes whitespace and key order. The sample payloads in the docs even contain irregular spacing.
 - **Any content type.** Use `express.raw({ type: '*/*' })` rather than `type: 'application/json'`, so verification doesn't depend on the `Content-Type` sent.
 - **Header name.** It's the generic `X-Signature`; read it case-insensitively (`x-signature` in Node and FastAPI).
-- **Secret copied once.** If verification fails for every request, the stored secret probably isn't the one shown at creation. Create a new webhook.
+- **Wrong secret.** If verification fails for every request, the stored secret probably isn't the one from this webhook's creation flow. Create a new webhook if you can't find it.
 - **No SDK.** Compare strings of equal length with a timing-safe function, and guard against length mismatches.
 
 ## Debugging Verification Failures

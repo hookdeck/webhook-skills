@@ -97,7 +97,7 @@ describe('verifyGo1Webhook', () => {
 });
 
 describe('POST /webhooks/go1', () => {
-  test.each(['enrollment.create', 'enrollment.update', 'enrollment.delete', 'something.new'])(
+  test.each(['enrollment.create', 'enrollment.complete', 'enrollment.delete', 'something.new'])(
     'returns 200 for a valid %s event',
     async (type) => {
       const body = JSON.stringify(event(type));

@@ -19,7 +19,7 @@ function makeRequest(body: string, signature?: string, contentType = 'applicatio
   });
 }
 
-const base = { workspace_id: 3167, sync_id: 3167956, sync_run_id: 324399613 };
+const base = { group_id: 'lazy_unicorn', sync_id: 3167956, sync_run_id: 324399613 };
 
 let POST: (req: NextRequest) => Promise<Response>;
 
@@ -94,7 +94,7 @@ describe('Census webhook route', () => {
   });
 
   it('verifies against the exact bytes, including whitespace', async () => {
-    const body = '{ "workspace_id" : 3167 , "event" : "sync.started" }';
+    const body = '{ "group_id" : "lazy_unicorn" , "event" : "sync.started" }';
     const res = await POST(makeRequest(body, sign(body)));
     expect(res.status).toBe(200);
   });

@@ -30,7 +30,7 @@ function verifyCoterieRequest(headers, config = process.env) {
 }
 
 /**
- * Coterie webhooks have no event-type field. The three kinds (application, quote,
+ * No Coterie body field names the kind (`eventType` is the change). The three kinds (application, quote,
  * policy) are told apart by their identifier key.
  */
 function classify(payload) {

@@ -94,8 +94,8 @@ def handle_event(payload: dict) -> None:
         # TODO: refresh the review state
 
     elif event_type == "git.pullrequest.merged":
-        print(f"Pull request merged: {text}")
-        # TODO: deploy or close linked tickets
+        print(f"Pull request merge attempted: {text}")
+        # TODO: check resource["mergeStatus"] is "succeeded" before you deploy or close linked tickets
 
     elif event_type == "workitem.created":
         print(f"Work item created: {text}")

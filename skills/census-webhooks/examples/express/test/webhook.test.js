@@ -17,7 +17,7 @@ function send(body, signature, contentType = 'application/json') {
   return req.send(body);
 }
 
-const base = { workspace_id: 3167, sync_id: 3167956, sync_run_id: 324399613 };
+const base = { group_id: 'lazy_unicorn', sync_id: 3167956, sync_run_id: 324399613 };
 
 describe('verifyCensusWebhook', () => {
   const body = Buffer.from(JSON.stringify({ ...base, event: 'sync.started' }));
@@ -89,7 +89,7 @@ describe('POST /webhooks/census', () => {
   });
 
   test('verifies against the exact bytes, including whitespace', async () => {
-    const body = '{ "workspace_id" : 3167 , "event" : "sync.started" }';
+    const body = '{ "group_id" : "lazy_unicorn" , "event" : "sync.started" }';
     const res = await send(body, sign(body));
     expect(res.status).toBe(200);
   });

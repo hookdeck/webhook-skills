@@ -33,7 +33,7 @@ so the endpoint authenticates each request by comparing that header with its sto
 | Lokalise setting | Header received |
 |------------------|-----------------|
 | Secret (default) | `X-Secret: <secret>` |
-| Secret, sent as API key | `X-Api-Key: <secret>` |
+| Send as API key | `X-Api-Key: <value you enter>` |
 | Custom header | `<your header name>: <your value>` |
 
 ```javascript
@@ -64,7 +64,8 @@ see [references/verification.md](references/verification.md).
 
 ## Event Types
 
-The JSON body carries the event name in `event` (also sent in the `X-Event` header).
+The JSON body carries the event name in `event`. Lokalise's header example also shows an `X-Event`
+header, but its list of headers every event includes names only `Project-Id` and `Webhook-Id`.
 
 | Event | Fires When |
 |-------|------------|

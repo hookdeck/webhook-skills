@@ -11,7 +11,7 @@ Each webhook has its own signing secret and its own list of subscribed events. A
 
 ## Common Event Types
 
-The type is in `event.eventType` in the body (and in the `X-BoldSign-Event` header).
+The type is in `event.eventType` in the body. BoldSign's docs only show the `X-BoldSign-Event` header with the value `Verification`.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -24,7 +24,7 @@ The type is in `event.eventType` in the body (and in the `X-BoldSign-Event` head
 | `Expired` | The request expires without completion | Reminders, resend |
 
 Other document events: `Edited`, `EditFailed`, `Reassigned`, `SignerSaved`, `DeliveryFailed`, `SendFailed`, `DraftCreated`, `Reminder`.
-Authentication events: `AuthenticationFailed`, `IdentityVerificationInitiated`, `IdentityVerificationSucceeded`, `IdentityVerificationFailed`, `KBAInitiated`, `KBASucceeded`, `KBAFailed`.
+Authentication events: `AuthenticationFailed`, `IdentityVerificationInitiated`, `IdentityVerificationSucceeded`, `IdentityVerificationFailed`, and `KBAInitiated`, `KBASucceeded`, `KBAFailed` (listed in the `WebHookEventType` enum of BoldSign's SDKs, not on the Available Webhook Events page).
 Sender identity events: `SenderIdentityCreated`, `SenderIdentityUpdated`, `SenderIdentityDeleted`, `SenderIdentityRevoked`, `SenderIdentityVerified`, `SenderIdentityDenied`.
 Template events: `TemplateCreated`, `TemplateEdited`, `TemplateCreateFailed`, `TemplateDraftCreated`, `TemplateSendFailed`.
 

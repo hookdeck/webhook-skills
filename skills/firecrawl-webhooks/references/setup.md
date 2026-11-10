@@ -41,4 +41,4 @@ The same `webhook` object works on `/v2/batch/scrape`, extract, and `/v2/agent` 
 
 ## Test Mode vs Live Mode
 
-Firecrawl has no separate test mode. Run a small job (e.g. `"limit": 1`) against your tunnel URL to produce real signed events.
+Firecrawl's webhook docs describe no test mode or test event. Run a small job (e.g. `"limit": 1`) against your tunnel URL to produce real signed events.

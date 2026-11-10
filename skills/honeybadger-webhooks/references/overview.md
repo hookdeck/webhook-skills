@@ -24,7 +24,9 @@ Honeybadger.
 | `up` | An uptime check succeeds after being down | Resolve the incident |
 | `cert_will_expire` | An SSL certificate is about to expire | Renew the certificate |
 | `check_in_missing` | An expected check-in is missing | Alert on a stalled job |
-| `check_in_reporting` | A check-in reports successfully | Clear a missing alert |
+| `check_in_reporting` | A missing check-in reports again | Clear a missing alert |
+| `alarm_alert` | An Insights alarm is triggered | Start an incident |
+| `alarm_ok` | An Insights alarm returns to normal | Resolve the incident |
 
 ## Event Payload Structure
 
@@ -36,8 +38,8 @@ Every payload is a JSON object with:
 
 | Events | Top-level properties |
 |--------|----------------------|
-| `occurred` | `event`, `message`, `project`, `fault`, `notice` |
-| `resolved`, `unresolved`, `rate_exceeded` | `event`, `message`, `project`, `fault` |
+| `occurred`, `rate_exceeded` | `event`, `message`, `project`, `fault`, `notice`, `context` |
+| `resolved`, `unresolved` | `event`, `message`, `actor`, `fault` |
 | `assigned` | `event`, `message`, `actor`, `fault`, `assignee` |
 | `commented` | `event`, `message`, `actor`, `fault`, `comment` |
 | `deployed` | `event`, `message`, `project`, `deploy` |
@@ -45,29 +47,36 @@ Every payload is a JSON object with:
 | `cert_will_expire` | `event`, `message`, `project`, `site` |
 | `check_in_missing`, `check_in_reporting` | `event`, `message`, `project`, `check_in` |
 | `volume_spike` | `event`, `message`, `project`, `volume_spike` |
+| `alarm_alert`, `alarm_ok` | `event`, `message`, `alarm` |
 
-Example `occurred` payload (from the docs):
+`actor` (the person who caused the event) is optional and absent when Honeybadger, or an API
+token with no user, did it. These are the v2 bodies, the default payload version. Each event's
+page links a JSON Schema you can validate against.
+
+Example `alarm_alert` payload (from the docs):
 
 ```json
 {
-  "event": "occurred",
-  "message": "[Crywolf/test] RuntimeError - oops",
-  "fault": {
-    "id": 3151009,
-    "project_id": 1717,
-    "klass": "RuntimeError",
-    "environment": "development",
-    "resolved": true,
-    "ignored": false,
-    "created_at": "2014-01-08T18:55:48Z",
-    "comments_count": 1,
-    "message": "oops",
-    "notices_count": 9,
-    "last_notice_at": "2014-01-08T19:02:21Z"
+  "event": "alarm_alert",
+  "message": "[Billing API] ALERT: Checkout errors is in alert status",
+  "alarm": {
+    "name": "Checkout errors",
+    "state": "alarm",
+    "created_at": "2026-10-21T12:36:26.448717Z",
+    "id": "opticon-observer-root-id",
+    "url": "https://app.honeybadger.io/projects/85736/insights/alarms/opticon-observer-root-id",
+    "details_url": "https://app.honeybadger.io/projects/85736/insights/alarms/opticon-observer-root-id"
   }
 }
 ```
 
+## Delivery
+
+Any 2xx response counts as delivered, and a 5xx is retried. Any other response, a timeout or a
+refused connection turns the integration off, and Honeybadger emails the account about it. The
+docs give no timeout length or retry schedule.
+
 ## Full Event Reference
 
-See [Honeybadger's webhook documentation](https://docs.honeybadger.io/guides/integrations/webhook/).
+See [Honeybadger's webhook documentation](https://docs.honeybadger.io/guides/integrations/webhook/)
+and the [v2 payloads](https://docs.honeybadger.io/guides/integrations/payloads/v2/).
