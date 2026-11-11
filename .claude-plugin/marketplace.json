@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 805 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 806 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -2099,6 +2099,30 @@
       ]
     },
     {
+      "name": "bundle-social-webhooks",
+      "description": "Receive and verify bundle.social webhooks. Use when setting up bundle.social webhook handlers, debugging x-signature verification (hex HMAC-SHA256 of the raw body), or handling post.published, comment.published, social-account.updated and team.updated events.",
+      "source": "./skills/bundle-social-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/bundle-social-webhooks",
+      "keywords": [
+        "webhooks",
+        "bundle-social",
+        "social-media",
+        "publishing",
+        "scheduling"
+      ]
+    },
+    {
       "name": "bunny-stream-webhooks",
       "description": "Receive and verify Bunny Stream webhooks. Use when setting up Bunny Stream webhook handlers, debugging X-BunnyStream-Signature verification, or handling video encoding events like Status 3 (Finished / encoding done), Status 5 (Failed), or captions and title/description generation.",
       "source": "./skills/bunny-stream-webhooks",
@@ -3806,7 +3830,7 @@
     },
     {
       "name": "deck-webhooks",
-      "description": "Receive and verify Deck (deck.co) webhooks, the event stream for Deck's computer-use agents API (agents, sources, Deck Vault credentials, sessions, tasks, task runs, workflows, storage). Use when setting up a Deck webhook event destination, generating the caller-provided whsec_ signing secret, debugging Standard Webhooks signature verification (webhook-id, webhook-timestamp, webhook-signature), rotating secrets, or handling events like task_run.completed, task_run.failed, task_run.interaction_required (MFA prompts), credential.verified, credential.invalid, workflow_run.completed, storage.created and test.ping.",
+      "description": "Receive and verify Deck (deck.co) webhooks, the event stream for Deck's computer-use agents API (agents, sources, Deck Vault credentials, sessions, tasks, task runs, workflows, triggers, storage). Use when setting up a Deck webhook event destination, generating the caller-provided whsec_ signing secret, debugging Standard Webhooks signature verification (webhook-id, webhook-timestamp, webhook-signature), rotating secrets, or handling events like task_run.completed, task_run.failed, task_run.interaction_required (MFA prompts), credential.verified, credential.invalid, workflow_run.completed, storage.created and test.ping.",
       "source": "./skills/deck-webhooks",
       "strict": false,
       "skills": [
@@ -17369,7 +17393,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 808 provider skills (Stripe, Shopify, GitHub, and 805 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 813 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 809 provider skills (Stripe, Shopify, GitHub, and 806 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 814 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17471,6 +17495,7 @@
         "./skills/builder-io-webhooks",
         "./skills/buildkite-webhooks",
         "./skills/bump-sh-webhooks",
+        "./skills/bundle-social-webhooks",
         "./skills/bunny-stream-webhooks",
         "./skills/buttondown-webhooks",
         "./skills/bvnk-webhooks",
