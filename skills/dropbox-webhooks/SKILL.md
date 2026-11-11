@@ -28,12 +28,12 @@ These are webhooks for **Dropbox API apps** (file and folder changes), not Dropb
 
 Dropbox webhooks are **change pings**, not event payloads. A notification lists the account IDs that have changes; you then call the API (`/files/list_folder/continue` with your saved cursor) to get the actual file changes. There is no event-type field or header.
 
-1. **Verification request** — when you add the URI in the App Console (and periodically after), Dropbox sends `GET <uri>?challenge=<random>`. Reply `200` echoing the value with `Content-Type: text/plain` and `X-Content-Type-Options: nosniff`.
+1. **Verification request** — when you add the URI in the Developer Console, Dropbox sends `GET <uri>?challenge=<random>`. Reply `200` echoing the value with `Content-Type: text/plain` and `X-Content-Type-Options: nosniff`.
 2. **Notification** — `POST` with JSON body and an `X-Dropbox-Signature` header.
 
 ## Verification (core)
 
-`X-Dropbox-Signature` is the **hex** HMAC-SHA256 of the **raw request body**, keyed with your app secret (the "App secret" in the App Console). No timestamp, no prefix. Compare timing-safe.
+`X-Dropbox-Signature` is the **hex** HMAC-SHA256 of the **raw request body**, keyed with your app secret (the "App secret" in the Developer Console). No timestamp, no prefix. Compare timing-safe.
 
 Node:
 
@@ -77,7 +77,7 @@ Dropbox has no named event types. The body contains these top-level keys:
 | Key | Description |
 |-----|-------------|
 | `list_folder.accounts` | Account IDs with file changes. Call `/files/list_folder/continue` with the stored cursor for each |
-| `delta.users` | Legacy user IDs (deprecated `/delta` API) |
+| `delta.users` | The same accounts as API v1 user IDs |
 
 ```json
 {"list_folder": {"accounts": ["dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"]}, "delta": {"users": [12345678]}}
@@ -94,7 +94,7 @@ Respond `200` quickly (Dropbox expects a response within 10 seconds) and do the 
 ## Environment Variables
 
 ```bash
-DROPBOX_APP_SECRET=your_app_secret   # App Console > Settings > App secret
+DROPBOX_APP_SECRET=your_app_secret   # Developer Console > Settings > App secret
 ```
 
 ## Local Development
@@ -104,12 +104,12 @@ DROPBOX_APP_SECRET=your_app_secret   # App Console > Settings > App secret
 npx hookdeck-cli listen 3000 dropbox --path /webhooks/dropbox
 ```
 
-Use the Hookdeck URL as the webhook URI in the App Console; Dropbox's challenge request is forwarded to your local server.
+Use the Hookdeck URL as the webhook URI in the Developer Console. Hookdeck answers Dropbox's `challenge` GET itself, so it doesn't reach your local server; the signed notifications are forwarded. Keep the GET handler for when Dropbox calls your server directly.
 
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Dropbox webhook concepts and payload
-- [references/setup.md](references/setup.md) - App Console configuration
+- [references/setup.md](references/setup.md) - Developer Console configuration
 - [references/verification.md](references/verification.md) - Challenge and signature verification details
 
 ## Attribution

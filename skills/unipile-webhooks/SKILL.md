@@ -16,8 +16,8 @@ metadata:
 
 # Unipile Webhooks
 
-Unipile is a unified API for messaging (LinkedIn, WhatsApp, Instagram, Messenger,
-Telegram, X) and email (Google, Microsoft, IMAP). You create a webhook with
+Unipile is a unified API for messaging (LinkedIn, WhatsApp, Instagram, Telegram),
+email (Google, Microsoft, IMAP) and calendars. You create a webhook with
 `POST /api/v1/webhooks` (or in the Unipile dashboard), choose a `source`, and
 Unipile sends an HTTP POST to your `request_url` when something happens.
 
@@ -93,13 +93,14 @@ configured, so the endpoint never accepts everything by accident. The header nam
 | `email` | `mail_received` (default), `mail_sent`, `mail_moved` | Flat: `email_id`, `account_id`, `event`, `from_attendee`, `to_attendees`, `subject`, `body`, `origin` |
 | `email_tracking` | `mail_opened`, `mail_link_clicked` | Flat: `event`, `event_id`, `tracking_id`, `email_id`, `account_id`, `url` |
 | `users` | `new_relation` | Flat, with `event` |
+| `calendar_event` | `calendar_event_created` (default), `calendar_event_updated`, `calendar_event_deleted` | Flat: `event`, `webhook_name`, `account_id`, `calendar_id`, `id` |
 | `account_status` | `message` is `CREATION_SUCCESS`, `RECONNECTED`, `SYNC_SUCCESS`, `OK`, `CREDENTIALS`, `ERROR`, `STOPPED`, `DELETED`, ... | `{"AccountStatus": {"account_id", "account_type", "message"}}` |
 
 Notes:
 
-- Sent messages and emails are delivered too (`message_received` / `mail_received`).
-  For messages, compare `account_info.user_id` with `sender.attendee_provider_id`
-  to tell your own from others. For emails, `origin` is `unipile` or `external`.
+- Sent messages are delivered as `message_received`. Compare `account_info.user_id`
+  with `sender.attendee_provider_id` to tell your own from others. The email webhook
+  covers sent email too (`mail_sent`), and its `origin` is `unipile` or `external`.
 - Account status `message` values include `OK`, `CREDENTIALS`, `ERROR`/`STOPPED`,
   `CONNECTING`, `DELETED`, `CREATION_SUCCESS`, `RECONNECTED` and `SYNC_SUCCESS`.
   When the status isn't `OK`, Unipile stops sending new-message webhooks for that

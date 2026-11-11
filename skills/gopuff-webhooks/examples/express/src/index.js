@@ -60,7 +60,7 @@ function verifySvixSignature(rawBody, headers, secret, toleranceSeconds = timest
 }
 
 // Gopuff payloads carry no event-type field, so classify them by shape.
-// order.status / order.status.v2 / order.delivered -> { order: {...} }
+// order.status / order.status.v2 -> { order: {...} } (Gopuff documents no order.delivered body)
 // Delivery Status -> { driver: {...} }; Delivery ETA -> { expected_delivery_time: {...} }
 export function classify(event) {
   if (event?.order && typeof event.order === 'object') return 'order';
@@ -116,7 +116,7 @@ app.post('/webhooks/gopuff', express.raw({ type: '*/*' }), (req, res) => {
     case 'order': {
       const { id: orderId, partner_order_id: partnerOrderId, status, cancel_reason: reason } = event.order;
       console.log('Order status (order.status.v2):', { orderId, partnerOrderId, status });
-      if (status === 'Finished') console.log('Order delivered (order.delivered):', partnerOrderId);
+      if (status === 'Finished') console.log('Order delivered (status Finished):', partnerOrderId);
       if (status === 'Cancelled') console.log('Order cancelled:', reason);
       break;
     }

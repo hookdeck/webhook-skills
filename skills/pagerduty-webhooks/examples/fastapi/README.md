@@ -83,8 +83,8 @@ endpoint is reachable. PagerDuty does not document whether the ping carries
 `X-PagerDuty-Signature`, so check your logs before reading a ping as proof that
 verification works. `pagey.ping` is not
 in the Event Types table and is not something you subscribe to, so it lands in
-this example's **default branch** with a `resource_type` and `data` you have not
-seen before; that is expected, not a bug.
+this example's **default branch** with `resource_type: "pagey"` and
+`data.type: "ping"`; that is expected, not a bug.
 
 For real traffic, trigger an incident on the filtered service and
 acknowledge/resolve it to exercise `incident.acknowledged` and
@@ -92,7 +92,7 @@ acknowledge/resolve it to exercise `incident.acknowledged` and
 
 **PagerDuty sends no handshake, challenge or validation request** — the only
 unsolicited delivery you can trigger is an explicit `pagey.ping` test via the
-ping endpoint. Every delivery is an ordinary signed event.
+ping endpoint or the **Send Test Event** button.
 
 ## What this example demonstrates
 

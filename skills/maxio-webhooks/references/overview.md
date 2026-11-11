@@ -22,14 +22,16 @@ Maxio offers additional webhook event types; see the official documentation for 
 ```
 POST /webhooks/maxio
 Content-Type: application/x-www-form-urlencoded
+X-Chargify-Webhook-Id: 123456
 X-Chargify-Webhook-Signature-Hmac-Sha-256: <hex digest>
 
-payload[chargify]=testing&event=test
+id=123456&event=test&payload[chargify]=testing
 ```
 
+- `id` — a numeric webhook ID, the same across retries and replays (also in `X-Chargify-Webhook-Id`). Use it to deduplicate.
 - `event` — the event name.
 - `payload[...]` — nested fields describing the event (bracket notation). Inspect real deliveries in the Hookdeck CLI web UI to see the exact fields for each event.
 
 ## Full Event Reference
 
-See [Maxio's webhook documentation](https://support.maxio.com/hc/en-us/articles/24266136649869-Webhooks-Configuration-and-Testing).
+See [Review Webhook Events](https://docs.maxio.com/configuration/advanced-billing/webhooks/review-webhook-events) in Maxio's docs.

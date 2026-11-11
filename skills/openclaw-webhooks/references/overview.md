@@ -79,7 +79,7 @@ The Gateway receives the webhook, verifies the token, and starts an isolated age
 Sequence:
 
 1. External service sends `POST /hooks/agent` with token and JSON payload
-2. Gateway verifies token, responds `202 Accepted`
+2. Gateway verifies token, responds `200 OK` with a `runId`
 3. Gateway enqueues an isolated agent turn
 4. Agent processes the message in its own session
 5. Summary is posted to the main session
@@ -88,7 +88,7 @@ Sequence:
 
 #### `/hooks/agent` - Trigger Agent Turn
 
-Sends a message that runs as an isolated agent turn with its own session key. The Gateway responds `202 Accepted` immediately. Results are posted to the agent's main session as a summary.
+Sends a message that runs as an isolated agent turn with its own session key. The Gateway responds `200 OK` with a `runId` once the run is admitted. Results are posted to the agent's main session as a summary.
 
 Use cases:
 - Notify an agent about external events (new email, deploy status, CI result)

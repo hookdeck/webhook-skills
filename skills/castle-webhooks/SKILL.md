@@ -70,7 +70,7 @@ Payload envelope: `api_version`, `app_id`, `created_at`, `type`, `data`. See [re
 ## Environment Variables
 
 ```bash
-CASTLE_API_SECRET=your_castle_api_secret   # Castle dashboard → Settings → API keys
+CASTLE_API_SECRET=your_castle_api_secret   # API secret of the Castle environment that sends the webhooks
 ```
 
 ## Local Development

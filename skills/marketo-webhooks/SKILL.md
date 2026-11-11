@@ -29,8 +29,9 @@ This differs from most providers in three ways:
 2. **You write the payload.** The Payload Template is any text that works in an
    HTTP POST body, with tokens substituted per lead. There are no fixed event
    type strings, so you put an `event` name in the body yourself.
-3. **You choose the request.** The method (GET or POST), token encoding (JSON or
-   Form/Url) and headers are all set on the webhook.
+3. **You choose the request.** The method (the Create a Webhook page lists
+   DELETE, GET, PATCH, POST and PUT), token encoding (JSON or Form/Url) and
+   headers are all set on the webhook.
 
 ## When to Use This Skill
 

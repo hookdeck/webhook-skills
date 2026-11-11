@@ -46,7 +46,7 @@ Dwolla's own example uses `===` for the comparison; prefer a timing-safe compari
 
 ## Common Gotchas
 
-- **Raw body**: Never re-encode the JSON. Dwolla warns this breaks the signature. In Express use `express.raw({ type: '*/*' })` (Dwolla sends `application/vnd.dwolla.v1.hal+json`, which `express.json()` would not match by default); in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
+- **Raw body**: Never re-encode the JSON. Dwolla warns this breaks the signature. In Express use `express.raw({ type: '*/*' })` (Dwolla doesn't document the request `Content-Type`, so accept any type); in Next.js use `await request.text()`; in FastAPI use `await request.body()`.
 - **Secret is yours**: a mismatch usually means the secret differs from the one sent when the subscription was created, or you are mixing Sandbox and Production.
 - **Hex case**: the digest is lowercase hex.
 - **No timestamp**: nothing in the signature prevents replays, so dedupe on the event `id`.

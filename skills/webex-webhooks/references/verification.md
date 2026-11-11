@@ -4,7 +4,7 @@
 
 If you create a webhook with a `secret`, Webex adds an **`X-Spark-Signature`** header to every delivery for that webhook, whatever the resource. The value is the **lowercase hex HMAC-SHA1** of the **unmodified raw request body**, keyed with your secret string used as-is (not base64-decoded). Nothing else is signed: no timestamp, no webhook ID, no prefix.
 
-Some webhook types also send **`X-Webex-Signature`** with HMAC-SHA256 or HMAC-SHA512 signatures. Webex says to prefer it where present and to choose the digest from what the header indicates, but the header format isn't spelled out in the public webhook guide. `X-Spark-Signature` is the header that is present for every signed webhook, so this skill and its examples verify that one. HMAC-SHA1 is weak as a general choice, but it is the documented Webex contract.
+Some webhook types also send **`X-Webex-Signature`** with HMAC-SHA256 or HMAC-SHA512 signatures. Its value is comma-separated `algorithm=signature` pairs, such as `SHA-256=<64 hex chars>, SHA-512=<128 hex chars>`, each a lowercase hex HMAC of the same raw body with the same secret. Webex says to prefer it where present, but doesn't list which webhook types send it. `X-Spark-Signature` is the header that is present for every signed webhook, so this skill and its examples verify that one. HMAC-SHA1 is weak as a general choice, but it is the documented Webex contract.
 
 Header names are case-insensitive, and HTTP/2 may deliver them lowercase, so use your framework's case-insensitive lookup.
 

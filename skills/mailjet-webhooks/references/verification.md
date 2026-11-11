@@ -43,7 +43,7 @@ See `examples/*/` for the full handlers, which return `401` with `WWW-Authentica
 - **Split on the first colon only.** Usernames can't contain `:` but passwords can.
 - **Compare both fields.** Don't return early after a username mismatch.
 - **URL encoding.** Credentials with special characters must be percent-encoded in the registered URL; the decoded header carries the raw characters.
-- **Failures are retried.** A `401` or `400` is a non-200 response, so Mailjet retries for 24 hours and may suspend the URL. Fix credentials quickly.
+- **Failures are retried.** A `401` or `400` is a non-200 response, so Mailjet retries it every 30 seconds for up to 24 hours. Fix credentials quickly.
 - **Don't parse before authenticating.** Use the raw body, then `JSON.parse` after the check. The body is an object, or an array when events are grouped.
 - **Add defense in depth.** Restrict the endpoint to HTTPS and consider dedupe on `MessageID` + `event` + `time`.
 
@@ -54,4 +54,4 @@ See `examples/*/` for the full handlers, which return `401` with `WWW-Authentica
 | `401`, no `Authorization` header logged | Registered URL has no `user:pass@`, or a proxy removes the header |
 | `401`, header present | Password has special characters not percent-encoded, or env vars differ from the URL |
 | `500` from your endpoint | `MAILJET_WEBHOOK_USERNAME`/`PASSWORD` not set |
-| Events stop arriving | URL suspended after repeated failures; update it with a new URL |
+| Events stop arriving | URL suspended (Mailjet doesn't document when); update it with a new URL |

@@ -4,7 +4,7 @@
 
 Webex (formerly Cisco Spark) sends an HTTP POST with a JSON body to a `targetUrl` you register through the Webex Webhooks API (`POST https://webexapis.com/v1/webhooks`) whenever a subscribed activity happens. You pick a `resource` (such as `messages`) and an `event` (such as `created`), optionally narrow it with a `filter`, and optionally set a `secret` so deliveries can be signed.
 
-Webex expects a 2xx response. If it attempts 100 deliveries within five minutes and your endpoint is unreachable or returns non-2xx, the webhook is **disabled** and is not re-enabled automatically (see [setup.md](setup.md)).
+Webex expects a 2xx response. After repeated delivery failures (an unreachable endpoint or a non-2xx response) Webex can **disable** the webhook, and it is not re-enabled automatically (see [setup.md](setup.md)). Webex says the failure threshold and counting interval are configurable, so don't rely on a fixed number of attempts.
 
 ## Common Event Types
 
@@ -22,7 +22,7 @@ An event is the combination of the body's `resource` and `event` fields. This sk
 | `meetings.ended` | A meeting ends | Follow-ups, summaries |
 | `attachmentActions.created` | A user submits one of your Adaptive Cards | Interactive bots |
 
-Other documented resources include `recordings`, `meetingParticipants` (`joined`, `left`), `meetingTranscripts`, `telephony_calls`, `convergedRecordings`, `dataSources`, `serviceApp` (`authorized`, `deauthorized`), `applications`, `adminBatchJobs` (`statusChanged`), and more. Webhooks also support `"event": "all"` (and `"resource": "all"`) firehose registrations for `messages`, `memberships`, and `rooms`, which deliver `created`, `updated`, and `deleted` events.
+Other documented resources include `recordings`, `meetingParticipants` (`joined`, `left`), `meetingTranscripts`, `telephony_calls`, `convergedRecordings`, `dataSources`, `serviceApp` (`authorized`, `deauthorized`), `applications`, `adminBatchJobs` (`statusChanged`), and more. Webhooks also support firehose registrations. `"event": "all"` on one resource covers its wildcard set: `created`, `updated` and `deleted` for most resources, plus `started` and `ended` for `meetings`, and `joined` and `left` for `meetingParticipants`. `"resource": "all"` with `"event": "all"` covers `messages`, `memberships`, and `rooms`.
 
 ## Event Payload Structure
 
@@ -60,4 +60,4 @@ Key points:
 
 ## Full Event Reference
 
-For the complete list of resources, events, and filters, see [Webex's webhook documentation](https://developer.webex.com/docs/webhooks).
+For the complete list of resources, events, and filters, see [Webex's webhook event reference](https://developer.webex.com/docs/webhook-event-reference).

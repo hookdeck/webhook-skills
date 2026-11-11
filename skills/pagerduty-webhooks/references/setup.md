@@ -120,13 +120,13 @@ log noise.
 
 PagerDuty may add new event types over time, and may ship
 [Early Access events](https://docs.pagerduty.com/developer/early-access-webhooks)
-without notice. Those also have to be requested explicitly in `events`, but your
+without notice, so your
 handler still needs a default branch — an account can have more than one
 subscription, and lists change.
 
 **`pagey.ping` is not subscribable.** It is not in the event types list and
-cannot be put in `events`, but it *will* arrive — signed, with a `resource_type`
-and `data` shape unlike any documented event — whenever someone calls
+cannot be put in `events`, but it *will* arrive, with a
+[`resource_type` and `data` shape](https://docs.pagerduty.com/integrations/webhooks#send-a-test-event) unlike any other event, whenever someone calls
 [`POST /webhook_subscriptions/{id}/ping`](#verify-your-endpoint-is-reachable).
 It has to fall through your default branch.
 
@@ -200,7 +200,8 @@ ping endpoint. To get a genuine signed delivery:
 
    `pagey.ping` is **not** in the [Event Types](overview.md#common-event-types)
    table and is not something you subscribe to — it only arrives from this
-   endpoint, carrying a `resource_type` and `data` shape you have never seen. It
+   endpoint or the **Send Test Event** button, with
+   [`resource_type: "pagey"` and `data.type: "ping"`](https://docs.pagerduty.com/integrations/webhooks#send-a-test-event). It
    must **fall through your default branch**, not throw.
 
 4. For real traffic, trigger an incident on the filtered service — e.g. send a
@@ -244,9 +245,8 @@ is what the examples in this skill do. A verifier that compares the whole header
 string, or only the first entry, breaks the moment a rotation starts. Details in
 [verification.md](verification.md).
 
-There is **no customer-facing rotate endpoint** — rotation is initiated by
-PagerDuty, which is why the header can carry several signatures during the
-window. If you lose the secret, create a replacement subscription and delete the
+There is **no customer-facing rotate endpoint** in the REST API, and PagerDuty's
+docs don't say how a rotation starts. If you lose the secret, create a replacement subscription and delete the
 old one.
 
 ## Mutual TLS (Recommended by PagerDuty)

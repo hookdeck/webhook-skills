@@ -60,9 +60,9 @@ def verify_databricks_auth(authorization, username, password):
 
 ## Common Gotchas
 
-- **Don't expect a signature header.** Searching for `X-Databricks-Signature` finds nothing.
+- **Don't expect a signature header.** `X-Databricks-Signature` belongs to the legacy [Workspace Model Registry webhooks](https://docs.databricks.com/aws/en/mlflow/model-registry-webhooks) (Public Preview), a separate feature. Notification destinations don't send it.
 - **Always set the username and password.** Without credentials there is nothing to verify, and anyone who finds your URL can post to it.
-- **OAuth (Beta) is a different mode.** Databricks fetches an access token with client credentials and sends it as a bearer token; Basic and OAuth can't be combined.
+- **OAuth (Beta) is a different mode.** Databricks obtains an access token from your identity provider with client credentials and uses it to authenticate the notification request; Basic and OAuth can't be combined.
 - **HTTPS with a trusted CA is required.** Self-signed certificates fail.
 - **Two payload shapes.** Job events use `event_type`; SQL alerts use `event: "alert_state_change"`. Don't assume `event_type` exists.
 - **Ignore unknown fields.** SQL alert payloads omit fields without values.

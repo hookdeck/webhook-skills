@@ -26,7 +26,7 @@ Webhooks are asynchronous, are not guaranteed to arrive in order, and can be del
   "id": "80d8ff7d-7e5a-4975-ade8-9e97306d6c15",
   "resourceId": "36E9DCB2-889B-4873-8E52-0C9404EA002A",
   "topic": "customer_created",
-  "timestamp": "2015-10-22T14:44:11.407Z",
+  "created": "2015-10-22T14:44:11.407Z",
   "_links": {
     "self": { "href": "https://api-sandbox.dwolla.com/events/80d8ff7d-..." },
     "account": { "href": "https://api-sandbox.dwolla.com/accounts/b4cdac07-..." },
@@ -36,7 +36,7 @@ Webhooks are asynchronous, are not guaranteed to arrive in order, and can be del
 }
 ```
 
-Requests also carry `X-Dwolla-Topic` and `X-Request-Signature-SHA-256` headers.
+Requests also carry `X-Dwolla-Topic` and `X-Request-Signature-SHA-256` headers. Transfer events add `correlationId` when one was set on the transfer. Dwolla's Webhook Events page and Events API name the timestamp `created`; an older example on Working with Webhooks shows `timestamp`.
 
 ## Delivery Rules
 
@@ -48,4 +48,4 @@ Requests also carry `X-Dwolla-Topic` and `X-Request-Signature-SHA-256` headers.
 
 ## Full Event Reference
 
-See [Dwolla's webhook events documentation](https://developers.dwolla.com/docs/webhook-events) and [Working with Webhooks](https://developers.dwolla.com/docs/balance/webhooks).
+See [Dwolla's webhook events documentation](https://developers.dwolla.com/docs/webhook-events) and [Working with Webhooks](https://developers.dwolla.com/docs/working-with-webhooks).

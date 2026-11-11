@@ -5,7 +5,7 @@
 dbt sends the signature in the **`Authorization`** header. Per the dbt docs, it "contains a SHA256 hash of the request body and uses the secret token as a key":
 
 - Algorithm: HMAC-SHA256
-- Signed content: the raw request body (no timestamp, no event id)
+- Signed content: the raw request body only, with nothing prepended
 - Key: the webhook secret (`hmac_secret`), used as a raw UTF-8 string
 - Encoding: lowercase hex digest
 - Header value: the bare digest. No `Bearer`, no `sha256=` prefix.
@@ -54,7 +54,7 @@ def verify_dbt_cloud_signature(raw_body: bytes, auth_header: str | None, secret:
 - **Raw body.** Hash the bytes as received. Parsing and re-serializing JSON changes whitespace and key order and breaks the hash. In Express use `express.raw({ type: '*/*' })`.
 - **No scheme prefix.** Don't strip `Bearer` or `sha256=`; there isn't one.
 - **Secret is a raw string.** Don't base64- or hex-decode it.
-- **No timestamp.** There is nothing to check for freshness. Dedupe on `eventId` instead.
+- **No replay window.** The body's `timestamp` is signed with the rest of the body, but dbt defines no tolerance for it. Dedupe on `eventId` instead.
 - **Duplicate events.** `job.run.errored` is a subset of `job.run.completed`; subscribing to both delivers two notifications for a failed run.
 - **10-second timeout.** Acknowledge fast and process asynchronously.
 - **Authorization-hostile destinations.** Azure Logic Apps and Power Automate may drop the header.

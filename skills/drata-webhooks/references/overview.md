@@ -52,8 +52,15 @@ Drata's "Create Workflow for Control" article lists these for control workflows:
 
 Risk, evidence and personnel workflows (triggers such as "Treatment option
 changed", "Upcoming renewal", "Out of compliance", "Status changed") can also
-send webhooks. The pages this skill was written from don't list their
-`event_type` strings, so don't hard-code names for them. Log what arrives.
+send webhooks. Their articles list these trigger names: `NEW_ARTIFACT_UPLOADED`,
+`LINKED_TO_CONTROL`, `UNLINKED_FROM_CONTROL`, `RENEWAL_PAST_DUE`,
+`UPCOMING_RENEWAL` ([evidence](https://help.drata.com/en/articles/12876880-create-workflow-for-evidence)),
+`OUT_OF_COMPLIANCE`, `STATUS_CHANGED` ([personnel](https://help.drata.com/en/articles/12876875-create-workflow-for-personnel)),
+`INHERENT_SCORE_UPDATED`, `RESIDUAL_SCORE_UPDATED` and `TREATMENT_OPTION_UPDATED`
+([risk](https://help.drata.com/en/articles/12876894-create-workflow-for-risk)).
+Drata shows every name, control ones included, only as a heading of its
+trigger-specific property list and publishes no example body, so log what
+arrives before you route on exact strings.
 
 ## Payload Structure
 

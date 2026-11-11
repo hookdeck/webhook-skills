@@ -20,7 +20,7 @@ function verifySignature(rawBody, signature, secret) {
 // In-memory dedupe by event ID; use a database or Redis in production.
 const processedEvents = new Set();
 
-// Raw body is required. Dwolla sends application/vnd.dwolla.v1.hal+json, so match every type.
+// Raw body is required. Dwolla doesn't document the request Content-Type, so match every type.
 app.post('/webhooks/dwolla', express.raw({ type: '*/*' }), (req, res) => {
   const signature = req.get('X-Request-Signature-SHA-256');
   if (!signature) {

@@ -81,7 +81,7 @@ async def mongodb_atlas_webhook(request: Request):
 
     # X-MMS-Event carries the alert state (alert.open, alert.close, ...)
     print(f"X-MMS-Event: {request.headers.get('x-mms-event')}")
-    # Use alert["id"] plus status/updated to de-duplicate retried deliveries
+    # Use alert["id"] plus status/updated to de-duplicate repeat notifications for one alert
     handle_alert(alert)
 
     # Any 2xx tells Atlas the delivery succeeded

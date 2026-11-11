@@ -15,16 +15,20 @@ AppsFlyer doesn't generate a secret. You choose a header name and a token:
 1. Generate a long random token, e.g. `openssl rand -hex 32`.
 2. Store it as `APPSFLYER_AUTH_TOKEN`.
 3. If you use a header name other than `Authorization`, store it as
-   `APPSFLYER_AUTH_HEADER_NAME`.
+   `APPSFLYER_AUTH_HEADER_NAME`. AppsFlyer only accepts `Authorization` or a name
+   starting with `X-` (up to 30 characters), and the token value may only contain
+   letters, digits, spaces, tabs, `-`, `_` and `.`.
 
-The header is configured **per app ID**.
+The token is set **per app ID** with the
+[Set Push API Authentication Token](https://dev.appsflyer.com/hc/reference/put_tokens-app-app-id) API
+(`PUT /tokens/app/{app_id}`).
 
 ## Register Your Endpoint
 
 1. In AppsFlyer, open the Push API configuration for your app.
 2. Enter your endpoint URL.
 3. Choose the **POST** method.
-4. Add the custom authorization header: the name and the token value from above.
+4. Set the authentication token for the app ID through the token API above.
 5. Select the event types and fields to stream.
 
 The exact menu path in the dashboard changes over time; follow the linked doc.

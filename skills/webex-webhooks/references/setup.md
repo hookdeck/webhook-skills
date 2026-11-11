@@ -35,7 +35,7 @@ curl -X POST https://webexapis.com/v1/webhooks \
 
 Request fields: `name`, `targetUrl`, `resource`, `event` (all required), plus optional `filter` (e.g. `roomId=...`, combine with `&`), `secret`, and `ownedBy` (`org` for org-wide webhooks, which need an admin token).
 
-Register one webhook per `resource`/`event` pair you care about, or use `"event": "all"` for a firehose on `messages`, `memberships`, or `rooms`. Meeting-related resources need their own scopes (for example `meeting:schedules_read` for `meetings`).
+Register one webhook per `resource`/`event` pair you care about, or use `"event": "all"` for a single-resource firehose (`created`, `updated` and `deleted` for most resources; `meetings` adds `started` and `ended`, `meetingParticipants` gives `joined` and `left`). `"resource": "all"` with `"event": "all"` covers `messages`, `memberships`, and `rooms`. Meeting-related resources need their own scopes (for example `meeting:schedules_read` for `meetings`).
 
 If you omit `secret`, Webex sends **no** `X-Spark-Signature` header and you can't verify the sender. Always set one.
 
@@ -51,7 +51,7 @@ Use the URL it prints (ending in `/webhooks/webex`) as `targetUrl`. Then post a 
 
 - `GET /v1/webhooks` lists your webhooks; `PUT /v1/webhooks/{id}` updates one; `DELETE /v1/webhooks/{id}` removes it.
 - To change a secret, update the webhook with a new `secret` and change your handler's `WEBEX_WEBHOOK_SECRET` at the same time.
-- If Webex disables a webhook after repeated failures, fix your endpoint and call `PUT /v1/webhooks/{id}` with `"status": "active"`. A webhook re-enabled within five minutes of being disabled has a lower failure threshold.
+- If Webex disables a webhook after repeated failures, fix your endpoint and call `PUT /v1/webhooks/{id}` with `"status": "active"`. Failure counts can last until their counting interval expires, so a webhook re-enabled while delivery still fails can be disabled again quickly.
 - A webhook created by a user who has since been deleted is disabled automatically.
 
 ## Test Mode vs Live Mode

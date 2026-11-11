@@ -7,7 +7,7 @@
 
 ## Get Your Signing Secret
 
-Castle does not issue a per-webhook secret. Signatures use your Castle **API secret**, the same one your backend uses to call the Castle API. Find it in the Castle dashboard under your app's API keys/settings and store it as `CASTLE_API_SECRET`.
+Castle does not issue a per-webhook secret. Signatures use your Castle **API secret**, the same one your backend uses to call the Castle API. A sandbox environment has its own API keys, so use the secret of the environment that sends the webhooks, and store it as `CASTLE_API_SECRET`. On Enterprise plans you can choose which API secret signs webhooks.
 
 ## Register Your Endpoint
 

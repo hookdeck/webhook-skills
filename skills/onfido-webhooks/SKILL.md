@@ -40,7 +40,7 @@ function verify(rawBody, signature, token) {
 }
 ```
 
-Python (manual; Onfido's Python client has no verifier):
+Python (manual; the official `onfido-python` client also has `onfido.WebhookEventVerifier(token).read_payload(raw_body_str, signature)`, which raises `OnfidoInvalidSignatureError`):
 
 ```python
 import hmac, hashlib

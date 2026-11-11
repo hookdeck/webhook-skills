@@ -25,6 +25,18 @@ const event = verifier.readPayload(rawBody, req.get('X-SHA2-Signature')); // thr
 
 `readPayload` throws `OnfidoInvalidSignatureError` on a mismatch but a plain `RangeError` if the hex signature is a different length from the expected one. Catch all errors and respond 400.
 
+### SDK Verification (Python)
+
+The official `onfido-python` client provides `WebhookEventVerifier`. `read_payload` takes the raw body as a string and raises `OnfidoInvalidSignatureError` on a mismatch:
+
+```python
+import os
+import onfido
+
+verifier = onfido.WebhookEventVerifier(os.environ["ONFIDO_WEBHOOK_TOKEN"])
+event = verifier.read_payload(raw_body.decode("utf-8"), signature)
+```
+
 ### Manual Verification (Python / no SDK)
 
 ```python
@@ -50,7 +62,7 @@ const ok = given.length === expected.length && crypto.timingSafeEqual(given, exp
 - **The token is used as-is**, with no base64 or hex decoding.
 - **No replay protection built in.** There's no timestamp to check, so deduplicate on `object.id` + `action`. Delivery is at-least-once.
 - **OAuth is separate.** A webhook can optionally fetch an OAuth access token to send as `Authorization: Bearer`. That is not a replacement for signature verification.
-- **Respond 20x within 10 seconds**, or Onfido retries and eventually disables the webhook.
+- **Respond 20x within 10 seconds**, or Onfido retries (5 resends over 10 hours). Five failures in a row to the same webhook disable it for one minute.
 
 ## Debugging Verification Failures
 

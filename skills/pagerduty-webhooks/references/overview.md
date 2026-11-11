@@ -229,10 +229,10 @@ PagerDuty: *"Available only for `account_reference` webhooks."* A
 [`POST /webhook_subscriptions/{id}/ping`](https://docs.pagerduty.com/developer/api/reference/rest/webhooks/test-webhook-subscription)
 (scope `webhook_subscriptions.write`) returns `202` and, in PagerDuty's words,
 *"if properly configured, this will deliver the `pagey.ping` webhook event to
-the destination"*. It is a real signed delivery — which makes it the cheapest
-end-to-end test of your verification path — carrying a `resource_type` and
-`data` shape unlike any documented event. **It has to fall through your default
-branch**, not throw.
+the destination"*. The **Send Test Event** button in the web app sends it too.
+Its [documented body](https://docs.pagerduty.com/integrations/webhooks#send-a-test-event) carries `resource_type: "pagey"` and
+`data.type: "ping"`, unlike any other event. PagerDuty does not document whether
+it is signed. **It has to fall through your default branch**, not throw.
 
 ### Scoped OAuth scopes
 

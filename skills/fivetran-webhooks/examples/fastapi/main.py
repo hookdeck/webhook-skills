@@ -83,10 +83,10 @@ async def fivetran_webhook(request: Request):
         # TODO: Alert on-call
 
     elif event == "connection_successful":
-        print(f"Connection test passed for {connector_id}")
+        print(f"Connected to source for {connector_id}")
 
     elif event == "connection_failure":
-        print(f"Connection test failed for {connector_id}")
+        print(f"Could not connect to source for {connector_id}")
         # TODO: Notify the connection owner
 
     else:

@@ -92,7 +92,7 @@ def verify_svix_signature(raw_body: bytes, headers, secret: str, tolerance: int 
 def classify(event) -> str:
     """Gopuff payloads carry no event-type field, so classify them by shape.
 
-    order.status / order.status.v2 / order.delivered -> {"order": {...}}
+    order.status / order.status.v2 -> {"order": {...}} (Gopuff documents no order.delivered body)
     Delivery Status -> {"driver": {...}}; Delivery ETA -> {"expected_delivery_time": {...}}
     """
     if isinstance(event.get("order"), dict):
@@ -160,7 +160,7 @@ async def gopuff_webhook(
         status = order.get("status")
         print(f"Order status (order.status.v2): {order.get('partner_order_id')} -> {status}")
         if status == "Finished":
-            print(f"Order delivered (order.delivered): {order.get('partner_order_id')}")
+            print(f"Order delivered (status Finished): {order.get('partner_order_id')}")
         elif status == "Cancelled":
             print(f"Order cancelled: {order.get('cancel_reason')}")
     elif kind == "delivery_status":

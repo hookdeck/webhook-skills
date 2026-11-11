@@ -110,10 +110,14 @@ field you didn't select as absent.
 | `CONTROL_OWNER_UPDATED` | The control owner changes (`new_control_owner`, `old_control_owner`, `updated_by`) |
 | `CONTROL_MARKED_IN_SCOPE` / `CONTROL_MARKED_OUT_OF_SCOPE` | Scope changes (`changed_by`, `date_changed`) |
 
-Workflows for risks, evidence and personnel also support webhooks, but the
-pages this skill is based on only list `event_type` values for control
-workflows. Log unknown values and return `200`; a body with no `event_type`
-gets `400`.
+Workflows for evidence, personnel and risks list their own trigger names:
+`NEW_ARTIFACT_UPLOADED`, `LINKED_TO_CONTROL`, `UNLINKED_FROM_CONTROL`,
+`RENEWAL_PAST_DUE` and `UPCOMING_RENEWAL` (evidence), `OUT_OF_COMPLIANCE` and
+`STATUS_CHANGED` (personnel), and `INHERENT_SCORE_UPDATED`,
+`RESIDUAL_SCORE_UPDATED` and `TREATMENT_OPTION_UPDATED` (risk). Drata shows
+these names only as headings of its property lists, with no example body, so
+log the first `event_type` values you receive before routing on them. Log
+unknown values and return `200`; a body with no `event_type` gets `400`.
 
 ## Delivery, Retries and Idempotency
 

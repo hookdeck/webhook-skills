@@ -47,7 +47,7 @@ Delete events carry a minimal object, e.g. `"bill": { "id": "...", "deleted_at":
 ## Delivery Behavior
 
 - Respond 2xx within **5 seconds** or the delivery is a failure.
-- Retries use exponential backoff with jitter for up to 15 minutes from creation (about 15s, 25s, 1.5m, 3m, 5.5m between attempts), then the webhook is permanently failed.
+- Retries use exponential backoff with jitter for up to 15 minutes from creation (about 15s, 25s, 45s, 1.5m, 3m, 5.5m between attempts), then the webhook is permanently failed.
 - The same payload may be sent more than once, and a small percentage may be dropped. Make handlers idempotent and poll the API periodically.
 
 ## Full Event Reference

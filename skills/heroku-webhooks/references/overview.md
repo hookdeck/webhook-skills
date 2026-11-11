@@ -54,7 +54,7 @@ Entities you subscribe to, and the actions Heroku emits for each:
 
 - `resource` names the entity and `action` is `create`, `update`, or `destroy`. The docs example shows `"resource": "app"` while subscriptions use `api:app`, so the example handlers strip an optional `api:` prefix.
 - `data` is the entity as the Heroku Platform API would return it.
-- `id` (also `webhook_metadata.event.id`) is the event ID; use it for idempotency. `webhook_metadata.delivery.id` changes per attempt.
+- `id` (also `webhook_metadata.event.id`) is the event ID; use it for idempotency. `webhook_metadata.delivery.id` identifies the delivery, which `heroku webhooks:deliveries:info DELIVERY_ID` looks up again.
 
 ## Request Headers
 

@@ -96,7 +96,7 @@ See [references/overview.md](references/overview.md) for the full list of activi
 | Header | Description |
 |--------|-------------|
 | `X-SigSci-Signature` | Hex HMAC-SHA256 of the raw body |
-| `Content-Type` | `application/json` |
+| `Content-Type` | Not documented by Fastly; the body is JSON |
 
 ## Environment Variables
 

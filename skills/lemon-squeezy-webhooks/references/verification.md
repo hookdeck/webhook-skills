@@ -10,7 +10,7 @@ Lemon Squeezy computes an HMAC-SHA256 of the **raw request body** using your sig
 | Algorithm | HMAC-SHA256 |
 | Signed content | The raw request body (no timestamp, no ID) |
 | Encoding | Lowercase hex, no prefix |
-| Key | The signing secret you entered (6-40 chars), used as a raw string |
+| Key | The signing secret you entered (normally 6-40 chars), used as a raw string |
 | Standard Webhooks | No |
 
 There is no official webhook verification helper in the Lemon Squeezy SDK, so verify manually as below.

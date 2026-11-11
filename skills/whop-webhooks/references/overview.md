@@ -14,7 +14,7 @@ Whop sends a signed `POST` with a JSON event to a public URL you register whenev
 | `membership.deactivated` | A membership ends | Revoke access |
 | `refund.created` | A refund is created | Reverse fulfillment, update accounting |
 
-`membership.deactivated` appears in the Whop SDK's event enum (`@whop/sdk`, `whop-sdk`) but is not in the events table on the docs page at time of writing; confirm it against your dashboard's event list.
+`membership.deactivated` is in the `events` enum of [Create Webhook](https://docs.whop.com/api-reference/webhooks/create-webhook), so you can subscribe to it, but it has no reference page or row in the guide's events table. Whop documents `membership.updated` as firing on every membership change, including activation and deactivation, so subscribing to `membership.updated` and reading the status from `data` also covers it.
 
 Other documented events include `payment.created`, `payment.pending`, `payment.authorized`, `payment.canceled`, `payment.requires_action` (send `data.recovery_url` to the buyer for 3D Secure), `membership.updated`, `membership.trial_ending_soon`, `refund.updated`, `dispute.created`, `dispute.updated`, `invoice.paid`, `invoice.past_due`, `product.created`, `plan.updated`, `member.created`, `payout.created`, and `verification.succeeded`.
 

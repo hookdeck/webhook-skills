@@ -24,7 +24,7 @@ metadata:
 
 ## Verification (core)
 
-Lemon Squeezy sends `X-Signature`: the lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with the signing secret you entered when creating the webhook. There is no timestamp, no prefix and no SDK helper. The secret is a plain 6-40 character string, used as-is (not base64-decoded).
+Lemon Squeezy sends `X-Signature`: the lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with the signing secret you entered when creating the webhook. There is no timestamp, no prefix and no SDK helper. The secret is whatever string you entered (Lemon Squeezy suggests a random 6-40 characters), used as-is (not base64-decoded).
 
 Node:
 
@@ -84,7 +84,7 @@ Also available: `customer_updated`, `subscription_resumed`, `subscription_expire
 - Payloads are JSON:API: the resource is `data` (`data.id`, `data.attributes`), and your checkout `custom_data` is in `meta.custom_data`.
 - Respond `200` to acknowledge. Any other status is retried up to 3 more times with exponential backoff (about 5s, 25s, 125s).
 - There is no delivery ID or timestamp header, so make handlers idempotent (for example key on event name + `data.id` + `data.attributes.updated_at`).
-- The same purchase fires several events (a subscription sale sends `order_created`, `subscription_created`, `subscription_payment_success`), and ordering is not guaranteed.
+- The same purchase fires several events (a subscription sale sends `order_created`, `subscription_created`, `subscription_payment_success`), and Lemon Squeezy does not document a delivery order.
 
 ## Environment Variables
 

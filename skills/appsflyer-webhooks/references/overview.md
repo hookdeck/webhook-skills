@@ -4,8 +4,8 @@
 
 The Push API (streaming raw data) sends a raw-data record to your server for
 each attributed install and in-app event, as it happens. You choose the method:
-**POST** sends the record in the body as JSON; GET puts the data in the query
-string, which leaks into access logs, so use POST.
+**POST** sends the record in the body as JSON. AppsFlyer doesn't document how
+a GET endpoint sends the fields, so use POST.
 
 AppsFlyer does not sign the payload. Authentication is a custom authorization
 header (name and token) that you configure per app ID.

@@ -85,7 +85,7 @@ Didit also delivers entity, transaction, Travel Rule and Investigator events (fo
 ## Environment Variables
 
 ```bash
-DIDIT_WEBHOOK_SECRET=your_secret_shared_key   # Returned once when the destination is created
+DIDIT_WEBHOOK_SECRET=your_secret_shared_key   # Returned when the destination is created
 DIDIT_TIMESTAMP_TOLERANCE_SECONDS=0           # Optional; a positive value turns on the timestamp check
 ```
 

@@ -72,6 +72,7 @@ If you can only verify `X-Signature-Simple`, treat everything outside `timestamp
 - **Timestamp isn't signed.** Anyone who can replay a request can also change `X-Timestamp`, so the window adds little. The examples skip it unless `DIDIT_TIMESTAMP_TOLERANCE_SECONDS` is positive
 - **Replays through a gateway.** A gateway such as Hookdeck re-sends the stored request with its original headers, so a retry or replay after the window has passed carries a stale `X-Timestamp` and fails a 300 second check (only Didit's own retries get a fresh one). That's why the check is off by default
 - **Secret is per destination.** A different destination has a different `secret_shared_key`
+- **Secret rotation.** For 24 hours after you rotate a destination's secret in the Business Console, deliveries also carry `X-Signature-Previous` (and `X-Signature-V2-Previous`, `X-Signature-Simple-Previous`), signed with the replaced secret, while `X-Signature` uses the new one. Deploy the new secret within those 24 hours, or accept a match on either header while you switch
 - **Hex digest.** Compare hex strings, not base64, and guard the length before `timingSafeEqual`
 - **Idempotency.** Key on `event_id`, which is reused across retries and destinations
 

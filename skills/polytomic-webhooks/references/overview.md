@@ -16,14 +16,20 @@ webhook-related page in Polytomic's docs. The model is:
 4. On the sync's schedule, Polytomic **POSTs batches of changed records** to your
    URL.
 
-**This is not event subscription.** There is no event-subscription UI, no
-per-event-type toggles and no separate "platform events" API. Polytomic is not an
-event producer in the usual sense — think *"receive Polytomic sync record
-batches"*, not *"subscribe to Polytomic events"*.
+**This is not event subscription.** The Webhook destination has no
+event-subscription UI and no per-event-type toggles — think *"receive Polytomic
+sync record batches"*, not *"subscribe to Polytomic events"*.
+
+Polytomic does also have a separate event webhook for sync and ingestion status
+(`sync.completed`, `sync.failed`, `bulk_sync.completed`, `ingestion.stalled` and
+others). It is registered through the API, one per organization, has its own
+envelope (`id`, `created_at`, `type`, `event`) and is signed with HMAC-SHA256.
+It is out of scope for this skill: see
+[Polytomic's events overview](https://apidocs.polytomic.com/2025-09-18/guides/events/overview).
 
 ## Common Event Types
 
-There is **exactly one documented event type**.
+The Webhook destination has **exactly one documented event type**.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -41,8 +47,9 @@ is just the sync.records event."*
   explicitly anticipate future types, and a 4xx/5xx would mark your customer's
   sync run as failed.
 
-**Do not invent event names.** There is no `sync.started`, `sync.completed`,
-`sync.failed`, `record.created` or anything else. None are documented.
+**Do not invent event names.** `sync.completed`, `sync.failed` and the other
+status events exist only on Polytomic's separate event webhook, and never arrive
+on a Webhook destination. There is no `sync.started` or `record.created`.
 
 ## Event Payload Structure
 

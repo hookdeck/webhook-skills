@@ -2,7 +2,7 @@
 
 ## What Are Fivetran Webhooks?
 
-Fivetran webhooks push JSON notifications to your HTTPS endpoint when something happens in your data pipelines: a sync starts or ends, a connection test passes or fails, a transformation runs, or a connection is created, paused, edited, or deleted. They are managed only through the Fivetran REST API (there is no dashboard UI for creating them), either at **account** level (all groups) or **group** level.
+Fivetran webhooks push JSON notifications to your HTTPS endpoint when something happens in your data pipelines: a sync starts or ends, Fivetran connects or fails to connect to a source, a transformation runs, or a connection is created, paused, edited, or deleted. They are managed through the Fivetran REST API, either at **account** level (all groups) or **group** level.
 
 ## Common Event Types
 
@@ -12,12 +12,12 @@ The event name is in the `event` field of the JSON body. Names below are from th
 |-------|----------------|------------------|
 | `sync_start` | A connection sync starts | Mark a pipeline as running |
 | `sync_end` | A connection sync ends (`data.status` `SUCCESSFUL` or `FAILED`) | Trigger dbt/BI refresh, alert on failure |
-| `status` | Connection status change (deprecated) | Legacy only; prefer `sync_*` |
+| `status` | Deprecated, with no published description | Legacy only; prefer `sync_*` |
 | `transformation_start` | A transformation run starts | Track transformation runs |
 | `transformation_succeeded` | A transformation run succeeds | Trigger downstream jobs |
 | `transformation_failed` | A transformation run fails | Alert on-call |
-| `connection_successful` | A connection setup test succeeds | Confirm onboarding |
-| `connection_failure` | A connection setup test fails | Notify the connection owner |
+| `connection_successful` | Fivetran connects to the connection's source system | Confirm onboarding |
+| `connection_failure` | Fivetran can't connect to the connection's source system | Notify the connection owner |
 | `create_connector`, `pause_connector`, `resume_connector`, `edit_connector`, `delete_connector`, `force_update_connector`, `resync_connector`, `resync_table` | Connection lifecycle actions | Audit logging |
 
 ## Event Payload Structure

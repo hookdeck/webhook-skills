@@ -57,8 +57,9 @@ def verify_asaas_token(received, expected):
 
 ## Debugging Verification Failures
 
-- Compare the header in **Webhook Logs** (Asaas) with your env var; look for trailing newlines
-  or quotes copied into `.env`.
+- Compare the token you stored when you created the webhook with your env var; look for trailing
+  newlines or quotes copied into `.env`. Asaas returns the authToken only in the creation
+  response, so if it is lost, set a new one on the webhook and in your env var together.
 - Confirm Sandbox and Production use different webhooks, and so possibly different tokens.
 - A `403` in the logs usually means a firewall/WAF is blocking Asaas, not a token problem. Allow
   the [official IPs](https://docs.asaas.com/docs/official-asaas-ips).

@@ -52,6 +52,7 @@ Framework wiring: Express `express.raw({ type: '*/*' })`, Next.js App Router `aw
 - **Secret handling**: don't decode or trim the Signing Secret; sandbox and production secrets differ.
 - **No replay protection**: there is no timestamp, so dedupe on `type` + `data.id`/`data.reference`.
 - **Response**: reply 200 with valid JSON, or Bolt retries with exponential back-off.
+- **Secret rotation**: while a Signing Secret is being rotated, Bolt also sends `X-Bolt-Hmac-Sha256-Pending`, the same body signed with the incoming secret. Accept the request if either header matches ([Merchant Callback conventions](https://help.boltapp.com/api-reference/merchant-callback/conventions#verifying-the-request-came-from-bolt), which Bolt's webhook docs say also apply to webhooks).
 
 ## Debugging Verification Failures
 

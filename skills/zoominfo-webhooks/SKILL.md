@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.1.1"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
@@ -28,7 +28,7 @@ ZoomInfo webhooks are **not signed**. There is no HMAC and no signed timestamp. 
 
 Two things to know:
 
-- The **Validate** button posts a sample payload **before the token exists**. Your endpoint must accept it (the examples return `200` without processing when `ZOOMINFO_WEBHOOK_TOKEN` is unset), then you generate the token, store it, and activate the webhook.
+- The **Validate** button posts a sample payload **before you generate and store the token**. Your endpoint must accept it (the examples return `200` without processing when `ZOOMINFO_WEBHOOK_TOKEN` is unset), then you generate the token, store it, and activate the webhook.
 - Set `ZOOMINFO_WEBHOOK_TOKEN` before you activate the webhook. While it is unset the examples acknowledge every request without processing it, so an unset token in production means requests are accepted but never authenticated or handled.
 - Because the token travels with every request, serve the endpoint over HTTPS only.
 
@@ -61,7 +61,7 @@ def verify_zoominfo_token(token_header, expected_token) -> bool:
 
 ## Events
 
-ZoomInfo's Webhooks Implementation Guide defines subscriptions as an **object type** plus an **event type**. It does not define event-type strings in the payload.
+ZoomInfo's Webhooks Implementation Guide defines subscriptions as an **object type** plus an **event type**. The Payload Examples in ZoomInfo's API documentation carry both in `webhookDetails` (`objectType`, `eventType`), with the profiles in a `data` array.
 
 | Subscription | Object type | Event type |
 |--------------|-------------|------------|
@@ -71,7 +71,7 @@ ZoomInfo's Webhooks Implementation Guide defines subscriptions as an **object ty
 - **Update is the only supported event today.** Create and delete events are not offered.
 - Each subscription is either a **full payload** (default; all fields plus changed attributes) or **changed attributes only** (changed fields plus default mapping fields such as ID, email, domain).
 - At most **25 profiles** per delivery. Only records enriched through the Enterprise API in the past 12 months produce events.
-- Exact payload field names are in the Payload Examples of ZoomInfo's API documentation, not in the implementation guide; check them against a real delivery.
+- The company examples send `objectType` as `company` while the guide and Get Subscription Types say `Company`, so compare it case-insensitively. Check field names against a real delivery.
 
 ## Important Headers
 

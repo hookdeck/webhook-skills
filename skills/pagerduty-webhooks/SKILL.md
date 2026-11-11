@@ -286,10 +286,11 @@ an unrecognised `event_type`.**
 | `service.custom_field_values.updated` | `service_field_values` | Service custom field values updated |
 
 Plus one that is **not subscribable** and not in that table: `pagey.ping`, which
-PagerDuty delivers — signed, with a `resource_type` and `data` shape unlike any
-documented event — when someone calls
-`POST /webhook_subscriptions/{id}/ping`. It must fall through your default
-branch.
+PagerDuty delivers when someone clicks **Send Test Event** on the subscription or
+calls `POST /webhook_subscriptions/{id}/ping`. Its
+[documented body](https://docs.pagerduty.com/integrations/webhooks#send-a-test-event)
+has `resource_type: "pagey"` and `data: {"message": ..., "type": "ping"}`, unlike
+any other event. It must fall through your default branch.
 
 Scoped-OAuth scopes: `incidents.read` for every `incident.*` **except**
 `incident.workflow.*`, which needs `incident_workflows.read`; `services.read`
@@ -297,7 +298,8 @@ for `service.*`; `pd_advance.write` for `scribe.summary.created`.
 
 ## Delivery Semantics
 
-- **POST**, `Content-Type: application/json`, **one event per request**. No batching.
+- **POST**, a JSON body, **one event per request**. No batching. V3 deliveries
+  carry the user agent `PagerDuty-Webhook/V3.0`.
 - **Respond 2xx within 5 seconds** (16 seconds for webhooks generated from
   Custom Incident Actions). PagerDuty recommends returning **`202 Accepted`**
   immediately and processing asynchronously — the examples here verify, enqueue,
@@ -424,8 +426,9 @@ curl -X POST https://api.pagerduty.com/webhook_subscriptions/PWHSUB1/ping \
 PagerDuty returns `202` and delivers a **`pagey.ping`** event (needs the
 `webhook_subscriptions.write` scope). It goes through the subscription's normal
 delivery method; PagerDuty does not document whether the ping is signed, so
-check your own logs rather than assuming a signed ping either way. PagerDuty sends no handshake, challenge or
-validation request — that ping is the only unsolicited delivery you can trigger.
+check your own logs rather than assuming a signed ping either way. The
+**Send Test Event** button on the subscription's page in the web app sends the
+same event. PagerDuty sends no handshake, challenge or validation request.
 `pagey.ping` is not subscribable, so it lands in your default branch.
 
 ## Reference Materials

@@ -26,9 +26,10 @@ metadata:
 
 dbt Cloud has no `Signature` header and no scheme prefix. The **`Authorization`**
 header carries the bare lowercase hex **HMAC-SHA256 of the raw request body**,
-keyed with the webhook's secret (`hmac_secret` in the API, shown once in the UI
+keyed with the webhook's secret (`hmac_secret` in the API, provided in the UI
 when you save the webhook). Use the secret as a raw UTF-8 string and the **raw
-body** (don't `JSON.parse` first). There is no timestamp, so dedupe on `eventId`.
+body** (don't `JSON.parse` first). The body's `timestamp` is signed with the rest
+of the body, but dbt defines no replay window, so dedupe on `eventId`.
 
 ```javascript
 const crypto = require('crypto');

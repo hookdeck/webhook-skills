@@ -34,7 +34,7 @@ curl -X POST "https://<your-access-url>/api/v3/accounts/<account_id>/webhooks/su
 
 The response includes `hmac_secret`. Use it as-is: it's a raw string, not base64 or hex encoded.
 
-Other endpoints under `/webhooks/subscription/{webhook_id}`: `GET` (read), `PUT` (update), `DELETE`, and `GET .../test` (sends a test verification request to your endpoint).
+Other endpoints under `/webhooks/subscription/{webhook_id}`: `GET` (read), `PUT` (update), `DELETE`, and `GET .../test` (tests the webhook and reports the result).
 
 ## Test Your Endpoint
 

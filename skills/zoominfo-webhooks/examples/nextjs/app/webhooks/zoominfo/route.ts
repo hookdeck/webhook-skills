@@ -43,9 +43,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Subscriptions are an object type (Contact or Company) plus the Update
-  // event. The guide does not define a payload field naming the event, so
-  // route on your own subscription/endpoint and read the record fields you
-  // need from the payload (up to 25 profiles per delivery).
+  // event. ZoomInfo's API reference examples name them in
+  // webhookDetails.objectType and webhookDetails.eventType, but its company
+  // examples send "company" in lower case, so compare case-insensitively.
+  // The profiles are in payload.data (up to 25 per delivery).
   const keys = payload && typeof payload === 'object' ? Object.keys(payload) : [];
   console.log(`✓ Verified ZoomInfo webhook (${rawBody.length} chars, keys: ${keys.join(', ') || 'none'})`);
 

@@ -17,7 +17,7 @@ metadata:
 
 AppsFlyer's **Push API** (raw data streaming) sends each attributed install and
 in-app event to your server as a raw-data record, in near real time. Choose
-**POST**: with GET, AppsFlyer puts the data in the query string.
+**POST**: AppsFlyer doesn't document how a GET endpoint sends the fields.
 
 ## When to Use This Skill
 
@@ -30,14 +30,15 @@ in-app event to your server as a raw-data record, in near real time. Choose
 ## No Signature: Custom Authorization Header Only
 
 AppsFlyer **does not sign payloads**. There is no signature header, no HMAC and
-no timestamp. Instead you configure a **custom authorization header** (a header
-name and a token value) per app ID in the Push API settings, and AppsFlyer sends
-it on every request. Your endpoint compares the received value to the token you
-stored, in constant time.
+no timestamp. Instead you set an **authentication token** (a header name and a
+token value) per app ID with the [Set Push API Authentication Token](https://dev.appsflyer.com/hc/reference/put_tokens-app-app-id)
+API, and AppsFlyer sends it on every message except **Send Test** messages,
+whose headers don't include the token. Your endpoint compares the received value
+to the token you stored, in constant time.
 
 | What | Value |
 |---|---|
-| Header name | Whatever you configured (this skill defaults to `Authorization`; env `APPSFLYER_AUTH_HEADER_NAME`) |
+| Header name | `Authorization` (the default) or a name starting with `X-`, as set in `token_name` (env `APPSFLYER_AUTH_HEADER_NAME`) |
 | Header value | The token you configured (env `APPSFLYER_AUTH_TOKEN`), compared as the **full** value |
 | Method | POST with a JSON raw-data record |
 
@@ -77,9 +78,11 @@ The event name is the record's `event_name` field.
 | `af_complete_registration` | Standard in-app registration event |
 | *your own event name* | In-app events are named by your app, so the set differs per app |
 
-Every record includes `appsflyer_id`, `app_id` and `event_time`. There is no
-unique event ID, so build an idempotency key from `appsflyer_id`, `event_name`
-and `event_time`. See [references/overview.md](references/overview.md).
+Every record includes App ID, event name, event time and IDFA (iOS) or
+Advertising ID (Android); other fields, `appsflyer_id` included, arrive only if
+you select them, and null or empty fields are never sent. There is no unique
+event ID, so select `appsflyer_id` and build an idempotency key from
+`appsflyer_id`, `event_name` and `event_time`. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 

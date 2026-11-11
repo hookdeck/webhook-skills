@@ -15,7 +15,7 @@ Each webhook goes to a **destination** (URL + subscribed events + its own `secre
 
 Other subscribable events (use the exact value in the destination's `subscribed_events`; there is no wildcard):
 
-`user.status.updated`, `user.data.updated`, `business.status.updated`, `business.data.updated`, `activity.created` (reserved, not delivered for live traffic), `transaction.created`, `transaction.status.updated`, `travel_rule.status.updated`, and the `investigator.*` family (for example `investigator.report.ready`, `investigator.decision.automated`, `investigator.rfi.answered`).
+`user.status.updated`, `user.data.updated`, `business.status.updated`, `business.data.updated`, `activity.created` (reserved, not delivered for live traffic), `transaction.created`, `transaction.status.updated`, `travel_rule.status.updated`, `workflow.compliance_changed`, `transaction_rule_suggestions.created`, the `investigator.*` family (for example `investigator.report.ready`, `investigator.decision.automated`, `investigator.rfi.answered`) and the `auth.*` family for Didit Authentication (for example `auth.login`, `auth.new_device`).
 
 ## Event Payload Structure
 
