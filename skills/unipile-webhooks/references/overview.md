@@ -2,8 +2,8 @@
 
 ## What Are Unipile Webhooks?
 
-Unipile is a unified API for messaging (LinkedIn, WhatsApp, Instagram, Messenger,
-Telegram, X) and email (Google, Microsoft, IMAP). Webhooks replace polling: when
+Unipile is a unified API for messaging (LinkedIn, WhatsApp, Instagram, Telegram),
+email (Google, Microsoft, IMAP) and calendars. Webhooks replace polling: when
 something changes on a connected account, Unipile sends an HTTP POST to the
 `request_url` you registered.
 
@@ -23,6 +23,7 @@ dashboard. Each webhook has one `source`, an optional `events` list, optional
 | `mail_sent`, `mail_moved` | `email` | An email is sent or moved between folders | Mailbox sync |
 | `mail_opened`, `mail_link_clicked` | `email_tracking` | A tracked email is opened or a link clicked | Outreach analytics |
 | `new_relation` | `users` | A new connection is detected | LinkedIn outreach |
+| `calendar_event_created`, `calendar_event_updated`, `calendar_event_deleted` | `calendar_event` | A calendar event is created, updated or deleted | Calendar sync |
 | Account status (`OK`, `CREDENTIALS`, ...) | `account_status` | An account's status changes | Reconnect prompts |
 
 ## Event Payload Structure

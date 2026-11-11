@@ -4,7 +4,7 @@ Dropbox has two checks: the `challenge` GET at registration, and the `X-Dropbox-
 
 ## How Does the Challenge Verification Work?
 
-When you add or re-check a webhook URI, Dropbox sends:
+When you add a webhook URI, Dropbox sends this once (it does not retry it):
 
 ```
 GET /webhooks/dropbox?challenge=abc123

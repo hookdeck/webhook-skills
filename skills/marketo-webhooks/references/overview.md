@@ -16,7 +16,7 @@ filled in for the lead that went through the flow step.
 | Property | What it does |
 |---|---|
 | URL | Where the request goes. Characters are sent as written (`&` stays `&`, `%26` stays `%26`) |
-| Request Type | The HTTP method: GET or POST |
+| Request Type | The HTTP method. The developer page says GET or POST; the Create a Webhook page lists DELETE, GET, PATCH, POST and PUT, with a template allowed on all but GET |
 | Payload Template | The POST body. Any format that works in an HTTP POST, including JSON or XML, as long as strings can be wrapped in double quotes |
 | Request Token Encoding | JSON or Form/Url. How token values with special characters (like `&`) are encoded |
 | Response Type | JSON or XML. Used to map response properties to lead fields |

@@ -39,7 +39,7 @@ Buildkite recommends checking the timestamp after verifying the signature and ac
 - **Raw body:** the signature covers the exact bytes. Do not parse JSON before verifying (`express.raw`, `request.text()`, `await request.body()`).
 - **Don't fall back:** if `X-Buildkite-Signature` is present, do not accept a matching token instead.
 - **Header names are case-insensitive**; Node lowercases them.
-- **Retries and the window:** if your receiver is down and Buildkite or Hookdeck retries later, a strict window rejects a legitimate delivery. That's why the window is off by default; if you turn it on, pick a size that suits your availability.
+- **Retries and the window:** Buildkite documents no retries, but if your receiver is down and Hookdeck retries later, or you replay an event, a strict window rejects a legitimate delivery. That's why the window is off by default; if you turn it on, pick a size that suits your availability.
 
 ## Debugging Verification Failures
 

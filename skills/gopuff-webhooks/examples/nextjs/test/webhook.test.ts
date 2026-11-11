@@ -45,7 +45,7 @@ describe('Gopuff webhook handler', () => {
     expect((await res.json()).kind).toBe('order');
   });
 
-  test('accepts a Finished order (order.delivered)', async () => {
+  test('accepts a Finished order (status Finished)', async () => {
     const p = orderV2('Finished');
     expect((await POST(makeRequest(p, signedHeaders(p)))).status).toBe(200);
   });

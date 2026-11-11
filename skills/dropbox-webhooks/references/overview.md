@@ -2,7 +2,7 @@
 
 ## What Are Dropbox Webhooks?
 
-Dropbox API apps can register a webhook URI in the App Console. When files change in an account that has authorized your app, Dropbox sends a `POST` to that URI. The notification only says *which accounts* changed; your handler fetches the actual changes with the API. (This is unrelated to Dropbox Sign webhooks.)
+Dropbox API apps can register a webhook URI in the Developer Console. When files change in an account that has authorized your app, Dropbox sends a `POST` to that URI. The notification only says *which accounts* changed; your handler fetches the actual changes with the API. (This is unrelated to Dropbox Sign webhooks.)
 
 ## Notification Types
 
@@ -11,9 +11,9 @@ Dropbox does not send named event types and has no event-type header. The JSON b
 | Key | Triggered When | Common Use Cases |
 |-----|----------------|------------------|
 | `list_folder` | Files or folders change in an account that authorized your app | Sync, backup, indexing; call `/files/list_folder/continue` |
-| `delta` | Same, for the legacy `/delta` API (deprecated) | Legacy integrations only |
+| `delta` | Same changes, listed as API v1 user IDs | Older integrations only |
 
-The `challenge` verification request is a `GET` (not a notification) sent when you add or re-check the URI.
+The `challenge` verification request is a `GET` (not a notification) sent once, when you add the URI. Dropbox does not retry it.
 
 ## Event Payload Structure
 
@@ -29,7 +29,7 @@ The `challenge` verification request is a `GET` (not a notification) sent when y
 ```
 
 - `list_folder.accounts` — account IDs (`dbid:...`) with changes
-- `delta.users` — numeric user IDs (legacy)
+- `delta.users` — API v1 user IDs (numeric)
 
 ## Handling Changes
 

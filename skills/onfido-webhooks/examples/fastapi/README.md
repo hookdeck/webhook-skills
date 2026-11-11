@@ -1,6 +1,6 @@
 # Onfido Webhooks - FastAPI Example
 
-Minimal example of receiving Onfido (Entrust Identity Verification) webhooks with signature verification. Onfido's Python client doesn't expose a webhook verifier, so this example verifies `X-SHA2-Signature` manually (HMAC-SHA256 hex of the raw body).
+Minimal example of receiving Onfido (Entrust Identity Verification) webhooks with signature verification. This example verifies `X-SHA2-Signature` manually (HMAC-SHA256 hex of the raw body), with no SDK dependency. The official `onfido-python` client also provides `WebhookEventVerifier` if you already use it.
 
 ## Prerequisites
 

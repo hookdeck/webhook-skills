@@ -73,7 +73,7 @@ Webex events are a `resource` + `event` pair in the payload. This skill names th
 | `meetings.ended` | A meeting ends |
 | `attachmentActions.created` | A user submits one of your Adaptive Cards |
 
-> **For the full resource and event list**, see [Webex Webhooks](https://developer.webex.com/docs/webhooks).
+> **For the full resource and event list**, see [Webex's webhook event reference](https://developer.webex.com/docs/webhook-event-reference).
 
 ## Important Headers and Payload Fields
 

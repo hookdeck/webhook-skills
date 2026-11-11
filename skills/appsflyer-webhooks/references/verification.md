@@ -38,9 +38,11 @@ def verify_appsflyer_token(received, expected):
 
 - **Compare the whole value.** If you configured `Bearer abc`, the expected
   value is `Bearer abc`, not `abc`.
-- **Header name is yours.** Read the header you configured; HTTP header names
-  are case-insensitive.
-- **Use POST.** GET puts the record in the query string.
+- **Header name is yours.** Read the header you set (`Authorization` or an
+  `X-` name); HTTP header names are case-insensitive.
+- **Send Test has no token.** AppsFlyer's test message headers don't include
+  the authentication token, so expect a 401 from a test and check a real message.
+- **Use POST.** AppsFlyer doesn't document how a GET endpoint sends the fields.
 - **Fail closed.** If the token env var is missing, return 500, never accept.
 - **No replay protection.** There is no timestamp to check, so deduplicate on
   `appsflyer_id` + `event_name` + `event_time`.

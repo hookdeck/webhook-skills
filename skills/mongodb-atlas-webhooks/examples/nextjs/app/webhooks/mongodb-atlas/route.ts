@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   // X-MMS-Event carries the alert state (alert.open, alert.close, ...)
   console.log(`X-MMS-Event: ${request.headers.get('x-mms-event')}`);
-  // Use alert.id plus status/updated to de-duplicate retried deliveries
+  // Use alert.id plus status/updated to de-duplicate repeat notifications for one alert
   handleAlert(alert);
 
   // Any 2xx tells Atlas the delivery succeeded

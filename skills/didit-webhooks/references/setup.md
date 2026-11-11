@@ -17,7 +17,7 @@ In **Business Console > API & Webhooks**, click **Add destination**, or call `PO
 
 ## Get Your Signing Secret
 
-The create response returns the destination's `secret_shared_key`. **Store it immediately**: it is the only time you will see it. It is scoped to that destination, so each destination has its own secret.
+The create response returns the destination's `secret_shared_key`. Store it with your other server secrets. `GET /v3/webhook/destinations/{destination_uuid}/` returns it again to API-key callers and to console users who can read webhooks. It is scoped to that destination, so each destination has its own secret.
 
 ```bash
 DIDIT_WEBHOOK_SECRET=your_secret_shared_key

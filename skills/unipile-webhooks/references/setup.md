@@ -41,11 +41,11 @@ curl --request POST \
 - `source` is one of `messaging`, `email`, `email_tracking`, `users`,
   `account_status`, `calendar_event`. Create one webhook per source.
 - `events` is optional. The default is `message_received` for messaging,
-  `mail_received` for email, `mail_opened` for email tracking and `new_relation`
-  for users.
+  `mail_received` for email, `mail_opened` for email tracking, `new_relation`
+  for users and `calendar_event_created` for calendar events.
 - `account_ids` limits the webhook to specific accounts. Omit it to cover all
   current and future accounts.
-- `format` is `json` (default) or `form`. The examples expect `json`.
+- `format` is `json` or `form`; the reference doesn't name a default. The examples expect `json`, so set it.
 - `enabled` turns the webhook on or off.
 - `name` is sent back as `webhook_name` in messaging and email payloads.
 

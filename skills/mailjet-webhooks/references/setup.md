@@ -41,7 +41,7 @@ Mailjet posts JSON and includes `Authorization: Basic base64(username:password)`
 
 ## Reactivating a Suspended URL
 
-After repeated failures Mailjet suspends the URL. Update it with a new URL (for example change the password or add a query string) to reactivate it.
+Mailjet's docs don't say when a URL is suspended. To reactivate a suspended URL, update it with a new URL. A backup URL (`IsBackup: true`) takes over while the primary is suspended.
 
 ## Test
 

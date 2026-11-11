@@ -48,5 +48,5 @@ Use the Hookdeck source URL as the `url` when creating the Dwolla webhook subscr
 ## Notes
 
 - Signature header: `X-Request-Signature-SHA-256` (hex HMAC-SHA256 of the raw body).
-- The route uses `express.raw({ type: '*/*' })` because Dwolla sends `application/vnd.dwolla.v1.hal+json`.
+- The route uses `express.raw({ type: '*/*' })` because Dwolla doesn't document the request `Content-Type`, so the route accepts any type.
 - Duplicate event IDs return 200 so Dwolla doesn't pause the subscription.

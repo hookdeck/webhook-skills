@@ -94,7 +94,7 @@ async function handleMessageReceived(p: UnipilePayload) {
   console.log(
     `Message ${p.message_id} in chat ${p.chat_id} (${p.account_type}) from ${p.sender?.attendee_name ?? 'unknown'}${own ? ' [sent by connected account]' : ''}`
   );
-  // TODO: store or forward the message. Attachment urls are att:// references.
+  // Store or forward the message. Attachment urls are att:// references.
 }
 
 async function handleMessageRead(p: UnipilePayload) {
@@ -109,7 +109,7 @@ async function handleAccountStatus(s: AccountStatus) {
   console.log(`Account ${s.account_id} (${s.account_type}) status: ${s.message}`);
   if (s.message !== 'OK') {
     // Not OK (e.g. CREDENTIALS) means no more new-message webhooks for this account
-    // until it is reconnected. TODO: alert the user and start the reconnect flow.
+    // until it is reconnected. Alert the user and start the reconnect flow here.
   }
 }
 

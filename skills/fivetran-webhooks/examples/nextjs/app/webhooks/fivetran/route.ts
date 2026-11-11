@@ -88,11 +88,11 @@ export async function POST(request: NextRequest) {
       break;
 
     case 'connection_successful':
-      console.log(`Connection test passed for ${connectorId}`);
+      console.log(`Connected to source for ${connectorId}`);
       break;
 
     case 'connection_failure':
-      console.log(`Connection test failed for ${connectorId}`);
+      console.log(`Could not connect to source for ${connectorId}`);
       // TODO: Notify the connection owner
       break;
 

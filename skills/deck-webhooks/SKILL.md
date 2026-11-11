@@ -3,7 +3,7 @@ name: deck-webhooks
 description: >
   Receive and verify Deck (deck.co) webhooks, the event stream for Deck's
   computer-use agents API (agents, sources, Deck Vault credentials, sessions,
-  tasks, task runs, workflows, storage). Use when setting up a Deck webhook
+  tasks, task runs, workflows, triggers, storage). Use when setting up a Deck webhook
   event destination, generating the caller-provided whsec_ signing secret,
   debugging Standard Webhooks signature verification (webhook-id,
   webhook-timestamp, webhook-signature), rotating secrets, or handling events
@@ -108,7 +108,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
 | `event_destination.activated` / `event_destination.deactivated` | Destination status changed. `deactivated` also fires when Deck auto-deactivates a destination after 100 consecutive failures |
 | `test.ping` | Console **Send test ping** or `POST /v2/event-destinations/{id}/test`. Not subscribable, never retried. Return a `2xx` |
 
-Also: `agent.*`, `source.*`, `credential.created|unverified|deleted`, `session.*`, `task.*`, `task_run.queued|running|canceling|canceled`, `workflow.*`, `workflow_run.queued|running|canceling|canceled`, and `storage.deleted`. [references/overview.md](references/overview.md) lists all of them with payloads.
+Also: `agent.*`, `source.*`, `credential.created|updated|unverified|deleted`, `session.*`, `task.*`, `task_run.queued|running|canceling|canceled`, `workflow.*`, `workflow_run.queued|running|canceling|canceled`, `trigger.created|updated|deleted|activated|deactivated`, `trigger_run.completed|failed`, and `storage.deleted`. [references/overview.md](references/overview.md) lists all of them with payloads.
 
 To answer an interaction, read `data.interaction.fields` and call `POST /v2/task-runs/{data.id}/interaction` with `{"input": {"<field name>": "<value>"}}`.
 

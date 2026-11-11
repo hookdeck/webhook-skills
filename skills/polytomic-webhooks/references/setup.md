@@ -167,8 +167,8 @@ No account required — the CLI creates a guest account on first run and gives y
 public HTTPS URL plus a web UI for inspecting requests. Paste that URL into the
 Webhook connection, then run your sync.
 
-Because Polytomic sends no signature, there is nothing for a gateway to verify on
-the **Polytomic → gateway** hop. What a gateway adds here is an unguessable
+Polytomic sends no signature, but a Hookdeck Polytomic source checks the Secret it
+sends against the one you set, on the **Polytomic → gateway** hop. What Hookdeck also adds is an unguessable
 source URL, plus the retries and replay Polytomic itself does not document — which
 matters, because a single 5xx marks the whole sync run failed.
 

@@ -21,7 +21,7 @@ Minimal example of receiving Dropbox API webhooks with the `challenge` verificat
    cp .env.example .env
    ```
 
-3. Add your Dropbox App secret (App Console > Settings) to `.env` as `DROPBOX_APP_SECRET`
+3. Add your Dropbox App secret (Developer Console > Settings) to `.env` as `DROPBOX_APP_SECRET`
 
 ## Run
 
@@ -45,7 +45,7 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 8000 dropbox --path /webhooks/dropbox
 ```
 
-Add the Hookdeck URL as the Webhook URI in the Dropbox App Console. Dropbox sends the `challenge` GET first, and the server must be running to answer it.
+Add the Hookdeck URL as the Webhook URI in the Dropbox Developer Console. Hookdeck answers Dropbox's `challenge` GET itself, then forwards the signed notifications to your local server. The GET handler here is for when Dropbox calls your server directly.
 
 ## Endpoints
 

@@ -54,6 +54,6 @@ def verify_bob_signature(raw_body: bytes, signature_header: str, secret: str) ->
 
 1. Log the byte length of the raw body and confirm it matches what Bob sent (for example in Hookdeck or a request inspector).
 2. Confirm no middleware (`express.json()`, a proxy that rewrites JSON) touched the body first.
-3. Confirm the secret belongs to this webhook (each Bob webhook has its own) and has no trailing whitespace.
+3. Confirm the secret is the one shown in this webhook's configuration in the Bob UI, copied with no trailing whitespace.
 4. Confirm you read the header `Bob-Signature` (HTTP headers are case-insensitive; frameworks usually lowercase them).
 5. Recompute the signature locally with the documented snippets and compare.

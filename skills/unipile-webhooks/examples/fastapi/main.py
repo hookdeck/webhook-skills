@@ -94,7 +94,7 @@ async def handle_message_received(payload: dict[str, Any]) -> None:
         sender.get("attendee_name", "unknown"),
         " [sent by connected account]" if own and sender.get("attendee_provider_id") else "",
     )
-    # TODO: store or forward the message. Attachment urls are att:// references.
+    # Store or forward the message. Attachment urls are att:// references.
 
 
 async def handle_message_read(payload: dict[str, Any]) -> None:
@@ -120,7 +120,7 @@ async def handle_account_status(status: dict[str, Any]) -> None:
     )
     if status.get("message") != "OK":
         # Not OK (e.g. CREDENTIALS) means no more new-message webhooks for this
-        # account until it is reconnected. TODO: alert the user and reconnect.
+        # account until it is reconnected. Alert the user and reconnect here.
         pass
 
 

@@ -8,7 +8,7 @@ Delivery details:
 
 - Respond with an HTTP `20x` within **10 seconds**.
 - Otherwise Onfido retries 5 times: 30 seconds, 2 minutes, 15 minutes, 2 hours and 10 hours after the first attempt.
-- **Circuit breaker:** if 5 requests to the same webhook fail in a row, the webhook is disabled.
+- **Circuit breaker:** if 5 requests to the same webhook fail in a row, the webhook is disabled for one minute.
 - **At-least-once delivery:** duplicates are possible, so make handlers idempotent.
 - **No ordering guarantee:** events can arrive out of order.
 - The URL must be HTTPS (TLS 1.2 and 1.3 supported).

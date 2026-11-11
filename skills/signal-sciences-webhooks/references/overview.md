@@ -2,7 +2,7 @@
 
 ## What Are Signal Sciences Webhooks?
 
-Signal Sciences is now the Fastly Next-Gen WAF. The generic webhook integration (alert) sends an HTTP POST with a JSON body to a URL you choose whenever selected activity occurs in a workspace (site). You can subscribe to all activity or to specific activity types.
+Signal Sciences is now the Fastly Next-Gen WAF. The generic webhook integration (alert) sends a JSON notification to a URL you choose whenever selected activity occurs in a workspace (site). You can subscribe to all activity or to specific activity types.
 
 ## Common Event Types
 
@@ -57,4 +57,4 @@ The shape of `payload` varies by activity type; Fastly's docs link each type to 
 
 ## Full Event Reference
 
-See [Fastly's generic webhooks documentation](https://docs.fastly.com/en/ngwaf/generic-webhooks).
+See [Fastly's generic webhooks documentation](https://www.fastly.com/documentation/guides/next-gen-waf/monitoring/alerts/generic-webhooks/).

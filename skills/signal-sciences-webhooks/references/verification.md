@@ -57,4 +57,4 @@ def verify(raw_body: bytes, signature_header: str, signing_key: str) -> bool:
 1. Print the length of the raw body and compare with what Fastly sent (via the Hookdeck CLI request view).
 2. Confirm you're using the key for *this* integration. Each alert or site integration has its own key.
 3. Make sure no middleware (body parsers, proxies) alters the body before verification.
-4. Test with Fastly's published example by hand: `echo -n "$BODY" | openssl dgst -sha256 -hmac "$KEY"` and compare with the header.
+4. Test with Fastly's published example by hand: `echo -n "$BODY" | openssl dgst -sha256 -hmac "$KEY"` and compare the hex digest with the header. openssl prints a label such as `(stdin)= ` before the digest, which is why Fastly's Bash sample never matches as written.

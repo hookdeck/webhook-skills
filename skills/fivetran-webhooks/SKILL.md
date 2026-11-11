@@ -68,12 +68,12 @@ The event name is in the JSON body (`event`); there is no event-type header.
 |-------|-------------|
 | `sync_start` | A connection sync started |
 | `sync_end` | A connection sync ended (`data.status` is `SUCCESSFUL` or `FAILED`) |
-| `status` | Connection status change (deprecated by Fivetran) |
+| `status` | Deprecated by Fivetran, with no published description |
 | `transformation_start` | A transformation run started |
 | `transformation_succeeded` | A transformation run succeeded |
 | `transformation_failed` | A transformation run failed |
-| `connection_successful` | Connection setup test passed |
-| `connection_failure` | Connection setup test failed |
+| `connection_successful` | Fivetran connected to the connection's source system |
+| `connection_failure` | Fivetran failed to connect to the connection's source system |
 | `create_connector` / `pause_connector` / `resume_connector` / `edit_connector` / `delete_connector` / `force_update_connector` / `resync_connector` / `resync_table` | Connection lifecycle changes |
 
 > **For the full event list**, see [Fivetran Webhooks](https://fivetran.com/docs/rest-api/webhooks).

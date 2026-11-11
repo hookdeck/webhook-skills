@@ -77,7 +77,7 @@ The event type is in the payload's `topic` field (also sent in the `X-Dwolla-Top
 
 ## Payload and Headers
 
-Payload: `id` (event ID), `resourceId`, `topic`, `timestamp`, and `_links` (`self`, `account`, `resource`, `customer`). Fetch the resource through `_links.resource.href` for current state.
+Payload: `id` (event ID), `resourceId`, `topic`, `created` (ISO-8601), `_links` (`self`, `account`, `resource`, `customer`), and `correlationId` on transfer events when you set one. One older example on Dwolla's Working with Webhooks page names the timestamp `timestamp`; the Webhook Events page and the Events API use `created`. Fetch the resource through `_links.resource.href` for current state.
 
 | Header | Description |
 |--------|-------------|

@@ -16,7 +16,7 @@ function makeEvent(overrides = {}) {
     id: crypto.randomUUID(),
     resourceId: '36E9DCB2-889B-4873-8E52-0C9404EA002A',
     topic: 'customer_created',
-    timestamp: '2015-10-22T14:44:11.407Z',
+    created: '2015-10-22T14:44:11.407Z',
     _links: { self: { href: 'https://api-sandbox.dwolla.com/events/x' } },
     ...overrides,
   };

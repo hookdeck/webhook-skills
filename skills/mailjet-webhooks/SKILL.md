@@ -86,7 +86,7 @@ MAILJET_WEBHOOK_PASSWORD=change-me-to-a-long-random-string
 
 ## Gotchas
 
-- **Respond `200` quickly.** Any other status makes Mailjet retry every 30 seconds for up to 24 hours, and a persistently failing URL can be suspended (reactivate by updating it with a new URL). Process events asynchronously.
+- **Respond `200` quickly.** Any other status makes Mailjet retry every 30 seconds for up to 24 hours, and a suspended URL is reactivated only by updating it to a new URL. Process events asynchronously.
 - **No event ID or timestamp-based replay protection.** Mailjet retries and `sent` volume make duplicates likely; dedupe on `MessageID` + `event` + `time` (+ `email`).
 - **Passwords may contain `:`.** Split the decoded credentials on the first colon only. Percent-encode special characters in the URL when registering it.
 - **`sent` is high-volume.** Turn on Group Events so you receive batches.

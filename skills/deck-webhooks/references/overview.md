@@ -56,19 +56,21 @@ These are all the documented subscribable types (`"events": ["*"]` subscribes to
 |----------|--------|
 | Agents | `agent.created`, `agent.updated`, `agent.deleted` |
 | Sources | `source.created`, `source.updated`, `source.deleted` |
-| Credentials | `credential.created`, `credential.unverified`, `credential.verified`, `credential.invalid`, `credential.deleted` |
+| Credentials | `credential.created`, `credential.updated`, `credential.unverified`, `credential.verified`, `credential.invalid`, `credential.deleted` |
 | Sessions | `session.queued`, `session.running`, `session.idle`, `session.completing`, `session.completed`, `session.failed` |
 | Tasks | `task.created`, `task.updated`, `task.reset`, `task.deleted` |
 | Task runs | `task_run.queued`, `task_run.running`, `task_run.completed`, `task_run.failed`, `task_run.canceling`, `task_run.canceled`, `task_run.interaction_required` |
 | Workflows | `workflow.created`, `workflow.updated`, `workflow.deleted` |
 | Workflow runs | `workflow_run.queued`, `workflow_run.running`, `workflow_run.paused`, `workflow_run.completed`, `workflow_run.failed`, `workflow_run.canceling`, `workflow_run.canceled` |
+| Triggers | `trigger.created`, `trigger.updated`, `trigger.deleted`, `trigger.activated`, `trigger.deactivated` (set by you, or automatic after repeated failed trigger runs) |
+| Trigger runs | `trigger_run.completed`, `trigger_run.failed` (a scheduled fire created no runs) |
 | Storage | `storage.created`, `storage.deleted` |
 | Event destinations | `event_destination.activated`, `event_destination.deactivated` (set by you, or automatic after 100 consecutive delivery failures) |
 
 There's also **`test.ping`**, with `data: {"ok": true}`. You can't subscribe to it. It's sent only from **Send test ping** in the Console or `POST /v2/event-destinations/{destination_id}/test`, it's delivered once and it's never retried. Return a `2xx`.
 
 Notes:
-- `credential.created` fires with status `unverified`. `credential.unverified` fires when a `verified` or `invalid` credential's auth details are updated, which resets it.
+- `credential.created` fires with status `unverified`. `credential.updated` fires on any PATCH to a credential: auth details, managed interactions, external ID or persistence. `credential.unverified` fires when a `verified` or `invalid` credential's auth details are updated, which resets it.
 - `task.updated` also fires when a task moves to a new status after successful runs (for example `learning` → `test`). `task.reset` puts a task back to `learning` and invalidates its cached plan.
 - `workflow_run.*`: every status transition emits exactly once.
 
@@ -179,6 +181,11 @@ These payloads have **no `id` field**: use `workflow_run_id`. `result` is `null`
 ### Event destination (`event_destination.*`)
 
 `id` (`evtd_`), `object: "event_destination"`, `name`, `status` (`active` / `inactive`), `type` (e.g. `webhook`), `created_at`, `updated_at`.
+
+### Trigger (`trigger.*`) and trigger run (`trigger_run.*`)
+
+- Trigger: `id` (`trg_`), `object: "trigger"`, `name`, `status` (`active` / `inactive`), `task_id`, `workflow_id`, `created_at`, `updated_at`. `trigger.deactivated` adds a `reason`.
+- Trigger run: `id` (`tgrn_`), `object: "trigger_run"`, `trigger_id`, `status` (`completed` / `failed`), `runs_created`, `skipped_count`, `created_at`.
 
 ### Agent, source, task
 

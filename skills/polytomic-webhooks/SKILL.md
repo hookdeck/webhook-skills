@@ -28,9 +28,15 @@ and Polytomic POSTs **batches of changed records** to your URL on the sync's
 schedule.
 
 **Frame this as "receive Polytomic sync record batches", not "subscribe to
-Polytomic events."** There is no event-subscription UI, no per-event-type
-toggles and no separate platform-events API. Polytomic is not an event producer
-in the usual sense.
+Polytomic events."** The Webhook destination has no event-subscription UI and
+no per-event-type toggles.
+
+**Polytomic also has a separate, signed event webhook** for sync and ingestion
+status (`sync.completed`, `sync.failed`, `bulk_sync.completed`,
+`ingestion.stalled` and others), registered through its API and signed with
+HMAC-SHA256 in `webhook-id` / `webhook-timestamp` / `webhook-signature` headers.
+It is a different surface with a different envelope, and this skill does not
+cover it. See [Polytomic's events overview](https://apidocs.polytomic.com/2025-09-18/guides/events/overview).
 
 **Three things make Polytomic unlike most providers in this repo:**
 
@@ -59,7 +65,7 @@ in the usual sense.
   an HMAC against.**)
 - Is the `Authorization` bearer token a JWT I should verify? (**No — treat it as
   an opaque secret and compare byte-for-byte.**)
-- Which Polytomic webhook event types exist? (**Exactly one: `sync.records`.**)
+- Which event types does the Webhook destination send? (**Exactly one: `sync.records`.**)
 - How do I loop over `object.records[]` and use `hash` for deduplication?
 - Why are the keys inside `fields` different from the docs' example? (**They are
   defined by *your* sync configuration.**)
@@ -184,7 +190,7 @@ model against them — access defensively and tolerate missing keys.
 
 ## Events
 
-**Exactly one documented event type: `sync.records`.** Verbatim: *"This is an
+**The Webhook destination documents exactly one event type: `sync.records`.** Verbatim: *"This is an
 event type to help you distinguish new and future hooks. You should only process
 webhooks you know about—for right now, that is just the sync.records event."*
 
@@ -196,8 +202,10 @@ Route on the top-level `event` field, and make the **default branch ignore
 unknown events with a 200** — the docs explicitly anticipate future types.
 Erroring on an unknown event would mark the customer's sync as failed.
 
-**Do not invent event names.** There is no `sync.started`, `sync.completed`,
-`sync.failed` or `record.created`. None are documented.
+**Do not route destination deliveries on status events.** `sync.completed`,
+`sync.failed` and the other status events belong to Polytomic's separate event
+webhook, with a `type` field rather than `event`, and never arrive on a Webhook
+destination. There is no `sync.started` or `record.created` on either surface.
 
 ## Response Contract
 
@@ -288,8 +296,8 @@ No account required — the CLI creates a guest account on first run and gives y
 a public HTTPS URL plus a web UI for inspecting requests. Paste that URL into the
 Webhook connection and run your sync.
 
-Because Polytomic has no signature, there is nothing for a gateway to verify on
-the **Polytomic → gateway** hop. What Hookdeck adds is an unguessable source URL,
+Polytomic sends no signature, but a Hookdeck Polytomic source checks the Secret it
+sends against the one you set, on the **Polytomic → gateway** hop. What Hookdeck also adds is an unguessable source URL,
 retries and replay that Polytomic itself does not document, plus its own outbound
 signature on the **gateway → your destination** hop.
 

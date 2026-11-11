@@ -128,7 +128,7 @@ The other direction: your service (or a Hookdeck destination) sends events **to*
 
 | Endpoint | Purpose | Response |
 |----------|---------|----------|
-| `POST /hooks/agent` | Trigger an isolated agent turn | `202 Accepted` |
+| `POST /hooks/agent` | Trigger an isolated agent turn | `200 OK` with `runId` |
 | `POST /hooks/wake` | Enqueue a system event | `200 OK` |
 
 ```bash
@@ -148,8 +148,6 @@ curl -X POST http://127.0.0.1:18789/hooks/agent \
   "sessionKey": "hook:email:msg-123",
   "wakeMode": "now",
   "deliver": true,
-  "channel": "last",
-  "to": "+15551234567",
   "model": "openai/gpt-5.2-mini",
   "thinking": "low",
   "timeoutSeconds": 120
@@ -164,8 +162,8 @@ curl -X POST http://127.0.0.1:18789/hooks/agent \
 | `sessionKey` | No | Session key (disabled by default) |
 | `wakeMode` | No | `now` (default) or `next-heartbeat` |
 | `deliver` | No | Send agent response to messaging channel (default `true`) |
-| `channel` | No | `last`, `whatsapp`, `telegram`, `discord`, `slack`, `signal`, `msteams` |
-| `to` | No | Recipient identifier for the channel |
+| `channel` | No | A registered channel id, paired with `to`. Direct `/hooks/agent` calls can't use `last` |
+| `to` | No | Recipient for direct delivery, paired with `channel` |
 | `model` | No | Model override for this run |
 | `thinking` | No | Thinking level: `low`, `medium`, `high` |
 | `timeoutSeconds` | No | Max duration for the agent run |
@@ -188,12 +186,11 @@ curl -X POST http://127.0.0.1:18789/hooks/agent \
 
 | Code | Meaning |
 |------|---------|
-| `200` | Wake event accepted |
-| `202` | Agent hook accepted (async run started) |
+| `200` | Wake event or agent hook accepted (`/hooks/agent` returns the `runId`) |
 | `400` | Invalid payload or query-string token |
 | `401` | Authentication failed |
 | `413` | Payload too large |
-| `429` | Rate-limited (check `Retry-After` header) |
+| `429` | Repeated failed authentication throttled (honor `Retry-After`) |
 
 ## Environment Variables
 

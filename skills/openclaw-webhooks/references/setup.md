@@ -157,7 +157,7 @@ curl -X POST http://127.0.0.1:18789/hooks/agent \
   -H 'Content-Type: application/json' \
   -d '{"message": "Hello from webhook test", "name": "Test"}'
 
-# Expected: 202 Accepted
+# Expected: 200 OK with {"ok": true, "runId": ...}
 
 # Test wake hook
 curl -X POST http://127.0.0.1:18789/hooks/wake \

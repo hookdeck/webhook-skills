@@ -88,7 +88,7 @@ async function handleMessageReceived(payload) {
     `Message ${payload.message_id} in chat ${payload.chat_id} (${payload.account_type})` +
       ` from ${payload.sender?.attendee_name ?? 'unknown'}${own ? ' [sent by connected account]' : ''}`
   );
-  // TODO: store or forward the message. Attachment urls are att:// references:
+  // Store or forward the message. Attachment urls are att:// references:
   // download them with the Unipile API, not directly.
 }
 
@@ -98,7 +98,7 @@ async function handleMessageRead(payload) {
 
 async function handleMailReceived(payload) {
   console.log(`Email ${payload.email_id} "${payload.subject ?? ''}" from ${payload.from_attendee?.identifier ?? 'unknown'}`);
-  // TODO: process the email. `origin` is "unipile" for mail sent through the API.
+  // Process the email. `origin` is "unipile" for mail sent through the API.
 }
 
 async function handleAccountStatus(status) {
@@ -106,7 +106,7 @@ async function handleAccountStatus(status) {
   if (status.message !== ACCOUNT_STATUS.OK) {
     // Anything other than OK (e.g. CREDENTIALS) means no more new-message webhooks
     // for this account until it is reconnected.
-    // TODO: alert the user and start the reconnect flow.
+    // Alert the user and start the reconnect flow here.
   }
 }
 
