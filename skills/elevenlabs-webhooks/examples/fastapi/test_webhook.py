@@ -78,7 +78,7 @@ class TestElevenLabsWebhookHandler:
             }
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 401
         assert "Invalid signature" in response.json()["detail"]
 
     def test_missing_signature_header(self):
@@ -94,7 +94,7 @@ class TestElevenLabsWebhookHandler:
             headers={"Content-Type": "application/json"}
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 401
         assert "Missing signature header" in response.json()["detail"]
 
     def test_expired_timestamp(self):
@@ -121,7 +121,7 @@ class TestElevenLabsWebhookHandler:
             }
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 401
         assert "Invalid signature" in response.json()["detail"]
 
     def test_lowercase_signature_header(self):
@@ -162,7 +162,7 @@ class TestElevenLabsWebhookHandler:
             }
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 401
         assert "Invalid signature" in response.json()["detail"]
 
     def test_all_event_types(self):

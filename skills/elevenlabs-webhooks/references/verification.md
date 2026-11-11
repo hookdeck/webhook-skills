@@ -47,11 +47,10 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
   // Parse the signature header
   const elements = signatureHeader.split(',');
   const timestamp = elements.find(e => e.startsWith('t='))?.substring(2);
-  const signatures = elements
-    .filter(e => e.startsWith('v0='))
-    .map(e => e.substring(3));
+  // ElevenLabs sends one v0= value; like the SDKs, read only that one
+  const signature = elements.find(e => e.startsWith('v0='))?.substring(3);
 
-  if (!timestamp || signatures.length === 0) {
+  if (!timestamp || !signature) {
     throw new Error('Invalid signature header format');
   }
 
@@ -72,18 +71,12 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
     .update(signedPayload)
     .digest('hex');
 
-  // Timing-safe comparison
-  const isValid = signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      // Different lengths = not equal
-      return false;
-    }
-  });
+  // Timing-safe comparison (lengths must match first)
+  const received = Buffer.from(signature);
+  const expected = Buffer.from(expectedSignature);
+  const isValid =
+    received.length === expected.length &&
+    crypto.timingSafeEqual(received, expected);
 
   if (!isValid) {
     throw new Error('Invalid webhook signature');
@@ -106,14 +99,19 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
    - ElevenLabs uses a 30-minute tolerance window
    - Reject webhooks with timestamps outside this window
    - This prevents replay attacks
+   - The SDKs always enforce the window. A delivery retried or replayed more than 30 minutes after ElevenLabs sent it, for example through Hookdeck, fails the check. If you need a longer window, use the manual implementation and widen its tolerance
 
 3. **Header Case Sensitivity**
    - The header name is `ElevenLabs-Signature` (capital E, capital L, capital S)
    - Some frameworks lowercase headers - check for both cases
 
-4. **Multiple Signatures**
+4. **One Signature per Header**
    - The header format is `t=<unix seconds>,v0=<hex HMAC-SHA256 of "<t>.<rawBody>">`
-   - The SDKs read a single `v0=` value (JS: the first, Python: the last) and don't treat multiple `v0=` values as "any match"; ElevenLabs documents one signature per header
+   - ElevenLabs documents one `v0=` value per header. The SDKs read a single value (JS: the first, Python: the last), and so does the manual implementation above
+
+5. **Constant-Time Comparison**
+   - Both SDKs compare the signature with a plain string comparison (`!==` in JS, `!=` in Python), which isn't constant-time
+   - The manual implementation above uses `crypto.timingSafeEqual`; in Python, use `hmac.compare_digest`
 
 ## Framework-Specific Examples
 
@@ -131,7 +129,7 @@ app.post('/webhooks/elevenlabs',
       res.sendStatus(200);
     } catch (error) {
       console.error('Webhook verification failed:', error.message);
-      res.status(400).send('Invalid signature');
+      res.status(401).send('Invalid signature');
     }
   }
 );
@@ -150,7 +148,7 @@ export async function POST(req: Request) {
     // Process webhook...
     return new Response('OK', { status: 200 });
   } catch (error) {
-    return new Response('Invalid signature', { status: 400 });
+    return new Response('Invalid signature', { status: 401 });
   }
 }
 ```
@@ -173,7 +171,7 @@ elevenlabs = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY") or "webhook
 async def elevenlabs_webhook(request: Request):
     sig = request.headers.get("elevenlabs-signature")
     if not sig:
-        raise HTTPException(status_code=400, detail="Missing signature header")
+        raise HTTPException(status_code=401, detail="Missing signature header")
 
     raw_body = await request.body()
     try:
@@ -183,7 +181,7 @@ async def elevenlabs_webhook(request: Request):
             os.environ["ELEVENLABS_WEBHOOK_SECRET"],
         )
     except BadRequestError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
     # Handle event["type"], event["data"]...
     return {"status": "ok"}

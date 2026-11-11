@@ -43,7 +43,7 @@ async def elevenlabs_webhook(
         elevenlabs_signature = request.headers.get('elevenlabs-signature')
 
     if not elevenlabs_signature:
-        raise HTTPException(status_code=400, detail="Missing signature header")
+        raise HTTPException(status_code=401, detail="Missing signature header")
 
     # Get raw body
     raw_body = await request.body()
@@ -88,7 +88,7 @@ async def elevenlabs_webhook(
 
     except BadRequestError as e:
         logger.error(f"Webhook verification failed: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
