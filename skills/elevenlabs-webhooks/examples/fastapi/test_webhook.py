@@ -145,28 +145,25 @@ class TestElevenLabsWebhookHandler:
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
-    def test_multiple_signatures_in_header(self):
+    def test_tampered_body_rejected(self):
         payload = json.dumps({
             "type": "voice_removal_notice",
             "data": {"voice_id": "test_voice_789"},
             "event_timestamp": "2024-01-20T10:30:00Z"
         })
-
         sig_data = generate_test_signature(payload, os.environ['ELEVENLABS_WEBHOOK_SECRET'])
-        # Add an invalid signature to the header
-        multi_sig_header = f"{sig_data['header']},v0=invalid_signature_here"
 
         response = client.post(
             "/webhooks/elevenlabs",
-            content=payload,
+            content=payload.replace("789", "000"),
             headers={
-                "ElevenLabs-Signature": multi_sig_header,
+                "ElevenLabs-Signature": sig_data['header'],
                 "Content-Type": "application/json"
             }
         )
 
-        assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.status_code == 400
+        assert "Invalid signature" in response.json()["detail"]
 
     def test_all_event_types(self):
         event_types = [
