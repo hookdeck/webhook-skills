@@ -27,7 +27,7 @@ function verifySumsubWebhook(rawBody, digest, digestAlg, secret) {
     return false;
   }
 
-  // Pick the hash from the alg header; an absent header means SHA256, an unknown value is rejected
+  // Pick the hash from the alg header (always sent). If it is missing, use SHA256 as Sumsub's C# sample does; reject unknown values
   const algorithm = DIGEST_ALGORITHMS[digestAlg || 'HMAC_SHA256_HEX'];
   if (!algorithm) {
     return false;
@@ -93,12 +93,12 @@ app.post('/webhooks/sumsub',
     switch (type) {
       case 'applicantCreated':
         console.log('Applicant created, review status:', reviewStatus);
-        // TODO: Link applicantId to your user record
+        // Link applicantId to your user record
         break;
 
       case 'applicantPending':
         console.log('Applicant submitted documents, review pending');
-        // TODO: Show "verification in progress" to the user
+        // Show "verification in progress" to the user
         break;
 
       case 'applicantReviewed': {
@@ -106,18 +106,18 @@ app.post('/webhooks/sumsub',
         const answer = payload.reviewResult?.reviewAnswer;
         if (answer === 'GREEN') {
           console.log('Applicant approved');
-          // TODO: Unlock verified features
+          // Unlock verified features
         } else if (answer === 'RED') {
           // RETRY = user can resubmit, FINAL = permanently rejected
           console.log('Applicant rejected:', payload.reviewResult?.reviewRejectType);
-          // TODO: Ask for resubmission or block the account
+          // Ask for resubmission or block the account
         }
         break;
       }
 
       case 'applicantOnHold':
         console.log('Applicant on hold, manual review required');
-        // TODO: Flag for compliance team
+        // Flag for compliance team
         break;
 
       case 'applicantActionPending':
@@ -126,17 +126,17 @@ app.post('/webhooks/sumsub',
 
       case 'applicantActionReviewed':
         console.log('Applicant action reviewed:', payload.applicantActionId, payload.reviewResult?.reviewAnswer);
-        // TODO: Apply the action result (e.g. payment method check)
+        // Apply the action result (e.g. payment method check)
         break;
 
       case 'applicantReset':
         console.log('Applicant reset');
-        // TODO: Clear cached verification state
+        // Clear cached verification state
         break;
 
       case 'applicantDeleted':
         console.log('Applicant deleted');
-        // TODO: Remove local references to the applicant
+        // Remove local references to the applicant
         break;
 
       default:

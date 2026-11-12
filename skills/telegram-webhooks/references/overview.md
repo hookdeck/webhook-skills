@@ -47,6 +47,11 @@ const updateType = Object.keys(update).find((key) => key !== 'update_id');
 | `chat_member` | Another member's status changed; must be listed in `allowed_updates`; bot must be an admin |
 | `chat_join_request` | Join request; bot needs `can_invite_users` |
 | `chat_boost`, `removed_chat_boost` | Chat boosts; bot must be an admin |
+| `widget_query`, `shared_widget_query` | Queries from HTML widgets in the bot's messages (Bot API 10.4); answer with `answerWidgetQuery` |
+| `guest_message` | Guest message; answer with `answerGuestQuery` using `Message.guest_query_id` |
+| `managed_bot` | A bot managed by this bot was created, or its token or owner changed |
+| `subscription` | A user's payment subscription changed |
+| `stopped_message_generation` | A user asked the bot to stop generating a message |
 
 Telegram adds update types regularly, so always have a default branch that logs and
 acknowledges unknown types. By default (empty `allowed_updates`) you receive every type

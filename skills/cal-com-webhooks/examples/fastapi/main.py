@@ -58,32 +58,32 @@ async def cal_com_webhook(request: Request):
 
     if trigger == "BOOKING_CREATED":
         print(f"Booking created: {data.get('uid')} \"{data.get('title')}\" at {data.get('startTime')}")
-        # TODO: Create CRM record, send custom confirmation, etc.
+        # Create CRM record, send custom confirmation, etc.
 
     elif trigger == "BOOKING_REQUESTED":
         print(f"Booking requested (awaiting confirmation): {data.get('uid')}")
 
     elif trigger == "BOOKING_RESCHEDULED":
         print(f"Booking rescheduled: {data.get('rescheduleUid')} -> {data.get('uid')} at {data.get('startTime')}")
-        # TODO: Update calendar / CRM with the new time
+        # Update calendar / CRM with the new time
 
     elif trigger == "BOOKING_CANCELLED":
         print(f"Booking cancelled: {data.get('uid')} ({data.get('cancellationReason') or 'no reason'})")
-        # TODO: Release resources, issue refunds, etc.
+        # Release resources, issue refunds, etc.
 
     elif trigger == "BOOKING_REJECTED":
         print(f"Booking rejected: {data.get('uid')} ({data.get('rejectionReason') or 'no reason'})")
 
     elif trigger == "BOOKING_PAID":
         print(f"Booking paid: {data.get('uid')} (payment {data.get('paymentId')})")
-        # TODO: Mark order as paid
+        # Mark order as paid
 
     elif trigger == "MEETING_STARTED":
         print(f"Meeting started: {data.get('uid')}")
 
     elif trigger == "MEETING_ENDED":
         print(f"Meeting ended: {data.get('uid')}")
-        # TODO: Send follow-up email, survey, invoice
+        # Send follow-up email, survey, invoice
 
     elif trigger == "RECORDING_READY":
         print(f"Recording ready for: {data.get('title')}")

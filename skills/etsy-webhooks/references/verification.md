@@ -6,7 +6,7 @@ Your webhook URL is public. Without verification, anyone can POST a fake `order.
 
 ## How Does Etsy Sign Webhooks?
 
-Etsy follows the [Standard Webhooks](https://www.standardwebhooks.com/) spec.
+Etsy's construction matches the [Standard Webhooks](https://www.standardwebhooks.com/) spec, although Etsy's docs don't name it or show a `webhook-signature` value.
 
 | Item | Value |
 |------|-------|
@@ -14,7 +14,7 @@ Etsy follows the [Standard Webhooks](https://www.standardwebhooks.com/) spec.
 | Headers | `webhook-id`, `webhook-timestamp`, `webhook-signature` |
 | Signed content | `{webhook-id}.{webhook-timestamp}.{raw body}` |
 | Key | Signing secret with `whsec_` removed, then base64-decoded |
-| Signature header format | Space-separated `v1,<base64>` entries; any match is valid |
+| Signature header format | Etsy: "if more than one" entry, any match is valid. The `v1,` prefix and space delimiter come from Standard Webhooks |
 | Timestamp tolerance | Reject if more than 300 seconds from server time (Etsy's recommendation) |
 
 Steps:
@@ -91,7 +91,7 @@ def verify_etsy_webhook(raw_body: bytes, webhook_id: str, timestamp: str,
 
 - **Use the raw body.** Parsing JSON and re-serializing it changes whitespace and key order, so the HMAC won't match. Use `express.raw()`, `await request.text()` in Next.js, or `await request.body()` in FastAPI.
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the literal string.
-- **Strip the `v1,` prefix** from each signature entry before comparing, and check every entry: the header can contain several during secret rotation.
+- **Strip the `v1,` prefix** from each signature entry before comparing, and check every entry: Etsy says the header can contain more than one.
 - **Timestamp is in seconds**, not milliseconds.
 - **Header names are lowercase** in Node and are case-insensitive in FastAPI/Next.js; read `webhook-signature`, not `X-Etsy-Signature`.
 - **The event type is in the body** (`event_type`), not a header.

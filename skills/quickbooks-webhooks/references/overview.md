@@ -12,7 +12,7 @@ Webhooks apply to every company connected to the app. You only receive events fo
 
 ### CloudEvents format (current)
 
-In 2026 Intuit moved webhook notifications to the [CloudEvents](https://cloudevents.io/) format. The body is a JSON **array**. One delivery can hold events for **several companies**, so don't assume one realm per request.
+Intuit is moving webhook notifications to the [CloudEvents](https://cloudevents.io/) format, a change it announced in November 2025. The body is a JSON **array**. One delivery can hold events for **several companies**, so don't assume one realm per request.
 
 ```json
 [
@@ -35,7 +35,7 @@ In 2026 Intuit moved webhook notifications to the [CloudEvents](https://cloudeve
 | `specversion` | CloudEvents spec version. Can be ignored. |
 | `id` | Unique event ID. Use it for deduplication and troubleshooting. |
 | `source` | GUID value. Can be ignored. |
-| `type` | `namespace.entitytype.eventname.version`, e.g. `qbo.invoice.updated.v1` |
+| `type` | `namespace.entitytype.eventname.version`, e.g. `qbo.salesreceipt.updated.v1` |
 | `datacontenttype` | Content type of `data` (`application/json`). Can be missing. |
 | `time` | When the change happened (RFC 3339, UTC). Use it to order events. |
 | `intuitentityid` | ID of the entity that changed |
@@ -72,24 +72,20 @@ Apps built before the migration received a single JSON **object**:
 }
 ```
 
-The signature scheme is the same for both. The examples in this skill accept both and normalize them to `{ entity, action, entityId, realmId }`. Legacy operations map as `Create`→`created`, `Update`→`updated`, `Delete`→`deleted`, `Merge`→`merged`, `Void`→`voided`, `Emailed`→`emailed`. Once your app only receives CloudEvents, you can drop the legacy branch.
+The signature scheme is the same for both. The examples in this skill accept both and normalize them to `{ entity, action, entityId, realmId }`. Legacy operations map as `Create`→`created`, `Update`→`updated` and `Merge`→`merged`, the three operations with a CloudEvents example in Intuit's docs. Other legacy operations keep their lowercased name. Once your app only receives CloudEvents, you can drop the legacy branch.
 
 ## Common Event Types
 
-The event `type` is `qbo.{entity in lowercase}.{event}.v1`. Intuit's documentation shows `qbo.account.created.v1`, `qbo.customer.merged.v1`, `qbo.employee.created.v1` and `qbo.salesreceipt.updated.v1`. Other entities and operations follow the same pattern.
+The event `type` has the format `namespace.entitytype.eventname.version`. Intuit's documentation prints four type strings, listed below. It doesn't say how the Delete, Void and Emailed operations are spelled in `type`, so check a real delivery before you match on one.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `qbo.invoice.created.v1` | Invoice created | Sync invoice to CRM or billing system |
-| `qbo.invoice.updated.v1` | Invoice changed (including status changes) | Refresh balance and status |
-| `qbo.payment.created.v1` | Customer payment recorded | Mark orders paid, reconcile |
-| `qbo.customer.created.v1` | Customer created | Create matching CRM contact |
-| `qbo.customer.updated.v1` | Customer changed | Keep contact details in sync |
+| `qbo.account.created.v1` | Account created | Add the account to your chart of accounts copy |
 | `qbo.customer.merged.v1` | Two customers merged | Re-point references from `data.deletedid` |
 | `qbo.salesreceipt.updated.v1` | Sales receipt changed | Update revenue reporting |
 | `qbo.employee.created.v1` | Employee created | Provision in HR or payroll tools |
 
-The examples dispatch on the event segment (`created`, `updated`, `deleted`, `merged`, `voided`, `emailed`), so they cover every entity.
+The examples dispatch on the event segment: `created`, `updated` and `merged` by name, and every other operation through a default branch that re-fetches the record, so they cover every entity.
 
 ## Supported Entities and Operations
 
@@ -136,6 +132,6 @@ The examples dispatch on the event segment (`created`, `updated`, `deleted`, `me
 ## Full Event Reference
 
 - [QuickBooks Online webhooks](https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks)
-- [Managing webhook notifications](https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/managing-webhooks-notifications)
+- [Configure webhooks](https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/configure-webhooks)
 - [Data objects in webhook payloads](https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/data-objects)
 - [Webhook best practices](https://developer.intuit.com/app/developer/qbo/docs/develop/webhooks/best-practices)

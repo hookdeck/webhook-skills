@@ -82,9 +82,6 @@ function handleEvent(event) {
           `${event.payload?.amount} ${event.payload?.currency} (${event.payload?.id})`
       );
       break;
-    case 'payment.failed':
-      console.log(`Checkout ${event.payload?.metadata?.checkoutId} payment failed`);
-      break;
     case 'refund.succeeded':
       console.log(`Refund ${event.payload?.id} succeeded: ${event.payload?.amount} cents`);
       break;

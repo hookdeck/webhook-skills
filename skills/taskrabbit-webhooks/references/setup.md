@@ -51,8 +51,9 @@ npx hookdeck-cli listen 3000 taskrabbit --path /webhooks/taskrabbit
 npx hookdeck-cli listen 8000 taskrabbit --path /webhooks/taskrabbit
 ```
 
-Add the printed URL as an endpoint in the Svix Partner Dashboard, then send an
-example event from the endpoint's testing tab, or replay a past message.
+Add the printed URL as an endpoint in the Svix Partner Dashboard, then replay a
+past message from the dashboard or wait for a real project event. Taskrabbit's
+docs describe replay but no test-event button.
 
 ## Monitoring Deliveries
 

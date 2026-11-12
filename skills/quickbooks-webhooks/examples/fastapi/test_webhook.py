@@ -69,7 +69,7 @@ def post_signed(body: str):
 
 class TestVerifyQuickBooksSignature:
     def test_valid_signature(self):
-        body = '[{"type":"qbo.invoice.created.v1"}]'
+        body = '[{"type":"qbo.account.created.v1"}]'
         sig = generate_quickbooks_signature(body, VERIFIER_TOKEN)
         assert verify_quickbooks_signature(body.encode(), sig, VERIFIER_TOKEN) is True
 
@@ -115,24 +115,24 @@ class TestNormalizeEvents:
 
 class TestQuickBooksWebhook:
     def test_missing_signature_returns_400(self):
-        response = post(json.dumps([cloud_event("qbo.invoice.created.v1")]))
+        response = post(json.dumps([cloud_event("qbo.account.created.v1")]))
         assert response.status_code == 400
 
     def test_invalid_signature_returns_400(self):
-        response = post(json.dumps([cloud_event("qbo.invoice.created.v1")]), "aW52YWxpZA==")
+        response = post(json.dumps([cloud_event("qbo.account.created.v1")]), "aW52YWxpZA==")
         assert response.status_code == 400
         assert response.json()["detail"] == "Invalid signature"
 
     def test_valid_cloudevents_returns_200(self):
-        response = post_signed(json.dumps([cloud_event("qbo.invoice.created.v1")]))
+        response = post_signed(json.dumps([cloud_event("qbo.account.created.v1")]))
         assert response.status_code == 200
         assert response.json() == {"received": True, "count": 1}
 
     def test_multiple_companies(self):
         body = json.dumps(
             [
-                cloud_event("qbo.invoice.created.v1", intuitaccountid="111"),
-                cloud_event("qbo.payment.created.v1", intuitaccountid="222"),
+                cloud_event("qbo.account.created.v1", intuitaccountid="111"),
+                cloud_event("qbo.employee.created.v1", intuitaccountid="222"),
                 cloud_event("qbo.customer.merged.v1", intuitaccountid="333", data={"deletedid": "27"}),
             ]
         )
@@ -143,14 +143,7 @@ class TestQuickBooksWebhook:
     @pytest.mark.parametrize(
         "event_type",
         [
-            "qbo.invoice.created.v1",
-            "qbo.invoice.updated.v1",
-            "qbo.invoice.deleted.v1",
-            "qbo.invoice.voided.v1",
-            "qbo.invoice.emailed.v1",
-            "qbo.payment.created.v1",
-            "qbo.customer.created.v1",
-            "qbo.customer.updated.v1",
+            "qbo.account.created.v1",
             "qbo.customer.merged.v1",
             "qbo.salesreceipt.updated.v1",
             "qbo.employee.created.v1",
@@ -173,7 +166,7 @@ class TestQuickBooksWebhook:
         assert response.json()["count"] == 1
 
     def test_raw_body_whitespace(self):
-        body = '[ {"type": "qbo.invoice.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]'
+        body = '[ {"type": "qbo.account.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]'
         response = post_signed(body)
         assert response.status_code == 200
 

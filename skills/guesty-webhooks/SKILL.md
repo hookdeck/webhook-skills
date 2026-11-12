@@ -58,15 +58,17 @@ Python: `from svix.webhooks import Webhook` and call `Webhook(secret).verify(raw
 
 ## Common Event Types
 
-The payload is `{ "event": "<name>", "meta": { "eventId": ... }, <object>: {...} }`.
-The object key depends on the event: `data` (reservation v2), `reservation`
-(legacy reservation), `listing`, `guest`, `payment`.
+The payload is `{ "event": "<name>", <object>: {...} }`, plus a `meta` block
+(`meta.eventId`) on reservation and listing events. The object key depends on
+the event: `data` (reservation v2), `reservation` (legacy reservation),
+`listing`, `guest`, `payment`. Guesty's `calendar.updated.v2` and guest folio
+examples show no `event` key.
 
 | Event | Object key | Triggered When |
 |-------|-----------|----------------|
 | `reservation.created.v2` | `data` | A booking request or instant booking is created (recommended) |
 | `reservation.updated.v2` | `data` | Stay details change; `meta.changedFields` / `meta.subType` say what changed |
-| `reservation.new` | `reservation` | Legacy: booking created (being phased out by end of Feb 2027) |
+| `reservation.new` | `reservation` | Legacy: booking created (retired on 1 March 2027) |
 | `reservation.updated` | `reservation` | Legacy: reservation, folio, or payment changed; also has `reservationBefore` |
 | `listing.new` | `listing` | A listing is created |
 | `listing.updated` | `listing` | A listing's settings or content change |
@@ -78,7 +80,7 @@ Other events: `reservation_update_shortlist`, `calendar.updated.v2`,
 `listing.calendar.updated`, `reservation.messageReceived`,
 `reservation.messageSent`, `guest.updated`, `guest.deleted`, `task.created`,
 `task.updated`, `task.deleted`, `guest-folio.created`, `guest-folio.updated`,
-and the other `payments.*` events. See [references/overview.md](references/overview.md).
+`reservation.payments.updated`, and the other `payments.*` events. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 

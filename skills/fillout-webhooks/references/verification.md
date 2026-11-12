@@ -97,6 +97,9 @@ verify. All three examples use the standard library.
   `formId` and `url`.
 - **Store the token without `Bearer `.** `FILLOUT_WEBHOOK_TOKEN` is the bare token; the
   code adds the prefix. Putting `Bearer ` in both places gives `Bearer Bearer ...`.
+- **Publish after changing the header.** **Test** sends the editor's current settings, but
+  real submissions use the last published version. A test can pass while real deliveries
+  still send the old header, or none.
 - **Whitespace.** A trailing space or newline pasted into Fillout's header value makes
   every comparison fail. Re-type the value if the test request gets `401`.
 - **Don't confuse the API key with the webhook token.** Your Fillout API key

@@ -89,15 +89,16 @@ Notifications say *that* something changed, not *what*. Call the API afterwards
 | `untrash` | Drive files | Restored from trash |
 | `change` | Drive changes | Changelog items added (Google's example header shows `changed`; handle both) |
 | `exists` | Calendar | A resource in the collection was created, modified, or deleted |
-| `not_exists` | Calendar | The watched resource no longer exists |
+| `not_exists` | Calendar | Listed as a possible value; Google doesn't say when it's sent |
 | `delete`, `undelete`, `makeAdmin` | Directory users | User deleted / undeleted / admin status changed |
 
 Google may add new states; ignore unknown ones gracefully.
 
 ## Responding and Channel Lifetimes
 
-- Return **200, 201, 202, 204, or 102** for success. Google retries 500/502/503/504
-  with exponential backoff; other codes are failures.
+- Return **200, 201, 202, 204, or 102** for success. Google's docs say it retries
+  500/502/503/504 with exponential backoff if your service uses Google's API client
+  library; other codes are failures and aren't retried.
 - Channels expire and **cannot be renewed** — create a new channel with a new
   `id` before expiry (Drive: max 1 day for `files`, 1 week for `changes`; default
   1 hour). Stop old ones with `channels.stop` (`id` + `resourceId`).

@@ -77,35 +77,35 @@ async def mux_webhook(request: Request):
 
     if event_type == "video.asset.created":
         print(f"Asset created: {data.get('id')}")
-        # TODO: Record the asset and show it as processing
+        # Record the asset and show it as processing
 
     elif event_type == "video.asset.ready":
         print(f"Asset ready: {data.get('id')} {data.get('playback_ids')}")
-        # TODO: Store the playback ID and publish the video
+        # Store the playback ID and publish the video
 
     elif event_type == "video.asset.errored":
         print(f"Asset errored: {data.get('id')} {data.get('errors')}")
-        # TODO: Mark the asset as failed and notify the uploader
+        # Mark the asset as failed and notify the uploader
 
     elif event_type == "video.asset.deleted":
         print(f"Asset deleted: {data.get('id')}")
-        # TODO: Remove the asset from your catalog
+        # Remove the asset from your catalog
 
     elif event_type == "video.asset.live_stream_completed":
         print(f"Live stream asset completed: {data.get('id')}")
-        # TODO: Publish the recorded replay
+        # Publish the recorded replay
 
     elif event_type == "video.upload.asset_created":
         print(f"Upload created asset: {data.get('id')} {data.get('asset_id')}")
-        # TODO: Link the new asset to the user who uploaded it
+        # Link the new asset to the user who uploaded it
 
     elif event_type == "video.live_stream.active":
         print(f"Live stream active: {data.get('id')}")
-        # TODO: Show the stream as live
+        # Show the stream as live
 
     elif event_type == "video.live_stream.idle":
         print(f"Live stream idle: {data.get('id')}")
-        # TODO: Show the stream as ended
+        # Show the stream as ended
 
     else:
         print(f"Unhandled event type: {event_type}")

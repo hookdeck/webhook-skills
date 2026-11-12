@@ -109,7 +109,7 @@ app.post('/webhooks/instantly', express.raw({ type: '*/*' }), (req, res) => {
 });
 
 function handleEvent(payload) {
-  // TODO: check idempotencyKey(payload) against your store and return if seen.
+  // Check idempotencyKey(payload) against your store and return if seen.
   const lead = payload.lead_email || 'unknown lead';
   const campaign = payload.campaign_name || payload.campaign_id;
 

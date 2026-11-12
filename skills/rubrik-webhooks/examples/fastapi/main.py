@@ -142,26 +142,28 @@ def handle_event(event: Dict[str, Any]) -> None:
     status = event["status"]
     cls = event["event_class"]
     obj = event["object_name"]
-    # Status values come from Rubrik's ActivityStatusEnum.
-    if status in ("Failure", "TaskFailure"):
+    # Only Success, Failure, PartialSuccess and Canceled report a final outcome.
+    # Every other status (Running, Queued, Canceling, TaskSuccess, TaskFailure,
+    # Info, Warning) describes work in progress, so log it and move on.
+    if status == "Failure":
         print(f"[rubrik] FAILED {cls} on {obj}: {event['message']}")
-        # TODO: open an incident / page on-call
-    elif status in ("Success", "TaskSuccess"):
+    elif status == "Success":
         print(f"[rubrik] Succeeded {cls} on {obj}")
-        # TODO: record successful backup / recovery
-    elif status in ("PARTIAL_SUCCESS", "Warning"):
-        print(f"[rubrik] Warning {cls} on {obj}: {event['message']}")
-    elif status in ("Canceled", "Canceling"):
+    elif status == "PartialSuccess":
+        print(f"[rubrik] Partial success {cls} on {obj}: {event['message']}")
+    elif status == "Canceled":
         print(f"[rubrik] Canceled {cls} on {obj}")
-    elif status in ("Running", "Queued", "Info"):
-        print(f"[rubrik] {status}: {event['message']}")
     else:
-        print(f"[rubrik] Unhandled status {status}: {event['message']}")
+        print(f"[rubrik] In progress ({status}): {event['message']}")
 
-    # Anomaly (ransomware) events deserve attention regardless of status.
+    # Decide what needs attention on severity, not status: a critical ransomware
+    # detection arrives with status Success, because the scan succeeded.
+    if event.get("severity") == "critical":
+        print(f"[rubrik] CRITICAL {cls} on {obj}: {event['message']}")
+
+    # Anomaly is the ActivityTypeEnum spelling of the ANOMALY class.
     if cls == "Anomaly":
         print(f"[rubrik] ANOMALY detected on {obj}: {event['message']}")
-        # TODO: alert the security team
 
 
 @app.post("/webhooks/rubrik")

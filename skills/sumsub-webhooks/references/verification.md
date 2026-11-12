@@ -36,7 +36,7 @@ const DIGEST_ALGORITHMS = {
 function verifySumsubWebhook(rawBody, digest, digestAlg, secret) {
   if (!digest || !secret) return false;
 
-  // An absent alg header means SHA256; an unknown value is rejected
+  // Sumsub always sends the alg header. If it is missing, use SHA256 as Sumsub's C# sample does; reject unknown values
   const algorithm = DIGEST_ALGORITHMS[digestAlg || 'HMAC_SHA256_HEX'];
   if (!algorithm) return false;
 
@@ -87,7 +87,7 @@ Use `raw_body = await request.body()` before any JSON parsing.
 - **Parsed or re-serialised body.** `JSON.stringify(req.body)` or `json.dumps(payload)` changes whitespace and key order, so the digest won't match. Verify the raw bytes.
 - **Non-constant-time compare.** Sumsub's samples use `===` / `==`. Use `crypto.timingSafeEqual` / `hmac.compare_digest` instead.
 - **Wrong secret.** Each webhook has its own secret key. A digest that never matches for one event type usually means that webhook has a different key.
-- **Missing alg header.** The examples treat an absent `x-payload-digest-alg` as `HMAC_SHA256_HEX` (the current default) and reject unknown values, which matches the Hookdeck Sumsub source.
+- **Missing alg header.** Sumsub says it always sends `x-payload-digest-alg` but doesn't say what to do without it. The examples fall back to `HMAC_SHA256_HEX`, as Sumsub's C# sample does (its JS and PHP samples reject instead), and reject unknown values.
 
 ## Which Status Code to Return on Failure
 

@@ -37,14 +37,13 @@ function verifyQuickBooksSignature(
   }
 }
 
-// Legacy eventNotifications operations -> CloudEvents event names
+// Legacy eventNotifications operations -> CloudEvents event names. Intuit's docs
+// print a CloudEvents example for these three only; any other legacy operation
+// (Delete, Void, Emailed) falls back to its lowercased name.
 const LEGACY_OPERATIONS: Record<string, string> = {
   Create: 'created',
   Update: 'updated',
-  Delete: 'deleted',
   Merge: 'merged',
-  Void: 'voided',
-  Emailed: 'emailed',
 };
 
 /**
@@ -100,36 +99,23 @@ function handleEvent(event: QuickBooksEvent) {
   switch (event.action) {
     case 'created':
       console.log(`Created: ${label}`);
-      // TODO: Fetch the record from the Accounting API and sync it
+      // Fetch the record from the Accounting API and sync it
       break;
 
     case 'updated':
       console.log(`Updated: ${label}`);
-      // TODO: Re-fetch the record and update your copy
-      break;
-
-    case 'deleted':
-      console.log(`Deleted: ${label}`);
-      // TODO: Remove or archive your copy
+      // Re-fetch the record and update your copy
       break;
 
     case 'merged':
       console.log(`Merged: ${label}, removed ID ${event.data.deletedid}`);
-      // TODO: Re-point references from data.deletedid to entityId
-      break;
-
-    case 'voided':
-      console.log(`Voided: ${label}`);
-      // TODO: Mark the transaction void
-      break;
-
-    case 'emailed':
-      console.log(`Emailed: ${label}`);
-      // TODO: Record that the document was sent
+      // Re-point references from data.deletedid to entityId
       break;
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      // Delete, Void and Emailed: Intuit doesn't print these event names, so
+      // re-fetch the record (or run a CDC query) to see its current state
+      console.log(`Other change (${event.type}): ${label}`);
   }
 }
 

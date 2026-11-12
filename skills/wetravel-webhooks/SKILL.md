@@ -54,7 +54,7 @@ new Webhook(process.env.WETRAVEL_WEBHOOK_SECRET).verify(rawBody, {
   'svix-timestamp': h('timestamp'),
   'svix-signature': h('signature'),
 }); // throws WebhookVerificationError -> respond 400
-const event = JSON.parse(rawBody.toString('utf8')); // { type, data }
+const event = JSON.parse(rawBody.toString('utf8')); // shape: see the Event Catalog
 ```
 
 ```python
@@ -101,7 +101,7 @@ No account required. Paste the printed URL into **Manage Webhooks → + Add Endp
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Event types, triggers and payload envelope
+- [references/overview.md](references/overview.md) - Event types, triggers and what is known about payloads
 - [references/setup.md](references/setup.md) - Enable webhooks, add an endpoint, get the signing secret
 - [references/verification.md](references/verification.md) - Svix signing details, manual fallback, gotchas
 

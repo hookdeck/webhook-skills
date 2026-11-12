@@ -57,4 +57,4 @@ npx hookdeck-cli listen 3000 taskrabbit --path /webhooks/taskrabbit
 
 Add the printed URL as an endpoint in the Svix Partner Dashboard, subscribe it
 to the project events, then copy that endpoint's signing secret into `.env`.
-Use the dashboard's testing tab (or replay a past message) to send an event.
+Replay a past message from the dashboard, or wait for a real project event.

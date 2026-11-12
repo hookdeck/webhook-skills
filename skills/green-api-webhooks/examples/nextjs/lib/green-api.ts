@@ -47,9 +47,9 @@ export interface GreenApiNotification {
 }
 
 /**
- * Dispatch on typeWebhook. GREEN-API retries undelivered notifications every
- * minute for up to 24 hours, so make these handlers idempotent (e.g. dedupe
- * on idMessage).
+ * Dispatch on typeWebhook. GREEN-API makes delivery attempts at a 1-minute
+ * interval and guarantees delivery within 24 hours, so make these handlers
+ * idempotent (e.g. dedupe on idMessage).
  */
 export function handleNotification(body: GreenApiNotification): void {
   switch (body.typeWebhook) {
@@ -58,28 +58,28 @@ export function handleNotification(body: GreenApiNotification): void {
       console.log(
         `Incoming ${body.messageData?.typeMessage} ${body.idMessage} from ${body.senderData?.chatId}${text ? `: ${text}` : ''}`
       );
-      // TODO: route to your bot / inbox, auto-reply, etc.
+      // Route to your bot or inbox, or send an auto-reply.
       break;
     }
 
     case 'outgoingMessageReceived':
       console.log(`Message ${body.idMessage} sent from phone to ${body.senderData?.chatId}`);
-      // TODO: sync conversations sent outside your app
+      // Sync conversations sent outside your app.
       break;
 
     case 'outgoingAPIMessageReceived':
       console.log(`Message ${body.idMessage} sent via API to ${body.senderData?.chatId}`);
-      // TODO: log/audit API sends
+      // Log or audit API sends.
       break;
 
     case 'outgoingMessageStatus':
       console.log(`Message ${body.idMessage} to ${body.chatId} is ${body.status}`);
-      // TODO: update delivery/read status; handle "failed" and "noAccount" (always sent)
+      // Update delivery/read status. "failed" and "noAccount" can't be switched off.
       break;
 
     case 'stateInstanceChanged':
       console.log(`Instance ${body.instanceData?.idInstance} state: ${body.stateInstance}`);
-      // TODO: alert when notAuthorized or blocked
+      // Alert when the state is notAuthorized or blocked.
       break;
 
     case 'statusInstanceChanged':
@@ -88,7 +88,7 @@ export function handleNotification(body: GreenApiNotification): void {
 
     case 'incomingCall':
       console.log(`Incoming call ${body.idMessage} from ${body.from}`);
-      // TODO: missed-call auto-reply
+      // Send a missed-call auto-reply.
       break;
 
     default:

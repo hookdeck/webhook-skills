@@ -66,33 +66,33 @@ def handle_segment_event(event: dict) -> None:
 
     if event_type == "track":
         print(f'Track "{event.get("event")}" for {user}')
-        # TODO: Trigger workflows, update usage counters, sync conversions
+        # Trigger workflows, update usage counters, sync conversions
 
     elif event_type == "identify":
         print(f"Identify {user}: {event.get('traits')}")
-        # TODO: Upsert the user in your database or CRM
+        # Upsert the user in your database or CRM
 
     elif event_type == "page":
         path = (event.get("properties") or {}).get("path") or event.get("name")
         print(f"Page view: {path}")
-        # TODO: Content analytics
+        # Content analytics
 
     elif event_type == "screen":
         print(f"Screen view: {event.get('name')}")
-        # TODO: Mobile analytics
+        # Mobile analytics
 
     elif event_type == "group":
         print(f"Group {event.get('groupId')} for {event.get('userId')}")
-        # TODO: Sync the account/organization
+        # Sync the account/organization
 
     elif event_type == "alias":
         print(f"Alias {event.get('previousId')} -> {event.get('userId')}")
-        # TODO: Merge user records
+        # Merge user records
 
     elif event_type == "delete":
         # Classic Webhooks destination only: user deletion request notification
         print(f"Delete request for {event.get('userId')}")
-        # TODO: Start your data-deletion automation
+        # Start your data-deletion automation
 
     else:
         print(f"Unhandled Segment call type: {event_type}")

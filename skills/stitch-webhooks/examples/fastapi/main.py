@@ -102,24 +102,24 @@ async def stitch_webhook(
             _typename(node.get("state")),
             _typename(node.get("paymentConfirmation")),
         )
-        # TODO: update the order from state / paymentConfirmation
+        # Update the order from state / paymentConfirmation
     elif event_type == "payment-consent-request":
         print(f"Consent update: {data.get('id')} {data.get('status')}")
-        # TODO: store/revoke the consent (card token, DebiCheck mandate, ...)
+        # Store/revoke the consent (card token, DebiCheck mandate, ...)
     elif event_type == "transaction":
         print(f"Transaction update: {data.get('id')} {data.get('status')}")
-        # TODO: mark the recurring charge SUCCESS / FAILURE / CANCELLED
+        # Mark the recurring charge SUCCESS / FAILURE / CANCELLED
     elif event_type == "collection":
         print(f"Collection update: {data.get('id')} {data.get('status')}")
-        # TODO: reconcile the batch collection
+        # Reconcile the batch collection
     elif event_type == "refund":
         node = _node(event, "refunds")
         print(f"Refund update: {node.get('id')} {_typename(node.get('status'))}")
-        # TODO: update refund status
+        # Update refund status
     elif event_type == "disbursement":
         node = _node(event, "disbursements")
         print(f"Disbursement update: {node.get('id')} {_typename(node.get('status'))}")
-        # TODO: update payout status
+        # Update payout status
     else:
         print(f"Unhandled Stitch event type: {event_type}")
 

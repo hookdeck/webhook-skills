@@ -30,7 +30,8 @@ Things that send the **same submission again**:
 - **Retry integration** on the form's Results page after a failed delivery.
 - **Resubmitting** a response, which reruns every integration, workflow and notification
   on the form.
-- **Editing** a submission, which can rerun integrations.
+- **Editing** through the respondent's edit link, which sends the webhook again with the
+  new answers. Editing a submission on the Results page doesn't send it again.
 
 So deduplicate on `submissionId` (plus `lastUpdatedAt` if you want edits to go through).
 
@@ -49,7 +50,7 @@ For webhooks created through the API, Fillout's docs say the webhook receives
 | Field | Type | Notes |
 |-------|------|-------|
 | `submissionId` | string | Unique ID, e.g. `6bcedd3a-fe26-4bcb-9ce9-d3850e38d42c`. Required |
-| `submissionTime` | ISO 8601 string | When the form was submitted. Required |
+| `submissionTime` | ISO 8601 string | When the webhook was sent (for a retry, the time of the retry). Required |
 | `lastUpdatedAt` | ISO 8601 string | Changes when the submission is edited |
 | `questions` | array | `{ id, name, type, value }` per question. Required |
 | `calculations` | array | `{ id, name, type, value }`, where `type` is `number`, `text` or `duration` |

@@ -5,39 +5,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest, normalizeEvent, type RubrikEvent } from '../../../lib/rubrik-auth';
 
 function handleEvent(event: RubrikEvent) {
-  // Status values come from Rubrik's ActivityStatusEnum.
+  // Only Success, Failure, PartialSuccess and Canceled report a final outcome.
+  // Every other status (Running, Queued, Canceling, TaskSuccess, TaskFailure,
+  // Info, Warning) describes work in progress, so log it and move on.
   switch (event.status) {
     case 'Failure':
-    case 'TaskFailure':
       console.log(`[rubrik] FAILED ${event.eventClass} on ${event.objectName}: ${event.message}`);
-      // TODO: open an incident / page on-call
       break;
     case 'Success':
-    case 'TaskSuccess':
       console.log(`[rubrik] Succeeded ${event.eventClass} on ${event.objectName}`);
-      // TODO: record successful backup / recovery
       break;
-    case 'PARTIAL_SUCCESS':
-    case 'Warning':
-      console.log(`[rubrik] Warning ${event.eventClass} on ${event.objectName}: ${event.message}`);
+    case 'PartialSuccess':
+      console.log(`[rubrik] Partial success ${event.eventClass} on ${event.objectName}: ${event.message}`);
       break;
     case 'Canceled':
-    case 'Canceling':
       console.log(`[rubrik] Canceled ${event.eventClass} on ${event.objectName}`);
       break;
-    case 'Running':
-    case 'Queued':
-    case 'Info':
-      console.log(`[rubrik] ${event.status}: ${event.message}`);
-      break;
     default:
-      console.log(`[rubrik] Unhandled status ${event.status}: ${event.message}`);
+      console.log(`[rubrik] In progress (${event.status}): ${event.message}`);
   }
 
-  // Anomaly (ransomware) events deserve attention regardless of status.
+  // Decide what needs attention on severity, not status: a critical ransomware
+  // detection arrives with status Success, because the scan succeeded.
+  if (event.severity === 'critical') {
+    console.log(`[rubrik] CRITICAL ${event.eventClass} on ${event.objectName}: ${event.message}`);
+  }
+
+  // Anomaly is the ActivityTypeEnum spelling of the ANOMALY class.
   if (event.eventClass === 'Anomaly') {
     console.log(`[rubrik] ANOMALY detected on ${event.objectName}: ${event.message}`);
-    // TODO: alert the security team
   }
 }
 

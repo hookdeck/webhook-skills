@@ -42,27 +42,27 @@ export function handleEvent(event: LineEvent): void {
     case 'message':
       // message.type: text, image, video, audio, file, location, sticker
       console.log(`Message (${event.message.type}) from ${event.source?.userId}:`, event.message.text ?? event.message.id);
-      // TODO: Reply with event.replyToken via the Messaging API reply endpoint
+      // Reply with event.replyToken via the Messaging API reply endpoint
       break;
 
     case 'messageEdited':
       console.log('Message edited:', event.message.id);
-      // TODO: Update the stored copy of the message (latest timestamp wins)
+      // Update the stored copy of the message (latest timestamp wins)
       break;
 
     case 'unsend':
       console.log('Message unsent:', event.unsend.messageId);
-      // TODO: Delete the stored message so it can't be seen or used again
+      // Delete the stored message so it can't be seen or used again
       break;
 
     case 'follow':
       console.log(`Followed by ${event.source?.userId} (unblocked: ${event.follow?.isUnblocked})`);
-      // TODO: Send a welcome message, create the user record
+      // Send a welcome message, create the user record
       break;
 
     case 'unfollow':
       console.log(`Blocked by ${event.source?.userId}`);
-      // TODO: Stop messaging this user
+      // Stop messaging this user
       break;
 
     case 'join':
@@ -83,7 +83,7 @@ export function handleEvent(event: LineEvent): void {
 
     case 'postback':
       console.log('Postback:', event.postback.data);
-      // TODO: Route on postback.data (and postback.params for date/time pickers)
+      // Route on postback.data (and postback.params for date/time pickers)
       break;
 
     case 'videoPlayComplete':
@@ -96,7 +96,7 @@ export function handleEvent(event: LineEvent): void {
 
     case 'accountLink':
       console.log(`Account link ${event.link.result}, nonce:`, event.link.nonce);
-      // TODO: Look up the nonce and link accounts if result === 'ok'
+      // Look up the nonce and link accounts if result === 'ok'
       break;
 
     case 'membership':

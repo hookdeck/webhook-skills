@@ -77,22 +77,32 @@ Route on `status` and `class`; there is no single event-type string.
 
 ### Status (`custom_details.status`, Rubrik `ActivityStatusEnum`)
 
-| Status | Triggered When | Common Use Cases |
-|--------|----------------|------------------|
-| `Failure` | An activity (e.g. backup) failed | Open an incident, page on-call |
-| `Success` | An activity completed | Record SLA compliance |
-| `PARTIAL_SUCCESS` | Completed with warnings | Ticket for follow-up |
-| `Warning` | Warning-level activity | Review queue |
-| `Canceled` / `Canceling` | Job canceled | Audit trail |
-| `Running` / `Queued` | Job in progress | Progress dashboards |
-| `Info` | Informational | Logging |
-| `TaskSuccess` / `TaskFailure` | Task-level outcome | Same as Success/Failure |
+Rubrik's [Send Events to Third-Party Tools](https://developer.rubrik.com/Integrations/Send-Events/)
+page says only four statuses report a final outcome:
+
+| Status | Meaning |
+|--------|---------|
+| `Success` | The activity finished |
+| `Failure` | The activity failed |
+| `PartialSuccess` | Finished with problems; check the severity |
+| `Canceled` | The activity was canceled, usually routine |
+
+Every other status (`Running`, `Queued`, `Canceling`, `TaskSuccess`, `TaskFailure`, `Info`,
+`Warning`) describes work in progress and should be ignored whatever its severity. The GraphQL
+`ActivityStatusEnum` spells the partial outcome `PARTIAL_SUCCESS`, but Rubrik's webhook docs and
+templates use `PartialSuccess`.
+
+Decide what needs attention on `severity` (`critical` and `warning` do, `info` doesn't), not
+status: for a detection the status says whether the scan ran, so a critical ransomware detection
+arrives with status `Success`.
 
 ### Class (`class`, Rubrik `ActivityTypeEnum`)
 
-Common values: `Backup`, `Anomaly` (ransomware/anomaly detection), `Recovery`, `Archive`,
+Rubrik's webhook example shows `Backup`. The other spellings come from `ActivityTypeEnum`, which
+no webhook example confirms: `Anomaly` (ransomware/anomaly detection), `Recovery`, `Archive`,
 `Replication`, `Index`, `Classification`, `Configuration`, `Hardware`, `Storage`, `System`,
-`ThreatHunt`. Treat unknown values as pass-through; Rubrik adds new ones.
+`ThreatHunt`, and upper snake values such as `LOG_BACKUP`. Treat unknown values as pass-through;
+Rubrik adds new ones.
 
 ### Subscription filters (`EventType`, `EventSeverity`)
 

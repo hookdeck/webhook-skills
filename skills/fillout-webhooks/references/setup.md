@@ -25,7 +25,9 @@ and in your server's `FILLOUT_WEBHOOK_TOKEN`.
    In Advanced mode Fillout sends only what you map here, not the full submission.
 6. **Headers:** add a header with key `Authorization` and value `Bearer <your token>`.
 7. Click **Test** to send a test request, then **Finish setup**.
-8. **Publish** the form. The webhook runs on every new submission.
+8. **Publish** the form. The webhook runs on every new submission. **Test** uses the
+   settings in the editor, but real submissions and **Retry integration** use the version
+   you last published, so publish again after changing the URL, headers or body.
 
 Set the same token on your server:
 
@@ -60,7 +62,7 @@ curl -X POST "https://api.fillout.com/v1/api/webhook/create" \
   API-created webhooks arrive without an `Authorization` header.
 - API-created webhooks send the full submission object and **don't show in the Fillout
   dashboard**. Remove them with `POST /v1/api/webhook/delete` (body `{ "webhookId": <id> }`).
-- The API is rate limited to 5 requests per second per account/API key.
+- The API is rate limited to 5 requests per second per API key.
 
 ## What Happens When a Delivery Fails?
 
@@ -69,7 +71,10 @@ submission to read the error, fix your endpoint, then click **Retry integration*
 button isn't there, resubmit the response. Resubmitting reruns all integrations,
 workflows and notifications on the form, not only the webhook.
 
-Fillout doesn't document automatic retries, timeouts, source IPs or a delivery ID header.
+Fillout sends each webhook once and doesn't retry it on its own. A delivery fails if your
+server doesn't accept the connection within about 10 seconds or respond within 60 seconds,
+and Fillout doesn't follow redirects. A failing webhook is never turned off: new
+submissions keep being sent. Fillout doesn't document source IPs or a delivery ID header.
 Return `2xx` quickly and do slow work asynchronously.
 
 ## Local Development
@@ -92,4 +97,4 @@ verification settings:
 - **API Key Header:** `Authorization`
 - **API Key:** `Bearer <your token>` (the whole value, including `Bearer `)
 
-The source accepts `POST` only, so keep the Fillout webhook on `POST`.
+The source pre-selects `POST`. Keep the Fillout webhook on `POST`, since only `POST` carries a body.

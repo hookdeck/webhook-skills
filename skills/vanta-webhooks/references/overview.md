@@ -44,13 +44,14 @@ These are delivered only to Audit Partner accounts during an active audit engage
 
 | Event | Triggered When |
 |-------|----------------|
+| `v1.information-request.created` / `.deleted` | An IRL item is created / deleted (early access, enabled by Vanta on request) |
 | `v1.information-request.status-changed` | An IRL item's status changes |
 | `v1.information-request.comment.created` / `.updated` / `.deleted` | An IRL comment changes |
 | `v1.information-request.evidence.created` / `.deleted` | Evidence is attached to / removed from an IRL item |
 | `v1.evidence.created` / `v1.evidence.deleted` | Audit evidence is created / deleted |
 | `v1.evidence.status-changed` | Audit evidence status changes |
 | `v1.evidence.comment.created` / `.updated` / `.deleted` | An evidence comment changes |
-| `v1.control.comment.created` / `.updated` / `.deleted` | An audit control comment changes |
+| `v1.control.comment.created` / `.updated` / `.deleted` | An audit control comment changes (early access, enabled by Vanta on request) |
 
 ## What Does a Vanta Webhook Payload Look Like?
 
@@ -89,8 +90,8 @@ carry IDs; fetch full objects from the Manage Vanta API. Treat IDs as opaque str
 
 ### How Do I Tell Which Event I Received?
 
-Vanta's docs are not explicit here. The overview says the event payload is the JSON
-body, and the payloads above have no `type` field. The OpenAPI description also says
+The reference page says "The payload documented for each event is the event body",
+and the payloads above have no `type` field. The OpenAPI description also says
 deliveries are "wrapped in a delivery envelope" but doesn't document its fields. The
 examples in this skill handle both cases:
 

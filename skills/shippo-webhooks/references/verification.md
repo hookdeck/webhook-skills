@@ -126,9 +126,9 @@ ok = hmac.compare_digest(request.query_params.get("token", ""), expected)
 ## Timestamp Tolerance
 
 Shippo doesn't document a tolerance window. The examples **don't check the
-timestamp by default**: retries and replays carry the original timestamp, so a
-window would reject a redelivery that arrives late (for example a Hookdeck retry
-or manual replay).
+timestamp by default**: Shippo doesn't say whether its retries are re-signed, and a
+Hookdeck retry or manual replay carries the original timestamp, so a window would
+reject a redelivery that arrives late.
 
 To opt in, set `SHIPPO_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of
 seconds (for example `300`). Timestamps further than that from the current time

@@ -22,9 +22,9 @@ function safeEqual(a, b) {
  * Brevo does NOT sign webhook payloads (no HMAC/signature header). Instead the
  * webhook is created with one of:
  *   - Basic auth: credentials in the notify URL (https://user:pass@host/...),
- *     which Brevo sends as `Authorization: Basic base64(user:pass)`
+ *     expected as `Authorization: Basic base64(user:pass)` (Brevo does not name the header)
  *   - Bearer token: `"auth": {"type": "bearer", "token": "..."}` on the
- *     webhook, sent as `Authorization: Bearer <token>`
+ *     webhook, expected as `Authorization: Bearer <token>` (Brevo does not name the header)
  * Either configured method is accepted; credentials are compared timing-safe.
  *
  * @param {string|undefined} authHeader - Authorization header value
@@ -68,14 +68,14 @@ function handleBrevoEvent(event) {
       break;
     case 'delivered':
       console.log(`Delivered to ${event.email}`);
-      // TODO: Mark message as delivered
+      // Mark message as delivered
       break;
     case 'opened':
     case 'unique_opened':
     case 'proxy_open':
     case 'unique_proxy_open':
       console.log(`${event.event} by ${event.email}`);
-      // TODO: Track engagement (proxy_open = opened via a privacy proxy, e.g. Apple MPP)
+      // Track engagement (proxy_open = opened via a privacy proxy)
       break;
     case 'click':
       console.log(`Click by ${event.email}: ${event.link || event.URL}`);
@@ -84,7 +84,7 @@ function handleBrevoEvent(event) {
     case 'invalid_email':
     case 'blocked':
       console.log(`${event.event} for ${event.email}: ${event.reason || ''}`);
-      // TODO: Suppress the address
+      // Suppress the address
       break;
     case 'soft_bounce':
     case 'deferred':
@@ -93,18 +93,18 @@ function handleBrevoEvent(event) {
       break;
     case 'spam':
       console.log(`Spam complaint from ${event.email}`);
-      // TODO: Unsubscribe / suppress the address
+      // Unsubscribe / suppress the address
       break;
     case 'unsubscribed': // transactional
     case 'unsubscribe': // marketing
       console.log(`Unsubscribed: ${event.email}`);
-      // TODO: Update subscription preferences
+      // Update subscription preferences
       break;
     case 'list_addition':
     case 'contact_updated':
     case 'contact_deleted':
       console.log(`Contact event ${event.event}: ${event.email}`);
-      // TODO: Sync contact to your system
+      // Sync contact to your system
       break;
     default:
       console.log(`Unhandled Brevo event: ${event.event ?? event.msg_status ?? 'unknown'}`);
@@ -134,7 +134,7 @@ app.post('/webhooks/brevo', express.raw({ type: '*/*', limit: '5mb' }), (req, re
     return res.status(400).send('Invalid JSON');
   }
 
-  // Batched webhooks (`batched: true`) deliver an array; normal ones a single object
+  // Brevo does not document the batched (`batched: true`) body, so accept an array or a single object
   const events = Array.isArray(body) ? body : [body];
   if (events.some((e) => !e || typeof e !== 'object')) {
     return res.status(400).send('Invalid payload');

@@ -111,7 +111,7 @@ good dedupe key.
 
 ## Retries, Timeouts and 202
 
-- The default retry policy retries **408, 429 and 5xx** (and connectivity errors) up
+- The default retry policy retries **408, 429 and 5xx** responses and timeouts up
   to **4** times at exponential intervals. `401`/`400` aren't retried.
 - Outbound request timeout: **120 s** (Consumption) / **225 s** default (Standard).
 - **Return `200`, not `202`.** For stateful workflows the HTTP action follows the

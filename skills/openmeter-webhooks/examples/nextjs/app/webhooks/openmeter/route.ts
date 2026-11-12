@@ -69,28 +69,28 @@ export async function POST(request: Request) {
         usage: data.value?.usage,
         hasAccess: data.value?.hasAccess,
       });
-      // TODO: notify the customer, or block access at 100%
+      // Notify the customer, or block access at 100%
       break;
 
     case 'entitlements.reset':
       console.log('Entitlement reset:', { subject: data.subject?.key, feature: data.feature?.key });
-      // TODO: clear over-quota flags, restore access
+      // Clear over-quota flags, restore access
       break;
 
     case 'invoice.created':
       console.log('Invoice created:', { id: data.id, number: data.number, status: data.status });
-      // TODO: sync the invoice to your accounting system
+      // Sync the invoice to your accounting system
       break;
 
     case 'invoice.updated':
       console.log('Invoice updated:', { id: data.id, number: data.number, status: data.status });
-      // TODO: react to the new invoice state
+      // React to the new invoice state
       break;
 
     default:
       console.log('Unhandled OpenMeter event type:', event.type);
   }
 
-  // Acknowledge quickly; OpenMeter (via Svix) retries non-2xx responses
+  // Acknowledge quickly with a 2xx
   return NextResponse.json({ received: true, id: event.id, type: event.type }, { status: 200 });
 }

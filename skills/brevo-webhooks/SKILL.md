@@ -32,7 +32,7 @@ spam, and when contacts change.
 **Brevo does not sign webhook payloads.** There is no signature header and no
 HMAC to compute. You secure the webhook when you create it, with one of:
 
-| Method | How you configure it | What Brevo sends |
+| Method | How you configure it | Expected on delivery (Brevo doesn't name the header) |
 |--------|----------------------|------------------|
 | Basic auth | Credentials in the notify URL: `https://user:pass@host/webhooks/brevo` | `Authorization: Basic base64(user:pass)` |
 | Bearer token | `"auth": {"type": "bearer", "token": "..."}` on create/update webhook | `Authorization: Bearer <token>` |
@@ -64,8 +64,8 @@ function verifyBrevoAuth(authHeader, { username, password, token } = {}) {
 ```
 
 > **No body signature** means the raw body isn't security-critical: normal JSON
-> parsing is fine. With **batched** webhooks (`"batched": true`) the body is an
-> array of events, so normalize to an array before dispatching.
+> parsing is fine. Brevo doesn't document the **batched** (`"batched": true`)
+> body, so accept either an array or a single object before dispatching.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -80,7 +80,7 @@ from the camelCase names you subscribe with (`hardBounce` → `hard_bounce`,
 | `request` | Transactional | Email sent ("Sent") |
 | `delivered` | Both | Email accepted by the recipient's server |
 | `opened` / `unique_opened` | Opened: both; first opening: transactional | Email opened / opened for the first time |
-| `proxy_open` / `unique_proxy_open` | `proxy_open`: both | Opened via a privacy proxy (e.g. Apple MPP) |
+| `proxy_open` / `unique_proxy_open` | `proxy_open`: both | Opened via a privacy proxy |
 | `click` | Both | Link clicked (`link` field in transactional, `URL` in marketing) |
 | `soft_bounce` / `hard_bounce` | Both | Temporary / permanent delivery failure |
 | `spam` | Both | Recipient marked the email as spam |

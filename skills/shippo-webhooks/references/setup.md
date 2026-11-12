@@ -53,7 +53,7 @@ Reject requests that don't come from Shippo's egress IPs:
 | US | `52.4.41.98`, `52.23.121.194`, `52.44.110.80`, `54.81.253.187`, `54.81.255.221` |
 | EU | `34.248.247.69`, `34.253.119.130`, `52.214.174.64`, `54.72.179.250` |
 
-Check the [webhook security page](https://docs.goshippo.com/docs/Tracking/WebhookSecurity)
+Check the [webhook security page](https://docs.goshippo.com/tracking/webhook-security)
 for the current list. An allowlist doesn't work when traffic reaches you through a
 proxy or tunnel (e.g. Hookdeck), because the source IP changes. Use the token or HMAC instead.
 
