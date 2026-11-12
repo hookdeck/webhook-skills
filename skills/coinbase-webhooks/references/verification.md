@@ -93,8 +93,10 @@ Never re-serialize parsed JSON to verify it.
 Use a constant-time comparison: `crypto.timingSafeEqual` in Node, `hmac.compare_digest` in
 Python. **Validate first.** Node's `timingSafeEqual` throws on buffers of unequal length.
 The docs' sample calls `Buffer.from(providedSignature, 'hex')` with no length check, so a
-malformed or odd-length signature makes it throw and return a 500. Check
-`/^[0-9a-f]{64}$/i` before comparing and return 400 if it fails.
+malformed or odd-length signature throws there; the sample relies on a surrounding
+`try`/`catch` to turn that into `false`. Checking `/^[0-9a-f]{64}$/i` before comparing is
+clearer, avoids exceptions for control flow, and lets you return a deliberate 400 — drop the
+`try`/`catch` and the same input becomes an unhandled 500.
 
 ## What About Replay Protection?
 
@@ -130,7 +132,7 @@ Return **500** ("server configuration error"). Never fail open, and never call H
 | Every request fails | Body parsed before verifying (`express.json()`, `request.json()`), or wrong secret |
 | `v1` fails but `v0` passes | A proxy changed a header named in `h`. Switch to `v0` |
 | Signature with a stray `=` | Stripped 2 characters from `v1=` instead of 3. Parse on the first `=` |
-| 500 on garbage signatures | `timingSafeEqual` length mismatch. Validate the hex first |
+| 500 on garbage signatures | `timingSafeEqual` length mismatch, uncaught. Validate the hex first |
 | Fails after Coinbase drops a header | Code reads only `X-Hook0-Signature`. Read `X-Webhook-Signature` first |
 | Old deliveries rejected | Timestamp window. Check server clock (NTP) |
 
