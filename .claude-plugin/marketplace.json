@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 806 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 807 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -3149,6 +3149,31 @@
         "coinbase-commerce",
         "payments",
         "crypto"
+      ]
+    },
+    {
+      "name": "coinbase-webhooks",
+      "description": "Receive and verify Coinbase Developer Platform (CDP) webhooks. Use when setting up CDP webhook handlers, debugging X-Webhook-Signature verification (HMAC-SHA256 hex, v0/v1), or handling onchain.activity.detected, wallet.transaction.*, wallet.activity.multi, payments.transfers.* and onramp/offramp events.",
+      "source": "./skills/coinbase-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/coinbase-webhooks",
+      "keywords": [
+        "webhooks",
+        "coinbase",
+        "cdp",
+        "crypto",
+        "onchain",
+        "wallets"
       ]
     },
     {
@@ -9135,7 +9160,7 @@
     },
     {
       "name": "nango-webhooks",
-      "description": "Receive and verify Nango webhooks. Use when setting up Nango webhook handlers, debugging X-Nango-Hmac-Sha256 signature verification (HMAC-SHA256 hex of the raw body, keyed with the environment's webhook signing key, not the API key), or handling Nango webhook types: auth (connection creation, override, refresh, deletion), sync (sync run succeeded or failed), forward (external API webhooks forwarded through Nango), and async_action.",
+      "description": "Receive and verify Nango webhooks. Use when setting up Nango webhook handlers, debugging X-Nango-Hmac-Sha256 signature verification (HMAC-SHA256 hex of the raw body, keyed with the environment's webhook signing key, not the API key), or handling Nango webhook types: auth (connection creation, override, refresh, deletion), sync (sync run succeeded or failed), forward (external API webhooks forwarded through Nango), and the deprecated async_action.",
       "source": "./skills/nango-webhooks",
       "strict": false,
       "skills": [
@@ -11657,7 +11682,7 @@
     },
     {
       "name": "quickbooks-webhooks",
-      "description": "Receive and verify QuickBooks Online (Intuit) webhooks. Use when setting up QuickBooks webhook handlers, debugging intuit-signature verification with the Verifier Token, migrating from the legacy eventNotifications payload to the CloudEvents format, or handling accounting events like qbo.invoice.created.v1, qbo.customer.updated.v1, and qbo.customer.merged.v1.",
+      "description": "Receive and verify QuickBooks Online (Intuit) webhooks. Use when setting up QuickBooks webhook handlers, debugging intuit-signature verification with the Verifier Token, migrating from the legacy eventNotifications payload to the CloudEvents format, or handling accounting events like qbo.account.created.v1, qbo.salesreceipt.updated.v1, and qbo.customer.merged.v1.",
       "source": "./skills/quickbooks-webhooks",
       "strict": false,
       "skills": [
@@ -13702,7 +13727,7 @@
     },
     {
       "name": "sovos-webhooks",
-      "description": "Receive and verify Sovos e-invoicing (Indirect Tax API) webhooks delivered through Svix. Use when setting up a Sovos webhook handler, debugging svix-id / svix-timestamp / svix-signature verification, configuring the Svix Consumer App Portal, or handling Sovos document notifications by eventType such as document.received, document.completed, workflow.completed, and system.error.",
+      "description": "Receive and verify Sovos e-invoicing (Indirect Tax API) webhooks delivered through Svix. Use when setting up a Sovos webhook handler, debugging svix-id / svix-timestamp / svix-signature verification, configuring the Svix Consumer App Portal, or handling Sovos document notifications by eventType (document.received) and the configured statusEvent names workflow.completed, system.error and document.completed.",
       "source": "./skills/sovos-webhooks",
       "strict": false,
       "skills": [
@@ -14616,7 +14641,7 @@
     },
     {
       "name": "taskrabbit-webhooks",
-      "description": "Receive and verify Taskrabbit webhooks from the Taskrabbit Partner API (Delivery and Home Services). Use when setting up a Taskrabbit webhook handler, verifying the Svix signature headers (svix-id, svix-timestamp, svix-signature) with a whsec_ secret from the Svix Partner Dashboard, debugging Taskrabbit signature verification, or handling project.completed, project.canceled and project.rescheduled events.",
+      "description": "Receive and verify Taskrabbit webhooks from the Taskrabbit Home Services Partner API. Use when setting up a Taskrabbit webhook handler, verifying the Svix signature headers (svix-id, svix-timestamp, svix-signature) with a whsec_ secret from the Svix Partner Dashboard, debugging Taskrabbit signature verification, or handling project.completed, project.canceled and project.rescheduled events.",
       "source": "./skills/taskrabbit-webhooks",
       "strict": false,
       "skills": [
@@ -17393,7 +17418,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 809 provider skills (Stripe, Shopify, GitHub, and 806 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 814 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 810 provider skills (Stripe, Shopify, GitHub, and 807 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 815 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17544,6 +17569,7 @@
         "./skills/coassemble-webhooks",
         "./skills/codat-webhooks",
         "./skills/coinbase-commerce-webhooks",
+        "./skills/coinbase-webhooks",
         "./skills/column-webhooks",
         "./skills/commercelayer-webhooks",
         "./skills/community-webhooks",
