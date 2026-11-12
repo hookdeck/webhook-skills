@@ -60,7 +60,7 @@ encrypted and out of exported workflow JSON.
 ```json
 {
   "event": "order.created",
-  "id": "{{ $execution.id }}-{{ $itemIndex }}",
+  "id": "order-{{ $json.orderId }}-created",
   "data": {{ JSON.stringify($json) }}
 }
 ```

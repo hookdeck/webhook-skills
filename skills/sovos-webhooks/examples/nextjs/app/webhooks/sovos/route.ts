@@ -76,16 +76,19 @@ export async function POST(request: Request) {
         erpDocumentId: metadata.erpDocumentId,
         sciResponseCode: metadata.sciResponseCode,
       });
-      // TODO: update the ERP document status; fetch notification.contentUrl if needed
+      // Update the ERP document status here; fetch notification.contentUrl if needed
       break;
+    // document.completed, workflow.completed and system.error are the statusEvent
+    // names Sovos configures. Its docs only show document.received as a delivered
+    // eventType, so log what arrives and adjust these cases to match.
     case 'document.completed':
     case 'workflow.completed':
       console.log('Document processing completed:', { documentId: metadata.documentId });
-      // TODO: mark the invoice final and store legal attachments
+      // Mark the invoice final and store legal attachments here
       break;
     case 'system.error':
       console.error('Sovos system error:', { documentId: metadata.documentId });
-      // TODO: alert and flag the document for review
+      // Alert your team and flag the document for review here
       break;
     default:
       console.log('Unhandled event type:', eventType);

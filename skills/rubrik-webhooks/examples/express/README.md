@@ -76,8 +76,10 @@ guest account on first run and gives you a web UI for inspecting and replaying e
   `timestamp`, `class` at the top level and the event details (`id`, `type`, `objectName`,
   `objectType`, `status`, `eventName`, ...) under `custom_details`. Custom templates can change
   the shape, so the handler also reads a flat payload.
-- **Dispatch on `status`** (`Failure`, `Success`, `PARTIAL_SUCCESS`, `Canceled`, ...) and
-  `class` (`Backup`, `Anomaly`, `Recovery`, ...). There is no single `event.type` string.
+- **Act on final outcomes and severity.** Only `Success`, `Failure`, `PartialSuccess` and
+  `Canceled` are final; other statuses are work in progress. Decide what needs attention on
+  `severity`, because a critical detection can arrive with status `Success`. There is no single
+  `event.type` string: `class` (`Backup` in Rubrik's example) says which kind of activity it was.
 - **Respond fast.** Rubrik retries only 3 times (after 1s, 5s and 10s), then drops the event, and
   auto-disables the webhook after 25 consecutive failures.
 - **Deduplicate** on `custom_details.id` (the activity ID).

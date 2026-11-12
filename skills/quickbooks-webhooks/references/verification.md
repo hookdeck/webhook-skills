@@ -29,7 +29,7 @@ user-agent: intuit_notification_server/0.1
 
 ### SDK Verification
 
-Intuit's SDKs (`intuit-oauth` for Node, `intuit-oauth` / `python-quickbooks` for Python, the Java and .NET SDKs) have **no** webhook-signature helper. Intuit's own sample verifies by hand, so all examples here do too.
+Intuit's Java SDK verifies with `WebhooksService.verifyPayload(intuitSignature, payload)`, which reads the verifier token from its config. The Node and Python OAuth clients have no webhook-signature helper, and Intuit's docs sample verifies by hand, so all examples here do too.
 
 ### Manual Verification
 

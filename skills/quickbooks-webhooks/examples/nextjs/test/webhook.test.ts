@@ -48,46 +48,46 @@ function signedRequest(body: string): NextRequest {
 
 describe('POST /webhooks/quickbooks', () => {
   it('returns 400 when intuit-signature is missing', async () => {
-    const res = await POST(makeRequest(JSON.stringify([cloudEvent('qbo.invoice.created.v1')])));
+    const res = await POST(makeRequest(JSON.stringify([cloudEvent('qbo.account.created.v1')])));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for an invalid signature', async () => {
-    const res = await POST(makeRequest(JSON.stringify([cloudEvent('qbo.invoice.created.v1')]), 'aW52YWxpZA=='));
+    const res = await POST(makeRequest(JSON.stringify([cloudEvent('qbo.account.created.v1')]), 'aW52YWxpZA=='));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Invalid signature' });
   });
 
   it('returns 400 for a hex-encoded signature', async () => {
-    const body = JSON.stringify([cloudEvent('qbo.invoice.created.v1')]);
+    const body = JSON.stringify([cloudEvent('qbo.account.created.v1')]);
     const hex = crypto.createHmac('sha256', verifierToken).update(body).digest('hex');
     const res = await POST(makeRequest(body, hex));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when signed with the wrong verifier token', async () => {
-    const body = JSON.stringify([cloudEvent('qbo.invoice.created.v1')]);
+    const body = JSON.stringify([cloudEvent('qbo.account.created.v1')]);
     const res = await POST(makeRequest(body, generateQuickBooksSignature(body, 'other_token')));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for a tampered body', async () => {
-    const original = JSON.stringify([cloudEvent('qbo.invoice.created.v1', { intuitentityid: '1' })]);
+    const original = JSON.stringify([cloudEvent('qbo.account.created.v1', { intuitentityid: '1' })]);
     const tampered = original.replace('"intuitentityid":"1"', '"intuitentityid":"2"');
     const res = await POST(makeRequest(tampered, generateQuickBooksSignature(original, verifierToken)));
     expect(res.status).toBe(400);
   });
 
   it('returns 200 for a valid CloudEvents notification', async () => {
-    const res = await POST(signedRequest(JSON.stringify([cloudEvent('qbo.invoice.created.v1')])));
+    const res = await POST(signedRequest(JSON.stringify([cloudEvent('qbo.account.created.v1')])));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true, count: 1 });
   });
 
   it('handles events for multiple companies in one notification', async () => {
     const body = JSON.stringify([
-      cloudEvent('qbo.invoice.created.v1', { intuitaccountid: '111' }),
-      cloudEvent('qbo.payment.created.v1', { intuitaccountid: '222' }),
+      cloudEvent('qbo.account.created.v1', { intuitaccountid: '111' }),
+      cloudEvent('qbo.employee.created.v1', { intuitaccountid: '222' }),
       cloudEvent('qbo.customer.merged.v1', { intuitaccountid: '333', data: { deletedid: '27' } }),
     ]);
     const res = await POST(signedRequest(body));
@@ -96,14 +96,7 @@ describe('POST /webhooks/quickbooks', () => {
   });
 
   it.each([
-    'qbo.invoice.created.v1',
-    'qbo.invoice.updated.v1',
-    'qbo.invoice.deleted.v1',
-    'qbo.invoice.voided.v1',
-    'qbo.invoice.emailed.v1',
-    'qbo.payment.created.v1',
-    'qbo.customer.created.v1',
-    'qbo.customer.updated.v1',
+    'qbo.account.created.v1',
     'qbo.customer.merged.v1',
     'qbo.salesreceipt.updated.v1',
     'qbo.employee.created.v1',
@@ -132,7 +125,7 @@ describe('POST /webhooks/quickbooks', () => {
   });
 
   it('verifies against the raw bytes, not re-serialized JSON', async () => {
-    const body = '[ {"type": "qbo.invoice.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]';
+    const body = '[ {"type": "qbo.account.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]';
     const res = await POST(signedRequest(body));
     expect(res.status).toBe(200);
   });

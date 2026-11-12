@@ -35,42 +35,42 @@ app.post('/webhooks/mux',
     switch (event.type) {
       case 'video.asset.created':
         console.log('Asset created:', event.data.id);
-        // TODO: Record the asset and show it as processing
+        // Record the asset and show it as processing
         break;
 
       case 'video.asset.ready':
         console.log('Asset ready:', event.data.id, event.data.playback_ids);
-        // TODO: Store the playback ID and publish the video
+        // Store the playback ID and publish the video
         break;
 
       case 'video.asset.errored':
         console.log('Asset errored:', event.data.id, event.data.errors);
-        // TODO: Mark the asset as failed and notify the uploader
+        // Mark the asset as failed and notify the uploader
         break;
 
       case 'video.asset.deleted':
         console.log('Asset deleted:', event.data.id);
-        // TODO: Remove the asset from your catalog
+        // Remove the asset from your catalog
         break;
 
       case 'video.asset.live_stream_completed':
         console.log('Live stream asset completed:', event.data.id);
-        // TODO: Publish the recorded replay
+        // Publish the recorded replay
         break;
 
       case 'video.upload.asset_created':
         console.log('Upload created asset:', event.data.id, event.data.asset_id);
-        // TODO: Link the new asset to the user who uploaded it
+        // Link the new asset to the user who uploaded it
         break;
 
       case 'video.live_stream.active':
         console.log('Live stream active:', event.data.id);
-        // TODO: Show the stream as live
+        // Show the stream as live
         break;
 
       case 'video.live_stream.idle':
         console.log('Live stream idle:', event.data.id);
-        // TODO: Show the stream as ended
+        // Show the stream as ended
         break;
 
       default:

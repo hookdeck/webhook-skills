@@ -5,7 +5,7 @@ Minimal example of receiving Sumsub webhooks with `x-payload-digest` verificatio
 ## Prerequisites
 
 - Node.js 20.9+
-- A Sumsub account with a webhook in **Dev space → Webhooks → Webhook manager** and its **Secret key** (see [setup](../../references/setup.md))
+- A Sumsub account with a webhook in **Configurations → Developers → Webhooks** (Manager tab) and its **Secret key** (see [setup](../../references/setup.md))
 
 ## Setup
 

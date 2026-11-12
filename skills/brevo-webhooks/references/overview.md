@@ -57,7 +57,7 @@ payload value.
 | `blocked` | Brevo blocked the send | Investigate the recipient |
 | `deferred` | Delivery delayed | Monitor |
 | `error` | Sending failed | Alert / retry the send |
-| `proxy_open` / `unique_proxy_open` | Opened through a privacy proxy (e.g. Apple Mail Privacy Protection) | Treat separately from real opens |
+| `proxy_open` / `unique_proxy_open` | Opened through a privacy proxy | Treat separately from real opens |
 
 ### Marketing email (campaigns)
 
@@ -137,8 +137,8 @@ Key fields:
 ## Batched Webhooks
 
 Create the webhook with `"batched": true` to receive events in batches: events
-accumulate in 5-minute windows, with up to 500 events per batch. Handle both a
-single object and an array.
+accumulate in 5-minute windows, with up to 500 events per batch. Brevo doesn't
+document the batched body, so handle both a single object and an array.
 
 ## Full Event Reference
 

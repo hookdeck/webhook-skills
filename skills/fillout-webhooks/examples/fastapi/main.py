@@ -83,7 +83,7 @@ def handle_submission(submission: dict[str, Any]) -> None:
     quiz = submission.get("quiz")
     if quiz:
         logger.info("Quiz score %s/%s", quiz.get("score"), quiz.get("maxScore"))
-    # TODO: save the submission, notify your team, etc.
+    # Save the submission, notify your team, etc.
 
 
 @app.post("/webhooks/fillout")
@@ -118,7 +118,7 @@ async def fillout_webhook(
             handle_submission(payload["submission"])
         else:
             logger.info("Form submission (Advanced mode mapped body): %s", payload["fields"])
-            # TODO: read the keys you mapped in Fillout's Body section
+            # Read the keys you mapped in Fillout's Body section
     except Exception:
         logger.exception("Error handling Fillout submission")
         return JSONResponse({"error": "Processing failed"}, status_code=500)

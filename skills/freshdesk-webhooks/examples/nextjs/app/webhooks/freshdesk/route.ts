@@ -56,13 +56,13 @@ export function dedupeKey(payload: FreshdeskPayload): string | null {
 
 async function handleTicketCreated(ticket: FreshdeskTicket) {
   console.log(`Ticket created: #${ticket.id} "${ticket.subject ?? ''}" from ${ticket.requester_email ?? 'unknown'}`);
-  // TODO: create the record in your system. Re-fetch the ticket from the
+  // Create the record in your system here. Re-fetch the ticket from the
   // Freshdesk API before acting on it.
 }
 
 async function handleTicketUpdated(ticket: FreshdeskTicket) {
   console.log(`Ticket updated: #${ticket.id} status=${ticket.status ?? 'n/a'} priority=${ticket.priority ?? 'n/a'}`);
-  // TODO: sync the change, upserting on ticket.id.
+  // Sync the change here, upserting on ticket.id.
 }
 
 /** Dispatch on the `event` field. Returns whether the event was recognised. */

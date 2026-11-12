@@ -14,14 +14,13 @@ load_dotenv()
 
 app = FastAPI()
 
-# Legacy eventNotifications operations -> CloudEvents event names
+# Legacy eventNotifications operations -> CloudEvents event names. Intuit's docs
+# print a CloudEvents example for these three only; any other legacy operation
+# (Delete, Void, Emailed) falls back to its lowercased name.
 LEGACY_OPERATIONS = {
     "Create": "created",
     "Update": "updated",
-    "Delete": "deleted",
     "Merge": "merged",
-    "Void": "voided",
-    "Emailed": "emailed",
 }
 
 
@@ -94,24 +93,17 @@ def handle_event(event: dict) -> None:
 
     if action == "created":
         print(f"Created: {label}")
-        # TODO: Fetch the record from the Accounting API and sync it
+        # Fetch the record from the Accounting API and sync it
     elif action == "updated":
         print(f"Updated: {label}")
-        # TODO: Re-fetch the record and update your copy
-    elif action == "deleted":
-        print(f"Deleted: {label}")
-        # TODO: Remove or archive your copy
+        # Re-fetch the record and update your copy
     elif action == "merged":
         print(f"Merged: {label}, removed ID {event['data'].get('deletedid')}")
-        # TODO: Re-point references from data.deletedid to entity_id
-    elif action == "voided":
-        print(f"Voided: {label}")
-        # TODO: Mark the transaction void
-    elif action == "emailed":
-        print(f"Emailed: {label}")
-        # TODO: Record that the document was sent
+        # Re-point references from data.deletedid to entity_id
     else:
-        print(f"Unhandled event type: {event['type']}")
+        # Delete, Void and Emailed: Intuit doesn't print these event names, so
+        # re-fetch the record (or run a CDC query) to see its current state
+        print(f"Other change ({event['type']}): {label}")
 
 
 @app.post("/webhooks/quickbooks")

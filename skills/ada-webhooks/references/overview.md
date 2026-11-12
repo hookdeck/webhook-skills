@@ -57,7 +57,7 @@ Event-specific fields:
 - `v1.conversation.ended`: `ended_by.role` (`end_user`, `system`, `human_agent`), `created_at`, `updated_at`.
 - `v1.conversation.handoff.ended`: `handoff_integration` (for example `salesforce`, `zendesk_chat`).
 - `v1.end_user.*`: `end_user_id`, `external_id`, `profile` (name, email, language, metadata).
-- `v1.audit_log.emitted`: `id`, `entity_type`, `entity_id`, `activity` (`created`, `updated`, `deleted`, `executed`, `invited`, `activated`, `deactivated`), actor fields. Delivery is best effort; the Audit log pull API is the durable record.
+- `v1.audit_log.emitted`: `id`, `entity_type`, `entity_id`, `activity` (`created`, `updated`, `deleted`, `executed`, `invited`, `activated`, `deactivated`, `signed_in`, `sign_in_failed`, `signed_out`), actor fields. Delivery is best effort; the Audit log pull API is the durable record.
 - `v1.proactive_call.*`: `proactive_attempt_id`, `proactive_id`, `state`, `recipient.phone_number`, `conversation_id` (from `answered` on), `failure_reason` (only on `failed`). These events can arrive out of order.
 
 ## How Does Ada Deliver and Retry Webhooks?

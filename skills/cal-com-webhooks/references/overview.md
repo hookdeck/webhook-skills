@@ -33,7 +33,7 @@ There is no event-type or delivery-id header: the event name is the body's `trig
 | `RECORDING_READY` | A Cal Video recording is available | Archive or transcribe recordings |
 | `FORM_SUBMITTED` | A Routing Form is submitted | Push leads to a CRM |
 
-Other triggers include `BOOKING_NO_SHOW_UPDATED`, `BOOKING_LOCATION_UPDATED`, `BOOKING_REASSIGNED`,
+Other triggers include `BOOKING_NO_SHOW_UPDATED`, `BOOKING_LOCATION_UPDATED`, `BOOKING_TITLE_UPDATED`, `BOOKING_REASSIGNED`,
 `BOOKING_SEAT_ACCEPTED`, `BOOKING_SEAT_REJECTED`, `INSTANT_MEETING`, `INSTANT_MEETING_ACCEPTED`,
 `RECORDING_TRANSCRIPTION_GENERATED`, `OOO_CREATED`, `FORM_SUBMITTED_NO_EVENT`,
 `AFTER_HOSTS_CAL_VIDEO_NO_SHOW`, `AFTER_GUESTS_CAL_VIDEO_NO_SHOW`, `WRONG_ASSIGNMENT_REPORT`, and the

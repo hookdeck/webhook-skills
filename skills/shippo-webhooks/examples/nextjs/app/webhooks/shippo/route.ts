@@ -6,8 +6,9 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+// Optional replay window in seconds. Off by default (0): Shippo documents no tolerance,
+// and a Hookdeck retry or replay carries the original timestamp, so a window would
+// reject late redeliveries.
 // Set SHIPPO_TIMESTAMP_TOLERANCE_SECONDS to a positive value to opt in.
 // A value that isn't a whole number of seconds is treated as 0 (check off), with a warning.
 let warnedInvalidTolerance = false;
@@ -128,27 +129,27 @@ export async function POST(request: Request) {
   switch (event) {
     case 'track_updated':
       console.log('Tracking updated:', data?.tracking_number, data?.tracking_status?.status);
-      // TODO: update order status, notify customer on DELIVERED / FAILURE
+      // Update order status, notify customer on DELIVERED / FAILURE
       break;
     case 'transaction_created':
       console.log('Transaction created:', data?.object_id, data?.tracking_number);
-      // TODO: store label_url and tracking number
+      // Store label_url and tracking number
       break;
     case 'transaction_updated':
       console.log('Transaction updated:', data?.object_id, data?.status);
-      // TODO: sync label/transaction state
+      // Sync label/transaction state
       break;
     case 'batch_created':
       console.log('Batch created:', data);
-      // TODO: review and purchase the batch
+      // Review and purchase the batch
       break;
     case 'batch_purchased':
       console.log('Batch purchased:', data);
-      // TODO: download merged label PDFs
+      // Download merged label PDFs
       break;
     case 'automations_label_resolved':
       console.log('Automations label resolved:', data?.request_id, data?.status);
-      // TODO: dedupe on request_id; fulfil or alert on failure
+      // Dedupe on request_id; fulfil or alert on failure
       break;
     default:
       console.log('Unhandled Shippo event:', event);

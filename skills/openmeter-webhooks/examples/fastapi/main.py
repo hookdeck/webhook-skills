@@ -77,7 +77,7 @@ async def openmeter_webhook(
                 "has_access": (data.get("value") or {}).get("hasAccess"),
             },
         )
-        # TODO: notify the customer, or block access at 100%
+        # Notify the customer, or block access at 100%
     elif event_type == "entitlements.reset":
         print(
             "Entitlement reset:",
@@ -86,17 +86,17 @@ async def openmeter_webhook(
                 "feature": (data.get("feature") or {}).get("key"),
             },
         )
-        # TODO: clear over-quota flags, restore access
+        # Clear over-quota flags, restore access
     elif event_type == "invoice.created":
         print("Invoice created:", {"id": data.get("id"), "status": data.get("status")})
-        # TODO: sync the invoice to your accounting system
+        # Sync the invoice to your accounting system
     elif event_type == "invoice.updated":
         print("Invoice updated:", {"id": data.get("id"), "status": data.get("status")})
-        # TODO: react to the new invoice state
+        # React to the new invoice state
     else:
         print(f"Unhandled OpenMeter event type: {event_type}")
 
-    # Acknowledge quickly; OpenMeter (via Svix) retries non-2xx responses
+    # Acknowledge quickly with a 2xx
     return {"received": True, "id": event.get("id"), "type": event_type}
 
 

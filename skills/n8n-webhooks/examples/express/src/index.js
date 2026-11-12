@@ -63,22 +63,22 @@ function handleEvent(payload) {
   switch (event) {
     case 'lead.created':
       console.log(`Lead created: ${data.email}`);
-      // TODO: add the lead to your CRM
+      // add the lead to your CRM
       break;
 
     case 'order.created':
       console.log(`Order created: ${data.order_id}`);
-      // TODO: fulfil the order
+      // fulfil the order
       break;
 
     case 'workflow.completed':
       console.log(`Workflow completed: ${data.workflow_name}`);
-      // TODO: mark the job as done
+      // mark the job as done
       break;
 
     case 'workflow.failed':
       console.log(`Workflow failed: ${data.workflow_name} (${data.error})`);
-      // TODO: alert the owning team
+      // alert the owning team
       break;
 
     default:

@@ -83,17 +83,17 @@ export async function POST(request: Request) {
   switch (event) {
     case 'taskCreated':
       console.log(`Task created: ${payload.task_id}`);
-      // TODO: Sync the new task to your system
+      // Sync the new task to your system
       break;
 
     case 'taskUpdated':
       console.log(`Task updated: ${payload.task_id}`);
-      // TODO: Fetch the task from the API or apply history_items changes
+      // Fetch the task from the API or apply history_items changes
       break;
 
     case 'taskDeleted':
       console.log(`Task deleted: ${payload.task_id}`);
-      // TODO: Remove mirrored records
+      // Remove mirrored records
       break;
 
     case 'taskStatusUpdated': {
@@ -101,18 +101,18 @@ export async function POST(request: Request) {
       console.log(
         `Task ${payload.task_id} status: ${statusItem?.before?.status} -> ${statusItem?.after?.status}`
       );
-      // TODO: Trigger workflow automation
+      // Trigger workflow automation
       break;
     }
 
     case 'taskAssigneeUpdated':
       console.log(`Task assignee updated: ${payload.task_id}`);
-      // TODO: Notify the new assignee
+      // Notify the new assignee
       break;
 
     case 'taskCommentPosted':
       console.log(`Comment posted on task: ${payload.task_id}`);
-      // TODO: Forward the comment to chat
+      // Forward the comment to chat
       break;
 
     case 'listCreated':

@@ -56,38 +56,38 @@ function handleSegmentEvent(event) {
   switch (event.type) {
     case 'track':
       console.log(`Track "${event.event}" for ${event.userId || event.anonymousId}`);
-      // TODO: Trigger workflows, update usage counters, sync conversions
+      // Trigger workflows, update usage counters, sync conversions
       break;
 
     case 'identify':
       console.log(`Identify ${event.userId || event.anonymousId}:`, event.traits);
-      // TODO: Upsert the user in your database or CRM
+      // Upsert the user in your database or CRM
       break;
 
     case 'page':
       console.log(`Page view: ${event.properties?.path || event.name}`);
-      // TODO: Content analytics
+      // Content analytics
       break;
 
     case 'screen':
       console.log(`Screen view: ${event.name}`);
-      // TODO: Mobile analytics
+      // Mobile analytics
       break;
 
     case 'group':
       console.log(`Group ${event.groupId} for ${event.userId}`);
-      // TODO: Sync the account/organization
+      // Sync the account/organization
       break;
 
     case 'alias':
       console.log(`Alias ${event.previousId} -> ${event.userId}`);
-      // TODO: Merge user records
+      // Merge user records
       break;
 
     case 'delete':
       // Classic Webhooks destination only: user deletion request notification
       console.log(`Delete request for ${event.userId}`);
-      // TODO: Start your data-deletion automation
+      // Start your data-deletion automation
       break;
 
     default:

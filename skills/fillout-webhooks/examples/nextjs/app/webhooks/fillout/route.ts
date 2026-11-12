@@ -23,7 +23,7 @@ function handleSubmission(submission: FilloutSubmission) {
   if (submission.quiz) {
     console.log(`Quiz score ${submission.quiz.score}/${submission.quiz.maxScore}`);
   }
-  // TODO: save the submission, notify your team, etc.
+  // Save the submission, notify your team, etc.
 }
 
 export async function POST(request: NextRequest) {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       handleSubmission(payload.submission);
     } else {
       console.log('Form submission (Advanced mode mapped body):', payload.fields);
-      // TODO: read the keys you mapped in Fillout's Body section
+      // Read the keys you mapped in Fillout's Body section
     }
   } catch (err) {
     console.error('Error handling Fillout submission:', err);

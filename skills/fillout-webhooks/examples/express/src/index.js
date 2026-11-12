@@ -67,12 +67,12 @@ function handleSubmission(submission) {
   if (submission.quiz) {
     console.log(`Quiz score ${submission.quiz.score}/${submission.quiz.maxScore}`);
   }
-  // TODO: save the submission, notify your team, etc.
+  // Save the submission, notify your team, etc.
 }
 
 function handleMappedFields(fields) {
   console.log('Form submission (Advanced mode mapped body):', fields);
-  // TODO: read the keys you mapped in Fillout's Body section
+  // Read the keys you mapped in Fillout's Body section
 }
 
 // express.raw so we authenticate before parsing and can return 400 on bad JSON

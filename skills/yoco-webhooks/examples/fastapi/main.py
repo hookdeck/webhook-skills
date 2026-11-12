@@ -116,9 +116,6 @@ def handle_event(event: Dict[str, Any]) -> None:
             payload.get("currency"),
             payload.get("id"),
         )
-    elif event_type == "payment.failed":
-        payload = event.get("payload") or {}
-        logger.info("Checkout %s payment failed", (payload.get("metadata") or {}).get("checkoutId"))
     elif event_type == "refund.succeeded":
         payload = event.get("payload") or {}
         logger.info("Refund %s succeeded: %s cents", payload.get("id"), payload.get("amount"))

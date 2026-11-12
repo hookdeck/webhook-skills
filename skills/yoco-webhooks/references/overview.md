@@ -10,7 +10,7 @@ Yoco has **two webhook systems**. Both are signed the same way ([Standard Webhoo
 |---|----------|--------------|
 | Base URL | `https://api.yoco.com/v1` (sandbox: `https://api.yocosandbox.com`) | `https://payments.yoco.com/api` |
 | Subscribe with | `POST /v1/webhooks/subscriptions/` | `POST /api/webhooks` |
-| Event selection | Per subscription (`event_types` array) | None: all payment and refund events for the account |
+| Event selection | Per subscription (`event_types` array) | Per webhook (`events` array); defaults to all three Checkout events |
 | Event type field | `event_type` | `type` |
 | Payload | Flat object of IDs (`business_id`, `order_id`, `payment_id`) | `{ id, type, createdDate, payload: {...} }` |
 | Covers | POS and online payments, orders, catalogue items | Hosted checkout payments and refunds |
@@ -43,9 +43,10 @@ Note the underscore in `item_category.*`. Payment and order events need the `bus
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `payment.succeeded` | A checkout payment succeeds | Fulfil the order for `payload.metadata.checkoutId` |
-| `payment.failed` | A checkout payment fails | Let the customer retry |
 | `refund.succeeded` | A full or partial refund succeeds | Update order and accounting |
 | `refund.failed` | A refund fails (`payload.failureReason` explains why) | Alert support |
+
+`payment.failed` is listed in the payment notification's `type` enum, but the register and update webhook endpoints don't accept it in `events`, and a webhook only receives the types in its `events`.
 
 ## Event Payload Structure
 

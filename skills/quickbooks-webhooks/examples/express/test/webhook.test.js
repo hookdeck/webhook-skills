@@ -54,7 +54,7 @@ function post(body, signature) {
 
 describe('verifyQuickBooksSignature', () => {
   it('returns true for a valid signature', () => {
-    const body = Buffer.from('[{"type":"qbo.invoice.created.v1"}]');
+    const body = Buffer.from('[{"type":"qbo.account.created.v1"}]');
     expect(verifyQuickBooksSignature(body, generateQuickBooksSignature(body, verifierToken), verifierToken)).toBe(true);
   });
 
@@ -105,25 +105,25 @@ describe('normalizeEvents', () => {
 
 describe('POST /webhooks/quickbooks', () => {
   it('returns 400 when intuit-signature is missing', async () => {
-    const res = await post(JSON.stringify([cloudEvent('qbo.invoice.created.v1')]));
+    const res = await post(JSON.stringify([cloudEvent('qbo.account.created.v1')]));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for an invalid signature', async () => {
-    const res = await post(JSON.stringify([cloudEvent('qbo.invoice.created.v1')]), 'aW52YWxpZA==');
+    const res = await post(JSON.stringify([cloudEvent('qbo.account.created.v1')]), 'aW52YWxpZA==');
     expect(res.status).toBe(400);
     expect(res.text).toBe('Invalid signature');
   });
 
   it('returns 200 for a valid CloudEvents notification', async () => {
-    const body = JSON.stringify([cloudEvent('qbo.invoice.created.v1')]);
+    const body = JSON.stringify([cloudEvent('qbo.account.created.v1')]);
     const res = await post(body, generateQuickBooksSignature(body, verifierToken));
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ received: true, count: 1 });
   });
 
   it('returns 200 when the CloudEvents notification uses a non-JSON content type', async () => {
-    const body = JSON.stringify([cloudEvent('qbo.invoice.created.v1')]);
+    const body = JSON.stringify([cloudEvent('qbo.account.created.v1')]);
     const res = await request(app)
       .post('/webhooks/quickbooks')
       .set('Content-Type', 'application/cloudevents-batch+json')
@@ -135,8 +135,8 @@ describe('POST /webhooks/quickbooks', () => {
 
   it('handles events for multiple companies in one notification', async () => {
     const body = JSON.stringify([
-      cloudEvent('qbo.invoice.created.v1', { intuitaccountid: '111' }),
-      cloudEvent('qbo.payment.created.v1', { intuitaccountid: '222' }),
+      cloudEvent('qbo.account.created.v1', { intuitaccountid: '111' }),
+      cloudEvent('qbo.employee.created.v1', { intuitaccountid: '222' }),
       cloudEvent('qbo.customer.merged.v1', { intuitaccountid: '333', data: { deletedid: '27' } }),
     ]);
     const res = await post(body, generateQuickBooksSignature(body, verifierToken));
@@ -145,14 +145,7 @@ describe('POST /webhooks/quickbooks', () => {
   });
 
   it.each([
-    'qbo.invoice.created.v1',
-    'qbo.invoice.updated.v1',
-    'qbo.invoice.deleted.v1',
-    'qbo.invoice.voided.v1',
-    'qbo.invoice.emailed.v1',
-    'qbo.payment.created.v1',
-    'qbo.customer.created.v1',
-    'qbo.customer.updated.v1',
+    'qbo.account.created.v1',
     'qbo.customer.merged.v1',
     'qbo.salesreceipt.updated.v1',
     'qbo.employee.created.v1',
@@ -180,7 +173,7 @@ describe('POST /webhooks/quickbooks', () => {
 
   it('verifies against the raw bytes, not re-serialized JSON', async () => {
     // Whitespace that JSON.stringify would drop must still verify
-    const body = '[ {"type": "qbo.invoice.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]';
+    const body = '[ {"type": "qbo.account.created.v1", "intuitentityid": "1", "intuitaccountid": "2"} ]';
     const res = await post(body, generateQuickBooksSignature(body, verifierToken));
     expect(res.status).toBe(200);
   });

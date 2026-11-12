@@ -96,31 +96,31 @@ export async function POST(request: Request) {
         state: node?.state?.__typename,
         confirmation: node?.paymentConfirmation?.__typename,
       });
-      // TODO: update the order from state / paymentConfirmation
+      // Update the order from state / paymentConfirmation
       break;
     }
     case 'payment-consent-request':
       console.log('Consent update:', { id: event.data?.id, status: event.data?.status });
-      // TODO: store/revoke the consent (card token, DebiCheck mandate, ...)
+      // Store/revoke the consent (card token, DebiCheck mandate, ...)
       break;
     case 'transaction':
       console.log('Transaction update:', { id: event.data?.id, status: event.data?.status });
-      // TODO: mark the recurring charge SUCCESS / FAILURE / CANCELLED
+      // Mark the recurring charge SUCCESS / FAILURE / CANCELLED
       break;
     case 'collection':
       console.log('Collection update:', { id: event.data?.id, status: event.data?.status });
-      // TODO: reconcile the batch collection
+      // Reconcile the batch collection
       break;
     case 'refund': {
       const node = client?.refunds?.node;
       console.log('Refund update:', { id: node?.id, status: node?.status?.__typename });
-      // TODO: update refund status
+      // Update refund status
       break;
     }
     case 'disbursement': {
       const node = client?.disbursements?.node;
       console.log('Disbursement update:', { id: node?.id, status: node?.status?.__typename });
-      // TODO: update payout status
+      // Update payout status
       break;
     }
     default:

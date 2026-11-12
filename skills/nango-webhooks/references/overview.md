@@ -7,7 +7,7 @@
 - a connection was created, re-authorized, failed to refresh (or recovered), or was deleted (`auth`)
 - a sync function run finished, successfully or not (`sync`)
 - an external API sent a webhook that Nango forwarded to you (`forward`)
-- an async action finished (`async_action`)
+- a deprecated async action finished (`async_action`)
 
 Webhook settings are per **environment** (e.g. `dev`, `prod`). Each environment can have up to two webhook URLs; every webhook goes to both. A connection can override both with its own `webhook_url_override`.
 
@@ -24,7 +24,7 @@ Nango doesn't use event names. Every webhook body has a `type`; route on it, the
 | `sync` | `success: true` | A sync run finished | Fetch changed records with the records API (cursor-based) |
 | `sync` | `success: false` | A sync run failed | Alert, surface `error` |
 | `forward` | — | Nango forwarded an external API webhook | Handle the provider's raw event in `payload` |
-| `async_action` | — | An async action finished | Read the action result in `payload` |
+| `async_action` | — | A deprecated async action finished | Fetch the result from `payload.statusUrl` with your API key |
 
 New types are added without notice. Return `200` and ignore types you don't handle.
 

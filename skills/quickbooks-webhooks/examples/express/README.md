@@ -47,4 +47,4 @@ Paste the printed URL (with `/webhooks/quickbooks`) into your app's **Developmen
 
 ## Endpoint
 
-- `POST /webhooks/quickbooks` - Verifies `intuit-signature` against the raw body, then dispatches each event by action (`created`, `updated`, `deleted`, `merged`, `voided`, `emailed`)
+- `POST /webhooks/quickbooks` - Verifies `intuit-signature` against the raw body, then dispatches each event by action (`created`, `updated` and `merged` by name, other operations through a default branch)

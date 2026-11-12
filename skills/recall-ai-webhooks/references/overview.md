@@ -83,6 +83,7 @@ Payload (transcript example): `data.data` holds `code`, `sub_code` and `updated_
 | `participant_events.join` / `participant_events.leave` | A participant joined or left |
 | `participant_events.update` | A participant updated their details |
 | `participant_events.speech_on` / `participant_events.speech_off` | A participant started or stopped speaking |
+| `participant_events.microphone_on` / `participant_events.microphone_off` | A participant unmuted or muted their microphone (platform mute state, not active speech) |
 | `participant_events.webcam_on` / `participant_events.webcam_off` | Webcam toggled |
 | `participant_events.screenshare_on` / `participant_events.screenshare_off` | Screen share toggled |
 | `participant_events.chat_message` | A participant sent a chat message (`data.data.data.text`) |

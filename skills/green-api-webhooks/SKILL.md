@@ -56,9 +56,9 @@ function verifyGreenApiAuthorization(header, token) {
 }
 ```
 
-Return `401` on a mismatch. Return `200` quickly on success: GREEN-API retries
-undelivered notifications every minute for up to 24 hours, so make handlers
-idempotent (dedupe on `idMessage` where present).
+Return `401` on a mismatch. Return `200` quickly on success: GREEN-API makes
+delivery attempts at a 1-minute interval and guarantees delivery within 24
+hours, so make handlers idempotent (dedupe on `idMessage` where present).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -73,7 +73,7 @@ Dispatch on the body's `typeWebhook` field:
 | `outgoingAPIMessageReceived` | Message sent via the API |
 | `outgoingMessageStatus` | Status of a sent message (`sent`, `delivered`, `read`, `failed`, `noAccount`, ...) |
 | `stateInstanceChanged` | Instance authorization state (`authorized`, `notAuthorized`, `blocked`, ...) |
-| `statusInstanceChanged` | Instance socket state (`online`, `offline`) |
+| `statusInstanceChanged` | Instance socket state (`online`, `offline`). Deprecated: GREEN-API says it's temporarily not working |
 | `incomingCall` | Incoming call |
 
 > **For the full list**, see [GREEN-API incoming webhook types](https://green-api.com/en/docs/api/receiving/notifications-format/type-webhook/).

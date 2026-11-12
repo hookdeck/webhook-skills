@@ -36,18 +36,14 @@ your handler idempotent rather than branching on an assumed cause.
 ## Event Payload Structure
 
 WeTravel doesn't publish payload schemas on its public docs. Schemas and samples
-for every event are in **Manage Webhooks → Event Catalog**. As a Svix-delivered
-webhook, the body is JSON in the usual Svix envelope:
+for every event are in **Manage Webhooks → Event Catalog**. Svix delivers the
+body exactly as WeTravel builds it and doesn't add an event-type field
+([Svix quickstart](https://docs.svix.com/quickstart#including-the-event-type-in-the-payload)),
+so where the event name sits in the body isn't public.
 
-```json
-{
-  "type": "booking.created",
-  "data": { "...": "event-specific fields — see the Event Catalog" }
-}
-```
-
-The handlers in this skill dispatch on `type` and read `data`. Check the Event
-Catalog for the exact fields before relying on them.
+The handlers in this skill assume a top-level `type` holding the event name and
+a `data` object, a common convention for Svix senders. Check the Event Catalog
+and adjust the field names before relying on them.
 
 Each delivery also carries a unique `svix-id` header. Use it as your
 idempotency key: a retried delivery keeps the same `svix-id`.
