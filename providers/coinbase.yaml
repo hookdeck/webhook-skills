@@ -1,0 +1,65 @@
+name: coinbase
+displayName: Coinbase
+docs:
+  webhooks: https://docs.cdp.coinbase.com/webhooks/overview
+  verification: https://docs.cdp.coinbase.com/webhooks/verify-signatures
+  events: https://docs.cdp.coinbase.com/webhooks/wallets
+notes: >
+  Coinbase Developer Platform (CDP) webhooks v2 (docs.cdp.coinbase.com/webhooks). Hookdeck source
+  type COINBASE. NOT Coinbase Commerce (separate coinbase-commerce-webhooks skill,
+  X-CC-Webhook-Signature) and not legacy retail/v2 notifications, Exchange/Advanced Trade or Prime.
+  CDP Webhooks v1 is deprecated as of January 26th, 2026; everything here is v2.
+  Signature header X-Webhook-Signature; X-Hook0-Signature is a deprecated alias sent with the
+  identical value (read X-Webhook-Signature first, fall back to X-Hook0-Signature). Value is
+  comma-separated key=value parts in no guaranteed order: t=<unix seconds>, v0=<hex>,
+  h=<space-separated ordered header names>, v1=<hex>. Both digests are lowercase hex HMAC-SHA256
+  keyed with the subscription secret as UTF-8 (no whsec_ prefix, no base64). v0 signs
+  `{t}.{rawBody}`; v1 signs `{t}.{h}.{values of the h headers joined by "."}.{rawBody}` (missing
+  header = ""). The default h is "content-type x-event-id x-event-type". The verify-signatures
+  page recommends v0 for most uses, but v1 is documented on both verification pages
+  (/webhooks/verify-signatures and /webhooks/transfers/verification) and is what Hookdeck's
+  verifier computes, so the examples verify v1 when v1 and h are present, else v0. Reject when
+  |now - t| > 5 minutes (CDP's default). Validate hex length before timingSafeEqual. Secret is
+  returned once in the subscription-create response (metadata.secret via CLI/REST, .secret on the
+  SDK result). No handshake, no IP ranges published. The CDP SDK has no webhook-verify helper.
+  At-least-once delivery, up to 60 retries per event with exponential backoff; de-duplicate on
+  the X-Event-Id header. Route on the X-Event-Type header (fallback: body type, then eventType).
+  Body shapes differ by domain: wallet events flat snake_case (Solana uses transaction_signature
+  instead of transaction_hash); transfers { eventID, eventType, timestamp, data };
+  onramp/offramp flat camelCase with eventType in body; wallet.activity.multi enveloped
+  { id, type, createdAt, data } with raw (non-decimal-adjusted) token value;
+  onchain.activity.detected is documented both flat snake_case (2 pages) and enveloped camelCase
+  (verify-signatures page) - accept both. Events: wallet.transaction.{created,signed,broadcast,
+  pending,replaced,confirmed,failed}, wallet.typed_data.signed, wallet.message.signed,
+  wallet.hash.signed, wallet.delegation.{created,revoked}, onchain.activity.detected,
+  wallet.activity.detected, wallet.activity.multi, payments.transfers.{quoted,processing,
+  completed,failed,expired} (quoted/processing best-effort; expired keeps data.status "quoted"),
+  onramp.transaction.{created,updated,success,failed}, offramp.transaction.{created,updated,
+  success,failed}. CDP also documents Customers (customers.*) and Payment Acceptance
+  (acceptance.*, oauth.*, identity.user.*; { eventId, eventType, timestamp, data }) webhooks on
+  the same signature scheme; handlers acknowledge them via the default branch.
+testScenario:
+  events:
+    - onchain.activity.detected
+    - wallet.transaction.confirmed
+    - payments.transfers.completed
+  prompt: >
+    Create a {framework} webhook handler for Coinbase Developer Platform (CDP) webhooks. Verify the
+    X-Webhook-Signature header (fall back to the deprecated X-Hook0-Signature): parse t, v0, h and
+    v1 by key; verify the lowercase hex HMAC-SHA256 v1 over `{t}.{h}.{h header values joined by
+    "."}.{rawBody}` when v1 and h are present, otherwise v0 over `{t}.{rawBody}`, keyed with the
+    subscription secret; reject timestamps older than 5 minutes; compare in constant time. Use the
+    raw body. Return 400 for a missing/invalid signature, 500 if the secret is unset, 200 once
+    verified. Route on the X-Event-Type header and handle {events}, de-duplicating on X-Event-Id.
+    If you use any skills to help with this, add a comment noting which skill(s) you referenced.
+catalog:
+  summary: Verify Coinbase Developer Platform (CDP) webhook signatures (`X-Webhook-Signature`, HMAC-SHA256 hex over t/h/v0/v1), handle onchain.activity.detected, wallet.transaction.confirmed and payments.transfers.completed events
+  marketplace:
+    description: Receive and verify Coinbase Developer Platform (CDP) webhooks. Use when setting up CDP webhook handlers, debugging X-Webhook-Signature verification (HMAC-SHA256 hex, v0/v1), or handling onchain.activity.detected, wallet.transaction.*, wallet.activity.multi, payments.transfers.* and onramp/offramp events.
+    keywords:
+    - webhooks
+    - coinbase
+    - cdp
+    - crypto
+    - onchain
+    - wallets
