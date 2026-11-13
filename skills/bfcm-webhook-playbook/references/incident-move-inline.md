@@ -27,11 +27,10 @@ export T0=2026-11-27T14:05:00Z   # when deliveries started failing
 ## Step 0 — Authenticate and confirm the project
 
 ```sh
-hookdeck ci --api-key "$HOOKDECK_API_KEY"
-hookdeck whoami
+hookdeck whoami   # not set up? See Rules for Agents 8 in SKILL.md
 ```
 
-Show the output to the user and get confirmation that this is the right organization and project before changing anything. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.)
+Show the output to the user and get confirmation that this is the right organization and project before changing anything. (If you authenticated with `hookdeck ci` and `whoami` errors, show the "configured on project … in organization …" line that `ci` printed instead.)
 
 ## Step 1 — Create the source and connection, held back
 

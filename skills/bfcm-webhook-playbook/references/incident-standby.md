@@ -36,11 +36,10 @@ The commands use `jq`. CLI list commands print `{"models": [...], "pagination": 
 ## Step 0 — Authenticate, confirm the project, resolve IDs
 
 ```sh
-hookdeck ci --api-key "$HOOKDECK_API_KEY"
-hookdeck whoami
+hookdeck whoami   # not set up? See Rules for Agents 8 in SKILL.md
 ```
 
-Show the output to the user and get confirmation that this is the right organization and project before going further. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.) Then resolve IDs from names:
+Show the output to the user and get confirmation that this is the right organization and project before going further. (If you authenticated with `hookdeck ci` and `whoami` errors, show the "configured on project … in organization …" line that `ci` printed instead.) Then resolve IDs from names:
 
 ```sh
 export STANDBY_SRC=$(hookdeck gateway source get shopify-standby --output json | jq -r .id)
@@ -338,7 +337,7 @@ When webhooks are failing and there is no Event Gateway in the path, the first g
 1. Create a standby source with **provider signature verification** and no connection. Verification means forged requests are stored as `VERIFICATION_FAILED` and never replayed:
 
    ```sh
-   hookdeck ci --api-key "$HOOKDECK_API_KEY" && hookdeck whoami
+   hookdeck whoami   # not set up? See Rules for Agents 8 in SKILL.md
    SRC_JSON=$(hookdeck gateway source upsert shopify-standby --type SHOPIFY \
      --webhook-secret "$SHOPIFY_APP_CLIENT_SECRET" --output json)
    export STANDBY_SRC=$(echo "$SRC_JSON" | jq -r .id)

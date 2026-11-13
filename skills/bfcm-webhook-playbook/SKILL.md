@@ -63,7 +63,10 @@ These are not optional. Recovery commands change production delivery.
 5. **Filter replays on `rejection_cause=NO_CONNECTION` and `created_at[gte]`/`[lte]` only.** `status=rejected` overrides the cause filter and matches forged (`VERIFICATION_FAILED`) requests too. `created_at[gt]`/`[lt]` are ignored (for requests and events), which silently removes the bound. Sanity-check every dry-run count against the expected outage volume.
 6. **Choose the replay mode with the user.** Ordered replay keeps exact capture order at about 4–5 requests a second; bulk replay is fast but shuffles order within each batch of 100. See [references/ordering.md](references/ordering.md).
 7. **Prefer lowering the delivery rate over pausing.** See [references/ordering.md](references/ordering.md) for why unpausing a large backlog disturbs order.
-8. **Install the Hookdeck CLI first** (`npm i -g hookdeck-cli` or `brew install hookdeck/hookdeck/hookdeck`) and authenticate non-interactively with `hookdeck ci --api-key "$HOOKDECK_API_KEY"`. It prints the project and organization it configured.
+8. **Set up the Hookdeck CLI before anything else.** Run `hookdeck whoami`. If the CLI isn't installed, install it (`brew install hookdeck` or `npm i -g hookdeck-cli`). If it isn't authenticated:
+   - **A person is at the keyboard:** run `hookdeck login`. It opens the browser so they can sign in and approve the CLI; wait for them to finish. If they don't have a Hookdeck account yet, they can sign up at https://dashboard.hookdeck.com/signup first.
+   - **CI, or no browser:** run `hookdeck ci --api-key "$HOOKDECK_API_KEY"`. It prints the project and organization it configured.
+   - **REST API calls need the project's API key.** Bulk retries and replays, destination rate changes and alert triggers call the REST API with `HOOKDECK_API_KEY`, and `hookdeck login` doesn't set it. When you reach the first step that calls the API, ask the user for the API key from the project's settings in the dashboard, export it, and don't print it back.
 
 ## Key Facts the Runbooks Rely On
 
