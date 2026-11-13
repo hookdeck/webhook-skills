@@ -1096,7 +1096,7 @@
     },
     {
       "name": "autotask-webhooks",
-      "description": "Receive and verify Autotask PSA webhooks (Datto, now Kaseya). Use when setting up Autotask webhook handlers, debugging X-Hook-Signature verification, or handling Company, Contact, Ticket and TicketNote Create, Update, Delete and Deactivated callouts.",
+      "description": "Receive and verify Autotask PSA webhooks (Datto, now Kaseya). Use when setting up Autotask webhook handlers, debugging X-Hook-Signature verification, or handling Company, Contact, Asset, Ticket and Ticket Note Create, Update, Delete and Deactivated callouts.",
       "source": "./skills/autotask-webhooks",
       "strict": false,
       "skills": [
@@ -2464,7 +2464,7 @@
     },
     {
       "name": "certn-webhooks",
-      "description": "Receive and verify Certn webhooks. Use when setting up Certn background check webhook handlers, debugging Certn-Signature verification, or handling applicant report updates dispatched on report_status (IN_PROGRESS, COMPLETE) and result.",
+      "description": "Receive and verify Certn (CertnCentric) webhooks. Use when setting up Certn background check webhook handlers, answering Certn's GET challenge, debugging X-Signature verification, or handling CASE_STATUS_CHANGED, CHECK_STATUS_CHANGED, CASE_REPORT_READY and CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED events.",
       "source": "./skills/certn-webhooks",
       "strict": false,
       "skills": [
@@ -5220,7 +5220,7 @@
     },
     {
       "name": "folk-webhooks",
-      "description": "Receive and verify folk (folk.app CRM) webhooks, which follow the Standard Webhooks spec. Use when setting up a folk webhook endpoint, saving the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling events like person.created, person.updated, person.deleted, person.groups_updated, company.created, company.updated, object.created, note.created and reminder.triggered.",
+      "description": "Receive and verify folk (folk.app CRM) webhooks, which follow the Standard Webhooks spec. Use when setting up a folk webhook endpoint, saving the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling events like person.created, person.updated, person.deleted, person.groups_updated, company.created, company.updated, object.created, note.created, task.created and task.completed.",
       "source": "./skills/folk-webhooks",
       "strict": false,
       "skills": [
@@ -17344,6 +17344,33 @@
       ]
     },
     {
+      "name": "bfcm-webhook-playbook",
+      "description": "Black Friday / Cyber Monday (BFCM) webhook playbook: prepare Shopify, Stripe, BigCommerce, WooCommerce and PayPal webhooks for peak traffic, and recover when webhooks are failing by capturing, replaying in order and rate-limiting delivery with the Hookdeck Event Gateway via CLI, API and Terraform.",
+      "source": "./skills/bfcm-webhook-playbook",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "development",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/bfcm-webhook-playbook",
+      "keywords": [
+        "webhooks",
+        "black-friday",
+        "cyber-monday",
+        "bfcm",
+        "incident-response",
+        "replay",
+        "recovery",
+        "hookdeck"
+      ]
+    },
+    {
       "name": "hookdeck-event-gateway",
       "description": "Hookdeck Event Gateway: webhook infrastructure that replaces your queue — guaranteed delivery, retries, rate limiting, replay, observability.",
       "source": "./skills/hookdeck-event-gateway",
@@ -17418,7 +17445,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 810 provider skills (Stripe, Shopify, GitHub, and 807 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, and a webhook DX audit skill for scoring how a platform sends outbound webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 815 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 810 provider skills (Stripe, Shopify, GitHub, and 807 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 816 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17495,6 +17522,7 @@
         "./skills/belco-webhooks",
         "./skills/belvo-webhooks",
         "./skills/better-stack-webhooks",
+        "./skills/bfcm-webhook-playbook",
         "./skills/bigcommerce-webhooks",
         "./skills/bigmailer-webhooks",
         "./skills/bindbee-webhooks",
