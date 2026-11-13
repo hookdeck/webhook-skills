@@ -14,7 +14,7 @@ persistent Agent Relay instead; webhooks suit a public inbound integration.
 | `call.received` | An inbound call is answered | Log the caller, start a session |
 | `call.utterance` | A live caller turn; its `conversation` field uses `user` and `assistant` roles | Live transcripts, reply logic |
 | `call.completed` | A call finishes | Persist the call, fetch the transcript |
-| `call.owner_task` | The agent hands a task to its owner | Follow-up tasks |
+| `call.owner_task` | Not described in AgentLine's docs | Log it and inspect the payload |
 | `call.failed` | A call fails | Alerting, retries |
 | `call.busy` | Line busy | Schedule a retry |
 | `call.no-answer` | Callee did not answer | Schedule a retry |

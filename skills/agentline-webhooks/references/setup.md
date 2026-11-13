@@ -23,7 +23,7 @@ replaces it. (The Python SDK equivalent is `client.webhooks.set(agent_id=..., ur
 
 Keep the default `X-Webhook-Signature` header on the AgentLine webhook. AgentLine
 lets you set a custom `signature_header`, but **a custom signature_header isn't
-supported** by Hookdeck's AgentLine source, which only checks `X-Webhook-Signature`.
+supported** by Hookdeck's AgentLine source.
 Do not set `signature_header` (omit it, or leave it at the default).
 
 ## Test the Webhook

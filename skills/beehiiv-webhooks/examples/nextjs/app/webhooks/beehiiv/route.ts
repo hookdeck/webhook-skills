@@ -41,7 +41,7 @@ function handleEvent(event: BeehiivEvent): void {
     case 'post.sent':
     case 'post.updated':
     case 'post.scheduled':
-      console.log(`${type}: post ${data.id ?? data.post_id ?? '(unknown id)'}`);
+      console.log(`${type}: post ${data.id ?? '(unknown id)'}`);
       break;
     case 'subscription.created':
     case 'subscription.confirmed':

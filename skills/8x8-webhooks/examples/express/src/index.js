@@ -36,12 +36,12 @@ function handleEvent(event) {
   switch (event.eventType) {
     case 'inbound_message_received':
       console.log(`Inbound message ${p.umid} from ${p.source || (p.user && p.user.msisdn)}`);
-      // TODO: route the reply to your conversation or support system
+      // Route the reply to your conversation or support system
       break;
 
     case 'outbound_message_status_changed':
       console.log(`Message ${p.umid}: ${p.status && p.status.state}`);
-      // TODO: update delivery status (queued, sent, delivered, undelivered, rejected, read)
+      // Update delivery status (queued, sent, delivered, undelivered, rejected, read)
       break;
 
     case 'external_app_message':
@@ -50,12 +50,12 @@ function handleEvent(event) {
 
     case 'short_url_clicked':
       console.log(`Short URL clicked: ${p.shortUrl} -> ${p.targetUrl}`);
-      // TODO: record the click against the original SMS (p.umid)
+      // Record the click against the original SMS (p.umid)
       break;
 
     case 'template_status_update':
       console.log(`Template ${event.eventDetails && event.eventDetails.templateName} status update`);
-      // TODO: sync template approval status
+      // Sync template approval status
       break;
 
     case 'template_category_update':

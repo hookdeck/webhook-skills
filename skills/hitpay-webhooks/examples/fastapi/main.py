@@ -33,49 +33,45 @@ def handle_event(event_name: str, data: dict) -> None:
     """The body carries no event name. Dispatch on "{Hitpay-Event-Object}.{Hitpay-Event-Type}"."""
     if event_name == "charge.created":
         print(f"Charge created: {data.get('id')} ({data.get('currency')} {data.get('amount')}, status {data.get('status')})")
-        # TODO: fulfil the order, keyed on data["id"] (webhooks can repeat)
+        # Fulfil the order, keyed on data["id"] (webhooks can repeat).
 
     elif event_name == "charge.updated":
         print(f"Charge updated: {data.get('id')} (refunded {data.get('refunded_amount')})")
-        # TODO: record the refund / partial refund
+        # Record the refund / partial refund.
 
     elif event_name == "order.created":
         print(f"Order created: {data.get('id')}")
-        # TODO: create the order in your system
+        # Create the order in your system.
 
     elif event_name == "order.updated":
         print(f"Order updated: {data.get('id')} (status {data.get('status')})")
-        # TODO: sync the order status
+        # Sync the order status.
 
     elif event_name == "invoice.created":
         print(f"Invoice created: {data.get('id')}")
-        # TODO: store the invoice
+        # Store the invoice.
 
     elif event_name == "invoice.updated":
         print(f"Invoice updated: {data.get('id')}")
-        # TODO: sync the invoice
+        # Sync the invoice.
 
     elif event_name == "payout.created":
         print(f"Payout created: {data.get('id')}")
-        # TODO: reconcile the payout
+        # Reconcile the payout.
 
-    elif event_name in (
-        "transfer.created",
-        "transfer.updated",
-        "transfer.processing",
-        "transfer.scheduled",
-        "transfer.canceled",
-    ):
-        print(f"{event_name}: {data.get('id')} (status {data.get('status')})")
-        # TODO: update the transfer status
-
-    elif event_name == "transfer.paid":
-        print(f"Transfer paid: {data.get('id')}")
-        # TODO: mark the transfer as paid
-
-    elif event_name == "transfer.failed":
-        print(f"Transfer failed: {data.get('id')}")
-        # TODO: alert finance
+    elif event_name.startswith("transfer."):
+        # HitPay documents Hitpay-Event-Type only as created / updated, so read the
+        # transfer's state from data["status"] (scheduled, processing, paid, failed, canceled).
+        status = data.get("status")
+        if status == "paid":
+            print(f"Transfer paid: {data.get('id')}")
+            # Mark the transfer as paid.
+        elif status == "failed":
+            print(f"Transfer failed: {data.get('id')} (code {data.get('failure_code')})")
+            # Alert finance and act on the failure code.
+        else:
+            print(f"{event_name}: {data.get('id')} (status {status})")
+            # Update the transfer status.
 
     else:
         print(f"Unhandled HitPay event: {event_name}")

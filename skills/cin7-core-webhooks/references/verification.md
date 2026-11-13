@@ -2,7 +2,7 @@
 
 ## How Does Cin7 Core Authenticate Webhooks?
 
-Cin7 Core does not sign payloads. There is no HMAC and no timestamp. It sends the header you configured when creating the webhook: `authorization: Bearer <token>` (`bearerauth`) or a custom header from `ExternalHeaders`. Your endpoint compares that header with the value you stored. This is also what Hookdeck's Cin7 Core source does: header name plus exact whole value.
+Cin7 Core does not sign payloads. There is no HMAC and no timestamp. It sends the header you configured when creating the webhook: a bearer token (`bearerauth`) or a custom header from `ExternalHeaders`. The docs don't spell out the header `bearerauth` produces; `Authorization: Bearer <token>` is the usual form, so confirm it on your first delivery. Your endpoint compares that header with the value you stored. This is also what Hookdeck's Cin7 Core source does: header name plus exact whole value.
 
 > A static shared credential authenticates the **sender**, not the **body**, and gives **no replay protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it leaks.
 
@@ -57,5 +57,5 @@ def safe_equal(a: str, b: str) -> bool:
 | 401 on every request | Secret unset, or header name differs from `CIN7_CORE_WEBHOOK_HEADER` |
 | 401 with Bearer auth | Secret is missing the `Bearer ` prefix |
 | 401 only behind a proxy | The proxy strips or renames the header |
-| 400 after authentication | Body isn't a JSON object |
+| 400 after authentication | Body isn't JSON |
 | Webhook stopped firing | 6 failed attempts deactivated it; re-activate |

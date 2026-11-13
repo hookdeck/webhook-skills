@@ -73,18 +73,23 @@ valid = hmac.compare_digest(expected.encode(), header.lower().encode())
 
 ## Event Payload Structure
 
-Every delivery has an `action` field naming the event, a `timestamp`, and a link
-to the owning webhook, plus an object for the event (`message` and
+Every documented delivery has an `action` field naming the event, a `timestamp`,
+and a link to the owning webhook, plus an object for the event (`message` and
 `conversation` for message events, `contact` for `contact.created`, `optOut`
-for opt-out/opt-in events):
+for opt-out and opt-in events, per TextUs's `WebhookDelivery`,
+`ContactWebhookDelivery` and `OptOutWebhookDelivery` types). TextUs publishes
+example bodies for four events only, and none for `phone_call.completed`.
+Trimmed from TextUs's `message.received` example:
 
 ```json
 {
+  "@type": "WebhookDelivery",
+  "id": "/integrations/h13Jc5/deliveries/xyz",
+  "timestamp": "2018-07-24T20:59:32.156Z",
   "action": "message.received",
-  "timestamp": "2026-10-20T18:38:00Z",
-  "webHook": "/integrations/123",
-  "conversation": { "id": "..." },
-  "message": { "id": "...", "body": "Hello" }
+  "webHook": "/integrations/h13Jc5",
+  "conversation": { "id": "/conversations/JYnJBY" },
+  "message": { "id": "/messages/6Nvq9L" }
 }
 ```
 

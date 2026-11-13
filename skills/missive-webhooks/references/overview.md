@@ -14,10 +14,11 @@ dispatch on `rule.type`.
 
 | `rule.type` | Triggered When | Common Use Cases |
 |-------------|----------------|------------------|
-| `label_change` | A shared label changes on a conversation (the type shown in Missive's payload example) | Notify a channel, create a task, sync state to a CRM |
+| `label_change` | A label is added or removed (the type shown in Missive's payload example) | Notify a channel, create a task, sync state to a CRM |
+| `incoming_email` | An incoming email rule fired (the type shown in Missive's rule step example) | Create a CRM entry for a matching email |
 
-Missive's docs mention other triggers (incoming emails, outgoing emails and so
-on) but name only `label_change` as a `type` value, so treat the type as an open
+Missive's docs mention other triggers (outgoing messages, new comments and so
+on) but name only these two `type` values, so treat the type as an open
 string: handle the ones you configured and log the rest.
 
 ## Validation request
@@ -59,12 +60,12 @@ request and acknowledge any verified payload that has no `rule.type`.
 ```
 
 (Abbreviated; Missive's example also includes counts, `authors`, timestamps and
-more message fields.) Rules triggered by comments carry a comment object instead
-of a message.
+more message fields.) When the webhook runs in a rule step, `rule` also has
+`parent_id`, `delay_seconds` and `delay_business_hours`.
 
 - For WhatsApp messages, `from_field.id` and `to_fields[].id` are Business-Scoped User IDs, not phone numbers; `username` holds the WhatsApp username or falls back to the phone number.
-- Deliveries are retried (up to 5 times over 8 minutes), so deduplicate, for example on `rule.id` plus `conversation.id` plus the message `id`.
+- Deliveries are retried (up to 5 times over 8 minutes) and carry no delivery ID. `rule.id` plus `latest_message.id` identifies a message rule's delivery, but a user action rule such as `label_change` can fire again for the same message, so make those handlers idempotent instead.
 
 ## Full Event Reference
 
-See [Missive's webhook documentation](https://learn.missiveapp.com/api-documentation/webhooks).
+See [Missive's webhook documentation](https://missiveapp.com/docs/developers/webhooks).

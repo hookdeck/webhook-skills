@@ -38,16 +38,16 @@ def handle_event(payload: dict) -> None:
     event_type = payload.get("eventType")
 
     if event_type == "CREATED":
-        print(f"Firstbase resource created: {payload.get('id')}")
-        # TODO: fetch the new order / return order / inventory order from the Firstbase API
+        print(f"Firstbase {payload.get('resourceType')} created: {payload.get('resourceId')}")
+        # Fetch the new order, return or inventory order from the Firstbase API by resourceId
 
     elif event_type == "UPDATED":
-        print(f"Firstbase resource updated: {payload.get('id')}")
-        # TODO: re-fetch the resource and sync your records
+        print(f"Firstbase {payload.get('resourceType')} updated: {payload.get('resourceId')}")
+        # Re-fetch the resource and read its status: the granular event isn't in the payload
 
     elif event_type == "DELETED":
-        print(f"Firstbase resource deleted: {payload.get('id')}")
-        # TODO: remove or archive the resource locally
+        print(f"Firstbase {payload.get('resourceType')} deleted: {payload.get('resourceId')}")
+        # Remove or archive your local copy of the resource
 
     else:
         print(f"Unhandled eventType: {event_type}")

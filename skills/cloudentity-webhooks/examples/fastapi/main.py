@@ -37,11 +37,10 @@ async def require_cloudentity_key(request: Request) -> None:
 
 
 def event_name(audit_event: dict):
-    """The docs don't name a field that carries the event type. They say the webhook
-    payload "delivers the matching field in subject_action form" (user_deleted), and
-    the external-logging guide reads audit_events.payload.login_failed.cause, which
-    suggests each audit event's `payload` object holds one key named for the event.
-    That is an inference: confirm it against a real delivery before relying on it."""
+    """Each audit event carries its type twice: as `event_subject` and `action`
+    (login + accepted), and as the single key of its `payload` object, named
+    <subject>_<action> (login_accepted). Dispatch on the payload key, which is
+    also where the event's data lives."""
     payload = audit_event.get("payload")
     if not isinstance(payload, dict) or len(payload) != 1:
         return None
@@ -54,35 +53,35 @@ def handle_event(audit_event: dict) -> None:
 
     if name == "user_created":
         print(f"User created (event {event_id})")
-        # TODO: create the matching record in your CRM
+        # Create the matching record in your CRM.
 
     elif name == "user_updated":
         print(f"User updated (event {event_id})")
-        # TODO: sync profile changes
+        # Sync the profile changes.
 
     elif name == "user_deleted":
         print(f"User deleted (event {event_id})")
-        # TODO: deprovision the user downstream
+        # Deprovision the user downstream.
 
     elif name == "user_authenticated":
         print(f"User authenticated (event {event_id})")
-        # TODO: record the sign-in
+        # Record the sign-in.
 
     elif name == "group_created":
         print(f"Group created (event {event_id})")
-        # TODO: mirror the group
+        # Mirror the group.
 
     elif name == "login_failed":
         print(f"Login failed (event {event_id})")
-        # TODO: feed your SIEM or alerting
+        # Feed your SIEM or alerting.
 
     elif name == "consent_revoked":
         print(f"Consent revoked (event {event_id})")
-        # TODO: stop processing data covered by the consent
+        # Stop processing data covered by the consent.
 
     elif name == "client_created":
         print(f"Client created (event {event_id})")
-        # TODO: audit the new application
+        # Audit the new application.
 
     else:
         print(f"Unhandled event: {name}")

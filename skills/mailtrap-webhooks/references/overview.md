@@ -22,7 +22,8 @@ events, flushed every 30 seconds), signed with the `Mailtrap-Signature` header.
 | `reject` | Message rejected (e.g. recipient in suppression list) | Alert, clean lists |
 
 `soft bounce` has a space. Audit Log events (Enterprise only) are `activity_log.*`
-(for example `activity_log.user.login`, `activity_log.user.updated`).
+(for example `activity_log.user.login`, `activity_log.user.updated`). Inbound Email
+webhooks send `inbound.message_received` when an inbound inbox gets a new message.
 
 ## Event Payload Structure
 
@@ -49,4 +50,4 @@ Audit Log events: `event`, `description`, `actor` (`id`, `type` = `user` or
 
 ## Full Event Reference
 
-[Mailtrap webhooks documentation](https://docs.mailtrap.io/email-api-smtp/advanced/webhooks)
+[Mailtrap webhooks documentation](https://docs.mailtrap.io/general/webhooks)

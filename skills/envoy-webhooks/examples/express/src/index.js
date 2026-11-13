@@ -67,7 +67,7 @@ app.post('/webhooks/envoy', express.raw({ type: '*/*' }), (req, res) => {
 
 function handleEvent(payload) {
   // `event` is the topic; `payload` is the entry/invite/etc., `meta` has the location and company.
-  // TODO: dedupe (e.g. on event + payload.id); Envoy retries failed deliveries.
+  // Dedupe (e.g. on event + payload.id) before acting: Envoy retries failed deliveries.
   const { event, payload: data = {}, meta = {} } = payload || {};
   const attrs = data?.attributes || {};
   const who = attrs['full-name'] || data?.id;

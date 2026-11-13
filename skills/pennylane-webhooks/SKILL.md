@@ -98,9 +98,9 @@ Unlike some providers, the event name is in the body (`event`). The payload is u
 |-------|----------------|-------|
 | `customer_invoice.e_invoicing_status_updated` | A customer invoice's e-invoicing (PDP) status changes | `data.previous_attributes` holds the previous status (`null` on the first transition) |
 | `dms_file.created` | A DMS file is created | Create event, no `previous_attributes` |
-| `supplier_invoice.e_invoicing_received` | A supplier invoice arrives through e-invoicing | Create event, no `previous_attributes` |
+| `supplier_invoice.e_invoicing_received` | A supplier invoice arrives through e-invoicing | Create event, no `previous_attributes`; not fired for supplier invoices created by hand, imported or created through the API |
 
-Envelope: `id` (delivery id, use it to deduplicate), `event`, `retry_count`, `created` (unix seconds), `data.context` (`company_id`, `firm_id`), `data.object`. Deliveries are at-least-once and not ordered. See [references/overview.md](references/overview.md).
+Envelope: `id` (delivery id, use it to deduplicate), `event`, `retry_count`, `created` (documented as unix seconds, but each event's API reference example prints a 13-digit value, so check the unit before comparing), `data.context` (`company_id`, `firm_id`), `data.object`. Deliveries are at-least-once and not ordered. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 

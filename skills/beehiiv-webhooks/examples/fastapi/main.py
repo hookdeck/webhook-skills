@@ -73,7 +73,7 @@ def handle_event(event: Dict[str, Any]) -> None:
     data = event.get("data") or {}
 
     if event_type in ("post.sent", "post.updated", "post.scheduled"):
-        logger.info("%s: post %s", event_type, data.get("id") or data.get("post_id") or "(unknown id)")
+        logger.info("%s: post %s", event_type, data.get("id") or "(unknown id)")
     elif event_type in (
         "subscription.created",
         "subscription.confirmed",

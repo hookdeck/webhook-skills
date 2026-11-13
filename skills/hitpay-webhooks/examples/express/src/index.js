@@ -27,47 +27,51 @@ function handleEvent(eventName, data) {
   switch (eventName) {
     case 'charge.created':
       console.log(`Charge created: ${data.id} (${data.currency} ${data.amount}, status ${data.status})`);
-      // TODO: fulfil the order, keyed on data.id (webhooks can repeat)
+      // Fulfil the order, keyed on data.id (webhooks can repeat).
       return;
     case 'charge.updated':
       console.log(`Charge updated: ${data.id} (refunded ${data.refunded_amount})`);
-      // TODO: record the refund / partial refund
+      // Record the refund / partial refund.
       return;
     case 'order.created':
       console.log(`Order created: ${data.id}`);
-      // TODO: create the order in your system
+      // Create the order in your system.
       return;
     case 'order.updated':
       console.log(`Order updated: ${data.id} (status ${data.status})`);
-      // TODO: sync the order status
+      // Sync the order status.
       return;
     case 'invoice.created':
       console.log(`Invoice created: ${data.id}`);
-      // TODO: store the invoice
+      // Store the invoice.
       return;
     case 'invoice.updated':
       console.log(`Invoice updated: ${data.id}`);
-      // TODO: sync the invoice
+      // Sync the invoice.
       return;
     case 'payout.created':
       console.log(`Payout created: ${data.id}`);
-      // TODO: reconcile the payout
+      // Reconcile the payout.
       return;
     case 'transfer.created':
     case 'transfer.updated':
-    case 'transfer.processing':
     case 'transfer.scheduled':
-    case 'transfer.canceled':
-      console.log(`${eventName}: ${data.id} (status ${data.status})`);
-      // TODO: update the transfer status
-      return;
+    case 'transfer.processing':
     case 'transfer.paid':
-      console.log(`Transfer paid: ${data.id}`);
-      // TODO: mark the transfer as paid
-      return;
     case 'transfer.failed':
-      console.log(`Transfer failed: ${data.id}`);
-      // TODO: alert finance
+    case 'transfer.canceled':
+      // HitPay documents Hitpay-Event-Type only as created / updated, so read the
+      // transfer's state from data.status (scheduled, processing, paid, failed, canceled).
+      if (data.status === 'paid') {
+        console.log(`Transfer paid: ${data.id}`);
+        // Mark the transfer as paid.
+      } else if (data.status === 'failed') {
+        console.log(`Transfer failed: ${data.id} (code ${data.failure_code})`);
+        // Alert finance and act on the failure code.
+      } else {
+        console.log(`${eventName}: ${data.id} (status ${data.status})`);
+        // Update the transfer status.
+      }
       return;
     default:
       console.log(`Unhandled HitPay event: ${eventName}`);

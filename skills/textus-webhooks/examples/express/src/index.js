@@ -42,38 +42,40 @@ app.post('/webhooks/textus', express.raw({ type: '*/*' }), (req, res) => {
   switch (event.action) {
     case 'message.received':
       console.log('Message received:', event.message?.id);
-      // TODO: Route the reply to your CRM or support queue.
+      // Route the reply to your CRM or support queue.
       break;
 
     case 'message.delivered':
       console.log('Message delivered:', event.message?.id);
-      // TODO: Mark the outgoing message as delivered.
+      // Mark the outgoing message as delivered.
       break;
 
     case 'message.failed':
     case 'message.unknown':
       console.log(`Message problem (${event.action}):`, event.message?.id);
-      // TODO: Alert or retry through another channel.
+      // Alert or retry through another channel.
       break;
 
     case 'phone_call.completed':
+      // TextUs publishes no example body for this event.
       console.log('Phone call completed');
-      // TODO: Log the call against the contact.
+      // Log the call against the contact.
       break;
 
     case 'contact.opted_out':
       console.log('Contact opted out:', event.optOut);
-      // TODO: Suppress this number in your systems.
+      // Suppress this number in your systems.
       break;
 
     case 'contact.opted_in':
+      // Opt-ins use the same OptOutWebhookDelivery shape as opt-outs.
       console.log('Contact opted in:', event.optOut);
-      // TODO: Re-enable messaging for this number.
+      // Re-enable messaging for this number.
       break;
 
     case 'contact.created':
       console.log('Contact created:', event.contact?.id);
-      // TODO: Sync the new contact.
+      // Sync the new contact.
       break;
 
     default:

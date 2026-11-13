@@ -35,10 +35,10 @@ function handleRule(payload) {
     case 'label_change':
       console.log(`Label change on "${conversation.subject}" (${conversation.id})`);
       console.log(`Shared labels: ${conversation.shared_label_names || '(none)'}`);
-      // TODO: Notify a channel, create a task, sync labels to your CRM, etc.
+      // Notify a channel, create a task or sync labels to your CRM here.
       break;
     case undefined:
-      // Verified body without a rule (for example the validation request sent on save)
+      // Verified body without a rule. Missive doesn't document the validation request's body.
       console.log('Missive request without rule.type acknowledged');
       break;
     default:

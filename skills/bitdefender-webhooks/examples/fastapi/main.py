@@ -19,7 +19,7 @@ def safe_equal(a: str, b: str) -> bool:
 
 
 def verify_bitdefender_request(headers, config=os.environ) -> bool:
-    """GravityZone does not sign payloads. The credential is the Authorization header,
+    """GravityZone sends no HMAC signature. The credential is the Authorization header,
     sent verbatim from serviceSettings.authorization (e.g. "Bearer sfasdfw34243").
     Compare the WHOLE header value, including any "Bearer " / "Basic " prefix.
     Do not strip or decode it.
@@ -45,7 +45,7 @@ def handle_event(event: dict) -> None:
 
     if module == "av":
         print(f"Antimalware: {event.get('malware_name')} on {event.get('computer_name')} ({event.get('final_status')})")
-        # TODO: raise an alert or open a ticket for the detection
+        # Raise an alert or open a ticket for the detection
 
     elif module == "aph":
         print(f"Antiphishing: {event.get('url')} {event.get('status')} on {event.get('computer_name')}")

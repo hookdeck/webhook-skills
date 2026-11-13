@@ -47,11 +47,11 @@ def handle_event(payload: dict) -> None:
 
     if action == "Open":
         print(f"Monitor opened: {event.get('title')} ({event.get('monitorID')})")
-        # TODO: page on-call or open an incident (event["body"], event["value"], event["matchedEvent"])
+        # Page on-call or open an incident here (event["body"], event["value"], event["matchedEvent"])
 
     elif action == "Closed":
         print(f"Monitor closed: {event.get('title')} ({event.get('monitorID')})")
-        # TODO: resolve the matching incident
+        # Resolve the matching incident here
 
     else:
         print(f"Unhandled action: {action}")

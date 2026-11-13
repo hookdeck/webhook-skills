@@ -17,7 +17,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 /**
- * GravityZone does not sign payloads. The credential is the Authorization header, sent
+ * GravityZone sends no HMAC signature. The credential is the Authorization header, sent
  * verbatim from serviceSettings.authorization (e.g. "Bearer sfasdfw34243"). Compare the
  * WHOLE header value, including any "Bearer " / "Basic " prefix. Do not strip or decode it.
  */

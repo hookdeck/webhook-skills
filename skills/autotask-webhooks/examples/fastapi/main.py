@@ -58,45 +58,22 @@ async def autotask_webhook(request: Request):
     fields = payload.get("Fields")
     print(f"Received Autotask webhook: {entity_type} {action}")
 
-    if entity_type == "Company":
-        if action == "Create":
-            print(f"Company created: {entity_id} {fields}")
-        elif action == "Update":
-            print(f"Company updated: {entity_id} {fields}")
-        elif action == "Delete":
-            print(f"Company deleted: {entity_id}")
-        # TODO: Sync companies to CRM, billing, etc.
-
-    elif entity_type == "Contact":
-        if action == "Create":
-            print(f"Contact created: {entity_id} {fields}")
-        elif action == "Update":
-            print(f"Contact updated: {entity_id} {fields}")
-        elif action == "Delete":
-            print(f"Contact deleted: {entity_id}")
-        # TODO: Sync contacts to marketing or CRM tools
-
-    elif entity_type == "Ticket":
-        if action == "Create":
-            print(f"Ticket created: {entity_id} {fields}")
-        elif action == "Update":
-            print(f"Ticket updated: {entity_id} {fields}")
-        elif action == "Delete":
-            print(f"Ticket deleted: {entity_id}")
-        # TODO: Alert on-call, mirror to chat, etc.
-
-    elif entity_type == "TicketNote":
-        if action == "Create":
-            print(f"Ticket note created: {entity_id} {fields}")
-        elif action == "Update":
-            print(f"Ticket note updated: {entity_id} {fields}")
-        elif action == "Delete":
-            print(f"Ticket note deleted: {entity_id}")
-        # TODO: Notify watchers, sync notes, etc.
-
+    # Each webhook belongs to one entity (CompanyWebhooks, TicketWebhooks, ...), so
+    # give each entity its own webhook URL and route on Action. Autotask's sample
+    # shows EntityType "Account" for a company webhook; other values aren't printed.
+    if action == "Create":
+        print(f"{entity_type} created: {entity_id} {fields}")
+        # Add the new record to your system
+    elif action == "Update":
+        # Fields holds only the subscribed fields that changed
+        print(f"{entity_type} updated: {entity_id} {fields}")
+    elif action == "Delete":
+        print(f"{entity_type} deleted: {entity_id}")
+    elif action == "Deactivated":
+        # Sent to the DeactivationUrl: the webhook has stopped sending callouts
+        print(f"Webhook deactivated: {payload.get('Guid')}")
     else:
-        # Other entities, or Deactivated callouts (webhook disabled or deleted)
-        print(f"Unhandled Autotask webhook: {entity_type} {action}")
+        print(f"Unhandled Autotask callout: {entity_type} {action}")
 
     # Return 200 to acknowledge receipt
     return {"received": True}

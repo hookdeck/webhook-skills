@@ -17,7 +17,7 @@ The header name is whatever the author typed. This skill reads it from
 **Use a simple header name without spaces or special characters, such as `Authorization`.**
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
-> protection** (no signature, no timestamp). Anyone who captures one request can replay it or
+> protection** (no signature, and the body's `timestamp` isn't signed). Anyone who captures one request can replay it or
 > send a different body with the same header. Use HTTPS, and rotate the credential in both the
 > scenario and your endpoint if it leaks. Use the event `id` for idempotency.
 

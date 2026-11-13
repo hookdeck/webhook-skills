@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - An athenahealth Developer Portal account with an OAuth client ID and secret (see [athenahealth API Onboarding Overview](https://docs.athenahealth.com/api/guides/onboarding-overview))
-- OAuth scopes `system/SubscriptionTopic.read` and `system/Subscription.write`
+- OAuth scopes `system/SubscriptionTopic.read`, `system/Subscription.write` and `system/Subscription.read`, requested from the athenahealth API operations team (they are not in the self-service UI; only 2-legged OAuth apps can use them)
 - A public HTTPS endpoint on port 443 with a valid certificate (use `npx hookdeck-cli listen` during development)
 - Access to the Event Subscription Platform (alpha rollout at the time of the README)
 
@@ -53,7 +53,7 @@ openssl rand -hex 32
      }'
    ```
    A `201 Created` response returns the Subscription `id`.
-3. To change a subscription (including its secret) use `PUT /Subscription/{id}` with a new `X-Hub-Secret`; to stop, `DELETE /Subscription/{id}`.
+3. To change a subscription's filters use `PUT /Subscription/{id}`; athenahealth's update example sends `X-Hub-Secret` again, but the README doesn't say whether that replaces the secret. You can't change the webhook URL: delete the subscription (`DELETE /Subscription/{id}`) and create a new one. Filter changes can take up to 15 minutes to apply.
 
 Recommended topics to start with: `Appointment.schedule`, `Appointment.cancel`, `Encounter.signoff`, `LabResult.create`.
 

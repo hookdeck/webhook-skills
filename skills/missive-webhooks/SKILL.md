@@ -15,7 +15,7 @@ metadata:
 # Missive Webhooks
 
 Missive is a shared team inbox. A **Webhook** action on a Missive rule POSTs a
-JSON payload (the rule, the conversation and the latest message or comment) to
+JSON payload (the rule, the conversation and the latest message) to
 your endpoint whenever the rule triggers, for example on incoming email or a
 label change.
 
@@ -82,15 +82,16 @@ in [references/setup.md](references/setup.md).
 ## Event Types (rule types)
 
 Missive has no event header. Each payload has a `rule` object
-(`id`, `description`, `type`) plus `conversation` and `latest_message` (or a
-comment object for comment rules). **Dispatch on `rule.type`.**
+(`id`, `description`, `type`) plus `conversation` and `latest_message`.
+**Dispatch on `rule.type`.**
 
 | `rule.type` | Description |
 |-------------|-------------|
-| `label_change` | A shared label was added or removed (the example in Missive's docs) |
+| `label_change` | A label is added or removed (Missive's payload example) |
+| `incoming_email` | An incoming email rule fired (Missive's rule step example) |
 
-Missive's docs show only `label_change`; other rule triggers (incoming email,
-outgoing email, new comment and so on) are chosen in the rule UI, so route
+Missive's docs show only these two values; other rule types (outgoing
+messages, new comment and so on) are chosen in the rule UI, so route
 unknown types to a default branch and log them.
 
 ## Important Headers

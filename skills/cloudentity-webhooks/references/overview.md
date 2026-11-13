@@ -44,24 +44,44 @@ Other documented events: `group.updated`, `group.deleted`, `credential.created`,
 
 SecureAuth sends audit events in JSON batches:
 
+SecureAuth sends each request as an HTTPS `POST` with `Content-Type: application/json`. One
+request can carry several events:
+
 ```json
 {
   "audit_events": [
-    { "tenant_id": "example", "server_id": "demo", "event_id": "a6ea34a8ef24cfdb74da4ff9f3cb693e" },
-    { "tenant_id": "example", "server_id": "demo", "event_id": "474cf3eeaf2a4f34a8e2dbf9c69b7ddf" }
+    {
+      "tenant_id": "...",
+      "server_id": "...",
+      "event_id": "...",
+      "timestamp": "...",
+      "context": null,
+      "event_subject": "login",
+      "action": "accepted",
+      "metadata": { },
+      "payload": { "login_accepted": { } }
+    }
   ]
 }
 ```
 
-The docs elide the remaining fields and don't name the field that carries the event type. The
-webhooks page says the payload "delivers the matching field in subject_action form", and the
-external-logging guide charts `audit_events.payload.login_failed.cause`, which suggests each audit
-event has a `payload` object with one key named for the event (`login_failed`). The examples
-dispatch on that key; it is inferred, so confirm it against a real delivery. Iterate over
-`audit_events` and handle each entry on its own.
-The HTTP method isn't stated in the docs; treat it as `POST` with a JSON body.
+Each element has the same shape as an item from the list audit events API. `event_subject` and
+`action` name the event, and `payload` holds one key named `<subject>_<action>` with the
+event-specific data. `metadata` holds request context (IP, device, location) and identifiers, much
+of it personal data. Iterate over `audit_events` and handle each entry on its own.
+
+## Delivery
+
+- Success is a 2xx within 2 seconds. Other statuses, redirects (not followed) and timeouts fail.
+- A failed request is retried as a whole batch after 5 s, 30 s and 1 min, then every 5 min, up to
+  20 attempts (about 80 minutes). After that, read missed events from the list audit events API.
+- Delivery is at least once: deduplicate on `event_id`. Events can arrive out of order: compare
+  `timestamp`.
+- SecureAuth publishes its egress IPs per region on its SaaS platform IP allowlist page.
 
 ## Full Event Reference
 
-See [Set up webhooks](https://docs.secureauth.com/iam/set-up-webhooks) and
+See [Set up webhooks](https://docs.secureauth.com/iam/set-up-webhooks), the
+[Admin API reference](https://docs.secureauth.com/iam/docs/api/admin#operation/listAuditEvents)
+(`audit_events.payload` lists every payload key) and
 [Integrating external logging solutions](https://docs.secureauth.com/iam/integrating-external-logging-solutions-with-secureauth-audit-events).

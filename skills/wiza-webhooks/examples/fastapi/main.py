@@ -50,10 +50,10 @@ def handle_event(payload: dict) -> None:
     if event_type == "individual_reveal":
         if code == 200:
             print(f"Reveal {event_id} finished")
-            # TODO: store the contact details in payload["data"]
+            # Store the contact details in payload["data"]
         elif code == 400:
             print(f"Reveal {event_id} failed")
-            # TODO: flag the lookup as failed or retry it
+            # Flag the lookup as failed or retry it
         else:
             print(f"Reveal {event_id} has status {code}")
 

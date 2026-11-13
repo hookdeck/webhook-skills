@@ -59,15 +59,15 @@ def handle_event(payload: dict) -> None:
 
     if event == "return.created":
         print(f"Return {ret.get('id')} created ({ret.get('status')})")
-        # TODO: open a ticket or notify the warehouse
+        # Open a ticket or notify the warehouse
 
     elif event == "return.updated":
         print(f"Return {ret.get('id')} updated ({ret.get('status')})")
-        # TODO: sync the return status; dedupe on return.id + payload["at"]
+        # Sync the return status; dedupe on return.id + payload["at"]
 
     elif event == "backfill":
         print(f"Backfill event for return {ret.get('id')}")
-        # TODO: load history without triggering customer-facing side effects
+        # Load history without triggering customer-facing side effects
 
     else:
         print(f"Unhandled Redo event type: {payload.get('type')}")

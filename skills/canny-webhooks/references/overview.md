@@ -23,6 +23,10 @@ You set up webhooks in **Your Subdomain > Settings > API**.
 | `comment.deleted` | A portal comment is deleted | Remove the mirrored comment |
 | `vote.created` | A user votes on a post | Update demand counts |
 | `vote.deleted` | A user unvotes on a post | Update demand counts |
+| `changelog_entry.created` | A changelog entry is created as a draft | Prepare release notes |
+| `changelog_entry.published` | A changelog entry is published, including a scheduled one | Announce the release |
+| `changelog_entry.unpublished` | A published entry is moved back to draft | Retract the announcement |
+| `changelog_entry.deleted` | A changelog entry is deleted | Remove the mirrored entry |
 
 ## What Does a Canny Webhook Payload Look Like?
 
@@ -54,7 +58,7 @@ Every event has the same envelope:
 }
 ```
 
-Canny's docs show only the post object in full. Treat the fields of comment and vote objects as something to confirm against a real delivery. The body has no event ID, so dedupe on the `webhook-id` header.
+Canny's docs show only the post object in full. Treat the fields of comment, vote and changelog entry objects as something to confirm against a real delivery. The body has no event ID, so dedupe on the `webhook-id` header.
 
 ## Full Event Reference
 

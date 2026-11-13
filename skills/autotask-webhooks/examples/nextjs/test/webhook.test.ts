@@ -42,10 +42,10 @@ describe('POST /webhooks/autotask', () => {
   });
 
   it.each([
-    ['Company', 'Update'],
+    ['Account', 'Update'],
     ['Contact', 'Delete'],
     ['TicketNote', 'Create'],
-    ['Company', 'Deactivated'],
+    ['Account', 'Deactivated'],
     ['ConfigurationItem', 'Create'],
   ])('accepts a signed %s %s', async (EntityType, Action) => {
     const body = JSON.stringify({ Action, EntityType, Id: 1, Fields: {} });

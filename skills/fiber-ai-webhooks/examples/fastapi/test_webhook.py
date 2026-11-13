@@ -28,11 +28,12 @@ def setup_env(monkeypatch):
     monkeypatch.setenv("FIBER_AI_WEBHOOK_SECRET", TEST_SECRET)
 
 
-def post(payload: str, msg_id=None, ts=None, sig=None, content_type="application/json"):
+def post(payload: str, msg_id=None, ts=None, sig=None, content_type="application/json", event=None):
     msg_id = msg_id or "msg_" + secrets.token_hex(16)
     ts = ts or str(int(time.time()))
     return client.post(
         "/webhooks/fiber-ai",
+        params={"event": event} if event else None,
         content=payload,
         headers={
             "content-type": content_type,
@@ -46,34 +47,40 @@ def post(payload: str, msg_id=None, ts=None, sig=None, content_type="application
 @pytest.mark.parametrize(
     "event_type,body",
     [
-        ("reveal.completed", {"type": "reveal.completed", "task_id": "abc123", "success": True}),
-        ("batch_live_enrich.completed", {"type": "batch_live_enrich.completed", "task_id": "t1", "completed": 3, "failed": 0, "not_found": 1, "malformed": 0}),
-        ("batch_contact_enrich.completed", {"type": "batch_contact_enrich.completed", "task_id": "t2", "success": True}),
-        ("mosaic.completed", {"type": "mosaic.completed", "task_id": "t3", "success": True}),
-        ("audience.enrichment_completed", {"type": "audience.enrichment_completed", "audience_id": "a1", "success": True}),
-        ("tracker.signal_detected", {"type": "tracker.signal_detected", "eventId": "e1", "occurredAt": "2026-01-01T00:00:00Z"}),
-        ("job.changed", {"type": "job.changed", "profiles": [{"listId": "l1"}]}),
+        ("reveal.completed", {"task_id": "abc123", "success": True}),
+        ("batch_live_enrich.completed", {"job_id": "job_1", "type": "PROFILE", "success": True, "completed": 3, "failed": 0, "not_found": 1, "malformed": 0}),
+        ("batch_contact_enrich.completed", {"task_id": "t2", "success": True}),
+        ("mosaic.completed", {"run_id": "run_1", "success": True}),
+        ("audience.enrichment_completed", {"audience_id": "a1", "success": True}),
+        ("tracker.signal_detected", {"success": True, "eventId": "e1", "occurredAt": "2026-01-01T00:00:00Z"}),
+        ("job.changed", {"profiles": [{"listId": "l1"}]}),
     ],
 )
 def test_processes_valid_events(event_type, body):
-    res = post(json.dumps(body))
+    res = post(json.dumps(body), event=event_type)
     assert res.status_code == 200
     assert res.json() == {"success": True, "type": event_type}
 
 
-def test_recognises_job_changed_by_profiles_without_type():
+def test_body_type_field_is_not_the_event_type():
+    res = post(json.dumps({"saved_search_id": "ss_1", "type": "combined", "success": True}))
+    assert res.status_code == 200
+    assert res.json()["type"] == "unknown"
+
+
+def test_recognises_job_changed_by_profiles_without_event_in_url():
     res = post(json.dumps({"profiles": [{"listId": "l1"}]}))
     assert res.status_code == 200
     assert res.json()["type"] == "job.changed"
 
 
 def test_verifies_any_content_type():
-    res = post(json.dumps({"type": "reveal.completed"}), content_type="text/plain")
+    res = post(json.dumps({"task_id": "abc123"}), content_type="text/plain")
     assert res.status_code == 200
 
 
 def test_accepts_any_matching_entry_in_multi_signature_header():
-    payload = json.dumps({"type": "reveal.completed"})
+    payload = json.dumps({"task_id": "abc123"})
     msg_id, ts = "msg_rot", str(int(time.time()))
     good = sign(payload, TEST_SECRET, ts, msg_id)
     res = post(payload, msg_id, ts, sig="v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= " + good)
@@ -81,26 +88,26 @@ def test_accepts_any_matching_entry_in_multi_signature_header():
 
 
 def test_unknown_event_type_returns_200():
-    res = post(json.dumps({"type": "something.new"}))
+    res = post(json.dumps({"success": True}), event="something.new")
     assert res.status_code == 200
     assert res.json()["type"] == "something.new"
 
 
 def test_rejects_invalid_signature():
-    res = post(json.dumps({"type": "reveal.completed"}), sig="v1,invalidsignature")
+    res = post(json.dumps({"task_id": "abc123"}), sig="v1,invalidsignature")
     assert res.status_code == 400
 
 
 def test_rejects_tampered_body():
     msg_id, ts = "msg_t", str(int(time.time()))
-    sig = sign(json.dumps({"type": "reveal.completed", "task_id": "a"}), TEST_SECRET, ts, msg_id)
-    res = post(json.dumps({"type": "reveal.completed", "task_id": "b"}), msg_id, ts, sig)
+    sig = sign(json.dumps({"task_id": "a"}), TEST_SECRET, ts, msg_id)
+    res = post(json.dumps({"task_id": "b"}), msg_id, ts, sig)
     assert res.status_code == 400
 
 
 def test_rejects_timestamp_older_than_five_minutes():
     ts = str(int(time.time()) - 600)
-    res = post(json.dumps({"type": "reveal.completed"}), ts=ts)
+    res = post(json.dumps({"task_id": "abc123"}), ts=ts)
     assert res.status_code == 400
 
 
