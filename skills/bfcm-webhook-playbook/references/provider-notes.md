@@ -1,6 +1,6 @@
 # Provider Notes for BFCM
 
-What each commerce provider does when your endpoint fails. These facts decide how much time you have, whether your direct subscription survives an outage, and what you can recover from the provider rather than from Hookdeck. Taken from each provider's official docs (checked November 2026); confirm against the linked pages before relying on a number. "Not documented" means the provider's docs don't say.
+What each commerce provider does when your endpoint fails. These facts decide how much time you have, whether your direct subscription survives an outage, and what you can recover from the provider rather than from Event Gateway. Taken from each provider's official docs (checked November 2026); confirm against the linked pages before relying on a number. "Not documented" means the provider's docs don't say.
 
 ## Summary
 
@@ -32,8 +32,8 @@ Docs: [webhooks](https://docs.stripe.com/webhooks), [how events work](https://do
 - **Retries:** live mode retries for up to three days with exponential backoff. Sandbox retries three times over a few hours.
 - **Disabling:** retries stop if the endpoint is disabled or deleted. The docs don't give an automatic-disable threshold. Re-enabling resumes delivery of new events; don't count on events created while it was disabled being sent. List them with `GET /v1/events?delivery_success=false` and resend.
 - **Manual resend:** Dashboard resend up to 15 days after the event. The Stripe CLI (`stripe events resend <event_id> --webhook-endpoint=<endpoint_id>`) goes up to 30 days. `GET /v1/events` with `delivery_success=false` lists undelivered events from the last 30 days.
-- **Multiple endpoints:** up to 16 event destinations per account (live or sandbox). Each endpoint has its **own** signing secret (`whsec_...`) and can be pinned to an API version: give a standby endpoint the same API version as the direct one, and make sure the handler, or the Hookdeck source, has the standby's secret.
-- **Signature tolerance:** `Stripe-Signature` includes a timestamp. Stripe's libraries reject signatures older than **5 minutes** by default; the tolerance is configurable (don't set it to 0). Payloads captured by Hookdeck and replayed later will fail this check. Verify the Hookdeck signature on deliveries from Hookdeck, or widen the tolerance for the recovery window.
+- **Multiple endpoints:** up to 16 event destinations per account (live or sandbox). Each endpoint has its **own** signing secret (`whsec_...`) and can be pinned to an API version: give a standby endpoint the same API version as the direct one, and make sure the handler, or the Event Gateway source, has the standby's secret.
+- **Signature tolerance:** `Stripe-Signature` includes a timestamp. Stripe's libraries reject signatures older than **5 minutes** by default; the tolerance is configurable (don't set it to 0). Payloads captured by Event Gateway and replayed or delivered late will fail this check. Verify the `x-hookdeck-signature` on deliveries from Event Gateway, or widen the tolerance for the recovery window.
 - **Ordering:** not guaranteed. Stripe advises against using `created` to determine order. Fetch the current object state when order matters.
 
 ## BigCommerce

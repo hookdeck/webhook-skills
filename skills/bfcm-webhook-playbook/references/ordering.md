@@ -1,6 +1,6 @@
 # Ordering During Recovery
 
-Neither the providers nor Hookdeck guarantee webhook delivery order. Shopify documents that it doesn't guarantee ordering within a topic or across topics for the same resource. Stripe documents that it doesn't guarantee delivery in the order events were generated. How you replay a backlog decides how close recovery gets to the original order. The difference is large, so choose deliberately.
+Neither the providers nor Event Gateway guarantee webhook delivery order. Shopify documents that it doesn't guarantee ordering within a topic or across topics for the same resource. Stripe documents that it doesn't guarantee delivery in the order events were generated. How you replay a backlog decides how close recovery gets to the original order. The difference is large, so choose deliberately.
 
 Handlers must be correct regardless of order. See [webhook-handler-patterns › ordering](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/ordering.md).
 
@@ -16,7 +16,7 @@ Measured on a live project: numbered webhooks were replayed or retried, and deli
 | **Bulk event retry** | Same as unpause: one shared timestamp per batch of up to 5,000 | Random within each block. 40 retried events: 310 of 780 pairs out of order |
 | **Live traffic on the same connection** | Queued as it arrives | New live events interleave with, or overtake, an older backlog |
 
-"Original order" here means the order Hookdeck recorded the requests (`created_at`). Webhooks that arrive within a fraction of a second of each other can be recorded slightly out of arrival order: in one run, two webhooks sent about 160 ms apart were stored in reverse. No replay mode can undo that, so handlers still need the tolerance below.
+"Original order" here means the order Event Gateway recorded the requests (`created_at`). Webhooks that arrive within a fraction of a second of each other can be recorded slightly out of arrival order: in one run, two webhooks sent about 160 ms apart were stored in reverse. No replay mode can undo that, so handlers still need the tolerance below.
 
 **Inline runbook:** retry `FAILED` events *before* unpausing. A bulk retry created after the pause delivers while the connection is still paused, so older failures arrive before the newer held events. Unpausing first sends the newer held events ahead of them.
 

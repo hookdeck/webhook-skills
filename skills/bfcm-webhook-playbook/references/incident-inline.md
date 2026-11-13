@@ -1,6 +1,6 @@
-# Recovery Runbook: Hookdeck Inline
+# Recovery Runbook: Event Gateway Inline
 
-Use this when the provider sends only to Hookdeck, and a connection delivers to your endpoint. Hookdeck has kept every webhook. Events that couldn't be delivered are retrying on the connection's retry rule, or have `FAILED` after exhausting it. Nothing is lost while the payloads are inside your retention window.
+Use this when the provider sends only to Event Gateway, and a connection delivers to your endpoint. Event Gateway has kept every webhook. If you don't have Event Gateway in the path yet, start with [Move inline mid-incident](incident-move-inline.md), which ends here. Events that couldn't be delivered are retrying on the connection's retry rule, or have `FAILED` after exhausting it. Nothing is lost while the payloads are inside your retention window.
 
 ## Variables used below
 
@@ -49,7 +49,7 @@ Choose one:
 
 ## Step 2 — Fix the endpoint
 
-The fix happens outside Hookdeck. Confirm the endpoint is healthy before resuming delivery.
+The fix happens outside Event Gateway. Confirm the endpoint is healthy before resuming delivery.
 
 ## Step 3 — Set a safe rate
 
