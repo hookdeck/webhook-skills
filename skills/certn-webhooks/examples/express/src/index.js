@@ -8,76 +8,33 @@ require('dotenv').config({ quiet: true });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// When signing is enabled, Certn adds a Certn-Signature header to every delivery (one line):
-//   t=<unix seconds>, v1=<hex>[, v1=<hex>]
-// Each v1 is HMAC-SHA256 (hex) of "<t>.<request body as text>", keyed with the signing secret as UTF-8.
-// Several v1 values are sent while a rolled secret is still active (48 hours).
-// https://docs.certn.co/api/guides/use-the-api/webhooks
+// CertnCentric webhooks: https://centric-api-docs.certn.co/#webhooks
+// - Endpoint verification: Certn sends GET ?challenge=<value> when you add the URL, and again
+//   periodically. Echo the value as the body within 10 seconds, or Certn disables the webhook.
+// - Signature: X-Signature is the hex HMAC-SHA256 of the raw request body, keyed with the
+//   signing key Certn gives you when you create the webhook. No timestamp, no prefix.
 
-// Optional replay window in seconds. Off by default (0): retries and replays, including
-// Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
-// Set CERTN_TIMESTAMP_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
-// treated as 0, with a warning.
-let warnedInvalidTolerance = false;
-function timestampToleranceSeconds() {
-  const raw = (process.env.CERTN_TIMESTAMP_TOLERANCE_SECONDS ?? '').trim();
-  if (raw === '') return 0;
-  if (!/^\d+$/.test(raw)) {
-    if (!warnedInvalidTolerance) {
-      console.warn(`CERTN_TIMESTAMP_TOLERANCE_SECONDS=${JSON.stringify(raw)} is not a whole number of seconds; the timestamp check is off`);
-      warnedInvalidTolerance = true;
-    }
-    return 0;
-  }
-  return Number(raw);
-}
-timestampToleranceSeconds(); // surface an invalid value at startup
-
-// Split on ',' and trim each part; keep t and every v1, ignore other schemes.
-function parseSignatureHeader(header) {
-  let t;
-  const v1 = [];
-  for (const part of header.split(',')) {
-    const p = part.trim();
-    const i = p.indexOf('=');
-    if (i <= 0) continue;
-    const key = p.slice(0, i).trim();
-    const value = p.slice(i + 1).trim();
-    if (key === 't') t = value;
-    else if (key === 'v1') v1.push(value);
-  }
-  return { t, v1 };
+function verifyCertn(rawBody, signature, secret) {
+  if (!secret || typeof signature !== 'string') return false;
+  // Exactly 64 hex chars first, then compare equal-length lowercase hex strings in constant time
+  if (!/^[0-9a-f]{64}$/i.test(signature)) return false;
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature.toLowerCase()), Buffer.from(expected));
 }
 
-function verifyCertn(rawBody, signatureHeader, secret) {
-  if (!secret || !signatureHeader) return false;
-
-  const { t, v1 } = parseSignatureHeader(signatureHeader);
-  if (!t || v1.length === 0) return false;
-
-  if (!/^\d+$/.test(t)) return false;
-  // Certn suggests rejecting old timestamps. It's opt-in here: off unless
-  // CERTN_TIMESTAMP_TOLERANCE_SECONDS > 0.
-  const tolerance = timestampToleranceSeconds();
-  if (tolerance > 0 && Math.abs(Math.floor(Date.now() / 1000) - Number(t)) > tolerance) {
-    return false;
+// Endpoint verification (challenge-response). Not signed: don't run the signature check here.
+app.get('/webhooks/certn', (req, res) => {
+  const { challenge } = req.query;
+  if (typeof challenge !== 'string') {
+    return res.status(400).send('Missing challenge');
   }
+  res
+    .status(200)
+    .set({ 'Content-Type': 'text/plain', 'X-Content-Type-Options': 'nosniff' })
+    .send(challenge);
+});
 
-  const expected = Buffer.from(
-    crypto
-      .createHmac('sha256', secret) // signing secret as UTF-8, not decoded
-      .update(`${t}.`)
-      .update(rawBody)
-      .digest('hex')
-  );
-  // Accept if any v1 matches. Check it is exactly 64 hex chars first, then compare the
-  // lowercase hex strings as equal-length Buffers in constant time.
-  return v1.some(
-    (sig) => /^[0-9a-f]{64}$/i.test(sig) && crypto.timingSafeEqual(Buffer.from(sig.toLowerCase()), expected)
-  );
-}
-
-// Raw body is required: the signature covers the exact body text Certn sent.
+// Events. Raw body is required: the signature covers the exact bytes Certn sent.
 // type: '*/*' reads the body whatever the Content-Type is, so verification never depends on it.
 app.post('/webhooks/certn', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.CERTN_WEBHOOK_SECRET;
@@ -87,32 +44,44 @@ app.post('/webhooks/certn', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
-  if (!verifyCertn(rawBody, req.headers['certn-signature'], secret)) {
+  if (!verifyCertn(rawBody, req.get('X-Signature'), secret)) {
     console.error('Certn webhook signature verification failed');
-    return res.status(400).send('Invalid signature');
+    return res.status(403).send('Invalid signature');
   }
 
-  let applicant;
+  let event;
   try {
-    applicant = JSON.parse(rawBody.toString('utf8'));
+    event = JSON.parse(rawBody.toString('utf8'));
   } catch {
     return res.status(400).send('Invalid JSON');
   }
 
-  // Certn has no event types: the body is the applicant (report) object, posted as results
-  // become available. Dispatch on report_status (for example IN_PROGRESS or COMPLETE).
-  switch (applicant.report_status) {
-    case 'COMPLETE':
-      console.log(`Applicant ${applicant.id} report complete: result ${applicant.result}`);
+  // Deduplicate on event.event_id before doing work: retries can deliver an event again,
+  // and out of order. Return 200 within 10 seconds and do slow work in a background job.
+  switch (event.event_type) {
+    case 'CASE_STATUS_CHANGED':
+      console.log(`Case ${event.object_id} status: ${event.case_status}`);
       break;
-    case 'IN_PROGRESS':
-      console.log(`Applicant ${applicant.id} report in progress`);
+    case 'CHECK_STATUS_CHANGED': {
+      const check = event.triggered_check || {};
+      console.log(`Case ${event.object_id} check ${check.type} status: ${check.status}`);
+      if (check.action_required_resolution) {
+        // Follow steps[] in ascending `step` order with Certn's API to resolve the check
+        console.log(`Client action required: ${check.action_required_resolution.summary}`);
+      }
+      break;
+    }
+    case 'CASE_REPORT_READY':
+      console.log(`Case ${event.object_id} report ready`);
+      break;
+    case 'CASE_INPUT_CLAIMS_AUTOMATICALLY_GENERATED':
+      console.log(`Case ${event.object_id} has new input claims`);
       break;
     default:
-      console.log(`Unhandled report_status: ${applicant.report_status}`);
+      console.log(`Unhandled event type: ${event.event_type}`);
   }
 
-  res.json({ received: true });
+  res.status(200).json({ received: true });
 });
 
 if (require.main === module) {
