@@ -16,27 +16,27 @@ function handleEvent(payload: IngeniousBuildPayload): void {
   switch (name) {
     case 'budget_exported_to_accounting':
       console.log(`Budget synced (${subject}): ${id}`);
-      // TODO: create budget lines in the accounting system (data.items)
+      // Create budget lines in the accounting system (data.items)
       break;
 
     case 'budget_change_exported_to_accounting':
       console.log(`Budget change synced (${subject}): ${id}`);
-      // TODO: post the reallocation between cost codes (data.items)
+      // Post the reallocation between cost codes (data.items)
       break;
 
     case 'contract_exported_to_accounting':
       console.log(`Contract synced (${subject}): ${id}`);
-      // TODO: create the commitment (data.accounting_company_custom_id, data.items)
+      // Create the commitment (data.accounting_company_custom_id, data.items)
       break;
 
     case 'contract_change_exported_to_accounting':
       console.log(`Contract change synced (${subject}): ${id}`);
-      // TODO: amend the commitment
+      // Amend the commitment
       break;
 
     case 'invoice_exported_to_accounting':
       console.log(`Invoice synced (${subject}): ${data?.invoice_number}`);
-      // TODO: create the vendor bill (data.gross_value, data.items)
+      // Create the vendor bill (data.gross_value, data.items)
       break;
 
     default:

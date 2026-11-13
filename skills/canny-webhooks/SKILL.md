@@ -71,7 +71,7 @@ Teams that used webhooks before signing secrets existed also receive `canny-time
   "object": { "id": "6a2889c586d7b8843bf4cf05", "title": "An awesome feature request", "status": "in progress", "board": { "name": "Feature Requests" } } }
 ```
 
-Dispatch on the body's `type`. There is no event ID in the body, so dedupe on the `webhook-id` header.
+Dispatch on the body's `type`. There is no per-event subscription, so every webhook URL receives every type: acknowledge types you don't handle. There is no event ID in the body, so dedupe on the `webhook-id` header.
 
 ## Common Event Types
 
@@ -83,6 +83,8 @@ Dispatch on the body's `type`. There is no event ID in the body, so dedupe on th
 | `post.jira_issue_linked` / `post.jira_issue_unlinked` | A Jira issue is linked to / unlinked from a post |
 | `comment.created` / `comment.edited` / `comment.deleted` | A portal comment is created, edited or deleted |
 | `vote.created` / `vote.deleted` | A user votes / unvotes on a post |
+| `changelog_entry.created` / `changelog_entry.published` | A changelog entry is created as a draft / published (including a scheduled one) |
+| `changelog_entry.unpublished` / `changelog_entry.deleted` | A published entry is moved back to draft / an entry is deleted |
 
 > **Full payloads:** [references/overview.md](references/overview.md) and [Canny's webhook docs](https://developers.canny.io/api-reference).
 

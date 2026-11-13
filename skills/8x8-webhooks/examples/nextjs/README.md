@@ -28,7 +28,7 @@ no replay protection, so use HTTPS and rotate it if it leaks.
    ```
 
 3. Set `EIGHT_X_EIGHT_AUTHORIZATION` to the HTTP Authorization value exactly as set in 8x8,
-   including any "Bearer " or "Basic " prefix. OAuth authentication is not supported.
+   including any "Bearer " or "Basic " prefix. 8x8's OAuth option isn't covered.
 
 ## Run
 
@@ -51,7 +51,7 @@ values. To try it by hand:
 curl -X POST http://localhost:3000/webhooks/8x8 \
   -H "Content-Type: application/json" \
   -H "Authorization: $EIGHT_X_EIGHT_AUTHORIZATION" \
-  -d '{"namespace":"SMS","eventType":"inbound_message_received","payload":{"umid":"9e09ac86-bd74-5465-851d-1eb5a5fdbb9a","source":"+6581968289","body":"Test MO message"}}'
+  -d '{"namespace":"SMS","eventType":"inbound_message_received","payload":{"umid":"9e09ac86-bd74-5465-851d-1eb5a5fdbb9a","source":"+6555555501","body":"Test MO message"}}'
 ```
 
 ## Receive 8x8 Webhooks Locally

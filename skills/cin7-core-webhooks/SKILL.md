@@ -14,7 +14,7 @@ metadata:
 
 # Cin7 Core Webhooks
 
-Cin7 Core (formerly DEAR Inventory) sends a JSON webhook when something changes in your account: a sale is created or authorised, a purchase is created, a product is updated. Webhooks need the **Automation** module. Requests are **not signed**. Instead, you give the webhook a secret header when you create it, and your endpoint checks that header on every request.
+Cin7 Core (formerly DEAR Inventory) sends a JSON webhook when something changes in your account: a sale is created or authorised, a purchase order is authorised, a product is updated. Webhooks need the **Automation** module. Requests are **not signed**. Instead, you give the webhook a secret header when you create it, and your endpoint checks that header on every request.
 
 ## When to Use This Skill
 
@@ -54,7 +54,7 @@ function verifyCin7CoreRequest(headers, {
 
 - The header name is whatever you configured (`Authorization` for `bearerauth`, or your own name in `ExternalHeaders`). Look it up case-insensitively.
 - Compare the **whole** value exactly as typed, including any `Bearer ` prefix. Do not strip or parse it.
-- Return `401` for a missing header or mismatch, `400` for a body that isn't a JSON object, `200` once handled.
+- Return `401` for a missing header or mismatch, `400` for a body that isn't JSON, `200` once handled. Accept JSON arrays too: `Stock/AvailableStockLevelChanged` and `Task/Overdue` send one, with no `EventType`.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **Security note:** a static shared credential authenticates the *sender*, not the *body*, and gives no replay protection (no signature, no timestamp). Use HTTPS only, and rotate the credential if it leaks.
@@ -63,7 +63,7 @@ function verifyCin7CoreRequest(headers, {
 
 ## Event Types
 
-The payload has an `EventType` field, one per webhook `Type` you register.
+The payload has an `EventType` field, one per webhook `Type` you register. `Stock/AvailableStockLevelChanged` and `Task/Overdue` are the exceptions: their body is a JSON array with no `EventType`, so give each webhook its own URL path and route on it.
 
 | EventType | Sent When |
 |-----------|-----------|

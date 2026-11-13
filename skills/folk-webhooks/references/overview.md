@@ -25,13 +25,17 @@ You can also add filters through the API, for example to only be notified when a
 | `note.created` | A note is created | Mirror notes |
 | `note.updated` | A note is updated | Mirror notes |
 | `note.deleted` | A note is deleted | Mirror notes |
-| `reminder.created` | A reminder is created | Sync tasks |
-| `reminder.updated` | A reminder is updated | Sync tasks |
-| `reminder.deleted` | A reminder is deleted | Sync tasks |
-| `reminder.triggered` | A reminder is triggered | Notify the owner |
+| `task.created` | A task is created, including a recurring task's next occurrence | Sync tasks |
+| `task.updated` | A task is updated, or marked as to do (`completedAt` set to `null`) | Sync tasks |
+| `task.completed` | A task is marked as done | Close the task elsewhere |
+| `task.deleted` | A task is deleted, including when its linked record is deleted (`data.details` has `title` and `entity.id`) | Clean up |
+| `reminder.created` | A reminder is created (deprecated) | Sync reminders |
+| `reminder.updated` | A reminder is updated (deprecated) | Sync reminders |
+| `reminder.deleted` | A reminder is deleted (deprecated) | Sync reminders |
+| `reminder.triggered` | A reminder is triggered (deprecated, no task equivalent) | Notify the owner |
 | `person_enrichment.finished` | An enrichment ends (`changes` has `status`, `errorReason`, `finishedAt`) | Fetch results from `data.url` |
 
-The events page lists these under Person, Company, Object, Note, Reminder and Person enrichment events. Its example for `person.workspace_interaction_metadata_updated` shows `"type": "person.groups_updated"`, which looks like a docs typo: dispatch on the event name above.
+The events page lists these under Person, Company, Object, Note, Task, Reminder and Person enrichment events. folk's changelog of October 25, 2026 added the task events and deprecated the reminder events, which will be removed on February 13, 2027; until then a change to a task triggers both. Events of a private task only go to webhooks created by the task's owner. See [Migrate from reminders to tasks](https://developer.folk.app/migrations/reminders-to-tasks#webhooks). Its example for `person.workspace_interaction_metadata_updated` shows `"type": "person.groups_updated"`, which looks like a docs typo: dispatch on the event name above.
 
 ## What Does a folk Webhook Payload Look Like?
 
@@ -43,7 +47,7 @@ Every event has the same envelope:
 | `type` | Event type, for example `person.updated` |
 | `createdAt` | ISO 8601 time the event occurred |
 | `source` | API URL of the webhook that delivered the event |
-| `data.id` | ID of the resource (`per_...`, `com_...`, `obj_...`, `nte_...`, `rmd_...`, `enr_...`) |
+| `data.id` | ID of the resource (`per_...`, `com_...`, `obj_...`, `nte_...`, `tsk_...`, `rmd_...`, `enr_...`) |
 | `data.url` | API URL to fetch the full resource |
 | `data.changes` | Updates only. Array of `{ path, type, value }` where `type` is `add`, `remove` or `set` |
 | `data.details` | Deletions only. Properties of the deleted resource, which can no longer be fetched |

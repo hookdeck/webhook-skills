@@ -33,7 +33,7 @@ def handle_event(topic: str, event: dict) -> None:
     """One call per notification event (a Bundle can batch several for one topic)."""
     focus_info = event.get("focus") or {}
     focus = focus_info.get("reference") or (focus_info.get("identifier") or {}).get("value")
-    # TODO: dedupe on event["id"] (delivery is at-least-once), then GET the focus resource
+    # Next: dedupe on event["id"] (delivery is at-least-once), then GET the focus resource
     if topic == "Appointment.schedule":
         print(f"Appointment scheduled: {focus}")
     elif topic == "Appointment.cancel":

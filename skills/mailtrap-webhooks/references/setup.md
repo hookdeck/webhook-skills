@@ -11,8 +11,8 @@
 1. In Mailtrap, go to **Webhooks** and click **Create New Webhook**.
 2. Enter the **Webhook URL**. (Basic auth in the URL or a token query parameter are also offered; this skill uses the signature.)
 3. Choose the **Payload format**: JSON (`{"events": [...]}`) or JSON Lines.
-4. Select the webhook area: Audit Log, Email Sending, Inbound Inboxes, Campaigns or Reputation Monitor.
-5. For Email Sending, pick the **Sending Stream** (Transactional or Bulk), the **domain**, and the event types.
+4. Select the webhook area: Audit Log, Email Live Sending, Inbound Inboxes, Campaigns or Reputation Monitor.
+5. For Email Live Sending, pick the **Sending Stream** (Transactional or Bulk), the **domain**, and the event types.
 6. Click **Run Test**. A dummy payload is sent; only a 200 response counts as success.
 7. Click **Save**.
 
@@ -20,6 +20,8 @@
 
 The signing secret (32 hex characters) is generated when the webhook is created
 and is displayed in the webhook's details. Copy it into `MAILTRAP_WEBHOOK_SECRET`.
+If you create the webhook with the API (`POST /api/webhooks`), the response returns it as
+`signing_secret`, and only on creation.
 Use it as plain text, not hex-decoded. Resetting it in the UI invalidates the old
 secret immediately.
 

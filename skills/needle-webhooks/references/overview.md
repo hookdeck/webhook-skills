@@ -6,7 +6,7 @@
 
 ## Common Event Types
 
-The docs list 67 types. Your receiver should switch on the top-level `type` and ignore ones it doesn't know, because Needle adds types over time.
+The docs list 68 types; `linkedin_follow_sent` and `linkedin_unfollowed` are marked "Not sent yet". Your receiver should switch on the top-level `type` and ignore ones it doesn't know, because Needle adds types over time.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -24,7 +24,7 @@ Other groups (see the [Needle events table](https://needle.app/docs/webhooks) fo
 - **Campaigns and accounts:** `campaign_updated`, `account_connected`, `account_reconnected`, `account_deleted`, `account_paused`, `account_resumed`, `account_suspended`, `account_limits_updated`, `account_access_granted`, `account_access_revoked`, `account_sharing_changed`
 - **Workspace:** `member_invited`, `member_joined`, `member_role_changed`, `member_removed`, `member_left`, `api_key_created`, `webhook_created`, `suppression_added`, `suppression_removed`
 - **LinkedIn:** `linkedin_profile_visited`, `linkedin_invite_sent`, `linkedin_invite_withdrawn`, `linkedin_invite_accepted`, `linkedin_message_sent`, `linkedin_follow_sent`, `linkedin_unfollowed`, `linkedin_post_commented`, `linkedin_post_reacted`
-- **Instagram:** `instagram_message_sent`, `instagram_message_received`, `instagram_profile_visited`, `instagram_follow_sent`, `instagram_unfollowed`, `instagram_post_commented`, `instagram_post_reacted`, `instagram_message_reacted`, `instagram_post_created`
+- **Instagram:** `instagram_message_sent`, `instagram_message_received`, `instagram_profile_visited`, `instagram_follow_sent`, `instagram_follow_accepted`, `instagram_unfollowed`, `instagram_post_commented`, `instagram_post_reacted`, `instagram_message_reacted`, `instagram_post_created`
 
 ## Event Payload Structure
 
@@ -60,6 +60,7 @@ Other groups (see the [Needle events table](https://needle.app/docs/webhooks) fo
 - **Headers:** `webhook-id` (the event id, unchanged on a resend), `webhook-timestamp` (Unix seconds when this request was sent), `webhook-signature`.
 - **Acknowledge:** any `2xx` within 10 seconds.
 - **Retries:** 3 tries: right away, 10 minutes later, 1 hour after the first. Events not delivered after 3 days are given up. A `429` pauses sending for a few seconds.
+- **Turned off:** a webhook whose URL gives no `2xx` for 3 days is turned off, and events from while it is off are not sent later. Turn it back on in Settings or with `enabled: true`.
 - **At least once, unordered:** up to 5 requests can be open at once. Dedupe on `webhook-id`.
 - **Plan paused:** webhooks pause while the plan is inactive and missed events are not sent later. Fetch them with Search events.
 

@@ -77,7 +77,7 @@ The payload's `Event` field carries the event's display name. Keys are display l
 | `Article published` | An article is published |
 | `Article created` | A new article is created |
 | `Article deleted` | An article is deleted (payload adds `Slugs`, one per language) |
-| `Article settings saved` | Article settings are saved (name used in the docs' sample payload) |
+| `Article settings saved` | Article settings are saved (name used in the docs' sample payload; the mapping list calls it `Article settings updated`, so the examples handle both) |
 | `Article workflow status updated` | An article's workflow status changes |
 | `Extension token deleted` | An extension token is deleted (payload has `Extension`) |
 
@@ -92,8 +92,8 @@ Article event payload (the docs' example):
 {
   "Knowledge base name": "Document360 2.0",
   "Event": "Article settings saved",
-  "User": "Matt Sterling",
-  "User email": "matt.sterling@document360.co",
+  "User": "Example User",
+  "User email": "user@example.com",
   "Logged on (UTC)": "09/12/2025 06:15:00",
   "Article name": "Getting Started",
   "Article id": "e1444f0x-0xx0-000x-xxx0-0x3f2bc3713c",

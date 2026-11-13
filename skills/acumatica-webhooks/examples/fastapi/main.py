@@ -71,15 +71,15 @@ def handle_notification(payload: dict) -> None:
 
     if change == "inserted":
         print(f"[{tenant}] {query}: {len(payload['Inserted'])} row(s) inserted")
-        # TODO: create the records downstream (payload["Inserted"])
+        # Create the records downstream (payload["Inserted"])
 
     elif change == "deleted":
         print(f"[{tenant}] {query}: {len(payload['Deleted'])} row(s) deleted")
-        # TODO: remove or archive the records (payload["Deleted"])
+        # Remove or archive the records (payload["Deleted"])
 
     elif change == "updated":
         print(f"[{tenant}] {query}: rows updated")
-        # TODO: compare payload["Deleted"] (old values) with payload["Inserted"] (new values)
+        # Compare payload["Deleted"] (old values) with payload["Inserted"] (new values)
 
     else:
         print(f"[{tenant}] {query}: notification without rows")

@@ -9,11 +9,10 @@ interface AuditEvent {
   [key: string]: unknown;
 }
 
-// The docs don't name a field that carries the event type. They say the webhook
-// payload "delivers the matching field in subject_action form" (user_deleted), and
-// the external-logging guide reads audit_events.payload.login_failed.cause, which
-// suggests each audit event's `payload` object holds one key named for the event.
-// That is an inference: confirm it against a real delivery before relying on it.
+// Each audit event carries its type twice: as `event_subject` and `action`
+// (login + accepted), and as the single key of its `payload` object, named
+// <subject>_<action> (login_accepted). Dispatch on the payload key, which is
+// also where the event's data lives.
 function eventName(auditEvent: AuditEvent): string | undefined {
   const { payload } = auditEvent;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return undefined;
@@ -27,42 +26,42 @@ function handleEvent(auditEvent: AuditEvent): void {
   switch (name) {
     case 'user_created':
       console.log(`User created (event ${auditEvent.event_id})`);
-      // TODO: create the matching record in your CRM
+      // Create the matching record in your CRM.
       break;
 
     case 'user_updated':
       console.log(`User updated (event ${auditEvent.event_id})`);
-      // TODO: sync profile changes
+      // Sync the profile changes.
       break;
 
     case 'user_deleted':
       console.log(`User deleted (event ${auditEvent.event_id})`);
-      // TODO: deprovision the user downstream
+      // Deprovision the user downstream.
       break;
 
     case 'user_authenticated':
       console.log(`User authenticated (event ${auditEvent.event_id})`);
-      // TODO: record the sign-in
+      // Record the sign-in.
       break;
 
     case 'group_created':
       console.log(`Group created (event ${auditEvent.event_id})`);
-      // TODO: mirror the group
+      // Mirror the group.
       break;
 
     case 'login_failed':
       console.log(`Login failed (event ${auditEvent.event_id})`);
-      // TODO: feed your SIEM or alerting
+      // Feed your SIEM or alerting.
       break;
 
     case 'consent_revoked':
       console.log(`Consent revoked (event ${auditEvent.event_id})`);
-      // TODO: stop processing data covered by the consent
+      // Stop processing data covered by the consent.
       break;
 
     case 'client_created':
       console.log(`Client created (event ${auditEvent.event_id})`);
-      // TODO: audit the new application
+      // Audit the new application.
       break;
 
     default:

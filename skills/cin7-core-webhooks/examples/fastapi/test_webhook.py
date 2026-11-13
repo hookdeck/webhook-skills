@@ -77,7 +77,12 @@ class TestBodyHandling:
         assert post({HEADER: SECRET}, body="{not json").status_code == 400
 
     def test_non_object_json(self):
-        assert post({HEADER: SECRET}, body="[1,2]").status_code == 400
+        assert post({HEADER: SECRET}, body='"text"').status_code == 400
+
+    def test_array_body_is_accepted(self):
+        # Stock/AvailableStockLevelChanged and Task/Overdue send arrays with no EventType.
+        body = '[{"TaskID": "86febf5e-6704-4da8-baad-00471e99e8be"}]'
+        assert post({HEADER: SECRET}, body=body).status_code == 200
 
     def test_invalid_json_without_credential_is_401(self):
         assert post(body="{not json").status_code == 401

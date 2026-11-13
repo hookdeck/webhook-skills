@@ -3,8 +3,8 @@ name: autotask-webhooks
 description: >
   Receive and verify Autotask PSA webhooks (Datto, now Kaseya). Use when setting
   up Autotask webhook handlers, debugging X-Hook-Signature verification, or
-  handling Company, Contact, Ticket and TicketNote Create, Update, Delete and
-  Deactivated callouts.
+  handling Company, Contact, Asset, Ticket and Ticket Note Create, Update,
+  Delete and Deactivated callouts.
 license: MIT
 metadata:
   author: hookdeck
@@ -48,7 +48,7 @@ Always verify the **raw body**. In Express use `express.raw({ type: '*/*' })` so
 
 ## Payload and Events
 
-Autotask has no event-name string. Each callout is a JSON POST with `Action`, `Guid`, `EntityType`, `Id`, `Fields`, `EventTime`, `SequenceNumber` and `PersonID`. Dispatch on `EntityType` and `Action`.
+Autotask has no event-name string. Each callout is a JSON POST with `Action`, `Guid`, `EntityType`, `Id`, `Fields`, `EventTime`, `SequenceNumber` and `PersonID`. Each webhook belongs to one entity, so give each entity its own webhook URL and dispatch on `Action`.
 
 | `Action` | Triggered When | `Fields` |
 |----------|----------------|----------|
@@ -57,7 +57,7 @@ Autotask has no event-name string. Each callout is a JSON POST with `Action`, `G
 | `Delete` | A record is deleted | Base payload only |
 | `Deactivated` | The webhook is deactivated | Base payload only; `Guid` identifies the webhook |
 
-Entities that support webhooks: Companies, Contacts, Assets (Configuration Items), Tickets and Ticket Notes. The examples handle `Company`, `Contact`, `Ticket` and `TicketNote`.
+Entities that support webhooks: Companies, Contacts, Assets (Configuration Items), Tickets and Ticket Notes. Autotask's sample callout shows `EntityType: "Account"` for a company webhook; the docs don't print the other entities' values, so don't switch on guessed ones.
 
 > **For the full reference**, see [Creating a webhook](https://www.autotask.net/help/developerhelp/Content/APIs/Webhooks/Webhooks_Creating.htm).
 

@@ -33,7 +33,7 @@ Required OAuth scopes for deliveries: `customer_invoices:readonly` or `:all`, `d
 - `id`: unique delivery id. Use it for idempotency.
 - `event`: the event name (dispatch on this).
 - `retry_count`: `0` on the first attempt.
-- `created`: unix seconds when the event occurred.
+- `created`: when the event occurred. The envelope table calls it unix seconds, but each event's API reference page ([example](https://pennylane.readme.io/reference/dms_filecreated)) prints a 13-digit value, so check the unit in a real delivery before comparing it.
 - `data.context`: the `company_id` and `firm_id` the change belongs to.
 - `data.object`: the event payload. For `dms_file.created` and `supplier_invoice.e_invoicing_received` it is `{ "id": ..., "created_at": ... }`.
 - `data.previous_attributes`: present only for update events.

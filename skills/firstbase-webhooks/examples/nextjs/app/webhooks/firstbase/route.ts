@@ -4,8 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyFirstbaseRequest } from '../../../lib/verify-firstbase';
 
 interface FirstbasePayload {
+  eventId?: string;
   eventType?: string;
-  id?: string;
+  resourceType?: string;
+  resourceId?: string;
   [key: string]: unknown;
 }
 
@@ -14,18 +16,18 @@ function handleEvent(payload: FirstbasePayload): void {
 
   switch (eventType) {
     case 'CREATED':
-      console.log(`Firstbase resource created: ${payload.id}`);
-      // TODO: fetch the new order / return order / inventory order from the Firstbase API
+      console.log(`Firstbase ${payload.resourceType} created: ${payload.resourceId}`);
+      // Fetch the new order, return or inventory order from the Firstbase API by resourceId
       break;
 
     case 'UPDATED':
-      console.log(`Firstbase resource updated: ${payload.id}`);
-      // TODO: re-fetch the resource and sync your records
+      console.log(`Firstbase ${payload.resourceType} updated: ${payload.resourceId}`);
+      // Re-fetch the resource and read its status: the granular event isn't in the payload
       break;
 
     case 'DELETED':
-      console.log(`Firstbase resource deleted: ${payload.id}`);
-      // TODO: remove or archive the resource locally
+      console.log(`Firstbase ${payload.resourceType} deleted: ${payload.resourceId}`);
+      // Remove or archive your local copy of the resource
       break;
 
     default:

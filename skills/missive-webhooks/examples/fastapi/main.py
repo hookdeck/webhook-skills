@@ -46,9 +46,9 @@ def handle_rule(payload: dict) -> None:
     if rule_type == "label_change":
         logger.info('Label change on "%s" (%s)', conversation.get("subject"), conversation.get("id"))
         logger.info("Shared labels: %s", conversation.get("shared_label_names") or "(none)")
-        # TODO: Notify a channel, create a task, sync labels to your CRM, etc.
+        # Notify a channel, create a task or sync labels to your CRM here.
     elif rule_type is None:
-        # Verified body without a rule (for example the validation request sent on save)
+        # Verified body without a rule. Missive doesn't document the validation request's body.
         logger.info("Missive request without rule.type acknowledged")
     else:
         logger.info("Unhandled Missive rule type: %s (rule %s)", rule_type, rule.get("id"))

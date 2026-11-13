@@ -18,7 +18,7 @@ This is not exhaustive. See the [Cin7 Core API docs](https://dearinventory.docs.
 
 ## Event Payload Structure
 
-The body is a JSON object with an `EventType` field (the webhook `Type`, e.g. `Sale/Created`) plus event-specific data. Dispatch on `EventType`.
+The body is a JSON object with an `EventType` field (the webhook `Type`, e.g. `Sale/Created`) plus event-specific data. Dispatch on `EventType`. `Stock/AvailableStockLevelChanged` and `Task/Overdue` are documented with a JSON array body and no `EventType`, so route those on the URL path.
 
 ## Delivery and Retries
 

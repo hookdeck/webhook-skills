@@ -19,7 +19,12 @@ EVENT_TYPES = ["CREATED", "UPDATED", "DELETED"]
 
 
 def sample_payload(event_type="CREATED"):
-    return {"eventType": event_type, "id": "ord_12345"}
+    return {
+        "eventId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "eventType": event_type,
+        "resourceType": "ORDER",
+        "resourceId": "550e8400-e29b-41d4-a716-446655440000",
+    }
 
 
 def post(headers=None, body=None, content_type="application/json"):

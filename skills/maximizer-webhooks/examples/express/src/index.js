@@ -45,47 +45,47 @@ function handleEvent(webhook) {
   switch (`${entity}.${op}`) {
     case 'AbEntry.Create':
       console.log(`Contact created: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: add the contact to your system (webhook.Data.New)
+      // Add the contact to your system (webhook.Data.New)
       break;
 
     case 'AbEntry.Update':
       console.log(`Contact updated: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: sync changed fields (webhook.Data.Original vs webhook.Data.New)
+      // Sync changed fields (webhook.Data.Original vs webhook.Data.New)
       break;
 
     case 'AbEntry.Delete':
       console.log(`Contact deleted: ${webhook.Data.Original && webhook.Data.Original.Key}`);
-      // TODO: remove or archive the contact
+      // Remove or archive the contact
       break;
 
     case 'Opportunity.Create':
       console.log(`Opportunity created: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: open a deal in your system
+      // Open a deal in your system
       break;
 
     case 'Opportunity.Update':
       console.log(`Opportunity updated: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: handle stage changes (SalesStageSetupName in Original and New)
+      // Handle stage changes (SalesStageSetupName in Original and New)
       break;
 
     case 'Opportunity.Delete':
       console.log(`Opportunity deleted: ${webhook.Data.Original && webhook.Data.Original.Key}`);
-      // TODO: close the matching deal
+      // Close the matching deal
       break;
 
     case 'Lead.Create':
       console.log(`Lead created: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: route the lead to sales
+      // Route the lead to sales
       break;
 
     case 'Lead.Update':
       console.log(`Lead updated: ${webhook.Data.New && webhook.Data.New.Key}`);
-      // TODO: sync changed fields
+      // Sync changed fields
       break;
 
     case 'Lead.Delete':
       console.log(`Lead deleted: ${webhook.Data.Original && webhook.Data.Original.Key}`);
-      // TODO: remove the lead
+      // Remove the lead
       break;
 
     default:

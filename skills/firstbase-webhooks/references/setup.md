@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A Firstbase account with access to webhook settings
+- Admin permissions in Firstbase, which configuring webhooks requires
 - A public HTTPS endpoint with a valid certificate that accepts `POST`
   (locally: `npx hookdeck-cli listen 3000 firstbase --path /webhooks/firstbase`)
 
@@ -44,7 +44,7 @@ FIRSTBASE_WEBHOOK_SECRET=<the exact, whole value you entered in Firstbase>
 curl -X POST http://localhost:3000/webhooks/firstbase \
   -H "Content-Type: application/json" \
   -H "$FIRSTBASE_WEBHOOK_HEADER: $FIRSTBASE_WEBHOOK_SECRET" \
-  -d '{"eventType":"CREATED","id":"ord_12345"}'
+  -d '{"eventId":"f47ac10b-58cc-4372-a567-0e02b2c3d479","eventType":"UPDATED","resourceType":"ORDER","resourceId":"550e8400-e29b-41d4-a716-446655440000"}'
 ```
 
 ## Rotating the Credential

@@ -43,7 +43,7 @@ def handle_event(event: dict) -> None:
     else:
         logger.info("Unhandled Humaans event: %s", action)
 
-    # TODO: sync the change to payroll, your directory, etc.
+    # Sync the change to payroll, your directory, etc.
     # Deduplicate on the webhook-id header: retries reuse it.
 
 

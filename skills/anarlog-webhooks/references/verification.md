@@ -48,7 +48,7 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 - **Secret includes `whsec_`:** stripping it gives a different key and every signature fails.
 - **Require the `sha256=` prefix** and strip it before comparing.
 - **Timing-safe compare** with a length/format check first.
-- **Replay protection is optional:** the timestamp is unsigned. Anarlog suggests rejecting stale `created_at` values and storing each payload `id`. Retries re-send the same body, so a strict window can reject legitimate retries.
+- **Replay protection is optional:** the timestamp is unsigned. Anarlog suggests rejecting stale `created_at` values and storing each payload `id`. Failed attempts retry after 5 and 30 seconds, so leave room for retries when you set a window.
 - **Secret shown once:** if lost, you need to create a new endpoint to get a new secret.
 
 ## Debugging Verification Failures

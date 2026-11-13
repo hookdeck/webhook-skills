@@ -40,20 +40,20 @@ def handle_event(payload: dict) -> None:
     data = payload.get("event_data") or {}
 
     if event == "shop.incoming_message":
-        print(f"Incoming message from {data.get('from_number')}: {data.get('body')}")
-        # TODO: route to support or reply via the Send Message API
+        print(f"Incoming message {data.get('id')} from subscriber {data.get('subscriber_id')}")
+        # Route to support or reply via the Send Message API
 
     elif event == "shop.subscriber.opt_in":
-        print(f"Subscriber opted in: {data.get('id') or data.get('subscriber_id')}")
-        # TODO: sync the subscriber to your CRM
+        print(f"Subscriber opted in for {payload.get('resource_id')}")
+        # Sync the consent change to your CRM (event_data is undocumented for this event)
 
     elif event == "shop.subscriber.opt_out":
-        print(f"Subscriber opted out: {data.get('id') or data.get('subscriber_id')}")
-        # TODO: suppress the subscriber in other channels
+        print(f"Subscriber opted out for {payload.get('resource_id')}")
+        # Suppress the subscriber in other channels (event_data is undocumented for this event)
 
     elif event == "shop.email_collected":
-        print(f"Email collected: {data.get('email')}")
-        # TODO: add the email to your list
+        print(f"Email collected for {payload.get('resource_id')}")
+        # Add the email to your list (event_data is undocumented for this event)
 
     else:
         print(f"Unhandled event: {event}")

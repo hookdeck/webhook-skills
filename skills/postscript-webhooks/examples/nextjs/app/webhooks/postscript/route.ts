@@ -19,23 +19,23 @@ function handleEvent(payload: PostscriptPayload): void {
 
   switch (event) {
     case 'shop.incoming_message':
-      console.log(`Incoming message from ${data.from_number}: ${data.body}`);
-      // TODO: route to support or reply via the Send Message API
+      console.log(`Incoming message ${data.id} from subscriber ${data.subscriber_id}`);
+      // Route to support or reply via the Send Message API
       break;
 
     case 'shop.subscriber.opt_in':
-      console.log(`Subscriber opted in: ${data.id ?? data.subscriber_id}`);
-      // TODO: sync the subscriber to your CRM
+      console.log(`Subscriber opted in for ${payload.resource_id}`);
+      // Sync the consent change to your CRM (event_data is undocumented for this event)
       break;
 
     case 'shop.subscriber.opt_out':
-      console.log(`Subscriber opted out: ${data.id ?? data.subscriber_id}`);
-      // TODO: suppress the subscriber in other channels
+      console.log(`Subscriber opted out for ${payload.resource_id}`);
+      // Suppress the subscriber in other channels (event_data is undocumented for this event)
       break;
 
     case 'shop.email_collected':
-      console.log(`Email collected: ${data.email}`);
-      // TODO: add the email to your list
+      console.log(`Email collected for ${payload.resource_id}`);
+      // Add the email to your list (event_data is undocumented for this event)
       break;
 
     default:

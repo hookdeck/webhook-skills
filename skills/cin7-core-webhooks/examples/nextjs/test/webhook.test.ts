@@ -93,9 +93,16 @@ describe('POST /webhooks/cin7-core', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 for a non-object JSON body', async () => {
-      const res = await POST(makeRequest({ [HEADER]: SECRET }, '[1,2]'));
+    it('returns 400 for a JSON body that is neither an object nor an array', async () => {
+      const res = await POST(makeRequest({ [HEADER]: SECRET }, '"text"'));
       expect(res.status).toBe(400);
+    });
+
+    it('accepts an array body (Stock/AvailableStockLevelChanged, Task/Overdue)', async () => {
+      const res = await POST(
+        makeRequest({ [HEADER]: SECRET }, '[{"TaskID":"86febf5e-6704-4da8-baad-00471e99e8be"}]'),
+      );
+      expect(res.status).toBe(200);
     });
 
     it('returns 401, not 400, for invalid JSON without the credential', async () => {

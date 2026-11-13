@@ -54,6 +54,7 @@ which fields are present.
 - `actionItems[].status` is `PENDING` or `DONE`; `assignee` is `null` when unassigned.
 - `insights` keys are the names of your own AI insights; a value's `insight` is a string, or an object if the insight has custom fields.
 - Circleback sends no delivery ID header. Deduplicate on the meeting `id`.
+- If your endpoint returns a non-2xx response, errors or doesn't respond within 5 minutes, Circleback retries the request up to 9 more times, so the same meeting can arrive more than once.
 
 ## Full Event Reference
 

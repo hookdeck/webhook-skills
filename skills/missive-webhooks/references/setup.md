@@ -13,7 +13,7 @@
 ## Create the Webhook Rule
 
 1. Go to **Settings > Rules** and create a new rule.
-2. Set the rule's conditions (for example a label change or an incoming email).
+2. Pick the rule's type (for example Incoming messages, or the Label change user action) and its conditions.
 3. Choose **Webhook** as the action and enter your endpoint URL.
 4. **Set a validation secret** on the webhook action and store it as `MISSIVE_WEBHOOK_SECRET`.
 5. Save the rule. Missive sends a validation request, so your endpoint must already be accepting `POST` requests.

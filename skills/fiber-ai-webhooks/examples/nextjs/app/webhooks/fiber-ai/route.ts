@@ -6,7 +6,7 @@ import { Webhook } from 'svix';
 
 export const dynamic = 'force-dynamic';
 
-type FiberEvent = Record<string, unknown> & { type?: string; profiles?: unknown[] };
+type FiberEvent = Record<string, unknown> & { profiles?: unknown[] };
 
 export async function POST(request: Request) {
   const secret = process.env.FIBER_AI_WEBHOOK_SECRET;
@@ -48,15 +48,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Fiber AI documents no event-type field or header (one endpoint per event type is the
-  // reliable way to tell events apart). Read `type` defensively if present; job.changed
-  // carries a `profiles` array and is recognised by that shape.
-  const type =
-    typeof event.type === 'string'
-      ? event.type
-      : Array.isArray(event.profiles)
-        ? 'job.changed'
-        : 'unknown';
+  // Fiber AI sends no event type in the body or headers, and a body `type` field means
+  // something else (the saved search type, or PROFILE / COMPANY on batch_live_enrich).
+  // Subscribe one endpoint per event type and name the type in its URL, for example
+  // https://example.com/webhooks/fiber-ai?event=reveal.completed. Only job.changed can be
+  // recognised by shape: it carries a `profiles` array.
+  const eventParam = new URL(request.url).searchParams.get('event');
+  const type = eventParam
+    ? eventParam
+    : Array.isArray(event.profiles)
+      ? 'job.changed'
+      : 'unknown';
   console.log(`Received Fiber AI webhook: ${type} (${svixId})`);
 
   switch (type) {
@@ -65,13 +67,13 @@ export async function POST(request: Request) {
       break;
     case 'batch_live_enrich.completed':
       // Reports per-outcome counts (completed / failed / not_found / malformed), no `error`
-      console.log('Batch live enrich finished:', { task_id: event.task_id });
+      console.log('Batch live enrich finished:', { job_id: event.job_id, success: event.success });
       break;
     case 'batch_contact_enrich.completed':
       console.log('Batch contact enrich finished:', { task_id: event.task_id, success: event.success });
       break;
     case 'mosaic.completed':
-      console.log('File repair finished:', { task_id: event.task_id, success: event.success });
+      console.log('Mosaic run finished:', { run_id: event.run_id, success: event.success });
       break;
     case 'audience.enrichment_completed':
       console.log('Audience enrichment finished:', { audience_id: event.audience_id, success: event.success });

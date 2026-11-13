@@ -37,10 +37,10 @@ function handleEvent(payload) {
     case 'individual_reveal':
       if (status && status.code === 200) {
         console.log(`Reveal ${id} finished`);
-        // TODO: store the contact details in `data`
+        // Store the contact details in `data`
       } else if (status && status.code === 400) {
         console.log(`Reveal ${id} failed`);
-        // TODO: flag the lookup as failed or retry it
+        // Flag the lookup as failed or retry it
       } else {
         console.log(`Reveal ${id} has status ${status && status.code}`);
       }

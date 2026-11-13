@@ -71,24 +71,24 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "TASK_CREATED":
         print(f"Task created: {task.get('taskId')} {task.get('taskName')}")
-        # TODO: create the matching task in your system
+        # Create the matching task in your system
 
     elif event_type == "TASK_UPDATED":
         changed = (payload.get("changeLog") or {}).get("changedFields") or []
         print(f"Task updated: {task.get('taskId')}, changed: {', '.join(changed)}")
-        # TODO: apply payload["changeLog"]["to"] to your copy of the task
+        # Apply payload["changeLog"]["to"] to your copy of the task
 
     elif event_type == "TASK_DELETED":
         print(f"Task deleted: {task.get('taskId')}")
-        # TODO: remove the task from your system
+        # Remove the task from your system
 
     elif event_type in ("PROJECT_CREATED", "PROJECT_UPDATED", "PROJECT_ARCHIVED", "PROJECT_DELETED"):
         print(f"{event_type} (event {payload.get('eventId')})")
-        # TODO: sync the project
+        # Sync the project
 
     elif event_type in ("PHASE_CREATED", "PHASE_UPDATED", "PHASE_DELETED"):
         print(f"{event_type} (event {payload.get('eventId')})")
-        # TODO: sync the phase
+        # Sync the phase
 
     else:
         print(f"Unhandled Rocketlane event type: {event_type}")

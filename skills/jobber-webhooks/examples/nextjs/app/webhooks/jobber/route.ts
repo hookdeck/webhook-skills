@@ -45,19 +45,19 @@ function handleEvent(event: JobberWebhookEvent): void {
   switch (event.topic) {
     case 'CLIENT_CREATE':
       console.log('Client created:', event.itemId);
-      // TODO: query the client by itemId via GraphQL and sync it to your CRM
+      // Query the client by itemId via GraphQL and sync it to your CRM
       break;
     case 'INVOICE_UPDATE':
       console.log('Invoice updated:', event.itemId);
-      // TODO: query the invoice by itemId via GraphQL and reconcile status/payments
+      // Query the invoice by itemId via GraphQL and reconcile status/payments
       break;
     case 'APP_CONNECT':
       console.log('App connected:', event.accountId);
-      // TODO: store the account link for this accountId
+      // Store the account link for this accountId
       break;
     case 'APP_DISCONNECT':
       console.log('App disconnected:', event.accountId);
-      // TODO: revoke tokens and clean up data for this accountId (required for Marketplace apps)
+      // Revoke tokens and clean up data for this accountId (required for Marketplace apps)
       break;
     default:
       console.log(`Unhandled topic: ${event.topic} (${event.itemId})`);

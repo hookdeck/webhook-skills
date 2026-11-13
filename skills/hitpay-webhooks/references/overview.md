@@ -12,7 +12,7 @@ These are distinct from the **legacy callbacks** (payment-request webhooks, redi
 |--------|---------|
 | `Hitpay-Signature` | HMAC-SHA256 of the raw JSON body, using that webhook endpoint's salt (hex) |
 | `Hitpay-Event-Object` | The object type: `charge`, `payout`, `invoice`, `order` or `transfer` |
-| `Hitpay-Event-Type` | `created` / `updated` and similar, depending on the event |
+| `Hitpay-Event-Type` | `created` / `updated` based on the event; the payment request guides give `completed` / `failed` with `Hitpay-Event-Object: payment_request` |
 | `User-Agent` | `HitPay v2.0` |
 
 The body is a JSON object whose structure depends on `Hitpay-Event-Object`. It carries **no event name**, so dispatch on `{Hitpay-Event-Object}.{Hitpay-Event-Type}`.
@@ -33,7 +33,7 @@ The body is a JSON object whose structure depends on `Hitpay-Event-Object`. It c
 | `transfer.failed` | A transfer fails | Alert finance |
 | `transfer.canceled` | A transfer is canceled | Update status |
 
-HitPay's event list also includes `payment_request.completed`, `payment_request.failed`, `recurring_billing.method_attached`, `recurring_billing.method_detached` and `recurring_billing.subscription_updated`. The docs' header table lists only the five objects above for `Hitpay-Event-Object`, so check what a real delivery of those events carries (the Hookdeck or HitPay delivery log shows the headers) before relying on them. Platform accounts also see `charge.failed`.
+HitPay's event list also includes `payment_request.completed`, `payment_request.failed`, `recurring_billing.method_attached`, `recurring_billing.method_detached` and `recurring_billing.subscription_updated`. The payment request guides document their headers (`payment_request` with `completed` or `failed`). The header values for transfer status events and `recurring_billing.*` aren't documented, so route transfers on `status` too and check what a real delivery carries (the Hookdeck or HitPay delivery log shows the headers) before relying on them. Platform accounts also see `charge.failed`.
 
 ## Event Payload Structure
 

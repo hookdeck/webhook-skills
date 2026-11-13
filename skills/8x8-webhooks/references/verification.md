@@ -12,7 +12,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
 ```
 
 Paste the HTTP Authorization value exactly as set in 8x8, including any "Bearer " or
-"Basic " prefix. OAuth authentication is not supported.
+"Basic " prefix. 8x8's OAuth option isn't covered.
 
 Points that cause most failures:
 

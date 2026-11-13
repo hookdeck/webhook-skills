@@ -67,39 +67,39 @@ def handle_event(webhook: dict) -> None:
 
     if key == "AbEntry.Create":
         print(f"Contact created: {new.get('Key')}")
-        # TODO: add the contact to your system (data["New"])
+        # Add the contact to your system (data["New"])
 
     elif key == "AbEntry.Update":
         print(f"Contact updated: {new.get('Key')}")
-        # TODO: sync changed fields (data["Original"] vs data["New"])
+        # Sync changed fields (data["Original"] vs data["New"])
 
     elif key == "AbEntry.Delete":
         print(f"Contact deleted: {original.get('Key')}")
-        # TODO: remove or archive the contact
+        # Remove or archive the contact
 
     elif key == "Opportunity.Create":
         print(f"Opportunity created: {new.get('Key')}")
-        # TODO: open a deal in your system
+        # Open a deal in your system
 
     elif key == "Opportunity.Update":
         print(f"Opportunity updated: {new.get('Key')}")
-        # TODO: handle stage changes (SalesStageSetupName in Original and New)
+        # Handle stage changes (SalesStageSetupName in Original and New)
 
     elif key == "Opportunity.Delete":
         print(f"Opportunity deleted: {original.get('Key')}")
-        # TODO: close the matching deal
+        # Close the matching deal
 
     elif key == "Lead.Create":
         print(f"Lead created: {new.get('Key')}")
-        # TODO: route the lead to sales
+        # Route the lead to sales
 
     elif key == "Lead.Update":
         print(f"Lead updated: {new.get('Key')}")
-        # TODO: sync changed fields
+        # Sync changed fields
 
     elif key == "Lead.Delete":
         print(f"Lead deleted: {original.get('Key')}")
-        # TODO: remove the lead
+        # Remove the lead
 
     else:
         print(f"Unhandled event: {key}")

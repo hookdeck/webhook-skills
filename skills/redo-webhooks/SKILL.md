@@ -71,8 +71,7 @@ In Hookdeck, create a source of type **Redo** (`REDO`). Hookdeck shows this setu
 
 > Paste the secret set on the Redo webhook subscription.
 
-Paste the bare secret into the **Subscription Secret** field, without `Bearer `. Hookdeck accepts
-the `Authorization` header with or without the `Bearer ` prefix.
+Paste the bare secret into the **Subscription Secret** field, without `Bearer `.
 
 ## Event Types
 

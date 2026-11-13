@@ -62,7 +62,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 | `call.received` | An inbound call is answered | Log the caller, start a session |
 | `call.utterance` | A live caller turn (`conversation` uses `user` / `assistant` roles) | Live transcripts, real-time reply logic |
 | `call.completed` | A call finishes | Persist the call record, fetch the transcript |
-| `call.owner_task` | The agent hands a task to its owner | Create a follow-up task |
+| `call.owner_task` | Not described in AgentLine's docs | Log it and inspect the payload |
 | `call.failed` | A call fails | Alerting, retry |
 | `call.busy` | The callee line was busy | Schedule a retry |
 | `call.no-answer` | The callee did not answer | Schedule a retry |
@@ -88,8 +88,8 @@ PORT=3000
 
 Create the webhook with `POST /v1/webhooks` (`agent_id`, `url`, optional `secret`), save
 the returned `secret`, and **keep the default `X-Webhook-Signature` header**.
-AgentLine allows a custom `signature_header`, but Hookdeck's AgentLine source
-only checks `X-Webhook-Signature`, so a custom header is not supported. Details:
+AgentLine allows a custom `signature_header`, but a custom signature_header
+isn't supported by Hookdeck's AgentLine source. Details:
 [references/setup.md](references/setup.md).
 
 ## Local Development

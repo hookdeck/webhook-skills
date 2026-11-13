@@ -28,7 +28,7 @@ beehiiv documents further event types; the examples log unknown ones and return 
 
 ```json
 {
-  "uid": "evt_...",
+  "uid": "...",
   "event_type": "subscription.created",
   "event_timestamp": 1792922400,
   "data": { }
