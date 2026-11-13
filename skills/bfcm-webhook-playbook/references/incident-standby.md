@@ -1,8 +1,8 @@
 # Recovery Runbook: Standby Capture
 
-Use this when the provider delivers to your endpoint directly **and** to a Hookdeck source with **no connection** (the standby source), and your endpoint has failed. Hookdeck has been recording every webhook as a request rejected with cause `NO_CONNECTION`. Recovery replays those requests, oldest first, into a separate **recovery lane** (its own source, destination and connection) that delivers to your fixed endpoint at a controlled rate.
+Use this when the provider delivers to your endpoint directly **and** to an Event Gateway source with **no connection** (the standby source), and your endpoint has failed. Event Gateway has been recording every webhook as a request rejected with cause `NO_CONNECTION`. Recovery replays those requests, oldest first, into a separate **recovery lane** (its own source, destination and connection) that delivers to your fixed endpoint at a controlled rate.
 
-If you have no Hookdeck at all, start with [No Hookdeck yet: emergency capture](#no-hookdeck-yet-emergency-capture).
+If you have no Event Gateway at all and can change where the provider sends, [move inline now](incident-move-inline.md) instead. If you can't, start with [No Event Gateway yet: emergency capture](#no-event-gateway-yet-emergency-capture).
 
 ## Why a separate recovery lane
 
@@ -49,7 +49,7 @@ hookdeck gateway connection list --source-id "$STANDBY_SRC" --output json | jq '
 
 If the standby source has a connection, stop and tell the user: something already delivers from it, and this runbook assumes it doesn't.
 
-## Step 1 — Confirm Hookdeck is capturing, and fix T0
+## Step 1 — Confirm Event Gateway is capturing, and fix T0
 
 ```sh
 hookdeck gateway request list \
@@ -66,14 +66,14 @@ Agree `T0` with the user: the time of the last webhook your system definitely pr
 
 ## Step 2 — Fix the endpoint, then fix T1
 
-The fix itself happens outside Hookdeck. Before continuing, confirm the endpoint is healthy (health check, error rate back to normal).
+The fix itself happens outside Event Gateway. Before continuing, confirm the endpoint is healthy (health check, error rate back to normal).
 
 `T1` is the moment live delivery resumed. Pick one path:
 
 - **Direct delivery resumed** (your endpoint is accepting the provider's own deliveries again): `T1` is when the first direct delivery succeeded. If the provider deleted or disabled your direct subscription (Shopify deletes Admin-API subscriptions after repeated failures; see [provider-notes.md](provider-notes.md)), recreate it first, then take `T1` from then.
-- **Moving to Hookdeck inline from now on:** at `T1`, add a live connection from the standby source to your endpoint **and** remove or disable the provider's direct subscription to your endpoint. Do both, or every live webhook arrives twice. The source is no longer a standby; create a new standby source after the incident if you still want one.
+- **Moving to Event Gateway inline from now on:** at `T1`, add a live connection from the standby source to your endpoint **and** remove or disable the provider's direct subscription to your endpoint. Do both, or every live webhook arrives twice. The source is no longer a standby; create a new standby source after the incident if you still want one.
 
-Add a few minutes to `T1` as a safety margin. Your endpoint's clock and Hookdeck's `created_at` won't line up exactly, and a few duplicates are cheaper than a gap.
+Add a few minutes to `T1` as a safety margin. Your endpoint's clock and Event Gateway's `created_at` won't line up exactly, and a few duplicates are cheaper than a gap.
 
 If `T1` isn't known yet, leave it unset and omit `lte` in step 5. The bulk operation then stops at the moment it was created. Run a second window later, as described in [Replaying in more than one window](#replaying-in-more-than-one-window).
 
@@ -268,7 +268,7 @@ hookdeck gateway event list --connection-id "$RECOVERY_CONN" --status QUEUED --l
 
    Here `FIRST_AT` works as a lower bound because every event on the recovery lane from this run was created after the canary replay. Bulk event retry shuffles order within blocks of up to 5,000 (see [ordering.md](ordering.md)); for a handful of order-sensitive failures, retry them one at a time instead with `hookdeck gateway event retry <id>`, oldest first.
 
-2. **Reconcile critical objects** (orders, payments, refunds) for `T0`–`T1` against the provider's API. Replay restores webhooks Hookdeck captured; reconciliation catches anything that never reached it.
+2. **Reconcile critical objects** (orders, payments, refunds) for `T0`–`T1` against the provider's API. Replay restores webhooks Event Gateway captured; reconciliation catches anything that never reached it.
 3. **Expect some duplicates.** They come from the canary, the `T1` margin, and the provider's own retries redelivering outage-window webhooks directly after the fix. Idempotent handlers absorb them.
 4. **Record the outcome**: the window, mode, `OP_ID` or `replayed.log`, counts and failures. Requests created by a bulk replay can be listed with `GET $API/requests?bulk_retry_id=$OP_ID`.
 5. **Leave the standby source connection-less** so it keeps capturing (unless you moved to inline in step 2). If the recovery lane was created ad hoc, keep it (an idle lane costs nothing) or, with the user's approval, delete it by ID: `hookdeck gateway connection delete "$RECOVERY_CONN" --force`. The command can't prompt without a terminal, so an agent needs `--force`, and must get the user's approval before running it.
@@ -294,7 +294,7 @@ If the standby source's secret was wrong, genuine webhooks were captured as `VER
    ```
 
    Check the command printed no error before waiting.
-2. **Wait 5–6 minutes.** Hookdeck needs time to pick up a new secret everywhere. Measured: the edge kept rejecting correctly signed webhooks with `401` for up to about a minute. For about 4 more minutes it accepted them (`200`) while they were still stored as `VERIFICATION_FAILED`. They became `NO_CONNECTION` from about 5 minutes. A retry during that window fails again.
+2. **Wait 5–6 minutes.** Event Gateway needs time to pick up a new secret everywhere. Measured: the edge kept rejecting correctly signed webhooks with `401` for up to about a minute. For about 4 more minutes it accepted them (`200`) while they were still stored as `VERIFICATION_FAILED`. They became `NO_CONNECTION` from about 5 minutes. A retry during that window fails again.
 3. **Confirm the fix:** trigger a provider test webhook and check it is stored as `NO_CONNECTION`, not `VERIFICATION_FAILED`. If it isn't, wait another minute and repeat; don't retry until a test webhook passes:
 
    ```sh
@@ -329,9 +329,11 @@ If the standby source's secret was wrong, genuine webhooks were captured as `VER
 
 Requests that still fail verification after this are genuinely not from the provider. Leave them.
 
-## No Hookdeck yet: emergency capture
+## No Event Gateway yet: emergency capture
 
-When webhooks are failing and there is no Hookdeck in the path, the first goal is to **stop losing webhooks** while the endpoint is being fixed.
+When webhooks are failing and there is no Event Gateway in the path, the first goal is to **stop losing webhooks** while the endpoint is being fixed.
+
+**Choose this or moving inline.** If you can change where the provider sends (edit or recreate the subscription, and deploy a handler change if needed), [move inline now](incident-move-inline.md): Event Gateway queues webhooks for the endpoint and the provider sees `200`, so the recovery lane isn't needed. Use emergency capture below when you can't change the provider's delivery target during the incident, so you can only add a second endpoint, or when the handler can't be changed to accept deliveries from Event Gateway before the endpoint recovers. Capture keeps your direct subscription, and recovery then replays through a recovery lane.
 
 1. Create a standby source with **provider signature verification** and no connection. Verification means forged requests are stored as `VERIFICATION_FAILED` and never replayed:
 
@@ -349,4 +351,4 @@ When webhooks are failing and there is no Hookdeck in the path, the first goal i
 3. Confirm capture with step 1, using the time you registered the URL as `T0`. For up to a minute after a source is created, the edge may answer `200` with `"status": "NOTICE"` ("Unknown source ... it can take a minute to propagate") instead of `SUCCESS`. The request is still processed; check the request list rather than the response body.
 4. Fix the endpoint, then follow steps 2–7.
 
-Webhooks that failed **before** the standby existed are not in Hookdeck. Recover them with the provider's resend tools where they exist (Stripe, PayPal), or by reconciling against the provider's API (Shopify, BigCommerce, WooCommerce).
+Webhooks that failed **before** the standby existed are not in Event Gateway. Recover them with the provider's resend tools where they exist (Stripe, PayPal), or by reconciling against the provider's API (Shopify, BigCommerce, WooCommerce).

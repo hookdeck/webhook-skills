@@ -10,7 +10,7 @@ hookdeck ci --api-key "$HOOKDECK_API_KEY" && hookdeck whoami   # confirm the pro
 
 ## 1. Make the handler peak-ready
 
-Hookdeck can hold and replay webhooks; it can't make a slow or non-idempotent handler safe. Before anything else:
+Hookdeck Event Gateway can hold and replay webhooks; it can't make a slow or non-idempotent handler safe. Before anything else:
 
 - **Verify, enqueue, return `2xx`.** Do the work asynchronously. Shopify gives the whole request 5 seconds ([provider-notes.md](provider-notes.md)); a handler doing inline work under peak load will time out and trigger provider retries on top of the surge.
 - **Idempotent.** Recovery will redeliver some webhooks you already processed. Key on the provider's event or delivery ID (`X-Shopify-Webhook-Id`, Stripe `event.id`).
@@ -19,8 +19,8 @@ Hookdeck can hold and replay webhooks; it can't make a slow or non-idempotent ha
   - **Timestamp tolerance:** Stripe SDKs reject signatures older than 5 minutes by default.
   - **Per-endpoint secrets:** Stripe, PayPal and WooCommerce sign each endpoint with its own secret. Shopify signs with the app secret, so Shopify signatures still verify.
 
-  For deliveries that come through Hookdeck, verify the `x-hookdeck-signature` instead (see [hookdeck-event-gateway-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway-webhooks)). That is only safe when the Hookdeck source verifies the provider signature on the way in, which is why every source below is created with verification on.
-- **No provider-IP allowlist on the webhook route**, or one that also allows Hookdeck's outbound IPs. Recovery deliveries come from Hookdeck, not from the provider.
+  For deliveries that come through Event Gateway, verify the `x-hookdeck-signature` instead (see [hookdeck-event-gateway-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway-webhooks)). That is only safe when the Event Gateway source verifies the provider signature on the way in, which is why every source below is created with verification on.
+- **No provider-IP allowlist on the webhook route**, or one that also allows Hookdeck's outbound IPs. Deliveries from Event Gateway, including recovery deliveries, come from Hookdeck, not from the provider.
 
 ## 2. Know your safe delivery rate
 
@@ -31,20 +31,47 @@ Load-test the endpoint with sudden onset (not a slow ramp) at several times norm
 
 That headroom is the recovery destination's rate limit.
 
-## 3. Choose standby or inline
+## 3. Choose inline or standby
 
-| | **Standby** | **Inline** |
+**Put Event Gateway in front of the endpoint (inline).** If you are setting up before the peak, you have time to change where the provider sends, and inline is the setup this playbook recommends. Event Gateway receives every webhook, verifies it, queues it while your endpoint is slow or down, and delivers at a rate you set. The provider sees `200` throughout, so it never retries on top of the surge or disables your subscription.
+
+| | **Inline (recommended)** | **Standby (fallback)** |
 |---|---|---|
-| Path | Provider → your endpoint, **and** provider → Hookdeck source with no connection | Provider → Hookdeck → your endpoint |
-| Code / DNS change | None. Add a second subscription at the provider | Provider points at Hookdeck |
-| During an outage | Provider deliveries to you fail; Hookdeck has a full copy | Hookdeck queues and retries; the provider sees `200` throughout |
-| Recovery | Bulk replay the capture window into a recovery lane | Pause or throttle, then retry failures |
-| Provider auto-disable risk | Your direct subscription can still be disabled or deleted (Shopify deletes Admin-API subscriptions after 8 failures). The standby subscription keeps capturing | None: Hookdeck acknowledges every delivery |
-| Best for | Teams that can't change the delivery path before the peak | Teams that want Hookdeck to absorb surges permanently |
+| Path | Provider → Event Gateway → your endpoint | Provider → your endpoint, **and** provider → Event Gateway source with no connection |
+| Code / DNS change | Provider points at the Event Gateway source URL. The handler verifies `x-hookdeck-signature` | None. Add a second subscription at the provider |
+| During an outage | Event Gateway queues and retries; the provider sees `200` throughout | Provider deliveries to you fail; Event Gateway has a full copy |
+| Recovery | Pause or throttle, then retry failures | Bulk replay the capture window into a recovery lane |
+| Provider auto-disable risk | None: Event Gateway acknowledges every delivery | Your direct subscription can still be disabled or deleted (Shopify deletes Admin-API subscriptions after 8 failures). The standby subscription keeps capturing |
+| Surge absorption | Peaks above the destination's rate queue instead of reaching your endpoint | None. Live traffic still hits your endpoint at full rate |
 
-Both are valid. Standby is the lower-risk change to make shortly before a peak.
+**Use standby when you can't go inline in time.** Standby is a capture-only fallback. Choose it when:
 
-## 4a. Standby setup
+- you can't change the provider's delivery target before the peak (another team owns the subscription, or a change freeze already applies), or
+- you can't change the handler's verification in time to accept deliveries from Event Gateway (see step 1), or
+- you want a safety copy while you migrate to inline.
+
+Standby records webhooks but doesn't protect the endpoint. If you start on standby, plan to move inline when you can.
+
+## 4a. Inline setup
+
+```sh
+hookdeck gateway connection upsert shopify-orders \
+  --source-name shopify --source-type SHOPIFY --source-webhook-secret "$SHOPIFY_SECRET" \
+  --destination-name orders-api --destination-type HTTP \
+  --destination-url https://api.example.com/webhooks/shopify \
+  --destination-rate-limit 50 --destination-rate-limit-period second \
+  --rules '[{"type":"retry","strategy":"exponential","count":10,"interval":60000,"response_status_codes":["429","500-599"]}]'
+```
+
+- Set the rate to the sustained rate from step 2. Peaks above it queue in Event Gateway instead of hitting the endpoint.
+- Point the provider's subscription at the source URL (`hookdeck gateway source get shopify --output json | jq -r .url`), then remove the old direct subscription so webhooks don't arrive twice.
+- **Stripe, PayPal and WooCommerce:** register the new endpoint first, then set the source's secret to that endpoint's own secret. Each endpoint signs with its own secret.
+- Update the handler to verify `x-hookdeck-signature` (step 1) before you switch the provider over.
+- Check it works by triggering a real provider test event and confirming it arrives at the endpoint with `hookdeck gateway event list --connection-id <connection> --limit 1`.
+
+## 4b. Standby setup
+
+Use this only when inline isn't possible before the peak (see step 3). It captures webhooks but doesn't sit in front of the endpoint.
 
 1. **Create the standby source** with provider signature verification and no connection:
 
@@ -55,7 +82,7 @@ Both are valid. Standby is the lower-risk change to make shortly before a peak.
    export STANDBY_URL=$(echo "$SRC_JSON" | jq -r .url)
    ```
 
-   - **Verification is not optional.** Hookdeck verifies before it records a request as `NO_CONNECTION`, so forged requests are stored as `VERIFICATION_FAILED` and the recovery replay never picks them up. With an unverified source, anyone who learns the URL can plant requests that recovery would deliver to production with a valid Hookdeck signature.
+   - **Verification is not optional.** Event Gateway verifies before it records a request as `NO_CONNECTION`, so forged requests are stored as `VERIFICATION_FAILED` and the recovery replay never picks them up. With an unverified source, anyone who learns the URL can plant requests that recovery would deliver to production with a valid Hookdeck signature.
    - **Stripe:** register the standby endpoint first (step 2), then set the source's secret to that endpoint's own signing secret: `hookdeck gateway source upsert stripe-standby --type STRIPE --webhook-secret "$STANDBY_WHSEC"`.
    - Use one standby source per provider (or per store), so a recovery replay can filter by source.
 
@@ -103,20 +130,6 @@ Both are valid. Standby is the lower-risk change to make shortly before a peak.
 
 5. **Don't alert on the standby's `NO_CONNECTION` requests.** That is expected behaviour; new projects exclude `NO_CONNECTION` from request issue alerts by default.
 
-## 4b. Inline setup
-
-```sh
-hookdeck gateway connection upsert shopify-orders \
-  --source-name shopify --source-type SHOPIFY --source-webhook-secret "$SHOPIFY_SECRET" \
-  --destination-name orders-api --destination-type HTTP \
-  --destination-url https://api.example.com/webhooks/shopify \
-  --destination-rate-limit 50 --destination-rate-limit-period second \
-  --rules '[{"type":"retry","strategy":"exponential","count":10,"interval":60000,"response_status_codes":["429","500-599"]}]'
-```
-
-- Set the rate to the sustained rate from step 2. Peaks above it queue in Hookdeck instead of hitting the endpoint.
-- Point the provider's subscription at the source URL (`hookdeck gateway source get shopify --output json | jq -r .url`).
-
 ## 5. Check payload retention
 
 Replay needs the stored payload. If a payload falls outside your plan's retention window, replaying it fails with `409 DATA_ARCHIVED`. Make sure retention comfortably covers the time it takes to detect, fix and replay an outage: a full holiday weekend, not a few hours.
@@ -153,13 +166,13 @@ In your own system, alert on **freshness** as well as errors: the gap between a 
 
 Run the recovery runbook end to end against a non-production project before the peak:
 
-1. Point a test standby source at a test endpoint, and stop the endpoint.
+1. Point a test source at a test endpoint (for inline, a connection to it; for standby, a source with no connection), and stop the endpoint.
 2. Send a burst of test requests.
-3. Run [incident-standby.md](incident-standby.md) (or [incident-inline.md](incident-inline.md)) start to finish, and time it.
+3. Run [incident-inline.md](incident-inline.md) (or [incident-standby.md](incident-standby.md) for a standby setup) start to finish, and time it. Also rehearse [moving inline mid-incident](incident-move-inline.md) if there is any chance you reach the peak without Event Gateway in place.
 4. Check the replayed events arrived approximately in order and that the handler deduplicated the overlap.
 
-Write the real project's IDs (standby source, recovery connection and destination) into your incident runbook so nobody has to look them up mid-incident.
+Write the real project's IDs (the live connection and destination, or the standby source and recovery lane) into your incident runbook so nobody has to look them up mid-incident.
 
 ## 8. Freeze
 
-During the peak, freeze changes to Hookdeck configuration along with your code freeze, except the recovery actions in the runbooks.
+During the peak, freeze changes to Event Gateway configuration along with your code freeze, except the recovery actions in the runbooks.
