@@ -16,12 +16,11 @@ export T0=2026-11-27T14:05:00Z   # when deliveries started failing
 ## Step 0 — Authenticate and confirm the project
 
 ```sh
-hookdeck ci --api-key "$HOOKDECK_API_KEY"
-hookdeck whoami
+hookdeck whoami   # not set up? See Rules for Agents 8 in SKILL.md
 hookdeck gateway connection get "$CONN" --output json | jq '{id, name, paused_at, destination: .destination.id}'
 ```
 
-Get the user to confirm the project and the connection before changing anything. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.) To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
+Get the user to confirm the project and the connection before changing anything. (If you authenticated with `hookdeck ci` and `whoami` errors, show the "configured on project … in organization …" line that `ci` printed instead.) To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
 
 Record the destination's current delivery policy before changing it, so it can be restored exactly in step 6:
 

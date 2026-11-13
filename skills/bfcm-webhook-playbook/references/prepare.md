@@ -3,9 +3,9 @@
 Work through this checklist in the weeks before the peak, not the day before. Each step is a CLI command or API call. For the infrastructure-as-code version, see [terraform.md](terraform.md).
 
 ```sh
-export HOOKDECK_API_KEY=...
+hookdeck whoami   # confirm the project; not set up? See Rules for Agents 8 in SKILL.md
 export API=https://api.hookdeck.com/2026-09-01
-hookdeck ci --api-key "$HOOKDECK_API_KEY" && hookdeck whoami   # confirm the project (ci also prints it)
+export HOOKDECK_API_KEY=...   # the project's API key, for the REST calls below
 ```
 
 ## 1. Make the handler peak-ready
