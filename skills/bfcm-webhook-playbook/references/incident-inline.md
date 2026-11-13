@@ -23,7 +23,7 @@ hookdeck gateway connection get "$CONN" --output json | jq '{id, name, paused_at
 
 Get the user to confirm the project and the connection before changing anything. (`hookdeck ci` also prints "configured on project … in organization …"; if `whoami` errors, show that line instead.) To resolve IDs from names: `hookdeck gateway connection get <name> --output json | jq -r '.id, .destination.id, .source.id'`.
 
-Record the destination's current delivery policy before changing it, so it can be restored exactly in step 5:
+Record the destination's current delivery policy before changing it, so it can be restored exactly in step 6:
 
 ```sh
 curl -sS "$API/destinations/$DEST" -H "Authorization: Bearer $HOOKDECK_API_KEY" | jq -c '.config.delivery_policy'
@@ -51,20 +51,19 @@ Choose one:
 
 The fix happens outside Hookdeck. Confirm the endpoint is healthy before resuming delivery.
 
-## Step 3 — Set a safe rate, then resume
+## Step 3 — Set a safe rate
 
-Set the rate before unpausing. The held backlog plus live traffic arrives together, and the backlog drains at the destination's rate.
+Set the rate the endpoint can take now. The backlog (held events plus retried failures) drains at the destination's rate, alongside live traffic.
 
 ```sh
 hookdeck gateway destination update "$DEST" --rate-limit 20 --rate-limit-period second
-hookdeck gateway connection unpause "$CONN"
 ```
 
-Unpausing re-queues held events in blocks of up to 5,000 that share one queue timestamp, so order is shuffled inside each block. If order matters more than speed, skip pausing next time and use a low delivery rate instead. See [ordering.md](ordering.md).
+## Step 4 — Retry what failed, before unpausing
 
-## Step 4 — Retry what failed
+Events that exhausted their retries during the outage stay `FAILED` until retried. **Retry them while the connection is still paused.** A bulk retry created after the pause delivers even though the connection is paused, while newer events stay on `HOLD`. The older failures therefore arrive before the newer held events. If you unpause first, the held events go ahead of the failures. (Measured: with 20 failed and 10 held events, retrying before unpausing delivered all 20 older ones first.)
 
-Events that exhausted their retries during the outage stay `FAILED` until retried. Filter on `last_attempt_at`, not `created_at`: an event created before `T0` that was still queued or retrying when the endpoint went down also failed during the outage. Dry-run, confirm the count with the user, then retry:
+Filter on `last_attempt_at`, not `created_at`: an event created before `T0` that was still queued or retrying when the endpoint went down also failed during the outage. Dry-run, confirm the count with the user, then retry:
 
 ```sh
 curl -sS --fail-with-body -G "$API/bulk/events/retry/plan" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
@@ -81,20 +80,31 @@ export OP_ID=$(curl -sS --fail-with-body -X POST "$API/bulk/events/retry" \
 
 The CLI equivalent filter for checking what's left is `hookdeck gateway event list --connection-id "$CONN" --status FAILED --last-attempt-at-after "$T0"`.
 
-Bulk retry walks events oldest first. Like unpause, it queues each block of up to 5,000 events with a shared timestamp. Retried events queue alongside live events, so increase the rate temporarily if the backlog is large and the endpoint has headroom.
-
-Watch progress:
+Watch progress, and wait until the retried events have drained (no `QUEUED` events) before step 5:
 
 ```sh
 curl -sS "$API/bulk/events/retry/$OP_ID" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
   | jq '{progress, completed_count, failed_count, completed_at}'
-hookdeck gateway event list --connection-id "$CONN" --status FAILED --limit 20 --output json \
+hookdeck gateway event list --connection-id "$CONN" --status QUEUED --limit 1 --output json | jq '.models | length'
+hookdeck gateway event list --connection-id "$CONN" --status FAILED --last-attempt-at-after "$T0" --limit 20 --output json \
   | jq '.models[] | {id, response_status, created_at}'
 ```
 
-## Step 5 — Mop up
+Bulk retry walks events oldest first, but queues each block of up to 5,000 with one shared timestamp, so order is shuffled within a block (see [ordering.md](ordering.md)).
 
-1. Restore the delivery policy recorded in step 0. If it had a rate, set it back with `hookdeck gateway destination update "$DEST" --rate-limit <rate> --rate-limit-period <period>`. If it had none, remove the limit through the API (`--rate-limit 0` is rejected as "no updates"):
+## Step 5 — Unpause
+
+Skip this if you only lowered the rate in step 1.
+
+```sh
+hookdeck gateway connection unpause "$CONN"
+```
+
+Unpausing re-queues held events in blocks of up to 5,000 that share one queue timestamp, so order is shuffled inside each block. If order matters more than speed, skip pausing next time and use a low delivery rate instead.
+
+## Step 6 — Mop up
+
+1. Restore the delivery policy recorded in step 0. If it had a rate, set it back with `hookdeck gateway destination update "$DEST" --rate-limit <rate> --rate-limit-period <period>`. If its `rate` was `null` (no limit; step 0 prints `{"rate":null,...}`), remove the limit through the API (`--rate-limit 0` is rejected as "no updates"):
 
    ```sh
    curl -sS --fail-with-body -X PUT "$API/destinations/$DEST" -H "Authorization: Bearer $HOOKDECK_API_KEY" \
@@ -114,9 +124,9 @@ curl -sS --fail-with-body -G "$API/bulk/requests/retry/plan" -H "Authorization: 
   --data-urlencode "query[source_id]=$SRC" --data-urlencode "query[rejection_cause]=VERIFICATION_FAILED" \
   --data-urlencode "query[created_at][gte]=$T0" | jq '.estimated_count'
 
-curl -sS -X POST "$API/bulk/requests/retry" \
+curl -sS --fail-with-body -X POST "$API/bulk/requests/retry" \
   -H "Authorization: Bearer $HOOKDECK_API_KEY" -H "Content-Type: application/json" \
   -d "{\"query\": {\"source_id\": \"$SRC\", \"rejection_cause\": \"VERIFICATION_FAILED\", \"created_at\": {\"gte\": \"$T0\"}}}"
 ```
 
-Bound the window with `created_at[gte]` (never `gt`, which is ignored). After changing a source's secret, wait about 5 minutes before retrying: verification keeps the old secret for a few minutes, and a retry during that window fails again. Judge the result by `rejection_cause`, not by the operation's `failed_count`. Without it, every `VERIFICATION_FAILED` request in retention is retried, including genuine forgeries from long before the incident; those simply fail verification again.
+Bound the window with `created_at[gte]` (never `gt`, which is ignored). After changing a source's secret, wait 5–6 minutes and confirm a test webhook is accepted before retrying: verification keeps the old secret for several minutes, and a retry during that window fails again (see [incident-standby.md § VERIFICATION_FAILED](incident-standby.md#verification_failed-on-the-standby-source)). Judge the result by `rejection_cause`, not by the operation's `failed_count`. Without it, every `VERIFICATION_FAILED` request in retention is retried, including genuine forgeries from long before the incident; those simply fail verification again.

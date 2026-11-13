@@ -133,7 +133,7 @@ Expect `SUCCESSFUL`. If the event is retrying or `FAILED`, stop and diagnose bef
 
 Choose a mode with the user first (see [ordering.md](ordering.md)):
 
-- **5a. Ordered replay:** exact original order, about 4 requests a second (around 14,000 an hour). Use it when handlers are order-sensitive or the backlog is modest.
+- **5a. Ordered replay:** exact capture order, about 4–5 requests a second (around 14,000 an hour). Use it when handlers are order-sensitive or the backlog is modest.
 - **5b. Bulk replay:** one API call, much faster to enqueue. Order is kept between batches of 100 but is effectively random within each batch. Use it for large backlogs with order-tolerant handlers.
 
 Either way, **wait about a minute after `T1` before counting or replaying.** Requests from the last few seconds can be missing from counts and listings.
@@ -149,6 +149,8 @@ curl -sS --fail-with-body -G "$API/bulk/requests/replay/plan" -H "Authorization:
   --data-urlencode "query[created_at][gte]=$FIRST_AT" \
   --data-urlencode "query[created_at][lte]=$T1" | jq '{estimated_count, estimated_batch}'
 ```
+
+Without an `lte` bound (`T1` unknown), the count is a lower bound while webhooks are still arriving: the operation includes everything up to its own creation time. Reconcile against the operation's `completed_count` afterwards.
 
 **Sanity-check `estimated_count` before asking for confirmation.** Compare it with what the outage should have produced: normal webhook rate × outage length, or the provider dashboard's count for the window. If it is far higher, the window is wrong (a missing lower bound, or the wrong source). Stop and recheck the query. If it is 0, there is nothing to replay; don't create an operation. Otherwise show the count and the chosen mode to the user and get explicit confirmation.
 
@@ -200,7 +202,7 @@ OP=$(curl -sS --fail-with-body -X POST "$API/bulk/requests/replay" \
       \"target\": { \"webhook_ids\": [\"$RECOVERY_CONN\"] }
     }
   }")
-echo "$OP" | jq '{id, estimated_count}'          # on an error, this prints the API's message instead
+echo "$OP" | jq 'if .id then {id, estimated_count} else (.data.message // .message // .) end'   # prints the API's error message on failure
 export OP_ID=$(echo "$OP" | jq -r '.id // empty'); [ -n "$OP_ID" ] || echo "No operation created; read the error above"
 ```
 
@@ -285,9 +287,20 @@ Because filters are millisecond-precise and stored values microsecond-precise, a
 
 If the standby source's secret was wrong, genuine webhooks were captured as `VERIFICATION_FAILED` instead of `NO_CONNECTION`, and step 5 won't replay them. Retrying them on the standby source re-runs verification; with no connection they then become `NO_CONNECTION` and fall inside the replay window.
 
-1. **Fix the secret:** `hookdeck gateway source upsert <standby name> --webhook-secret "$CORRECT_SECRET"`.
-2. **Wait about 5 minutes.** The edge picks up the new secret at once, but verification in Hookdeck's processing keeps the old one for a few minutes. A retry during that window fails again.
-3. **Confirm the fix:** trigger a provider test webhook and check it is stored as `NO_CONNECTION`, not `VERIFICATION_FAILED`.
+1. **Fix the secret**, passing the source type as well. Without `--type`, the upsert is treated as a generic source and fails with `config.auth is not allowed`, leaving the old secret in place:
+
+   ```sh
+   hookdeck gateway source upsert <standby name> --type SHOPIFY --webhook-secret "$CORRECT_SECRET"   # or STRIPE, etc.
+   ```
+
+   Check the command printed no error before waiting.
+2. **Wait 5–6 minutes.** Hookdeck needs time to pick up a new secret everywhere. Measured: the edge kept rejecting correctly signed webhooks with `401` for up to about a minute. For about 4 more minutes it accepted them (`200`) while they were still stored as `VERIFICATION_FAILED`. They became `NO_CONNECTION` from about 5 minutes. A retry during that window fails again.
+3. **Confirm the fix:** trigger a provider test webhook and check it is stored as `NO_CONNECTION`, not `VERIFICATION_FAILED`. If it isn't, wait another minute and repeat; don't retry until a test webhook passes:
+
+   ```sh
+   hookdeck gateway request list --source-id "$STANDBY_SRC" --limit 1 --output json \
+     | jq '.models[0] | {id, rejection_cause, created_at}'
+   ```
 4. **Retry, with no upper bound**, so the window also covers requests captured while the secret was propagating:
 
    ```sh
@@ -303,7 +316,16 @@ If the standby source's secret was wrong, genuine webhooks were captured as `VER
      | jq -r '.id'
    ```
 
-5. **Check the outcome by rejection cause, not by the operation's `failed_count`.** `failed_count` counts every request that is still rejected afterwards, and `NO_CONNECTION` is a rejection too, so it reads 100% even when the retry worked. List the window again with `--rejection-cause NO_CONNECTION` and `--rejection-cause VERIFICATION_FAILED` and compare.
+5. **Check the outcome by rejection cause, not by the operation's `failed_count`.** `failed_count` counts every request that is still rejected afterwards, and `NO_CONNECTION` is a rejection too, so it reads 100% even when the retry worked. Count both causes for the window, before and after the retry:
+
+   ```sh
+   for CAUSE in NO_CONNECTION VERIFICATION_FAILED; do
+     echo "$CAUSE: $(hookdeck gateway request list --source-id "$STANDBY_SRC" --rejection-cause $CAUSE \
+       --created-after "$T0" --limit 100 --output json | jq '.models | length')"
+   done
+   ```
+
+   Success: `VERIFICATION_FAILED` drops by the plan count (to 0, or to the genuine forgeries), and `NO_CONNECTION` rises by the same amount. Retried requests keep their original `created_at`, so they fall inside the replay window. For more than 100, page with `--next`.
 
 Requests that still fail verification after this are genuinely not from the provider. Leave them.
 

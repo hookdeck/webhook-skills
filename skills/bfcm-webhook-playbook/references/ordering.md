@@ -10,11 +10,15 @@ Measured on a live project: numbered webhooks were replayed or retried, and deli
 
 | Operation | How events are queued | Measured order |
 |-----------|-----------------------|----------------|
-| **Ordered replay**: replay requests one at a time, oldest first ([incident-standby.md § 5a](incident-standby.md#5a-ordered-replay)) | Each replay finishes before the next starts, so each event's queue timestamp follows the original order | **Exact.** 40 of 40 in order, zero inversions. Runs at about 4 requests a second (the API rate limit) |
+| **Ordered replay**: replay requests one at a time, oldest first ([incident-standby.md § 5a](incident-standby.md#5a-ordered-replay)) | Each replay finishes before the next starts, so each event's queue timestamp follows the original order | **Exact capture order.** Two runs: 40 of 40 and 130 of 130 in `created_at` order, zero inversions. Runs at about 4–5 requests a second (the API rate limit) |
 | **Bulk replay** ([§ 5b](incident-standby.md#5b-bulk-replay)) | Requests are taken oldest first in batches of 100, but the 100 replays in a batch run concurrently | **Ordered between batches, random within each batch.** With 150 requests, all of 1–100 arrived before any of 101–150, but within each batch the order was close to a random shuffle (max displacement 87). A backlog under 100 arrives in no particular order |
 | **Unpause** | Up to 5,000 held events get one shared queue timestamp per batch | Random within each block of up to 5,000. 20 held events arrived fully shuffled |
 | **Bulk event retry** | Same as unpause: one shared timestamp per batch of up to 5,000 | Random within each block. 40 retried events: 310 of 780 pairs out of order |
 | **Live traffic on the same connection** | Queued as it arrives | New live events interleave with, or overtake, an older backlog |
+
+"Original order" here means the order Hookdeck recorded the requests (`created_at`). Webhooks that arrive within a fraction of a second of each other can be recorded slightly out of arrival order: in one run, two webhooks sent about 160 ms apart were stored in reverse. No replay mode can undo that, so handlers still need the tolerance below.
+
+**Inline runbook:** retry `FAILED` events *before* unpausing. A bulk retry created after the pause delivers while the connection is still paused, so older failures arrive before the newer held events. Unpausing first sends the newer held events ahead of them.
 
 The destination's delivery rate drains the queue lowest timestamp first. It keeps whatever order the events were queued in, but it can't repair an order that was already shuffled when they were queued.
 
