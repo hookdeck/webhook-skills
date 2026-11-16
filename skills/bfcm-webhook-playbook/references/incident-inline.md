@@ -58,6 +58,12 @@ Set the rate the endpoint can take now. The backlog (held events plus retried fa
 hookdeck gateway destination update "$DEST" --rate-limit 20 --rate-limit-period second
 ```
 
+The command prints the destination's URL, not its rate. Confirm the new rate with the same call as step 0:
+
+```sh
+curl -sS "$API/destinations/$DEST" -H "Authorization: Bearer $HOOKDECK_API_KEY" | jq -c '.config.delivery_policy'
+```
+
 ## Step 4 — Retry what failed, before unpausing
 
 Events that exhausted their retries during the outage stay `FAILED` until retried. **Retry them while the connection is still paused.** A bulk retry created after the pause delivers even though the connection is paused, while newer events stay on `HOLD`. The older failures therefore arrive before the newer held events. If you unpause first, the held events go ahead of the failures. (Measured: with 20 failed and 10 held events, retrying before unpausing delivered all 20 older ones first.)

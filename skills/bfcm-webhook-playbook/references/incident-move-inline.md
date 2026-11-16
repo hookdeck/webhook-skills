@@ -84,7 +84,7 @@ From here the connection is a normal inline connection with a paused queue. [inc
 
 1. **Set a safe rate** ([step 3](incident-inline.md#step-3--set-a-safe-rate)). Replace the placeholder rate on the destination with the rate the endpoint can take now.
 2. **Retry failures** ([step 4](incident-inline.md#step-4--retry-what-failed-before-unpausing)). Events that failed after the move are `FAILED` until retried. Retry them while the connection is paused, so older failures arrive before newer held events. If nothing is `FAILED`, the dry-run count is 0 and you skip this.
-3. **Unpause** ([step 5](incident-inline.md#step-5--unpause)).
+3. **Unpause** ([step 5](incident-inline.md#step-5--unpause)). The held backlog is delivered in no particular order. Unpausing re-queues held events in blocks of up to 5,000 that share one queue timestamp, so every event in a block can arrive in any order. In the rehearsal, 20 held webhooks sent in order 1 to 20 arrived as 20, 15, 19, 17, 7, 11, 3, 18, 4, 16, 12, 10, 6, 8, 9, 1, 5, 13, 2, 14. Handlers must tolerate out-of-order events, and order-sensitive objects should be reconciled against the provider's API in the mop-up step ([ordering.md](ordering.md)).
 4. **Mop up** ([step 6](incident-inline.md#step-6--mop-up)). Restore the delivery policy. For this connection, the policy to restore is the steady-state rate from [prepare.md § 2](prepare.md#2-know-your-safe-delivery-rate), not the placeholder from step 1. Then reconcile critical objects against the provider's API.
 
 ## Caveats before you point the provider at Event Gateway
@@ -96,6 +96,12 @@ From here the connection is a normal inline connection with a paused queue. [inc
 - **Webhooks that failed before the move are not in Event Gateway.** Recover them with the provider's resend tools where they exist (Stripe, PayPal), or by reconciling against the provider's API (Shopify, BigCommerce, WooCommerce). See [provider-notes.md](provider-notes.md).
 - **Duplicates.** Handlers must be idempotent. Resent and reconciled webhooks can overlap with ones already processed ([ordering.md](ordering.md)).
 
-## What has not been tested
+## What has been tested
 
-This path reuses the commands from [prepare.md § 4a](prepare.md#4a-inline-setup) and [incident-inline.md](incident-inline.md), but the full mid-incident sequence has not been run end to end. Rehearse it against a non-production project before relying on it ([prepare.md § Rehearse](prepare.md#7-rehearse)).
+Rehearsed in full on 16 Nov 2026 against a throwaway project, with an HTTP destination on a test endpoint that answered `503` while "down" and `200` once fixed:
+
+- Step 1 created the source and connection and paused it in about 3 seconds.
+- 20 Shopify-style webhooks signed with the source's secret were accepted with `200` and held (`HOLD`); a request with a wrong signature got `401` and was stored as `VERIFICATION_FAILED`. Nothing reached the endpoint while the connection was paused.
+- After the fix, the steps from incident-inline.md (rate to 20 a second, a retry dry-run that counted 0 because nothing had failed, unpause, restore the delivery policy) delivered all 20, each signed with `x-hookdeck-signature`, within about 9 seconds of unpausing, in shuffled order (see step 4).
+
+Not exercised: re-pointing a real provider's subscription (step 2), Stripe, PayPal and WooCommerce per-endpoint secrets, and a backlog large enough to span more than one 5,000-event block. Rehearse your own setup against a non-production project before relying on it ([prepare.md § Rehearse](prepare.md#7-rehearse)).
