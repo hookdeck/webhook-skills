@@ -39,7 +39,7 @@ ok = hmac.compare_digest(expected.encode(), signature.lower().encode())
 - Use the raw body. The docs' Node snippet hashes `JSON.stringify(request.body)`, which can differ from what Plain signed.
 - Check the header is exactly 64 hex chars before `Buffer.from(x, 'hex')`; invalid hex silently truncates.
 - Use `express.raw({ type: '*/*' })` so any content type verifies.
-- The timestamp is in the body (`webhookMetadata.webhookDeliveryAttemptTimestamp`), not covered by a separate signed header. Retries and Hookdeck replays carry their own attempt timestamps, so a strict window is opt-in here (`PLAIN_TOLERANCE_SECONDS`).
+- The timestamp is in the body (`webhookMetadata.webhookDeliveryAttemptTimestamp`), not covered by a separate signed header. Plain re-signs each of its own retries with a new attempt timestamp, but a Hookdeck retry or replay resends the body from Plain's original attempt, so its timestamp can be hours or days old. A strict window would reject those, so it is opt-in here (`PLAIN_TOLERANCE_SECONDS`).
 - No HMAC secret in the workspace means no header at all.
 
 ## Debugging Verification Failures

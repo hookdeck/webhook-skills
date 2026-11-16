@@ -56,12 +56,12 @@ function handleAlert(payload) {
   switch (status) {
     case 'raised':
       console.log(`Alert raised ${alertUid}: ${message}`);
-      // TODO: open a ticket or page on-call (payload.device_hostname, payload.site_name)
+      // Open a ticket or page on-call (payload.device_hostname, payload.site_name)
       break;
 
     case 'resolved':
       console.log(`Alert resolved ${alertUid}: ${message}`);
-      // TODO: close the matching ticket
+      // Close the matching ticket
       break;
 
     default:

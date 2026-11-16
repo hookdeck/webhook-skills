@@ -25,7 +25,10 @@ the connection's configuration, so the shape below is **illustrative**, not a Ta
 ]
 ```
 
-Handle a JSON array of records and a single JSON object, and tolerate an empty body. If you need to
+Select **Generate Document** in the JSON format settings to get a JSON array like this one. By
+default Connect writes each row as an object with no commas between them, which a JSON parser
+rejects. **Wrap Data with Source** sends one object whose key is the source name and whose value
+is the array. Handle a JSON array of records and a single JSON object, and tolerate an empty body. If you need to
 tell connections apart, use a separate URL path or a separate secret per connection.
 
 ## Which HTTP Method?
@@ -43,9 +46,8 @@ Requests are unsigned. The destination offers these authentication options:
 |--------|--------------------------------------------------|
 | None | No (unauthenticated) |
 | Basic Authentication | No |
-| OAuth2 Client Credentials | No |
 | **Header Authentication** (Auth Header Name + Secret) | **Yes** |
-| IBM Cloud IAM | No |
+| IBM Cloud IAM - API Key | No |
 
 See [verification.md](verification.md) and [setup.md](setup.md).
 

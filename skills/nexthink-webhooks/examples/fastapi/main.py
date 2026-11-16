@@ -51,11 +51,11 @@ def handle_event(payload) -> None:
 
     if event == "alert triggered":
         print(f"Alert triggered: {body.get('monitor')}")
-        # TODO: open a ticket or notify the on-call channel
+        # Open a ticket or notify the on-call channel
 
-    elif event == "alert recovered":
-        print(f"Alert recovered: {body.get('monitor')}")
-        # TODO: resolve the ticket
+    elif event == "high priority alert":
+        print(f"High-priority alert: {body.get('monitor')}")
+        # Page the on-call engineer
 
     else:
         print('Unrecognised Nexthink payload (no matching "event" in your template)')

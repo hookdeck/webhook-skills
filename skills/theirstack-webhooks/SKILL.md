@@ -81,7 +81,7 @@ The event name is **in the body**, not a header. Every delivery is one record in
 | `job.new` | A new job matching the saved search is discovered | Full Job record |
 | `company.new` | A company matches the saved search for the first time (once per webhook) | Full Company record |
 | `job.closed` | A matching job is closed or removed by the source | `{ id, closed_at }` |
-| `tech.new` | A company adopts a new technology (access on request) | Technology change record |
+| `tech.new` | A company adopts a new technology (access on request) | Not documented |
 
 > **For the full event reference**, see [TheirStack webhook docs](https://theirstack.com/en/docs/webhooks).
 

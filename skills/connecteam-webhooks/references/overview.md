@@ -61,7 +61,7 @@ Most features send an envelope:
 }
 ```
 
-`data` is an array for users and an object for forms, tasks and chat. Shift Scheduler payloads add `webhookVersion` and `schedulerId`. Time Activity payloads are flat: `userId`, `timeClockId` and the event's fields sit at the root next to `webhookVersion`.
+`data` is an array for users and tasks, and an object for forms and chat. Shift Scheduler payloads add `webhookVersion` and `schedulerId`. Time Activity payloads are flat: `userId`, `timeClockId` and the event's fields sit at the root next to `webhookVersion`.
 
 ```json
 {
@@ -78,7 +78,7 @@ Most features send an envelope:
 
 ## Delivery
 
-Return any 2xx within 10 seconds, then process the event asynchronously. A 404 is treated as permanent; other failures may be retried.
+Return any 2xx within 10 seconds, then process the event asynchronously. A 404 is treated as permanent; other failures may be retried. `requestId` is a correlation ID that several events from one action can share, so build an idempotency key from `requestId`, `eventType` and the affected entity.
 
 ## Full Event Reference
 

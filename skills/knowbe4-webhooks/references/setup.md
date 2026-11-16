@@ -52,10 +52,10 @@ typed in KnowBe4. The header name is matched case-insensitively.
 curl -X POST http://localhost:3000/webhooks/knowbe4 \
   -H "Content-Type: application/json" \
   -H "Authorization: $KNOWBE4_WEBHOOK_SECRET" \
-  -d '{"event_type":"Phish Failure Removed","System":"KnowBe4"}'
+  -d '{"System":"KnowBe4"}'
 ```
 
-The body above is illustrative. For a real delivery, trigger a selected event in KSAT or run a
+The body above holds only the Custom Data from KnowBe4's example. For a real delivery, trigger a selected event in KSAT or run a
 PhishER action with **Send to Webhook**.
 
 ## If the Webhook Is Deactivated

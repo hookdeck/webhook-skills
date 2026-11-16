@@ -10,7 +10,7 @@ X-Hail-Signature: t=1700000000,v1=72f7940d13ca8528cf655a04e82dabfe90a531e239241f
 
 - `t`: Unix timestamp in seconds
 - `v1`: lowercase hex HMAC-SHA256. Hail's signer emits one `v1`; the examples accept the header if **any** `v1` matches, which is harmless
-- Key: the whole signing secret string, including `whsec_`, as UTF-8 bytes
+- Key: the whole signing secret string, prefix included, as UTF-8 bytes. Hail's code generates secrets starting `whs_` ([routes/webhooks.py](https://github.com/hail-hq/hail/blob/main/api/hailhq/api/routes/webhooks.py)); the docs' example uses `whsec_example`
 - Signed message: `"<t>.<raw request bytes>"`
 
 Split the header on `,`, trim each part (a space after the comma is allowed), split each on the first `=`, take `t` and every `v1`. Reject a header with no `t` or no `v1`.
@@ -24,7 +24,7 @@ header: t=1700000000,v1=72f7940d13ca8528cf655a04e82dabfe90a531e239241fda9bdff729
 
 ## This Is Not Standard Webhooks
 
-The secret looks like `whsec_...`, but the `standardwebhooks` and `svix` libraries don't apply: they base64-decode the part after `whsec_` and expect `webhook-id` / `webhook-timestamp` / `webhook-signature` headers. Hail uses neither. Use plain HMAC.
+The docs' example secret looks like `whsec_...`, but the `standardwebhooks` and `svix` libraries don't apply: they base64-decode the part after `whsec_` and expect `webhook-id` / `webhook-timestamp` / `webhook-signature` headers. Hail uses neither. Use plain HMAC.
 
 ## Constant-Time Comparison
 
@@ -52,13 +52,13 @@ The signature covers `t`, so an attacker can't refresh an old request's timestam
 ## Common Gotchas
 
 - **Raw body:** hash the exact bytes. Don't re-serialise JSON. Use `express.raw({ type: '*/*' })` (Hail's docs show `application/json`, but `*/*` works whatever the Content-Type), `request.text()`, or `await request.body()`.
-- **Secret as-is:** don't strip `whsec_` or base64-decode.
+- **Secret as-is:** don't strip the `whs_` or `whsec_` prefix or base64-decode.
 - **Secret shown once:** returned only at create (and by `rotate-secret`, which invalidates the old secret immediately, with no overlap period).
 - **Status codes:** reply 400 for a bad signature, any 2xx on success.
 
 ## How Do I Debug Verification Failures?
 
-- Compare `HAIL_WEBHOOK_SECRET` with the secret from the create response (no whitespace or quotes, `whsec_` included).
+- Compare `HAIL_WEBHOOK_SECRET` with the secret from the create response (no whitespace or quotes, prefix included).
 - A body parser ahead of your route (`express.json()`) breaks the signature.
 - If you set `HAIL_TIMESTAMP_TOLERANCE_SECONDS`, an old `t` (a Hookdeck retry or replay) fails by design.
-- In Hookdeck, confirm the whole secret was pasted, `whsec_` included.
+- In Hookdeck, confirm the whole secret was pasted, prefix included.

@@ -12,7 +12,7 @@ Authorization: Bearer your-long-random-secret
 The header name is whatever you chose as the JSON key. There is no HMAC, timestamp or prefix
 parsing: compare the **whole** header value with the value you stored.
 
-> Choose Header Authentication on the Jamf Pro webhook and enter the same header name and value here.
+> Choose Header Authentication on the Jamf Pro webhook and enter the same header name (the JSON key) and value (the JSON value) here.
 
 ### What this does and doesn't protect
 

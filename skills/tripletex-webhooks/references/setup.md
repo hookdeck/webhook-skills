@@ -8,7 +8,7 @@
 
 ## Choose an Authentication Header
 
-Subscriptions are created through the API only. Pick a header name and a long random value:
+Tripletex documents creating subscriptions through the API. Pick a header name and a long random value:
 
 - `authHeaderName`: e.g. `Authorization` (the examples default to this) or a custom name such as `X-Webhook-Secret`
 - `authHeaderValue`: e.g. `Bearer <long random string>`

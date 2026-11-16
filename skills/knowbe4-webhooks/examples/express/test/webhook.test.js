@@ -7,9 +7,9 @@ delete process.env.KNOWBE4_WEBHOOK_HEADER; // default: Authorization
 const app = require('../src/index');
 const { verifyKnowbe4Request } = require('../src/index');
 
-// ILLUSTRATIVE payload: KnowBe4 documents no body schema or event field.
+// KnowBe4 documents no body schema or event field. This body holds only the Custom Data
+// key/value from KnowBe4's own example; a real delivery carries more.
 const payload = {
-  event_type: 'Phish Failure Removed',
   System: 'KnowBe4', // an admin-defined Custom Data key/value
 };
 
@@ -76,8 +76,13 @@ describe('KnowBe4 webhook', () => {
     expect(res.status).toBe(200);
   });
 
-  it('handles a payload with no event_type', async () => {
+  it('handles a PhishER payload', async () => {
     const res = await post({ System: 'PhishER' }, { Authorization: SECRET });
+    expect(res.status).toBe(200);
+  });
+
+  it('handles a payload without the Custom Data key', async () => {
+    const res = await post({}, { Authorization: SECRET });
     expect(res.status).toBe(200);
   });
 

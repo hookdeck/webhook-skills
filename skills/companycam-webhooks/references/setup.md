@@ -5,14 +5,16 @@
 - A CompanyCam account and an API access token (OAuth bearer token)
 - A publicly reachable HTTPS endpoint, e.g. `https://your-domain.com/webhooks/companycam`
 
-## Set a Token (required for signed deliveries)
+## Set a Token
 
-Set a token when you create the CompanyCam webhook. The `token` parameter is optional on
-create, but without one, deliveries are unsigned and fail verification. The token is the HMAC
-key for the `X-CompanyCam-Signature` header.
+Set a token when you create the CompanyCam webhook. The token is the HMAC key for the
+`X-CompanyCam-Signature` header, and CompanyCam never shows it again after creation. The
+`token` parameter is optional on create, and the docs don't say what a webhook created
+without one signs with, so always pass your own value. To change it, delete and recreate
+the webhook.
 
 If you use Hookdeck, set the token on the CompanyCam webhook and use the same value as the
-source's webhook secret; without it, deliveries are unsigned and verification fails.
+source's webhook secret.
 
 ## Register Your Endpoint
 
@@ -39,8 +41,9 @@ Inspect delivery attempts (retained for 30 days) with
 
 ## Delivery, Retries & Auto-Disable
 
-Respond with exactly `200`. Anything else is retried with exponential backoff (max 10
-attempts); more than 25 errors disables the webhook. Acknowledge quickly and process
+Respond with exactly `200`. Anything else is retried with exponential backoff (up to 10
+times). More than 25 errors, or a single event that exhausts its retries, disables the
+webhook. Acknowledge quickly and process
 asynchronously.
 
 ## Local Development

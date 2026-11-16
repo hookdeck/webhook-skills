@@ -5,8 +5,8 @@ import { verifyQuickbaseRequest } from '../lib/verify-quickbase';
 
 const SECRET = 'Bearer test_quickbase_secret_0123456789';
 
-// Illustrative payloads: Quickbase adds no event field; these are user-written templates.
-const EVENTS = ['record_added', 'record_modified', 'record_deleted'];
+// Template output: Quickbase adds no event field; `action` comes from the %action% marker.
+const EVENTS = ['Add', 'Replace', 'Delete'];
 
 beforeAll(() => {
   process.env.QUICKBASE_WEBHOOK_SECRET = SECRET;
@@ -18,8 +18,8 @@ afterEach(() => {
   delete process.env.QUICKBASE_WEBHOOK_HEADER;
 });
 
-function sample(event = 'record_added') {
-  return { event, record_id: 42, table: 'Projects' };
+function sample(event = 'Add') {
+  return { action: event, record_id: 42, table: 'Projects' };
 }
 
 function makeRequest(
@@ -34,7 +34,7 @@ function makeRequest(
   });
 }
 
-const json = (event = 'record_added') => JSON.stringify(sample(event));
+const json = (event = 'Add') => JSON.stringify(sample(event));
 
 describe('Quickbase webhook route', () => {
   describe('secret header verification', () => {
@@ -118,13 +118,13 @@ describe('Quickbase webhook route', () => {
   });
 
   describe('bodies', () => {
-    it.each(EVENTS)('handles illustrative %s payloads', async (event) => {
+    it.each(EVENTS)('handles %s actions', async (event) => {
       const res = await POST(makeRequest('POST', { Authorization: SECRET }, json(event)));
       expect(res.status).toBe(200);
     });
 
     it('acknowledges unrecognized events', async () => {
-      const res = await POST(makeRequest('POST', { Authorization: SECRET }, JSON.stringify({ event: 'other' })));
+      const res = await POST(makeRequest('POST', { Authorization: SECRET }, JSON.stringify({ action: 'other' })));
       expect(res.status).toBe(200);
     });
 

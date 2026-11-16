@@ -27,8 +27,8 @@ app = FastAPI()
 # The signature is HMAC-SHA256 (hex) of "<X-Coassemble-Timestamp>.<raw body>" keyed with the webhook secret.
 # https://developers.coassemble.com/webhooks
 
-# Optional replay window in seconds. Off by default (0): retries and replays, including
-# Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
+# Optional replay window in seconds. Off by default (0): Coassemble's docs set no window, and
+# Hookdeck's retries and replays carry the original timestamp, so a window would reject late redeliveries.
 # Set COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS to a positive whole number to opt in; any other value is
 # treated as 0, with a warning.
 _warned_invalid_tolerance = False
@@ -106,7 +106,7 @@ async def coassemble_webhook(raw_body: bytes = Depends(verified_body)):
     if not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    # Dedupe on the X-Coassemble-Delivery header: retries and replays keep the same delivery ID
+    # Dedupe on the X-Coassemble-Delivery header: retry attempts keep the same delivery ID
     event = payload.get("type")
     data = _as_dict(payload.get("data"))
     tracking = _as_dict(data.get("tracking"))
@@ -125,9 +125,9 @@ async def coassemble_webhook(raw_body: bytes = Depends(verified_body)):
     elif event == "course.completed":
         logger.info("%s completed %r in %ss", tracking.get("identifier"), course.get("title"), tracking.get("totalTime"))
     elif event == "quiz.completed":
-        logger.info("Quiz passed (delivery %s)", payload.get("id"))
+        logger.info("Quiz passed (event %s)", payload.get("id"))
     elif event == "quiz.failed":
-        logger.info("Quiz failed (delivery %s)", payload.get("id"))
+        logger.info("Quiz failed (event %s)", payload.get("id"))
     elif event == "migration.progress":
         item = _as_dict(data.get("item"))
         logger.info("Migration batch %s: %r %s", data.get("id"), item.get("title"), item.get("status"))

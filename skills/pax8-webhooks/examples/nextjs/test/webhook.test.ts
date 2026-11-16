@@ -10,17 +10,25 @@ beforeAll(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-// Illustrative payloads: Pax8's docs elide samplePayload, so the body shape is assumed.
-const subscriptionCreate = {
-  topic: 'SUBSCRIPTION',
-  action: 'CREATE',
-  id: '00000000-0000-0000-0000-000000000001',
-};
-const invoiceCreate = {
-  topic: 'INVOICE',
-  action: 'CREATE',
-  id: '00000000-0000-0000-0000-000000000002',
-};
+// Illustrative payloads: the field names follow the WebhookPayload schema in Pax8's
+// Webhooks API reference; the values are placeholders, and payloadData is left empty
+// because its fields aren't documented.
+function notification(topic, action, n) {
+  return {
+    accountId: '00000000-0000-0000-0000-00000000000a',
+    url: 'https://example.com/webhooks/pax8',
+    webhookId: '00000000-0000-0000-0000-00000000000b',
+    sentAt: '2026-01-01T00:00:00Z',
+    webhookTopic: {
+      id: `00000000-0000-0000-0000-00000000000${n}`,
+      topic,
+      filters: [{ action, conditions: [] }],
+    },
+    payloadData: {},
+  };
+}
+const subscriptionCreate = notification('SUBSCRIPTION', 'CREATE', 1);
+const invoiceCreate = notification('INVOICE', 'CREATED', 2);
 
 function makeRequest(
   headers: Record<string, string> = {},
@@ -67,16 +75,17 @@ describe('Pax8 webhook route', () => {
     expect((await POST(makeRequest({ Authorization: SECRET }, '[1,2]'))).status).toBe(400);
   });
 
-  it('accepts a payload without topic or action', async () => {
+  it('accepts a payload without a topic', async () => {
     expect((await POST(makeRequest({ Authorization: SECRET }, '{"foo":1}'))).status).toBe(200);
   });
 });
 
 describe('helpers', () => {
-  it('reads topic and action defensively', () => {
-    expect(classify(subscriptionCreate)).toEqual({ topic: 'SUBSCRIPTION', action: 'CREATE' });
-    expect(classify({ topic: 'invoice', action: 'update' })).toEqual({ topic: 'INVOICE', action: 'UPDATE' });
-    expect(classify({ topic: 5 })).toEqual({ topic: null, action: null });
+  it('reads the topic from webhookTopic.topic', () => {
+    expect(classify(subscriptionCreate)).toEqual({ topic: 'SUBSCRIPTION', sentAt: '2026-01-01T00:00:00Z' });
+    expect(classify({ webhookTopic: { topic: 'invoice' } })).toEqual({ topic: 'INVOICE', sentAt: null });
+    expect(classify({ topic: 'SUBSCRIPTION' })).toEqual({ topic: null, sentAt: null });
+    expect(classify({ webhookTopic: { topic: 5 } })).toEqual({ topic: null, sentAt: null });
   });
 
   it('compares the whole value for a bare (prefix-less) secret', () => {

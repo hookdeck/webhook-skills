@@ -125,6 +125,10 @@ class TestBodyHandling:
     def test_invalid_json_without_credentials_is_401(self):
         assert post(body="{not json").status_code == 401
 
+    def test_empty_send_a_test_request(self):
+        assert post(GOOD, body="").status_code == 200
+        assert post(body="").status_code == 401
+
 
 class TestEventHandling:
     def test_handles_alert(self, capsys):

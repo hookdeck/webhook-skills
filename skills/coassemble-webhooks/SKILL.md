@@ -33,7 +33,7 @@ X-Coassemble-Timestamp: 1736937000
 
 - The signature is HMAC-SHA256 (lowercase hex) of `<X-Coassemble-Timestamp value>.<raw body>`, keyed with the endpoint's **signing secret** (returned once when you create the endpoint), used as-is (UTF-8, not decoded).
 - Accept the digest with or without the `sha256=` prefix, and compare hex case-insensitively.
-- The event name is in the body's `type` field (also sent in `X-Coassemble-Event`). `X-Coassemble-Delivery` is the same across retries and replays, so use it for idempotency.
+- The event name is in the body's `type` field (also sent in `X-Coassemble-Event`). `X-Coassemble-Delivery` is the same across retry attempts, so use it for idempotency.
 - Test deliveries have `testMode: true` and are signed like real ones; verify, return `2xx`, then skip production actions.
 - Answer a missing, malformed or wrong signature with `401`.
 
@@ -72,7 +72,7 @@ def verify_coassemble(raw_body: bytes, signature_header, timestamp_header, secre
 
 Coassemble's docs show a Node sample that interpolates a string body; the examples sign the **raw body bytes** instead, since re-serialized JSON can differ from what was sent.
 
-The timestamp age check is **off by default**, because retries and replays (Coassemble's and Hookdeck's) resend the original `X-Coassemble-Timestamp`. Set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`) to opt in. Use `X-Coassemble-Delivery` for idempotency instead.
+The timestamp age check is **off by default**, because Coassemble's docs set no window and Hookdeck's retries and replays resend the original `X-Coassemble-Timestamp`. Set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`) to opt in. Use `X-Coassemble-Delivery` for idempotency instead.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

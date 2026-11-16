@@ -89,15 +89,15 @@ def handle_event(payload: dict) -> None:
 
     if event == "New Ticket Logged":
         print(f"New ticket logged: {object_id}")
-        # TODO: create the ticket in your system
+        # Create the ticket in your system
 
     elif event == "Ticket Reassigned":
         print(f"Ticket reassigned: {object_id}")
-        # TODO: notify the new assignee
+        # Notify the new assignee
 
     elif event in ("Document deleted on a Ticket", "Document edited on a Ticket"):
         print(f"{event}: {object_id}")
-        # TODO: refresh the ticket's attachments
+        # Refresh the ticket's attachments
 
     else:
         print(f"Unhandled event: {event} (object: {object_id})")

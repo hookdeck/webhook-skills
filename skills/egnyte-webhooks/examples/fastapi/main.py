@@ -44,15 +44,15 @@ def handle_event(event: dict) -> None:
 
     if event_type == "fs:add_file":
         print(f"File added: {data.get('targetPath')}")
-        # TODO: sync the new file or version
+        # Sync the new file or version
 
     elif event_type == "fs:delete_file":
         print(f"File deleted: {data.get('targetPath')}")
-        # TODO: remove the file from your cache
+        # Remove the file from your cache
 
     elif event_type == "fs:move_file":
         print(f"File moved: {data.get('sourcePath')} -> {data.get('targetPath')}")
-        # TODO: update stored paths
+        # Update stored paths
 
     elif event_type == "fs:add_folder":
         print(f"Folder added: {data.get('targetPath')}")

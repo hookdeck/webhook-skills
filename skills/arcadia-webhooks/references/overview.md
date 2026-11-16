@@ -2,7 +2,7 @@
 
 ## What Are Arcadia Webhooks?
 
-Arcadia is a utility data platform (Plug and Spark APIs). Its webhooks `POST` a JSON payload to a
+Arcadia is a utility data platform (Plug API). Its webhooks `POST` a JSON payload to a
 URL you register whenever utility data changes: a credential's connection status changes, new
 meter or account data arrives, existing data is updated or deleted, or a user has to complete an
 MFA challenge. Requests are **not signed**. Arcadia can add a custom header (name and value) to
@@ -18,7 +18,7 @@ Your endpoint must return a 2xx within 10 seconds.
 | `NEW_DATA_AVAILABLE` | `METER` | New data is available | Fetch the new statements, meters or intervals |
 | `EXISTING_DATA_UPDATED` | `METER` | Existing data is updated | Re-sync the affected records |
 | `DATA_DELETED` | `BUSINESS_UNIT_DELETION` | A user deletes a business unit (`data` says where its accounts moved and how many) | Reassign or remove the business unit's accounts locally |
-| `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to a business unit | Update local ownership |
+| `BUSINESS_UNIT_ASSIGNMENT` | `ROOT_BUSINESS_UNIT_ACCOUNT` | An account is assigned to the root business unit | Review the account's business units |
 | `REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS` | `CREDENTIAL` | A real-time credential validation succeeds | Mark the connection ready |
 | `REAL_TIME_CREDENTIAL_VALIDATION_FAILURE` | `CREDENTIAL` | A real-time credential validation fails | Ask the user to re-enter credentials |
 | `MFA_CHALLENGE_METHOD` | `MFA_METHOD_PROMPT` | The user must choose an MFA method | Show the available `verificationMethods` |
@@ -46,7 +46,8 @@ Dispatch on `eventType`, then on `resource` where one event type covers several 
 }
 ```
 
-- `id` - unique per webhook (`whk_...`); use it to de-duplicate
+- `id` - unique per webhook (`whk_...`); retries repeat it, so use it to de-duplicate retries.
+  Each business unit URL that receives the event gets its own `id`
 - `eventType`, `resource` - what happened, and to which entity
 - `createdAt` - when the event was created
 - `businessUnitIds` - business units the event applies to

@@ -58,42 +58,42 @@ export async function POST(request: NextRequest) {
   switch (eventType) {
     case 'project.created':
       console.log('Project created:', payload.id);
-      // TODO: sync the new project to your CRM / job system
+      // Sync the new project to your CRM or job system
       break;
 
     case 'project.updated':
       console.log('Project updated:', payload.id);
-      // TODO: keep your records in sync
+      // Keep your records in sync
       break;
 
     case 'photo.created':
       console.log('Photo created:', payload.id);
-      // TODO: back up the photo, run tagging, etc.
+      // Back up the photo, run tagging, etc.
       break;
 
     case 'photo.updated':
       console.log('Photo updated:', payload.id);
-      // TODO: refresh derived assets
+      // Refresh derived assets
       break;
 
     case 'comment.created':
       console.log('Comment created:', payload.id);
-      // TODO: notify the team
+      // Notify the team
       break;
 
     case 'document.created':
       console.log('Document created:', payload.id);
-      // TODO: sync the document
+      // Sync the document
       break;
 
     case 'todo_list.completed':
       console.log('Checklist completed:', payload.id);
-      // TODO: trigger close-out workflow
+      // Trigger close-out workflow
       break;
 
     case 'task.completed':
       console.log('Checklist task completed:', payload.id);
-      // TODO: track progress
+      // Track progress
       break;
 
     default:

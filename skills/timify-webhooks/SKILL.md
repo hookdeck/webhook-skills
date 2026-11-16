@@ -67,8 +67,9 @@ function verifyTimifyRequest(headers, secret = process.env.TIMIFY_WEBHOOK_SECRET
 ## Webhooks and Types
 
 TIMIFY's webhook overview lists these webhooks (the scope table) and their types. The overview
-page does not document the payload field names, so the examples dispatch defensively on an
-illustrative `webhook` and `type` and acknowledge anything they don't recognise.
+page does not document the payload field names, so the examples don't branch on a guessed field.
+Give each webhook scope its own subscription and Server URL, or branch on a field you've seen in a
+real delivery.
 
 | Webhook | Types |
 |---------|-------|

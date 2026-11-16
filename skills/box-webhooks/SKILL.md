@@ -22,7 +22,7 @@ metadata:
 - Why is my Box webhook signature verification failing?
 - How do I dedupe Box webhook retries?
 
-This skill covers **V2 webhooks** (created through the API per file or folder). V1 webhooks are unsigned and Box Sign's own webhooks are separate; neither is covered.
+This skill covers **V2 webhooks** (created through the API per file or folder). V1 webhooks are unsigned and not covered. Box Sign events (`SIGN_REQUEST.*`) are V2 triggers, signed the same way.
 
 ## Essential Code (USE THIS)
 
@@ -62,9 +62,9 @@ A missing or empty header, a malformed value, or a mismatch gets `401`.
 
 > **Setup note (same text Hookdeck shows for its Box source):** Paste the primary signature key from the Box Developer Console; only the primary signature is verified, so during key rotation paste the key that signs it. Only V2 webhooks are signed.
 
-**Timestamp window:** Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` (RFC 3339) older than 10 minutes. The examples leave that **off by default**, because Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance. Set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number (for example `600`) to opt in; unset or `0` is off. Box's own SDK helper (`WebhookValidator`) always enforces the 10 minutes and checks both keys, which is why the examples verify by hand. See [references/verification.md](references/verification.md).
+**Timestamp window:** Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` (RFC 3339) older than 10 minutes. The examples leave that **off by default**, because Hookdeck retries and replays resend the original headers and timestamp. Set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number (for example `600`) to opt in; unset or `0` is off. Box's own SDK helper (`WebhookValidator`) always enforces the 10 minutes and checks both keys, which is why the examples verify by hand. See [references/verification.md](references/verification.md).
 
-**HTTP method:** Box's docs don't name the delivery method; they say only that "Box makes an HTTP call to the `address`". The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes. Hookdeck's Box source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source.
+**HTTP method:** Box's Box Sign webhooks page says Box sends an HTTP `POST`; the V2 webhooks page says only that "Box makes an HTTP call to the `address`". The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes.
 
 **Dedupe on `id`:** the body's `id` is the same across Box's retries; `BOX-DELIVERY-ID` changes on every retry, so don't use it.
 

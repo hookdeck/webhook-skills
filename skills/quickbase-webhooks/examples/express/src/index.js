@@ -25,24 +25,25 @@ function verifyQuickbaseRequest(headers, secret = process.env.QUICKBASE_WEBHOOK_
 }
 
 /**
- * Quickbase adds no event field. The `event` field below is ILLUSTRATIVE: it is a literal you
- * type into your message body template (one webhook per trigger), not something Quickbase sends.
+ * Quickbase adds no event field. Put "action": "%action%" in your message body template:
+ * Quickbase replaces the %action% marker with Add, Replace or Delete, depending on what
+ * triggered the webhook.
  */
 function handleEvent(payload) {
-  switch (payload.event) {
-    case 'record_added':
+  switch (payload.action) {
+    case 'Add':
       console.log(`Record added: ${payload.record_id}`);
-      // TODO: create the record in your system
+      // Create the record in your system
       break;
 
-    case 'record_modified':
+    case 'Replace':
       console.log(`Record modified: ${payload.record_id}`);
-      // TODO: update the record in your system
+      // Update the record in your system
       break;
 
-    case 'record_deleted':
+    case 'Delete':
       console.log(`Record deleted: ${payload.record_id}`);
-      // TODO: remove the record from your system
+      // Remove the record from your system
       break;
 
     default:

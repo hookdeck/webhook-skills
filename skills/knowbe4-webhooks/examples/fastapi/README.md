@@ -46,13 +46,13 @@ Server runs on http://localhost:8000 and accepts requests at `POST /webhooks/kno
 pytest test_webhook.py
 ```
 
-No KnowBe4 account is needed. To try it by hand (the body is an illustrative payload):
+No KnowBe4 account is needed. To try it by hand (the body holds only the Custom Data from KnowBe4's example):
 
 ```bash
 curl -X POST http://localhost:8000/webhooks/knowbe4 \
   -H "Content-Type: application/json" \
   -H "Authorization: $KNOWBE4_WEBHOOK_SECRET" \
-  -d '{"event_type":"Phish Failure Removed","System":"KnowBe4"}'
+  -d '{"System":"KnowBe4"}'
 ```
 
 ## Receive Webhooks Locally
@@ -70,5 +70,5 @@ Put the printed URL in the KSAT or PhishER webhook.
 - `main.py`: `verify_knowbe4_request()`, the `require_knowbe4_auth` dependency and the route
 
 Failure returns `401`; a body that isn't a JSON object returns `400`; success returns
-`200 {"received": true}`. The handler reads an illustrative `event_type` string, because KnowBe4
-documents no event field.
+`200 {"received": true}`. KnowBe4 documents no event field, so the handler routes on a
+`System` Custom Data key you add to each webhook (`KnowBe4` or `PhishER`, as in KnowBe4's examples).

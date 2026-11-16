@@ -62,7 +62,7 @@ def handle_task(task: dict) -> None:
 
     if task.get("status") == "failed":
         print(f"Failed {label}", (task.get("error") or {}).get("message"))
-        # TODO: alert your team (e.g. post to Slack)
+        # Alert your team here, for example by posting to Slack.
         return
     if task.get("status") == "canceled":
         print(f"Canceled {label}")
@@ -71,7 +71,7 @@ def handle_task(task: dict) -> None:
     task_type = task.get("type")
     if task_type == "documentAdditionOrUpdate":
         print(f"{label} ({(task.get('details') or {}).get('indexedDocuments')} documents indexed)")
-        # TODO: purge your CDN or application cache
+        # Purge your CDN or application cache here.
     elif task_type in (
         "documentDeletion",
         "settingsUpdate",

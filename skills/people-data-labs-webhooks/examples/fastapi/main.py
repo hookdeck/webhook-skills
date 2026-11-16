@@ -39,7 +39,7 @@ async def require_pdl_header(request: Request) -> None:
 def handle_event(ids: list) -> None:
     # The payload is a JSON array of PDL IDs (up to 1,000) for records updated in a release.
     print(f"Person record update batch: {len(ids)} ids")
-    # TODO: dedupe (an ID repeats when several filters match), store the IDs,
+    # Your code here: dedupe (an ID repeats when several filters match), store the IDs,
     # then re-enrich them with the Person Enrichment API
 
 

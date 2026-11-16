@@ -44,8 +44,8 @@ def verify_companycam_signature(raw_body: bytes, signature: str, token: str) -> 
 
 - **Raw body:** verify against the raw bytes, not a re-serialized parse. In Express use
   `express.raw({ type: '*/*' })` so any content type verifies.
-- **No token, no signature:** the token is optional when creating the webhook. Without one,
-  deliveries are unsigned and verification fails.
+- **Use your own token:** the token is optional when creating the webhook, and the docs
+  don't say what a webhook created without one signs with. Pass your own value and store it.
 - **SHA-1 and base64:** using SHA-256 or hex comparison will never match.
 - **Compare bytes in constant time:** compare the base64 strings as equal-length UTF-8
   buffers (check length first); don't base64-decode the header leniently. In Python compare

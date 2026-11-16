@@ -56,13 +56,13 @@ Set `lesson_completed_callback_url` to the printed URL. For FastAPI, use port `8
 
 ## Sending a Manual Test
 
-The body is illustrative (Lessonly doesn't document it):
+The body is trimmed from the sample payload in Lessonly's Reporting Webhook article:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/lessonly \
   -H "Content-Type: application/json" \
   -H "Authorization: $LESSONLY_AUTHORIZATION" \
-  -d '{"lesson_id":1234,"user_id":5678,"completed_at":"2026-10-25T12:00:00Z"}'
+  -d '{"user":{"id":"1234567890"},"lesson":{"id":"1234567","title":"A Sample Lesson"},"completed_at":"2022-12-02T15:13:26Z"}'
 ```
 
 ## Rotating the Credential

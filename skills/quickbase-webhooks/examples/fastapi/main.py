@@ -39,21 +39,22 @@ async def require_quickbase_secret(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    """Quickbase adds no event field. `event` is ILLUSTRATIVE: a literal you type into your
-    message body template (one webhook per trigger), not something Quickbase sends."""
-    event = payload.get("event")
+    """Quickbase adds no event field. Put "action": "%action%" in your message body template:
+    Quickbase replaces the %action% marker with Add, Replace or Delete, depending on what
+    triggered the webhook."""
+    action = payload.get("action")
 
-    if event == "record_added":
+    if action == "Add":
         print(f"Record added: {payload.get('record_id')}")
-        # TODO: create the record in your system
+        # Create the record in your system
 
-    elif event == "record_modified":
+    elif action == "Replace":
         print(f"Record modified: {payload.get('record_id')}")
-        # TODO: update the record in your system
+        # Update the record in your system
 
-    elif event == "record_deleted":
+    elif action == "Delete":
         print(f"Record deleted: {payload.get('record_id')}")
-        # TODO: remove the record from your system
+        # Remove the record from your system
 
     else:
         print("Unrecognized Quickbase payload; acknowledging")

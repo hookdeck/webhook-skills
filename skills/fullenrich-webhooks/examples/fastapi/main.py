@@ -38,16 +38,16 @@ def handle_enrichment(payload: dict) -> None:
     if status == "FINISHED":
         credits = (payload.get("cost") or {}).get("credits", 0)
         print(f"Enrichment {payload.get('id')} finished ({credits} credits)")
-        # TODO: Store data[].contact_info, match rows via data[].custom
+        # Store data[].contact_info, match rows via data[].custom
     elif status == "IN_PROGRESS":
         # Sent per contact by webhook_events.contact_finished
         print(f"Contact finished in enrichment {payload.get('id')}")
-        # TODO: Process data[0] as it completes
+        # Process data[0] as it completes
     elif status == "CANCELED":
         print(f"Enrichment {payload.get('id')} was canceled")
     elif status == "CREDITS_INSUFFICIENT":
         print(f"Enrichment {payload.get('id')} stopped: insufficient credits")
-        # TODO: Alert and top up credits
+        # Alert and top up credits
     else:
         print(f"Unhandled enrichment status: {status}")
 

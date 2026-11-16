@@ -6,12 +6,14 @@ import { verifyTaniumRequest } from '../../../lib/verify-tanium';
 /**
  * The body is whatever the Connect connection is configured to send (the rows of
  * its source, with the columns the author picked); there is no vendor event field.
- * A batched run may be a JSON array of records, otherwise an object.
+ * Select Generate Document on the connection's JSON format so the body is a JSON array
+ * of records. The default JSON output puts objects back to back with no commas, which
+ * JSON.parse rejects.
  */
 function handleRecords(payload: object): void {
   const records = Array.isArray(payload) ? payload : [payload];
   console.log(`Received ${records.length} record(s) from Tanium Connect`);
-  // TODO: store or forward the records (e.g. records[0]['Computer Name'])
+  // Store or forward the records here (e.g. records[0]['Computer Name']).
 }
 
 async function handle(request: NextRequest) {

@@ -52,11 +52,11 @@ def handle_workflow_request(method: str, payload) -> None:
 
     if workflow == "new app discovered":
         print(f"[{method}] New app discovered: {body.get('app')}")
-        # TODO: open a review ticket for the app
+        # open a review ticket for the app
 
     elif workflow == "user offboarding":
         print(f"[{method}] User offboarding: {body.get('user')}")
-        # TODO: revoke access in downstream systems
+        # revoke access in downstream systems
 
     else:
         print(f"[{method}] Workflow request: {payload}")

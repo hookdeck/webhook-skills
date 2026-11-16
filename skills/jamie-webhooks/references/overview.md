@@ -2,7 +2,7 @@
 
 ## What Are Jamie Webhooks?
 
-Jamie ([meetjamie.ai](https://www.meetjamie.ai)) produces AI meeting notes. A webhook is an HTTPS endpoint you register in Settings → Integrations → Webhooks. Jamie sends it a `POST` with a JSON body when a meeting has been fully processed. Webhooks need a Plus plan or higher. A **personal** webhook fires only for your own meetings; a **workspace** webhook fires for every meeting in the workspace and needs workspace admin access.
+Jamie ([meetjamie.ai](https://www.meetjamie.ai)) produces AI meeting notes. A webhook is an HTTPS endpoint you register in Settings → Webhooks. Jamie sends it a `POST` with a JSON body when a meeting has been fully processed. Webhooks need a Plus plan or higher. A **personal** webhook fires only for your own meetings; a **workspace** webhook fires for every meeting in the workspace and needs workspace admin access.
 
 ## Common Event Types
 
@@ -48,7 +48,7 @@ Jamie ([meetjamie.ai](https://www.meetjamie.ai)) produces AI meeting notes. A we
 
 ## Delivery and Retries
 
-Return any `2xx` within 30 seconds. Otherwise Jamie retries with backoff (10 s, 60 s, 10 min, 1 h; five attempts in all), then moves the delivery to a dead-letter queue and emails the webhook owner.
+Return any `2xx` within 30 seconds. Otherwise Jamie retries with backoff (10 s, 60 s, 10 min, 1 h; five attempts in all), then moves the delivery to a dead-letter queue and emails the webhook owner (personal webhooks) or the workspace admins (workspace webhooks), at most once an hour per endpoint.
 
 ## Full Event Reference
 

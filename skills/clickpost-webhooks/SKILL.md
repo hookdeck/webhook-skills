@@ -55,7 +55,8 @@ function verifyClickPostRequest(headers, configured = process.env.CLICKPOST_WEBH
   case-insensitively. Store the **bare** secret in `CLICKPOST_WEBHOOK_SECRET`; if the stored value
   itself starts with `Token `, strip it. Don't trim or otherwise alter the secret.
 - Missing header, wrong scheme or mismatch: `401`. A body that isn't a ClickPost scan object: `400`.
-  Success is `200`/`201`/`202`/`204` within 5 seconds.
+  Respond within 5 seconds. ClickPost lists `200`/`201`/`202`/`204` as success, but its retry rule
+  names only `200`, `201` and `202`, so return `200`.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the token if it leaks.
@@ -81,8 +82,10 @@ Dispatch on `clickpost_status_code`, an integer:
 | 47 / 48 / 50 / 52 | PartialRTOOutForDelivery / PartialDelivered / PartialRTO / PartialRTODelivered |
 
 The list is longer; see the [ClickPost docs](https://docs.clickpost.ai/docs/tracking-a-shipment-using-webhook).
-Scans may arrive out of order and can be redelivered, so dedupe on `waybill` + scan
-(e.g. `waybill`, `clickpost_status_code`, `timestamp`) and don't let an older scan overwrite a newer state.
+Scans may arrive out of order and can be redelivered, so dedupe and don't let an older scan
+overwrite a newer state. ClickPost recommends `waybill` + `scan_id`; `scan_id` is nullable, and
+ClickPost also says no two scans of one waybill share `clickpost_status_code` and `timestamp`,
+which is the key the examples use.
 
 ## Environment Variables
 

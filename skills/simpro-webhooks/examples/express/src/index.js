@@ -33,27 +33,27 @@ function handleSimproEvent(event) {
   switch (event.ID) {
     case 'job.created':
       console.log(`Job created: ${event.description}`, event.reference);
-      // TODO: Fetch the job via the Simpro API and sync it
+      // Fetch the job via the Simpro API and sync it
       break;
 
     case 'company.customer.updated':
       console.log(`Customer updated: ${event.description}`, event.reference);
-      // TODO: Fetch the customer and update your CRM
+      // Fetch the customer and update your CRM
       break;
 
     case 'invoice.created':
       console.log(`Invoice created: ${event.description}`, event.reference);
-      // TODO: Push to accounting
+      // Push to accounting
       break;
 
     case 'quote.updated':
       console.log(`Quote updated: ${event.description}`, event.reference);
-      // TODO: Track quote status
+      // Track quote status
       break;
 
     case 'employee.deleted':
       console.log(`Employee deleted: ${event.description}`, event.reference);
-      // TODO: Revoke access in connected systems
+      // Revoke access in connected systems
       break;
 
     case 'test.updated':

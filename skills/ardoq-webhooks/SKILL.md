@@ -66,7 +66,7 @@ There is **no official Ardoq SDK** for webhook verification. Ardoq's help articl
 
 ### Timestamp tolerance is opt-in
 
-Ardoq's own snippets reject deliveries more than 5 minutes old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Set `ARDOQ_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Ardoq-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
+Ardoq's own snippets reject deliveries more than 5 minutes old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `ARDOQ_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Ardoq-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
 
 ## Event Types
 
@@ -74,9 +74,9 @@ The body is `{resource-type, resource-id, event-type, organization, organization
 
 | `resource-type` | Triggered When | Notes |
 |-----------------|----------------|-------|
-| `component` | A component changes | Signed webhooks only |
-| `reference` | A reference (link between components) changes | Signed webhooks only |
-| `tag` | A tag changes, e.g. one is added to a component | Signed webhooks only; `data.components` lists tagged components |
+| `component` | A component changes | Signed and unsigned webhooks |
+| `reference` | A reference (link between components) changes | Signed and unsigned webhooks |
+| `tag` | A tag changes, e.g. one is added to a component | Signed and unsigned webhooks; `data.components` lists tagged components |
 
 Ardoq's docs show `event-type: "create"` in the sample payload and do not list the other values, so log unknown ones instead of guessing. Signed webhooks do **not** deliver field, report, dashboard or survey changes (only unsigned webhooks do, and this skill does not cover them), and there are **no deletion events**.
 

@@ -62,13 +62,13 @@ def handle_scan(payload: dict) -> None:
         print(f"In transit: {waybill} at {payload.get('location')}")
     elif code == 6:
         print(f"Out for delivery: {waybill}")
-        # TODO: notify the customer
+        # Notify the customer here.
     elif code == 8:
         print(f"Delivered: {waybill}")
-        # TODO: mark the order delivered
+        # Mark the order delivered here.
     elif code == 9:
         print(f"Failed delivery: {waybill} ({payload.get('status')})")
-        # TODO: start the NDR / reattempt flow
+        # Start your NDR or reattempt flow here.
     elif code in (41, 42, 43, 44):
         print(f"Rider update {code} ({desc}): {waybill}")
     elif code in (47, 48, 50, 52):

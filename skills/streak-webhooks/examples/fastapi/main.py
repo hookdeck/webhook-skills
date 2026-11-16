@@ -36,29 +36,29 @@ async def require_streak_token(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing X-Streak-Webhook-Token")
 
 
-# Streak does not put the event name in the body, so register one URL per webhook:
+# Streak's docs don't say whether the body names the event, so register one URL per webhook:
 # POST /webhooks/streak?event=BOX_CREATE
 def handle_event(event: Optional[str], objects: list) -> None:
     n = len(objects)
 
     if event == "BOX_CREATE":
         print(f"Box created ({n})")
-        # TODO: sync the new box (name, pipelineKey, stageKey)
+        # Sync the new box (name, pipelineKey, stageKey)
 
     elif event == "BOX_EDIT":
         print(f"Box edited ({n})")
-        # TODO: refresh custom fields, notes, assignees or name
+        # Refresh custom fields, notes, assignees or name
 
     elif event == "BOX_CHANGE_STAGE":
         print(f"Box changed stage ({n})")
-        # TODO: react to the new stageKey
+        # React to the new stageKey
 
     elif event == "BOX_CHANGE_PIPELINE":
         print(f"Box changed pipeline ({n})")
 
     elif event == "BOX_DELETE":
         print(f"Box deleted ({n})")
-        # TODO: remove the box from your system
+        # Remove the box from your system
 
     elif event == "BOX_NEW_EMAIL_ADDRESS":
         print(f"Box got a new email address ({n})")
@@ -68,22 +68,22 @@ def handle_event(event: Optional[str], objects: list) -> None:
 
     elif event == "COMMENT_CREATE":
         print(f"Comment created ({n})")
-        # TODO: mirror the comment
+        # Mirror the comment
 
     elif event in ("MEETING_CREATE", "MEETING_UPDATE"):
         print(f"{event} ({n})")
-        # TODO: sync the meeting note or call log
+        # Sync the meeting note or call log
 
     elif event in ("TASK_CREATE", "TASK_COMPLETE", "TASK_DUE", "TASK_UPDATED"):
         print(f"{event} ({n})")
-        # TODO: sync the task
+        # Sync the task
 
     elif event in (
         "CONTACT_CREATE", "CONTACT_UPDATE", "CONTACT_DELETE",
         "ORG_CREATE", "ORG_UPDATE", "ORG_DELETE",
     ):
         print(f"{event} ({n})")
-        # TODO: sync the contact or organization
+        # Sync the contact or organization
 
     else:
         print(f"Unhandled event: {event or '(none, add ?event=NAME to the webhook URL)'}")

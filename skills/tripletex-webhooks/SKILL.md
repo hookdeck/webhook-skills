@@ -16,7 +16,7 @@ metadata:
 
 Tripletex (Norwegian accounting) sends a JSON webhook when an object you subscribed to changes: an
 invoice is charged, a customer is created, an order is updated, a product is deleted. Subscriptions
-are created through the API (`POST /v2/event/subscription`); there is no dashboard UI for it.
+are created through the API (`POST /v2/event/subscription`).
 Webhooks are **not signed**. The only built-in authentication is a custom header you choose when
 creating the subscription (`authHeaderName` / `authHeaderValue`), which Tripletex sends as-is on
 every callback.

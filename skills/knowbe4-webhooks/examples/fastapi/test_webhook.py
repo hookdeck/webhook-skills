@@ -12,8 +12,9 @@ from main import app, verify_knowbe4_request
 
 client = TestClient(app)
 
-# ILLUSTRATIVE payload: KnowBe4 documents no body schema or event field.
-PAYLOAD = {"event_type": "Phish Failure Removed", "System": "KnowBe4"}
+# KnowBe4 documents no body schema or event field. This body holds only the Custom Data
+# key/value from KnowBe4's own example; a real delivery carries more.
+PAYLOAD = {"System": "KnowBe4"}
 
 
 def post(body=None, headers=None, content_type="application/json"):
@@ -59,8 +60,12 @@ class TestKnowbe4Webhook:
         res = post(headers={"Authorization": SECRET}, content_type="text/plain")
         assert res.status_code == 200
 
-    def test_payload_without_event_type(self):
+    def test_phisher_payload(self):
         res = post(body=json.dumps({"System": "PhishER"}), headers={"Authorization": SECRET})
+        assert res.status_code == 200
+
+    def test_payload_without_custom_data(self):
+        res = post(body="{}", headers={"Authorization": SECRET})
         assert res.status_code == 200
 
     def test_health(self):

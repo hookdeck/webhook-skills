@@ -14,12 +14,12 @@ client = TestClient(app)
 
 SECRET = os.environ["QUICKBASE_WEBHOOK_SECRET"]
 
-# Illustrative payloads: Quickbase adds no event field; these are user-written templates.
-EVENTS = ["record_added", "record_modified", "record_deleted"]
+# Template output: Quickbase adds no event field; `action` comes from the %action% marker.
+EVENTS = ["Add", "Replace", "Delete"]
 
 
-def sample(event="record_added"):
-    return {"event": event, "record_id": 42, "table": "Projects"}
+def sample(event="Add"):
+    return {"action": event, "record_id": 42, "table": "Projects"}
 
 
 def send(method="POST", headers=None, body=None, content_type="application/json", empty=False):
@@ -97,11 +97,11 @@ class TestHttpMethods:
 
 class TestBodies:
     @pytest.mark.parametrize("event", EVENTS)
-    def test_handles_illustrative_events(self, event):
+    def test_handles_actions(self, event):
         assert send(headers=AUTH, body=json.dumps(sample(event))).status_code == 200
 
     def test_acknowledges_unrecognized_events(self):
-        assert send(headers=AUTH, body=json.dumps({"event": "other"})).status_code == 200
+        assert send(headers=AUTH, body=json.dumps({"action": "other"})).status_code == 200
 
     def test_accepts_xml_body(self):
         res = send(headers=AUTH, body="<record><id>42</id></record>", content_type="application/xml")

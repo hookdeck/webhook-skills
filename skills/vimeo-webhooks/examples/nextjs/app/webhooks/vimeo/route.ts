@@ -50,48 +50,48 @@ export async function POST(request: NextRequest) {
   }
 
   // The event name is the `webhook_type` field in the body.
-  // Vimeo sends no delivery ID: dedupe on webhook_type + data URI + timestamp.
+  // Vimeo sends no delivery ID, so keep handlers idempotent: re-fetch the resource by its URI.
   const data = event.data ?? {};
 
   switch (event.webhook_type) {
     case 'video-created':
       console.log(`Video created: ${data.video_uri}`);
-      // TODO: record the new video
+      // Record the new video
       break;
 
     case 'video-deleted':
       console.log(`Video deleted: ${data.video_uri}`);
-      // TODO: remove the video from your catalog
+      // Remove the video from your catalog
       break;
 
     case 'video-transcode-playable':
       console.log(`Video playable: ${data.video_uri}`);
-      // TODO: allow playback
+      // Allow playback
       break;
 
     case 'video-transcode-complete':
       console.log(`Video transcode complete: ${data.video_uri} (${data.version_uri})`);
-      // TODO: mark processing done
+      // Mark processing done
       break;
 
     case 'video-upload-failed':
-      console.log(`Video upload failed: ${data.video_uri} (${data.error_type})`);
-      // TODO: notify the uploader
+      console.log(`Video upload failed: ${data.video_uri} (${data.failure_cause})`);
+      // Notify the uploader
       break;
 
     case 'transcript-status-complete':
       console.log(`Transcript ${data.transcript_status}: ${data.video_uri}`);
-      // TODO: fetch the transcript if completed
+      // Fetch the transcript if completed
       break;
 
     case 'live-event-started':
       console.log(`Live event started: ${data.event_uri}`);
-      // TODO: notify viewers
+      // Notify viewers
       break;
 
     case 'live-event-ended':
       console.log(`Live event ended: ${data.event_uri}`);
-      // TODO: close out the stream
+      // Close out the stream
       break;
 
     default:

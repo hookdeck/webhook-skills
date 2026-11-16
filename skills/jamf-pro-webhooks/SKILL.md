@@ -21,7 +21,7 @@ this skill covers. To authenticate them, choose **Header Authentication** on the
 you enter a JSON object of header names and values, Jamf Pro sends those headers on every request,
 and your endpoint compares one of them with the value you stored.
 
-> Choose Header Authentication on the Jamf Pro webhook and enter the same header name and value here.
+> Choose Header Authentication on the Jamf Pro webhook and enter the same header name (the JSON key) and value (the JSON value) here.
 
 Basic authentication, mTLS and the Hash Signature option are not covered. The Hash Signature header
 and what it signs aren't publicly documented, so this skill doesn't verify it.

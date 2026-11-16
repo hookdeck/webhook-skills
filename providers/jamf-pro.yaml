@@ -23,7 +23,7 @@ notes: >
   oyster, fireberry and new-relic skills if present). Hookdeck's source type is JAMF_PRO, labelled
   'Jamf Pro'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
   must tell the user the same thing: "Choose Header Authentication on the Jamf Pro webhook and enter
-  the same header name and value here." Body: {webhook: {id, name, webhookEvent, eventTimestamp},
+  the same header name (the JSON key) and value (the JSON value) here." Body: {webhook: {id, name, webhookEvent, eventTimestamp},
   event: {...}}; webhookEvent like ComputerAdded, ComputerCheckIn, ComputerInventoryCompleted,
   MobileDeviceEnrolled, JSSStartup. A webhook can send JSON or XML: say JSON is assumed. POST.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type

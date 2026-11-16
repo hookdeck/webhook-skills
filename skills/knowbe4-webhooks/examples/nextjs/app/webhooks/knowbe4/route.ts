@@ -4,22 +4,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyKnowbe4Request } from '../../../lib/verify-knowbe4';
 
 /**
- * The body is defined by your own webhook configuration and KnowBe4 documents no event
- * field. ILLUSTRATIVE: this example reads an `event_type` string, e.g. the UI label
- * "Phish Failure Removed". Inspect a real delivery and adapt.
+ * KnowBe4 documents no event field or body schema. Route on the Custom Data you add to each
+ * webhook: KnowBe4's own examples use the key "System" with "KnowBe4" (KSAT) and "PhishER".
+ * Inspect a real delivery before you read other fields.
  */
 function handleEvent(payload: Record<string, unknown>): void {
-  const eventType = typeof payload.event_type === 'string' ? payload.event_type : null;
+  const system = typeof payload.System === 'string' ? payload.System : null;
 
-  switch (eventType) {
-    case 'Phish Failure Removed':
-      console.log('KSAT: phish failure removed');
-      // TODO: update the user's risk record in your system
+  switch (system) {
+    case 'KnowBe4':
+      console.log('KSAT webhook payload received');
+      // Handle the phishing, training or general events you selected
+      break;
+
+    case 'PhishER':
+      console.log('PhishER webhook payload received');
+      // Handle the reported-message data types you selected
       break;
 
     default:
-      console.log(`KnowBe4 payload received${eventType ? ` (${eventType})` : ''}`);
-      // TODO: route PhishER message data or other KSAT events here
+      console.log('KnowBe4 payload received without the expected Custom Data');
   }
 }
 

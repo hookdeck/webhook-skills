@@ -9,7 +9,7 @@ import base64
 import pytest
 from fastapi.testclient import TestClient
 
-# Hail signing secrets look like whsec_..., but the whole string is the HMAC key (not Standard Webhooks)
+# Hail's docs example secret looks like whsec_..., but the whole string is the HMAC key (not Standard Webhooks)
 SECRET = "whsec_test_hail_secret_8f3a1c"
 os.environ["HAIL_WEBHOOK_SECRET"] = SECRET
 

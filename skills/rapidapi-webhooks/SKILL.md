@@ -65,8 +65,8 @@ idempotent, and rotate the key with **Generate new** if it leaks.
 
 ## Event Types
 
-Events are named like the display names below (the docs also show some in `UPPER.CASE` form, such
-as `BILLINGPLAN.UPDATED`). The body format is not documented, so send a **Test event** from the
+RapidAPI's docs list events by display name, as below, and give some rows in `UPPER.CASE` form
+(such as `BILLINGPLAN.UPDATED`). They don't say which spelling arrives on the wire. The body format is not documented, so send a **Test event** from the
 Admin Panel and read the real payload before relying on any field name. The examples read the
 event type from the field named by `RAPIDAPI_EVENT_FIELD`; example payloads are illustrative.
 

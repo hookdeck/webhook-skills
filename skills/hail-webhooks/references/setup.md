@@ -20,11 +20,11 @@ List the valid `event_types` with `curl https://api.hail.so/v1/webhooks/event-ty
 
 ## Get Your Signing Secret
 
-The create response returns the signing secret **once**. Save it right away as `HAIL_WEBHOOK_SECRET`. It looks like `whsec_...`, but it is not a Standard Webhooks secret: use the whole string, including `whsec_`, as a plain HMAC key. Do not strip the prefix or base64-decode it.
+The create response returns the signing secret **once**. Save it right away as `HAIL_WEBHOOK_SECRET`. Hail's code generates it with a `whs_` prefix, and it is not a Standard Webhooks secret: use the whole string, prefix included, as a plain HMAC key. Do not strip the prefix or base64-decode it.
 
 ## Hookdeck Setup
 
-When you receive Hail webhooks through the Hookdeck Event Gateway, paste the whole signing secret, including any `whsec_` prefix, into the source's webhook secret. Hail uses it as a plain HMAC key.
+When you receive Hail webhooks through the Hookdeck Event Gateway, paste the whole signing secret, prefix included, into the source's webhook secret. Hail uses it as a plain HMAC key.
 
 ## Local Development
 

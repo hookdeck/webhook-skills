@@ -1,6 +1,6 @@
 # Live Tennis API Webhooks - Next.js Example
 
-Minimal example of receiving Live Tennis API webhooks in a Next.js App Router route handler with `X-LTAPI-Signature` HMAC-SHA256 verification.
+Minimal example of receiving Live Tennis API webhooks in a Next.js App Router route handler with `X-LTAPI-Signature-V1` HMAC-SHA256 verification.
 
 ## Prerequisites
 
@@ -36,16 +36,16 @@ Server runs on http://localhost:3000, and the webhook endpoint is `POST /webhook
 npm test
 ```
 
-The tests sign payloads with Live Tennis API's algorithm, `sha256=` + `hex(HMAC-SHA256(secret, raw body))`, and cover valid, tampered, malformed, non-hex and wrong-length signatures, non-JSON content types, an unsigned timestamp, and every event type.
+The tests sign payloads with Live Tennis API's algorithm, `t=<unix>,v1=` + `hex(HMAC-SHA256(secret, "<t>.<raw body>"))`, and cover valid, tampered, malformed, non-hex and wrong-length signatures, several `v1` values, stale and re-stamped timestamps, no fallback to the deprecated `X-LTAPI-Signature`, repeated `delivery_id`s, non-JSON content types, and every event type.
 
 ## How Verification Works
 
 1. The route reads the **raw** body with `request.text()` before any JSON parsing, so any content type verifies.
-2. It requires `X-LTAPI-Signature` to be `sha256=` followed by exactly 64 hex characters, and strips the prefix.
-3. It computes `HMAC-SHA256(secret, raw body)` and compares the digests with `crypto.timingSafeEqual`.
-4. `X-LTAPI-Timestamp` is not signed, so there is no replay window. Dedupe on `sequence` (`score`) and `point.seq` (`point`).
+2. It reads `t` and every `v1` from `X-LTAPI-Signature-V1`, and rejects a `t` more than 5 minutes from the server clock.
+3. It computes `HMAC-SHA256(secret, "<t>." + raw body)` and accepts the request if any `v1` matches, compared in constant time. It never falls back to the deprecated `X-LTAPI-Signature`.
+4. It dedupes on the body's `delivery_id`, keeping each id until `t` + 5 minutes (in memory here; use a shared store with an atomic insert-if-absent when you run several workers).
 
-Handled events: `score`, `point`, `break_point`, `break_point_result`.
+Handled events: `score`, `score_withdrawn`, `point`, `break_point`, `break_point_result`, `status`.
 
 ## Local Testing with Hookdeck
 

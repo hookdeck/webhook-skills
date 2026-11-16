@@ -31,7 +31,7 @@ expected = base64.b64encode(hmac.new(secret.encode(), signed, hashlib.sha256).di
 
 Build the message as bytes. The header value is encoded latin1 exactly as received (never trimmed or re-formatted) and the body is the raw bytes (never decoded and re-encoded, never `JSON.parse`d first).
 
-Validate the signature's format before comparing: exactly `[A-Za-z0-9+/]{43}=`. Then compare in constant time and case-sensitively: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (and never calls `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python checks `base64.b64decode(sig, validate=True)` and uses `hmac.compare_digest` on bytes. The examples compare the base64 text rather than decoded bytes, because decoders ignore stray low bits in the last character and Hookdeck compares base64 exactly.
+Validate the signature's format before comparing: exactly `[A-Za-z0-9+/]{43}=`. Then compare in constant time and case-sensitively: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers (and never calls `Buffer.from(sig, 'base64')` on an unvalidated value, which silently drops bad characters); Python checks `base64.b64decode(sig, validate=True)` and uses `hmac.compare_digest` on bytes. The examples compare the base64 text rather than decoded bytes, because decoders ignore stray low bits in the last character.
 
 A missing or empty signature or timestamp header, a malformed value, or a mismatch returns `401`.
 
@@ -41,7 +41,7 @@ Box's SDKs have a helper (`WebhookValidator` / `validateMessage`) that checks bo
 
 ## Replay Protection
 
-Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` older than 10 minutes. The examples **don't check it by default**: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate redeliveries. To opt in, set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `600`). The timestamp is an RFC 3339 date; with a tolerance set, an unparseable one is rejected. Use the body's `id` for idempotency (see webhook-handler-patterns).
+Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` older than 10 minutes. The examples **don't check it by default**: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate redeliveries. To opt in, set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `600`). The timestamp is an RFC 3339 date; with a tolerance set, an unparseable one is rejected. Use the body's `id` for idempotency (see webhook-handler-patterns).
 
 ## Common Gotchas
 

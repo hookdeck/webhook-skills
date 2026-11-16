@@ -45,19 +45,28 @@ export async function POST(request: NextRequest) {
 
     case 'access':
     case 'deletion':
-    case 'opt_out':
-      // Queue the data-subject request, then answer 201 Created. Completion is
+    case 'opt_out': {
+      // Queue the data-subject request. Cyera wants 201 Created for a new request
+      // and 200 OK for a reminder (topic ending ":reminder"). Completion is
       // reported LATER by a PUT to payload.webhook_callback_url (API key auth).
+      const isReminder = typeof payload.topic === 'string' && payload.topic.endsWith(':reminder');
       console.log(
         `Cyera ${payload.request_type} request`,
         payload.privacy_request_id || payload.opt_out_request_id,
         payload.topic
       );
-      return NextResponse.json({ received: true }, { status: 201 });
+      return NextResponse.json({ received: true }, { status: isReminder ? 200 : 201 });
+    }
 
     case 'readiness_check':
       // Cyera asks whether this system is ready to process the request.
       console.log('Cyera readiness check', payload.privacy_request_id);
+      return NextResponse.json({ received: true }, { status: 200 });
+
+    case 'identifiers':
+      // Identifier retrieval: look the data subject up, then PUT the identifiers
+      // with payload.results_token to payload.webhook_callback_url.
+      console.log('Cyera identifiers request', payload.privacy_request_id, payload.topic);
       return NextResponse.json({ received: true }, { status: 200 });
 
     default:

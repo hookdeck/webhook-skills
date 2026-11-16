@@ -16,32 +16,32 @@ function handleEvent(payload: RollerPayload): void {
   switch (event) {
     case 'Booking.Created':
       console.log(`Booking created`);
-      // TODO: handle Booking.Created
+      // Add your Booking.Created handling here
       break;
 
     case 'Booking.Updated':
       console.log(`Booking updated`);
-      // TODO: handle Booking.Updated
+      // Add your Booking.Updated handling here
       break;
 
     case 'Booking.Cancelled':
       console.log(`Booking cancelled`);
-      // TODO: handle Booking.Cancelled
+      // Add your Booking.Cancelled handling here
       break;
 
     case 'Customer.Created':
       console.log(`Customer created`);
-      // TODO: handle Customer.Created
+      // Add your Customer.Created handling here
       break;
 
     case 'Redemption.Created':
       console.log(`Redemption created`);
-      // TODO: handle Redemption.Created
+      // Add your Redemption.Created handling here
       break;
 
     case 'PaymentLink.Created':
       console.log(`Payment link created`);
-      // TODO: handle PaymentLink.Created
+      // Add your PaymentLink.Created handling here
       break;
 
     default:

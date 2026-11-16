@@ -26,7 +26,10 @@ this skill.
 
 1. Open a saved question and click the **bell icon** to create an alert.
 2. Add the webhook as a recipient.
-3. Send a test alert to confirm delivery (the body has `alert_id: null`).
+3. Click **Send now** to trigger the alert (the question must return results, or Metabase won't send).
+
+The webhook form's **Send a test** button posts with the credentials and **no body**, and passes on any
+`2xx`, so your endpoint should answer an empty authenticated request with `200`.
 
 ## Test Mode vs Live Mode
 

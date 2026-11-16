@@ -64,7 +64,7 @@ For Hookdeck, create a source of type Vimeo and paste the same `secret` as its w
 
 ## Common Event Types
 
-The event name is in the body's `webhook_type` field (not a header). Payloads look like `{ "webhook_type": "video-transcode-complete", "data": { ... }, "timestamp": 1644961452 }`.
+The event name is in the body's `webhook_type` field (not a header). Payloads look like `{ "webhook_type": "video-transcode-complete", "data": { ... }, "timestamp": 1645026988 }`.
 
 | Event (`webhook_type`) | Fires when |
 |------------------------|------------|
@@ -123,7 +123,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Vimeo sends no event ID; key on `webhook_type` + URI + `timestamp`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Vimeo sends no event ID; re-fetch by URI so handlers are safe to repeat, and use `data.sequence_number` on registration events)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

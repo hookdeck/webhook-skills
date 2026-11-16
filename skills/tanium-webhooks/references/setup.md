@@ -31,7 +31,8 @@ whole value is compared, and no prefix is parsed.
    requests").
 6. Set the schedule, or run the connection manually, then save.
 
-Basic Authentication, OAuth2 Client Credentials and IBM Cloud IAM are also offered by Tanium but
+In **Configure Output**, keep the JSON format and select **Generate Document** so each request is a
+valid JSON array. Basic Authentication and IBM Cloud IAM - API Key are also offered by Tanium but
 are not covered here or by Hookdeck's Tanium source.
 
 ## Using Hookdeck

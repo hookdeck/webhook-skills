@@ -12,7 +12,7 @@ beforeAll(() => {
 
 // Illustrative template: Nexthink adds no event field; "event" is chosen by the template author
 const triggered = { event: 'alert triggered', monitor: 'High CPU (illustrative)' };
-const recovered = { event: 'alert recovered', monitor: 'High CPU (illustrative)' };
+const highPriority = { event: 'high priority alert', monitor: 'High CPU (illustrative)' };
 
 function makeRequest(
   method: string,
@@ -35,7 +35,7 @@ describe('Nexthink webhook route', () => {
   });
 
   it('accepts PUT and PATCH', async () => {
-    const body = JSON.stringify(recovered);
+    const body = JSON.stringify(highPriority);
     expect((await PUT(makeRequest('PUT', { Authorization: AUTH }, body))).status).toBe(200);
     expect((await PATCH(makeRequest('PATCH', { Authorization: AUTH }, body))).status).toBe(200);
   });

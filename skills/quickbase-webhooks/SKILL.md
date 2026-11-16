@@ -81,20 +81,20 @@ GET or DELETE, also allow that method on the source.
 
 Quickbase adds **no event field** to the request, and there are no event name strings. The three
 triggers you can select under **When** are a record being added, modified or deleted. What the
-request contains is the message body template you wrote. The examples dispatch on an
-**illustrative** `event` field that you add yourself in the template (one webhook per trigger, with
-the value typed as a literal). It is not a Quickbase field.
+request contains is the message body template you wrote. To tell triggers apart, put the
+`%action%` marker in the template: Quickbase replaces it with `Add`, `Replace` or `Delete`,
+depending on what triggered the webhook. The examples dispatch on an `action` field filled that way.
 
-| Trigger (When) | Illustrative `event` value in your template |
-|----------------|---------------------------------------------|
-| A record is added | `record_added` |
-| A record is modified | `record_modified` |
-| A record is deleted | `record_deleted` |
+| Trigger (When) | `%action%` renders as |
+|----------------|-----------------------|
+| A record is added | `Add` |
+| A record is modified | `Replace` |
+| A record is deleted | `Delete` |
 
-Illustrative JSON template (field references chosen from the dropdown go where the values are):
+Example JSON template (`[Record ID#]` is a field reference; use your table's field names):
 
 ```json
-{ "event": "record_modified", "record_id": 42, "table": "Projects" }
+{ "action": "%action%", "record_id": "[Record ID#]", "table": "%dbName%" }
 ```
 
 ## Environment Variables

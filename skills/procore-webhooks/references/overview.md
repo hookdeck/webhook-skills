@@ -27,38 +27,52 @@ You choose the resources and the events to send when creating the hook.
 
 ## Event Payload Structure
 
-Confirmed by the Procore support article: each event has a Resource Name, Resource ID, Event
-Type, Event Status and a UTC timestamp. The payload format (REST API payload version) is chosen
-when the hook is created and cannot be changed afterwards.
-
-The v2 payload is described as carrying fields like the following. Only the resource name,
-resource ID, event type and timestamp are confirmed by the support article; the rest could not
-be checked against the developer docs, so this payload is **illustrative**:
+Procore's [How Webhooks Work](https://developers.procore.com/documentation/webhooks) page lists
+the event fields. The payload format (`api_version`) is chosen when the hook is created and
+cannot be changed afterwards. Procore's v2.0 (legacy) example:
 
 ```json
 {
-  "id": "evt_1",
-  "ulid": "01H8XYZ0000000000000000000",
-  "timestamp": "2026-10-25T12:00:00Z",
-  "user_id": 42,
-  "company_id": 1001,
-  "project_id": 2002,
-  "api_version": "v2",
-  "event_type": "create",
+  "id": 123456789,
+  "ulid": "0A1B2C3D4F5G6H7I8J9K0LMN",
+  "timestamp": "2025-02-06T23:34:12.246562Z",
+  "metadata": {
+    "source_user_id": 987654321,
+    "source_project_id": 2468013579,
+    "source_operation_id": null,
+    "source_company_id": 1357908642,
+    "source_application_id": null
+  },
+  "user_id": 987654321,
+  "company_id": 1357908642,
+  "project_id": 2468013579,
+  "api_version": "v2.0",
+  "event_type": "update",
   "resource_name": "RFIs",
-  "resource_id": 3003
+  "resource_id": 54321
 }
 ```
 
-Treat the payload as a notification and fetch the full record through the Procore REST API.
+v3.0 adds a `related_resources` array. v4.0, which Procore recommends for new integrations,
+makes every ID a string, renames `event_type` to `reason` (which can include more than create,
+update and delete) and `resource_name` to `resource_type`. Its example has no `ulid`, `metadata` or `api_version`
+field.
 
-## Delivery Status and History
+Treat the payload as a notification and fetch the full record through the Procore REST API.
+Deduplicate on `ulid` or the event `id`.
+
+## Delivery
+
+Procore expects a `2xx` (`200` or `204`) within 5 seconds of the connection being established.
+Failed deliveries retry with exponential backoff, starting at 1 second and growing to 1 hour.
+After 12 hours of continuous failure the queue is flushed and its events are marked discarded,
+so pair webhooks with a periodic reconciliation sync.
 
 The hook's Events view keeps event history for a rolling 28-day period. Event Status is one
-of `Delivered`, `Discarded`, `Failed`, `Queued` or `Retrying`. The support article does not
-describe the retry schedule.
+of `Delivered`, `Discarded`, `Failed`, `Queued` or `Retrying`.
 
 ## Full Reference
 
 - Procore support: https://v2.support.procore.com/product-manuals/admin-company/tutorials/configure-company-webhooks/
 - Developer docs: https://developers.procore.com/documentation/webhooks
+- Webhooks API: https://developers.procore.com/documentation/webhooks-api

@@ -19,7 +19,7 @@ Minimal example of receiving Hail webhooks with `X-Hail-Signature` verification.
    cp .env.example .env
    ```
 
-3. Add the signing secret to `.env` (`HAIL_WEBHOOK_SECRET`). Hail returns it only when the subscription is created. Use the whole string, including `whsec_`.
+3. Add the signing secret to `.env` (`HAIL_WEBHOOK_SECRET`). Hail returns it only when the subscription is created. Use the whole string, prefix included.
 
 ## Run
 

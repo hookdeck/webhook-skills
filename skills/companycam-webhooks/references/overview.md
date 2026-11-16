@@ -25,6 +25,10 @@ Other scopes: `project.label_added`, `project.contact_created`, `project.contact
 `todo_list.created`, `todo_list.deleted`. Wildcards: `*`, `project.*`, `photo.*`,
 `comment.*`, `document.*`, `video.*`, `todo_list.*`, `task.*`.
 
+The current scope table at developers.companycam.com also covers project tasks, Advanced
+Checklists (`checklist.*`, separate from `todo_list.*`), custom fields, users and user
+groups, time entries, customers, proposals, invoices and walkthroughs.
+
 ## Event Payload Structure
 
 ```json
@@ -44,7 +48,8 @@ Other scopes: `project.label_added`, `project.contact_created`, `project.contact
 ## Retries
 
 Any response other than exactly `200` is retried with exponential backoff, up to 10
-attempts. A webhook whose total error count exceeds 25 is disabled; the count resets on each
+times. A webhook is disabled once its error count exceeds 25, or when a single event
+exhausts its retries; the count resets on each
 successful response.
 
 ## Full Event Reference

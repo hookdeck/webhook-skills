@@ -3,13 +3,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyLessonlyRequest } from '../../../lib/verify-lessonly';
 
-// Lessonly sends one webhook, "lesson completed", with no event-type field. The
-// payload is not documented; lesson_id, user_id and completed_at are ILLUSTRATIVE.
+// Lessonly sends one webhook, "lesson completed", with no event-type field. Fields
+// follow the sample payload in Lessonly's Reporting Webhook article.
 function handleLessonCompleted(payload: Record<string, unknown>): void {
+  const user = (payload.user ?? {}) as Record<string, unknown>;
+  const lesson = (payload.lesson ?? {}) as Record<string, unknown>;
   console.log(
-    `Lesson completed: lesson ${payload.lesson_id} by user ${payload.user_id} at ${payload.completed_at}`
+    `Lesson completed: lesson ${lesson.id} by user ${user.id} at ${payload.completed_at}`
   );
-  // TODO: record the completion (dedupe on user + lesson, there is no event ID)
+  // Record the completion here. There is no event ID: key it on user.id,
+  // lesson.id and completed_at so a retried request isn't counted twice.
 }
 
 export async function POST(request: NextRequest) {

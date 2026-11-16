@@ -35,7 +35,7 @@ function verifyPdlRequest(headers, {
 // The payload is a JSON array of PDL IDs (up to 1,000) for records updated in a release.
 function handleEvent(ids) {
   console.log(`Person record update batch: ${ids.length} ids`);
-  // TODO: dedupe (an ID repeats when several filters match), store the IDs,
+  // Your code here: dedupe (an ID repeats when several filters match), store the IDs,
   // then re-enrich them with the Person Enrichment API
 }
 

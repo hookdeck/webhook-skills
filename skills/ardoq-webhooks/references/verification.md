@@ -21,7 +21,7 @@ header value   = "sha256=" + digest
 
 - The key is the signing secret's **UTF-8 bytes, used as-is** (not hex- or base64-decoded). It is shown once when the webhook is created.
 - Build the signed message as **bytes**: the timestamp header exactly as received (latin1), a literal `.`, and the raw body bytes as received. A header is never trimmed, parsed or re-formatted.
-- Hookdeck's Ardoq source verifies the same way (HMAC, `sha256`, hex, signed content `{header:x-ardoq-timestamp}.{body}`). It accepts the digest with or without the `sha256=` prefix, and compares hex case-insensitively, so this skill does too.
+- The examples accept the digest with or without the `sha256=` prefix, and compare hex case-insensitively.
 
 ## Implementation
 
@@ -68,7 +68,6 @@ Complete handlers with tests: [Express](../examples/express/), [Next.js](../exam
 Ardoq's help article says to reject deliveries outside a tolerance window and uses 5 minutes in its examples. The skill's examples **do not reject old timestamps by default**:
 
 - Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window rejects legitimate retries.
-- Hookdeck itself applies no tolerance.
 - The timestamp is part of the signed content, so an attacker cannot refresh it without the secret.
 
 To opt in, set `ARDOQ_WEBHOOK_TOLERANCE_SECONDS` (Unix seconds; unset or `0` = off). The examples then require a numeric `X-Ardoq-Timestamp` within that many seconds of the current time. If you also use Hookdeck retries or replays, choose a window larger than the longest delay you allow, or leave it off and deduplicate instead.

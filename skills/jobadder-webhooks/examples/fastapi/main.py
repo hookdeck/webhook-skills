@@ -48,19 +48,19 @@ def handle_event(payload: dict) -> None:
 
     if event == "candidate_status_changed":
         print(f"Candidate status changed (event {event_id})")
-        # TODO: sync the candidate's new status to your system
+        # Sync the candidate's new status to your system
 
     elif event == "job_status_changed":
         print(f"Job status changed (event {event_id})")
-        # TODO: update the job in your system
+        # Update the job in your system
 
     elif event == "jobapplication_status_changed":
         print(f"Job application status changed (event {event_id})")
-        # TODO: move the application along your pipeline
+        # Move the application along your pipeline
 
     elif event == "placement_approved":
         print(f"Placement approved (event {event_id})")
-        # TODO: trigger onboarding or invoicing
+        # Trigger onboarding or invoicing
 
     else:
         print(f"Unhandled JobAdder event: {event}")

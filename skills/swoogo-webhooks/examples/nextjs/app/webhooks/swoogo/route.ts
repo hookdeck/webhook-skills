@@ -10,42 +10,42 @@ function handleChange(object: string | null, payload: Record<string, unknown>): 
   switch (object) {
     case 'event':
       console.log(`Event changed: ${payload.id}`);
-      // TODO: sync event details
+      // Sync event details
       break;
 
     case 'contact':
       console.log(`Contact changed: ${payload.id}`);
-      // TODO: sync the contact to your CRM
+      // Sync the contact to your CRM
       break;
 
     case 'registrant':
       console.log(`Registrant changed: ${payload.id}`);
-      // TODO: upsert the registrant (insert and update both arrive here)
+      // Upsert the registrant (insert and update both arrive here)
       break;
 
     case 'speaker':
       console.log(`Speaker changed: ${payload.id}`);
-      // TODO: sync the speaker roster
+      // Sync the speaker roster
       break;
 
     case 'sponsor':
       console.log(`Sponsor changed: ${payload.id}`);
-      // TODO: sync the sponsor list
+      // Sync the sponsor list
       break;
 
     case 'session':
       console.log(`Session changed: ${payload.id}`);
-      // TODO: refresh the agenda
+      // Refresh the agenda
       break;
 
     case 'session_attendance':
       console.log(`Session attendance changed: ${payload.id}`);
-      // TODO: record the check-in
+      // Record the check-in
       break;
 
     case 'registrant_line_item':
       console.log(`Registrant line item changed: ${payload.id}`);
-      // TODO: update fees and purchases
+      // Update fees and purchases
       break;
 
     default:

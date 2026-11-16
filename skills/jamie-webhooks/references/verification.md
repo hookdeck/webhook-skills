@@ -83,7 +83,7 @@ Behind Hookdeck keep `JAMIE_TIMESTAMP_TOLERANCE_SECONDS=0` and rely on Hookdeck'
 - **Content type:** use `type: '*/*'` in Express so any content type reaches the verifier as a Buffer.
 - **Don't decode the secret** or strip a prefix.
 - **API key mode sends no signature:** a webhook created in API Key mode has no `x-jamie-signature` header, so every request fails verification. Recreate it with Signature Verification.
-- **Secret shown once:** regenerate it from the webhook settings if lost.
+- **Secret shown once:** if you lose it, use **Rotate signing secret** in the webhook's actions menu. Rotation invalidates the old secret immediately, so update every verifier (including your Hookdeck source) straight away.
 - **Header order:** parse `t` and `v0` by name, not by position.
 
 ## Debugging Verification Failures

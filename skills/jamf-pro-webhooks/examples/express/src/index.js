@@ -66,7 +66,7 @@ function handleEvent(payload) {
     return;
   }
 
-  // TODO: act on `event` (its shape depends on webhook.webhookEvent), e.g.
+  // Act on `event` (its shape depends on webhook.webhookEvent), e.g.
   // ComputerAdded -> event.udid / event.serialNumber / event.jssID
   // MobileDeviceEnrolled -> event.udid / event.serialNumber
   console.log(`${label} (${webhook.webhookEvent}, webhook "${webhook.name}")`, Object.keys(event));

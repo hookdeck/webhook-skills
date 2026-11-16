@@ -60,7 +60,7 @@ curl -X POST http://localhost:8000/webhooks/grist \
 npx hookdeck-cli listen 8000 grist --path /webhooks/grist
 ```
 
-Use the printed URL as the webhook **URL** in Grist (Document settings > Webhooks).
+Use the printed URL as the webhook **URL** in Grist (Document Settings > API > Manage Webhooks).
 
 ## How It Works
 

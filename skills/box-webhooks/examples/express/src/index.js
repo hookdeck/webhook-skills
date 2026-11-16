@@ -55,8 +55,8 @@ function verifyBox(rawBody, signature, timestamp, secret) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
-// verified the same way. Raw body is required: the signature covers the exact bytes Box sent.
+// Box's Box Sign webhooks page says deliveries are POSTs; the V2 webhooks page only says "an HTTP
+// call". Every method is verified the same way, so the route doesn't depend on which page is right. Raw body is required: the signature covers the exact bytes Box sent.
 // type: '*/*' so any content type reaches the verifier as a Buffer.
 app.all('/webhooks/box', express.raw({ type: '*/*' }), (req, res) => {
   const secret = process.env.BOX_WEBHOOK_SECRET;
@@ -72,7 +72,7 @@ app.all('/webhooks/box', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(401).send('Invalid signature');
   }
 
-  // Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+  // A verified request without a body has nothing to process
   if (rawBody.length === 0) return res.status(200).json({ received: true });
 
   let event;

@@ -5,8 +5,8 @@
 Tripletex WebHooks are event subscriptions. You register a `targetUrl` and an event name
 (`object.verb`) through the API, and Tripletex sends an HTTP `POST` with a JSON body each time that
 event happens. Subscriptions are managed under `/event` and `/event/subscription` in the
-[OpenAPI docs](https://developer.tripletex.no/docs/documentation/webhooks/); there is no dashboard
-UI. Webhooks are not signed; authenticate them with the custom header you set on the subscription.
+[OpenAPI docs](https://developer.tripletex.no/docs/documentation/webhooks/).
+Webhooks are not signed; authenticate them with the custom header you set on the subscription.
 
 ## Common Event Types
 

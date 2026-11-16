@@ -68,6 +68,6 @@ def verify_roller_request(headers, api_key=None) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `ROLLER_WEBHOOK_API_KEY` unset or different from the registered `apiKey` |
-| 401 after re-registering | The key changed; update the variable |
+| 401 after updating the webhook | The key changed; update the variable |
 | 401 only behind a proxy | The proxy strips the `x-roller-apikey` header |
 | 400 after authentication | Body isn't a JSON object |

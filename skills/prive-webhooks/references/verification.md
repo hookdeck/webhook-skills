@@ -4,9 +4,9 @@
 
 - Header: `x-prive-hmac-sha256`
 - Algorithm: HMAC-SHA256 over the **raw request body**
-- Key: the secret token Prive provides to the merchant
+- Key: the per-merchant `webhookSigningKey` issued by Recurly Support
 - Encoding: bare **base64** of the digest (Shopify-style, no `sha256=` prefix)
-- No timestamp, so no replay window; make handlers idempotent
+- No timestamp, so no replay window; Recurly says to dedupe on the payload's `idempotencyKey`
 
 Prive's Node sample calls `.digest()` after `update(body, 'hex')`. Node ignores the third argument of `update()` (it is an input encoding only applied to strings), so the digest is base64 as documented in prose, not hex.
 
@@ -47,7 +47,8 @@ def verify_prive_signature(raw_body: bytes, header: str | None, secret: str) -> 
 - **Don't decode the header.** Lenient base64 decoding accepts trailing junk. Compare the base64 strings as equal-length UTF-8 buffers.
 - **Length check first.** `crypto.timingSafeEqual` throws on unequal lengths.
 - **Python str vs bytes.** `hmac.compare_digest` raises `TypeError` on non-ASCII `str`, which becomes a 500. Encode both sides to bytes so a bad header gives 401.
-- **Wrong secret.** Use the secret token Prive provided, not a Shopify or API credential. Ask Prive support if you don't have it.
+- **Wrong secret.** Use the signing key Recurly Support issued, not a Shopify or API credential.
+- **Key replaced.** A new key is a hard cutover with no overlap window, so update every verifier as soon as it's issued.
 
 ## Debugging Verification Failures
 

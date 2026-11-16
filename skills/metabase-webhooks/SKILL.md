@@ -58,7 +58,8 @@ function verifyMetabaseRequest(headers, username, password) {
 
 - Header: `Authorization: Basic base64(username:password)`; the scheme is case-insensitive.
 - Return `401` for a missing or malformed header or a mismatch, `400` for a body that isn't a JSON
-  object, `200` once handled. Credentials arrive on the **first** request (Metabase sends them
+  object, `200` once handled. An authenticated request with an **empty body** is the webhook form's
+  **Send a test** button: return `200`, or the test shows as failed. Credentials arrive on the **first** request (Metabase sends them
   preemptively), so there is no challenge round-trip to support.
 - Read the body raw (`express.raw({ type: '*/*', limit: '10mb' })`) and authenticate before
   parsing it. Alerts embed a base64 PNG, so raise Express's default 100kb body limit.
@@ -110,7 +111,9 @@ Metabase can't reach `localhost`. Tunnel with the Hookdeck CLI (no account requi
 npx hookdeck-cli listen 3000 metabase --path /webhooks/metabase
 ```
 
-Use the printed URL as the webhook URL in Metabase, then use **Send a test alert**.
+Use the printed URL as the webhook URL in Metabase. The webhook form's **Send a test** button posts
+with no body; for a full payload, create an alert on a question that returns results and click
+**Send now**.
 
 ## Resources
 

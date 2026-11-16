@@ -38,40 +38,42 @@ function getEventName(payload) {
 function handleEvent(payload) {
   const event = getEventName(payload);
 
+  // RapidAPI's docs list events by display name and don't document the wire spelling.
+  // Match the values a Test event shows before relying on these cases.
   switch (event) {
     case 'API Created':
       console.log('API created');
-      // TODO: sync the new API to your catalog or gateway
+      // Sync the new API to your catalog or gateway
       break;
 
     case 'API Updated':
       console.log('API updated');
-      // TODO: refresh the API in your gateway
+      // Refresh the API in your gateway
       break;
 
     case 'API Deleted':
       console.log('API deleted');
-      // TODO: remove the API from your gateway
+      // Remove the API from your gateway
       break;
 
     case 'Subscription Created':
       console.log('Subscription created');
-      // TODO: sync the new subscription to your CRM or billing system
+      // Sync the new subscription to your CRM or billing system
       break;
 
     case 'Subscription Updated':
       console.log('Subscription updated');
-      // TODO: update the subscription downstream
+      // Update the subscription downstream
       break;
 
     case 'User Created':
       console.log('User created');
-      // TODO: provision the user in your systems
+      // Provision the user in your systems
       break;
 
     case 'Billing Plan Updated':
       console.log('Billing plan updated');
-      // TODO: update plan pricing downstream
+      // Update plan pricing downstream
       break;
 
     default:

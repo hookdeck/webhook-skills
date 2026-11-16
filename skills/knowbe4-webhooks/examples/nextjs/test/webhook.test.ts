@@ -11,8 +11,9 @@ beforeAll(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
-// ILLUSTRATIVE payload: KnowBe4 documents no body schema or event field.
-const payload = { event_type: 'Phish Failure Removed', System: 'KnowBe4' };
+// KnowBe4 documents no body schema or event field. This body holds only the Custom Data
+// key/value from KnowBe4's own example; a real delivery carries more.
+const payload = { System: 'KnowBe4' };
 
 function makeRequest(
   headers: Record<string, string> = {},
@@ -73,8 +74,13 @@ describe('KnowBe4 webhook', () => {
     expect(res.status).toBe(200);
   });
 
-  it('handles a payload with no event_type', async () => {
+  it('handles a PhishER payload', async () => {
     const res = await POST(makeRequest({ Authorization: SECRET }, JSON.stringify({ System: 'PhishER' })));
+    expect(res.status).toBe(200);
+  });
+
+  it('handles a payload without the Custom Data key', async () => {
+    const res = await POST(makeRequest({ Authorization: SECRET }, '{}'));
     expect(res.status).toBe(200);
   });
 });

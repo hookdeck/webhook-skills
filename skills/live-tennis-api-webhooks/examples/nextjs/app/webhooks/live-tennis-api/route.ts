@@ -4,28 +4,66 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Live Tennis API's receiver check: reject a `t` more than 5 minutes from your clock.
+const TOLERANCE_SECONDS = 300;
+
 /**
- * Verify the X-LTAPI-Signature header.
- * Format: "sha256=<64 hex chars>", the HMAC-SHA256 of the raw body keyed with
- * the webhook secret. X-LTAPI-Timestamp is NOT signed, so it plays no part here.
+ * Verify the X-LTAPI-Signature-V1 header.
+ * Format: "t=<unix seconds>,v1=<hex>". Each v1 is the hex HMAC-SHA256, keyed with
+ * the webhook secret, of "<t>.<raw request body>". Accept if any v1 matches.
+ * Never fall back to the deprecated X-LTAPI-Signature: it doesn't cover the timestamp.
  */
 function verifyLiveTennisSignature(
   rawBody: string,
   header: string,
-  secret: string
-): { valid: boolean; error?: string } {
-  const match = /^sha256=([0-9a-f]{64})$/i.exec(header);
-  if (!match) {
-    return { valid: false, error: 'Malformed X-LTAPI-Signature header' };
+  secret: string,
+  now = Math.floor(Date.now() / 1000)
+): { valid: boolean; timestamp?: number; error?: string } {
+  let timestamp: string | null = null;
+  const signatures: string[] = [];
+  for (const part of header.split(',')) {
+    const i = part.indexOf('=');
+    if (i === -1) continue;
+    const key = part.slice(0, i).trim();
+    const value = part.slice(i + 1).trim();
+    if (key === 't') timestamp = value;
+    else if (key === 'v1') signatures.push(value);
   }
 
-  // The header is exactly 64 hex chars, so Buffer.from(..., 'hex') can't truncate
-  const received = Buffer.from(match[1], 'hex');
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
+  if (!timestamp || !/^\d+$/.test(timestamp) || signatures.length === 0) {
+    return { valid: false, error: 'Malformed X-LTAPI-Signature-V1 header' };
+  }
+  if (Math.abs(now - Number(timestamp)) > TOLERANCE_SECONDS) {
+    return { valid: false, error: 'Timestamp outside the 5-minute window' };
+  }
 
-  return crypto.timingSafeEqual(received, expected)
-    ? { valid: true }
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest();
+
+  // Check the hex shape first: Buffer.from(x, 'hex') silently truncates invalid hex
+  const matched = signatures.some(
+    (sig) => /^[0-9a-f]{64}$/i.test(sig) && crypto.timingSafeEqual(Buffer.from(sig, 'hex'), expected)
+  );
+
+  return matched
+    ? { valid: true, timestamp: Number(timestamp) }
     : { valid: false, error: 'Invalid signature' };
+}
+
+// Seen delivery_ids, kept until t + 5 minutes. With several instances, use a shared
+// store with an atomic insert-if-absent (for example Redis SET NX EX) instead.
+const seenDeliveries = new Map<string, number>();
+
+function firstDelivery(deliveryId: string, timestamp: number): boolean {
+  const now = Math.floor(Date.now() / 1000);
+  for (const [id, expiresAt] of seenDeliveries) {
+    if (expiresAt < now) seenDeliveries.delete(id);
+  }
+  if (seenDeliveries.has(deliveryId)) return false;
+  seenDeliveries.set(deliveryId, timestamp + TOLERANCE_SECONDS);
+  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,9 +73,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
-  const signatureHeader = request.headers.get('x-ltapi-signature');
+  const signatureHeader = request.headers.get('x-ltapi-signature-v1');
   if (!signatureHeader) {
-    return NextResponse.json({ error: 'Missing X-LTAPI-Signature header' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing X-LTAPI-Signature-V1 header' }, { status: 400 });
   }
 
   // IMPORTANT: read the raw text body, whatever the Content-Type; don't call request.json() first.
@@ -57,27 +95,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
 
+  // delivery_id is unique per delivery and inside the signed body
+  if (frame?.delivery_id && !firstDelivery(frame.delivery_id, result.timestamp!)) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   // The signed body carries the frame type; X-LTAPI-Event (unsigned) is the fallback.
-  // Delivery is at-most-once: dedupe score frames on `sequence` and point frames on `point.seq`.
   const event = frame?.type || request.headers.get('x-ltapi-event');
   console.log(`Received Live Tennis API frame: ${event} (match ${frame?.match_id})`);
 
   switch (event) {
     case 'score':
-      console.log('Score:', frame.match_id, frame.sets, frame.games, frame.points);
-      // TODO: update your scoreboard (each score frame is the complete current score)
+      // The complete current score: apply it if its `sequence` is newer than the one you hold
+      console.log('Score:', frame.match_id, frame.sequence);
+      break;
+    case 'score_withdrawn':
+      // Discard the state with this sequence and resume from the next score frame
+      console.log('Score withdrawn:', frame.match_id, frame.superseded_sequence, frame.kind);
       break;
     case 'point':
-      console.log('Point:', frame.match_id, frame.point?.seq, 'won by', frame.point?.winner);
-      // TODO: store the point keyed on (match_id, point.seq); recover gaps via GET /matches/{id}/points?after_seq=
+      // Store keyed on (match_id, point.seq); fill gaps from GET /matches/{id}/points?after_seq=
+      console.log('Point:', frame.match_id, frame.point?.seq);
       break;
     case 'break_point':
       console.log('Break point:', frame.match_id, 'server', frame.server, 'returner', frame.returner);
-      // TODO: raise an alert
       break;
     case 'break_point_result':
+      // outcome is "held" or "broken"
       console.log('Break point result:', frame.match_id, frame.outcome);
-      // TODO: settle the break point (outcome is "held" or "broken")
+      break;
+    case 'status':
+      console.log('Status change:', frame.match_id);
       break;
     default:
       console.log('Unhandled Live Tennis API event:', event);
