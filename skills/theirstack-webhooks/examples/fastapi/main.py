@@ -55,17 +55,17 @@ async def theirstack_webhook(request: Request):
 
     if event_type == "job.new":
         print("New job:", payload.get("job_title"), payload.get("company_domain"))
-        # TODO: Add to CRM, alert sales, etc. Dedupe on payload["id"].
+        # Add to CRM, alert sales, etc. Dedupe on type plus payload["id"].
     elif event_type == "company.new":
         print("New company:", payload.get("name"), payload.get("domain"))
-        # TODO: Create a lead, enrich, etc.
+        # Create a lead, enrich, etc.
     elif event_type == "job.closed":
         # Minimal payload: { id, closed_at }
         print("Job closed:", payload.get("id"), payload.get("closed_at"))
-        # TODO: Mark the job as closed in your system.
+        # Mark the job as closed in your system.
     elif event_type == "tech.new":
         print("New technology detected for company")
-        # TODO: Update technographic records (access is by request).
+        # Payload not documented yet; access is by request.
     else:
         print(f"Unhandled event type: {event_type}")
 

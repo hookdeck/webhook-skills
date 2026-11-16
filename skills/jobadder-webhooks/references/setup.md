@@ -6,7 +6,7 @@
   plus the read scopes for the events you want
 - A public HTTPS endpoint for your webhook receiver (use the Hookdeck CLI locally)
 
-JobAdder has no dashboard for webhooks. You create them with the Webhook API.
+JobAdder's API docs describe creating webhooks only through the Webhook API.
 
 ## Choose Your Authorization Value
 

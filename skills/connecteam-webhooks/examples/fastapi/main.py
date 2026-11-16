@@ -12,7 +12,7 @@ load_dotenv()
 
 app = FastAPI()
 
-# Connecteam's docs don't name the method (the Chat guide says POST), so accept all of these.
+# Only Connecteam's Chat guide names the method (POST), so accept all of these.
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 
@@ -53,14 +53,14 @@ def handle_event(payload: dict) -> None:
         "user_restored", "user_promoted", "user_demoted",
     ):
         print(f"User event {event_type}: {json.dumps(payload.get('data'))}")
-        # TODO: sync payload["data"] (userId, email, isArchived) to your directory
+        # Next: sync payload["data"] (userId, email, isArchived) to your directory
 
     # Forms
     elif event_type in ("form_submission", "form_submission_edited", "manager_field_updated"):
         data = payload.get("data")
         submission_id = data.get("formSubmissionId") if isinstance(data, dict) else None
         print(f"Form event {event_type}: submission {submission_id}")
-        # TODO: process payload["data"]["answers"]
+        # Next: process payload["data"]["answers"]
 
     # Time clock (flat payload: userId, timeClockId at the root)
     elif event_type in (
@@ -72,7 +72,7 @@ def handle_event(payload: dict) -> None:
             f"Time activity event {event_type}: user {payload.get('userId')}, "
             f"clock {payload.get('timeClockId')}"
         )
-        # TODO: update payroll or attendance records
+        # Next: update payroll or attendance records
 
     # Shift scheduler
     elif event_type in (
@@ -80,12 +80,12 @@ def handle_event(payload: dict) -> None:
         "availability_status_created", "availability_status_deleted",
     ):
         print(f"Scheduler event {event_type}: scheduler {payload.get('schedulerId')}")
-        # TODO: sync payload["data"] to your calendar
+        # Next: sync payload["data"] to your calendar
 
     # Tasks
     elif event_type in ("task_published", "task_completed"):
         print(f"Task event {event_type}")
-        # TODO: update your task tracker from payload["data"]
+        # Next: update your task tracker from payload["data"]
 
     # Chat
     elif event_type in (
@@ -93,7 +93,7 @@ def handle_event(payload: dict) -> None:
         "conversation_created", "conversation_updated", "conversation_deleted",
     ):
         print(f"Chat event {event_type}")
-        # TODO: mirror payload["data"]
+        # Next: mirror payload["data"]
 
     else:
         print(f"Unhandled event: {event_type}")

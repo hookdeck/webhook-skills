@@ -12,7 +12,7 @@ yours, so read them from configuration:
 
 Look the header up case-insensitively and compare the **whole** value. If you typed
 `Bearer abc123`, the expected value is `Bearer abc123`; do not strip or parse the prefix.
-Hookdeck's Dynatrace source does the same (header name plus exact whole value).
+Hookdeck's Dynatrace source checks the header name and value you enter on the source.
 
 **Send the secret in a custom header, not as a token in the webhook URL.**
 

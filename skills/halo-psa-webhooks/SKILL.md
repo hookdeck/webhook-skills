@@ -84,8 +84,9 @@ event per webhook, and can put conditions on them.
 | `Document edited on a Ticket` | An attachment is edited on a ticket (v2.242+) |
 
 Every payload carries an ID, notification ID, escmsg ID, event name, webhook ID, object ID and
-timestamp. The docs don't name those JSON properties in text, so the example payloads here are
-**illustrative**: inspect a real delivery. With **batching** on, the body is a JSON array of
+timestamp. The docs don't name those JSON properties in text, or say whether the event-name
+property carries the display names above exactly, so the example payloads and `switch` cases here
+are **illustrative**: inspect a real delivery. With **batching** on, the body is a JSON array of
 objects instead of one object. The **Method** setting also offers GET (for retrieving data), but
 notifications are POSTs and Hookdeck's HaloPSA source accepts POST only.
 

@@ -20,14 +20,15 @@ metadata:
 - How do I verify the `X-CompanyCam-Signature` header?
 - Why is my CompanyCam webhook signature verification failing?
 - How do I handle `photo.created`, `project.created`, or `task.completed` events?
-- Why are my CompanyCam webhooks unsigned?
+- Why does my CompanyCam signature never match?
 
 ## Setup
 
 Set a **token** when you create the CompanyCam webhook (`POST /public_api/v1/webhooks`
-with `webhook.url`, `webhook.scopes`, and `webhook.token`). The token is optional on
-create, but without one, deliveries are unsigned and fail verification. The token is the
-HMAC key; store it as `COMPANYCAM_WEBHOOK_TOKEN`. See [references/setup.md](references/setup.md).
+with `webhook.url`, `webhook.scopes`, and `webhook.token`). The token is the HMAC key,
+and CompanyCam never shows it again after the create response, so pass your own value and
+store it as `COMPANYCAM_WEBHOOK_TOKEN`. CompanyCam's docs don't say what a webhook created
+without a token signs with. To change the token, delete and recreate the webhook. See [references/setup.md](references/setup.md).
 
 ## Verification (core)
 
@@ -77,7 +78,8 @@ Scopes also include wildcards (`*`, `project.*`, `photo.*`, ...), `project.archi
 [references/overview.md](references/overview.md).
 
 CompanyCam expects exactly HTTP `200`; any other status is retried with exponential backoff
-(max 10 attempts), and a webhook with more than 25 errors is disabled.
+(up to 10 times). A webhook is disabled once it has more than 25 errors, or when a single
+event exhausts its retries; the error count resets after each successful response.
 
 ## Environment Variables
 

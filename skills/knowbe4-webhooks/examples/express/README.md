@@ -48,13 +48,13 @@ npm test
 The tests cover correct, wrong, missing and prefix-stripped values, case-insensitive header
 lookup and any content type. No KnowBe4 account is needed.
 
-To try it by hand (the body is an illustrative payload):
+To try it by hand (the body holds only the Custom Data from KnowBe4's example):
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/knowbe4 \
   -H "Content-Type: application/json" \
   -H "Authorization: $KNOWBE4_WEBHOOK_SECRET" \
-  -d '{"event_type":"Phish Failure Removed","System":"KnowBe4"}'
+  -d '{"System":"KnowBe4"}'
 ```
 
 ## Receive Webhooks Locally
@@ -74,6 +74,6 @@ Put the printed URL in the KSAT or PhishER webhook.
 1. The configured header is looked up case-insensitively and its whole value compared with the
    secret before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
-3. The handler reads an illustrative `event_type` string (KnowBe4 documents no event field) and
-   logs anything it doesn't recognise.
+3. KnowBe4 documents no event field, so the handler routes on a `System` Custom Data key you add
+   to each webhook (`KnowBe4` or `PhishER`, as in KnowBe4's examples) and logs anything else.
 4. It returns `200 {"received": true}`.

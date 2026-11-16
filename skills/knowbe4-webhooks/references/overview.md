@@ -39,16 +39,12 @@ The body is JSON but isn't documented field by field, and there is no vendor eve
 can add **Custom Data** key/values to the payload, for example `{"System": "KnowBe4"}`. The body
 is therefore defined by your own configuration.
 
-The examples in this skill use an **illustrative** payload, not a KnowBe4 schema:
+KnowBe4's change log adds one field name: the `Phish Failure Removed` payload carries
+`phish_failure_timestamp`, an ISO 8601 time of when the phishing failure happened (not when it was
+removed).
 
-```json
-{
-  "event_type": "Phish Failure Removed",
-  "System": "KnowBe4"
-}
-```
-
-Capture a real delivery (for example with `npx hookdeck-cli listen 3000 knowbe4 --path /webhooks/knowbe4`)
+The examples in this skill route on a `System` Custom Data key, set to `KnowBe4` on a KSAT webhook
+and `PhishER` on a PhishER one, as in KnowBe4's own examples. Capture a real delivery (for example with `npx hookdeck-cli listen 3000 knowbe4 --path /webhooks/knowbe4`)
 and adapt the handler to the fields you actually receive.
 
 ## Delivery

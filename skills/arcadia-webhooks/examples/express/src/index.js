@@ -40,47 +40,47 @@ function handleEvent(payload) {
   switch (eventType) {
     case 'STATUS_CHANGE':
       console.log(`Status change on ${resource}: ${payload.data?.id}`);
-      // TODO: if payload.data.isCustomerActionRequired, prompt the user to fix the connection
+      // If payload.data.isCustomerActionRequired, prompt the user to fix the connection
       break;
 
     case 'NEW_DATA_AVAILABLE':
       console.log(`New data available for ${resource}: ${payload.data?.id}`);
-      // TODO: fetch the new data for payload.data.accounts
+      // Fetch the new data for payload.data.accounts
       break;
 
     case 'EXISTING_DATA_UPDATED':
       console.log(`Existing data updated for ${resource}: ${payload.data?.id}`);
-      // TODO: re-sync the affected records
+      // Re-sync the affected records
       break;
 
     case 'DATA_DELETED':
       console.log(`Data deleted (${resource}): ${payload.data?.businessUnitId}`);
-      // TODO: remove or move local copies (payload.data.movedToBusinessUnitId)
+      // Remove or move local copies (payload.data.movedToBusinessUnitId)
       break;
 
     case 'BUSINESS_UNIT_ASSIGNMENT':
       console.log(`Business unit assignment (${resource})`);
-      // TODO: update ownership of payload.data.account
+      // Update ownership of payload.data.account
       break;
 
     case 'REAL_TIME_CREDENTIAL_VALIDATION_SUCCESS':
       console.log(`Credential validated: ${payload.data?.id}`);
-      // TODO: mark the connection ready
+      // Mark the connection ready
       break;
 
     case 'REAL_TIME_CREDENTIAL_VALIDATION_FAILURE':
       console.log(`Credential validation failed: ${payload.data?.id}`);
-      // TODO: ask the user to re-enter their utility credentials
+      // Ask the user to re-enter their utility credentials
       break;
 
     case 'MFA_CHALLENGE_METHOD':
       console.log(`MFA method needed for credential ${payload.data?.credential?.id}`);
-      // TODO: show payload.data.verificationMethods and submit the choice
+      // Show payload.data.verificationMethods and submit the choice
       break;
 
     case 'MFA_CHALLENGE_CODE':
       console.log(`MFA code needed for credential ${payload.data?.credential?.id}`);
-      // TODO: prompt the user for the code
+      // Prompt the user for the code
       break;
 
     default:

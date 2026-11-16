@@ -60,11 +60,11 @@ def handle_alert(payload: dict) -> None:
 
     if status == "raised":
         print(f"Alert raised {alert_uid}: {message}")
-        # TODO: open a ticket or page on-call (payload["device_hostname"], payload["site_name"])
+        # Open a ticket or page on-call (payload["device_hostname"], payload["site_name"])
 
     elif status == "resolved":
         print(f"Alert resolved {alert_uid}: {message}")
-        # TODO: close the matching ticket
+        # Close the matching ticket
 
     else:
         print("Unhandled Datto RMM payload (no recognised status field)")

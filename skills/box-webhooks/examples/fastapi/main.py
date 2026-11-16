@@ -92,8 +92,8 @@ def verify_box(raw_body: bytes, signature, timestamp, secret: str) -> bool:
     return hmac.compare_digest(signature.encode("ascii"), expected)
 
 
-# Box's docs don't name the HTTP method (Hookdeck pre-selects POST, unmanaged), so every method is
-# verified the same way.
+# Box's Box Sign webhooks page says deliveries are POSTs; the V2 webhooks page only says "an HTTP
+# call". Every method is verified the same way, so the route doesn't depend on which page is right.
 @app.api_route("/webhooks/box", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def box_webhook(request: Request):
     secret = os.getenv("BOX_WEBHOOK_SECRET", "")
@@ -112,7 +112,7 @@ async def box_webhook(request: Request):
         logger.error("Box webhook signature verification failed")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # Hookdeck leaves the method unmanaged, so a verified request may arrive without a body
+    # A verified request without a body has nothing to process
     if not raw_body:
         return {"received": True}
 

@@ -83,7 +83,7 @@ Dispatch on the body's `type`. Choose the events to send when you create the end
 | Event | Description |
 |-------|-------------|
 | `affiliate.created` | A new affiliate signs up (usually `PENDING`) |
-| `affiliate.confirmed` | An affiliate is confirmed (`ACTIVE`) |
+| `affiliate.confirmed` | An affiliate confirms their email address (`ACTIVE` in the docs example) |
 | `referral.lead` | A visitor referred by an affiliate becomes a lead |
 | `referral.converted` | A referral converts to a customer |
 | `transaction.created` | A sale and its commission are recorded |
@@ -95,7 +95,7 @@ Dispatch on the body's `type`. Choose the events to send when you create the end
 
 Others: `affiliate.updated`, `affiliate.deleted`, `referral.updated`, `referral.deleted`, `transaction.updated`, `transaction.deleted`, `payout.created`, `payout.updated`, `payout.deleted`, `coupon.created`, `coupon.deleted`. See [references/overview.md](references/overview.md).
 
-> **For the full event reference**, see [Affonso's webhook events](https://docs.affonso.io/webhooks).
+> **For the full event reference**, see [Affonso's webhook events](https://docs.affonso.io/webhooks/introduction).
 
 ## Important Headers
 

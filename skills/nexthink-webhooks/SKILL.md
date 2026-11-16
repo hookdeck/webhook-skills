@@ -73,7 +73,7 @@ webhook, with `{{variable}}` placeholders from the NQL data model (for example
 { "event": "alert triggered", "monitor": "{{alert.monitor.name}}" }
 ```
 
-The examples dispatch on `event` values `alert triggered` and `alert recovered`; see
+The examples dispatch on `event` values `alert triggered` and `high priority alert`; see
 [references/overview.md](references/overview.md).
 
 ## Setup Note (same as in Hookdeck)

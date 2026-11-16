@@ -43,4 +43,4 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 3000 jamie --path /webhooks/jamie
 ```
 
-Use the Hookdeck URL as the webhook URL in Jamie (Settings → Integrations → Webhooks), then record a meeting to trigger `meeting.completed`.
+Use the Hookdeck URL as the webhook URL in Jamie (Settings → Webhooks), then record a meeting to trigger `meeting.completed`.

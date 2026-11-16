@@ -63,7 +63,7 @@ function verifyTaniumRequest(
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the secret if it leaks.
 - Hookdeck's Tanium source (type `TANIUM`) checks exactly this: API Key Header plus exact whole API
-  Key. The destination's **Basic Authentication** and **OAuth2 Client Credentials** options are
+  Key. The destination's **Basic Authentication** and **IBM Cloud IAM - API Key** options are
   not covered by it; use Header Authentication.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
@@ -75,8 +75,10 @@ function verifyTaniumRequest(
   notes). The examples accept `POST`, `PUT` and `PATCH` for illustration; add whatever method your
   destination uses. Hookdeck's Tanium source pre-selects `POST` without managing the
   method: if the destination sends anything else, also allow that method on the source.
-- **There is no event field.** The body is defined by the connection's configuration: usually an
-  array of row objects keyed by the columns the author picked, or one object. Handle both. The
+- **There is no event field.** The body is defined by the connection's configuration. With the
+  JSON format, select **Generate Document** to get an array of row objects keyed by the columns the
+  author picked: by default Connect writes the objects back to back with no commas, which isn't
+  valid JSON. **Wrap Data with Source** sends one object keyed by the source name instead. The
   examples use a clearly labelled illustrative payload, not a Tanium-defined schema:
 
 ```json

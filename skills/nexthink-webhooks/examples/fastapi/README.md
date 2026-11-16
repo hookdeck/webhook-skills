@@ -72,5 +72,5 @@ POST without managing the method: allow PUT or PATCH on the source if your webho
 2. The raw body is read, so any content type works. An empty body is fine; a non-empty body must
    be valid JSON (`400` otherwise).
 3. Nexthink adds no event field. The example dispatches on `event` from an illustrative payload
-   template (`alert triggered`, `alert recovered`) that you write yourself.
+   template (`alert triggered`, `high priority alert`) that you write yourself.
 4. It returns `200 {"received": true}`.

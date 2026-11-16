@@ -32,83 +32,15 @@ function verifyTimifyRequest(
   return Boolean(received) && safeEqual(received, secret);
 }
 
-// Normalize "Customer Fields" / "customer_fields" / "customerFields" to "customerfields".
-const normalize = (value) => String(value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
 /**
- * TIMIFY's overview page does not document the payload fields, so this dispatch is
- * defensive: it looks for the webhook name and type under a few likely keys and
- * acknowledges anything it doesn't recognise. Adjust to the payloads you actually receive.
+ * TIMIFY's webhook overview names each webhook (Customers, Event, Resource, ...) and its type
+ * (Created, Updated, Deleted), but documents no payload fields, so this handler doesn't guess
+ * which field carries them. Give each webhook scope its own subscription and Server URL, as
+ * TIMIFY suggests, or capture one delivery and branch on the field it actually uses.
  */
 function handleEvent(payload) {
-  const name = normalize(payload.webhook ?? payload.name ?? payload.resource);
-  const type = normalize(payload.type ?? payload.action);
-  const label = `${payload.webhook ?? payload.name ?? payload.resource} ${payload.type ?? payload.action}`;
-
-  switch (name) {
-    case 'customers':
-      console.log(`Customers ${type}: ${label}`);
-      // TODO: sync the customer record (payload.data)
-      break;
-
-    case 'event':
-      console.log(`Event ${type}: ${label}`);
-      // TODO: create, update or cancel the booking in your system
-      break;
-
-    case 'events':
-      console.log(`Events ${type}: ${label}`);
-      // TODO: remove the deleted bookings
-      break;
-
-    case 'services':
-      console.log(`Services ${type}: ${label}`);
-      // TODO: sync the service catalogue
-      break;
-
-    case 'resource':
-      console.log(`Resource ${type}: ${label}`);
-      // TODO: sync staff, rooms or equipment
-      break;
-
-    case 'company':
-      console.log(`Company ${type}: ${label}`);
-      // TODO: sync company details
-      break;
-
-    case 'manager':
-      console.log(`Manager ${type}: ${label}`);
-      // TODO: sync manager accounts
-      break;
-
-    case 'enterprise':
-      console.log(`Enterprise ${type}: ${label}`);
-      // TODO: sync enterprise settings
-      break;
-
-    case 'customerfields':
-      console.log(`Customer Fields ${type}: ${label}`);
-      // TODO: sync custom customer field definitions
-      break;
-
-    case 'shift':
-      console.log(`Shift ${type}: ${label}`);
-      // TODO: sync working hours
-      break;
-
-    case 'notification':
-      console.log(`Notification ${type}: ${label}`);
-      // TODO: forward the notification
-      break;
-
-    case 'servicegroups':
-      console.log(`Service Groups ${type}: ${label}`);
-      // TODO: sync service groups
-      break;
-
-    default:
-      console.log(`Unhandled TIMIFY event: ${label}`);
-  }
+  console.log(`TIMIFY webhook received with fields: ${Object.keys(payload).join(', ')}`);
+  // Process the delivery here
 }
 
 // Read the body raw (any content type) so the request is authenticated before parsing.

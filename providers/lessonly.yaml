@@ -1,7 +1,7 @@
 name: lessonly
 displayName: 'Lessonly'
 docs:
-  webhooks: https://docs.lessonly.com/
+  webhooks: https://intercom.help/lessonly/en/articles/3828587-reporting-webhook
   verification: https://docs.lessonly.com/
 notes: >
   Training platform, now Seismic Learning (keep the Lessonly name, mention the rename). Only one
@@ -23,8 +23,11 @@ notes: >
   oyster, fireberry and new-relic skills if present). Hookdeck's source type is LESSONLY, labelled
   'Lessonly'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md
   must tell the user the same thing: "Paste the Authorization value exactly as set in Lessonly,
-  including any "Bearer " or "Basic " prefix." The payload isn't documented on the API reference:
-  use a clearly labelled illustrative lesson-completed JSON body and say so. Express examples must
+  including any "Bearer " or "Basic " prefix." The payload is documented in the Reporting Webhook help
+  article (https://intercom.help/lessonly/en/articles/3828587-reporting-webhook): a JSON POST with
+  user {id, name, email, custom_fields}, lesson {id, title, retake_score}, score, score_percent,
+  started_at, completed_at, via_path_id, assigned_at and report_card_url. A failed POST is retried
+  up to three times every five minutes. Use fields from that sample, with placeholder name and email. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works; parse the body only
   after the credential check.
 testScenario:

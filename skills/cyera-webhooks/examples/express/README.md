@@ -49,5 +49,5 @@ npx hookdeck-cli listen 3000 cyera --path /webhooks/cyera
 - Signed message: `{X-Webhook-Timestamp}:{raw body}` (colon separator, raw bytes)
 - Key: the Webhook Secret's UTF-8 bytes, used as-is
 - The route uses `express.raw({ type: '*/*' })`, so the exact bytes are verified before any JSON parsing
-- Responses: `401` for bad signatures, `201` for created access/deletion/opt-out requests, `200` for health and readiness checks
+- Responses: `401` for bad signatures, `201` for new access/deletion/opt-out requests, `200` for reminders, health checks, readiness checks and identifier requests
 - Optional replay window: set `CYERA_WEBHOOK_TOLERANCE_SECONDS` (off by default; leave it off behind Hookdeck, which replays the original timestamp)

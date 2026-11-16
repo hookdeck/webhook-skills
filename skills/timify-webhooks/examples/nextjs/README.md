@@ -76,7 +76,7 @@ Use the printed URL as the Server URL of the subscription.
 
 1. The configured header is checked before the body is parsed. Failure returns `401`.
 2. The body must be a JSON object (`400` otherwise).
-3. The handler dispatches defensively on the webhook name (`Customers`, `Event`, `Events`,
-   `Services`, `Resource`, `Company`, `Manager`, `Enterprise`, `Customer Fields`, `Shift`,
-   `Notification`, `Service Groups`) and acknowledges anything it doesn't recognise.
+3. The handler logs the body's top-level fields and acknowledges it. TIMIFY's overview doesn't
+   document which field names the webhook or type, so it doesn't branch on one: use a separate
+   subscription and Server URL per webhook scope, or branch on a field from a real delivery.
 4. It returns `200 {"received": true}`.

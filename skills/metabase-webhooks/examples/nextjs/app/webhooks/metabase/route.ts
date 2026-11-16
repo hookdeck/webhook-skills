@@ -23,7 +23,7 @@ function handleEvent(payload: MetabasePayload): void {
       const rows = Array.isArray(raw_data?.rows) ? raw_data.rows.length : 0;
       const test = payload.alert_id === null ? ' (test alert)' : '';
       console.log(`Alert${test}: ${question_name} (#${question_id}) returned ${rows} rows ${question_url}`);
-      // TODO: forward to chat/on-call, store raw_data, or decode payload.data.visualization (base64 PNG)
+      // Your logic here: forward to chat or on-call, store raw_data, or decode payload.data.visualization (base64 PNG)
       break;
     }
 
@@ -41,10 +41,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Read as text so any content type is accepted.
+  const raw = await request.text();
+
+  // The webhook form's "Send a test" button posts with no body. Acknowledge it.
+  if (raw.trim() === '') {
+    return NextResponse.json({ received: true, test: true });
+  }
+
   let payload: unknown;
   try {
-    // Read as text so any content type is accepted.
-    payload = JSON.parse(await request.text());
+    payload = JSON.parse(raw);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

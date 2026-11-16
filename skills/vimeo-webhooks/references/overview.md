@@ -38,7 +38,7 @@ Every payload has the same envelope. The event name is the `webhook_type` field 
     "video_uri": "/videos/890352789",
     "version_uri": "/videos/890352789/versions/1"
   },
-  "timestamp": 1644961452
+  "timestamp": 1645026988
 }
 ```
 
@@ -54,13 +54,13 @@ Every payload has the same envelope. The event name is the `webhook_type` field 
 | `live-event-updated` | `event_uri` |
 | `automatic-thumbnail-available` | `video_uri`, `thumbnail_uri` |
 | `content-scan-completed` | `video_uri`, `result`, `version_uri` |
-| `registration-*` | `resource_uri`, `registrant_uuid`, `email`, `sequence_number` |
+| `registration-*` | `resource_uri`, `registrant_uuid`, `email` (only for registrants your app created through the API), `sequence_number` |
 
 Payloads carry URIs, not full resources; call the Vimeo API (for example `GET /videos/{id}`) for details.
 
 ## Idempotency
 
-Vimeo documents no delivery ID header or body field and no retry schedule. Build a deduplication key from `webhook_type`, the primary URI in `data`, and `timestamp`, and make handlers safe to run twice.
+Vimeo documents no delivery ID header or body field and no retry schedule. `timestamp` is in seconds, so two real events of the same type for the same resource can share it: don't use it as a deduplication key on its own. Make handlers safe to run twice by re-fetching the resource from its URI and writing the current state. Registration events carry `data.sequence_number`, which increases for each change on the lead-capture resource; Vimeo says to use it to detect gaps or out-of-order delivery.
 
 ## Full Event Reference
 

@@ -25,7 +25,7 @@ function handleEvent(payload: ConnecteamPayload): void {
     case 'user_promoted':
     case 'user_demoted':
       console.log(`User event ${eventType}:`, JSON.stringify(payload.data));
-      // TODO: sync payload.data[] (userId, email, isArchived) to your directory
+      // Next: sync payload.data[] (userId, email, isArchived) to your directory
       break;
 
     // Forms
@@ -34,7 +34,7 @@ function handleEvent(payload: ConnecteamPayload): void {
     case 'manager_field_updated': {
       const data = payload.data as { formSubmissionId?: string } | undefined;
       console.log(`Form event ${eventType}: submission ${data?.formSubmissionId}`);
-      // TODO: process payload.data.answers
+      // Next: process payload.data.answers
       break;
     }
 
@@ -50,7 +50,7 @@ function handleEvent(payload: ConnecteamPayload): void {
     case 'user_timesheet_approved':
     case 'user_timesheet_reopened':
       console.log(`Time activity event ${eventType}: user ${payload.userId}, clock ${payload.timeClockId}`);
-      // TODO: update payroll or attendance records
+      // Next: update payroll or attendance records
       break;
 
     // Shift scheduler
@@ -60,14 +60,14 @@ function handleEvent(payload: ConnecteamPayload): void {
     case 'availability_status_created':
     case 'availability_status_deleted':
       console.log(`Scheduler event ${eventType}: scheduler ${payload.schedulerId}`);
-      // TODO: sync payload.data to your calendar
+      // Next: sync payload.data to your calendar
       break;
 
     // Tasks
     case 'task_published':
     case 'task_completed':
       console.log(`Task event ${eventType}`);
-      // TODO: update your task tracker from payload.data
+      // Next: update your task tracker from payload.data
       break;
 
     // Chat
@@ -78,7 +78,7 @@ function handleEvent(payload: ConnecteamPayload): void {
     case 'conversation_updated':
     case 'conversation_deleted':
       console.log(`Chat event ${eventType}`);
-      // TODO: mirror payload.data
+      // Next: mirror payload.data
       break;
 
     default:
@@ -119,7 +119,7 @@ async function handleWebhook(request: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-// Connecteam's docs don't name the method (the Chat guide says POST), so accept all of these.
+// Only Connecteam's Chat guide names the method (POST), so accept all of these.
 export const GET = handleWebhook;
 export const POST = handleWebhook;
 export const PUT = handleWebhook;

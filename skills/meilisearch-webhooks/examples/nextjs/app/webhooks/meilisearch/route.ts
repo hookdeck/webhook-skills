@@ -8,7 +8,7 @@ function handleTask(task: MeilisearchTask): void {
 
   if (task.status === 'failed') {
     console.log(`Failed ${label}`, task.error?.message);
-    // TODO: alert your team (e.g. post to Slack)
+    // Alert your team here, for example by posting to Slack.
     return;
   }
   if (task.status === 'canceled') {
@@ -19,7 +19,7 @@ function handleTask(task: MeilisearchTask): void {
   switch (task.type) {
     case 'documentAdditionOrUpdate':
       console.log(`${label} (${task.details?.indexedDocuments} documents indexed)`);
-      // TODO: purge your CDN or application cache
+      // Purge your CDN or application cache here.
       break;
     case 'documentDeletion':
     case 'settingsUpdate':

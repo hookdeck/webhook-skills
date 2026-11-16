@@ -80,7 +80,7 @@ async def pylon_webhook(request: Request):
         f"(#{payload.get('number')}): {payload.get('title')}{retry}"
     )
 
-    # TODO: Pylon sends no event ID, so de-duplicate on fields from your
+    # Pylon sends no event ID, so de-duplicate on fields from your
     # template (for example issue_id plus the field that changed).
 
     return {"received": True}

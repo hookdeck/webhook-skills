@@ -11,17 +11,26 @@ from main import app, classify, verify_pax8_request
 
 client = TestClient(app)
 
-# Illustrative payloads: Pax8's docs elide samplePayload, so the body shape is assumed.
-SUBSCRIPTION_CREATE = {
-    "topic": "SUBSCRIPTION",
-    "action": "CREATE",
-    "id": "00000000-0000-0000-0000-000000000001",
-}
-INVOICE_CREATE = {
-    "topic": "INVOICE",
-    "action": "CREATE",
-    "id": "00000000-0000-0000-0000-000000000002",
-}
+# Illustrative payloads: the field names follow the WebhookPayload schema in Pax8's
+# Webhooks API reference; the values are placeholders, and payloadData is left empty
+# because its fields aren't documented.
+def notification(topic, action, n):
+    return {
+        "accountId": "00000000-0000-0000-0000-00000000000a",
+        "url": "https://example.com/webhooks/pax8",
+        "webhookId": "00000000-0000-0000-0000-00000000000b",
+        "sentAt": "2026-01-01T00:00:00Z",
+        "webhookTopic": {
+            "id": f"00000000-0000-0000-0000-00000000000{n}",
+            "topic": topic,
+            "filters": [{"action": action, "conditions": []}],
+        },
+        "payloadData": {},
+    }
+
+
+SUBSCRIPTION_CREATE = notification("SUBSCRIPTION", "CREATE", 1)
+INVOICE_CREATE = notification("INVOICE", "CREATED", 2)
 
 
 def post(body=None, headers=None, content_type="application/json"):
@@ -69,9 +78,10 @@ class TestPax8Webhook:
 
 class TestHelpers:
     def test_classify(self):
-        assert classify(SUBSCRIPTION_CREATE) == {"topic": "SUBSCRIPTION", "action": "CREATE"}
-        assert classify({"topic": "invoice", "action": "update"}) == {"topic": "INVOICE", "action": "UPDATE"}
-        assert classify({"topic": 5}) == {"topic": None, "action": None}
+        assert classify(SUBSCRIPTION_CREATE) == {"topic": "SUBSCRIPTION", "sentAt": "2026-01-01T00:00:00Z"}
+        assert classify({"webhookTopic": {"topic": "invoice"}}) == {"topic": "INVOICE", "sentAt": None}
+        assert classify({"topic": "SUBSCRIPTION"}) == {"topic": None, "sentAt": None}
+        assert classify({"webhookTopic": {"topic": 5}}) == {"topic": None, "sentAt": None}
 
     def test_compares_whole_value_for_bare_secret(self):
         cfg = {"PAX8_AUTHORIZATION": "my_super_secret"}

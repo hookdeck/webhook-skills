@@ -85,8 +85,10 @@ the payload (for example `{"System": "KnowBe4"}`).
 | KSAT: General Events | General account events you tick in the webhook |
 | PhishER: Send to Webhook | Message data for the data types selected on the webhook |
 
-The examples and tests use a clearly labelled **illustrative** payload with an `event_type` string
-(`Phish Failure Removed`). Inspect a real delivery, then adapt the handler.
+The examples route on a Custom Data key you add to each webhook: `System` set to `KnowBe4` on a
+KSAT webhook and `PhishER` on a PhishER one, the key/value pairs KnowBe4's own articles use. The
+tests send only that key, because no full payload is published. Inspect a real delivery before you
+read other fields.
 
 ## Delivery Behaviour
 

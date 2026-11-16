@@ -57,35 +57,35 @@ async def companycam_webhook(request: Request):
 
     if event_type == "project.created":
         print(f"Project created: {object_id}")
-        # TODO: sync the new project to your CRM / job system
+        # Sync the new project to your CRM or job system
 
     elif event_type == "project.updated":
         print(f"Project updated: {object_id}")
-        # TODO: keep your records in sync
+        # Keep your records in sync
 
     elif event_type == "photo.created":
         print(f"Photo created: {object_id}")
-        # TODO: back up the photo, run tagging, etc.
+        # Back up the photo, run tagging, etc.
 
     elif event_type == "photo.updated":
         print(f"Photo updated: {object_id}")
-        # TODO: refresh derived assets
+        # Refresh derived assets
 
     elif event_type == "comment.created":
         print(f"Comment created: {object_id}")
-        # TODO: notify the team
+        # Notify the team
 
     elif event_type == "document.created":
         print(f"Document created: {object_id}")
-        # TODO: sync the document
+        # Sync the document
 
     elif event_type == "todo_list.completed":
         print(f"Checklist completed: {object_id}")
-        # TODO: trigger close-out workflow
+        # Trigger close-out workflow
 
     elif event_type == "task.completed":
         print(f"Checklist task completed: {object_id}")
-        # TODO: track progress
+        # Track progress
 
     else:
         print(f"Unhandled event type: {event_type}")

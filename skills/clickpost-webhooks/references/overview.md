@@ -55,8 +55,11 @@ defensively.
 
 ## Delivery Notes
 
-- Method is `POST`. Respond `200`, `201`, `202` or `204` within 5 seconds.
-- Scans may arrive out of order. Dedupe on `waybill` + scan and keep the latest state by scan `timestamp`.
+- Method is `POST`. Respond within 5 seconds. ClickPost lists `200`, `201`, `202` or `204` as
+  success, but its retry rule names only `200`, `201` and `202`, so return `200`.
+- Scans may arrive out of order. Dedupe on `waybill` + `scan_id` (ClickPost's recommended key), or
+  `waybill` + `clickpost_status_code` + `timestamp` when `scan_id` is null, and keep the latest state
+  by scan `timestamp`.
 
 ## Full Reference
 

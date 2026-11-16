@@ -31,7 +31,7 @@ uvicorn main:app --reload --port 8000
 
 Server runs on http://localhost:8000
 
-The handler reads the raw body with `await request.body()` and verifies `X-Coassemble-Signature` (`sha256=<hex>`): HMAC-SHA256 of `<X-Coassemble-Timestamp>.<raw body>`. A bad signature gets `401`. The timestamp check is off by default because retries and replays keep the original timestamp; set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
+The handler reads the raw body with `await request.body()` and verifies `X-Coassemble-Signature` (`sha256=<hex>`): HMAC-SHA256 of `<X-Coassemble-Timestamp>.<raw body>`. A bad signature gets `401`. The timestamp check is off by default because Coassemble's docs set no window and Hookdeck's retries and replays keep the original timestamp; set `COASSEMBLE_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to reject older ones.
 
 ## Test
 

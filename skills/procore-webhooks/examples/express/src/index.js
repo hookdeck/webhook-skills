@@ -31,26 +31,30 @@ function verifyProcoreRequest(headers, config = process.env) {
 }
 
 function handleEvent(payload) {
-  const { event_type: eventType, resource_name: resource, resource_id: resourceId } = payload;
+  // Payload formats v2.0 and v3.0 use event_type and resource_name; v4.0 renames them
+  // to reason and resource_type.
+  const eventType = payload.event_type ?? payload.reason;
+  const resource = payload.resource_name ?? payload.resource_type;
+  const resourceId = payload.resource_id;
 
   switch (eventType) {
     case 'create':
       console.log(`${resource} ${resourceId} created`);
-      // TODO: fetch the new record via the Procore REST API and sync it
+      // Fetch the new record via the Procore REST API and sync it
       break;
 
     case 'update':
       console.log(`${resource} ${resourceId} updated`);
-      // TODO: refresh your copy of the record
+      // Refresh your copy of the record
       break;
 
     case 'delete':
       console.log(`${resource} ${resourceId} deleted`);
-      // TODO: remove or archive your copy of the record
+      // Remove or archive your copy of the record
       break;
 
     default:
-      console.log(`Unhandled Procore event_type: ${eventType}`);
+      console.log(`Unhandled Procore event: ${eventType}`);
   }
 }
 

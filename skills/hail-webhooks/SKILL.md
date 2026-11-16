@@ -19,14 +19,14 @@ metadata:
 - How do I receive Hail webhooks?
 - How do I verify the `X-Hail-Signature` header?
 - How do I handle `email.received`, `email.bounced`, `sms.received`, or `call.completed` events?
-- Why does the `whsec_` secret not work with the Standard Webhooks or Svix libraries?
+- Why does the Hail secret not work with the Standard Webhooks or Svix libraries?
 - Why is my Hail webhook signature verification failing?
 
 ## Essential Code (USE THIS)
 
-Every Hail delivery carries `X-Hail-Signature: t=<unix>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the **whole signing secret string, including `whsec_`, as UTF-8**. Hail returns the secret only when you create the subscription, so save it then.
+Every Hail delivery carries `X-Hail-Signature: t=<unix>,v1=<hex>`. `v1` is the HMAC-SHA256 (hex) of `"<t>.<raw body>"`. The key is the **whole signing secret string, prefix included, as UTF-8**. Hail returns the secret only when you create the subscription, so save it then.
 
-**This is not Standard Webhooks.** The secret looks like `whsec_...`, but do not use the `standardwebhooks` or `svix` libraries, and do not strip or base64-decode the `whsec_` prefix.
+**This is not Standard Webhooks.** Hail's code generates secrets that start with `whs_`, and the docs' worked example uses `whsec_example`. Either way, do not use the `standardwebhooks` or `svix` libraries, and do not strip the prefix or base64-decode the secret.
 
 Hail's signer emits a single `v1`, and rotating the secret (`POST /webhooks/{id}/rotate-secret`) invalidates the old one immediately, so there is no overlap period to cover. The code below still accepts any matching `v1`, which costs nothing. Reject a header with no `t` or no `v1`.
 
@@ -124,13 +124,13 @@ See [references/overview.md](references/overview.md) for the payload.
 ## Environment Variables
 
 ```bash
-HAIL_WEBHOOK_SECRET=whsec_your_signing_secret   # returned once by POST /webhooks; use the whole string
+HAIL_WEBHOOK_SECRET=whs_your_signing_secret     # returned once by POST /webhooks; use the whole string
 HAIL_TIMESTAMP_TOLERANCE_SECONDS=0              # optional; a positive value opts in to the replay window
 ```
 
 ## Hookdeck Setup
 
-Paste the whole signing secret, including any `whsec_` prefix, into the Hookdeck source's webhook secret. Hail uses it as a plain HMAC key. See [references/setup.md](references/setup.md).
+Paste the whole signing secret, prefix included, into the Hookdeck source's webhook secret. Hail uses it as a plain HMAC key. See [references/setup.md](references/setup.md).
 
 ## Local Development
 

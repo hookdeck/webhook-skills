@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- An Arcadia account with API access (Plug or Spark)
+- An Arcadia account with API access (Plug)
 - A publicly reachable HTTPS endpoint (locally, use
   `npx hookdeck-cli listen 3000 arcadia --path /webhooks/arcadia`)
 

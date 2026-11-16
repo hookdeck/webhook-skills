@@ -80,7 +80,7 @@ def handle_event(payload: dict) -> None:
             f"Alert{test}: {data.get('question_name')} (#{data.get('question_id')}) "
             f"returned {rows} rows {data.get('question_url')}"
         )
-        # TODO: forward to chat/on-call, store raw_data, or decode data["visualization"] (base64 PNG)
+        # Your logic here: forward to chat or on-call, store raw_data, or decode data["visualization"] (base64 PNG)
 
     else:
         print(f"Unhandled event: {event}")
@@ -90,6 +90,10 @@ def handle_event(payload: dict) -> None:
 async def metabase_webhook(request: Request):
     # Read the raw body so any content type is accepted.
     raw_body = await request.body()
+
+    # The webhook form's "Send a test" button posts with no body. Acknowledge it.
+    if not raw_body.strip():
+        return {"received": True, "test": True}
 
     try:
         payload = json.loads(raw_body)

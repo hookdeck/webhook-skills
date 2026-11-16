@@ -25,7 +25,7 @@ The secret is the **exact, whole header value**. If you type `Bearer abc123` as 
    - **Message format**: JSON for the examples (XML and RAW are accepted too)
    - **Message header**: add `Content-Type: application/json` and your secret header, e.g.
      `Authorization: Bearer abc123` (up to 10 pairs)
-   - **Message body**: your template, e.g. `{ "event": "record_added", "record_id": <field reference> }`
+   - **Message body**: your template, e.g. `{ "action": "%action%", "record_id": "[Record ID#]" }`
 4. Save.
 
 Webhooks can be edited or copied by all admins in the app, so any credential you enter is visible
@@ -46,5 +46,5 @@ Add or edit a record in the table, or replay with curl:
 curl -X POST http://localhost:3000/webhooks/quickbase \
   -H "Content-Type: application/json" \
   -H "Authorization: $QUICKBASE_WEBHOOK_SECRET" \
-  -d '{"event":"record_added","record_id":42,"table":"Projects"}'
+  -d '{"action":"Add","record_id":42,"table":"Projects"}'
 ```

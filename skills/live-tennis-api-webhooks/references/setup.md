@@ -17,8 +17,8 @@ curl -X POST https://api.livetennisapi.com/api/public/v1/webhooks \
 ```
 
 - `url` must be HTTPS and publicly routable.
-- `events` is optional and defaults to `["score"]`. Allowed values include `score`, `break_point` (delivers `break_point` and `break_point_result`) and `point`.
-- The 201 response includes `secret`. **It is shown exactly once**: store it as `LIVE_TENNIS_API_WEBHOOK_SECRET` right away. `GET /webhooks` never returns it.
+- `events` is optional and defaults to `["score"]`. Allowed values are `score`, `break_point` (delivers `break_point` and `break_point_result`), `point` and `status`. Any other value is a 400.
+- The 201 response includes `secret`, which signs `X-LTAPI-Signature-V1` (and the deprecated `X-LTAPI-Signature`, sent until 2027-02-01). **It is shown exactly once**: store it as `LIVE_TENNIS_API_WEBHOOK_SECRET` right away. `GET /webhooks` never returns it.
 - A fourth webhook on the same key returns `409 webhook_limit`.
 
 Other endpoints: `GET /webhooks` (list, shows `enabled`, `consecutive_failures`, `last_error`) and `DELETE /webhooks/{webhookId}`.

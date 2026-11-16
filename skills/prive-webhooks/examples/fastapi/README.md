@@ -5,7 +5,7 @@ Minimal example of receiving Prive (now Recurly Commerce) webhooks with signatur
 ## Prerequisites
 
 - Python 3.9+
-- A Prive merchant account and the secret token Prive provides (ask Prive support if you don't have it)
+- A Prive merchant account and the `webhookSigningKey` Recurly Support issues (`support@recurly.com`)
 
 ## Setup
 
@@ -35,7 +35,7 @@ Endpoints:
 - `POST /webhooks/prive` - verifies the signature; topic not identified
 - `POST /webhooks/prive/{topic_slug}` - one path per topic, e.g. `/webhooks/prive/billing-attempts-failed`
 
-Prive documents no topic header or body field, so create one Prive webhook per topic and point each at its own path. The slug-to-topic map is `TOPICS` in `main.py`.
+Each payload names its topic in `topic`, and the handler dispatches on it. Each Prive webhook has one topic, so you can also point each at its own path; a body whose `topic` doesn't match the path gets a 400. The slug-to-topic map is `TOPICS` in `main.py`.
 
 ## Test
 

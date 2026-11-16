@@ -40,7 +40,7 @@ function verifyGristRequest(headers, config = process.env) {
 function handleRows(rows) {
   for (const row of rows) {
     console.log(`Grist row ${row.id} received`);
-    // TODO: upsert the row into your system, keyed on row.id
+    // Upsert the row into your system, keyed on row.id
   }
 }
 

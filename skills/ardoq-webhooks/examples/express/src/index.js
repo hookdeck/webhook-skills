@@ -12,9 +12,8 @@ const HEX_DIGEST_RE = /^[0-9a-fA-F]{64}$/;
 const UNIX_SECONDS_RE = /^[0-9]+$/;
 
 // Ardoq's own examples reject deliveries older than 5 minutes, but Hookdeck
-// retries and replays resend the ORIGINAL headers and timestamp (and Hookdeck
-// applies no tolerance itself), so a fixed window would reject legitimate
-// retries. The check is OFF by default; set ARDOQ_WEBHOOK_TOLERANCE_SECONDS to
+// retries and replays resend the ORIGINAL headers and timestamp, so a fixed
+// window would reject legitimate retries. The check is OFF by default; set ARDOQ_WEBHOOK_TOLERANCE_SECONDS to
 // opt in. Read at call time so it can be changed without a restart in tests.
 function defaultTolerance() {
   const n = Number.parseInt(process.env.ARDOQ_WEBHOOK_TOLERANCE_SECONDS || '0', 10);
@@ -93,17 +92,17 @@ function handleArdoqEvent(event) {
   switch (resourceType) {
     case 'component':
       console.log(`Component ${event['resource-id']} ${eventType}`);
-      // TODO: sync the component into your CMDB / catalog
+      // Sync the component into your CMDB or catalog here
       return label;
 
     case 'reference':
       console.log(`Reference ${event['resource-id']} ${eventType}`);
-      // TODO: update dependency links between components
+      // Update dependency links between components here
       return label;
 
     case 'tag':
       console.log(`Tag ${event.data?.name ?? event['resource-id']} ${eventType}`);
-      // TODO: re-classify the tagged components (data.components)
+      // Re-classify the tagged components (data.components) here
       return label;
 
     default:

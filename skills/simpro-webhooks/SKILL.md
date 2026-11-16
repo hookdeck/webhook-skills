@@ -25,7 +25,7 @@ metadata:
 
 ## Setup note
 
-Set the Secret on the Simpro webhook subscription to a long random value, then paste the same value here.
+Set the Secret on the Simpro webhook subscription to a long random value of your choice, and use the same value as `SIMPRO_WEBHOOK_SECRET`.
 
 ## Verification (core)
 

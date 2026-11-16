@@ -44,14 +44,15 @@ Server runs on http://localhost:3000 and accepts webhooks at `POST /webhooks/pax
 npm test
 ```
 
-The tests send illustrative payloads (Pax8's docs do not specify the body) with correct,
+The tests send illustrative payloads (field names from the WebhookPayload schema in Pax8's
+Webhooks API reference, placeholder values) with correct,
 wrong and missing `Authorization` headers. To try it by hand:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/pax8 \
   -H "Content-Type: application/json" \
   -H "Authorization: $PAX8_AUTHORIZATION" \
-  -d '{"topic":"SUBSCRIPTION","action":"CREATE","id":"00000000-0000-0000-0000-000000000000"}'
+  -d '{"webhookTopic":{"topic":"SUBSCRIPTION"},"sentAt":"2026-01-01T00:00:00Z","payloadData":{}}'
 ```
 
 ## Receive Pax8 Webhooks Locally
@@ -70,6 +71,6 @@ Use the printed URL as the webhook `url`, then call `POST /webhooks/{id}/topics/
 1. The body is read with `request.text()`, so any content type works.
 2. `Authorization` is compared with `PAX8_AUTHORIZATION`. Failure returns `401`.
 3. The body must be a JSON object (`400` otherwise).
-4. `topic` and `action` are read defensively (`SUBSCRIPTION`, `INVOICE`, `CLIENT`, `PRODUCT`,
-   `QUOTE`, `USER`); anything else is logged as unclassified.
+4. The topic is read from `webhookTopic.topic`. `SUBSCRIPTION`, `INVOICE` and `PRODUCT` get
+   their own branch; other topics are logged.
 5. It returns `200 {"received": true}` well inside Pax8's 10 second timeout.

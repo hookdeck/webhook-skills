@@ -13,7 +13,7 @@ client = TestClient(app)
 
 
 def payload(event_type):
-    # Illustrative v2 payload; field names are not confirmed against the developer docs
+    # v2.0 payload fields as listed in Procore's How Webhooks Work page; values are made up
     return {
         "id": "evt_1",
         "ulid": "01H8XYZ0000000000000000000",

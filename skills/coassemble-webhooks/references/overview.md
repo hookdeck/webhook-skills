@@ -62,7 +62,7 @@ Every delivery shares this envelope:
 
 - A delivery succeeds only on a `2xx`; the request timeout is 10 seconds.
 - Up to 6 attempts (the first delivery plus five retries) after roughly 1 minute, 5 minutes, 30 minutes, 2 hours and 6 hours, about 8.5 hours in all. Deliveries that were already pending when the schedule changed keep 4 attempts.
-- Retries and manual replays keep the same `X-Coassemble-Delivery` ID and the original payload and `testMode`. Manual replay remains available after automatic retries stop.
+- Retry attempts keep the same `X-Coassemble-Delivery` ID. Retries and manual replays keep the original payload and `testMode`. Manual replay remains available after automatic retries stop.
 - Respond with a `2xx` quickly and process asynchronously.
 
 ## Full Event Reference

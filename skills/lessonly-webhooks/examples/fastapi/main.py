@@ -44,13 +44,15 @@ async def require_lessonly_auth(request: Request) -> None:
 
 def handle_lesson_completed(payload: dict) -> None:
     """Lessonly sends one webhook, "lesson completed", with no event-type field.
-    The payload is not documented; lesson_id, user_id and completed_at are
-    ILLUSTRATIVE."""
+    Fields follow the sample payload in Lessonly's Reporting Webhook article."""
+    user = payload.get("user") or {}
+    lesson = payload.get("lesson") or {}
     print(
-        f"Lesson completed: lesson {payload.get('lesson_id')} "
-        f"by user {payload.get('user_id')} at {payload.get('completed_at')}"
+        f"Lesson completed: lesson {lesson.get('id')} "
+        f"by user {user.get('id')} at {payload.get('completed_at')}"
     )
-    # TODO: record the completion (dedupe on user + lesson, there is no event ID)
+    # Record the completion here. There is no event ID: key it on user.id,
+    # lesson.id and completed_at so a retried request isn't counted twice.
 
 
 @app.post("/webhooks/lessonly", dependencies=[Depends(require_lessonly_auth)])

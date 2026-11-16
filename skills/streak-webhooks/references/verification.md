@@ -70,7 +70,7 @@ def verify_streak_request(headers, token):
 - **Never accept when unconfigured.** An empty `STREAK_WEBHOOK_TOKEN` must reject everything.
 - **Don't return 410 by accident.** `410 Gone` deletes the webhook. Use `401` for a bad token.
 - **Failures are retried.** Any non-200 response is retried with backoff, including your `401`s.
-- **The body doesn't name the event.** Use one URL or `?event=` value per webhook.
+- **Streak's docs don't say the body names the event.** Use one URL or `?event=` value per webhook.
 
 ## Debugging 401s
 

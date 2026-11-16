@@ -20,8 +20,8 @@ app = FastAPI()
 # Hail signs every delivery with an X-Hail-Signature header:
 #   t=<unix>,v1=<hex>
 # v1 is HMAC-SHA256 (hex) of "<t>.<raw body>", keyed with the whole signing secret
-# (including whsec_) as UTF-8. This is NOT Standard Webhooks: no svix / standardwebhooks library,
-# no stripping or base64-decoding of the whsec_ prefix.
+# (prefix included) as UTF-8. This is NOT Standard Webhooks: no svix / standardwebhooks library,
+# no stripping or base64-decoding of the secret prefix.
 # https://hail.so/docs/webhooks
 
 # Optional replay window in seconds. Off by default (0): Hookdeck retries and replays carry the
@@ -83,7 +83,7 @@ def verify_hail(raw_body: bytes, signature_header, secret: str) -> bool:
             return False
 
     signed = t.encode() + b"." + raw_body
-    # whole secret incl. whsec_, used as-is
+    # whole secret incl. its prefix, used as-is
     expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest().encode()
     # Accept if any v1 matches. compare_digest on bytes (encode both sides) so a non-ASCII
     # header value gives a 400, not a 500.

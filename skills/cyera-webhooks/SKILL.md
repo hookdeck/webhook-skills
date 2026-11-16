@@ -1,11 +1,11 @@
 ---
 name: cyera-webhooks
 description: >
-  Receive and verify Cyera Privacy webhooks (the privacy-request product formerly
-  DataGrail, not Cyera's DSPM platform). Use when setting up a Cyera Privacy webhook
-  integration, debugging X-Webhook-Signature / X-Webhook-Timestamp verification, or
-  handling data-subject privacy requests (request_type access, deletion, opt_out) plus
-  health_check and readiness_check deliveries.
+  Receive and verify Cyera Privacy webhooks (the privacy-request product, not Cyera's
+  DSPM platform). Use when setting up a Cyera Privacy webhook integration, debugging
+  X-Webhook-Signature / X-Webhook-Timestamp verification, or handling data-subject
+  privacy requests (request_type access, deletion, opt_out) plus health_check,
+  readiness_check and identifiers deliveries.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,9 +15,9 @@ metadata:
 
 # Cyera Webhooks
 
-Cyera Privacy (privacy.cyera.io, the privacy-request product formerly DataGrail) automates
-data-subject privacy requests across integrated systems. Its webhook integration POSTs
-privacy-request notifications (access, deletion, opt-out), health checks and readiness checks
+Cyera Privacy (privacy.cyera.io, the privacy-request product) automates data-subject privacy
+requests across integrated systems. Its webhook integration POSTs privacy-request notifications
+(access, deletion, opt-out), identifier retrieval requests, health checks and readiness checks
 to your endpoint.
 
 > **Not Cyera's DSPM platform.** This skill covers the Cyera Privacy webhook integration
@@ -81,12 +81,14 @@ Dispatch on the body's `request_type`:
 | `request_type` | Meaning | Respond with |
 |----------------|---------|--------------|
 | `health_check` | Liveness ping | `200` |
-| `access` | Data-subject access request | `201 Created` |
-| `deletion` | Data-subject deletion request | `201 Created` |
-| `opt_out` | Opt-out request (`topic: opt_out:create`) | `201 Created` |
+| `access` | Data-subject access request | `201 Created` (`200` for a `privacy_request:reminder`) |
+| `deletion` | Data-subject deletion request | `201 Created` (`200` for a `privacy_request:reminder`) |
+| `opt_out` | Opt-out request (`topic: opt_out:create`) | `201 Created` (`200` for an `opt_out:reminder`) |
 | `readiness_check` | Asks the readiness question configured on the integration; answer it with a callback | `200` (the docs give no code for readiness checks) |
+| `identifiers` | Identifier retrieval, when that capability is enabled; answer with a callback carrying `results_token` | `200` (the docs name `200` for reminders and give no code for `identifiers:create`) |
 
-Access, deletion and opt-out bodies carry `topic` (e.g. `privacy_request:create`),
+Access, deletion and opt-out bodies carry `topic` (`privacy_request:create` or
+`privacy_request:reminder`, `opt_out:create` or `opt_out:reminder`),
 `identifiers`, `webhook_callback_url` and request ids (`privacy_request_id` or
 `opt_out_request_id`, plus `webhook_request_id`). Use `4xx`/`5xx` only when the request was not
 created. Completion is reported **later** by a PUT to `webhook_callback_url` with an API key

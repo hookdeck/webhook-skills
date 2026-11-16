@@ -21,7 +21,7 @@ JAMF_PRO_WEBHOOK_HEADER=Authorization
 JAMF_PRO_WEBHOOK_SECRET=Bearer 6f1c...long-random...a9d2
 ```
 
-> Choose Header Authentication on the Jamf Pro webhook and enter the same header name and value here.
+> Choose Header Authentication on the Jamf Pro webhook and enter the same header name (the JSON key) and value (the JSON value) here.
 
 ## Register Your Endpoint
 

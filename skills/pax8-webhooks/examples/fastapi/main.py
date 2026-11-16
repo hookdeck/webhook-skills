@@ -35,13 +35,15 @@ def verify_pax8_request(headers, config=os.environ) -> bool:
 
 
 def classify(payload: dict) -> dict:
-    """The body is not documented (samplePayload is elided), so read topic and action
-    defensively. Both are returned upper-case, or None when absent."""
-
-    def norm(value):
-        return value.upper() if isinstance(value, str) and value else None
-
-    return {"topic": norm(payload.get("topic")), "action": norm(payload.get("action"))}
+    """Pax8's Webhooks API reference types a delivery as WebhookPayload: accountId, url,
+    webhookId, sentAt, webhookTopic ({id, topic, filters}) and payloadData. The topic
+    name is webhookTopic.topic. payloadData varies by topic and isn't documented, so
+    treat the notification as a prompt to fetch current state from the Pax8 API."""
+    wt = payload.get("webhookTopic")
+    raw_topic = wt.get("topic") if isinstance(wt, dict) else None
+    topic = raw_topic.upper() if isinstance(raw_topic, str) and raw_topic else None
+    sent_at = payload.get("sentAt") if isinstance(payload.get("sentAt"), str) else None
+    return {"topic": topic, "sentAt": sent_at}
 
 
 async def require_pax8_auth(request: Request) -> None:
@@ -51,37 +53,25 @@ async def require_pax8_auth(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    topic = classify(payload)["topic"]
-    action = classify(payload)["action"]
+    event = classify(payload)
+    topic, sent_at = event["topic"], event["sentAt"]
 
-    # SUBSCRIPTION and PRODUCT are the topic values the docs show; INVOICE, CLIENT, QUOTE
-    # and USER are assumed from the docs' event category names. Check topic-definitions.
+    # SUBSCRIPTION, INVOICE and PRODUCT are topic values printed in Pax8's docs. Read the
+    # client, quote and user topic strings from GET /webhooks/topic-definitions.
     if topic == "SUBSCRIPTION":
-        print(f"Pax8 subscription {action}")
-        # TODO: sync the subscription (the docs show the CREATE action) to your system
+        print(f"Pax8 subscription notification sent at {sent_at}")
+        # Fetch the subscription from the Pax8 API and update your system.
 
     elif topic == "INVOICE":
-        print(f"Pax8 invoice {action}")
-        # TODO: import the invoice into billing
-
-    elif topic == "CLIENT":
-        print(f"Pax8 client {action}")
-        # TODO: update your customer record
+        print(f"Pax8 invoice notification sent at {sent_at}")
+        # Fetch the invoice from the Pax8 API and import it into billing.
 
     elif topic == "PRODUCT":
-        print(f"Pax8 product {action}")
-        # TODO: refresh your catalog cache
-
-    elif topic == "QUOTE":
-        print(f"Pax8 quote {action}")
-        # TODO: sync the quote
-
-    elif topic == "USER":
-        print(f"Pax8 user {action}")
-        # TODO: sync the user
+        print(f"Pax8 product notification sent at {sent_at}")
+        # Refresh the product in your catalog cache.
 
     else:
-        print("Unclassified Pax8 payload (no recognized topic)")
+        print(f"Pax8 notification for topic {topic or '(none)'}")
 
 
 @app.post("/webhooks/pax8", dependencies=[Depends(require_pax8_auth)])

@@ -3,7 +3,6 @@
 import hmac
 import json
 import os
-import re
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -35,72 +34,14 @@ async def require_timify_header(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing TIMIFY webhook header")
 
 
-def normalize(value) -> str:
-    """Normalize "Customer Fields" / "customer_fields" / "customerFields" to "customerfields"."""
-    return re.sub(r"[^a-z0-9]", "", str(value if value is not None else "").lower())
-
-
 def handle_event(payload: dict) -> None:
-    """TIMIFY's overview page does not document the payload fields, so this dispatch is
-    defensive: it looks for the webhook name and type under a few likely keys and
-    acknowledges anything it doesn't recognise. Adjust to the payloads you actually receive.
+    """TIMIFY's webhook overview names each webhook (Customers, Event, Resource, ...) and its
+    type (Created, Updated, Deleted), but documents no payload fields, so this handler doesn't
+    guess which field carries them. Give each webhook scope its own subscription and Server URL,
+    as TIMIFY suggests, or capture one delivery and branch on the field it actually uses.
     """
-    raw_name = payload.get("webhook") or payload.get("name") or payload.get("resource")
-    raw_type = payload.get("type") or payload.get("action")
-    name = normalize(raw_name)
-    event_type = normalize(raw_type)
-    label = f"{raw_name} {raw_type}"
-
-    if name == "customers":
-        print(f"Customers {event_type}: {label}")
-        # TODO: sync the customer record (payload["data"])
-
-    elif name == "event":
-        print(f"Event {event_type}: {label}")
-        # TODO: create, update or cancel the booking in your system
-
-    elif name == "events":
-        print(f"Events {event_type}: {label}")
-        # TODO: remove the deleted bookings
-
-    elif name == "services":
-        print(f"Services {event_type}: {label}")
-        # TODO: sync the service catalogue
-
-    elif name == "resource":
-        print(f"Resource {event_type}: {label}")
-        # TODO: sync staff, rooms or equipment
-
-    elif name == "company":
-        print(f"Company {event_type}: {label}")
-        # TODO: sync company details
-
-    elif name == "manager":
-        print(f"Manager {event_type}: {label}")
-        # TODO: sync manager accounts
-
-    elif name == "enterprise":
-        print(f"Enterprise {event_type}: {label}")
-        # TODO: sync enterprise settings
-
-    elif name == "customerfields":
-        print(f"Customer Fields {event_type}: {label}")
-        # TODO: sync custom customer field definitions
-
-    elif name == "shift":
-        print(f"Shift {event_type}: {label}")
-        # TODO: sync working hours
-
-    elif name == "notification":
-        print(f"Notification {event_type}: {label}")
-        # TODO: forward the notification
-
-    elif name == "servicegroups":
-        print(f"Service Groups {event_type}: {label}")
-        # TODO: sync service groups
-
-    else:
-        print(f"Unhandled TIMIFY event: {label}")
+    print(f"TIMIFY webhook received with fields: {', '.join(payload.keys())}")
+    # Process the delivery here
 
 
 @app.post("/webhooks/timify", dependencies=[Depends(require_timify_header)])

@@ -80,18 +80,18 @@ function handleEvent(payload) {
   switch (event) {
     case 'New Ticket Logged':
       console.log(`New ticket logged: ${objectId}`);
-      // TODO: create the ticket in your system
+      // Create the ticket in your system
       break;
 
     case 'Ticket Reassigned':
       console.log(`Ticket reassigned: ${objectId}`);
-      // TODO: notify the new assignee
+      // Notify the new assignee
       break;
 
     case 'Document deleted on a Ticket':
     case 'Document edited on a Ticket':
       console.log(`${event}: ${objectId}`);
-      // TODO: refresh the ticket's attachments
+      // Refresh the ticket's attachments
       break;
 
     default:

@@ -44,14 +44,13 @@ Server runs on http://localhost:3000 and accepts webhooks at `POST /webhooks/les
 npm test
 ```
 
-The tests send an **illustrative** lesson-completed body (Lessonly doesn't document the
-payload) with correct, wrong and missing `Authorization` headers. To try it by hand:
+The tests send a lesson-completed body trimmed from Lessonly's sample payload with correct, wrong and missing `Authorization` headers. To try it by hand:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/lessonly \
   -H "Content-Type: application/json" \
   -H "Authorization: $LESSONLY_AUTHORIZATION" \
-  -d '{"lesson_id":1234,"user_id":5678,"completed_at":"2026-10-25T12:00:00Z"}'
+  -d '{"user":{"id":"1234567890"},"lesson":{"id":"1234567","title":"A Sample Lesson"},"completed_at":"2022-12-02T15:13:26Z"}'
 ```
 
 ## Receive Lessonly Webhooks Locally

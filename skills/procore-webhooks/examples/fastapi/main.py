@@ -43,24 +43,26 @@ async def require_procore_auth(request: Request) -> None:
 
 
 def handle_event(payload: dict) -> None:
-    event_type = payload.get("event_type")
-    resource = payload.get("resource_name")
+    # Payload formats v2.0 and v3.0 use event_type and resource_name; v4.0 renames them
+    # to reason and resource_type.
+    event_type = payload.get("event_type") or payload.get("reason")
+    resource = payload.get("resource_name") or payload.get("resource_type")
     resource_id = payload.get("resource_id")
 
     if event_type == "create":
         print(f"{resource} {resource_id} created")
-        # TODO: fetch the new record via the Procore REST API and sync it
+        # Fetch the new record via the Procore REST API and sync it
 
     elif event_type == "update":
         print(f"{resource} {resource_id} updated")
-        # TODO: refresh your copy of the record
+        # Refresh your copy of the record
 
     elif event_type == "delete":
         print(f"{resource} {resource_id} deleted")
-        # TODO: remove or archive your copy of the record
+        # Remove or archive your copy of the record
 
     else:
-        print(f"Unhandled Procore event_type: {event_type}")
+        print(f"Unhandled Procore event: {event_type}")
 
 
 @app.post("/webhooks/procore", dependencies=[Depends(require_procore_auth)])

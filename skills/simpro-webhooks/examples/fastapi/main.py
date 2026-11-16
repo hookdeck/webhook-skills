@@ -41,23 +41,23 @@ def handle_simpro_event(event: dict) -> None:
 
     if event_id == "job.created":
         print(f"Job created: {description}", reference)
-        # TODO: Fetch the job via the Simpro API and sync it
+        # Fetch the job via the Simpro API and sync it
 
     elif event_id == "company.customer.updated":
         print(f"Customer updated: {description}", reference)
-        # TODO: Fetch the customer and update your CRM
+        # Fetch the customer and update your CRM
 
     elif event_id == "invoice.created":
         print(f"Invoice created: {description}", reference)
-        # TODO: Push to accounting
+        # Push to accounting
 
     elif event_id == "quote.updated":
         print(f"Quote updated: {description}", reference)
-        # TODO: Track quote status
+        # Track quote status
 
     elif event_id == "employee.deleted":
         print(f"Employee deleted: {description}", reference)
-        # TODO: Revoke access in connected systems
+        # Revoke access in connected systems
 
     elif event_id == "test.updated":
         print("Simpro test subscription received")

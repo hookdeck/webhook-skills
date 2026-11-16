@@ -78,7 +78,7 @@ async def glean_webhook(request: Request):
 
     if event_type == "CONTENT_SCHEDULE":
         print(f"Scheduled event: {event.get('title')} at {event.get('event_time')} {event.get('view_url')}")
-        # TODO: kick off meeting prep
+        # Start meeting prep here.
     else:
         print(f"Unhandled event type: {event_type} {event.get('reason')}")
 

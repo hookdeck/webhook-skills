@@ -14,13 +14,13 @@ function handleEnrichment(payload: EnrichmentPayload) {
   switch (payload.status) {
     case 'FINISHED':
       console.log(`Enrichment ${payload.id} finished (${payload.cost?.credits ?? 0} credits)`);
-      // TODO: Store payload.data[].contact_info, match rows via data[].custom
+      // Store payload.data[].contact_info, match rows via data[].custom
       break;
 
     case 'IN_PROGRESS':
       // Sent per contact by webhook_events.contact_finished
       console.log(`Contact finished in enrichment ${payload.id}`);
-      // TODO: Process payload.data[0] as it completes
+      // Process payload.data[0] as it completes
       break;
 
     case 'CANCELED':
@@ -29,7 +29,7 @@ function handleEnrichment(payload: EnrichmentPayload) {
 
     case 'CREDITS_INSUFFICIENT':
       console.log(`Enrichment ${payload.id} stopped: insufficient credits`);
-      // TODO: Alert and top up credits
+      // Alert and top up credits
       break;
 
     default:

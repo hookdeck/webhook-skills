@@ -5,23 +5,23 @@ import { verifyStreakRequest } from '../../../lib/verify-streak';
 
 type StreakObject = Record<string, unknown>;
 
-// Streak does not put the event name in the body, so register one URL per webhook:
+// Streak's docs don't say whether the body names the event, so register one URL per webhook:
 // POST /webhooks/streak?event=BOX_CREATE
 function handleEvent(event: string | null, objects: StreakObject[]): void {
   switch (event) {
     case 'BOX_CREATE':
       console.log(`Box created (${objects.length})`);
-      // TODO: sync the new box (name, pipelineKey, stageKey)
+      // Sync the new box (name, pipelineKey, stageKey)
       break;
 
     case 'BOX_EDIT':
       console.log(`Box edited (${objects.length})`);
-      // TODO: refresh custom fields, notes, assignees or name
+      // Refresh custom fields, notes, assignees or name
       break;
 
     case 'BOX_CHANGE_STAGE':
       console.log(`Box changed stage (${objects.length})`);
-      // TODO: react to the new stageKey
+      // React to the new stageKey
       break;
 
     case 'BOX_CHANGE_PIPELINE':
@@ -30,7 +30,7 @@ function handleEvent(event: string | null, objects: StreakObject[]): void {
 
     case 'BOX_DELETE':
       console.log(`Box deleted (${objects.length})`);
-      // TODO: remove the box from your system
+      // Remove the box from your system
       break;
 
     case 'BOX_NEW_EMAIL_ADDRESS':
@@ -43,13 +43,13 @@ function handleEvent(event: string | null, objects: StreakObject[]): void {
 
     case 'COMMENT_CREATE':
       console.log(`Comment created (${objects.length})`);
-      // TODO: mirror the comment
+      // Mirror the comment
       break;
 
     case 'MEETING_CREATE':
     case 'MEETING_UPDATE':
       console.log(`${event} (${objects.length})`);
-      // TODO: sync the meeting note or call log
+      // Sync the meeting note or call log
       break;
 
     case 'TASK_CREATE':
@@ -57,7 +57,7 @@ function handleEvent(event: string | null, objects: StreakObject[]): void {
     case 'TASK_DUE':
     case 'TASK_UPDATED':
       console.log(`${event} (${objects.length})`);
-      // TODO: sync the task
+      // Sync the task
       break;
 
     case 'CONTACT_CREATE':
@@ -67,7 +67,7 @@ function handleEvent(event: string | null, objects: StreakObject[]): void {
     case 'ORG_UPDATE':
     case 'ORG_DELETE':
       console.log(`${event} (${objects.length})`);
-      // TODO: sync the contact or organization
+      // Sync the contact or organization
       break;
 
     default:

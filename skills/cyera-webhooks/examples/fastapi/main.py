@@ -113,18 +113,27 @@ async def cyera_webhook(raw_body: bytes = Depends(verified_body)):
         return {"received": True}
 
     if request_type in ("access", "deletion", "opt_out"):
-        # Queue the data-subject request, then answer 201 Created. Completion is
+        # Queue the data-subject request. Cyera wants 201 Created for a new request
+        # and 200 OK for a reminder (topic ending ":reminder"). Completion is
         # reported LATER by a PUT to payload["webhook_callback_url"] (API key auth).
+        topic = payload.get("topic")
+        is_reminder = isinstance(topic, str) and topic.endswith(":reminder")
         print(
             f"Cyera {request_type} request",
             payload.get("privacy_request_id") or payload.get("opt_out_request_id"),
-            payload.get("topic"),
+            topic,
         )
-        return JSONResponse({"received": True}, status_code=201)
+        return JSONResponse({"received": True}, status_code=200 if is_reminder else 201)
 
     if request_type == "readiness_check":
         # Cyera asks whether this system is ready to process the request.
         print("Cyera readiness check", payload.get("privacy_request_id"))
+        return {"received": True}
+
+    if request_type == "identifiers":
+        # Identifier retrieval: look the data subject up, then PUT the identifiers
+        # with payload["results_token"] to payload["webhook_callback_url"].
+        print("Cyera identifiers request", payload.get("privacy_request_id"), payload.get("topic"))
         return {"received": True}
 
     print(f"Unhandled Cyera request_type: {request_type}")

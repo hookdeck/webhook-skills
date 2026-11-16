@@ -6,7 +6,7 @@ const express = require('express');
 
 const app = express();
 
-// Connecteam's docs don't name the method (the Chat guide says POST), so accept all of these.
+// Only Connecteam's Chat guide names the method (POST), so accept all of these.
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
 /**
@@ -44,7 +44,7 @@ function handleEvent(payload) {
     case 'user_promoted':
     case 'user_demoted':
       console.log(`User event ${eventType}:`, JSON.stringify(payload.data));
-      // TODO: sync payload.data[] (userId, email, isArchived) to your directory
+      // Next: sync payload.data[] (userId, email, isArchived) to your directory
       break;
 
     // Forms
@@ -52,7 +52,7 @@ function handleEvent(payload) {
     case 'form_submission_edited':
     case 'manager_field_updated':
       console.log(`Form event ${eventType}: submission ${payload.data?.formSubmissionId}`);
-      // TODO: process payload.data.answers
+      // Next: process payload.data.answers
       break;
 
     // Time clock (flat payload: userId, timeClockId at the root)
@@ -67,7 +67,7 @@ function handleEvent(payload) {
     case 'user_timesheet_approved':
     case 'user_timesheet_reopened':
       console.log(`Time activity event ${eventType}: user ${payload.userId}, clock ${payload.timeClockId}`);
-      // TODO: update payroll or attendance records
+      // Next: update payroll or attendance records
       break;
 
     // Shift scheduler
@@ -77,14 +77,14 @@ function handleEvent(payload) {
     case 'availability_status_created':
     case 'availability_status_deleted':
       console.log(`Scheduler event ${eventType}: scheduler ${payload.schedulerId}`);
-      // TODO: sync payload.data to your calendar
+      // Next: sync payload.data to your calendar
       break;
 
     // Tasks
     case 'task_published':
     case 'task_completed':
       console.log(`Task event ${eventType}`);
-      // TODO: update your task tracker from payload.data
+      // Next: update your task tracker from payload.data
       break;
 
     // Chat
@@ -95,7 +95,7 @@ function handleEvent(payload) {
     case 'conversation_updated':
     case 'conversation_deleted':
       console.log(`Chat event ${eventType}`);
-      // TODO: mirror payload.data
+      // Next: mirror payload.data
       break;
 
     default:

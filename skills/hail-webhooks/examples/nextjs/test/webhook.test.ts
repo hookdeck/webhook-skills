@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
-// Hail signing secrets look like whsec_..., but the whole string is the HMAC key (not Standard Webhooks)
+// Hail's docs example secret looks like whsec_..., but the whole string is the HMAC key (not Standard Webhooks)
 const SECRET = 'whsec_test_hail_secret_8f3a1c';
 
 let POST: (request: NextRequest) => Promise<Response>;

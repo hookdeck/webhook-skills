@@ -44,7 +44,7 @@ def handle_rows(rows: list) -> None:
     # Rows arrive batched and Grist retries until success, so keep this idempotent.
     for row in rows:
         print(f"Grist row {row.get('id')} received")
-        # TODO: upsert the row into your system, keyed on row["id"]
+        # Upsert the row into your system, keyed on row["id"]
 
 
 @app.post("/webhooks/grist", dependencies=[Depends(require_grist_auth)])

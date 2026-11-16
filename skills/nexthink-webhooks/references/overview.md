@@ -23,7 +23,8 @@ You configure three fields on the webhook:
 | **Payload** | JSON only; may contain `{{variable_name}}` placeholders |
 
 Placeholders come from the NQL data model and must match the webhook's NQL conditions, for
-example `{{alert.monitor.name}}`. Adding `.as(format = text)` renders values readably.
+example `{{alert.monitor.name}}`. Every NQL field you use as a placeholder must also be in the NQL
+condition's `list` clause. Adding `.as(format = text)` renders values readably.
 Placeholders that cannot be filled are left as the literal `{{variable_name}}`. **Send Test**
 does not substitute them either (all variables are plain strings).
 
@@ -44,7 +45,7 @@ field you choose:
 | Illustrative `event` | Meaning in the example |
 |----------------------|------------------------|
 | `alert triggered` | An alert condition matched; the handler logs the monitor name |
-| `alert recovered` | A second webhook you define for recovery; the handler logs it |
+| `high priority alert` | A second webhook whose NQL condition matches only high-priority monitors (`where monitor.priority == high`); the handler logs it |
 
 Any other body (or an empty one) is accepted and logged as unrecognised.
 

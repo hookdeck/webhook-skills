@@ -8,7 +8,8 @@ ServiceNow, Freshdesk, Slack or Microsoft Teams. This skill covers **Global Webh
 across all monitors. Enabling Global Webhooks automatically disables webhooks set on individual
 monitors.
 
-Requests are `POST`. They are **not signed**. To authenticate them, add a custom header with a
+Datto's docs don't name the method; a Microsoft Teams test error they quote mentions a `POST`
+request, so the examples handle `POST`. Requests are **not signed**. To authenticate them, add a custom header with a
 secret value to the Global Webhook and check it on your endpoint. Per-monitor webhooks have no
 header field, so they can't carry a secret.
 

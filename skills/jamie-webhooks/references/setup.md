@@ -14,18 +14,18 @@ Jamie offers API Key (its recommended default) and Signature Verification. Hookd
 
 ## Create the Webhook and Get Your Signing Secret
 
-1. In Jamie, go to **Settings → Integrations → Webhooks** and click **Create Webhook**.
-2. Enter the **URL** (your Hookdeck source URL or your endpoint), an optional description, and select the `meeting.completed` event.
-3. Choose the scope: personal or workspace.
-4. Under authentication choose **Signature Verification (Advanced)**.
-5. Click **Create** and copy the secret. **It is shown only once.** If you lose it, regenerate it from the webhook settings.
-6. Store it as `JAMIE_WEBHOOK_SECRET`. Use it exactly as shown; don't decode it.
+1. In Jamie, go to **Settings → Webhooks** and click **New webhook**. Team and Enterprise admins pick the **Personal** or **Team** (workspace) tab first.
+2. Enter the **Endpoint URL** (your Hookdeck source URL or your endpoint) and an optional description. The event is fixed to `meeting.completed`.
+3. Under authentication choose **Signature (Advanced)**.
+4. Click **Create webhook** and copy the signing secret. **It is shown only once.** If you lose it, use **Rotate signing secret** in the webhook's actions menu (**⋯**). Rotation invalidates the old secret immediately.
+5. Store it as `JAMIE_WEBHOOK_SECRET`. Use it exactly as shown; don't decode it.
+6. The event and authentication method can't be changed later; create a new webhook to switch.
 
 In Hookdeck, create a source of type **Jamie** and paste the same signing secret.
 
 ## Send a Test Event
 
-On the webhooks page, click **Test** next to the webhook. Jamie sends a realistic mock `meeting.completed` payload through the same signing and retry path. The webhook must be enabled.
+Open the webhook's actions menu (**⋯**) and click **Send test event**. Jamie sends a realistic mock `meeting.completed` payload through the same signing and retry path. The webhook must be enabled.
 
 ## Timestamp Window
 

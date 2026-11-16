@@ -57,12 +57,13 @@ function verifyRollerRequest(headers, apiKey = process.env.ROLLER_WEBHOOK_API_KE
 
 - Header: `x-roller-apikey: <apiKey>` (compare the **whole** value; name is case-insensitive).
 - Return `401` on a missing header or mismatch, `400` for a body that isn't a JSON object, `200` once handled. Acknowledge within 10 seconds.
+- Answer ROLLER with exactly `200` on success. It retries only `500`, `503` and `504`, and any other status can trigger a review and deactivation of the webhook.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 - Python: `hmac.compare_digest` on **bytes** (encode both sides; `str` raises on non-ASCII).
 
 **A static shared credential authenticates the sender, not the body.** There is no signature and
 no timestamp, so there is no replay protection. Use HTTPS only, and rotate the apiKey
-(re-register the webhook with a new value) if it leaks.
+(update the webhook with a new value) if it leaks.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

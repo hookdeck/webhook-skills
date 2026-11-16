@@ -77,7 +77,7 @@ app.post('/webhooks/pylon',
       (retryNumber ? ` [retry ${retryNumber}]` : '')
     );
 
-    // TODO: Pylon sends no event ID, so de-duplicate on fields from your
+    // Pylon sends no event ID, so de-duplicate on fields from your
     // template (for example issue_id plus the field that changed).
 
     res.status(200).send('OK');

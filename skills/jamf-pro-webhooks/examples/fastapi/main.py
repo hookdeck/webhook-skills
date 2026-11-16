@@ -72,7 +72,7 @@ def handle_event(payload: dict) -> None:
         print(f"Unhandled event: {webhook_event}")
         return
 
-    # TODO: act on `event` (its shape depends on webhookEvent), e.g.
+    # Act on `event` (its shape depends on webhookEvent), e.g.
     # ComputerAdded -> event["udid"] / event["serialNumber"] / event["jssID"]
     # MobileDeviceEnrolled -> event["udid"] / event["serialNumber"]
     print(f'{label} ({webhook_event}, webhook "{webhook.get("name")}")', list(event))

@@ -117,6 +117,18 @@ class TestTopicEndpoints:
         r = client.post("/webhooks/prive/nope", content=b"{}", headers={HEADER: sign(b"{}")})
         assert r.status_code == 404
 
+    def test_body_topic_mismatch(self):
+        payload = b'{"topic":"orders/created","idempotencyKey":"k1","data":{}}'
+        r = client.post(
+            "/webhooks/prive/billing-attempts-failed", content=payload, headers={HEADER: sign(payload)}
+        )
+        assert r.status_code == 400
+
+    def test_body_topic_on_generic_path(self):
+        payload = b'{"topic":"billingAttempts/failed","idempotencyKey":"k2","data":{"id":"ba_1"}}'
+        r = client.post("/webhooks/prive", content=payload, headers={HEADER: sign(payload)})
+        assert r.status_code == 200
+
     def test_bad_signature_on_topic_path(self):
         r = client.post(
             "/webhooks/prive/billing-attempts-failed", content=b"{}", headers={HEADER: "bad"}

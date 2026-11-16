@@ -36,4 +36,4 @@ Make a small change in your components, such as adding and removing a tag. The r
 
 ## Hookdeck
 
-In Hookdeck, create a source of type **Ardoq** and paste the signing secret there. Hookdeck verifies `X-Ardoq-Signature-256` over `{X-Ardoq-Timestamp}.{body}` and forwards the request to your handler.
+In Hookdeck, create a source of type **Ardoq** and paste the signing secret there. Hookdeck verifies the signature and forwards the request to your handler.

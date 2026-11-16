@@ -133,6 +133,11 @@ describe('Metabase webhook endpoint', () => {
     it('returns 401, not 400, for invalid JSON without credentials', async () => {
       expect((await post('{not json')).status).toBe(401);
     });
+
+    it('returns 200 for the empty Send a test request', async () => {
+      expect((await post('').set('Authorization', GOOD)).status).toBe(200);
+      expect((await post('')).status).toBe(401);
+    });
   });
 
   describe('Event handling', () => {

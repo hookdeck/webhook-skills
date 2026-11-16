@@ -59,7 +59,7 @@ Delivery attempts, status codes and errors appear in `GET /webhooks/{webhookId}/
 curl -X POST http://localhost:3000/webhooks/pax8 \
   -H "Content-Type: application/json" \
   -H "Authorization: $PAX8_AUTHORIZATION" \
-  -d '{"topic":"SUBSCRIPTION","action":"CREATE","id":"00000000-0000-0000-0000-000000000000"}'
+  -d '{"webhookTopic":{"topic":"SUBSCRIPTION"},"sentAt":"2026-01-01T00:00:00Z","payloadData":{}}'
 ```
 
-(The body above is illustrative.)
+(The body above is illustrative: field names from the WebhookPayload schema, placeholder values.)

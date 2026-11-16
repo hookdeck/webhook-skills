@@ -80,7 +80,7 @@ several events; loop over `data[]` and dispatch on `eventType`:
 |-------------|------------|
 | `fs:add_file` | A file or file version is added |
 | `fs:delete_file` | A file is deleted |
-| `fs:move_file` | A file is moved or renamed |
+| `fs:move_file` | A file is moved |
 | `fs:add_folder` | A folder is created |
 | `link:create` | A link is created |
 | `comment:set_comment` | A comment is set on a file |
