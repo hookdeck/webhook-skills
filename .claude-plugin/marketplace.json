@@ -733,7 +733,7 @@
     },
     {
       "name": "arcadia-webhooks",
-      "description": "Receive and authenticate Arcadia webhooks (utility data platform, Plug and Spark APIs). Use when setting up an Arcadia webhook endpoint, checking the custom authentication header Arcadia support configures, debugging 401s, or handling STATUS_CHANGE, NEW_DATA_AVAILABLE, EXISTING_DATA_UPDATED, DATA_DELETED and credential validation events.",
+      "description": "Receive and authenticate Arcadia webhooks (utility data platform, Plug API). Use when setting up an Arcadia webhook endpoint, checking the custom authentication header Arcadia support configures, debugging 401s, or handling STATUS_CHANGE, NEW_DATA_AVAILABLE, EXISTING_DATA_UPDATED, DATA_DELETED and credential validation events.",
       "source": "./skills/arcadia-webhooks",
       "strict": false,
       "skills": [
@@ -3685,7 +3685,7 @@
     },
     {
       "name": "cyera-webhooks",
-      "description": "Receive and verify Cyera Privacy webhooks (the privacy-request product formerly DataGrail, not Cyera's DSPM platform). Use when setting up a Cyera Privacy webhook integration, debugging X-Webhook-Signature / X-Webhook-Timestamp verification, or handling data-subject privacy requests (request_type access, deletion, opt_out) plus health_check and readiness_check deliveries.",
+      "description": "Receive and verify Cyera Privacy webhooks (the privacy-request product, not Cyera's DSPM platform). Use when setting up a Cyera Privacy webhook integration, debugging X-Webhook-Signature / X-Webhook-Timestamp verification, or handling data-subject privacy requests (request_type access, deletion, opt_out) plus health_check, readiness_check and identifiers deliveries.",
       "source": "./skills/cyera-webhooks",
       "strict": false,
       "skills": [
@@ -6107,7 +6107,7 @@
     },
     {
       "name": "grist-webhooks",
-      "description": "Receive and authenticate Grist document webhooks. Use when setting up a Grist webhook endpoint (Document settings > Webhooks), checking the static Authorization header, debugging 401s, or handling the JSON array of added or updated rows Grist sends for the add and update event types.",
+      "description": "Receive and authenticate Grist document webhooks. Use when setting up a Grist webhook endpoint (Document Settings > API > Manage Webhooks), checking the static Authorization header, debugging 401s, or handling the JSON array of added or updated rows Grist sends for the add and update event types.",
       "source": "./skills/grist-webhooks",
       "strict": false,
       "skills": [
@@ -7860,7 +7860,7 @@
     },
     {
       "name": "live-tennis-api-webhooks",
-      "description": "Receive and verify Live Tennis API webhooks. Use when setting up Live Tennis API webhook handlers, debugging X-LTAPI-Signature HMAC-SHA256 verification, registering a webhook with POST /webhooks, or handling live tennis frames like score, point, break_point, and break_point_result.",
+      "description": "Receive and verify Live Tennis API webhooks. Use when setting up Live Tennis API webhook handlers, debugging X-LTAPI-Signature-V1 HMAC-SHA256 verification, moving off the deprecated X-LTAPI-Signature header, registering a webhook with POST /webhooks, or handling live tennis frames like score, score_withdrawn, point, break_point, break_point_result and status.",
       "source": "./skills/live-tennis-api-webhooks",
       "strict": false,
       "skills": [
