@@ -31,7 +31,7 @@ def verify_reditus_signature(raw_body: bytes, signature, secret=None) -> bool:
         return False
 
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
-    received = bytes.fromhex(signature)  # case-insensitive, as Hookdeck does
+    received = bytes.fromhex(signature)  # case-insensitive
     return hmac.compare_digest(received, expected)  # bytes, never str
 
 

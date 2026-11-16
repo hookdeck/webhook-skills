@@ -37,7 +37,7 @@ def resolve_signature_headers(headers: Mapping[str, str]) -> Optional[Dict[str, 
     """Read the three signature headers.
 
     epilot sends webhook-*; when webhook-id is absent, fall back to the svix-*
-    names (as Hookdeck does). The result uses the webhook-* names the
+    names. The result uses the webhook-* names the
     standardwebhooks library expects. Returns None when any header is missing.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"

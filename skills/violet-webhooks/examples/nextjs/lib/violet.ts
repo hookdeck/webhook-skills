@@ -20,7 +20,7 @@ export function verifyVioletSignature(
   if (typeof signatureHeader !== 'string' || !SIGNATURE_FORMAT.test(signatureHeader)) return false;
   const expected = Buffer.from(crypto.createHmac('sha256', secret).update(rawBody).digest('base64'));
   const received = Buffer.from(signatureHeader);
-  // Compare the base64 strings exactly (as Hookdeck does): a value whose last character carries
+  // Compare the base64 strings exactly: a value whose last character carries
   // stray low bits decodes to the same digest but is not the string Violet sends
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }

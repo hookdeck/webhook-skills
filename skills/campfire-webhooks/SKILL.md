@@ -56,7 +56,7 @@ function verifyCampfireSignature(rawBody, headers, secret) {
 - **The timestamp is signed exactly as received.** Do not trim or reformat the header value.
 - **The secret is used as-is.** It is the `token` returned when the webhook is created (or **Show** on the webhook card). Do not hex- or base64-decode it. It is not your API key, and Campfire generates it: to rotate, delete the webhook and create a new one.
 - **Compare safely.** Require exactly 64 hex characters (`Buffer.from(x, 'hex')` silently drops bad characters), lowercase, then `crypto.timingSafeEqual` on equal-length buffers (Python: `hmac.compare_digest` on bytes).
-- **Timestamp window is opt-in.** Campfire recommends a 5-minute tolerance and re-signs each retry, but Hookdeck retries and replays resend the **original** headers and Hookdeck applies no tolerance, so the examples do **not** reject old timestamps by default. Set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off) to enable it. The timestamp is Unix **seconds**.
+- **Timestamp window is opt-in.** Campfire recommends a 5-minute tolerance and re-signs each retry, but Hookdeck retries and replays resend the **original** headers, so the examples do **not** reject old timestamps by default. Set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off) to enable it. The timestamp is Unix **seconds**.
 - **Dispatch on `topic`.** The body is `{ webhook_uuid, topic, data, changes }`. `*.deleted` carries only `{"id": ...}` in `data` and `null` in `changes`.
 
 ## Topics

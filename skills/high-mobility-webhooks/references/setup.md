@@ -15,9 +15,9 @@
 
 ## Set Up the Hookdeck Source
 
-In Hookdeck, create a source of type **High Mobility** and paste the same secret. Hookdeck's source verifies `X-HM-Signature-256` (HMAC-SHA256, hex, raw body).
+In Hookdeck, create a source of type **High Mobility** and paste the same secret. Hookdeck's source verifies the signature.
 
-Hookdeck's High Mobility source pre-selects POST without managing the method (you can change it). High Mobility's docs don't name the HTTP method, so if the sender uses another one, allow that method on the source too.
+Hookdeck's High Mobility source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). High Mobility's docs don't name the HTTP method, so if the sender uses another one, allow that method on the source too.
 
 ## Test Mode vs Live Mode
 

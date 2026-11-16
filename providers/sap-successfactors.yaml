@@ -15,24 +15,19 @@ notes: >
   validate=True in Python, so valid credentials followed by junk are rejected; split on the first
   colon), and compare the username and the password each in constant time, evaluating both before
   deciding (no short-circuit). Missing or malformed header or mismatch: 401. The docs don't say
-  whether the Basic credentials are sent preemptively. SKILL.md and setup.md must say that Hookdeck
-  never sends a 401 challenge (no WWW-Authenticate round trip), so the credentials must arrive with
-  each request. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  whether the Basic credentials are sent preemptively. SKILL.md and setup.md must say that the credentials must arrive with each request (preemptive Basic auth): Event Gateway doesn't prompt for them, and a request with wrong or missing credentials still gets a 200 and is recorded as failed verification. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
   equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
   bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
   must say plainly that a static shared credential authenticates the sender, not the body, and gives
   no replay protection (no signature, no timestamp), so use HTTPS and rotate the credential if it
   leaks. Model on the n8n, zapier, coterie and honeybadger skills on main. Hookdeck's source type is
   SAP_SUCCESSFACTORS, labelled 'SAP SuccessFactors'. Hookdeck shows this setup note for the source,
-  and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use Basic
-  authentication on the Integration Center REST destination. Hookdeck never answers with a 401
-  challenge, so the credentials have to arrive with each request; if deliveries show as failed
+  and SKILL.md and references/setup.md must tell the user the same thing: "Use Basic
+  authentication on the Integration Center REST destination. The credentials have to arrive with each request; if deliveries show as failed
   verification, they are not." The request method is user-chosen, so the examples must not be
   POST-only: accept GET and POST ('Choose either GET or POST HTTP method for the connection');
   recommend POST on the webhook route (Next.js: export a handler for each; FastAPI: api_route with
-  those methods), and handle an empty body. Say in SKILL.md and setup.md that Hookdeck's SAP
-  SuccessFactors source pre-selects POST without managing the method, so any other method the sender
-  uses must also be allowed on the source. Body: the fields the author maps from a starting entity,
+  those methods), and handle an empty body. Say in SKILL.md and setup.md that any method the sender uses must be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Body: the fields the author maps from a starting entity,
   in the format chosen (JSON or XML); The body is defined by the sender's own configuration and
   there is no vendor event field, so the examples and test scenario use a clearly labelled
   illustrative payload. Don't assume JSON: parse JSON when the content type says so and otherwise

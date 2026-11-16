@@ -4,7 +4,7 @@
 
 | Item | Value |
 |------|-------|
-| Header | `Webhook-Signature` (Hookdeck's source reads `webhook-signature`) |
+| Header | `Webhook-Signature` |
 | Algorithm | HMAC-SHA256 |
 | Key | The integration's private API key, as UTF-8 bytes, used as-is |
 | Signed content | The raw request body bytes only |
@@ -74,6 +74,6 @@ def verify_tutorcruncher_signature(raw_body: bytes, signature, secret: str) -> b
 
 - Signature always fails: check `TUTORCRUNCHER_WEBHOOK_SECRET` is the integration's private API
   key, with no whitespace or quotes, and that the body is not parsed before the check.
-- `401` for every request via Hookdeck: the source's key must be the same private API key.
+- Every request fails verification in Hookdeck: the source's key must be the same private API key.
 - Works in tests but not live: a proxy or middleware is re-serialising the body.
 - Compare against TutorCruncher's webhook logs, which show the request that was sent.

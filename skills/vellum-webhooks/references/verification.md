@@ -82,5 +82,5 @@ def verify_vellum_request(headers, secret=None, header_name=None) -> bool:
 | 401 on every request | `VELLUM_WEBHOOK_SECRET` unset, or missing the `Bearer ` prefix |
 | 401 with a custom header | `VELLUM_WEBHOOK_HEADER` doesn't match the name set in Vellum |
 | 401 only behind a proxy | The proxy strips or renames the credential header |
-| Vellum sends but nothing arrives in Hookdeck | The source only allows POST; allow the method Vellum uses |
+| Vellum sends but nothing arrives in Hookdeck | The source doesn't allow the method Vellum uses; allow it (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)) |
 | 400 after authentication | Body isn't a JSON object |

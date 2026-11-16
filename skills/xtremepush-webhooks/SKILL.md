@@ -82,7 +82,7 @@ def verify_xtremepush(raw_body: bytes, signature_header: str, secret: str) -> bo
 
 ## Any HTTP method
 
-Xtremepush's docs don't name the HTTP method. Hookdeck's Xtremepush source pre-selects POST without managing the method, so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/xtremepush`, verify the signature first for every method, and treat a missing body as zero bytes (a verified GET with no body gets `200`, not an invalid-JSON error).
+Xtremepush's docs don't name the HTTP method. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/xtremepush`, verify the signature first for every method, and treat a missing body as zero bytes (a verified GET with no body gets `200`, not an invalid-JSON error).
 
 ## Setup
 

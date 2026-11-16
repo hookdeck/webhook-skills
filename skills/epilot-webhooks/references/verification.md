@@ -43,7 +43,7 @@ epilot's own docs sample passes only the `v1` entry (`split(" ")[1]`), which ass
 
 ### What if webhook-id is missing?
 
-Read the `webhook-*` headers, and when `webhook-id` is absent fall back to `svix-id`, `svix-timestamp` and `svix-signature`, as Hookdeck does. Then hand the three values to the library under the `webhook-*` names it expects. Every example does this and tests it.
+Read the `webhook-*` headers, and when `webhook-id` is absent fall back to `svix-id`, `svix-timestamp` and `svix-signature`. Then hand the three values to the library under the `webhook-*` names it expects. Every example does this and tests it.
 
 ## Manual Verification (no timestamp window, or a wider one)
 

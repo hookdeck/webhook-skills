@@ -18,15 +18,14 @@ notes: >
   the docs (registry summary): Header `X-Komoju-Signature: <hex>` (bare, 64 hex chars in the
   examples). The prose says "SHA-2 HMAC"; the Ruby sample fixes it as
   `OpenSSL::HMAC.hexdigest('sha256', WEBHOOK_SECRET_TOKEN, request_body)`. No test vector (the
-  examples' signatures cannot be checked without their secret). SIGNATURE SCHEME (it must match
-  Hookdeck's KOMOJU source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-komoju-signature", encoding "hex"). The X-Komoju-Signature header carries the bare lowercase hex
+  examples' signatures cannot be checked without their secret). SIGNATURE SCHEME (algorithm sha256, header
+  x-komoju-signature, encoding hex). The X-Komoju-Signature header carries the bare lowercase hex
   digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
   parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
   body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
   raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The secret token the merchant sets when creating or updating the webhook (or `secret_key` on
   a per-payment webhook). Use it as UTF-8 bytes. Env var: KOMOJU_WEBHOOK_SECRET. Validate the
@@ -42,7 +41,7 @@ notes: >
   payment.captured, payment.updated, payment.expired, payment.cancelled, payment.refund.created,
   payment.refunded, payment.failed, customer.created, customer.updated, customer.deleted,
   subscription.created, subscription.captured (and 4 more). Handle a few common ones and log the rest.
-  Method: POST. Hookdeck's KOMOJU source manages the method as POST, so the examples handle POST on
+  Method: POST. The examples handle POST on
   the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. Documented sample payloads (each JSON

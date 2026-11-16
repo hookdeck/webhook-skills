@@ -85,7 +85,7 @@ The runnable, tested versions are in [examples/express/](../examples/express/), 
 ## What About Timestamp Tolerance?
 
 Tidio's documentation does not require checking `t` against the clock, and **the examples do not reject old timestamps by
-default**. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance,
+default**. Hookdeck retries and replays resend the original headers and timestamp,
 so a fixed window would reject legitimate deliveries. If you receive directly from Tidio and want replay protection, set
 `TIDIO_WEBHOOK_TOLERANCE_SECONDS` (for example `300`). `t` is Unix seconds; unset or `0` turns the check off. Tidio's own
 retries can arrive up to about 4 h 45 min later, so a short window will drop late retries. Deduplicating on `webhook_id`

@@ -13,15 +13,14 @@ notes: >
   computed using HMAC-SHA256 over the raw request body (before JSON parsing)' 'The signing key can be
   any string you choose—make it long and random for best security.' From the docs (registry summary):
   `sha256=` + hex(HMAC-SHA256(signing key, raw body)); the Python sample strips the prefix and
-  compares hex digests. SIGNATURE SCHEME (it must match Hookdeck's BUTTONDOWN source exactly: HMAC
-  controller, algorithm "sha256", header_key "x-buttondown-signature", encoding "hex"). The
+  compares hex digests. SIGNATURE SCHEME (algorithm sha256, header x-buttondown-signature, encoding hex). The
   x-buttondown-signature header carries `sha256=<hex>`. Strip a leading `sha256=` before validating
-  the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  the digest; accept the value with or without the
   prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body
   bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
   body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: An optional signing key of the user's choosing, set in the webhook's settings; without it
   requests are unsigned. Use it as UTF-8 bytes. Env var: BUTTONDOWN_WEBHOOK_SECRET. Validate the
@@ -36,8 +35,7 @@ notes: >
   automation.invoked, date.day.started, date.month.started, date.week.started, date.year.started,
   bigcommerce.customer.created, bigcommerce.customer.updated, bigcommerce.order.created,
   bigcommerce.order.updated, email.created, email.deleted, email.send.started (and 70 more). Handle a
-  few common ones and log the rest. Method: POST. Hookdeck's Buttondown source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

@@ -53,9 +53,8 @@ Other calls: `GET .../webhooks` lists listeners, `POST .../webhooks/{id}` update
 ## Use It With Hookdeck
 
 Create a Hookdeck source of type **Nextcloud** and register the Hookdeck source URL as `uri`.
-Configure the source with the same header name and value. The source pre-selects `POST` without
-managing the method, so if your listener uses `PUT`, `PATCH`, `GET` or `DELETE`, also allow that
-method on the source.
+Configure the source with the same header name and value. Make sure the source allows the
+method your listener uses ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

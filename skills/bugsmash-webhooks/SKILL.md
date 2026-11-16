@@ -72,7 +72,7 @@ Missing or empty headers, a malformed signature or a mismatch all return `401`. 
 returns `500` (fail closed).
 
 **Timestamp window:** off by default. Hookdeck retries and replays resend the original headers and
-timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries.
+timestamp, so a fixed window would reject legitimate retries.
 BugSmash's docs suggest 5 minutes; the examples offer it as opt-in: set
 `BUGSMASH_WEBHOOK_TOLERANCE_SECONDS=300` (unset or `0` = off). The check runs after the signature check.
 
@@ -80,8 +80,7 @@ BugSmash's docs suggest 5 minutes; the examples offer it as opt-in: set
 
 ## HTTP Methods
 
-BugSmash's docs don't name the HTTP method of a delivery. Hookdeck's BugSmash source pre-selects
-POST without managing the method (you can change it), so any other method the sender uses must
+BugSmash's docs don't name the HTTP method of a delivery. Hookdeck's BugSmash source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must
 also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE, verify the
 signature first for every method, and treat a missing body as empty bytes. Read the body raw:
 `express.raw({ type: '*/*' })` (Express), `await request.arrayBuffer()` (Next.js), `await request.body()` (FastAPI).

@@ -49,8 +49,7 @@ POST /tenants/{tenant_id}/webhooks
 
 ## Methods
 
-Aurora fires **GET** requests with the data in the query string and no body. Hookdeck's Aurora
-Solar source pre-selects GET without managing the method. The example receivers handle GET on
+Aurora fires **GET** requests with the data in the query string and no body. Allow GET on Hookdeck's Aurora Solar source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The example receivers handle GET on
 `/webhooks/aurora-solar` and also accept POST for flexibility.
 
 ## Test

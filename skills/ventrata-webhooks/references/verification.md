@@ -11,8 +11,7 @@ X-Webhook-Secret: your-secret-value
 ```
 
 The header name and value are yours. Your endpoint compares the received value with the one you
-stored. This is also how Hookdeck's Ventrata source works (API key verification: header name plus
-the exact, whole header value).
+stored.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Anyone who learns it can send forged or replayed

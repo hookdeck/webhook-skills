@@ -7,8 +7,7 @@ docs:
 notes: >
   papergames.io online multiplayer board-game platform with an embeddable games API (create a game
   session over REST, embed playUrl/watchUrl in an iframe). Not Paperform, PaperCut or Paper; the
-  vendor domain is papergames.io. Hookdeck source type PAPERGAMES uses the STANDARD_WEBHOOKS
-  controller with headers_prefix 'svix' ("Delivered by Svix"). Headers svix-id (stable across
+  vendor domain is papergames.io. Hookdeck source type is PAPERGAMES. Delivered by Svix. Headers svix-id (stable across
   retries; idempotency key), svix-timestamp (seconds), svix-signature (space-delimited v1,<base64>;
   accept any v1 entry, ignore other version tags, no v2 scheme). HMAC-SHA256 over
   "<svix-id>.<svix-timestamp>.<raw body>", standard base64; key is the base64-decoded part after

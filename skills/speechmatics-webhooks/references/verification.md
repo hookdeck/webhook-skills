@@ -14,7 +14,7 @@ Both name and value are yours to choose, so the examples read the name from
 `SPEECHMATICS_WEBHOOK_HEADER` (default `Authorization`) and the expected value from
 `SPEECHMATICS_WEBHOOK_SECRET`. The value is compared **whole**: if you registered
 `Authorization: Bearer abc123`, set the secret to `Bearer abc123`. Don't strip or parse a
-`Bearer ` prefix. Hookdeck's Speechmatics source works the same way (header name plus exact value).
+`Bearer ` prefix.
 
 ## What This Does and Doesn't Prove
 

@@ -19,7 +19,7 @@ Details this skill relies on:
 | Signed content | The raw body bytes only. No timestamp, id or other header is signed |
 | Key | The product's secret key, as UTF-8 bytes (not hex- or base64-decoded) |
 
-Hookdeck's Freemius source uses the same configuration (HMAC, `sha256`, header `x-signature`, hex), so the same handler works whether Freemius delivers directly or through Hookdeck.
+Hookdeck's Freemius source verifies the same signature, so the same handler works whether Freemius delivers directly or through Hookdeck.
 
 ## Implementation
 

@@ -38,8 +38,7 @@ your own endpoint too:
 
 > Turn on authentication and choose API Key Header (or Bearer Token, with header name Authorization and value "Bearer <token>"). The HMAC signature option is not supported.
 
-The source pre-selects the POST method without managing it. Vellum's docs don't name the HTTP
-method for webhooks, so if your sender uses another method, allow it on the source as well. The
+Vellum's docs don't name the HTTP method for webhooks, so allow the method your sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The
 examples accept GET, POST, PUT, PATCH and DELETE.
 
 ## Verification (core)

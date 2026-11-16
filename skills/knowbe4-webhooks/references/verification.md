@@ -11,8 +11,7 @@ checks that header against the value you stored:
 ```
 
 The header name is user-chosen, so the examples read it from `KNOWBE4_WEBHOOK_HEADER` (default
-`Authorization`) and the expected value from `KNOWBE4_WEBHOOK_SECRET`. This is what Hookdeck's
-KnowBe4 source does too (API key verification: header name plus exact whole header value).
+`Authorization`) and the expected value from `KNOWBE4_WEBHOOK_SECRET`. Hookdeck's KnowBe4 source checks the same header.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Anyone who learns the value can send forged or replayed

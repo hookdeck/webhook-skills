@@ -13,7 +13,7 @@ Authorization: Bearer <token>
 Points that cause most failures:
 
 - The key is the **whole header value including the scheme prefix**. Compare the full header to
-  `NAVATTIC_AUTHORIZATION` (for example `Bearer abc123`), as Hookdeck's Navattic source does.
+  `NAVATTIC_AUTHORIZATION` (for example `Bearer abc123`).
   Don't strip the prefix, parse it, or base64-decode Basic credentials.
 - The header is sent only after you configure it on the webhook.
 - Check it before reading the body, for every HTTP method.
@@ -81,7 +81,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **Header not configured in Navattic**: Navattic then sends no `Authorization` header and every
   request gets a 401. Add the credential to the webhook; don't switch verification off.
 - **HTTP method**: the docs don't name it. Accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`, and
-  allow the same on the Hookdeck source (which pre-selects `POST` only).
+  allow the method Navattic uses on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Raw body**: there is nothing to sign, but authenticate before parsing; `express.raw({ type: '*/*' })`
   accepts any content type.
 

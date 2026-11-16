@@ -74,7 +74,7 @@ Complete handlers with tests: [../examples/express/](../examples/express/), [../
 
 Campfire's docs recommend a 5-minute tolerance to prevent replay, and note that retries are re-signed with a fresh timestamp, so a tolerance check does not reject Campfire's own retries.
 
-The examples here leave it **off by default**, because behind Hookdeck, retries and replays resend the **original** headers and timestamp, and Hookdeck applies no tolerance itself: a fixed window would reject legitimate redeliveries. To opt in, set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off). With it on, a non-numeric timestamp is rejected. Make the handler idempotent either way.
+The examples here leave it **off by default**, because behind Hookdeck, retries and replays resend the **original** headers and timestamp: a fixed window would reject legitimate redeliveries. To opt in, set `CAMPFIRE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off). With it on, a non-numeric timestamp is rejected. Make the handler idempotent either way.
 
 ## Common Gotchas
 

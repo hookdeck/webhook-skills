@@ -88,8 +88,8 @@ def safe_equal(a: str, b: str) -> bool:
 - **Empty body**: the Payload may be empty or minimal; don't fail on a missing body.
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
   `express.raw({ type: '*/*' })` accepts any content type.
-- **Hookdeck**: a Hookdeck Nexthink source compares the same header (full value) and
-  pre-selects POST; allow PUT/PATCH on the source if you use them.
+- **Hookdeck**: a Hookdeck Nexthink source checks the same header; allow the method your
+  webhook uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Debugging 401s
 

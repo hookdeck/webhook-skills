@@ -15,14 +15,11 @@ notes: >
   signature is calculated over the concatenation of the **raw HTTP request body**, the **nonce**, and
   the **timestamp**, separated by dots (`.`).' 'var signedData = rawBody + '.' + nonce + '.' +
   timestamp var signature = crypto.createHmac('sha256', secret).update(signedData).digest('base64')'
-  SIGNATURE SCHEME (it must match Hookdeck's SINCH source exactly: HMAC controller, algorithm sha256,
-  header x-sinch-webhook-signature, encoding base64, signed_content_template
-  "{body}.{header:x-sinch-webhook-signature-nonce}.{header:x-sinch-webhook-signature-timestamp}"). The
+  SIGNATURE SCHEME: HMAC-SHA256, signature in the x-sinch-webhook-signature header, base64 encoded. The
   x-sinch-webhook-signature header carries the bare standard base64 (padded) digest, no prefix. The
   signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the raw request body
   bytes, then a literal ".", then the x-sinch-webhook-signature-nonce header value, then a literal
-  ".", then the x-sinch-webhook-signature-timestamp header value. Build the signed message as BYTES,
-  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  ".", then the x-sinch-webhook-signature-timestamp header value. Build the signed message as BYTES: literal separators as UTF-8, header values as the exact header
   string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
   is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
   Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
@@ -37,7 +34,7 @@ notes: >
   silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
   base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
   or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  replays resend the original headers and timestamp, so a
   fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   SINCH_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
   (x-sinch-webhook-signature-timestamp is Unix seconds). Body FIRST, then nonce, then timestamp,
@@ -46,11 +43,10 @@ notes: >
   (project_id, app_id, accepted_time, event_time, message_metadata, correlation_id) plus exactly one
   callback-specific top-level object whose key is the type: message, message_delivery_report, event,
   conversation_start_notification, contact_create_notification, opt_in_notification and others (19 in
-  all). Dispatch on which key is present. Method: POST. Hookdeck's Sinch source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  all). Dispatch on which key is present. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs give a worked
+  PUBLISHED TEST VECTOR: the vendor's docs give a worked
   example, saved verbatim as JSON (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/sinch.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

@@ -8,7 +8,7 @@ PAY.JP does not sign payloads. Every webhook carries an `X-Payjp-Webhook-Token` 
 X-Payjp-Webhook-Token: whook_a09d5c1c87be4e1590a9f16516
 ```
 
-There is no HMAC, timestamp or prefix. Compare the **whole** header value with `PAYJP_WEBHOOK_SECRET`. This is also what Hookdeck's PAY.JP source does.
+There is no HMAC, timestamp or prefix. Compare the **whole** header value with `PAYJP_WEBHOOK_SECRET`.
 
 ## What Does the Token Prove?
 

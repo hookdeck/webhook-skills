@@ -66,7 +66,7 @@ def verify_loyaltylion_signature(raw_body: bytes, signature: Optional[str], secr
 Read the body raw (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`)
 and parse JSON only after the check. Return `401` for a missing, malformed or wrong signature.
 Don't decode the base64 to compare: a value with stray low bits in its last character decodes to the
-same bytes but is a different string, and Hookdeck rejects it.
+same bytes but is a different string.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

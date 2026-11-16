@@ -18,8 +18,7 @@ the webhook sends on every request. Pick one (or configure both and accept eithe
   them in `BETTER_STACK_WEBHOOK_USERNAME` and `BETTER_STACK_WEBHOOK_PASSWORD`.
 
 **Basic auth caveat:** Better Stack's docs don't say whether the Basic credentials are sent
-preemptively on the first request or only after a `401 WWW-Authenticate` challenge. Your endpoint,
-and Hookdeck's Better Stack source, never send that challenge, so if Basic auth deliveries are
+preemptively on the first request or only after a `401 WWW-Authenticate` challenge. Your endpoint never sends that challenge, so if Basic auth deliveries are
 rejected, switch to the custom header.
 
 ## Register Your Endpoint
@@ -75,9 +74,8 @@ methods:
 
 - **Basic auth** (the default): enter the same username and password as the webhook.
 - **Custom header**: enter the header name (placeholder `X-Better-Stack-Secret`) and its value.
-  Hookdeck finds the header case-insensitively and compares the whole value.
 
-The source pre-selects `POST` without managing the method. If the webhook uses another method,
+The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If the webhook uses another method,
 allow it on the source as well. Hookdeck sources can allow `GET`, `HEAD`, `POST`, `PUT` and
 `PATCH` but not `OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
 

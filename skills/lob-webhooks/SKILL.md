@@ -59,7 +59,7 @@ content type.
 
 **Timestamp tolerance is off by default.** Lob's step 4 (reject old timestamps, 5 minutes
 recommended) is optional. Hookdeck retries and replays re-send the original headers and
-timestamp, and Hookdeck itself applies no window, so a fixed window would reject legitimate
+timestamp, so a fixed window would reject legitimate
 retries. The examples offer an opt-in `LOB_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
 Deduplicate on the event `id` instead.
 

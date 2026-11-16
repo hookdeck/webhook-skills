@@ -25,7 +25,7 @@ function verifyReferralHeroSignature(rawBody, signature, secret) {
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
 
-  // Compare the base64 text exactly (case-sensitive), as Hookdeck does.
+  // Compare the base64 text exactly (case-sensitive).
   const a = Buffer.from(signature, 'utf8');
   const b = Buffer.from(expected, 'utf8');
   return a.length === b.length && crypto.timingSafeEqual(a, b);

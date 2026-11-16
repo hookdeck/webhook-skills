@@ -17,8 +17,8 @@ function safeEqual(a: string, b: string): boolean {
 
 /**
  * Kibana does not sign webhooks. With Basic authentication selected on the connector it sends
- * `Authorization: Basic base64(username:password)` on every request. Hookdeck never sends a 401
- * challenge, so the header must be present on each request.
+ * `Authorization: Basic base64(username:password)` on every request. There is no 401
+ * challenge round trip, so the header must be present on each request.
  */
 export function verifyBasicAuth(
   authHeader: string | null | undefined,

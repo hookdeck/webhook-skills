@@ -42,7 +42,7 @@ Form.io also publishes an example [Webhook Receiver](https://github.com/formio/f
 
 ## Using Hookdeck
 
-Hookdeck's Form.io source pre-selects POST only. Allow **PUT** and **DELETE** (and PATCH or GET if
+Hookdeck's Form.io source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Allow **PUT** and **DELETE** (and PATCH or GET if
 your action uses them) on the source, or update and delete requests are rejected.
 
 ## Network Notes

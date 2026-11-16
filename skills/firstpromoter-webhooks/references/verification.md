@@ -10,8 +10,7 @@ Covers Webhooks v2 only: add a custom header to the subscription and enter it he
 
 There is no HMAC, timestamp or prefix convention. The header name is yours
 (`FIRSTPROMOTER_WEBHOOK_HEADER`, default `Authorization`) and the expected value is the exact,
-whole header value (`FIRSTPROMOTER_WEBHOOK_SECRET`), including any `Bearer ` you typed. This is
-how Hookdeck's FirstPromoter source works too (header name plus exact whole header value).
+whole header value (`FIRSTPROMOTER_WEBHOOK_SECRET`), including any `Bearer ` you typed. Hookdeck's FirstPromoter source checks the same header.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
 > protection** (no signature, no timestamp). Anyone who captures one request can replay it.

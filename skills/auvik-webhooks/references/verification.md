@@ -12,8 +12,7 @@ header you configured (Key and Value). Compare it with the value you stored.
 There is no HMAC, timestamp or algorithm. The header name is user-chosen, so read it from
 `AUVIK_WEBHOOK_HEADER` (default `Authorization`) and look it up case-insensitively. Compare the
 **whole** value with `AUVIK_WEBHOOK_SECRET`; if you typed `Bearer abc` in Auvik, the secret is
-`Bearer abc`. Do not strip or parse a prefix. This matches Hookdeck's Auvik source (header name
-plus exact whole value).
+`Bearer abc`. Do not strip or parse a prefix. Hookdeck's Auvik source checks the same header.
 
 ## What This Does and Doesn't Protect
 

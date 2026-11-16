@@ -65,8 +65,7 @@ Plunk can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (no 
 npx hookdeck-cli listen 3000 plunk --path /webhooks/plunk
 ```
 
-Put the printed URL in the Webhook step. In Hookdeck, the Plunk source pre-selects `POST` without
-managing the method, so allow any other method your step uses on the source too.
+Put the printed URL in the Webhook step. In Hookdeck, allow the method your step uses on the Plunk source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

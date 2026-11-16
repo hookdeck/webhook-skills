@@ -36,7 +36,7 @@ Rules the examples follow:
 1. Split the header on `,` into `key=value` pairs. Collect `t` and every `v1`; ignore other keys.
 2. Fail if `t` is missing or is not all ASCII digits.
 3. Build the signed message as **bytes**: the `t` string exactly as it appears in the header, a literal `.`, then the raw body bytes as received. Never parse `t` to a number and re-format it (`01700000000` would change), and never decode and re-encode the body or `JSON.parse`/`JSON.stringify` it first.
-4. Accept if **any** `v1` matches (Hookdeck does).
+4. Accept if **any** `v1` matches.
 5. Validate `v1`'s format before comparing: exactly 64 hex characters. Hex is compared case-insensitively, so lowercase both sides.
 6. Compare in constant time: Node checks lengths and uses `crypto.timingSafeEqual` on equal-length Buffers; Python uses `hmac.compare_digest` on `bytes`.
 7. Missing or empty header, malformed value, or mismatch: respond **401**.

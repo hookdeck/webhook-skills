@@ -62,7 +62,7 @@ Check your own implementation against it before pointing real traffic at it.
 
 Purchasely suggests you may compare the timestamp to the current time and decide on a tolerance. This
 skill leaves that **off by default**: Hookdeck retries and replays resend the original headers and
-timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+timestamp, so a fixed window would reject legitimate
 retries (Purchasely itself retries for about 20 days). To opt in, set
 `PURCHASELY_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); requests whose timestamp is further than
 that many seconds from now, or not all digits, are rejected. Idempotency on `event_id` is the usual

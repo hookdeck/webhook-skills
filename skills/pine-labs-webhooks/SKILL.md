@@ -67,7 +67,7 @@ function verifyPineLabsWebhook(rawBody, { id, timestamp, signature }, secret, to
 }
 ```
 
-**Header fallback:** read the `webhook-*` headers and, when `webhook-id` is absent, use the `svix-id`, `svix-timestamp` and `svix-signature` headers instead, as Hookdeck does. The examples do this and test it.
+**Header fallback:** read the `webhook-*` headers and, when `webhook-id` is absent, use the `svix-id`, `svix-timestamp` and `svix-signature` headers instead. The examples do this and test it.
 
 **Why not the `standardwebhooks` or `svix` libraries?** They base64-decode the secret, so they compute the wrong key for Pine Labs' raw string secret. They also enforce a 5-minute timestamp window, which rejects Hookdeck retries and replays (they keep the original timestamp). The examples verify by hand and make the window opt-in with `PINE_LABS_WEBHOOK_TOLERANCE_SECONDS` (default `0`).
 

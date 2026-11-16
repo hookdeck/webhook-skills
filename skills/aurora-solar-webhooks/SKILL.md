@@ -83,8 +83,7 @@ https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>&source=<SOU
 ```
 
 Aurora fills in the attributes, so the request looks like
-`GET /?event=project_created&project_id=3fa8...&source=api`. Hookdeck's Aurora Solar source
-pre-selects GET without managing the method; the receivers also accept POST for flexibility.
+`GET /?event=project_created&project_id=3fa8...&source=api`. Allow GET on Hookdeck's Aurora Solar source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); the receivers also accept POST for flexibility.
 Respond within 10 seconds; failures (timeout, 3xx/4xx/5xx) are retried 5 more times over 24 hours.
 
 ## Event Types

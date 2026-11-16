@@ -16,7 +16,7 @@ If Memberful isn't reaching you, point the webhook at a temporary logger such as
 
 ## HTTP Method
 
-Memberful sends `POST` with a JSON body, so the examples accept `POST` only and answer `405` to other methods. Hookdeck's Memberful source verifies the signature and manages the method as POST.
+Memberful sends `POST` with a JSON body, so the examples accept `POST` only and answer `405` to other methods. Hookdeck's Memberful source verifies the signature.
 
 ## Delivery Behaviour
 

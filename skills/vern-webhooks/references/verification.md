@@ -11,8 +11,8 @@ Vern deliveries are signed by Svix per Standard Webhooks, with Svix's header nam
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Vern source reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+carry the same values. The examples here read the `svix-*` headers and fall back to
+the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 

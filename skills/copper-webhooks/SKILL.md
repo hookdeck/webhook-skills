@@ -58,8 +58,7 @@ function verifyCopperRequest(headers, expected = process.env.COPPER_WEBHOOK_SECR
   and rotate the credential if it leaks.
 - The subscription's optional `secret` object is not a header and not a body field called
   `secret`: Copper merges its key/value pairs into the **top level** of the JSON body (a secret of
-  `{"key": "copper_notifications"}` arrives as `"key": "copper_notifications"`). It is a weaker
-  extra check that Hookdeck does not perform; don't rely on it alone.
+  `{"key": "copper_notifications"}` arrives as `"key": "copper_notifications"`). It is a weaker extra check; don't rely on it alone.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

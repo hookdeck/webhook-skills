@@ -8,12 +8,10 @@ notes: >
   and returned letters. Notify says: 'You must provide: a URL where Notify will post the callback
   [and] a bearer token which Notify will put in the authorisation header of the requests'; its
   source sends headers {'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'} with
-  method POST. No signature. GOV.UK Notify sends 'Authorization: Bearer <secret>'. Hookdeck's GOV.UK
-  Notify source is API key verification on the authorization header with value_prefix 'Bearer '
-  (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and the scheme matches in any
-  case (auth schemes are case-insensitive, RFC 9110). So the examples read the BARE secret from
+  method POST. No signature. GOV.UK Notify sends 'Authorization: Bearer <secret>'. On Hookdeck's GOV.UK
+  Notify source the user stores just the secret, without the 'Bearer ' prefix. So the examples read the BARE secret from
   GOVUK_NOTIFY_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer ',
-  case-insensitively, strip it, as core does), require the Authorization header to start with
+  case-insensitively, strip it), require the Authorization header to start with
   'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
   trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on

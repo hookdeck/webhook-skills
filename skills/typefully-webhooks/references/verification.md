@@ -46,7 +46,7 @@ Typefully says to verify the timestamp is recent but gives no window. The exampl
 ## Common Gotchas
 
 - **Raw body:** the signature covers the exact bytes. Typefully sends compact JSON with sorted keys, but don't rely on that: don't parse or re-serialize before verifying (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`).
-- **Header values:** use the timestamp header exactly as received, never trimmed or reformatted. Hookdeck's TYPEFULLY source builds the same message with the header value as latin1 bytes.
+- **Header values:** use the timestamp header exactly as received, never trimmed or reformatted.
 - **Prefix:** the signature header is `sha256=<hex>`; strip the prefix before hex-decoding.
 - **Status codes:** return `401` for a missing, empty, malformed or mismatched signature or timestamp, and `500` if the secret isn't configured.
 - **Disabled webhooks:** 100 consecutive failures disable the webhook. A bug in verification can cause that.

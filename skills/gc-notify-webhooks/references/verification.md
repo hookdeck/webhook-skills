@@ -22,7 +22,7 @@ idempotent (a notification can legitimately produce several callbacks).
 ## Implementation
 
 The configured secret is the **bare token**. If the configured value itself starts with `Bearer `
-(any case) the scheme is stripped, as Hookdeck does. Never trim or otherwise alter the secret.
+(any case) the scheme is stripped. Never trim or otherwise alter the secret.
 
 ### Node.js
 

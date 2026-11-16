@@ -44,7 +44,7 @@ function verifyTwentySignature(rawBody, signature, timestamp, secret) {
 
 Respond **401** for a missing, malformed or mismatched signature and any **2xx** (the examples use `200`) for a valid delivery. Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check. Twenty's docs example signs `JSON.stringify(req.body)`; Twenty's sender signs the JSON string it posts, so signing the raw body is equivalent and avoids re-serialisation drift.
 
-**Timestamp window is off by default.** `X-Twenty-Webhook-Timestamp` is `Date.now()` (Unix **milliseconds**). Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `TWENTY_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
+**Timestamp window is off by default.** `X-Twenty-Webhook-Timestamp` is `Date.now()` (Unix **milliseconds**). Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in: set `TWENTY_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

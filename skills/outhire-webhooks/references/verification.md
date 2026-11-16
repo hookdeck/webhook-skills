@@ -30,7 +30,7 @@ Your endpoint URL is public. Without verification anyone can POST a fake `candid
 
 [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) (npm, PyPI) reads the three headers, checks the timestamp (fixed **5-minute** window), compares in constant time against every `v1,` entry and returns the parsed body. `OUTHIRE_WEBHOOK_SECRET` holds the full `whsec_` value.
 
-Hookdeck also accepts the `svix-id`, `svix-timestamp` and `svix-signature` spelling of the same headers. The examples read `webhook-*` and fall back to `svix-*` when `webhook-id` is absent, then hand the library the values under the `webhook-*` names:
+Svix-style senders use the `svix-id`, `svix-timestamp` and `svix-signature` spelling of the same headers. The examples read `webhook-*` and fall back to `svix-*` when `webhook-id` is absent, then hand the library the values under the `webhook-*` names:
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

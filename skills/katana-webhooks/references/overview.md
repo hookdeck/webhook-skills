@@ -7,7 +7,7 @@ to changes (sales orders, purchase orders, manufacturing orders, inventory, prod
 webhooks through the public API; each one has its own signing token and a list of `subscribed_events`.
 
 Katana's docs don't name the HTTP method, so the examples accept GET, POST, PUT, PATCH and DELETE. Hookdeck's
-Katana MRP source (type `KATANA`) pre-selects POST without managing the method, so allow any other method
+Katana MRP source (type `KATANA`) accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method
 Katana uses on the source.
 
 ## Common Event Types

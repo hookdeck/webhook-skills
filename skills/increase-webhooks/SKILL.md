@@ -102,7 +102,7 @@ INCREASE_WEBHOOK_SECRET=your_shared_secret   # the Event Subscription's shared_s
 INCREASE_TIMESTAMP_TOLERANCE_SECONDS=0       # optional; a positive value opts in to the replay window
 ```
 
-If you choose your own `shared_secret`, don't start it with `whsec_`: Standard Webhooks tooling treats a `whsec_` secret as base64, while Hookdeck's Increase source uses any secret that doesn't start with `whsec_` as UTF-8 bytes. Using the secret Increase generates, or one without that prefix, avoids the mismatch.
+If you choose your own `shared_secret`, don't start it with `whsec_`: Standard Webhooks tooling treats a `whsec_` secret as base64. Using the secret Increase generates, or one without that prefix, avoids the mismatch.
 
 ## Local Development
 

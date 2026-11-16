@@ -36,4 +36,4 @@ TERRA_WEBHOOK_TOLERANCE_SECONDS=0   # optional replay window; 0 or unset = off
 
 ## Using Hookdeck in Production
 
-Create a Hookdeck source of type **Terra API** and point your Terra destination at it. Hookdeck verifies `terra-signature` for you (HMAC-SHA256, hex, `<t>.<body>`) and applies no timestamp tolerance, so retries and replays still pass.
+Create a Hookdeck source of type **Terra API** and point your Terra destination at it. Hookdeck verifies the signature for you.

@@ -1,6 +1,6 @@
 # Requesty Webhooks - Next.js Example
 
-Minimal Next.js App Router example of receiving [Requesty](https://docs.requesty.ai/features/webhook-signatures) (LLM routing gateway spending alerts and sample requests) webhooks with signature verification. Requesty signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the route verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal Next.js App Router example of receiving [Requesty](https://docs.requesty.ai/features/webhook-signatures) (LLM routing gateway spending alerts and sample requests) webhooks with signature verification. Requesty signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the route verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

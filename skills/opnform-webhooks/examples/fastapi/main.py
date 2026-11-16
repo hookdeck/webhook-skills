@@ -27,7 +27,7 @@ def verify_opnform(raw_body: bytes, signature_header, secret: str) -> bool:
     if not secret or not signature_header:
         return False
 
-    # The prefix is optional: Hookdeck's OpnForm source accepts the bare digest too
+    # The prefix is optional: accept the bare digest too
     sig = signature_header.strip()
     if sig.startswith("sha256="):
         sig = sig[len("sha256="):]

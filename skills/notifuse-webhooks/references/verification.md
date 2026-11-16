@@ -58,7 +58,7 @@ event = Webhook(os.environ["NOTIFUSE_WEBHOOK_SECRET"]).verify(await request.body
 
 ### Header fallback: webhook-* or svix-*
 
-Notifuse sends `webhook-*` headers. A Svix-style sender uses `svix-id`, `svix-timestamp` and `svix-signature` for the same values, and Hookdeck reads either set. The examples read `webhook-id` first and, when it is absent, use the `svix-*` headers, then hand the library the three values under the `webhook-*` names it expects:
+Notifuse sends `webhook-*` headers. A Svix-style sender uses `svix-id`, `svix-timestamp` and `svix-signature` for the same values. The examples read `webhook-id` first and, when it is absent, use the `svix-*` headers, then hand the library the three values under the `webhook-*` names it expects:
 
 ```javascript
 const prefix = req.get('webhook-id') ? 'webhook' : 'svix';

@@ -46,8 +46,7 @@ your endpoint's response. If you see `401`, see
 ## Credentials Must Arrive on the First Request
 
 The Halo documentation doesn't say whether Basic credentials are sent preemptively. Your
-endpoint (and Hookdeck) must accept them on the first request: Hookdeck never sends a
-`401` + `WWW-Authenticate` challenge, it verifies the request as received.
+endpoint (and Hookdeck) must accept them on the first request.
 
 ## Hookdeck
 

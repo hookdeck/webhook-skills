@@ -54,7 +54,7 @@ Python equivalent: `hmac.new(base64.b64decode(secret.removeprefix("whsec_")), f"
 ## Common Gotchas
 
 - **Raw body**: verify the exact bytes received. In Express use `express.raw({ type: '*/*' })` so any content type is verified, not just `application/json`.
-- **Secret format**: use `whsec_<base64>`. A bare base64 secret signs fine in PostHog but fails Hookdeck.
+- **Secret format**: use `whsec_<base64>`, on the Hookdeck source too.
 - **Same string everywhere**: the value in PostHog must match the receiver exactly.
 - **Short secrets**: under 24 decoded bytes, PostHog refuses to send.
 - **Timestamp window**: libraries reject anything older than 5 minutes, including Hookdeck retries and replays.
@@ -67,4 +67,4 @@ Python equivalent: `hmac.new(base64.b64decode(secret.removeprefix("whsec_")), f"
 | `Missing required headers` | No signing secret set in PostHog |
 | `No matching signature found` | Different secret, bare vs `whsec_` form mismatch, or body parsed/re-serialized |
 | `Message timestamp too old` | Retry or replay after 5 minutes; use the manual verifier |
-| Works direct, fails via Hookdeck | Secret not in `whsec_` form on the Hookdeck source |
+| Works direct, fails via Hookdeck | The Hookdeck source's secret isn't the same `whsec_` string as PostHog's |

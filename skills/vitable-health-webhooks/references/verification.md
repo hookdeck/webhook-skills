@@ -16,7 +16,7 @@ message = f"{timestamp}.{payload}"
 expected = "sha512=" + hmac.new(secret_key.encode("utf-8"), message.encode("utf-8"), hashlib.sha512).hexdigest()
 ```
 
-Vitable provides no SDK for verification; verify manually. This is the same scheme Hookdeck's Vitable Health source checks (HMAC, `sha512`, header `x-vitable-signature`, hex, signed content `{X-Vitable-Timestamp}.{body}`).
+Vitable provides no SDK for verification; verify manually.
 
 ## Implementation
 
@@ -58,7 +58,7 @@ def verify_vitable(raw_body: bytes, headers, secret: str) -> bool:
     return hmac.compare_digest(bytes.fromhex(digest), expected)
 ```
 
-Vitable's docs verify with `hmac.compare_digest(signature_header, expected)` on the full `sha512=...` string. The code above compares decoded bytes instead, which is equivalent for a well-formed header and also accepts the bare digest and uppercase hex (as Hookdeck does).
+Vitable's docs verify with `hmac.compare_digest(signature_header, expected)` on the full `sha512=...` string. The code above compares decoded bytes instead, which is equivalent for a well-formed header and also accepts the bare digest and uppercase hex.
 
 ## Common Gotchas
 
@@ -72,7 +72,7 @@ Vitable's docs verify with `hmac.compare_digest(signature_header, expected)` on 
 
 ## Should I Reject Old Timestamps?
 
-Vitable's examples reject a timestamp more than 300 seconds from now. That protects against replays, but **Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance**, so a fixed window would reject legitimate redeliveries (Vitable's own retries span about 3.4 days). The examples leave the check off by default and make it opt-in:
+Vitable's examples reject a timestamp more than 300 seconds from now. That protects against replays, but **Hookdeck retries and replays resend the original headers and timestamp**, so a fixed window would reject legitimate redeliveries (Vitable's own retries span about 3.4 days). The examples leave the check off by default and make it opt-in:
 
 ```bash
 VITABLE_WEBHOOK_TOLERANCE_SECONDS=300   # unset or 0 = off

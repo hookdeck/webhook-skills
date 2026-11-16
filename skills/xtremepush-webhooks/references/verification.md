@@ -36,7 +36,7 @@ Build the signed message as bytes from the raw body exactly as received. Never d
 
 ## Where Does the Timestamp Window Go?
 
-The examples don't reject old timestamps by default. **Hookdeck retries and replays resend the original headers, including the original `t`, and Hookdeck itself applies no tolerance**, so a fixed window rejects a legitimate late redelivery (after your receiver was down, or when you replay an event from the dashboard).
+The examples don't reject old timestamps by default. **Hookdeck retries and replays resend the original headers, including the original `t`**, so a fixed window rejects a legitimate late redelivery (after your receiver was down, or when you replay an event from the dashboard).
 
 The check is opt-in: set `XTREMEPUSH_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number of seconds (`t` is Unix seconds). In each example it lives in one place:
 

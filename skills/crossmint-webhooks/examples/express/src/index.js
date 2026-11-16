@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names, as Hookdeck does
+// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers) {
   const prefix = headers['svix-id'] ? 'svix' : 'webhook';
   return {

@@ -144,8 +144,7 @@ class TestVerifyCommunitySignature:
         assert verify_community_signature(body, header, SECRET) is True
 
     def test_accepts_uppercase_hex_signature(self):
-        """Hex is case-insensitive (0xAB == 0xab), and Hookdeck's own generic HMAC
-        verifier normalizes both sides, so an uppercase digest must still verify."""
+        """Hex is case-insensitive (0xAB == 0xab), so an uppercase digest must still verify."""
         body = b"{}"
         ts = current_timestamp()
         t_part, v_part = generate_signature_header(body, ts, SECRET).split(",")

@@ -99,7 +99,7 @@ class TestVerifyCronofyWebhook:
         assert not verify_cronofy_webhook(self.body.encode(), header, TEST_SECRET)
 
     def test_rejects_header_of_only_separators(self):
-        # Parity with the hookdeck/core CRONOFY controller, which filters empty candidates.
+        # Empty candidates are filtered out.
         for header in (" , ", "", ",,,"):
             assert not verify_cronofy_webhook(self.body.encode(), header, TEST_SECRET)
 

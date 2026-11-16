@@ -18,7 +18,7 @@ Use the key exactly as shown, as a UTF-8 string (no base64 or hex decoding). A n
 
 ## Hookdeck Source
 
-Hookdeck's source type is `XTREMEPUSH`, labelled "Xtremepush", and Hookdeck's source verifies the signature. Create it with the Webhook Secret Key. Xtremepush's docs don't name the HTTP method. **Hookdeck's Xtremepush source pre-selects POST without managing the method (you can change it), so any other method the sender uses must also be allowed on the source.**
+Hookdeck's source type is `XTREMEPUSH`, labelled "Xtremepush", and Hookdeck's source verifies the signature. Create it with the Webhook Secret Key. Xtremepush's docs don't name the HTTP method. **Allow the method the sender uses on the Hookdeck source** (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Local Development
 

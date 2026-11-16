@@ -28,7 +28,7 @@ Minimal example of receiving [epilot](https://www.epilot.cloud) webhooks with si
 npm run dev
 ```
 
-Server runs on http://localhost:3000. The endpoint `/webhooks/epilot` accepts `GET`, `POST`, `PUT`, `PATCH` and `DELETE` (each epilot webhook config sets its own `httpMethod`; Hookdeck's epilot source pre-selects POST without managing it, so allow any other method on the source too).
+Server runs on http://localhost:3000. The endpoint `/webhooks/epilot` accepts `GET`, `POST`, `PUT`, `PATCH` and `DELETE` (each epilot webhook config sets its own `httpMethod`; Hookdeck's epilot source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method on the source too).
 
 ## Test
 

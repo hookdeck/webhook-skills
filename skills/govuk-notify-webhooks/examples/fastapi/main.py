@@ -23,8 +23,8 @@ def safe_equal(a: bytes, b: bytes) -> bool:
 def verify_notify_request(headers, secret=None) -> bool:
     """GOV.UK Notify does not sign callbacks. It sends `Authorization: Bearer <token>`, where
     the token is the one you set for the callback. The secret is the BARE token; if the
-    configured value itself starts with "Bearer " (any case) that prefix is stripped, as
-    Hookdeck does. The scheme is matched case-insensitively (RFC 9110); the token is never
+    configured value itself starts with "Bearer " (any case) that prefix is stripped.
+    The scheme is matched case-insensitively (RFC 9110); the token is never
     trimmed.
     """
     secret = secret if secret is not None else os.environ.get("GOVUK_NOTIFY_WEBHOOK_SECRET")

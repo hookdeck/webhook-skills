@@ -18,15 +18,13 @@ notes: >
   req.headers, req.options)' 'Create a organization secret containing the environment variable
   WEBHOOK_SECRET and a secret value.' From the docs (registry summary): lowercase hex
   HMAC-SHA256(WEBHOOK_SECRET value, raw body), the whole header value with no prefix. The page states
-  the algorithm only; the encoding is from Semaphore's open-source signer. SIGNATURE SCHEME (it must
-  match Hookdeck's SEMAPHORE source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-semaphore-signature-256", encoding "hex"). The x-semaphore-signature-256 header carries the bare
+  the algorithm only; the encoding is from Semaphore's open-source signer. SIGNATURE SCHEME: HMAC-SHA256, signature in the x-semaphore-signature-256 header, hex encoded. The x-semaphore-signature-256 header carries the bare
   lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or
   prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: Opt-in: create an organization secret holding the environment variable WEBHOOK_SECRET and
   name that secret on the notification (`--webhook-secret`). Without it the header is not sent. Use it
@@ -41,14 +39,11 @@ notes: >
   set. Events: there is no event-name field or header; every delivery is a finished pipeline
   (`version`, `organization`, `project`, `repository`, `revision`, `workflow`, `pipeline`, `blocks`).
   Dispatch on `pipeline.result` (passed, failed, stopped, canceled). Methods: Semaphore's docs don't
-  name the HTTP method. Hookdeck's Semaphore CI source pre-selects POST without managing the method
-  (the user can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and
+  name the HTTP method. The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and
   DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler for
   each; FastAPI: api_route with those methods), verify the signature first for every method, and treat
   a missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it
-  is acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that
-  Hookdeck's Semaphore CI source pre-selects POST without managing the method, so any other method the
-  sender uses must also be allowed on the source. Express examples must read the raw body with
+  is acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that any method the sender uses must be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

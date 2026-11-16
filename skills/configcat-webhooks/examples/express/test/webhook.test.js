@@ -5,7 +5,7 @@ process.env.CONFIGCAT_WEBHOOK_SECRET = SECRET;
 
 const { app, computeSignature, verifyConfigCatWebhook } = require('../src/index');
 
-// Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+// Published vector from ConfigCat's docs
 const VECTOR = {
   body: 'examplebody',
   id: 'b616ca659d154a5fb907dd8475792eeb',

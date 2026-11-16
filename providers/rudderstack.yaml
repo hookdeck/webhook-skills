@@ -6,7 +6,7 @@ docs:
 notes: >
   Customer data platform; covers the HTTP Webhook destination with Basic Auth (it sends
   Authorization: Basic base64(user:pass)); Bearer / API Key auth types aren't covered. No signature.
-  Authenticate with HTTP Basic auth, which is what Hookdeck's RudderStack source verifies. The
+  Authenticate with HTTP Basic auth, which Event Gateway also checks. The
   examples read RUDDERSTACK_WEBHOOK_USERNAME and RUDDERSTACK_WEBHOOK_PASSWORD, parse 'Authorization:
   Basic base64(username:password)' (scheme case-insensitive, split on the first colon), and compare
   the username and the password each in constant time, evaluating both before deciding (no

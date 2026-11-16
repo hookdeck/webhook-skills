@@ -12,8 +12,7 @@ X-Prefect-Secret: your-shared-secret
 
 There is no HMAC, timestamp or event field. Compare the **whole** header value with
 `PREFECT_WEBHOOK_SECRET`. If you typed `Bearer abc` in the block, the value is `Bearer abc`; do
-not strip or parse the `Bearer ` prefix. This matches Hookdeck's Prefect source (header name +
-exact value). Missing header or mismatch: `401`.
+not strip or parse the `Bearer ` prefix. Missing header or mismatch: `401`.
 
 > A static shared credential authenticates the **sender**, not the **body**, and gives **no
 > replay protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it

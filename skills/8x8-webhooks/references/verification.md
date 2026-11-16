@@ -94,7 +94,7 @@ the credential's length either.)
   `express.raw({ type: '*/*' })` so any content type is accepted.
 - **Retries**: a 401 triggers 8x8 retries (1, 10, 30, 90 seconds), so fix the credential
   rather than waiting.
-- **Hookdeck**: a Hookdeck 8x8 source compares the same whole header value.
+- **Hookdeck**: a Hookdeck 8x8 source (`EIGHT_X_EIGHT`) checks the same header.
 
 ## Debugging 401s
 

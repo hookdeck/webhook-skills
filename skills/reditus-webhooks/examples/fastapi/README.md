@@ -44,7 +44,7 @@ The tests sign payloads with the real algorithm and cover valid, missing, wrong,
 npx hookdeck-cli listen 8000 reditus --path /webhooks/reditus
 ```
 
-Use the printed URL as the endpoint in Reditus. Hookdeck's Reditus source pre-selects POST without managing the method, so allow any other method Reditus uses on the source.
+Use the printed URL as the endpoint in Reditus. Allow any method Reditus uses on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

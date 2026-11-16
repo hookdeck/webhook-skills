@@ -29,7 +29,7 @@ The endpoint listens at `http://localhost:8000/webhooks/preczn`.
 pytest -q
 ```
 
-Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest checked against core; it is not a live vendor capture.
+Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest; it is not a live vendor capture.
 
 ## Receive Real Deliveries
 

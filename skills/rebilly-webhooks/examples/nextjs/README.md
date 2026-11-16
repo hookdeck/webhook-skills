@@ -62,8 +62,7 @@ npx hookdeck-cli listen 3000 rebilly --path /webhooks/rebilly
 ```
 
 Put the printed URL in the Rebilly webhook, set HTTP basic access authentication on it, and allow
-the webhook's method (GET, POST, PUT, PATCH or DELETE) on the Hookdeck source: it pre-selects POST.
-Hookdeck never sends a 401 challenge, so the credentials must arrive with each request.
+the webhook's method (GET, POST, PUT, PATCH or DELETE) on the Hookdeck source. The credentials must arrive with each request (there is no challenge round trip).
 
 ## How It Works
 

@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Read the signature headers. General Translation sends webhook-*; when
- * webhook-id is absent, fall back to the svix-* names (as Hookdeck does).
+ * webhook-id is absent, fall back to the svix-* names.
  * Returns the three values under the names the library expects.
  *
  * @param {(name: string) => string | undefined} get - header lookup

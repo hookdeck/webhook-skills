@@ -17,18 +17,17 @@ notes: >
   const computedHmac = CryptoJS.enc.Base64.stringify(hmac);' 'SecretKeySpec secretKey = new
   SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");' From the docs (registry
   summary): `X-Violet-Hmac: <base64>` = standard Base64 of HMAC-SHA256(app secret as UTF-8, raw body).
-  Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's VIOLET source exactly: HMAC
-  controller, algorithm "sha256", header_key "x-violet-hmac", encoding "base64"). The X-Violet-Hmac
+  Bare value, no prefix. SIGNATURE SCHEME: The X-Violet-Hmac
   header carries the bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value
   as one digest (no list splitting or prefix parsing). The signature is standard base64 (padded)
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
-  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  (case-sensitive): require the 44-character padded standard-base64 form
   ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
   constant time. Decoding alone is not enough: a value whose last character carries stray low bits
-  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: The
+  decodes to the same bytes, so the skill must reject it explicitly. Secret: The
   channel's app secret (the same secret used for API calls), as UTF-8 bytes; not a per-webhook secret.
   Use it as UTF-8 bytes. Env var: VIOLET_WEBHOOK_SECRET. Validate the signature's format before
   decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
@@ -44,8 +43,7 @@ notes: >
   event types (52): ORDER_ACCEPTED, ORDER_UPDATED, ORDER_COMPLETED, ORDER_SHIPPED, ORDER_DELIVERED,
   ORDER_REFUNDED, ORDER_CANCELLED, ORDER_FAILED, MERCHANT_CONNECTED, MERCHANT_DISCONNECTED,
   MERCHANT_ENABLED, MERCHANT_DISABLED, MERCHANT_NEEDS_ATTENTION, MERCHANT_COMPLETE (and 38 more).
-  Handle a few common ones and log the rest. Method: POST. Hookdeck's Violet source manages the method
-  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
   (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
   check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show

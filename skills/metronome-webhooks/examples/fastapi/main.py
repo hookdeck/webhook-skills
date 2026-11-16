@@ -29,8 +29,8 @@ _HEX64 = re.compile(rb"[0-9a-fA-F]{64}")
 
 
 def tolerance_seconds() -> float:
-    # Retries and Hookdeck replays resend the original X-Metronome-Date, and Hookdeck
-    # applies no tolerance itself, so the window is OFF unless you opt in.
+    # Retries and Hookdeck replays resend the original X-Metronome-Date,
+    # so the window is OFF unless you opt in.
     try:
         return max(float(os.getenv("METRONOME_WEBHOOK_TOLERANCE_SECONDS", "0")), 0.0)
     except ValueError:

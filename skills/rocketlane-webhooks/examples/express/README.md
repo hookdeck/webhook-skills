@@ -61,8 +61,7 @@ npx hookdeck-cli listen 3000 rocketlane --path /webhooks/rocketlane
 ```
 
 Paste the printed URL as the webhook URL in Rocketlane. The credentials must arrive on the
-first request: Hookdeck never sends a 401 + WWW-Authenticate challenge, it verifies the
-request as received.
+first request; a 401 + WWW-Authenticate challenge flow won't work.
 
 ## How It Works
 

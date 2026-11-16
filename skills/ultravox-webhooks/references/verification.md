@@ -18,8 +18,7 @@ this concatenated string using your webhook secret as the key."
 > Give the Ultravox webhook exactly one secret and paste it here. A webhook without a secret is unsigned, and one with several secrets sends a list of signatures, so both fail verification.
 
 The docs say the signature header "may contain multiple signatures separated by commas". That
-happens for a webhook with several secrets. Hookdeck's Ultravox source (and these examples) compare
-the **whole** header to a single expected digest, so a list fails. Keep one secret per webhook.
+happens for a webhook with several secrets. These examples compare the **whole** header to a single expected digest, so a list fails. Keep one secret per webhook.
 
 ## Implementation
 
@@ -47,7 +46,7 @@ Complete handlers: [Express](../examples/express/), [Next.js](../examples/nextjs
 ## Timestamp Tolerance (opt-in)
 
 The examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the
-original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would
+original headers and timestamp, so a fixed window would
 reject legitimate retries. If you receive directly from Ultravox and want replay protection, set
 `ULTRAVOX_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). Ultravox's own example rejects anything
 older than 1 minute. Either way, dedupe retries and duplicates idempotently.

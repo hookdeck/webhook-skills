@@ -43,4 +43,4 @@ To receive real webhooks locally:
 npx hookdeck-cli listen 8000 xtremepush --path /webhooks/xtremepush
 ```
 
-Use the Hookdeck URL as the webhook URL in Xtremepush. Hookdeck's Xtremepush source pre-selects POST without managing the method, so allow any other method the sender uses on the source.
+Use the Hookdeck URL as the webhook URL in Xtremepush. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).

@@ -1,6 +1,6 @@
 # camelAI Webhooks - FastAPI Example
 
-Minimal example of receiving [camelAI](https://camelai.com) (camelRun) webhooks with signature verification in FastAPI. camelRun signs deliveries per [Standard Webhooks](https://www.standardwebhooks.com/) (`webhook-id`, `webhook-timestamp`, `webhook-signature`), verified here with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent the handler reads the `svix-*` spelling of the same headers instead, as Hookdeck does.
+Minimal example of receiving [camelAI](https://camelai.com) (camelRun) webhooks with signature verification in FastAPI. camelRun signs deliveries per [Standard Webhooks](https://www.standardwebhooks.com/) (`webhook-id`, `webhook-timestamp`, `webhook-signature`), verified here with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent the handler reads the `svix-*` spelling of the same headers instead.
 
 ## Prerequisites
 

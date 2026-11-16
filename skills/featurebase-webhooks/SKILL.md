@@ -64,7 +64,7 @@ Rules that matter:
 - Read the raw body: `express.raw({ type: '*/*' })` in Express, `await request.arrayBuffer()` in Next.js, `await request.body()` in FastAPI.
 - Check the signature is exactly 64 hex characters before decoding. Compare the whole header value as one digest, with a constant-time comparison.
 - Missing or empty headers, a malformed signature or a mismatch: respond `401`.
-- **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Featurebase's own sample rejects timestamps older than 5 minutes. If you receive directly and want that, opt in with `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). `X-Webhook-Timestamp` is Unix seconds.
+- **Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Featurebase's own sample rejects timestamps older than 5 minutes. If you receive directly and want that, opt in with `FEATUREBASE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). `X-Webhook-Timestamp` is Unix seconds.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

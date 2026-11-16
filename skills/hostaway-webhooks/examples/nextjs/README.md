@@ -58,7 +58,7 @@ Hostaway can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (
 npx hookdeck-cli listen 3000 hostaway --path /webhooks/hostaway
 ```
 
-Put the printed URL in the Hostaway webhook settings. Hookdeck's Hostaway source pre-selects POST without managing the method, so allow any other method Hostaway uses on the source too. Hookdeck never sends a 401 challenge, so the credentials must arrive with each request.
+Put the printed URL in the Hostaway webhook settings. Hookdeck's Hostaway source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method Hostaway uses on the source too. There is no 401 challenge round trip, so the credentials must arrive with each request.
 
 ## How It Works
 

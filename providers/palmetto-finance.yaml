@@ -16,8 +16,7 @@ notes: >
   PALMETTO_FINANCE_WEBHOOK_HEADER (default 'apiKey') and the expected value from
   PALMETTO_FINANCE_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
   user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
-  parse a 'Bearer ' prefix. This is what Hookdeck's Palmetto Finance source does (API key
-  verification: API Key Header + exact whole API Key value). Missing header or mismatch: 401. Compare in
+  parse a 'Bearer ' prefix. Missing header or mismatch: 401. Compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on
   SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never
   pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static
@@ -31,9 +30,7 @@ notes: >
   (the example uses POST). The examples must not be POST-only: accept GET, POST, PUT, PATCH and
   DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
   for each; FastAPI: api_route with those methods), check the credential first for every method, and
-  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Palmetto Finance source
-  pre-selects POST without managing the method, so any other method the sender uses must also be
-  allowed on the source. Body: flat event objects with event plus the event's fields (accountId,
+  handle an empty body. Say in SKILL.md and setup.md that the Hookdeck source must allow whatever method the sender uses (see https://hookdeck.com/docs/sources#custom-methods). Body: flat event objects with event plus the event's fields (accountId,
   applicationId, ...); event e.g. accountCreated, applicationStatus, contractSigned,
   milestoneAchieved, quoteCreated, documentUploaded. Dispatch on event. 30-second timeout;
   5xx/429/network errors retried up to 9 times, other 4xx not; 10 failures disable a subscription.

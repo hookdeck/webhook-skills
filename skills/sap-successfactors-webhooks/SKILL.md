@@ -22,7 +22,7 @@ Requests are **not signed**: the REST connection's Authentication Type is either
 Authentication** or **OAuth**, and this skill covers Basic. OAuth is not covered by Hookdeck's SAP
 SuccessFactors source.
 
-> Use Basic authentication on the Integration Center REST destination. Hookdeck never answers with a 401 challenge, so the credentials have to arrive with each request; if deliveries show as failed verification, they are not.
+> Use Basic authentication on the Integration Center REST destination. The credentials have to arrive with each request; if deliveries show as failed verification, they are not.
 
 ## When to Use This Skill
 
@@ -97,8 +97,7 @@ def verify(headers, username, password):
   (encode both sides; a `str` raises on non-ASCII) and `base64.b64decode(..., validate=True)`.
 - A static shared credential authenticates the **sender, not the body**, and gives **no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
-- The SAP docs don't say whether Basic credentials are sent preemptively. Hookdeck never sends a
-  401 challenge (no `WWW-Authenticate` round trip), so they must arrive with each request.
+- The SAP docs don't say whether Basic credentials are sent preemptively. Event Gateway doesn't prompt for them (a request without them still gets a 200 and is recorded as failed verification), so they must arrive with each request.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
@@ -106,9 +105,7 @@ def verify(headers, username, password):
 ## Request Method and Body
 
 - **Method:** the operation's HTTP Method is user-chosen: "Choose either GET or POST HTTP method
-  for the connection". Accept both; POST is recommended. Hookdeck's SAP SuccessFactors source
-  pre-selects POST without managing the method, so any other method the sender uses must also be
-  allowed on the source.
+  for the connection". Accept both; POST is recommended. Allow the method the sender uses on the Hookdeck source too ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Body:** the fields the integration author maps from a starting entity, in the chosen Payload
   Format (JSON or XML). There is **no vendor event field**; the examples use a clearly labelled
   illustrative payload. Parse JSON when the content type says so, otherwise keep the raw text, and

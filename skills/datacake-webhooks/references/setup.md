@@ -36,8 +36,7 @@ receiver compares the whole value as typed, so if you include `Bearer ` in Datac
 ## Setting It Up in Hookdeck
 
 When you create a Datacake source in Hookdeck, it shows the same note: Datacake webhooks are not
-signed, so add a secret header under Headers on the webhook and enter it in Hookdeck (header name
-and exact whole header value). A request without it still gets `200` from Hookdeck, but Hookdeck
+signed, so add a secret header under Headers on the webhook and enter it in Hookdeck (header name and value). A request without it still gets `200` from Hookdeck, but Hookdeck
 records it as failed verification and doesn't forward it.
 
 ## Test Mode vs Live Mode

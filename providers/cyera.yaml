@@ -13,13 +13,11 @@ notes: >
   'Concatenate the timestamp and body to a single string (e.g. $TIMESTAMP:$PAYLOAD).' 'Calculate the
   HMAC-SHA256 signature for the string, using the Webhook Secret. Convert the signature to the
   printable ASCII characters (base64). Compare the signature with the webhook signature from the
-  request header X-Webhook-Signature.' SIGNATURE SCHEME (it must match Hookdeck's CYERA source
-  exactly: HMAC controller, algorithm sha256, header x-webhook-signature, encoding base64,
-  signed_content_template "{header:x-webhook-timestamp}:{body}"). The X-Webhook-Signature header
+  request header X-Webhook-Signature.' SIGNATURE SCHEME (algorithm sha256, header x-webhook-signature, encoding base64,
+  signed content "{x-webhook-timestamp header}:{raw body}"). The X-Webhook-Signature header
   carries the bare standard base64 (padded) digest, no prefix. The signature is standard base64
   (padded) HMAC-SHA256, keyed with the secret, over: the X-Webhook-Timestamp header value, then a
-  literal ":", then the raw request body bytes. Build the signed message as BYTES, exactly as
-  Hookdeck's template does: literal separators as UTF-8, header values as the exact header string
+  literal ":", then the raw request body bytes. Build the signed message as BYTES: literal separators as UTF-8, header values as the exact header string
   encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never
   trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
   Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
@@ -34,16 +32,14 @@ notes: >
   'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
   hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
   signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
-  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
-  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an
   opt-in tolerance (an env var such as CYERA_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so
   in SKILL.md and verification.md (X-Webhook-Timestamp is Unix seconds). The separator is a COLON.
   Cyera expects 201 Created when a privacy request was created and 200 for health checks and
   reminders; completion is reported later by a PUT to the body's `webhook_callback_url` with an API
   key (out of scope beyond a note). Events: dispatch on the body's `request_type` (health_check,
   access, deletion, opt_out, readiness_check); access/deletion/opt_out bodies carry `topic`,
-  identifiers, `webhook_callback_url` and request ids. Method: POST. Hookdeck's Cyera source manages
-  the method as POST, so the examples handle POST on the webhook route. Express examples must read the
+  identifiers, `webhook_callback_url` and request ids. Method: POST. The examples handle POST on the webhook route. Express examples must read the
   raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are
   verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only
   after the check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's

@@ -35,7 +35,7 @@ def signature_headers(headers: Mapping[str, str]) -> Dict[str, Optional[str]]:
     """Read the three signature headers.
 
     Axilio sends webhook-*; if webhook-id is absent the svix-* equivalents are
-    used instead (Hookdeck does the same). Values are returned under the names
+    used instead. Values are returned under the names
     the standardwebhooks library expects.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"

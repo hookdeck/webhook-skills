@@ -61,9 +61,8 @@ printf '{"uid":1,"indexUid":"movies","status":"succeeded","type":"documentAdditi
 npx hookdeck-cli listen 3000 meilisearch --path /webhooks/meilisearch
 ```
 
-Use the printed URL as the webhook URL in Meilisearch. Hookdeck stores gzip bodies as binary,
-so events show a binary body in the dashboard; it forwards the original bytes and the
-`Content-Encoding` header.
+Use the printed URL as the webhook URL in Meilisearch. Your handler receives the gzip body and
+the `Content-Encoding` header as Meilisearch sent them.
 
 ## How It Works
 

@@ -23,7 +23,7 @@ def _env(monkeypatch, caplog):
 
 
 def sign(body, secret=SECRET) -> str:
-    """x-modem-signature = HMAC-SHA512 hex of the raw body (as Hookdeck's Modem Pay source checks it)."""
+    """x-modem-signature = HMAC-SHA512 hex of the raw body."""
     if isinstance(body, str):
         body = body.encode()
     return hmac.new(secret.encode(), body, hashlib.sha512).hexdigest()

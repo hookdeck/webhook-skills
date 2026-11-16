@@ -82,8 +82,8 @@ Choose the Bearer token credential type for the webhook and paste the whole Auth
 value here, including "Bearer ". Basic and OAuth credentials are not covered by Hookdeck's
 Nexthink source (`NEXTHINK`).
 
-The request method is user-chosen. Hookdeck's Nexthink source pre-selects POST without
-managing the method, so if the webhook uses PUT or PATCH, allow that method on the source too.
+The request method is user-chosen, so allow the method your webhook uses on the Hookdeck source
+([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 See [references/setup.md](references/setup.md).
 
 ## Environment Variables

@@ -17,8 +17,7 @@ notes: >
   `{t}.{rawBody}`; v1 signs `{t}.{h}.{values of the h headers joined by "."}.{rawBody}` (missing
   header = ""). The default h is "content-type x-event-id x-event-type". The verify-signatures
   page recommends v0 for most uses, but v1 is documented on both verification pages
-  (/webhooks/verify-signatures and /webhooks/transfers/verification) and is what Hookdeck's
-  verifier computes, so the examples verify v1 when v1 and h are present, else v0. Reject when
+  (/webhooks/verify-signatures and /webhooks/transfers/verification) so the examples verify v1 when v1 and h are present, else v0. Reject when
   |now - t| > 5 minutes (CDP's default). Validate hex length before timingSafeEqual. Secret is
   returned once in the subscription-create response (metadata.secret via CLI/REST, .secret on the
   SDK result). No handshake, no IP ranges published. The CDP SDK has no webhook-verify helper.

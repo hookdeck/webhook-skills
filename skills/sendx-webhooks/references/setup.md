@@ -40,7 +40,7 @@ with header `X-Team-ApiKey`):
 ## With Hookdeck
 
 Create a source with type **SendX** and paste your SendX team API key. SendX signs webhooks with it.
-Hookdeck's SendX source verifies the signature and manages the method as `POST`. Point the SendX
+Hookdeck's SendX source verifies the signature. Point the SendX
 webhook URL at the Hookdeck source URL.
 
 For local development:

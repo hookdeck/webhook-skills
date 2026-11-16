@@ -55,7 +55,7 @@ def verify_bump_signature(raw_body: bytes, header, secret: str) -> bool:
 - **Compare in constant time**: `crypto.timingSafeEqual` on equal-length Buffers, `hmac.compare_digest` on bytes (not `str`).
 - **Missing or empty header, malformed value or mismatch: respond `401`.**
 - **Parse only after verifying**, and check the type of the body and of `api`/`diff` before reading into them.
-- **Hookdeck:** the Bump.sh source type in Hookdeck verifies this signature (HMAC SHA-256, `x-bump-signature-256`, hex) on its own. Your handler should still verify if it can be reached directly.
+- **Hookdeck:** the Bump.sh source type in Hookdeck verifies this signature on its own. Your handler should still verify if it can be reached directly.
 
 ## Debugging Verification Failures
 

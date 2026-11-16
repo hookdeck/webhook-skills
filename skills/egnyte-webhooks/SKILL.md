@@ -69,7 +69,7 @@ the source's key:
 
 > Paste the authHeader value exactly as set on the Egnyte webhook, including any "Bearer " prefix.
 
-Hookdeck compares the whole `Authorization` header to that value, the same as the examples here.
+Hookdeck checks the header against that value, as the examples here do.
 
 ## Events and Payload
 

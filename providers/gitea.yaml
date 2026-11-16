@@ -8,7 +8,7 @@ notes: >
   Self-hosted Git service. Header X-Gitea-Signature: bare hex HMAC-SHA256 of the JSON payload
   keyed with the webhook Secret (no prefix); that is the raw body only for POST + application/json.
   Gitea also sends GitHub-compatible X-Hub-Signature-256
-  (sha256=<hex>); verify X-Gitea-Signature (what Hookdeck checks). If no secret is set, the headers
+  (sha256=<hex>); verify X-Gitea-Signature. If no secret is set, the headers
   are present but empty, so reject an empty signature. Event name in X-Gitea-Event (push,
   pull_request, issues, issue_comment, create, delete, release). Form-encoded and GET deliveries
   are still signed over the JSON payload, not the bytes sent, so they fail verification; set the

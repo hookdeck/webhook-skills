@@ -7,8 +7,7 @@ docs:
 notes: >
   Automattic's HOSTED WordPress service and its NATIVE webhooks feature ("Use
   WordPress.com Webhooks", last reviewed 2026-08-11). Hookdeck source type
-  WORDPRESS_COM (slug wordpress-com, hookdeck/core#5669): schema only,
-  http_method_managed_post, NO verification controller.
+  WORDPRESS_COM (slug wordpress-com).
 
   NOT WooCommerce (own signed scheme, X-WC-Webhook-Signature, HMAC-SHA256 base64 —
   covered by woocommerce-webhooks; never borrow its headers or verifier), NOT
@@ -40,8 +39,7 @@ notes: >
   is visible to any site admin and may appear in logs. Plus HTTPS, plus treating the
   payload as untrusted and re-fetching authoritative data
   (GET https://public-api.wordpress.com/rest/v1.1/sites/{site}/posts/{ID}). With
-  Hookdeck the Source URL is the secret endpoint and the WordPress.com source performs
-  no signature check; the app should verify Hookdeck's own x-hookdeck-signature
+  Hookdeck the Source URL is the secret endpoint (WordPress.com sends no signature); the app should verify Hookdeck's own x-hookdeck-signature
   (HMAC-SHA256, base64, raw body) — the ONE HMAC the skill may show, clearly labelled
   as Hookdeck's.
 

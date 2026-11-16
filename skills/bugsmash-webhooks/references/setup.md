@@ -42,11 +42,11 @@ Then `POST /webhook/test` ("fire a test event") sends a signed sample delivery.
 ## Using Hookdeck as the Source
 
 In Hookdeck choose the **BugSmash** source type and paste the whole `secret_key`, including the
-`bgsmsh_` prefix. Hookdeck verifies `X-BugSmash-Signature` against `{X-Webhook-Timestamp}.{body}`.
+`bgsmsh_` prefix. Hookdeck verifies the signature.
 
-Hookdeck's BugSmash source pre-selects POST without managing the method (you can change it), and
+Hookdeck's BugSmash source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), and
 BugSmash's docs don't name the method it uses. If deliveries arrive with another method, allow that
-method on the source too. Hookdeck applies no timestamp window, so retries and replays still verify.
+method on the source too.
 
 ## Test Mode vs Live Mode
 

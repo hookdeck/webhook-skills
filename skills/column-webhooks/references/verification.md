@@ -15,7 +15,7 @@ Column-Signature: <64 lowercase hex characters>
 
 Column's docs say to use the raw payload without any modification: prettifying, deserialising and re-serialising, or trimming whitespace can change the signature.
 
-The docs never state the output encoding. Hookdeck's Column source uses hex, confirmed by two production integrations (hackclub/hcb, formancehq/payments). The docs also show no header value and no test vector.
+The docs never state the output encoding. Hex is confirmed by two production integrations (hackclub/hcb, formancehq/payments). The docs also show no header value and no test vector.
 
 ## How Do I Compare Safely?
 

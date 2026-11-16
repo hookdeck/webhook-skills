@@ -16,15 +16,14 @@ notes: >
   `payment_response_hash_key` on the business profile and store it securely.' From the docs (registry
   summary): Header `X-Webhook-Signature-512: <hex>`, no prefix. MAC = hex of HMAC-SHA512(key = the
   business profile's `payment_response_hash_key`, message = the raw request body). Compare in constant
-  time. SIGNATURE SCHEME (it must match Hookdeck's HYPERSWITCH source exactly: HMAC controller,
-  algorithm "sha512", header_key "x-webhook-signature-512", encoding "hex"). The
+  time. SIGNATURE SCHEME (algorithm sha512, header x-webhook-signature-512, encoding hex). The
   X-Webhook-Signature-512 header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA512, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 128 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 128 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One key per business profile
   (`payment_response_hash_key`), set on the profile; the docs do not say whether Hyperswitch generates
   it or the merchant chooses it. Use it as UTF-8 bytes. Env var: HYPERSWITCH_WEBHOOK_SECRET. Validate
@@ -43,8 +42,7 @@ notes: >
   payment_succeeded, payment_failed, payment_processing, payment_cancelled,
   payment_cancelled_post_capture, payment_authorized, payment_partially_authorized, payment_captured,
   payment_expired, action_required, refund_succeeded, refund_failed, refund_review, dispute_opened
-  (and 19 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's Hyperswitch
-  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  (and 19 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is HYPERSWITCH, labelled 'Hyperswitch'.

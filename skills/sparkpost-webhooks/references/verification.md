@@ -96,8 +96,7 @@ not a verification scheme.
 
 ### Hookdeck
 
-Hookdeck's `SPARKPOST` source verifies **Basic Auth**: it checks the incoming
-`Authorization: Basic …` header against the username and password configured on the source.
+Hookdeck's `SPARKPOST` source verifies **Basic Auth** credentials against the username and password configured on the source.
 Hookdeck does **not** implement the OAuth 2.0 token-URL flow, so if Hookdeck sits in front of your
 handler, use `auth_type: "basic"` on the SparkPost webhook and configure the same credentials on
 the Hookdeck source.

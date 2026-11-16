@@ -68,8 +68,7 @@ Form.io must be able to reach your machine. Tunnel with the Hookdeck CLI (no acc
 npx hookdeck-cli listen 8000 formio --path /webhooks/formio
 ```
 
-Put the printed URL in the Webhook action's **Request URL**. Hookdeck's Form.io source pre-selects
-POST only: allow PUT and DELETE on the source too.
+Put the printed URL in the Webhook action's **Request URL**. Hookdeck's Form.io source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)): allow PUT and DELETE on the source too.
 
 ## How It Works
 

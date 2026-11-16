@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Read the signature headers. Standard Webhooks uses webhook-*; when
- * webhook-id is absent, fall back to the svix-* names, as Hookdeck does.
+ * webhook-id is absent, fall back to the svix-* names.
  * Returns them under the webhook-* names the library expects.
  */
 function readSignatureHeaders(get) {

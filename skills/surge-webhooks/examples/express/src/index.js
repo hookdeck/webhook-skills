@@ -15,8 +15,8 @@ const PORT = process.env.PORT || 3000;
 //   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list during rotation)
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
 // Key: base64-decode of the secret after its `whsec_` prefix.
-// Hookdeck's Surge source also accepts the svix-* header names when
-// webhook-id is absent, so this handler does the same.
+// This handler also accepts the svix-* header names when
+// webhook-id is absent.
 // ---------------------------------------------------------------------------
 
 /**

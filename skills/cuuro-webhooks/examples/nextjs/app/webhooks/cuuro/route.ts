@@ -6,7 +6,7 @@ import { Webhook } from 'svix';
 
 export const dynamic = 'force-dynamic';
 
-// Cuuro sends svix-* headers; Hookdeck also accepts the Standard Webhooks webhook-* names
+// Cuuro sends svix-* headers; this handler also accepts the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('svix-id') ? 'svix' : 'webhook';
   return {

@@ -41,7 +41,7 @@ Steps in the examples:
 
 ## Replay Protection
 
-Affonso's docs sample rejects events more than 300 seconds old. The examples **don't check this by default**. Affonso retries a failed delivery up to 11 times over 48 hours, and Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate redeliveries. Hookdeck applies no tolerance either.
+Affonso's docs sample rejects events more than 300 seconds old. The examples **don't check this by default**. Affonso retries a failed delivery up to 11 times over 48 hours, and Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate redeliveries.
 
 To opt in, set `AFFONSO_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`). Unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. With the window on, a non-numeric `X-Affonso-Timestamp` is rejected. Use the event `id` for idempotency (see webhook-handler-patterns).
 

@@ -17,18 +17,15 @@ notes: >
   'For 2026-01-01, the HMAC key is your API key (the same X-DELIVEREASY-API-KEY you use for requests).
   For 2025-01-01, a separate webhook secret is used instead.' From the docs (registry summary):
   base64(HMAC-SHA256(API key, raw body)) (strict, i.e. padded, base64), the whole header value with no
-  prefix. SIGNATURE SCHEME (it must match Hookdeck's DELIVEREASY source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-signature", encoding "base64"). The x-signature header carries the
+  prefix. SIGNATURE SCHEME (algorithm sha256, header x-signature, encoding base64). The x-signature header carries the
   bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no
   list splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with
   the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
   the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
-  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
   compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
-  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
-  but Hookdeck rejects it, so the skill must reject it too. Secret: The Lastmile account's Delivereasy
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes, so the skill must reject it. Secret: The Lastmile account's Delivereasy
   API key is the HMAC key; there is no separate webhook secret. Use it as UTF-8 bytes. Env var:
   DELIVEREASY_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
   alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
@@ -41,7 +38,7 @@ notes: >
   of scope; say so. Webhook URLs are configured by a Delivereasy representative. Events: there is no
   event-name field or header. Every Lastmile delivery is the booking resource itself (`id`,
   `booking_identifier`, `status`, `driver`, `pickup`, `dropoff`, ...); dispatch on `status`. Method:
-  POST. Hookdeck's Delivereasy source manages the method as POST, so the examples handle POST on the
+  POST. The examples handle POST on the
   webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. Hookdeck's source type is DELIVEREASY,

@@ -18,7 +18,7 @@ This is **not** Standard Webhooks: there is no `webhook-id`, nothing is base64-d
 
 ## Implementation
 
-There is no Upload-Post SDK verification helper, so verify manually. Build the signed message as bytes, the way Hookdeck's template does: the timestamp header string encoded latin1 (never trimmed or reformatted), a `.`, then the body bytes exactly as received.
+There is no Upload-Post SDK verification helper, so verify manually. Build the signed message as bytes: the timestamp header string encoded latin1 (never trimmed or reformatted), a `.`, then the body bytes exactly as received.
 
 Node (Express with `express.raw({ type: '*/*' })`, Next.js with `Buffer.from(await request.arrayBuffer())`):
 
@@ -56,7 +56,7 @@ Respond `401` for a missing or empty header, a malformed value or a mismatch.
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. If you receive deliveries directly and want replay protection, set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); Upload-Post's own samples reject timestamps more than 300 seconds old, so `300` matches them. The examples then reject deliveries whose `X-Upload-Post-Timestamp` (Unix seconds) differs from now by more than that. Idempotency on the event is the other defence.
+Not by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. If you receive deliveries directly and want replay protection, set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); Upload-Post's own samples reject timestamps more than 300 seconds old, so `300` matches them. The examples then reject deliveries whose `X-Upload-Post-Timestamp` (Unix seconds) differs from now by more than that. Idempotency on the event is the other defence.
 
 ## Common Gotchas
 

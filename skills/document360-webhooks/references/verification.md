@@ -14,8 +14,7 @@ X-Docs-Secret: your-shared-secret
   `Authorization`). Look it up case-insensitively.
 - The expected value is `DOCUMENT360_WEBHOOK_SECRET`: the **exact, whole** header value,
   including any `Bearer ` prefix you typed. Compare it in full; don't strip or parse a prefix.
-- A missing header or a mismatch gets `401`. This matches Hookdeck's Document360 source
-  (header name plus exact whole value).
+- A missing header or a mismatch gets `401` from the examples. Hookdeck's Document360 source checks the same header.
 
 ## What This Does Not Protect Against
 
@@ -79,8 +78,7 @@ def verify_document360_request(headers, secret=None, header_name=None) -> bool:
 ## Common Gotchas
 
 - **Accept POST and PUT.** The **Request method** dropdown offers both. A POST-only route
-  returns 404/405 to a PUT channel. In Hookdeck, the Document360 source pre-selects POST without
-  managing the method, so allow PUT on the source too.
+  returns 404/405 to a PUT channel. In Hookdeck, the Document360 source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow PUT on the source too.
 - **Empty body.** Handle it: an authenticated request with no body should still get `200`.
 - **Whole-value compare.** If the channel header is `Authorization: Bearer abc`, the expected
   value is `Bearer abc`, not `abc`.

@@ -7,8 +7,8 @@ export interface SignatureHeaders {
   'svix-signature': string;
 }
 
-// Celitech deliveries carry svix-* headers. Hookdeck also accepts the Standard
-// Webhooks webhook-* names when svix-id is absent, so do the same. The three
+// Celitech deliveries carry svix-* headers. Also accept the Standard
+// Webhooks webhook-* names when svix-id is absent. The three
 // values are handed to the library under the svix-* names it expects.
 export function resolveSignatureHeaders(headers: Headers): SignatureHeaders | null {
   const prefix = headers.get('svix-id') ? 'svix' : 'webhook';

@@ -62,8 +62,7 @@ def verify_payrix_pro_request(headers, secret=None, header_name=None) -> bool:
 ## Common Gotchas
 
 - **Compare the whole value.** If the Header Value is `Bearer abc123`, `PAYRIX_PRO_WEBHOOK_SECRET`
-  must be `Bearer abc123`. Don't strip or parse the prefix. This matches Hookdeck's Payrix Pro
-  source (API Key Header + exact whole API Key).
+  must be `Bearer abc123`. Don't strip or parse the prefix.
 - **Every action needs the header.** Actions without one send nothing to verify.
 - **Every method.** Check the credential first for GET, POST, PUT, PATCH and DELETE alike.
 - **Empty bodies.** Some requests may have no body; don't fail on that.
@@ -81,5 +80,5 @@ def verify_payrix_pro_request(headers, secret=None, header_name=None) -> bool:
 | 401 only with `Bearer` values | Secret stored without the `Bearer ` prefix |
 | 401 only on some requests | Another action on the alert has no header set |
 | 401 behind a proxy | The proxy strips or renames the header |
-| 405/404 at Hookdeck | Source doesn't allow the method Payrix used (only POST is pre-selected) |
+| Non-POST deliveries fail through Hookdeck | Source doesn't allow the method Payrix used |
 | 400 after authentication | Content-Type says JSON but the body isn't valid JSON |

@@ -51,7 +51,7 @@ Build the signed message as bytes: never decode the body to a string and re-enco
 
 ## Timestamp Tolerance (opt-in)
 
-Do not reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. The examples check `X-Chili-Timestamp` against the clock only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). Chili Piper's own example uses 300 seconds.
+Do not reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples check `X-Chili-Timestamp` against the clock only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). Chili Piper's own example uses 300 seconds.
 
 ## Event Types
 

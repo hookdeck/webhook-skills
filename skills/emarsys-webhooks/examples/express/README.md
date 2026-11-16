@@ -47,8 +47,7 @@ npm test
 The tests send illustrative payloads with correct, wrong, malformed and missing credentials. No
 Emarsys account is needed.
 
-To try it by hand (send the header preemptively; this app never sends a 401 challenge, and
-neither does Hookdeck):
+To try it by hand (send the header preemptively; this app never sends a 401 challenge):
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/emarsys \

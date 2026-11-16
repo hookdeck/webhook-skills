@@ -64,7 +64,7 @@ event = Webhook(secret).verify(
 )
 ```
 
-**Header fallback.** Apply this before calling `verify()`. The examples read the `webhook-*` headers and, when `webhook-id` is absent, the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`), exactly as Hookdeck does. They then pass the three values to the library under the `webhook-*` names it expects:
+**Header fallback.** Apply this before calling `verify()`. The examples read the `webhook-*` headers and, when `webhook-id` is absent, the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`). They then pass the three values to the library under the `webhook-*` names it expects:
 
 ```javascript
 const prefix = req.get('webhook-id') ? 'webhook' : 'svix';
@@ -79,7 +79,7 @@ const headers = {
 
 The `standardwebhooks` libraries always enforce a fixed **5-minute** timestamp window. **Hookdeck retries and replays resend the original request, including its original `webhook-timestamp`, so the library rejects them once they are more than 5 minutes old.** If you receive Speed webhooks through Hookdeck (or replay deliveries later), use this verifier and set `toleranceSeconds` to `null` (no window) or a wider value.
 
-It accepts the secret in either prefix (`wsec_` or `whsec_`) and, for a secret with neither, uses its raw UTF-8 bytes as the key (as Hookdeck does).
+It accepts the secret in either prefix (`wsec_` or `whsec_`) and, for a secret with neither, uses its raw UTF-8 bytes as the key.
 
 ```javascript
 const crypto = require('crypto');

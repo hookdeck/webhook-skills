@@ -1,6 +1,6 @@
 # Velt Webhooks - Next.js Example
 
-Minimal example of receiving [Velt](https://docs.velt.dev/webhooks/advanced) Advanced (V2) webhooks with signature verification. Velt signs these with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Velt](https://docs.velt.dev/webhooks/advanced) Advanced (V2) webhooks with signature verification. Velt signs these with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

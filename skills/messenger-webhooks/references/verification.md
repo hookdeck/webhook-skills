@@ -8,7 +8,7 @@ signature on every POST. See also the
 
 Meta sends `hub.mode=subscribe`, `hub.verify_token` and `hub.challenge` whenever you configure
 the webhook. Respond `200` with the raw `hub.challenge` when the mode is `subscribe` and the
-token matches `MESSENGER_VERIFY_TOKEN`; otherwise `403`. (Hookdeck's edge answers this itself.)
+token matches `MESSENGER_VERIFY_TOKEN`; otherwise `403`. (Behind Hookdeck, the source answers this for you.)
 
 ## 2. POST Signature
 

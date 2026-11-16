@@ -13,19 +13,16 @@ notes: >
   Encoding.UTF8.GetBytes(secret); using HMACSHA256 hasher = new(secretBytes); ... return
   $"sha256={Convert.ToBase64String(sha256Bytes)}";' 'Read Request Body: The incoming HTTP request body
   is read as a raw payload.' From the docs (registry summary): `x-dd-signature: sha256=<base64>` =
-  `sha256=` + standard Base64 of HMAC-SHA256(secret as UTF-8, raw body as UTF-8). SIGNATURE SCHEME (it
-  must match Hookdeck's TOKITY source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-dd-signature", encoding "base64"). The x-dd-signature header carries `sha256=<base64>`. Strip a
-  leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
-  accept the value with or without the prefix. The signature is standard base64 (padded) HMAC-SHA256,
+  `sha256=` + standard Base64 of HMAC-SHA256(secret as UTF-8, raw body as UTF-8). SIGNATURE SCHEME: The x-dd-signature header carries `sha256=<base64>`. Strip a
+  leading `sha256=` before validating the digest, and accept the value with or without the prefix. The signature is standard base64 (padded) HMAC-SHA256,
   keyed with the secret, over the raw request body bytes only (no timestamp, id or other header is
   signed). Build the signed message as BYTES: the raw body bytes exactly as received, never decoded to
   a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the
   secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
-  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  (case-sensitive): require the 44-character padded standard-base64 form
   ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
   constant time. Decoding alone is not enough: a value whose last character carries stray low bits
-  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: Each
+  decodes to the same bytes, so the skill must reject it explicitly. Secret: Each
   webhook registration (and each event) gets its own auto-generated secret, shown with "Display
   detail" and regenerable; used as UTF-8 bytes. Use it as UTF-8 bytes. Env var: TOKITY_WEBHOOK_SECRET.
   Validate the signature's format before decoding it (exact length and alphabet), then compare in
@@ -36,7 +33,7 @@ notes: >
   there is no replay window to check; do not invent one from unsigned headers or body fields. Events:
   there is no event-name field or header. A ticket webhook body is the ticket plus `from` (its
   previous state, null on creation), so diff to find the change; chat webhooks send an array. Method:
-  POST. Hookdeck's Tokity source manages the method as POST, so the examples handle POST on the
+  POST. The examples handle POST on the
   webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. Hookdeck's source type is TOKITY,

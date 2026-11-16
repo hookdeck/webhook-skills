@@ -46,7 +46,7 @@ function verifyWebiny(rawBody /* Buffer */, h /* lower-cased headers */, secret)
     ? Buffer.from(secret.slice(6), 'base64')
     : Buffer.from(secret || '', 'utf8');
   if (!key.length) return false;                      // fail closed on an empty key
-  const p = h['webhook-id'] ? 'webhook' : 'svix';     // svix-* fallback, as Hookdeck does
+  const p = h['webhook-id'] ? 'webhook' : 'svix';     // svix-* fallback
   const [id, ts, sig] = [h[`${p}-id`], h[`${p}-timestamp`], h[`${p}-signature`]];
   if (!id || !sig || !/^[1-9][0-9]*$/.test(ts || '')) return false;
   const expected = crypto.createHmac('sha256', key)

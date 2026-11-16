@@ -14,7 +14,7 @@ by it.
 ## Methods
 
 `POST` (default), `PUT`, `PATCH`, `GET` and `DELETE` (`PATCH`, `GET` and `DELETE` generally available since 9.3). Hookdeck's
-Kibana source pre-selects POST without managing the method, so allow any other method the
+Kibana source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method the
 connector uses on the source too.
 
 ## Events

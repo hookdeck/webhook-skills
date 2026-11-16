@@ -7,7 +7,7 @@ const { Webhook, WebhookVerificationError } = require('standardwebhooks');
 const app = express();
 
 // A whsec_ secret is base64-decoded after the prefix (the library does this).
-// Any other secret is used as its raw UTF-8 bytes, matching Hookdeck.
+// Any other secret is used as its raw UTF-8 bytes.
 function createWebhook(secret) {
   if (secret.startsWith('whsec_')) return new Webhook(secret);
   return new Webhook(new TextEncoder().encode(secret), { format: 'raw' });

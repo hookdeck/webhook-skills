@@ -34,7 +34,7 @@ Steps the examples follow:
 
 1. Read the raw body as bytes. Build the signed message as bytes; never decode and re-encode it.
 2. Parse the header: first `t=`, every `s=`. No `t=` fails. Ignore other keys.
-3. Check each `s` is exactly `[A-Za-z0-9+/]{43}=` **before** comparing. Don't decode it first: `Buffer.from(s, 'base64')` silently drops bad characters, and a value whose last character has stray low bits decodes to the same bytes but is not what Khipu sent (Hookdeck rejects it, so the skill does too).
+3. Check each `s` is exactly `[A-Za-z0-9+/]{43}=` **before** comparing. Don't decode it first: `Buffer.from(s, 'base64')` silently drops bad characters, and a value whose last character has stray low bits decodes to the same bytes but is not what Khipu sent, so the skill rejects it.
 4. Compare strings in constant time (`crypto.timingSafeEqual` after a length check; `hmac.compare_digest` on bytes).
 5. Accept if any `s` matches. Otherwise respond `401`.
 
@@ -48,7 +48,7 @@ The worked example from Khipu's docs, used in every example's tests:
 
 ## Replay Protection
 
-The examples **don't check the timestamp by default**. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a window would reject legitimate late redeliveries. To opt in, set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is milliseconds, so the examples compare `|now_ms - t| / 1000`. Unset, `0` or a non-numeric value leaves it off (a non-numeric value logs a warning). Use `payment_id` for idempotency.
+The examples **don't check the timestamp by default**. Hookdeck retries and replays resend the original headers, so a window would reject legitimate late redeliveries. To opt in, set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is milliseconds, so the examples compare `|now_ms - t| / 1000`. Unset, `0` or a non-numeric value leaves it off (a non-numeric value logs a warning). Use `payment_id` for idempotency.
 
 ## Common Gotchas
 

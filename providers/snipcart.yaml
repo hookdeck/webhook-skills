@@ -54,9 +54,7 @@ notes: >
   amount in currency units not cents). Because Hookdeck cannot synchronously return a
   destination's response to the client, those two must point DIRECTLY at the app; only the
   async order/subscription events go through Hookdeck. Hookdeck has a SNIPCART source type
-  (hookdeck/core#5669, merged 2026-09-28; config takes a single api_key = the Snipcart secret
-  key for the webhook's mode; validates as above with the same token format check, no
-  redirects, 5s fail-closed timeout) — not yet listed at hookdeck.com/docs/sources on
+  (added 2026-09-28; it takes the Snipcart secret API key for the webhook's mode and validates the token) — not yet listed at hookdeck.com/docs/sources on
   2026-09-28, so say "recently added". General webhook URL: Store Configurations -> Webhooks; multiple URLs
   separated by semicolons; the dashboard logs each request and has a manual "Send this hook
   again" button. NOT DOCUMENTED, do not fabricate: retry policy/schedule, delivery timeout,

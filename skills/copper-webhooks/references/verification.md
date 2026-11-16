@@ -12,8 +12,7 @@ X-Webhook-Secret: your-secret-value
 
 Your endpoint looks up that header (case-insensitively) and compares the **whole** value with the
 one you stored. Don't strip or parse a `Bearer ` prefix: if you typed `Bearer abc` into the
-subscription, store `Bearer abc`. This matches how Hookdeck's Copper source verifies requests
-(header name plus exact value).
+subscription, store `Bearer abc`. Hookdeck's Copper source checks the same header.
 
 ## What Does This Protect (and Not)?
 
@@ -27,8 +26,7 @@ and no timestamp. So:
 
 The subscription's optional `secret` object is not sent as a header: its key/value pairs are merged
 into the top level of the JSON **body** (there is no `secret` field wrapping them).
-You can compare it as an extra check, but it is weaker (it lives in the payload) and Hookdeck does
-not perform it.
+You can compare it as an extra check, but it is weaker (it lives in the payload).
 
 ## Implementation
 

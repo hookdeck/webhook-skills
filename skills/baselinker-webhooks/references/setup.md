@@ -55,8 +55,7 @@ See [examples/express/](../examples/express/),
 > **The unresolved step.** BaseLinker documents **no action that calls a URL** —
 > not in the Automatic Actions reference, not anywhere in either Help Centre. So
 > this section cannot tell you which control to click, and does not pretend to.
-> What is established is only the *shape* of what arrives (HEAD + query string,
-> from Hookdeck's implementation of the source type). Confirm in your own panel
+> What is established is only the *shape* of what arrives (HEAD + query string). Confirm in your own panel
 > that an outbound-HTTP action exists before building against this; if it does
 > not, the callback is not available to your account and `getJournalList` polling
 > (step 5) is the supported path.
@@ -143,16 +142,12 @@ curl -I 'http://localhost:3000/webhooks/baselinker?order_id=42&state=packed'
 
 When you create a **Baselinker** Source in Hookdeck:
 
-- Its `allowed_http_methods` is **seeded to `["HEAD"]`** when the type is chosen.
-  This is an **unmanaged default**: it seeds the *initial selection only*, remains
-  editable afterwards, and is **not re-applied on later updates**. If you edit the
-  method list, your edit sticks.
+- **HEAD** must be allowed on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - Its auth schema (`SourceConfigBaselinkerAuth`) is
   `{ "properties": {}, "additionalProperties": false }` — it accepts **no secret
   at all**, because there is nothing to verify.
 - Since a HEAD response cannot carry a body, Hookdeck returns the request id in
-  the **`x-hookdeck-request-id` response header** (exposed via
-  `Access-Control-Expose-Headers`). Use it to correlate a delivery with its
+  the **`x-hookdeck-request-id` response header**. Use it to correlate a delivery with its
   dashboard entry.
 
 ## Testing

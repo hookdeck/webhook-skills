@@ -84,7 +84,7 @@ Header names are case-insensitive.
 
 ## Setup with Hookdeck
 
-In Mailcoach, open Settings > Webhooks, create a webhook with your Hookdeck source URL, and **set a secret** on its details page. Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification. Use the same secret as the Hookdeck source's signing secret (Mailcoach source type; Hookdeck manages the method as POST). See [references/setup.md](references/setup.md).
+In Mailcoach, open Settings > Webhooks, create a webhook with your Hookdeck source URL, and **set a secret** on its details page. Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification. Use the same secret as the Hookdeck source's signing secret (Mailcoach source type). See [references/setup.md](references/setup.md).
 
 ## Environment Variables
 

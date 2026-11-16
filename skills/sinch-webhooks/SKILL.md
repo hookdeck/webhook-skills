@@ -47,7 +47,7 @@ function verifySinchSignature(rawBody, { signature, nonce, timestamp }, secret) 
 
 Respond **200** for a valid delivery and **401** for a missing, malformed or mismatched signature. Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check.
 
-**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `SINCH_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
+**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in: set `SINCH_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
 
 Published test vector from Sinch's docs: secret `foo_secret1234`, nonce `01FJA8B4A7BM43YGWSG9GBV067`, timestamp `1634579353` gives `6bpJoRmFoXVjfJIVglMoJzYXxnoxRujzR4k2GOXewOE=`. Every example's tests include it (body in [references/verification.md](references/verification.md)).
 

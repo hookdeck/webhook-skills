@@ -12,7 +12,7 @@ Reditus sends an `X-Signature` header. Its value is the lowercase hex digest of 
 | Key | the secret's UTF-8 bytes, not decoded |
 | Encoding | lowercase hex, 64 characters, no prefix |
 
-Hookdeck's Reditus source uses the same scheme (HMAC, `sha256`, `x-signature`, hex) and compares hex case-insensitively.
+Hookdeck's Reditus source verifies the same signature.
 
 ## Implementation
 

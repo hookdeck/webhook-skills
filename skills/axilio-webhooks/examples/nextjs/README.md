@@ -1,6 +1,6 @@
 # Axilio Webhooks - Next.js Example
 
-Minimal example of receiving [Axilio](https://axilio.ai) webhooks with signature verification. Axilio signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does.
+Minimal example of receiving [Axilio](https://axilio.ai) webhooks with signature verification. Axilio signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead.
 
 ## Prerequisites
 

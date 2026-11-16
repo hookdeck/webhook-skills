@@ -59,7 +59,7 @@ def verify_violet_signature(raw_body: bytes, signature_header: str | None, secre
         return False
     digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
     expected = base64.b64encode(digest)
-    # Compare the base64 strings exactly (as Hookdeck does), as bytes: a value whose last
+    # Compare the base64 strings exactly, as bytes: a value whose last
     # character carries stray low bits decodes to the same digest but is not what Violet sends
     return hmac.compare_digest(signature_header.encode("ascii"), expected)
 

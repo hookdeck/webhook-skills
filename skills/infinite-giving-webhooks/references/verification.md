@@ -62,7 +62,7 @@ def verify(raw_body: bytes, timestamp: str, signature: str, secret: str) -> bool
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Retries (up to 4 more attempts over about 2 hours) and Hookdeck replays resend the original `X-IG-Timestamp` and signature, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate deliveries. Make the handler idempotent instead (dedupe on `X-IG-Webhook-Id`).
+Not by default. Retries (up to 4 more attempts over about 2 hours) and Hookdeck replays resend the original `X-IG-Timestamp` and signature, so a fixed window would reject legitimate deliveries. Make the handler idempotent instead (dedupe on `X-IG-Webhook-Id`).
 
 The examples include an opt-in check: set `INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS` to a positive number and a request whose `X-IG-Timestamp` (Unix seconds) differs from the current time by more than that is rejected with 401. Unset or `0` disables it. Retries and replays older than the window will then fail, so keep the window generous.
 

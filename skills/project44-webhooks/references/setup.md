@@ -42,8 +42,7 @@ Notes:
 - A header is created for each key (max 2).
 - `webhookConfiguration.webhookEventType` selects a granular webhook. Create one configuration per
   event type you need.
-- `method` can be `GET`, `POST`, `PUT` or `PATCH` (default `POST`). If you receive through
-  Hookdeck, its project44 source pre-selects only `POST`: allow any other method you use on the source.
+- `method` can be `GET`, `POST`, `PUT` or `PATCH` (default `POST`). If you receive through Hookdeck, allow the method you use on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - Once the configuration exists, contact your project44 representative to complete the setup.
 
 ## Test

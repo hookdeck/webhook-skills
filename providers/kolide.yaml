@@ -13,15 +13,14 @@ notes: >
   secret.' 'Authorization: c71fd8b49e0736962d16f8410fa0d6f5bb27d7ef35cd1c0b6d4da0b8568921ac' 'data =
   request.body.read ... expected_hmac = OpenSSL::HMAC.hexdigest('sha256', SIGNING_SECRET, data)' From
   the docs (registry summary): `Authorization: <hex>` = hex HMAC-SHA256(endpoint signing secret, raw
-  body). Bare value: no `Bearer`/scheme, no prefix, no timestamp. SIGNATURE SCHEME (it must match
-  Hookdeck's KOLIDE source exactly: HMAC controller, algorithm "sha256", header_key "authorization",
-  encoding "hex"). The Authorization header carries the bare lowercase hex digest, no prefix. Compare
+  body). Bare value: no `Bearer`/scheme, no prefix, no timestamp. SIGNATURE SCHEME (algorithm sha256, header authorization,
+  encoding hex). The Authorization header carries the bare lowercase hex digest, no prefix. Compare
   the WHOLE header value as one digest (no list splitting or prefix parsing). The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
   timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: A per-endpoint
   signing secret, shown with "Reveal Secret" on the webhook settings screen. Rotating it also changes
   X-Kolide-Webhook-Identifier. Use it as UTF-8 bytes. Env var: KOLIDE_WEBHOOK_SECRET. Validate the
@@ -38,8 +37,7 @@ notes: >
   admin_users.created, auth_logs.success, auth_logs.failure, devices.created, devices.registered,
   devices.destroyed, device_trust.status_changed, issues.new, issues.resolved,
   requests.issue_exemption, requests.registration, webhook.test. Handle a few common ones and log the
-  rest. Method: POST. Hookdeck's 1Password Device Trust (Kolide) source manages the method as POST, so
-  the examples handle POST on the webhook route. Express examples must read the raw body with
+  rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

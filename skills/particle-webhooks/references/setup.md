@@ -30,8 +30,7 @@ compared with a stored secret.
 ## Methods and Hookdeck
 
 The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/particle` and check the header
-first on every one. If you route through Hookdeck, its Particle source pre-selects POST without
-managing the method, so any other method your integration uses must also be allowed on the source.
+first on every one. If you route through Hookdeck, allow every method your integration uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Basic Auth Is Not Covered by Hookdeck
 

@@ -27,8 +27,8 @@ HOSTAWAY_WEBHOOK_PASSWORD=your-webhook-password
 
 Create a Hostaway source (source type `HOSTAWAY`) in Hookdeck, enter the same login and password for verification, and point Hostaway at the source URL.
 
-- **Hookdeck never sends a 401 challenge** (no `WWW-Authenticate` round trip), so Hostaway must include the credentials on every request. That is what it does when a login and password are set.
-- Hookdeck's Hostaway source **pre-selects POST without managing the method**. Hostaway's docs don't name the method, so if the sender uses another one (GET, PUT, PATCH, DELETE), also allow it on the source.
+- **No 401 challenge** (no `WWW-Authenticate` round trip), so Hostaway must include the credentials on every request. That is what it does when a login and password are set.
+- Hookdeck's Hostaway source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Hostaway's docs don't name the method, so if the sender uses another one (GET, PUT, PATCH, DELETE), also allow it on the source.
 
 ## Test
 

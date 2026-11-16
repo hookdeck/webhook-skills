@@ -30,8 +30,7 @@ is an optional `auth` scheme (Basic or Bearer) set on the webhook, expected to a
 ## Verification (core)
 
 Choose the Bearer auth scheme on the YouMail webhook, not Basic. In a Hookdeck YouMail source,
-paste the bare token into the **Bearer Token** field; Hookdeck accepts the header with or
-without the `Bearer ` prefix.
+paste the bare token into the **Bearer Token** field.
 
 YouMail's docs say only that the `Bearer` scheme "requires additional `token`" on the webhook;
 they don't print the header it produces. The expected form is `Authorization: Bearer <token>`,

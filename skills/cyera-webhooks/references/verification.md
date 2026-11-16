@@ -16,9 +16,6 @@ signature with the webhook signature from the request header `X-Webhook-Signatur
 | Encoding | Standard base64, padded (44 chars, `[A-Za-z0-9+/]{43}=`), no prefix |
 | Key | The Webhook Secret's UTF-8 bytes, used as-is (examples look like `dgwebhook...`) |
 
-This matches Hookdeck's `CYERA` source: HMAC, `sha256`, header `x-webhook-signature`, base64,
-signed content template `{header:x-webhook-timestamp}:{body}`.
-
 ## Build the Message as Bytes
 
 - Literal separator `:` as UTF-8
@@ -73,7 +70,7 @@ Complete handlers with tests: [Express](../examples/express/), [Next.js](../exam
 
 Cyera's docs include the timestamp in the signed content but describe no freshness window.
 The examples do **not** reject old timestamps by default: Hookdeck retries and replays resend the
-original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would
+original headers and timestamp, so a fixed window would
 reject legitimate retries. To opt in, set `CYERA_WEBHOOK_TOLERANCE_SECONDS` (for example `300`);
 unset or `0` turns it off. When enabled, the timestamp must be digits (Unix seconds).
 

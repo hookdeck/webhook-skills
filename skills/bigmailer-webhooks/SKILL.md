@@ -86,7 +86,7 @@ def verify_bigmailer(raw_body: bytes, signature_header, secret: str) -> bool:
 
 Validate the signature's format (exactly 64 hex characters) before comparing, then compare in constant time. Never call `Buffer.from(sig, 'hex')` on an unvalidated value; it silently drops bad characters.
 
-**Timestamp window:** the examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck's own verification applies no tolerance, so a fixed window would reject legitimate retries. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (unset or `0` = off); `t` is Unix seconds.
+**Timestamp window:** the examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (unset or `0` = off); `t` is Unix seconds.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

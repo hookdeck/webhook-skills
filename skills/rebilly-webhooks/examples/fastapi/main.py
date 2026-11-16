@@ -61,7 +61,7 @@ def verify_rebilly_request(headers, username=None, password=None) -> bool:
 async def require_basic_auth(request: Request) -> None:
     """FastAPI dependency: reject the request before the body is read.
 
-    Hookdeck never sends a 401 challenge, so the credentials must arrive with every request.
+    The credentials must arrive with every request (there is no challenge round trip).
     """
     if not verify_rebilly_request(request.headers):
         raise HTTPException(status_code=401, detail="Invalid or missing basic auth credentials")

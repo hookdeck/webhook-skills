@@ -14,8 +14,7 @@ but only when the agent config sets `event_webhook.signing_secret_id`. Signed de
 Unsigned deliveries still carry `webhook-id` and `webhook-timestamp` but no `webhook-signature`.
 
 Svix's header names (`svix-id`, `svix-timestamp`, `svix-signature`) carry the same values.
-Hookdeck's Omnara source reads the `webhook-*` headers and also accepts the `svix-*` set, and
-the examples do the same: use `webhook-*` when `webhook-id` is present, otherwise `svix-*`.
+The examples read the `webhook-*` headers and also accept the `svix-*` set: use `webhook-*` when `webhook-id` is present, otherwise `svix-*`.
 Then hand the library the three values under the `webhook-*` names it expects.
 
 The algorithm:

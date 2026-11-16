@@ -21,7 +21,7 @@ interface BayouEvent {
 type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-signature', string>;
 
 /**
- * Read the three signature headers. Bayou sends webhook-*; like Hookdeck, fall
+ * Read the three signature headers. Bayou sends webhook-*; fall
  * back to the svix-* names when webhook-id is absent. The result always uses
  * the webhook-* names, which is what the standardwebhooks library expects.
  */

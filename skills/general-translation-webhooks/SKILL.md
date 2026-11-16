@@ -42,7 +42,7 @@ const { Webhook } = require('standardwebhooks');
 
 // rawBody: exact request body string, NOT re-serialised JSON
 function verify(rawBody, req, secret = process.env.GENERAL_TRANSLATION_WEBHOOK_SECRET) {
-  // Fall back to svix-* names when webhook-id is absent (as Hookdeck does)
+  // Fall back to svix-* names when webhook-id is absent
   const p = req.get('webhook-id') ? 'webhook' : 'svix';
   return new Webhook(secret).verify(rawBody, {
     'webhook-id': req.get(`${p}-id`),

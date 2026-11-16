@@ -100,8 +100,8 @@ npx hookdeck-cli listen 8000 wordpress-com --path /webhooks/wordpress-com
 ```
 
 Paste the CLI's HTTPS URL (with `?token=...` appended) into the webhook's URL
-field. Hookdeck's `WORDPRESS_COM` source type runs **no** signature check —
-there is nothing to check — but the request Hookdeck forwards to your app
+field. WordPress.com sends no signature,
+so there is nothing to check — but the request Hookdeck forwards to your app
 carries `x-hookdeck-signature` (HMAC-SHA256, base64, over the raw body), which is
 **Hookdeck's** signature and worth verifying in production.
 

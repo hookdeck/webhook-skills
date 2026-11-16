@@ -33,7 +33,7 @@ HMAC-SHA256 signature of the raw request body in `x-server-authorization-hmac-sh
 
 Paste the HMAC secret from your Deliverect integration settings. Before certification, Deliverect signs with the channelLink or locationId value instead. Some Deliverect calls are GET requests, so also allow GET on this source if your integration receives them.
 
-Hookdeck's Deliverect source pre-selects POST without managing the method, so any other method
+Hookdeck's Deliverect source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method
 the sender uses (GET, PUT, PATCH, DELETE) must also be allowed on the source.
 
 ## Verification (core)

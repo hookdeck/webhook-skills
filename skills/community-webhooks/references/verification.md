@@ -95,8 +95,7 @@ function verifyCommunitySignature(rawBody, signatureHeader, secret, toleranceSec
     .digest('hex');
 
   // Constant-time comparison; timingSafeEqual throws on length mismatch.
-  // Lowercase the incoming signature first: hex is case-insensitive, and
-  // Hookdeck's generic HMAC verifier normalizes both sides the same way.
+  // Lowercase the incoming signature first: hex is case-insensitive.
   try {
     return crypto.timingSafeEqual(
       Buffer.from(signature.toLowerCase()),
@@ -196,8 +195,7 @@ tolerance window would.
   like.
 - **Compare hex case-insensitively.** `0xAB` and `0xab` are the same byte, so
   lowercase the incoming `v1` before comparing. Community's documented example is
-  lowercase and this has not been observed to vary, but Hookdeck's own generic
-  HMAC verifier normalizes both sides, and a case-sensitive compare would reject
+  lowercase and this has not been observed to vary, but a case-sensitive compare would reject
   a signature that is arithmetically correct. Normalizing case leaks nothing
   about the secret, so it costs nothing to be lenient here.
 - **One secret per webhook.** If you have several webhooks pointing at the same

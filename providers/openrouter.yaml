@@ -11,17 +11,15 @@ notes: >
   documented (see gaps). OpenRouter says: '"X-OpenRouter-Signature": `t=${timestamp},v1=${signature}`'
   'const signedPayload = Buffer.concat([ Buffer.from(`${timestamp},`, "utf8"), rawBody, ]); const
   expected = crypto .createHmac("sha256", signingSecret) .update(signedPayload) .digest("hex");'
-  SIGNATURE SCHEME (it must match Hookdeck's OPENROUTER source exactly: HMAC controller, algorithm
-  sha256, header x-openrouter-signature, encoding hex, signed_content_template "{timestamp},{body}").
+  SIGNATURE SCHEME:
   The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t= value parsed from
   the signature header, then a literal ",", then the raw request body bytes. Build the signed message
-  as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8, header values as the
+  as BYTES: literal separators as UTF-8, header values as the
   exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
   value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
   as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
   re-encode it, and never JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's
-  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as
-  Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
+  UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes)
   before the constant-time compare. Secret: the webhook signing secret from the OpenRouter workspace
   settings, used as UTF-8. Env var: OPENROUTER_WEBHOOK_SECRET. Validate the signature's format before
   decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
@@ -29,16 +27,15 @@ notes: >
   an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
   (never str) and base64.b64decode(..., validate=True). Missing or empty signature or signed header,
   malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default.
-  Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies
-  no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
+  Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env
   var such as OPENROUTER_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and
   verification.md (t is Unix seconds; OpenRouter's receiver example uses 300 s).
-  X-OpenRouter-Signature is `t=<unix seconds>,v1=<hex>`. Parse it like Hookdeck: take the t= value and
+  X-OpenRouter-Signature is `t=<unix seconds>,v1=<hex>`. Parse it: take the t= value and
   each v1= value; the signed bytes are the t value, a literal COMMA (not a dot), then the raw body;
   valid when any v1 matches (64 hex chars, case-insensitive). Missing t or v1: 401. Events: dispatch
   on the body's `type` field. Documented event types (4): video.generation.completed,
   video.generation.failed, video.generation.cancelled, video.generation.expired. Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's OpenRouter source manages the method as POST, so the
+  ones and log the rest. Method: POST, so the
   examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

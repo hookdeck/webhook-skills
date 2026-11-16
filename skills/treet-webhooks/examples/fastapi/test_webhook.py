@@ -77,7 +77,7 @@ class TestVerify:
         sig = sign(BODY)
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
         tweaked = sig[:42] + alphabet[(alphabet.index(sig[42]) + 1) % 64] + "="
-        # Same decoded bytes, but Hookdeck compares the exact string, so this must fail.
+        # Same decoded bytes, but not the exact string Treet sent, so this must fail.
         assert base64.b64decode(tweaked, validate=True) == base64.b64decode(sig, validate=True)
         assert not verify_treet_signature(BODY, tweaked, SECRET)
 

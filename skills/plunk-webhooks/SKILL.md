@@ -65,13 +65,11 @@ function verifyPlunkRequest(headers, secret = process.env.PLUNK_WEBHOOK_SECRET,
 
 ## Hookdeck Source Setup
 
-In Hookdeck the source type is **PLUNK** (labelled "Plunk"). It uses API key verification (API Key
-Header + exact whole API Key). Hookdeck shows this note for the source:
+In Hookdeck the source type is **PLUNK** (labelled "Plunk"). It uses API key verification. Hookdeck shows this note for the source:
 
 > Add a secret header to the webhook step in your workflow and enter it here. Use a static value, not a {{variable}}.
 
-Hookdeck's Plunk source pre-selects `POST` without managing the method. The webhook step can use
-`GET`, `POST`, `PUT`, `PATCH` or `DELETE`, so allow any other method your step uses on the source too.
+The webhook step can use `GET`, `POST`, `PUT`, `PATCH` or `DELETE`, so allow the method your step uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Methods, Body and Retries
 

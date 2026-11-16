@@ -60,7 +60,7 @@ Python: `hmac.new(secret.encode(), timestamp.encode("latin-1") + raw_body, hashl
 
 Cashfree's SDK has `PGVerifyWebhookSignature` (`cashfree-pg`), but the examples verify by hand so every framework treats the body as raw bytes. Never `JSON.parse` / `JSON.stringify` before verifying. Details: [references/verification.md](references/verification.md).
 
-**Timestamp window: off by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. The examples offer an opt-in `CASHFREE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). Cashfree's docs suggest 5 minutes, but the unit of `x-webhook-timestamp` is not stated, so check a real delivery first.
+**Timestamp window: off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in `CASHFREE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). Cashfree's docs suggest 5 minutes, but the unit of `x-webhook-timestamp` is not stated, so check a real delivery first.
 
 Legacy **Payouts V1 and Cashgram** webhooks (form-encoded, different scheme) are not covered and fail this verification.
 
@@ -88,7 +88,7 @@ The overview page's samples abbreviate some Payment Gateway names (e.g. `PAYMENT
 - Respond **HTTP 200**. Anything else, 3xx included, fails and is retried.
 - Payment Gateway: per-endpoint policy (default 3 retries at 2, 10 and 30 minutes, or Fixed/Exponential/Custom up to 10) and Batch Resend in the dashboard. Payouts V2: fixed schedule, endpoint disabled after 5 consecutive failures.
 - At-least-once, unordered: dedupe on business IDs (`cf_payment_id`, `transfer_id`, ...) and process asynchronously.
-- Hookdeck's Cashfree source manages the method as `POST`.
+-
 
 ## Environment Variables
 

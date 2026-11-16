@@ -63,8 +63,7 @@ only after the check, and treat every field of the parsed body as untrusted
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-Hookdeck's Ayrshare source (`AYRSHARE`) verifies the same header: HMAC SHA-256,
-hex, `x-authorization-content-sha256-v2`.
+Hookdeck's Ayrshare source (`AYRSHARE`) verifies the same signature.
 
 ## Common Event Types
 

@@ -99,8 +99,7 @@ KOMOJU_WEBHOOK_SECRET=your_secret_token   # the secret token set on the KOMOJU w
 
 Create the Hookdeck source with the **KOMOJU** type and paste the webhook's secret token into the
 source's webhook verification settings. Set a secret token on the KOMOJU webhook. Without one,
-deliveries are unsigned and fail verification. Hookdeck verifies `X-Komoju-Signature` (HMAC-SHA256,
-hex) on KOMOJU's `POST` delivery.
+deliveries are unsigned and fail verification. Hookdeck verifies the signature.
 
 ## Local Development
 

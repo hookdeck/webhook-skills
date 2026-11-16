@@ -13,8 +13,7 @@ Authorization: Basic base64(username:password)
 Points that cause most failures:
 
 - **Credentials must arrive on the first request.** The docs don't say whether Basic credentials
-  are sent preemptively. A `401` + `WWW-Authenticate` challenge flow won't work, and it won't
-  work through Hookdeck, which verifies the request as received.
+  are sent preemptively. A `401` + `WWW-Authenticate` challenge flow won't work, with Proxyclick or through Hookdeck.
 - The scheme is case-insensitive (`Basic`, `basic`). Split the decoded value on the **first**
   colon, because the password can contain colons.
 - Compare the username **and** the password, each in constant time, and evaluate both before

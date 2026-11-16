@@ -31,8 +31,7 @@ Store only the bare key. The check:
    RFC 9110).
 3. Compares the rest, exactly as sent, with the key in constant time.
 
-If the configured value itself starts with `Bearer ` (any case), strip that prefix first, as
-Hookdeck does. Never trim or otherwise alter the key.
+If the configured value itself starts with `Bearer ` (any case), strip that prefix first. Never trim or otherwise alter the key.
 
 ### Node.js
 

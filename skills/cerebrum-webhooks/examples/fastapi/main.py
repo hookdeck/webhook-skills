@@ -9,7 +9,7 @@ Cerebrum delivers webhooks through Svix (Standard Webhooks):
 Signed content: f"{id}.{timestamp}.{raw_body}"
 Key: base64-decode of the secret after its `whsec_` prefix.
 The same three values can arrive as webhook-id / webhook-timestamp /
-webhook-signature; Hookdeck reads either set, and so does this handler.
+webhook-signature; this handler reads either set.
 """
 
 import json
@@ -36,8 +36,7 @@ processed_message_ids: set = set()
 def get_signature_headers(headers: Mapping[str, str]) -> Optional[Dict[str, str]]:
     """Pick one complete set of signature headers.
 
-    svix-* wins when svix-id is present, otherwise webhook-* is used (the same
-    rule Hookdeck applies). Returns the three values under the names the svix
+    svix-* wins when svix-id is present, otherwise webhook-* is used. Returns the three values under the names the svix
     library reads, or None if any of them is missing.
     """
     prefix = "svix" if headers.get("svix-id") else "webhook"

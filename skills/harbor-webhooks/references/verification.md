@@ -87,7 +87,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **Both payload formats**: the check is identical for Default and CloudEvents deliveries.
 - **Proxies**: some reverse proxies and API gateways consume or rewrite `Authorization`. Make
   sure it reaches your handler unchanged.
-- **Hookdeck**: a Hookdeck Harbor source compares the same header (full value). Use the HTTP
+- **Hookdeck**: a Hookdeck Harbor source checks the same header. Use the HTTP
   notify type and paste the Auth Header value exactly as set in Harbor, including any
   "Bearer " or "Basic " prefix.
 

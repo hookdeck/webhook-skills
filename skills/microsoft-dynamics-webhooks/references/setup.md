@@ -70,8 +70,8 @@ filter on **Status Reason: Failed**.
 ## Hookdeck Source
 
 In Hookdeck, create a **Microsoft Dynamics** source. Enter the header name
-(`X-Webhook-Secret`) and your secret. Requests without the right header are
-rejected before they reach your app. Use the source URL as the webhook's
+(`X-Webhook-Secret`) and your secret. A request without the right header still gets
+a 200 but is recorded as failed verification. Use the source URL as the webhook's
 **Endpoint URL**, and register the same header key and value in the
 **HttpHeader** option.
 

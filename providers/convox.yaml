@@ -19,9 +19,8 @@ notes: >
   summary): Header `Convox-Signature: t=<unix seconds>,v1=<hex>[,v1=<hex>...]`. MAC = hex of
   HMAC-SHA256(key = the `webhook_signing_key` value as its UTF-8 string, message =
   `fmt.Sprintf("%d.%s", t, body)`). During key rotation the Rack signs with every active key (up to 4)
-  and sends one `v1=` per key; a receiver accepts ANY match. SIGNATURE SCHEME (it must match
-  Hookdeck's CONVOX source exactly: HMAC controller, algorithm "sha256", header_key
-  "convox-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  and sends one `v1=` per key; a receiver accepts ANY match. SIGNATURE SCHEME (algorithm sha256, header
+  convox-signature, encoding hex). The
   Convox-Signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature
   is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the
   header (a string; never parse it to a number and re-format it), then a literal ".", then the raw
@@ -30,7 +29,7 @@ notes: >
   value fails. Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: The `webhook_signing_key` Rack
   parameter, chosen by the operator (Convox suggests `openssl rand -hex 32`) and used as-is, not
   hex-decoded. Up to 4 active keys for rotation; the Console manages it under Rack > Settings (reveal
@@ -40,8 +39,7 @@ notes: >
   'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
   hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
   signature header, malformed value or mismatch: 401. Timestamp window: do NOT reject old timestamps
-  by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck
-  itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an opt-in
+  by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an opt-in
   tolerance (an env var such as CONVOX_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
   SKILL.md and verification.md (t is Unix seconds). During key rotation the Rack signs with every
   active key (up to 4) and sends one `v1=` per key; accept if any matches. The key is used as its
@@ -54,7 +52,7 @@ notes: >
   build:cancel, release:create, release:promote, app:promote:completed, app:promote:errored,
   app:promote:cancelled, release:autoscale-disabled, release:manifest-advisory,
   release:prometheus-skipped, release:imperative-patch-note (and 21 more). Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's Convox source manages the method as POST, so the examples
+  and log the rest. Method: POST. The examples
   handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

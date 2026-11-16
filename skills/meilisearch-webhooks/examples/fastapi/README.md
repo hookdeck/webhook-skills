@@ -53,9 +53,8 @@ The tests send gzipped multi-line ndjson bodies with correct, wrong and missing
 npx hookdeck-cli listen 8000 meilisearch --path /webhooks/meilisearch
 ```
 
-Use the printed URL as the webhook URL in Meilisearch. Hookdeck stores gzip bodies as binary,
-so events show a binary body in the dashboard; it forwards the original bytes and the
-`Content-Encoding` header.
+Use the printed URL as the webhook URL in Meilisearch. Your handler receives the gzip body and
+the `Content-Encoding` header as Meilisearch sent them.
 
 ## How It Works
 

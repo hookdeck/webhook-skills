@@ -118,8 +118,7 @@ Any non-2xx response makes Freshdesk retry every 30 minutes, up to 48 calls.
 
 ## With Hookdeck
 
-Hookdeck's **Freshdesk** source type verifies the header for you: you enter the
-header name and its exact value. Requests that don't match are rejected before
+Hookdeck's **Freshdesk** source type verifies the header for you: you enter the header name and its value. Requests that don't match are rejected before
 they reach your app. To confirm on your server that a request came through
 Hookdeck, verify Hookdeck's own `x-hookdeck-signature`; see the
 [hookdeck-event-gateway skill](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway).

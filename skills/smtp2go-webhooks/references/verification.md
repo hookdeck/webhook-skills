@@ -9,7 +9,7 @@ Set an Authorization header on the SMTP2GO webhook and paste the full value, inc
 Points that cause most failures:
 
 - The docs don't print the exact outgoing header. Capture one delivery and set `SMTP2GO_AUTHORIZATION` to exactly what arrives in `Authorization` (expected `Bearer <token>` or `Basic <base64>`).
-- Compare the **whole header value** including the scheme prefix. Don't strip, parse or base64-decode it. A Hookdeck SMTP2GO source does the same.
+- Compare the **whole header value** including the scheme prefix. Don't strip, parse or base64-decode it.
 - Reject everything if `SMTP2GO_AUTHORIZATION` is empty, otherwise a missing header could "match".
 
 ## What This Does and Doesn't Give You
@@ -80,7 +80,7 @@ Both give flat parameters. Return `400` if the body can't be parsed as either.
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing; `express.raw({ type: '*/*' })` accepts any content type.
 - **Output type**: JSON and form-encoded are chosen per webhook, so handle both.
 - **Header not configured**: if deliveries arrive with no `Authorization` header, it wasn't set on the webhook. Set it; don't switch verification off.
-- **Hookdeck**: a Hookdeck SMTP2GO source verifies the same header (full value).
+- **Hookdeck**: a Hookdeck SMTP2GO source verifies the header too.
 
 ## Debugging 401s
 

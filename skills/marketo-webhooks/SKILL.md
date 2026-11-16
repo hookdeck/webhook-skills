@@ -154,8 +154,7 @@ a public HTTPS URL to paste into the webhook's URL field, plus a web UI for
 inspecting requests.
 
 In production, Hookdeck's **Marketo** source type checks the header for you. You
-enter the header name and its exact value, and requests without them are
-rejected. See [references/setup.md](references/setup.md).
+enter the header name and its value. See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 

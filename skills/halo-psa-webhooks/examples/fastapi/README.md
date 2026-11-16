@@ -29,8 +29,7 @@ credential if it leaks.
 
 3. Set `HALO_PSA_WEBHOOK_USERNAME` and `HALO_PSA_WEBHOOK_PASSWORD` to the values you enter
    on the Halo webhook. **Choose Basic Authentication on the Halo webhook.** The credentials
-   must arrive on the first request: Hookdeck never sends a 401 + `WWW-Authenticate` challenge,
-   it verifies the request as received.
+   must arrive on the first request.
 
 ## Run
 

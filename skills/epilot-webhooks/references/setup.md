@@ -41,7 +41,7 @@ If you receive `binary_multipart` file deliveries through Hookdeck, signature ve
 
 ## Which Header Names Does epilot Send?
 
-`webhook-id`, `webhook-timestamp` and `webhook-signature`. The examples also accept the same values under `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent, which is how Hookdeck reads them.
+`webhook-id`, `webhook-timestamp` and `webhook-signature`. The examples also accept the same values under `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent.
 
 ## Local Development
 

@@ -15,18 +15,18 @@ notes: >
   secret' 'crypto.createHmac('sha256', LOYALTYLION_SECRET).update(data).digest('base64')' From the
   docs (registry summary): base64(HMAC-SHA256(secret, raw body)), the whole header value, no prefix.
   The TypeScript, Ruby and PHP samples all compute the base64 digest and compare it to the header.
-  SIGNATURE SCHEME (it must match Hookdeck's LOYALTYLION source exactly: HMAC controller, algorithm
-  "sha256", header_key "x-loyaltylion-hmac-sha256", encoding "base64"). The x-loyaltylion-hmac-sha256
+  SIGNATURE SCHEME (algorithm
+  sha256, header x-loyaltylion-hmac-sha256, encoding base64). The x-loyaltylion-hmac-sha256
   header carries the bare standard base64 (padded) digest, no prefix. Compare the WHOLE header value
   as one digest (no list splitting or prefix parsing). The signature is standard base64 (padded)
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly
-  (case-sensitive, as Hookdeck does): require the 44-character padded standard-base64 form
+  (case-sensitive): require the 44-character padded standard-base64 form
   ([A-Za-z0-9+/]{43}=) and compare the strings, or the decoded bytes AND the re-encoded string, in
   constant time. Decoding alone is not enough: a value whose last character carries stray low bits
-  decodes to the same bytes but Hookdeck rejects it, so the skill must reject it too. Secret: The
+  decodes to the same bytes, so the skill must reject it. Secret: The
   OAuth client secret for webhooks registered by an OAuth client; the site secret for webhooks created
   with API keys. Use it as UTF-8 bytes. Env var: LOYALTYLION_WEBHOOK_SECRET. Validate the signature's
   format before decoding it (exact length and alphabet), then compare in constant time: Node checks
@@ -48,8 +48,7 @@ notes: >
   program_events/customer.recurring_reward_available_reminder, program_events/customer.claimed_reward,
   program_events/customer.points_earned, program_events/customer.referral_complete,
   program_events/customer.rule_completed, program_events/customer.approaching_tier_upgrade (and 7
-  more). Handle a few common ones and log the rest. Method: POST. Hookdeck's LoyaltyLion source
-  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
   are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
   only after the check. Documented sample payloads (each JSON file's `body` is the payload as the

@@ -63,8 +63,7 @@ npx hookdeck-cli listen 3000 aurora-solar --path /webhooks/aurora-solar
 ```
 
 Use the printed URL, with a static event in the template, as the subscription's `url_template`:
-`https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>`. Hookdeck's Aurora Solar
-source pre-selects GET without managing the method.
+`https://<hookdeck-url>?event=project_created&project_id=<PROJECT_ID>`. Allow GET on Hookdeck's Aurora Solar source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

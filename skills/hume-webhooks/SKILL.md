@@ -65,7 +65,7 @@ Hume's docs show manual verification code and no verification helper in an SDK, 
 
 ### Timestamp tolerance is opt-in
 
-Hume's own example rejects deliveries more than 180 seconds old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Set `HUME_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Hume-AI-Webhook-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
+Hume's own example rejects deliveries more than 180 seconds old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `HUME_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Hume-AI-Webhook-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
 
 ## Event Types
 
@@ -83,7 +83,7 @@ Log and acknowledge any other `event_name` rather than failing.
 
 ## Important Details
 
-- **Method:** `POST`. Hookdeck's Hume source manages the method as POST.
+- **Method:** `POST`.
 - **Subscribing:** add a `webhooks` entry to an EVI Config: `{ "url": "...", "events": ["chat_started", "chat_ended", "tool_call"] }`. Only subscribed events are sent.
 - **Rotating the key:** generating a new signing key immediately invalidates the old one. Only admins can do it in an organization.
 - **`tool_call` replies:** if `response_required` is true, send the tool response (or a tool error) back to EVI through the Control Plane API; the webhook response body is not used for it.

@@ -32,7 +32,7 @@ Only v1 webhooks, whose secret starts with whs_, are supported. Legacy v0 webhoo
 - Accept the delivery if **any** `v1=` entry matches (e.g. during key rotation); ignore other keys such as `v0`. A header with no `t=` value fails.
 - Require exactly 64 hex characters in each `v1` (compare case-insensitively) *before* decoding, then compare in constant time. Never call `Buffer.from(sig, 'hex')` on an unvalidated value; it silently drops bad characters.
 - A missing or empty header, a malformed value or a mismatch gets `401`.
-- Top.gg sends `t` in Unix seconds. Don't reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. Opt in with `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
+- Top.gg sends `t` in Unix seconds. Don't reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Opt in with `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
 
 ```javascript
 const crypto = require('crypto');

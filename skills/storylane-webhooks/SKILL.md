@@ -26,7 +26,7 @@ Storylane sends `x-storylane-signature: <base64>`: the **standard padded base64 
 raw request body**, keyed with the Webhook Verification Secret (its UTF-8 bytes, used as-is). There
 is no prefix, and no timestamp or id is signed, so there is no replay window to check. Verify over
 the **raw bytes before parsing**, validate the 44-character shape, then compare the exact strings in
-constant time (decoding alone would accept non-canonical base64 that Hookdeck rejects).
+constant time (decoding alone would accept non-canonical base64).
 
 Node:
 
@@ -78,9 +78,9 @@ STORYLANE_WEBHOOK_SECRET=your_webhook_verification_secret   # Webhook Verificati
 
 ## Setup with Hookdeck
 
-Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings
-(Storylane source: HMAC-SHA256, header `x-storylane-signature`, base64). Hookdeck then rejects
-unsigned or invalid deliveries before they reach your endpoint.
+Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings.
+Hookdeck then verifies the signature; an unsigned or invalid delivery is recorded as failed
+verification and creates no event.
 
 ## Local Development
 

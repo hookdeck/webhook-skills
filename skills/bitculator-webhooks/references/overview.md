@@ -58,7 +58,7 @@ The `alarm` object mirrors an item of `GET /api/v1/alarms` (`id`, `name`, `coin`
 
 ## Delivery Behaviour
 
-- Method and format: POST with a JSON body. Hookdeck's Bitculator source manages the method as POST.
+- Method and format: POST with a JSON body.
 - Retries: "Each delivery is attempted up to 3 times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed deliveries." The endpoint object's `consecutive_failures` and `disabled_at` fields show where an endpoint stands (`GET /api/v1/webhooks`). Because deliveries are retried, deduplicate in your handler.
 - Not documented: the backoff intervals, the timeout, source IP addresses and any delivery ID.
 - `GET /api/v1/webhooks/{id}/deliveries` returns a delivery log kept for 30 days (event, `response_status`, `error`, `attempts`, `delivered_at`), which helps debug failing receivers.

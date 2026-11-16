@@ -73,9 +73,7 @@ What the two captures settle:
 - **Signed content.** The raw urlencoded body and nothing else. There is no timestamp or nonce
   header to include.
 
-This is also what **Hookdeck's own `FORMSTACK` source integration** implements, as an alias
-of its generic HMAC controller with `sha256` / `x-fs-signature` / `hex`, so a Hookdeck source
-verifies the same deliveries your handler does.
+A Hookdeck `FORMSTACK` source verifies the same deliveries your handler does.
 
 The express, nextjs and fastapi test suites each verify the captured delivery above as a
 test vector, so a regression in the verifier fails against a real Formstack signature rather
@@ -240,7 +238,7 @@ X-FS-Signature: sha256=30dff7f180b6d69eab397a5d51719474df490b730514c253e8b5832d3
 
 Strip a leading `sha256=` **case-insensitively**, trim whitespace, then compare. Comparing the
 raw header value against a bare hex digest rejects every delivery. Tolerating a bare digest as
-well costs nothing, and Hookdeck's HMAC controller does the same.
+well costs nothing.
 
 ## Constant-Time Comparison
 

@@ -25,9 +25,8 @@ def default_tolerance() -> int:
     """Staleness window in seconds; 0 (the default) disables the check.
 
     Hume's own example rejects deliveries older than 180 seconds, but Hookdeck
-    retries and replays resend the ORIGINAL headers and timestamp (and Hookdeck
-    applies no tolerance itself), so a fixed window would reject legitimate
-    retries. Set HUME_WEBHOOK_TOLERANCE_SECONDS to opt in. Read at call time so
+    retries and replays resend the ORIGINAL headers and timestamp, so a fixed window would reject
+    legitimate retries. Set HUME_WEBHOOK_TOLERANCE_SECONDS to opt in. Read at call time so
     it can be changed without a restart in tests.
     """
     try:

@@ -60,7 +60,7 @@ If your code does not reproduce that digest, the message construction is wrong.
 - **Millisecond timestamp.** Not seconds. Matters only if you add a tolerance check.
 - **Compare as one digest.** No prefix such as `sha256=`, no list splitting. Hex case does not matter: lowercase both sides.
 - **Validate before decoding.** `Buffer.from(sig, 'hex')` silently drops bad characters, so check for exactly 64 hex characters first.
-- **Timestamp tolerance is off by default.** Hookdeck retries and replays resend the original headers, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate deliveries. To opt in, set `REMOTE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); the examples compare it against the millisecond timestamp.
+- **Timestamp tolerance is off by default.** Hookdeck retries and replays resend the original headers, so a fixed window rejects legitimate deliveries. To opt in, set `REMOTE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); the examples compare it against the millisecond timestamp.
 - **4xx and 5xx are final.** Remote counts them as delivered and never retries them.
 
 ## Debugging Verification Failures

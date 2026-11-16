@@ -14,8 +14,7 @@ app's client secret** (shown on the app in the Envoy dashboard). Save it as
 `ENVOY_CLIENT_SECRET`.
 
 If you receive Envoy webhooks through Hookdeck, create an Envoy source and paste
-that client secret into its webhook signing secret field: Hookdeck verifies
-`X-Envoy-Signature` with it before forwarding.
+that client secret into its webhook signing secret field: Hookdeck verifies the signature with it before forwarding.
 
 ## Register Your Endpoint
 

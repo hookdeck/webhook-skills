@@ -9,16 +9,14 @@ header with the GET, POST, PUT, PATCH or DELETE request:
 Authorization: Basic cmViaWxseTpzdXBlcm1hbgo=
 ```
 
-That is `base64(username:password)`. Hookdeck's Rebilly source verifies exactly this header, and
-the examples do the same. There is no signature to compute for basic auth, and the body is not part
+That is `base64(username:password)`. Hookdeck's Rebilly source checks these credentials, and the examples do the same. There is no signature to compute for basic auth, and the body is not part
 of the check.
 
 > Hookdeck shows this note for the source: "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and Ed25519 signatures are not checked."
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it leaks.
-Hookdeck never sends a 401 challenge (no `WWW-Authenticate` round trip), so the credentials must
-arrive with each request.
+The credentials must arrive with each request (there is no `WWW-Authenticate` challenge round trip).
 
 ## Implementation
 
@@ -129,7 +127,7 @@ integrity, but it is an extra; the basic auth check remains the one Hookdeck per
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | Env vars unset, or the webhook has no basic auth credentials |
-| GET/PUT/PATCH/DELETE deliveries never reach you | The method isn't allowed on the Hookdeck source (it pre-selects POST) |
+| GET/PUT/PATCH/DELETE deliveries never reach you | The method isn't allowed on the Hookdeck source |
 | 401 for some passwords | Splitting on every colon instead of the first |
 | 401 only behind a proxy | The proxy strips the `Authorization` header |
 | Rebilly keeps retrying | The response wasn't exactly `200`, or took longer than 20 seconds |

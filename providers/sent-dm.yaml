@@ -13,8 +13,7 @@ notes: >
   consecutive failed events disable the webhook. Sent says: 'key = base64_decode( secret without the
   "whsec_" prefix ) signed_content = "{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw_body}" expected =
   "v1," + base64( HMAC_SHA256(key, signed_content) )' 'Sent signs webhooks Svix-style: the same HMAC
-  scheme used by Svix' SIGNATURE SCHEME (it must match Hookdeck's SENT_DM source exactly:
-  STANDARD_WEBHOOKS controller with headers_prefix 'x-webhook'). Standard Webhooks on X-Webhook-*
+  scheme used by Svix' SIGNATURE SCHEME: Standard Webhooks on x-webhook-* headers. Standard Webhooks on X-Webhook-*
   headers: X-Webhook-ID, X-Webhook-Timestamp (Unix seconds), X-Webhook-Signature (one or more
   space-separated `v1,<base64>` entries). Signed content '{X-Webhook-ID}.{X-Webhook-Timestamp}.{raw
   body}', HMAC-SHA256, key = base64-decode of the secret after `whsec_`, base64 output; valid when any
@@ -24,19 +23,16 @@ notes: >
   'standardwebhooks') by mapping x-webhook-id/-timestamp/-signature to the
   webhook-id/-timestamp/-signature names the library reads; do not use the svix library's svix-*
   headers. The library always enforces a fixed 5-minute timestamp window; SKILL.md must say that
-  Hookdeck retries and replays resend the original timestamp (and Hookdeck applies no window), so the
+  Hookdeck retries and replays resend the original timestamp, so the
   library rejects late retries after 5 minutes, and point to a manual verifier in
   references/verification.md where the window is off by default or can be widened (HMAC over the
   signed content with the decoded key, constant-time compare of every space-separated v1,<base64>
-  entry, base64-decode with validation, timestamp must be a plain positive integer, like Hookdeck's
-  /^[1-9]\d*$/ check). Hookdeck reads the x-webhook-* headers and falls back to webhook-* and svix-*
-  names; the manual verifier may do the same. A secret without the whsec_ prefix is used as raw UTF-8
-  bytes by Hookdeck. Missing headers or a bad signature: 401. Sent sends one signature today; split on
+  entry, base64-decode with validation, timestamp must be a plain positive integer, e.g. /^[1-9]\d*$/). The manual verifier may read the x-webhook-* headers and fall back to webhook-* and svix-* names. Missing headers or a bad signature: 401. Sent sends one signature today; split on
   spaces anyway. Events: dispatch on the body's `event` field. Documented event types (38):
   message.queued, message.routed, message.sent, message.delivered, message.read, message.failed,
   message.scheduled, message.cancelled, message.filtered, message.blocked, message.received,
   templates.pending, templates.approved, templates.rejected (and 24 more). Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's Sent source manages the method as POST, so the examples
+  and log the rest. Method: POST. The examples
   handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

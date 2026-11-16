@@ -99,7 +99,7 @@ The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is un
 | `X-Bitculator-Signature` | `t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>` |
 | `X-Bitculator-Event` | The event name, `alarm.triggered`. Not signed: a routing label to read after verifying |
 
-Bitculator POSTs each event as JSON ("Bitculator POSTs each event as JSON with an HMAC signature header"), and Hookdeck's Bitculator source manages the method as POST. The examples handle `POST` on `/webhooks/bitculator` and read the raw body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`) so the exact signed bytes are verified.
+Bitculator POSTs each event as JSON ("Bitculator POSTs each event as JSON with an HMAC signature header"), and The examples handle `POST` on `/webhooks/bitculator` and read the raw body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`) so the exact signed bytes are verified.
 
 ## Delivery and Retries
 

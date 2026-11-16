@@ -11,8 +11,7 @@ import { Webhook } from 'standardwebhooks';
 //   webhook-signature  one or more space-separated "v1,<base64 HMAC-SHA256>"
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
 // Key: base64-decode of the endpoint's secret after its `whsec_` prefix.
-// Hookdeck also accepts the svix-* spelling of the same three headers, so
-// this handler does too.
+// This handler also accepts the svix-* spelling of the same three headers.
 // ---------------------------------------------------------------------------
 
 interface CamelAiEvent {
@@ -30,7 +29,7 @@ interface SignatureHeaders {
 
 /**
  * Read the three signature headers, preferring webhook-* and falling back to
- * svix-* when webhook-id is absent (the same rule Hookdeck applies).
+ * svix-* when webhook-id is absent.
  */
 function extractSignatureHeaders(headers: Headers): SignatureHeaders {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';

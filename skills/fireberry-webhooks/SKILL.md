@@ -62,7 +62,7 @@ function verifyFireberryRequest(
   after the credential check.
 - **The method is yours to choose.** The action offers POST, GET, PUT, DELETE and PATCH, so accept
   all five on the route and handle an empty body (the action has no body for GET).
-- **Hookdeck:** Hookdeck's Fireberry source pre-selects POST only. If your automation uses
+- **Hookdeck:** Hookdeck's Fireberry source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If your automation uses
   another method, allow that method on the source.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

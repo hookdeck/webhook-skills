@@ -106,4 +106,4 @@ Return **400** for a missing or invalid digest. Sumsub treats **401, 403 and 404
 
 ## Using Hookdeck
 
-The Hookdeck Event Gateway has a Sumsub source type that verifies `x-payload-digest` (SHA1/SHA256/SHA512 from `x-payload-digest-alg`) before forwarding. You can then verify Hookdeck's own signature in your handler instead, or keep verifying Sumsub's digest on the forwarded raw body.
+The Hookdeck Event Gateway has a Sumsub source type that verifies Sumsub's payload digest before forwarding. You can then verify Hookdeck's own signature in your handler instead, or keep verifying Sumsub's digest on the forwarded raw body.

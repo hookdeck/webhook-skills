@@ -45,7 +45,6 @@ The `t` value is encoded as latin-1 bytes exactly as it appears in the header; i
 Not by default. OpenRouter's own receiver example rejects `t` more than 300 seconds from now, but:
 
 - Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window rejects legitimate redeliveries.
-- Hookdeck's OpenRouter source applies no tolerance.
 
 The examples therefore leave the window **off** and offer an opt-in: set `OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=300` (unset or `0` = off). `t` is Unix seconds. Deduplicate with the `X-OpenRouter-Idempotency-Key` header instead.
 

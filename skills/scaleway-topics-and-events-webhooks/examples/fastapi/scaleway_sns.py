@@ -32,7 +32,7 @@ OPTIONAL_FIELDS = {"Subject"}
 
 # Host of the SigningCertURL in Scaleway's docs (and of the trust-chain files)
 DEFAULT_CERT_HOSTS = ["messaging.s3.fr-par.scw.cloud"]
-# Regions with a published trust chain (and the ones Hookdeck accepts)
+# Regions with a published trust chain
 TOPIC_ARN = re.compile(r"arn:scw:sns:(fr-par|nl-ams):[^:]+:[^:]+")
 BASE64 = re.compile(r"[A-Za-z0-9+/]+={0,2}")
 MAX_CACHED_CERTS = 50
@@ -207,7 +207,7 @@ class Verifier:
 
 def is_valid_subscribe_url(msg: Dict[str, Any]) -> bool:
     """
-    The checks Hookdeck applies before it GETs a SubscribeURL: https, host sns.mnq.<region>.scaleway.com
+    The checks to apply before GETting a SubscribeURL: https, host sns.mnq.<region>.scaleway.com
     for the TopicArn's region, path "/" (or empty, which URL parsers normalise to "/"), no
     credentials, no port other than the default 443, no fragment, and exactly one Action
     (ConfirmSubscription), TopicArn and Token, matching the message.

@@ -42,7 +42,7 @@ def verify_learnhouse_signature(raw_body: bytes, header: str | None, secret: str
 - **Raw body bytes.** Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`. Parse JSON only after the check.
 - **Validate before decoding.** `Buffer.from(sig, 'hex')` silently drops bad characters, so check for exactly 64 hex characters first. `timingSafeEqual` throws on unequal lengths.
 - **Compare bytes in constant time.** Use `crypto.timingSafeEqual` or `hmac.compare_digest` on bytes, never `==` or a `str` comparison.
-- **Prefix optional.** Strip a leading `sha256=`; Hookdeck's parser also accepts the bare digest. Hex is case-insensitive.
+- **Prefix optional.** Strip a leading `sha256=`; the bare digest is also accepted. Hex is case-insensitive.
 - **Secret handling.** Whole `whsec_...` string as UTF-8 bytes, nothing stripped or decoded. After rotating the secret, update the env var.
 - **Status codes.** A missing, empty, malformed or mismatched signature gets `401`. A verified body that is not valid JSON or not an object gets `400`. Any `2xx` stops retries.
 - **Untrusted fields.** After verifying, check types (`typeof`, `Array.isArray`, `isinstance`) before reading nested fields so a wrong-typed field never causes a `500`.

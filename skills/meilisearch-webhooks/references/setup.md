@@ -59,9 +59,8 @@ value). If your receiver is on a private network you may also need
 npx hookdeck-cli listen 3000 meilisearch --path /webhooks/meilisearch
 ```
 
-Use the printed URL as the webhook URL. For FastAPI, use port `8000`. Hookdeck stores gzip
-bodies as binary, so events show a binary body in the dashboard; it forwards the original
-bytes and the `Content-Encoding` header, so your handler sees what Meilisearch sent.
+Use the printed URL as the webhook URL. For FastAPI, use port `8000`. Your handler
+receives the gzip body and the `Content-Encoding` header as Meilisearch sent them.
 
 ## Testing
 

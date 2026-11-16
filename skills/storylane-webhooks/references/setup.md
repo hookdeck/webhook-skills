@@ -20,8 +20,7 @@ hex- or base64-decoded.
 
 ## Setup with Hookdeck
 
-Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings
-(Storylane source: HMAC-SHA256, header `x-storylane-signature`, base64).
+Paste the Webhook Verification Secret into the Hookdeck source's webhook verification settings.
 
 ## Local Development
 

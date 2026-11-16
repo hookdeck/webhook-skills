@@ -11,7 +11,7 @@ doesn't list the header names or secret format; they are Svix defaults:
 | `svix-timestamp` | Attempt time, Unix seconds |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Because the `svix-` prefix is inferred, the snippets below (like Hookdeck) fall back to
+Because the `svix-` prefix is inferred, the snippets below fall back to
 `webhook-id`, `webhook-timestamp` and `webhook-signature`, Svix's other header prefix,
 when the `svix-*` headers are absent. The signed content is the same either way.
 

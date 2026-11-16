@@ -59,7 +59,7 @@ def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool
 
 Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check. A missing/malformed signature or timestamp, or a mismatch, returns `401`.
 
-**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. The examples offer an opt-in `SCHEMATIC_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); `X-Schematic-Webhook-Timestamp` is Unix seconds.
+**Timestamp window is off by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in `SCHEMATIC_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); `X-Schematic-Webhook-Timestamp` is Unix seconds.
 
 Schematic's SDKs also ship verify helpers (for example `verifyWebhookSignature` in `@schematichq/schematic-typescript-node`); the examples verify by hand so the algorithm stays visible and works in every framework.
 

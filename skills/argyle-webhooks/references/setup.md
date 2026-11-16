@@ -31,7 +31,7 @@ See [Argyle's webhook guide](https://docs.argyle.com/api-guide/webhooks).
 Argyle's docs don't name the HTTP method. Accept GET, POST, PUT, PATCH and DELETE on your route, as the
 examples do, and verify the signature first for every method.
 
-Hookdeck's Argyle source pre-selects POST without managing the method, so any other method the sender
+Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender
 uses must also be allowed on the source.
 
 ## Local Development

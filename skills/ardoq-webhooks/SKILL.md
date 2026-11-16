@@ -66,7 +66,7 @@ There is **no official Ardoq SDK** for webhook verification. Ardoq's help articl
 
 ### Timestamp tolerance is opt-in
 
-Ardoq's own snippets reject deliveries more than 5 minutes old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate retries. Set `ARDOQ_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Ardoq-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
+Ardoq's own snippets reject deliveries more than 5 minutes old. This skill does **not** by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `ARDOQ_WEBHOOK_TOLERANCE_SECONDS` to opt in (`X-Ardoq-Timestamp` is Unix seconds; unset or `0` = off). Because the timestamp is signed, it cannot be swapped for a fresh one.
 
 ## Event Types
 
@@ -82,7 +82,7 @@ Ardoq's docs show `event-type: "create"` in the sample payload and do not list t
 
 ## Important Details
 
-- **Method:** `POST`. Hookdeck's Ardoq source manages the method as POST.
+- **Method:** `POST`.
 - **Scope:** the endpoint receives every change in the organization, unfiltered by workspace or permissions, including confidential fields. Only use an endpoint you trust.
 - **HTTPS required** for signed webhooks; Ardoq verifies the endpoint's TLS certificate.
 - **Signing is one-way.** To stop signing, delete the webhook and create an unsigned one.

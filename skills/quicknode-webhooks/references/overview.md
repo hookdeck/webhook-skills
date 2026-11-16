@@ -38,7 +38,7 @@ Acknowledge quickly and process in the background; deduplicate on block number o
 
 ## Compression
 
-Payload compression (gzip) must stay **off**. Quicknode signs the uncompressed JSON while the wire carries gzip bytes, so a verifier that checks the raw request body, including Hookdeck's, fails on compressed deliveries. See [verification.md](verification.md).
+Payload compression (gzip) must stay **off**. Quicknode signs the uncompressed JSON while the wire carries gzip bytes, so a verifier that checks the raw request body fails on compressed deliveries. See [verification.md](verification.md).
 
 ## Full Reference
 

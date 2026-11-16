@@ -6,7 +6,7 @@ import { Webhook } from 'svix';
 
 export const dynamic = 'force-dynamic';
 
-// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names, as Hookdeck does
+// Crossmint sends svix-* headers; fall back to the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('svix-id') ? 'svix' : 'webhook';
   return {

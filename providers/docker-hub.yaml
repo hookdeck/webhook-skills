@@ -32,8 +32,7 @@ notes: >
   pull by digest — keep this optional in examples, tests must not hit the network.
   (3) Validate shape: require push_data.tag and repository.repo_name as non-empty
   strings (400 otherwise); optionally allowlist repository.repo_name via
-  DOCKER_HUB_ALLOWED_REPOS (403). (4) Hookdeck source type DOCKER_HUB (label
-  "Docker Hub", slug docker-hub, managed POST) is "No verification (schema only)" —
+  DOCKER_HUB_ALLOWED_REPOS (403). (4) Hookdeck source type DOCKER_HUB (label "Docker Hub", slug docker-hub) is "No verification (schema only)" —
   there is nothing to verify; do NOT claim Hookdeck verifies a Docker Hub signature,
   and do NOT claim Docker Hub can send Basic auth or custom headers. Hookdeck's own
   outbound signature secures the Hookdeck->destination hop only. Docker Hub is not yet

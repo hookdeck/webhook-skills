@@ -54,7 +54,7 @@ function verifyOpenRouterSignature(rawBody, header, secret) {
 
 Respond **204** for a valid delivery and **401** for a missing, malformed or mismatched signature. Read the raw body first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`) and parse JSON only after the check.
 
-**Timestamp window is off by default.** OpenRouter's own receiver example rejects `t` older than 300 s, but Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries. The examples offer an opt-in: set `OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
+**Timestamp window is off by default.** OpenRouter's own receiver example rejects `t` older than 300 s, but Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in: set `OPENROUTER_WEBHOOK_TOLERANCE_SECONDS=300` to enforce one (unset or `0` = off). Use idempotency instead (see below).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

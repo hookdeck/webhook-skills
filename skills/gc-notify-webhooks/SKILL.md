@@ -65,8 +65,7 @@ function verifyGcNotifyRequest(headers, configured = process.env.GC_NOTIFY_WEBHO
 ## Hookdeck Setup Note
 
 When you create the GC Notify source in Hookdeck (source type `GC_NOTIFY`, labelled "GC Notify"),
-it shows this note: "Paste the bearer token you set for the callback in GC Notify." Paste only the
-token; Hookdeck matches the `Bearer ` scheme itself.
+it shows this note: "Paste the bearer token you set for the callback in GC Notify." Paste only the token, without `Bearer `.
 
 ## Delivery Receipt Statuses
 

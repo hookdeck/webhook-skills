@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Read the three signature headers. Axilio sends webhook-*; if webhook-id is
- * absent the svix-* equivalents are used instead (Hookdeck does the same).
+ * absent the svix-* equivalents are used instead.
  * The values come back under the names the standardwebhooks library expects.
  */
 function signatureHeaders(get) {

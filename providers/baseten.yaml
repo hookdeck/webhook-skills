@@ -18,15 +18,13 @@ notes: >
   v1=<hex>`. The Python sample computes `hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()`
   and compares it with the value after `v1=`, cut at the first comma (`.split(",")[0]`), which
   suggests several comma-separated values can be sent, e.g. during rotation; the page does not say so.
-  No test vector. SIGNATURE SCHEME (it must match Hookdeck's BASETEN source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-baseten-signature", encoding "hex"). The X-BASETEN-SIGNATURE
-  header carries `v1=<hex>`. Strip a leading `v1=` before validating the digest; Hookdeck's parser
-  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  No test vector. SIGNATURE SCHEME (algorithm sha256, header x-baseten-signature, encoding hex). The X-BASETEN-SIGNATURE
+  header carries `v1=<hex>`. Strip a leading `v1=` before validating the digest; accept the value with or without the prefix. The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
   timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: A webhook secret
   created in the workspace's Secrets tab. During rotation the old and new secrets are both valid for
   24 hours. Use it as UTF-8 bytes. Env var: BASETEN_WEBHOOK_SECRET. Validate the signature's format
@@ -36,13 +34,12 @@ notes: >
   hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
   signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
   window to check; do not invent one from unsigned headers or body fields. During secret rotation the
-  header may hold several comma-separated values; accept if any `v1=` entry matches, as Hookdeck does.
+  header may hold several comma-separated values; accept if any `v1=` entry matches.
   Events: dispatch on the body's `type` field. The body's `type` is `async_request_completed` in the
   only example, and no other value is documented: success and failure share it, told apart by `data`
   (output or null) and `errors` (empty or error objects). It names the callback kind rather than
   choosing among events. No header names a type. Documented event types (1): async_request_completed.
-  Handle a few common ones and log the rest. Method: POST. Hookdeck's Baseten source manages the
-  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw
   body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
   (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
   check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show

@@ -24,7 +24,7 @@ If Hookdeck receives the webhooks, create a source of type **Redo**. Hookdeck sh
 > Paste the secret set on the Redo webhook subscription.
 
 Paste `your-subscriber-secret` into the **Subscription Secret** field, without the `Bearer `
-prefix. Hookdeck accepts the `Authorization` header with or without the prefix.
+prefix.
 
 ## Create the Subscription
 

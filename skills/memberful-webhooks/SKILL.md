@@ -46,7 +46,7 @@ function verifyMemberfulSignature(rawBody, signature, secret = process.env.MEMBE
 - Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`. Python: `hmac.compare_digest` on bytes.
 - Memberful's own Node sample calls `Buffer.from(signature, 'hex')` on the unvalidated header; don't copy that.
 - **Method:** Memberful sends `POST` only; the examples answer `405` to anything else.
-- **Hookdeck:** Hookdeck's Memberful source verifies the signature (HMAC SHA-256, `x-memberful-webhook-signature`, hex) and manages the method as POST.
+- **Hookdeck:** Hookdeck's Memberful source verifies the signature.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

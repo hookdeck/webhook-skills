@@ -73,9 +73,7 @@ def verify_quickbase_request(headers, secret, header_name="Authorization") -> bo
 
 ## Hookdeck Source
 
-Hookdeck's Quickbase source (type `QUICKBASE`) performs the same check: header name plus the exact
-whole value. It pre-selects `POST` without managing the method, so if your webhook uses PUT, PATCH,
-GET or DELETE, also allow that method on the source.
+Hookdeck's Quickbase source (type `QUICKBASE`) checks the same header. If your webhook uses PUT, PATCH, GET or DELETE, also allow that method on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

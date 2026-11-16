@@ -37,8 +37,7 @@ Add a custom header with a secret value to the KSAT or PhishER webhook.
 - `KNOWBE4_WEBHOOK_SECRET` is the exact, **whole** header value, including any `Bearer ` prefix you
   typed. Look the header up case-insensitively and compare the whole value; do not strip or parse a
   `Bearer ` prefix.
-- Hookdeck's KnowBe4 source does the same (API key verification: header name plus exact whole
-  header value).
+- Hookdeck's KnowBe4 source checks the same header.
 - KSAT also has an **Authentication** method field and PhishER offers No Auth, API Key, Bearer
   Token or Basic Auth. Basic Auth is not covered by Hookdeck's KnowBe4 source; use the custom
   header instead.

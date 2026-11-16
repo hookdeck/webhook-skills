@@ -15,14 +15,14 @@ notes: >
   messageData = new TextEncoder().encode(JSON.stringify(body));' 'export const WEBHOOK_SECRET_PREFIX =
   "whsec_";' From the docs (registry summary): `Dub-Signature: <hex>` = hex HMAC-SHA256(webhook
   signing secret, raw body). Bare value, no prefix, no timestamp. The secret string is the key as-is.
-  SIGNATURE SCHEME (it must match Hookdeck's DUB source exactly: HMAC controller, algorithm "sha256",
-  header_key "dub-signature", encoding "hex"). The Dub-Signature header carries the bare lowercase hex
+  SIGNATURE SCHEME (algorithm sha256,
+  header dub-signature, encoding hex). The Dub-Signature header carries the bare lowercase hex
   digest, no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix
   parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request
   body bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the
   raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: A signing secret per webhook, in the webhook's Configuration tab. Use it as UTF-8 bytes. Env
   var: DUB_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
@@ -39,7 +39,7 @@ notes: >
   partner.application_submitted, partner.merged, lead.created, sale.created, commission.created,
   bounty.created, bounty.updated, discount_code.created, discount_code.deleted, link.created,
   link.updated, link.deleted (and 1 more). Handle a few common ones and log the rest. Method: POST.
-  Hookdeck's Dub source manages the method as POST, so the examples handle POST on the webhook route.
+  The examples handle POST on the webhook route.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
   and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. After verifying, treat every field of the

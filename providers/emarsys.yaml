@@ -15,8 +15,7 @@ notes: >
   in Python, so valid credentials followed by junk are rejected; split on the first colon), and
   compare the username and the password each in constant time, evaluating both before deciding (no
   short-circuit). Missing or malformed header or mismatch: 401. The docs don't say whether the Basic
-  credentials are sent preemptively. SKILL.md and setup.md must say that Hookdeck never sends a 401
-  challenge (no WWW-Authenticate round trip), so the credentials must arrive with each request.
+  credentials are sent preemptively. SKILL.md and setup.md must say that the credentials must be sent with every request.
   Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
   (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
   sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly

@@ -69,7 +69,7 @@ def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool
 
 A missing or empty header, a malformed value or a mismatch is a `401`. In Express use `express.raw({ type: '*/*' })`, in Next.js `await request.arrayBuffer()`, in FastAPI `await request.body()`, and parse the JSON only after the check passes.
 
-**Timestamp window (opt-in):** the examples do not reject old timestamps by default. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to reject deliveries whose `X-Upload-Post-Timestamp` is further than that many seconds from now.
+**Timestamp window (opt-in):** the examples do not reject old timestamps by default. Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate retries. Set `UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to reject deliveries whose `X-Upload-Post-Timestamp` is further than that many seconds from now.
 
 Deliveries made before a secret existed carry no signature header and fail verification.
 

@@ -68,7 +68,7 @@ def verify_torii_request(headers, secret=None, header_name=None) -> bool:
   raises on non-ASCII.
 - **Fail closed.** If `TORII_WEBHOOK_SECRET` is unset, reject everything.
 - **Not POST-only.** The author chooses the method; accept POST, PUT, PATCH, GET and DELETE, and
-  handle an empty body. Allow the method on the Hookdeck source too (it pre-selects POST).
+  handle an empty body. Allow the method on the Hookdeck source too (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, then
   parse after the credential check.
 

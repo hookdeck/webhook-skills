@@ -77,7 +77,7 @@ Terra does not document an SDK verification helper for this, so the examples ver
 - **Validate before comparing.** Require exactly 64 hex characters. Lowercase both sides (hex is compared case-insensitively), then compare in constant time: `crypto.timingSafeEqual` on equal-length Buffers, `hmac.compare_digest` on bytes. Never `Buffer.from(sig, 'hex')` an unvalidated value, because it silently drops bad characters.
 - **Secret as-is.** Don't hex- or base64-decode it.
 - **Status code.** Missing or empty header, no `t`, malformed value or mismatch: `401`.
-- **Timestamp tolerance is opt-in.** The examples don't reject old timestamps unless `TERRA_WEBHOOK_TOLERANCE_SECONDS` is a positive whole number. Hookdeck retries and replays resend the original headers, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate redeliveries. If you opt in, measure against `t` (Unix seconds).
+- **Timestamp tolerance is opt-in.** The examples don't reject old timestamps unless `TERRA_WEBHOOK_TOLERANCE_SECONDS` is a positive whole number. Hookdeck retries and replays resend the original headers, so a fixed window would reject legitimate redeliveries. If you opt in, measure against `t` (Unix seconds).
 - **8-second budget.** Respond `2xx` within 8 seconds; do heavy work after acknowledging.
 
 ## How Do I Debug Verification Failures?

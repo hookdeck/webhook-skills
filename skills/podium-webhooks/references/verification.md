@@ -17,7 +17,7 @@ signature      = HMAC_SHA256(secret, signed_payload)   // hex
 | Key | The `secret` as UTF-8 bytes, used as-is |
 
 Podium's text never names the encoding. Its examples show a 64-character lowercase hex
-`podium-signature`, which is what Hookdeck checks. Webhooks without a secret are not signed and
+`podium-signature`. Webhooks without a secret are not signed and
 cannot pass verification.
 
 ## Implementation
@@ -53,15 +53,14 @@ def verify_podium(raw_body: bytes, signature: str, timestamp: str, secret: str) 
     return hmac.compare_digest(expected, bytes.fromhex(signature))
 ```
 
-Hex is compared case-insensitively (as Hookdeck does): both sides are decoded to bytes. The whole
+Hex is compared case-insensitively: both sides are decoded to bytes. The whole
 header value is one digest, with no list splitting or prefix parsing. Status codes: missing or empty
 header, malformed value or mismatch is `401`; a missing secret is `500`.
 
 ## Replay Protection (Opt-in)
 
 Podium's docs don't require a freshness check, and the examples **do not** reject old timestamps by
-default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself
-applies no tolerance, so a fixed window would reject legitimate retries. To opt in, set
+default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To opt in, set
 `PODIUM_WEBHOOK_TOLERANCE_SECONDS=300` (unset or `0` = off). The header is in milliseconds, so the
 examples compare `|Date.now() - ts|` against `tolerance * 1000`. The check runs after the signature
 check and answers `401`. Prefer idempotency on your own key.
@@ -85,4 +84,4 @@ check and answers `401`. Prefer idempotency on your own key.
 | `401` only on some payloads | Body re-serialised or decoded to a string and re-encoded |
 | `401` after a retry or replay | You enabled the tolerance window; the original timestamp is old |
 | `500` | `PODIUM_WEBHOOK_SECRET` not set |
-| Source in Hookdeck rejects, endpoint works | Wrong secret, no secret on the Podium webhook, or the method isn't allowed on the source |
+| Hookdeck shows failed verification, endpoint works | Wrong secret, no secret on the Podium webhook, or the method isn't allowed on the source |

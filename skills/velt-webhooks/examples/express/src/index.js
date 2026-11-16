@@ -18,8 +18,8 @@ const PORT = process.env.PORT || 3000;
 // Key: base64-decode of the endpoint's secret after its `whsec_` prefix.
 // Each webhook endpoint has its own signing secret. Basic (V1) webhooks are not
 // signed (they send `Authorization: Basic <token>`), so they fail this check.
-// Hookdeck's Velt source also accepts the svix-* header names when
-// webhook-id is absent, so this handler does the same.
+// This handler also accepts the svix-* header names when
+// webhook-id is absent.
 // ---------------------------------------------------------------------------
 
 /**

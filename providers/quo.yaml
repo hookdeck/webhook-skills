@@ -12,9 +12,7 @@ notes: >
   signature header is still literally `openphone-signature`, why the public API JSON is
   still served from openphone-public-api-prod.s3.us-west-2.amazonaws.com, and why older
   community material says "OpenPhone webhooks". API host is https://api.quo.com; docs at
-  www.quo.com/docs and support.quo.com. Hookdeck source type is QUO, whose source config
-  takes a single `webhook_secret_key` string (SourceConfigQuoAuth), which fits either
-  scheme below.
+  www.quo.com/docs and support.quo.com. Hookdeck source type is QUO, which takes a single webhook secret that fits either scheme below.
 
   NOT QUOTER. Quoter (help.quoter.com, Hookdeck source type QUOTER, skill
   quoter-webhooks) is an unrelated CPQ / sales-quoting company that verifies with a weak

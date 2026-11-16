@@ -46,9 +46,7 @@ don't put a variable in the secret.
 
 ## Hookdeck: Allow Every Method You Use
 
-Hookdeck's Plunk source pre-selects `POST` without managing the method. If the webhook step uses
-`GET`, `PUT`, `PATCH` or `DELETE`, allow that method on the source as well, or those requests
-won't be accepted.
+If the webhook step uses `GET`, `PUT`, `PATCH` or `DELETE`, allow that method on the source as well ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Enable and Test
 

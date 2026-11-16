@@ -14,15 +14,14 @@ notes: >
   sha256=bc3a344f9214bff0100b4dfc9eec47aa281935bfc0da0db1575ae7d4204eefe2).' 'If the secret is not
   provided, the signature is generated with an empty string key ('').' From the docs (registry
   summary): `X-H1-Signature: sha256=<hex>` = hex HMAC-SHA256(secret, raw body), prefixed `sha256=`.
-  With no secret set, the key is the empty string. SIGNATURE SCHEME (it must match Hookdeck's
-  HACKERONE source exactly: HMAC controller, algorithm "sha256", header_key "x-h1-signature", encoding
-  "hex"). The X-H1-Signature header carries `sha256=<hex>`. Strip a leading `sha256=` before
-  validating the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or
+  With no secret set, the key is the empty string. SIGNATURE SCHEME (algorithm sha256, header x-h1-signature, encoding
+  hex). The X-H1-Signature header carries `sha256=<hex>`. Strip a leading `sha256=` before
+  validating the digest; accept the value with or
   without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The optional secret set on the webhook. If none is set, HackerOne still sends a signature,
   keyed with ''; such a webhook gives no authenticity, and a Hookdeck source needs the secret, so set
@@ -33,7 +32,7 @@ notes: >
   hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
   signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no replay
   window to check; do not invent one from unsigned headers or body fields. Without a secret HackerOne
-  signs with an empty key, which neither Hookdeck nor the examples accept (an empty secret is a
+  signs with an empty key, which the examples don't accept (an empty secret is a
   configuration error). Events: dispatch on the X-H1-Event header. Only the header names the event.
   The body is `{data: {activity, report}}` (JSON:API-style); `data.activity.type` (e.g.
   `activity-bug-filed`) is an activity type, not the webhook event name, and the mapping between the
@@ -42,7 +41,7 @@ notes: >
   report_closed_as_informative, report_closed_as_spam, report_closed_as_not_applicable,
   report_comment_created, report_comments_closed, report_created, report_custom_field_value_updated,
   report_needs_more_info, report_new, report_prioritised (and 18 more). Handle a few common ones and
-  log the rest. Method: POST. Hookdeck's HackerOne source manages the method as POST, so the examples
+  log the rest. Method: POST. The examples
   handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

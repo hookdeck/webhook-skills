@@ -53,15 +53,13 @@ function verifyTutorCruncherSignature(rawBody, signature, secret) {
 
 **HTTP method:** TutorCruncher's docs don't name the method, so accept `GET`, `POST`, `PUT`,
 `PATCH` and `DELETE`, verify the signature first for each, and treat a missing body as zero
-bytes (a verified empty body gets `200`). Hookdeck's TutorCruncher source pre-selects POST
-without managing the method, so allow any other method the sender uses on the source too.
+bytes (a verified empty body gets `200`). Allow the method the sender uses on the Hookdeck source too (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Hookdeck Setup
 
-Hookdeck's TutorCruncher source type verifies the signature (HMAC, SHA-256, header
-`webhook-signature`, hex). Hookdeck shows this note for the source:
+Hookdeck's TutorCruncher source type verifies the signature. Hookdeck shows this note for the source:
 
 "Paste your TutorCruncher private API key. TutorCruncher signs webhooks with it."
 

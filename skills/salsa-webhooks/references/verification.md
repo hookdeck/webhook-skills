@@ -12,9 +12,8 @@ specification. Each request carries three headers:
 | `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
 
 Salsa's docs name them `Webhook-Id`, `Webhook-Timestamp` and `Webhook-Signature`; header names are
-case-insensitive. Hookdeck's Salsa source reads `webhook-*` and falls back to the `svix-*` header names
-(`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent, and the examples here do the
-same.
+case-insensitive. The examples here read `webhook-*` and fall back to the `svix-*` header names
+(`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent.
 
 The algorithm:
 
@@ -83,7 +82,7 @@ deduplicating on `webhook-id`, since the body has no event id.
 
 ## Manual Verification (configurable timestamp window)
 
-Salsa secrets start with `whsec_` (for example `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`), and the key is the base64-decoded remainder. As in Hookdeck's source, a
+Salsa secrets start with `whsec_` (for example `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`), and the key is the base64-decoded remainder. A
 secret without that prefix is used as its raw UTF-8 bytes.
 
 ```javascript

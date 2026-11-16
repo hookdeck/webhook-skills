@@ -16,15 +16,14 @@ notes: >
   API Access: Admin > Developers > Webhook Endpoints > Webhooks Signature Key. Live and sandbox have
   separate keys.' From the docs (registry summary): `sha256=` + lowercase hex HMAC-SHA256(signature
   key, raw body). The Rails sample splits on `=` and uses the prefix as the digest name; the Django
-  sample compares the whole prefixed string. SIGNATURE SCHEME (it must match Hookdeck's HINT_HEALTH
-  source exactly: HMAC controller, algorithm "sha256", header_key "x-hint-signature", encoding "hex").
+  sample compares the whole prefixed string. SIGNATURE SCHEME (algorithm sha256, header x-hint-signature, encoding hex).
   The x-hint-signature header carries `sha256=<hex>`. Strip a leading `sha256=` before validating the
-  digest; Hookdeck's parser also accepts the bare digest, so accept the value with or without the
+  digest; accept the value with or without the
   prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body
   bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
   body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: The webhooks signature key is one of the partner API keys (by default the one created with
   the partner account), chosen in Partner Portal > Webhooks > Settings; a practice with API Access has
@@ -41,8 +40,7 @@ notes: >
   patient.inactive, membership.created, membership.updated, membership.destroyed,
   practitioner.created, practitioner.updated, practitioner.destroyed, company.created,
   company.updated, company.destroyed, employee_division.created (and 30 more). Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's Hint Health source manages the method as POST, so
-  the examples handle POST on the webhook route. Express examples must read the raw body with
+  ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

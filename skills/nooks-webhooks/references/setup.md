@@ -19,7 +19,7 @@ If saving fails with a 4xx or 5xx, your endpoint is rejecting the activation pin
 
 ## Hookdeck Setup
 
-Put the Hookdeck source URL in Nooks instead of your own URL. Hookdeck answers the activation ping for you, so the save succeeds even before your server is running.
+Put the Hookdeck source URL in Nooks instead of your own URL.
 
 **The one-off activation ping Nooks sends when you save the URL is unsigned and may show as a failed verification. Later deliveries are signed.** Ignore that single failed verification. Then:
 

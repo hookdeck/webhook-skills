@@ -35,7 +35,7 @@ Use the URL the CLI prints as your `callback_url`. (Use port `8000` for the Fast
 
 ## Using Hookdeck as the Source
 
-When creating a Qonto source in Hookdeck, paste the whole secret, including the whsec_ prefix. Qonto uses it as a plain HMAC key. Hookdeck verifies `X-Qonto-Signature` (`t=`,`v1=`, hex HMAC-SHA256 of `{t}.{body}`) and applies no timestamp tolerance.
+When creating a Qonto source in Hookdeck, paste the whole secret, including the whsec_ prefix. Qonto uses it as a plain HMAC key. Hookdeck verifies the signature.
 
 ## Test Mode vs Live Mode
 

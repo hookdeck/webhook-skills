@@ -9,8 +9,7 @@ notes: >
   setPushEventSettings; serviceSettings are url, authorization and requireValidSslCertificate).
   No signature. The credential is the Authorization header, sent verbatim from
   serviceSettings.authorization (docs example 'Bearer sfasdfw34243'). Compare the WHOLE header
-  to BITDEFENDER_AUTHORIZATION, including any 'Bearer '/'Basic ' prefix, as Hookdeck's
-  Bitdefender source does; do not strip or decode the prefix. Constant-time compare. A static
+  to BITDEFENDER_AUTHORIZATION, including any 'Bearer '/'Basic ' prefix; do not strip or decode the prefix. Constant-time compare. A static
   credential authenticates the sender, not the body, with no replay protection. The push
   messages page also mentions an Event-Push-Service-Md5 header (not used). Body is JSON-RPC 2.0
   addEvents with params.events; each event has a module (av, aph, avc, fw, hd, dp,

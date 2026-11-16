@@ -19,7 +19,7 @@ configuration) if it leaks.
 ## Implementation
 
 The secret (`GOVUK_NOTIFY_WEBHOOK_SECRET`) is the **bare** token. If the configured value itself
-starts with `Bearer ` (case-insensitively) it is stripped, as Hookdeck does. The `Authorization`
+starts with `Bearer ` (case-insensitively) it is stripped. The `Authorization`
 header must start with `Bearer `, matched case-insensitively (auth schemes are case-insensitive,
 RFC 9110); the remainder is compared to the secret in constant time. Neither side is trimmed.
 

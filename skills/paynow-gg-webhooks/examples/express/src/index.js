@@ -36,7 +36,7 @@ function verifyPaynowSignature(rawBody, timestamp, signature, secret, toleranceS
   const message = Buffer.concat([Buffer.from(timestamp, 'latin1'), Buffer.from('.', 'utf8'), rawBody]);
   const expected = crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(message).digest();
   const provided = Buffer.from(signature, 'base64');
-  // Reject non-canonical encodings (stray low bits in the last character): core compares base64 exactly
+  // Reject non-canonical encodings (stray low bits in the last character)
   if (provided.toString('base64') !== signature) return { valid: false, error: 'Malformed signature' };
 
   if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {

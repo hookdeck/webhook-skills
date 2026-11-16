@@ -121,9 +121,7 @@ if not all(isinstance(t, dict) for t in tasks):
 - **Unconfigured secret**: reject everything if `MEILISEARCH_AUTHORIZATION` is empty, otherwise
   an empty header would "match".
 - **Optional header**: Meilisearch lets you omit the Authorization header; always set one.
-- **Hookdeck**: events show a binary body because Hookdeck stores gzip as binary; it forwards
-  the original bytes and `Content-Encoding`. A Hookdeck Meilisearch source (type `MEILISEARCH`)
-  compares the same whole header value.
+- **Hookdeck**: a Hookdeck Meilisearch source (type `MEILISEARCH`) checks the same header.
 
 ## Debugging 401s
 

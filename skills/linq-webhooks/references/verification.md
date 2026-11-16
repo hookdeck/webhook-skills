@@ -13,9 +13,8 @@ specification. Each request carries three headers:
 
 Linq also still sends the deprecated `X-Webhook-Event`, `X-Webhook-Subscription-ID`, `X-Webhook-Timestamp`
 and `X-Webhook-Signature` headers (hex HMAC-SHA256) for older integrations. New code should use the
-`webhook-*` headers. Hookdeck's Linq source reads `webhook-*` and falls back to the `svix-*` header names
-(`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent, and the examples here do the
-same.
+`webhook-*` headers. The examples read `webhook-*` and fall back to the `svix-*` header names
+(`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent.
 
 The algorithm:
 

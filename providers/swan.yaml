@@ -9,8 +9,7 @@ notes: >
   optional per webhook subscription (dashboard or the addWebhookSubscription mutation). No
   signature: requests are unsigned. Swan sends the subscription's webhook secret as plain text in
   the x-swan-secret header on every request. The examples read SWAN_WEBHOOK_SECRET, look the
-  x-swan-secret header up case-insensitively and compare its WHOLE value to the secret. This is what
-  Hookdeck's Swan source does (API key verification, header x-swan-secret, exact whole value).
+  x-swan-secret header up case-insensitively and compare its WHOLE value to the secret.
   Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).

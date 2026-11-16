@@ -15,7 +15,7 @@ from main import app, compute_signature, verify_spherepay  # noqa: E402
 
 client = TestClient(app)
 
-# Published vector from SpherePay's docs (verified against Hookdeck's SPHEREPAY source template)
+# Published vector from SpherePay's docs
 VECTOR = {
     "secret": "whsec_9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c",
     "body": '{"id":"event_01HXPA3M9R7DEF456","type":"transfer.succeeded","apiVersion":"v2","originalCreateDate":"2026-08-07T14:05:30.000Z","livemode":true,"sequence":5,"data":{"id":"payout_d243ab2b1de4447d8a046d87fefe58cf","type":"transfer","applicationId":"application_1324354657","customerId":"customer_f31121c389624d3697cbf3ea8830b7a4","transferType":"oneTimeTransfer","previousStatus":"processing","previousStatusAt":"2026-08-07T14:02:15.000Z","status":"succeeded","statusAt":"2026-08-07T14:05:30.000Z"}}',

@@ -12,7 +12,7 @@ from main import app, compute_signature, verify_configcat_webhook  # noqa: E402
 client = TestClient(app)
 URL = "/webhooks/configcat"
 
-# Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+# Published vector from ConfigCat's docs
 VECTOR_BODY = b"examplebody"
 VECTOR_ID = "b616ca659d154a5fb907dd8475792eeb"
 VECTOR_TIMESTAMP = "1669629035"

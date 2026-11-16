@@ -11,9 +11,7 @@ Authorization: Bearer your-shared-secret
 ```
 
 The header name is user-chosen. The examples read it from `ARGO_CD_WEBHOOK_HEADER` (default
-`Authorization`) and the expected **whole** value from `ARGO_CD_WEBHOOK_SECRET`. This matches
-Hookdeck's Argo CD source, which uses API key verification with a header name and the exact
-header value. A missing header or a mismatch is `401`.
+`Authorization`) and the expected **whole** value from `ARGO_CD_WEBHOOK_SECRET`. Hookdeck's Argo CD source checks the same header. A missing header or a mismatch is `401`.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it leaks.

@@ -11,8 +11,7 @@ Hookdeck shows this note for the Rebilly source, and it is the whole verificatio
 
 "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and Ed25519 signatures are not checked."
 
-Hookdeck never sends a 401 challenge (there is no `WWW-Authenticate` round trip), so the
-credentials must arrive with each request. A webhook without basic auth credentials is not
+The credentials must arrive with each request (there is no `WWW-Authenticate` challenge round trip). A webhook without basic auth credentials is not
 authenticated at all.
 
 ## Create the Webhook
@@ -30,8 +29,7 @@ authenticated at all.
 
 ## Hookdeck Source and Methods
 
-Hookdeck's Rebilly source pre-selects POST without managing the method. If the webhook uses
-GET, PUT, PATCH or DELETE, also allow that method on the source. The example handlers accept all
+If the webhook uses GET, PUT, PATCH or DELETE, also allow that method on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The example handlers accept all
 five methods and check the credentials first for each.
 
 ## Test

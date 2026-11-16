@@ -1,6 +1,6 @@
 # Bayou Energy Webhooks - FastAPI Example
 
-Minimal example of receiving [Bayou Energy](https://bayou.energy) webhooks with signature verification. Bayou signs deliveries per the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Bayou Energy](https://bayou.energy) webhooks with signature verification. Bayou signs deliveries per the [Standard Webhooks](https://www.standardwebhooks.com/) spec, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

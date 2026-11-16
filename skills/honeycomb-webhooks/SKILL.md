@@ -65,8 +65,7 @@ function verifyHoneycombRequest(headers, secret = process.env.HONEYCOMB_WEBHOOK_
 ## HTTP Methods
 
 Honeycomb's docs don't name the HTTP method, so the examples accept **GET, POST, PUT, PATCH and
-DELETE** on the webhook route and check the credential first for each. Hookdeck's Honeycomb source
-pre-selects POST without managing the method, so any other method Honeycomb uses must also be
+DELETE** on the webhook route and check the credential first for each. Hookdeck's Honeycomb source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method Honeycomb uses must also be
 allowed on the source.
 
 ## Alert Types

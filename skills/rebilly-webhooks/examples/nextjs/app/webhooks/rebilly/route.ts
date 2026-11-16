@@ -63,8 +63,8 @@ function handleEvent(payload: RebillyPayload): void {
 // Rebilly sends GET, POST, PUT, PATCH or DELETE, as configured on the webhook, so every
 // method runs the same handler.
 async function handle(request: NextRequest) {
-  // Authenticate before reading or parsing the body. Hookdeck never sends a 401 challenge,
-  // so the credentials must arrive with every request.
+  // Authenticate before reading or parsing the body. The credentials must arrive
+  // with every request (there is no challenge round trip).
   if (!verifyRebillyRequest(request.headers)) {
     return NextResponse.json({ error: 'Invalid or missing basic auth credentials' }, { status: 401 });
   }

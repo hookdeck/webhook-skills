@@ -162,13 +162,12 @@ to the 1-second contract.
 
 ## Hookdeck
 
-A `SENTRY` source type is being added to Hookdeck
-([hookdeck/core#5771](https://github.com/hookdeck/core/pull/5771), open at the
-time of writing). It is an alias on the generic HMAC controller with exactly
-the config this skill describes: **HMAC-SHA256, hex encoding, signature header
-`sentry-hook-signature`, a single secret** (the dashboard labels it *Client
-Secret*), signed content = the raw body. Until it ships, pick the generic HMAC
-source type and set those values yourself.
+A `SENTRY` source type is being added to Hookdeck (in progress at the time of
+writing); the dashboard labels its single secret *Client Secret*. Until it
+ships, pick the generic HMAC source type and set the scheme this skill
+describes: **HMAC-SHA256, hex encoding, signature header
+`sentry-hook-signature`, a single secret** (the Client Secret), signed content
+= the raw body.
 
 It covers `Sentry-Hook-Signature` only. The UI-component external requests that
 carry `Sentry-App-Signature` are synchronous request/response calls Sentry

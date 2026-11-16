@@ -14,14 +14,13 @@ notes: >
   hmac.new( key=secret.encode(), msg=body, digestmod=hashlib.sha256 ).hexdigest()' From the docs
   (registry summary): `X-MG-Signature: <hex_hmac_of_body>`, bare lowercase hex HMAC-SHA256(secret, raw
   body); the Python, Go, Node and Java samples all hex-encode and key with the secret's UTF-8 bytes.
-  No test vector. SIGNATURE SCHEME (it must match Hookdeck's MEETGEEK source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-mg-signature", encoding "hex"). The X-MG-Signature header carries
+  No test vector. SIGNATURE SCHEME: The X-MG-Signature header carries
   the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
   splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
   over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
   message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
   never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
-  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require
   exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
   compare. Secret: "The configured secret": the page does not say where it is set or shown (presumably
   next to the webhook URL in the Public API section). Hookdeck's alert asks for the secret configured
@@ -33,8 +32,7 @@ notes: >
   empty signature header, malformed value or mismatch: 401. No timestamp is signed, so there is no
   replay window to check; do not invent one from unsigned headers or body fields. Events: there is no
   event-name field or header; the body is `{message, meeting_id}` on success or `{message}` on
-  failure. Branch on `meeting_id`. Method: POST. Hookdeck's MeetGeek source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  failure. Branch on `meeting_id`. Method: POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

@@ -10,7 +10,7 @@ Optimizely has no webhook verification SDK, so verify manually. Both examples be
 
 1. Read the **raw body bytes**. Never `JSON.parse`/re-serialise before verifying, and don't decode to a string and re-encode.
 2. Use the secret's UTF-8 bytes as the key as-is (not hex- or base64-decoded).
-3. Strip a leading `sha1=` (Hookdeck's parser also accepts the bare digest).
+3. Strip a leading `sha1=`.
 4. Validate the digest: exactly 40 hex characters (case-insensitive).
 5. Compare decoded bytes in constant time.
 

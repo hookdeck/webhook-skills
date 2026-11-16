@@ -10,8 +10,7 @@ Add an auth header, such as Authorization: Bearer <token>, to each webhook URL o
 
 There is no HMAC, signature header or timestamp. The header name is user-chosen, so the examples
 read it from `INGENIOUS_BUILD_WEBHOOK_HEADER` (default `Authorization`) and the expected value from
-`INGENIOUS_BUILD_WEBHOOK_SECRET`. This matches Hookdeck's INGENIOUS.BUILD source (API key
-verification: header name plus exact, whole header value).
+`INGENIOUS_BUILD_WEBHOOK_SECRET`. Hookdeck's INGENIOUS.BUILD source checks the same header.
 
 **What this does and does not give you:** a static shared credential authenticates the sender, not
 the body, and gives no replay protection (no signature, no timestamp). Anyone who captures one

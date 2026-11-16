@@ -8,8 +8,7 @@ camelAI webhooks follow Standard Webhooks:
   webhook-signature  one or more space-separated "v1,<base64 HMAC-SHA256>"
 Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
 Key: base64-decode of the endpoint's secret after its `whsec_` prefix.
-Hookdeck also accepts the svix-* spelling of the same three headers, so this
-handler does too.
+This handler also accepts the svix-* spelling of the same three headers.
 """
 
 import json
@@ -35,7 +34,7 @@ processed_event_ids: set = set()
 
 def extract_signature_headers(headers: Any) -> Dict[str, str]:
     """Read the three signature headers, preferring webhook-* and falling back
-    to svix-* when webhook-id is absent (the same rule Hookdeck applies)."""
+    to svix-* when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "id": headers.get(f"{prefix}-id", ""),

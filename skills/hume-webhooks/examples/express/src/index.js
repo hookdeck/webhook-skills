@@ -11,9 +11,8 @@ const HEX_DIGEST_RE = /^[0-9a-fA-F]{64}$/;
 const UNIX_SECONDS_RE = /^[0-9]+$/;
 
 // Hume's own example rejects deliveries older than 180 seconds, but Hookdeck
-// retries and replays resend the ORIGINAL headers and timestamp (and Hookdeck
-// applies no tolerance itself), so a fixed window would reject legitimate
-// retries. The check is OFF by default; set HUME_WEBHOOK_TOLERANCE_SECONDS to
+// retries and replays resend the ORIGINAL headers and timestamp, so a fixed window would reject
+// legitimate retries. The check is OFF by default; set HUME_WEBHOOK_TOLERANCE_SECONDS to
 // opt in. Read at call time so it can be changed without a restart in tests.
 function defaultTolerance() {
   const n = Number.parseInt(process.env.HUME_WEBHOOK_TOLERANCE_SECONDS || '0', 10);

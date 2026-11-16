@@ -19,7 +19,7 @@ Both must be public HTTPS URLs. Both receive a `POST` with the transaction as JS
 
 ## Using Hookdeck
 
-Create a PayTabs source in Hookdeck. Paste your PayTabs profile server key. Only callback (IPN) requests are supported, not the browser return URL. Point the callback or IPN URL at the Hookdeck source URL. Hookdeck's source verifies the `signature` header and forwards the request to your destination.
+Create a PayTabs source in Hookdeck. Paste your PayTabs profile server key. Only callback (IPN) requests are supported, not the browser return URL. Point the callback or IPN URL at the Hookdeck source URL. Hookdeck's source verifies the signature and forwards the request to your destination.
 
 ## Test Mode vs Live Mode
 

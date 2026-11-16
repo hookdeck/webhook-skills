@@ -60,7 +60,7 @@ Schematic's SDKs include verify helpers, e.g. `verifyWebhookSignature(req, secre
 
 ## Optional Timestamp Tolerance
 
-Schematic's docs describe no required replay window, and the examples apply none by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries.
+Schematic's docs describe no required replay window, and the examples apply none by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries.
 
 If you receive directly from Schematic and want a window, set `SCHEMATIC_WEBHOOK_TOLERANCE_SECONDS` (for example `300`). Unset or `0` turns it off. The check runs after the signature matches and compares against `X-Schematic-Webhook-Timestamp` (Unix seconds). Idempotency on `event_id` is the more robust replay defence.
 

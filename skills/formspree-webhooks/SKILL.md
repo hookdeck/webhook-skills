@@ -78,7 +78,7 @@ for candidate in candidates:
 ### Timestamp window is opt-in
 
 Don't reject old timestamps by default. Hookdeck retries and replays resend the
-original headers, and Hookdeck's Formspree source applies no tolerance either, so
+original headers, so
 a fixed window would reject legitimate redeliveries. The examples read
 `FORMSPREE_WEBHOOK_TOLERANCE_SECONDS` (`t` is Unix seconds; unset or `0` = off) if
 you want replay protection.

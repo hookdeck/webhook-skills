@@ -37,8 +37,8 @@ Basic and OAuth credential types are not covered by Hookdeck's Nexthink source (
 
 ## Using Hookdeck
 
-Hookdeck's Nexthink source pre-selects POST without managing the method. The method is the
-sender's choice, so if your webhook uses PUT or PATCH, also allow that method on the source.
+The method is the sender's choice, so make sure the Hookdeck source allows the method your
+webhook uses ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 Point the credential's URL (plus the webhook Resource) at the Hookdeck source URL.
 
 ## Local Testing

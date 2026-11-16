@@ -40,12 +40,12 @@ ok = any(hmac.compare_digest(sig.encode(), expected) for sig in signatures)
 ```
 
 The header can carry more than one `v1` (for example during key rotation). The hex comparison is
-case-insensitive, as Hookdeck's Morta source does it.
+case-insensitive.
 
 ## Should I Reject Old Timestamps?
 
 Not by default. Hookdeck retries and replays resend the original headers, including the original
-`t`, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+`t`, so a fixed window would reject legitimate
 redeliveries. If you receive webhooks directly and want replay protection, set
 `MORTA_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`). Unset or `0`
 turns it off. `t` is Unix seconds.

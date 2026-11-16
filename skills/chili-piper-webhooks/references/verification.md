@@ -69,7 +69,7 @@ The example tests include this vector.
 
 ## How Do I Prevent Replay Attacks?
 
-Chili Piper suggests rejecting timestamps older than 5 minutes (300 s). This skill does **not** do that by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. The examples enable the check only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). When on, a request is rejected with `401` if `X-Chili-Timestamp` is not a whole number of seconds or differs from the current time by more than the tolerance. Otherwise, de-duplicate on `meetingIdChili` plus `type`.
+Chili Piper suggests rejecting timestamps older than 5 minutes (300 s). This skill does **not** do that by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples enable the check only when `CHILI_PIPER_WEBHOOK_TOLERANCE_SECONDS` is set above 0 (unset or `0` = off). When on, a request is rejected with `401` if `X-Chili-Timestamp` is not a whole number of seconds or differs from the current time by more than the tolerance. Otherwise, de-duplicate on `meetingIdChili` plus `type`.
 
 ## Common Gotchas
 

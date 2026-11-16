@@ -33,7 +33,7 @@ SIGNATURE_RE = re.compile(r"[A-Za-z0-9+/]{43}=")
 def verify_bvnk(raw_body: bytes, signature_header, secret: str) -> bool:
     if not secret or not signature_header:
         return False
-    # Only the canonical 44-character form passes: Hookdeck compares the base64 text exactly.
+    # Only the canonical 44-character form passes: compare the base64 text exactly.
     if not SIGNATURE_RE.fullmatch(signature_header):
         return False
     digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()

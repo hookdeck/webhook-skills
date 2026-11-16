@@ -145,8 +145,7 @@ MESSENGER_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the
 3. Subscribe each Page: `POST /<PAGE_ID>/subscribed_apps?subscribed_fields=messages,...` with
    a Page access token (`pages_messaging`, `pages_manage_metadata`).
 4. **Hookdeck setup:** Paste your Meta app's App Secret (App settings > Basic).
-   Hookdeck answers the `hub.challenge` handshake itself without checking the Verify Token,
-   so any value you enter in the Meta dashboard works.
+   Hookdeck's Messenger source answers the `hub.challenge` handshake for you.
 
 See [references/setup.md](references/setup.md).
 

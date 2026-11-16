@@ -62,7 +62,7 @@ ReferralHero has no official verification SDK; the documented method is manual H
 - **Parsed body.** Re-serialised JSON has different bytes (key order, whitespace). Verify first, parse second.
 - **Don't decode the secret.** It is used as its UTF-8 bytes, not base64- or hex-decoded.
 - **Hex vs base64.** The digest is base64. A hex digest never matches.
-- **Non-canonical base64.** A final character with stray low bits decodes to the same bytes but is not the canonical text, so Hookdeck rejects it. Compare the text exactly (or the bytes and the re-encoded text) rather than only decoded bytes.
+- **Non-canonical base64.** A final character with stray low bits decodes to the same bytes but is not the canonical text, so reject it. Compare the text exactly (or the bytes and the re-encoded text) rather than only decoded bytes.
 - **Never `Buffer.from(sig, 'base64')` on unvalidated input.** It silently drops bad characters.
 - **Status codes.** `401` for a bad or missing signature; `200` with a blank body on success.
 

@@ -14,15 +14,13 @@ notes: >
   enter a secret for webhook authentication. The secret must be between 32 and 64 characters. If
   created, the secret will be included as part of a hash, appended to the HTTP request as a
   qlik-signature.' From the docs (registry summary): HMAC-SHA256(webhook secret, raw request body),
-  hex-encoded, compared with the whole header value. No prefix, no timestamp. SIGNATURE SCHEME (it
-  must match Hookdeck's QLIK_CLOUD source exactly: HMAC controller, algorithm "sha256", header_key
-  "qlik-signature", encoding "hex"). The qlik-signature header carries the bare lowercase hex digest,
+  hex-encoded, compared with the whole header value. No prefix, no timestamp. SIGNATURE SCHEME: HMAC-SHA256, header qlik-signature, hex encoding. The qlik-signature header carries the bare lowercase hex digest,
   no prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
   signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only
   (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: The optional webhook
   secret (32 to 64 characters), write-once, set when creating or editing the webhook. Without it no
   qlik-signature is sent. Use it as UTF-8 bytes. Env var: QLIK_CLOUD_WEBHOOK_SECRET. Validate the
@@ -41,14 +39,12 @@ notes: >
   com.qlik.v1.reload.finished, com.qlik.v1.api-key.validation.failed, com.qlik.v1.user.created,
   com.qlik.v1.user.deleted, com.qlik.v1.automation.created, com.qlik.v1.automation.updated,
   com.qlik.v1.automation.deleted, com.qlik.v1.automation.run.started (and 8 more). Handle a few common
-  ones and log the rest. Methods: Qlik Cloud's docs don't name the HTTP method. Hookdeck's Qlik Cloud
-  source pre-selects POST without managing the method (the user can change it). The examples must NOT
+  ones and log the rest. Methods: Qlik Cloud's docs don't name the HTTP method. The examples must NOT
   be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express: app.all or one
   route per method; Next.js: export a handler for each; FastAPI: api_route with those methods), verify
   the signature first for every method, and treat a missing body as empty bytes (a GET with no body is
   verified over zero bytes, and once verified it is acknowledged with 200, not rejected as invalid
-  JSON). Say in SKILL.md and setup.md that Hookdeck's Qlik Cloud source pre-selects POST without
-  managing the method, so any other method the sender uses must also be allowed on the source. Express
+  JSON). Say in SKILL.md and setup.md that the Hookdeck source must allow whatever method the sender uses (see https://hookdeck.com/docs/sources#custom-methods). Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Documented sample payloads (each JSON file's `body` is the

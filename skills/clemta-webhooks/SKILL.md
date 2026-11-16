@@ -36,7 +36,7 @@ Clemta follows [Standard Webhooks](https://www.standardwebhooks.com):
 | `webhook-timestamp` | Unix seconds of this attempt |
 | `webhook-signature` | Space-separated entries: `v1,<base64>` (HMAC) and `v1a,<base64>` (Ed25519) |
 
-Clemta also sends `Clemta-Webhook-Id`, `-Timestamp` and `-Signature` copies of the same values. Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry (two during a secret rotation) and skip other versions such as `v1a`. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Clemta also sends `Clemta-Webhook-Id`, `-Timestamp` and `-Signature` copies of the same values. Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry (two during a secret rotation) and skip other versions such as `v1a`. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

@@ -11,8 +11,7 @@ Hookdeck shows this setup note for its Estuary source:
 
 > Estuary triggers are not signed. Add a secret header to the materialization trigger (or the HTTP Webhook connector) and enter it here.
 
-On the Hookdeck source, enter the **header name** and the **whole header value** (exact string,
-including any `Bearer ` prefix you typed).
+On the Hookdeck source, enter the **header name** and the **header value** (including any `Bearer ` prefix you typed).
 
 ## Add the Secret Header
 
@@ -34,7 +33,7 @@ ESTUARY_WEBHOOK_SECRET=Bearer <random>
 Triggers default to `POST`; `PUT` and `PATCH` are also allowed ("One of: POST, PUT, PATCH").
 The example handlers accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`.
 
-Hookdeck's Estuary source pre-selects `POST` without managing the method, so if your trigger
+Hookdeck's Estuary source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if your trigger
 uses `PUT` or `PATCH`, also allow that method on the Hookdeck source.
 
 ## Local Testing

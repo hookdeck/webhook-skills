@@ -14,8 +14,7 @@ notes: >
   decode strictly, e.g. validate=True in Python, so valid credentials followed by junk are rejected;
   split on the first colon), and compare the username and the password each in constant time,
   evaluating both before deciding (no short-circuit). Missing or malformed header or mismatch: 401.
-  SKILL.md and setup.md must say that Hookdeck never sends a 401 challenge (no WWW-Authenticate
-  round trip), so the credentials must arrive with each request. Compare in constant time: Node
+  SKILL.md and setup.md must say that the credentials must be sent with every request. Compare in constant time: Node
   checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
   sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
   on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
@@ -27,9 +26,7 @@ notes: >
   'POST (default) PUT ... PATCH ... GET ... DELETE (Generally available since 9.3)'. The examples
   must not be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route (Express:
   app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route with those
-  methods), check the credential first for every method, and handle an empty body. Say in SKILL.md
-  and setup.md that Hookdeck's Kibana source pre-selects POST without managing the method, so any
-  other method the sender uses must also be allowed on the source. The body is defined by the
+  methods), check the credential first for every method, and handle an empty body. Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). The body is defined by the
   sender's own configuration and there is no vendor event field, so the examples and test scenario
   use a clearly labelled illustrative payload. The body is the rule action's mustache template (e.g.
   {"rule": "{{rule.name}}", "status": "{{alert.actionGroup}}", "context": "{{context.message}}"});

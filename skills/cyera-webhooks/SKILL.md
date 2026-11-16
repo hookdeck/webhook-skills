@@ -59,7 +59,7 @@ function verifyCyera(rawBody /* Buffer */, headers, secret) {
 ```
 
 Python equivalent: `hmac.new(secret.encode(), ts.encode('latin-1') + b':' + raw, hashlib.sha256).digest()`,
-`base64.b64decode(sig, validate=True)`, a re-encode check that it gives back `sig` (decoders ignore stray low bits in the last character; Hookdeck compares base64 exactly), then `hmac.compare_digest` on bytes.
+`base64.b64decode(sig, validate=True)`, a re-encode check that it gives back `sig` (decoders ignore stray low bits in the last character), then `hmac.compare_digest` on bytes.
 
 - Missing or empty signature or timestamp, malformed signature, or mismatch: respond `401`.
 - Read the **raw body** (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`); parse JSON only after the check.
@@ -70,7 +70,7 @@ Python equivalent: `hmac.new(secret.encode(), ts.encode('latin-1') + b':' + raw,
 ### Timestamp window (opt-in)
 
 Do **not** reject old timestamps by default. Hookdeck retries and replays resend the original
-headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject
+headers and timestamp, so a fixed window would reject
 legitimate redeliveries. The examples offer an opt-in `CYERA_WEBHOOK_TOLERANCE_SECONDS` (unset or
 `0` = off; `X-Webhook-Timestamp` is Unix seconds). Cyera's webhook docs describe no freshness window.
 
@@ -96,7 +96,7 @@ created. Completion is reported **later** by a PUT to `webhook_callback_url` wit
 
 For Cyera Privacy's privacy-request webhooks. Paste the Webhook Secret from the webhook integration.
 
-The Hookdeck source type is `CYERA` (labelled "Cyera"), and it manages the method as `POST`.
+The Hookdeck source type is `CYERA` (labelled "Cyera").
 
 ## Environment Variables
 

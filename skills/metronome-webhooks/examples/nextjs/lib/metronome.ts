@@ -44,8 +44,8 @@ export function verifyMetronomeSignature(
   return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
 }
 
-// Retries and Hookdeck replays resend the original X-Metronome-Date, and Hookdeck applies
-// no tolerance itself, so the window is OFF unless METRONOME_WEBHOOK_TOLERANCE_SECONDS is set.
+// Retries and Hookdeck replays resend the original X-Metronome-Date,
+// so the window is OFF unless METRONOME_WEBHOOK_TOLERANCE_SECONDS is set.
 export function getToleranceSeconds(): number {
   const n = Number(process.env.METRONOME_WEBHOOK_TOLERANCE_SECONDS);
   return Number.isFinite(n) && n > 0 ? n : 0;

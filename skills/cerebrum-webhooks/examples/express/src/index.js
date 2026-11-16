@@ -19,12 +19,12 @@ const PORT = process.env.PORT || 3000;
 // Signed content: `${id}.${timestamp}.${rawBody}`
 // Key: base64-decode of the secret after its `whsec_` prefix.
 // The same three values can arrive as webhook-id / webhook-timestamp /
-// webhook-signature; Hookdeck reads either set, and so does this handler.
+// webhook-signature; this handler reads either set.
 // ---------------------------------------------------------------------------
 
 /**
  * Pick one complete set of signature headers. svix-* wins when svix-id is
- * present, otherwise webhook-* is used (the same rule Hookdeck applies).
+ * present, otherwise webhook-* is used.
  * Returns the three values under the names the svix library reads, or null
  * if any of them is missing.
  *

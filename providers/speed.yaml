@@ -10,7 +10,7 @@ notes: >-
   Connect), signed in the Standard Webhooks layout with webhook-* headers and a `wsec_` secret. Standard
   Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp (Unix seconds), webhook-signature
   (one or more space-separated 'v1,<base64>' entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw
-  request body}', HMAC-SHA256, base64 output. Hookdeck core notes: Speed issues a wsec_<base64> secret;
+  request body}', HMAC-SHA256, base64 output. Notes: Speed issues a wsec_<base64> secret;
   it is pasted as whsec_<base64>. SECRET: Per endpoint: revealed on the endpoint in Webhooks settings
   or returned by Get Webhook Endpoint By Id. Format `wsec_<base64>` (NOT `whsec_`): strip `wsec_` and
   base64-decode the rest for the key. Research: wsec_ + base64 ("Get byte[] of the signing secret by removing
@@ -19,13 +19,9 @@ notes: >-
   (or strip it) before constructing Webhook; a value already starting whsec_ is used as is. SPEED_WEBHOOK_SECRET
   holds the wsec_ value exactly as Speed shows it. Verify with the standardwebhooks library (npm 'standardwebhooks',
   pip 'standardwebhooks'). HEADER FALLBACK (all three frameworks and the manual verifier): read the webhook-*
-  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature),
-  exactly as Hookdeck does; then hand the library (or manual check) the three values under the header
+  headers and, when webhook-id is absent, fall back to the svix-* headers (svix-id, -timestamp, -signature); then hand the library (or manual check) the three values under the header
   names it expects (for the standardwebhooks library, pass them as webhook-id, webhook-timestamp and webhook-signature).
   Include a test that a delivery signed the same way but sent with the other prefix's headers is accepted.
-  This matches Hookdeck's Speed source (Standard Webhooks, headers_prefix 'webhook', a whsec_ secret base64-decoded
-  after the prefix and any other secret used as its raw UTF-8 bytes, every v1 entry tried, other versions
-  such as v1a ignored, no timestamp window; core also reads the other prefix's headers, webhook-* or svix-*).
   The library always enforces a fixed 5-minute timestamp window. SKILL.md must say that Hookdeck retries
   and replays resend the original timestamp, so the library rejects late retries after 5 minutes, and
   point to a manual verifier in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}'

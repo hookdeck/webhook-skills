@@ -11,9 +11,7 @@ notes: >
   secret Infinite Giving gives you at partner kickoff." Headers: X-IG-Signature (sha256=<hex>),
   X-IG-Timestamp (Unix seconds), X-IG-Event, X-IG-Webhook-Id (dedupe id). Signature is lowercase hex
   HMAC-SHA256 over the X-IG-Timestamp header value, a literal ".", then the raw body bytes, keyed with
-  the partner signing secret used as UTF-8 (not decoded). Hookdeck's INFINITE_GIVING source uses the
-  HMAC controller with signed_content_template "{header:x-ig-timestamp}.{body}", header x-ig-signature,
-  hex; the sha256= prefix is optional and hex is case-insensitive. No timestamp window by default
+  the partner signing secret used as UTF-8 (not decoded). Scheme: HMAC-SHA256 over "{x-ig-timestamp header}.{raw body}", header x-ig-signature, hex; accept the value with or without the sha256= prefix and compare hex case-insensitively. No timestamp window by default
   (retries and replays resend the original timestamp); the examples offer an opt-in
   INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS. Env var INFINITE_GIVING_WEBHOOK_SECRET. Events (2):
   donation:created, donation:updated (completion is donation:updated with status "complete"); dispatch

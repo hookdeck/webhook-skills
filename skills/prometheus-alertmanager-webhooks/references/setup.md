@@ -57,15 +57,14 @@ receivers:
 ```
 
 Set `ALERTMANAGER_WEBHOOK_USERNAME` and `ALERTMANAGER_WEBHOOK_PASSWORD` to the same values. The
-examples split on the first colon, so a password may contain `:`. Hookdeck never sends a 401
-challenge, which is fine here: Alertmanager sends the credentials with every request.
+examples split on the first colon, so a password may contain `:`. Alertmanager sends the credentials with every request, so no challenge round trip is needed.
 
 ## Hookdeck
 
 Hookdeck's Prometheus Alertmanager source offers two methods. Pick the one that matches the
 receiver:
 
-- **Basic auth** (the default): for `basic_auth`. Enter the username and password.
+- **Basic auth**: for `basic_auth`. Enter the username and password.
 - **Bearer token**: for `authorization`. Enter the bare credentials, without `Bearer `.
 
 ## oauth2 Is Not Supported

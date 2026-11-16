@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Cuuro sends svix-* headers; Hookdeck also accepts the Standard Webhooks webhook-* names
+// Cuuro sends svix-* headers; this handler also accepts the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers) {
   const prefix = headers['svix-id'] ? 'svix' : 'webhook';
   return {

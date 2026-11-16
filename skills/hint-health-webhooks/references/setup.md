@@ -20,7 +20,7 @@ Partners register a global or per-integration webhook endpoint with a partner AP
 
 ## Using Hookdeck
 
-Create a Hint Health source in Hookdeck. Paste the partner API key you chose as the webhooks signature key. Point the webhook URL in Hint at the Hookdeck source URL. Hookdeck's source verifies the `x-hint-signature` header and forwards the request to your destination.
+Create a Hint Health source in Hookdeck. Paste the partner API key you chose as the webhooks signature key. Point the webhook URL in Hint at the Hookdeck source URL. Hookdeck's source verifies the signature and forwards the request to your destination.
 
 ## Test Mode vs Live Mode
 

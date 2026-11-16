@@ -160,15 +160,14 @@ inspecting requests.
 
 ## Using the Hookdeck MailerSend Source
 
-Hookdeck ships a first-class `MAILERSEND` source type. It verifies the same way
-this skill does — HMAC-SHA256, hex, read from the `Signature` header — and the
-dashboard field it asks for, **Webhook Signing Secret**, is the per-webhook
+Hookdeck ships a first-class `MAILERSEND` source type that verifies the signature.
+The dashboard field it asks for, **Webhook Signing Secret**, is the per-webhook
 signing secret, not your API token.
 
 The public test secret creates one ordering trap. MailerSend sends the
 `webhook.test` ping on **create and update**, signed with the fixed public
 secret rather than your signing secret. A source that is already verifying with
-your real signing secret rejects that ping — and MailerSend refuses to save a
+your real signing secret records that ping as failed verification, and MailerSend refuses to save a
 webhook whose URL did not answer 2xx. So:
 
 1. Create the Hookdeck source with verification **not yet configured**.

@@ -67,7 +67,7 @@ FastAPI: `await request.body()` returns the raw bytes.
 
 ## Optional Timestamp Window
 
-RootFi's docs show a 300-second tolerance in their sample and call it a reasonable default to limit replay attacks. The examples leave it **off** unless you opt in, because Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate retries.
+RootFi's docs show a 300-second tolerance in their sample and call it a reasonable default to limit replay attacks. The examples leave it **off** unless you opt in, because Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries.
 
 To opt in, set `ROOTFI_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number of seconds. The check goes right after the header is parsed and before the HMAC:
 

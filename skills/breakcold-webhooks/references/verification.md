@@ -54,13 +54,13 @@ Breakcold publishes no webhook verification SDK, so manual HMAC is the supported
 
 ## Optional Replay Window
 
-The examples skip timestamp checks by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. To opt in, set `BREAKCOLD_WEBHOOK_TOLERANCE_SECONDS` (for example `300`). The handler then rejects requests whose `X-Webhook-Timestamp` differs from the current Unix time by more than that many seconds. Unset or `0` turns it off. Idempotency on `X-Webhook-Delivery-Id` is the default replay defence.
+The examples skip timestamp checks by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To opt in, set `BREAKCOLD_WEBHOOK_TOLERANCE_SECONDS` (for example `300`). The handler then rejects requests whose `X-Webhook-Timestamp` differs from the current Unix time by more than that many seconds. Unset or `0` turns it off. Idempotency on `X-Webhook-Delivery-Id` is the default replay defence.
 
 ## Common Gotchas
 
 - **Raw body**: any parsing or re-serialization (`express.json()`, `request.json()`) changes the bytes and breaks the MAC. Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()` or `await request.body()`.
 - **The timestamp is signed.** A MAC over the body alone will not match.
-- **Prefix**: the header carries `sha256=`. Strip it before comparing. A bare digest is also accepted by Hookdeck's parser.
+- **Prefix**: the header carries `sha256=`. Strip it before comparing. A bare digest is also accepted.
 - **Hex case**: compare case-insensitively (decode both sides to bytes).
 - **Secret**: use the string exactly as copied; do not hex- or base64-decode it, and do not trim it.
 - **Validate before decoding**: `Buffer.from(x, 'hex')` silently drops invalid characters, so check for exactly 64 hex characters first. `timingSafeEqual` throws on unequal lengths.

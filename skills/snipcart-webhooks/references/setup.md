@@ -114,10 +114,7 @@ Paste the printed URL into the dashboard webhook field.
 Hookdeck has a `SNIPCART` source type (recently added, so it may not yet
 appear on [hookdeck.com/docs/sources](https://hookdeck.com/docs/sources)). Its
 config takes a single secret API key — use the key for the same mode (Test or
-Live) as the webhook — and performs the same `X-Snipcart-RequestToken`
-validation at ingestion: `GET .../requestvalidation/{token}` with the key as the
-Basic-auth username, a format check on the token, no redirects followed, and a
-5-second timeout that fails closed.
+Live) as the webhook — and performs the same `X-Snipcart-RequestToken` validation at ingestion.
 
 When Hookdeck sits in front of your handler:
 

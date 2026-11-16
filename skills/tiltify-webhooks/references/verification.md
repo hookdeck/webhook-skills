@@ -28,7 +28,7 @@ if (!/^[A-Za-z0-9+/]{43}=$/.test(signature)) return false;   // exact length and
 return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature)); // compare the base64 text
 ```
 
-Validate the format first, then compare the base64 text rather than decoded bytes: `Buffer.from(x, 'base64')` silently drops bad characters, and both Node and Python ignore stray low bits in the last character, while Hookdeck compares the base64 string exactly.
+Validate the format first, then compare the base64 text rather than decoded bytes: `Buffer.from(x, 'base64')` silently drops bad characters, and both Node and Python ignore stray low bits in the last character.
 
 ### Python
 
@@ -58,7 +58,7 @@ It confirms the key is the 64-character hex string used as UTF-8 text. If your i
 
 ## Should I Enforce a Timestamp Window?
 
-Tiltify says the timestamp should be recent (within a minute). The examples don't enforce it by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries (Tiltify itself retries for about an hour). To opt in, set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); unset or `0` is off. With it on, the timestamp must be a valid ISO-8601 UTC value, and anything farther than the tolerance from now is rejected with `401`. Deduplicating on `meta.id` protects against replays regardless.
+Tiltify says the timestamp should be recent (within a minute). The examples don't enforce it by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries (Tiltify itself retries for about an hour). To opt in, set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); unset or `0` is off. With it on, the timestamp must be a valid ISO-8601 UTC value, and anything farther than the tolerance from now is rejected with `401`. Deduplicating on `meta.id` protects against replays regardless.
 
 ## Common Gotchas
 

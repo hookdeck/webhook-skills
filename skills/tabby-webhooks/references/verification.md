@@ -20,8 +20,7 @@ leaks.
 ## Implementation
 
 Configuration: `TABBY_WEBHOOK_HEADER` (default `X-Auth-Key`) and `TABBY_WEBHOOK_SECRET`, the
-exact, whole header value. This matches Hookdeck's Tabby source (API key verification with
-header name and exact whole header value).
+exact, whole header value.
 
 ### Node.js
 

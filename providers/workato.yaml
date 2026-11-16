@@ -7,7 +7,7 @@ notes: >
   Automation platform with no native outbound webhooks: deliveries are HTTP connector actions
   in recipes (like n8n and Zapier), using an HTTP connection with Basic auth ("Basic auth user"
   and "Basic auth password" fields). No signature. Authenticate with HTTP Basic auth, which is what
-  Hookdeck's Workato source verifies: parse 'Authorization: Basic base64(username:password)'
+  Hookdeck's Workato source verifies. The examples parse 'Authorization: Basic base64(username:password)'
   (scheme case-insensitive, split on the first colon) and compare username and password each in
   constant time, evaluating both before deciding. A static shared credential authenticates the
   sender, not the body, and gives no replay protection (no signature, no timestamp). The request

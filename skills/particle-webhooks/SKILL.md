@@ -71,9 +71,7 @@ function verifyParticleRequest(
 ## Methods
 
 `requestType` is one of GET, POST, PUT or DELETE (default POST). The examples accept GET, POST,
-PUT, PATCH and DELETE on the route and authenticate each one. Hookdeck's Particle source
-pre-selects POST without managing the method, so any other method your integration uses must also
-be allowed on the source.
+PUT, PATCH and DELETE on the route and authenticate each one. Any method your integration uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

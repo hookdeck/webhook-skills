@@ -35,7 +35,7 @@ metadata:
 | `svix-timestamp` | Unix seconds of this delivery attempt |
 | `svix-signature` | One or more space-separated `v1,<base64 HMAC-SHA256>` entries |
 
-Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. The key is the base64-**decoded** part of the secret after `whsec_`. The same values may arrive as `webhook-id`, `webhook-timestamp` and `webhook-signature`; read `svix-*` and fall back to `webhook-*` when `svix-id` is absent, as Hookdeck does. Use the official [`svix`](https://www.npmjs.com/package/svix) library (npm, PyPI):
+Signed content is `{svix-id}.{svix-timestamp}.{raw body}`. The key is the base64-**decoded** part of the secret after `whsec_`. The same values may arrive as `webhook-id`, `webhook-timestamp` and `webhook-signature`; read `svix-*` and fall back to `webhook-*` when `svix-id` is absent. Use the official [`svix`](https://www.npmjs.com/package/svix) library (npm, PyPI):
 
 ```javascript
 import { Webhook } from 'svix';

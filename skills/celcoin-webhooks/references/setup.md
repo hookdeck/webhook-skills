@@ -39,8 +39,8 @@ Other calls on the same path: `GET` (list), `PUT .../{context}/{entity}` (change
 
 If Hookdeck sits in front of your endpoint, create a source of type **Celcoin**, and use its URL as `webhookUrl`.
 
-- **Hookdeck never sends a 401 challenge** (no `WWW-Authenticate` round trip), so Celcoin must present the Basic credentials with each request, which is what the subscription's `auth` does.
-- **Methods:** Celcoin's docs don't name the HTTP method. Hookdeck's Celcoin source pre-selects POST without managing the method, so any other method Celcoin uses must also be allowed on the source.
+- **No 401 challenge** (no `WWW-Authenticate` round trip), so Celcoin must present the Basic credentials with each request, which is what the subscription's `auth` does.
+- **Methods:** Celcoin's docs don't name the HTTP method. Hookdeck's Celcoin source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method Celcoin uses must also be allowed on the source.
 
 ## Register Your Endpoint
 

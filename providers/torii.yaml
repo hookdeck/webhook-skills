@@ -11,8 +11,7 @@ notes: >
   examples read the header name from TORII_WEBHOOK_HEADER (default 'Authorization') and the expected
   value from TORII_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer ' prefix the
   user typed). Look the header up case-insensitively and compare the WHOLE value; do not strip or
-  parse a 'Bearer ' prefix. This is what Hookdeck's Torii source does (API key verification: header
-  name + exact whole value). Missing header or mismatch: 401. Compare in constant time: Node checks
+  parse a 'Bearer ' prefix. Missing header or mismatch: 401. Compare in constant time: Node checks
   lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both
   sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass str, which raises
   on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
@@ -22,8 +21,7 @@ notes: >
   if present). Hookdeck's source type is TORII, labelled 'Torii'. The request method is user-chosen,
   so the examples must not be POST-only: accept POST, PUT, PATCH, GET and DELETE on the webhook
   route (Next.js: export a handler for each), and handle an empty body. Say in SKILL.md and setup.md
-  that Hookdeck's Torii source pre-selects POST without managing the method, so any other method the
-  sender uses must also be allowed on the source. The body is the author's JSON with @ placeholders;
+  that the user must allow the method the sender uses on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). The body is the author's JSON with @ placeholders;
   The body is a template the user writes; the vendor adds no event field, so the examples and test
   scenario use a clearly labelled illustrative payload. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works; parse the body only after the credential

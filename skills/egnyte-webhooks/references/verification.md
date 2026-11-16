@@ -88,7 +88,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **Disabled webhook**: Egnyte disables a registration after the four delivery attempts fail.
   A wrong credential on your side (401) causes exactly that, so fix it and re-enable the
   webhook.
-- **Hookdeck**: a Hookdeck Egnyte source verifies the same header (full value). Paste the
+- **Hookdeck**: a Hookdeck Egnyte source checks the same header. Paste the
   authHeader value exactly as set on the Egnyte webhook, including any "Bearer " prefix.
 
 ## Debugging 401s

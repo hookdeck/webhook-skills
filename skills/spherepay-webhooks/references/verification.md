@@ -14,7 +14,7 @@ signature = hex( HMAC-SHA256( secret, "{Sphere-Timestamp}.{raw body}" ) )
 ```
 
 - **Key:** the endpoint's whole signing secret (`whsec_...`) as UTF-8 bytes, used as-is. Not hex- or base64-decoded; the `whsec_` prefix stays.
-- **Message (bytes):** the `Sphere-Timestamp` header value (latin-1, exactly as received, never trimmed or reformatted), a literal `.`, then the raw request body bytes. This matches Hookdeck's `{header:sphere-timestamp}.{body}` template.
+- **Message (bytes):** the `Sphere-Timestamp` header value (latin-1, exactly as received, never trimmed or reformatted), a literal `.`, then the raw request body bytes.
 - **Not Standard Webhooks.** There is no `webhook-id`, nothing is base64, and the digest is hex. Do not use the `standardwebhooks` or `svix` libraries.
 
 Paste the whole secret, including the whsec_ prefix. SpherePay uses it as a plain HMAC key.
@@ -51,7 +51,7 @@ The runnable, tested versions are in `examples/express`, `examples/nextjs` and `
 
 ## Published Test Vector
 
-SpherePay's docs give a worked example (the same `whsec_9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c` secret as its endpoint-creation example). Every example's test suite includes it, and it matches Hookdeck's template:
+SpherePay's docs give a worked example (the same `whsec_9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c` secret as its endpoint-creation example). Every example's test suite includes it:
 
 - Secret: `whsec_9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c`
 - `Sphere-Timestamp`: `1786111531`
@@ -62,7 +62,7 @@ If your verifier computes a different digest for this vector, the problem is in 
 
 ## Replay Protection (Optional Timestamp Window)
 
-SpherePay's docs suggest rejecting a `Sphere-Timestamp` more than 5 minutes old. The examples **do not check it by default**: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate redeliveries. To opt in, set `SPHEREPAY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` is off, and a value that isn't a whole number is treated as `0` with a warning. When it is on, a non-numeric timestamp is rejected. Use the body's event `id` for idempotency to absorb duplicates either way.
+SpherePay's docs suggest rejecting a `Sphere-Timestamp` more than 5 minutes old. The examples **do not check it by default**: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate redeliveries. To opt in, set `SPHEREPAY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` is off, and a value that isn't a whole number is treated as `0` with a warning. When it is on, a non-numeric timestamp is rejected. Use the body's event `id` for idempotency to absorb duplicates either way.
 
 SpherePay's own manual replays get a fresh timestamp and signature, so they would pass a window; redeliveries of the original request from Hookdeck would not.
 

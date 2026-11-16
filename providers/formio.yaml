@@ -21,8 +21,7 @@ notes: >
   DELETE on the webhook route, and handle an empty body (e.g. GET). Form.io's default 'Match' method
   sends POST for creates, PUT for updates and DELETE for deletes (URL params as a query string), so
   the receiver must accept all three, and the HTTP verb is the only hint of the operation (no event
-  field). Body: {request, response, submission, params}. Note in SKILL.md that Hookdeck's Form.io
-  source pre-selects POST only, so PUT and DELETE must be allowed on the source. Express examples
+  field). Body: {request, response, submission, params}. Note in SKILL.md that PUT and DELETE must be allowed on the Hookdeck source (https://hookdeck.com/docs/sources#custom-methods). Express examples
   must read the raw body with express.raw({ type: '*/*' }) so any content type works; parse JSON
   only after the credential check.
 testScenario:

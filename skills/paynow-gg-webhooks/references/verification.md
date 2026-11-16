@@ -56,14 +56,14 @@ Full handlers with tests: [Express](../examples/express/), [Next.js](../examples
 
 ## Should I Reject Old Timestamps?
 
-Not by default. PayNow's [Preventing Replay Attacks](https://docs.paynow.gg/webhooks/preventing-replay-attacks/) page recommends ignoring requests older than 5 minutes, and its sample code does so. But PayNow retries failed deliveries with exponential backoff, and Hookdeck retries and replays resend the **original** headers and timestamp. Hookdeck itself applies no timestamp tolerance, so a fixed window in your handler would reject legitimate retries and replays.
+Not by default. PayNow's [Preventing Replay Attacks](https://docs.paynow.gg/webhooks/preventing-replay-attacks/) page recommends ignoring requests older than 5 minutes, and its sample code does so. But PayNow retries failed deliveries with exponential backoff, and Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window in your handler would reject legitimate retries and replays.
 
 The examples make it opt-in: set `PAYNOW_WEBHOOK_TOLERANCE_SECONDS` (for example `300`). Unset or `0` leaves it off. The check compares `PayNow-Timestamp` (milliseconds) with the current time, in both directions. For replay protection without a window, store `event_id` and ignore duplicates.
 
 ## Common Gotchas
 
 - **Raw body.** Verify the exact bytes. In Express use `express.raw({ type: '*/*' })`; in Next.js `await request.arrayBuffer()`; in FastAPI `await request.body()`. PayNow's sample converts the body to a UTF-8 string before hashing; keep it as bytes so non-UTF-8 payloads still verify.
-- **Don't decode base64 unvalidated.** `Buffer.from(sig, 'base64')` silently drops invalid characters. Check the 44-character padded alphabet first. In Python use `base64.b64decode(..., validate=True)`. Then re-encode and require the original string, since both decoders ignore stray bits in the last character and Hookdeck compares base64 exactly.
+- **Don't decode base64 unvalidated.** `Buffer.from(sig, 'base64')` silently drops invalid characters. Check the 44-character padded alphabet first. In Python use `base64.b64decode(..., validate=True)`. Then re-encode and require the original string, since both decoders ignore stray bits in the last character.
 - **Compare as one digest.** Use the whole header value: no splitting, no prefix parsing. Compare in constant time (`crypto.timingSafeEqual` on equal-length buffers, `hmac.compare_digest` on bytes).
 - **Milliseconds, not seconds.** `PayNow-Timestamp` is Unix milliseconds. It is signed exactly as sent, so never re-format it.
 - **Status codes.** Return `401` for a missing, malformed, or mismatched signature. A response above 299 triggers a retry.

@@ -4,7 +4,7 @@
 
 A `generic-hmac` Provider adds `X-Signature: <hash-function>=<hash>` to each POST.
 
-- Algorithm: HMAC-SHA256 today. The docs say the hash function "currently defaults to sha256, which may change in the future", and their Go sample also accepts `sha224`, `sha384` and `sha512`. Hookdeck verifies `sha256` only, and these examples do the same.
+- Algorithm: HMAC-SHA256 today. The docs say the hash function "currently defaults to sha256, which may change in the future", and their Go sample also accepts `sha224`, `sha384` and `sha512`. These examples verify `sha256` only.
 - Signed content: the raw request body bytes only. No timestamp, id or header is signed.
 - Encoding: lowercase hex (compare case-insensitively).
 - Key: the `token` of the Secret in the Provider's `spec.secretRef`, as UTF-8 bytes.

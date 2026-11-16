@@ -1,6 +1,6 @@
 # Basiq Webhooks - Next.js Example
 
-Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification in a Next.js App Router route handler. Basiq signs deliveries with the Standard Webhooks scheme, so the route verifies `webhook-id`, `webhook-timestamp` and `webhook-signature` with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification in a Next.js App Router route handler. Basiq signs deliveries with the Standard Webhooks scheme, so the route verifies `webhook-id`, `webhook-timestamp` and `webhook-signature` with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

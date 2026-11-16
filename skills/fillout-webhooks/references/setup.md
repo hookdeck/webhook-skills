@@ -97,4 +97,4 @@ verification settings:
 - **API Key Header:** `Authorization`
 - **API Key:** `Bearer <your token>` (the whole value, including `Bearer `)
 
-The source pre-selects `POST`. Keep the Fillout webhook on `POST`, since only `POST` carries a body.
+The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Keep the Fillout webhook on `POST`, since only `POST` carries a body.

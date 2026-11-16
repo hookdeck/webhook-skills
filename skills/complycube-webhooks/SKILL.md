@@ -95,8 +95,7 @@ COMPLYCUBE_WEBHOOK_SECRET=your_webhook_secret   # Returned once, when the webhoo
 ## Setup with Hookdeck
 
 Create the webhook in ComplyCube with your Hookdeck source URL, then paste the webhook secret into
-the Hookdeck source's webhook verification settings (HMAC, SHA-256, header `ComplyCube-Signature`,
-hex). Hookdeck accepts the delivery quickly, which keeps you inside the 15-second window and avoids
+the Hookdeck source's webhook verification settings. Hookdeck accepts the delivery quickly, which keeps you inside the 15-second window and avoids
 the webhook being disabled.
 
 ## Local Development

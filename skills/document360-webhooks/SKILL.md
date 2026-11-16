@@ -114,7 +114,7 @@ DOCUMENT360_WEBHOOK_SECRET=your-secret     # its exact, whole value (including a
 ## Using Hookdeck
 
 Hookdeck's **Document360** source type authenticates this the same way: you give it the header
-name and the exact whole value. The source **pre-selects POST without managing the method**, so if
+name and the value. The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if
 your channel's Request method is PUT, also allow PUT on the source.
 
 ## Local Development

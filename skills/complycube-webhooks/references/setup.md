@@ -26,8 +26,7 @@ and treat it like a password. Each webhook endpoint has its own secret.
 
 1. Create a Hookdeck source and copy its URL.
 2. Create the ComplyCube webhook pointing at that URL and copy the secret.
-3. Paste the secret into the Hookdeck source's webhook verification settings (HMAC, SHA-256, header
-   `ComplyCube-Signature`, hex).
+3. Paste the secret into the Hookdeck source's webhook verification settings.
 
 ## Local Development
 

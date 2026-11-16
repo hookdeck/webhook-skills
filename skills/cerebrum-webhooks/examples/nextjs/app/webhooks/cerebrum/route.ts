@@ -12,7 +12,7 @@ import { Webhook } from 'svix';
 // Signed content: `${id}.${timestamp}.${rawBody}`
 // Key: base64-decode of the secret after its `whsec_` prefix.
 // The same three values can arrive as webhook-id / webhook-timestamp /
-// webhook-signature; Hookdeck reads either set, and so does this handler.
+// webhook-signature; this handler reads either set.
 // ---------------------------------------------------------------------------
 
 // Payload schema: { id, idType, additionalMetadata, event, eventDate, svixAppId, metadata }
@@ -31,7 +31,7 @@ type SvixHeaders = Record<'svix-id' | 'svix-timestamp' | 'svix-signature', strin
 
 /**
  * Pick one complete set of signature headers. svix-* wins when svix-id is
- * present, otherwise webhook-* is used (the same rule Hookdeck applies).
+ * present, otherwise webhook-* is used.
  * Returns the three values under the names the svix library reads, or null
  * if any of them is missing.
  */

@@ -8,11 +8,9 @@ notes: >
   itself). GC Notify says: 'You'll need to provide a Bearer token, for security. We'll add this to
   the authorization header of the callback request'; its source sends 'Authorization': f'Bearer
   {callback_target_token}' with method POST. No signature. GC Notify sends 'Authorization: Bearer
-  <secret>'. Hookdeck's GC Notify source is API key verification on the authorization header with
-  value_prefix 'Bearer ' (hookdeck/core#6046 head 8c48f55d): the user stores just the secret, and
-  the scheme matches in any case (auth schemes are case-insensitive, RFC 9110). So the examples read
+  <secret>'. On Hookdeck's GC Notify source the user stores just the secret, without the 'Bearer ' prefix. So the examples read
   the BARE secret from GC_NOTIFY_WEBHOOK_SECRET (if the configured value itself starts with 'Bearer
-  ', case-insensitively, strip it, as core does), require the Authorization header to start with
+  ', case-insensitively, strip it), require the Authorization header to start with
   'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time. Do not
   trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on

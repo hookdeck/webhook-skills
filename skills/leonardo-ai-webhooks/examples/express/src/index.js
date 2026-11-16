@@ -11,7 +11,7 @@ const BEARER = /^bearer /i; // auth schemes are case-insensitive (RFC 9110)
 /**
  * Leonardo.Ai does not sign payloads. If a webhook callback API key is set, every
  * callback carries "Authorization: Bearer <key>". The configured secret is the bare
- * key; a pasted "Bearer <key>" is tolerated (stripped) like Hookdeck does.
+ * key; a pasted "Bearer <key>" is tolerated (stripped).
  * A static credential authenticates the sender, not the body, and has no replay protection.
  */
 function verifyLeonardoRequest(headers, configured = process.env.LEONARDO_AI_WEBHOOK_SECRET) {

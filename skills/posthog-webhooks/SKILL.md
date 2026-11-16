@@ -42,7 +42,7 @@ PostHog does not issue one. It strips an optional `whsec_` prefix, base64-decode
 echo "whsec_$(openssl rand -base64 32)"
 ```
 
-A bare base64 secret works in PostHog but fails Hookdeck, so always keep the `whsec_` prefix.
+Always keep the `whsec_` prefix, and paste the same string into Hookdeck.
 
 ## Verification (core)
 

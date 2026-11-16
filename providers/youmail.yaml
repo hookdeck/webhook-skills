@@ -8,7 +8,7 @@ notes: >
   YouMail Protective Services API webhooks (data.youmail.com/docs; curl may get 403,
   https://r.jina.ai/https://data.youmail.com/docs can read it). A webhook's auth is 'Basic'
   (username and password) or 'Bearer' (token), or none; method 'will default to POST and cannot be
-  modified'. No signature. The credential is the Authorization header. Hookdeck's YouMail source takes the bare token in its Bearer Token field and accepts the header with or without 'Bearer '. The examples read
+  modified'. No signature. The credential is the Authorization header. In Hookdeck, the user pastes the bare token into the YouMail source's Bearer Token field. The examples read
   YOUMAIL_AUTHORIZATION = the full value as YouMail sends it (e.g. 'Bearer <token>'), including the
   'Bearer ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
   base64-decode the prefix (Coterie pattern). Cover the Bearer scheme: the value is 'Bearer ' + the

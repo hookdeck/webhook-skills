@@ -28,8 +28,7 @@ def safe_equal(a: bytes, b: bytes) -> bool:
 
 def verify_basic_auth(auth_header: str | None) -> bool:
     """Kibana does not sign webhooks. With Basic authentication selected on the connector it
-    sends `Authorization: Basic base64(username:password)` on every request. Hookdeck never
-    sends a 401 challenge, so the header must be present on each request."""
+    sends `Authorization: Basic base64(username:password)` on every request. There is no 401 challenge round trip, so the header must be present on each request."""
     username = os.environ.get("KIBANA_WEBHOOK_USERNAME", "").encode()
     password = os.environ.get("KIBANA_WEBHOOK_PASSWORD", "").encode()
     if not username or not password:

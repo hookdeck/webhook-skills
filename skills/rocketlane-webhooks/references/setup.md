@@ -17,8 +17,7 @@
 5. Save the webhook. It is now available to automations.
 
 Store the credentials as `ROCKETLANE_WEBHOOK_USERNAME` and `ROCKETLANE_WEBHOOK_PASSWORD`.
-Use a long random password. The credentials must arrive on the first request: Hookdeck never
-sends a `401` + `WWW-Authenticate` challenge, it verifies the request as received. The docs
+Use a long random password. The credentials must arrive on the first request; a `401` + `WWW-Authenticate` challenge flow won't work. The docs
 don't say whether Rocketlane sends Basic credentials preemptively, so confirm with the test
 below.
 

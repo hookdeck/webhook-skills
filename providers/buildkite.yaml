@@ -6,7 +6,7 @@ docs:
 notes: >
   CI/CD. The webhook Token is sent either as plain text in X-Buildkite-Token (default) or as
   X-Buildkite-Signature: timestamp=<unix>,signature=<hex HMAC-SHA256 of "<timestamp>.<body>">.
-  Hookdeck verifies token mode only (X-Buildkite-Token compared to the token), so the skill
+  Hookdeck's Buildkite source supports token mode, so the skill
   should lead with token mode (constant-time compare) and document signature mode as the
   alternative. X-Buildkite-Event names the event: ping, build.scheduled, build.running,
   build.finished, job.started, job.finished, agent.connected.

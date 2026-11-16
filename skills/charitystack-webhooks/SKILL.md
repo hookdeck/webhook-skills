@@ -65,7 +65,7 @@ CharityStack has no official webhook SDK, so verification is manual in every fra
 
 ### Timestamp tolerance is opt-in
 
-CharityStack's guide suggests rejecting timestamps more than 5 minutes old. The examples do **not** do this by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Webhook-Timestamp` is Unix seconds.
+CharityStack's guide suggests rejecting timestamps more than 5 minutes old. The examples do **not** do this by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Webhook-Timestamp` is Unix seconds.
 
 ### Read the raw body
 

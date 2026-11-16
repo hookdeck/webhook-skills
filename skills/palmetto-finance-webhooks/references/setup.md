@@ -61,14 +61,12 @@ await fetch(`${envBaseUrl}/api/webhooks/registrations/${webhookRegistrationId}/s
 
 Each subscription sets its own `httpMethod`. The examples use `POST` but accept `GET`, `POST`,
 `PUT`, `PATCH` and `DELETE` on the route, check the key first for every method, and handle an
-empty body. Hookdeck's Palmetto Finance source pre-selects `POST` without managing the method,
-so any other method the sender uses must also be allowed on the source.
+empty body. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Use With Hookdeck
 
 Create a source with type **Palmetto Finance**. Enter the header name (`apiKey` unless your
-requests show `api_key`) and paste the key. Hookdeck checks the header, using the exact whole
-value, before forwarding.
+requests show `api_key`) and paste the key. Hookdeck checks the header before forwarding.
 
 ## Test
 

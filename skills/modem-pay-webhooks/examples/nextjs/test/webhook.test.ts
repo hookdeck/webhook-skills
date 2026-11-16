@@ -25,7 +25,7 @@ afterEach(() => {
   process.env.MODEM_PAY_WEBHOOK_SECRET = SECRET;
 });
 
-// x-modem-signature = HMAC-SHA512 hex of the raw body (as Hookdeck's Modem Pay source checks it)
+// x-modem-signature = HMAC-SHA512 hex of the raw body
 const sign = (body: string | Buffer, secret = SECRET) =>
   crypto.createHmac('sha512', secret).update(body).digest('hex');
 

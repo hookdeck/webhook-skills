@@ -63,7 +63,7 @@ Encode both sides to bytes: `hmac.compare_digest` raises `TypeError` on a non-AS
 - **Raw body, any content type.** In Express use `express.raw({ type: '*/*' })`; parse only after the check.
 - **Whole value.** Don't strip or split the header; compare it exactly.
 - **Fail closed.** If `CONNECTEAM_WEBHOOK_SECRET` is unset, reject everything rather than comparing against an empty string.
-- **Hookdeck source.** Hookdeck's Connecteam source uses API key verification on `x-webhook-secret` and pre-selects POST without managing the method; allow any other method the sender uses.
+- **Hookdeck source.** Hookdeck's Connecteam source checks the secret header and accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); allow any other method the sender uses.
 
 ## Debugging Verification Failures
 

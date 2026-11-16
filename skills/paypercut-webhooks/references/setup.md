@@ -30,8 +30,8 @@ Each endpoint has its **own secret**, shown in the Dashboard or returned by the 
 
 If Hookdeck sits in front of your handler, create a source of type **Paypercut** and use its URL as the endpoint URL in Paypercut, with the signing secret on the source.
 
-- **Methods:** Paypercut's docs don't name the HTTP method. Hookdeck's Paypercut source pre-selects POST without managing the method, so any other method Paypercut uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE.
-- Hookdeck applies no timestamp window, so its retries and replays (which resend the original `t`) still verify.
+- **Methods:** Paypercut's docs don't name the HTTP method. Any method Paypercut uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE.
+
 
 ## Local Development
 
