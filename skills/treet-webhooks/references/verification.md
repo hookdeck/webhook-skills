@@ -52,11 +52,11 @@ def verify_treet_signature(raw_body: bytes, signature: Optional[str], secret: Op
 ## Common Gotchas
 
 - **Raw body, as bytes.** Don't decode to a string and re-encode, and never `JSON.parse`/`JSON.stringify` before verifying. Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`.
-- **Exact base64.** Hookdeck compares the base64 string exactly (case-sensitive). A value whose last character carries stray low bits decodes to the same bytes, so a decode-only check would accept something Hookdeck rejects. Validate the 44-character form and compare the strings.
+- **Exact base64.** Compare the base64 string exactly (case-sensitive). A value whose last character carries stray low bits decodes to the same bytes, so a decode-only check would accept a malformed value. Validate the 44-character form and compare the strings.
 - **Validate before decoding.** In Node, `Buffer.from(sig, 'base64')` silently drops bad characters. In Python use `hmac.compare_digest` on bytes (a `str` with non-ASCII characters raises).
 - **Empty bodies.** A request with no body (such as a GET) is verified over zero bytes. Once verified, acknowledge it with `200` rather than failing JSON parsing.
 - **No replay window.** No timestamp is signed, so don't invent one from unsigned headers or body fields. Make handlers idempotent instead.
-- **Hookdeck.** Hookdeck's Treet source verifies the signature with these same rules (HMAC, `sha256`, header `x-treet-signature`, base64).
+- **Hookdeck.** Hookdeck's Treet source verifies the signature before forwarding.
 
 ## Debugging Verification Failures
 

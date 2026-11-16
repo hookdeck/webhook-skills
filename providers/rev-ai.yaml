@@ -7,8 +7,7 @@ notes: >
   Speech-to-text (Rev AI async API). Auth headers are set per job in
   notification_config.auth_headers; Authorization is the only header allowed and its value must be
   '<scheme> <token>', e.g. {"Authorization": "Bearer $TOKEN"}. The legacy callback_url carries no
-  auth. No signature. The credential is the Authorization header. Hookdeck's Rev.ai source compares
-  the WHOLE Authorization header value to the configured key, so the examples read
+  auth. No signature. The credential is the Authorization header. The examples read
   REV_AI_AUTHORIZATION = the full value as Rev.ai sends it (e.g. 'Bearer <token>'), including the
   scheme prefix, and compare the whole Authorization header to it; do not strip or parse the prefix
   (Coterie pattern). Missing header or mismatch: 401. Compare in constant time: Node checks lengths,

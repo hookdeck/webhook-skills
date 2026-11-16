@@ -15,15 +15,14 @@ notes: >
   `request.env["HTTP_X_BUMP_SIGNATURE_256"]`, which is how Rack exposes an `X-Bump-Signature-256`
   header, so the value is `sha256=<hex>`. The API reference instead names the header
   `X_BUMP_SIGNATURE_256` and shows a bare 64-hex example; see the `verification.encoding` gap.
-  SIGNATURE SCHEME (it must match Hookdeck's BUMP_SH source exactly: HMAC controller, algorithm
-  "sha256", header_key "x-bump-signature-256", encoding "hex"). The x-bump-signature-256 header
-  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser
-  also accepts the bare digest, so accept the value with or without the prefix. The signature is
+  SIGNATURE SCHEME (algorithm
+  sha256, header x-bump-signature-256, encoding hex). The x-bump-signature-256 header
+  carries `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; accept the value with or without the prefix. The signature is
   lowercase hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no
   timestamp, id or other header is signed). Build the signed message as BYTES: the raw body bytes
   exactly as received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd
   before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded).
-  Hex is compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase
+  Hex is compared case-insensitively: require exactly 64 hex characters, lowercase
   both sides (or decode both to bytes) before the constant-time compare. Secret: The webhook's secret
   token, shown on the webhook's confirmation screen in the Integrations tab. Use it as UTF-8 bytes.
   Env var: BUMP_SH_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length
@@ -33,8 +32,7 @@ notes: >
   base64.b64decode(..., validate=True). Missing or empty signature header, malformed value or
   mismatch: 401. No timestamp is signed, so there is no replay window to check; do not invent one from
   unsigned headers or body fields. Events: there is no event-name field or header; the one webhook is
-  a documentation structure change with body `{api, diff}`. Method: POST. Hookdeck's Bump.sh source
-  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  a documentation structure change with body `{api, diff}`. Method: POST. The examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
   are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
   only after the check. Hookdeck's source type is BUMP_SH, labelled 'Bump.sh'.

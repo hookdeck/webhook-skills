@@ -51,18 +51,7 @@ notes: >
   implementations accept both, but Google's documented Pub/Sub token shows a single
   string and no Pub/Sub doc says an array is sent — do not assert the array form as
   a Pub/Sub behaviour.
-  Verified firsthand against google-auth-library 11.0.2 and google-auth 2.56.3,
-  and cross-checked against Hookdeck's own GOOGLE_PUBSUB controller in
-  hookdeck/core (server/integrations/platforms/google-pubsub.ts), whose test
-  suite asserts all three leniencies explicitly.
-  HOOKDECK SOURCE CONFIG (server/integrations/sourceTypeSchemas.ts): VERIFICATION
-  is required:true with exactly two required fields, audience and
-  service_account_email — Hookdeck supports ONLY the OIDC posture for this source
-  type, with no unauthenticated or URL-token option. Core verifies signature +
-  iss/aud/email/email_verified but DELIBERATELY SKIPS exp, because it re-verifies
-  stored requests on retry and expiry would fail a request that was valid on
-  arrival. That rationale is gateway-specific: a direct receiver sees each request
-  once and SHOULD let the library enforce exp. Do not copy the skip into a skill.
+  Verified firsthand against google-auth-library 11.0.2 and google-auth 2.56.3. Hookdeck's GOOGLE_PUBSUB source asks for an audience and a service account email (OIDC only, with no unauthenticated or URL-token option). A direct receiver SHOULD let the library enforce exp.
   Gotchas: the JWT does NOT sign the body — it authenticates the caller, so unlike
   HMAC providers there is NO raw-body requirement; tokens may be up to an hour old
   and are reused across pushes (not a nonce); aud mismatch is the #1 cause of 401s;

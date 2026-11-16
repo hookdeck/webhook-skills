@@ -26,7 +26,7 @@ See [examples/express/](../examples/express/), [examples/nextjs/](../examples/ne
 ## Common Gotchas
 
 - **Raw body**: re-serialised JSON changes whitespace and key order. Use `express.raw({ type: '*/*' })`, `request.arrayBuffer()` or `await request.body()`.
-- **Don't decode the signature**: `Buffer.from(sig, 'base64')` silently drops bad characters, and a final character with stray low bits decodes to the same bytes but Hookdeck rejects it. Validate the shape, then compare the strings.
+- **Don't decode the signature**: `Buffer.from(sig, 'base64')` silently drops bad characters, and a final character with stray low bits decodes to the same bytes but isn't the canonical encoding. Validate the shape, then compare the strings.
 - **`compare_digest` with `str`** raises `TypeError` on non-ASCII input; encode both sides to bytes.
 - **No replay window**: nothing signed carries a time, so don't invent a tolerance from unsigned fields.
 - **Which secret**: Storylane's docs don't say whether the secret is per alert or per account. If verification fails for one alert but not another, check you're using that alert's secret.

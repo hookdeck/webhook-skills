@@ -13,10 +13,6 @@ Doubleword uses [Standard Webhooks](https://www.standardwebhooks.com/):
 | Key | The signing key from your profile is `whsec_` + base64. Strip the prefix and base64-decode to get the raw key |
 | Env var | `DOUBLEWORD_WEBHOOK_SECRET` holds the full `whsec_` value |
 
-Hookdeck's Doubleword source behaves the same way: it tries every `v1` entry, ignores other
-versions such as `v1a`, uses a non-`whsec_` secret as raw UTF-8 bytes, and also reads the other
-header prefix (`webhook-*` or `svix-*`).
-
 ## Library Verification (recommended)
 
 Use `standardwebhooks` (npm and PyPI). Read the `webhook-*` headers, fall back to `svix-*` when

@@ -45,8 +45,7 @@ function verifyAgentsetSignature(rawBody, signature, secret = process.env.AGENTS
   no replay window to check. Never `JSON.parse` / `JSON.stringify` before verifying.
 - Key: the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is case-insensitive.
 - Missing, empty or malformed header, or a mismatch: `401`. Python: `hmac.compare_digest` on bytes.
-- **Methods:** Agentset's docs don't name the HTTP method. Hookdeck's Agentset source pre-selects
-  POST without managing the method, so allow any other method the sender uses on the source too.
+- **Methods:** Agentset's docs don't name the HTTP method. Hookdeck's Agentset source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method the sender uses on the source too.
   The examples accept GET, POST, PUT, PATCH and DELETE, verify first, and treat a missing body as
   empty bytes (a verified empty body is acknowledged with `200`).
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse only after the check. Treat every parsed

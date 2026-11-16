@@ -20,7 +20,7 @@ signature = base64(HMAC-SHA256(key, content))
 
 The request is valid when any `v1,` entry matches. Entries with other versions (such as `v1a`) are ignored. Each destination has its own `whsec_` secret, shown once when you register it. Axilio documents no other authentication (no API key, Basic auth or IP allowlist).
 
-Hookdeck's Axilio source verifies the same way, and also accepts the `svix-id`, `svix-timestamp` and `svix-signature` headers when the `webhook-*` ones are absent. The examples do the same.
+Hookdeck's Axilio source verifies the same signature. The examples do the same.
 
 ## Why Does Signature Verification Matter?
 
@@ -60,7 +60,7 @@ event = Webhook(os.environ["AXILIO_WEBHOOK_SECRET"]).verify(
 
 ### Why Do Hookdeck Retries Fail the Library's Timestamp Check?
 
-The library always rejects a `webhook-timestamp` more than 5 minutes from your clock, and the window can't be changed. Axilio re-signs each of its own retries, but when Hookdeck sits in front of your handler, **Hookdeck retries and replays resend the original request with its original timestamp**. A retry or replay after 5 minutes fails with the library. Hookdeck's own Axilio source applies no timestamp window.
+The library always rejects a `webhook-timestamp` more than 5 minutes from your clock, and the window can't be changed. Axilio re-signs each of its own retries, but when Hookdeck sits in front of your handler, **Hookdeck retries and replays resend the original request with its original timestamp**. A retry or replay after 5 minutes fails with the library.
 
 If you receive through Hookdeck, or want a wider window, use the manual verifier below and drop or widen the check.
 

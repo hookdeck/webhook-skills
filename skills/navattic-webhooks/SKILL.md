@@ -29,8 +29,8 @@ that Navattic sends **only when you configure one on the webhook**: `Basic <cred
 
 ## Verification (core)
 
-Hookdeck's Navattic source compares the **whole** `Authorization` header value to the
-configured key, and so do the examples. Store the value exactly as Navattic sends it, scheme
+The examples compare the **whole** `Authorization` header value to the
+configured key. Store the value exactly as Navattic sends it, scheme
 prefix included (for example `Bearer abc123`). Don't strip, parse or base64-decode it:
 
 ```javascript
@@ -65,8 +65,8 @@ credential in Navattic and in `NAVATTIC_AUTHORIZATION` if it leaks.
 
 Navattic's page doesn't name the HTTP method, so the examples accept `GET`, `POST`, `PUT`,
 `PATCH` and `DELETE` on the route, check the credential first for every method, and treat an
-empty body as nothing to process (`200`). Hookdeck's Navattic source pre-selects `POST` without
-managing the method, so any other method the sender uses must also be allowed on the source.
+empty body as nothing to process (`200`). If you receive through
+Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

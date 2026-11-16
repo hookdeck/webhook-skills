@@ -4,7 +4,7 @@ const express = require('express');
 
 const app = express();
 
-// X-UseSend-Signature is `v1=<hex>`; Hookdeck also accepts the bare digest.
+// X-UseSend-Signature is `v1=<hex>`; the bare digest is accepted too.
 const HEX_DIGEST = /^[0-9a-f]{64}$/;
 
 /**

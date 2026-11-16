@@ -114,7 +114,7 @@ npx hookdeck-cli listen 3000 incode --path /webhooks/incode
 ```
 
 Use the printed URL as the webhook URL in Incode. Add the custom header in Incode and in the
-Hookdeck source (header name and exact value) so both ends agree.
+Hookdeck source (header name and value) so both ends agree.
 
 ## Resources
 

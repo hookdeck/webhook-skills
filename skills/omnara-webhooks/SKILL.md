@@ -44,9 +44,9 @@ base64-encoded. `webhook-signature` holds one or more space-separated `v1,<base6
 The secret is bare base64 (from `openssl rand -base64 32`); the HMAC key is its base64-decoding.
 The official `standardwebhooks` library (npm and pip) checks every `v1` entry in constant time,
 strips a `whsec_` prefix if present, and otherwise base64-decodes the whole secret, so the bare
-value and the `whsec_`-prefixed form Hookdeck needs give the same key. Read the `webhook-*`
+value and the `whsec_`-prefixed form give the same key. Read the `webhook-*`
 headers and, when `webhook-id` is absent, fall back to the `svix-*` headers (`svix-id`,
-`svix-timestamp`, `svix-signature`), as Hookdeck does.
+`svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

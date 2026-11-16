@@ -56,7 +56,7 @@ def verify_modem_pay(raw_body: bytes, header, secret: str) -> bool:
     return hmac.compare_digest(header.strip().lower().encode(), expected)  # bytes, never str
 ```
 
-Hex is compared case-insensitively, as Hookdeck does. The examples answer **401** when the header is missing or empty, malformed, or doesn't match. Modem Pay's snippets answer 400; either works, because Modem Pay retries any non-2xx response.
+Hex is compared case-insensitively. The examples answer **401** when the header is missing or empty, malformed, or doesn't match. Modem Pay's snippets answer 400; either works, because Modem Pay retries any non-2xx response.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -116,7 +116,7 @@ npx hookdeck-cli listen 3000 modem-pay --path /webhooks/modem-pay
 
 ## Using Hookdeck
 
-Hookdeck has a **Modem Pay** source type. Give it your webhook secret and Hookdeck's source verifies `x-modem-signature` (hex HMAC-SHA512 of the raw body) on every request and accepts only `POST`. Hookdeck forwards the original body and headers, so your handler can keep verifying `x-modem-signature` with the same secret. Hookdeck retries and replays send the same signed body, and there's no timestamp, so they verify too.
+Hookdeck has a **Modem Pay** source type. Give it your webhook secret and Hookdeck's source verifies the signature on every request. Hookdeck forwards the original body and headers, so your handler can keep verifying `x-modem-signature` with the same secret. Hookdeck retries and replays send the same signed body, and there's no timestamp, so they verify too.
 
 ## Reference Materials
 

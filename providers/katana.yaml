@@ -15,15 +15,13 @@ notes: >
   use the raw event request body because the fields may be reordered if you first parse it from JSON.'
   From the docs (registry summary): Header `x-sha2-signature: <hex>`, no prefix. MAC = HMAC-SHA256(key
   = the webhook's `token`, message = the raw request body); the header is hex and the pseudocode
-  decodes it before comparing. SIGNATURE SCHEME (it must match Hookdeck's KATANA source exactly: HMAC
-  controller, algorithm "sha256", header_key "x-sha2-signature", encoding "hex"). The x-sha2-signature
+  decodes it before comparing. SIGNATURE SCHEME (algorithm sha256, header x-sha2-signature, encoding hex). The x-sha2-signature
   header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
   digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with
   the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
   the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
   constant-time compare. Secret: One token per webhook, returned in the `token` field when the webhook
   is created through the API (the create example shows a 16-hex-character value, `73f82127d57a2cea`).
   Use it as UTF-8 bytes. Env var: KATANA_WEBHOOK_SECRET. Validate the signature's format before
@@ -42,13 +40,11 @@ notes: >
   purchase_order.created, purchase_order.updated, purchase_order.deleted,
   purchase_order.partially_received, purchase_order.received, purchase_order.approved (and 51 more).
   Handle a few common ones and log the rest. Methods: Katana's docs don't name the HTTP method.
-  Hookdeck's Katana MRP source pre-selects POST without managing the method (the user can change it).
+  The allowed methods on the Hookdeck source can be changed (https://hookdeck.com/docs/sources#custom-methods).
   The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
   (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
   with those methods), verify the signature first for every method, and treat a missing body as empty
-  bytes (a GET with no body is verified over zero bytes). Say in SKILL.md and setup.md that Hookdeck's
-  Katana MRP source pre-selects POST without managing the method, so any other method the sender uses
-  must also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  bytes (a GET with no body is verified over zero bytes). Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Hookdeck's source type is KATANA, labelled 'Katana MRP'.

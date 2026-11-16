@@ -59,7 +59,7 @@ Python:
 expected = base64.b64encode(
     hmac.new(key, f"{msg_id}.{ts}.".encode() + raw_body, hashlib.sha256).digest()
 )
-# Compare the base64 text, as Hookdeck does, so a malformed entry simply doesn't match
+# Compare the base64 text, so a malformed entry simply doesn't match
 ok = any(
     v == "v1" and hmac.compare_digest(s.encode(), expected)
     for v, _, s in (e.partition(",") for e in signature.split(" "))
@@ -75,7 +75,7 @@ ok = any(
 - **Raw body.** Verify the exact bytes. In Express use `express.raw({ type: '*/*' })` so any content type works; parse JSON afterwards.
 - **Secret format.** Free text used as raw UTF-8 bytes, not base64. Paste it exactly as entered.
 - **Empty secret.** If neither the webhook nor Webhook settings has a secret, Webiny signs with an empty key. Set one. Handlers must reject an empty key rather than verify against it.
-- **svix-\* headers.** If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead (Hookdeck does the same).
+- **svix-\* headers.** If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead.
 - **Multiple signatures.** Try every `v1,` entry and ignore other versions such as `v1a`.
 - **Timestamps.** Require a plain positive integer. Do not enforce a window by default: retries and replays resend the original timestamp.
 - **Status codes.** A `4xx` is not retried by Webiny and marks the delivery as delivered in its log, so check your own logs for rejections.

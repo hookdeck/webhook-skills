@@ -63,7 +63,7 @@ def verify_lodgix_signature(raw_body: bytes, timestamp, signature, secret: str) 
 
 Lodgix's docs say to reject requests more than 5 minutes old. The examples do **not**
 do this by default: Hookdeck retries and replays resend the original headers and
-timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject
+timestamp, so a fixed window would reject
 legitimate retries. To enable it, set `LODGIX_WEBHOOK_TOLERANCE_SECONDS` to a number
 above `0` (for example `300`). `X-Lodgix-Timestamp` is Unix seconds; a missing or
 non-numeric timestamp is rejected when tolerance is on. When off, rely on

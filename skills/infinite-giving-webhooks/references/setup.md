@@ -26,7 +26,7 @@ Use port `8000` for the FastAPI example.
 
 ## Using Hookdeck
 
-Create an **Infinite Giving** source in Hookdeck and paste the signing secret there. Hookdeck verifies `X-IG-Signature` before forwarding to your destination.
+Create an **Infinite Giving** source in Hookdeck and paste the signing secret there. Hookdeck verifies the signature before forwarding to your destination.
 
 ## Testing
 

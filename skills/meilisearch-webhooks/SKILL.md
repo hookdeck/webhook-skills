@@ -98,9 +98,8 @@ MEILISEARCH_AUTHORIZATION=Bearer your-secret-token   # full header value, prefix
 npx hookdeck-cli listen 3000 meilisearch --path /webhooks/meilisearch
 ```
 
-No account required. Use the printed URL as the webhook URL. Hookdeck stores gzip bodies as
-binary, so events show a binary body in the dashboard; it forwards the original bytes and
-`Content-Encoding` header. In Hookdeck's Meilisearch source (type `MEILISEARCH`): paste the
+No account required. Use the printed URL as the webhook URL. Your handler receives the gzip body
+and the `Content-Encoding` header as Meilisearch sent them. In Hookdeck's Meilisearch source (type `MEILISEARCH`): paste the
 Authorization header value exactly as set in Meilisearch, including any "Bearer " or "Basic " prefix.
 
 ## Resources

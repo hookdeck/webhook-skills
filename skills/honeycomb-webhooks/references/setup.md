@@ -33,7 +33,7 @@ webhook with only a Trigger payload can't be used by an SLO Budget Rate Burn Ale
 ## HTTP Method
 
 Honeycomb's docs don't name the HTTP method. The example handlers accept GET, POST, PUT, PATCH
-and DELETE. Hookdeck's Honeycomb source pre-selects POST without managing the method, so if
+and DELETE. Hookdeck's Honeycomb source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if
 Honeycomb uses any other method, allow that method on the source too.
 
 ## Test

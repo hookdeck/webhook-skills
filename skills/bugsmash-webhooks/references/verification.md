@@ -49,15 +49,14 @@ def verify_bugsmash(raw_body: bytes, signature: str, timestamp: str, secret: str
     return hmac.compare_digest(expected, bytes.fromhex(signature))
 ```
 
-Hex is compared case-insensitively (as Hookdeck does): both sides are decoded to bytes. The whole
+Hex is compared case-insensitively: both sides are decoded to bytes. The whole
 header value is one digest, with no list splitting or prefix parsing. Status codes: missing or empty
 header, malformed value or mismatch is `401`; a missing secret is `500`.
 
 ## Replay Protection (Opt-in)
 
 BugSmash suggests rejecting timestamps older than five minutes. The examples **do not** do this by
-default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself
-applies no tolerance, so a fixed window would reject legitimate retries. To opt in, set
+default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To opt in, set
 `BUGSMASH_WEBHOOK_TOLERANCE_SECONDS=300` (`X-Webhook-Timestamp` is Unix seconds; unset or `0` = off).
 The check runs after the signature check and answers `401`. Prefer idempotency on your own key.
 

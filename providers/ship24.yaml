@@ -8,11 +8,8 @@ notes: >
   Ship24 (multi-carrier parcel tracking). Ship24 says: 'Ship24 will allocate to your account a
   random Webhook Secret that will be sent in an Authorization header for each webhook request in the
   following format: Authorization: Bearer your_webhook_secret', visible in the dashboard. No
-  signature. Ship24 sends 'Authorization: Bearer <secret>'. Hookdeck's Ship24 source is API key
-  verification on the authorization header with value_prefix 'Bearer ' (hookdeck/core#6046 head
-  8c48f55d): the user stores just the secret, and the scheme matches in any case (auth schemes are
-  case-insensitive, RFC 9110). So the examples read the BARE secret from SHIP24_WEBHOOK_SECRET (if
-  the configured value itself starts with 'Bearer ', case-insensitively, strip it, as core does),
+  signature. Ship24 sends 'Authorization: Bearer <secret>'. Auth schemes are case-insensitive (RFC 9110). So the examples read the BARE secret from SHIP24_WEBHOOK_SECRET (if
+  the configured value itself starts with 'Bearer ', case-insensitively, strip it),
   require the Authorization header to start with 'Bearer ' compared case-insensitively, and compare
   the rest to the secret in constant time. Do not trim or otherwise alter the secret. Missing
   header, wrong scheme or mismatch: 401. Compare in constant time: Node checks lengths, then

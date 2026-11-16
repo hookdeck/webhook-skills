@@ -16,15 +16,13 @@ notes: >
   received.' 'The secret key can be obtained on the `settings` page of the webhooks, it is shown only
   once after generating it.' From the docs (registry summary): hex(HMAC-SHA256(secret, raw body)), the
   whole header value, no prefix. The JavaScript sample decodes both sides as hex and uses
-  timingSafeEqual. SIGNATURE SCHEME (it must match Hookdeck's PAYT source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-payt-signature", encoding "hex"). The x-payt-signature header
+  timingSafeEqual. SIGNATURE SCHEME: HMAC-SHA256, header x-payt-signature, hex encoding. The x-payt-signature header
   carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no
   list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the
   secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
   signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
   constant-time compare. Secret: Generated on the webhook settings page and shown once; regenerating
   it rolls over asynchronously, so old and new secrets can both be seen for a while. Use it as UTF-8
   bytes. Env var: PAYT_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
@@ -40,8 +38,7 @@ notes: >
   bundled_reminder_letter_returned, bundled_reminder_sent, bundled_reminder_invoice_performed,
   case_created, case_email_bounced, case_invoice_amount_paid, case_letter_returned, case_new_comment,
   case_paid, case_reopened, case_step_performed, case_to_bailiff, credit_limit_exceeded (and 39 more).
-  Handle a few common ones and log the rest. Method: POST. Hookdeck's Payt source manages the method
-  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
   (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
   check. Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show

@@ -62,8 +62,7 @@ return crypto.timingSafeEqual(expected, Buffer.from(provided, 'hex'));
 ```
 
 The examples verify `v1` when the header has both `v1=` and `h=`, otherwise `v0`.
-`v1` is documented on both CDP verification pages, and it's what Hookdeck's Coinbase
-source verifier computes. `v0` is only documented on `/webhooks/verify-signatures`,
+`v1` is documented on both CDP verification pages. `v0` is only documented on `/webhooks/verify-signatures`,
 which recommends it for most uses. If a proxy rewrites any header named in `h`, switch
 to `v0` (the examples take a `scheme: 'v0'` option).
 

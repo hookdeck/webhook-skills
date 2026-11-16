@@ -43,8 +43,7 @@ Enabling an event without mapping a channel delivers nothing.
 
 ## Using Hookdeck
 
-Create a Hookdeck source of type **Document360** and enter the header name and exact value. The
-source pre-selects **POST** without managing the method. If you picked **PUT** above, also allow
+Create a Hookdeck source of type **Document360** and enter the header name and value. The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If you picked **PUT** above, also allow
 PUT on the source, or those requests are rejected before reaching your destination. Use the
 source URL as the channel's **Webhook URL**.
 

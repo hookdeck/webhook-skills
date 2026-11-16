@@ -28,7 +28,7 @@ Subscriptions are per workspace. Event names are listed in [overview.md](overvie
 
 1. Create a Hookdeck source of type **Greenshades** and set the signing key to your `hmacKey`.
 2. Use the source URL as the subscription `url`.
-3. **Allow the right HTTP method on the source.** Greenshades' docs don't name the method. Hookdeck's Greenshades source pre-selects POST without managing the method, so if the sender uses another method, add it to the source's allowed methods.
+3. **Allow the right HTTP method on the source.** Greenshades' docs don't name the method. Hookdeck's Greenshades source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if the sender uses another method, add it to the source's allowed methods.
 
 For local development:
 

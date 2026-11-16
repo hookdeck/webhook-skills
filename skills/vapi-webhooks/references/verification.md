@@ -99,8 +99,7 @@ verbatim).
 **What Vapi signs depends on the credential's "Payload Format":**
 
 - **`{body}` (recommended):** the signed content is the **raw request body**:
-  `HMAC-SHA256(rawBody, secret)`. Self-contained and verifiable on its own — and
-  it matches how Hookdeck's own Vapi source verifies. **Prefer this format.**
+  `HMAC-SHA256(rawBody, secret)`. Self-contained and verifiable on its own. **Prefer this format.**
 - **`{timestamp}.{body}` (Vapi's default):** the signed content is
   `<timestamp> + "." + rawBody`, where `<timestamp>` is Vapi's **send-time epoch
   in milliseconds**, delivered in the **timestamp header** (default `x-timestamp`).
@@ -122,10 +121,8 @@ Both formats share:
 > they differ by tens of milliseconds (the header is stamped at send time). Sign
 > with the header value.
 
-> **Hookdeck compatibility.** Hookdeck's core Vapi source verifies the **`{body}`**
-> construction (raw body, no timestamp). It cannot verify `{timestamp}.{body}`
-> (it has no separate-timestamp-header support), so set your Vapi credential to
-> `{body}` when routing through Hookdeck.
+> **Hookdeck compatibility.** Set your Vapi credential to `{body}` when routing
+> through Hookdeck.
 
 ```javascript
 const crypto = require('crypto');

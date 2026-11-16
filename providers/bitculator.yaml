@@ -25,13 +25,12 @@ notes: >
   are 'Bearer-only and carry the data-api ability'. The vendor's verification example (PHP),
   verbatim: "[$t, $v1] = sscanf($_SERVER['HTTP_X_BITCULATOR_SIGNATURE'], 't=%d,v1=%s'); $expected =
   hash_hmac('sha256', $t.'.'.file_get_contents('php://input'), $secret);
-  abort_unless(hash_equals($expected, $v1) && abs(time() - $t) < 300, 403);". SIGNATURE SCHEME (it
-  must match Hookdeck's BITCULATOR source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-bitculator-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  abort_unless(hash_equals($expected, $v1) && abs(time() - $t) < 300, 403);". SIGNATURE SCHEME (algorithm sha256, header
+  x-bitculator-signature, encoding hex). The
   X-Bitculator-Signature header is `t=<unix seconds>,v1=<hex>` (comma-separated key=value pairs).
   The signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it
   appears in the header (a string; never parse it to a number and re-format it), then a literal ".",
-  then the raw request body bytes. Accept the delivery if ANY v1= entry matches (Hookdeck does), and
+  then the raw request body bytes. Accept the delivery if ANY v1= entry matches, and
   ignore other keys. A header with no t= value, or a t= value that is not all digits, fails. Build
   the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. Secret: the `secret` returned once
@@ -39,7 +38,7 @@ notes: >
   string's UTF-8 bytes, whsec_ prefix included (the PHP example passes $secret as is); do NOT strip
   the prefix and do NOT base64-decode it (this is not the Standard Webhooks scheme; do not mention
   or link Standard Webhooks or Svix). Env var: BITCULATOR_WEBHOOK_SECRET. Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Validate the signature's format before
   decoding it (exact length and alphabet), then compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers, and never calls Buffer.from(sig, 'hex') on an
@@ -47,7 +46,7 @@ notes: >
   (never str, which raises TypeError on non-ASCII header values). Missing or empty signature header,
   malformed value or mismatch: 401. Timestamp window: the vendor's PHP example rejects timestamps
   more than 300 s from now, but do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  replays resend the original headers and timestamp, so a
   fixed window would reject legitimate retries. Offer an opt-in tolerance
   (BITCULATOR_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off; 300 matches the vendor's example when
   receiving directly) and say so in SKILL.md and verification.md (t is Unix seconds; compare the
@@ -67,8 +66,7 @@ notes: >
   as untrusted: check that the body and each nested field is the expected type before reading into
   it (Express/Next.js: typeof / Array.isArray; FastAPI: isinstance(x, dict) / isinstance(x, list)
   before .get() or iterating), so a wrong-typed field is ignored or answered with 400, never a 500.
-  Delivery: POST with a JSON body, and Hookdeck's Bitculator source manages the method as POST, so
-  the examples handle POST on the webhook route. Retries and auto-disable as quoted above; the
+  Delivery: POST with a JSON body, so the examples handle POST on the webhook route. Retries and auto-disable as quoted above; the
   backoff intervals, timeout, source IPs and any delivery ID are not documented, so do not invent
   them. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content
   type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await

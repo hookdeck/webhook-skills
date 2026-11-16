@@ -10,7 +10,7 @@ Helcim signs every webhook with HMAC-SHA256 using your `verifierToken` and follo
 | `webhook-timestamp` | Unix seconds when the message was sent |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries (usually one) |
 
-Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names and fall back to the `svix-*` names when `webhook-id` is absent and then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 
@@ -121,7 +121,7 @@ Call it with the values resolved from the `webhook-*` or `svix-*` headers, and r
 
 - **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order. Use `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()` (FastAPI).
 - **Decode the token.** The HMAC key is the base64-decoded bytes of the `verifierToken`, not the literal string. Helcim's Node sample uses `new Buffer(verifierToken, "base64")`, which is deprecated: use `Buffer.from`.
-- **Hookdeck needs `whsec_`.** Hookdeck decodes only `whsec_` secrets, so paste the token there as `whsec_` followed by the token: "Paste your verifierToken as whsec_ followed by the token, or verification fails."
+- **Hookdeck needs `whsec_`.** Paste the token there as `whsec_` followed by the token: "Paste your verifierToken as whsec_ followed by the token, or verification fails."
 - **Multiple signatures.** Split `webhook-signature` on spaces and accept any matching `v1,` entry. Don't compare the whole header.
 - **Fixed 5-minute window in the library.** See the Hookdeck section above.
 - **Header names.** Frameworks lower-case them; read `webhook-id`, then fall back to `svix-id`.

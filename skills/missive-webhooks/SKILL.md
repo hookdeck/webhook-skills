@@ -76,7 +76,7 @@ Respond `401` on a bad signature.
 3. Save the rule. Missive sends a **validation POST** to make sure your endpoint works, so the endpoint must be reachable (and accept POST) before you save.
 
 Using Hookdeck: create the source with the same validation secret as the rule's
-webhook action; Hookdeck verifies `X-Hook-Signature` before forwarding. Details
+webhook action; Hookdeck verifies the signature before forwarding. Details
 in [references/setup.md](references/setup.md).
 
 ## Event Types (rule types)

@@ -58,7 +58,7 @@ Compare `bytes`, never `str` (`compare_digest` raises on non-ASCII strings).
   it to add one; signing then cannot be turned off.
 - **Wrong key.** The default key is the API key that *created* the subscription, not another key in
   the same account. A custom `signing_key` replaces it.
-- **Case.** Compare hex case-insensitively (lowercase both sides, as Hookdeck does).
+- **Case.** Compare hex case-insensitively (lowercase both sides).
 - **Status code.** Missing, empty, malformed or mismatched signature: `401`. Acknowledge valid
   deliveries with `200`; any other status is retried for up to 48 hours.
 

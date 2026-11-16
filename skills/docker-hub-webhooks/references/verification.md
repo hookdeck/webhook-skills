@@ -171,9 +171,7 @@ including one they control — and steer whatever your handler does next.
 
 ### 4. What Hookdeck does and doesn't do
 
-Hookdeck's source type for this provider is **`DOCKER_HUB`**, configured as **"No
-verification (schema only)"**, with the code comment *"Docker Hub repository
-webhooks are unsigned (no secret, signature or auth header)."*
+Hookdeck's source type for this provider is **`DOCKER_HUB`**, configured as **"No verification (schema only)"**: Docker Hub repository webhooks are unsigned (no secret, signature or auth header).
 
 | Claim | True? |
 |-------|-------|

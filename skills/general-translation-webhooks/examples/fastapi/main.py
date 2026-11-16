@@ -34,7 +34,7 @@ def resolve_signature_headers(request_headers: Mapping[str, str]) -> Optional[Di
     """Read the signature headers.
 
     General Translation sends webhook-*; when webhook-id is absent, fall back
-    to the svix-* names (as Hookdeck does). Returns the three values under the
+    to the svix-* names. Returns the three values under the
     names the library expects, or None when one is missing.
     """
     prefix = "webhook" if request_headers.get("webhook-id") else "svix"

@@ -67,8 +67,7 @@ equivalents are in [references/verification.md](references/verification.md).
 
 > **Credentials must arrive on the first request.** The docs don't say whether parcelLab sends
 > Basic credentials preemptively, so assume it does. A `401` + `WWW-Authenticate` challenge
-> flow won't work, and it won't work through Hookdeck either, which verifies the request as
-> received.
+> flow won't work, including through Hookdeck: Event Gateway doesn't prompt for credentials, and a request with wrong ones still gets a 200 and is recorded as failed verification.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/),
 > [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

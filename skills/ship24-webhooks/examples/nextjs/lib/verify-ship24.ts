@@ -5,7 +5,7 @@ import crypto from 'crypto';
 /**
  * Ship24 does not sign payloads. Every webhook carries the account's Webhook Secret as
  * "Authorization: Bearer <secret>". The configured value is the bare secret (a pasted
- * "Bearer " prefix is stripped, as Hookdeck does). The scheme matches in any case; the
+ * "Bearer " prefix is stripped). The scheme matches in any case; the
  * secret is compared exactly, in constant time.
  *
  * A static shared credential authenticates the sender, not the body, and gives no replay

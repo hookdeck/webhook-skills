@@ -13,8 +13,7 @@ Points that cause most failures:
 
 - Choose Basic authentication and set a username and password on the Rocketlane webhook.
 - The credentials must arrive on the first request. The docs don't say whether Rocketlane
-  sends them preemptively, and Hookdeck never sends a `401` + `WWW-Authenticate` challenge: it
-  verifies the request as received.
+  sends them preemptively, and a `401` + `WWW-Authenticate` challenge flow won't work.
 - Split the decoded value on the **first** colon; the password may contain colons.
 - Parse strictly. Accept only the base64 alphabet, so valid credentials followed by junk are rejected.
 

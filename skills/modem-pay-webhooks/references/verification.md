@@ -12,7 +12,7 @@ The value is `hex(HMAC-SHA512(key = webhook secret, message = request body))`:
 
 - **Key:** the webhook secret from Developers > Webhooks, as UTF-8 bytes, exactly as shown.
 - **Message:** the request body bytes exactly as received. No timestamp, ID or delimiter is added.
-- **Encoding:** hex, with no `sha512=` or other prefix. Modem Pay produces lowercase; Hookdeck compares hex case-insensitively, and so do the examples.
+- **Encoding:** hex, with no `sha512=` or other prefix. Modem Pay produces lowercase; the examples compare hex case-insensitively.
 
 There's no timestamp, so there's no replay window to configure. Deduplicate retries on `(event, payload.id)` instead.
 
@@ -80,4 +80,4 @@ Compare `bytes`, not `str`: `hmac.compare_digest` raises `TypeError` on non-ASCI
    ```bash
    printf '%s' "$BODY" | openssl dgst -sha512 -hmac "$MODEM_PAY_WEBHOOK_SECRET"
    ```
-3. Behind Hookdeck, open the request in Hookdeck's dashboard. A request that failed the source's check is marked as rejected there, so you can tell whether the secret or your handler is wrong.
+3. Behind Hookdeck, open the request in Hookdeck's dashboard. A request that failed the source's check is recorded as failed verification there, so you can tell whether the secret or your handler is wrong.

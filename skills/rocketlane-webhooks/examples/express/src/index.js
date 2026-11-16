@@ -43,7 +43,7 @@ function parseBasicAuth(header) {
 
 /**
  * Rocketlane does not sign payloads. The only authentication is HTTP Basic auth, which
- * must arrive on the first request (Hookdeck never answers with a 401 challenge). Both
+ * must arrive on the first request (a challenge flow won't work). Both
  * the username and the password are compared before deciding, so there is no short-circuit.
  */
 function verifyRocketlaneRequest(headers, config = process.env) {

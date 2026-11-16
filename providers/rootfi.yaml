@@ -16,9 +16,7 @@ notes: >
   **raw** request body: HMAC-SHA256(signing_key, "{t}.{raw_body}")' '`X-RootFi-Signature` | HMAC
   signature. Sent only when the config has a signing key' From the docs (registry summary): Header
   `X-RootFi-Signature: t=<unix seconds>,v1=<hex>`. v1 = hex HMAC-SHA256(signing_key, "<t>.<raw
-  body>"); the page's JavaScript keys with the signing key string as-is. No test vector. SIGNATURE
-  SCHEME (it must match Hookdeck's ROOTFI source exactly: HMAC controller, algorithm "sha256",
-  header_key "x-rootfi-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true).
+  body>"); the page's JavaScript keys with the signing key string as-is. No test vector. SIGNATURE SCHEME: HMAC-SHA256, header x-rootfi-signature, hex encoding, signed content '{timestamp}.{raw body}'.
   The X-RootFi-Signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The
   signature is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it
   appears in the header (a string; never parse it to a number and re-format it), then a literal ".",
@@ -27,7 +25,7 @@ notes: >
   header with no t= value fails. Build the signed message as BYTES: the raw body bytes exactly as
   received, never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before
   verifying. The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is
-  compared case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both
+  compared case-insensitively: require exactly 64 hex characters, lowercase both
   sides (or decode both to bytes) before the constant-time compare. Secret: The optional `signing_key`
   the customer sets on the webhook config (dashboard or API); RootFi does not generate one. Use it as
   UTF-8 bytes. Env var: ROOTFI_WEBHOOK_SECRET. Validate the signature's format before decoding it
@@ -36,7 +34,7 @@ notes: >
   an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
   (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
   value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries
-  and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so
+  and replays resend the original headers and timestamp, so
   a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   ROOTFI_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
   Unix seconds). Events: dispatch on the body's `event` field. Top-level `event` carries the type
@@ -44,8 +42,7 @@ notes: >
   and `data.type` (`CREATE` / `UPDATE` / `DELETE`) say what changed; a config's lowercase `topics`
   (`invoice.create`) filter those deliveries but are not sent as a field. No header names the type.
   Documented event types (5): DATA_MODEL_CHANGES, SYNC_STARTED, SYNC_COMPLETED, CONNECTION_CHANGED,
-  DISCONNECT_REQUESTED. Handle a few common ones and log the rest. Method: POST. Hookdeck's RootFi
-  (Commenda) source manages the method as POST, so the examples handle POST on the webhook route.
+  DISCONNECT_REQUESTED. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
   and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. Documented sample payloads (each JSON file's

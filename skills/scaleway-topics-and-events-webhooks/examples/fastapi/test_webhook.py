@@ -254,7 +254,7 @@ class TestSubscribeUrl:
         [SUBSCRIBE_URL.replace(".com/?", ".com?"), SUBSCRIBE_URL.replace(".com/", ".com:443/")],
         ids=["no-path", "default-port"],
     )
-    def test_accepts_what_hookdeck_accepts(self, url):
+    def test_accepts_allowed_url_forms(self, url):
         assert is_valid_subscribe_url(confirmation(SubscribeURL=url))
 
     def test_rejects_aws_or_unsupported_region_arn(self):

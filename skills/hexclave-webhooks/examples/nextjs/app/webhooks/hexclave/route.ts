@@ -6,7 +6,7 @@ import { Webhook } from 'svix';
 
 export const dynamic = 'force-dynamic';
 
-// Hexclave (via Svix) sends svix-* headers; Hookdeck also accepts the Standard Webhooks webhook-* names
+// Hexclave (via Svix) sends svix-* headers; this handler also accepts the Standard Webhooks webhook-* names
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('svix-id') ? 'svix' : 'webhook';
   return {

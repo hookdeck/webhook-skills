@@ -47,6 +47,6 @@ Use the URL it prints as the `url` of your webhook subscription.
 
 ## Endpoint
 
-`GET`, `POST`, `PUT`, `PATCH` and `DELETE` `/webhooks/greenshades`. Greenshades' docs don't name the HTTP method, and Hookdeck's Greenshades source pre-selects POST without managing it, so the example verifies every method. The raw body is read for any content type and verified before it is parsed. The event-name field in the delivery body is not documented, so `getEventName` / `get_event_name` reads it defensively; check a real delivery and adjust.
+`GET`, `POST`, `PUT`, `PATCH` and `DELETE` `/webhooks/greenshades`. Greenshades' docs don't name the HTTP method, and Hookdeck's Greenshades source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so the example verifies every method. The raw body is read for any content type and verified before it is parsed. The event-name field in the delivery body is not documented, so `getEventName` / `get_event_name` reads it defensively; check a real delivery and adjust.
 
 Responses: `200` verified, `400` verified but not JSON, `401` missing or invalid signature or timestamp, `500` secret not configured.

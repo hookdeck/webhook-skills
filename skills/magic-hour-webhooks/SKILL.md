@@ -60,8 +60,7 @@ string and re-encode it, and never `JSON.parse` before verifying (Express:
 ### Timestamp tolerance is opt-in
 
 Magic Hour recommends rejecting timestamps more than 5 minutes old, but this skill does **not**
-do that by default. Retries (and Hookdeck replays) resend the original headers, and Hookdeck
-itself applies no tolerance, so a fixed window would reject legitimate redeliveries. To opt in,
+do that by default. Retries (and Hookdeck replays) resend the original headers, so a fixed window would reject legitimate redeliveries. To opt in,
 set `MAGIC_HOUR_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off, e.g. `300`). The examples then
 require a numeric timestamp within that many seconds of now.
 

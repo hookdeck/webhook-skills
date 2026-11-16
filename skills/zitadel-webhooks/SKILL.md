@@ -91,7 +91,7 @@ def verify_zitadel(raw_body: bytes, signature_header, secret: str) -> bool:
     )
 ```
 
-ZITADEL does not document a replay window or retries. The examples **do not reject old timestamps by default**, because Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck's own source applies no tolerance. Set `ZITADEL_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to opt in (`t` is Unix seconds); unset or `0` leaves it off.
+ZITADEL does not document a replay window or retries. The examples **do not reject old timestamps by default**, because Hookdeck retries and replays resend the original headers and timestamp. Set `ZITADEL_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds to opt in (`t` is Unix seconds); unset or `0` leaves it off.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

@@ -1,6 +1,6 @@
 # Basiq Webhooks - FastAPI Example
 
-Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification in FastAPI. Basiq signs deliveries with the Standard Webhooks scheme, so the handler verifies `webhook-id`, `webhook-timestamp` and `webhook-signature` with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification in FastAPI. Basiq signs deliveries with the Standard Webhooks scheme, so the handler verifies `webhook-id`, `webhook-timestamp` and `webhook-signature` with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

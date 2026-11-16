@@ -105,7 +105,7 @@ PLANETSCALE_WEBHOOK_SECRET=your_webhook_secret   # Database Settings > Webhooks 
 
 In the dashboard open your database, then **Settings → Webhooks → Add webhook**, enter an `https://` URL, pick events and save. Use **… → Show secret** to copy the secret (one per webhook), and **… → Test webhook** to send `webhook.test`. Webhooks can also be managed with `pscale webhook` or the API. See [references/setup.md](references/setup.md).
 
-When using Hookdeck, paste the webhook secret into the PlanetScale source's webhook secret field: Hookdeck's source verifies `X-PlanetScale-Signature` with the same HMAC-SHA256 hex scheme.
+When using Hookdeck, paste the webhook secret into the PlanetScale source's webhook secret field: Hookdeck's source verifies the same signature.
 
 ## Local Development
 

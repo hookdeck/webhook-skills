@@ -67,8 +67,7 @@ function verifyPayrixProRequest(
 
 Payrix's docs don't name the HTTP method, and each action has its own format (Content-Type)
 setting. The examples therefore accept GET, POST, PUT, PATCH and DELETE, check the credential
-first, and handle an empty body. Hookdeck's Payrix Pro source pre-selects POST without managing
-the method, so any other method the sender uses must also be allowed on the source.
+first, and handle an empty body. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 The body isn't documented either. The examples parse JSON when the content type says so and
 otherwise keep the raw text. Express reads the raw body with `express.raw({ type: '*/*' })` and

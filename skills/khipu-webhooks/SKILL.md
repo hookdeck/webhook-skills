@@ -90,7 +90,7 @@ def verify_khipu(raw_body: bytes, header, secret: str) -> bool:
 
 Accept the delivery if **any** `s=` entry matches (the header can carry several during key rotation) and ignore other keys. A missing header, no `t=`, a malformed signature or a mismatch gets `401`.
 
-**Timestamp window is off by default.** Hookdeck retries and replays resend the original `t`, and Hookdeck applies no tolerance itself, so a fixed window would reject legitimate redeliveries. The examples offer an opt-in: set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number (`t` is milliseconds, the examples convert). Unset or `0` leaves it off. Use `payment_id` for idempotency instead.
+**Timestamp window is off by default.** Hookdeck retries and replays resend the original `t`, so a fixed window would reject legitimate redeliveries. The examples offer an opt-in: set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number (`t` is milliseconds, the examples convert). Unset or `0` leaves it off. Use `payment_id` for idempotency instead.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

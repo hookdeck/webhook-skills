@@ -8,8 +8,7 @@ notes: >
   Product analytics. The CDP Webhook destination has an optional Signing secret that signs
   requests per Standard Webhooks: webhook-id, webhook-timestamp, webhook-signature "v1,<base64>",
   HMAC-SHA256 over "<id>.<timestamp>.<raw body>". The user chooses the secret; PostHog strips an
-  optional whsec_ prefix and base64-decodes the rest (minimum 24 bytes). Use whsec_<base64> so
-  Hookdeck can verify it too. Signing is documented only in PostHog's open-source code. The
+  optional whsec_ prefix and base64-decodes the rest (minimum 24 bytes). Use whsec_<base64>, and paste the same string into Hookdeck. Signing is documented only in PostHog's open-source code. The
   standardwebhooks/svix libraries enforce a fixed 5-minute timestamp window, which Hookdeck
   retries and replays can exceed (original timestamp is resent). The body is the destination
   template; default is {event: {event, uuid, distinct_id, properties, timestamp}, person}.

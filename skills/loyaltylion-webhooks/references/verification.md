@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 ## Common Gotchas
 
 - **Use the raw body.** `JSON.parse` then `JSON.stringify` (or a body parser that re-serialises, or pretty-printing) changes the bytes and breaks the signature. In Express use `express.raw({ type: '*/*' })`, not `express.json()`.
-- **Don't decode the signature to compare.** A base64 value whose last character has stray low bits decodes to the same bytes, but it is a different string and Hookdeck rejects it, so reject it too. Check the 44-character format, then compare strings.
+- **Don't decode the signature to compare.** A base64 value whose last character has stray low bits decodes to the same bytes, but it is a different string, so reject it. Check the 44-character format, then compare strings.
 - **Base64, not hex.** A hex digest never matches. Compare case-sensitively.
 - **Two secrets.** Which secret signs depends on how the webhook was registered: the OAuth client secret for webhooks registered with an OAuth client, otherwise the site secret. Using the wrong one is the usual cause of failures.
 - **Use the secret as-is.** It is not hex- or base64-decoded.

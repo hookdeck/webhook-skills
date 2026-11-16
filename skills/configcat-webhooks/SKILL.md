@@ -50,7 +50,7 @@ def verify(raw_body: bytes, wid: str, ts: str, signature: str, secret: str) -> b
 
 Verify the **raw bytes** before parsing (never `JSON.parse` then re-serialise). Missing headers, a malformed value or a mismatch is a `401`. The documented vector (secret `configcat_whsk_VN3juirnVh5pNvCKd81RYRYchxUX4j3NykbZG2fAy88=`, body `examplebody`, ID `b616ca659d154a5fb907dd8475792eeb`, timestamp `1669629035`) must produce `Ks3cYsu9Lslfo+hVxNC3oQWnsF9e5d73TI5t94D9DRA=`.
 
-**Timestamp window:** old timestamps are **not** rejected by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
+**Timestamp window:** old timestamps are **not** rejected by default. Hookdeck retries and replays resend the original headers and timestamp. The examples offer an opt-in `CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -58,7 +58,7 @@ Verify the **raw bytes** before parsing (never `JSON.parse` then re-serialise). 
 
 Keep a single signing key on the ConfigCat webhook and paste it whole, including the configcat_whsk_ prefix. With two keys, ConfigCat sends two signatures and verification fails. If the webhook uses GET, also allow GET on this source.
 
-Hookdeck's source type is `CONFIGCAT` ("ConfigCat"). It compares the whole header to one signature, as the examples do, so during a key rotation both Hookdeck and the examples reject deliveries until the old key is removed. It pre-selects POST without managing the method, so any other method the sender uses (ConfigCat allows GET or POST) must also be allowed on the source.
+Hookdeck's source type is `CONFIGCAT` ("ConfigCat"). During a key rotation, deliveries fail verification until the old key is removed. It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses (ConfigCat allows GET or POST) must also be allowed on the source.
 
 ## Event Types
 

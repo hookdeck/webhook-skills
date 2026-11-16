@@ -21,15 +21,14 @@ notes: >
   and compares with `timingSafeEqual`. Caveat: the guide's Node sample passes
   `JSON.stringify(request.body)` after `bodyParser.json()`, a re-serialisation that only matches the
   raw body when the sender's JSON is compact with the same key order; the Python, PHP and .NET samples
-  pass the raw body. SIGNATURE SCHEME (it must match Hookdeck's COMPLYCUBE source exactly: HMAC
-  controller, algorithm "sha256", header_key "complycube-signature", encoding "hex"). The
+  pass the raw body. SIGNATURE SCHEME (algorithm sha256, header complycube-signature, encoding hex). The
   ComplyCube-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One secret per webhook endpoint,
   from the developer console (or the webhook create API). Use it as UTF-8 bytes. Env var:
   COMPLYCUBE_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
@@ -48,7 +47,7 @@ notes: >
   workflow.session.updated, check.pending, check.completed, check.completed.clear,
   check.completed.attention, check.completed.rejected, check.completed.match_confirmed,
   check.monitoring.attention, check.failed, check.updated (and 11 more). Handle a few common ones and
-  log the rest. Method: POST. Hookdeck's ComplyCube source manages the method as POST, so the examples
+  log the rest. Method: POST. The examples
   handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

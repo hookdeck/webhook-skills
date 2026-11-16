@@ -11,10 +11,9 @@ SAP SuccessFactors does not generate a secret for you. Pick a username and a str
 store them as `SAP_SUCCESSFACTORS_WEBHOOK_USERNAME` and `SAP_SUCCESSFACTORS_WEBHOOK_PASSWORD`.
 You enter the same pair in Integration Center and, if you use Hookdeck, on the source.
 
-> Use Basic authentication on the Integration Center REST destination. Hookdeck never answers with a 401 challenge, so the credentials have to arrive with each request; if deliveries show as failed verification, they are not.
+> Use Basic authentication on the Integration Center REST destination. The credentials have to arrive with each request; if deliveries show as failed verification, they are not.
 
-The SAP docs don't say whether Basic credentials are sent preemptively. Hookdeck never sends a 401
-challenge (no `WWW-Authenticate` round trip), so the credentials must arrive with each request.
+The SAP docs don't say whether Basic credentials are sent preemptively. Event Gateway doesn't prompt for them (a request without them still gets a 200 and is recorded as failed verification), so the credentials must arrive with each request.
 
 ## Register Your Endpoint
 
@@ -35,8 +34,7 @@ field mapping are yours to choose), then configure:
 3. Optional: **Execute with Exceptions** and **Exclude empty requests** (stops empty requests when
    a filtered run finds no records).
 
-Hookdeck's SAP SuccessFactors source pre-selects POST without managing the method. If the sender
-uses any other method, allow it on the source too.
+If you use Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

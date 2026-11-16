@@ -11,7 +11,7 @@
 2. Open **Settings** and copy your secret key.
 3. Store it in `PINE_LABS_WEBHOOK_SECRET` exactly as shown.
 
-**Paste the secret key exactly as shown in the Pine Labs dashboard, without adding a whsec_ prefix.** That is Hookdeck's configuration alert for this source, quoted verbatim. Pine Labs uses the string as raw UTF-8 bytes for the HMAC key. If you paste a `whsec_`-prefixed value, the part after the prefix is base64-decoded and the signatures won't match.
+**Paste the secret key exactly as shown in the Pine Labs dashboard, without adding a whsec_ prefix.** That is Hookdeck's configuration alert for this source, quoted verbatim. Pine Labs uses the string as raw UTF-8 bytes for the HMAC key.
 
 ## Register Your Endpoint
 

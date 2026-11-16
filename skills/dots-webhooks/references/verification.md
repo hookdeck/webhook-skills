@@ -14,7 +14,7 @@ request includes:
 Svix implements Standard Webhooks; `webhook-id`, `webhook-timestamp`, and `webhook-signature`
 carry the same values, and the Svix libraries accept either set of names. Dots' docs don't
 name the headers, so `svix-*` is the Svix default. Read `svix-*` and, when `svix-id` is absent,
-fall back to `webhook-*` (as Hookdeck does). Take all three values from the same set.
+fall back to `webhook-*`. Take all three values from the same set.
 
 The algorithm:
 
@@ -27,8 +27,7 @@ The algorithm:
    are ignored.
 6. Optionally reject timestamps too far from now (the libraries use a fixed 5 minutes).
 
-Dots' docs don't print the secret, so the `whsec_` format is Svix's. Hookdeck treats a
-`whsec_` secret as base64 after the prefix and any other secret as raw UTF-8 bytes.
+Dots' docs don't print the secret, so the `whsec_` format is Svix's.
 
 ## SDK Verification (recommended)
 

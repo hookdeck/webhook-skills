@@ -8,8 +8,7 @@ notes: >
   carries the account's fixed webhook signing token from GET /api/v2/webhooks/token ('Tokens fixed
   MD5 hashes and can be compared to the Postscript-Signature request header'). Say this clearly. No
   signature. Postscript sends the account signing token as plain text in the vendor-fixed
-  'Postscript-Signature' header. Hookdeck's Postscript source compares that header's WHOLE value
-  (header name case-insensitive) to the configured key, so the examples read
+  'Postscript-Signature' header. The examples read
   POSTSCRIPT_WEBHOOK_TOKEN and compare the whole 'Postscript-Signature' value to it in constant
   time. Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses

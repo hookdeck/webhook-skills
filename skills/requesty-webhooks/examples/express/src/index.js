@@ -19,8 +19,7 @@ const PORT = process.env.PORT || 3000;
 // There is one signing secret per organisation (Admin Panel > Alerts); during
 // a rotation grace period webhook-signature carries several v1 entries.
 // Until the organisation has a secret, deliveries are unsigned and fail here.
-// Hookdeck's Requesty source also accepts the svix-* header names when webhook-id
-// is absent, so this handler does the same.
+// When webhook-id is absent, this handler also accepts the svix-* header names.
 // ---------------------------------------------------------------------------
 
 /**

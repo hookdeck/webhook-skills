@@ -54,7 +54,7 @@ event = Webhook(os.environ["GENERAL_TRANSLATION_WEBHOOK_SECRET"]).verify(
 
 ### Header Fallback (`webhook-*` or `svix-*`)
 
-General Translation sends `webhook-*` headers. Hookdeck's General Translation source also reads the `svix-*` names (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent, so the examples do the same. The libraries only read `webhook-*` names, so pass the resolved values under those names:
+General Translation sends `webhook-*` headers. The examples also read the `svix-*` names (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent. The libraries only read `webhook-*` names, so pass the resolved values under those names:
 
 ```javascript
 const p = req.get('webhook-id') ? 'webhook' : 'svix';

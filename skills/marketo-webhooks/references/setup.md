@@ -94,6 +94,7 @@ payload in a queue.
    - **API Key:** your secret, exactly as entered in Marketo
 3. Paste the Hookdeck Source URL into the webhook's **URL** field.
 
-Hookdeck rejects requests whose header doesn't match. It also acknowledges
+Hookdeck checks the header: a request with a wrong value still gets a 200 but is
+recorded as failed verification. Hookdeck also acknowledges
 quickly and queues deliveries to your app, so a slow handler doesn't hold up
 your Marketo campaigns, and failed deliveries can be retried and replayed.

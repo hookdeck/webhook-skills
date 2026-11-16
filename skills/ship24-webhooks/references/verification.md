@@ -26,7 +26,7 @@ send your endpoint arbitrary tracking data, and a captured request can be replay
 ## Implementation
 
 Configure the **bare secret** in `SHIP24_WEBHOOK_SECRET`. If the configured value itself starts
-with `Bearer ` (any case) it is stripped, as Hookdeck does. The request's `Authorization` header
+with `Bearer ` (any case) it is stripped. The request's `Authorization` header
 must start with `Bearer ` (the scheme is case-insensitive, RFC 9110); the rest is compared to the
 secret in constant time. The secret is never trimmed or otherwise altered.
 

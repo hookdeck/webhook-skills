@@ -5,8 +5,7 @@ docs:
   verification: https://v2.support.procore.com/product-manuals/admin-company/tutorials/configure-company-webhooks/
 notes: >
   Construction platform; covers company- and project-level webhooks (Admin > Webhooks). No
-  signature. The credential is the Authorization header. Hookdeck's Procore source compares the
-  WHOLE Authorization header value to the configured key, so the examples read PROCORE_AUTHORIZATION
+  signature. The credential is the Authorization header. The examples read PROCORE_AUTHORIZATION
   = the full value as Procore sends it (e.g. 'Basic c3a24b8208ac5199d083d54a1234e94b8864'),
   including any 'Bearer '/'Basic ' scheme prefix, and compare the whole Authorization header to it;
   do not strip, parse or base64-decode the prefix (Coterie pattern). The optional 'Authorization

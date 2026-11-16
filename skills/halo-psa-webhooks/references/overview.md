@@ -59,8 +59,7 @@ handler must accept both.
 
 ## Method
 
-The **Method** setting offers POST (send data from Halo) and GET (retrieve data). Notifications
-are POSTs, and Hookdeck's HaloPSA source accepts POST only.
+The **Method** setting offers POST (send data from Halo) and GET (retrieve data). Notifications are POSTs.
 
 ## Full Event Reference
 

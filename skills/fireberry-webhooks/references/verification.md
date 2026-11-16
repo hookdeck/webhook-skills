@@ -11,8 +11,7 @@ Authorization: Bearer your-long-random-secret
 ```
 
 The header name is your choice, so the examples read it from `FIREBERRY_WEBHOOK_HEADER` (default
-`Authorization`) and the expected value from `FIREBERRY_WEBHOOK_SECRET`. This matches what Hookdeck's
-Fireberry source does: API key verification with a header name and the exact value.
+`Authorization`) and the expected value from `FIREBERRY_WEBHOOK_SECRET`. Hookdeck's Fireberry source checks the same header.
 
 > **What this does and doesn't give you.** A static shared credential authenticates the **sender**,
 > not the body, and gives **no replay protection** (no signature, no timestamp). Anyone who captures
@@ -70,7 +69,7 @@ def verify_fireberry_request(headers, secret=None, header_name=None) -> bool:
   sync with the key in the action.
 - **Any method, empty body.** The action can use POST, GET, PUT, DELETE or PATCH, and GET has no
   body. Accept all five and treat an empty body as valid. Authenticate before looking at the body.
-- **Hookdeck source pre-selects POST.** Hookdeck's Fireberry source pre-selects POST only, so a
+- **Hookdeck source methods.** Hookdeck's Fireberry source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so a
   non-POST automation needs that method allowed on the source.
 - **Constant-time compare.** Check lengths before `timingSafeEqual` (it throws on unequal lengths)
   or hash both sides. In Python encode both sides to bytes.

@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Nitrosend sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent."""
+    """Nitrosend sends webhook-* headers; fall back to the svix-* names when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return {
         "webhook-id": headers.get(f"{prefix}-id"),

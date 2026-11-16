@@ -10,7 +10,7 @@
 
 Choose Signature Verification when creating the Jamie webhook and paste its signing secret. API key mode is not supported.
 
-Jamie offers API Key (its recommended default) and Signature Verification. Hookdeck's Jamie source verifies the `x-jamie-signature` header, so pick Signature Verification. An API key webhook sends a static key in a header, which Hookdeck's Jamie source does not check.
+Jamie offers API Key (its recommended default) and Signature Verification. Hookdeck's Jamie source supports Signature Verification, so pick it. An API key webhook sends a static key in a header, which Hookdeck's Jamie source does not check.
 
 ## Create the Webhook and Get Your Signing Secret
 

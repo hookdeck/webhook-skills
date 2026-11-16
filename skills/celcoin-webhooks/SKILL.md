@@ -64,7 +64,7 @@ function verifyCelcoinAuth(authorization, username, password) {
   Python: `hmac.compare_digest` on bytes (encode both sides; `str` raises on non-ASCII).
 - Return `401` for a missing or malformed header or a mismatch, `400` for a body that isn't a JSON
   object, `200` once handled.
-- **Hookdeck never sends a 401 challenge** (no `WWW-Authenticate` round trip), so the credentials
+- **No 401 challenge** (no `WWW-Authenticate` round trip), so the credentials
   must arrive with every request.
 - A static shared credential authenticates the **sender, not the body**, and gives **no replay
   protection** (no signature, no timestamp). Use HTTPS, and rotate the credential (update the
@@ -77,8 +77,7 @@ function verifyCelcoinAuth(authorization, username, password) {
 
 Celcoin's docs don't name the HTTP method of the notification. The examples therefore accept
 **GET, POST, PUT, PATCH and DELETE** on the webhook route, check the credential first for every
-method, and acknowledge an empty body. Hookdeck's Celcoin source pre-selects POST without managing
-the method, so if Celcoin uses any other method, **also allow that method on the Hookdeck source**.
+method, and acknowledge an empty body. Hookdeck's Celcoin source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if Celcoin uses any other method, **also allow that method on the Hookdeck source**.
 
 ## Event Payload and Entities
 

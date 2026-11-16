@@ -68,8 +68,7 @@ curl -I 'http://localhost:3000/webhooks/baselinker?order_id=42&state=packed&toke
 npx hookdeck-cli listen 3000 baselinker --path /webhooks/baselinker
 ```
 
-A Hookdeck Baselinker Source seeds `allowed_http_methods` to `["HEAD"]` (an
-unmanaged default — initial selection only, still editable). Since a HEAD
+Allow HEAD on the Hookdeck Baselinker Source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Since a HEAD
 response cannot carry a body, Hookdeck returns the request id in the
 `x-hookdeck-request-id` **response header**; use it to correlate a delivery with
 its dashboard entry.

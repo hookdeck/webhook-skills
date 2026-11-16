@@ -25,7 +25,7 @@ type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-sig
 
 /**
  * Read the three signature headers. Notifuse sends webhook-*; if webhook-id is
- * absent, fall back to the svix-* names (what Hookdeck does too). The result
+ * absent, fall back to the svix-* names. The result
  * always uses the webhook-* names the standardwebhooks library expects.
  */
 function signatureHeaders(headers: Headers): Partial<SignatureHeaders> {

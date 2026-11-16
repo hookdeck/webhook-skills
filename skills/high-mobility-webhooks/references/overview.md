@@ -41,7 +41,7 @@ Treat every field as untrusted after verification: check that the body and each 
 
 ## HTTP Method
 
-The docs don't name the HTTP method. Hookdeck's High Mobility source pre-selects POST without managing the method, so allow any other method the sender uses on the source too. The examples accept GET, POST, PUT, PATCH and DELETE.
+The docs don't name the HTTP method. Hookdeck's High Mobility source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method the sender uses on the source too. The examples accept GET, POST, PUT, PATCH and DELETE.
 
 ## Full Event Reference
 

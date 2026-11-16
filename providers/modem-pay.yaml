@@ -27,17 +27,15 @@ notes: >
   charge.failed (and lacks payment_intent.expired, charge.expired); mention charge.failed as listed
   only by the CLI page. Handle a few in the examples (charge.succeeded, charge.updated,
   payment_intent.created, customer.created, transfer.succeeded, transfer.failed) and acknowledge
-  (200) unknown events. SIGNATURE (it must match Hookdeck's MODEM_PAY source exactly: HMAC
-  controller, algorithm "sha512", header_key "x-modem-signature", encoding "hex", no timestamp
-  prefix): the x-modem-signature header is the bare lowercase hex HMAC-SHA512 (128 hex characters,
+  (200) unknown events. SIGNATURE:: the x-modem-signature header is the bare lowercase hex HMAC-SHA512 (128 hex characters,
   no prefix such as sha512=) of the request body, keyed with the webhook secret's UTF-8 bytes as-is
   (no decoding, no prefix stripping). The vendor's own examples re-serialise the parsed JSON
   (JS: JSON.stringify(req.body); Flask: json.dumps(request.json), which uses different separators
   than JSON.stringify) before hashing; their SDK (npm modem-pay, webhooks.composeEventDetails)
-  hashes the string as-is when given a string. Hookdeck hashes the raw body bytes. The examples
+  hashes the string as-is when given a string. The examples must hash the raw body bytes. The examples
   must hash the RAW body bytes exactly as received, never re-serialised JSON, and SKILL.md must
   say why (re-serialising can change bytes; the raw body is what was sent). Do not use the vendor's
-  Flask json.dumps pattern. Compare hex case-insensitively (Hookdeck does): require exactly 128 hex
+  Flask json.dumps pattern. Compare hex case-insensitively: require exactly 128 hex
   characters, lowercase it, then constant-time compare. Node: check the format with a regex first,
   then crypto.timingSafeEqual on equal-length Buffers; never call Buffer.from(sig, 'hex') on an
   unvalidated value. Python: hmac.compare_digest on bytes (never on str, which raises TypeError on
@@ -56,8 +54,7 @@ notes: >
   header value (assume JSON but accept any content type), other headers. After verifying, treat
   every parsed field as untrusted: check that the body is an object, event is a string and payload
   is an object before reading into them (typeof / Array.isArray; FastAPI isinstance), so
-  wrong-typed or non-JSON signed bodies get 400, never 500. Delivery: POST; Hookdeck's Modem Pay
-  source manages the method as POST. Express examples must read the raw body with express.raw({
+  wrong-typed or non-JSON signed bodies get 400, never 500. Delivery: POST. Express examples must read the raw body with express.raw({
   type: '*/*' }) (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse only
   after the check. Hookdeck's source type is MODEM_PAY, labelled 'Modem Pay': Hookdeck's source
   verifies the signature (never say 'at the edge'). Do not mention or link Standard Webhooks or

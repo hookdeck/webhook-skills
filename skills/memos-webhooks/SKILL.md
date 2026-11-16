@@ -43,7 +43,7 @@ So if you receive through Hookdeck, set a custom response with body `{"code":0}`
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. For a `whsec_...` secret the key is the base64-**decoded** part after the prefix; Memos uses any other secret value as its raw bytes. Compare against every `v1,` entry and ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. For a `whsec_...` secret the key is the base64-**decoded** part after the prefix; Memos uses any other secret value as its raw bytes. Compare against every `v1,` entry and ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

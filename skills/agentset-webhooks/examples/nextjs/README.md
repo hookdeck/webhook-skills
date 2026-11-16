@@ -53,8 +53,7 @@ Agentset can't reach `localhost`. Tunnel to your machine with the Hookdeck CLI (
 npx hookdeck-cli listen 3000 agentset --path /webhooks/agentset
 ```
 
-Use the printed URL as the webhook URL. Hookdeck's Agentset source pre-selects POST without managing
-the method, so allow any other method Agentset uses on the source.
+Use the printed URL as the webhook URL. Hookdeck's Agentset source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method Agentset uses on the source.
 
 ## How It Works
 

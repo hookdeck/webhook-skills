@@ -18,15 +18,14 @@ notes: >
   HMAC-SHA256(secret, body), where the body is `JSON.stringify(payload)` (the raw body as sent). The
   secret is used literally, including any `whsec_` prefix; it is not a Standard Webhooks key and there
   is no `v1,` prefix or webhook-id. Signing is per destination secret; the webhooks page says a random
-  secret is created when none is given. SIGNATURE SCHEME (it must match Hookdeck's TEXTURE source
-  exactly: HMAC controller, algorithm "sha256", header_key "texture-signature", encoding "hex"). The
+  secret is created when none is given. SIGNATURE SCHEME: The
   Texture-Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header
   value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: The destination's `secret` (any
   string; the docs' example is `whsec_my-webhook-secret`). Optional on create; Texture generates one
   if omitted. Use it as UTF-8 bytes. Env var: TEXTURE_WEBHOOK_SECRET. Validate the signature's format
@@ -44,8 +43,7 @@ notes: >
   `device.created`, is in neither list, so no documented wire value is recorded here. Documented event
   types (9): customer.created, command.failed, command.overridden, command.succeeded,
   device.discovered, device.updated, device.disconnected, enrollment.approved, site.created. Handle a
-  few common ones and log the rest. Method: POST. Hookdeck's Texture source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Hookdeck's source type is TEXTURE, labelled 'Texture'. Hookdeck shows this setup note for the

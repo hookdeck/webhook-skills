@@ -41,7 +41,7 @@ Steps:
 1. Read the raw body (Express `express.raw({ type: '*/*' })`, Next.js `await request.arrayBuffer()`, FastAPI `await request.body()`).
 2. Require all three headers to be present and non-empty, else 401.
 3. Require the signature to match `[A-Za-z0-9+/]{43}=` (44 padded base64 characters), else 401. Compare the WHOLE header value as one digest: no list splitting, no prefix parsing.
-4. Compute the HMAC and compare in constant time (Node: equal-length buffers with `crypto.timingSafeEqual`; Python: `hmac.compare_digest` on bytes, with `base64.b64decode(..., validate=True)` followed by a re-encode check, since decoders ignore stray low bits in the last character and Hookdeck compares base64 exactly).
+4. Compute the HMAC and compare in constant time (Node: equal-length buffers with `crypto.timingSafeEqual`; Python: `hmac.compare_digest` on bytes, with `base64.b64decode(..., validate=True)` followed by a re-encode check, since decoders ignore stray low bits in the last character).
 5. Respond `200` if valid, `401` otherwise. Parse JSON only after this check.
 
 Header values are encoded latin-1 exactly as received; they are never trimmed, parsed or re-formatted.
@@ -60,11 +60,11 @@ Sinch's docs give a worked example, included as a unit test in every example (Ex
 {"app_id":"","accepted_time":"2021-10-18T17:49:13.813615Z","project_id":"e2df3a34-a71b-4448-9db5-a8d2baad28e4","contact_create_notification":{"contact":{"id":"01FJA8B466Y0R2GNXD78MD9SM1","channel_identities":[{"channel":"SMS","identity":"48123456789","app_id":""}],"display_name":"New Test Contact","email":"new.contact@email.com","external_id":"","metadata":"","language":"EN_US"}},"message_metadata":""}
 ```
 
-The vector matches Hookdeck's Sinch source template `{body}.{header:x-sinch-webhook-signature-nonce}.{header:x-sinch-webhook-signature-timestamp}`.
+
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window rejects legitimate redeliveries, and Hookdeck's Sinch source applies no tolerance.
+Not by default. Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window rejects legitimate redeliveries.
 
 The examples therefore leave the window **off** and offer an opt-in: set `SINCH_WEBHOOK_TOLERANCE_SECONDS=300` (unset or `0` = off). The timestamp header is Unix seconds. Because Sinch dedup is best-effort, deduplicate on a stable id from the payload (for example `message.id`) instead.
 

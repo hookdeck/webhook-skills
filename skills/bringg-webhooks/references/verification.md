@@ -13,7 +13,7 @@ authentication", and your receiver checks one of them:
 
 The header name is user-chosen. The examples look it up case-insensitively and compare the
 **whole value**, so a `Bearer ` prefix is just part of the expected string (not parsed or
-stripped). This matches Hookdeck's Bringg source, which verifies header name plus exact value.
+stripped). Hookdeck's Bringg source checks the same header.
 
 Bringg also supports **JWT** and **OAuth 2.0** authentication methods for webhooks. They are
 not handled here; verifying them needs custom code (validate the JWT in the configured

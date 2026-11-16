@@ -24,7 +24,7 @@ Paste the secret key into the source's webhook secret field. Without a secret, n
 
 ## HTTP Method
 
-Treet's docs don't name the HTTP method. Hookdeck's Treet source pre-selects POST without managing the method (you can change it). If Treet sends any other method, allow that method on the source too. The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method.
+Treet's docs don't name the HTTP method. Allow the method Treet uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method.
 
 ## Local Development
 

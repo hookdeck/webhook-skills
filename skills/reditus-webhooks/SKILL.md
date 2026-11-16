@@ -44,7 +44,7 @@ function verifyReditusSignature(rawBody, signature, secret = process.env.REDITUS
 - Hex is compared case-insensitively. Missing or empty header, malformed value or mismatch: `401`.
 - Express: `express.raw({ type: '*/*' })`. Next.js: `await request.arrayBuffer()`. FastAPI: `await request.body()`. Python: `hmac.compare_digest` on bytes.
 - **The HTTP method is not documented.** Accept GET, POST, PUT, PATCH and DELETE on the route and verify every one. A request with no body is verified over zero bytes, then acknowledged with `200`.
-- **Hookdeck:** Hookdeck's Reditus source verifies the signature (HMAC SHA-256, `x-signature`, hex). It pre-selects POST without managing the method, so allow any other method Reditus uses on the source.
+- **Hookdeck:** Hookdeck's Reditus source verifies the signature. Allow any method Reditus uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

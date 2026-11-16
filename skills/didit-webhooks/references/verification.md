@@ -12,7 +12,7 @@ Every webhook is signed with HMAC-SHA256 keyed with the destination's `secret_sh
 
 `X-Timestamp` (unix seconds) is a separate header and is **not** part of any `X-Signature` input. Didit recommends rejecting requests where `abs(now - X-Timestamp) > 300`, and refreshes it on each of its own retries. A gateway such as Hookdeck re-sends the original header on its retries and replays, so the examples leave the check off by default; set `DIDIT_TIMESTAMP_TOLERANCE_SECONDS` to a positive number of seconds to opt in. A value that isn't a whole number is treated as `0`, with a warning at startup.
 
-This skill uses `X-Signature` over the raw body as the primary path, which is also what Hookdeck's Didit source verifies.
+This skill uses `X-Signature` over the raw body as the primary path.
 
 ## Implementation
 

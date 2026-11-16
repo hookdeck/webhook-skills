@@ -31,7 +31,7 @@ openssl rand -hex 32
 ## Using Hookdeck's Baserow Source
 
 Hookdeck's Baserow source (type `BASEROW`) authenticates the same way: header name plus the exact
-whole value. It pre-selects the `POST` method without managing it. If the Baserow webhook uses
+whole value. It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If the Baserow webhook uses
 PUT, PATCH, GET or DELETE, also allow that method on the source, otherwise those requests are
 rejected.
 

@@ -68,9 +68,8 @@ function verifyNextcloudRequest(headers,
 
 `httpMethod` is a free string set when the webhook is registered, so the route must accept
 `POST`, `PUT`, `PATCH`, `GET` and `DELETE`, and cope with an empty body. The examples do this
-(Next.js exports a handler for each method). If you receive through Hookdeck: the Nextcloud
-source pre-selects `POST` without managing the method, so any other method your listener uses
-must also be allowed on the source.
+(Next.js exports a handler for each method). If you receive through Hookdeck, allow the
+method your listener uses on the Nextcloud source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

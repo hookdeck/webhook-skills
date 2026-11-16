@@ -12,8 +12,7 @@ notes: >
   so the examples read the header name from DATACAKE_WEBHOOK_HEADER (default 'Authorization') and
   the expected value from DATACAKE_WEBHOOK_SECRET (the exact, whole header value, including any
   'Bearer ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE
-  value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Datacake source does (API
-  key verification: API Key Header + exact whole API Key value). Missing header or mismatch: 401.
+  value; do not strip or parse a 'Bearer ' prefix. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401.
   Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers
   (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on bytes (encode both
   sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md must say plainly

@@ -11,8 +11,7 @@ specification. Each request carries three headers:
 | `webhook-timestamp` | Unix timestamp in seconds when the webhook was sent |
 | `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
 
-Hookdeck's Relay source reads `webhook-*` and falls back to the `svix-*` header names (`svix-id`,
-`svix-timestamp`, `svix-signature`) when `webhook-id` is absent, and the examples here do the same.
+The examples read `webhook-*` and fall back to the `svix-*` header names (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent.
 
 The algorithm:
 
@@ -84,8 +83,7 @@ deduplicating on the body's `event_id`.
 
 ## Manual Verification (configurable timestamp window)
 
-Relay secrets start with `whsec_`, and the key is the base64-decoded remainder. As in Hookdeck's source, a
-secret without that prefix is used as its raw UTF-8 bytes.
+Relay secrets start with `whsec_`, and the key is the base64-decoded remainder. A secret without that prefix is used as its raw UTF-8 bytes.
 
 ```javascript
 const crypto = require('node:crypto');

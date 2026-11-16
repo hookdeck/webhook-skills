@@ -55,7 +55,7 @@ def verify_spree_signature(raw_body: bytes, signature: str | None, timestamp: st
 - **Bare digest.** The signature header is one hex digest: no `sha256=` prefix, no list, no `t=`/`v1=` parts.
 - **Validate before decoding.** Require exactly 64 hex characters (case-insensitive), then compare in constant time. Node: `Buffer.from(sig, 'hex')` silently drops bad characters, so check the format first and use `crypto.timingSafeEqual` on equal-length buffers. Python: `hmac.compare_digest` on bytes.
 - **Timestamp is a signed input.** Missing or empty signature or timestamp, a malformed signature or a mismatch returns 401.
-- **Replay window is opt-in.** Do not reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. To enforce one, set `SPREE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off); `X-Spree-Webhook-Timestamp` is Unix seconds. Deduplicate on the event `id` instead.
+- **Replay window is opt-in.** Do not reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To enforce one, set `SPREE_WEBHOOK_TOLERANCE_SECONDS` (for example `300`; unset or `0` = off); `X-Spree-Webhook-Timestamp` is Unix seconds. Deduplicate on the event `id` instead.
 - **Content type.** Deliveries are `application/json`, but read the raw body for any content type.
 
 ## Debugging Verification Failures

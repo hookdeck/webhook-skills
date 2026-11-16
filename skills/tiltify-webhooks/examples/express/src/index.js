@@ -72,7 +72,7 @@ function verifyTiltifySignature(
     crypto.createHmac('sha256', Buffer.from(secret, 'utf8')).update(signedContent).digest('base64'),
     'ascii',
   );
-  // Compare the base64 text, as Hookdeck does: decoding would also accept a
+  // Compare the base64 text: decoding would also accept a
   // non-canonical last character (stray low bits) that maps to the same digest.
   const received = Buffer.from(signatureHeader, 'ascii');
 

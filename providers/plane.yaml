@@ -13,15 +13,13 @@ notes: >
   keyed with your webhook secret' 'expected = hmac.new( secret.encode( "utf-8" ), request_body_bytes,
   hashlib.sha256, ).hexdigest()' 'The secret key is formatted as plane_wh_ followed by a random
   string.' From the docs (registry summary): hex(HMAC-SHA256(secret, raw body)), the whole header
-  value, no prefix; the Python sample compares it directly. SIGNATURE SCHEME (it must match Hookdeck's
-  PLANE source exactly: HMAC controller, algorithm "sha256", header_key "x-plane-signature", encoding
-  "hex"). The x-plane-signature header carries the bare lowercase hex digest, no prefix. Compare the
+  value, no prefix; the Python sample compares it directly. SIGNATURE SCHEME: HMAC-SHA256, header x-plane-signature, hex encoding. The x-plane-signature header carries the bare lowercase hex digest, no prefix. Compare the
   WHOLE header value as one digest (no list splitting or prefix parsing). The signature is lowercase
   hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
   other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
   never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
   HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: Generated on create and downloaded
   as a CSV (`plane_wh_...`); viewable later in the edit form. Re-generating invalidates the old key at
   once. Use it as UTF-8 bytes. Env var: PLANE_WEBHOOK_SECRET. Validate the signature's format before
@@ -37,7 +35,7 @@ notes: >
   project.created, project.updated, project.archived, project.deleted, cycle.created, cycle.updated,
   cycle.archived, cycle.deleted, module.created, module.updated, module.archived, module.deleted,
   milestone.created, milestone.updated (and 29 more). Handle a few common ones and log the rest.
-  Method: POST. Hookdeck's Plane source manages the method as POST, so the examples handle POST on the
+  Method: POST. The examples handle POST on the
   webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. Documented sample payloads (each JSON

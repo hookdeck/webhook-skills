@@ -14,18 +14,15 @@ notes: >
   req . get ( "X-Treet-Signature" ); assert . equal ( hmac , signature );' From the docs (registry
   summary): base64(HMAC-SHA256(secret key, raw body)), the whole header value. Only the Node sample
   states the algorithm and encoding; the prose says "a hashed value of the request data". SIGNATURE
-  SCHEME (it must match Hookdeck's TREET source exactly: HMAC controller, algorithm "sha256",
-  header_key "x-treet-signature", encoding "base64"). The x-treet-signature header carries the bare
+  SCHEME: The x-treet-signature header carries the bare
   standard base64 (padded) digest, no prefix. Compare the WHOLE header value as one digest (no list
   splitting or prefix parsing). The signature is standard base64 (padded) HMAC-SHA256, keyed with the
   secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build the
   signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as
-  Hookdeck does): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
+  bytes, used as-is (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and
   compare the strings, or the decoded bytes AND the re-encoded string, in constant time. Decoding
-  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes
-  but Hookdeck rejects it, so the skill must reject it too. Secret: Opt-in: the secret key is issued
+  alone is not enough: a value whose last character carries stray low bits decodes to the same bytes, so the skill must reject it explicitly. Secret: Opt-in: the secret key is issued
   by Treet support on request; without it no signature header is sent. Use it as UTF-8 bytes. Env var:
   TREET_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
   alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
@@ -38,14 +35,11 @@ notes: >
   `label/updated`); top-level `topic` is the coarser topic (`label`) and is the same for both.
   Triggers carry `/`, so the sample file uses the safe stem. Documented event types (2):
   label/created, label/updated. Handle a few common ones and log the rest. Methods: Treet's docs don't
-  name the HTTP method. Hookdeck's Treet source pre-selects POST without managing the method (the user
-  can change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
+  name the HTTP method. The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
   webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
   FastAPI: api_route with those methods), verify the signature first for every method, and treat a
   missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it is
-  acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that Hookdeck's
-  Treet source pre-selects POST without managing the method, so any other method the sender uses must
-  also be allowed on the source. Express examples must read the raw body with express.raw({ type:
+  acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that the user must allow the method the sender uses on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

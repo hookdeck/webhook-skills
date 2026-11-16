@@ -95,7 +95,7 @@ side. Either way the part after `whsec_` is treated as **base64** and decoded
 into the HMAC key.
 
 **Keep the `whsec_` prefix when you set a custom secret.** Svix/Standard
-Webhooks libraries and Hookdeck use the prefix to recognise the secret as
+Webhooks libraries use the prefix to recognise the secret as
 base64 and decode it. Without it, a verifier may use the string's raw bytes as
 the key and every signature check will fail, even though OpenMeter is signing
 correctly. Also make sure the value after the prefix is valid base64 (only

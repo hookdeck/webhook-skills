@@ -5,7 +5,7 @@ import { computeSignature, verifyConfigCatWebhook } from '../lib/verify';
 const SECRET = 'configcat_whsk_VN3juirnVh5pNvCKd81RYRYchxUX4j3NykbZG2fAy88=';
 const URL = 'http://localhost:3000/webhooks/configcat';
 
-// Published vector from ConfigCat's docs (also verified against Hookdeck's CONFIGCAT source)
+// Published vector from ConfigCat's docs
 const VECTOR = {
   body: 'examplebody',
   id: 'b616ca659d154a5fb907dd8475792eeb',

@@ -31,7 +31,7 @@ X-Webhook-Signature: sha256=3d35d777510a7ccf73ded723f141b0ada2986aebe63c4e45a9c7
 ```
 
 - The value is `sha256=` plus the lowercase hex HMAC-SHA256 of the **raw request body** only, keyed with the webhook secret as UTF-8 bytes (not hex- or base64-decoded). No timestamp, id or other header is signed.
-- Strip a leading `sha256=`, then require exactly 64 hex characters before decoding (`Buffer.from(x, 'hex')` silently drops bad characters). Accept the bare digest too, as Hookdeck's source does. Hex is case-insensitive.
+- Strip a leading `sha256=`, then require exactly 64 hex characters before decoding (`Buffer.from(x, 'hex')` silently drops bad characters). Accept the bare digest too. Hex is case-insensitive.
 - Compare in constant time. A missing or empty header, malformed value or mismatch gets `401`.
 - There is no timestamp, so there is no replay window to check. Use `submission_id` for idempotency.
 

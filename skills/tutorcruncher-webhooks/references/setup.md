@@ -30,9 +30,7 @@ URL. Hookdeck shows this note for the source:
 
 "Paste your TutorCruncher private API key. TutorCruncher signs webhooks with it."
 
-TutorCruncher's docs don't name the HTTP method. Hookdeck's TutorCruncher source pre-selects
-POST without managing the method, so if the sender uses another method, allow that method on
-the source too. The examples in this skill accept GET, POST, PUT, PATCH and DELETE.
+TutorCruncher's docs don't name the HTTP method. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples in this skill accept GET, POST, PUT, PATCH and DELETE.
 
 ## Webhook Logs
 

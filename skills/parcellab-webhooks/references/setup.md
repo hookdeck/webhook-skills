@@ -21,8 +21,7 @@ HTTP Basic, access token headers and OAuth 2.0 access token. Choose **HTTP Basic
 ## Credentials Must Arrive on the First Request
 
 The docs don't say whether parcelLab sends Basic credentials preemptively. Don't build the
-endpoint around a `401` + `WWW-Authenticate` challenge: it won't work with parcelLab, and it
-won't work through Hookdeck, which verifies the request as received.
+endpoint around a `401` + `WWW-Authenticate` challenge: it won't work with parcelLab or through Hookdeck.
 
 ## Local Testing
 

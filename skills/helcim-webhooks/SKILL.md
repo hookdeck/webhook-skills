@@ -34,7 +34,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** `verifierToken`. Helcim shows it as bare base64 with no `whsec_` prefix; the `standardwebhooks` library accepts it as shown, with or without a `whsec_` prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** `verifierToken`. Helcim shows it as bare base64 with no `whsec_` prefix; the `standardwebhooks` library accepts it as shown, with or without a `whsec_` prefix. Compare against every `v1,` entry; ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 
 ```javascript
 const { Webhook } = require('standardwebhooks');
@@ -56,7 +56,7 @@ The library always enforces a fixed **5-minute timestamp window**, but Helcim do
 
 ## Hookdeck: Paste the verifierToken With a `whsec_` Prefix
 
-Hookdeck base64-decodes only secrets that start with `whsec_`, and Helcim's `verifierToken` has no prefix. When you add the Helcim source in Hookdeck, paste the token as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
+Helcim's `verifierToken` has no prefix. When you add the Helcim source in Hookdeck, paste the token as `whsec_` followed by the token. Hookdeck's configuration alert for this source reads exactly:
 
 > Paste your verifierToken as whsec_ followed by the token, or verification fails.
 

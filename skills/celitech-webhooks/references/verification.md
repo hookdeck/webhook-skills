@@ -62,7 +62,7 @@ except WebhookVerificationError:
 The library's 5-minute window is fixed. Hookdeck retries and replays resend the
 original `svix-timestamp`, so a retry that reaches your server more than 5 minutes after
 the original delivery fails with a timestamp error even though the signature is valid.
-Hookdeck's own Celitech verification applies no timestamp window. If you receive through
+If you receive through
 Hookdeck, use the manual verifier below with the window dropped (or widened).
 
 ## Manual Verification (no timestamp window)
@@ -75,7 +75,7 @@ function verifyCelitech(rawBody, id, timestamp, signatureHeader, secret, maxAgeS
   if (!/^[1-9]\d*$/.test(timestamp)) return false; // plain positive integer only
   if (maxAgeSeconds !== null && Math.abs(Date.now() / 1000 - Number(timestamp)) > maxAgeSeconds) return false;
 
-  // As Hookdeck does: whsec_ secrets are base64, anything else is used as raw UTF-8 bytes
+  // whsec_ secrets are base64, anything else is used as raw UTF-8 bytes
   const key = secret.startsWith('whsec_')
     ? Buffer.from(secret.slice('whsec_'.length), 'base64')
     : Buffer.from(secret, 'utf8');
@@ -105,7 +105,7 @@ def verify_celitech(raw_body: bytes, msg_id: str, timestamp: str, signature_head
         return False
     if max_age_seconds is not None and abs(time.time() - int(timestamp)) > max_age_seconds:
         return False
-    # As Hookdeck does: whsec_ secrets are base64, anything else is used as raw UTF-8 bytes
+    # whsec_ secrets are base64, anything else is used as raw UTF-8 bytes
     key = base64.b64decode(secret[len("whsec_"):]) if secret.startswith("whsec_") else secret.encode("utf-8")
     if not key:
         return False

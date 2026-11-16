@@ -22,7 +22,7 @@ Rotating the Wiza API key changes the `x-auth-key` value. Update your configurat
 
 ## Using Hookdeck
 
-Hookdeck's Wiza source compares the whole `x-auth-key` value with the key you configure, so:
+When you create the Wiza source in Hookdeck:
 
 > Enter the lowercase hex SHA-256 hash of your Wiza API key, as sent in `x-auth-key`, not the API key itself.
 

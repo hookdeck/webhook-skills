@@ -7,7 +7,7 @@
 - Key: the configured webhook secret string's UTF-8 bytes, used as-is (not decoded)
 - Signed message: the exact raw request body bytes. No timestamp, id or other header is signed.
 
-High Mobility also sends a deprecated `X-HM-Signature` (HMAC-SHA1) so old integrations can migrate. Verify only `X-HM-Signature-256`, as Hookdeck's source does.
+High Mobility also sends a deprecated `X-HM-Signature` (HMAC-SHA1) so old integrations can migrate. Verify only `X-HM-Signature-256`.
 
 ## Implementation
 

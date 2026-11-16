@@ -8,7 +8,7 @@ When a webhook secret is configured, Baseten adds `X-BASETEN-SIGNATURE: v1=<hex>
 - Key: the webhook secret as UTF-8 bytes, used as-is
 - Signed message: the **raw request body bytes** only. No timestamp, id or header is included
 - Encoding: lowercase hex, prefixed `v1=`
-- Hookdeck's Baseten source uses the same scheme (header `x-baseten-signature`, sha256, hex) and also accepts the bare digest
+- The examples also accept the bare digest
 
 Baseten's own sample compares the value after `v1=`, cut at the first comma. That suggests several comma-separated values can appear, for example during the 24-hour rotation overlap. The docs don't spell this out, so accept if any entry matches.
 

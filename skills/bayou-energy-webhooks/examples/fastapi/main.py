@@ -33,7 +33,7 @@ processed_message_ids: set = set()
 def signature_headers(headers: Mapping[str, str]) -> Dict[str, Optional[str]]:
     """Read the three signature headers.
 
-    Bayou sends webhook-*; like Hookdeck, fall back to the svix-* names when
+    Bayou sends webhook-*; fall back to the svix-* names when
     webhook-id is absent. The result always uses the webhook-* names, which is
     what the standardwebhooks library expects.
     """

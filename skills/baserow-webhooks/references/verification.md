@@ -69,7 +69,7 @@ def verify_baserow_request(headers, name=None, secret=None) -> bool:
   body is sent even on GET, and the body may be empty, so don't assume one.
 - **Raw body, any content type.** Express: `express.raw({ type: '*/*' })`. Authenticate first.
 - **Whole-value comparison.** `Authorization: Bearer abc` is compared as the full string.
-- **Hookdeck source methods.** The Baserow source pre-selects POST; allow any other method your
+- **Hookdeck source methods.** The Baserow source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); allow any other method your
   webhook uses.
 - **Return `200`.** The docs say success requires `200 OK` and failed calls are retried a limited
   number of times (Baserow's source accepts any status below 400). Duplicates can happen; dedupe on

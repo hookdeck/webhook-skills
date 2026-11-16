@@ -56,7 +56,7 @@ Static helpers also exist (`Webhook.verifyAndParseWebhook(rawBody, signature, se
 ## Common Gotchas
 
 - **Raw body.** Verify the exact bytes received. Re-serialising parsed JSON changes whitespace and key order. In Express use `express.raw({ type: '*/*' })` so any content type is read as a Buffer; in Next.js use `Buffer.from(await request.arrayBuffer())`, because `request.text()` corrupts a gzipped body; in FastAPI use `await request.body()`.
-- **Payload Compression.** With `enable_hook_payload_compression` on, bodies over 256 bytes are gzipped and the HMAC covers the **uncompressed** bytes. Verify after decompressing, never on the gzip bytes. Hookdeck's Stream source cannot verify compressed payloads, so turn it off. Apps created after May 7, 2026 default to on.
+- **Payload Compression.** With `enable_hook_payload_compression` on, bodies over 256 bytes are gzipped and the HMAC covers the **uncompressed** bytes. Verify after decompressing, never on the gzip bytes. Turn it off if you route Stream through Hookdeck. Apps created after May 7, 2026 default to on.
 - **Secret.** Use the API secret, not the API key and not a token you generated.
 - **Header case.** Node lowercases headers (`x-signature`); `request.headers.get` and Starlette are case-insensitive.
 - **SQS/SNS.** Stream does not attach the app-level signature to SQS/SNS payloads; this applies to HTTP only.

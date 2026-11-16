@@ -52,8 +52,7 @@ function verifyKatanaSignature(rawBody, signature, secret = process.env.KATANA_W
 - No timestamp is signed, so there is no replay window to check. Deduplicate on the event instead.
 - **The HTTP method is not documented.** Katana's docs don't name it, so accept GET, POST, PUT, PATCH and
   DELETE, verify first for every method, and treat a missing body as empty bytes.
-- **Hookdeck:** Hookdeck's Katana MRP source (type `KATANA`) pre-selects POST without managing the method,
-  so any other method Katana uses must also be allowed on the source.
+- **Hookdeck:** Hookdeck's Katana MRP source (type `KATANA`) accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method Katana uses must also be allowed on the source.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

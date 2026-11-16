@@ -43,7 +43,7 @@ The tests sign payloads with the real algorithm and cover valid, missing, wrong,
 npx hookdeck-cli listen 3000 memberful --path /webhooks/memberful
 ```
 
-Use the printed URL as the endpoint URL when you create the webhook in Memberful. Hookdeck's Memberful source verifies the signature and manages the method as POST.
+Use the printed URL as the endpoint URL when you create the webhook in Memberful. Hookdeck's Memberful source verifies the signature.
 
 ## How It Works
 

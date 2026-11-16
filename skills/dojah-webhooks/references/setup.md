@@ -43,8 +43,7 @@ each with its own secret.
 
 ## Using Hookdeck
 
-Create a source of type `Dojah` in Hookdeck and paste the webhook secret there; Hookdeck's source verifies
-`x-dojah-signature`. Use the source URL as the webhook URL.
+Create a source of type `Dojah` in Hookdeck and paste the webhook secret there; Hookdeck's source verifies the signature. Use the source URL as the webhook URL.
 
 ## Local Development
 

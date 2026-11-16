@@ -13,7 +13,7 @@
 
 Keep a single signing key on the ConfigCat webhook and paste it whole, including the configcat_whsk_ prefix. With two keys, ConfigCat sends two signatures and verification fails. If the webhook uses GET, also allow GET on this source.
 
-ConfigCat lets you add a secondary key for rotation, and then sends two comma-separated signatures. Both Hookdeck and the examples compare the whole header to one signature, so during a rotation they reject deliveries until the old key is removed.
+ConfigCat lets you add a secondary key for rotation, and then sends two comma-separated signatures. During a rotation, deliveries fail verification until the old key is removed.
 
 ## Register Your Endpoint
 
@@ -25,7 +25,7 @@ ConfigCat lets you add a secondary key for rotation, and then sends two comma-se
 
 ## Hookdeck Source and the HTTP Method
 
-Hookdeck's `CONFIGCAT` source pre-selects POST without managing the method. If your webhook uses GET, or any method other than POST, also allow that method on the source. The example handlers accept GET, POST, PUT, PATCH and DELETE.
+Hookdeck's `CONFIGCAT` source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If your webhook uses GET, or any method other than POST, also allow that method on the source. The example handlers accept GET, POST, PUT, PATCH and DELETE.
 
 ## Test Your Webhook
 

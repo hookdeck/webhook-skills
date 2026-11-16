@@ -56,7 +56,7 @@ function verifySentWebhook(rawBody, headers, secret = process.env.SENT_WEBHOOK_S
 
 Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).verify(await request.body(), {"webhook-id": ..., "webhook-timestamp": ..., "webhook-signature": ...})` with the same header mapping. In Express, read the body with `express.raw({ type: '*/*' })` so any content type verifies.
 
-**Timestamp window.** The library always rejects timestamps more than 5 minutes off. Sent signs each retry when it sends it, so Sent's own retries pass. Hookdeck retries and replays resend the **original** timestamp (and Hookdeck applies no window itself), so the library rejects them once they are over 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the dependency-free verifier in [references/verification.md](references/verification.md) and widen or disable its window.
+**Timestamp window.** The library always rejects timestamps more than 5 minutes off. Sent signs each retry when it sends it, so Sent's own retries pass. Hookdeck retries and replays resend the **original** timestamp, so the library rejects them once they are over 5 minutes old. If you receive through Hookdeck and need late retries to pass, use the dependency-free verifier in [references/verification.md](references/verification.md) and widen or disable its window.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

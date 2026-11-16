@@ -97,8 +97,7 @@ BASEROW_WEBHOOK_SECRET=your-secret     # the exact, whole header value (e.g. "Be
 
 ## Hookdeck Source Note
 
-Hookdeck's Baserow source (type `BASEROW`) verifies the same way: header name plus the exact whole
-value. It pre-selects the `POST` method without managing it, so if your Baserow webhook uses
+Hookdeck's Baserow source (type `BASEROW`) checks the same header. It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if your Baserow webhook uses
 another method (PUT, PATCH, GET or DELETE), also allow that method on the Hookdeck source.
 
 ## Local Development

@@ -13,9 +13,7 @@ notes: >
   is user-chosen, so the examples read the header name from ARCADIA_WEBHOOK_HEADER (default
   'X-Arcadia-Token') and the expected value from ARCADIA_WEBHOOK_SECRET (the exact, whole header
   value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
-  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Arcadia
-  source does (API key verification: API Key Header + exact whole API Key value). Missing header or
-  mismatch: 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401. Compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
   equal-length Buffers (or on SHA-256 digests of both sides); Python uses hmac.compare_digest on
   bytes (encode both sides; never pass str, which raises on non-ASCII). SKILL.md and verification.md
   must say plainly that a static shared credential authenticates the sender, not the body, and gives

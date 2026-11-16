@@ -37,7 +37,7 @@ To receive webhooks locally:
 npx hookdeck-cli listen 8000 katana --path /webhooks/katana
 ```
 
-Hookdeck's Katana MRP source pre-selects POST without managing the method, so allow any other method Katana uses.
+Hookdeck's Katana MRP source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow any other method Katana uses.
 
 ## Test
 

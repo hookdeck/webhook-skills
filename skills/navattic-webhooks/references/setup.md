@@ -22,12 +22,10 @@ names in the Webhook integration screen.
 
 Hookdeck's Navattic source type is labelled "Navattic". Paste the full Authorization value Navattic sends, including the "Basic " or "Bearer " prefix.
 
-Hookdeck compares the whole `Authorization` header value to the configured key. Don't paste
-only the token and don't base64-decode Basic credentials.
+Don't paste only the token and don't base64-decode Basic credentials.
 
-Navattic's page doesn't name the HTTP method. Hookdeck's Navattic source pre-selects `POST`
-without managing the method, so if Navattic sends anything else (`GET`, `PUT`, `PATCH`,
-`DELETE`), also allow that method on the source. The examples accept all five.
+Navattic's page doesn't name the HTTP method. Make sure the Hookdeck source
+allows the method Navattic uses ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept all five.
 
 ## Local Testing
 

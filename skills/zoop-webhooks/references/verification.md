@@ -14,8 +14,6 @@ Points that cause most failures:
 - The header is `Authorization`. There is no `Bearer` prefix unless you put one in the string.
 - Compare the **whole header value** with `ZOOP_AUTHORIZATION` (the exact string set when the
   webhook was created). Don't strip, parse or base64-decode a prefix.
-- Hookdeck's Zoop source does the same: it compares the whole `Authorization` header with the
-  configured value.
 
 ## What Does This Protect Against?
 

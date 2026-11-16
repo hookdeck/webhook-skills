@@ -6,7 +6,7 @@ import { Webhook } from 'standardwebhooks';
 
 export const dynamic = 'force-dynamic';
 
-// iSnap sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// iSnap sends webhook-* headers; this handler also reads the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

@@ -20,7 +20,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `VIVENU` source type once it is available in your environment and configure its verification secret. Named sources answer 200 at ingress; a failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures. Hookdeck applies no timestamp tolerance.
+Choose the `VIVENU` source type once it is available in your environment and configure its verification secret. A request with a bad signature is recorded as failed verification and creates no event. The example receivers themselves return 401 for invalid signatures.
 
 If the sender is configured for unsigned delivery, leave source verification disabled or enable signing at the sender first. These examples deliberately require signed requests.
 

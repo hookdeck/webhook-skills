@@ -34,7 +34,7 @@ def signature_headers(headers: Mapping[str, str]) -> Dict[str, Optional[str]]:
     """Read the three signature headers.
 
     Notifuse sends webhook-*; if webhook-id is absent, fall back to the svix-*
-    names (what Hookdeck does too). The result always uses the webhook-* names
+    names. The result always uses the webhook-* names
     the standardwebhooks library expects.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"

@@ -13,15 +13,13 @@ notes: >
   you with a secret key.' From the docs (registry summary): Header `X-Onramper-Webhook-Signature:
   <hex>`, no prefix. MAC = hex of HMAC-SHA256(key = the secret Onramper issues at registration,
   message = the body). The prose says only "HMAC hex digest"; SHA-256 comes from the TypeScript
-  sample, which also compares with `===` rather than a constant-time compare. SIGNATURE SCHEME (it
-  must match Hookdeck's ONRAMPER source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-onramper-webhook-signature", encoding "hex"). The X-Onramper-Webhook-Signature header carries the
+  sample, which also compares with `===` rather than a constant-time compare. SIGNATURE SCHEME: The X-Onramper-Webhook-Signature header carries the
   bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
   splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
   over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
   message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
   never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
-  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require
   exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
   compare. Secret: Issued by Onramper when webhooks are registered (through the Customer Success
   Manager), one per registration. No format or rotation is documented. Use it as UTF-8 bytes. Env var:
@@ -37,7 +35,7 @@ notes: >
   are recorded as the event list, keyed on `status`. `transactionType` (`buy` or `offramp`) splits the
   direction and is recorded as the sub-discriminator. No header carries a type. Documented event types
   (6): completed, paid, pending, new, failed, canceled. Handle a few common ones and log the rest.
-  Method: POST. Hookdeck's Onramper source manages the method as POST, so the examples handle POST on
+  Method: POST, so the examples handle POST on
   the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI:
   await request.body()); parse the body only after the check. Documented sample payloads (each JSON

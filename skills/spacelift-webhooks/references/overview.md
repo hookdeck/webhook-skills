@@ -4,7 +4,7 @@
 
 Spacelift is an IaC orchestration platform. A **named webhook** (Integrations -> Webhooks) is an endpoint URL, an optional secret and optional extra headers. Spacelift sends it the messages that **notification policies** route to it. Two kinds of message exist: run state changes and internal errors. Per-stack webhooks are kept for backwards compatibility. Paid accounts only.
 
-Spacelift doesn't name the HTTP method in its docs. Hookdeck's Spacelift source pre-selects POST without managing the method, so allow any other method the sender uses on the source too.
+Spacelift doesn't name the HTTP method in its docs. If you use Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Message Types
 

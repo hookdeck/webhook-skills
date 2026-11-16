@@ -34,7 +34,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. Salsa signs it 
 base64-decoded secret (the part after `whsec_`), base64-encodes the result, and sends one or more
 space-separated `v1,<signature>` entries. Use a Standard Webhooks library (`standardwebhooks` on npm and
 PyPI), which compares in constant time. Read the `webhook-*` headers, and when `webhook-id` is absent fall
-back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`), as Hookdeck does.
+back to the `svix-*` headers (`svix-id`, `svix-timestamp`, `svix-signature`).
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

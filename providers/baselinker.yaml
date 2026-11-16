@@ -11,10 +11,7 @@ notes: >
   await request.json() / await request.body() — the body is always empty and parsing it
   throws or yields null. Express needs app.head(...) (app.get() also answers HEAD, but be
   explicit); Next.js needs an exported HEAD route handler; FastAPI needs @app.head(...).
-  No JSON body parser on the route. Hookdeck seeds a Baselinker Source's
-  allowed_http_methods to ["HEAD"] when the type is chosen — an UNMANAGED default that
-  seeds the initial selection only, stays editable, and is not re-applied on later
-  updates. (2) THE ENTIRE PAYLOAD IS IN THE QUERY STRING — req.query (Express),
+  No JSON body parser on the route. HEAD must be allowed on the Hookdeck source (https://hookdeck.com/docs/sources#custom-methods). (2) THE ENTIRE PAYLOAD IS IN THE QUERY STRING — req.query (Express),
   request.nextUrl.searchParams (Next.js), typed query args / request.query_params
   (FastAPI). Query values are ALWAYS STRINGS: coerce numerics explicitly (Number(order_id)
   / int(order_id)) and never assume a param is present. (3) THERE IS NO SIGNATURE
@@ -24,23 +21,19 @@ notes: >
   secret at all), whereas every HMAC source there carries webhook_secret_key; BaseLinker
   sits in the zero-property auth cohort with AWS SNS, Microsoft Graph, Microsoft
   SharePoint, Monday, Strava, Tikkie, Ethoca and Zift. There is also NO
-  handshake/challenge/ack step: unlike Trello (which uses HEAD as a verification probe), a
-  Baselinker HEAD request resolves no challenge controller and goes straight to ingestion.
+  handshake/challenge/ack step: unlike Trello (which uses HEAD as a verification probe), a Baselinker HEAD request is an ordinary delivery.
   Security guidance must be honest — endpoint-URL secrecy, network controls, or a shared
   token the user themselves appends to the endpoint URL as a query param — and say plainly
   that the platform provides no cryptographic authentication. RESPONDING: a HEAD response
   MUST NOT carry a body (RFC 9110 section 9.3.2) — reply with a bare 200 and no payload
   (res.sendStatus(200) / new Response(null, {status: 200}) / Response(status_code=200)),
-  never res.json(...). Because of that rule Hookdeck returns the request id in the
-  x-hookdeck-request-id RESPONSE header (exposed via Access-Control-Expose-Headers) rather
-  than in a body — that is how a delivery is correlated with its dashboard entry. PAYLOAD
+  never res.json(...). PAYLOAD
   SHAPE — HEDGE HONESTLY: BaseLinker publishes NO webhook documentation whatsoever. Its
   public API (api.baselinker.com, ~195 methods) is strictly request/response over
   connector.php with change tracking by polling (getJournalList,
   getOrderReturnJournalList, getInventoryProductLogs), and neither the English nor the
   Polish help centre documents an outbound webhook or a "send HTTP request" automatic
-  action. The only query params actually observed are order_id (e.g. 42) and state (e.g.
-  packed), from Hookdeck's own ingestion fixtures — present these as OBSERVED EXAMPLES,
+  action. The only query params known are order_id (e.g. 42) and state (e.g. packed) — present these as OBSERVED EXAMPLES,
   explicitly not as a documented or exhaustive parameter list. Do not fabricate additional
   param names, and do not claim an event-type discriminator exists. NOTE X-BLToken is
   BaseLinker's REQUEST auth header (client -> BaseLinker API for outbound calls such as

@@ -56,7 +56,7 @@ payload = Webhook(os.environ["BAYOU_ENERGY_WEBHOOK_SECRET"]).verify(
 
 The Python library raises a plain `ValueError` (not `WebhookVerificationError`) for a malformed signature entry or timestamp, so catch `Exception` and answer 400.
 
-**Header fallback.** The examples read `webhook-*` and, when `webhook-id` is absent, use `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. They pass the values to the library under the `webhook-*` names it expects.
+**Header fallback.** The examples read `webhook-*` and, when `webhook-id` is absent, use `svix-id`, `svix-timestamp` and `svix-signature` instead. They pass the values to the library under the `webhook-*` names it expects.
 
 ### Manual Verification (configurable window)
 

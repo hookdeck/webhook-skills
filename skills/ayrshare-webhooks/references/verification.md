@@ -76,8 +76,7 @@ def verify_ayrshare_signature(raw_body: bytes, header, secret: str) -> bool:
     return matched
 ```
 
-Hookdeck's Ayrshare source also accepts the bare digest, so the examples accept the
-value with or without `v1=`. Hex is compared case-insensitively.
+The examples accept the value with or without `v1=`. Hex is compared case-insensitively.
 
 ## Common Gotchas
 

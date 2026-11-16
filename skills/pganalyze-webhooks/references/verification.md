@@ -10,7 +10,7 @@ pganalyze follows [Standard Webhooks](https://standardwebhooks.com/). Each reque
 | `webhook-timestamp` | The send time, in Unix seconds |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries, usually one |
 
-Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. Hookdeck reads the `webhook-*` names and falls back to the `svix-*` names when `webhook-id` is absent, so the examples do the same and then hand the library the values under the `webhook-*` names it expects.
+Svix uses the same scheme under `svix-id`, `svix-timestamp` and `svix-signature`. The examples read the `webhook-*` names, fall back to the `svix-*` names when `webhook-id` is absent, and then hand the library the values under the `webhook-*` names it expects.
 
 The algorithm:
 

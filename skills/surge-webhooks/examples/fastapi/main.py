@@ -8,8 +8,7 @@ Surge delivers webhooks with Standard Webhooks signatures:
   webhook-signature  "v1,<base64 HMAC-SHA256>" (space-separated list during rotation)
 Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
 Key: base64-decode of the secret after its `whsec_` prefix.
-Hookdeck's Surge source also accepts the svix-* header names when webhook-id
-is absent, so this handler does the same.
+This handler also accepts the svix-* header names when webhook-id is absent.
 """
 
 import logging

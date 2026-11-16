@@ -68,7 +68,7 @@ def require_celcoin_auth(authorization: Optional[str] = Header(None)) -> None:
         print("Set CELCOIN_WEBHOOK_USERNAME and CELCOIN_WEBHOOK_PASSWORD")
         raise HTTPException(status_code=500, detail="Webhook authentication not configured")
 
-    # Hookdeck never sends a 401 challenge, so the header must be present on each request.
+    # There is no 401 challenge round trip, so the header must be present on each request.
     if not verify_celcoin_auth(authorization, username, password):
         raise HTTPException(status_code=401, detail="Invalid or missing Basic credentials")
 

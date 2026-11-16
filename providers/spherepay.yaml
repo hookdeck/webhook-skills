@@ -11,18 +11,16 @@ notes: >
   per endpoint; a failure is marked `failed` and can only be replayed manually through the Events API.
   Failures never disable the endpoint. At-least-once, unordered. SpherePay says: 'signature = hex(
   HMAC-SHA256( secret, "{timestamp}.{rawBody}" ) )' '`secret` — the endpoint's signing secret
-  (`whsec_...`), returned once when you created the endpoint.' SIGNATURE SCHEME (it must match
-  Hookdeck's SPHEREPAY source exactly: HMAC controller, algorithm sha256, header sphere-signature,
-  encoding hex, signed_content_template "{header:sphere-timestamp}.{body}"). The Sphere-Signature
+  (`whsec_...`), returned once when you created the endpoint.' SIGNATURE SCHEME: HMAC-SHA256, signature in the sphere-signature header, hex encoded. The Sphere-Signature
   header carries the bare lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256,
   keyed with the secret, over: the Sphere-Timestamp header value, then a literal ".", then the raw
-  request body bytes. Build the signed message as BYTES, exactly as Hookdeck's template does: literal
+  request body bytes. Build the signed message as BYTES: literal
   separators as UTF-8, header values as the exact header string encoded latin1 (Node
   Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header is never trimmed, parsed or
   re-formatted), and the raw body bytes as received, concatenated with Buffer.concat / b''.join. Never
   decode the body to a string and re-encode it, and never JSON.parse/JSON.stringify before verifying.
   The HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Compare the WHOLE header value as one digest
   (no list splitting, no prefix parsing). Secret: the endpoint's signing secret, used WHOLE as a plain
   UTF-8 HMAC key including its `whsec_` prefix. This is NOT Standard Webhooks (nothing is
@@ -33,7 +31,7 @@ notes: >
   silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
   base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
   or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  replays resend the original headers and timestamp, so a
   fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   SPHEREPAY_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
   (Sphere-Timestamp is Unix seconds, fresh on every attempt and replay). SpherePay makes ONE attempt
@@ -42,11 +40,10 @@ notes: >
   customer.pending, customer.approved, customer.rejected, transfer.created, transfer.pendingFunding,
   transfer.pendingReview, transfer.fundsReceived, transfer.processing, transfer.succeeded,
   transfer.returned, transfer.pendingRefundInformation, transfer.refunded, transfer.failed (and 4
-  more). Handle a few common ones and log the rest. Method: POST. Hookdeck's SpherePay source manages
-  the method as POST, so the examples handle POST on the webhook route. Express examples must read the
+  more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the
   raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are
   verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only
-  after the check. PUBLISHED TEST VECTOR (verified against Hookdeck's template): the vendor's docs
+  after the check. PUBLISHED TEST VECTOR: the vendor's docs
   give a worked example, saved verbatim as JSON (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/spherepay.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

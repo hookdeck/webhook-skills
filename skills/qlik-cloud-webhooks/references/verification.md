@@ -53,7 +53,7 @@ def verify_qlik_signature(raw_body: bytes, signature, secret: str) -> bool:
   Hookdeck's setup note says it too: "Set a secret on the Qlik Cloud webhook. Without one, deliveries are unsigned and fail verification."
 - **Validate before decoding.** Check the header is exactly 64 hex characters first. Node's
   `Buffer.from(sig, 'hex')` silently drops bad characters, so compare the lowercase text instead.
-- **Case.** Hex is compared case-insensitively (as Hookdeck does): lowercase both sides.
+- **Case.** Hex is compared case-insensitively: lowercase both sides.
 - **Key is the secret's text.** Don't hex- or base64-decode it. It is 32 to 64 characters.
 - **No timestamp, no replay window.** Nothing signed carries a time, so don't invent a tolerance from
   unsigned headers or body fields. Dedupe on the event `id` instead.
@@ -69,4 +69,4 @@ def verify_qlik_signature(raw_body: bytes, signature, secret: str) -> bool:
 | Digest differs, length is 64 | Body was parsed and re-serialised, a proxy changed the bytes, or the secret differs from the one saved |
 | Header isn't 64 hex characters | A prefix was added or the header was truncated or altered in transit |
 | Works for POST, fails for GET | The body wasn't treated as empty bytes, or the source blocks that method |
-| 401 only through Hookdeck | The source's verification secret differs from the one on the Qlik Cloud webhook |
+| Fails verification only in Hookdeck | The source's verification secret differs from the one on the Qlik Cloud webhook |

@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * Read the three signature headers. epilot sends webhook-*; when webhook-id is
- * absent, fall back to the svix-* names (as Hookdeck does). The result uses the
+ * absent, fall back to the svix-* names. The result uses the
  * webhook-* names the standardwebhooks library expects.
  *
  * @param {(name: string) => string | undefined} get - case-insensitive header getter

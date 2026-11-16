@@ -55,9 +55,7 @@ function verifyToriiRequest(headers, secret = process.env.TORII_WEBHOOK_SECRET,
 - Return `401` for a missing header or mismatch, `400` for a non-empty body that isn't JSON,
   `200` once handled. An empty body is valid.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
-- **Accept every method the workflow might use**: POST, PUT, PATCH, GET and DELETE. Hookdeck's
-  Torii source pre-selects POST without managing the method, so allow any other method the
-  sender uses on the source too.
+- **Accept every method the workflow might use**: POST, PUT, PATCH, GET and DELETE. Allow the method the sender uses on the Hookdeck source too (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **A static shared credential authenticates the sender, not the body, and gives no replay
   protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
 

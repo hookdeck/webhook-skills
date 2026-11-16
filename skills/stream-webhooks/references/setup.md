@@ -41,7 +41,7 @@ Omit `event_types` / choose all events to receive everything. With "all events",
 await client.updateAppSettings({ enable_hook_payload_compression: false });
 ```
 
-Apps created after May 7, 2026 default to `true`. Compressed (gzip) payloads are signed over the uncompressed bytes, and Hookdeck's Stream source cannot verify them. Do this before routing Stream through Hookdeck.
+Apps created after May 7, 2026 default to `true`. Compressed (gzip) payloads are signed over the uncompressed bytes. Turn it off before routing Stream through Hookdeck.
 
 ## Test Mode vs Live Mode
 

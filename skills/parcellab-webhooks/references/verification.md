@@ -25,8 +25,7 @@ and no timestamp:
 ## Credentials Must Arrive on the First Request
 
 The docs don't say whether Basic credentials are sent preemptively. A `401` +
-`WWW-Authenticate` challenge flow won't work, and it won't work through Hookdeck, which
-verifies the request as received.
+`WWW-Authenticate` challenge flow won't work, with parcelLab or through Hookdeck.
 
 ## Implementation
 

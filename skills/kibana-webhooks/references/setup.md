@@ -9,9 +9,8 @@
 
 Choose Basic authentication on the Kibana Webhook connector.
 
-Hookdeck's Kibana source pre-selects POST without managing the method, so if the connector uses
-PUT, PATCH, GET or DELETE, allow that method on the source too. Hookdeck never sends a 401
-challenge (no `WWW-Authenticate` round trip), so the credentials must arrive with each request.
+Hookdeck's Kibana source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if the connector uses
+PUT, PATCH, GET or DELETE, allow that method on the source too. There is no 401 challenge (no `WWW-Authenticate` round trip), so the credentials must arrive with each request.
 Custom headers and OAuth 2.0 are not covered by Hookdeck's Kibana source.
 
 ## Create the Connector

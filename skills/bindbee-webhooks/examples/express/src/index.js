@@ -34,7 +34,7 @@ timestampToleranceSeconds(); // surface an invalid value at startup
  *
  * Written out by hand, not with the `standardwebhooks` or `svix` libraries: they base64-decode
  * the secret, but Bindbee's secret is used as raw UTF-8 bytes. A secret that starts with
- * `whsec_` is base64-decoded after the prefix, as Hookdeck does; any other secret is the key as-is.
+ * `whsec_` is base64-decoded after the prefix; any other secret is the key as-is.
  */
 function verifyBindbeeSignature(rawBody, headers, secret, toleranceSeconds = timestampToleranceSeconds()) {
   // webhook-* headers; fall back to svix-* when webhook-id is absent

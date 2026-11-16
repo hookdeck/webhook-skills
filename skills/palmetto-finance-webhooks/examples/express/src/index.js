@@ -23,7 +23,7 @@ function safeEqual(a, b) {
  * Palmetto Finance does not sign payloads. With the default server API key
  * authentication, every delivery carries the key Palmetto returned at registration
  * in a header (apiKey by default; some pages show api_key). We compare the WHOLE
- * header value, with no 'Bearer ' parsing, which is what Hookdeck's source does.
+ * header value, with no 'Bearer ' parsing.
  * Express lowercases incoming header names, so the lookup is case-insensitive.
  */
 function verifyPalmettoFinanceRequest(

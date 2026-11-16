@@ -56,7 +56,7 @@ function verifyPalmettoFinanceRequest(
 - Header: `apiKey: <server API key>` by default. Some Palmetto pages call it `api_key`, so the
   header name is configurable (`PALMETTO_FINANCE_WEBHOOK_HEADER`). Check a real delivery.
 - Compare the **whole** header value, case-insensitive on the name only. Do not strip or parse a
-  `Bearer ` prefix. This is what Hookdeck's Palmetto Finance source does.
+  `Bearer ` prefix.
 - Check the credential **first, for every HTTP method**, then handle an empty body.
 - Return `401` on a missing or wrong key, `400` for a non-JSON body, `200` once handled.
 - Read the body raw (`express.raw({ type: '*/*' })`) and authenticate before parsing it.
@@ -72,8 +72,7 @@ function verifyPalmettoFinanceRequest(
 
 Each webhook subscription sets its own `httpMethod` (the docs example uses `POST`), so the
 examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the route and handle an empty body.
-Hookdeck's Palmetto Finance source pre-selects `POST` without managing the method, so any other
-method your subscription uses must also be allowed on the source.
+Any method your subscription uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 
@@ -126,7 +125,7 @@ PALMETTO_FINANCE_WEBHOOK_SECRET=your-server-api-key   # exact, whole header valu
 Use the default server API key authentication. Palmetto shows the key only once, when you register the webhook. Enter apiKey as the header unless your requests show api_key.
 
 In Hookdeck, create a source with type **Palmetto Finance**, enter that header name and the key,
-and leave the method as the pre-selected `POST` unless your subscription uses another method.
+and allow your subscription's method on the source.
 
 ## Local Development
 

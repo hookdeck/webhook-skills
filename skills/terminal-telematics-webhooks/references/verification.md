@@ -141,8 +141,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
 - **One secret per endpoint, per environment.** A sandbox secret won't verify production traffic.
-- **Non-`whsec_` secrets.** Hookdeck uses a secret without the `whsec_` prefix as its raw UTF-8 bytes, but the `svix` library
-  needs the `whsec_` form. Keep the full `whsec_...` value in `TERMINAL_TELEMATICS_WEBHOOK_SECRET`.
+- **Non-`whsec_` secrets.** The `svix` library needs the `whsec_` form. Keep the full `whsec_...` value in `TERMINAL_TELEMATICS_WEBHOOK_SECRET`.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures

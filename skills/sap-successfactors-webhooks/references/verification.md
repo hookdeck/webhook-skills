@@ -11,7 +11,7 @@ Authorization: Basic base64(username:password)
 
 Your endpoint authenticates the request by comparing that pair with the one you configured.
 
-> Use Basic authentication on the Integration Center REST destination. Hookdeck never answers with a 401 challenge, so the credentials have to arrive with each request; if deliveries show as failed verification, they are not.
+> Use Basic authentication on the Integration Center REST destination. The credentials have to arrive with each request; if deliveries show as failed verification, they are not.
 
 ## What This Does and Doesn't Give You
 
@@ -39,13 +39,11 @@ reject everything.
 
 ## Common Gotchas
 
-- **Credentials not arriving.** Hookdeck never answers with a 401 challenge, so a client that only
-  sends credentials after a `WWW-Authenticate` response never authenticates. The docs don't say
+- **Credentials not arriving.** Event Gateway doesn't prompt for credentials (a request without them still gets a 200 and is recorded as failed verification), so a client that only sends credentials after a `WWW-Authenticate` response never authenticates. The docs don't say
   whether SAP sends Basic preemptively; if deliveries show as failed verification, check this.
 - **Read the body raw.** Use `express.raw({ type: '*/*' })`, `request.text()` or
   `await request.body()` so JSON, XML and any other content type works. Authenticate first, parse second.
-- **GET and POST.** The sender picks the method; accept both and handle an empty body. Hookdeck's
-  source pre-selects POST, so allow any other method on the source.
+- **GET and POST.** The sender picks the method; accept both and handle an empty body. Allow the method on the Hookdeck source too ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **401 and 403 stop the integration** in Integration Center, even with Execute with Exceptions on.
   Retries happen only for `429`, `500`, `503` and `504`.
 - **OAuth** is not covered by Hookdeck's source.
@@ -56,6 +54,6 @@ reject everything.
 |---------|--------------|
 | Always 401 | Env vars unset or empty, or the pair differs from Integration Center |
 | 401 only for some passwords | Password contains characters your tooling mangles; check the first-colon split and UTF-8 handling |
-| 401 with no `Authorization` header logged | Authentication Type isn't Basic, or the client waits for a challenge Hookdeck never sends |
+| 401 with no `Authorization` header logged | Authentication Type isn't Basic, or the client only sends credentials after a challenge |
 | 401 after rotating | Updated one side only; change both together |
 | 400 after authenticating | Content type says JSON but the body isn't valid JSON |

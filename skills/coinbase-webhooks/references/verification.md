@@ -65,8 +65,7 @@ bind the headers, which is unnecessary for most use cases, use `v0`."
 The examples verify **`v1` when the header has both `v1=` and `h=`, and `v0` otherwise**.
 They accept the request if that digest matches. The reasoning:
 
-- `v1` is documented on both CDP verification pages, and it's what Hookdeck's Coinbase source
-  verifier computes.
+- `v1` is documented on both CDP verification pages.
 - `v0` is documented only on `/webhooks/verify-signatures`.
 - `v1` also covers `X-Event-Type` and `X-Event-Id`, which the handler routes and de-duplicates on.
 

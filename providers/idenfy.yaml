@@ -19,14 +19,14 @@ notes: >
   HMAC-SHA256(signing key, raw body) (the samples use `hexdigest()` / `digest("hex")`; 64 characters),
   compared constant-time. Sent only when the webhook has a signing key: the signing page says every
   request carries it, but its own troubleshooting and the KYC header table make it conditional on the
-  key. SIGNATURE SCHEME (it must match Hookdeck's IDENFY source exactly: HMAC controller, algorithm
-  "sha256", header_key "idenfy-signature", encoding "hex"). The Idenfy-Signature header carries the
+  key. SIGNATURE SCHEME (algorithm
+  sha256, header idenfy-signature, encoding hex). The Idenfy-Signature header carries the
   bare lowercase hex digest, no prefix. Compare the WHOLE header value as one digest (no list
   splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with the secret,
   over the raw request body bytes only (no timestamp, id or other header is signed). Build the signed
   message as BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded,
   never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used
-  as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require
+  as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require
   exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time
   compare. Secret: A signing key you set per webhook in the dashboard (Settings -> System
   notifications -> the webhook -> Headers -> Signing key); iDenfy does not generate one. Each event
@@ -46,8 +46,7 @@ notes: >
   IDENTIFICATION_AUTO_FINISHED, IDENTIFICATION_MANUAL_FINISHED, IDENTIFICATION_EXPIRED,
   IDENTIFICATION_CANCELLED, IDENTIFICATION_RESUBMITTED, DOCUMENT_EXPIRATION, VIDEO_CALL_FINISHED,
   COMPANY_REVIEW, COMPANY_DELETE, COMPANY_AML_REVIEW, COMPANY_INFO_REQUEST, COMPANY_EXPIRATION,
-  COMPANY_SUBMIT (and 9 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
-  iDenfy source manages the method as POST, so the examples handle POST on the webhook route. Express
+  COMPANY_SUBMIT (and 9 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is IDENFY, labelled 'iDenfy'. Hookdeck

@@ -10,9 +10,7 @@ notes: >
   SHA1 HMAC hexdigest', with the PHP example hash_equals($headers['X-Response-Signature'],
   hash_hmac('sha1', $requestBody, $secret)). 'Secret is a random string of your choice' set on the
   webhook subscription. So: header X-Response-Signature = bare lowercase hex HMAC-SHA1 of the raw
-  body (no prefix, no timestamp), key = the secret's UTF-8 bytes (SIMPRO_WEBHOOK_SECRET). This
-  matches Hookdeck's Simpro source (HMAC, sha1, header x-response-signature, hex; hex compared
-  case-insensitively). Validate the header is exactly 40 hex characters before decoding
+  body (no prefix, no timestamp), key = the secret's UTF-8 bytes (SIMPRO_WEBHOOK_SECRET). Validate the header is exactly 40 hex characters before decoding
   (Buffer.from(x, 'hex') silently truncates invalid hex), then compare with crypto.timingSafeEqual
   on the decoded bytes (or lowercase both and compare equal-length Buffers); Python:
   hmac.compare_digest on lowercased hex. Missing or invalid signature: 401. There is no timestamp,

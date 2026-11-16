@@ -134,7 +134,7 @@ app.all('/webhooks/celcoin', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook authentication not configured' });
   }
 
-  // Credential first, for every method. Hookdeck never sends a 401 challenge, so the
+  // Credential first, for every method. There is no 401 challenge round trip, so the
   // Authorization header must be present on each request.
   if (!verifyCelcoinAuth(req.headers.authorization)) {
     return res.status(401).json({ error: 'Invalid or missing Basic credentials' });

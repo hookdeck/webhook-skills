@@ -13,18 +13,15 @@ notes: >
   Finally, compare the hexadecimal representation of the HMAC you computed with the one found in the
   `Metronome-Webhook-Signature` header.' 'Metronome sends both an `X-Metronome-Date` header and a
   standard `Date` header with the same value. Prefer `X-Metronome-Date` for signature verification'
-  SIGNATURE SCHEME (it must match Hookdeck's METRONOME source exactly: HMAC controller, algorithm
-  sha256, header metronome-webhook-signature, encoding hex, signed_content_template
-  "{header:x-metronome-date}\n{body}"). The Metronome-Webhook-Signature header carries the bare
+  SIGNATURE SCHEME: The Metronome-Webhook-Signature header carries the bare
   lowercase hex digest, no prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret,
   over: the X-Metronome-Date header value, then one newline character (LF, "\n", a real 0x0A byte, not
-  the two characters backslash-n), then the raw request body bytes. Build the signed message as BYTES,
-  exactly as Hookdeck's template does: literal separators as UTF-8, header values as the exact header
+  the two characters backslash-n), then the raw request body bytes. Build the signed message as BYTES: literal separators as UTF-8, header values as the exact header
   string encoded latin1 (Node Buffer.from(value, 'latin1'); Python value.encode('latin-1'); a header
   is never trimmed, parsed or re-formatted), and the raw body bytes as received, concatenated with
   Buffer.concat / b''.join. Never decode the body to a string and re-encode it, and never
   JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
   webhook's secret key, used as UTF-8. Env var: METRONOME_WEBHOOK_SECRET. Validate the signature's
@@ -33,8 +30,7 @@ notes: >
   'hex'|'base64') on an unvalidated value (it silently drops bad characters); Python uses
   hmac.compare_digest on bytes (never str) and base64.b64decode(..., validate=True). Missing or empty
   signature or signed header, malformed value or mismatch: 401. Timestamp window: do NOT reject old
-  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and
-  Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Offer an
+  timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an
   opt-in tolerance (an env var such as METRONOME_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say
   so in SKILL.md and verification.md (X-Metronome-Date is an HTTP date such as 'Mon, 02 Jan 2006
   22:04:05 GMT'). The separator is a single real newline (LF, 0x0A); a unit test must assert the
@@ -44,12 +40,10 @@ notes: >
   alerts.spend_threshold_reached, alerts.low_remaining_commit_balance_reached,
   alerts.usage_threshold_reached, alerts.invoice_total_reached, contract.create, contract.start,
   contract.edit, contract.end, contract.archive, commit.create, commit.edit, commit.archive,
-  commit.segment.start (and 20 more). Handle a few common ones and log the rest. Method: POST.
-  Hookdeck's Metronome source manages the method as POST, so the examples handle POST on the webhook
+  commit.segment.start (and 20 more). Handle a few common ones and log the rest. Method: POST, so the examples handle POST on the webhook
   route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
-  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified against
-  Hookdeck's template): the vendor's docs give a worked example, saved verbatim as JSON (secret, body
+  request.body()); parse the body only after the check. PUBLISHED TEST VECTOR: the vendor's docs give a worked example, saved verbatim as JSON (secret, body
   string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/metronome.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

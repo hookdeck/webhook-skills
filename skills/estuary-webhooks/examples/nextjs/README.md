@@ -59,7 +59,7 @@ curl -X POST http://localhost:3000/webhooks/estuary \
 npx hookdeck-cli listen 3000 estuary --path /webhooks/estuary
 ```
 
-Use the printed URL as the trigger `url`. Hookdeck's Estuary source pre-selects `POST`; also allow
+Use the printed URL as the trigger `url`. Hookdeck's Estuary source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)); also allow
 `PUT` or `PATCH` on it if your trigger uses them.
 
 ## How It Works

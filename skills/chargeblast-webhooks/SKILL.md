@@ -35,7 +35,7 @@ metadata:
 | `svix-signature` | One or more space-separated `v1,<base64>` entries |
 | `X-Event-Type` | The event type, e.g. `alert.created`. **Not in the body** |
 
-Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `svix-id` is absent, read `webhook-id`, `webhook-timestamp` and `webhook-signature` instead, as Hookdeck does. The examples use the [`svix`](https://www.npmjs.com/package/svix) library (npm and PyPI):
+Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix. Compare against every `v1,` entry; ignore other versions. If `svix-id` is absent, read `webhook-id`, `webhook-timestamp` and `webhook-signature` instead. The examples use the [`svix`](https://www.npmjs.com/package/svix) library (npm and PyPI):
 
 ```javascript
 import { Webhook } from 'svix';

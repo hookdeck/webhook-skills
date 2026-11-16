@@ -32,7 +32,7 @@ header matches what you configured.
 Compare the full string `Bearer <token>`, not a token you've split out of it. The scheme
 prefix is part of what you configured, and splitting on spaces adds parsing edge cases
 (double spaces, lowercase `bearer`, missing prefix) that a plain equality check avoids.
-Hookdeck's Fillout source does the same: its **API Key** field takes the whole value.
+On Hookdeck's Fillout source, paste the same value into the **API Key** field.
 
 Use a constant-time comparison so response timing doesn't leak how much of the value
 matched. Hashing both sides with SHA-256 first gives equal-length inputs, so you don't

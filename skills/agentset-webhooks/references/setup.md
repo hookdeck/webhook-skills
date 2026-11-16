@@ -30,8 +30,7 @@ Use the printed URL as the webhook URL.
 
 ## Using Hookdeck
 
-Hookdeck's Agentset source verifies the `agentset-signature` header. It pre-selects POST without
-managing the HTTP method, because Agentset's docs don't name one. If Agentset sends any other
+Hookdeck's Agentset source verifies the signature. It accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), and Agentset's docs don't name one. If Agentset sends any other
 method, allow that method on the source too. Paste the same signing secret into the source.
 
 ## Delivery Behavior

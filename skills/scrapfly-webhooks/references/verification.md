@@ -98,11 +98,11 @@ const safe = { ...payload, context: { ...payload.context, webhook: { ...payload.
 
 ## Alternative: Verify at the Gateway with Hookdeck
 
-If your handlers sit behind Hookdeck Event Gateway, you can offload Scrapfly signature verification to the gateway and have your handler verify only Hookdeck's signature downstream. Hookdeck has a built-in `SCRAPFLY` source type that knows the exact algorithm (uppercase hex HMAC-SHA256, dual-case headers, raw-body) and will reject invalid deliveries at the edge.
+If your handlers sit behind Hookdeck Event Gateway, you can offload Scrapfly signature verification to the gateway and have your handler verify only Hookdeck's signature downstream. Hookdeck has a built-in `SCRAPFLY` source type that verifies the signature; a delivery with an invalid signature is recorded as failed verification and creates no event.
 
 Set up by creating a Hookdeck source with `--type SCRAPFLY` and the same signing secret you configured in Scrapfly, then have your handler verify `x-hookdeck-signature` instead of `X-Scrapfly-Webhook-Signature`. See the [hookdeck-event-gateway](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway) and [hookdeck-event-gateway-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/hookdeck-event-gateway-webhooks) skills for the downstream verification pattern.
 
-A known caveat (May 2026): if your Scrapfly dashboard is configured to send `application/json` (the default), Hookdeck rejects Scrapfly screenshot deliveries with `UNPARSABLE_JSON` because the configured Content-Type doesn't match the binary screenshot body. This is upstream Scrapfly behaviour: the Content-Type dropdown applies to every delivery, but screenshot bodies are binary regardless. Pending resolution, route screenshot deliveries directly to your handler without the gateway preset, or configure the webhook to send `application/msgpack` if you can use a parser that tolerates binary bodies on the screenshot path.
+A known caveat (May 2026): if your Scrapfly dashboard is configured to send `application/json` (the default), Scrapfly screenshot deliveries fail through Hookdeck because the configured Content-Type doesn't match the binary screenshot body. This is upstream Scrapfly behaviour: the Content-Type dropdown applies to every delivery, but screenshot bodies are binary regardless. Pending resolution, route screenshot deliveries directly to your handler without the gateway preset, or configure the webhook to send `application/msgpack` if you can use a parser that tolerates binary bodies on the screenshot path.
 
 ## Debugging Verification Failures
 

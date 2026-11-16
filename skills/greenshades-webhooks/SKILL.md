@@ -69,11 +69,11 @@ Gotchas:
 - Greenshades' C# recipe encodes key and content as ASCII; Hookdeck and these examples sign the UTF-8 body bytes. The two only differ for a non-ASCII body.
 - The recipe's "Response Example" hash uses placeholder inputs and is not a test vector.
 - Missing or empty header, malformed digest or mismatch: respond `401`.
-- **No timestamp window by default.** Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries. The examples offer an opt-in `GREENSHADES_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); because the `X-GS-TIMESTAMP` format is undocumented, it is parsed only when you opt in.
+- **No timestamp window by default.** Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in `GREENSHADES_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off); because the `X-GS-TIMESTAMP` format is undocumented, it is parsed only when you opt in.
 
 ## HTTP Method
 
-Greenshades' docs don't name the HTTP method used for deliveries. Hookdeck's Greenshades source pre-selects POST without managing the method, so if the sender uses another method, allow it on the source too. The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes.
+Greenshades' docs don't name the HTTP method used for deliveries. Hookdeck's Greenshades source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if the sender uses another method, allow it on the source too. The examples accept GET, POST, PUT, PATCH and DELETE and verify the signature first for every method, treating a missing body as empty bytes.
 
 ## Events
 

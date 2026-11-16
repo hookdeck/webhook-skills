@@ -65,7 +65,7 @@ A missing, empty, malformed, or mismatching `Authorization` value gets a `401`.
 
 ## Setup with Hookdeck
 
-Hookdeck's `KOLIDE` source type (labelled "1Password Device Trust (Kolide)") verifies this signature: HMAC, SHA-256, header `authorization`, hex encoding. Paste the endpoint's signing secret into the source and register the Hookdeck source URL as the endpoint URL. See [references/setup.md](references/setup.md).
+Hookdeck's `KOLIDE` source type (labelled "1Password Device Trust (Kolide)") verifies this signature. Paste the endpoint's signing secret into the source and register the Hookdeck source URL as the endpoint URL. See [references/setup.md](references/setup.md).
 
 ## Event Envelope and Types
 

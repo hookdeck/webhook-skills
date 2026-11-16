@@ -12,11 +12,7 @@ notes: >
   shell (confirmed 403 again on 2026-09-28); everything here was read verbatim in a
   real browser on 2026-09-28. FOUR products send webhooks: Tracking (flagship),
   Shipping (formerly Postmen — admin is still admin.postmen.com, label URLs on
-  postmen.com), Returns, and Warranty. Hookdeck source type is AFTERSHIP (slug
-  aftership), added in hookdeck/core#5669 (merged 2026-09-28); external_docs_url is the Tracking
-  signature page and its config is the standard single webhook_secret_key. Core's
-  controller accepts a valid HMAC in ANY of the three product headers, so the
-  primary target is Tracking with the others as variants of one algorithm.
+  postmen.com), Returns, and Warranty. Hookdeck source type is AFTERSHIP (slug aftership); its docs link is the Tracking signature page and it takes a single webhook secret. The primary target is Tracking, with the others as variants of one algorithm.
   VERIFICATION — ONE algorithm, THREE header names. In every product: HMAC-SHA256,
   key = the webhook secret string used as UTF-8 bytes (NOT base64-decoded, no
   prefix), message = the RAW request body bytes, digest encoded as standard BASE64

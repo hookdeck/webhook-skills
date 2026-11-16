@@ -50,7 +50,7 @@ function verifyAxilioWebhook(rawBody, headers, secret = process.env.AXILIO_WEBHO
 }
 ```
 
-Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).verify(await request.body(), {...same three headers...})`. The examples also read the `svix-id`, `svix-timestamp` and `svix-signature` headers when `webhook-id` is absent, as Hookdeck does.
+Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).verify(await request.body(), {...same three headers...})`. The examples also read the `svix-id`, `svix-timestamp` and `svix-signature` headers when `webhook-id` is absent.
 
 > **Hookdeck retries and the 5-minute window.** The library always rejects a `webhook-timestamp` more than 5 minutes old. Hookdeck retries and replays resend the original timestamp, so the library rejects late retries after 5 minutes. A dependency-free verifier where the window can be dropped or widened is in [references/verification.md](references/verification.md).
 

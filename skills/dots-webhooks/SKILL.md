@@ -66,7 +66,7 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 **Header names.** Dots' docs don't name the headers; `svix-*` is the Svix default, and Svix
 also sends the same values as Standard Webhooks `webhook-id`, `webhook-timestamp`, and
 `webhook-signature`. The examples read `svix-*` and fall back to `webhook-*` when `svix-id`
-is absent, as Hookdeck does. Never mix the two sets within one request.
+is absent. Never mix the two sets within one request.
 
 **Secret format.** One signing secret per endpoint, shown in the Svix dashboard when you
 create the endpoint. Dots' docs don't print it; Svix secrets start with `whsec_`, and the

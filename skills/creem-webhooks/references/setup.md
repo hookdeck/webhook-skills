@@ -46,5 +46,4 @@ registers a temporary endpoint and forwards events with the real signature heade
 npx hookdeck-cli listen 3000 creem --path /webhooks/creem
 ```
 
-Register the printed URL as the endpoint URL. Hookdeck's Creem source verifies the
-`creem-signature` header with the same secret.
+Register the printed URL as the endpoint URL. Hookdeck's Creem source verifies the signature with the same secret.

@@ -51,8 +51,7 @@ Complete code: [Express](../examples/express/), [Next.js](../examples/nextjs/), 
 - **Bodyless requests.** A GET with no body is verified over zero bytes; once
   verified it gets `200`, not an invalid-JSON error.
 - **Timestamp window.** Not enforced by default. Hookdeck retries and replays
-  resend the original headers and timestamp, and Hookdeck itself applies no
-  tolerance, so a fixed window would reject legitimate retries. For direct
+  resend the original headers and timestamp, so a fixed window would reject legitimate retries. For direct
   deliveries you can opt in with `SOCOTRA_WEBHOOK_TOLERANCE_SECONDS` (seconds;
   unset or `0` = off). Remember `t` is in milliseconds.
 - **Status codes.** `401` for a missing, empty, malformed or mismatched signature;

@@ -53,7 +53,7 @@ def verify_whoop_signature(raw_body, signature, timestamp, secret):
 
 ## Optional Timestamp Tolerance
 
-By default the examples **do not** reject old timestamps. Hookdeck retries and replays resend the original headers and timestamp (and Hookdeck applies no tolerance itself), so a fixed window would reject legitimate deliveries.
+By default the examples **do not** reject old timestamps. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate deliveries.
 
 To opt in, set `WHOOP_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The check runs after the signature is verified: the timestamp must be digits only, and `|now_ms - timestamp_ms| <= tolerance * 1000`, otherwise `401`. Remember the timestamp is **milliseconds**, not seconds.
 

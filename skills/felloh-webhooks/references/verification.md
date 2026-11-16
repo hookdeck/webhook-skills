@@ -66,4 +66,4 @@ Pass bytes to `hmac.compare_digest`: it raises `TypeError` on a non-ASCII `str`.
 | `TypeError` in Python | `str` passed to `compare_digest`; encode both sides to bytes |
 | Endpoint never receives anything | URL not public, or non-2xx earlier: check the delivery log (kept 30 days) |
 
-Hookdeck's Felloh source verifies the same signature (HMAC, SHA-256, header `x-signature`, hex), so a request that fails there will fail in your handler too.
+Hookdeck's Felloh source verifies the same signature, so a request that fails there will fail in your handler too.

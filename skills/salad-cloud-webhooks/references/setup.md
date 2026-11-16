@@ -24,8 +24,7 @@ validation request is documented, so the endpoint doesn't need a handshake.
 
 ## Configure Hookdeck
 
-Hookdeck's SaladCloud source verifies the Standard Webhooks signature. It base64-decodes a secret only when
-it starts with `whsec_`, and SaladCloud shows the secret without a prefix. When you paste the secret into
+Hookdeck's SaladCloud source verifies the Standard Webhooks signature. SaladCloud shows the secret without a prefix. When you paste the secret into
 the Hookdeck source, Hookdeck shows this configuration alert, and it applies to you:
 
 > SaladCloud shows the secret without a prefix. Paste it as whsec_ followed by the secret, or verification fails.

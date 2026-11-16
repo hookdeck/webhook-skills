@@ -14,7 +14,7 @@ signature = HMAC-SHA256(webhook_secret, request_body)
 
 `request_body` is the raw JSON payload, and `webhook_secret` is the secret set on the integration. The digest is lowercase hex, and the header value is `sha256=` followed by it. Nothing else is signed: no timestamp, id or header.
 
-Hookdeck's OpnForm source verifies the same way (HMAC, `sha256`, header `x-webhook-signature`, hex), and accepts the digest with or without the `sha256=` prefix.
+Hookdeck's OpnForm source verifies the same signature.
 
 ## Implementation
 

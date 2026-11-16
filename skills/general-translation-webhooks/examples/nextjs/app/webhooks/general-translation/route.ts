@@ -27,7 +27,7 @@ type SignatureHeaders = Record<'webhook-id' | 'webhook-timestamp' | 'webhook-sig
 
 /**
  * Read the signature headers. General Translation sends webhook-*; when
- * webhook-id is absent, fall back to the svix-* names (as Hookdeck does).
+ * webhook-id is absent, fall back to the svix-* names.
  * Returns the three values under the names the library expects.
  */
 function resolveSignatureHeaders(request: Request): SignatureHeaders | null {

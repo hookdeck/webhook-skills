@@ -6,8 +6,7 @@ docs:
   events: https://docs.signnow.com/docs/guides-webhooks
 notes: >
   E-signature. Signed only when the event subscription has a secret_key (any string up to 300 chars,
-  user-chosen or generated in the API Dashboard); without it deliveries are unsigned and Hookdeck's
-  SignNow source fails verification, so say to set one. Header X-SignNow-Signature: base64
+  user-chosen or generated in the API Dashboard); without it deliveries are unsigned and can't be verified, so say to set one. Header X-SignNow-Signature: base64
   HMAC-SHA256 of the raw body keyed with the secret_key as UTF-8. Payload {meta: {timestamp, event,
   environment, callback_url, access_token}, content: {...}}; events (in meta.event) like
   document.complete, document.update, document.open, document.fieldinvite.create,

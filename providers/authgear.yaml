@@ -12,15 +12,14 @@ notes: >
   key, visit the portal and go to **Advanced** -> **Hooks** -> **Webhook Signature**.' 'hasher :=
   hmac.New(sha256.New, secret) ... sig = hex.EncodeToString(signature)' From the docs (registry
   summary): `x-authgear-body-signature: <hex>` = hex HMAC-SHA256(project webhook secret, raw body).
-  Bare value, no prefix. SIGNATURE SCHEME (it must match Hookdeck's AUTHGEAR source exactly: HMAC
-  controller, algorithm "sha256", header_key "x-authgear-body-signature", encoding "hex"). The
+  Bare value, no prefix. SIGNATURE SCHEME (algorithm sha256, header x-authgear-body-signature, encoding hex). The
   x-authgear-body-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: One secret per project: portal >
   Advanced > Hooks > Webhook Signature (re-authentication may be required to reveal it). Use it as
   UTF-8 bytes. Env var: AUTHGEAR_WEBHOOK_SECRET. Validate the signature's format before decoding it
@@ -37,8 +36,7 @@ notes: >
   user.authenticated, user.disabled, user.reenabled, user.anonymous.promoted, user.deletion_scheduled,
   user.deletion_unscheduled, user.deleted, identity.email.added, identity.email.removed,
   identity.email.updated, identity.email.verified, identity.email.unverified (and 12 more). Handle a
-  few common ones and log the rest. Method: POST. Hookdeck's Authgear source manages the method as
-  POST, so the examples handle POST on the webhook route. Express examples must read the raw body with
+  few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   After verifying, treat every field of the parsed body as untrusted: check that the body and each

@@ -33,10 +33,7 @@ to them.
 
 ## Hookdeck Source
 
-If you receive through Hookdeck's Quickbase source (type `QUICKBASE`), set the source's
-verification to the same header name and exact whole value. The source pre-selects `POST` without
-managing the method, so if the webhook uses PUT, PATCH, GET or DELETE, allow that method on the
-source too.
+If you receive through Hookdeck's Quickbase source (type `QUICKBASE`), set the source's verification to the same header name and value. If the webhook uses PUT, PATCH, GET or DELETE, allow that method on the source too ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

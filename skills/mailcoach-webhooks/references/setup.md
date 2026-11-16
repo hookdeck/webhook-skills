@@ -19,7 +19,7 @@ Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and 
 
 1. Enter your server URL, or the Hookdeck source URL when you route through the Event Gateway. The sample handlers in `examples/` listen on `POST /webhooks/mailcoach`.
 2. Optionally choose which event types the webhook receives on its details page (`UnconfirmedSubscriberCreatedEvent`, `SubscribedEvent`, `UnsubscribedEvent`, `CampaignSentEvent`).
-3. In the Hookdeck dashboard create a source of the Mailcoach type and paste the **same secret** into its verification settings. Hookdeck manages the method as POST.
+3. In the Hookdeck dashboard create a source of the Mailcoach type and paste the **same secret** into its verification settings.
 
 Self-hosted extras (in `config/mailcoach.php`): `webhooks.logs` to keep a log of calls, `webhooks.selectable_event_types_enabled` for per-webhook event selection, and `webhooks.maximum_attempts` with `opt_in_features.disable_failed_webhooks` to disable a webhook after consecutive failures. Each needs the related migrations published and run.
 

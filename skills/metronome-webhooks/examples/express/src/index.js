@@ -7,8 +7,8 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Metronome retries and Hookdeck replays resend the original X-Metronome-Date, and
-// Hookdeck applies no tolerance itself, so the window is OFF unless you opt in.
+// Metronome retries and Hookdeck replays resend the original X-Metronome-Date,
+// so the window is OFF unless you opt in.
 function toleranceSeconds() {
   const n = Number(process.env.METRONOME_WEBHOOK_TOLERANCE_SECONDS);
   return Number.isFinite(n) && n > 0 ? n : 0;

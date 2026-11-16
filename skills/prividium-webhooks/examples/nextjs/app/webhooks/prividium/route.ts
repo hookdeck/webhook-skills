@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // persist ids in durable storage before applying side effects in production.
 const processedIds = new Set<string>();
 
-// Prividium sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Prividium sends webhook-* headers; also read the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers: Headers) {
   const prefix = headers.get('webhook-id') ? 'webhook' : 'svix';
   return {

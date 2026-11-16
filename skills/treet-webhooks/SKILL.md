@@ -41,7 +41,7 @@ function verifyTreetSignature(rawBody, signature, secret = process.env.TREET_WEB
 - **Signed content:** the raw body bytes only. No timestamp, id or other header is signed, so there is no replay window to check.
 - **Key:** the secret as UTF-8 bytes, used as-is (not hex- or base64-decoded). Env var: `TREET_WEBHOOK_SECRET`.
 - **Raw body:** verify the exact bytes (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`). Never `JSON.parse`/`JSON.stringify` before verifying.
-- **Exact comparison:** the base64 is case-sensitive. Validate the format, then compare the strings in constant time. Decoding alone isn't enough: a value whose last character carries stray bits decodes to the same bytes but Hookdeck rejects it, so you must too.
+- **Exact comparison:** the base64 is case-sensitive. Validate the format, then compare the strings in constant time. Decoding alone isn't enough: a value whose last character carries stray bits decodes to the same bytes, so reject it explicitly.
 - **Python:** `hmac.compare_digest` on bytes, never `str`.
 - Missing or empty header, malformed value or mismatch: `401`. Signed but malformed body: `400`.
 
@@ -55,7 +55,7 @@ Treet issues the secret key on request (support@treet.co). Without it, no signat
 
 ## HTTP Methods
 
-Treet's docs don't name the HTTP method. Hookdeck's Treet source pre-selects POST without managing the method (you can change it), so any other method the sender uses must also be allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE, verify the signature first for every method, and treat a missing body as empty bytes: a signed GET with no body is verified over zero bytes and acknowledged with `200`.
+Treet's docs don't name the HTTP method. Allow the method the sender uses on the Hookdeck source (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE, verify the signature first for every method, and treat a missing body as empty bytes: a signed GET with no body is verified over zero bytes and acknowledged with `200`.
 
 ## Event Types
 

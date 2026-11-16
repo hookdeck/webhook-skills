@@ -42,5 +42,4 @@ curl -X POST http://localhost:3000/webhooks/rapidapi \
 
 ## Hookdeck
 
-The Hookdeck source type is **RapidAPI**. Hookdeck compares the whole `x-rapidapi-webhook-secret`
-header with the key you configure on the source. Setup note: "Covers Enterprise Hub events only."
+The Hookdeck source type is **RapidAPI**. Hookdeck checks the header against the key you configure on the source. Setup note: "Covers Enterprise Hub events only."

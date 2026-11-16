@@ -86,7 +86,7 @@ def safe_equal(a: str, b: str) -> bool:
   `401` or `500` are dropped, so don't use auth failures to shed load.
 - **Authentication None**: if requests arrive without `Authorization`, the webhook is set to
   None. Switch it to Basic or OAuth 2.0 rather than turning verification off.
-- **Hookdeck**: a Hookdeck Iterable source compares the same header (full value).
+- **Hookdeck**: a Hookdeck Iterable source checks the same header.
 
 ## Debugging 401s
 

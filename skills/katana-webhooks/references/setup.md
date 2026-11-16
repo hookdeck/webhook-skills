@@ -27,8 +27,8 @@ If you create several webhooks pointing at one endpoint, you need to know which 
 
 ## Using Hookdeck
 
-Hookdeck's Katana MRP source (type `KATANA`) verifies `x-sha2-signature` as hex HMAC-SHA256. Paste the webhook's
-`token` as the signing secret. The source pre-selects POST without managing the method, so if Katana sends
+Hookdeck's Katana MRP source (type `KATANA`) verifies the signature. Paste the webhook's
+`token` as the signing secret. The source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if Katana sends
 another method, allow it on the source.
 
 ## Test

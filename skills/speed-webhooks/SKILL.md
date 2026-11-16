@@ -41,7 +41,7 @@ const { Webhook } = require('standardwebhooks');
 // SPEED_WEBHOOK_SECRET is the wsec_ value exactly as Speed shows it
 const secret = process.env.SPEED_WEBHOOK_SECRET.replace(/^wsec_/, 'whsec_');
 // rawBody: exact request body string, NOT re-serialised JSON
-const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-* like Hookdeck
+const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-*
 const event = new Webhook(secret).verify(rawBody, {
   'webhook-id': req.get(`${prefix}-id`),
   'webhook-timestamp': req.get(`${prefix}-timestamp`),

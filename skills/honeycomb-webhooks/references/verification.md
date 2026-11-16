@@ -59,7 +59,7 @@ def verify_honeycomb_request(headers, secret=None) -> bool:
 - **No secret, nothing to verify.** The Shared Secret is optional in Honeycomb; without it no
   token header is sent, so every request fails this check. Set one.
 - **Check every method.** The docs don't name the HTTP method; authenticate GET, POST, PUT, PATCH
-  and DELETE the same way, before reading the body. Hookdeck's source pre-selects POST, so allow
+  and DELETE the same way, before reading the body. Hookdeck's source accepts only the methods you allow, so allow
   any other method Honeycomb uses.
 - **Whole value, constant time.** Don't compare prefixes or trim. Hash both sides (or check
   lengths) before `timingSafeEqual`, which throws on unequal lengths. In Python, encode both sides

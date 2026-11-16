@@ -56,11 +56,10 @@ Webhook(os.environ["DOUBLEWORD_WEBHOOK_SECRET"]).verify(raw_body, headers, json_
 ```
 
 > **Secret handling:** the library base64-decodes whatever it is given, so pass the `whsec_`
-> value as-is. Hookdeck uses a secret without the `whsec_` prefix as its raw UTF-8 bytes; the
-> examples do the same by passing raw bytes to the library.
+> value as-is. The examples use a secret without the `whsec_` prefix as its raw UTF-8 bytes, > passing raw bytes to the library.
 
 > **Header fallback:** the library only reads `webhook-*` names. The examples read `webhook-*`,
-> fall back to `svix-*` when `webhook-id` is absent (as Hookdeck does), and hand the library the
+> fall back to `svix-*` when `webhook-id` is absent, and hand the library the
 > three values as `webhook-id`, `webhook-timestamp` and `webhook-signature`.
 
 > **Timestamp window and Hookdeck retries:** the library always enforces a fixed 5-minute

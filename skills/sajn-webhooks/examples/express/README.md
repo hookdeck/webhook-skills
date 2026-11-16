@@ -1,6 +1,6 @@
 # sajn Webhooks - Express Example
 
-Minimal example of receiving [sajn](https://sajn.se) webhooks with signature verification. sajn signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead, as Hookdeck does.
+Minimal example of receiving [sajn](https://sajn.se) webhooks with signature verification. sajn signs deliveries with [Standard Webhooks](https://www.standardwebhooks.com), so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it reads the `svix-*` headers instead.
 
 ## Prerequisites
 

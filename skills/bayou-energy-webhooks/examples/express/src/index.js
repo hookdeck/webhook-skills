@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------------------------------------------------------
 
 /**
- * Read the three signature headers. Bayou sends webhook-*; like Hookdeck, fall
+ * Read the three signature headers. Bayou sends webhook-*; fall
  * back to the svix-* names when webhook-id is absent. The result always uses
  * the webhook-* names, which is what the standardwebhooks library expects.
  *

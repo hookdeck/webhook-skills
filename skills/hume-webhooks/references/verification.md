@@ -23,7 +23,7 @@ header value   = digest   (bare, no prefix)
 - The key is the **webhook signing key's UTF-8 bytes, used as-is** (not hex- or base64-decoded). Generate it on the Developers page.
 - Build the signed message as **bytes**: the raw body as received, a literal `.`, and the timestamp header exactly as received (latin1). A header is never trimmed, parsed or re-formatted.
 - The signature header is one whole digest: no list splitting and no `sha256=` prefix.
-- Hookdeck's Hume source verifies the same way (HMAC, `sha256`, hex, signed content `{body}.{header:x-hume-ai-webhook-timestamp}`) and compares hex case-insensitively, so this skill does too.
+- This skill compares hex case-insensitively.
 
 ## Implementation
 
@@ -67,7 +67,6 @@ Complete handlers with tests: [Express](../examples/express/), [Next.js](../exam
 Hume's docs say to reject requests whose timestamp is outside a range (their example uses 180 seconds, comparing against the current time). The skill's examples **do not reject old timestamps by default**:
 
 - Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window rejects legitimate retries.
-- Hookdeck itself applies no tolerance.
 - The timestamp is part of the signed content, so an attacker cannot refresh it without the signing key.
 
 To opt in, set `HUME_WEBHOOK_TOLERANCE_SECONDS` (Unix seconds; unset or `0` = off). The examples then require a numeric `X-Hume-AI-Webhook-Timestamp` within that many seconds of the current time. If you also use Hookdeck retries or replays, choose a window larger than the longest delay you allow, or leave it off and deduplicate instead.

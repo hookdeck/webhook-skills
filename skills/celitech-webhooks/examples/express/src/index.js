@@ -11,8 +11,8 @@ dotenv.config({ quiet: true });
 export const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Celitech deliveries carry svix-* headers. Hookdeck also accepts the Standard
-// Webhooks webhook-* names when svix-id is absent, so do the same. The three
+// Celitech deliveries carry svix-* headers. Also accept the Standard
+// Webhooks webhook-* names when svix-id is absent. The three
 // values are handed to the library under the svix-* names it expects.
 export function resolveSignatureHeaders(headers) {
   const prefix = headers['svix-id'] ? 'svix' : 'webhook';

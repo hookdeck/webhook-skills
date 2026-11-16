@@ -31,8 +31,7 @@ HMAC-SHA512 of the **raw request body**.
 Set a secret on the Argyle webhook subscription. Without one, deliveries are unsigned and fail verification.
 
 Argyle does not generate the secret: you choose it when you create the subscription (Console or
-`POST /v2/webhooks`). Argyle's docs don't name the HTTP method. Hookdeck's Argyle source pre-selects
-POST without managing the method, so any other method the sender uses must also be allowed on the source.
+`POST /v2/webhooks`). Argyle's docs don't name the HTTP method. Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source.
 
 ## Verification (core)
 

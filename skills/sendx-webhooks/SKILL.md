@@ -89,9 +89,8 @@ SENDX_WEBHOOK_SECRET=your_sendx_team_api_key   # SendX Settings → Team API Key
 
 ## Setup with Hookdeck
 
-Hookdeck's source type is **SendX**, which verifies the signature (HMAC-SHA256, hex, header `x-sendx-signature`).
-Paste your SendX team API key. SendX signs webhooks with it. Hookdeck's SendX source manages the
-method as `POST`.
+Hookdeck's source type is **SendX**, which verifies the signature.
+Paste your SendX team API key. SendX signs webhooks with it.
 
 > Paste your SendX team API key. SendX signs webhooks with it.
 

@@ -34,8 +34,7 @@ is all you need to do:
 
 Paste the API key you configured with the webhook in Mighty Networks.
 
-Hookdeck checks the `Authorization` header against that key (the `Bearer ` scheme is matched in
-any case), then forwards the request to your destination.
+Hookdeck checks the key, then forwards the request to your destination.
 
 ## Test
 

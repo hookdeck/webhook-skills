@@ -7,8 +7,7 @@ notes: >
   Recruitment CRM; webhooks are created via the Webhook API (POST /webhooks, partner app with
   offline_access) with an optional 'authorization' value ('Optional authorization header to include
   with the HTTP POST notification', example 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='). No signature. The
-  credential is the Authorization header. Hookdeck's JobAdder source compares the WHOLE
-  Authorization header value to the configured key, so the examples read JOBADDER_AUTHORIZATION =
+  credential is the Authorization header. The examples read JOBADDER_AUTHORIZATION =
   the full value as JobAdder sends it (e.g. 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='), including any 'Bearer
   '/'Basic ' scheme prefix, and compare the whole Authorization header to it; do not strip, parse or
   base64-decode the prefix (Coterie pattern). Compare the whole value even when it looks like Basic

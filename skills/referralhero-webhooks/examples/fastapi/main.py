@@ -40,7 +40,7 @@ def verify_referralhero_signature(raw_body: bytes, signature: str | None, secret
     expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
 
     # Compare bytes AND the re-encoded text: a final character with stray low bits decodes
-    # to the same bytes, but Hookdeck compares the base64 text exactly, so reject it too.
+    # to the same bytes, but is not the canonical text, so reject it too.
     return hmac.compare_digest(received, expected) and hmac.compare_digest(
         base64.b64encode(received), signature.encode("ascii")
     )

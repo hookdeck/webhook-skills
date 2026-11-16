@@ -10,8 +10,7 @@ notes: >
   examples read the header name from HIGHTOUCH_WEBHOOK_HEADER (default 'Authorization') and the
   expected value from HIGHTOUCH_WEBHOOK_SECRET (the exact, whole header value, including any 'Bearer
   ' prefix the user typed). Look the header up case-insensitively and compare the WHOLE value; do
-  not strip or parse a 'Bearer ' prefix. This is what Hookdeck's Hightouch source does (API key
-  verification: header name + exact value). Missing header or mismatch: 401. Compare in constant
+  not strip or parse a 'Bearer ' prefix. Hookdeck's source checks this header too. In the examples, a missing header or mismatch returns 401. Compare in constant
   time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on SHA-256
   digests of both sides); Python uses hmac.compare_digest on bytes (encode both sides; never pass
   str, which raises on non-ASCII). SKILL.md and verification.md must say plainly that a static

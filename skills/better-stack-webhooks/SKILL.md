@@ -24,12 +24,10 @@ credentials, and your endpoint authenticates the request by comparing it with th
    `X-Better-Stack-Secret: <long random secret>`. The header name is yours to choose.
 
 Hookdeck's Better Stack source offers both: **Basic auth** (the default) and **Custom header**
-(an API key check on the header name you enter, compared against the whole value). Hookdeck's
-source checks the credential; it never answers with a `401` challenge.
+(an API key check on the header name you enter). Hookdeck's source checks the credential, so it must be on every request.
 
 Better Stack's docs do **not** say whether Basic credentials are sent on the first request or only
-after a `401 WWW-Authenticate` challenge. A receiver that never challenges (including Hookdeck's
-source) only works if they are sent preemptively. The custom header avoids the question, so prefer
+after a `401 WWW-Authenticate` challenge. A receiver that never challenges only works if they are sent preemptively. The custom header avoids the question, so prefer
 it; if Basic auth deliveries are rejected, switch to the custom header.
 
 This skill covers the Uptime / incident management webhooks. Better Stack's Errors product has
@@ -134,7 +132,7 @@ A non-JSON body (a custom template) is acknowledged and logged, not a 500.
 or `options` (default `post`), so the examples accept all six on the webhook route. An
 authenticated request with no body is acknowledged with `200`.
 
-Hookdeck's Better Stack source pre-selects `POST` without managing the method. If the webhook uses
+Hookdeck's Better Stack source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If the webhook uses
 another method, also allow it on the source. Hookdeck sources can allow `GET`, `HEAD`, `POST`,
 `PUT` and `PATCH` but not `OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
 

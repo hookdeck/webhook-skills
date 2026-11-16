@@ -104,7 +104,7 @@ JOBBER_CLIENT_SECRET=your_jobber_oauth_client_secret   # Your app's OAuth client
 
 ## Hookdeck Setup
 
-Jobber signs webhooks with your app's OAuth client secret. When you create a Jobber source in Hookdeck, paste that secret there so Hookdeck verifies `X-Jobber-Hmac-SHA256` before forwarding. Then set the Hookdeck source URL as the webhook URL for your app in the Jobber Developer Center. See [references/setup.md](references/setup.md).
+Jobber signs webhooks with your app's OAuth client secret. When you create a Jobber source in Hookdeck, paste that secret there so Hookdeck verifies the signature before forwarding. Then set the Hookdeck source URL as the webhook URL for your app in the Jobber Developer Center. See [references/setup.md](references/setup.md).
 
 ## Local Development
 

@@ -29,5 +29,4 @@ computed `X-Body-Signature` (see [verification.md](verification.md)).
 
 ## Hookdeck
 
-Hookdeck's Spike API source verifies the signature (`x-body-signature`, HMAC-SHA256,
-hex) before forwarding to your handler. The source accepts POST requests.
+Hookdeck's Spike API source verifies the signature before forwarding to your handler.

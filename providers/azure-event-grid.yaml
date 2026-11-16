@@ -30,24 +30,13 @@ notes: >
   so the API-Key and Basic-Auth options map onto a header/credential you choose.
   Nothing in Azure computes an HMAC over the payload.
 
-  CONFIRMED AGAINST HOOKDECK CORE (server/integrations/sourceTypeSchemas.ts,
-  AZURE_EVENT_GRID entry). Core's own comment reads: "Event Grid does not sign
-  deliveries itself, but subscribers can attach static credentials via secret
-  query parameters or custom delivery headers ... so expose the same auth methods
-  as the generic HTTP/WEBHOOK types." Core sets `VERIFICATION:
-  generic_http.VERIFICATION` — i.e. the HMAC/basic/API-key/none oneOf in the
-  OpenAPI is the GENERIC HTTP auth block reused, not an Event Grid scheme — and
-  `HANDSHAKE: { required: true, advanced: false }`, so the handshake is a required
-  feature of this source, which is why it is the centre of this skill. Core's
-  `external_docs_url` is
+  The HMAC/basic/API-key/none options are the same auth methods the generic HTTP/webhook sources offer, not an Event Grid scheme. The subscription validation handshake is the centre of this skill. Hookdeck's docs link for this source is
   https://learn.microsoft.com/en-us/azure/event-grid/end-point-validation-cloud-events-schema
-  — the CloudEvents OPTIONS variant. Do NOT over-read this as core choosing
-  the CloudEvents flavour: Microsoft's own security-authentication page uses
+  — the CloudEvents OPTIONS variant. Do NOT over-read this as choosing the CloudEvents flavour: Microsoft's own security-authentication page uses
   that same URL as its generic "Webhook event delivery" link (the older
-  /webhook-event-delivery path redirects to it), so core most likely copied
-  Microsoft's canonical link rather than selecting a variant. Cover both
+  /webhook-event-delivery path redirects to it), so it is most likely Microsoft's canonical link rather than a chosen variant. Cover both
   handshakes with equal weight and let the delivery schema decide which fires.
-  Core labels it "Azure Event Grid", category `platform`, icon `azure_event_grid`.
+  Hookdeck labels it "Azure Event Grid".
 
 
   === 1. VERIFICATION MECHANISM A — SUBSCRIPTION VALIDATION HANDSHAKE

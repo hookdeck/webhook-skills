@@ -8,9 +8,7 @@ notes: >
   create response returns the webhook secret once; it is never shown again. Every delivery carries
   X-Webhook-Signature (sha256=<hex>, HMAC-SHA256), X-Webhook-Timestamp (Unix seconds) and
   X-Webhook-ID. Signed content is the X-Webhook-Timestamp header value, a literal ".", then the raw
-  body bytes, keyed with the secret's UTF-8 bytes. Hookdeck's CHARITYSTACK source is an HMAC source
-  (sha256, header x-webhook-signature, hex, signed_content_template
-  "{header:x-webhook-timestamp}.{body}", POST). No timestamp tolerance by default (retries and
+  body bytes, keyed with the secret's UTF-8 bytes. Scheme: HMAC-SHA256, header x-webhook-signature, hex, signed content "{x-webhook-timestamp header}.{raw body}". No timestamp tolerance by default (retries and
   replays resend the original headers); the examples offer an opt-in
   CHARITYSTACK_WEBHOOK_TOLERANCE_SECONDS. No retry or timeout policy is documented. Setup note:
   "CharityStack shows the webhook secret only once, when you create the webhook. Paste it here."

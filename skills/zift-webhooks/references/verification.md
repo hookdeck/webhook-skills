@@ -16,8 +16,8 @@ check — it would be checking a header Zift never sends.
 
 > A tunnel/gateway in front of your endpoint (e.g. Hookdeck's Zift source)
 > cannot cryptographically verify these deliveries either — there is no secret
-> to verify against. Treat them as **unverified / passthrough** and secure the
-> transport instead.
+> to verify against. Treat them as **unverified** and secure the transport
+> instead.
 
 ## How to Secure an Endpoint With No Signature
 

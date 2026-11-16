@@ -56,7 +56,7 @@ def verify(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool
     return hmac.compare_digest(bytes.fromhex(signature), expected)
 ```
 
-**Timestamp window (opt-in):** `X-Timestamp` is Unix seconds. MICEtribe lists rejecting old timestamps as optional. The examples do **not** reject old timestamps by default, because Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance. Set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to opt in.
+**Timestamp window (opt-in):** `X-Timestamp` is Unix seconds. MICEtribe lists rejecting old timestamps as optional. The examples do **not** reject old timestamps by default, because Hookdeck retries and replays resend the original headers and timestamp. Set `MICETRIBE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to opt in.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

@@ -19,15 +19,13 @@ notes: >
   `X-Notarize-Signature: <hex>` = hex HMAC-SHA256(key, request body). The key is the API key that
   created the subscription, or its custom `signing_key`. No code sample or test vector is given.
   Subscriptions created with OAuth are unsigned unless a `signing_key` is set (and then signing cannot
-  be turned off). SIGNATURE SCHEME (it must match Hookdeck's PROOF source exactly: HMAC controller,
-  algorithm "sha256", header_key "x-notarize-signature", encoding "hex"). The X-Notarize-Signature
+  be turned off). SIGNATURE SCHEME: HMAC-SHA256, header x-notarize-signature, hex encoding. The X-Notarize-Signature
   header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value as one
   digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256, keyed with
   the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
   the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
   constant-time compare. Secret: The Proof API key used to create the subscription, unless a
   `signing_key` was given on create or update; OAuth-created subscriptions must set a `signing_key` to
   be signed. Use it as UTF-8 bytes. Env var: PROOF_WEBHOOK_SECRET. Validate the signature's format
@@ -45,7 +43,7 @@ notes: >
   notary.signer_ready, transaction.created, transaction.deleted, transaction.canceled,
   transaction.expired, transaction.updated, transaction.recalled, transaction.reviewed,
   transaction.document.upload, transaction.document.processed (and 23 more). Handle a few common ones
-  and log the rest. Method: POST. Hookdeck's Proof source manages the method as POST, so the examples
+  and log the rest. Method: POST. The examples
   handle POST on the webhook route. Express examples must read the raw body with express.raw({ type:
   '*/*' }) so any content type works and the exact bytes are verified (Next.js: await
   request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.

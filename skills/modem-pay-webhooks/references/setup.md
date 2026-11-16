@@ -15,7 +15,7 @@ Store it as `MODEM_PAY_WEBHOOK_SECRET` and use it exactly as shown, with no deco
 
 Modem Pay's docs don't spell out where the endpoint URL is entered; the webhook secret lives under Developers > Webhooks, so start there. With the examples in this skill the path is `/webhooks/modem-pay`.
 
-Behind Hookdeck, create a source with the **Modem Pay** source type, enter the same webhook secret, and register the Hookdeck source URL with Modem Pay. Hookdeck's source then verifies `x-modem-signature` on every request and only accepts `POST`.
+Behind Hookdeck, create a source with the **Modem Pay** source type, enter the same webhook secret, and register the Hookdeck source URL with Modem Pay. Hookdeck's source then verifies the signature on every request.
 
 ## Test Mode with the Modem Pay CLI
 

@@ -13,8 +13,7 @@ Authorization: Bearer a-long-random-string      # or any header name you chose
 > protection (no signature, no timestamp). Anyone who captures one request can replay it or
 > send a different body with the same header. Use HTTPS, and rotate the credential if it leaks.
 
-Hookdeck's ClickHouse source does the same: API key verification with a header name plus the
-exact whole value.
+Hookdeck's ClickHouse source checks the same header.
 
 ## Implementation
 

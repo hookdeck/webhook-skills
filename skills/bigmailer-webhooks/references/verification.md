@@ -29,7 +29,7 @@ Parse the header by splitting on `,`, trimming each item, and splitting on the f
 
 ## Replay Protection
 
-The examples **don't check the timestamp by default**. Retries and replays (BigMailer's, Hookdeck's, manual resends) resend the original headers, and Hookdeck's own verification applies no tolerance, so a fixed window would reject legitimate late redeliveries. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is Unix seconds, and with a tolerance set it must be a whole number. Unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup.
+The examples **don't check the timestamp by default**. Retries and replays (BigMailer's, Hookdeck's, manual resends) resend the original headers, so a fixed window would reject legitimate late redeliveries. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is Unix seconds, and with a tolerance set it must be a whole number. Unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup.
 
 ## Common Gotchas
 

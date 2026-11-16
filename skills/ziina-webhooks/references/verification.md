@@ -55,7 +55,7 @@ FastAPI: `await request.body()`.
 
 - **Unsigned deliveries**: with no secret set at registration, there is no `X-Hmac-Signature` header and verification fails. Set a secret when you register the webhook through the Ziina API. Without one, deliveries are unsigned and fail verification.
 - **Raw body only**: re-serialising JSON changes bytes and breaks the signature.
-- **Hex case**: compare case-insensitively by decoding to bytes (Hookdeck does the same).
+- **Hex case**: compare case-insensitively by decoding to bytes.
 - **Secret overwrite**: calling `POST /webhook` again replaces the secret; update your env var at the same time.
 - **Don't decode the secret**: it is used as plain UTF-8 bytes.
 

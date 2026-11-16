@@ -15,7 +15,7 @@ authenticate in the third-party server" and is sent verbatim. Points that cause 
 - Paste the authorization value exactly as set in GravityZone, including any "Bearer " or
   "Basic " prefix. Compare the **whole header value** to `BITDEFENDER_AUTHORIZATION`.
 - Do not strip, parse or base64-decode the prefix, even for `Basic`.
-- The header is `Authorization` (Hookdeck's Bitdefender source compares it the same way).
+- The header is `Authorization` (Hookdeck's Bitdefender source checks it too).
 
 ## What a Static Credential Does Not Give You
 

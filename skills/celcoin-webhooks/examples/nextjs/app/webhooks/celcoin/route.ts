@@ -9,7 +9,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Webhook authentication not configured' }, { status: 500 });
   }
 
-  // Credential first, for every method. Hookdeck never sends a 401 challenge, so the
+  // Credential first, for every method. There is no 401 challenge round trip, so the
   // Authorization header must be present on each request.
   if (!verifyCelcoinAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Invalid or missing Basic credentials' }, { status: 401 });

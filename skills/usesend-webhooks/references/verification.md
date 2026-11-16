@@ -22,7 +22,7 @@ the `standardwebhooks` or `svix` libraries.
 
 ## Implementation
 
-Build the message as bytes, the way Hookdeck does: separators as UTF-8, the
+Build the message as bytes: separators as UTF-8, the
 timestamp header as its exact string encoded latin1, and the body bytes as
 received. Never decode the body and re-encode it, and never `JSON.parse` before
 verifying.
@@ -60,15 +60,14 @@ def verify_usesend(raw_body: bytes, signature: str, timestamp: str, secret: str)
     return hmac.compare_digest(expected, bytes.fromhex(digest))
 ```
 
-Hex is compared case-insensitively, as Hookdeck does. The leading `v1=` is
+Hex is compared case-insensitively. The leading `v1=` is
 optional: a bare 64-character digest is accepted too.
 
 ## Why the Examples Don't Use usesend-js
 
 The `usesend-js` SDK (`webhooks.constructEvent` / `webhooks.verify`) rejects
 signatures older than 5 minutes by default. Hookdeck retries and replays resend
-the original headers and timestamp, and Hookdeck applies no tolerance of its
-own, so that window would reject legitimate retries. The examples verify by hand
+the original headers and timestamp, so that window would reject legitimate retries. The examples verify by hand
 and make the window opt-in.
 
 ## Timestamp Tolerance (opt-in)

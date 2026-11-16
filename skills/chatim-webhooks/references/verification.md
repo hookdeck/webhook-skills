@@ -35,13 +35,13 @@ Steps, in order:
 
 ## Replay Protection
 
-Chatim's samples reject timestamps older than 5 minutes (300 seconds). The examples **don't check it by default**: retries and replays (Chatim's own, Hookdeck's, manual resends) carry the original `X-Chatim-Timestamp`, so a fixed window would reject legitimate late redeliveries, and Hookdeck itself applies no tolerance. To opt in, set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use `eventId` or `X-Chatim-Delivery-Id` for idempotency (see webhook-handler-patterns).
+Chatim's samples reject timestamps older than 5 minutes (300 seconds). The examples **don't check it by default**: retries and replays (Chatim's own, Hookdeck's, manual resends) carry the original `X-Chatim-Timestamp`, so a fixed window would reject legitimate late redeliveries. To opt in, set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use `eventId` or `X-Chatim-Delivery-Id` for idempotency (see webhook-handler-patterns).
 
 ## Common Gotchas
 
 - **Sign the raw body.** Chatim's Node sample signs `JSON.stringify(req.body)`, but its troubleshooting section says to sign `timestamp + "." + raw_body`, not parsed JSON. Re-serialized JSON can differ in whitespace or key order. Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()` or `await request.body()`.
 - **Return 4xx only for a bad signature.** Chatim never retries a `4xx`, so a transient problem on your side should be a `5xx`.
-- **Prefix is optional.** Chatim sends `sha256=<hex>`; Hookdeck also accepts the bare digest, so the examples do too.
+- **Prefix is optional.** Chatim sends `sha256=<hex>`; the examples also accept the bare digest.
 - **Case:** compare hex case-insensitively.
 - **Header names are case-insensitive;** Node lowercases them.
 - **Secret shown once:** if you didn't save it, regenerate it.

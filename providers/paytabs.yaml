@@ -8,7 +8,7 @@ notes: >
   IPN listener URL receive the full transaction as JSON with a `Signature` header: hex(HMAC-SHA256(profile
   ServerKey, raw body)), bare lowercase hex, no timestamp. There is no event name; dispatch on `tran_type`
   (Sale, Refund) and `payment_result.response_status` (A = authorised). Only callback/IPN requests are
-  covered, not the browser Return URL. Hookdeck source type PAYTABS (HMAC, sha256, header `signature`, hex).
+  covered, not the browser Return URL. Hookdeck source type is PAYTABS.
 testScenario:
   events:
     - "Sale"

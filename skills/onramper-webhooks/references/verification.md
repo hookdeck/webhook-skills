@@ -6,7 +6,7 @@
 - Algorithm: HMAC-SHA256. The prose in Onramper's docs only says "HMAC hex digest"; SHA-256 comes from their TypeScript sample: `crypto.createHmac('sha256', secret).update(body).digest('hex')`.
 - Signed content: the raw request body only. No timestamp, id or other header is signed, so there is no replay window to check. Don't invent one from unsigned fields.
 - Key: the secret Onramper issues at registration, as UTF-8 bytes, used as-is.
-- Hex is compared case-insensitively (Hookdeck's source does the same): require exactly 64 hex characters, lowercase, then compare in constant time.
+- Hex is compared case-insensitively: require exactly 64 hex characters, lowercase, then compare in constant time.
 
 ## Implementation
 
@@ -48,7 +48,7 @@ def verify_onramper_signature(raw_body: bytes, signature: str | None, secret: st
 - **Decoding the signature early.** `Buffer.from(sig, 'hex')` silently drops bad characters, so validate the length and alphabet first.
 - **`===` comparison.** Onramper's sample uses it; use `timingSafeEqual` / `compare_digest`.
 - **Secret decoding.** Don't hex- or base64-decode the secret.
-- **Behind Hookdeck.** Hookdeck's Onramper source (HMAC, sha256, header `x-onramper-webhook-signature`, hex) verifies the same way. Retries and replays carry the original signature, which stays valid because no timestamp is signed.
+- **Behind Hookdeck.** Hookdeck's Onramper source verifies the same signature. Retries and replays carry the original signature, which stays valid because no timestamp is signed.
 
 ## Debugging Verification Failures
 

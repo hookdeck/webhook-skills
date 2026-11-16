@@ -38,8 +38,7 @@ BaseLinker is in the small cohort of **zero-property auth schemas** together wit
 and Zift**.
 
 **2. There is no handshake either.** Some providers use HEAD as a verification
-probe — **Trello** does exactly that. BaseLinker does not: a Baselinker HEAD
-request resolves **no challenge controller** and goes straight to ingestion. There
+probe — **Trello** does exactly that. BaseLinker does not: a Baselinker HEAD request is an ordinary delivery. There
 is no token to echo, no `X-Hook-Secret` to reflect, nothing to confirm.
 
 **3. BaseLinker documents no webhook at all.** The public API

@@ -57,8 +57,7 @@ function verifyYoucanbookmeRequest(headers, {
   protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it leaks.
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse JSON only after the credential check.
 - The method is user-chosen, so accept `POST`, `PUT`, `PATCH`, `DELETE` and `GET`, and treat an
-  empty body (typical for `GET`) as valid. Hookdeck's YouCanBookMe source pre-selects `POST`
-  without managing the method, so allow whichever method your booking webhook uses on the source too.
+  empty body (typical for `GET`) as valid. Allow whichever method your booking webhook uses on the Hookdeck source too (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

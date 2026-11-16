@@ -66,7 +66,7 @@ The complete versions, with header parsing and tests, are in [examples/express/]
 
 ## Should I Reject Old Timestamps?
 
-Formspree's docs list this as optional. This skill leaves it **off by default**: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck's Formspree source applies no tolerance, so a fixed window would reject legitimate retries. To opt in, set `FORMSPREE_WEBHOOK_TOLERANCE_SECONDS` (Unix seconds; the examples then require a numeric `t` within that distance of now). Because `t` is inside the signed message, an attacker can't refresh it on a replay.
+Formspree's docs list this as optional. This skill leaves it **off by default**: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. To opt in, set `FORMSPREE_WEBHOOK_TOLERANCE_SECONDS` (Unix seconds; the examples then require a numeric `t` within that distance of now). Because `t` is inside the signed message, an attacker can't refresh it on a replay.
 
 ## Common Gotchas
 

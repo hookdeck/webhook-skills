@@ -56,7 +56,7 @@ def verify_creem_signature(raw_body: bytes, signature, secret: str) -> bool:
 - **Use the raw body.** In Express read it with `express.raw({ type: '*/*' })` so any content
   type is verified, not only `application/json`. In Next.js use `request.arrayBuffer()`; in
   FastAPI `await request.body()`. Never re-serialize parsed JSON, and parse only after the check.
-- **Hex is case-insensitive.** Hookdeck accepts upper- and lowercase digests; so do the examples.
+- **Hex is case-insensitive.** The examples accept upper- and lowercase digests.
 - **The secret is a plain string.** Don't hex- or base64-decode it before keying the HMAC.
 - **Test and live endpoints have different secrets.**
 - **No timestamp is signed.** There is no replay window to enforce, and you shouldn't invent one

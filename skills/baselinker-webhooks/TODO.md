@@ -13,8 +13,7 @@ merge; contributions to close them are welcome.
   in both English (342 articles) and Polish (355) for "webhook" — zero hits. Zapier
   and Make both integrate by pasting an API token and polling, not by registering a
   callback URL.
-- [x] **The transport is HTTP HEAD with the payload in the query string.** From
-  Hookdeck's Baselinker ingestion fixtures.
+- [x] **The transport is HTTP HEAD with the payload in the query string.**
 - [x] **There is no authentication of any kind.** Hookdeck's
   `SourceConfigBaselinkerAuth` is `{properties: {}, additionalProperties: false}`
   — it accepts no secret, unlike every HMAC source in the same spec (which carry
@@ -22,11 +21,8 @@ merge; contributions to close them are welcome.
   SharePoint, Monday, Strava, Tikkie, Ethoca and Zift in the zero-property-auth
   cohort.
 - [x] **No handshake/challenge step.** Unlike Trello (which uses HEAD as a
-  verification probe), a Baselinker HEAD request resolves no challenge controller
-  and goes straight to ingestion.
-- [x] **Hookdeck seeds `allowed_http_methods` to `["HEAD"]`** for a Baselinker
-  Source. This is an *unmanaged* default: initial selection only, still editable,
-  not re-applied on later updates.
+  verification probe), a Baselinker HEAD request is an ordinary delivery.
+- [x] **HEAD must be allowed on the Hookdeck source** ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Still open (deliberately hedged in the docs)
 

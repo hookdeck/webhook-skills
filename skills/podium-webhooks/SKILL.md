@@ -73,7 +73,7 @@ returns `500` (fail closed). An unsigned delivery (a webhook created without a s
 `podium-signature` and is rejected.
 
 **Timestamp window:** off by default. Hookdeck retries and replays resend the original headers and
-timestamp, and Hookdeck applies no tolerance, so a fixed window would reject legitimate retries.
+timestamp, so a fixed window would reject legitimate retries.
 The examples offer it as opt-in: set `PODIUM_WEBHOOK_TOLERANCE_SECONDS=300` (unset or `0` = off;
 the header is in milliseconds and the examples convert). The check runs after the signature check.
 
@@ -81,9 +81,7 @@ the header is in milliseconds and the examples convert). The check runs after th
 
 ## HTTP Methods
 
-Podium's docs don't name the HTTP method of a delivery. Hookdeck's Podium source pre-selects POST
-without managing the method (you can change it), so any other method the sender uses must also be
-allowed on the source. The examples accept GET, POST, PUT, PATCH and DELETE, verify the signature
+Podium's docs don't name the HTTP method of a delivery. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept GET, POST, PUT, PATCH and DELETE, verify the signature
 first for every method, and treat a missing body as empty bytes. Read the body raw:
 `express.raw({ type: '*/*' })` (Express), `await request.arrayBuffer()` (Next.js), `await request.body()` (FastAPI).
 

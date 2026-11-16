@@ -19,10 +19,8 @@ So **do not write an HMAC verifier.** No `crypto.createHmac`, no `hmac.new`, no
 `timestamp.body` signed string. There are no inputs for it, and a fabricated verifier
 rejects 100% of genuine deliveries while looking correct in review.
 
-Hookdeck's own `ORDINAL` source type corroborates this: verification is **optional**, and
-the only checks offered are the generic **Basic Auth** and **API Key** (header name +
-value) ones — both of which validate a *static* header. Hookdeck cannot offer HMAC for
-Ordinal because no body-dependent signature exists.
+Hookdeck's `ORDINAL` source type reflects this: it offers **Basic Auth** and **API Key**
+checks, both of which validate a *static* header, because no body-dependent signature exists.
 
 ## The Only Authentication Mechanism: A Static Custom Header
 

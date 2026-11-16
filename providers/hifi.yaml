@@ -15,9 +15,8 @@ notes: >
   signingSecret).update(`${timestamp}.${rawBody}`, "utf8").digest("hex")' '"signingSecret":
   "3f2504e04f8911d39a0c0305e82c3301b1f2c9e8a7d6f5e4c3b2a1908f7e6d5" ... `signingSecret` is only ever
   returned once, in this response' From the docs (registry summary): `hifi-signature:
-  t=<unix>,v1=<hex>` where v1 = hex HMAC-SHA256(endpoint signingSecret, `{t}.{raw body}`). SIGNATURE
-  SCHEME (it must match Hookdeck's HIFI source exactly: HMAC controller, algorithm "sha256",
-  header_key "hifi-signature", encoding "hex", delimiter ".", prefix_data_with_timestamp true). The
+  t=<unix>,v1=<hex>` where v1 = hex HMAC-SHA256(endpoint signingSecret, `{t}.{raw body}`). SIGNATURE SCHEME (algorithm sha256,
+  header hifi-signature, encoding hex). The
   hifi-signature header is `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature
   is lowercase hex HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the
   header (a string; never parse it to a number and re-format it), then a literal ".", then the raw
@@ -26,7 +25,7 @@ notes: >
   value fails. Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: The endpoint's `signingSecret`,
   returned once at registration; it cannot be rotated (delete and re-register instead). Use it as
   UTF-8 bytes. Env var: HIFI_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact
@@ -35,7 +34,7 @@ notes: >
   an unvalidated value (it silently drops bad characters); Python uses hmac.compare_digest on bytes
   (never str) and base64.b64decode(..., validate=True). Missing or empty signature header, malformed
   value or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries
-  and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so
+  and replays resend the original headers and timestamp, so
   a fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   HIFI_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md (t is
   Unix seconds). Events: dispatch on the body's `eventType` field. Top-level `eventType` in the
@@ -46,8 +45,7 @@ notes: >
   COMPLIANCE.STATUS.NOT_SUBMITTED, COMPLIANCE.STATUS.PENDING, COMPLIANCE.STATUS.IN_REVIEW,
   COMPLIANCE.STATUS.APPROVED, COMPLIANCE.STATUS.REJECTED, COMPLIANCE.STATUS.REQUIRES_INFO,
   RFI.STATUS.ISSUED, RFI.STATUS.SUBMITTED, RFI.STATUS.RESOLVED, RFI.STATUS.EXPIRED (and 131 more).
-  Handle a few common ones and log the rest. Method: POST. Hookdeck's HIFI source manages the method
-  as POST, so the examples handle POST on the webhook route. Express examples must read the raw body
+  Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
   (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
   check. After verifying, treat every field of the parsed body as untrusted: check that the body and

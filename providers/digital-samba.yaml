@@ -9,11 +9,9 @@ notes: >
   every webhook POST request as a bearer token' and 'The webhook will send the secret as a standard
   Authorization Bearer http header.' authorization_header is optional and set when creating or
   editing the webhook through the REST API. No signature. Digital Samba sends 'Authorization: Bearer
-  <secret>'. Hookdeck's Digital Samba source is API key verification on the authorization header
-  with value_prefix 'Bearer ' (hookdeck/core#6046 head 8c48f55d): the user stores just the secret,
-  and the scheme matches in any case (auth schemes are case-insensitive, RFC 9110). So the examples
+  <secret>'. On Hookdeck's Digital Samba source the user stores just the secret, without the 'Bearer ' prefix. So the examples
   read the BARE secret from DIGITAL_SAMBA_WEBHOOK_SECRET (if the configured value itself starts with
-  'Bearer ', case-insensitively, strip it, as core does), require the Authorization header to start
+  'Bearer ', case-insensitively, strip it), require the Authorization header to start
   with 'Bearer ' compared case-insensitively, and compare the rest to the secret in constant time.
   Do not trim or otherwise alter the secret. Missing header, wrong scheme or mismatch: 401. Compare
   in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers (or on

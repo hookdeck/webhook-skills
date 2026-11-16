@@ -32,7 +32,7 @@ are unsigned and fail verification. Then:
 
 1. Create a Hookdeck source of type **Missive** and paste the same validation secret into its verification settings.
 2. Use the Hookdeck source URL as the webhook action's endpoint in the rule.
-3. Hookdeck verifies `X-Hook-Signature` and forwards to your destination, where the Express, Next.js or FastAPI example (or your own handler) can verify again.
+3. Hookdeck verifies the signature and forwards to your destination, where the Express, Next.js or FastAPI example (or your own handler) can verify again.
 
 ## Reliability
 

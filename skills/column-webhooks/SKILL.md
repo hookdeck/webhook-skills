@@ -26,7 +26,7 @@ metadata:
 
 Every Column delivery carries `Column-Signature`: the bare lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with the signing secret of the endpoint that received it (Dashboard → Webhook settings; each endpoint has its own secret). No prefix, no timestamp, no list of values. Only the body is signed.
 
-Column's docs don't state the output encoding. Hex is what Hookdeck's Column source uses, and two production integrations (hackclub/hcb, formancehq/payments) confirm it.
+Column's docs don't state the output encoding. Two production integrations (hackclub/hcb, formancehq/payments) confirm hex.
 
 ### Verification (Node.js)
 

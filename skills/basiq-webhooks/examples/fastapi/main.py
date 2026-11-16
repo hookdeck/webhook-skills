@@ -36,10 +36,8 @@ processed_message_ids: set = set()
 
 
 def signature_headers(headers: Mapping[str, str]) -> Dict[str, str]:
-    """Pick the header set.
-
-    Hookdeck's Basiq source reads webhook-* and falls back to svix-* when
-    webhook-id is absent; do the same, then hand the library the values under
+    """Pick the header set.    Read webhook-* and fall back to svix-* when webhook-id is absent, then
+    hand the library the values under
     the webhook-* names it expects.
     """
     prefix = "webhook" if headers.get("webhook-id") else "svix"

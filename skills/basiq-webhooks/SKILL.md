@@ -42,7 +42,7 @@ const { Webhook } = require('standardwebhooks');
 
 // rawBody: exact request body string, NOT re-serialised JSON
 function verifyBasiq(rawBody, h, secret = process.env.BASIQ_WEBHOOK_SECRET) {
-  // webhook-* headers; fall back to svix-* when webhook-id is absent (Hookdeck reads either)
+  // webhook-* headers; fall back to svix-* when webhook-id is absent
   const p = h['webhook-id'] ? 'webhook' : 'svix';
   new Webhook(secret).verify(rawBody, {
     'webhook-id': h[`${p}-id`],

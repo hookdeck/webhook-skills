@@ -135,8 +135,7 @@ Webhooks. To exercise your handler:
 ## Hookdeck Source Configuration
 
 Hookdeck's source type for this provider is **`WORDPRESS_COM`** (slug
-`wordpress-com`). It is schema-only with `http_method_managed_post` and **no
-verification controller** — because there is nothing to verify. Consequences:
+`wordpress-com`). WordPress.com sends no signature, so there is nothing to verify. Consequences:
 
 - The Hookdeck Source URL itself is the secret endpoint. Keep your `?token=`
   on it anyway: Hookdeck preserves the original query string when it forwards,

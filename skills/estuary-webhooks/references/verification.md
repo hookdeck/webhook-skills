@@ -4,8 +4,7 @@
 
 Estuary **does not sign requests**: no HMAC, no signature header, no timestamp. You add a
 secret header to the materialization trigger (or the HTTP Webhook connector's custom headers)
-and compare it on receipt. This is also what Hookdeck's Estuary source does: API key
-verification with a header name and the exact, whole header value.
+and compare it on receipt. Hookdeck's Estuary source checks the same header.
 
 **A static shared credential authenticates the sender, not the body, and gives no replay
 protection.** Anyone who captures one request can replay it. Use HTTPS, keep the value secret
@@ -75,7 +74,7 @@ def safe_equal(received: str, expected: str) -> bool:
 - **Non-POST methods**: triggers can use `PUT` or `PATCH`; a POST-only route returns 405.
 - **Empty bodies**: handle them (a `GET`/`DELETE` or a template that renders nothing).
 - **Raw body**: `express.raw({ type: '*/*' })` accepts any content type; parse after the check.
-- **Hookdeck**: the Estuary source verifies the same header and value. Allow `PUT`/`PATCH` on it if your trigger uses them.
+- **Hookdeck**: the Estuary source checks the same header. Allow `PUT`/`PATCH` on it if your trigger uses them.
 
 ## Debugging 401s
 

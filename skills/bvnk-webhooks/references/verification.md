@@ -49,7 +49,7 @@ BVNK's docs include a worked example, and every example's tests use it:
 
 - **Do not base64-decode the secret.** It looks like base64, but BVNK uses the string's UTF-8 bytes. Decoding it gives a different key and every signature fails.
 - **Use the raw body.** Express: `express.raw({ type: '*/*' })`; Next.js: `await request.arrayBuffer()`; FastAPI: `await request.body()`. Parse JSON only after the check. Any re-serialization changes the bytes.
-- **Compare base64 exactly.** A value whose last character carries stray low bits decodes to the same bytes, but Hookdeck rejects it, so the examples validate the 44-character form and compare strings. Never call `Buffer.from(sig, 'base64')` on an unvalidated value: it silently drops bad characters.
+- **Compare base64 exactly.** A value whose last character carries stray low bits decodes to the same bytes, so the examples validate the 44-character form and compare strings. Never call `Buffer.from(sig, 'base64')` on an unvalidated value: it silently drops bad characters.
 - **No timestamp is signed**, so there is no replay window. Do not invent one from unsigned headers or body fields; use `eventId` for idempotency.
 - **Legacy webhooks fail.** Bodies with `"event": "statusChanged"` use hex HMAC-SHA256 over the webhook path, content type and payload. They are not verified by this scheme.
 - **The field is called "Public Key"** in the BVNK Portal, but it is the HMAC secret.

@@ -42,7 +42,7 @@ def parse_basic_auth(header):
 
 def verify_rocketlane_request(headers, config=os.environ) -> bool:
     """Rocketlane does not sign payloads. The only authentication is HTTP Basic auth, which
-    must arrive on the first request (Hookdeck never answers with a 401 challenge). Both
+    must arrive on the first request (a challenge flow won't work). Both
     the username and the password are compared before deciding, so there is no short-circuit.
     """
     expected_user = config.get("ROCKETLANE_WEBHOOK_USERNAME")

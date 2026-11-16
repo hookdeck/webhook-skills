@@ -10,8 +10,7 @@ notes: >
   optional static HTTP Authorization value set on the webhook (API field httpAuthorization,
   e.g. 'Bearer 9QQhlsEb8VY' or 'Basic dXNlcjpwYXNzd29yZA=='), sent back as the Authorization
   header. The key is the WHOLE header value including any Bearer/Basic prefix: compare the full
-  Authorization header to EIGHT_X_EIGHT_AUTHORIZATION, as Hookdeck's 8x8 source (EIGHT_X_EIGHT)
-  does; never strip, parse or base64-decode it, Basic included. Say plainly that a static shared
+  Authorization header to EIGHT_X_EIGHT_AUTHORIZATION; never strip, parse or base64-decode it, Basic included. Say plainly that a static shared
   credential authenticates the sender, not the body, and gives no replay protection (no
   signature, no timestamp), so use HTTPS and rotate it if it leaks. Setup note: paste the HTTP
   Authorization value exactly as set in 8x8, including any "Bearer " or "Basic " prefix; OAuth

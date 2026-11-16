@@ -59,8 +59,7 @@ Compare bytes, never `str` (`compare_digest` raises on non-ASCII `str`).
 - **No secret, no signature**: a subscription without a `secret` sends no header, so verification fails.
 - **No timestamp**: nothing signed is time-bound. Don't invent a replay window from unsigned fields;
   use idempotency.
-- **Method**: all of GET, POST, PUT, PATCH and DELETE are accepted, and Hookdeck's Argyle source
-  pre-selects POST without managing the method, so allow other methods on the source.
+- **Method**: all of GET, POST, PUT, PATCH and DELETE are accepted, and Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so allow other methods on the source.
 - **Case**: hex is compared case-insensitively.
 
 ## Debugging Verification Failures

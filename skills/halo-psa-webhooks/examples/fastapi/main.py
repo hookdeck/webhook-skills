@@ -51,8 +51,7 @@ def parse_basic_auth(header: Optional[str]) -> Optional[tuple[str, str]]:
 def verify_halo_psa_request(headers, config=os.environ) -> bool:
     """HaloPSA webhooks are not signed. With "Basic Authentication" chosen on the
     webhook, every request carries `Authorization: Basic base64(username:password)`.
-    The credentials must arrive on the first request: Hookdeck never answers with a
-    401 + WWW-Authenticate challenge."""
+    The credentials must arrive on the first request."""
     username = config.get("HALO_PSA_WEBHOOK_USERNAME")
     password = config.get("HALO_PSA_WEBHOOK_PASSWORD")
     if not username or not password:

@@ -12,7 +12,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Nitrosend sends webhook-* headers; Hookdeck also reads the svix-* names when webhook-id is absent
+// Nitrosend sends webhook-* headers; fall back to the svix-* names when webhook-id is absent
 function readSignatureHeaders(headers) {
   const prefix = headers['webhook-id'] ? 'webhook' : 'svix';
   return {

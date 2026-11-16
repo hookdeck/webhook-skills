@@ -16,8 +16,8 @@ const PORT = process.env.PORT || 3000;
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
 // Key: base64-decode of the endpoint's secret after its `whsec_` prefix.
 // Each webhook endpoint has its own signing secret.
-// Hookdeck's Skovik source also accepts the svix-* header names when
-// webhook-id is absent, so this handler does the same.
+// This handler also accepts the svix-* header names when
+// webhook-id is absent.
 // ---------------------------------------------------------------------------
 
 /**

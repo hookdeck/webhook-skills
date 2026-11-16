@@ -16,7 +16,7 @@ Requests are not signed. Authentication is whatever you set on the REST connecti
 - **OAuth**: the connection can use a configured OAuth 2.0 flow instead. Hookdeck's source does not
   cover OAuth.
 
-> Use Basic authentication on the Integration Center REST destination. Hookdeck never answers with a 401 challenge, so the credentials have to arrive with each request; if deliveries show as failed verification, they are not.
+> Use Basic authentication on the Integration Center REST destination. The credentials have to arrive with each request; if deliveries show as failed verification, they are not.
 
 ## Event Types
 

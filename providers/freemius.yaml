@@ -14,15 +14,13 @@ notes: >
   SHA256 hash of the raw body using your product's secret key.' 'const hash =
   crypto.createHmac('sha256', PRODUCT_SECRET_KEY).update(rawBody).digest('hex');' From the docs
   (registry summary): `x-signature: <hex>` = lowercase hex HMAC-SHA256(product secret key, raw body).
-  Bare value, no prefix and no timestamp. SIGNATURE SCHEME (it must match Hookdeck's FREEMIUS source
-  exactly: HMAC controller, algorithm "sha256", header_key "x-signature", encoding "hex"). The
+  Bare value, no prefix and no timestamp. SIGNATURE SCHEME (algorithm sha256, header x-signature, encoding hex). The
   x-signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE header value
   as one digest (no list splitting or prefix parsing). The signature is lowercase hex HMAC-SHA256,
   keyed with the secret, over the raw request body bytes only (no timestamp, id or other header is
   signed). Build the signed message as BYTES: the raw body bytes exactly as received, never decoded to
   a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the
-  secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively
-  (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or decode both to
+  secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to
   bytes) before the constant-time compare. Secret: The product's secret key (Developer Dashboard >
   Settings > API & Keys), used as the HMAC key string as-is; one key per product, not per webhook. Use
   it as UTF-8 bytes. Env var: FREEMIUS_WEBHOOK_SECRET. Validate the signature's format before decoding
@@ -39,8 +37,7 @@ notes: >
   affiliate.approved, affiliate.blocked, affiliate.created, affiliate.deleted,
   affiliate.payout.pending, affiliate.paypal.updated, affiliate.rejected, affiliate.suspended,
   affiliate.unapproved, affiliate.updated, card.created, card.updated, cart.abandoned, cart.completed
-  (and 134 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's Freemius source
-  manages the method as POST, so the examples handle POST on the webhook route. Express examples must
+  (and 134 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must
   read the raw body with express.raw({ type: '*/*' }) so any content type works and the exact bytes
   are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body
   only after the check. Hookdeck's source type is FREEMIUS, labelled 'Freemius'.

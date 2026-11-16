@@ -84,7 +84,7 @@ POSTSCRIPT_WEBHOOK_TOKEN=your-webhook-signing-token   # from GET /api/v2/webhook
 ## Hookdeck Setup Note
 
 When you add a Postscript source in Hookdeck (source type `POSTSCRIPT`), paste the token returned by
-`GET /api/v2/webhooks/token`. Hookdeck compares the whole `Postscript-Signature` value to it.
+`GET /api/v2/webhooks/token`. Hookdeck checks the header against it.
 
 ## Retries
 

@@ -18,9 +18,8 @@ const PORT = process.env.PORT || 3000;
 // Each Basiq webhook subscription has its own signing secret.
 // ---------------------------------------------------------------------------
 
-/**
- * Pick the header set. Hookdeck's Basiq source reads webhook-* and falls back
- * to svix-* when webhook-id is absent; do the same, then hand the library the
+/** * Pick the header set: read webhook-* and fall back to svix-* when
+ * webhook-id is absent, then hand the library the
  * values under the webhook-* names it expects.
  */
 function signatureHeaders(get) {

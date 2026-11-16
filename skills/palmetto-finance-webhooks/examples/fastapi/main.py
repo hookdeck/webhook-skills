@@ -28,7 +28,7 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
     """Palmetto Finance does not sign payloads. With the default server API key
     authentication, every delivery carries the key Palmetto returned at registration
     in a header (apiKey by default; some pages show api_key). We compare the WHOLE
-    header value, with no 'Bearer ' parsing, which is what Hookdeck's source does.
+    header value, with no 'Bearer ' parsing.
     Starlette headers are case-insensitive.
     """
     secret = secret if secret is not None else os.environ.get("PALMETTO_FINANCE_WEBHOOK_SECRET")

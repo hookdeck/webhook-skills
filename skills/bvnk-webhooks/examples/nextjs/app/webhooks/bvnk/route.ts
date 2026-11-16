@@ -11,7 +11,7 @@ import crypto from 'crypto';
 function verifyBvnk(rawBody: Buffer, signatureHeader: string | null, secret: string): boolean {
   if (!secret || typeof signatureHeader !== 'string') return false;
   // Check the shape first: Buffer.from(x, 'base64') silently drops invalid characters, and
-  // Hookdeck compares the base64 text exactly, so only the canonical 44-character form passes.
+  // Compare the base64 text exactly, so only the canonical 44-character form passes.
   if (!/^[A-Za-z0-9+/]{43}=$/.test(signatureHeader)) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');

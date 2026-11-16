@@ -15,7 +15,7 @@ Points that cause most failures:
 - The key is the **whole header value including any scheme prefix** (`Bearer `, `Basic `).
   Compare the full header to `PROCORE_AUTHORIZATION`; don't strip, add or parse the prefix.
 - Never base64-decode it. The docs' example is a token, not base64 `user:pass`.
-- Hookdeck's Procore source compares the same whole value. Paste the Authorization Header value
+- For Hookdeck's Procore source, paste the Authorization Header value
   exactly as set in Procore, including any "Bearer " or "Basic " prefix.
 
 ## What This Does Not Protect Against

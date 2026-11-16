@@ -69,9 +69,9 @@ Quicknode's own guide shows Node.js, Python and Go samples and does not document
 
 ### Keep gzip off
 
-Quicknode signs the **uncompressed** JSON, while a gzip delivery carries compressed bytes on the wire. A verifier that reads the raw request body, Hookdeck's included, fails on compressed deliveries. Keep payload compression (gzip) off on the stream or webhook: Quicknode signs the uncompressed body.
+Quicknode signs the **uncompressed** JSON, while a gzip delivery carries compressed bytes on the wire. A verifier that reads the raw request body fails on compressed deliveries. Keep payload compression (gzip) off on the stream or webhook: Quicknode signs the uncompressed body.
 
-(Quicknode's guide notes that Express body parsers, including `express.raw()`, inflate gzip bodies automatically, so a handler that reads from them sees the decoded bytes. That does not help once Hookdeck or another proxy verifies the wire bytes, so turning compression off is the reliable fix.)
+(Quicknode's guide notes that Express body parsers, including `express.raw()`, inflate gzip bodies automatically, so a handler that reads from them sees the decoded bytes. That does not help once a proxy in front verifies the wire bytes, so turning compression off is the reliable fix.)
 
 ### No separators
 
@@ -83,7 +83,7 @@ Any parse-and-reserialise step changes whitespace or key order and breaks the HM
 
 ### Timestamp tolerance is opt-in
 
-Do not reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. If you want one, set `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples parse it only when you opt in, accepting epoch seconds, epoch milliseconds or an ISO 8601 string. Check what your deliveries actually carry before relying on it.
+Do not reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. If you want one, set `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples parse it only when you opt in, accepting epoch seconds, epoch milliseconds or an ISO 8601 string. Check what your deliveries actually carry before relying on it.
 
 ### Replays
 

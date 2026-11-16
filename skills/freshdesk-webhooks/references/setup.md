@@ -102,7 +102,7 @@ is idempotent so the catch-up doesn't double-process.
    - **API Key:** your secret, exactly as entered in Freshdesk
 3. Paste the Hookdeck Source URL into the rule's **Callback URL**.
 
-Hookdeck rejects requests whose header doesn't match. It also queues and
+Requests whose header doesn't match still get a `200` and are recorded as failed verification. It also queues and
 retries deliveries to your app, so a short outage on your side won't turn into
 Freshdesk's 30-minute retries and failure emails. The Freshdesk source lets you
 pick the HTTP method, so if your rule uses `PUT` or `PATCH`, allow that method

@@ -7,7 +7,7 @@ notes: >
   Identity verification. Every webhook is signed with HMAC-SHA256 keyed with the destination's
   secret_shared_key (raw string). Three headers are sent: X-Signature (hex HMAC of the exact raw
   body bytes), X-Signature-V2 (hex HMAC of re-serialized sorted JSON) and X-Signature-Simple
-  (deprecated). Hookdeck verifies X-Signature over the raw body, so the skill should verify
+  (deprecated). The skill should verify
   X-Signature against the raw body as the primary path and mention V2 only as an alternative.
   X-Timestamp (unix seconds) is sent separately and is not part of the X-Signature input; reject
   if older than 300s. Events: status.updated, data.updated.

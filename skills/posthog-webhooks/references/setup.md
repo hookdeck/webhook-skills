@@ -13,7 +13,7 @@ PostHog does not generate the secret; you choose it.
 echo "whsec_$(openssl rand -base64 32)"
 ```
 
-- Keep the `whsec_` prefix. PostHog accepts a bare base64 secret too, but Hookdeck's Standard Webhooks verification does not.
+- Keep the `whsec_` prefix. PostHog accepts a bare base64 secret too, but use the prefixed form.
 - It must decode to at least 24 bytes (32 random bytes is fine).
 - Paste the **same string** into PostHog, your receiver's `POSTHOG_WEBHOOK_SECRET`, and/or the Hookdeck source.
 

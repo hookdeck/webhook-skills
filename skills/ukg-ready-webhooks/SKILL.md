@@ -73,8 +73,7 @@ credential if it leaks.
 ## Hookdeck
 
 Hookdeck's source type is **UKG_READY** (label "UKG Ready"). Paste the bare token into its
-**Bearer Token** field; it accepts the `Authorization` header with or without the `Bearer `
-prefix. Only **Bearer Token** works. Basic and OAuth are not covered by Hookdeck's UKG Ready
+**Bearer Token** field. Only **Bearer Token** works. Basic and OAuth are not covered by Hookdeck's UKG Ready
 source.
 
 ## Webhook Payloads

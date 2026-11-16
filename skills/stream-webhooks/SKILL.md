@@ -56,7 +56,7 @@ def verify_stream_webhook(raw_body: bytes, signature: str, api_secret: str) -> b
 
 ### Payload Compression must be OFF (Hookdeck)
 
-Stream's `enable_hook_payload_compression` app setting gzips payloads (over 256 bytes). The signature is computed over the **uncompressed** bytes, so a verifier that sees the gzipped body fails, and Hookdeck's Stream source cannot verify compressed payloads. **Apps created after May 7, 2026 have it on by default**, so turn it off before pointing Stream at Hookdeck:
+Stream's `enable_hook_payload_compression` app setting gzips payloads (over 256 bytes). The signature is computed over the **uncompressed** bytes, so a verifier that sees the gzipped body fails. **Apps created after May 7, 2026 have it on by default**, so turn it off before pointing Stream at Hookdeck:
 
 ```javascript
 await client.updateAppSettings({ enable_hook_payload_compression: false });

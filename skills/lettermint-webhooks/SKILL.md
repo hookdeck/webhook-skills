@@ -58,7 +58,7 @@ function verifyLettermintWebhook(rawBody, header, secret, toleranceSeconds = 0) 
 
 Missing header, malformed value or mismatch: respond `401` (Lettermint does not retry 4xx other than 408 and 429).
 
-Lettermint also ships SDKs with a `Webhook.verify()` helper. They additionally require `X-Lettermint-Delivery` to equal `t` and enforce a 300 second window by default. Hookdeck does not check `X-Lettermint-Delivery`, so these examples verify manually to behave the same way and keep replays working.
+Lettermint also ships SDKs with a `Webhook.verify()` helper. They additionally require `X-Lettermint-Delivery` to equal `t` and enforce a 300 second window by default. These examples verify manually, which keeps replays working.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

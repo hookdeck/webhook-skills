@@ -40,7 +40,7 @@ Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the 
 const { Webhook } = require('standardwebhooks');
 
 // rawBody: exact request body string, NOT re-serialised JSON
-const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-* like Hookdeck
+const prefix = req.get('webhook-id') ? 'webhook' : 'svix'; // fall back to svix-*
 const event = new Webhook(process.env.SCALEKIT_WEBHOOK_SECRET).verify(rawBody, {
   'webhook-id': req.get(`${prefix}-id`),
   'webhook-timestamp': req.get(`${prefix}-timestamp`),

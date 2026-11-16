@@ -9,8 +9,7 @@ notes: >
   Header X-Signature: hex HMAC-SHA256 of the raw body keyed with the app's API secret (the full
   Stream app API secret as UTF-8). The SDKs have verifyWebhook(body, signature); show as an option
   but keep a manual check. Payload Compression (enable_hook_payload_compression) must be OFF:
-  compressed (gzip) payloads are signed over the uncompressed bytes and Hookdeck's Stream source
-  can't verify them; say so. Also mention X-Webhook-Id and X-Api-Key headers. Events: message.new,
+  compressed (gzip) payloads are signed over the uncompressed bytes, so a verifier that sees the gzipped body fails; say so. Also mention X-Webhook-Id and X-Api-Key headers. Events: message.new,
   message.updated, message.deleted, reaction.new, channel.created, user.updated, member.added.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   verifies.

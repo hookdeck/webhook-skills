@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 function verifyOpnform(rawBody, signatureHeader, secret) {
   if (!secret || !signatureHeader) return false;
 
-  // The prefix is optional: Hookdeck's OpnForm source accepts the bare digest too
+  // The prefix is optional: accept the bare digest too
   let sig = signatureHeader.trim();
   if (sig.startsWith('sha256=')) sig = sig.slice('sha256='.length);
   // Buffer.from(x, 'hex') silently drops invalid characters, so check the shape first.

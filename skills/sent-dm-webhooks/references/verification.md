@@ -44,11 +44,11 @@ event = Webhook(secret).verify(raw_body, {
 })  # raises WebhookVerificationError on failure
 ```
 
-The library always enforces a fixed 5-minute timestamp window. Sent signs each retry when it is sent, so Sent's own retries pass. **Hookdeck retries and replays resend the original timestamp**, and Hookdeck applies no window itself, so the library rejects a Hookdeck retry or replay after 5 minutes. Use the manual verifier below when you need those to pass.
+The library always enforces a fixed 5-minute timestamp window. Sent signs each retry when it is sent, so Sent's own retries pass. **Hookdeck retries and replays resend the original timestamp**, so the library rejects a Hookdeck retry or replay after 5 minutes. Use the manual verifier below when you need those to pass.
 
 ### Manual Verification (no dependency, adjustable window)
 
-`toleranceSeconds` defaults to 300. Pass `null` to turn the window off, or a larger number to widen it (needed for late Hookdeck retries and replays). Like Hookdeck, it reads `x-webhook-*` names and falls back to `webhook-*` and `svix-*`, requires the timestamp to be a plain positive integer, validates base64, and treats a secret without the `whsec_` prefix as raw UTF-8 bytes.
+`toleranceSeconds` defaults to 300. Pass `null` to turn the window off, or a larger number to widen it (needed for late Hookdeck retries and replays). It reads `x-webhook-*` names and falls back to `webhook-*` and `svix-*`, requires the timestamp to be a plain positive integer, validates base64, and treats a secret without the `whsec_` prefix as raw UTF-8 bytes.
 
 ```javascript
 import { createHmac, timingSafeEqual } from 'node:crypto';

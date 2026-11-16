@@ -8,7 +8,7 @@ Outhire signs deliveries with Standard Webhooks:
   webhook-signature  one or more space-separated "v1,<base64 HMAC-SHA256>"
 Signed content: f"{webhook-id}.{webhook-timestamp}.{raw_body}"
 Key: base64-decode of the secret after its `whsec_` prefix.
-Hookdeck also accepts the svix-* spelling of the same three headers, so this
+Svix-style senders use the svix-* spelling of the same three headers, so this
 handler falls back to svix-id / svix-timestamp / svix-signature when webhook-id
 is absent.
 """

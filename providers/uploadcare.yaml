@@ -14,15 +14,13 @@ notes: >
   hashlib.sha256).hexdigest()' 'a signing secret can be added with a POST request when creating or
   updating a webhook ... The signing secret can be added in Dashboard settings on the Webhooks page.'
   From the docs (registry summary): `v1=` + hex(HMAC-SHA256(signing_secret, body)). The Python sample
-  checks `calculated in header`, a substring test. SIGNATURE SCHEME (it must match Hookdeck's
-  UPLOADCARE source exactly: HMAC controller, algorithm "sha256", header_key "x-uc-signature",
-  encoding "hex"). The x-uc-signature header carries `v1=<hex>`. Strip a leading `v1=` before
-  validating the digest; Hookdeck's parser also accepts the bare digest, so accept the value with or
+  checks `calculated in header`, a substring test. SIGNATURE SCHEME: The x-uc-signature header carries `v1=<hex>`. Strip a leading `v1=` before
+  validating the digest, and accept the value with or
   without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with the secret, over the raw
   request body bytes only (no timestamp, id or other header is signed). Build the signed message as
   BYTES: the raw body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck does): require exactly
+  (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
   Secret: Optional `signing_secret`, set when creating or updating the webhook (REST API or
   dashboard). Without it requests are unsigned. Use it as UTF-8 bytes. Env var:
@@ -36,8 +34,7 @@ notes: >
   body's `hook.event` field. Nested `hook.event`; `hook` also holds webhook and project information.
   The examples are elided, so only `hook.event` and parts of `data` are shown. Documented event types
   (5): file.uploaded, file.info_updated, file.deleted, file.stored, file.infected. Handle a few common
-  ones and log the rest. Method: POST. Hookdeck's Uploadcare source manages the method as POST, so the
-  examples handle POST on the webhook route. Express examples must read the raw body with
+  ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Hookdeck's source type is UPLOADCARE, labelled 'Uploadcare'. Hookdeck shows this setup note for the

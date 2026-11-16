@@ -12,8 +12,7 @@ notes: >
   name is user-chosen, so the examples read the header name from PARTICLE_WEBHOOK_HEADER (default
   'Authorization') and the expected value from PARTICLE_WEBHOOK_SECRET (the exact, whole header
   value, including any 'Bearer ' prefix the user typed). Look the header up case-insensitively and
-  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. This is what Hookdeck's
-  Particle source does (API key verification: API Key Header + exact whole API Key value). Missing
+  compare the WHOLE value; do not strip or parse a 'Bearer ' prefix. Missing
   header or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
@@ -26,9 +25,7 @@ notes: >
   or DELETE', default POST. The examples must not be POST-only: accept GET, POST, PUT, PATCH and
   DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler
   for each; FastAPI: api_route with those methods), check the credential first for every method, and
-  handle an empty body. Say in SKILL.md and setup.md that Hookdeck's Particle source pre-selects
-  POST without managing the method, so any other method the sender uses must also be allowed on the
-  source. Body: the default request format is a web form (application/x-www-form-urlencoded) with
+  handle an empty body. Say in SKILL.md and setup.md that the Hookdeck source must allow whatever method the sender uses (see https://hookdeck.com/docs/sources#custom-methods). Body: the default request format is a web form (application/x-www-form-urlencoded) with
   fields event, data, published_at and coreid; JSON, query-string and custom bodies are also
   configurable. Parse form-encoded and JSON bodies (and query parameters for GET), after the auth
   check. The event name is chosen by the customer's firmware, so dispatch on the event field with

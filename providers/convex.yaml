@@ -14,16 +14,13 @@ notes: >
   configuring the webhook.' 'Note that the signature is prefixed with `sha256=`.' 'new
   TextEncoder().encode(env.WEBHOOK_SECRET),' From the docs (registry summary): `x-webhook-signature:
   sha256=<lowercase hex>` = HMAC-SHA256(secret as UTF-8, raw body); the sample verifies
-  `crypto.subtle.verify` over `c.req.arrayBuffer()` after stripping `sha256=`. SIGNATURE SCHEME (it
-  must match Hookdeck's CONVEX source exactly: HMAC controller, algorithm "sha256", header_key
-  "x-webhook-signature", encoding "hex"). The x-webhook-signature header carries `sha256=<hex>`. Strip
-  a leading `sha256=` before validating the digest; Hookdeck's parser also accepts the bare digest, so
-  accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
+  `crypto.subtle.verify` over `c.req.arrayBuffer()` after stripping `sha256=`. SIGNATURE SCHEME (algorithm sha256, header
+  x-webhook-signature, encoding hex). The x-webhook-signature header carries `sha256=<hex>`. Strip
+  a leading `sha256=` before validating the digest; accept the value with or without the prefix. The signature is lowercase hex HMAC-SHA256, keyed with
   the secret, over the raw request body bytes only (no timestamp, id or other header is signed). Build
   the signed message as BYTES: the raw body bytes exactly as received, never decoded to a string and
   re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8
-  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively (as Hookdeck
-  does): require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
+  bytes, used as-is (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly 64 hex characters, lowercase both sides (or decode both to bytes) before the
   constant-time compare. Secret: An HMAC secret Convex generates and shows in the dashboard when the
   webhook log stream is configured. Use it as UTF-8 bytes. Env var: CONVEX_WEBHOOK_SECRET. Validate
   the signature's format before decoding it (exact length and alphabet), then compare in constant
@@ -34,8 +31,7 @@ notes: >
   replay window to check; do not invent one from unsigned headers or body fields. Events: this is
   Convex's webhook LOG STREAM. The body is a JSON array of log events; each has `topic` (verification,
   console, function_execution, audit_log, scheduler_stats, current_storage_usage, ...), `timestamp`
-  (Unix ms) and `convex`. Loop over the array and dispatch on `topic`. Method: POST. Hookdeck's Convex
-  source manages the method as POST, so the examples handle POST on the webhook route. Express
+  (Unix ms) and `convex`. Loop over the array and dispatch on `topic`. Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is CONVEX, labelled 'Convex'.

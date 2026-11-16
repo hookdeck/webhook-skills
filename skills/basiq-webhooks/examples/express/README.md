@@ -1,6 +1,6 @@
 # Basiq Webhooks - Express Example
 
-Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification. Basiq signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers, as Hookdeck does.
+Minimal example of receiving [Basiq](https://basiq.io) webhooks with signature verification. Basiq signs deliveries with the Standard Webhooks scheme, so the handler verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

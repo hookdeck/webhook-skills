@@ -61,7 +61,7 @@ The Python library raises plain `ValueError` or `binascii.Error` (not just `Webh
 
 ### Header Fallback: `webhook-*` or `svix-*`
 
-Hookdeck's Basiq source reads the `webhook-*` headers and falls back to the `svix-*` set (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent. The examples do the same: pick the prefix, then pass the three values to the library under the `webhook-*` names it expects.
+The examples read the `webhook-*` headers and fall back to the `svix-*` set (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent. They pick the prefix, then pass the three values to the library under the `webhook-*` names it expects.
 
 ### Manual Verification (no dependency, or a custom timestamp window)
 

@@ -143,7 +143,7 @@ describe('Khipu webhook', () => {
     });
 
     it('rejects a signature with stray low bits in the last character', async () => {
-      // Same decoded bytes, different string: Hookdeck rejects it, so must we
+      // Same decoded bytes, different string: reject it
       const body = payment();
       const header = sign(body);
       const sig = header.split(',s=')[1];

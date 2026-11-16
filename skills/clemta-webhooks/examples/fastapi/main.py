@@ -19,7 +19,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Clemta sends webhook-* headers; Hookdeck also reads svix-* when webhook-id is absent."""
+    """Clemta sends webhook-* headers; this handler also reads svix-* when webhook-id is absent."""
     prefix = "webhook" if headers.get("webhook-id") else "svix"
     return (
         headers.get(f"{prefix}-id"),

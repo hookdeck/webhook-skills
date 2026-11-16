@@ -30,12 +30,9 @@ Use port `8000` for the FastAPI example. Pass the printed URL as the webhook `ur
 
 ## Using Hookdeck as the Source
 
-In Hookdeck choose the **Podium** source type and paste the webhook's `secret`. Hookdeck verifies
-`podium-signature` against `{podium-timestamp}.{body}` (hex HMAC-SHA256).
+In Hookdeck choose the **Podium** source type and paste the webhook's `secret`. Hookdeck verifies the signature.
 
-Hookdeck's Podium source pre-selects POST without managing the method (you can change it), and
-Podium's docs don't name the method it uses. If deliveries arrive with another method, allow that
-method on the source too. Hookdeck applies no timestamp window, so retries and replays still verify.
+Podium's docs don't name the method it uses. If deliveries arrive with a method other than POST, allow that method on the Hookdeck source too ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test Mode vs Live Mode
 

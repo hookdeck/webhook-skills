@@ -45,8 +45,7 @@ export function parseBasicAuth(
 
 /**
  * HaloPSA webhooks are not signed. With "Basic Authentication" chosen on the webhook, every
- * request carries `Authorization: Basic base64(username:password)`. The credentials must
- * arrive on the first request: Hookdeck never answers with a 401 + WWW-Authenticate challenge.
+ * request carries `Authorization: Basic base64(username:password)`. The credentials must * arrive on the first request.
  */
 export function verifyHaloPsaRequest(
   headers: Headers,

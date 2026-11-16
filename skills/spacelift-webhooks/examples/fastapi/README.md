@@ -32,7 +32,7 @@ Set a secret on the Spacelift webhook. Without one, deliveries are unsigned and 
 uvicorn main:app --port 8000
 ```
 
-Server runs on http://localhost:8000 and accepts `GET`, `POST`, `PUT`, `PATCH` and `DELETE` at `/webhooks/spacelift` (Spacelift doesn't name its method; Hookdeck's Spacelift source pre-selects POST without managing it, so allow any other method on the source too).
+Server runs on http://localhost:8000 and accepts `GET`, `POST`, `PUT`, `PATCH` and `DELETE` at `/webhooks/spacelift` (Spacelift doesn't name its method; allow the method it uses on the Hookdeck source too, see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

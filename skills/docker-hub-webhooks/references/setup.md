@@ -155,9 +155,7 @@ Because the token *is* the URL, rotation means re-registering:
 ## Using Hookdeck
 
 Hookdeck's source type for this provider is **`DOCKER_HUB`** (label "Docker
-Hub", slug `docker-hub`), with method **POST**. Its verification setting is **"No
-verification (schema only)"** — as Hookdeck's own code comment puts it, *"Docker
-Hub repository webhooks are unsigned (no secret, signature or auth header)."*
+Hub", slug `docker-hub`). Its verification setting is **"No verification (schema only)"**: Docker Hub repository webhooks are unsigned (no secret, signature or auth header).
 
 What that means in practice:
 

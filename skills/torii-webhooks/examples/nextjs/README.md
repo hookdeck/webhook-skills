@@ -66,8 +66,7 @@ install):
 npx hookdeck-cli listen 3000 torii --path /webhooks/torii
 ```
 
-Put the printed URL in the custom action. If the action uses a method other than POST, allow it
-on the Hookdeck source too (the Torii source pre-selects POST only).
+Put the printed URL in the custom action. Allow the method the action uses on the Hookdeck source too (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

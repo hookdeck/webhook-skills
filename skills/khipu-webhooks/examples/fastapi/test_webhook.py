@@ -134,7 +134,7 @@ class TestSignatureVerification:
         assert post(body, {"x-khipu-signature": header.rstrip("=")}).status_code == 401
 
     def test_rejects_stray_low_bits_in_last_character(self):
-        # Same decoded bytes, different string: Hookdeck rejects it, so must we
+        # Same decoded bytes, different string: reject it
         body = payment()
         t_part, sig = sign(body).split(",s=")
         idx = ALPHABET.index(sig[42])

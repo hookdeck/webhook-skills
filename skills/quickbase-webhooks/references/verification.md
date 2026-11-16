@@ -78,5 +78,5 @@ def verify_quickbase_request(headers, secret, header_name="Authorization") -> bo
 | 401 on every request | `QUICKBASE_WEBHOOK_SECRET` unset, or differs from the webhook's header value |
 | 401 with the right secret | Wrong `QUICKBASE_WEBHOOK_HEADER`, or `Bearer ` typed in Quickbase but not in the env var (or vice versa) |
 | 401 after editing the webhook | Header value changed in Quickbase; update the env var |
-| 405 | The webhook uses a method the route doesn't accept (or the Hookdeck source doesn't allow it) |
+| 405 | The webhook uses a method the route doesn't accept |
 | Handler sees an empty body | `GET`/`DELETE` webhooks, or an empty message body template |

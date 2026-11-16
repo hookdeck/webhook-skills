@@ -32,7 +32,7 @@ metadata:
 
 Paste the endpoint's Signing Secret from the Act-On webhook portal exactly as shown, including any whsec_ prefix.
 
-Act-On says only that it sends a payload with an HMAC SHA-256 signature and that the Signing Secret is generated automatically when you configure the endpoint. Its pages don't name the headers or the secret prefix. They are the Svix defaults, which is what Hookdeck's Act-On source assumes (source type `ACT_ON`, labelled "Act-On"). Because the `svix-` prefix is inferred rather than documented, the examples (like Hookdeck) also accept the same values in `webhook-id`, `webhook-timestamp` and `webhook-signature` when the `svix-*` headers are absent.
+Act-On says only that it sends a payload with an HMAC SHA-256 signature and that the Signing Secret is generated automatically when you configure the endpoint. Its pages don't name the headers or the secret prefix. They are the Svix defaults, which is what Hookdeck's Act-On source assumes (source type `ACT_ON`, labelled "Act-On"). Because the `svix-` prefix is inferred rather than documented, the examples also accept the same values in `webhook-id`, `webhook-timestamp` and `webhook-signature` when the `svix-*` headers are absent.
 
 ## Verification (core)
 

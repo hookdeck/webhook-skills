@@ -51,7 +51,7 @@ def verify_violet_signature(raw_body: bytes, header: str | None, secret: str) ->
     return hmac.compare_digest(header.encode("ascii"), base64.b64encode(digest))
 ```
 
-Respond **401** when the header is missing, malformed, or doesn't match. Compare the base64 string exactly: a value whose last character carries stray low bits decodes to the same bytes but is not what Violet sends, and Hookdeck's Violet source rejects it too.
+Respond **401** when the header is missing, malformed, or doesn't match. Compare the base64 string exactly: a value whose last character carries stray low bits decodes to the same bytes but is not what Violet sends.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/) (use `express.raw({ type: '*/*' })` so the exact bytes are verified for any content type)

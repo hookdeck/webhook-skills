@@ -30,7 +30,7 @@ Create a Hookdeck source of type **Sinch** and paste the same secret into it. Ho
 
 > For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
 
-Then use the Hookdeck source URL as the webhook `target`. The Sinch source manages the method as POST.
+Then use the Hookdeck source URL as the webhook `target`.
 
 ## Local Development
 

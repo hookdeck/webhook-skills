@@ -18,19 +18,17 @@ notes: >
   published test vector (secret `JUL5Qk...Gfg==`, body `{"event":"bvnk:ledger:report:ready",...}`,
   signature `VWEtiJu/7dLrq0ZtXS0HbGDPy6Re86oZeTnEEc9mlxg=`) verifies (harvest_bvnk.py). Legacy
   "Standard" webhooks use a different scheme: hex HMAC-SHA256 over the webhook path + content type +
-  payload; see the `verification.legacy_standard_scheme` gap. SIGNATURE SCHEME (it must match
-  Hookdeck's BVNK source exactly: HMAC controller, algorithm "sha256", header_key "x-signature",
-  encoding "base64"). The x-signature header carries the bare standard base64 (padded) digest, no
+  payload; see the `verification.legacy_standard_scheme` gap. SIGNATURE SCHEME (algorithm sha256, header x-signature,
+  encoding base64). The x-signature header carries the bare standard base64 (padded) digest, no
   prefix. Compare the WHOLE header value as one digest (no list splitting or prefix parsing). The
   signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over the raw request body
   bytes only (no timestamp, id or other header is signed). Build the signed message as BYTES: the raw
   body bytes exactly as received, never decoded to a string and re-encoded, never
   JSON.parse/JSON.stringify'd before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
-  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive, as Hookdeck does): require
+  (not hex- or base64-decoded). Base64 is compared exactly (case-sensitive): require
   the 44-character padded standard-base64 form ([A-Za-z0-9+/]{43}=) and compare the strings, or the
   decoded bytes AND the re-encoded string, in constant time. Decoding alone is not enough: a value
-  whose last character carries stray low bits decodes to the same bytes but Hookdeck rejects it, so
-  the skill must reject it too. Secret: The secret is shown in the field labelled "Public Key" when
+  whose last character carries stray low bits decodes to the same bytes, so the skill must reject it. Secret: The secret is shown in the field labelled "Public Key" when
   the webhook is created, and is used as a UTF-8 string, not decoded. Use it as UTF-8 bytes. Env var:
   BVNK_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and alphabet),
   then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length
@@ -54,11 +52,10 @@ notes: >
   bvnk:customers:status-change, bvnk:customers:agreements:status-change,
   bvnk:customers:associates:status-change, bvnk:customers:documents:status-change,
   bvnk:customers:associates:documents:status-change (and 14 more). Handle a few common ones and log
-  the rest. Method: POST. Hookdeck's BVNK source manages the method as POST, so the examples handle
+  the rest. Method: POST. The examples handle
   POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
-  FastAPI: await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified
-  against Hookdeck's controller): the vendor's docs give a worked example, saved verbatim as JSON
+  FastAPI: await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR: the vendor's docs give a worked example, saved verbatim as JSON
   (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b910-skills/vectors/bvnk.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

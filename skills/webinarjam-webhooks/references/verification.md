@@ -17,8 +17,7 @@ Points that cause most failures:
 - The header name is **user-chosen**, so read it from `WEBINARJAM_WEBHOOK_HEADER` (default
   `Authorization`) and look it up case-insensitively.
 - Compare the **whole header value**, including any `Bearer ` prefix, with
-  `WEBINARJAM_WEBHOOK_SECRET`. Don't strip or parse the prefix. This is what Hookdeck's WebinarJam
-  source does too (header name plus exact whole header value).
+  `WEBINARJAM_WEBHOOK_SECRET`. Don't strip or parse the prefix.
 - No header or a mismatch returns `401`.
 
 ## What Does a Static Credential Protect?
@@ -89,8 +88,8 @@ def safe_equal(a: str, b: str) -> bool:
 - **Raw body**: there is nothing to sign, but read the body raw and authenticate before parsing;
   `express.raw({ type: '*/*' })` accepts any content type.
 - **Body key-value authentication**: WebinarJam can also send key-value pairs in the body, but a
-  body field is not read by these examples or by Hookdeck's source. Use a header.
-- **Hookdeck**: a Hookdeck WebinarJam source verifies the same header (name and whole value).
+  body field is not read by these examples. Use a header.
+- **Hookdeck**: a Hookdeck WebinarJam source checks the same header.
 
 ## Debugging 401s
 

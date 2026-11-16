@@ -61,7 +61,7 @@ def verify(raw_body: bytes, headers, secret: str) -> bool:
 
 ### Timestamp tolerance is opt-in
 
-Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck applies no tolerance itself. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. Storing `X-QN-Nonce` skips exact repeats (Hookdeck retries and replays resend it), but Quicknode doesn't document whether its own retries keep the nonce, so also key idempotency on block number or hash and transaction hash.
+Do **not** reject old timestamps by default: Hookdeck retries and replays resend the original headers and timestamp. The examples offer an opt-in `QUICKNODE_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). The `X-QN-Timestamp` unit is not documented, so the examples only parse it when you opt in. Storing `X-QN-Nonce` skips exact repeats (Hookdeck retries and replays resend it), but Quicknode doesn't document whether its own retries keep the nonce, so also key idempotency on block number or hash and transaction hash.
 
 > **For complete handlers with route wiring, payload dispatch, and tests**, see:
 > - [examples/express/](examples/express/)

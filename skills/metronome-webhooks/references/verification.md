@@ -20,7 +20,7 @@ Signed message (bytes):
 - The separator is one real newline byte (LF, `0x0A`), not the two characters backslash and `n`
 - Metronome also sends a standard `Date` header with the same value. Use `X-Metronome-Date`: intermediaries may rewrite `Date`
 
-This is the scheme Hookdeck's Metronome source verifies (HMAC, SHA-256, hex, signed content `{header:x-metronome-date}\n{body}`).
+Hookdeck's Metronome source verifies this signature too.
 
 ## Implementation
 
@@ -95,7 +95,7 @@ If your verifier doesn't reproduce this digest from those inputs, the signed byt
 
 ## Timestamp Tolerance (Opt-in)
 
-Metronome's docs suggest ignoring requests older than five minutes. The examples do **not** do this by default: Hookdeck retries and replays resend the original `X-Metronome-Date`, and Hookdeck applies no tolerance itself, so a fixed window rejects legitimate retries. Deduplicate on the body's `id` instead. To opt in, set `METRONOME_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); unset or `0` leaves it off. Rejected requests get `401`.
+Metronome's docs suggest ignoring requests older than five minutes. The examples do **not** do this by default: Hookdeck retries and replays resend the original `X-Metronome-Date`, so a fixed window rejects legitimate retries. Deduplicate on the body's `id` instead. To opt in, set `METRONOME_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); unset or `0` leaves it off. Rejected requests get `401`.
 
 ## Debugging Verification Failures
 

@@ -82,7 +82,7 @@ Ardoq's docs show `event-type: "create"` in the sample payload and do not list t
 
 ## Important Details
 
-- **Method:** `POST`. Hookdeck's Ardoq source manages the method as POST.
+- **Method:** `POST`.
 - **Scope:** the endpoint receives every change in the organization, unfiltered by workspace or permissions, including confidential fields. Only use an endpoint you trust.
 - **HTTPS required** for signed webhooks; Ardoq verifies the endpoint's TLS certificate.
 - **Signing is one-way.** To stop signing, delete the webhook and create an unsigned one.

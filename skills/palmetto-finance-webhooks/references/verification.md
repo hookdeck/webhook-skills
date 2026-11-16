@@ -29,8 +29,7 @@ credential if it leaks.
 ## Implementation
 
 Compare the **whole** header value in constant time. Don't strip or parse a `Bearer ` prefix: if
-the header value is `Bearer abc`, the expected secret is `Bearer abc`. This matches Hookdeck's
-Palmetto Finance source (API key verification: header name plus exact whole header value).
+the header value is `Bearer abc`, the expected secret is `Bearer abc`.
 
 ### Node.js
 
@@ -78,8 +77,7 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
   proxies drop headers containing underscores, so prefer `apiKey` where you can.
 - **Check every method first.** The subscription's `httpMethod` may be GET, PUT, PATCH or
   DELETE, and those often have no body. Authenticate before looking at the body.
-- **Hookdeck's source pre-selects POST** without managing the method. If your subscription uses
-  another method, allow it on the source too.
+- **Hookdeck source methods.** Allow your subscription's method on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `compare_digest` on bytes, never `str` (non-ASCII
   raises).
@@ -97,6 +95,6 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
 | 401 but the key looks right | Wrong header name: try `api_key`, or a proxy stripped the header |
 | 401 with a `Bearer` value | The whole value, prefix included, must be in the secret |
 | 401 only on GET or DELETE | The check ran after body handling, or the method isn't routed |
-| Hookdeck rejects non-POST | Allow the subscription's method on the Hookdeck source |
+| Non-POST deliveries fail through Hookdeck | Allow the subscription's method on the Hookdeck source |
 | 400 after authentication | Body isn't a JSON object |
 | Deliveries stop | 10 failures disabled the subscription; re-enable it and replay skipped events |

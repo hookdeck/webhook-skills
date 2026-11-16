@@ -8,9 +8,8 @@ notes: >
   IDENTITY: Ordinal is tryordinal.com — the social-media / LinkedIn content planning,
   approval and scheduling platform for marketing teams. App at
   https://app.tryordinal.com, docs at https://docs.tryordinal.com, REST API base
-  https://app.tryordinal.com/api/v1. Hookdeck's ORDINAL source type links to
-  docs.tryordinal.com/integrations/webhooks/introduction with icon_domain
-  https://www.tryordinal.com/, which fixes the identity. This is NOT Ordinals (the
+  https://app.tryordinal.com/api/v1. Hookdeck's ORDINAL source type is for this Ordinal
+  (docs.tryordinal.com/integrations/webhooks/introduction, www.tryordinal.com), which fixes the identity. This is NOT Ordinals (the
   Bitcoin inscription protocol / ord), NOT Ordinal Stats or Ordinal Labs, and NOT an
   "ordinal numbers" npm package. There is NO official Ordinal npm or pip SDK — do not
   add one to package.json / requirements.txt.
@@ -57,9 +56,8 @@ notes: >
   documented. Tell users to set headers via the API (POST /webhooks or
   PATCH /webhooks/{id}) if the UI lacks it.
 
-  HOOKDECK: the ORDINAL source type has verification OPTIONAL and offers the generic
-  Basic Auth and API Key (header name + value) checks — these validate the static header
-  configured in Ordinal's `headers`. Hookdeck cannot do HMAC for Ordinal because there is
+  HOOKDECK: the ORDINAL source type offers Basic Auth and API Key checks, which validate the
+  static header configured in Ordinal's `headers`. There is no HMAC check because Ordinal sends
   no body-dependent signature.
 
   MANAGEMENT API (bearer API key, base https://app.tryordinal.com/api/v1):

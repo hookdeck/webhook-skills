@@ -15,8 +15,7 @@ specification. Each request carries these headers:
 
 Each retry is signed again: same `webhook-id`, new `webhook-timestamp` and `webhook-signature`.
 
-Hookdeck's Requesty source reads `webhook-*` and falls back to the `svix-*` header names (`svix-id`,
-`svix-timestamp`, `svix-signature`) when `webhook-id` is absent, and the examples here do the same.
+The examples read `webhook-*` and fall back to the `svix-*` header names (`svix-id`, `svix-timestamp`, `svix-signature`) when `webhook-id` is absent.
 
 > **Unsigned until a secret exists.** Webhooks go out unsigned until your organisation has a signing secret,
 > and are always signed once one exists. Hookdeck's configuration alert for this source reads: "Create a
@@ -91,8 +90,7 @@ deduplicating on `webhook-id`.
 
 ## Manual Verification (configurable timestamp window)
 
-Requesty secrets start with `whsec_`, and the key is the base64-decoded remainder. As in Hookdeck's source, a
-secret without that prefix is used as its raw UTF-8 bytes. Requesty's own docs include a manual verifier with a
+Requesty secrets start with `whsec_`, and the key is the base64-decoded remainder. A secret without that prefix is used as its raw UTF-8 bytes. Requesty's own docs include a manual verifier with a
 fixed 5-minute window. This one makes the window optional.
 
 ```javascript

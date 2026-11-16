@@ -29,7 +29,7 @@ Buildkite sends **one** of two headers on every webhook, depending on how the we
 - **Token mode (default):** the token is sent as plain text in `X-Buildkite-Token`. Compare it to your stored token in constant time. There is no body signature, so anyone who sees the token can forge requests.
 - **Signature mode (more secure, optional):** `X-Buildkite-Signature: timestamp=<unix>,signature=<hex>`. The signature is HMAC-SHA256 (hex) of `"<timestamp>.<raw body>"`, keyed with the webhook token.
 
-If the webhook goes through Hookdeck Event Gateway, use token mode: Hookdeck's Buildkite source verifies `X-Buildkite-Token`, not `X-Buildkite-Signature`.
+If the webhook goes through Hookdeck Event Gateway, use token mode, which Hookdeck's Buildkite source supports.
 
 The event name is in the `X-Buildkite-Event` header (and `event` in the JSON body).
 

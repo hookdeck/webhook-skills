@@ -20,7 +20,7 @@ async def health_check():
 
 
 def read_signature_headers(headers):
-    """Chargeblast sends svix-* headers; Hookdeck also accepts the Standard Webhooks webhook-* names."""
+    """Chargeblast sends svix-* headers; this handler also accepts the Standard Webhooks webhook-* names."""
     prefix = "svix" if headers.get("svix-id") else "webhook"
     return (
         headers.get(f"{prefix}-id"),

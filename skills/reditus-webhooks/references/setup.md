@@ -15,7 +15,7 @@ Add your endpoint URL for the events you want. The docs describe five: `partners
 
 ## HTTP Method
 
-Reditus's docs don't name the HTTP method. The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/reditus` and verify the signature on each. If you receive through Hookdeck, note that Hookdeck's Reditus source pre-selects POST without managing the method, so any other method Reditus uses must also be allowed on the source.
+Reditus's docs don't name the HTTP method. The examples accept GET, POST, PUT, PATCH and DELETE on `/webhooks/reditus` and verify the signature on each. If you receive through Hookdeck, any method Reditus uses must also be allowed on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

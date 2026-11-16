@@ -11,9 +11,7 @@ notes: >
   PAY.JP, not chosen by the user, and the v2 guide checks it with a plain string comparison. No
   signature: requests are unsigned. PAY.JP sends the account's webhook token as plain text in the
   X-Payjp-Webhook-Token header on every request. The examples read PAYJP_WEBHOOK_SECRET, look the
-  X-Payjp-Webhook-Token header up case-insensitively and compare its WHOLE value to the secret. This
-  is what Hookdeck's PAY.JP source does (API key verification, header x-payjp-webhook-token, exact
-  whole value). Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
+  X-Payjp-Webhook-Token header up case-insensitively and compare its WHOLE value to the secret. Missing header or mismatch: 401. Compare in constant time: Node checks lengths, then
   crypto.timingSafeEqual on equal-length Buffers (or on SHA-256 digests of both sides); Python uses
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
   SKILL.md and verification.md must say plainly that a static shared credential authenticates the

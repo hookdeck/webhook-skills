@@ -29,33 +29,19 @@ notes: >
   MessageDeduplicationId; MessageStructure is not supported. RawMessageDelivery is NOT supported
   ("N"), so the envelope is always present. SignatureVersion: "Version 1 is always used, version 2
   is not supported" (so RSA PKCS#1 v1.5 with SHA1). Regions: fr-par and nl-ams (the two with
-  published trust chains; Hookdeck accepts only these). HANDSHAKE: an HTTP or HTTPS subscription
+  published trust chains). HANDSHAKE: an HTTP or HTTPS subscription
   stays Pending until confirmed; 'To confirm the subscription, make a request to the SubscribeURL
   using your browser or curl.' The console alternative: Topics and Events > Topics > topic > more
   menu > Confirm subscription, then paste the SubscribeURL from the confirmation message. The docs
   don't say whether the confirmation message is sent when the subscription is created or when you
-  choose Confirm subscription in the console; say so. HOW HOOKDECK HANDLES IT (Hookdeck source type
-  SCALEWAY_TOPICS_AND_EVENTS, labelled 'Scaleway Topics and Events'; handshake is built in and
-  required; method managed as POST): when a POST arrives with header x-amz-sns-message-type:
-  SubscriptionConfirmation (case-insensitive), Hookdeck parses the JSON body, checks Type is
-  SubscriptionConfirmation, Token is a non-empty string, TopicArn matches
-  arn:scw:sns:(fr-par|nl-ams):<project>:<topic>, and SubscribeURL is exactly https, host
-  sns.mnq.<same region>.scaleway.com, no credentials/port/fragment, path '/', exactly one Action
-  (=ConfirmSubscription), one TopicArn (= the body's TopicArn) and one Token (= the body's Token).
-  It then GETs the SubscribeURL unchanged (no redirects followed, 5 s timeout) and, on HTTP 200,
-  answers Scaleway 200 and does NOT forward the confirmation to your destination. If the payload or
-  URL is invalid, or Scaleway answers anything but 200, Hookdeck answers Scaleway 500 and records
-  the request as rejected (it is not forwarded); the subscription stays Pending and you can confirm
+  choose Confirm subscription in the console; say so. HOW HOOKDECK HANDLES IT (Hookdeck source type SCALEWAY_TOPICS_AND_EVENTS, labelled 'Scaleway Topics and Events'): Hookdeck confirms the subscription for you and does not forward the SubscriptionConfirmation to your destination. If confirmation fails, the subscription stays Pending and you can confirm
   it manually with the SubscribeURL from the request shown in Hookdeck's request log (or re-send
-  from the console). Notification and UnsubscribeConfirmation messages (and anything without that
-  header) are forwarded to your destination unchanged, body bytes and headers included. Hookdeck
-  does NOT verify Scaleway's message signature for this source type (there is no signature
-  verification for it); never claim it does, and never say 'at the edge'. So: BEHIND HOOKDECK the
+  from the console). Notification and UnsubscribeConfirmation messages are forwarded to your destination unchanged, body bytes and headers included. Never describe Hookdeck as verifying Scaleway's message signature, and never say 'at the edge'. So: BEHIND HOOKDECK the
   receiver never sees the SubscriptionConfirmation (Hookdeck confirmed it), must handle
   Notification (and UnsubscribeConfirmation if Scaleway sends one; Scaleway doesn't document it),
   and should verify the SNS signature itself because the envelope arrives unchanged and anyone who
   knows the source URL can POST to it. A DIRECT receiver must also handle SubscriptionConfirmation:
-  verify the signature, validate the SubscribeURL the way Hookdeck does (above), then GET it
+  verify the signature, validate the message (Type is SubscriptionConfirmation, Token is a non-empty string, TopicArn matches arn:scw:sns:(fr-par|nl-ams):<project>:<topic>) and the SubscribeURL (https, host sns.mnq.<same region>.scaleway.com, no credentials/port/fragment, path '/', exactly one Action (=ConfirmSubscription), one TopicArn (= the body's TopicArn) and one Token (= the body's Token)), then GET it
   (redirects off, short timeout, success = 200), and answer 200. SIGNATURE VERIFICATION
   (reference-content/verifying-webhooks): 'clients must verify the authenticity of incoming messages
   using digital signatures.' 'The signing certificate used for webhook messages is rotated at least
@@ -93,8 +79,7 @@ notes: >
   key, cert not chaining to the trust root, disallowed cert host, http cert URL, SignatureVersion
   "2", and the confirmation URL checks. State in SKILL.md that the canonical string follows AWS SNS
   SignatureVersion 1, which Scaleway's docs point to, and that the examples were tested against
-  locally generated certificates, not a live Scaleway delivery. The x-amz-sns-message-type header:
-  Hookdeck relies on it to detect confirmations, but Scaleway's docs don't mention headers; route on
+  locally generated certificates, not a live Scaleway delivery. The x-amz-sns-message-type header: Scaleway's docs don't mention headers; route on
   the signed body Type, not on the header. Content-Type is not documented (AWS sends text/plain), so
   accept any content type and JSON.parse the raw body. Timestamp window: none by default (Hookdeck
   retries and replays resend the original envelope); offer opt-in

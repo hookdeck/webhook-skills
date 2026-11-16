@@ -25,7 +25,7 @@ Steps:
 
 ## Should I Reject Old Timestamps?
 
-Not by default. Hookdeck retries and replays resend the original headers, including the original `t`, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. The examples leave the check off. To opt in, set `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds); unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup. With a window set, a non-numeric `t` fails.
+Not by default. Hookdeck retries and replays resend the original headers, including the original `t`, so a fixed window would reject legitimate retries. The examples leave the check off. To opt in, set `TOP_GG_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (`t` is Unix seconds); unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup. With a window set, a non-numeric `t` fails.
 
 ## Implementation
 

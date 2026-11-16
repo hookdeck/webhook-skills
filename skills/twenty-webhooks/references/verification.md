@@ -70,7 +70,7 @@ Complete handlers with tests: [Express](../examples/express/), [Next.js](../exam
 
 ## Timestamp Tolerance (opt-in)
 
-The examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. If you want replay protection at the receiver, set `TWENTY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); the examples then reject a timestamp more than that many seconds from now (unset or `0` = off). Prefer idempotent handlers for replay safety. The nonce is not signed, so it can't prove freshness.
+The examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. If you want replay protection at the receiver, set `TWENTY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`); the examples then reject a timestamp more than that many seconds from now (unset or `0` = off). Prefer idempotent handlers for replay safety. The nonce is not signed, so it can't prove freshness.
 
 ## Debugging Verification Failures
 

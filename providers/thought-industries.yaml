@@ -16,19 +16,16 @@ notes: >
   exactly as received. Parsing the JSON and serializing it again can change the bytes and break the
   match.' 'The Site Secret is not your API key and is not shown in Admin. Request it from Thought
   Industries Support.' From the docs (registry summary): `X-Ti-Hook-Signature: sha256=<hex>` =
-  `sha256=` + lowercase hex HMAC-SHA256(Site Secret, raw body). No timestamp. SIGNATURE SCHEME (it
-  must match Hookdeck's THOUGHT_INDUSTRIES source exactly: HMAC controller, algorithm "sha256",
-  header_key "x-ti-hook-signature", encoding "hex"). The X-Ti-Hook-Signature header carries
-  `sha256=<hex>`. Strip a leading `sha256=` before validating the digest; Hookdeck's parser also
-  accepts the bare digest, so accept the value with or without the prefix. The signature is lowercase
+  `sha256=` + lowercase hex HMAC-SHA256(Site Secret, raw body). No timestamp. SIGNATURE SCHEME: The X-Ti-Hook-Signature header carries
+  `sha256=<hex>`. Strip a leading `sha256=` before validating the digest, and accept the value with or without the prefix. The signature is lowercase
   hex HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or
   other header is signed). Build the signed message as BYTES: the raw body bytes exactly as received,
   never decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The
   HMAC key is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: The site's Site Secret, which is
   neither the API key nor shown in Admin: Thought Industries Support issues it and rotates it on
-  request. Hookdeck's configuration_alert says the same: "Ask Thought Industries Support for your Site
+  request. Hookdeck's configuration alert says the same: "Ask Thought Industries Support for your Site
   Secret and paste it here." Use it as UTF-8 bytes. Env var: THOUGHT_INDUSTRIES_WEBHOOK_SECRET.
   Validate the signature's format before decoding it (exact length and alphabet), then compare in
   constant time: Node checks lengths, then crypto.timingSafeEqual on equal-length Buffers, and never
@@ -41,8 +38,7 @@ notes: >
   notifications must key on `event`. Documented event types (31): courseEnrollment, courseAction,
   courseCompletion, courseCertificate, coursePurchase, quizAttempt, assignmentSubmission,
   courseComment, courseInstructorMessage, emailCapture, learningPathEnrollment, learningPathAction,
-  login, visit (and 17 more). Handle a few common ones and log the rest. Method: POST. Hookdeck's
-  Thought Industries source manages the method as POST, so the examples handle POST on the webhook
+  login, visit (and 17 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook
   route. Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type
   works and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. After verifying, treat every field of the

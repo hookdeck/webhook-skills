@@ -19,7 +19,7 @@ whenever a group of alerts fires or resolves. Webhooks are **not signed**. The r
 (`authorization`, default type Bearer) or `Basic base64(username:password)` (`basic_auth`). Your
 endpoint authenticates the request by comparing those credentials with the ones you configured.
 
-Hookdeck's Prometheus Alertmanager source offers both: **Basic auth** (the default) for
+Hookdeck's Prometheus Alertmanager source offers both: **Basic auth** for
 `basic_auth`, where you enter the username and password, and **Bearer token** for `authorization`,
 where you enter the bare credentials.
 
@@ -79,7 +79,7 @@ function verifyAlertmanagerRequest(headers, env = process.env) {
 - `basic_auth`: `Authorization: Basic base64(username:password)`, checked against
   `ALERTMANAGER_WEBHOOK_USERNAME` and `ALERTMANAGER_WEBHOOK_PASSWORD`. Split on the first colon (a
   password may contain `:`) and compare both parts. The `Basic` scheme matches in any case.
-  Hookdeck never sends a 401 challenge; Alertmanager sends `basic_auth` on every request anyway.
+  Alertmanager sends `basic_auth` on every request, so no challenge round trip is needed.
 - A form you haven't configured is rejected, so with neither configured every request is rejected.
 - Return `401` for a missing header, wrong scheme or mismatch, `400` for a body that isn't a JSON
   object, `200` once handled.

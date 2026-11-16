@@ -29,9 +29,8 @@ you type one in Torii. The header name is your choice; it defaults to `Authoriza
 
 ## Using Hookdeck
 
-Hookdeck's Torii source verifies the header name and exact whole value (API key verification).
-It **pre-selects POST** without managing the method, so if your custom action uses PUT, PATCH,
-GET or DELETE, allow that method on the source as well.
+Hookdeck's Torii source checks the header (API key verification).
+Allow the method your custom action uses on the source as well (see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

@@ -85,7 +85,7 @@ def safe_equal(a: str, b: str) -> bool:
 - **Wrong credential**: don't confuse the Pax8 OAuth token you use to call Pax8's API with the
   `authorization` value Pax8 sends to you.
 - **Timeouts**: respond within 10 seconds or the attempt is marked failed and retried.
-- **Hookdeck**: a Hookdeck Pax8 source (`PAX8`) compares the same whole header value.
+- **Hookdeck**: a Hookdeck Pax8 source (`PAX8`) checks the same header.
 
 ## Debugging 401s
 

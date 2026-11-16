@@ -65,7 +65,7 @@ Frameworks: Express `express.raw({ type: '*/*' })`; Next.js `await request.array
 
 Lob's step 4 is optional and recommends rejecting timestamps older than 5 minutes. This skill
 leaves it **off by default**: Hookdeck retries and replays re-send the original headers and
-timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate
+timestamp, so a fixed window would reject legitimate
 retries. The examples read `LOB_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off; `300` = 5
 minutes). Lob does not document the timestamp unit, so the examples read a ~10-digit value as
 seconds and a ~13-digit value as milliseconds, and reject a non-numeric timestamp when a

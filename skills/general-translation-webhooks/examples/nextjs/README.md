@@ -1,6 +1,6 @@
 # General Translation Webhooks - Next.js Example
 
-Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names, as Hookdeck does.
+Minimal example of receiving [General Translation](https://generaltranslation.com) webhooks with signature verification. Deliveries are signed with Standard Webhooks (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and verified with the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) package. If `webhook-id` is absent the handler falls back to the `svix-*` header names.
 
 ## Prerequisites
 

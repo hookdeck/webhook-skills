@@ -24,7 +24,7 @@ Each endpoint has its own `whsec_` secret (up to 16 endpoints). It is returned o
 
 ## Which Header Names Should I Read?
 
-Read `webhook-*`. When `webhook-id` is absent, fall back to the `svix-*` spelling (`svix-id`, `svix-timestamp`, `svix-signature`), which is what Hookdeck does. Then hand the three values to the verifier under the names it expects (`webhook-id`, `webhook-timestamp`, `webhook-signature` for the `standardwebhooks` library).
+Read `webhook-*`. When `webhook-id` is absent, fall back to the `svix-*` spelling (`svix-id`, `svix-timestamp`, `svix-signature`). Then hand the three values to the verifier under the names it expects (`webhook-id`, `webhook-timestamp`, `webhook-signature` for the `standardwebhooks` library).
 
 ```javascript
 function extractSignatureHeaders(get) {

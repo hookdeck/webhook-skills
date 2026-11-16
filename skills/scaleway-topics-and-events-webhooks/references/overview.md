@@ -4,7 +4,7 @@
 
 Scaleway Topics and Events is a publish/subscribe service "based on the AWS SNS protocol". Scaleway built it in-house: it "does not have any dependencies on the AWS SNS infrastructure". Publishers send messages to a **topic**, and the topic pushes them to its **subscriptions**: HTTP/HTTPS endpoints, Scaleway Serverless Functions and Containers, or Scaleway Queues. This skill covers the HTTP/HTTPS subscribers, which receive `POST` requests.
 
-Topics live in a region. `fr-par` and `nl-ams` have published trust chains, and they're the regions Hookdeck accepts. ARNs look like `arn:scw:sns:fr-par:<project-id>:<topic-name>`.
+Topics live in a region. `fr-par` and `nl-ams` have published trust chains. ARNs look like `arn:scw:sns:fr-par:<project-id>:<topic-name>`.
 
 ## The Envelope
 

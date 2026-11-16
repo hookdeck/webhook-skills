@@ -10,7 +10,7 @@ Act-On sends outgoing webhooks through an embedded [Svix](https://www.svix.com/)
 | `svix-timestamp` | Unix timestamp (seconds) of this delivery attempt |
 | `svix-signature` | Space-separated list of signatures, each `v1,<base64>` (for example `v1,abc123 v1,def456`) |
 
-Because the `svix-` prefix is inferred, the snippets below (like Hookdeck) fall back to `webhook-id`, `webhook-timestamp` and `webhook-signature`, Svix's other header prefix, when the `svix-*` headers are absent. The signed content is the same either way.
+Because the `svix-` prefix is inferred, the snippets below fall back to `webhook-id`, `webhook-timestamp` and `webhook-signature`, Svix's other header prefix, when the `svix-*` headers are absent. The signed content is the same either way.
 
 - **Algorithm:** HMAC-SHA256, base64-encoded
 - **Signed content:** `{svix-id}.{svix-timestamp}.{raw body}`

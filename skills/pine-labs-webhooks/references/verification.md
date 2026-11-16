@@ -20,7 +20,7 @@ Pine Labs' docs: "Ensure that the webhook body remains unparsed."
 
 The secret key from the dashboard as its **raw UTF-8 bytes**. Pine Labs' worked example uses the secret `abc1234`, "encodes it to Base64" (`YWJjMTIzNA==`) and then base64-decodes that again to get the HMAC key, which is the original bytes. So `Buffer.from(secret, 'utf8')` is correct.
 
-The key rule used by the examples (and by Hookdeck):
+The key rule used by the examples:
 
 - Secret starts with `whsec_`: base64-decode the part after the prefix. Pine Labs doesn't issue these.
 - Anything else: the secret's UTF-8 bytes.
@@ -69,7 +69,7 @@ def verify_pine_labs(raw_body: bytes, msg_id: str, timestamp: str, signature_hea
 
 ### Header fallback
 
-Read `webhook-id`, `webhook-timestamp` and `webhook-signature`. When `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead, as Hookdeck does. Pass the three values to the verifier under whichever names it expects.
+Read `webhook-id`, `webhook-timestamp` and `webhook-signature`. When `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. Pass the three values to the verifier under whichever names it expects.
 
 ## Common Gotchas
 

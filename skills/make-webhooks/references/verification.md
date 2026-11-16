@@ -15,8 +15,7 @@ keychain:
 The examples read the header name from `MAKE_WEBHOOK_HEADER` (default `Authorization`) and
 the expected value from `MAKE_WEBHOOK_SECRET`, and compare the **whole** value. They don't
 strip or parse a `Bearer ` prefix: if you typed `Bearer abc` in Make, set
-`MAKE_WEBHOOK_SECRET=Bearer abc`. This is also how Hookdeck's Make source verifies (header
-name plus exact value).
+`MAKE_WEBHOOK_SECRET=Bearer abc`. Hookdeck's Make source checks this header too.
 
 ## What a Static Credential Does and Doesn't Give You
 

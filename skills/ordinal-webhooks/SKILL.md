@@ -229,10 +229,9 @@ No account required — the CLI creates a guest account on first run and gives y
 HTTPS URL plus a web UI for inspecting requests. Use `8000` instead of `3000` for the
 FastAPI example.
 
-Hookdeck's `ORDINAL` source type has verification **optional** and offers the generic
-**Basic Auth** and **API Key** (header name + value) checks — these validate the static
-header you configured in Ordinal's `headers`. Hookdeck cannot do HMAC for Ordinal because
-there is no body-dependent signature to verify.
+Hookdeck's `ORDINAL` source type offers **Basic Auth** and **API Key** checks, which
+validate the static header you configured in Ordinal's `headers`. There is no HMAC check
+because Ordinal sends no body-dependent signature to verify.
 
 ## Reference Materials
 

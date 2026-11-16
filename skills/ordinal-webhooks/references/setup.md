@@ -157,11 +157,9 @@ Use `8000` for the FastAPI example. No account required — the CLI creates a gu
 on first run, gives you a public HTTPS URL to paste into the webhook's `url`, and a web UI
 for inspecting and replaying requests.
 
-Hookdeck's `ORDINAL` source type has verification **optional**, and offers the generic
-**Basic Auth** and **API Key** (header name + value) checks. Configure the API Key check
-with the same header name and value you put in Ordinal's `headers` and Hookdeck will
-validate it at the edge. Hookdeck cannot perform HMAC verification for Ordinal because
-there is no body-dependent signature.
+Hookdeck's `ORDINAL` source type offers **Basic Auth** and **API Key** checks. Configure the
+API Key check with the same header name and value you put in Ordinal's `headers` and Hookdeck
+will check it. There is no HMAC check because Ordinal sends no body-dependent signature.
 
 ## Securing an Endpoint With No Signature
 

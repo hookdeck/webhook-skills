@@ -97,9 +97,7 @@ re-fetch authoritative data before doing anything consequential.
 curl https://public-api.wordpress.com/rest/v1.1/sites/example.wordpress.com/posts/123
 ```
 
-With Hookdeck, the Hookdeck Source URL *is* the secret endpoint; Hookdeck's
-WordPress.com source type performs no signature check (there is nothing to
-check). Verify Hookdeck's own `x-hookdeck-signature` (HMAC-SHA256, base64, over
+With Hookdeck, the Hookdeck Source URL *is* the secret endpoint; WordPress.com sends no signature, so there is nothing for Hookdeck to check. Verify Hookdeck's own `x-hookdeck-signature` (HMAC-SHA256, base64, over
 the raw forwarded body) on the request Hookdeck delivers to your app — that
 signature is **Hookdeck's**, not WordPress.com's. See
 [references/verification.md](references/verification.md).
@@ -180,9 +178,7 @@ npx hookdeck-cli listen 3000 wordpress-com --path /webhooks/wordpress-com
 ```
 
 No account required — the CLI creates a guest account on first run and gives you
-a public HTTPS URL plus a web UI for inspecting requests. Hookdeck's
-`WORDPRESS_COM` source type is schema-only (`http_method_managed_post`) with no
-verification controller, matching the fact that there is nothing to verify.
+a public HTTPS URL plus a web UI for inspecting requests. Use the `WORDPRESS_COM` source type; WordPress.com sends no signature, so there is nothing to verify.
 
 ## Reference Materials
 

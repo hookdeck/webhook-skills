@@ -13,8 +13,7 @@ X-Webhook-Secret: Bearer your-shared-secret
 ```
 
 Lookup is case-insensitive; the comparison is on the **whole** value. Do not strip or parse a
-`Bearer ` prefix. This is also what Hookdeck's MeasureOne source does (API key verification:
-API Key Header plus exact whole API Key).
+`Bearer ` prefix. Hookdeck's MeasureOne source checks this header too.
 
 ## What This Does and Doesn't Protect
 

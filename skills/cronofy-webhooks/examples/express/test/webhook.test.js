@@ -124,7 +124,7 @@ describe('verifyCronofyWebhook', () => {
     expect(verifyCronofyWebhook(reserialized, sign(body), TEST_SECRET)).toBe(false);
   });
 
-  // Parity with the hookdeck/core CRONOFY controller, which filters empty candidates.
+  // Empty candidates are filtered out.
   it('rejects a header of only separators', () => {
     expect(verifyCronofyWebhook(body, ' , ', TEST_SECRET)).toBe(false);
     expect(verifyCronofyWebhook(body, '', TEST_SECRET)).toBe(false);

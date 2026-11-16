@@ -73,7 +73,7 @@ def verify_sinch_signature(
         received = base64.b64decode(signature, validate=True)
     except (binascii.Error, ValueError):
         return False
-    # Reject non-canonical encodings (stray low bits in the last character): Hookdeck compares base64 exactly
+    # Reject non-canonical encodings (stray low bits in the last character)
     if base64.b64encode(received).decode("ascii") != signature:
         return False
 

@@ -25,7 +25,7 @@ Consequences:
 - A raw-body HMAC check **fails for every batched delivery**.
 - To verify, compute the HMAC over the serialized first element: `JSON.stringify(body[0])` in Node, or the exact bytes of the first element sliced from the raw body (more robust than re-serializing in non-JS languages).
 - **Only the first event is authenticated.** Events after it are not covered by the signature. If that matters, keep batching off.
-- Tools that verify the raw body (including a Hookdeck source verifying `X-Signature` over the body) will reject batched Segment deliveries. Disable batching on the mapping when a raw-body verifier sits in front of your app.
+- Tools that verify the raw body (such as a Hookdeck source) will reject batched Segment deliveries. Disable batching on the mapping when a raw-body verifier sits in front of your app.
 
 ## Implementation
 

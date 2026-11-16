@@ -21,7 +21,7 @@ const OPTIONAL_FIELDS = new Set(['Subject']);
 
 // Host of the SigningCertURL in Scaleway's docs (and of the trust-chain files)
 export const DEFAULT_CERT_HOSTS = ['messaging.s3.fr-par.scw.cloud'];
-// Regions with a published trust chain (and the ones Hookdeck accepts)
+// Regions with a published trust chain
 const TOPIC_ARN = /^arn:scw:sns:(fr-par|nl-ams):[^:]+:[^:]+$/;
 
 export class CertFetchError extends Error {}
@@ -177,7 +177,7 @@ export function createVerifier({
 }
 
 /**
- * The checks Hookdeck applies before it GETs a SubscribeURL: https, host sns.mnq.<region>.scaleway.com
+ * The checks to apply before GETting a SubscribeURL: https, host sns.mnq.<region>.scaleway.com
  * for the TopicArn's region, path "/", no credentials, port or fragment, and exactly one Action
  * (ConfirmSubscription), TopicArn and Token, matching the message.
  */

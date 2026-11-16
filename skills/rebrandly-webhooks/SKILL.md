@@ -66,8 +66,7 @@ function verifyRebrandlyRequest(headers, secret = process.env.REBRANDLY_WEBHOOK_
 ## HTTP Methods
 
 Clickstream uses the POST or PUT method you give Rebrandly at setup, so the examples accept GET,
-POST, PUT, PATCH and DELETE on `/webhooks/rebrandly`. Hookdeck's Rebrandly source pre-selects POST
-without managing the method, so any other method the sender uses must also be allowed on the source.
+POST, PUT, PATCH and DELETE on `/webhooks/rebrandly`. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Types
 

@@ -35,7 +35,7 @@ metadata:
 | `webhook-timestamp` | Unix seconds of this delivery attempt |
 | `webhook-signature` | One or more space-separated `v1,<base64 HMAC-SHA256>` entries |
 
-Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the base64-**decoded** part of the endpoint's secret after `whsec_`. Each endpoint has its own secret. camelAI has no webhook SDK, so the examples use `standardwebhooks` (npm, PyPI), which compares in constant time against every `v1,` entry. Read `webhook-*` headers and, when `webhook-id` is absent, fall back to the `svix-*` headers, as Hookdeck does.
+Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the base64-**decoded** part of the endpoint's secret after `whsec_`. Each endpoint has its own secret. camelAI has no webhook SDK, so the examples use `standardwebhooks` (npm, PyPI), which compares in constant time against every `v1,` entry. Read `webhook-*` headers and, when `webhook-id` is absent, fall back to the `svix-*` headers.
 
 ```javascript
 const { Webhook } = require('standardwebhooks');

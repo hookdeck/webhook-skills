@@ -72,7 +72,7 @@ Triggers default to `POST` and can use `PUT` or `PATCH` ("One of: POST, PUT, PAT
 examples therefore accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on the route, check the
 credential first for each, and handle an empty body.
 
-Hookdeck's Estuary source pre-selects `POST` without managing the method, so if your trigger
+Hookdeck's Estuary source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so if your trigger
 uses `PUT` or `PATCH`, also allow that method on the Hookdeck source.
 
 ## Payloads

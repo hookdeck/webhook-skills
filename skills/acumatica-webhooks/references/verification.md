@@ -67,8 +67,7 @@ def verify_acumatica_request(headers, env=os.environ) -> bool:
 
 ## Common Gotchas
 
-- **Compare the whole value.** Don't split off `Bearer `; Hookdeck's Acumatica source compares the
-  header name and exact whole value too.
+- **Compare the whole value.** Don't split off `Bearer `.
 - **Header names are case-insensitive.** Node lowercases them; look up `name.toLowerCase()`.
 - **Constant-time compare.** `timingSafeEqual` throws on unequal lengths, so check lengths first.
   In Python pass bytes to `hmac.compare_digest`; `str` raises on non-ASCII.

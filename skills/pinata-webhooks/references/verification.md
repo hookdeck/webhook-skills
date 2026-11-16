@@ -12,8 +12,7 @@ carries three headers:
 | `webhook-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 Svix's own `svix-id`, `svix-timestamp` and `svix-signature` names carry the same values.
-Hookdeck's Pinata source reads the `webhook-*` headers and also accepts the `svix-*` set, and the
-examples here do the same: they read `webhook-*` first and fall back to `svix-*` when
+The examples read `webhook-*` first and fall back to `svix-*` when
 `webhook-id` is absent.
 
 The algorithm:

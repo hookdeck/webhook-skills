@@ -17,8 +17,7 @@ logs, and rotate them if they leak.
 
 ## What Does the Handler Check?
 
-It matches Hookdeck's Prometheus Alertmanager source, which offers Basic auth (the default) and
-Bearer token (API key on `authorization` with value prefix `Bearer `):
+It matches Hookdeck's Prometheus Alertmanager source, which offers Basic auth and Bearer token:
 
 1. **Bearer:** if the header starts with `Bearer ` (any case; auth schemes are case-insensitive per
    RFC 9110), compare the rest with `ALERTMANAGER_WEBHOOK_SECRET` in constant time. A leading
@@ -29,8 +28,7 @@ Bearer token (API key on `authorization` with value prefix `Bearer `):
 3. A form that isn't configured is rejected. With neither configured, every request is rejected.
 4. Missing header, another scheme, malformed credentials or a mismatch: `401`.
 
-Hookdeck never sends a 401 challenge. That doesn't matter here: Alertmanager sends `basic_auth`
-with every request, without waiting to be challenged.
+Alertmanager sends `basic_auth` with every request, without waiting to be challenged.
 
 ## Implementation
 

@@ -11,8 +11,6 @@ The header name is your choice, so it is configured with `SWOOGO_WEBHOOK_HEADER`
 Authorization: Bearer your-secret
 ```
 
-This matches Hookdeck's Swoogo source: header name plus the exact whole value.
-
 > **Limits.** A static shared credential authenticates the sender, not the body, and gives no
 > replay protection (no signature, no timestamp). Anyone who captures one request can replay it or
 > send a different body. Use HTTPS, rotate the credential if it leaks, and make handlers idempotent.

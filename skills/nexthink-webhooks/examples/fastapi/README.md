@@ -60,8 +60,8 @@ curl -X POST http://localhost:8000/webhooks/nexthink \
 npx hookdeck-cli listen 8000 nexthink --path /webhooks/nexthink
 ```
 
-Use the printed URL as the connector credential's URL. Hookdeck's Nexthink source pre-selects
-POST without managing the method: allow PUT or PATCH on the source if your webhook uses them.
+Use the printed URL as the connector credential's URL. Allow the method your webhook
+uses on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## How It Works
 

@@ -10,15 +10,13 @@ notes: >
   delays. No timeout is documented. ConfigCat says: 'The signature is calculated from the content
   constructed by concatenating the webhook's id , timestamp , and raw body together.'
   'X-ConfigCat-Webhook-Signature-V1 A comma-separated list of base64-encoded HMAC-SHA-256 signatures
-  (one for each signing key).' SIGNATURE SCHEME (it must match Hookdeck's CONFIGCAT source exactly:
-  HMAC controller, algorithm sha256, header x-configcat-webhook-signature-v1, encoding base64,
-  signed_content_template
-  "{header:x-configcat-webhook-id}{header:x-configcat-webhook-timestamp}{body}"). The
+  (one for each signing key).' SIGNATURE SCHEME (algorithm sha256, header x-configcat-webhook-signature-v1, encoding base64,
+  signed content
+  "{x-configcat-webhook-id header}{x-configcat-webhook-timestamp header}{raw body}"). The
   X-ConfigCat-Webhook-Signature-V1 header carries the bare standard base64 (padded) digest, no prefix.
   The signature is standard base64 (padded) HMAC-SHA256, keyed with the secret, over: the
   X-ConfigCat-Webhook-ID header value, then the X-ConfigCat-Webhook-Timestamp header value, then the
-  raw request body bytes. Where two parts are adjacent above there is NO separator between them. Build
-  the signed message as BYTES, exactly as Hookdeck's template does: literal separators as UTF-8,
+  raw request body bytes. Where two parts are adjacent above there is NO separator between them. Build the signed message as BYTES: literal separators as UTF-8,
   header values as the exact header string encoded latin1 (Node Buffer.from(value, 'latin1'); Python
   value.encode('latin-1'); a header is never trimmed, parsed or re-formatted), and the raw body bytes
   as received, concatenated with Buffer.concat / b''.join. Never decode the body to a string and
@@ -34,30 +32,25 @@ notes: >
   silently drops bad characters); Python uses hmac.compare_digest on bytes (never str) and
   base64.b64decode(..., validate=True). Missing or empty signature or signed header, malformed value
   or mismatch: 401. Timestamp window: do NOT reject old timestamps by default. Hookdeck retries and
-  replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a
+  replays resend the original headers and timestamp, so a
   fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   CONFIGCAT_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
   (X-ConfigCat-Webhook-Timestamp is Unix seconds). ID, timestamp and body with NO separators. The body
-  may be empty (then only id + timestamp are signed). Like Hookdeck's ConfigCat source, compare the
-  WHOLE X-ConfigCat-Webhook-Signature-V1 value to one expected signature: with two signing keys
+  may be empty (then only id + timestamp are signed). Compare the WHOLE X-ConfigCat-Webhook-Signature-V1 value to one expected signature: with two signing keys
   ConfigCat sends two comma-separated signatures and verification fails, so the user keeps a single
-  key (say this, and say that during a rotation both Hookdeck and the examples reject deliveries until
+  key (say this, and say that during a rotation deliveries fail verification until
   the old key is removed). Events: ConfigCat has no event types. The webhook author writes the body
   (optional) with ##Variable## placeholders such as ##ConfigName##, ##EnvironmentName##,
   ##ChangeNotes## and ##ChangeDetails##; every call means 'settings changed' in the chosen Config and
   Environment. The examples handle any body (JSON if it parses, else text, or empty) with a clearly
   labelled illustrative JSON template, and treat each call as a config-changed notification. Methods:
   ConfigCat webhooks are set to GET or POST by the user (WebHookHttpMethod get|post). With GET there
-  is no body. Hookdeck's ConfigCat source pre-selects POST without managing the method (the user can
-  change it). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
+  is no body. The allowed methods on the Hookdeck source can be changed (https://hookdeck.com/docs/sources#custom-methods). The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the
   webhook route (Express: app.all or one route per method; Next.js: export a handler for each;
   FastAPI: api_route with those methods), verify the signature first for every method, and treat a
-  missing body as empty bytes. Say in SKILL.md and setup.md that Hookdeck's ConfigCat source
-  pre-selects POST without managing the method, so any other method the sender uses must also be
-  allowed on the source. Express examples must read the raw body with express.raw({ type: '*/*' }) so
+  missing body as empty bytes. Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with express.raw({ type: '*/*' }) so
   any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();
-  FastAPI: await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR (verified
-  against Hookdeck's template): the vendor's docs give a worked example, saved verbatim as JSON
+  FastAPI: await request.body()); parse the body only after the check. PUBLISHED TEST VECTOR: the vendor's docs give a worked example, saved verbatim as JSON
   (secret, body string, headers) in
   /tmp/claude-0/-home-user/a6117e89-67f4-5ebf-9ebd-ebed152a5054/scratchpad/b14-skills/vectors/configcat.json.
   Every example's test suite (Express, Next.js and FastAPI) must include it as a unit test: load or

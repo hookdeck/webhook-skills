@@ -7,7 +7,7 @@
 
 ## Hookdeck Source
 
-Hookdeck's source type is `CYERA` (labelled "Cyera"); it manages the method as `POST`. Hookdeck
+Hookdeck's source type is `CYERA` (labelled "Cyera"). Hookdeck
 shows this note for the source:
 
 For Cyera Privacy's privacy-request webhooks. Paste the Webhook Secret from the webhook integration.

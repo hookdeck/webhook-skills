@@ -16,7 +16,7 @@ function verifyMemberfulSignature(rawBody, signature, secret = process.env.MEMBE
   if (!/^[0-9a-fA-F]{64}$/.test(signature)) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  const received = Buffer.from(signature.toLowerCase(), 'hex'); // case-insensitive, as Hookdeck does
+  const received = Buffer.from(signature.toLowerCase(), 'hex'); // case-insensitive
   return received.length === expected.length && crypto.timingSafeEqual(received, expected);
 }
 

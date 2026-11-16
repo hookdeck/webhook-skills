@@ -17,9 +17,7 @@ notes: >
   HMAC-SHA256 of '<t>.<raw body>' and accept if ANY v0 value matches; validate each candidate is
   exactly 64 hex characters before decoding (Buffer.from(x, 'hex') silently truncates invalid hex),
   compare with crypto.timingSafeEqual on decoded bytes (Python: hmac.compare_digest on lowercased
-  hex); hex is compared case-insensitively. Require t to be a plain positive integer. This matches
-  Hookdeck's Sublime Security source (HMAC, sha256, header x-sublime-signature, hex,
-  prefix_data_with_timestamp with delimiter '.'; core has no timestamp window). Timestamp window:
+  hex); hex is compared case-insensitively. Require t to be a plain positive integer. Timestamp window:
   follow the house pattern from batch 6 (e.g. the boldsign skill): any window the skill enforces is
   OFF by default and opt-in via SUBLIME_SECURITY_TIMESTAMP_TOLERANCE_SECONDS (a positive whole
   number turns it on; anything else leaves it off with a warning). Sublime's own retries come with a

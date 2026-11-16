@@ -57,7 +57,7 @@ Tiltify has no official webhook SDK, so verification is manual in every framewor
 
 ### Timestamp tolerance is opt-in
 
-Tiltify's guide says the timestamp should be within a minute of now. The examples do **not** enforce this by default: Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck itself applies no tolerance, so a fixed window would reject legitimate retries. Set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Tiltify-Timestamp` is ISO-8601 with microseconds.
+Tiltify's guide says the timestamp should be within a minute of now. The examples do **not** enforce this by default: Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Set `TILTIFY_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to turn it on; unset or `0` means off. `X-Tiltify-Timestamp` is ISO-8601 with microseconds.
 
 ### Read the raw body
 

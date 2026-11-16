@@ -15,8 +15,7 @@ Authorization: Bearer your-shared-secret
 `PARAGON_WEBHOOK_SECRET` is the exact, whole header value, including any `Bearer ` prefix. Look
 the header up case-insensitively and compare the **whole** value. Do not strip or parse `Bearer `.
 
-This matches Hookdeck's Paragon source, which verifies the header name and exact value (API key
-verification).
+Hookdeck's Paragon source checks the same header (API key verification).
 
 ## Security Limits
 

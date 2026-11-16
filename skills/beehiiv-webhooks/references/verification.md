@@ -60,7 +60,7 @@ function verifyBeehiivWebhookManual(rawBody, headers, secret, toleranceSec = 0) 
   const expected = Buffer.from(crypto.createHmac('sha256', key).update(`${id}.${ts}.`).update(rawBody).digest('base64'));
   const ok = sigs.split(' ').some((entry) => {
     const [version, sig] = entry.split(',');
-    const given = Buffer.from(sig ?? ''); // compare the base64 text, as Svix and Hookdeck do
+    const given = Buffer.from(sig ?? ''); // compare the base64 text, as Svix does
     return version === 'v1' && given.length === expected.length && crypto.timingSafeEqual(given, expected);
   });
   if (!ok) throw new Error('Invalid signature');

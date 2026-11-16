@@ -34,7 +34,7 @@ Bindbee signs every version 2 delivery per Standard Webhooks, with three headers
 
 ```javascript
 const key = secret.startsWith('whsec_')               // paste the secret as shown, no whsec_ prefix
-  ? Buffer.from(secret.slice(6), 'base64')             // (a whsec_ value is base64, as Hookdeck treats it)
+  ? Buffer.from(secret.slice(6), 'base64')             // (a whsec_ value is base64)
   : Buffer.from(secret, 'utf8');
 if (!/^[1-9][0-9]*$/.test(timestamp)) throw new Error('Invalid timestamp');
 const expected = crypto.createHmac('sha256', key)

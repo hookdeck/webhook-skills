@@ -18,15 +18,13 @@ notes: >
   secret. The guide computes it over `json_encode($payload)`, i.e. a re-encoding of the decoded body;
   spatie/laravel-webhook-server, which Mailcoach sends with, signs the exact body string it sends
   (`DefaultSigner::calculateSignature(..., string $body, ...)`), and that body is itself `json_encode`
-  of the payload, so the raw body is what is signed. SIGNATURE SCHEME (it must match Hookdeck's
-  MAILCOACH source exactly: HMAC controller, algorithm "sha256", header_key "signature", encoding
-  "hex"). The Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
+  of the payload, so the raw body is what is signed. SIGNATURE SCHEME: The Signature header carries the bare lowercase hex digest, no prefix. Compare the WHOLE
   header value as one digest (no list splitting or prefix parsing). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over the raw request body bytes only (no timestamp, id or other
   header is signed). Build the signed message as BYTES: the raw body bytes exactly as received, never
   decoded to a string and re-encoded, never JSON.parse/JSON.stringify'd before verifying. The HMAC key
   is the secret's UTF-8 bytes, used as-is (not hex- or base64-decoded). Hex is compared
-  case-insensitively (as Hookdeck does): require exactly 64 hex characters, lowercase both sides (or
+  case-insensitively: require exactly 64 hex characters, lowercase both sides (or
   decode both to bytes) before the constant-time compare. Secret: A secret the user enters on the
   webhook details page. Use it as UTF-8 bytes. Env var: MAILCOACH_WEBHOOK_SECRET. Validate the
   signature's format before decoding it (exact length and alphabet), then compare in constant time:
@@ -39,8 +37,7 @@ notes: >
   `event`, the PHP event class name (`SubscribedEvent`). Each Payloads section lists `event` first,
   then the subscriber or campaign fields flat beside it. No header names the event. Documented event
   types (4): UnconfirmedSubscriberCreatedEvent, SubscribedEvent, UnsubscribedEvent, CampaignSentEvent.
-  Handle a few common ones and log the rest. Method: POST. Hookdeck's Mailcoach source manages the
-  method as POST, so the examples handle POST on the webhook route. Express examples must read the raw
+  Handle a few common ones and log the rest. Method: POST, so the examples handle POST on the webhook route. Express examples must read the raw
   body with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified
   (Next.js: await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the
   check. Hookdeck's source type is MAILCOACH, labelled 'Mailcoach'. Hookdeck shows this setup note for

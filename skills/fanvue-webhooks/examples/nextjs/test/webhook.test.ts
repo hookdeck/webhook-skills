@@ -104,7 +104,7 @@ describe('verifyFanvueSignature', () => {
     expect(verifyFanvueSignature(body, header, SECRET)).toEqual({ valid: true });
   });
 
-  it('accepts uppercase hex, as the Hookdeck FANVUE verifier does', () => {
+  it('accepts uppercase hex', () => {
     const t = nowSeconds();
     const header = `t=${t},v0=${sign(body, SECRET, t).toUpperCase()}`;
     expect(verifyFanvueSignature(body, header, SECRET, undefined, t)).toEqual({ valid: true });

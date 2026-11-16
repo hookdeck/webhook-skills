@@ -31,7 +31,7 @@ The create response carries the endpoint's `secret` (it looks like `whsec_...`) 
 
 ## Use Hookdeck
 
-In Hookdeck, create a source of the Agentcard type, paste the endpoint's whole secret (with `whsec_`) into its verification field, and use the source URL as the endpoint `url` above. Hookdeck verifies `AgentCard-Signature` for you; if you also verify in your handler, use the same secret.
+In Hookdeck, create a source of the Agentcard type, paste the endpoint's whole secret (with `whsec_`) into its verification field, and use the source URL as the endpoint `url` above. Hookdeck verifies the signature for you; if you also verify in your handler, use the same secret.
 
 For local development:
 
