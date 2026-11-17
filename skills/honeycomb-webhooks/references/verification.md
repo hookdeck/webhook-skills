@@ -56,8 +56,8 @@ def verify_honeycomb_request(headers, secret=None) -> bool:
 
 ## Common Gotchas
 
-- **No secret, nothing to verify.** The Shared Secret is optional in Honeycomb; without it no
-  token header is sent, so every request fails this check. Set one.
+- **No secret, nothing to verify.** The Shared Secret is optional in Honeycomb; without it the
+  token header carries no secret, so every request fails this check. Set one.
 - **Check every method.** The docs don't name the HTTP method; authenticate GET, POST, PUT, PATCH
   and DELETE the same way, before reading the body. Hookdeck's source accepts only the methods you allow, so allow
   any other method Honeycomb uses.
@@ -75,7 +75,7 @@ def verify_honeycomb_request(headers, secret=None) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `HONEYCOMB_WEBHOOK_SECRET` unset, or differs from the integration's Shared Secret |
-| 401 and no `X-Honeycomb-Webhook-Token` in the logs | The webhook has no Shared Secret; set one |
+| 401 and an empty or missing `X-Honeycomb-Webhook-Token` | The webhook has no Shared Secret; set one |
 | 401 began after editing the integration | The Shared Secret was changed; update the env var |
 | 401 only behind a proxy | The proxy strips or renames the header |
 | 405 on some requests | The route or Hookdeck source doesn't allow the method Honeycomb uses |

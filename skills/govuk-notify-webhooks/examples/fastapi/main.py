@@ -63,15 +63,15 @@ def handle_callback(payload: dict) -> None:
     if kind == "delivery_receipt":
         # status: delivered, permanent-failure, temporary-failure, technical-failure
         print(f"Delivery receipt {payload.get('id')}: {payload.get('status')} ({payload.get('notification_type')})")
-        # TODO: update the notification by payload["reference"] / payload["id"]; retry or alert on failures
+        # Update the notification by payload["reference"] / payload["id"]; retry or alert on failures
 
     elif kind == "received_text":
         print(f"Text message from {payload.get('source_number')}: {payload.get('message')}")
-        # TODO: route the reply (payload["destination_number"], payload["date_received"])
+        # Route the reply (payload["destination_number"], payload["date_received"])
 
     elif kind == "returned_letter":
         print(f"Letter returned: {payload.get('notification_id')}")
-        # TODO: flag the address as bad (payload["reference"], payload["template_name"])
+        # Flag the address as bad (payload["reference"], payload["template_name"])
 
     else:
         print("Unhandled GOV.UK Notify callback shape")

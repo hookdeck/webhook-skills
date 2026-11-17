@@ -85,7 +85,7 @@ def handle_event(event: str, params: dict) -> None:
         print(f"Unhandled event: {event}")
         return
     print(f"{label}: {params}")
-    # TODO: the payload is only identifiers and statuses; fetch the object from the
+    # The payload is only identifiers and statuses: fetch the object from the
     # Aurora API using params["project_id"] / params["design_id"] / params["job_id"].
 
 

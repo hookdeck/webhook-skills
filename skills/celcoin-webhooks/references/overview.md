@@ -8,6 +8,8 @@ Celcoin's docs don't name the HTTP method used for notifications, so handle GET,
 
 ## Event Payload Structure
 
+This is the BaaS envelope (trimmed from Celcoin's `spb-transfer-out` template). Pix webhooks registered through the CelBricks module follow Celcoin's Pix models instead: the data sits in `RequestBody`, the type in `RequestBody.TransactionType` (`RECEIVEPIX`, `PAYMENT`, `REVERTPIX`, `REVERTED`), and there is no `entity`. Pix Indireto MED, infraction and key-claim models use `entity` values `DictRefund`, `InfractionReport` and `DictClaim`.
+
 ```json
 {
   "entity": "spb-transfer-out",
@@ -41,7 +43,7 @@ Celcoin says it never removes fields from a webhook contract without notice but 
 | `spb-transfer-in` | A TED is received | Credit an account |
 | `onboarding-create` | A new account is created | Store account details |
 | `onboarding-proposal` | The proposal is decided (`Approved` or `Reproved`) | Continue or stop onboarding |
-| `kyc` | The KYC result of an account is available | Update compliance state |
+| `kyc` | The KYC result of an account is available (KYC V1, marked discontinued) | Update compliance state |
 
 Other entities in Celcoin's docs include `pix-automatic-*`, `pix-dict-claim-*`, `pix-infraction`, `pix-med-refund`, `pix-funds-recovery-*`, `spb-reversal-in`, `charge-*`, `billpayment`, `topup`, `launch-in`, `launch-out`, `account-status`, `onboarding-backgroundcheck`, `onboarding-documentscopy`, `onboarding-file`, `slc-payment-in`, `judicial-movement-*`, `vehicledebts-*`, `invoice-nfse-*`, `account-accreditation` and `spb-event-error`. The examples log unknown entities and return 200.
 

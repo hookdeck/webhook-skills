@@ -1,6 +1,6 @@
 # Setting Up Sinch Conversation API Webhooks
 
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
+> For Sinch Conversation API callbacks. Set a `secret` on the Conversation API webhook, because callbacks are signed only when it has one. Sinch's other APIs, such as Voice and Verification, sign their callbacks differently.
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ The secret is one you choose: it is the `secret` field of the Conversation API w
 
 ## Register Your Endpoint
 
-Create the webhook with the Conversation API (Sinch Build dashboard: your app's webhooks section, or the API):
+Create the webhook with the Conversation API (in the [Sinch Portal](https://dashboard.sinch.com/convapi/apps) under your app's webhooks, or with the API):
 
 1. Set `target` to your public URL (e.g. `https://your-app.example.com/webhooks/sinch`) and `target_type` to `HTTP`.
 2. Set `secret` to your signing secret.
@@ -26,11 +26,7 @@ Check the current trigger names and request shape in [Sinch's documentation](htt
 
 ## Using Hookdeck
 
-Create a Hookdeck source of type **Sinch** and paste the same secret into it. Hookdeck's setup note for the source:
-
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
-
-Then use the Hookdeck source URL as the webhook `target`.
+Create a Hookdeck source of type **Sinch** and paste the same secret into it. Then use the Hookdeck source URL as the webhook `target`.
 
 ## Local Development
 

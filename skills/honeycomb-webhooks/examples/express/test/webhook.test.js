@@ -9,19 +9,11 @@ const { verifyHoneycombRequest, classifyAlert } = require('../src/index');
 const SECRET = process.env.HONEYCOMB_WEBHOOK_SECRET;
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
-// Illustrative payloads: Honeycomb doesn't document the default payload field by field.
-const TRIGGER = {
-  name: 'Slow checkout requests',
-  status: 'TRIGGERED',
-  trigger_url: 'https://ui.honeycomb.io/example/triggers/abc123',
-  threshold: { op: '>', value: 2000 }
-};
-const BURN_ALERT = {
-  slo_name: 'Checkout availability',
-  alert_type: 'exhaustion_time',
-  budget_remaining: 0.12
-};
-const ANOMALY = { anomaly_id: 'an_123', summary: 'Error rate anomaly' };
+// Bodies rendered by the custom payload templates SKILL.md describes: a constant "kind"
+// plus .Alert.Status. Honeycomb doesn't document its standard payload field by field.
+const TRIGGER = { kind: 'trigger', status: 'TRIGGERED' };
+const BURN_ALERT = { kind: 'exhaustion_time', status: 'TRIGGERED' };
+const ANOMALY = { kind: 'anomaly', status: 'Detected' };
 
 let n = 0;
 const uniqueId = () => `delivery-${++n}`;
@@ -107,9 +99,9 @@ describe('Honeycomb webhook endpoint', () => {
 
   describe('alert classification', () => {
     it('classifies a trigger payload', () => expect(classifyAlert(TRIGGER)).toBe('trigger'));
-    it('classifies an SLO burn alert payload', () => expect(classifyAlert(BURN_ALERT)).toBe('slo_burn_alert'));
+    it('classifies an SLO burn alert payload', () => expect(classifyAlert(BURN_ALERT)).toBe('exhaustion_time'));
     it('classifies an anomaly payload', () => expect(classifyAlert(ANOMALY)).toBe('anomaly'));
-    it('falls back to unknown for custom templates', () => expect(classifyAlert({ foo: 1 })).toBe('unknown'));
+    it('falls back to unknown without a known kind', () => expect(classifyAlert({ foo: 1 })).toBe('unknown'));
 
     it.each([TRIGGER, BURN_ALERT, ANOMALY, { foo: 1 }])('returns 200 for %j', async (payload) => {
       const res = await send('post', { body: JSON.stringify(payload) });

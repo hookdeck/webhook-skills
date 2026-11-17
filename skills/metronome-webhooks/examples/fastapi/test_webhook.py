@@ -20,7 +20,7 @@ from main import (  # noqa: E402
 SECRET = "correct-horse-battery-staple"
 DATE = "Mon, 02 Jan 2006 22:04:05 GMT"
 
-# Published test vector from Metronome's docs (setup-webhooks#verify-signatures).
+# Published test vector from Metronome's docs (webhooks/best-practices#verify-signatures).
 # The body is pretty-printed exactly as the docs show it, with no trailing newline.
 VECTOR_BODY = (
     '{\n  "id": "b2c9e307-624e-4e7d-a5a4-1b74107d78c4",\n  "type": "widget_created",\n'

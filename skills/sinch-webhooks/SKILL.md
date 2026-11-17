@@ -21,7 +21,7 @@ metadata:
 - How do I handle `message`, `message_delivery_report` or `contact_create_notification` callbacks?
 - Why is my Sinch webhook signature verification failing?
 
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
+> For Sinch Conversation API callbacks. Set a `secret` on the Conversation API webhook, because callbacks are signed only when it has one. Sinch's other APIs, such as Voice and Verification, sign their callbacks differently.
 
 This skill covers **Conversation API callbacks only**. Sinch's SMS, Voice, Numbers and Verification APIs are other products with other signing schemes.
 
@@ -72,7 +72,7 @@ Callbacks have **no `type` field**. Each has common fields (`project_id`, `app_i
 | `duplicated_contact_identities_notification` | Duplicate contact identities detected |
 | `unsupported_callback` | A channel callback Sinch can't map |
 
-Sinch lists 19 callback types in all; the examples handle these 17 documented sample payloads and log any unrecognised key. Delivery: 2xx is success; network errors, timeouts, 5xx and 429 are retried with exponential backoff; other 4xx are not. Dedup is best-effort, so duplicates are possible and order is not guaranteed.
+Sinch also documents `channel_event_notification`, `message_redaction` and `smart_conversation_notification`; the examples handle the 17 keys above by name and log any other key as unrecognised. Delivery: 2xx is success; network errors, timeouts, 5xx and 429 are retried with exponential backoff; other 4xx are not. Dedup is best-effort, so duplicates are possible and order is not guaranteed.
 
 ## Environment Variables
 
@@ -90,7 +90,7 @@ SINCH_WEBHOOK_TOLERANCE_SECONDS=0
 npx hookdeck-cli listen 3000 sinch --path /webhooks/sinch
 ```
 
-Use the printed public HTTPS URL as the webhook `target`. Hookdeck's Sinch source (type `SINCH`) verifies the same signature; paste the webhook secret into it. Hookdeck's setup note for the source: "For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently."
+Use the printed public HTTPS URL as the webhook `target`. Hookdeck's Sinch source (type `SINCH`) verifies the same signature; paste the webhook secret into it.
 
 ## Reference Materials
 

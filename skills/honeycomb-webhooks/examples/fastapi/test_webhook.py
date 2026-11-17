@@ -15,15 +15,11 @@ client = TestClient(app)
 SECRET = os.environ["HONEYCOMB_WEBHOOK_SECRET"]
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
-# Illustrative payloads: Honeycomb doesn't document the default payload field by field.
-TRIGGER = {
-    "name": "Slow checkout requests",
-    "status": "TRIGGERED",
-    "trigger_url": "https://ui.honeycomb.io/example/triggers/abc123",
-    "threshold": {"op": ">", "value": 2000},
-}
-BURN_ALERT = {"slo_name": "Checkout availability", "alert_type": "exhaustion_time", "budget_remaining": 0.12}
-ANOMALY = {"anomaly_id": "an_123", "summary": "Error rate anomaly"}
+# Bodies rendered by the custom payload templates SKILL.md describes: a constant "kind"
+# plus .Alert.Status. Honeycomb doesn't document its standard payload field by field.
+TRIGGER = {"kind": "trigger", "status": "TRIGGERED"}
+BURN_ALERT = {"kind": "exhaustion_time", "status": "TRIGGERED"}
+ANOMALY = {"kind": "anomaly", "status": "Detected"}
 
 _n = 0
 
@@ -103,12 +99,12 @@ class TestAlertClassification:
         assert classify_alert(TRIGGER) == "trigger"
 
     def test_slo_burn_alert(self):
-        assert classify_alert(BURN_ALERT) == "slo_burn_alert"
+        assert classify_alert(BURN_ALERT) == "exhaustion_time"
 
     def test_anomaly(self):
         assert classify_alert(ANOMALY) == "anomaly"
 
-    def test_unknown_for_custom_templates(self):
+    def test_unknown_without_a_known_kind(self):
         assert classify_alert({"foo": 1}) == "unknown"
 
     @pytest.mark.parametrize("payload", [TRIGGER, BURN_ALERT, ANOMALY, {"foo": 1}])

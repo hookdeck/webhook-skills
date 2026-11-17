@@ -43,29 +43,14 @@ A JSON object where every value is a string (or `null`/nil):
 | `sent_at` | When the notification was sent | timestamp or nil |
 | `notification_type` | Notification type | `email` or `sms` |
 
-Example built from the documented field table (not a captured delivery):
-
-```json
-{
-  "id": "3b0f9c1e-6d6b-4a6c-9f1e-0a4d3d3f9e11",
-  "reference": "12345678",
-  "to": "hello@canada.ca",
-  "status": "delivered",
-  "status_description": "Delivered",
-  "provider_response": null,
-  "created_at": "2017-05-14T12:15:30.000000Z",
-  "completed_at": "2017-05-14T12:15:30.000000Z",
-  "sent_at": "2017-05-14T12:15:30.000000Z",
-  "notification_type": "email"
-}
-```
-
 ## Multiple Callbacks and Health Checks
 
 - A notification can produce more than one callback (for example `delivered`, then a bounce).
   Callbacks are sent in the order received.
-- GC Notify sends `{"health_check": "true"}` when you set up or update callbacks, or test response
-  time from the callbacks page.
+- GC Notify sends a health check when you set up or update callbacks, or test response time from
+  the callbacks page. The docs print `{"health_check": "true"}`, but notification-admin's
+  `validate_callback_url` sends `{"health_check": true}` (a JSON boolean) with the `Authorization`
+  header, so check for the key, not its value. A 4xx response fails the save.
 - Callbacks work with test API keys but not with smoke-testing email addresses or phone numbers.
 
 ## Delivery and Retries

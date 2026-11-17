@@ -56,8 +56,9 @@ def verify_gumlet_request(headers, secret=None) -> bool:
 
 ## Common Gotchas
 
-- **No Secret Token, nothing to verify.** Without the optional token Gumlet sends no header. The
-  examples reject such requests; set a token on the webhook.
+- **No Secret Token, nothing to verify.** Without the optional token Gumlet still sends
+  `x-gumlet-token`, but as an empty string. The examples reject an empty header; set a token on the
+  webhook.
 - **Compare the whole value.** No prefix is added, so don't strip or split the header.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python, pass bytes to `hmac.compare_digest`, never `str`.
@@ -73,6 +74,6 @@ def verify_gumlet_request(headers, secret=None) -> bool:
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `GUMLET_WEBHOOK_SECRET` unset or different from the Secret Token in Gumlet |
-| 401, header missing in logs | No Secret Token set on the webhook, or a proxy strips `x-gumlet-token` |
+| 401, header empty or missing in logs | No Secret Token set on the webhook (Gumlet sends an empty header), or a proxy strips `x-gumlet-token` |
 | 401 after editing the webhook | The Secret Token was changed; update `GUMLET_WEBHOOK_SECRET` |
 | 400 after authentication | Body isn't a JSON object |

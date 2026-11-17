@@ -30,33 +30,33 @@ function verifyHoneycombRequest(headers, secret = process.env.HONEYCOMB_WEBHOOK_
   return Boolean(received) && safeEqual(received, secret);
 }
 
+const KINDS = ['trigger', 'budget_rate', 'exhaustion_time', 'anomaly'];
+
 /**
- * Honeycomb doesn't document the default payload field by field, and a webhook can use a
- * custom JSON template per alert type, so classify by the fields present. Illustrative only.
+ * Honeycomb sends no event-type field or header, and doesn't document the standard payload
+ * field by field. Enable a custom payload template for each alert type and put a constant
+ * "kind" field in each one (see SKILL.md). Anything else is classed as unknown.
  */
 function classifyAlert(payload) {
-  const keys = Object.keys(payload);
-  if (keys.some((k) => /^slo|burn|budget|exhaustion/i.test(k))) return 'slo_burn_alert';
-  if (keys.some((k) => /anomal/i.test(k))) return 'anomaly';
-  if (keys.some((k) => /^trigger|^threshold|^result/i.test(k))) return 'trigger';
-  return 'unknown';
+  return KINDS.includes(payload.kind) ? payload.kind : 'unknown';
 }
 
 function handleAlert(kind, payload) {
   switch (kind) {
     case 'trigger':
-      console.log(`Trigger alert: ${payload.name || payload.trigger_id || '(unnamed)'}`);
-      // TODO: page on-call or open an incident
+      console.log(`Trigger alert: ${payload.status} ${payload.summary || ''}`);
+      // Page on-call or open an incident here.
       break;
 
-    case 'slo_burn_alert':
-      console.log(`SLO burn alert: ${payload.slo_name || payload.name || '(unnamed)'}`);
-      // TODO: escalate before the error budget runs out
+    case 'budget_rate':
+    case 'exhaustion_time':
+      console.log(`SLO burn alert (${kind}): ${payload.status} ${payload.summary || ''}`);
+      // Escalate before the error budget runs out here.
       break;
 
     case 'anomaly':
-      console.log('Anomaly detection alert');
-      // TODO: open an investigation
+      console.log(`Anomaly Detection alert: ${payload.status} ${payload.summary || ''}`);
+      // Open an investigation here.
       break;
 
     default:

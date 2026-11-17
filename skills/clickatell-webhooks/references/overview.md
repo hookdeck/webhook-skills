@@ -34,35 +34,44 @@ The event kind is the name of the key inside `event`. Each value is an array of 
 
 ## Event Payload Structure
 
+Clickatell's reference documents schemas, not example bodies. A status callback has this shape
+(types from the schema, not real values):
+
 ```json
 {
-  "integrationId": "fa8090815f05d5ed015f0b5b56080cd2",
-  "integrationName": "My integration",
+  "integrationId": "string",
+  "integrationName": "string",
   "event": {
     "messageStatusUpdate": [
       {
-        "channel": "whatsapp",
-        "timestamp": 1506607698860,
-        "statusCode": 5,
-        "status": "DEVICE_ACK",
-        "messageId": "3a89680503414383af44dcd0e4e5f184",
-        "clientMessageId": "2993b6b548000a80989a20549e7558a5"
+        "channel": "sms | whatsapp",
+        "timestamp": 0,
+        "statusCode": 0,
+        "status": "string",
+        "messageId": "string",
+        "clientMessageId": "string"
       }
     ]
   }
 }
 ```
 
+`status` takes the names in Clickatell's
+[Status Codes & Errors](https://help.clickatell.com/developers-documentation/channels/whatsapp-and-sms-one-api/status-codes-and-errors)
+table, such as `SENT_TO_SUPPLIER`, `DEVICE_ACK` and `READ`, with the matching numeric `statusCode`.
+
 Reply events (`moText` and friends) carry `channel`, `messageId`, `relatedMessageId`,
 `relatedClientMessageId`, `from`, `to` and `timestamp`, plus content fields such as `content`
 (text), `contentType`/`files` (media) or `postbackData` (button replies), and a `whatsapp` or
-`sms` object with channel details. `moLocation` events spell the latitude field `latitute` in
-Clickatell's docs.
+`sms` object with channel details. The `moLocation` schema lists both `latitude` and a misspelled
+`latitute`, so read whichever is present.
 
 ## Delivery Behavior
 
-- Any HTTP 2xx response acknowledges the callback. Anything else is retried (redirects are not followed).
-- Retries mean **duplicate callbacks**: deduplicate on `messageId` (plus `status` for status events).
+- Any HTTP 2xx response acknowledges the callback. Anything else is retried, except a redirect status code.
+- A response that isn't fast enough is retried too. No timeout, retry count or interval is documented.
+- Retries mean **duplicate callbacks**: deduplicate replies on `messageId`, and status events on the kind,
+  `messageId` and `status` together, because one message gets several status events.
 - Events can arrive **out of order**: use `timestamp` (milliseconds) to order them.
 - Batch size is currently always 1, but one request may carry several events in future: loop over
   the arrays.

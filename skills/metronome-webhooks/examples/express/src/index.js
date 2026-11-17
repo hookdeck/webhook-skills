@@ -101,27 +101,27 @@ app.post('/webhooks/metronome', express.raw({ type: '*/*' }), (req, res) => {
   switch (event.type) {
     case 'alerts.spend_threshold_reached':
       console.log('Spend threshold reached:', data.customer_id, data.current_spend);
-      // TODO: Notify the customer or throttle
+      // Your code: Notify the customer or throttle
       break;
     case 'alerts.low_remaining_credit_balance_reached':
       console.log('Low credit balance:', data.customer_id, data.remaining_balance);
-      // TODO: Trigger a top-up
+      // Your code: Trigger a top-up
       break;
     case 'alerts.low_remaining_commit_balance_reached':
       console.log('Low commit balance:', data.customer_id);
-      // TODO: Alert the account owner
+      // Your code: Alert the account owner
       break;
     case 'alerts.usage_threshold_reached':
       console.log('Usage threshold reached:', data.customer_id);
-      // TODO: Notify the customer
+      // Your code: Notify the customer
       break;
     case 'alerts.invoice_total_reached':
       console.log('Invoice total reached:', data.customer_id);
-      // TODO: Flag the invoice for review
+      // Your code: Flag the invoice for review
       break;
     case 'contract.create':
       console.log('Contract created:', data.contract_id);
-      // TODO: Provision the customer
+      // Your code: Provision the customer
       break;
     case 'contract.start':
       console.log('Contract started:', data.contract_id);
@@ -131,7 +131,7 @@ app.post('/webhooks/metronome', express.raw({ type: '*/*' }), (req, res) => {
       break;
     case 'contract.end':
       console.log('Contract ended:', data.contract_id);
-      // TODO: Revoke entitlements
+      // Your code: Revoke entitlements
       break;
     case 'contract.archive':
       console.log('Contract archived:', data.contract_id);
@@ -144,14 +144,14 @@ app.post('/webhooks/metronome', express.raw({ type: '*/*' }), (req, res) => {
       break;
     case 'invoice.finalized':
       console.log('Invoice finalized:', data.invoice_id);
-      // TODO: Record the receivable
+      // Your code: Record the receivable
       break;
     case 'invoice.void':
       console.log('Invoice voided:', data.invoice_id);
       break;
     case 'invoice.billing_provider_error':
       console.log('Billing provider error:', data.invoice_id, data.billing_provider_error);
-      // TODO: Page whoever owns the billing integration
+      // Your code: Page whoever owns the billing integration
       break;
     case 'subscription.start':
       console.log('Subscription started:', data.subscription_id);

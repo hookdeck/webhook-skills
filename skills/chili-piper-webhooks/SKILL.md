@@ -25,7 +25,7 @@ metadata:
 
 ## Get the Signing Secret
 
-Chili Piper issues the signing secret on request: email Chili Piper support for your tenant's secret and paste it here.
+Chili Piper doesn't show the signing secret in the Command Center: you request it from support.
 
 The secret is not shown in the Command Center. Create and enable the webhook first, then email support@chilipiper.com with your tenant (instance) name and the webhook you created. Store it as `CHILI_PIPER_WEBHOOK_SECRET`. See [references/setup.md](references/setup.md).
 
@@ -70,7 +70,7 @@ Chili Piper sends one webhook per action type, selected when you create the webh
 | `X-Chili-Signature` | Lowercase hex HMAC-SHA256 digest (64 characters), compared as a whole value |
 | `X-Chili-Timestamp` | Unix timestamp in seconds when the request was signed |
 | Method / body | `POST` with a JSON body. Read the raw body whatever the content type |
-| Retries | Not documented. De-duplicate on `meetingIdChili` plus `type` |
+| Retries | Not documented. Skip a repeated `Created` or `Deleted` by `meetingIdChili` plus `type`, and apply `Updated` as an idempotent write keyed on `meetingIdChili` |
 
 ## Environment Variables
 
@@ -106,7 +106,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) - Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) - Prevent duplicate processing (use `meetingIdChili` and `type`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) - Prevent duplicate processing (`meetingIdChili` plus `type` for `Created` and `Deleted`; a meeting can have many `Updated` events)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) - Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) - Retry schedules and backoff
 

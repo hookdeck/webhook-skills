@@ -29,16 +29,15 @@ export function verifyEstuaryRequest(
   );
 }
 
-export type EstuaryKind = 'trigger' | 'document' | 'empty';
+export type EstuaryKind = 'trigger' | 'documents' | 'empty';
 
 /**
- * There is no vendor event field. A trigger body is the author's payloadTemplate
- * (which may include materialization_name); the HTTP Webhook connector sends documents.
+ * There is no vendor event field. The HTTP Webhook connector POSTs a JSON array of
+ * documents from one binding; a trigger body is whatever its payloadTemplate renders,
+ * so its keys are the ones you chose (Estuary's example uses materialization and runId).
  */
 export function classify(payload: unknown): EstuaryKind {
   if (payload === null) return 'empty';
-  if (typeof payload === 'object' && !Array.isArray(payload) && 'materialization_name' in (payload as object)) {
-    return 'trigger';
-  }
-  return 'document';
+  if (Array.isArray(payload)) return 'documents';
+  return 'trigger';
 }

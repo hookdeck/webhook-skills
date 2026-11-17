@@ -21,10 +21,8 @@
 Click the webhook. On the **Overview** tab, under **Details**, **Signing secret** has buttons to
 show and copy it. Store it as `SEVALLA_WEBHOOK_SECRET` (`whsec_` followed by 30 characters).
 
-Paste the whole secret, including the whsec_ prefix. When you roll the secret, update it here when the new one becomes active.
-
-(That is the note Hookdeck shows for the **Sevalla** source: paste the secret in the source's
-authentication settings.)
+If you use a Hookdeck **Sevalla** source, enter the whole secret there too, `whsec_` prefix
+included, and update it when a rolled secret becomes active.
 
 ## Roll the Secret
 
@@ -40,13 +38,13 @@ use Hookdeck, just update the source's secret when the new one becomes active.)
 
 ## Test
 
-Trigger a deployment, or replay with curl:
+Trigger a deployment, or send Sevalla's documented `APP_DEPLOY` example with curl:
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/sevalla \
   -H "Content-Type: application/json" \
   -H "svl-signature: $SEVALLA_WEBHOOK_SECRET" \
-  -d '{"webhook_id":"w1","event_id":"e1","event_delivery_id":"d1","type":"APP_DEPLOY","data":{"app_display_name":"storefront","deployment_id":"dep1","status":"success","is_preview":false}}'
+  -d '{"webhook_id":"d5f8a1c2-3b4e-4f6a-8b8c-9d0e1f2a3b4c","event_id":"a1b2c3d4-5e6f-4a8b-9c0d-1e2f3a4b5c6d","event_delivery_id":"f1e2d3c4-b5a6-4788-9a0b-c1d2e3f4a5b6","type":"APP_DEPLOY","data":{"company_id":"0c9e3f5a-7b2d-4e1f-8a6c-5d4b3a2f1e0d","app_id":"7f3c2b1a-9e8d-4c7b-a6f5-4e3d2c1b0a9f","app_name":"storefront-x7k2m","app_display_name":"storefront","deployment_id":"3b2a1c0d-8e7f-4a6b-9c5d-2e1f0a9b8c7d","status":"success","commit":"9fceb02d0ae598e95dc970b74767f19372d61af8","stage":"","is_preview":false}}'
 ```
 
 Check deliveries on the webhook's **Event deliveries** tab (request payload, response status and

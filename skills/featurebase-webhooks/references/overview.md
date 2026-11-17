@@ -63,7 +63,7 @@ Conversation and message events also carry `conversationId` and `conversationUrl
 ## Delivery
 
 - Return `200`, `201`, `202` or `204` within 5 seconds. Anything else counts as a failure. The API can raise the timeout to 30 seconds.
-- Up to 3 retries. The event `id` is the same on every attempt.
+- Up to 3 retries. Store each event `id` and skip repeats.
 - A webhook is paused after 100 consecutive failures (5 minutes, doubling up to 4 hours) and disabled after 500 failures or 3 pauses in 24 hours. Events are not kept while it is paused or disabled.
 
 ## Full Event Reference

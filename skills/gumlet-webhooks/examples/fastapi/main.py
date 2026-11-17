@@ -40,55 +40,55 @@ def handle_event(payload: dict) -> None:
 
     if type_ in ("video.status.created", "video.status.stream_ready", "video.status.downloaded", "video.status.processed"):
         print(f"Video {payload.get('status')}: {payload.get('asset_id')}")
-        # TODO: update processing progress for payload["asset_id"]
+        # Your code: update processing progress for payload["asset_id"]
 
     elif type_ == "video.status.ready":
         print(f"Video ready: {payload.get('asset_id')}")
-        # TODO: store payload["output"]["playback_url"] and publish the video
+        # Your code: store payload["output"]["playback_url"] and publish the video
 
     elif type_ == "video.status.errored":
         print(f"Video errored: {payload.get('asset_id')}")
-        # TODO: alert and retry the upload
+        # Your code: alert and retry the upload
 
     elif type_ == "video.status.deleted":
         print(f"Video deleted: {payload.get('asset_id')}")
-        # TODO: remove local records
+        # Your code: remove local records
 
     elif type_ == "video.status.repackaged":
         print(f"Video repackaged: {payload.get('asset_id')}")
-        # TODO: refresh playback info
+        # Your code: refresh playback info
 
     elif type_ in ("live.video.status.created", "live.video.status.preparing", "live.video.status.ready", "live.video.status.connected", "live.video.status.active", "live.video.status.disconnected"):
         print(f"Live stream {payload.get('status')}: {payload.get('live_asset_id')}")
-        # TODO: update the live session state
+        # Your code: update the live session state
 
     elif type_ == "live.video.status.complete":
         print(f"Live stream complete: {payload.get('live_asset_id')}")
-        # TODO: link payload["recording_asset_id"] and payload["vod_collection_id"]
+        # Your code: link payload["recording_asset_id"] and payload["vod_collection_id"]
 
     elif type_ in ("event.video.uploaded", "event.video.updated"):
         print(f"Video event: {type_}")
-        # TODO: start downstream workflows or sync metadata
+        # Your code: start downstream workflows or sync metadata
 
     elif type_ in ("event.embed.viewed", "event.embed.cta_clicked"):
         print(f"Embed event: {type_}")
-        # TODO: record analytics
+        # Your code: record analytics
 
     elif type_ == "event.embed.form_submitted":
         print(f'Lead captured')
-        # TODO: send the lead to your CRM
+        # Your code: send the lead to your CRM
 
     elif type_ in ("event.playlist.created", "event.playlist.asset", "event.playlist.deleted"):
         print(f"Playlist event: {type_}")
-        # TODO: sync playlists
+        # Your code: sync playlists
 
     elif type_ == "event.comment.all":
         print(f'Comment event')
-        # TODO: moderate or sync comments
+        # Your code: moderate or sync comments
 
     elif type_ == "event.channel.member_joined":
         print(f'Channel member joined')
-        # TODO: onboard the member
+        # Your code: onboard the member
 
     else:
         print(f"Unhandled event: {type_}")

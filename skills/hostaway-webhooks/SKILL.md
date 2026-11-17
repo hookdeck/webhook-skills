@@ -65,7 +65,7 @@ Hostaway's docs don't name the HTTP method or the body format. The examples ther
 
 ## Event Types
 
-The unified webhook payload is not documented field by field, so treat the payload below as **illustrative** and read the event name defensively (`event`, `eventType`, or `object` + `action`), logging unknown shapes.
+Hostaway doesn't document the unified webhook body or which field carries the event name. Make a test direct booking under **Reservations**, capture the request, and route on the field you find there. Until then, log the top-level keys of any body you can't route. The API changelog says unified webhooks carry the Reservation object, and the help article says each request includes `listingMapId`.
 
 | Event | Sent When |
 |-------|-----------|
@@ -75,11 +75,7 @@ The unified webhook payload is not documented field by field, so treat the paylo
 | `task.created` | A task is created |
 | `task.updated` | A task changes |
 
-```json
-{ "event": "reservation.created", "data": { "id": 1001, "listingMapId": 2002, "guestName": "Jane Doe", "status": "new" } }
-```
-
-Hostaway times out after 20 seconds and retries transient failures up to 3 times, so acknowledge quickly and process idempotently. Only ports 80 and 443 are reachable.
+Hostaway times out after 20 seconds and retries transient failures (connection errors, `5xx`, `429`) up to 3 times within about an hour; other `4xx` responses are not retried. Events can arrive out of order and more than once, so acknowledge quickly and process idempotently. Only ports 80 and 443 are accepted.
 
 ## Environment Variables
 

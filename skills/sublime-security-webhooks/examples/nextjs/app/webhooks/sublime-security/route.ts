@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // payload.id is unique per delivery: use it to drop duplicates (see webhook-handler-patterns)
+  // Store payload.id and skip repeats to drop duplicates (see webhook-handler-patterns)
   const { id, type, data = {} } = payload;
   const messageId = data.message?.id;
   const rules = (data.flagged_rules || []).map((r: { name: string }) => r.name).join(', ');

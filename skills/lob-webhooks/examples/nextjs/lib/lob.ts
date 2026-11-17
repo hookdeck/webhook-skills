@@ -5,7 +5,7 @@ const HEX_DIGEST = /^[0-9a-fA-F]{64}$/;
 /**
  * Verify a Lob webhook signature.
  *
- * Lob-Signature = lowercase hex HMAC-SHA256(secret, `${Lob-Signature-Timestamp}.${raw body}`)
+ * Lob-Signature = hex HMAC-SHA256(secret, `${Lob-Signature-Timestamp}.${raw body}`)
  * The signed message is built as BYTES: the timestamp header exactly as received (latin1),
  * a literal ".", then the raw body bytes. Never decode and re-encode the body.
  */

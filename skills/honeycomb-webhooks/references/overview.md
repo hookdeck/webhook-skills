@@ -24,40 +24,23 @@ Custom headers you add (up to 5) can't use the names `Content-Type`, `User-Agent
 
 Honeycomb has no event-type field; the kind depends on what the webhook is attached to.
 
-| Kind (handler label) | Triggered When | Common Use Cases |
+| Kind (`kind` in the examples) | Status values | Common Use Cases |
 |----------------------|----------------|------------------|
-| Trigger (`trigger`) | A Trigger fires or resolves | Page on-call, open an incident |
-| SLO burn alert (`slo_burn_alert`) | A Budget Rate or Exhaustion Time burn alert fires | Escalate before the budget runs out |
-| Anomaly Detection (`anomaly`) | An anomaly signal fires | Open an investigation |
+| Trigger (`trigger`) | `TRIGGERED`, `OK` | Page on-call, open an incident |
+| SLO Budget Rate burn alert (`budget_rate`) | `TRIGGERED`, `OK` | Escalate before the budget runs out |
+| SLO Exhaustion Time burn alert (`exhaustion_time`) | `TRIGGERED`, `OK` | Escalate before the budget runs out |
+| Anomaly Detection (`anomaly`) | `Detected`, `Resolved` | Open an investigation |
 
 ## Payload Structure
 
-The body is `application/json` and carries the result of the alert. The default payload isn't
-documented field by field, and a webhook can use a custom JSON template for each of the four
-alert types (Trigger, Budget Rate Burn, Exhaustion Time Burn, Anomaly Detection), so field names
-are yours to confirm. The example handlers classify by the fields present and fall back to
-`unknown`.
-
-An illustrative trigger payload (not Honeycomb's documented schema):
-
-```json
-{
-  "name": "Slow checkout requests",
-  "status": "TRIGGERED",
-  "trigger_url": "https://ui.honeycomb.io/example/triggers/abc123",
-  "threshold": { "op": ">", "value": 2000 }
-}
-```
-
-An illustrative SLO burn alert payload:
-
-```json
-{
-  "slo_name": "Checkout availability",
-  "alert_type": "exhaustion_time",
-  "budget_remaining": 0.12
-}
-```
+The body is `application/json` and carries the result of the alert. Honeycomb doesn't document
+the standard payload field by field. A webhook can instead use a custom JSON template for each of
+the four alert types (Trigger, Budget Rate Burn, Exhaustion Time Burn, Anomaly Detection), built
+from [Honeycomb's template variables](https://docs.honeycomb.io/notify/webhooks/variables), such
+as `.Alert.Status`, `.Alert.Summary`, `.Alert.InstanceID`, `.Alert.Timestamp` and `.Alert.IsTest`.
+Put a constant `kind` field in each template: the example handlers classify on it and fall back
+to `unknown`. Honeycomb's [example templates](https://docs.honeycomb.io/notify/webhooks/example-templates)
+show complete templates for Discord, incident.io and OpsGenie.
 
 ## Delivery and Retries
 

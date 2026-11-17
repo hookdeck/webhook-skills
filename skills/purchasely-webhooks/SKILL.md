@@ -85,7 +85,7 @@ Dispatch on the body's `event_name`. Common events (full list in [references/ove
 ## Environment Variables
 
 ```bash
-PURCHASELY_WEBHOOK_SECRET=your-webhook-shared-secret   # Console: [YOUR APP] > Settings > Webhooks
+PURCHASELY_WEBHOOK_SECRET=your-webhook-shared-secret   # see references/setup.md
 # PURCHASELY_WEBHOOK_TOLERANCE_SECONDS=300             # optional replay window, off by default
 ```
 

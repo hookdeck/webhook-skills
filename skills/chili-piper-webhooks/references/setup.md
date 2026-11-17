@@ -16,7 +16,7 @@ Create one webhook per type you need. They can all point at the same URL, becaus
 
 ## Get Your Signing Secret
 
-Chili Piper issues the signing secret on request: email Chili Piper support for your tenant's secret and paste it here.
+Chili Piper doesn't show the signing secret in the Command Center: you request it from support.
 
 Each tenant has its own secret and it is not displayed in the Command Center.
 
@@ -28,4 +28,4 @@ To rotate the secret, email support again. Rotation invalidates the old secret i
 
 ## Test Mode vs Live Mode
 
-Chili Piper has no separate test mode for custom webhooks. Check your signature code offline with the test vector in [verification.md](verification.md), then book, reschedule and cancel a test meeting to trigger `Created`, `Updated` and `Deleted`.
+Chili Piper has no separate test mode for custom webhooks. Check your signature code offline with the openssl command in [verification.md](verification.md), then book, reschedule and cancel a test meeting to trigger `Created`, `Updated` and `Deleted`.

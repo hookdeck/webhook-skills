@@ -14,7 +14,7 @@ interface Click {
 function handleClick(click: Click): void {
   const country = click.client?.location?.country;
   console.log(`Click on ${click.route?.id} from ${country ?? 'unknown'} at ${click.timestamp}`);
-  // TODO: store the click (click.client, click.referral, click.route)
+  // Store the click (click.client, click.referral, click.route)
 }
 
 // Clickstream sends POST or PUT, depending on what you gave Rebrandly; every method is accepted.

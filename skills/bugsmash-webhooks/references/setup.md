@@ -5,9 +5,10 @@
 - A BugSmash account with an API key (sent as the `X-API-Key` header)
 - A public HTTPS URL for your handler (use the Hookdeck CLI while developing, below)
 
-## Create the Webhook (API only)
+## Create the Webhook
 
-BugSmash workspace webhooks are created through API v2:
+In the dashboard, go to **Workspace Settings → Integrations → Webhooks**, click **Add Webhook**, enter
+the endpoint URL, choose the trigger events and click **Connect**. Or use API v2:
 
 ```bash
 curl --location 'https://api.bugsmash.io/api/v2/webhook' \
@@ -23,10 +24,7 @@ curl --location 'https://api.bugsmash.io/api/v2/webhook' \
 
 ## Get Your Signing Secret
 
-The response contains `secret_key` (for example `bgsmsh_...`). It is shown **only once**:
-
-> BugSmash returns the secret_key only once, when you create the webhook through the API. Paste the whole value, including the bgsmsh_ prefix.
-
+The response contains `secret_key` (for example `bgsmsh_...`). It is shown **only once**, at creation.
 If you lose it, delete and recreate the webhook. Store the whole value, `bgsmsh_` prefix included,
 as `BUGSMASH_WEBHOOK_SECRET`. It is the HMAC key as-is: don't strip the prefix and don't base64- or hex-decode it.
 

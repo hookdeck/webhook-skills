@@ -106,7 +106,7 @@ async def chatim_webhook(raw_body: bytes = Depends(verified_body)):
     if not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    # Use payload["eventId"] (or the X-Chatim-Delivery-Id header) for idempotency
+    # Use payload["eventId"] for idempotency, as Chatim recommends
     event = payload.get("event")
     data = _as_dict(payload.get("data"))
     visitor = _as_dict(data.get("visitor"))

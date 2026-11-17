@@ -5,9 +5,9 @@ Minimal example of receiving [Onshape](https://www.onshape.com/) webhooks with `
 ## Prerequisites
 
 - Python 3.9+
-- An Onshape Enterprise company with a webhook signature key (Company/Enterprise settings > Webhooks)
+- An Onshape company, classroom or enterprise with a webhook signature key (Company/Classroom/Enterprise settings > Webhooks)
 
-> Onshape signature keys are an Enterprise company setting. Paste the primary key; only the primary signature is verified.
+> A company administrator generates Onshape's signature keys in Company/Classroom/Enterprise settings > Webhooks. Use the primary key: this skill verifies the primary signature.
 
 ## Setup
 

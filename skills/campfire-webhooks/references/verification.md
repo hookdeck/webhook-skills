@@ -11,11 +11,11 @@
 | Key | The webhook's 50-character signing secret (`token`), UTF-8 bytes as-is |
 | Encoding | Lowercase hex, 64 characters, **no prefix** |
 
-The `-v1` in the header name is a scheme version. The value is the bare digest. It is not Standard Webhooks (no `webhook-id` / `webhook-timestamp` / `webhook-signature`).
+Despite the `-v1` in the header name, the value is the bare digest. It is not Standard Webhooks (no `webhook-id` / `webhook-timestamp` / `webhook-signature`).
 
 ## Why Does It Matter That the Message Is Built as Bytes?
 
-Hookdeck's Campfire source builds the message the same way, and so should you:
+Build the message from bytes:
 
 - literal `:` as UTF-8
 - the timestamp header **exactly as received** (latin1; never trimmed, parsed or reformatted)

@@ -15,7 +15,7 @@ There is no HMAC, timestamp or prefix. Compare the **whole** header value with `
 A static shared credential authenticates the **sender**, not the **body**: it proves the caller knows your token, not that the payload is unmodified. There is also **no replay protection**, because there is no signature and no timestamp, so a captured request can be replayed. Mitigate this by:
 
 - receiving webhooks over HTTPS only
-- rotating the token if it leaks
+- keeping the token in a secrets manager and out of logs
 - deduping on the event `id` and keeping handlers idempotent
 - re-fetching the object from the PAY.JP API before acting on high-value events
 

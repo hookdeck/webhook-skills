@@ -19,7 +19,7 @@ function sign(rawBody: string | Buffer, timestamp: string | number, secret = SEC
 
 const now = () => Math.floor(Date.now() / 1000);
 
-// Illustrative payload: BugSmash documents no delivery body.
+// Test payload: a minimal flat body that names its event in `event`, as BugSmash's help center examples do.
 const payloadFor = (event: string) => JSON.stringify({ event, data: { comment: 'Logo is cut off' } });
 
 interface Options {
@@ -52,7 +52,7 @@ describe('BugSmash webhook route', () => {
   afterEach(() => vi.restoreAllMocks());
 
   describe('valid deliveries', () => {
-    it.each(['new_comment', 'comment_replied', 'status_changed', 'comment_updated'])(
+    it.each(['new_comment', 'comment_replied', 'new_reply_on_comment', 'status_changed', 'comment_updated'])(
       'accepts a signed %s event',
       async (event) => {
         const res = await send(payloadFor(event));

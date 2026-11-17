@@ -11,9 +11,7 @@
 2. Open (or add) your webhook and copy its **signing key**. It starts with `configcat_whsk_`.
 3. Store it whole in `CONFIGCAT_WEBHOOK_SECRET`, including the prefix. Do not strip it or base64-decode it.
 
-Keep a single signing key on the ConfigCat webhook and paste it whole, including the configcat_whsk_ prefix. With two keys, ConfigCat sends two signatures and verification fails. If the webhook uses GET, also allow GET on this source.
-
-ConfigCat lets you add a secondary key for rotation, and then sends two comma-separated signatures. During a rotation, deliveries fail verification until the old key is removed.
+ConfigCat lets you add a secondary key for rotation, and then sends two comma-separated signatures, one per key. The example handlers accept a match on any entry. With a Hookdeck source, paste the key whole, including the configcat_whsk_ prefix, and update the source's secret as soon as you rotate. If the webhook uses GET, also allow GET on the source.
 
 ## Register Your Endpoint
 

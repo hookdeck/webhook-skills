@@ -47,5 +47,5 @@ Use the printed URL as `webhookUrl` in `POST https://api.bugsmash.io/api/v2/webh
 
 ## Notes
 
-- The event name field is not documented by BugSmash. The handler reads `event`, then `type`, from an illustrative payload. Check a real delivery and adjust.
+- The handler reads the event name from `event`, as in BugSmash's help center examples, and treats `comment_replied` (the API's name) and `new_reply_on_comment` (the help center's) as the same reply event.
 - No timestamp window by default, because Hookdeck retries and replays resend the original timestamp.

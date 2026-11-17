@@ -1,8 +1,8 @@
 # Sinch Webhooks - Next.js Example
 
-Minimal example of receiving Sinch Conversation API callbacks with signature verification. Sinch has no verification helper for this scheme, so the HMAC check is manual.
+Minimal example of receiving Sinch Conversation API callbacks with signature verification. The HMAC check is written out by hand so you can see the scheme; Sinch's official Node.js SDK also has a `ConversationCallbackWebhooks` class that makes the same check.
 
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
+> For Sinch Conversation API callbacks. Set a `secret` on the Conversation API webhook, because callbacks are signed only when it has one. Sinch's other APIs, such as Voice and Verification, sign their callbacks differently.
 
 ## Prerequisites
 

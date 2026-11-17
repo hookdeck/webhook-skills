@@ -113,7 +113,7 @@ async def sublime_security_webhook(raw_body: bytes = Depends(verified_body)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # payload["id"] is unique per delivery: use it to drop duplicates (see webhook-handler-patterns)
+    # Store payload["id"] and skip repeats to drop duplicates (see webhook-handler-patterns)
     event_id = payload.get("id")
     event_type = payload.get("type")
     data = payload.get("data") or {}

@@ -6,7 +6,7 @@
 |------|-------|
 | Signature header | `X-Upload-Post-Signature: sha256=<hex>` (sent whenever the account has a `webhook_secret`) |
 | Timestamp header | `X-Upload-Post-Timestamp`, Unix time in seconds when the request was signed |
-| Delivery header | `X-Upload-Post-Delivery`, a unique id per delivery (not signed), useful for logging and tracing |
+| Delivery header | `X-Upload-Post-Delivery`, a unique id per delivery (not signed), the same on every retry; deduplicate on it |
 | Event header | `X-Upload-Post-Event`, the event name (not signed) |
 | Algorithm | HMAC-SHA256, lowercase hex |
 | Signed content | `<timestamp>.<raw body>` (timestamp header value, a literal `.`, the raw body bytes) |

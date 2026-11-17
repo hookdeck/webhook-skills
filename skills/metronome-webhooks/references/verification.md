@@ -24,7 +24,7 @@ Hookdeck's Metronome source verifies this signature too.
 
 ## Implementation
 
-There is no SDK helper; verify manually. Build the message as bytes: the header encoded latin1, the separator, then the body bytes exactly as received. Never decode the body to a string and re-encode it, and never `JSON.parse`/`JSON.stringify` before verifying.
+Metronome's official Node SDK has `client.webhooks.unwrap()` and `verifySignature()` ([source](https://github.com/Metronome-Industries/metronome-node/blob/main/src/resources/webhooks.ts)), but they reject an `X-Metronome-Date` more than five minutes old or ahead, so a retry or replay that arrives later fails. The examples verify manually. Build the message as bytes: the header encoded latin1, the separator, then the body bytes exactly as received. Never decode the body to a string and re-encode it, and never `JSON.parse`/`JSON.stringify` before verifying.
 
 ### Node.js
 

@@ -7,8 +7,6 @@ Soniox does not sign payloads, so there is no HMAC to verify. The handler looks 
 header case-insensitively and compares the whole value with your secret in constant time. The
 route reads the body with `express.raw({ type: '*/*' })`, so any content type works.
 
-> Soniox webhooks are not signed. Send webhook_auth_header_name and webhook_auth_header_value with every async transcription, and enter the same name and value here.
-
 A static shared credential authenticates the sender, not the body, and gives no replay protection.
 Use HTTPS and rotate the credential if it leaks.
 

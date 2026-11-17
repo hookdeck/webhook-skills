@@ -85,7 +85,8 @@ Dispatch on the body's `meta.event_type`. The format is `<scope>:<locality>:<eve
 - Method: `POST` with a JSON body (`Content-Type: application/json`).
 - Return a `2xx` to acknowledge. Failures are retried 12 times (2 s doubling to 512 s, then 900 s; about an hour in all). After the 12th retry Tiltify **deactivates the endpoint**, and you must re-enable it in the dashboard or through the API.
 - Return `2xx` for event types you don't handle, so unknown events never count as failures.
-- `meta.id` identifies the event; deduplicate on it.
+- Skip a `meta.id` you've already processed, and upsert donations on `data.id`: Tiltify doesn't say whether a retry or a dashboard Resend keeps the same `meta.id`.
+- Delivery order isn't documented. Compare `meta.generated_at` with what you stored before you overwrite a record.
 
 ## Environment Variables
 

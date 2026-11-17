@@ -90,8 +90,9 @@ Other fields: `id`, `reference`, `to`, `status_description`, `provider_response`
 `completed_at`, `sent_at` and `notification_type` (`email` or `sms`). A notification can produce
 several callbacks (for example `delivered`, then a bounce), so handle them idempotently.
 
-GC Notify also POSTs `{"health_check": "true"}` when you set up or update callbacks; the examples
-acknowledge it with `200`.
+GC Notify also POSTs a health check when you set up or update callbacks. The docs print
+`{"health_check": "true"}`, but notification-admin sends `true` as a JSON boolean, with the
+`Authorization` header; the examples check for the key and acknowledge it with `200`.
 
 ## Environment Variables
 
@@ -101,7 +102,8 @@ GC_NOTIFY_WEBHOOK_SECRET=your-callback-bearer-token   # the token you set for th
 
 ## Delivery Behaviour
 
-Respond within 1 second (GC Notify's guidance). A failed callback is retried 6 times over about 25
+Respond within 1 second (GC Notify's guidance). notification-api retries only connection errors,
+5xx and 429, so return a 5xx, not a 4xx, for a temporary failure. A failed callback is retried 6 times over about 25
 minutes; after repeated errors GC Notify suspends callbacks for your service and emails you, and
 you must contact them to resume.
 

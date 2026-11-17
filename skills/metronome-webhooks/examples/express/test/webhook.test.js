@@ -15,7 +15,7 @@ const {
 const secret = process.env.METRONOME_WEBHOOK_SECRET;
 const DATE = 'Mon, 02 Jan 2006 22:04:05 GMT';
 
-// Published test vector from Metronome's docs (setup-webhooks#verify-signatures).
+// Published test vector from Metronome's docs (webhooks/best-practices#verify-signatures).
 // The body is pretty-printed exactly as the docs show it, with no trailing newline.
 const VECTOR_BODY =
   '{\n  "id": "b2c9e307-624e-4e7d-a5a4-1b74107d78c4",\n  "type": "widget_created",\n  "properties": {\n    "customer_id": "5f794d50-085a-4db6-8d15-286e518b7225",\n    "widget_id": "0891458d-b6f0-4fdd-a41e-380aae1a1e38"\n  }\n}';

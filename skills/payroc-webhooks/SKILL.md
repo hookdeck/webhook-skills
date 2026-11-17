@@ -55,8 +55,8 @@ function verifyPayrocRequest(headers, secret = process.env.PAYROC_WEBHOOK_SECRET
 - Return `401` when the header is missing or wrong, `400` for a body that isn't a JSON object.
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, check the header,
   then parse.
-- Return exactly `200` on success. Otherwise Payroc retries five times, then emails the
-  subscription's support address.
+- Return exactly `200` on success, within 15 seconds. Otherwise Payroc retries five times, then
+  emails the subscription's support address.
 - Dispatch on `type`; dedupe on `id`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

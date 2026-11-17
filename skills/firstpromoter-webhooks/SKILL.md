@@ -16,11 +16,11 @@ metadata:
 
 FirstPromoter (affiliate and referral management) Webhooks v2 sends a JSON `POST` when something
 happens in your account: a promoter signs up, a referral converts, a commission is approved, a
-payout completes. Requests are **not signed**. You authenticate them with a secret header that
-you add to the webhook subscription yourself, and your endpoint compares that header with the
-value you stored.
+payout completes. FirstPromoter's webhook docs describe **no signature**. You authenticate
+requests with a secret header that you add to the webhook subscription yourself, and your
+endpoint compares that header with the value you stored.
 
-Covers Webhooks v2 only: add a custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers.
+This covers Webhooks v2 only. Legacy webhooks can't send custom headers, so they carry nothing to check.
 
 ## When to Use This Skill
 

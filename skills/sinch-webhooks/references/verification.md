@@ -1,6 +1,6 @@
 # How to Verify Sinch Webhook Signatures
 
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
+> For Sinch Conversation API callbacks. Set a `secret` on the Conversation API webhook, because callbacks are signed only when it has one. Sinch's other APIs, such as Voice and Verification, sign their callbacks differently.
 
 ## How Does Sinch Sign Callbacks?
 

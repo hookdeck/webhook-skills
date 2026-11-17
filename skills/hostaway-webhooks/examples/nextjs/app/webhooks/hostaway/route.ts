@@ -9,27 +9,27 @@ function handleEvent(payload: unknown): void {
   switch (event) {
     case 'reservation.created':
       console.log('Reservation created');
-      // TODO: sync the new booking (payload.data)
+      // Your code: sync the new booking (payload.data)
       break;
 
     case 'reservation.updated':
       console.log('Reservation updated');
-      // TODO: update the stored booking
+      // Your code: update the stored booking
       break;
 
     case 'message.received':
       console.log('Guest message received');
-      // TODO: route the message to your inbox
+      // Your code: route the message to your inbox
       break;
 
     case 'task.created':
       console.log('Task created');
-      // TODO: create the matching task
+      // Your code: create the matching task
       break;
 
     case 'task.updated':
       console.log('Task updated');
-      // TODO: update the matching task
+      // Your code: update the matching task
       break;
 
     default:

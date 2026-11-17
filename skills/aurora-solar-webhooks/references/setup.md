@@ -5,7 +5,7 @@
 - An Aurora Solar tenant with access to the webhooks dashboard or the Webhooks API
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 aurora-solar --path /webhooks/aurora-solar` locally)
 
-> Set header_auth_key and header_auth_value on the Aurora Solar webhook and enter them here. Webhooks without them send nothing to verify.
+> Always set `header_auth_key` and `header_auth_value` on the Aurora Solar subscription. Aurora's webhook authentication is optional, so a subscription created without it sends no credential to check.
 
 ## Choose a Header Name and Secret
 

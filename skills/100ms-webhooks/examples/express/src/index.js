@@ -42,22 +42,22 @@ function handleEvent(event) {
   switch (type) {
     case 'session.open.success':
       console.log(`Session opened: ${data.session_id} (room ${data.room_name})`);
-      // TODO: mark the session as live
+      // Mark the session as live
       break;
 
     case 'session.close.success':
       console.log(`Session closed: ${data.session_id} after ${data.session_duration}s`);
-      // TODO: record session duration for analytics
+      // Record session duration for analytics
       break;
 
     case 'peer.join.success':
       console.log(`Peer joined: ${data.user_name} (${data.peer_id}) as ${data.role}`);
-      // TODO: record attendance
+      // Record attendance
       break;
 
     case 'peer.leave.success':
       console.log(`Peer left: ${data.user_name} (${data.peer_id})`);
-      // TODO: close the attendance record
+      // Close the attendance record
       break;
 
     case 'peer.join.failure':
@@ -65,17 +65,17 @@ function handleEvent(event) {
     case 'room.end.failure':
     case 'role.change.failure':
       console.log(`Event failed: ${type}`);
-      // TODO: alert or investigate (data.error)
+      // Alert or investigate (data.error_message)
       break;
 
     case 'room.end.success':
       console.log(`Room ended: ${data.room_id}`);
-      // TODO: finalize the room
+      // Finalize the room
       break;
 
     case 'role.change.success':
       console.log(`Role changed for peer ${data.peer_id}`);
-      // TODO: update permissions in your app
+      // Update permissions in your app
       break;
 
     case 'recording.success':
@@ -84,7 +84,7 @@ function handleEvent(event) {
     case 'beam.recording.success':
     case 'hls.recording.success':
       console.log(`Recording ready: ${type}`);
-      // TODO: fetch the asset from data.location or data.recording_path
+      // Fetch the asset from data.recording_path (HLS: data.hls_vod_recording_path)
       break;
 
     case 'recording.failed':
@@ -93,7 +93,7 @@ function handleEvent(event) {
     case 'beam.failure':
     case 'hls.failure':
       console.log(`Recording or streaming failed: ${type}`);
-      // TODO: alert (data.error)
+      // Alert (data.error_message; recording.failed uses data.error)
       break;
 
     case 'track.recording.started.success':
@@ -102,14 +102,14 @@ function handleEvent(event) {
     case 'hls.started.success':
     case 'hls.stopped.success':
       console.log(`Streaming or recording state changed: ${type}`);
-      // TODO: update UI state (data.room_id, data.session_id)
+      // Update UI state (data.room_id, data.session_id)
       break;
 
     case 'transcription.started.success':
     case 'transcription.success':
     case 'transcription.failure':
       console.log(`Transcription event: ${type}`);
-      // TODO: fetch or flag the transcript
+      // Fetch or flag the transcript
       break;
 
     case 'ingest.start.success':

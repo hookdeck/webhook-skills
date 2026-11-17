@@ -41,11 +41,11 @@ def handle_transcription(payload: dict) -> None:
 
     if status == "completed":
         print(f"Transcription completed: {transcription_id}")
-        # TODO: fetch the transcript from the Soniox API by id
+        # Fetch the transcript: GET /v1/transcriptions/{id}/transcript
 
     elif status == "error":
         print(f"Transcription failed: {transcription_id}")
-        # TODO: look up the transcription by id, alert or retry
+        # Look up the transcription (GET /v1/transcriptions/{id}) for error_message
 
     else:
         print(f"Unhandled status: {status}")

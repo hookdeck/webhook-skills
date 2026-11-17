@@ -17,13 +17,13 @@ MICEtribe webhooks are managed through the Integrations API (v1, management-auth
 
 ## Get Your Signing Secret
 
-> MICEtribe signs webhooks only when the webhook has a signing secret. Set one on the webhook and paste it here.
+> MICEtribe signs a delivery only when the webhook has a signing secret, so set one on every webhook.
 
 You choose the signing secret yourself when you create (or update) the webhook; MICEtribe stores it encrypted. Use the same value as `MICETRIBE_WEBHOOK_SECRET`. It is used as UTF-8 bytes, so don't hex- or base64-decode it. Don't log it.
 
 ## Hookdeck
 
-With Hookdeck, create a source of type **MICEtribe**, paste the signing secret into it, and use the Hookdeck source URL as the webhook URL. MICEtribe's `X-Signature` is verified there, and retries and replays keep the original `X-Timestamp`.
+With Hookdeck, create a source of type **MICEtribe**, paste the signing secret into it, and use the Hookdeck source URL as the webhook URL. the signature is verified there, and retries and replays keep the original `X-Timestamp`.
 
 ## Local Development
 

@@ -38,7 +38,7 @@ def handle_click(click: dict) -> None:
     country = (click.get("client") or {}).get("location", {}).get("country")
     route_id = (click.get("route") or {}).get("id")
     print(f"Click on {route_id} from {country or 'unknown'} at {click.get('timestamp')}")
-    # TODO: store the click (click["client"], click["referral"], click["route"])
+    # Store the click (click["client"], click["referral"], click["route"])
 
 
 # Clickstream sends POST or PUT, depending on what you gave Rebrandly; accept any method.

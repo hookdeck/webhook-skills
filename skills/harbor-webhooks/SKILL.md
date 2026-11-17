@@ -20,7 +20,7 @@ artifacts are pushed, pulled, deleted or scanned, when a quota is hit, and on re
 tag retention. Payloads are not signed. The only authentication is the optional **Auth Header**
 you enter on the webhook, which Harbor sends verbatim as the `Authorization` header.
 
-Use the HTTP notify type and paste the Auth Header value exactly as set in Harbor, including any "Bearer " or "Basic " prefix.
+Choose the `HTTP` notify type on the webhook. Your receiver compares the Auth Header value exactly as you typed it, including any `Bearer ` or `Basic ` prefix.
 
 ## When to Use This Skill
 
@@ -122,7 +122,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Default payloads have no event ID: dedupe on `type`, `occur_at` and the artifact digest (CloudEvents has `id`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Default payloads have no event ID, and two pulls of one artifact in the same second share `type`, `occur_at` and digest, so make handlers idempotent. CloudEvents `id` is set once per notification and kept on retries
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Harbor re-sends on non-2xx responses, so make handlers idempotent
 

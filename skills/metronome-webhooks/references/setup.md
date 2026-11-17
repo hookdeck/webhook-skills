@@ -11,7 +11,7 @@ Each webhook configured on a Metronome account has its own secret key, set up wh
 
 ## Register Your Endpoint
 
-Follow the [Metronome webhook guide](https://docs.metronome.com/guides/platform-configuration/setup-webhooks) to add your endpoint URL (for example `https://your-app.example.com/webhooks/metronome`) and choose the notifications to receive. Check the guide for the current location of the setting in the Metronome UI or API, since the menu names change.
+Follow the [Metronome webhook guide](https://docs.metronome.com/guides/platform-configuration/webhooks/best-practices) to add your endpoint URL (for example `https://your-app.example.com/webhooks/metronome`) and choose the notifications to receive. Check the guide for the current location of the setting in the Metronome UI or API, since the menu names change.
 
 ## Source IP Allowlist (Optional)
 

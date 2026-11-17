@@ -32,7 +32,7 @@ def now() -> int:
 
 
 def payload_for(event: str) -> str:
-    # Illustrative payload: BugSmash documents no delivery body.
+    # Test payload: a minimal flat body that names its event in `event`, as BugSmash's help center examples do.
     return json.dumps({"event": event, "data": {"comment": "Logo is cut off"}})
 
 
@@ -57,7 +57,7 @@ def _env(monkeypatch):
 
 class TestValidDeliveries:
     @pytest.mark.parametrize(
-        "event", ["new_comment", "comment_replied", "status_changed", "comment_updated"]
+        "event", ["new_comment", "comment_replied", "new_reply_on_comment", "status_changed", "comment_updated"]
     )
     def test_accepts_signed_events(self, event):
         res = send(payload_for(event))

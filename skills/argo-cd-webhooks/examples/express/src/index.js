@@ -40,17 +40,17 @@ function handleNotification(payload) {
   switch (trigger) {
     case 'on-sync-succeeded':
       console.log(`Sync succeeded: ${appName} (sync ${syncStatus}, health ${health})`);
-      // TODO: mark the deployment as successful
+      // Your code: mark the deployment as successful
       break;
 
     case 'on-sync-failed':
       console.log(`Sync failed: ${appName} (sync ${syncStatus}, health ${health})`);
-      // TODO: alert the team
+      // Your code: alert the team
       break;
 
     case 'on-health-degraded':
       console.log(`Health degraded: ${appName} (sync ${syncStatus}, health ${health})`);
-      // TODO: open an incident
+      // Your code: open an incident
       break;
 
     default:

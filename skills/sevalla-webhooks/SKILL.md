@@ -66,9 +66,8 @@ function verifySevallaRequest(headers, secrets = [process.env.SEVALLA_WEBHOOK_SE
 
 ## Hookdeck Setup Note
 
-If you receive Sevalla webhooks through the Hookdeck Event Gateway (source type **Sevalla**):
-
-> Paste the whole secret, including the whsec_ prefix. When you roll the secret, update it here when the new one becomes active.
+If you receive Sevalla webhooks through the Hookdeck Event Gateway (source type **Sevalla**), enter
+the whole secret on the source, `whsec_` prefix included. The source holds one secret.
 
 When you roll the secret in Sevalla, deliveries keep carrying the old secret until the activation
 time you chose, then the new one. Update the stored value at that moment. Sevalla also suggests

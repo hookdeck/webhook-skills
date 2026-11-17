@@ -7,7 +7,7 @@
 
 ## Get Your Webhook Token
 
-Use the webhook token (whook_...) shown in your PAY.JP account settings.
+The token you need is the webhook token (`whook_...`) in your PAY.JP account settings.
 
 1. Log in to PAY.JP and open **アカウント設定** (account settings).
 2. Copy the webhook token (it looks like `whook_a09d5c1c87be4e1590a9f16516`) and store it as `PAYJP_WEBHOOK_SECRET`.
@@ -41,4 +41,4 @@ curl -X POST http://localhost:3000/webhooks/payjp \
 
 ## Security Notes
 
-Use HTTPS in production: payloads contain customer and payment details. The token is a static credential, so anyone who learns it can post forged events. If it leaks, rotate it in PAY.JP and update `PAYJP_WEBHOOK_SECRET`.
+Use HTTPS in production: payloads contain customer and payment details. The token is a static credential, so anyone who learns it can post forged events. PAY.JP's webhook pages describe no way to rotate it, so keep it in a secrets manager and out of logs.

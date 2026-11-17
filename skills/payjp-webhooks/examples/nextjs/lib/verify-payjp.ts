@@ -15,7 +15,7 @@ function safeEqual(a: string, b: string): boolean {
 /**
  * PAY.JP does not sign payloads. Every webhook carries X-Payjp-Webhook-Token, the
  * account's webhook token (whook_...). It authenticates the sender, not the body,
- * and gives no replay protection: use HTTPS and rotate the token if it leaks.
+ * and gives no replay protection: use HTTPS and keep the token secret.
  */
 export function verifyPayjpRequest(
   headers: Headers,

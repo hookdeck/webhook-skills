@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // Use payload.eventId (or the X-Chatim-Delivery-Id header) for idempotency
+  // Use payload.eventId for idempotency, as Chatim recommends
   const data = payload.data || {};
   const visitor = data.visitor || {};
 

@@ -19,8 +19,6 @@ recorded, a payload decoder returns output, or a downlink is sent. Datacake webh
 signed. Instead you add a secret header under **Headers** on the webhook, and your endpoint
 authenticates each request by comparing that header with the value you stored.
 
-> Datacake webhooks are not signed. Add a secret header under Headers on the webhook and enter it here.
-
 ## When to Use This Skill
 
 - How do I receive Datacake webhooks?

@@ -54,11 +54,11 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/honeycomb \
   -H "Content-Type: application/json" \
   -H "X-Honeycomb-Webhook-Token: $HONEYCOMB_WEBHOOK_SECRET" \
-  -H "X-Honeycomb-Webhook-Delivery-ID: test-1" \
-  -d '{"name":"Slow checkout requests","status":"TRIGGERED"}'
+  -d '{"kind":"trigger","status":"TRIGGERED"}'
 ```
 
-(That payload is illustrative: the real default payload isn't documented field by field.)
+That body is what a custom Trigger payload template with a `kind` field renders (see SKILL.md).
+Honeycomb doesn't document its standard payload field by field.
 
 ## Receive Webhooks Locally
 
@@ -78,6 +78,6 @@ Put the printed URL in the Honeycomb webhook integration.
 1. The `X-Honeycomb-Webhook-Token` header is checked first, for every method. Failure returns `401`.
 2. A repeated `X-Honeycomb-Webhook-Delivery-ID` is acknowledged without reprocessing.
 3. An empty body is accepted; otherwise the body must be a JSON object (`400` otherwise).
-4. The handler classifies the alert as `trigger`, `slo_burn_alert`, `anomaly` or `unknown` from the
-   fields present, because custom templates can change the payload.
+4. The handler classifies the alert by the `kind` field your payload templates set (`trigger`,
+   `budget_rate`, `exhaustion_time` or `anomaly`), and anything else as `unknown`.
 5. It returns `200 {"received": true}`. Honeycomb expects a response within 15 seconds.

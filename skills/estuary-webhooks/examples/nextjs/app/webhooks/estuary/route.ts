@@ -5,15 +5,13 @@ import { classify, verifyEstuaryRequest } from '../../../lib/verify-estuary';
 
 function handleEvent(payload: unknown): void {
   switch (classify(payload)) {
-    case 'trigger': {
-      const p = payload as Record<string, unknown>;
-      console.log(`Estuary trigger: ${p.materialization_name} (run ${p.run_id})`);
-      // TODO: react to the committed transaction (e.g. start a downstream job)
+    case 'trigger':
+      console.log('Estuary trigger received');
+      // Your code: react to the committed transaction (e.g. start a downstream job)
       break;
-    }
-    case 'document':
-      console.log('Estuary document received');
-      // TODO: store or process the document
+    case 'documents':
+      console.log(`Estuary connector batch: ${(payload as unknown[]).length} documents`);
+      // Your code: store or process the documents
       break;
     default:
       console.log('Estuary request with an empty body');

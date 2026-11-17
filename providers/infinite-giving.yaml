@@ -6,13 +6,13 @@ docs:
   events: https://docs.infinitegiving.com/guide/webhooks/overview
 notes: >
   Infinite Giving (infinitegiving.com) is a non-cash donation platform (stock, crypto, DAF) for
-  nonprofits. Partner webhooks go to integration partners after OAuth connect. Setup note (shown
-  verbatim in Hookdeck): "Infinite Giving webhooks are for integration partners. Paste the signing
-  secret Infinite Giving gives you at partner kickoff." Headers: X-IG-Signature (sha256=<hex>),
+  nonprofits. Partner webhooks go to integration partners after OAuth connect. Infinite Giving configures
+  the webhook URL at partner kickoff and shares the signing secret out-of-band, per environment
+  (sandbox first, then production). Headers: X-IG-Signature (sha256=<hex>),
   X-IG-Timestamp (Unix seconds), X-IG-Event, X-IG-Webhook-Id (dedupe id). Signature is lowercase hex
   HMAC-SHA256 over the X-IG-Timestamp header value, a literal ".", then the raw body bytes, keyed with
   the partner signing secret used as UTF-8 (not decoded). Scheme: HMAC-SHA256 over "{x-ig-timestamp header}.{raw body}", header x-ig-signature, hex; accept the value with or without the sha256= prefix and compare hex case-insensitively. No timestamp window by default
-  (retries and replays resend the original timestamp); the examples offer an opt-in
+  (a replayed or queued delivery keeps its original timestamp; the docs don't say whether retries refresh it); the examples offer an opt-in
   INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS. Env var INFINITE_GIVING_WEBHOOK_SECRET. Events (2):
   donation:created, donation:updated (completion is donation:updated with status "complete"); dispatch
   on the body's `event` field. Method POST. Up to 5 attempts (retries about 1m, 5m, 30m, 2h); no

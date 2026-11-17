@@ -1,6 +1,7 @@
 # Setting Up 100ms Webhooks
 
-100ms webhooks are not signed. Add a secret header to the webhook in the 100ms dashboard and enter it here.
+100ms webhooks are not signed. Add a secret header to the workspace's webhook in the
+**Developer** section of the 100ms dashboard, and check it on every request.
 
 ## Prerequisites
 

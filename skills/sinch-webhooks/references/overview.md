@@ -1,6 +1,6 @@
 # Sinch Conversation API Callbacks Overview
 
-> For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it here; other Sinch APIs sign callbacks differently.
+> For Sinch Conversation API callbacks. Set a `secret` on the Conversation API webhook, because callbacks are signed only when it has one. Sinch's other APIs, such as Voice and Verification, sign their callbacks differently.
 
 ## What Are Sinch Conversation API Callbacks?
 
@@ -34,7 +34,7 @@ Common fields: `project_id`, `app_id`, `accepted_time`, `event_time`, `message_m
 | `duplicated_contact_identities_notification` | Duplicate contact identities are found | Contact cleanup |
 | `unsupported_callback` | A channel callback Sinch can't map | Debugging |
 
-Sinch lists 19 callback types in all; the list above is the 17 with documented sample payloads, which the examples handle by name. Any other key is logged as unrecognised.
+Sinch also documents `channel_event_notification`, `message_redaction` (the Smart Conversations redaction trigger's version of `message`) and `smart_conversation_notification`. The examples handle the 17 keys above by name and log any other key as unrecognised.
 
 ## Delivery Behaviour
 

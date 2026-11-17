@@ -53,9 +53,9 @@ def verify_payroc_request(headers, secret=None) -> bool:
 - **Fail closed.** If `PAYROC_WEBHOOK_SECRET` is unset, reject everything.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type works, check the
   header, then `JSON.parse`.
-- **Return exactly 200.** Any other status triggers up to five retries and then an email to the
-  subscription's support address.
-- **Dedupe on `id`.** Retries and replays carry the same event `id`.
+- **Return exactly 200 within 15 seconds.** Any other status, or a slower response, triggers up to
+  five retries and then an email to the subscription's support address.
+- **Dedupe on `id`.** `id` uniquely identifies the event, and a retry resends the same request.
 - **Hosted Payments Page callbacks** are a different mechanism and are not covered here.
 
 ## Debugging Verification Failures

@@ -61,7 +61,7 @@ function verifyRemote(rawBody, headers, secret = process.env.REMOTE_WEBHOOK_SECR
 
 ## Event Types
 
-Dispatch on the body's `event_type`. Remote documents 112 event types; these are the ones the examples handle.
+Dispatch on the body's `event_type`. Remote's Available Webhooks page lists 112 event types, and a few more appear only in its API reference; these are the ones the examples handle.
 
 | Event | Sent When |
 |-------|-----------|

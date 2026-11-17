@@ -50,11 +50,14 @@ Use the printed URL as the trigger `url`. For FastAPI, use port `8000`.
 curl -X POST http://localhost:3000/webhooks/estuary \
   -H "Content-Type: application/json" \
   -H "$ESTUARY_WEBHOOK_HEADER: $ESTUARY_WEBHOOK_SECRET" \
-  -d '{"materialization_name":"acmeCo/orders/to-warehouse","run_id":"run-0001"}'
+  -d '{"materialization":"acmeCo/example/database-views","runId":"2024-01-15T08:30:00.000Z"}'
 ```
 
 ## Rotating the Credential
 
 Because the credential is static and unsigned requests carry no timestamp, rotate it
 immediately if it leaks: change the header value in Estuary and the matching value in your
-receiver (and in Hookdeck).
+receiver (and in Hookdeck). A trigger's `url`, `method` and `headers` are covered by
+Estuary's SOPS integrity check, so changing any of them after the first publication means
+re-entering every secret header value. Accept both values in your receiver until the new
+spec is published.

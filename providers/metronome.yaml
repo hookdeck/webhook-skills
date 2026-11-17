@@ -1,8 +1,8 @@
 name: metronome
 displayName: "Metronome"
 docs:
-  webhooks: https://docs.metronome.com/guides/platform-configuration/setup-webhooks
-  verification: https://docs.metronome.com/guides/platform-configuration/setup-webhooks#verify-signatures
+  webhooks: https://docs.metronome.com/guides/platform-configuration/webhooks/webhook-types
+  verification: https://docs.metronome.com/guides/platform-configuration/webhooks/best-practices#verify-signatures
 notes: >
   Metronome usage-based-billing webhooks. Metronome (metronome.com), usage-based billing. Delivery
   (from the docs): A status above 299 is retried with exponential backoff up to a 15-minute cadence,

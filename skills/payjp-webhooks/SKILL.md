@@ -44,16 +44,15 @@ function verifyPayjpRequest(headers, secret = process.env.PAYJP_WEBHOOK_SECRET) 
 ```
 
 - Header: `X-Payjp-Webhook-Token: whook_...`, the token set by PAY.JP for your account (you don't choose it). Compare the **whole** value, case-insensitive header name.
-- Hookdeck shows this setup note for the PAY.JP source: "Use the webhook token (whook_...) shown in your PAY.JP account settings."
 - Return `401` on a missing or wrong token, `400` for a body that isn't a JSON object, and `200` once handled. PAY.JP requires HTTP 200 (the body is ignored); `4xx`/`5xx` responses are retried every 3 minutes, at most 3 times.
 - Read the body raw (`express.raw({ type: '*/*' })`) so any content type works, authenticate first, and parse afterwards.
-- **A static shared token authenticates the sender, not the body, and gives no replay protection** (no signature, no timestamp). Always receive webhooks over HTTPS and rotate the token if it leaks. Dedupe on the event `id`.
+- **A static shared token authenticates the sender, not the body, and gives no replay protection** (no signature, no timestamp). Always receive webhooks over HTTPS and keep the token out of logs and client code; PAY.JP's webhook pages describe no way to rotate it. Dedupe on the event `id`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
-The body is a v1 event `{id, object: "event", livemode, type, created, data, pending_webhooks}`. Dispatch on `type`; `data` is the same object the API returns.
+The body is an event `{id, object: "event", livemode, type, created, data, pending_webhooks}`. Dispatch on `type`; `data` is the same object the API returns. The table below covers API v1 types; accounts on API v2 also receive types such as `payment_flow.succeeded`, `setup_flow.succeeded`, `checkout.session.completed` and `refund.created` (see [references/overview.md](references/overview.md)).
 
 | Event | Sent When |
 |-------|-----------|
@@ -85,7 +84,7 @@ PAY.JP can't reach `localhost`. Tunnel with the Hookdeck CLI (no account require
 npx hookdeck-cli listen 3000 payjp --path /webhooks/payjp
 ```
 
-Use the printed URL as the webhook destination in the PAY.JP dashboard.
+Use the printed URL as the webhook destination in the PAY.JP dashboard. PAY.JP's own [payjp-cli](https://docs.pay.jp/v2/guide/developers/payjp-cli) can also forward test-mode events: `payjp-cli listen --forward-to http://localhost:3000/webhooks/payjp`.
 
 ## Resources
 

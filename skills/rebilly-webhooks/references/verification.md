@@ -12,10 +12,8 @@ Authorization: Basic cmViaWxseTpzdXBlcm1hbgo=
 That is `base64(username:password)`. Hookdeck's Rebilly source checks these credentials, and the examples do the same. There is no signature to compute for basic auth, and the body is not part
 of the check.
 
-> Hookdeck shows this note for the source: "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and Ed25519 signatures are not checked."
-
 **A static shared credential authenticates the sender, not the body, and gives no replay
-protection** (no signature, no timestamp). Use HTTPS, and rotate the credential if it leaks.
+protection** (basic auth itself carries no signature or timestamp). Use HTTPS, and rotate the credential if it leaks.
 The credentials must arrive with each request (there is no `WWW-Authenticate` challenge round trip).
 
 ## Implementation
@@ -88,11 +86,15 @@ def verify_rebilly_request(headers, username: str, password: str) -> bool:
 Every Rebilly webhook is also signed, in two ways. Hookdeck's Rebilly source checks neither, and
 the examples don't either.
 
-1. **`Security-Signature`**: an RS256 JWT. Rebilly's docs describe it as a body-bound JWT verified against Rebilly's
-   published public keys; confirm the claim names and key URLs in Rebilly's webhook docs before
-   relying on it, as this skill doesn't implement it.
+1. **`Security-Signature`**: an RS256 JWT, verified against Rebilly's JSON Web Keys at
+   `https://api.rebilly.com/.well-known/keys` (live) or `https://api-sandbox.rebilly.com/.well-known/keys`
+   (sandbox), cached for no more than 1 hour. Its payload has `iss` (the Rebilly API URL), `aud` (your
+   organization ID), `iat`, `exp` and `requestBodyHash`, the SHA-256 hash of the raw body as received.
+   This skill doesn't implement it.
 2. **Standard Webhooks `v1a`**: an Ed25519 signature in `webhook-id`, `webhook-timestamp` and
-   `webhook-signature`. Rebilly's public keys are fixed per environment:
+   `webhook-signature`. `webhook-id` is your organization ID, a colon and the webhook's ID, so check
+   its prefix to confirm the webhook is for your organization. Rebilly recommends this check for new
+   integrations. Rebilly's public keys are fixed per environment:
    - live: `whpk_lr2xkGO1EEdyZxVx4DKQ5XfmSjxOmwv9UcwNPbn9fFI=`
    - sandbox: `whpk_qism49rHt4dOh6txzL3dfnMTmhQiITY1A86Y9BJGEZM=`
 
@@ -118,8 +120,9 @@ function verifyV1a(headers, rawBody, whpk) {
 }
 ```
 
-Do not add Rebilly's 5-minute `webhook-timestamp` check behind Hookdeck: retries resend the
-original timestamp, so a freshness window would reject every retry. A signature adds body
+Do not add Rebilly's 5-minute `webhook-timestamp` check behind Hookdeck: Hookdeck forwards the
+original headers, so a delivery it retries or you replay later carries the original timestamp and
+would fail a freshness window. A signature adds body
 integrity, but it is an extra; the basic auth check remains the one Hookdeck performs.
 
 ## Debugging Verification Failures

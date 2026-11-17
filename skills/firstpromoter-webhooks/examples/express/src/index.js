@@ -41,102 +41,102 @@ function handleEvent(payload) {
   switch (type) {
     case 'promoter.created':
       console.log(`Promoter created: ${data.email} (${id})`);
-      // TODO: create a CRM contact, send onboarding
+      // Create a CRM contact, send onboarding
       break;
 
     case 'promoter.updated':
       console.log(`Promoter updated: ${id}`, Object.keys(changes));
-      // TODO: sync the profile
+      // Sync the profile
       break;
 
     case 'promoter.deleted':
       console.log(`Promoter deleted: ${id}`);
-      // TODO: deprovision
+      // Deprovision
       break;
 
     case 'promoter.balance.updated':
       console.log(`Promoter balance updated: ${id}`);
-      // TODO: update the balance shown in your app
+      // Update the balance shown in your app
       break;
 
     case 'referral.created':
       console.log(`Referral created: ${data.email} (${id})`);
-      // TODO: attribute the signup
+      // Attribute the signup
       break;
 
     case 'referral.updated':
       console.log(`Referral updated: ${id}`, Object.keys(changes));
-      // TODO: sync state (changes.state = [old, new])
+      // Sync state (changes.state = [old, new])
       break;
 
     case 'referral.converted':
       console.log(`Referral converted: ${data.email} (${id})`);
-      // TODO: credit the promoter, notify
+      // Credit the promoter, notify
       break;
 
     case 'referral.cancelled':
       console.log(`Referral cancelled: ${id}`);
-      // TODO: reverse benefits
+      // Reverse benefits
       break;
 
     case 'referral.deleted':
       console.log(`Referral deleted: ${id}`);
-      // TODO: clean up
+      // Clean up
       break;
 
     case 'referral.moved':
       console.log(`Referral moved campaign: ${id}`);
-      // TODO: re-tier
+      // Re-tier
       break;
 
     case 'commission.created':
       console.log(`Commission created: ${id} amount=${data.amount} ${data.unit}`);
-      // TODO: record the liability
+      // Record the liability
       break;
 
     case 'commission.updated':
       console.log(`Commission updated: ${id}`, Object.keys(changes));
-      // TODO: sync status
+      // Sync status
       break;
 
     case 'commission.approved':
       console.log(`Commission approved: ${id}`);
-      // TODO: queue for payout
+      // Queue for payout
       break;
 
     case 'commission.pending':
       console.log(`Commission pending: ${id}`);
-      // TODO: hold
+      // Hold
       break;
 
     case 'commission.denied':
       console.log(`Commission denied: ${id}`);
-      // TODO: notify the promoter
+      // Notify the promoter
       break;
 
     case 'commission.deleted':
       console.log(`Commission deleted: ${id}`);
-      // TODO: remove the liability
+      // Remove the liability
       break;
 
     case 'payout.created':
       console.log(`Payout created: ${id}`);
-      // TODO: open a payout record
+      // Open a payout record
       break;
 
     case 'payout.completed':
       console.log(`Payout completed: ${id}`);
-      // TODO: mark as paid
+      // Mark as paid
       break;
 
     case 'payout.failed':
       console.log(`Payout failed: ${id}`);
-      // TODO: alert finance
+      // Alert finance
       break;
 
     case 'contract_document.signed':
       console.log(`Contract signed: ${id} by promoter ${data.promoter_id}`);
-      // TODO: unlock the program for the promoter
+      // Unlock the program for the promoter
       break;
 
     default:

@@ -83,8 +83,9 @@ the **name of the key inside `event`**; each value is an array of events. Dispat
 | `moButtonResponse` | Reply | A button is tapped |
 
 Clickatell adds new kinds and fields over time, so acknowledge kinds you don't handle. Events can
-be duplicated (retries) or arrive out of order: deduplicate on `messageId` and order by
-`timestamp` (milliseconds).
+be duplicated (retries) or arrive out of order. One message gets several status events, so
+deduplicate status events on the kind, `messageId` and `status` together, and replies on
+`messageId`. Order by `timestamp` (milliseconds).
 
 ## Environment Variables
 

@@ -8,7 +8,7 @@
 
 ## Get Your Signing Secret
 
-> Onshape signature keys are an Enterprise company setting. Paste the primary key; only the primary signature is verified.
+> A company administrator generates Onshape's signature keys in Company/Classroom/Enterprise settings > Webhooks. Use the primary key: this skill verifies the primary signature.
 
 1. Click your account icon > **Company/Classroom/Enterprise settings** > **Webhooks**.
 2. Under **Webhook signatures**, generate a primary key (and optionally a secondary key for rotation). Onshape accepts either; this skill verifies the **primary** header only.
@@ -28,7 +28,7 @@ Call `POST https://cad.onshape.com/api/v6/webhooks` (Enterprise accounts use the
 }
 ```
 
-- Use `companyId` (from `findCompany`, the `id` field) or a `documentId` owned by the company.
+- Use `companyId` (from `GET /companies`, the `id` field, not `address.id` or `ownerId`) or a `documentId` owned by the company.
 - Set `isTransient=false` to avoid automatic clean-up after inactivity.
 - Registration sends a trial notification (`webhook.register`, and a `webhook.ping` validation). Your endpoint only needs to return HTTP 200 for it. Onshape doesn't say whether the trial carries the signature headers (its help page only says webhooks include them when a key is set), so check the first `webhook.register` in Hookdeck's request log. If the check fails there, it is recorded as failed verification and creates no event.
 

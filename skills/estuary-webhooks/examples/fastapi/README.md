@@ -44,14 +44,14 @@ Server runs on http://localhost:8000 and accepts `GET`, `POST`, `PUT`, `PATCH` a
 pytest test_webhook.py
 ```
 
-The tests use an illustrative payload (Estuary has no fixed event schema) with correct, wrong and
+The tests use the example bodies printed in Estuary's docs (it has no fixed event schema) with correct, wrong and
 missing headers across all methods. To try it by hand:
 
 ```bash
 curl -X POST http://localhost:8000/webhooks/estuary \
   -H "Content-Type: application/json" \
   -H "Authorization: $ESTUARY_WEBHOOK_SECRET" \
-  -d '{"materialization_name":"acmeCo/orders/to-warehouse","run_id":"run-0001"}'
+  -d '{"materialization":"acmeCo/example/database-views","runId":"2024-01-15T08:30:00.000Z"}'
 ```
 
 ## Receive Estuary Webhooks Locally
@@ -70,5 +70,5 @@ Use the printed URL as the trigger `url`. Hookdeck's Estuary source accepts only
 1. The `require_estuary_auth` dependency compares the configured header with `ESTUARY_WEBHOOK_SECRET` for every method, before the body is read. Failure returns `401`.
 2. The raw body is read, so any content type works and an empty body is fine.
 3. JSON is parsed after the check; anything else is kept as text.
-4. There is no vendor event field: the handler tells a trigger body (`materialization_name`) from any other document.
+4. There is no vendor event field: the handler tells an HTTP Webhook connector batch (a JSON array of documents) from a trigger body.
 5. It returns `200 {"received": true}`.

@@ -44,7 +44,7 @@ export function verifyInfiniteGivingWebhook(
     return { valid: false, error: 'Signature mismatch' };
   }
 
-  // Opt-in replay window. Off by default: retries and replays resend the original timestamp.
+  // Opt-in replay window. Off by default: a replayed or queued delivery keeps its original timestamp.
   if (toleranceSeconds > 0) {
     const sent = /^\d+$/.test(timestamp) ? Number(timestamp) : NaN;
     const now = Math.floor(Date.now() / 1000);

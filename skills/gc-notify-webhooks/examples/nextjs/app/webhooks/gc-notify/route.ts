@@ -14,7 +14,7 @@ interface DeliveryReceipt {
   completed_at?: string | null;
   sent_at?: string | null;
   notification_type?: 'email' | 'sms';
-  health_check?: string;
+  health_check?: string | boolean;
   [key: string]: unknown;
 }
 
@@ -38,27 +38,27 @@ function handleReceipt(payload: DeliveryReceipt): void {
 
     case 'delivered':
       console.log(`${type} ${id} delivered to ${to}`);
-      // TODO: mark the message delivered (payload.completed_at)
+      // Your code: mark the message delivered (payload.completed_at)
       break;
 
     case 'permanent-failure':
       console.log(`${type} ${id} permanently failed: ${payload.status_description}`);
-      // TODO: stop sending to this address or number
+      // Your code: stop sending to this address or number
       break;
 
     case 'temporary-failure':
       console.log(`${type} ${id} temporarily failed: ${payload.status_description}`);
-      // TODO: record it; a later callback may report the final outcome
+      // Your code: record it; a later callback may report the final outcome
       break;
 
     case 'technical-failure':
       console.log(`${type} ${id} technical failure: ${payload.provider_response}`);
-      // TODO: alert and consider resending
+      // Your code: alert and consider resending
       break;
 
     case 'virus-scan-failed':
       console.log(`${type} ${id} attachment failed the virus scan`);
-      // TODO: tell the sender their attachment was rejected
+      // Your code: tell the sender their attachment was rejected
       break;
 
     default:

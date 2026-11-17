@@ -57,25 +57,26 @@ function withinTolerance(timestamp) {
   return Math.abs(Math.floor(Date.now() / 1000) - ts) <= tolerance;
 }
 
-// BugSmash's docs list these events but document no delivery body, so the field
-// carrying the event name is unknown. This reads `event`, then `type`, from an
-// ILLUSTRATIVE payload ({ "event": "new_comment", "data": {...} }). Check a real
-// delivery (POST /webhook/test) and adjust.
+// BugSmash's help center example bodies are flat JSON objects that name the event
+// in `event`. Replies appear under two names: the API subscribes to
+// `comment_replied`, while the help center's reply body carries
+// `new_reply_on_comment`, so both are handled. `type` is a fallback only.
 function handleEvent(payload) {
   const eventType = payload.event ?? payload.type;
 
   switch (eventType) {
     case 'new_comment':
-      console.log('New comment', payload.data ?? payload);
+      console.log('New comment', payload);
       break;
     case 'comment_replied':
-      console.log('Comment replied', payload.data ?? payload);
+    case 'new_reply_on_comment':
+      console.log('Comment replied', payload);
       break;
     case 'status_changed':
-      console.log('Status changed', payload.data ?? payload);
+      console.log('Status changed', payload);
       break;
     case 'comment_updated':
-      console.log('Comment updated', payload.data ?? payload);
+      console.log('Comment updated', payload);
       break;
     default:
       console.log(`Unhandled BugSmash event: ${eventType}`);

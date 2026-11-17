@@ -16,10 +16,13 @@ notes: >
   hmac.compare_digest on bytes (encode both sides; never pass str, which raises on non-ASCII).
   SKILL.md and verification.md must say plainly that a static shared credential authenticates the
   sender, not the body, and gives no replay protection (no signature, no timestamp), so use HTTPS
-  and rotate the credential if it leaks. Model on the n8n, zapier, coterie and honeybadger skills on
-  main. Hookdeck's source type is PAYJP, labelled 'PAY.JP'. Hookdeck shows this setup note for the
-  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim: "Use the
-  webhook token (whook_...) shown in your PAY.JP account settings." Body: v1 event {id, object:
+  and keep the token secret. PAY.JP's webhook pages describe no way to rotate the token, so don't
+  tell users to rotate it. Model on the n8n, zapier, coterie and honeybadger skills on
+  main. Hookdeck's source type is PAYJP, labelled 'PAY.JP'. Don't quote Hookdeck's setup alert; tell
+  the user to use the webhook token (whook_...) from PAY.JP account settings. API v2 accounts also
+  receive v2 types (payment_flow.*, setup_flow.*, payment_method.*, checkout.session.*, refund.*,
+  product.*, price.*, tax_rate.*), listed in references/overview.md. Example code has no TODO
+  comments. Body: v1 event {id, object:
   'event', livemode, type, created, data, pending_webhooks}; type e.g. charge.succeeded,
   charge.failed, charge.refunded, customer.created, subscription.renewed, transfer.succeeded.
   Dispatch on type; dedupe on id. All webhooks are POST and the response must be HTTP 200 (body

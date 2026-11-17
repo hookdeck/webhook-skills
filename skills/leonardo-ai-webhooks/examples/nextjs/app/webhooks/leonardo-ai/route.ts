@@ -17,7 +17,7 @@ function handleEvent(payload: LeonardoPayload): void {
       console.log(
         `Generation ${generation?.id} ${generation?.status}: ${generation?.images?.length ?? 0} image(s)`
       );
-      // TODO: download images[].url, update your job record, notify the user
+      // Next: download images[].url, update your job record, notify the user
       break;
     }
 
