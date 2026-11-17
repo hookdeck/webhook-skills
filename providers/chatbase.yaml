@@ -1,0 +1,36 @@
+name: chatbase
+displayName: Chatbase
+docs:
+  webhooks: https://chatbase.co/docs/developer-guides/webhooks
+  verification: https://chatbase.co/docs/developer-guides/webhooks#receiving-the-request
+  events: https://chatbase.co/docs/developer-guides/webhooks#event-types
+  hipaa: https://chatbase.co/docs/developer-guides/hipaa-webhooks
+notes: >
+  AI agent platform. Two webhook schemes. (1) Event webhooks, configured on an Action's Destinations
+  section (Collect Leads, Collect Data), Settings > Webhooks (custom forms) or Phone > Connections
+  (call summaries): header x-chatbase-signature = hex HMAC-SHA1 of the raw request body, no prefix,
+  no timestamp. Body is { eventType, chatbotId, payload }. Event types are leads.submit,
+  "{action name}_collect_data.submit", "{action name}_custom_form.submit" and phone_call.summary.
+  The docs do not say where the event-webhook secret is shown; Chatbase's sample reads SECRET_KEY.
+  (2) HIPAA conversation webhook (Enterprise, Settings > HIPAA): X-Chatbase-Signature = "v1=" + hex
+  HMAC-SHA256(secret, timestamp + "." + rawBody), X-Chatbase-Timestamp (unix seconds, check within
+  5 minutes), X-Chatbase-Delivery-Id (idempotency key). Body event is conversation.deleted.
+  Verification sends two probes with "test": true; the one signed with a throwaway key must get a
+  non-2xx. Retries 6 attempts over ~22 hours; 10 second timeout. Helpdesk trigger webhooks also send
+  X-Chatbase-Signature but the algorithm is not documented.
+testScenario:
+  events:
+    - leads.submit
+    - phone_call.summary
+    - conversation.deleted
+catalog:
+  summary: 'Verify Chatbase webhook signatures (`x-chatbase-signature`, HMAC-SHA1 of the raw body; HIPAA `v1=` HMAC-SHA256 with `X-Chatbase-Timestamp`), handle leads.submit, phone_call.summary, custom form and collect data submissions, and conversation.deleted events'
+  marketplace:
+    description: Verify Chatbase webhook signatures (x-chatbase-signature HMAC-SHA1, HIPAA v1= HMAC-SHA256), handle leads.submit, phone_call.summary, {action}_custom_form.submit, {action}_collect_data.submit and conversation.deleted events.
+    keywords:
+    - webhooks
+    - chatbase
+    - ai-agents
+    - chatbots
+    - leads
+    - hipaa
