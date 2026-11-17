@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 807 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 808 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -2567,6 +2567,30 @@
       "keywords": [
         "webhooks",
         "charitystack"
+      ]
+    },
+    {
+      "name": "chatbase-webhooks",
+      "description": "Verify Chatbase Action webhook signatures (x-chatbase-signature, hex HMAC-SHA1 of the raw body), handle leads.submit, phone_call.summary, {action}_custom_form.submit and {action}_collect_data.submit events.",
+      "source": "./skills/chatbase-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/chatbase-webhooks",
+      "keywords": [
+        "webhooks",
+        "chatbase",
+        "ai-agents",
+        "chatbots",
+        "leads"
       ]
     },
     {
@@ -6726,7 +6750,7 @@
     },
     {
       "name": "hume-webhooks",
-      "description": "Receive and verify Hume EVI (speech-to-speech) webhooks. Use when setting up a Hume webhook handler, debugging X-Hume-AI-Webhook-Signature HMAC-SHA256 signature verification, or handling chat_started, chat_ended and tool_call events from Hume's emotionally intelligent voice AI.",
+      "description": "Deprecated: Hume retired EVI and its webhooks on 2026-11-13. Receive and verify Hume EVI (speech-to-speech) webhooks. Use when setting up a Hume webhook handler, debugging X-Hume-AI-Webhook-Signature HMAC-SHA256 signature verification, or handling chat_started, chat_ended and tool_call events from Hume's emotionally intelligent voice AI.",
       "source": "./skills/hume-webhooks",
       "strict": false,
       "skills": [
@@ -13090,7 +13114,7 @@
     },
     {
       "name": "sent-dm-webhooks",
-      "description": "Receive and verify Sent (sent.dm) webhooks, a multi-channel messaging API (SMS, WhatsApp, RCS, voice) that signs deliveries Standard Webhooks / Svix style on X-Webhook-* headers. Use when setting up a Sent webhook endpoint, getting the whsec_ signing secret, debugging X-Webhook-Signature verification, deduping on X-Webhook-Event-ID, or handling events like message.delivered, message.failed, message.received, templates.approved and contact.opt_out.",
+      "description": "Receive and verify Sent (sent.dm) webhooks, a multi-channel messaging API (SMS, WhatsApp, RCS, voice) that signs deliveries with the Standard Webhooks scheme: webhook-* headers on version 2 webhooks (the default) and X-Webhook-* headers on version 1. Use when setting up a Sent webhook endpoint, getting the whsec_ signing secret, debugging webhook-signature or X-Webhook-Signature verification, deduping retries, or handling events like message.delivered, message.failed, message.received, templates.approved and contact.opt_out.",
       "source": "./skills/sent-dm-webhooks",
       "strict": false,
       "skills": [
@@ -17445,7 +17469,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 810 provider skills (Stripe, Shopify, GitHub, and 807 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 816 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 811 provider skills (Stripe, Shopify, GitHub, and 808 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 817 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -17570,6 +17594,7 @@
         "./skills/chargebee-webhooks",
         "./skills/chargeblast-webhooks",
         "./skills/charitystack-webhooks",
+        "./skills/chatbase-webhooks",
         "./skills/chatim-webhooks",
         "./skills/check-hq-webhooks",
         "./skills/checkly-webhooks",
