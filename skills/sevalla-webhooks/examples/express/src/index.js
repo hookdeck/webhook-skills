@@ -39,42 +39,42 @@ function handleEvent(payload) {
   switch (type) {
     case 'APP_CREATE':
       console.log(`Application created: ${data.display_name} (${data.id})`);
-      // TODO: register the application in your inventory
+      // Your code: register the application in your inventory
       break;
 
     case 'APP_DEPLOY':
       console.log(`Application deployment ${data.status}: ${data.app_display_name} (${data.deployment_id})`);
-      // TODO: notify chat on 'failed', run tests on 'success' (data.is_preview marks preview apps)
+      // Your code: notify chat on 'failed', run tests on 'success' (data.is_preview marks preview apps)
       break;
 
     case 'APP_UPDATE':
       console.log(`Application updated: ${data.display_name} (${data.id})`);
-      // TODO: refresh your inventory
+      // Your code: refresh your inventory
       break;
 
     case 'APP_DELETE':
       console.log(`Application deleted: ${data.display_name} (${data.id})`);
-      // TODO: clean up
+      // Your code: clean up
       break;
 
     case 'STATIC_SITE_CREATE':
       console.log(`Static site created: ${data.display_name} (${data.id})`);
-      // TODO: register the static site
+      // Your code: register the static site
       break;
 
     case 'STATIC_SITE_DEPLOY':
       console.log(`Static site deployment ${data.status}: ${data.static_site_display_name} (${data.deployment_id})`);
-      // TODO: purge caches or notify on 'success'
+      // Your code: purge caches or notify on 'success'
       break;
 
     case 'STATIC_SITE_UPDATE':
       console.log(`Static site updated: ${data.display_name} (${data.id})`);
-      // TODO: refresh your inventory
+      // Your code: refresh your inventory
       break;
 
     case 'STATIC_SITE_DELETE':
       console.log(`Static site deleted: ${data.display_name} (${data.id})`);
-      // TODO: clean up
+      // Your code: clean up
       break;
 
     case 'DATABASE_CREATE':

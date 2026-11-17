@@ -29,7 +29,7 @@ def verify_lob_signature(
 ) -> bool:
     """Verify a Lob webhook signature.
 
-    Lob-Signature = lowercase hex HMAC-SHA256(secret, f"{Lob-Signature-Timestamp}.{raw body}").
+    Lob-Signature = hex HMAC-SHA256(secret, f"{Lob-Signature-Timestamp}.{raw body}").
     The signed message is built as BYTES: the timestamp header exactly as received (latin-1),
     a literal ".", then the raw body bytes. Never decode and re-encode the body.
     """
@@ -114,12 +114,12 @@ async def lob_webhook(event: dict = Depends(verified_lob_event)):
     resource = event.get("body") or {}
     resource_id = resource.get("id") if isinstance(resource, dict) else None
 
-    # TODO: use event["id"] to deduplicate (Lob retries until it sees a 2xx).
+    # Deduplicate on event["id"]: Lob retries until it sees a 2xx.
     if event_type == "postcard.created":
         print(f"Postcard created: {resource_id}")
     elif event_type == "postcard.delivered":
         print(f"Postcard delivered: {resource_id}")
-        # TODO: trigger the downstream "mail delivered" workflow.
+        # Trigger your downstream "mail delivered" workflow here.
     elif event_type == "postcard.re-routed":
         print(f"Postcard re-routed: {resource_id}")
     elif event_type == "letter.mailed":
@@ -130,7 +130,7 @@ async def lob_webhook(event: dict = Depends(verified_lob_event)):
         print(f"Check in transit: {resource_id}")
     elif event_type == "self_mailer.rendered_thumbnails":
         print(f"Self mailer thumbnails rendered: {resource_id}")
-        # TODO: download resource["thumbnails"] (small/medium/large URLs) if payload redaction is off.
+        # resource["thumbnails"] holds small/medium/large URLs when payload redaction is off.
     else:
         print(f"Unhandled event type: {event_type}")
 

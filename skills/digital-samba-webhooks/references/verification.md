@@ -61,13 +61,13 @@ def verify_digital_samba_request(headers, secret=None) -> bool:
 - **Constant-time compare.** Check lengths (or hash both sides) before `timingSafeEqual`, which throws on unequal lengths. In Python use `hmac.compare_digest` on bytes.
 - **Fail closed.** If `DIGITAL_SAMBA_WEBHOOK_SECRET` is unset, reject everything.
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then `JSON.parse` after the check.
-- **No replay protection.** Use idempotency keys such as `sessionId` + `eventType` + `timestamp` to drop duplicates.
+- **No replay protection.** `sessionId` + `eventType` + `timestamp` isn't unique, because `timestamp` is in whole seconds and two participants can join in the same second. Add an ID from `data`, such as `participantId`, and make handlers idempotent.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
 | 401 on every request | `DIGITAL_SAMBA_WEBHOOK_SECRET` unset, or differs from the webhook's `authorization_header` |
-| 401 and no Authorization header arrives | The webhook was created without `authorization_header`; edit it through the API |
+| 401 and no Authorization header arrives | The webhook was created without `authorization_header`; edit it in the dashboard or through the API |
 | 401 only behind a proxy | The proxy strips the `Authorization` header |
 | 400 after authentication | Body isn't a JSON object |

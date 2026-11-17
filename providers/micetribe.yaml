@@ -40,9 +40,9 @@ notes: >
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are
   in /home/user/regwt/b14-merge/samples-doc/providers/micetribe/latest/ (registration.updated.json);
   base the examples' test payloads on them. Hookdeck's source type is MICETRIBE, labelled 'MICEtribe'.
-  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
-  user the same thing, verbatim: "MICEtribe signs webhooks only when the webhook has a signing secret.
-  Set one on the webhook and paste it here."
+  SKILL.md and references/setup.md must tell the user that MICEtribe signs a delivery only when the
+  webhook has a signing secret, so they should set one on every webhook. Don't quote Hookdeck's source
+  setup text.
 testScenario:
   events:
     - "registration.created"

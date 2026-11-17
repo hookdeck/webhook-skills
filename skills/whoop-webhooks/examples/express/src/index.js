@@ -89,17 +89,17 @@ app.post('/webhooks/whoop',
     // For recovery.* events, `id` is the UUID of the associated sleep.
     switch (type) {
       case 'sleep.updated':
-        // TODO: GET /v2/activity/sleep/{id}
+        // Next, GET /v2/activity/sleep/{id} with the user's access token
         console.log(`Sleep ${id} created or updated`);
         break;
 
       case 'workout.updated':
-        // TODO: GET /v2/activity/workout/{id}
+        // Next, GET /v2/activity/workout/{id} with the user's access token
         console.log(`Workout ${id} created or updated`);
         break;
 
       case 'recovery.updated':
-        // TODO: fetch the recovery for sleep {id}
+        // Next, GET the sleep for its cycle_id, then /v2/cycle/{cycle_id}/recovery
         console.log(`Recovery for sleep ${id} created or updated`);
         break;
 

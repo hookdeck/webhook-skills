@@ -26,9 +26,7 @@ Digital Samba (embedded video conferencing) sends a JSON webhook when something 
 
 ## Setup
 
-Set authorization_header on the webhook through the Digital Samba REST API, then paste the same secret.
-
-`authorization_header` is optional and is set when creating or editing the webhook through the REST API. It is highly recommended: without it the request carries nothing to check. See [references/setup.md](references/setup.md).
+Create the webhook in the dashboard's Webhooks section (**Add webhook**) or with `POST /api/v1/webhooks`, and set a secret you generate as its authorisation header (`authorization_header` in the API). The field is optional but highly recommended: without it the request carries nothing to check. See [references/setup.md](references/setup.md).
 
 ## Verification (core)
 

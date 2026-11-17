@@ -42,8 +42,8 @@ notes: >
   separate option, not covered. Events: there is no type field. Each callback has common fields
   (project_id, app_id, accepted_time, event_time, message_metadata, correlation_id) plus exactly one
   callback-specific top-level object whose key is the type: message, message_delivery_report, event,
-  conversation_start_notification, contact_create_notification, opt_in_notification and others (19 in
-  all). Dispatch on which key is present. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
+  conversation_start_notification, contact_create_notification, opt_in_notification and others (20 documented keys,
+  including smart_conversation_notification from the Smart Conversations callbacks page). Dispatch on which key is present. Method: POST. The examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   PUBLISHED TEST VECTOR: the vendor's docs give a worked
@@ -57,10 +57,9 @@ notes: >
   in /home/user/regwt/b14-merge/samples-doc/providers/sinch/latest/
   (batch_status_update_notification.json, capability_notification.json,
   contact_create_notification.json, contact_delete_notification.json, ...); base the examples' test
-  payloads on them. Hookdeck's source type is SINCH, labelled 'Sinch'. Hookdeck shows this setup note
-  for the source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
-  "For Sinch Conversation API callbacks. Set a secret on the Conversation API webhook and paste it
-  here; other Sinch APIs sign callbacks differently."
+  payloads on them. Hookdeck's source type is SINCH, labelled 'Sinch'. Tell the user to set a
+  `secret` on the Conversation API webhook (callbacks are signed only when it has one) and to paste
+  the same secret into the Hookdeck source. Don't quote Hookdeck's dashboard setup text.
 testScenario:
   events:
     - "message"

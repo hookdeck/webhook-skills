@@ -59,8 +59,8 @@ carries `data.signed` (the string `"true"`).
 
 ## Delivery
 
-Respond with exactly `200`. Otherwise Payroc retries five times, then emails the subscription's
-support address.
+Respond with exactly `200` within 15 seconds, because Payroc treats a slower response as a failed
+delivery. Without a `200`, Payroc retries five times, then emails the subscription's support address.
 
 ## Full Event Reference
 

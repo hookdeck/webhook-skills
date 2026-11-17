@@ -22,7 +22,7 @@ Register the endpoint URL (for Hookdeck, the source URL it gives you) with Vitab
 | Header | Example |
 |--------|---------|
 | `X-Vitable-Signature` | `sha512=<128 hex characters>` |
-| `X-Vitable-Timestamp` | `1769178600` |
+| `X-Vitable-Timestamp` | `<unix_timestamp>` |
 
 ## Respond Quickly
 
@@ -30,4 +30,4 @@ Return a `2xx` as soon as you have verified and recorded the event. If deliverie
 
 ## Test Your Endpoint
 
-Ask Vitable to trigger events for your subscription, or exercise the flows in the sandbox (for example a census sync, which produces `employee.eligibility_granted`). Inspect the deliveries in Hookdeck; if the signature check fails, see [verification.md](verification.md).
+Vitable's docs describe no test-event button, so trigger a real flow in your integration (for example a census sync, which produces `employee.eligibility_granted` for each eligible employee), or ask Vitable's team. Inspect the deliveries in Hookdeck; if the signature check fails, see [verification.md](verification.md).

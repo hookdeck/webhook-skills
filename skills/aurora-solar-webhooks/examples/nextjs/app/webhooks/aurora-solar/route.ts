@@ -46,7 +46,7 @@ function handleEvent(event: string, params: Record<string, string>): void {
     return;
   }
   console.log(`${label}:`, params);
-  // TODO: the payload is only identifiers and statuses; fetch the object from the
+  // The payload is only identifiers and statuses: fetch the object from the
   // Aurora API using params.project_id / params.design_id / params.job_id.
 }
 

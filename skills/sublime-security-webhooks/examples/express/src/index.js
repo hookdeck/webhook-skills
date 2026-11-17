@@ -94,7 +94,7 @@ app.post('/webhooks/sublime-security', express.raw({ type: '*/*' }), (req, res) 
     return res.status(400).send('Invalid JSON');
   }
 
-  // payload.id is unique per delivery: use it to drop duplicates (see webhook-handler-patterns)
+  // Store payload.id and skip repeats to drop duplicates (see webhook-handler-patterns)
   const { id, type, data = {} } = payload;
   const messageId = data.message?.id;
   const rules = (data.flagged_rules || []).map((r) => r.name).join(', ');

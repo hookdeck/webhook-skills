@@ -51,43 +51,43 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "participant_joined":
         print(f"Participant joined room {room_id}: {data.get('name')}")
-        # TODO: update attendance (data["participantId"], data["role"])
+        # Update attendance (data["participantId"], data["role"])
 
     elif event_type == "participant_left":
         print(f"Participant left room {room_id}")
-        # TODO: record the departure
+        # Record the departure
 
     elif event_type == "session_started":
         print(f"Session started: {session_id}")
-        # TODO: mark the room as live
+        # Mark the room as live
 
     elif event_type == "session_ended":
         print(f"Session ended: {session_id}")
-        # TODO: finalize attendance and billing
+        # Finalize attendance and billing
 
     elif event_type == "recording_started":
         print(f"Recording started in session {session_id}")
-        # TODO: show a recording indicator
+        # Show a recording indicator
 
     elif event_type == "recording_stopped":
         print(f"Recording stopped in session {session_id}")
-        # TODO: mark the recording as processing
+        # Mark the recording as processing
 
     elif event_type == "recording_ready":
         print(f"Recording ready for session {session_id}")
-        # TODO: fetch the recording through the REST API
+        # Fetch the recording through the REST API
 
     elif event_type == "recording_deleted":
         print(f"Recording deleted in session {session_id}")
-        # TODO: remove the stored reference
+        # Remove the stored reference
 
     elif event_type == "session_summary_ready":
         print(f"Session summary ready for session {session_id}")
-        # TODO: fetch the summary through the REST API
+        # Fetch the summary through the REST API
 
     elif event_type == "session_transcript_ready":
         print(f"Session transcript ready for session {session_id}")
-        # TODO: fetch the transcript through the REST API
+        # Fetch the transcript through the REST API
 
     else:
         print(f"Unhandled event: {event_type}")

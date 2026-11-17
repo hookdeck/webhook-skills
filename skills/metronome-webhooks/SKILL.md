@@ -24,7 +24,7 @@ metadata:
 
 ## Verification (core)
 
-Metronome sends the signature as bare lowercase hex in `Metronome-Webhook-Signature`. It is HMAC-SHA256, keyed with the webhook's secret key (UTF-8 bytes, used as-is), over `X-Metronome-Date` + a newline (LF, `0x0A`) + the **raw request body bytes**. Use `X-Metronome-Date`, not `Date` (intermediaries may rewrite `Date`). No official SDK helper exists, so verify manually.
+Metronome sends the signature as bare lowercase hex in `Metronome-Webhook-Signature`. It is HMAC-SHA256, keyed with the webhook's secret key (UTF-8 bytes, used as-is), over `X-Metronome-Date` + a newline (LF, `0x0A`) + the **raw request body bytes**. Use `X-Metronome-Date`, not `Date` (intermediaries may rewrite `Date`). Metronome's official Node SDK has `client.webhooks.unwrap()` and `verifySignature()`, but they reject an `X-Metronome-Date` more than five minutes old, which also rejects retries and replays from a queue, so the examples verify manually.
 
 ```javascript
 const crypto = require('crypto');
@@ -76,9 +76,9 @@ Dispatch on the body's `type`. Deduplicate on the body's `id` (duplicates are po
 | `invoice.billing_provider_error` | Pushing an invoice to the billing provider failed |
 | `subscription.start` / `subscription.end` | Subscription lifecycle |
 
-Metronome documents 34 types (more commit, credit, marketplace and integration events); the examples log any type they don't handle.
+Metronome documents 45 types (more alert, commit, credit, rate card, marketplace, payment gate and integration events); the examples log any type they don't handle.
 
-> **For the full list**, see [Metronome webhook documentation](https://docs.metronome.com/guides/platform-configuration/setup-webhooks).
+> **For the full list**, see [Metronome webhook documentation](https://docs.metronome.com/guides/platform-configuration/webhooks/webhook-types).
 
 ## Environment Variables
 

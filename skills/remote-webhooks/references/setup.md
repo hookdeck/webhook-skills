@@ -7,14 +7,14 @@
 
 ## Get Your Signing Key
 
-There is no dashboard field for it. The `signing_key` is returned when you create the callback with
-the API (`POST /v1/webhook-callbacks`). Store it as `REMOTE_WEBHOOK_SECRET` and use it exactly as
-returned, as UTF-8 text.
+The `signing_key` is returned only when you create the callback, with the API
+(`POST /v1/webhook-callbacks`) or `remotecli webhooks create`, and the API does not return it again.
+Store it as `REMOTE_WEBHOOK_SECRET` and use it exactly as returned, as UTF-8 text.
 
 ## Register Your Endpoint
 
 1. Call `POST /v1/webhook-callbacks` with your callback URL and the event types to subscribe to
-   (see [Remote's webhook introduction](https://developer.remote.com/docs/introduction-to-webhooks)
+   (see [Subscribing to Webhooks](https://developer.remote.com/docs/subscribing-to-webhooks)
    for the request body).
 2. Save the `signing_key` from the response.
 3. Subscribe to the events you handle, e.g. `employment.onboarding.completed`, `timeoff.requested`,

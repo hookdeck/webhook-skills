@@ -54,23 +54,23 @@ def handle_receipt(payload: dict) -> None:
 
     elif status == "delivered":
         print(f"{kind} {receipt_id} delivered to {payload.get('to')}")
-        # TODO: mark the message delivered (payload["completed_at"])
+        # Your code: mark the message delivered (payload["completed_at"])
 
     elif status == "permanent-failure":
         print(f"{kind} {receipt_id} permanently failed: {payload.get('status_description')}")
-        # TODO: stop sending to this address or number
+        # Your code: stop sending to this address or number
 
     elif status == "temporary-failure":
         print(f"{kind} {receipt_id} temporarily failed: {payload.get('status_description')}")
-        # TODO: record it; a later callback may report the final outcome
+        # Your code: record it; a later callback may report the final outcome
 
     elif status == "technical-failure":
         print(f"{kind} {receipt_id} technical failure: {payload.get('provider_response')}")
-        # TODO: alert and consider resending
+        # Your code: alert and consider resending
 
     elif status == "virus-scan-failed":
         print(f"{kind} {receipt_id} attachment failed the virus scan")
-        # TODO: tell the sender their attachment was rejected
+        # Your code: tell the sender their attachment was rejected
 
     else:
         print(f"Unhandled status: {status}")

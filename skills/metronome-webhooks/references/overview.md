@@ -26,7 +26,7 @@ Metronome (metronome.com) is a usage-based billing platform. If you configure a 
 | `subscription.start` | A subscription starts | Activate access |
 | `subscription.end` | A subscription ends | Revoke access |
 
-Other documented types in the same families include `commit.edit`, `commit.archive`, `commit.segment.start`, `commit.segment.end`, `credit.edit`, `credit.archive`, `credit.segment.start`, `credit.segment.end`, `integration.issue` and the `marketplaces.*_metering_disabled` events (34 documented in total).
+Other documented types in the same families include `commit.edit`, `commit.archive`, `commit.segment.start`, `commit.segment.end`, `credit.edit`, `credit.archive`, `credit.segment.start`, `credit.segment.end`, `integration.issue`, the `marketplaces.*_metering_disabled` events, the `payment_gate.*` events, `product.edit`, the `rate_card.*` events and more `alerts.*` threshold types (45 documented in total).
 
 ## Event Payload Structure
 
@@ -67,4 +67,4 @@ Contract, commit, credit and subscription events are flat:
 
 ## Full Event Reference
 
-For the complete list of events, see [Metronome's webhook documentation](https://docs.metronome.com/guides/platform-configuration/setup-webhooks).
+For the complete list of events, see [Metronome's webhook documentation](https://docs.metronome.com/guides/platform-configuration/webhooks/webhook-types).

@@ -70,19 +70,34 @@ allowed on the source.
 
 ## Alert Types
 
-Honeycomb has no event-type field. The notification kind comes from where the webhook is attached:
+Honeycomb has no event-type field or header. The notification kind comes from where the webhook
+is attached:
 
-| Kind | Sent When |
+| Kind (`kind` in the examples) | `.Alert.Status` values |
 |------|-----------|
-| Trigger | A Trigger fires or resolves |
-| SLO burn alert | A Budget Rate or Exhaustion Time burn alert fires |
-| Anomaly Detection | An anomaly signal fires |
+| Trigger (`trigger`) | `TRIGGERED`, `OK` |
+| SLO Budget Rate burn alert (`budget_rate`) | `TRIGGERED`, `OK` |
+| SLO Exhaustion Time burn alert (`exhaustion_time`) | `TRIGGERED`, `OK` |
+| Anomaly Detection (`anomaly`) | `Detected`, `Resolved` |
 
-The default payload carries the result of the alert as JSON but isn't documented field by field,
-and a webhook can use a custom JSON template per alert type (Payload tab). The examples therefore
-classify defensively by the fields present (`trigger`, `slo_burn_alert`, `anomaly`, else
-`unknown`) and use clearly labelled **illustrative** payloads. Check a real delivery from your own
-webhook before relying on specific fields.
+The standard payload carries the result of the alert as JSON but isn't documented field by field.
+To get a body you can rely on, enable a custom payload template for each alert type on the
+webhook's **Payload** tab and put a constant `kind` in each one. The examples classify on that
+field and treat anything else as `unknown`. A Trigger template, using Honeycomb's documented
+variables:
+
+```text
+{
+  "kind": "trigger",
+  "status": "{{ .Alert.Status }}",
+  "summary": "{{ .Alert.Summary }}",
+  "instance_id": "{{ .Alert.InstanceID }}",
+  "is_test": {{ .Alert.IsTest }}
+}
+```
+
+Wrap array variables such as `.Datasets` in `toJson`, or the send fails. A webhook with custom
+payloads can only be used by the alert types it has a template for.
 
 ## Idempotency and Timeouts
 

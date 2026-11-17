@@ -35,7 +35,7 @@ Steps, in order:
 
 ## Replay Protection
 
-Chatim's samples reject timestamps older than 5 minutes (300 seconds). The examples **don't check it by default**: retries and replays (Chatim's own, Hookdeck's, manual resends) carry the original `X-Chatim-Timestamp`, so a fixed window would reject legitimate late redeliveries. To opt in, set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use `eventId` or `X-Chatim-Delivery-Id` for idempotency (see webhook-handler-patterns).
+Chatim's samples reject timestamps older than 5 minutes (300 seconds). The examples **don't check it by default**: Hookdeck's retries and replays carry the original `X-Chatim-Timestamp`, so a fixed window would reject legitimate late redeliveries. To opt in, set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); unset or `0` means off. A value that isn't a whole number is treated as `0`, with a warning at startup. Use `eventId` for idempotency, as Chatim recommends (see webhook-handler-patterns).
 
 ## Common Gotchas
 

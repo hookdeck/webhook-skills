@@ -43,32 +43,32 @@ function handleEvent(event) {
   switch (event.event_type) {
     case 'employment.onboarding.completed':
       console.log(`Onboarding completed for employment ${event.employment_id}`);
-      // TODO: provision accounts, notify the manager
+      // Provision accounts, notify the manager
       break;
 
     case 'employment.onboarding_task.completed':
       console.log(`Onboarding task "${event.completed_task?.name}" completed for employment ${event.employment_id}`);
-      // TODO: update your onboarding checklist
+      // Update your onboarding checklist
       break;
 
     case 'timeoff.requested':
       console.log(`Time off requested (employment ${event.employment_id})`);
-      // TODO: route to the approver
+      // Route to the approver
       break;
 
     case 'timeoff.approved':
       console.log(`Time off approved (employment ${event.employment_id})`);
-      // TODO: update your calendar
+      // Update your calendar
       break;
 
     case 'payslip.released':
       console.log(`Payslip released (employment ${event.employment_id})`);
-      // TODO: fetch the payslip through the Remote API
+      // Fetch the payslip through the Remote API
       break;
 
     case 'contract.termination_date_reached':
       console.log(`Contract termination date reached (employment ${event.employment_id})`);
-      // TODO: start offboarding in your systems
+      // Start offboarding in your systems
       break;
 
     default:

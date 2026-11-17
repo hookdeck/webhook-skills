@@ -14,14 +14,17 @@ from main import app, classify, verify_estuary_request
 
 client = TestClient(app)
 
-# ILLUSTRATIVE payloads: Estuary has no fixed event schema. A trigger body is the
-# author's payloadTemplate; these use the documented template variables.
+# Estuary has no fixed event schema. The trigger body is what the example template on
+# Estuary's Materialization Triggers page renders, with that page's example values;
+# the document batch is the example on its HTTP Webhook connector page.
 TRIGGER = {
-    "materialization_name": "acmeCo/orders/to-warehouse",
-    "collection_names": ["acmeCo/orders"],
-    "run_id": "run-0001",
+    "materialization": "acmeCo/example/database-views",
+    "collections": ["acmeCo/example/collection"],
+    "publishedAtMin": "2024-01-15T08:30:00Z",
+    "publishedAtMax": "2024-01-15T08:31:00Z",
+    "runId": "2024-01-15T08:30:00.000Z",
 }
-DOCUMENT = {"id": 42, "status": "shipped"}
+DOCUMENTS = [{"id": 1, "status": "shipped", "flow_published_at": "2026-10-23T14:00:00Z"}]
 
 
 def send(method, body=None, headers=None, content_type="application/json"):
@@ -69,7 +72,7 @@ class TestEstuaryWebhook:
         assert send("POST", json.dumps(TRIGGER), {"Authorization": SECRET}).status_code == 401
 
     def test_authenticates_regardless_of_content_type(self):
-        res = send("POST", json.dumps(DOCUMENT), {"Authorization": SECRET}, "text/plain")
+        res = send("POST", json.dumps(DOCUMENTS), {"Authorization": SECRET}, "text/plain")
         assert res.status_code == 200
 
     def test_accepts_non_json_body_once_authenticated(self):
@@ -79,7 +82,7 @@ class TestEstuaryWebhook:
 class TestHelpers:
     def test_classify(self):
         assert classify(TRIGGER) == "trigger"
-        assert classify(DOCUMENT) == "document"
+        assert classify(DOCUMENTS) == "documents"
         assert classify(None) == "empty"
 
     def test_never_accepts_when_unconfigured(self):

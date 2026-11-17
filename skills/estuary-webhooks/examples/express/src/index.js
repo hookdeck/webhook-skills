@@ -33,26 +33,25 @@ function verifyEstuaryRequest(headers, env = process.env) {
 }
 
 /**
- * There is no vendor event field. A trigger body is the author's payloadTemplate
- * (which may include materialization_name); the HTTP Webhook connector sends documents.
+ * There is no vendor event field. The HTTP Webhook connector POSTs a JSON array of
+ * documents from one binding; a trigger body is whatever its payloadTemplate renders,
+ * so its keys are the ones you chose (Estuary's example uses materialization and runId).
  */
 function classify(payload) {
   if (payload === null) return 'empty';
-  if (typeof payload === 'object' && !Array.isArray(payload) && 'materialization_name' in payload) {
-    return 'trigger';
-  }
-  return 'document';
+  if (Array.isArray(payload)) return 'documents';
+  return 'trigger';
 }
 
 function handleEvent(payload) {
   switch (classify(payload)) {
     case 'trigger':
-      console.log(`Estuary trigger: ${payload.materialization_name} (run ${payload.run_id})`);
-      // TODO: react to the committed transaction (e.g. start a downstream job)
+      console.log('Estuary trigger received');
+      // Your code: react to the committed transaction (e.g. start a downstream job)
       break;
-    case 'document':
-      console.log('Estuary document received');
-      // TODO: store or process the document
+    case 'documents':
+      console.log(`Estuary connector batch: ${payload.length} documents`);
+      // Your code: store or process the documents
       break;
     default:
       console.log('Estuary request with an empty body');

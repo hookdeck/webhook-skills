@@ -30,18 +30,22 @@ export function verifyConfigCatWebhook(input: VerifyInput): { valid: boolean; er
   if (!webhookId || !timestamp || !signature) {
     return { valid: false, error: 'Missing X-ConfigCat-Webhook-ID, -Timestamp or -Signature-V1 header' };
   }
-  // The whole header is ONE digest. Two signing keys produce a comma-separated list and fail here.
-  if (!SIGNATURE_PATTERN.test(signature)) {
+  // A comma-separated list, one signature per signing key (two during a key rotation).
+  const candidates = signature.split(',').map((s) => s.trim()).filter((s) => SIGNATURE_PATTERN.test(s));
+  if (candidates.length === 0) {
     return { valid: false, error: 'Malformed signature' };
   }
 
   const expected = Buffer.from(computeSignature(secret, webhookId, timestamp, rawBody));
-  const received = Buffer.from(signature);
-  if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
+  const matched = candidates.some((candidate) => {
+    const received = Buffer.from(candidate);
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  });
+  if (!matched) {
     return { valid: false, error: 'Invalid signature' };
   }
 
-  // Opt-in replay window (off by default: Hookdeck retries and replays keep the original timestamp)
+  // Opt-in replay window, off by default: ConfigCat recommends a check but sets no window
   if (toleranceSeconds > 0) {
     const sentAt = Number(timestamp);
     const now = input.nowSeconds ?? Math.floor(Date.now() / 1000);

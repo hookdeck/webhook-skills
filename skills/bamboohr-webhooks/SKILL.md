@@ -128,7 +128,7 @@ BAMBOOHR_WEBHOOK_TOLERANCE_SECONDS=0               # optional; 0 or unset = no t
 
 ## Retries
 
-BambooHR retries up to 5 times on network errors or 5xx responses (not 4xx), at roughly immediately, 5, 10, 20 and 40 minutes, each with 0-30 seconds of jitter. Return `2xx` once verified; return `401` for bad signatures (a 4xx is not retried).
+BambooHR retries up to 5 times on network errors or 5xx responses (not 4xx), each with 0-30 seconds of jitter. The Webhooks page lists the delays as immediately, 5, 10, 20 and 40 minutes; the event reference says 5, 10, 20, 40 and 80-minute intervals. Return `2xx` once verified; return `401` for bad signatures (a 4xx is not retried).
 
 ## Local Development
 

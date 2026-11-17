@@ -46,83 +46,83 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "promoter.created":
         print(f"Promoter created: {data.get('email')} ({entity_id})")
-        # TODO: create a CRM contact, send onboarding
+        # Create a CRM contact, send onboarding
 
     elif event_type == "promoter.updated":
         print(f"Promoter updated: {entity_id} {list(changes)}")
-        # TODO: sync the profile
+        # Sync the profile
 
     elif event_type == "promoter.deleted":
         print(f"Promoter deleted: {entity_id}")
-        # TODO: deprovision
+        # Deprovision
 
     elif event_type == "promoter.balance.updated":
         print(f"Promoter balance updated: {entity_id}")
-        # TODO: update the balance shown in your app
+        # Update the balance shown in your app
 
     elif event_type == "referral.created":
         print(f"Referral created: {data.get('email')} ({entity_id})")
-        # TODO: attribute the signup
+        # Attribute the signup
 
     elif event_type == "referral.updated":
         print(f"Referral updated: {entity_id} {list(changes)}")
-        # TODO: sync state (changes["state"] = [old, new])
+        # Sync state (changes["state"] = [old, new])
 
     elif event_type == "referral.converted":
         print(f"Referral converted: {data.get('email')} ({entity_id})")
-        # TODO: credit the promoter, notify
+        # Credit the promoter, notify
 
     elif event_type == "referral.cancelled":
         print(f"Referral cancelled: {entity_id}")
-        # TODO: reverse benefits
+        # Reverse benefits
 
     elif event_type == "referral.deleted":
         print(f"Referral deleted: {entity_id}")
-        # TODO: clean up
+        # Clean up
 
     elif event_type == "referral.moved":
         print(f"Referral moved campaign: {entity_id}")
-        # TODO: re-tier
+        # Re-tier
 
     elif event_type == "commission.created":
         print(f"Commission created: {entity_id} amount={data.get('amount')} {data.get('unit')}")
-        # TODO: record the liability
+        # Record the liability
 
     elif event_type == "commission.updated":
         print(f"Commission updated: {entity_id} {list(changes)}")
-        # TODO: sync status
+        # Sync status
 
     elif event_type == "commission.approved":
         print(f"Commission approved: {entity_id}")
-        # TODO: queue for payout
+        # Queue for payout
 
     elif event_type == "commission.pending":
         print(f"Commission pending: {entity_id}")
-        # TODO: hold
+        # Hold
 
     elif event_type == "commission.denied":
         print(f"Commission denied: {entity_id}")
-        # TODO: notify the promoter
+        # Notify the promoter
 
     elif event_type == "commission.deleted":
         print(f"Commission deleted: {entity_id}")
-        # TODO: remove the liability
+        # Remove the liability
 
     elif event_type == "payout.created":
         print(f"Payout created: {entity_id}")
-        # TODO: open a payout record
+        # Open a payout record
 
     elif event_type == "payout.completed":
         print(f"Payout completed: {entity_id}")
-        # TODO: mark as paid
+        # Mark as paid
 
     elif event_type == "payout.failed":
         print(f"Payout failed: {entity_id}")
-        # TODO: alert finance
+        # Alert finance
 
     elif event_type == "contract_document.signed":
         print(f"Contract signed: {entity_id} by promoter {data.get('promoter_id')}")
-        # TODO: unlock the program for the promoter
+        # Unlock the program for the promoter
 
     else:
         print(f"Unhandled event: {event_type}")

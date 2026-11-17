@@ -16,6 +16,7 @@ Events are **thin**: the payload identifies the resource but doesn't contain it.
 | `enrollment.granted` | An enrollment has been granted | Sync coverage status |
 | `enrollment.waived` | An employee has waived a benefit | Record the decline |
 | `enrollment.terminated` | An enrollment has been terminated | End coverage in your system |
+| `enrollment.termination_rescheduled` | An enrollment's termination is rescheduled (listed only in the OpenAPI spec's `EventName` enum, not on the Events page) | Re-read the enrollment's end dates |
 | `employee.eligibility_granted` | An employee has been granted benefits eligibility (after census sync) | Show enrollment options to the employee |
 | `employee.eligibility_terminated` | An employee's benefits eligibility has been terminated | Hide enrollment options |
 | `employee.deactivated` | An employee has been deactivated (after termination) | Offboard the employee |

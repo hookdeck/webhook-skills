@@ -17,7 +17,7 @@ Infinite Giving (infinitegiving.com) is a non-cash donation platform (stock, cry
 nonprofits. Integration partners receive a webhook whenever a donation is created or updated for a
 connected organization.
 
-> Infinite Giving webhooks are for integration partners. Paste the signing secret Infinite Giving gives you at partner kickoff.
+> Webhooks are for integration partners: Infinite Giving configures your webhook URL at partner kickoff and shares the webhook signing secret out-of-band, separately for sandbox and production.
 
 ## When to Use This Skill
 
@@ -68,8 +68,8 @@ Key points:
   signature covers the exact bytes received. In Express use `express.raw({ type: '*/*' })`.
 - **Header value as-is.** Use the `X-IG-Timestamp` value exactly as received (Unix seconds); don't trim or reformat it.
 - **Prefix optional.** Accept `X-IG-Signature` with or without the `sha256=` prefix; compare hex case-insensitively.
-- **No timestamp window by default.** Retries and Hookdeck replays resend the original headers, so
-  rejecting old timestamps would drop legitimate deliveries. The examples offer an opt-in
+- **No timestamp window by default.** Hookdeck replays resend the original headers, and Infinite Giving
+  doesn't say whether its retries refresh the timestamp, so rejecting old timestamps can drop legitimate deliveries. The examples offer an opt-in
   `INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) that checks `X-IG-Timestamp` (Unix seconds) against the clock.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

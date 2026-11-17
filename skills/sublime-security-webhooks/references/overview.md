@@ -13,8 +13,8 @@ The `type` field in the body says why the delivery was sent.
 | `type` | Triggered When | Common Use Cases |
 |--------|----------------|------------------|
 | `message.flagged` | A message matched a detection rule and the webhook Action fired | Alerting, SIEM ingestion, open a ticket |
-| `group` | The Action fired for a message group | Campaign-level alerting |
-| `manual` | A user sent a message to the webhook Action by hand | Analyst-driven escalation |
+| `group` | The webhook fired on another message in this message's group, and its scope covers every message in the group | Campaign-level alerting |
+| `manual` | A Sublime user triggered an action on this message by hand | Analyst-driven escalation |
 
 `type_extended` may list several reasons at once, and adds `group_late_arriving`. Dispatch on `type`, and treat unknown values as acknowledged-but-unhandled so new types don't cause retries.
 
@@ -45,7 +45,7 @@ The `type` field in the body says why the delivery was sent.
 }
 ```
 
-- `id` is unique per delivery; use it to drop duplicates.
+- Store the top-level `id` and skip repeats to drop duplicates.
 - `data.message` identifies the email and mailbox; `data.flagged_rules` lists the rules that matched; `data.triggered_actions` lists the Actions that ran.
 
 ## Delivery

@@ -22,38 +22,38 @@ function handleEvent(event: PurchaselyEvent): void {
   switch (event.event_name) {
     case 'SUBSCRIPTION_STARTED':
       console.log(`Subscription started: ${event.purchasely_subscription_id} (${event.plan}, user ${event.user_id})`);
-      // TODO: grant access, start onboarding
+      // Your code: grant access, start onboarding
       break;
 
     case 'SUBSCRIPTION_RENEWED':
       console.log(`Subscription renewed: ${event.purchasely_subscription_id}`);
-      // TODO: extend access to event.next_renewal_at
+      // Your code: extend access to event.next_renewal_at
       break;
 
     case 'RENEWAL_DISABLED':
       console.log(`Auto-renew turned off: ${event.purchasely_subscription_id}`);
-      // TODO: start a win-back flow
+      // Your code: start a win-back flow
       break;
 
     case 'GRACE_PERIOD_STARTED':
     case 'ENTERED_BILLING_RETRY':
       console.log(`Billing issue (${event.event_name}): ${event.purchasely_subscription_id}`);
-      // TODO: nudge the user to fix their payment method
+      // Your code: nudge the user to fix their payment method
       break;
 
     case 'SUBSCRIPTION_TERMINATED':
       console.log(`Subscription terminated: ${event.purchasely_subscription_id}`);
-      // TODO: revoke access
+      // Your code: revoke access
       break;
 
     case 'TRANSACTION_PROCESSED':
       console.log(`Transaction processed: ${event.amount_in_eur} EUR (${event.store})`);
-      // TODO: record revenue
+      // Your code: record revenue
       break;
 
     case 'ACTIVATE':
       console.log(`Entitlement activated for user ${event.user_id}`);
-      // TODO: unlock the entitlement
+      // Your code: unlock the entitlement
       break;
 
     default:

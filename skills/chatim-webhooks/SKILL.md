@@ -33,7 +33,7 @@ X-Chatim-Timestamp: 1736937000
 
 - The signature is HMAC-SHA256 (lowercase hex) of `<X-Chatim-Timestamp value>.<raw body>`, keyed with the **webhook secret** (shown once when you create the webhook in the dashboard), used as-is (UTF-8, not decoded).
 - Accept the digest with or without the `sha256=` prefix, and compare hex case-insensitively.
-- The event name is in the body's `event` field (also sent in `X-Chatim-Event`). `X-Chatim-Delivery-Id` and the body's `eventId` are unique per delivery.
+- The event name is in the body's `event` field (also sent in `X-Chatim-Event`). Chatim recommends the body's `eventId` for idempotency. `X-Chatim-Delivery-Id` is a unique delivery identifier.
 - Answer a missing, malformed or wrong signature with `401`. Chatim treats any `4xx` as a permanent failure and does not retry, so don't return one for anything else.
 
 ### Verification (Node.js)
@@ -72,7 +72,7 @@ def verify_chatim(raw_body: bytes, signature_header, timestamp_header, secret: s
 Chatim's own docs reject timestamps older than 5 minutes, and their Node sample signs `JSON.stringify(req.body)`. The examples differ on both points:
 
 - They sign the **raw body bytes** (as Chatim's troubleshooting section says). Re-serialized JSON can differ from what was sent.
-- The timestamp check is **off by default**, because retries and replays (Chatim's and Hookdeck's) resend the original `X-Chatim-Timestamp`. Set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (Chatim's examples use `300`) to opt in. Use `eventId` for idempotency instead.
+- The timestamp check is **off by default**, because Hookdeck's retries and replays resend the original `X-Chatim-Timestamp`. Set `CHATIM_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (Chatim's examples use `300`) to opt in. Use `eventId` for idempotency instead.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

@@ -11,7 +11,7 @@ const HEX_DIGEST = /^[0-9a-fA-F]{64}$/;
 /**
  * Lob sends no webhook SDK, so we verify manually.
  *
- * Lob-Signature = lowercase hex HMAC-SHA256(secret, `${Lob-Signature-Timestamp}.${raw body}`)
+ * Lob-Signature = hex HMAC-SHA256(secret, `${Lob-Signature-Timestamp}.${raw body}`)
  * The signed message is built as BYTES: the timestamp header exactly as received (latin1),
  * a literal ".", then the raw body bytes. Never decode and re-encode the body.
  */
@@ -84,7 +84,7 @@ app.post('/webhooks/lob', express.raw({ type: '*/*' }), (req, res) => {
   const eventType = event.event_type && event.event_type.id;
   const resource = event.body || {};
 
-  // TODO: use event.id to deduplicate (Lob retries until it sees a 2xx).
+  // Deduplicate on event.id: Lob retries until it sees a 2xx.
   switch (eventType) {
     case 'postcard.created':
       console.log(`Postcard created: ${resource.id}`);
@@ -92,7 +92,7 @@ app.post('/webhooks/lob', express.raw({ type: '*/*' }), (req, res) => {
 
     case 'postcard.delivered':
       console.log(`Postcard delivered: ${resource.id}`);
-      // TODO: trigger the downstream "mail delivered" workflow.
+      // Trigger your downstream "mail delivered" workflow here.
       break;
 
     case 'postcard.re-routed':
@@ -113,7 +113,7 @@ app.post('/webhooks/lob', express.raw({ type: '*/*' }), (req, res) => {
 
     case 'self_mailer.rendered_thumbnails':
       console.log(`Self mailer thumbnails rendered: ${resource.id}`);
-      // TODO: download resource.thumbnails (small/medium/large URLs) if payload redaction is off.
+      // resource.thumbnails holds small/medium/large URLs when payload redaction is off.
       break;
 
     default:

@@ -15,45 +15,45 @@ interface ClickatellPayload {
 const handlers: Record<string, (e: ClickatellEvent) => void> = {
   messageStatusUpdate: (e) => {
     console.log(`Message ${e.messageId} status: ${e.status} (${e.statusCode})`);
-    // TODO: update delivery state; events can repeat or arrive out of order (use e.timestamp)
+    // Your code: update delivery state; events can repeat or arrive out of order (use e.timestamp)
   },
   messageFallback: (e) => {
     console.log(`Message ${e.messageId} fallback: ${e.status}`);
-    // TODO: record the channel fallback
+    // Your code: record the channel fallback
   },
   statusIsTyping: (e) => {
     console.log(`${e.from} is typing`);
-    // TODO: show a typing indicator
+    // Your code: show a typing indicator
   },
   moText: (e) => {
     console.log(`Text from ${e.from}: ${e.content}`);
-    // TODO: route to your bot or inbox
+    // Your code: route to your bot or inbox
   },
   moMedia: (e) => {
     const files = e.files as { contentType?: string }[] | undefined;
     console.log(`Media from ${e.from}: ${e.contentType ?? files?.[0]?.contentType}`);
-    // TODO: download e.files[].downloadUrl and store it
+    // Your code: download e.files[].downloadUrl and store it
   },
   moLocation: (e) => {
     console.log(`Location from ${e.from}: ${e.locationName}`);
-    // TODO: use e.latitute / e.longitude (the docs spell it "latitute")
+    // Your code: use e.latitude (the schema also lists a misspelled e.latitute) and e.longitude
   },
   moContacts: (e) => {
     const contacts = (e.contacts as unknown[] | undefined) ?? [];
     console.log(`Contacts from ${e.from}: ${contacts.length}`);
-    // TODO: import e.contacts
+    // Your code: import e.contacts
   },
   moSuggestedResponse: (e) => {
     console.log(`Suggested response from ${e.from}: ${e.postbackData}`);
-    // TODO: continue the flow using e.postbackData
+    // Your code: continue the flow using e.postbackData
   },
   moListPickerResponse: (e) => {
     console.log(`List selection from ${e.from}`);
-    // TODO: continue the flow using e.selectedItems
+    // Your code: continue the flow using e.selectedItems
   },
   moButtonResponse: (e) => {
     console.log(`Button response from ${e.from}`);
-    // TODO: continue the flow using e.selectedItem
+    // Your code: continue the flow using e.selectedItem
   },
 };
 

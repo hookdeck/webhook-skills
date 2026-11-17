@@ -2,7 +2,7 @@
 
 Minimal example of receiving Infinite Giving webhooks with signature verification.
 
-> Infinite Giving webhooks are for integration partners. Paste the signing secret Infinite Giving gives you at partner kickoff.
+> Webhooks are for integration partners: Infinite Giving configures your webhook URL at partner kickoff and shares the webhook signing secret out-of-band, separately for sandbox and production.
 
 ## Prerequisites
 
@@ -48,4 +48,4 @@ The tests sign payloads with HMAC-SHA256 over `{X-IG-Timestamp}.{raw body}` exac
 ## Notes
 
 - The route reads `await request.arrayBuffer()` so the exact bytes are verified; JSON is parsed only after the signature check.
-- Old timestamps are not rejected by default (retries and replays resend the original). Set `INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS` to opt in.
+- Old timestamps are not rejected by default (a replayed or queued delivery keeps its original timestamp). Set `INFINITE_GIVING_WEBHOOK_TOLERANCE_SECONDS` to opt in.

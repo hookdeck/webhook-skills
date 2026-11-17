@@ -20,9 +20,7 @@ processed, a customer is created, a subscription is activated, an invoice is iss
 webhook has HTTP basic access authentication credentials, every request carries
 `Authorization: Basic base64(username:password)`, and your endpoint authenticates the request by
 checking them. Rebilly also signs every webhook (see below), but Hookdeck's Rebilly source checks
-only basic auth.
-
-Hookdeck setup note for the Rebilly source: "Set HTTP basic access authentication on the Rebilly webhook. Its JWT and Ed25519 signatures are not checked."
+only basic auth, so set basic auth on the Rebilly webhook.
 
 ## When to Use This Skill
 
@@ -64,7 +62,8 @@ and compare with `hmac.compare_digest` on `bytes` (encode both sides; `str` rais
 - The credentials must arrive with each request: Event Gateway doesn't prompt for them, and a
   request with wrong ones still gets a 200 and is recorded as failed verification.
 - **A static shared credential authenticates the sender, not the body, and gives no replay
-  protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.
+  protection** (basic auth itself carries no signature or timestamp). Use HTTPS and rotate the
+  credential if it leaks.
 - Read the body raw (`express.raw({ type: '*/*' })`) and parse it only after the check.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
@@ -73,9 +72,10 @@ and compare with `hmac.compare_digest` on `bytes` (encode both sides; `str` rais
 
 Every Rebilly webhook carries a `Security-Signature` header (an RS256 JWT) and Standard Webhooks
 `v1a` Ed25519 signatures in `webhook-id`, `webhook-timestamp` and `webhook-signature`. Hookdeck's
-Rebilly source does not check them, and the examples don't either. Rebilly's 5-minute timestamp
-check would reject Hookdeck retries, which resend the original timestamp. The optional `v1a` check
-is described in [references/verification.md](references/verification.md).
+Rebilly source does not check them, and the examples don't either. Hookdeck forwards the original
+headers, so a delivery it retries later carries Rebilly's original `webhook-timestamp`, and
+Rebilly's 5-minute timestamp check would reject it. The optional `v1a` check is described in
+[references/verification.md](references/verification.md).
 
 ## Methods
 

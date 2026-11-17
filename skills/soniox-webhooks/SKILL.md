@@ -14,13 +14,11 @@ metadata:
 
 # Soniox Webhooks
 
-Soniox sends a webhook when an async speech-to-text transcription finishes. Requests are **not
+Soniox sends a webhook when an async speech-to-text transcription finishes or fails. Requests are **not
 signed**. You choose a secret header when you create each transcription
 (`webhook_auth_header_name` and `webhook_auth_header_value`), Soniox sends that header on the
 webhook request, and your endpoint authenticates the request by comparing it with the value you
 stored.
-
-> Soniox webhooks are not signed. Send webhook_auth_header_name and webhook_auth_header_value with every async transcription, and enter the same name and value here.
 
 ## When to Use This Skill
 

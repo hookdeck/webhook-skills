@@ -85,25 +85,25 @@ def handle_onshape_event(event: dict) -> None:
         print(f"Onshape {name} for webhook {event.get('webhookId')}")
     elif name == "onshape.model.lifecycle.changed":
         print(f"Model changed in document {event.get('documentId')} (element {event.get('elementId')})")
-        # TODO: Refresh your copy of the model / re-run exports
+        # Refresh your copy of the model / re-run exports
     elif name == "onshape.model.translation.complete":
         print(f"Translation {event.get('translationId')} complete in document {event.get('documentId')}")
-        # TODO: Download the translated file
+        # Download the translated file
     elif name == "onshape.document.lifecycle.created":
         print(f"Document created: {event.get('documentId')}")
-        # TODO: Register the document in your system
+        # Register the document in your system
     elif name == "onshape.document.lifecycle.statechange":
         print(f"Document {event.get('documentId')} state: {event.get('documentState')}")
-        # TODO: Archive or remove data when the state is TRASH or DELETED
+        # Archive or remove data when the state is TRASH or DELETED
     elif name == "onshape.revision.created":
         print(f"Revision created in document {event.get('documentId')}")
-        # TODO: Sync the release / revision
+        # Sync the release / revision
     elif name == "onshape.comment.create":
         print(f"Comment {event.get('commentId')} created in document {event.get('documentId')}")
-        # TODO: Fetch the comment via the REST API and notify
+        # Fetch the comment via the REST API and notify
     elif name == "onshape.user.lifecycle.updateappsettings":
         print(f"App settings updated for user {event.get('userId')} (client {event.get('clientId')})")
-        # TODO: Re-read the user's app settings
+        # Re-read the user's app settings
     else:
         print(f"Unhandled Onshape event: {name}")
 

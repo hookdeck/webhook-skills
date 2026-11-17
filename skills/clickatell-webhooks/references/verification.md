@@ -25,7 +25,8 @@ the header with a different body. Mitigate:
 
 - Serve the endpoint over HTTPS only
 - Rotate the header value in the portal if it leaks
-- Deduplicate on `messageId` (retries already cause duplicates)
+- Deduplicate replies on `messageId`, and status events on the kind, `messageId` and `status`
+  (retries already cause duplicates)
 - Keep the value out of logs
 
 ## Implementation

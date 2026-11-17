@@ -4,7 +4,7 @@ description: >
   Receive and verify BugSmash webhooks. Use when setting up BugSmash webhook
   handlers, debugging X-BugSmash-Signature verification (HMAC-SHA256 over
   X-Webhook-Timestamp + "." + raw body), storing the one-time bgsmsh_ secret_key,
-  or handling new_comment, comment_replied, status_changed and comment_updated events.
+  or handling new_comment, comment_replied (new_reply_on_comment), status_changed and comment_updated events.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,8 +15,9 @@ metadata:
 # BugSmash Webhooks
 
 BugSmash (bugsmash.io) is a visual feedback and review tool for websites, images, video and
-documents. Workspace webhooks are created only through the API (`POST https://api.bugsmash.io/api/v2/webhook`)
-and every delivery is signed with HMAC-SHA256 using the webhook's `secret_key`.
+documents. Workspace webhooks are added in the dashboard (Workspace Settings → Integrations → Webhooks) or
+through the API (`POST https://api.bugsmash.io/api/v2/webhook`), and every delivery is signed with HMAC-SHA256
+using the webhook's `secret_key`.
 
 ## When to Use This Skill
 
@@ -37,7 +38,7 @@ and every delivery is signed with HMAC-SHA256 using the webhook's `secret_key`.
 | Key | The `secret_key` as UTF-8 bytes, used whole including `bgsmsh_` (not decoded) |
 | Replay window | None by default; opt in with `BUGSMASH_WEBHOOK_TOLERANCE_SECONDS` |
 
-> BugSmash returns the secret_key only once, when you create the webhook through the API. Paste the whole value, including the bgsmsh_ prefix.
+BugSmash shows the `secret_key` once, when the webhook is created. Store the whole value, `bgsmsh_` prefix included.
 
 ## Verification (core)
 
@@ -87,18 +88,18 @@ signature first for every method, and treat a missing body as empty bytes. Read 
 
 ## Common Event Types
 
-Subscribe with the `events` array on `POST /webhook`. These are the only values the docs allow:
+Subscribe with the `events` array on `POST /webhook`, or pick trigger events in the dashboard:
 
 | Event | Triggered When |
 |-------|----------------|
-| `new_comment` | A comment is added |
-| `comment_replied` | A reply is posted on a comment |
-| `status_changed` | A comment's status changes |
-| `comment_updated` | A comment is edited |
+| `new_comment` | A comment is added in any project |
+| `comment_replied` / `new_reply_on_comment` | A reply is added to a comment thread |
+| `status_changed` | A comment moves between Active and Resolved |
+| `comment_updated` | A property of a comment changes, such as priority or assignee |
 
-The docs document **no delivery body**, so which field carries the event name is unknown. The
-examples read `event` then `type` from a clearly labelled illustrative payload; check a real delivery
-(`POST /webhook/test`) and adjust. See [references/overview.md](references/overview.md).
+The body is a flat JSON object that names its event in `event`, per BugSmash's help center examples.
+The API's subscription value for replies is `comment_replied`, but the help center's reply body carries
+`new_reply_on_comment`, so the examples handle both. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 
@@ -115,12 +116,12 @@ Receive webhooks locally with the Hookdeck CLI, no account required:
 npx hookdeck-cli listen 3000 bugsmash --path /webhooks/bugsmash
 ```
 
-Use the printed URL as `webhookUrl` when you create the webhook (use port `8000` for FastAPI).
+Use the printed URL as the endpoint URL (or `webhookUrl` in the API) when you create the webhook (use port `8000` for FastAPI).
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - What BugSmash webhooks are, events, illustrative payload
-- [references/setup.md](references/setup.md) - Create the webhook through the API, store the secret, Hookdeck source note
+- [references/overview.md](references/overview.md) - What BugSmash webhooks are, events, payload shape
+- [references/setup.md](references/setup.md) - Create the webhook in the dashboard or API, store the secret, Hookdeck source note
 - [references/verification.md](references/verification.md) - Signature details, byte-exact signing, replay window, debugging
 
 ## Attribution

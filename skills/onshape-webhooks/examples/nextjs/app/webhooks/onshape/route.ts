@@ -14,37 +14,37 @@ function handleOnshapeEvent(event: any) {
 
     case 'onshape.model.lifecycle.changed':
       console.log(`Model changed in document ${event.documentId} (element ${event.elementId})`);
-      // TODO: Refresh your copy of the model / re-run exports
+      // Refresh your copy of the model / re-run exports
       break;
 
     case 'onshape.model.translation.complete':
       console.log(`Translation ${event.translationId} complete in document ${event.documentId}`);
-      // TODO: Download the translated file
+      // Download the translated file
       break;
 
     case 'onshape.document.lifecycle.created':
       console.log(`Document created: ${event.documentId}`);
-      // TODO: Register the document in your system
+      // Register the document in your system
       break;
 
     case 'onshape.document.lifecycle.statechange':
       console.log(`Document ${event.documentId} state: ${event.documentState}`);
-      // TODO: Archive or remove data when the state is TRASH or DELETED
+      // Archive or remove data when the state is TRASH or DELETED
       break;
 
     case 'onshape.revision.created':
       console.log(`Revision created in document ${event.documentId}`);
-      // TODO: Sync the release / revision
+      // Sync the release / revision
       break;
 
     case 'onshape.comment.create':
       console.log(`Comment ${event.commentId} created in document ${event.documentId}`);
-      // TODO: Fetch the comment via the REST API and notify
+      // Fetch the comment via the REST API and notify
       break;
 
     case 'onshape.user.lifecycle.updateappsettings':
       console.log(`App settings updated for user ${event.userId} (client ${event.clientId})`);
-      // TODO: Re-read the user's app settings
+      // Re-read the user's app settings
       break;
 
     default:

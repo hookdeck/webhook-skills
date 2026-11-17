@@ -7,7 +7,7 @@ Minimal example of receiving MICEtribe webhooks with signature verification.
 - Node.js 18+
 - A MICEtribe webhook with a signing secret
 
-> MICEtribe signs webhooks only when the webhook has a signing secret. Set one on the webhook and paste it here.
+> MICEtribe signs a delivery only when the webhook has a signing secret, so set one on every webhook.
 
 ## Setup
 

@@ -59,5 +59,5 @@ replay one with curl:
 curl -X POST http://localhost:3000/webhooks/clickatell \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: $CLICKATELL_WEBHOOK_SECRET" \
-  -d '{"integrationId":"abc","integrationName":"My integration","event":{"messageStatusUpdate":[{"channel":"whatsapp","timestamp":1506607698860,"statusCode":5,"status":"DEVICE_ACK","messageId":"3a89680503414383af44dcd0e4e5f184"}]}}'
+  -d '{"integrationId":"test-integration","integrationName":"Test","event":{"messageStatusUpdate":[{"channel":"whatsapp","timestamp":1,"statusCode":5,"status":"DEVICE_ACK","messageId":"test-message"}]}}'
 ```

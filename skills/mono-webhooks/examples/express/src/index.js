@@ -37,37 +37,37 @@ function handleEvent(payload) {
   switch (event) {
     case 'mono.events.account_connected':
       console.log(`Account connected: ${data?.id}`);
-      // TODO: store data.id for the customer (data.meta.ref) and start retrieving data
+      // Store data.id for the customer (data.meta.ref) and start retrieving data
       break;
 
     case 'mono.events.account_updated':
       console.log(`Account updated: ${data?.account?._id}`);
-      // TODO: sync data.account and check data.meta.data_status
+      // Sync data.account and check data.meta.data_status
       break;
 
     case 'mono.events.account_unlinked':
       console.log('Account unlinked');
-      // TODO: remove the stored account
+      // Remove the stored account
       break;
 
     case 'direct_debit.payment_successful':
       console.log(`Payment successful: ${data?.object?.reference}`);
-      // TODO: fulfil the order for data.object.reference
+      // Fulfil the order for data.object.reference
       break;
 
     case 'direct_debit.payment_failed':
       console.log(`Payment failed: ${data?.object?.reference}`);
-      // TODO: notify the customer and offer a retry
+      // Notify the customer and offer a retry
       break;
 
     case 'direct_debit.payment_cancelled':
       console.log(`Payment cancelled: ${data?.object?.reference}`);
-      // TODO: release held stock
+      // Release held stock
       break;
 
     case 'direct_debit.payment_abandoned':
       console.log(`Payment abandoned: ${data?.object?.reference}`);
-      // TODO: expire the pending payment
+      // Expire the pending payment
       break;
 
     default:

@@ -74,7 +74,7 @@ Dispatch on the body's `topic` field; `data.item` holds the changed object and u
 
 ## Delivery
 
-Featurebase needs `200`, `201`, `202` or `204` within 5 seconds (the API can raise the timeout to 30 seconds); anything else is a failure. It retries up to 3 times, pauses a webhook after 100 consecutive failures and disables it after 500 failures or 3 pauses in 24 hours. Events are not kept while a webhook is paused or disabled. The event `id` (`notif_...`) is the same on every retry, so dedupe on it.
+Featurebase needs `200`, `201`, `202` or `204` within 5 seconds (the API can raise the timeout to 30 seconds); anything else is a failure. It retries up to 3 times, pauses a webhook after 100 consecutive failures and disables it after 500 failures or 3 pauses in 24 hours. Events are not kept while a webhook is paused or disabled. Featurebase says to store each event `id` (`notif_...`) and skip ones you have already processed.
 
 ## Environment Variables
 

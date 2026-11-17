@@ -124,16 +124,16 @@ async def sinch_webhook(request: Request):
     if callback_key == "message":
         message = payload["message"]
         print(f"Inbound message: {message.get('id')} {_as_dict(message.get('channel_identity')).get('channel')}")
-        # TODO: Process the contact's message (payload["message"]["contact_message"])
+        # Process the contact's message (payload["message"]["contact_message"])
 
     elif callback_key == "message_delivery_report":
         report = payload["message_delivery_report"]
         print(f"Delivery report: {report.get('message_id')} {report.get('status')}")
-        # TODO: Update the delivery status of the message
+        # Update the delivery status of the message
 
     elif callback_key == "contact_create_notification":
         print(f"Contact created: {_as_dict(payload['contact_create_notification'].get('contact')).get('id')}")
-        # TODO: Sync the new contact
+        # Sync the new contact
 
     elif callback_key is None:
         print(f"Unrecognised callback, keys: {list(payload.keys())}")

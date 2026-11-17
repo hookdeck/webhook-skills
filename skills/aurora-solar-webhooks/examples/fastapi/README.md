@@ -7,7 +7,7 @@ Aurora Solar webhooks are **unsigned GET requests with no body**; the event data
 query string. The handler checks the header first (constant-time, whole value, case-insensitive
 header name), then reads the query parameters. The route is an `@app.get` (and `@app.post`) with a header-check dependency.
 
-> Set header_auth_key and header_auth_value on the Aurora Solar webhook and enter them here. Webhooks without them send nothing to verify.
+> Always set `header_auth_key` and `header_auth_value` on the Aurora Solar subscription. Aurora's webhook authentication is optional, so a subscription created without it sends no credential to check.
 
 ## Prerequisites
 

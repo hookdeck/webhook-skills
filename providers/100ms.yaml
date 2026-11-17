@@ -18,10 +18,10 @@ notes: >
   on non-ASCII). SKILL.md and verification.md must say plainly that a static shared credential
   authenticates the sender, not the body, and gives no replay protection (no signature, no
   timestamp), so use HTTPS and rotate the credential if it leaks. Model on the n8n, zapier, coterie
-  and honeybadger skills on main. Hookdeck's source type is HUNDRED_MS, labelled '100ms'. Hookdeck
-  shows this setup note for the source, and SKILL.md and references/setup.md must tell the user the
-  same thing, verbatim: "100ms webhooks are not signed. Add a secret header to the webhook in the
-  100ms dashboard and enter it here." Body: {version, id, app_id, account_id, template_id,
+  and honeybadger skills on main. Hookdeck's source type is HUNDRED_MS, labelled '100ms'. SKILL.md and references/setup.md must say that 100ms webhooks are not signed and that the
+  secret header is added to the workspace's webhook in the Developer section of the 100ms dashboard
+  (don't copy Hookdeck's source setup text). Failure events carry data.error_message (recording.failed
+  uses data.error); recording paths are data.recording_path (location is deprecated). Body: {version, id, app_id, account_id, template_id,
   timestamp, type, data}; type is <object>.<action>.<outcome>, e.g. peer.join.success,
   peer.leave.success, session.open.success, session.close.success, recording.success,
   hls.started.success. Dispatch on type; dedupe on id. 'Webhook MUST implement POST'; respond 200

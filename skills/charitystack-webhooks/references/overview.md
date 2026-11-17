@@ -25,7 +25,7 @@ When a hosted payment method update link completes, CharityStack emits `subscrip
 
 ## Event Payload Structure
 
-The body is JSON and the event type is in its `type` field. The documentation pages this skill is based on don't list the other payload fields per event, so inspect a real delivery (the Hookdeck CLI shows them) before relying on a field.
+Every delivery is a JSON body with the same envelope: `id` (an event identifier such as `evt_1760280331123`), `type` (the event name), `created` (Unix seconds) and `data`. For `donation.*` events `data` is the stored donation record, for `subscription.created`, `subscription.updated` and `subscription.cancelled` it is the stored subscription record, and for `subscription.payment_method_updated` it is a fixed payment-method summary. CharityStack doesn't list the record fields, and its only example shows just the multi-currency display fields, so inspect a real delivery (the Hookdeck CLI shows them) before relying on a field.
 
 Headers on every delivery:
 
@@ -37,7 +37,7 @@ Headers on every delivery:
 
 ## Delivery
 
-No retry or timeout policy is documented. Respond with a `2xx` quickly and process asynchronously. The webhook object's `successCount` and `failureCount` show how deliveries are going.
+CharityStack counts any non-2xx response as a failed delivery. No retry or timeout policy is documented, so respond with a `2xx` quickly and process asynchronously. The webhook object's `successCount` and `failureCount`, and `GET /v1/analytics/webhook-logs`, show how deliveries are going.
 
 ## Full Event Reference
 

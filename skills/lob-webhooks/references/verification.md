@@ -6,16 +6,16 @@ Lob signs each delivery and sends two headers:
 
 | Header | Value |
 |--------|-------|
-| `Lob-Signature` | Lowercase hex HMAC-SHA256 digest, bare (no prefix) |
+| `Lob-Signature` | Hex HMAC-SHA256 digest, bare (no prefix) |
 | `Lob-Signature-Timestamp` | Timestamp included in the signed input |
 
 Signed input (as bytes): `Lob-Signature-Timestamp` header value + `.` + raw request body.
 Key: the webhook's secret from its dashboard details page, used as its UTF-8 bytes (not hex- or
-base64-decoded). There is no Lob webhook SDK; verify manually. Lob's steps: (1) build the
+base64-decoded). Lob's docs give no verification library; verify manually. Lob's steps: (1) build the
 signature input, (2) compute the HMAC-SHA256 as hex, (3) compare with `Lob-Signature`, (4)
 optionally check the timestamp.
 
-Events sent from Lob's webhook debugger are signed with a fixed test secret, so they fail verification. Real deliveries are signed with the webhook's secret.
+Lob signs events sent from its webhook debugger with the literal string `secret`, not the webhook's own secret, so they fail verification against the real one. Real deliveries are signed with the webhook's secret.
 
 ## Implementation
 

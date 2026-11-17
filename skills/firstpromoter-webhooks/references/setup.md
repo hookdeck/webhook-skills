@@ -1,6 +1,6 @@
 # Setting Up FirstPromoter Webhooks
 
-Covers Webhooks v2 only: add a custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers.
+This covers Webhooks v2 only. Legacy webhooks can't send custom headers, so they carry nothing to check.
 
 ## Prerequisites
 
@@ -9,8 +9,8 @@ Covers Webhooks v2 only: add a custom header to the subscription and enter it he
 
 ## Choose Your Secret Header
 
-FirstPromoter does not generate a signing secret. You invent a header and a value and add them
-to the subscription, then give the same two things to your endpoint:
+FirstPromoter's webhook docs document no signing secret. You invent a header and a value and
+add them to the subscription, then give the same two things to your endpoint:
 
 | Setting | Example | Where it goes |
 |---------|---------|---------------|

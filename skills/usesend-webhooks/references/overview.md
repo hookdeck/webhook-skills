@@ -70,8 +70,10 @@ The examples handle `email.delivered`, `email.bounced`, `email.complained`,
 | `data` | Event-specific data |
 | `attempt` | Delivery attempt number (1 to 6) |
 
-The `webhook.test` event has a different body:
-`{"test": true, "webhookId": "wh_abc123", "sentAt": "2024-01-15T10:30:00.000Z"}`.
+The `webhook.test` event uses the same envelope. useSend's docs print its payload,
+`{"test": true, "webhookId": "wh_abc123", "sentAt": "2024-01-15T10:30:00.000Z"}`, and
+[useSend's webhook service](https://github.com/usesend/useSend/blob/main/apps/web/src/server/service/webhook-service.ts)
+sends it as the envelope's `data`.
 
 ## Request Headers
 

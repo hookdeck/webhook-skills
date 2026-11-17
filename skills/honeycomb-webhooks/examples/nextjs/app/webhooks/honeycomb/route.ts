@@ -10,20 +10,22 @@ export const dynamic = 'force-dynamic';
 const seenDeliveries = new Set<string>();
 
 function handleAlert(payload: Record<string, unknown>): void {
-  switch (classifyAlert(payload)) {
+  const kind = classifyAlert(payload);
+  switch (kind) {
     case 'trigger':
-      console.log(`Trigger alert: ${payload.name || payload.trigger_id || '(unnamed)'}`);
-      // TODO: page on-call or open an incident
+      console.log(`Trigger alert: ${payload.status} ${payload.summary || ''}`);
+      // Page on-call or open an incident here.
       break;
 
-    case 'slo_burn_alert':
-      console.log(`SLO burn alert: ${payload.slo_name || payload.name || '(unnamed)'}`);
-      // TODO: escalate before the error budget runs out
+    case 'budget_rate':
+    case 'exhaustion_time':
+      console.log(`SLO burn alert (${kind}): ${payload.status} ${payload.summary || ''}`);
+      // Escalate before the error budget runs out here.
       break;
 
     case 'anomaly':
-      console.log('Anomaly detection alert');
-      // TODO: open an investigation
+      console.log(`Anomaly Detection alert: ${payload.status} ${payload.summary || ''}`);
+      // Open an investigation here.
       break;
 
     default:

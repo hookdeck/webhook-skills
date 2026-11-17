@@ -6,10 +6,10 @@ FirstPromoter (affiliate and referral management) Webhooks v2 is a rewrite of it
 system. Instead of three fixed URLs per campaign you create any number of **subscriptions**
 (Settings > Integrations > Webhooks), each with its own URL, event types, optional campaign
 filter and optional custom headers. When a matching event occurs, FirstPromoter sends a `POST`
-with a JSON payload. Requests are not signed; you authenticate them with a custom header you
-add to the subscription.
+with a JSON payload. The webhook docs describe no signature; you authenticate requests with a
+custom header you add to the subscription.
 
-Covers Webhooks v2 only: add a custom header to the subscription and enter it here. Legacy webhooks cannot send custom headers.
+This covers Webhooks v2 only. Legacy webhooks can't send custom headers, so they carry nothing to check.
 
 ## Common Event Types
 
@@ -85,10 +85,11 @@ A dashboard **Send test** delivery has `"data": { "test": true }`.
 
 ## Delivery and Retries
 
-Respond with any `2xx` to acknowledge. A non-2xx response, timeout (30 s by default) or network
-error is retried with exponential backoff (about 2 minutes, then 4, 8, ...). The docs disagree
-on the budget: the overview comparison table says 3 retries by default, while the delivery page
-says `max_retries` defaults to 10 (configurable 0 to 10). Check your subscription. Because
+Respond with any `2xx` to acknowledge. A non-2xx response, timeout (30 s by default, 1 to 120 s
+through the Admin API) or network error is retried with exponential backoff (about 2 minutes,
+then 4, 8, ...). The docs disagree on the budget: the overview comparison table and the Admin
+API spec say 3 retries by default, while the delivery page says `max_retries` defaults to 10
+(configurable 0 to 10). Set it explicitly on each subscription. Because
 retries and duplicates happen, dedupe on `event_id`.
 
 ## Full Event Reference

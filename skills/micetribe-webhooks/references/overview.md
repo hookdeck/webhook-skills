@@ -50,7 +50,7 @@ The event is in the body's `meta.trigger` field (there is no event-type header).
 
 - `2xx` is success. `3xx` and above, network errors and timeouts (10 s) fail.
 - Up to 5 retries, 15 min, 30 min, 3 h, 6 h and 12 h apart (a dispatcher runs every 15 minutes).
-- Deliveries can repeat. Process idempotently on `registration_id` + `meta.trigger` + `X-Request-Id`.
+- Deliveries can repeat. MICEtribe's docs say to process idempotently on `registration_id` + `meta.trigger` + `X-Request-Id`, but `X-Request-Id` is unique per delivery attempt, so a retry may not match. Keep a hash of the raw body too, and make writes idempotent.
 
 ## Full Event Reference
 

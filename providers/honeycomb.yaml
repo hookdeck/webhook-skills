@@ -26,15 +26,16 @@ notes: >
   api_route with those methods), check the credential first for every method, and handle an empty
   body. Say in SKILL.md and setup.md that any other method the sender uses must also be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Body:
   application/json. The default payload is not documented field by field (the page says it carries
-  the result of the alert in JSON), and a webhook may use a custom JSON template per alert type, so
-  use a clearly labelled illustrative payload and dispatch defensively (e.g. trigger vs burn alert
-  by the fields present). X-Honeycomb-Webhook-Delivery-ID is stable across retries; use it for
+  the result of the alert in JSON), and a webhook may use a custom JSON template per alert type.
+  Don't invent payload fields or sample bodies: tell the user to put a constant "kind" field
+  (trigger, budget_rate, exhaustion_time, anomaly) in each template, built from Honeycomb's
+  documented variables, and classify on it, falling back to unknown. No TODO comments in examples. X-Honeycomb-Webhook-Delivery-ID is stable across retries; use it for
   idempotency. Respond within 15 seconds. Express examples must read the raw body with express.raw({
   type: '*/*' }) so any content type works (and, for signatures, the exact bytes are verified);
   parse the body only after the check.
 testScenario:
   events:
-    - 'Trigger fired (illustrative payload)'
-    - 'SLO burn alert (illustrative payload)'
+    - 'Trigger template body with kind trigger'
+    - 'SLO burn alert template body with kind exhaustion_time'
 catalog:
   summary: 'Authenticate Honeycomb trigger, SLO burn alert and anomaly webhooks (unsigned: the `X-Honeycomb-Webhook-Token` Shared Secret compared in constant time)'

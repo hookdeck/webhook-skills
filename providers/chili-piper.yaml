@@ -38,9 +38,11 @@ notes: >
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is CHILI_PIPER, labelled 'Chili Piper'.
-  Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must tell the
-  user the same thing, verbatim: "Chili Piper issues the signing secret on request: email Chili Piper
-  support for your tenant's secret and paste it here."
+  SKILL.md and references/setup.md tell the user the secret is not shown in the Command Center and
+  is requested from Chili Piper support. Do not quote Hookdeck's source setup note. Deduplication:
+  skip a repeated Created or Deleted by meetingIdChili plus type; a meeting can have many Updated
+  events, so apply Updated as an idempotent write keyed on meetingIdChili. No TODO comments in
+  example code, and no made-up signature test vectors in the references.
 testScenario:
   events:
     - "Created"

@@ -60,7 +60,7 @@ def verify_infinite_giving_webhook(
     if not hmac.compare_digest(expected, bytes.fromhex(digest)):
         return False, "Signature mismatch"
 
-    # Opt-in replay window. Off by default: retries and replays resend the original timestamp.
+    # Opt-in replay window. Off by default: a replayed or queued delivery keeps its original timestamp.
     if tolerance_seconds > 0:
         if not re.fullmatch(r"\d+", timestamp) or abs(time.time() - int(timestamp)) > tolerance_seconds:
             return False, "Timestamp outside tolerance"

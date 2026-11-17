@@ -99,17 +99,17 @@ export async function POST(request: NextRequest) {
   switch (callbackKey) {
     case 'message':
       console.log('Inbound message:', payload.message.id, payload.message.channel_identity?.channel);
-      // TODO: Process the contact's message (payload.message.contact_message)
+      // Process the contact's message (payload.message.contact_message)
       break;
 
     case 'message_delivery_report':
       console.log('Delivery report:', payload.message_delivery_report.message_id, payload.message_delivery_report.status);
-      // TODO: Update the delivery status of the message
+      // Update the delivery status of the message
       break;
 
     case 'contact_create_notification':
       console.log('Contact created:', payload.contact_create_notification.contact?.id);
-      // TODO: Sync the new contact
+      // Sync the new contact
       break;
 
     case undefined:

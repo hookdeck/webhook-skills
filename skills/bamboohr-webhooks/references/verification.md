@@ -68,7 +68,7 @@ Use `raw_body = await request.body()`.
 
 ## Should I Reject Old Timestamps?
 
-Not by default. BambooHR retries (up to 40 minutes later) and Hookdeck retries and replays resend the original `X-BambooHR-Timestamp`, so a fixed window would reject legitimate redeliveries. Use idempotency on `employees[].id` plus `timestamp` for replay protection instead.
+Not by default. BambooHR retries (up to 40 or 80 minutes later, depending on which BambooHR page you read) and Hookdeck retries and replays resend the original `X-BambooHR-Timestamp`, so a fixed window would reject legitimate redeliveries. Make the handler idempotent instead: fetch the current employee record and upsert it. If you need a dedupe key, include the event (`type` or `action`), the employee ID, the body `timestamp` and the sorted `changedFields`, because one save can send two `employee.updated` events (custom and standard fields are grouped separately).
 
 If you want a window anyway, the examples support `BAMBOOHR_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off). BambooHR does not document the header's format, so the examples parse it only when this is set, accepting epoch seconds or milliseconds, and reject a timestamp they can't parse. Check a real delivery before enabling it.
 

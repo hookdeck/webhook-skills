@@ -39,5 +39,5 @@ Run a generation with the production API key, or replay with curl:
 curl -X POST http://localhost:3000/webhooks/leonardo-ai \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $LEONARDO_AI_WEBHOOK_SECRET" \
-  -d '{"type":"image_generation.complete","object":"generation","timestamp":1699490546932,"api_version":"v1","data":{"object":{"id":"gen-1","status":"COMPLETE","images":[{"id":"img-1","url":"https://cdn.leonardo.ai/example.jpg"}]}}}'
+  -d '{"type":"image_generation.complete","object":"generation","timestamp":1699490546932,"api_version":"v1","data":{"object":{"id":"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX","status":"COMPLETE","images":[{"id":"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX","url":"https://cdn.leonardo.ai/users/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/generations/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/Leonardo_Creative_An_oil_painting_of_a_cat_0.jpg"}]}}}'
 ```

@@ -3,9 +3,9 @@
 ## What Are Rebrandly Webhooks?
 
 Rebrandly sends click data for your branded short links to an endpoint you control. Two
-products exist: enterprise **Clickstream** webhooks (configured with Rebrandly; you provide the
-endpoint URL, the HTTP method POST or PUT, and an authentication header key and value) and the
-self-serve **Webhooks** feature in account settings.
+products exist: **Clickstream** webhooks (provisioned by Rebrandly once Clickstream is enabled on
+your account; you provide the endpoint URL, the HTTP method POST or PUT, and an authentication header
+key and value) and the self-serve **Webhooks** feature in the Rebrandly app.
 
 Requests are not signed. The sender adds the authentication header you chose.
 

@@ -77,11 +77,12 @@ uses `PUT` or `PATCH`, also allow that method on the Hookdeck source.
 
 ## Payloads
 
-There is no vendor event field. A trigger's body is the `payloadTemplate` its author wrote
+There is no vendor event field. A trigger's body is the JSON its `payloadTemplate` renders
 (template variables include `materialization_name`, `collection_names`,
-`flow_published_at_min`, `flow_published_at_max` and `run_id`); the HTTP Webhook connector
-sends documents. The examples use a clearly labelled **illustrative** payload and tell a
-trigger body (has `materialization_name`) from any other document.
+`flow_published_at_min`, `flow_published_at_max` and `run_id`), so its keys are the ones you
+chose. The HTTP Webhook connector sends a `POST` whose body is a JSON array of documents from
+one binding. The examples tell the two apart by that array, and their tests use the example
+values printed on Estuary's pages.
 
 Non-retryable 4xx responses fail the trigger, so return `2xx` once you have accepted the request
 and `401` only for a bad credential.

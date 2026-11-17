@@ -4,11 +4,12 @@ docs:
   webhooks: https://docs.upload-post.com/api/webhooks
   verification: https://docs.upload-post.com/api/webhooks
 notes: >
-  Upload-Post webhooks (upload results, social-account changes, opt-in Instagram DMs and comments).
+  Upload-Post webhooks (upload results, social-account changes, opt-in DMs, comments and Telegram bot updates).
   Upload-Post (upload-post.com), an API for publishing to many social networks. Webhooks report upload
-  results, social-account connection changes, and (opt-in) Instagram DMs and comments. Delivery (from
-  the docs): One attempt per event: a 10 s timeout, refused connection or non-2xx loses it. After 5
-  consecutive failures the channel pauses for 30 minutes. Upload-Post says: 'X-Upload-Post-Signature
+  results, social-account connection changes, and (opt-in) DMs, comments and raw Telegram bot updates.
+  Delivery (from the docs): at least once, up to 6 attempts over about 8.5 hours for a timeout,
+  connection error, 5xx, 408 or 429; other 4xx are final. Retries keep X-Upload-Post-Delivery, so
+  deduplicate on it. After 5 consecutive failures the webhook pauses for 30 minutes and queues events. Upload-Post says: 'X-Upload-Post-Signature
   sha256=<hex HMAC-SHA256> — present whenever the account has a webhook_secret X-Upload-Post-Timestamp
   Unix time (seconds) when the request was signed' 'The signature is HMAC_SHA256(webhook_secret,
   "<timestamp>.<raw body>").' SIGNATURE SCHEME: The X-Upload-Post-Signature
@@ -32,10 +33,9 @@ notes: >
   timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an
   opt-in tolerance (an env var such as UPLOAD_POST_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and
   say so in SKILL.md and verification.md (X-Upload-Post-Timestamp is Unix seconds). Deliveries made
-  before a secret existed carry no signature header and fail. Upload-Post makes ONE attempt per event
-  (10 s timeout). Events: dispatch on the body's `event` field. Documented event types (6):
+  before a secret existed carry no signature header and fail. Respond 2xx within 10 seconds. Events: dispatch on the body's `event` field. Documented event types (7):
   upload_completed, social_account_connected, social_account_disconnected,
-  social_account_reauth_required, dm_received, comment_received. Handle a few common ones and log the
+  social_account_reauth_required, dm_received, telegram_update, comment_received. Handle a few common ones and log the
   rest. Method: POST. The examples handle
   POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();

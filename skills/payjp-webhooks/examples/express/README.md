@@ -7,8 +7,7 @@ PAY.JP does not sign payloads, so there is no HMAC to verify. The handler compar
 `X-Payjp-Webhook-Token` header with your account's webhook token using a constant-time
 comparison. The route reads the body with `express.raw({ type: '*/*' })`, so any content type
 works, and parses it only after the check. A static token authenticates the sender, not the body,
-and gives no replay protection: use HTTPS, dedupe on the event `id`, and rotate the token if it
-leaks.
+and gives no replay protection: use HTTPS, dedupe on the event `id`, and keep the token secret.
 
 ## Prerequisites
 

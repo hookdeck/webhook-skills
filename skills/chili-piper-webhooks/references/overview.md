@@ -35,12 +35,14 @@ Fields from the Chili Piper docs (example values may differ from real data):
 | `meetingTypeName`, `meetingTypeIdChili` | Meeting Type used to book |
 | `type` | `Created`, `Updated` or `Deleted` |
 
+Since January 2026, Chili Piper's product updates say meeting created payloads also carry `hostTimeZone`, `assigneeTimeZone`, `bookerTimeZone`, `ruleIdChili` (the rule that created the meeting) and `ruleName`.
+
 ## Delivery
 
 - Method: `POST` with a JSON body.
 - Headers: `X-Chili-Signature` and `X-Chili-Timestamp` (see [verification.md](verification.md)).
 - Signing is optional on Chili Piper's side but recommended for any endpoint that triggers automations or writes data.
-- Retry behavior and expected response codes are not documented. Respond `2xx` quickly and de-duplicate on `meetingIdChili` plus `type`.
+- Retry behavior and expected response codes are not documented. Respond `2xx` quickly. Skip a repeated `Created` or `Deleted` by `meetingIdChili` plus `type`. A meeting can be updated many times, so apply `Updated` as an idempotent write keyed on `meetingIdChili` rather than dropping it as a duplicate.
 
 ## Full Event Reference
 

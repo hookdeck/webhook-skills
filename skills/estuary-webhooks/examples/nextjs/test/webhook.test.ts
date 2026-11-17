@@ -14,14 +14,17 @@ beforeEach(() => {
   delete process.env.ESTUARY_WEBHOOK_HEADER; // default: Authorization
 });
 
-// ILLUSTRATIVE payloads: Estuary has no fixed event schema. A trigger body is the
-// author's payloadTemplate; these use the documented template variables.
+// Estuary has no fixed event schema. The trigger body is what the example template on
+// Estuary's Materialization Triggers page renders, with that page's example values;
+// the document batch is the example on its HTTP Webhook connector page.
 const trigger = {
-  materialization_name: 'acmeCo/orders/to-warehouse',
-  collection_names: ['acmeCo/orders'],
-  run_id: 'run-0001',
+  materialization: 'acmeCo/example/database-views',
+  collections: ['acmeCo/example/collection'],
+  publishedAtMin: '2024-01-15T08:30:00Z',
+  publishedAtMax: '2024-01-15T08:31:00Z',
+  runId: '2024-01-15T08:30:00.000Z',
 };
-const document = { id: 42, status: 'shipped' };
+const documents = [{ id: 1, status: 'shipped', flow_published_at: '2026-10-23T14:00:00Z' }];
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 const METHODS: Method[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -82,7 +85,7 @@ describe('Estuary webhook route', () => {
 
   it('authenticates regardless of content type', async () => {
     const res = await route.POST(
-      makeRequest('POST', { Authorization: SECRET }, JSON.stringify(document), 'text/plain')
+      makeRequest('POST', { Authorization: SECRET }, JSON.stringify(documents), 'text/plain')
     );
     expect(res.status).toBe(200);
   });
@@ -96,7 +99,7 @@ describe('Estuary webhook route', () => {
 describe('helpers', () => {
   it('classifies payloads', () => {
     expect(classify(trigger)).toBe('trigger');
-    expect(classify(document)).toBe('document');
+    expect(classify(documents)).toBe('documents');
     expect(classify(null)).toBe('empty');
   });
 

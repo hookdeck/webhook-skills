@@ -6,8 +6,7 @@ Minimal example of receiving PAY.JP webhooks with the App Router and authenticat
 PAY.JP does not sign payloads, so there is no HMAC to verify. The route handler compares the whole
 `X-Payjp-Webhook-Token` header with your account's webhook token using a constant-time comparison,
 then reads the body as text and parses it. A static token authenticates the sender, not the body,
-and gives no replay protection: use HTTPS, dedupe on the event `id`, and rotate the token if it
-leaks.
+and gives no replay protection: use HTTPS, dedupe on the event `id`, and keep the token secret.
 
 ## Prerequisites
 

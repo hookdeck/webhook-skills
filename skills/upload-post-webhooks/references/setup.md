@@ -16,7 +16,7 @@ Store it unchanged in `UPLOAD_POST_WEBHOOK_SECRET`. Do not strip the `whsec_` pr
 ## Register Your Endpoint
 
 1. Configure the webhook URL in Upload-Post, pointing at `https://your-host/webhooks/upload-post`.
-2. Enable the events you want. Instagram DMs (`dm_received`) and comments (`comment_received`) are opt-in.
+2. Enable the events you want. DMs (`dm_received`), comments (`comment_received`) and raw Telegram bot updates (`telegram_update`) are opt-in.
 3. Hookdeck source type: `UPLOAD_POST` ("Upload-Post"). It verifies the same signature, so paste the same whole secret there.
 
 ## Local Development
@@ -27,4 +27,4 @@ npx hookdeck-cli listen 3000 upload-post --path /webhooks/upload-post
 
 ## Testing
 
-Trigger an upload or connect and disconnect a test social account, then check the request in the Hookdeck CLI web UI. Upload-Post makes one attempt per event, so use Hookdeck replay to resend a delivery while debugging.
+Trigger an upload or connect and disconnect a test social account, then check the request in the Hookdeck CLI web UI. `POST /api/uploadposts/users/notifications/test` sends a one-off test delivery, and `POST /api/uploadposts/webhooks/deliveries/{delivery_id}/redeliver` resends a logged one. Hookdeck replay also resends a delivery while debugging.

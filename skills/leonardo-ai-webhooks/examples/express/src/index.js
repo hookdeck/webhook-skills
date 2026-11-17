@@ -33,7 +33,7 @@ function handleEvent(payload) {
       // Don't log the whole payload: the documented sample embeds the callback key.
       const images = (generation && generation.images) || [];
       console.log(`Generation ${generation && generation.id} ${generation && generation.status}: ${images.length} image(s)`);
-      // TODO: download images[].url, update your job record, notify the user
+      // Next: download images[].url, update your job record, notify the user
       break;
     }
 

@@ -49,31 +49,31 @@ def handle_event(event: dict) -> None:
 
     if event_type == "session.open.success":
         print(f"Session opened: {data.get('session_id')} (room {data.get('room_name')})")
-        # TODO: mark the session as live
+        # Mark the session as live
 
     elif event_type == "session.close.success":
         print(f"Session closed: {data.get('session_id')} after {data.get('session_duration')}s")
-        # TODO: record session duration for analytics
+        # Record session duration for analytics
 
     elif event_type == "peer.join.success":
         print(f"Peer joined: {data.get('user_name')} ({data.get('peer_id')}) as {data.get('role')}")
-        # TODO: record attendance
+        # Record attendance
 
     elif event_type == "peer.leave.success":
         print(f"Peer left: {data.get('user_name')} ({data.get('peer_id')})")
-        # TODO: close the attendance record
+        # Close the attendance record
 
     elif event_type in ("peer.join.failure", "peer.leave.failure", "room.end.failure", "role.change.failure"):
         print(f"Event failed: {event_type}")
-        # TODO: alert or investigate (data["error"])
+        # Alert or investigate (data["error_message"])
 
     elif event_type == "room.end.success":
         print(f"Room ended: {data.get('room_id')}")
-        # TODO: finalize the room
+        # Finalize the room
 
     elif event_type == "role.change.success":
         print(f"Role changed for peer {data.get('peer_id')}")
-        # TODO: update permissions in your app
+        # Update permissions in your app
 
     elif event_type in (
         "recording.success",
@@ -83,7 +83,7 @@ def handle_event(event: dict) -> None:
         "hls.recording.success",
     ):
         print(f"Recording ready: {event_type}")
-        # TODO: fetch the asset from data["location"] or data["recording_path"]
+        # Fetch the asset from data["recording_path"] (HLS: data["hls_vod_recording_path"])
 
     elif event_type in (
         "recording.failed",
@@ -93,7 +93,7 @@ def handle_event(event: dict) -> None:
         "hls.failure",
     ):
         print(f"Recording or streaming failed: {event_type}")
-        # TODO: alert (data["error"])
+        # Alert (data["error_message"]; recording.failed uses data["error"])
 
     elif event_type in (
         "track.recording.started.success",
@@ -103,11 +103,11 @@ def handle_event(event: dict) -> None:
         "hls.stopped.success",
     ):
         print(f"Streaming or recording state changed: {event_type}")
-        # TODO: update UI state (data["room_id"], data["session_id"])
+        # Update UI state (data["room_id"], data["session_id"])
 
     elif event_type in ("transcription.started.success", "transcription.success", "transcription.failure"):
         print(f"Transcription event: {event_type}")
-        # TODO: fetch or flag the transcript
+        # Fetch or flag the transcript
 
     elif event_type in (
         "ingest.start.success",

@@ -1,10 +1,10 @@
 # Setting Up Rebrandly Webhooks
 
-> Rebrandly webhooks are not signed. Add an authentication header to the webhook and enter it here.
+Rebrandly webhooks are not signed: you authenticate them with a header you configure.
 
 ## Prerequisites
 
-- A Rebrandly account (Clickstream requires an enterprise arrangement with Rebrandly)
+- A Rebrandly account (Clickstream must be enabled on it; Rebrandly provisions the webhook)
 - A publicly reachable HTTPS endpoint (locally: `npx hookdeck-cli listen 3000 rebrandly --path /webhooks/rebrandly`)
 
 ## Choose the Authentication Header

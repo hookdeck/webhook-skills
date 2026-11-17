@@ -75,31 +75,31 @@ def handle_event(event: dict) -> None:
 
     if name == "SUBSCRIPTION_STARTED":
         print(f"Subscription started: {sub_id} ({event.get('plan')}, user {event.get('user_id')})")
-        # TODO: grant access, start onboarding
+        # Your code: grant access, start onboarding
 
     elif name == "SUBSCRIPTION_RENEWED":
         print(f"Subscription renewed: {sub_id}")
-        # TODO: extend access to event["next_renewal_at"]
+        # Your code: extend access to event["next_renewal_at"]
 
     elif name == "RENEWAL_DISABLED":
         print(f"Auto-renew turned off: {sub_id}")
-        # TODO: start a win-back flow
+        # Your code: start a win-back flow
 
     elif name in ("GRACE_PERIOD_STARTED", "ENTERED_BILLING_RETRY"):
         print(f"Billing issue ({name}): {sub_id}")
-        # TODO: nudge the user to fix their payment method
+        # Your code: nudge the user to fix their payment method
 
     elif name == "SUBSCRIPTION_TERMINATED":
         print(f"Subscription terminated: {sub_id}")
-        # TODO: revoke access
+        # Your code: revoke access
 
     elif name == "TRANSACTION_PROCESSED":
         print(f"Transaction processed: {event.get('amount_in_eur')} EUR ({event.get('store')})")
-        # TODO: record revenue
+        # Your code: record revenue
 
     elif name == "ACTIVATE":
         print(f"Entitlement activated for user {event.get('user_id')}")
-        # TODO: unlock the entitlement
+        # Your code: unlock the entitlement
 
     else:
         print(f"Unhandled event: {name}")

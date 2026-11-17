@@ -7,8 +7,6 @@
 
 ## Which Authentication Mode Should I Pick?
 
-> Use Basic auth (auth.type basic) on the webhook subscription, not JWT/OAuth 2.0.
-
 Celcoin offers two modes: Basic Auth and OAuth 2.0 (`auth.type` `jwt`, where Celcoin calls a token endpoint you host before each notification). Hookdeck's Celcoin source verifies Basic auth only. Celcoin's docs: "Neste formato o basic auth definido será enviado nas notificações" (in this format the Basic auth you define is sent with the notifications).
 
 ## Register a Subscription
@@ -39,12 +37,12 @@ Other calls on the same path: `GET` (list), `PUT .../{context}/{entity}` (change
 
 If Hookdeck sits in front of your endpoint, create a source of type **Celcoin**, and use its URL as `webhookUrl`.
 
-- **No 401 challenge** (no `WWW-Authenticate` round trip), so Celcoin must present the Basic credentials with each request, which is what the subscription's `auth` does.
+- Celcoin sends the Basic credentials from the subscription's `auth` object with each notification, which is what the source checks.
 - **Methods:** Celcoin's docs don't name the HTTP method. Hookdeck's Celcoin source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method Celcoin uses must also be allowed on the source.
 
 ## Register Your Endpoint
 
-Subscribe to the entities you handle, for example `pix-payment-in`, `pix-payment-out`, `pix-reversal-in`, `internal-transfer-in`, `spb-transfer-out`, `onboarding-proposal` and `kyc`. Registering the same entity twice returns error `CBE205`.
+Subscribe to the entities you handle, for example `pix-payment-in`, `pix-payment-out`, `pix-reversal-in`, `internal-transfer-in`, `spb-transfer-out`, `onboarding-proposal` and `kyc` (KYC V1, which Celcoin marks discontinued). Registering the same entity twice returns error `CBE205`.
 
 ## Test Mode vs Live Mode
 

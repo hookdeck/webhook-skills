@@ -37,12 +37,12 @@ function handleTranscription(payload) {
   switch (status) {
     case 'completed':
       console.log(`Transcription completed: ${id}`);
-      // TODO: fetch the transcript from the Soniox API by id
+      // Fetch the transcript: GET /v1/transcriptions/{id}/transcript
       break;
 
     case 'error':
       console.log(`Transcription failed: ${id}`);
-      // TODO: look up the transcription by id, alert or retry
+      // Look up the transcription (GET /v1/transcriptions/{id}) for error_message
       break;
 
     default:

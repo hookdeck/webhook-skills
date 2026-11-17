@@ -19,7 +19,7 @@ Minimal example of receiving Chili Piper webhooks with `X-Chili-Signature` verif
    cp .env.example .env
    ```
 
-3. Add your webhook signing secret to `.env` as `CHILI_PIPER_WEBHOOK_SECRET`. Chili Piper issues the signing secret on request: email Chili Piper support for your tenant's secret and paste it here.
+3. Add your webhook signing secret to `.env` as `CHILI_PIPER_WEBHOOK_SECRET`. Chili Piper doesn't show the signing secret in the Command Center: you request it from support.
 
 ## Run
 

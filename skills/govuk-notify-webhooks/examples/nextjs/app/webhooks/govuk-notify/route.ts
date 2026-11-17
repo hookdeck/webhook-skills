@@ -18,17 +18,17 @@ function handleCallback(payload: NotifyPayload): void {
     case 'delivery_receipt':
       // status: delivered, permanent-failure, temporary-failure, technical-failure
       console.log(`Delivery receipt ${payload.id}: ${payload.status} (${payload.notification_type})`);
-      // TODO: update the notification by payload.reference / payload.id; retry or alert on failures
+      // Update the notification by payload.reference / payload.id; retry or alert on failures
       break;
 
     case 'received_text':
       console.log(`Text message from ${payload.source_number}: ${payload.message}`);
-      // TODO: route the reply (payload.destination_number, payload.date_received)
+      // Route the reply (payload.destination_number, payload.date_received)
       break;
 
     case 'returned_letter':
       console.log(`Letter returned: ${payload.notification_id}`);
-      // TODO: flag the address as bad (payload.reference, payload.template_name)
+      // Flag the address as bad (payload.reference, payload.template_name)
       break;
 
     default:

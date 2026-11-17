@@ -52,20 +52,20 @@ def handle_event(payload: dict) -> None:
         # data is a list of {field, value, device, timestamp} for the fields just recorded
         rows = data if isinstance(data, list) else []
         print(f"Device measurement: {len(rows)} value(s)")
-        # TODO: store each row in your database (row["device"], row["field"], row["value"], row["timestamp"])
+        # Store each row in your database (row["device"], row["field"], row["value"], row["timestamp"])
 
     elif event == "decoder_output":
         # data["result"] is the raw payload decoder output; data["log"] and data["device"] may be null
         data = data if isinstance(data, dict) else {}
         results = data.get("result") if isinstance(data.get("result"), list) else []
         print(f"Decoder output: {len(results)} result(s) for product {data.get('product')}")
-        # TODO: act on raw decoder data that isn't stored in the time-series database
+        # Act on raw decoder data that isn't stored in the time-series database
 
     elif event == "downlink":
         # data["meta"]["type"] is e.g. "lorawan"; data["payload"] is the base64 downlink payload
         data = data if isinstance(data, dict) else {}
         print(f"Downlink sent to device {data.get('device')}")
-        # TODO: audit or mirror the downlink (data["meta"], data["payload"], data["product_slug"])
+        # Audit or mirror the downlink (data["meta"], data["payload"], data["product_slug"])
 
     else:
         print(f"Unhandled event: {event}")

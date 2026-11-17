@@ -53,15 +53,15 @@ def handle_notification(payload: dict) -> None:
 
     if trigger == "on-sync-succeeded":
         print(f"Sync succeeded: {app_name} (sync {sync_status}, health {health})")
-        # TODO: mark the deployment as successful
+        # Your code: mark the deployment as successful
 
     elif trigger == "on-sync-failed":
         print(f"Sync failed: {app_name} (sync {sync_status}, health {health})")
-        # TODO: alert the team
+        # Your code: alert the team
 
     elif trigger == "on-health-degraded":
         print(f"Health degraded: {app_name} (sync {sync_status}, health {health})")
-        # TODO: open an incident
+        # Your code: open an incident
 
     else:
         print(f"Unhandled notification: {trigger}")

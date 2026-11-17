@@ -49,35 +49,35 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "APP_CREATE":
         print(f"Application created: {data.get('display_name')} ({data.get('id')})")
-        # TODO: register the application in your inventory
+        # Your code: register the application in your inventory
 
     elif event_type == "APP_DEPLOY":
         print(f"Application deployment {data.get('status')}: {data.get('app_display_name')} ({data.get('deployment_id')})")
-        # TODO: notify chat on 'failed', run tests on 'success' (data["is_preview"] marks preview apps)
+        # Your code: notify chat on 'failed', run tests on 'success' (data["is_preview"] marks preview apps)
 
     elif event_type == "APP_UPDATE":
         print(f"Application updated: {data.get('display_name')} ({data.get('id')})")
-        # TODO: refresh your inventory
+        # Your code: refresh your inventory
 
     elif event_type == "APP_DELETE":
         print(f"Application deleted: {data.get('display_name')} ({data.get('id')})")
-        # TODO: clean up
+        # Your code: clean up
 
     elif event_type == "STATIC_SITE_CREATE":
         print(f"Static site created: {data.get('display_name')} ({data.get('id')})")
-        # TODO: register the static site
+        # Your code: register the static site
 
     elif event_type == "STATIC_SITE_DEPLOY":
         print(f"Static site deployment {data.get('status')}: {data.get('static_site_display_name')} ({data.get('deployment_id')})")
-        # TODO: purge caches or notify on 'success'
+        # Your code: purge caches or notify on 'success'
 
     elif event_type == "STATIC_SITE_UPDATE":
         print(f"Static site updated: {data.get('display_name')} ({data.get('id')})")
-        # TODO: refresh your inventory
+        # Your code: refresh your inventory
 
     elif event_type == "STATIC_SITE_DELETE":
         print(f"Static site deleted: {data.get('display_name')} ({data.get('id')})")
-        # TODO: clean up
+        # Your code: clean up
 
     elif event_type in ("DATABASE_CREATE", "DATABASE_UPDATE", "DATABASE_DELETE"):
         # Selectable in the dashboard but not sent by Sevalla at the moment.

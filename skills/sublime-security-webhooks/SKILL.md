@@ -100,8 +100,8 @@ The body is JSON: `{ id, api_version, created_at, type, data }`. Dispatch on `ty
 | `type` | Description |
 |--------|-------------|
 | `message.flagged` | A message matched a detection rule and the webhook Action fired |
-| `group` | The Action fired for a message group |
-| `manual` | A user sent the message to the webhook Action by hand |
+| `group` | The webhook fired on another message in this message's group, and its scope covers every message in the group |
+| `manual` | A Sublime user triggered an action on this message by hand |
 
 `type_extended` may list several reasons at once and adds `group_late_arriving`. See [references/overview.md](references/overview.md).
 

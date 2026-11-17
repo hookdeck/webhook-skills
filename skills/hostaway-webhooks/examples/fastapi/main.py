@@ -91,23 +91,23 @@ def handle_event(payload) -> None:
 
     if event == "reservation.created":
         print("Reservation created")
-        # TODO: sync the new booking (payload["data"])
+        # Your code: sync the new booking (payload["data"])
 
     elif event == "reservation.updated":
         print("Reservation updated")
-        # TODO: update the stored booking
+        # Your code: update the stored booking
 
     elif event == "message.received":
         print("Guest message received")
-        # TODO: route the message to your inbox
+        # Your code: route the message to your inbox
 
     elif event == "task.created":
         print("Task created")
-        # TODO: create the matching task
+        # Your code: create the matching task
 
     elif event == "task.updated":
         print("Task updated")
-        # TODO: update the matching task
+        # Your code: update the matching task
 
     else:
         # Unknown shape: log the top-level keys (not the values) so you can extend this handler.

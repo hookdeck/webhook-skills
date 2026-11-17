@@ -49,7 +49,7 @@ def handle_event(payload: dict) -> None:
         images = generation.get("images") or []
         # Don't log the whole payload: the documented sample embeds the callback key.
         print(f"Generation {generation.get('id')} {generation.get('status')}: {len(images)} image(s)")
-        # TODO: download images[].url, update your job record, notify the user
+        # Next: download images[].url, update your job record, notify the user
 
     else:
         print(f"Unhandled event: {event_type}")

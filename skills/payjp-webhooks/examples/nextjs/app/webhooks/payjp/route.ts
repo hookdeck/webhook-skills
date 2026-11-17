@@ -20,67 +20,67 @@ function handleEvent(event: PayjpEvent): void {
   switch (type) {
     case 'charge.succeeded':
       console.log(`Charge succeeded: ${data.id} (${data.amount} ${data.currency})`);
-      // TODO: fulfil the order
+      // Fulfil the order
       break;
 
     case 'charge.failed':
       console.log(`Charge failed: ${data.id} (${data.failure_code})`);
-      // TODO: notify the customer
+      // Notify the customer
       break;
 
     case 'charge.updated':
       console.log(`Charge updated: ${data.id}`);
-      // TODO: sync metadata
+      // Sync metadata
       break;
 
     case 'charge.refunded':
       console.log(`Charge refunded: ${data.id} (${data.amount_refunded} refunded)`);
-      // TODO: reverse fulfilment
+      // Reverse fulfilment
       break;
 
     case 'charge.captured':
       console.log(`Charge captured: ${data.id}`);
-      // TODO: confirm the sale
+      // Confirm the sale
       break;
 
     case 'dispute.created':
       console.log(`Dispute created: ${data.id}`);
-      // TODO: gather evidence
+      // Gather evidence
       break;
 
     case 'customer.created':
       console.log(`Customer created: ${data.id}`);
-      // TODO: sync the customer record
+      // Sync the customer record
       break;
 
     case 'customer.updated':
       console.log(`Customer updated: ${data.id}`);
-      // TODO: sync the customer record
+      // Sync the customer record
       break;
 
     case 'customer.deleted':
       console.log(`Customer deleted: ${data.id}`);
-      // TODO: remove the customer record
+      // Remove the customer record
       break;
 
     case 'subscription.created':
       console.log(`Subscription created: ${data.id}`);
-      // TODO: activate access
+      // Activate access
       break;
 
     case 'subscription.renewed':
       console.log(`Subscription renewed: ${data.id}`);
-      // TODO: extend access
+      // Extend access
       break;
 
     case 'subscription.canceled':
       console.log(`Subscription canceled: ${data.id}`);
-      // TODO: schedule revocation
+      // Schedule revocation
       break;
 
     case 'transfer.succeeded':
       console.log(`Transfer succeeded: ${data.id}`);
-      // TODO: reconcile the payout
+      // Reconcile the payout
       break;
 
     default:

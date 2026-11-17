@@ -26,16 +26,15 @@ export function verifyHoneycombRequest(
   return Boolean(received) && safeEqual(received as string, secret);
 }
 
-export type AlertKind = 'trigger' | 'slo_burn_alert' | 'anomaly' | 'unknown';
+const KINDS = ['trigger', 'budget_rate', 'exhaustion_time', 'anomaly'] as const;
+export type AlertKind = (typeof KINDS)[number] | 'unknown';
 
 /**
- * Honeycomb doesn't document the default payload field by field, and a webhook can use a
- * custom JSON template per alert type, so classify by the fields present. Illustrative only.
+ * Honeycomb sends no event-type field or header, and doesn't document the standard payload
+ * field by field. Enable a custom payload template for each alert type and put a constant
+ * "kind" field in each one (see SKILL.md). Anything else is classed as unknown.
  */
 export function classifyAlert(payload: Record<string, unknown>): AlertKind {
-  const keys = Object.keys(payload);
-  if (keys.some((k) => /^slo|burn|budget|exhaustion/i.test(k))) return 'slo_burn_alert';
-  if (keys.some((k) => /anomal/i.test(k))) return 'anomaly';
-  if (keys.some((k) => /^trigger|^threshold|^result/i.test(k))) return 'trigger';
-  return 'unknown';
+  const kind = payload.kind;
+  return (KINDS as readonly unknown[]).includes(kind) ? (kind as AlertKind) : 'unknown';
 }

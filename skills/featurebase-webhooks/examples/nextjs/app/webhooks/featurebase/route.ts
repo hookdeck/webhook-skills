@@ -6,7 +6,7 @@ import { verifyFeaturebaseWebhook } from '../../../lib/verify';
 
 interface FeaturebaseEvent {
   object: string; // "notification_event"
-  id: string; // notif_..., the same on every retry
+  id: string; // notif_...; store it and skip repeats
   topic: string; // e.g. "post.created"
   organizationId: string;
   webhookId: string;

@@ -35,7 +35,7 @@ function handleClick(click) {
   const country = click.client?.location?.country;
   const destination = click.route?.destination?.raw;
   console.log(`Click on ${click.route?.id} from ${country ?? 'unknown'} at ${click.timestamp}`);
-  // TODO: store the click (click.client, click.referral, click.route)
+  // Store the click (click.client, click.referral, click.route)
   return destination;
 }
 

@@ -74,9 +74,10 @@ def verify_gc_notify_request(headers, configured=None) -> bool:
 - **Raw body.** Read it raw (`express.raw({ type: '*/*' })`) so any content type is accepted, then
   `JSON.parse` after the check.
 - **Respond fast.** GC Notify's guidance is within 1 second; queue slow work.
-- **Health checks.** `{"health_check": "true"}` has no `status`; acknowledge it with 200. The docs
-  don't say whether it carries the `Authorization` header, so if setup reports a failure, check
-  your logs for a 401 on that request.
+- **Health checks.** The health check has a `health_check` key (a JSON boolean in
+  notification-admin's code, a string in the docs) and no `status`; acknowledge it with 200. It
+  carries the same `Authorization` header, and a 4xx fails the save, so a 401 on it means the
+  token doesn't match.
 
 ## Debugging Verification Failures
 

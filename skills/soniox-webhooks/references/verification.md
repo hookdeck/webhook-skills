@@ -14,8 +14,6 @@ Authorization: Bearer <my-secret-token>
 whatever you chose.) There is no HMAC and no timestamp. The body is not part of the check, but
 authenticate before parsing it.
 
-> Soniox webhooks are not signed. Send webhook_auth_header_name and webhook_auth_header_value with every async transcription, and enter the same name and value here.
-
 ## What This Does and Doesn't Protect
 
 A static shared credential authenticates the **sender**, not the **body**. Anyone who learns the

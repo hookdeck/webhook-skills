@@ -72,10 +72,10 @@ def handle_event(payload: dict) -> None:
                 f"{data['session'].get('mostRecentDemoName')} "
                 f"({end_user.get('mostRecentEmail', 'unknown visitor')}, {account.get('name', 'no account')})"
             )
-            # TODO: push the session to your CRM, notify sales
+            # Push the session to your CRM or notify sales here
         elif kind == "account":
             print(f"Account session closed at {payload.get('timestamp')}: {data.get('name') or data.get('id')}")
-            # TODO: update the account in your system
+            # Update the account in your system here
         else:
             print("session_closed with unrecognised data shape")
 

@@ -22,7 +22,7 @@ your handler rejected with a 4xx or 5xx.
 
 ## Common Event Types
 
-Remote documents 112 event types. Examples used in this skill:
+Remote's Available Webhooks page lists 112 event types, and a few more, such as `employment.hard_deleted`, appear only in its API reference. Examples used in this skill:
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
