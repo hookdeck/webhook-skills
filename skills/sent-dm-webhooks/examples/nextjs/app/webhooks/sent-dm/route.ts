@@ -5,14 +5,18 @@ import { NextResponse } from 'next/server';
 import { Webhook } from 'standardwebhooks';
 
 // ---------------------------------------------------------------------------
-// Sent (sent.dm) signs webhooks Standard Webhooks / Svix style, but on
-// X-Webhook-* header names:
-//   X-Webhook-ID         UUID of the webhook configuration (the SAME on every
-//                        event, so it is signed but is NOT a dedupe key)
-//   X-Webhook-Timestamp  Unix seconds at which this attempt was signed
-//   X-Webhook-Signature  "v1,<base64 HMAC-SHA256>" (space-delimited if several)
-//   X-Webhook-Event-ID   the event's own UUID, identical on every attempt
-// Signed content: `${X-Webhook-ID}.${X-Webhook-Timestamp}.${rawBody}`
+// Sent (sent.dm) signs webhooks with the Standard Webhooks scheme. Version 2
+// webhooks (the default) send the standard headers; version 1 webhooks send
+// the same scheme on X-Webhook-* names:
+//   webhook-id / X-Webhook-ID       signed id. v2: the message id, the same on
+//                                   every attempt (the dedupe key). v1: the
+//                                   webhook configuration's UUID, NOT a dedupe key
+//   webhook-timestamp / X-Webhook-Timestamp  Unix seconds this attempt was signed
+//   webhook-signature / X-Webhook-Signature  "v1,<base64 HMAC-SHA256>", space-
+//                                   delimited if several
+//   X-Webhook-Event-ID              v1 only: the event's UUID, the same on
+//                                   every attempt
+// Signed content: `${id}.${timestamp}.${rawBody}`
 // Key: base64-decode of the signing secret after its `whsec_` prefix.
 // ---------------------------------------------------------------------------
 
@@ -25,7 +29,8 @@ interface SentEvent {
 
 /**
  * Verify a Sent delivery with the Standard Webhooks library. The library reads
- * webhook-* header names, so map Sent's x-webhook-* headers onto them. It
+ * webhook-* header names: version 2 sends those, and version 1's x-webhook-*
+ * headers are passed under the same names. It
  * rejects timestamps more than 5 minutes off, recomputes the HMAC over the raw
  * body and compares in constant time against every `v1,` entry.
  */
@@ -42,7 +47,8 @@ function verifySentWebhook(
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Sent delivers at-least-once; X-Webhook-Event-ID is the same on every attempt.
+// Sent delivers at-least-once; webhook-id (v2) or X-Webhook-Event-ID (v1) is the
+// same on every attempt.
 const processedEventIds = new Set<string>();
 
 function handleEvent(event: SentEvent): void {
@@ -71,7 +77,7 @@ function handleEvent(event: SentEvent): void {
       break;
 
     default:
-      // Sent documents 38 event types and adds more over time. Acknowledge the rest.
+      // Sent documents 39 event types and adds more over time. Acknowledge the rest.
       console.log(`Unhandled Sent event: ${type}`);
   }
 }
@@ -83,9 +89,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'no signing secret configured' }, { status: 503 });
   }
 
-  const id = request.headers.get('x-webhook-id');
-  const timestamp = request.headers.get('x-webhook-timestamp');
-  const signature = request.headers.get('x-webhook-signature');
+  // Version 2 header names first, then version 1's X-Webhook-* names.
+  const header = (name: string) =>
+    request.headers.get(`webhook-${name}`) ?? request.headers.get(`x-webhook-${name}`);
+  const id = header('id');
+  const timestamp = header('timestamp');
+  const signature = header('signature');
   if (!id || !timestamp || !signature) {
     return NextResponse.json({ error: 'missing signature headers' }, { status: 400 });
   }
@@ -105,16 +114,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  // Dedupe on the event's own id, NOT x-webhook-id (that is the webhook's id).
-  const eventId = request.headers.get('x-webhook-event-id');
+  // Dedupe on webhook-id (v2) or x-webhook-event-id (v1), NOT v1's x-webhook-id
+  // (that is the webhook's id).
+  const eventId = request.headers.get('webhook-id') ?? request.headers.get('x-webhook-event-id');
   if (eventId && processedEventIds.has(eventId)) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
-    // Sent waits up to 30 s by default (5-120 s per webhook) for a 2xx, and
-    // disables a webhook after 10 consecutive failures. In production, enqueue
-    // the event here and process it asynchronously.
+    // Sent turns off a webhook that keeps failing (version 1: after 10
+    // consecutive failed events). In production, enqueue the event here and
+    // process it asynchronously.
     handleEvent(event);
     if (eventId) processedEventIds.add(eventId);
   } catch (err) {
