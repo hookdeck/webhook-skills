@@ -9,20 +9,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
-// Sent (sent.dm) signs webhooks Standard Webhooks / Svix style, but on
-// X-Webhook-* header names:
-//   X-Webhook-ID         UUID of the webhook configuration (the SAME on every
-//                        event, so it is signed but is NOT a dedupe key)
-//   X-Webhook-Timestamp  Unix seconds at which this attempt was signed
-//   X-Webhook-Signature  "v1,<base64 HMAC-SHA256>" (space-delimited if several)
-//   X-Webhook-Event-ID   the event's own UUID, identical on every attempt
-// Signed content: `${X-Webhook-ID}.${X-Webhook-Timestamp}.${rawBody}`
+// Sent (sent.dm) signs webhooks with the Standard Webhooks scheme. Version 2
+// webhooks (the default) send the standard headers; version 1 webhooks send
+// the same scheme on X-Webhook-* names:
+//   webhook-id / X-Webhook-ID       signed id. v2: the message id, the same on
+//                                   every attempt (the dedupe key). v1: the
+//                                   webhook configuration's UUID, NOT a dedupe key
+//   webhook-timestamp / X-Webhook-Timestamp  Unix seconds this attempt was signed
+//   webhook-signature / X-Webhook-Signature  "v1,<base64 HMAC-SHA256>", space-
+//                                   delimited if several
+//   X-Webhook-Event-ID              v1 only: the event's UUID, the same on
+//                                   every attempt
+// Signed content: `${id}.${timestamp}.${rawBody}`
 // Key: base64-decode of the signing secret after its `whsec_` prefix.
 // ---------------------------------------------------------------------------
 
 /**
  * Verify a Sent delivery with the Standard Webhooks library. The library reads
- * webhook-* header names, so map Sent's x-webhook-* headers onto them. It
+ * webhook-* header names: version 2 sends those, and version 1's x-webhook-*
+ * headers are passed under the same names. It
  * rejects timestamps more than 5 minutes off, recomputes the HMAC over the raw
  * body and compares in constant time against every `v1,` entry.
  *
@@ -33,15 +38,22 @@ const PORT = process.env.PORT || 3000;
  * @throws {Error} if verification fails
  */
 function verifySentWebhook(rawBody, headers, secret = process.env.SENT_WEBHOOK_SECRET) {
-  return new Webhook(secret).verify(rawBody, {
-    'webhook-id': headers['x-webhook-id'],
-    'webhook-timestamp': headers['x-webhook-timestamp'],
-    'webhook-signature': headers['x-webhook-signature'],
-  }); // throws WebhookVerificationError; returns the parsed JSON body
+  return new Webhook(secret).verify(rawBody, sentHeaders(headers));
+  // throws WebhookVerificationError; returns the parsed JSON body
+}
+
+/** Sent's signing headers: version 2 names first, then version 1's. */
+function sentHeaders(headers) {
+  return {
+    'webhook-id': headers['webhook-id'] ?? headers['x-webhook-id'],
+    'webhook-timestamp': headers['webhook-timestamp'] ?? headers['x-webhook-timestamp'],
+    'webhook-signature': headers['webhook-signature'] ?? headers['x-webhook-signature'],
+  };
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Sent delivers at-least-once; X-Webhook-Event-ID is the same on every attempt.
+// Sent delivers at-least-once; webhook-id (v2) or X-Webhook-Event-ID (v1) is the
+// same on every attempt.
 const processedEventIds = new Set();
 
 function handleEvent(event) {
@@ -70,7 +82,7 @@ function handleEvent(event) {
       break;
 
     default:
-      // Sent documents 38 event types and adds more over time. Acknowledge the rest.
+      // Sent documents 39 event types and adds more over time. Acknowledge the rest.
       console.log(`Unhandled Sent event: ${type}`);
   }
 }
@@ -85,7 +97,7 @@ app.post('/webhooks/sent-dm', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(503).json({ error: 'no signing secret configured' });
   }
 
-  if (!req.get('x-webhook-id') || !req.get('x-webhook-timestamp') || !req.get('x-webhook-signature')) {
+  if (!Object.values(sentHeaders(req.headers)).every(Boolean)) {
     return res.status(400).json({ error: 'missing signature headers' });
   }
 
@@ -100,16 +112,17 @@ app.post('/webhooks/sent-dm', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
-  // Dedupe on the event's own id, NOT x-webhook-id (that is the webhook's id).
-  const eventId = req.get('x-webhook-event-id');
+  // Dedupe on webhook-id (v2) or x-webhook-event-id (v1), NOT v1's x-webhook-id
+  // (that is the webhook's id).
+  const eventId = req.get('webhook-id') ?? req.get('x-webhook-event-id');
   if (eventId && processedEventIds.has(eventId)) {
     return res.status(200).json({ received: true, duplicate: true });
   }
 
   try {
-    // Sent waits up to 30 s by default (5-120 s per webhook) for a 2xx, and
-    // disables a webhook after 10 consecutive failures. In production, enqueue
-    // the event here and process it asynchronously.
+    // Sent turns off a webhook that keeps failing (version 1: after 10
+    // consecutive failed events). In production, enqueue the event here and
+    // process it asynchronously.
     handleEvent(event);
     if (eventId) processedEventIds.add(eventId);
   } catch (err) {
