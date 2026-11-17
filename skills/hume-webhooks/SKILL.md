@@ -1,24 +1,23 @@
 ---
 name: hume-webhooks
 description: >
-  Receive and verify Hume EVI (speech-to-speech) webhooks. Use when setting up a
+  Deprecated: Hume retired EVI and its webhooks on 2026-11-13. Receive and verify
+  Hume EVI (speech-to-speech) webhooks. Use when setting up a
   Hume webhook handler, debugging X-Hume-AI-Webhook-Signature HMAC-SHA256
   signature verification, or handling chat_started, chat_ended and tool_call
   events from Hume's emotionally intelligent voice AI.
 license: MIT
 metadata:
   author: hookdeck
-  version: "0.1.0"
+  version: "0.2.0"
   repository: https://github.com/hookdeck/webhook-skills
 ---
 
 # Hume Webhooks
 
+> **Deprecated.** Hume retired EVI on 2026-11-13. The EVI API now answers every request with a 404, and Hume's EVI docs redirect to its Audio Decisions product. EVI webhooks were the only webhooks Hume offered, so no new deliveries arrive. This skill is kept as a record of how they worked; don't build a new receiver from it.
+
 Webhooks from **Hume AI** (hume.ai), the emotionally intelligent voice AI company. This skill covers **EVI (speech-to-speech) webhooks only**, which are configured on an EVI Config and report the lifecycle of EVI Chat sessions.
-
-## Setup Note
-
-For Hume EVI (speech-to-speech) webhooks. Paste the webhook signing key from the Developers page.
 
 ## When to Use This Skill
 

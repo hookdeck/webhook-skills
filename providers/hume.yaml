@@ -4,7 +4,9 @@ docs:
   webhooks: https://dev.hume.ai/docs/speech-to-speech-evi/configuration/webhooks
   verification: https://dev.hume.ai/docs/speech-to-speech-evi/configuration/webhooks
 notes: >
-  Hume AI EVI (speech-to-speech) webhooks only, configured on an EVI Config. Hume AI (hume.ai),
+  DEPRECATED 2026-11-13: Hume retired EVI and its webhooks; the EVI API answers 404 ("This API was
+  retired on 2026-11-13") and the EVI docs redirect to Audio Decisions. Keep the skill marked deprecated
+  and do not regenerate it as a live integration. Hume AI EVI (speech-to-speech) webhooks only, configured on an EVI Config. Hume AI (hume.ai),
   emotionally intelligent voice AI; EVI is its speech-to-speech interface. Delivery (from the docs):
   Not documented (see gaps). Hume says: 'X-Hume-AI-Webhook-Signature: HMAC-SHA256 signature of the
   payload and timestamp, signed using your webhook signing key. X-Hume-AI-Webhook-Timestamp: Unix
