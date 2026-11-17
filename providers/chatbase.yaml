@@ -4,33 +4,29 @@ docs:
   webhooks: https://chatbase.co/docs/developer-guides/webhooks
   verification: https://chatbase.co/docs/developer-guides/webhooks#receiving-the-request
   events: https://chatbase.co/docs/developer-guides/webhooks#event-types
-  hipaa: https://chatbase.co/docs/developer-guides/hipaa-webhooks
 notes: >
-  AI agent platform. Two webhook schemes. (1) Event webhooks, configured on an Action's Destinations
-  section (Collect Leads, Collect Data), Settings > Webhooks (custom forms) or Phone > Connections
-  (call summaries): header x-chatbase-signature = hex HMAC-SHA1 of the raw request body, no prefix,
-  no timestamp. Body is { eventType, chatbotId, payload }. Event types are leads.submit,
-  "{action name}_collect_data.submit", "{action name}_custom_form.submit" and phone_call.summary.
-  The docs do not say where the event-webhook secret is shown; Chatbase's sample reads SECRET_KEY.
-  (2) HIPAA conversation webhook (Enterprise, Settings > HIPAA): X-Chatbase-Signature = "v1=" + hex
-  HMAC-SHA256(secret, timestamp + "." + rawBody), X-Chatbase-Timestamp (unix seconds, check within
-  5 minutes), X-Chatbase-Delivery-Id (idempotency key). Body event is conversation.deleted.
-  Verification sends two probes with "test": true; the one signed with a throwaway key must get a
-  non-2xx. Retries 6 attempts over ~22 hours; 10 second timeout. Helpdesk trigger webhooks also send
-  X-Chatbase-Signature but the algorithm is not documented.
+  AI agent platform. This skill covers Chatbase Action webhooks only, configured on an Action's
+  Destinations section (Collect Leads, Collect Data), Settings > Webhooks (custom forms) or Phone >
+  Connections (call summaries): header x-chatbase-signature = hex HMAC-SHA1 of the raw request body,
+  no prefix, no timestamp, 40 hex characters, compared case-insensitively in constant time. Body is
+  { eventType, chatbotId, payload }. Event types are leads.submit, "{action name}_collect_data.submit",
+  "{action name}_custom_form.submit" and phone_call.summary; match the two Action-named ones by suffix.
+  The docs do not say where the secret is shown; Chatbase's sample reads SECRET_KEY. Don't log payload
+  personal data (names, emails, phone numbers, call summaries). Out of scope, mention only, no code:
+  the HIPAA conversation webhook (Settings > HIPAA; v1= hex HMAC-SHA256 over the X-Chatbase-Timestamp
+  value, a "." and the raw body), Helpdesk trigger webhooks (X-Chatbase-Signature, scheme
+  undocumented) and MCP Events (Standard Webhooks with the MCP client's own secret).
 testScenario:
   events:
     - leads.submit
     - phone_call.summary
-    - conversation.deleted
 catalog:
-  summary: 'Verify Chatbase webhook signatures (`x-chatbase-signature`, HMAC-SHA1 of the raw body; HIPAA `v1=` HMAC-SHA256 with `X-Chatbase-Timestamp`), handle leads.submit, phone_call.summary, custom form and collect data submissions, and conversation.deleted events'
+  summary: 'Verify Chatbase Action webhooks (`x-chatbase-signature`: hex HMAC-SHA1 of the raw body), handle leads.submit, phone_call.summary, custom form and Collect Data submissions'
   marketplace:
-    description: Verify Chatbase webhook signatures (x-chatbase-signature HMAC-SHA1, HIPAA v1= HMAC-SHA256), handle leads.submit, phone_call.summary, {action}_custom_form.submit, {action}_collect_data.submit and conversation.deleted events.
+    description: Verify Chatbase Action webhook signatures (x-chatbase-signature, hex HMAC-SHA1 of the raw body), handle leads.submit, phone_call.summary, {action}_custom_form.submit and {action}_collect_data.submit events.
     keywords:
     - webhooks
     - chatbase
     - ai-agents
     - chatbots
     - leads
-    - hipaa

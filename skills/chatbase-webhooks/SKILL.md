@@ -1,12 +1,10 @@
 ---
 name: chatbase-webhooks
 description: >
-  Receive and verify Chatbase webhooks. Use when setting up a Chatbase webhook
-  endpoint, verifying the x-chatbase-signature header (hex HMAC-SHA1 of the raw
-  body), handling leads.submit, phone_call.summary, {action name}_custom_form.submit
-  and {action name}_collect_data.submit events, or receiving the HIPAA
-  conversation webhook (conversation.deleted, v1= HMAC-SHA256 with
-  X-Chatbase-Timestamp).
+  Receive and verify Chatbase Action webhooks. Use when setting up a Chatbase
+  webhook endpoint, verifying the x-chatbase-signature header (hex HMAC-SHA1 of
+  the raw body), or handling leads.submit, phone_call.summary,
+  {action name}_custom_form.submit and {action name}_collect_data.submit events.
 license: MIT
 metadata:
   author: hookdeck
@@ -22,73 +20,58 @@ metadata:
 - How do I verify the Chatbase `x-chatbase-signature` webhook header?
 - Why does my Chatbase webhook signature verification fail?
 - How do I handle Chatbase custom form, Collect Data, and phone call summary webhooks?
-- How do I receive and verify the Chatbase HIPAA conversation webhook?
-
-## Two Signature Schemes
-
-Chatbase signs its two kinds of webhook differently. Pick the one that matches where you configured the webhook.
-
-| Webhook | Configured in | Signature header | Algorithm |
-|---------|---------------|------------------|-----------|
-| Event webhooks | Action **Destinations**, **Settings > Webhooks**, **Phone > Connections** | `x-chatbase-signature` | hex HMAC-SHA1 of the raw body, no prefix |
-| HIPAA conversation webhook | **Settings > HIPAA** (Enterprise) | `X-Chatbase-Signature` + `X-Chatbase-Timestamp` | `v1=` + hex HMAC-SHA256 of `timestamp.rawBody` |
 
 ## Verification (core)
+
+Chatbase Action webhooks carry `x-chatbase-signature`: the hex HMAC-SHA1 of the raw request body, keyed with your webhook secret. There is no prefix and no timestamp.
 
 ```javascript
 const crypto = require('crypto');
 
-function safeEqual(a, b) {
-  const x = Buffer.from(a), y = Buffer.from(b);
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
-}
-
-// Event webhooks: x-chatbase-signature = hex(HMAC-SHA1(secret, rawBody))
 function verifyChatbaseSignature(rawBody, signature, secret) {
-  if (!signature || !secret) return false;
-  return safeEqual(signature, crypto.createHmac('sha1', secret).update(rawBody).digest('hex'));
-}
-
-// HIPAA webhook: "v1=" + hex(HMAC-SHA256(secret, `${timestamp}.${rawBody}`)), reject if older than 5 min
-function verifyChatbaseHipaaSignature(rawBody, signature, timestamp, secret) {
-  if (!signature || !timestamp) return { ok: false, error: 'missing_headers' };
-  if (!secret) return { ok: false, error: 'invalid_signature' };
-  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (!/^\d+$/.test(timestamp) || !Number.isFinite(age) || age > 300) {
-    return { ok: false, error: 'stale_timestamp' };
-  }
-  const hmac = crypto.createHmac('sha256', secret).update(`${timestamp}.`).update(rawBody);
-  return safeEqual(signature, `v1=${hmac.digest('hex')}`) ? { ok: true } : { ok: false, error: 'invalid_signature' };
+  // 40 hex characters; compare case-insensitively, in constant time
+  if (!signature || !secret || !/^[0-9a-f]{40}$/i.test(signature)) return false;
+  const expected = crypto.createHmac('sha1', secret).update(rawBody).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature.toLowerCase()), Buffer.from(expected));
 }
 ```
 
-Hash the **raw body** (`express.raw()`, `request.text()`, `await request.body()`), never re-serialized JSON. Chatbase's own Express sample re-stringifies `req.body`, which breaks whenever key order or whitespace differs.
+Hash the **raw body** (`express.raw()`, `request.arrayBuffer()`, `await request.body()`), never re-serialized JSON. Chatbase's own Node.js example hashes `JSON.stringify(req.body)`, which only matches when the re-serialized bytes are identical to what was sent.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 ## Event Types
 
-Event webhook bodies are `{ eventType, chatbotId, payload }`.
+Bodies are `{ eventType, chatbotId, payload }`.
 
-| `eventType` | Fires when | Key `payload` fields |
-|-------------|------------|----------------------|
-| `leads.submit` | A visitor submits the Collect Leads Action | `conversationId`, `customerEmail`, `customerName`, `customerPhone`, `customFields` (optional) |
-| `{action name}_collect_data.submit` | A Collect Data Action finishes | `conversationId`, `customFields` |
-| `{action name}_custom_form.submit` | A client-side custom form is submitted | `conversationId`, `data`, `error` |
-| `phone_call.summary` | A phone call to the agent ends | `conversationId`, `callSummary`, `duration`, `callerNumber`, `calledNumber` |
+| `eventType` | Fires when | `payload` fields |
+|-------------|------------|------------------|
+| `leads.submit` | A visitor submits their details to the Collect Leads Action | `conversationId`, `customerEmail`, `customerName`, `customerPhone`, `customFields` (optional) |
+| `{action name}_collect_data.submit` | A visitor submits the fields of a Collect Data Action | `conversationId`, `customFields` |
+| `{action name}_custom_form.submit` | A visitor submits a custom form | `conversationId`, `data`, `error` |
+| `phone_call.summary` | A phone call to the AI agent ends | `conversationId`, `callSummary`, `duration`, `callerNumber`, `calledNumber` |
 
-`{action name}` is the Action's name as you typed it, e.g. `Book demo_custom_form.submit`, so match on the suffix.
+`{action name}` is the name of the Action that sent the event, so match those two on the `_collect_data.submit` and `_custom_form.submit` suffixes.
 
-The HIPAA webhook body has `event: "conversation.deleted"`, `deliveryId`, `deletedAt`, `deletionReason` (`idle_24h` or `max_age_7d`) and the full `conversation`. Endpoint-verification probes carry `"test": true`: return 2xx for the signed one without storing it.
+Payloads carry names, emails, phone numbers and call summaries: don't log them.
 
-> **For full payloads**, see [references/overview.md](references/overview.md).
+> **For payload details**, see [references/overview.md](references/overview.md).
+
+## Not Covered
+
+Chatbase sends other webhooks this skill doesn't verify:
+
+- **HIPAA conversation webhook** (Settings > HIPAA): signed differently, `v1=` + hex HMAC-SHA256 over the `X-Chatbase-Timestamp` header value, a `.` and the raw body. See [Chatbase's HIPAA webhook guide](https://www.chatbase.co/docs/developer-guides/hipaa-webhooks).
+- **Helpdesk webhooks** sent by Helpdesk trigger actions: they carry an `X-Chatbase-Signature` header, but Chatbase doesn't document the scheme.
+- **MCP Events** from Chatbase's MCP server: signed with Standard Webhooks using the secret your MCP client chose. See [Chatbase's MCP Events guide](https://www.chatbase.co/docs/developer-guides/mcp-events).
 
 ## Environment Variables
 
 ```bash
-CHATBASE_WEBHOOK_SECRET=your_chatbase_webhook_secret          # event webhooks
-CHATBASE_HIPAA_WEBHOOK_SECRET=your_64_char_hex_signing_secret # HIPAA webhook (optional)
+CHATBASE_WEBHOOK_SECRET=your_chatbase_webhook_secret
 ```
+
+Chatbase's webhook guide doesn't say where this secret is shown; its examples read it from a `SECRET_KEY` environment variable.
 
 ## Local Development
 
@@ -99,9 +82,9 @@ npx hookdeck-cli listen 3000 chatbase --path /webhooks/chatbase
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Event types, payloads, HIPAA envelope, retries
+- [references/overview.md](references/overview.md) - Event types and payloads
 - [references/setup.md](references/setup.md) - Where to create each webhook in the Chatbase dashboard
-- [references/verification.md](references/verification.md) - Both signature schemes and debugging
+- [references/verification.md](references/verification.md) - The signature scheme and debugging
 
 ## Attribution
 
@@ -117,7 +100,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (HIPAA: key on `deliveryId`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

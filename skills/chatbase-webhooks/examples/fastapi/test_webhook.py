@@ -2,89 +2,61 @@ import hashlib
 import hmac
 import json
 import os
-import secrets
-import time
 
 import pytest
 from fastapi.testclient import TestClient
 
-# Event webhook secret: any string; Chatbase's own sample reads it from SECRET_KEY
+# Test secret only. Chatbase's docs don't say where the Action webhook secret is shown.
 os.environ["CHATBASE_WEBHOOK_SECRET"] = "test_chatbase_webhook_secret"
-# HIPAA signing secrets are 64-character hex strings, used as-is (UTF-8) as the HMAC key
-os.environ["CHATBASE_HIPAA_WEBHOOK_SECRET"] = "a" * 32 + "b" * 32
 
-from main import (  # noqa: E402
-    app,
-    parse_event_type,
-    verify_chatbase_hipaa_signature,
-    verify_chatbase_signature,
-)
+from main import app, parse_event_type, verify_chatbase_signature  # noqa: E402
 
 client = TestClient(app)
 SECRET = os.environ["CHATBASE_WEBHOOK_SECRET"]
-HIPAA_SECRET = os.environ["CHATBASE_HIPAA_WEBHOOK_SECRET"]
 
 
 def sign(body: str, secret: str = SECRET) -> str:
-    """Sign like Chatbase event webhooks: hex(HMAC-SHA1(secret, raw body))."""
+    """Sign like Chatbase Action webhooks: hex(HMAC-SHA1(secret, raw body))."""
     return hmac.new(secret.encode(), body.encode(), hashlib.sha1).hexdigest()
 
 
-def sign_hipaa(body: str, timestamp: str, secret: str = HIPAA_SECRET) -> str:
-    """Sign like the HIPAA webhook: "v1=" + hex(HMAC-SHA256(secret, f"{ts}.{body}"))."""
-    return "v1=" + hmac.new(secret.encode(), f"{timestamp}.{body}".encode(), hashlib.sha256).hexdigest()
-
-
-def now() -> str:
-    return str(int(time.time()))
-
-
+# The leads.submit body Chatbase's webhook guide prints (placeholder values).
 LEAD = {
     "eventType": "leads.submit",
-    "chatbotId": "agent_123",
+    "chatbotId": "xxxxxxxx",
     "payload": {
-        "conversationId": "conv_456",
+        "conversationId": "xxxxxxxx",
         "customerEmail": "example@chatbase.co",
         "customerName": "Example",
         "customerPhone": "123",
-        "customFields": {"Company name": "Acme", "Team size": 12, "utm_source": "google"},
+        "customFields": {"Company name": "Acme", "Team size": 12, "utm_source": "google", "utm_campaign": "spring_sale"},
     },
 }
 
+# The fixtures below are illustrative: the guide documents these payloads as field shapes only.
 PHONE = {
     "eventType": "phone_call.summary",
     "chatbotId": "agent_123",
     "payload": {
         "conversationId": "conv_789",
-        "callSummary": "Caller asked about opening hours.",
+        "callSummary": "Example summary",
         "duration": 94,
-        "callerNumber": "+14155550100",
-        "calledNumber": "+14155550199",
+        "callerNumber": "+15555550100",
+        "calledNumber": "+15555550199",
     },
 }
 
+# "Book demo" and "Shipping address" are example Action names.
 FORM = {
     "eventType": "Book demo_custom_form.submit",
     "chatbotId": "agent_123",
-    "payload": {"conversationId": "conv_1", "data": {"email": "a@b.co"}, "error": None},
+    "payload": {"conversationId": "conv_1", "data": {"field": "value"}, "error": None},
 }
 
 COLLECT = {
     "eventType": "Shipping address_collect_data.submit",
     "chatbotId": "agent_123",
-    "payload": {"conversationId": "conv_2", "customFields": {"City": "Paris"}},
-}
-
-HIPAA = {
-    "deliveryId": "b7c1e0a4-3f52-4d81-9a6c-2e4f8d0b1c73",
-    "event": "conversation.deleted",
-    "deletedAt": "2026-08-17T03:00:00.000Z",
-    "deletionReason": "idle_24h",
-    "conversation": {
-        "id": "d41f8a92-6b3c-4e17-8f5a-9c0d2b7e4a16",
-        "chatbotId": "c8e2f1b6-5a94-4d03-b7e8-1f6a3c9d0e52",
-        "messages": [{"id": "msg_1", "role": "user", "content": "Hi"}],
-    },
+    "payload": {"conversationId": "conv_2", "customFields": {"field": "value"}},
 }
 
 
@@ -95,61 +67,36 @@ def post(body: str, signature=None, content_type="application/json"):
     return client.post("/webhooks/chatbase", content=body, headers=headers)
 
 
-def post_hipaa(body: str, signature=None, timestamp=None):
-    headers = {"Content-Type": "application/json"}
-    if signature:
-        headers["X-Chatbase-Signature"] = signature
-    if timestamp:
-        headers["X-Chatbase-Timestamp"] = timestamp
-    return client.post("/webhooks/chatbase-hipaa", content=body, headers=headers)
-
-
 class TestVerifyChatbaseSignature:
     body = json.dumps(LEAD)
 
     def test_accepts_valid_signature(self):
-        assert verify_chatbase_signature(self.body.encode(), sign(self.body), SECRET)
+        assert verify_chatbase_signature(self.body.encode(), sign(self.body), SECRET) is True
+
+    def test_accepts_uppercase_hex(self):
+        assert verify_chatbase_signature(self.body.encode(), sign(self.body).upper(), SECRET) is True
 
     def test_signature_is_bare_hex(self):
         sig = sign(self.body)
         assert len(sig) == 40 and all(c in "0123456789abcdef" for c in sig)
 
     def test_rejects_tampered_body(self):
-        assert not verify_chatbase_signature(self.body.replace("Example", "Evil").encode(), sign(self.body), SECRET)
+        assert verify_chatbase_signature(self.body.replace("Example", "Evil").encode(), sign(self.body), SECRET) is False
 
     def test_rejects_wrong_secret(self):
-        assert not verify_chatbase_signature(self.body.encode(), sign(self.body, "other_secret"), SECRET)
+        assert verify_chatbase_signature(self.body.encode(), sign(self.body, "other_secret"), SECRET) is False
+
+    def test_rejects_malformed_values(self):
+        assert verify_chatbase_signature(self.body.encode(), sign(self.body)[:39], SECRET) is False
+        assert verify_chatbase_signature(self.body.encode(), "z" * 40, SECRET) is False
 
     def test_rejects_sha256(self):
         sha256 = hmac.new(SECRET.encode(), self.body.encode(), hashlib.sha256).hexdigest()
-        assert not verify_chatbase_signature(self.body.encode(), sha256, SECRET)
+        assert verify_chatbase_signature(self.body.encode(), sha256, SECRET) is False
 
     def test_rejects_missing_values(self):
-        assert not verify_chatbase_signature(self.body.encode(), None, SECRET)
-        assert not verify_chatbase_signature(self.body.encode(), sign(self.body), None)
-
-
-class TestVerifyChatbaseHipaaSignature:
-    body = json.dumps(HIPAA)
-
-    def test_accepts_valid_signature(self):
-        ts = now()
-        assert verify_chatbase_hipaa_signature(self.body.encode(), sign_hipaa(self.body, ts), ts, HIPAA_SECRET) is None
-
-    def test_rejects_missing_prefix_and_body_only(self):
-        ts = now()
-        assert verify_chatbase_hipaa_signature(self.body.encode(), sign_hipaa(self.body, ts)[3:], ts, HIPAA_SECRET) == "invalid_signature"
-        body_only = "v1=" + hmac.new(HIPAA_SECRET.encode(), self.body.encode(), hashlib.sha256).hexdigest()
-        assert verify_chatbase_hipaa_signature(self.body.encode(), body_only, ts, HIPAA_SECRET) == "invalid_signature"
-
-    def test_rejects_stale_and_non_numeric_timestamps(self):
-        old = str(int(time.time()) - 301)
-        assert verify_chatbase_hipaa_signature(self.body.encode(), sign_hipaa(self.body, old), old, HIPAA_SECRET) == "stale_timestamp"
-        assert verify_chatbase_hipaa_signature(self.body.encode(), sign_hipaa(self.body, "abc"), "abc", HIPAA_SECRET) == "stale_timestamp"
-
-    def test_missing_headers(self):
-        assert verify_chatbase_hipaa_signature(self.body.encode(), None, now(), HIPAA_SECRET) == "missing_headers"
-        assert verify_chatbase_hipaa_signature(self.body.encode(), "v1=x", None, HIPAA_SECRET) == "missing_headers"
+        assert verify_chatbase_signature(self.body.encode(), None, SECRET) is False
+        assert verify_chatbase_signature(self.body.encode(), sign(self.body), None) is False
 
 
 def test_parse_event_type():
@@ -174,6 +121,16 @@ class TestChatbaseEndpoint:
         res = post(json.dumps(LEAD), "a" * 40)
         assert res.status_code == 400
         assert res.json()["detail"] == "Invalid signature"
+
+    def test_wrong_secret_and_malformed_signature(self):
+        body = json.dumps(LEAD)
+        assert post(body, sign(body, "wrong_secret")).status_code == 400
+        assert post(body, sign(body)[:39]).status_code == 400
+        assert post(body, "g" * 40).status_code == 400
+
+    def test_uppercase_hex_accepted(self):
+        body = json.dumps(LEAD)
+        assert post(body, sign(body).upper()).status_code == 200
 
     @pytest.mark.parametrize(
         "event,kind",
@@ -209,41 +166,6 @@ class TestChatbaseEndpoint:
         monkeypatch.delenv("CHATBASE_WEBHOOK_SECRET")
         body = json.dumps(LEAD)
         assert post(body, sign(body)).status_code == 500
-
-
-class TestChatbaseHipaaEndpoint:
-    def test_accepts_signed_delivery(self):
-        body = json.dumps(HIPAA)
-        ts = now()
-        res = post_hipaa(body, sign_hipaa(body, ts), ts)
-        assert res.status_code == 200
-        assert res.json() == {"received": True, "event": "conversation.deleted"}
-
-    def test_acknowledges_signed_probe(self):
-        body = json.dumps({**HIPAA, "test": True})
-        ts = now()
-        res = post_hipaa(body, sign_hipaa(body, ts), ts)
-        assert res.status_code == 200
-        assert res.json() == {"received": True, "test": True}
-
-    def test_rejects_probe_signed_with_throwaway_key(self):
-        body = json.dumps({**HIPAA, "deliveryId": "other", "test": True})
-        ts = now()
-        res = post_hipaa(body, sign_hipaa(body, ts, secrets.token_hex(32)), ts)
-        assert res.status_code == 400
-        assert res.json()["detail"] == "invalid_signature"
-
-    def test_missing_headers(self):
-        res = post_hipaa(json.dumps(HIPAA))
-        assert res.status_code == 400
-        assert res.json()["detail"] == "missing_headers"
-
-    def test_stale_timestamp(self):
-        body = json.dumps(HIPAA)
-        old = str(int(time.time()) - 600)
-        res = post_hipaa(body, sign_hipaa(body, old), old)
-        assert res.status_code == 400
-        assert res.json()["detail"] == "stale_timestamp"
 
 
 def test_health():

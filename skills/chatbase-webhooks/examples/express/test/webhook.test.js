@@ -1,79 +1,55 @@
 const request = require('supertest');
 const crypto = require('crypto');
 
-// Event webhook secret: any string; Chatbase's own sample reads it from SECRET_KEY
+// Test secret only. Chatbase's docs don't say where the Action webhook secret is shown.
 process.env.CHATBASE_WEBHOOK_SECRET = 'test_chatbase_webhook_secret';
-// HIPAA signing secrets are 64-character hex strings, used as-is (UTF-8) as the HMAC key
-process.env.CHATBASE_HIPAA_WEBHOOK_SECRET = 'a'.repeat(32) + 'b'.repeat(32);
 
-const {
-  app,
-  verifyChatbaseSignature,
-  verifyChatbaseHipaaSignature,
-  parseEventType,
-} = require('../src/index');
+const { app, verifyChatbaseSignature, parseEventType } = require('../src/index');
 
 const SECRET = process.env.CHATBASE_WEBHOOK_SECRET;
-const HIPAA_SECRET = process.env.CHATBASE_HIPAA_WEBHOOK_SECRET;
 
-/** Sign like Chatbase event webhooks: hex(HMAC-SHA1(secret, rawBody)) */
+/** Sign like Chatbase Action webhooks: hex(HMAC-SHA1(secret, rawBody)) */
 function sign(body, secret = SECRET) {
   return crypto.createHmac('sha1', secret).update(body).digest('hex');
 }
 
-/** Sign like the HIPAA webhook: "v1=" + hex(HMAC-SHA256(secret, `${ts}.${body}`)) */
-function signHipaa(body, timestamp, secret = HIPAA_SECRET) {
-  return 'v1=' + crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
-}
-
-const now = () => String(Math.floor(Date.now() / 1000));
-
+// The leads.submit body Chatbase's webhook guide prints (placeholder values).
 const leadEvent = {
   eventType: 'leads.submit',
-  chatbotId: 'agent_123',
+  chatbotId: 'xxxxxxxx',
   payload: {
-    conversationId: 'conv_456',
+    conversationId: 'xxxxxxxx',
     customerEmail: 'example@chatbase.co',
     customerName: 'Example',
     customerPhone: '123',
-    customFields: { 'Company name': 'Acme', 'Team size': 12, utm_source: 'google' },
+    customFields: { 'Company name': 'Acme', 'Team size': 12, utm_source: 'google', utm_campaign: 'spring_sale' },
   },
 };
 
+// The fixtures below are illustrative: the guide documents these payloads as field shapes only.
 const phoneEvent = {
   eventType: 'phone_call.summary',
   chatbotId: 'agent_123',
   payload: {
     conversationId: 'conv_789',
-    callSummary: 'Caller asked about opening hours.',
+    callSummary: 'Example summary',
     duration: 94,
-    callerNumber: '+14155550100',
-    calledNumber: '+14155550199',
+    callerNumber: '+15555550100',
+    calledNumber: '+15555550199',
   },
 };
 
+// "Book demo" and "Shipping address" are example Action names.
 const formEvent = {
   eventType: 'Book demo_custom_form.submit',
   chatbotId: 'agent_123',
-  payload: { conversationId: 'conv_1', data: { email: 'a@b.co' }, error: null },
+  payload: { conversationId: 'conv_1', data: { field: 'value' }, error: null },
 };
 
 const collectEvent = {
   eventType: 'Shipping address_collect_data.submit',
   chatbotId: 'agent_123',
-  payload: { conversationId: 'conv_2', customFields: { City: 'Paris' } },
-};
-
-const hipaaEvent = {
-  deliveryId: 'b7c1e0a4-3f52-4d81-9a6c-2e4f8d0b1c73',
-  event: 'conversation.deleted',
-  deletedAt: '2026-08-17T03:00:00.000Z',
-  deletionReason: 'idle_24h',
-  conversation: {
-    id: 'd41f8a92-6b3c-4e17-8f5a-9c0d2b7e4a16',
-    chatbotId: 'c8e2f1b6-5a94-4d03-b7e8-1f6a3c9d0e52',
-    messages: [{ id: 'msg_1', role: 'user', content: 'Hi' }],
-  },
+  payload: { conversationId: 'conv_2', customFields: { field: 'value' } },
 };
 
 function post(body, signature, contentType = 'application/json') {
@@ -82,18 +58,15 @@ function post(body, signature, contentType = 'application/json') {
   return req.send(body);
 }
 
-function postHipaa(body, { signature, timestamp } = {}) {
-  const req = request(app).post('/webhooks/chatbase-hipaa').set('Content-Type', 'application/json');
-  if (signature) req.set('X-Chatbase-Signature', signature);
-  if (timestamp) req.set('X-Chatbase-Timestamp', timestamp);
-  return req.send(body);
-}
-
 describe('verifyChatbaseSignature', () => {
   const body = JSON.stringify(leadEvent);
 
   it('accepts a valid HMAC-SHA1 hex signature over the raw body', () => {
     expect(verifyChatbaseSignature(Buffer.from(body), sign(body), SECRET)).toBe(true);
+  });
+
+  it('accepts uppercase hex', () => {
+    expect(verifyChatbaseSignature(Buffer.from(body), sign(body).toUpperCase(), SECRET)).toBe(true);
   });
 
   it('produces a bare 40-char hex digest (no prefix)', () => {
@@ -108,6 +81,14 @@ describe('verifyChatbaseSignature', () => {
     expect(verifyChatbaseSignature(Buffer.from(body), sign(body, 'other_secret'), SECRET)).toBe(false);
   });
 
+  it('rejects a 39-character value', () => {
+    expect(verifyChatbaseSignature(Buffer.from(body), sign(body).slice(0, 39), SECRET)).toBe(false);
+  });
+
+  it('rejects a non-hex value of the right length', () => {
+    expect(verifyChatbaseSignature(Buffer.from(body), 'z'.repeat(40), SECRET)).toBe(false);
+  });
+
   it('rejects a SHA-256 signature', () => {
     const sha256 = crypto.createHmac('sha256', SECRET).update(body).digest('hex');
     expect(verifyChatbaseSignature(Buffer.from(body), sha256, SECRET)).toBe(false);
@@ -116,46 +97,6 @@ describe('verifyChatbaseSignature', () => {
   it('rejects missing signature or secret', () => {
     expect(verifyChatbaseSignature(Buffer.from(body), undefined, SECRET)).toBe(false);
     expect(verifyChatbaseSignature(Buffer.from(body), sign(body), undefined)).toBe(false);
-  });
-});
-
-describe('verifyChatbaseHipaaSignature', () => {
-  const body = JSON.stringify(hipaaEvent);
-
-  it('accepts a valid v1= signature over timestamp.body', () => {
-    const ts = now();
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), signHipaa(body, ts), ts, HIPAA_SECRET)).toEqual({ ok: true });
-  });
-
-  it('rejects a signature without the v1= prefix', () => {
-    const ts = now();
-    const bare = signHipaa(body, ts).slice(3);
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), bare, ts, HIPAA_SECRET).ok).toBe(false);
-  });
-
-  it('rejects a signature over the body alone', () => {
-    const ts = now();
-    const bodyOnly = 'v1=' + crypto.createHmac('sha256', HIPAA_SECRET).update(body).digest('hex');
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), bodyOnly, ts, HIPAA_SECRET).ok).toBe(false);
-  });
-
-  it('rejects a timestamp older than 5 minutes', () => {
-    const ts = String(Math.floor(Date.now() / 1000) - 301);
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), signHipaa(body, ts), ts, HIPAA_SECRET)).toEqual({
-      ok: false,
-      error: 'stale_timestamp',
-    });
-  });
-
-  it('rejects a non-numeric timestamp', () => {
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), signHipaa(body, 'abc'), 'abc', HIPAA_SECRET).error).toBe(
-      'stale_timestamp'
-    );
-  });
-
-  it('reports missing headers separately', () => {
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), undefined, now(), HIPAA_SECRET).error).toBe('missing_headers');
-    expect(verifyChatbaseHipaaSignature(Buffer.from(body), 'v1=x', undefined, HIPAA_SECRET).error).toBe('missing_headers');
   });
 });
 
@@ -184,6 +125,24 @@ describe('POST /webhooks/chatbase', () => {
     const res = await post(JSON.stringify(leadEvent), 'a'.repeat(40));
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Invalid signature');
+  });
+
+  it('returns 400 for a signature signed with the wrong secret', async () => {
+    const body = JSON.stringify(leadEvent);
+    const res = await post(body, sign(body, 'wrong_secret'));
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a malformed signature', async () => {
+    const body = JSON.stringify(leadEvent);
+    expect((await post(body, sign(body).slice(0, 39))).status).toBe(400);
+    expect((await post(body, 'g'.repeat(40))).status).toBe(400);
+  });
+
+  it('accepts an uppercase hex signature', async () => {
+    const body = JSON.stringify(leadEvent);
+    const res = await post(body, sign(body).toUpperCase());
+    expect(res.status).toBe(200);
   });
 
   it.each([
@@ -227,46 +186,6 @@ describe('POST /webhooks/chatbase', () => {
     } finally {
       process.env.CHATBASE_WEBHOOK_SECRET = saved;
     }
-  });
-});
-
-describe('POST /webhooks/chatbase-hipaa', () => {
-  it('accepts a signed conversation.deleted delivery', async () => {
-    const body = JSON.stringify(hipaaEvent);
-    const ts = now();
-    const res = await postHipaa(body, { signature: signHipaa(body, ts), timestamp: ts });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true, event: 'conversation.deleted' });
-  });
-
-  it('acknowledges the signed verification probe without processing it', async () => {
-    const body = JSON.stringify({ ...hipaaEvent, test: true });
-    const ts = now();
-    const res = await postHipaa(body, { signature: signHipaa(body, ts), timestamp: ts });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true, test: true });
-  });
-
-  it('rejects the probe signed with a throwaway key (non-2xx)', async () => {
-    const body = JSON.stringify({ ...hipaaEvent, deliveryId: 'other', test: true });
-    const ts = now();
-    const res = await postHipaa(body, { signature: signHipaa(body, ts, crypto.randomBytes(32).toString('hex')), timestamp: ts });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('invalid_signature');
-  });
-
-  it('returns 400 for missing headers', async () => {
-    const res = await postHipaa(JSON.stringify(hipaaEvent));
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('missing_headers');
-  });
-
-  it('returns 400 for a stale timestamp', async () => {
-    const body = JSON.stringify(hipaaEvent);
-    const ts = String(Math.floor(Date.now() / 1000) - 600);
-    const res = await postHipaa(body, { signature: signHipaa(body, ts), timestamp: ts });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe('stale_timestamp');
   });
 });
 
