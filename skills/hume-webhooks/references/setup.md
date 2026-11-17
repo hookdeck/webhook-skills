@@ -1,6 +1,6 @@
 # Setting Up Hume Webhooks
 
-For Hume EVI (speech-to-speech) webhooks. Paste the webhook signing key from the Developers page.
+Hume retired EVI and its webhooks on 2026-11-13, so this setup no longer applies. It is kept as a record.
 
 ## Prerequisites
 
