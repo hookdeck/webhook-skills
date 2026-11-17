@@ -2014,7 +2014,7 @@
     },
     {
       "name": "bugsmash-webhooks",
-      "description": "Receive and verify BugSmash webhooks. Use when setting up BugSmash webhook handlers, debugging X-BugSmash-Signature verification (HMAC-SHA256 over X-Webhook-Timestamp + \".\" + raw body), storing the one-time bgsmsh_ secret_key, or handling new_comment, comment_replied, status_changed and comment_updated events.",
+      "description": "Receive and verify BugSmash webhooks. Use when setting up BugSmash webhook handlers, debugging X-BugSmash-Signature verification (HMAC-SHA256 over X-Webhook-Timestamp + \".\" + raw body), storing the one-time bgsmsh_ secret_key, or handling new_comment, comment_replied (new_reply_on_comment), status_changed and comment_updated events.",
       "source": "./skills/bugsmash-webhooks",
       "strict": false,
       "skills": [
@@ -15829,7 +15829,7 @@
     },
     {
       "name": "upload-post-webhooks",
-      "description": "Receive and verify Upload-Post webhooks (upload-post.com, the API for publishing to many social networks). Use when setting up an Upload-Post webhook handler, debugging X-Upload-Post-Signature verification, or handling upload_completed, social_account_connected, social_account_disconnected, social_account_reauth_required, dm_received and comment_received events. The signature is a hex HMAC-SHA256 over the X-Upload-Post-Timestamp header, a dot, and the raw body. It is not Standard Webhooks.",
+      "description": "Receive and verify Upload-Post webhooks (upload-post.com, the API for publishing to many social networks). Use when setting up an Upload-Post webhook handler, debugging X-Upload-Post-Signature verification, or handling upload_completed, social_account_connected, social_account_disconnected, social_account_reauth_required, dm_received, telegram_update and comment_received events. The signature is a hex HMAC-SHA256 over the X-Upload-Post-Timestamp header, a dot, and the raw body. It is not Standard Webhooks.",
       "source": "./skills/upload-post-webhooks",
       "strict": false,
       "skills": [
