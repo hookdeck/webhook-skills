@@ -1,0 +1,25 @@
+name: payfit
+displayName: PayFit
+docs:
+  webhooks: https://developers.payfit.io/docs/payfit-webhooks
+  verification: https://docs.svix.com/receiving/verifying-payloads/how-manual
+  events: https://www.svix.com/event-types/eu/org_2OKOXEuHkmc3oMFNlQ8M357ssHn/
+notes: >
+  European payroll/HR partner API. Webhooks are partner-only, enabled by PayFit on request;
+  GET https://oauth.payfit.com/webhooks?clientSecret=..&clientId=.. returns webhookConfigUrl, the
+  webhooks dashboard (Svix app portal). Delivered by Svix: the event catalogue is a Svix-hosted page
+  for PayFit's Svix org (EU) that links to Svix's consuming guide; PayFit's own docs don't mention
+  signing. Headers svix-id, svix-timestamp (seconds), svix-signature (space-separated v1,<base64>);
+  signed content id.timestamp.body; key = base64-decoded part after whsec_. Svix's doc vector
+  (whsec_plJ3nmyCDGBKInavdOK15jsl, msg_loFOjxBNrRLzqYUf, 1731705121) is in the tests. Svix says check
+  the timestamp "within your tolerance" (libraries: 5 min); examples make it optional
+  (PAYFIT_WEBHOOK_TOLERANCE_SECONDS). Events integration.activated, integration.deactivated
+  ({companyId, effectiveDate}), payroll.run (+ payrollMonth YYYYMM); body {type, data}. Delivery
+  per Svix defaults (retries immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h; endpoint disabled
+  after 5 days of failures). Hookdeck source type PAYFIT (STANDARD_WEBHOOKS, headers_prefix svix).
+testScenario:
+  events:
+    - payroll.run
+    - integration.activated
+catalog:
+  summary: Verify PayFit webhooks (delivered by Svix; `svix-signature` base64 HMAC-SHA256 of id.timestamp.body keyed with the base64-decoded whsec_ secret), handle integration.activated, integration.deactivated and payroll.run

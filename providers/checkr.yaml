@@ -1,0 +1,26 @@
+name: checkr
+displayName: Checkr
+docs:
+  webhooks: https://docs.checkr.com/apis/webhooks
+  verification: https://docs.checkr.com/apis/webhooks
+  events: https://docs.checkr.com/apis/webhooks
+notes: >
+  Background checks. Webhook URLs (max two) in Dashboard Developer Settings, or on a Partner
+  Application (include_object and all events on by default). X-Checkr-Signature = lowercase hex
+  HMAC-SHA256 of the raw body (the "compact JSON" Checkr sends; re-serialising breaks it). No
+  webhook secret: direct accounts are signed with the OLDEST secret API key (deleting it breaks
+  verification); Partner apps with the OAuth client secret (also for events on customers' access
+  tokens). Accounts without an API key get a placeholder sentence in the header. Test vector from
+  github.com/checkr/webhook-verification-examples: key test-secret, body
+  {"monday":"75F","tuesday":"80F"} -> b7412f05e981a473b5ecbdb5393afaea02a679db6d7c8e56803512ec4ba98151.
+  Body {id, object: event, type, created_at, webhook_url, data.object}. No ordering guarantee;
+  dedupe on id. Any 2xx acks (body ignored); retries every minute for 10 min then hourly for 24 h;
+  direct URLs failing 100% for 60 days are removed, Partner webhooks failing 7 consecutive days are
+  deleted. User-Agent Checkr-Webhook/. Hookdeck source type CHECKR (HMAC sha256 hex on
+  x-checkr-signature; verification optional; no timestamp window).
+testScenario:
+  events:
+    - report.completed
+    - candidate.created
+catalog:
+  summary: Verify Checkr webhooks (`X-Checkr-Signature` lowercase hex HMAC-SHA256 of the raw body keyed with the oldest secret API key or the Partner app's client secret), handle report, candidate, invitation and verification events

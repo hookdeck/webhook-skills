@@ -1,0 +1,26 @@
+name: merge
+displayName: Merge
+docs:
+  webhooks: https://docs.merge.dev/merge-unified/reading-data/webhooks/merge-webhooks
+  verification: https://docs.merge.dev/merge-unified/reading-data/webhooks/merge-webhooks#security
+  events: https://docs.merge.dev/merge-unified/reading-data/webhooks/merge-webhooks
+notes: >
+  Merge Unified API (HRIS, ATS, CRM, accounting, ticketing, file storage). Webhooks are created on
+  app.merge.dev/configuration/webhooks and shared across the organization; the Security module shows
+  one org-wide signature key (regenerable). X-Merge-Webhook-Signature = HMAC-SHA256 of the raw body
+  keyed with the signature key (UTF-8), base64url WITH '=' padding (44 chars) in all three Merge
+  samples. Compare with trailing '=' stripped on both sides (Node's digest('base64url') is unpadded;
+  Merge's own merge-unified-skills does the same rstrip). Computed check vector from Merge's samples:
+  key k, body {} -> rdhTsQP7zJNqGU-esV4pxP8Ir25H1dG8pPICGOMeT_8=. Body {hook: {id, event, target},
+  linked_account, data}; events LinkedAccount.linked/sync_completed/deleted, Issue.new/reopened/
+  muted/resolved, {Model}.synced/added/changed/removed, AsyncPassthrough.resolved (no
+  linked_account), AsyncPost.completed, AsyncBulkPost.completed. "Send test POST request" in the
+  dashboard. Retries are not on the docs page; Merge's agent skill says 10 s timeout, 1 attempt + 2
+  retries (1 s, 2 s) on 5xx/connection error/timeout only, 4xx drops the event. Hookdeck source type
+  MERGE (HMAC sha256 base64url, padding-tolerant compare; verification optional; no timestamp window).
+testScenario:
+  events:
+    - LinkedAccount.sync_completed
+    - Candidate.changed
+catalog:
+  summary: Verify Merge webhooks (`X-Merge-Webhook-Signature` padded base64url HMAC-SHA256 of the raw body keyed with the organization's signature key, padding-tolerant compare), handle Linked Account, issue, Common Model and async events
