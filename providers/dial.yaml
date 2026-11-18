@@ -14,10 +14,10 @@ notes: >
   createdAt, relatedObject, data }; version is per event type (number.status_changed is at 2, the rest at
   1). Subscribable types: message.received, message.status_changed, call.status_changed, call.ended,
   call.transcribed, number.status_changed; plus webhook.ping, fired on demand at one subscription and not
-  subscribable. Dial's docs recommend rejecting deliveries older than 5 minutes. Dial computes a fresh t on
-  every one of its own retry attempts, but Hookdeck retries and replays resend the original t, so the
-  examples make the tolerance configurable (DIAL_WEBHOOK_TOLERANCE_SECONDS, 0 disables). Parse the header
-  by splitting on ',' then on the first '='; require t to be all digits; accept any of several v1 entries;
+  subscribable. Dial's docs recommend rejecting deliveries older than 5 minutes. Dial computes a fresh t on every one of
+  its own retry attempts, but Hookdeck retries and replays resend the original t, so the examples make the
+  window opt-in: off unless DIAL_WEBHOOK_TOLERANCE_SECONDS is a positive whole number (e.g. 300). Parse the header
+  by splitting on ',' then on the first '='; require t to be 1-12 digits (a longer value overflows float math in Python); accept any of several v1 entries;
   check each is exactly 64 hex chars before Buffer.from(x, 'hex'); compare with crypto.timingSafeEqual in
   Node and hmac.compare_digest on bytes in Python. Delivery: success is any 2xx; 10 s timeout per attempt;
   up to 6 attempts (1 + 5 retries) with exponential backoff; at-least-once. Setup: dashboard

@@ -24,8 +24,9 @@ verification SDK.
 3. Add the full signing secret (including `whsec_`) to `.env.local` as `DIAL_WEBHOOK_SECRET`.
    Get it from the dashboard or `GET https://api.getdial.ai/api/v1/webhooks/{id}/secret`.
 
-Behind Hookdeck, raise `DIAL_WEBHOOK_TOLERANCE_SECONDS` (or set `0`): Hookdeck retries
-and replays keep the original signed timestamp.
+The timestamp check is off by default, because Hookdeck retries and replays keep the
+original signed timestamp. To turn it on for direct delivery, set
+`DIAL_WEBHOOK_TOLERANCE_SECONDS` (e.g. `300`, Dial's suggested 5 minutes).
 
 ## Run
 

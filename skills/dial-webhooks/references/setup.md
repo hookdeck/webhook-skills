@@ -54,8 +54,9 @@ Other management calls: `GET /api/v1/webhooks`, `GET /api/v1/webhooks/{id}`,
 
 Dial signs a timestamp into every delivery. When Hookdeck sits in front of your
 handler, its retries and replays forward the original `X-Dial-Signature`, so the
-timestamp can be older than 5 minutes. Set `DIAL_WEBHOOK_TOLERANCE_SECONDS` to a larger
-value (or `0` to skip the check) on the handler behind Hookdeck, and dedupe on
+timestamp can be older than 5 minutes. The examples skip the timestamp check unless
+`DIAL_WEBHOOK_TOLERANCE_SECONDS` is set, so leave it unset (or set it well above your
+retry and replay horizon) on the handler behind Hookdeck, and dedupe on
 `X-Dial-Event-ID`.
 
 ## Local Development

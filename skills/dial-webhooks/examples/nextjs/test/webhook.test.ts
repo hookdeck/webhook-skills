@@ -79,14 +79,28 @@ describe('Dial webhook route', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects a stale timestamp by default', async () => {
+  it('accepts an old timestamp by default (window is opt-in)', async () => {
+    const body = envelope('call.ended');
+    const res = await POST(makeRequest(body, { 'x-dial-signature': sign(body, { t: now() - 86400 }) }));
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects a stale timestamp when a tolerance is set', async () => {
+    process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS = '300';
     const body = envelope('call.ended');
     const res = await POST(makeRequest(body, { 'x-dial-signature': sign(body, { t: now() - 600 }) }));
     expect(res.status).toBe(401);
   });
 
-  it('accepts a stale timestamp when the tolerance is disabled', async () => {
-    process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS = '0';
+  it('accepts a fresh timestamp when a tolerance is set', async () => {
+    process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS = '300';
+    const body = envelope('call.ended');
+    const res = await POST(makeRequest(body, { 'x-dial-signature': sign(body) }));
+    expect(res.status).toBe(200);
+  });
+
+  it.each(['0', 'abc', '-5'])('treats tolerance %s as off', async (value) => {
+    process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS = value;
     const body = envelope('call.ended');
     const res = await POST(makeRequest(body, { 'x-dial-signature': sign(body, { t: now() - 86400 }) }));
     expect(res.status).toBe(200);
