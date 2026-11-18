@@ -18,7 +18,7 @@ curl -X POST https://api.brex.com/v1/webhooks \
   }'
 ```
 
-Create Webhook requires an `Idempotency-Key` header. Only **one endpoint per `client_id`** is allowed, so to change the URL or events later, update the existing webhook with `PUT /v1/webhooks/{id}`. Manage it with:
+Create Webhook requires an `Idempotency-Key` header. To receive `EXPENSE_PAYMENT_UPDATED`, register with a user that has the `CARD_ADMIN` role. Only **one endpoint per `client_id`** is allowed, so to change the URL or events later, update the existing webhook with `PUT /v1/webhooks/{id}`. Manage it with:
 
 | Call | Purpose |
 |------|---------|

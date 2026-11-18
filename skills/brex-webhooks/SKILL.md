@@ -88,7 +88,7 @@ Partners with many customers map `company_id` to the right access token before c
 |-------|------------|------------|
 | `TRANSFER_PROCESSED` | A Brex Cash transfer (incoming or outgoing) is processed | `transfer_id`, `payment_type`, `company_id` |
 | `TRANSFER_FAILED` | A Brex Cash transfer (incoming or outgoing) fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
-| `EXPENSE_PAYMENT_UPDATED` | Card expense activity (purchase, refund, decline) | `expense_id`, `payment_status`, `payment_type`, `card_id`, `amount` |
+| `EXPENSE_PAYMENT_UPDATED` | Card expense activity (purchase, refund, decline) | `expense_id`, `payment_status`, `payment_type`, `card_id`, `billing_amount` |
 | `USER_UPDATED` | A user's status, manager, department or location changes | `user_id`, `updated_attributes` |
 | `REFERRAL_CREATED` / `REFERRAL_ACTIVATED` | A referral is created / the contact signs up | `referral_id` |
 | `REFERRAL_APPLICATION_STATUS_CHANGED` | A referred product application changes status | `referral_id`, `application` (status per product, e.g. `application.cash`) |

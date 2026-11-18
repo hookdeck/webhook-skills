@@ -33,14 +33,14 @@ Brex's [webhooks guide](https://developer.brex.com/guides/webhooks) lists six ev
 | `TRANSFER_PROCESSED` | Payments | A Brex Cash transfer (incoming or outgoing) is processed | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
 | `TRANSFER_FAILED` | Payments | A Brex Cash transfer (incoming or outgoing) fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
 | `USER_UPDATED` | Team | A user is updated | `user_id`, `company_id`, `updated_attributes` |
-| `EXPENSE_PAYMENT_UPDATED` | Expenses | Expense activity on Brex cards | `expense_id`, `payment_status`, `payment_type`, `card_id`, `merchant`, `amount`, `version`, ... |
+| `EXPENSE_PAYMENT_UPDATED` | Expenses | Expense activity on Brex cards | `expense_id`, `payment_status`, `payment_type`, `card_id`, `merchant`, `billing_amount`, `original_amount`, `version`, ... |
 | `ACCOUNTING_RECORD_READY_FOR_EXPORT` | Accounting | Accounting records are ready to export | `accountingRecordIds`, `companyId` (camelCase) |
 
 Field values:
 
 - `payment_type` on transfers: `ACH`, `DOMESTIC_WIRE`, `CHEQUE`, `INTERNATIONAL_WIRE`, `BOOK_TRANSFER`, `STABLECOIN`, and the returns `ACH_RETURN`, `WIRE_RETURN`, `CHEQUE_RETURN` (with `return_for_id` set to the original transfer).
 - `updated_attributes` on `USER_UPDATED`: any of `STATUS`, `MANAGER_ID`, `DEPARTMENT_ID`, `LOCATION_ID`.
-- `EXPENSE_PAYMENT_UPDATED`: `payment_status` is `PENDING` or `DECLINED`; `payment_type` is `PURCHASE`, `REFUND`, `WITHDRAWAL` or `DECLINED`. Money fields are objects with `amount` in the smallest currency unit and `currency`. `version` increases with each update, so ignore an update older than one you've already stored.
+- `EXPENSE_PAYMENT_UPDATED`: `payment_status` is `PENDING` or `DECLINED`; `payment_type` is `PURCHASE`, `REFUND`, `WITHDRAWAL` or `DECLINED`. Money fields (`billing_amount`, `original_amount`) are objects with `amount` in the smallest currency unit and `currency`; the top-level `amount` and `payment_description` fields are deprecated in favour of `billing_amount` and `merchant.raw_descriptor`. `version` starts at 1 and goes up by 1 with every update, so ignore an update older than one you've already stored. The subscription must be registered by a user with the `CARD_ADMIN` role to receive this event.
 
 The `WebhookEventType` enum also includes embedded-partner types such as `EMBEDDED_CARD_TRANSACTION_UPDATED`, `EMBEDDED_CARD_UPDATED`, `EMBEDDED_DISPUTE_UPDATED`, `EMBEDDED_CARD_AUTHORIZATION` and `PARTNERSHIP_INTEGRATION_CONNECTION_UPDATED`, which aren't documented in the public catalog. Return `200` for types you don't handle.
 
