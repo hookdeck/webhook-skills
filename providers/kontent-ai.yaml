@@ -10,7 +10,7 @@ notes: >
   the webhook's Secret as text (it looks like base64; don't decode it). The JS webhook-helper
   rewrites runs of CR/LF to CRLF before hashing, which only repairs bodies whose line endings were
   changed after receipt; hashing the raw bytes as received works (the .NET helper does that).
-  Older webhooks send the legacy X-KC-Signature header instead. Body {notifications: [{data:
+  Older webhooks may send the legacy X-KC-Signature header instead. Body {notifications: [{data:
   {system}, message: {environment_id, object_type, action, delivery_slot}}]}. Object types
   content_item, asset, content_type, language, taxonomy. 20X = success; 60 s timeout; retries
   at 1, 2, 4, 8, 16, 32, 60 min then hourly for up to 3 days; delivered in order. Hookdeck source

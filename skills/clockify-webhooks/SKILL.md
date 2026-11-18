@@ -60,7 +60,7 @@ function verifyClockifySignature(signature, tokens) {   // tokens: one per webho
 
 Python hashes both values with SHA-256 and compares them with `hmac.compare_digest`. See [references/verification.md](references/verification.md).
 
-**Hookdeck:** the Clockify source type (`CLOCKIFY`) compares `Clockify-Signature` with the token you paste in **Signing Secret**, in constant time. Use one source per Clockify webhook, since each has its own token. Verification is optional on the source, and Hookdeck applies no timestamp window.
+**Hookdeck:** the Clockify source type (`CLOCKIFY`) compares `Clockify-Signature` with the token you paste in **Signing Secret**. Use one source per Clockify webhook, since each has its own token. Verification is optional on the source, and Hookdeck applies no timestamp window.
 
 ## Payload
 

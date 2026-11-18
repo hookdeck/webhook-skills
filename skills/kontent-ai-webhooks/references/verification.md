@@ -44,7 +44,7 @@ So: hash the raw bytes as received, and keep any proxy, logger or framework from
 
 ## The Legacy Header
 
-Webhooks created before the rename send `X-KC-Signature`. These examples and the Hookdeck source type check only `X-Kontent-ai-Signature`. If you still have an old webhook, recreate it.
+Webhooks created before the rename may send `X-KC-Signature`. (This comes from the fallback in Kontent.ai's SDK helpers, not from the webhook docs, which only describe `X-Kontent-ai-Signature`.) These examples and the Kontent.ai source type in Hookdeck check only `X-Kontent-ai-Signature`. If you still have an old webhook, recreate it. In Hookdeck you can instead use the generic HMAC source type (SHA-256, base64, header `x-kc-signature`).
 
 ## Debugging Mismatches
 
@@ -53,5 +53,5 @@ Webhooks created before the rename send `X-KC-Signature`. These examples and the
 | Every request fails | The Secret was base64-decoded. Use it as text |
 | Every request fails | The body was parsed and re-serialised. HMAC the raw bytes |
 | Fails only for replayed or copied payloads | Line endings changed from CRLF to LF along the way |
-| No `X-Kontent-ai-Signature` header | A legacy webhook that sends `X-KC-Signature` |
+| No `X-Kontent-ai-Signature` header | Possibly a legacy webhook that sends `X-KC-Signature` |
 | Fails after copying a webhook | Each webhook has its own Secret |

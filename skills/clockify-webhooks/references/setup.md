@@ -41,4 +41,4 @@ Use the printed URL as the endpoint, then trigger the event (add a time entry, c
 
 ## Using Hookdeck
 
-Create a source with the **Clockify** source type and paste the webhook's token in **Signing Secret**. Hookdeck compares `Clockify-Signature` with it in constant time. Each webhook has its own token, so use one source per Clockify webhook. Verification is optional on the source, and Hookdeck applies no timestamp window.
+Create a source with the **Clockify** source type and paste the webhook's token in **Signing Secret**. Hookdeck compares `Clockify-Signature` with it. Each webhook has its own token, so use one source per Clockify webhook. Verification is optional on the source, and Hookdeck applies no timestamp window.

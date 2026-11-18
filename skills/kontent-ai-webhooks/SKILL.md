@@ -49,14 +49,14 @@ function verifyKontentAiSignature(rawBody, signature, secret) {   // rawBody: ex
 
 - **Secret as text.** The Secret looks like base64. Use the string itself as the key. Each webhook has its own Secret.
 - **Line endings.** Kontent.ai's JS helper (`@kontent-ai/webhook-helper`) rewrites every run of line breaks to CRLF before hashing. That repairs bodies whose line endings were changed after receipt, for example by copying a payload out of a request viewer. If you hash the bytes exactly as received (as the .NET helper and these examples do), you don't need it. Just make sure nothing in front of your handler rewrites the body.
-- **Legacy header.** Older webhooks send `X-KC-Signature` instead. The examples, and the Hookdeck source type, check only `X-Kontent-ai-Signature`. Recreate an old webhook to get the current header.
+- **Legacy header.** Older webhooks may send `X-KC-Signature` instead. The examples, and the Kontent.ai source type in Hookdeck, check only `X-Kontent-ai-Signature`. Recreate an old webhook to get the current header, or in Hookdeck use the generic HMAC source type (SHA-256, base64, header `x-kc-signature`).
 - Bad or missing signature: `401`. Secret not set: `500`.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 Python uses `hmac.new(secret.encode(), raw_body, hashlib.sha256)`, `base64.b64decode` and `hmac.compare_digest`. See [references/verification.md](references/verification.md).
 
-**Hookdeck:** the Kontent.ai source type (`KONTENT_AI`) verifies `X-Kontent-ai-Signature`. Paste the webhook's Secret as-is. Webhooks that send only the legacy `X-KC-Signature` aren't covered. Verification is optional on the source, and Hookdeck applies no timestamp window.
+**Hookdeck:** the Kontent.ai source type (`KONTENT_AI`) verifies `X-Kontent-ai-Signature`. Paste the webhook's Secret as-is. Webhooks that send only the legacy `X-KC-Signature` aren't covered: recreate the webhook, or use the generic HMAC source type (SHA-256, base64, header `x-kc-signature`). Verification is optional on the source, and Hookdeck applies no timestamp window.
 
 ## Payload
 

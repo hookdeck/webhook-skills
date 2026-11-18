@@ -33,4 +33,4 @@ Use the printed URL as the webhook URL.
 
 ## Using Hookdeck
 
-Create a source with the **Kontent.ai** source type and paste the webhook's Secret as-is. Hookdeck verifies `X-Kontent-ai-Signature`. Webhooks that only send the legacy `X-KC-Signature` aren't covered: create a new webhook. Verification is optional on the source, and Hookdeck applies no timestamp window.
+Create a source with the **Kontent.ai** source type and paste the webhook's Secret as-is. Hookdeck verifies `X-Kontent-ai-Signature`. Webhooks that only send the legacy `X-KC-Signature` aren't covered: create a new webhook, or use the generic HMAC source type (SHA-256, base64, header `x-kc-signature`). Verification is optional on the source, and Hookdeck applies no timestamp window.
