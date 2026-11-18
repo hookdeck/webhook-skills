@@ -25,4 +25,4 @@ From [Monitoring Failures and Retry Mechanism](https://developer.fedex.com/api/e
 
 - Anything other than `200` or `202` is a failure.
 - FedEx retries each failed event 3 times within about 15 minutes. (The page describes both 5-minute intervals and a 1/2/4-minute schedule with jitter.)
-- After that, the event goes to a missed-events queue for 7 days. Use the **RETRY** button on the webhook project to have FedEx resend missed events.
+- After that, the event goes to a missed-events queue for 7 days. To have FedEx resend missed events, start the retry process on the AIV webhook project.

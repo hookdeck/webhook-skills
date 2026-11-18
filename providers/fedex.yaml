@@ -13,7 +13,7 @@ notes: >
   HTTPS, TLS 1.2+, POST + JSON, max 200 characters, no IPs/RFC 1918/fedex.com. URL validation on
   creation needs 200 or 202; deliveries too. Payload is a detailed or event-specific tracking
   response (schema downloadable from the portal; PII for account subscriptions). Retries 3 times
-  within about 15 minutes, then a missed-events queue for 7 days (RETRY button). "Try this webhook"
+  within about 15 minutes, then a missed-events queue for 7 days (start the retry process on the AIV webhook project). "Try this webhook"
   sends a signed mock payload with only a portal login. Hookdeck source type FEDEX (HMAC sha256
   base64 on fdx-signature; verification optional; no timestamp window).
 testScenario:
