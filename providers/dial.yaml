@@ -1,0 +1,34 @@
+name: dial
+displayName: 'Dial'
+docs:
+  webhooks: https://docs.getdial.ai/documentation/platform/webhooks
+  events: https://docs.getdial.ai/api-reference/events/overview
+notes: >
+  Dial (getdial.ai) gives AI agents phone numbers for SMS, iMessage, WhatsApp and AI voice calls. One
+  webhook subscription receives every account event (eventTypes ["*"]) or an explicit list, as signed
+  JSON POSTs. Header X-Dial-Signature: 't=<unix-seconds>,v1=<hex>', where v1 is the lowercase hex
+  HMAC-SHA256 of '{t}.{raw request body}' keyed with the full signing secret as a UTF-8 string, including
+  its 'whsec_' prefix (the part after whsec_ is NOT base64-decoded; this is not Standard Webhooks). Other
+  headers: X-Dial-Event-ID (stable per event, the dedupe key, equal to the body's top-level `id`) and
+  X-Dial-Event-Type (equal to the body's `type`). Body envelope: { id, object: "event", type, version,
+  createdAt, relatedObject, data }; version is per event type (number.status_changed is at 2, the rest at
+  1). Subscribable types: message.received, message.status_changed, call.status_changed, call.ended,
+  call.transcribed, number.status_changed; plus webhook.ping, fired on demand at one subscription and not
+  subscribable. Dial's docs recommend rejecting deliveries older than 5 minutes. Dial computes a fresh t on every one of
+  its own retry attempts, but Hookdeck retries and replays resend the original t, so the examples make the
+  window opt-in: off unless DIAL_WEBHOOK_TOLERANCE_SECONDS is a positive whole number (e.g. 300). Parse the header
+  by splitting on ',' then on the first '='; require t to be 1-12 digits (a longer value overflows float math in Python); accept any of several v1 entries;
+  check each is exactly 64 hex chars before Buffer.from(x, 'hex'); compare with crypto.timingSafeEqual in
+  Node and hmac.compare_digest on bytes in Python. Delivery: success is any 2xx; 10 s timeout per attempt;
+  up to 6 attempts (1 + 5 retries) with exponential backoff; at-least-once. Setup: dashboard
+  (getdial.ai/dashboard/webhooks) or POST https://api.getdial.ai/api/v1/webhooks with { targetUrl,
+  eventTypes } (HTTPS only, no private or loopback hosts); read the full secret from
+  GET /api/v1/webhooks/{id}/secret (the subscription object only carries secretMasked); test with
+  POST /api/v1/webhooks/{id}/ping or the dashboard's Fire ping button. Express examples must read the raw
+  body with express.raw({ type: '*/*' }).
+testScenario:
+  events:
+    - 'message.received'
+    - 'call.ended'
+catalog:
+  summary: 'Verify Dial webhook signatures (`X-Dial-Signature`, `t=…,v1=…` HMAC-SHA256 of `{t}.{body}`), handle SMS, iMessage, WhatsApp and call events like `message.received` and `call.ended`'
