@@ -15,15 +15,17 @@ the raw `hub.challenge` as plain text when the mode is `subscribe` and the token
 - Header: `X-Hub-Signature-256: sha256=<hex>`
 - Algorithm: HMAC-SHA256, hex-encoded
 - Signed content: the raw request body
-- Key: the app secret (see below)
+- Key: the Threads App Secret (see below)
 
 Require and strip the `sha256=` prefix, validate the digest, and compare in constant time.
 
 ### Which secret signs?
 
-The Threads page doesn't name the key. Meta's getting-started guide says the App Secret, and
-Threads apps also show a separate Threads App Secret. The docs don't say which one signs: use
-the secret of the app the webhook is configured on and try the other if verification fails.
+The **Threads App Secret** (Use cases > Customize > Settings in the Threads API use case).
+The Threads page doesn't name the key, and Meta's getting-started guide only says "App
+Secret", but a live Threads notification (tested 2026-11-18) matched the Threads App Secret
+and not the Meta App Secret from App settings > Basic. Meta also sends a legacy
+`X-Hub-Signature: sha1=<hex>` with the same key; verify the SHA-256 header.
 
 ### Node.js
 
@@ -58,14 +60,14 @@ def verify_threads_signature(raw_body: bytes, signature_header: str, app_secret:
 ## Common Gotchas
 
 - **Use the raw body.** Verify before JSON parsing. In Express use `express.raw({ type: '*/*' })`.
-- **Wrong secret.** App Secret vs Threads App Secret; never the verify token or an access token.
+- **Wrong secret.** Use the Threads App Secret, not the Meta App Secret, the verify token or an access token.
 - **Prefix required.** Reject a header without `sha256=`.
-- **No timestamp in the signature.** Dedupe with `values.value.id` plus `values.field` (and `time`).
+- **No timestamp in the signature.** Dedupe with each change's `value.id` plus `field` (and `time`).
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
 | Handshake never succeeds | Returning JSON instead of raw `hub.challenge`, or verify token mismatch |
-| Signature always invalid | Body parsed before verifying, or the other app secret is the signing key |
+| Signature always invalid | Body parsed before verifying, or the Meta App Secret used instead of the Threads App Secret |
 | Works locally, fails in prod | A proxy re-serialized the body, or the app isn't in Live Mode |

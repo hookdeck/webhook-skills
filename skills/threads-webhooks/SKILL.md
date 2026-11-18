@@ -38,15 +38,15 @@ and [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/ski
 ## Verification (core)
 
 Meta sends `X-Hub-Signature-256: sha256=<hex>`, the HMAC-SHA256 hex digest of the **raw
-request body** keyed with your app secret. Require and strip the `sha256=` prefix, check
+request body** keyed with your **Threads App Secret**. Require and strip the `sha256=` prefix, check
 the digest is exactly 64 hex characters (`Buffer.from(x, 'hex')` silently truncates invalid
 hex), and compare in constant time.
 
-> **Which secret?** The Threads webhooks page does not name the signing key. Meta's
+> **Which secret?** Threads apps have two. Meta's
 > [getting-started guide](https://developers.facebook.com/docs/graph-api/webhooks/getting-started)
-> says the **App Secret**, but Threads apps also show a separate **Threads App Secret**
-> (Use cases > Threads API > Settings). The docs don't say which one signs, so use the
-> secret of the app the webhook is configured on and try the other if verification fails.
+> only says "App Secret", but a live Threads notification (tested 2026-11-18) is signed with
+> the **Threads App Secret** (Use cases > Customize > Settings in the Threads API use case),
+> not the Meta App Secret under App settings > Basic.
 
 Node:
 
@@ -85,10 +85,11 @@ the verifier as unparsed bytes.
 
 ## Common Event Types
 
-Threads notifications are a flat object. The event is `values.field`; `topic` groups
-fields into `moderate` or `interaction`.
+Threads notifications are a flat object. `values` holds the change: Meta's docs show one
+`{ field, value }` object, but live deliveries send an **array** of them, so handle both.
+The event is each change's `field`; `topic` groups fields into `moderate` or `interaction`.
 
-| Field (`values.field`) | Topic | Triggered When |
+| Field (`values[].field`) | Topic | Triggered When |
 |------------------------|-------|----------------|
 | `replies` | `moderate` | A reply is posted on a Threads post owned by the installing user |
 | `delete` | `moderate` | The authenticated user deletes a post |
@@ -103,10 +104,12 @@ fields into `moderate` or `interaction`.
   "time": 1723226877,
   "subscription_id": "234567",
   "has_uid_field": false,
-  "values": {
-    "field": "replies",
-    "value": { "id": "8901234", "username": "test_username", "text": "Reply", "replied_to": { "id": "567890" } }
-  }
+  "values": [
+    {
+      "field": "replies",
+      "value": { "id": "8901234", "username": "test_username", "text": "Reply", "replied_to": { "id": "567890" } }
+    }
+  ]
 }
 ```
 
@@ -114,12 +117,13 @@ fields into `moderate` or `interaction`.
 
 | Header | Description |
 |--------|-------------|
-| `X-Hub-Signature-256` | `sha256=<hex>` HMAC-SHA256 of the raw body keyed with the app secret |
+| `X-Hub-Signature-256` | `sha256=<hex>` HMAC-SHA256 of the raw body keyed with the Threads App Secret |
+| `X-Hub-Signature` | Legacy `sha1=<hex>` HMAC-SHA1 with the same key; verify the SHA-256 header instead |
 
 ## Environment Variables
 
 ```bash
-THREADS_APP_SECRET=your_app_secret       # Secret of the app the webhook is configured on
+THREADS_APP_SECRET=your_threads_app_secret  # Threads App Secret, not the Meta App Secret
 THREADS_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the token in the Dashboard
 ```
 
@@ -129,7 +133,7 @@ THREADS_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the t
    Settings add the **Get real-time notifications with Threads Webhooks** sub-use case.
 2. Select a topic, click **Subscribe to this object**, and set the Callback URL and verify token.
 3. Subscribe to the fields you need (`replies`, `mentions`, `publish`, `delete`).
-4. **Hookdeck setup:** paste the app secret your Threads app signs webhooks with. Hookdeck
+4. **Hookdeck setup:** paste the Threads App Secret into the source. Hookdeck
    answers the `hub.challenge` handshake itself.
 
 Webhooks only arrive for apps in Live Mode (or with Advanced Access for tech providers), and

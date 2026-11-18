@@ -28,7 +28,8 @@ function notification(field: string, value: Record<string, unknown>, topic = 'mo
     time: 1723226877,
     subscription_id: '234567',
     has_uid_field: false,
-    values: { value, field },
+    // Live deliveries send an array; Meta's docs show a single object (tested below).
+    values: [{ value, field }],
   });
 }
 
@@ -136,6 +137,18 @@ describe('event handling', () => {
     const res = await POST(post(body, sign(body)));
     expect(res.status).toBe(200);
     expect(spy.mock.calls.flat().join('\n')).not.toMatch(/Unhandled/);
+    spy.mockRestore();
+  });
+
+  it('handles the documented single-object values shape', async () => {
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const body = JSON.stringify({
+      ...JSON.parse(notification('replies', { id: '1', username: 'u', replied_to: { id: '2' } })),
+      values: { field: 'replies', value: { id: '1', username: 'u', replied_to: { id: '2' } } },
+    });
+    const res = await POST(post(body, sign(body)));
+    expect(res.status).toBe(200);
+    expect(spy.mock.calls.flat().join('\n')).toMatch(/Reply 1 by @u/);
     spy.mockRestore();
   });
 

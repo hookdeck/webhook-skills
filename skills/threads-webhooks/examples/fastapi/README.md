@@ -21,10 +21,10 @@ handshake and `X-Hub-Signature-256` signature verification.
    cp .env.example .env
    ```
 
-3. Add `THREADS_APP_SECRET` and `THREADS_VERIFY_TOKEN` to `.env`. The Threads docs
-   don't say which app secret signs webhooks: use the secret of the app the webhook
-   is configured on, and try the other (App Secret vs Threads App Secret) if
-   verification fails.
+3. Add `THREADS_APP_SECRET` and `THREADS_VERIFY_TOKEN` to `.env`. Use the Threads
+   App Secret (Use cases > Customize > Settings in the Threads API use case), not the
+   Meta App Secret under App settings > Basic: Threads notifications are signed with
+   the Threads App Secret.
 
 ## Run
 

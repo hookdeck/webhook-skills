@@ -14,14 +14,14 @@
 
 ## Get Your Signing Secret
 
-Meta signs every notification with an app secret, but **the Threads webhooks page does not
-say which one**:
+Threads apps have two secrets, and the Threads webhooks page doesn't say which one signs.
+A live notification (tested 2026-11-18) is signed with the **Threads App Secret**:
 
-- Meta's getting-started guide says the **App Secret** (App Dashboard > Settings > Basic).
-- Threads apps also show a separate **Threads App Secret** (Use cases > Threads API > Settings).
+- **Threads App Secret**: Use cases > Customize > Settings in the Threads API use case. Use this.
+- **Meta App Secret**: App settings > Basic. Meta's getting-started guide calls this "App
+  Secret", but it doesn't verify Threads notifications.
 
-Use the secret of the app the webhook is configured on, and if verification fails, try the
-other one. Store it as `THREADS_APP_SECRET`.
+Store it as `THREADS_APP_SECRET`.
 
 ## Choose a Verify Token
 
@@ -37,8 +37,7 @@ and enter the same value next to the Callback URL.
 
 ## Hookdeck Setup
 
-Paste the app secret your Threads app signs webhooks with into the Threads source's
-verification settings. Hookdeck's edge answers the `hub.challenge` handshake itself, so you
+Paste the Threads App Secret into the Threads source's verification settings. Hookdeck's edge answers the `hub.challenge` handshake itself, so you
 don't need to handle the GET in the destination.
 
 For local development:
