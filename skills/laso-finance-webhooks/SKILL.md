@@ -84,10 +84,10 @@ Every body is the same envelope. The event name is the top-level `type`, which i
 | `notification.withdrawal` | Withdrawals |
 | `notification.card` | Card orders |
 | `notification.giftCard` | Gift card orders |
-| `notification.refund` | Refunds (named in the docs, not described) |
-| `notification.balanceUpdate` | Balance changes (named in the docs, not described) |
+| `notification.refund` | Refunds, such as a refund settling |
+| `notification.balanceUpdate` | Balance changes |
 
-The docs list these eight under "Categories include" without describing each one, so the list is open-ended and the descriptions above are inferred from the names and the docs' examples. The examples handle all eight and ignore other types. There is no per-type selection: one webhook receives every notification. See [references/overview.md](references/overview.md).
+The docs list these eight under "Categories include" without describing each one, so the list is open-ended. The descriptions above are inferred from the names, the webhook docs' examples and the MCP server page's list of what notifies the owner ("a deposit landing, a card issued or declined, a refund or withdrawal settling, a balance change"). The examples handle all eight and ignore other types. There is no per-type selection: one webhook receives every notification. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

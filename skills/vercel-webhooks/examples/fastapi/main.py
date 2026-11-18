@@ -106,9 +106,9 @@ async def handle_vercel_webhook(
             team = payload.get("team", {})
 
             logger.info(f"Deployment created: {deployment.get('id')}")
-            logger.info(f"Project: {project.get('name')}")
+            logger.info(f"Project: {project.get('id')}")
             logger.info(f"URL: {deployment.get('url')}")
-            logger.info(f"Team: {team.get('name')}")
+            logger.info(f"Team: {team.get('id')}")
 
             # Extract git metadata if available
             meta = deployment.get("meta", {})
@@ -121,7 +121,7 @@ async def handle_vercel_webhook(
             deployment = payload.get("deployment", {})
             logger.info(f"Deployment succeeded: {deployment.get('id')}")
             logger.info(f"URL: {deployment.get('url')}")
-            logger.info(f"Duration: {deployment.get('duration')}ms")
+            logger.info(f"Target: {payload.get('target')}")
 
             # Here you could trigger post-deployment tasks
             # like smoke tests, cache warming, notifications, etc.
@@ -135,7 +135,7 @@ async def handle_vercel_webhook(
         elif event_type == "deployment.error":
             deployment = payload.get("deployment", {})
             logger.error(f"Deployment failed: {deployment.get('id')}")
-            logger.error(f"Error: {deployment.get('error')}")
+            logger.error(f"URL: {deployment.get('url')}")
 
             # Here you could send alerts to your team
             # or create an incident ticket
@@ -148,14 +148,12 @@ async def handle_vercel_webhook(
             deployment = payload.get("deployment", {})
             logger.info(f"Deployment promoted: {deployment.get('id')}")
             logger.info(f"URL: {deployment.get('url')}")
-            logger.info(f"Target: {deployment.get('target')}")
             # Could trigger cache clearing or feature flag updates
 
         elif event_type == "project.created":
             project = payload.get("project", {})
             logger.info(f"Project created: {project.get('name')}")
             logger.info(f"ID: {project.get('id')}")
-            logger.info(f"Framework: {project.get('framework')}")
 
         elif event_type == "project.removed":
             project = payload.get("project", {})
@@ -167,30 +165,19 @@ async def handle_vercel_webhook(
         elif event_type == "project.renamed":
             project = payload.get("project", {})
             logger.info(f"Project renamed: {project.get('id')}")
-            logger.info(f"Old name: {project.get('oldName')}")
+            logger.info(f"Old name: {payload.get('previousName')}")
             logger.info(f"New name: {project.get('name')}")
             # Update external references
 
         elif event_type == "domain.created":
             domain = payload.get("domain", {})
-            project = payload.get("project", {})
             logger.info(f"Domain created: {domain.get('name')}")
-            logger.info(f"Project: {project.get('name')}")
+            logger.info(f"Delegated: {domain.get('delegated')}")
 
         elif event_type == "integration-configuration.removed":
             configuration = payload.get("configuration", {})
-            integration = payload.get("integration", {})
-            logger.info(f"Integration removed: {integration.get('name')}")
-            logger.info(f"Configuration ID: {configuration.get('id')}")
-
-        elif event_type == "attack.detected":
-            attack = payload.get("attack", {})
-            logger.warning(f"Attack detected: {attack.get('type')}")
-            logger.warning(f"Action taken: {attack.get('action')}")
-            logger.warning(f"Source IP: {attack.get('ip')}")
-
-            # Here you could trigger security alerts
-            # or update firewall rules
+            logger.info(f"Integration removed: {configuration.get('id')}")
+            logger.info(f"Project selection: {configuration.get('projectSelection')}")
 
         else:
             logger.info(f"Unhandled event type: {event_type}")

@@ -38,7 +38,9 @@
    - `project.renamed`
 
    **Security Monitoring:**
-   - `attack.detected`
+   - **Attack Detected** (dashboard label): fires when the Vercel Firewall detects and mitigates a DDoS attack.
+     Vercel's Webhooks API reference doesn't document this event's `type` value or payload, so log the
+     `type` you receive before you branch on it.
 
 3. **Choose Project Scope**
    - **All Projects**: Receive events for all projects in your team

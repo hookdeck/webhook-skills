@@ -74,8 +74,8 @@ app.post('/webhooks/vercel',
             id: event.payload.deployment?.id,
             name: event.payload.deployment?.name,
             url: event.payload.deployment?.url,
-            project: event.payload.project?.name,
-            team: event.payload.team?.name
+            project: event.payload.project?.id,
+            team: event.payload.team?.id
           });
           break;
 
@@ -84,7 +84,7 @@ app.post('/webhooks/vercel',
             id: event.payload.deployment?.id,
             name: event.payload.deployment?.name,
             url: event.payload.deployment?.url,
-            duration: event.payload.deployment?.duration
+            target: event.payload.target
           });
           break;
 
@@ -99,7 +99,7 @@ app.post('/webhooks/vercel',
           console.error('Deployment failed:', {
             id: event.payload.deployment?.id,
             name: event.payload.deployment?.name,
-            error: event.payload.deployment?.error
+            url: event.payload.deployment?.url
           });
           break;
 
@@ -114,8 +114,7 @@ app.post('/webhooks/vercel',
           console.log('Deployment promoted:', {
             id: event.payload.deployment?.id,
             name: event.payload.deployment?.name,
-            url: event.payload.deployment?.url,
-            target: event.payload.deployment?.target
+            url: event.payload.deployment?.url
           });
           break;
 
@@ -136,7 +135,7 @@ app.post('/webhooks/vercel',
         case 'project.renamed':
           console.log('Project renamed:', {
             id: event.payload.project?.id,
-            oldName: event.payload.project?.oldName,
+            oldName: event.payload.previousName,
             newName: event.payload.project?.name
           });
           break;
@@ -144,14 +143,14 @@ app.post('/webhooks/vercel',
         case 'domain.created':
           console.log('Domain created:', {
             domain: event.payload.domain?.name,
-            project: event.payload.project?.name
+            delegated: event.payload.domain?.delegated
           });
           break;
 
         case 'integration-configuration.removed':
           console.log('Integration removed:', {
             id: event.payload.configuration?.id,
-            integration: event.payload.integration?.name
+            projectSelection: event.payload.configuration?.projectSelection
           });
           break;
 
