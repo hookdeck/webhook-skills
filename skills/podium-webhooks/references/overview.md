@@ -30,15 +30,17 @@ Podium documents 26 event types in all. The rest in the same families are `messa
 
 ## Event Payload Structure
 
+Podium publishes no full example event. The only body in its docs is the signing illustration,
+whose `test.event` is a placeholder rather than a real event type:
+
 ```json
-{
-  "data": { "uid": "..." },
-  "metadata": { "event_type": "message.received", "version": "2021.04.01" }
-}
+{"data":{"bar":"apples","foo":"1"},"metadata":{"event_type":"test.event","version":"2021.04.01"}}
 ```
 
-`data` is the full object for the event; its fields depend on the event type. `metadata.event_type`
-names the event and `metadata.version` is the payload version. Dispatch on `metadata.event_type`.
+`data` holds the object for the event: a message object for message events, `before` and/or
+`after` contact objects plus an `errors` list for contact events, and a review invite object for the
+invite link events. `metadata.event_type` names the event, and `metadata.version` is a version string
+Podium doesn't describe. Dispatch on `metadata.event_type`.
 
 ## Delivery Format
 
@@ -56,7 +58,8 @@ quickly and do the work asynchronously.
 
 Events are queued from the moment the webhook is created, even while it is disabled, and stay in
 the queue for about 10 days. No retry schedule is documented and no delivery id header is sent, so
-make handlers idempotent on your own key (for example the object `uid` in `data`).
+make handlers idempotent: upsert by the object's `uid` (the message `uid`, or the contact `uid` in
+`after` or `before`).
 
 ## Full Event Reference
 

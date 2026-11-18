@@ -32,6 +32,7 @@ Duplicates are possible and order is not guaranteed.
 | `client.created` | A client has been created | Sync customers |
 | `client.updated` | A client has been updated | Sync customers |
 | `client.deleted` | A client has been deleted | Sync customers |
+| `trigger.fired` | A lifecycle trigger ran a **Send webhook** action for a client | Start a periodic review or re-verification |
 | `document.created` | A document has been created | Track uploads |
 | `document.updated` | A document has been updated | Track changes |
 | `document.updated.image_uploaded` | A document got a new image | Trigger a document check |
@@ -65,9 +66,9 @@ Subscribe only to the events you need.
 - `id` - unique event id; use it to skip duplicate deliveries
 - `type` - the event type
 - `resourceType` - the kind of object in `payload`
-- `payload` - the object (a check, client, document, address or workflow session)
+- `payload` - the object (a check, client, document, address or workflow session), or for `trigger.fired` the trigger, execution and client IDs with the lifecycle `event`
 
 ## Full Event Reference
 
 See [ComplyCube's webhook documentation](https://docs.complycube.com/documentation/api-reference/other-resources/webhooks)
-and the [Webhooks Guide](https://docs.complycube.com/documentation/guides/webhooks).
+and the [Webhooks Guide](https://docs.complycube.com/documentation/integration-resources/webhooks).

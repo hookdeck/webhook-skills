@@ -52,7 +52,7 @@ The "Trigger an event" example in the docs (header starting `3b7f8f40...`) is il
 - **Don't decode hex with `Buffer.from(sig, 'hex')`:** it silently drops bad characters. Check length and alphabet first, then compare equal-length buffers.
 - **Compare bytes in Python**, not `str` with `==`.
 - **Secret is per webhook:** a different subscription has a different `sig_sec_...`.
-- **Don't invent a timestamp window:** `emittedAt` is in the body but is not signed separately from it, and retries re-send the same signed body.
+- **Don't invent a timestamp window:** `emittedAt` is in the body and is not signed separately from it.
 
 ## Debugging Verification Failures
 

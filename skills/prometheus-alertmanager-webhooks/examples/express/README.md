@@ -57,7 +57,7 @@ To try it by hand:
 curl -X POST http://localhost:3000/webhooks/prometheus-alertmanager \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ALERTMANAGER_WEBHOOK_SECRET" \
-  -d '{"version":"4","groupKey":"{}:{alertname=\"HighCPU\"}","status":"firing","receiver":"hookdeck","alerts":[{"status":"firing","labels":{"alertname":"HighCPU"},"annotations":{},"startsAt":"2026-10-26T10:00:00Z","endsAt":"0001-01-01T00:00:00Z","fingerprint":"1a2b3c4d5e6f7a8b"}]}'
+  -d '{"version":"4","status":"firing","alerts":[]}'
 ```
 
 ## Receive Webhooks Locally

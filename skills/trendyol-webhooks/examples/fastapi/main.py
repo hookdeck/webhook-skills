@@ -35,46 +35,54 @@ async def require_trendyol_key(request: Request) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing x-api-key")
 
 
+def normalize_status(value) -> str:
+    """Subscriptions use upper case (AT_COLLECTION_POINT), while bodies use the getShipmentPackages
+    spelling ("Delivered", and per its docs "AtCollectionPoint", "UnDelivered"). Drop underscores and
+    upper-case to compare, then map the one multi-word status back to its subscription name."""
+    key = str(value or "").replace("_", "").upper()
+    return "AT_COLLECTION_POINT" if key == "ATCOLLECTIONPOINT" else key
+
+
 def handle_package(pkg: dict) -> None:
     """Each package is the full order package; its status says what changed."""
-    status = str(pkg.get("status") or pkg.get("shipmentPackageStatus") or "").upper()
+    status = normalize_status(pkg.get("status") or pkg.get("shipmentPackageStatus"))
     ref = f"{pkg.get('orderNumber')} (package {pkg.get('shipmentPackageId')})"
 
     if status == "CREATED":
         print(f"Package created: {ref}")
-        # TODO: import the order and start picking
+        # Your code: import the order and start picking
 
     elif status == "PICKING":
         print(f"Package picking: {ref}")
-        # TODO: mark the order as being prepared
+        # Your code: mark the order as being prepared
 
     elif status == "INVOICED":
         print(f"Package invoiced: {ref}")
-        # TODO: record the invoice (pkg["invoiceNumber"], pkg["invoiceLink"])
+        # Your code: record the invoice (pkg["invoiceNumber"], pkg["invoiceLink"])
 
     elif status == "SHIPPED":
         print(f"Package shipped: {ref}")
-        # TODO: store pkg["cargoTrackingNumber"] and pkg["cargoProviderName"]
+        # Your code: store pkg["cargoTrackingNumber"] and pkg["cargoProviderName"]
 
     elif status == "DELIVERED":
         print(f"Package delivered: {ref}")
-        # TODO: complete the order
+        # Your code: complete the order
 
     elif status == "UNDELIVERED":
         print(f"Package undelivered: {ref}")
-        # TODO: follow up with the carrier
+        # Your code: follow up with the carrier
 
     elif status == "CANCELLED":
         print(f"Package cancelled: {ref}")
-        # TODO: release stock (pkg["lines"][i]["cancelReason"])
+        # Your code: release stock (pkg["lines"][i]["cancelReason"])
 
     elif status == "RETURNED":
         print(f"Package returned: {ref}")
-        # TODO: start the return flow
+        # Your code: start the return flow
 
     elif status == "UNSUPPLIED":
         print(f"Package unsupplied: {ref}")
-        # TODO: reconcile stock
+        # Your code: reconcile stock
 
     elif status == "AWAITING":
         print(f"Package awaiting: {ref}")
@@ -84,7 +92,7 @@ def handle_package(pkg: dict) -> None:
 
     elif status == "AT_COLLECTION_POINT":
         print(f"Package at collection point: {ref}")
-        # TODO: notify the customer if you track pickup
+        # Your code: notify the customer if you track pickup
 
     elif status == "VERIFIED":
         print(f"Package verified: {ref}")

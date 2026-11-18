@@ -42,15 +42,15 @@ export async function POST(request: NextRequest) {
   // Quicknode has no event types. Dispatch on the shape of the payload.
   // ILLUSTRATIVE shapes only: the real payload depends on your stream's dataset or webhook filter.
   if (Array.isArray(payload)) {
-    // Webhooks: array of matched items (e.g. transactions)
-    console.log(`Webhook delivery with ${payload.length} matched item(s)`);
+    // An array body. Quicknode documents no Webhooks payload shape: copy yours from the dashboard's test output
+    console.log(`Array payload with ${payload.length} item(s)`);
   } else if (payload && Array.isArray(payload.data) && payload.metadata) {
     // Streams: a batch with `data` and `metadata`
     console.log(`Streams batch: ${payload.data.length} item(s), dataset=${payload.metadata.dataset}, network=${payload.metadata.network}`);
   } else {
     console.log('Unrecognised payload shape');
   }
-  // TODO: Persist or enqueue the data, then return 2xx quickly
+  // Your code: persist or enqueue the data, then return 2xx quickly
 
   processedNonces.add(nonce);
   return NextResponse.json({ received: true });

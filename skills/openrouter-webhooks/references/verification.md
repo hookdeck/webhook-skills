@@ -2,7 +2,7 @@
 
 ## How Does OpenRouter Sign Webhooks?
 
-OpenRouter video-generation callbacks carry one signature header:
+OpenRouter video-generation and batch callbacks carry one signature header, once the workspace has a webhook signing secret:
 
 ```
 X-OpenRouter-Signature: t=<unix seconds>,v1=<hex>
@@ -55,7 +55,8 @@ The examples therefore leave the window **off** and offer an opt-in: set `OPENRO
 - **Content type.** Deliveries are `application/json`, but use `express.raw({ type: '*/*' })` so the exact bytes are read whatever the content type.
 - **`Buffer.from(sig, 'hex')` drops invalid characters.** Validate length and alphabet first; compare with `crypto.timingSafeEqual` (Node) or `hmac.compare_digest` on bytes (Python).
 - **Secret as UTF-8.** Do not decode it.
-- **Only callbacks are signed.** The Broadcast "Webhook" destination is unsigned.
+- **Only video and batch callbacks are signed.** The Broadcast "Webhook" destination has no signature.
+- **No header at all.** The workspace has no signing secret yet. Generate one under **Webhook signing secret** in the workspace settings.
 
 ## How Do I Debug Verification Failures?
 

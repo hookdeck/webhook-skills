@@ -56,23 +56,23 @@ def handle_event(payload: dict) -> None:
 
     if event == "document.ready":
         print(f"Document ready: {item_id} ({name})")
-        # TODO: mark the document as searchable
+        # Your code: mark the document as searchable
 
     elif event == "document.error":
         print(f"Document failed: {item_id} ({name}): {as_str(data.get('error'))}")
-        # TODO: alert and surface the error
+        # Your code: alert and surface the error
 
     elif event == "document.deleted":
         print(f"Document deleted: {item_id}")
-        # TODO: remove local records
+        # Your code: remove local records
 
     elif event == "ingest_job.ready":
         print(f"Ingest job ready: {item_id} ({name})")
-        # TODO: mark the import as complete
+        # Your code: mark the import as complete
 
     elif event == "ingest_job.error":
         print(f"Ingest job failed: {item_id} ({name}): {as_str(data.get('error'))}")
-        # TODO: alert and retry
+        # Your code: alert and retry
 
     else:
         print(f"Unhandled event: {event}")

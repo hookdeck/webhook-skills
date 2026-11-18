@@ -46,16 +46,8 @@ The body is flat JSON. Common fields (not every event has every field):
 - event-specific fields, for example `report_uri`, `transaction_id`, `items`, `item_id`,
   `item_type`, `session_id`, `reason_code` / `reason_codes`
 
-```json
-{
-  "event": "datarequest.items_available",
-  "datarequest_id": "dr_01",
-  "individual_id": "ind_01",
-  "external_id": "ext_01",
-  "metadata": {},
-  "is_refresh": false
-}
-```
+MeasureOne's event pages list fields with per-field examples, not complete bodies, so log real
+deliveries before relying on a field.
 
 ## Delivery and Retries
 

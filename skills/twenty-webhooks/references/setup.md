@@ -13,7 +13,7 @@
 2. Create the webhook (or open an existing one) and set its **secret**.
 3. Store the same value as `TWENTY_WEBHOOK_SECRET` in your app's environment. It is used as-is, as UTF-8 bytes, for the HMAC key (do not hex- or base64-decode it).
 
-Without a secret Twenty sends deliveries unsigned, and a verifier like the examples will reject them with 401.
+Without a secret Twenty sends deliveries unsigned, and a verifier like the examples will reject them with 401. In the settings form the secret is optional, so fill it in. A webhook created through Twenty's API without a `secret` gets a generated one, which you can copy by opening the webhook in Settings.
 
 ## Register Your Endpoint
 
@@ -24,7 +24,7 @@ Without a secret Twenty sends deliveries unsigned, and a verifier like the examp
 
 To change the URL, open the webhook, update it and save; to remove it, open it and delete it.
 
-There is no event selection: every record create, update and delete for every object (custom objects included) is sent, so filter on `eventName` in your handler.
+Twenty's docs say every record create, update and delete for every object (custom objects included) is sent. The webhook form in current versions has a **Filters** section where you can narrow this to chosen objects and actions; the default is all. Either way, check `eventName` in your handler and ignore what you don't need.
 
 ## Local Development
 

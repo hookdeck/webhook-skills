@@ -66,10 +66,10 @@ endpoint if you need to detect cancellations.
 
 Network failures, timeouts and non-2xx responses are retried at 1, 2, 4, 8, ... minutes
 (capped at 60 minutes). Events older than 24 hours are marked failed and no longer delivered.
-The timestamp and signature are regenerated for every attempt. Magic Hour doesn't state a
-timeout, so verify, save the event, and return `200` quickly; do long work afterwards.
+The timestamp and signature are regenerated for every attempt. Magic Hour's Create a Webhook
+page asks for a response within 10 seconds, so verify, save the event, and return `200` quickly; do long work afterwards.
 
 ## Full Event Reference
 
-See Magic Hour's [webhook quickstart](https://docs.magichour.ai/integration/webhook) and
+See Magic Hour's [webhook quickstart](https://docs.magichour.ai/integration/webhook/overview) and
 [securing your handler](https://docs.magichour.ai/integration/webhook/secure-handler) guides.

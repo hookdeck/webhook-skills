@@ -68,27 +68,31 @@ function verifyTrendyolRequest(headers, secret = process.env.TRENDYOL_WEBHOOK_SE
 
 Trendyol sends the **full order package** whatever the status. The body is a page of packages,
 `{ "content": [ ... ] }`; loop over `content[]` and dispatch on each package's `status`. The
-documentation lists the statuses in upper case but the example payload writes them in Title case
-(`"status": "Delivered"`), so compare case-insensitively.
+subscription list is upper case (`AT_COLLECTION_POINT`), but the body uses the getShipmentPackages
+spelling: the example has `"status": "Delivered"`, and the getShipmentPackages docs write
+`AtCollectionPoint`, `UnDelivered` and `UnPacked`. Remove underscores and upper-case both sides
+before comparing, as the example handlers do; upper-casing alone misses `AtCollectionPoint`.
 
-| Status | Package is |
-|--------|-----------|
-| `CREATED` | Created from a new order |
-| `PICKING` | Being picked by the seller |
-| `INVOICED` | Invoiced |
-| `SHIPPED` | Handed to the carrier |
-| `DELIVERED` | Delivered to the customer |
-| `UNDELIVERED` | Not delivered |
-| `CANCELLED` | Cancelled |
-| `RETURNED` | Returned |
-| `UNSUPPLIED` | Marked as not supplied by the seller |
-| `AWAITING` | Awaiting |
-| `UNPACKED` | Unpacked |
-| `AT_COLLECTION_POINT` | Waiting at a collection point |
-| `VERIFIED` | Verified |
+| Status | Meaning |
+|--------|---------|
+| `CREATED` | Package is ready to ship |
+| `PICKING` | Seller reports it has started picking or preparing the package |
+| `INVOICED` | Seller reports the invoice is issued |
+| `SHIPPED` | Package is in transit with the carrier |
+| `DELIVERED` | Package reached the customer (final) |
+| `UNDELIVERED` | Package couldn't be delivered to the customer |
+| `CANCELLED` | Package cancelled, including unsupplied ones |
+| `RETURNED` | Undelivered package is back with the seller (final) |
+| `UNSUPPLIED` | Seller cancelled items it can't supply |
+| `AWAITING` | Order awaits payment approval; use for stock updates only |
+| `UNPACKED` | Package was split |
+| `AT_COLLECTION_POINT` | Package waits at a pickup point for the customer |
+| `VERIFIED` | Order awaits payment approval, documented with `AWAITING` |
 
-Requests are `POST` with a JSON body. If your endpoint fails, Trendyol re-sends every 5 minutes
-until it succeeds and eventually deactivates the webhook, so handlers must be idempotent.
+Requests are `POST` with a JSON body. Delivery is at least once, so the same package can arrive
+more than once. If your endpoint fails, Trendyol re-sends every 5 minutes until it succeeds and
+eventually deactivates the webhook, so handlers must be idempotent: upsert by `shipmentPackageId`
+and skip a body whose `lastModifiedDate` isn't newer than the one you stored.
 
 ## Environment Variables
 
@@ -104,8 +108,9 @@ Trendyol can't reach `localhost`. Tunnel with the Hookdeck CLI (no account requi
 npx hookdeck-cli listen 3000 trendyol --path /webhooks/trendyol
 ```
 
-Use the printed URL as the webhook URL (Trendyol rejects URLs containing "Trendyol", "Dolap" or
-"Localhost").
+Use the printed URL as the webhook URL. Trendyol rejects URLs containing "Trendyol", "Dolap" or
+"Localhost", so if you expose a handler directly rather than through a tunnel or Hookdeck, mount it
+on a neutral path such as `/webhooks/orders` instead of the examples' `/webhooks/trendyol`.
 
 ## Resources
 

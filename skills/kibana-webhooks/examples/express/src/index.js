@@ -76,10 +76,10 @@ app.all('/webhooks/kibana', express.raw({ type: '*/*' }), (req, res) => {
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
     if (String(payload.status).toLowerCase() === 'recovered') {
       console.log(`Rule recovered: ${payload.rule}`);
-      // TODO: resolve the incident, notify the channel
+      // Your code: resolve the incident, notify the channel
     } else {
       console.log(`Rule action fired: ${payload.rule} (${payload.status}): ${payload.context}`);
-      // TODO: open an incident, page on-call
+      // Your code: open an incident, page on-call
     }
   } else {
     console.log(`Received ${req.method} with ${text ? 'non-JSON' : 'empty'} body`);

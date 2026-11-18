@@ -18,7 +18,7 @@ logger = logging.getLogger("bigmailer-webhooks")
 app = FastAPI()
 
 # BigMailer signs every event in X-BigMailer-Signature: "t=<unix seconds>,v1=<hex>"
-# (more than one v1= entry can appear, e.g. during key rotation).
+# (BigMailer's docs say the header can carry more than one signature).
 # Each v1 is HMAC-SHA256 (hex) of "<t>.<raw body>" keyed with the endpoint's signing secret.
 # https://docs.bigmailer.io/docs/verifying-webhook-signatures
 
@@ -142,7 +142,7 @@ async def bigmailer_webhook(request: Request):
         ids = data.get("unsubscribe_ids")
         lists = len(ids) if isinstance(ids, list) else 0
         logger.info(
-            "Unsubscribe by %s (all: %s, %d lists)", data.get("email"), data.get("unsubscribe_all") is True, lists
+            "Unsubscribe by %s (all: %s, %d message types)", data.get("email"), data.get("unsubscribe_all") is True, lists
         )
     else:
         logger.info("Unhandled event: %s", event_type)

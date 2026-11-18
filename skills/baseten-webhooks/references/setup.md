@@ -13,7 +13,7 @@ Create a webhook secret in the Baseten Secrets tab and paste it here. Without on
 2. Create a webhook secret.
 3. Store it as `BASETEN_WEBHOOK_SECRET`. Use it exactly as shown, as UTF-8 bytes (do not hex- or base64-decode it).
 
-The `X-BASETEN-SIGNATURE` header is only included once a secret is configured. During rotation, both old and new secrets remain valid for 24 hours.
+The `X-BASETEN-SIGNATURE` header is only included once a secret is configured. During rotation, both old and new secrets remain valid for 24 hours, and the header can carry a signature for each. Use the webhook secret, not a model secret or your Baseten API key.
 
 ## Register Your Endpoint
 
@@ -23,8 +23,8 @@ Webhooks are configured per request. Pass `webhook_endpoint` when calling `/asyn
 import requests, os
 
 resp = requests.post(
-    f"https://model-{model_id}.api.baseten.co/production/async_predict",
-    headers={"Authorization": f"Api-Key {os.environ['BASETEN_API_KEY']}"},
+    f"https://model-{model_id}.api.baseten.co/environments/production/async_predict",
+    headers={"Authorization": f"Bearer {os.environ['BASETEN_API_KEY']}"},
     json={
         "model_input": {"prompt": "hello"},
         "webhook_endpoint": "https://example.com/webhooks/baseten",
@@ -33,9 +33,9 @@ resp = requests.post(
 print(resp.json()["request_id"])
 ```
 
-There is no event selection: every completed request (success or failure) triggers one `async_request_completed` callback.
+There is no event selection: every completed request (success or failure) triggers one `async_predict_completed` callback.
 
 ## Testing
 
 - Run `npx hookdeck-cli listen 3000 baseten --path /webhooks/baseten` and use the tunnel URL as `webhook_endpoint`.
-- Poll `GET /async_request/{request_id}` to compare status with what the webhook reports. `WEBHOOK_FAILED` means inference succeeded but delivery failed.
+- Poll `GET /async_request/{request_id}` to compare status with what the webhook reports. `WEBHOOK_FAILED` means inference succeeded but delivery failed. Status is available for 1 hour after completion and never includes the output.

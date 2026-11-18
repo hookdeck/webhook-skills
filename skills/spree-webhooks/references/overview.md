@@ -6,6 +6,8 @@ Spree Commerce (Spree 5/6, the open-source headless e-commerce platform) sends a
 
 Delivery: any non-2xx response, timeout or connection error counts as a failure. A failed delivery is sent again with growing waits, up to 5 attempts in total over about six minutes. 15 consecutive failures disable the endpoint, and any delivery can be re-sent by hand from the delivery log. A re-sent delivery keeps the same event `id`.
 
+Spree 6.0 renamed some events (`order.completed` is now `order.placed`, `shipment.shipped` is now `fulfillment.fulfilled`, and `stock_item.*`, `wished_item.*` and `digital.*` became `stock_level.*`, `wishlist_item.*` and `digital_asset.*`). Until Spree 6.5 both names are sent, and the old-name delivery carries `metadata.deprecated_alias_of`, so skip it.
+
 ## Common Event Types
 
 | Event | Triggered When | Common Use Cases |
@@ -23,19 +25,23 @@ Other events in Spree's list include `order.fulfilled`, `payment.refunded`, `pro
 
 ## Event Payload Structure
 
-```json
+Spree's envelope example, with `data` elided as printed:
+
+```text
 {
-  "id": "evt_...",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
   "name": "order.placed",
-  "created_at": "2026-10-26T12:00:00Z",
-  "data": { "id": "or_...", "display_total": "$99.99", "currency": "USD", "items": [], "fulfillments": [], "payments": [] },
-  "metadata": { "spree_version": "6.0.0" }
+  "created_at": "2025-01-15T10:30:00Z",
+  "data": { ... },
+  "metadata": {
+    "spree_version": "6.0.0"
+  }
 }
 ```
 
 | Field | Description |
 |-------|-------------|
-| `id` | Unique ID for this event; the same on a re-send |
+| `id` | Unique UUID for this event; the same on every attempt and re-send |
 | `name` | Event name (dispatch on this) |
 | `created_at` | ISO8601 time the event occurred |
 | `data` | The serialized resource (V3 API format with prefixed IDs) |

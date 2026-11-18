@@ -15,7 +15,7 @@ function safeEqual(a: string, b: string): boolean {
 /**
  * Palmetto Finance does not sign payloads. With the default server API key
  * authentication, every delivery carries the key Palmetto returned at registration
- * in a header (apiKey by default; some pages show api_key). We compare the WHOLE
+ * in a header (apiKey; the API reference example also shows api_key). We compare the WHOLE
  * header value, with no 'Bearer ' parsing.
  * Headers.get() is case-insensitive.
  */

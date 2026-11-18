@@ -61,7 +61,7 @@ class TestQuicknodeWebhook:
     def test_valid_streams_batch(self):
         assert post(delivery(STREAMS_BATCH)).status_code == 200
 
-    def test_valid_webhooks_array(self):
+    def test_valid_array_body(self):
         assert post(delivery(WEBHOOK_MATCHES)).status_code == 200
 
     def test_any_content_type(self):

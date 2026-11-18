@@ -2,9 +2,12 @@ name: openrouter
 displayName: "OpenRouter"
 docs:
   webhooks: https://openrouter.ai/docs/cookbook/video-generation/video-generation-webhooks
-  verification: https://openrouter.ai/docs/cookbook/video-generation/video-generation-webhooks
+  verification: https://openrouter.ai/docs/api_reference/videos
+  batch: https://openrouter.ai/docs/batch-quickstart
 notes: >
-  OpenRouter video-generation callbacks (the `callback_url` of a video job). OpenRouter's Broadcast
+  OpenRouter video-generation and Batch API callbacks (the `callback_url` of a video job or batch),
+  signed with the same workspace secret and scheme. The signature header is sent only once the
+  workspace has a webhook signing secret (Generate signing secret under Webhook signing secret). OpenRouter's Broadcast
   'Webhook' destination (OTLP traces) is unsigned and out of scope. OpenRouter (openrouter.ai), a
   unified API for LLM and media-generation models. Delivery (from the docs): The receiver example
   answers 204 for a valid delivery and 401 otherwise. Retries happen but their schedule is not
@@ -33,25 +36,25 @@ notes: >
   X-OpenRouter-Signature is `t=<unix seconds>,v1=<hex>`. Parse it: take the t= value and
   each v1= value; the signed bytes are the t value, a literal COMMA (not a dot), then the raw body;
   valid when any v1 matches (64 hex chars, case-insensitive). Missing t or v1: 401. Events: dispatch
-  on the body's `type` field. Documented event types (4): video.generation.completed,
-  video.generation.failed, video.generation.cancelled, video.generation.expired. Handle a few common
+  on the body's `type` field. Documented event types (8): video.generation.completed,
+  video.generation.failed, video.generation.cancelled, video.generation.expired, batch.completed,
+  batch.failed, batch.expired, batch.cancelled (batch events carry only the batch id in data). Handle a few common
   ones and log the rest. Method: POST, so the
   examples handle POST on the webhook route. Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
-  Hookdeck's source type is OPENROUTER, labelled 'OpenRouter'. Hookdeck shows this setup note for the
-  source, and SKILL.md and references/setup.md must tell the user the same thing, verbatim:
-  "OpenRouter signs only video-generation callbacks (the callback_url of a video request). Use this
-  source for those callbacks."
+  Hookdeck's source type is OPENROUTER, labelled 'OpenRouter'. Its setup note says OpenRouter signs
+  only video-generation callbacks, which OpenRouter's docs no longer support (batch callbacks are
+  signed the same way since the Batch API added callback_url), so do not repeat it.
 testScenario:
   events:
     - "video.generation.completed"
     - "video.generation.failed"
     - "video.generation.cancelled"
 catalog:
-  summary: "Verify OpenRouter video-generation callbacks (`X-OpenRouter-Signature`: `t=...,v1=` hex HMAC-SHA256 of `{t},{body}`), handle completed, failed, cancelled and expired jobs"
+  summary: "Verify OpenRouter video-generation and batch callbacks (`X-OpenRouter-Signature`: `t=...,v1=` hex HMAC-SHA256 of `{t},{body}`), handle completed, failed, cancelled and expired jobs and batches"
   marketplace:
-    description: Verify OpenRouter video-generation callback signatures (X-OpenRouter-Signature, t=,v1= HMAC-SHA256 over "{t},{body}"), handle video.generation.completed, failed, cancelled and expired events.
+    description: Verify OpenRouter video-generation and batch callback signatures (X-OpenRouter-Signature, t=,v1= HMAC-SHA256 over "{t},{body}"), handle video.generation.* and batch.* events.
     keywords:
     - webhooks
     - openrouter

@@ -27,6 +27,13 @@ delivery.
 The Network-settings screens change over time, so follow the current
 [webhooks documentation](https://docs.mightynetworks.com/api/webhooks) if a label differs.
 
+You can also register the webhook with the GraphQL `createWebhookCallback` mutation, which takes
+`url`, `apiKey` and `includedEvents` and needs the `host:write:network_integrations` scope. The
+`apiKey` is optional there, and a webhook created without one sends no key to check, so always
+pass it. Omitting `includedEvents` subscribes the webhook to every event. Mighty Networks'
+[ActiveCampaign guide](https://docs.mightynetworks.com/api/guides/activecampaign) lists the Scale
+plan or above as a prerequisite for webhooks.
+
 ## Set Up the Source in Hookdeck
 
 Create a source of type **Mighty Networks** (`MIGHTY_NETWORKS`). Hookdeck shows this note, and it

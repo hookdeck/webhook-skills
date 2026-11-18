@@ -3,8 +3,8 @@ name: payrix-pro-webhooks
 description: >
   Receive and authenticate Payrix Pro webhooks (Worldpay's payment facilitation platform,
   not Payrix Payments). Use when setting up a Payrix Pro webhook endpoint, checking the
-  Header Name and Header Value on a webhook action, debugging 401s, or handling transaction
-  and merchant alerts.
+  Header Name and Header Value on a webhook action, debugging 401s, or handling merchant
+  onboarding and other alerts.
 license: MIT
 metadata:
   author: hookdeck
@@ -75,14 +75,10 @@ parses only after the credential check.
 
 ## Alerts
 
-No event names are documented; the payload shape depends on the alert and the action's format
-setting. The examples use clearly labelled illustrative payloads, for example a transaction alert:
-
-```json
-{ "alert": "transaction", "transaction": { "id": "t1_txn_example", "total": 1500 } }
-```
-
-Dispatch on the fields your own alerts actually send.
+No event names are documented: each trigger is a Resource and an Event picked from portal
+dropdowns, and the payload shape depends on the trigger and the action's format setting. Give each
+webhook a single trigger and its own endpoint URL, capture a delivery before you write the parser,
+and dispatch on the fields your own triggers actually send.
 
 ## Environment Variables
 

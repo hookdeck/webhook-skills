@@ -70,7 +70,7 @@ Do **not** reject old timestamps by default: Hookdeck retries and replays resend
 
 ## Payloads (no event types)
 
-Quicknode has **no event type field or header**. Each stream or webhook delivers its filter's output: blocks, transactions, logs or matched events. The examples dispatch on payload **shape** using clearly labelled illustrative payloads: a Streams batch with `data` and `metadata`, or a Webhooks array of matched transactions. Check your own stream's dataset or webhook filter for the real shape.
+Quicknode has **no event type field or header**. Each stream or webhook delivers its filter's output: blocks, transactions, logs or matched events. The examples dispatch on payload **shape** using clearly labelled illustrative payloads: a Streams batch with `data` and `metadata` (Quicknode's documented envelope), or any array body. Quicknode documents no Webhooks payload shape, so check the dashboard's test output for your own stream or webhook. Streams deliveries also carry metadata headers such as `Stream-Id` and `Stream-Dataset`.
 
 ## Important Headers
 

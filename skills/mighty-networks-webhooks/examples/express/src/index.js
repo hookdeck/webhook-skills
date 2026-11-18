@@ -39,77 +39,77 @@ function handleEvent(eventType, payload) {
   switch (eventType) {
     case 'MemberJoined':
       console.log(`Member joined space ${payload.space_id}`);
-      // TODO: welcome the member, sync to your CRM (payload.member)
+      // Your code: welcome the member, sync to your CRM (payload.member)
       break;
 
     case 'MemberLeft':
       console.log(`Member left space ${payload.space_id}`);
-      // TODO: record churn (payload.member, payload.reason)
+      // Your code: record churn (payload.member, payload.reason)
       break;
 
     case 'MemberPurchased':
       console.log('Member purchased a plan');
-      // TODO: grant access (payload.member, payload.plan, payload.purchase)
+      // Your code: grant access (payload.member, payload.plan, payload.purchase)
       break;
 
     case 'MemberPurchaseRequested':
       console.log('Member requested a purchase');
-      // TODO: approve or follow up (payload.member_email, payload.plan_id)
+      // Your code: approve or follow up (payload.member_email, payload.plan_id)
       break;
 
     case 'MemberSubscriptionRenewed':
       console.log('Subscription renewed');
-      // TODO: extend access (payload.member, payload.subscription)
+      // Your code: extend access (payload.member, payload.subscription)
       break;
 
     case 'MemberSubscriptionCanceled':
       console.log('Subscription canceled');
-      // TODO: start a win-back flow (payload.member, payload.subscription)
+      // Your code: start a win-back flow (payload.member, payload.subscription)
       break;
 
     case 'MemberPlanChanged':
       console.log('Member changed plan');
-      // TODO: adjust entitlements (payload.plan)
+      // Your code: adjust entitlements (payload.plan)
       break;
 
     case 'MemberRemovedFromPlan':
       console.log('Member removed from plan');
-      // TODO: revoke access
+      // Your code: revoke access
       break;
 
     case 'PostCreated':
       console.log(`Post created: ${payload.title}`);
-      // TODO: moderate or cross-post (payload.id, payload.space_id)
+      // Your code: moderate or cross-post (payload.id, payload.space_id)
       break;
 
     case 'PostUpdated':
       console.log(`Post updated: ${payload.title}`);
-      // TODO: re-sync the post
+      // Your code: re-sync the post
       break;
 
     case 'CommentCreated':
       console.log(`Comment created on ${payload.targetable_type} ${payload.targetable_id}`);
-      // TODO: notify (payload.text, payload.author_id)
+      // Your code: notify (payload.text, payload.author_id)
       break;
 
     case 'RsvpCreated':
       console.log(`RSVP created: ${payload.status}`);
-      // TODO: update the attendee list (payload.event, payload.member)
+      // Your code: update the attendee list (payload.event, payload.member)
       break;
 
     case 'EventCreated':
       console.log(`Event created: ${payload.title}`);
-      // TODO: add to your calendar (payload.starts_at)
+      // Your code: add to your calendar (payload.starts_at)
       break;
 
     case 'EventCanceled':
       console.log(`Event canceled: ${payload.title}`);
-      // TODO: notify attendees
+      // Your code: notify attendees
       break;
 
     case 'ReportedContentCreated':
       console.log('Content reported');
-      // TODO: queue for moderation (payload.reported_content)
+      // Your code: queue for moderation (payload.reported_content)
       break;
 
     default:

@@ -19,7 +19,7 @@ HEX_SHA256 = re.compile(r"[0-9a-fA-F]{64}")
 def verify_complycube_signature(raw_body: bytes, signature_header: str | None, secret: str) -> bool:
     """Verify a ComplyCube webhook signature.
 
-    ComplyCube sends ``ComplyCube-Signature: <hex>`` (no prefix): the lowercase hex HMAC-SHA256 of
+    ComplyCube sends ``ComplyCube-Signature: <hex>`` (no prefix): the hex HMAC-SHA256 of
     the raw request body bytes, keyed with the webhook's secret. Nothing else is signed.
     Both sides are compared as bytes so a non-ASCII header is rejected, not a 500.
     """

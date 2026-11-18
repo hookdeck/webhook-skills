@@ -114,15 +114,15 @@ async def quicknode_webhook(request: Request):
     # Quicknode has no event types. Dispatch on the shape of the payload.
     # ILLUSTRATIVE shapes only: the real payload depends on your stream's dataset or webhook filter.
     if isinstance(payload, list):
-        # Webhooks: array of matched items (e.g. transactions)
-        print(f"Webhook delivery with {len(payload)} matched item(s)")
+        # An array body. Quicknode documents no Webhooks payload shape: copy yours from the dashboard's test output
+        print(f"Array payload with {len(payload)} item(s)")
     elif isinstance(payload, dict) and isinstance(payload.get("data"), list) and payload.get("metadata"):
         # Streams: a batch with `data` and `metadata`
         metadata = payload["metadata"]
         print(f"Streams batch: {len(payload['data'])} item(s), dataset={metadata.get('dataset')}, network={metadata.get('network')}")
     else:
         print("Unrecognised payload shape")
-    # TODO: Persist or enqueue the data, then return 2xx quickly
+    # Your code: persist or enqueue the data, then return 2xx quickly
 
     processed_nonces.add(nonce)
     return {"received": True}

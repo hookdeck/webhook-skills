@@ -49,7 +49,7 @@ function verifySmtp2goRequest(headers, expected = process.env.SMTP2GO_AUTHORIZAT
 
 Return `401` on a missing or mismatched header, `400` for a body you can't parse, `200` once handled. Read the body raw (`express.raw({ type: '*/*' })`) and parse it only **after** the check. Python and Next.js equivalents are in [references/verification.md](references/verification.md).
 
-> **A static shared credential authenticates the sender, not the body, and gives no replay protection** (no signature, no timestamp). Use HTTPS, rotate the credential if it leaks, and dedupe on the webhook `id`.
+> **A static shared credential authenticates the sender, not the body, and gives no replay protection** (no signature, no timestamp). Use HTTPS, rotate the credential if it leaks, and make handlers idempotent. SMTP2GO documents no per-delivery ID: `id` is described as "the unique id for the webhook", so don't dedupe on it alone. Key on `event`, `email_id`, `rcpt` and `time` for email, and `event`, `message_id` and `received_timestamp` for SMS.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -105,7 +105,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on the webhook `id`
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Dedupe on `event` plus `email_id`, `rcpt` and `time`
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

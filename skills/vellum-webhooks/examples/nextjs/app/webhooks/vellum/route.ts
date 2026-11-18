@@ -23,33 +23,33 @@ function handleEvent(payload: VellumEvent): void {
   switch (name) {
     case 'workflow.execution.initiated':
       console.log(`Workflow execution initiated: ${body?.workflow_class?.name}`);
-      // TODO: record the run start (body.inputs)
+      // Your code: record the run start (body.inputs)
       break;
 
     case 'workflow.execution.fulfilled':
       console.log(`Workflow execution fulfilled: ${body?.workflow_class?.name}`);
-      // TODO: store the result (body.outputs)
+      // Your code: store the result (body.outputs)
       break;
 
     case 'workflow.execution.rejected':
       console.log(`Workflow execution rejected: ${body?.error?.code} ${body?.error?.message}`);
-      // TODO: alert on the failure (body.error)
+      // Your code: alert on the failure (body.error)
       break;
 
     case 'workflow_execution.usage_calculation.fulfilled':
     case 'workflow.usage_calculation.fulfilled':
       console.log('Workflow usage calculated');
-      // TODO: record cost (body.usage, body.cost)
+      // Your code: record cost (body.usage, body.cost)
       break;
 
     case 'workflow_execution.usage_calculation.rejected':
       console.log('Workflow usage calculation failed');
-      // TODO: flag the run for re-calculation
+      // Your code: flag the run for re-calculation
       break;
 
     case 'metric.execution.fulfilled':
       console.log('Metric execution fulfilled');
-      // TODO: store the metric result (body)
+      // Your code: store the metric result (body)
       break;
 
     default:

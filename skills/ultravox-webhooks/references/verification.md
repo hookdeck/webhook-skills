@@ -12,13 +12,13 @@ this concatenated string using your webhook secret as the key."
 | Algorithm | HMAC-SHA256 |
 | Signed message | raw body bytes, then the timestamp header value, **no separator** |
 | Key | the webhook secret as UTF-8 bytes, used as-is |
-| Encoding | lowercase hex, bare digest (no prefix) |
+| Encoding | lowercase hex, bare digest (no prefix); one per secret, comma-separated |
 | Secret env var | `ULTRAVOX_WEBHOOK_SECRET` |
 
-> Give the Ultravox webhook exactly one secret and paste it here. A webhook without a secret is unsigned, and one with several secrets sends a list of signatures, so both fail verification.
-
-The docs say the signature header "may contain multiple signatures separated by commas". That
-happens for a webhook with several secrets. These examples compare the **whole** header to a single expected digest, so a list fails. Keep one secret per webhook.
+The docs say the signature header "may contain multiple signatures separated by commas" and
+that "Your code should check if any of the provided signatures match your computed signature".
+That happens for a webhook with several secrets, and it's what lets you rotate without downtime.
+These examples split the header on commas and accept the delivery if any digest matches.
 
 ## Implementation
 
@@ -26,19 +26,26 @@ Build the message as bytes and verify before parsing anything:
 
 ```javascript
 const HEX_DIGEST = /^[0-9a-fA-F]{64}$/;
-if (!sig || !ts || !HEX_DIGEST.test(sig)) return 401;
+if (!sig || !ts) return 401;
 const signed = Buffer.concat([rawBody, Buffer.from(ts, 'latin1')]);
 const expected = crypto.createHmac('sha256', secret).update(signed).digest();
-const received = Buffer.from(sig.toLowerCase(), 'hex'); // validated first
-const ok = received.length === expected.length && crypto.timingSafeEqual(received, expected);
+const ok = sig.split(',').some((candidate) => {
+  if (!HEX_DIGEST.test(candidate)) return false;
+  const received = Buffer.from(candidate.toLowerCase(), 'hex'); // validated first
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+});
 ```
 
 ```python
-if not signature or not timestamp or not re.fullmatch(r"[0-9a-fA-F]{64}", signature):
+if not signature or not timestamp:
     return 401
 signed = b"".join([raw_body, timestamp.encode("latin-1")])
 expected = hmac.new(secret.encode(), signed, hashlib.sha256).digest()
-ok = hmac.compare_digest(bytes.fromhex(signature), expected)
+ok = any(
+    re.fullmatch(r"[0-9a-fA-F]{64}", candidate)
+    and hmac.compare_digest(bytes.fromhex(candidate), expected)
+    for candidate in signature.split(",")
+)
 ```
 
 Complete handlers: [Express](../examples/express/), [Next.js](../examples/nextjs/), [FastAPI](../examples/fastapi/).
@@ -62,13 +69,15 @@ older than 1 minute. Either way, dedupe retries and duplicates idempotently.
 - **Hex hygiene.** Require exactly 64 hex characters and compare in constant time. Never call
   `Buffer.from(sig, 'hex')` on an unvalidated value: it silently drops bad characters.
   Case is ignored, so lowercase (or decode) both sides first.
-- **No secret / several secrets.** Unsigned or comma-separated signatures fail verification.
+- **Several secrets.** Split on commas and accept any match. Comparing the whole header fails as
+  soon as a second secret is added.
+- **Rotation behind Hookdeck.** Update the Ultravox source's secret as soon as you rotate it in
+  Ultravox.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely cause |
 |---------|--------------|
 | 401, "Missing ..." | Header absent: webhook has no secret, or a proxy stripped it |
-| 401, "Malformed signature" | Header holds a comma-separated list (several secrets) or a prefix |
-| 401, "Invalid signature" | Wrong secret, body modified/re-serialized, or separator added between body and timestamp |
+| 401, "Invalid signature" | Wrong secret (none of the listed digests match), body modified/re-serialized, or separator added between body and timestamp |
 | 401, "Timestamp outside tolerance" | Tolerance enabled and the delivery is a retry/replay |

@@ -26,5 +26,5 @@ No timestamp is included in the signed message. These examples do not invent an 
 
 ## Official Documentation
 
-- [Webhooks](https://docs.authgear.com/integrate/events-hooks/webhooks)
-- [Verification](https://docs.authgear.com/integrate/events-hooks/webhooks#verifying-signature)
+- [Webhooks](https://docs.authgear.com/customization/events-hooks/webhooks)
+- [Verification](https://docs.authgear.com/customization/events-hooks/webhooks#verifying-signature)

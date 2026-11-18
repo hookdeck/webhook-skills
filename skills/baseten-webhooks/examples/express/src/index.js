@@ -64,7 +64,7 @@ app.post('/webhooks/baseten', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   switch (event.type) {
-    case 'async_request_completed':
+    case 'async_predict_completed':
       return res.json({ received: true, outcome: handleAsyncRequestCompleted(event) });
     default:
       console.log(`Unhandled Baseten event type: ${event.type}`);

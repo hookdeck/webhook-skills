@@ -9,7 +9,7 @@ x-tidio-signature: t=1680652800,s=c64b17322c4519dd324a6014658c518df231ec3e2c6ac8
 ```
 
 - `t` is the signing timestamp (Unix seconds).
-- Each `s` is a signature for one webhook secret (several while you rotate secrets).
+- Each `s` is a signature for one webhook secret; Tidio sends one for each secret generated.
 - Signed content is the **raw request body**, then a literal underscore, then the `t` value: `{request_body}_{signing_timestamp}`.
 - The signature is **lowercase hex HMAC-SHA256** keyed with the webhook secret (its UTF-8 bytes, not hex- or base64-decoded).
 - The request is authentic if the computed hash equals **any** `s` value.
@@ -95,7 +95,7 @@ is the more robust replay defence.
 
 - **Raw body**: any parse and re-serialize changes the bytes. Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, or `await request.body()`.
 - **Order**: body first, then `_`, then `t`. `t.body` or `t_body` will never match.
-- **Multiple `s` values**: during secret rotation the header holds one `s` per secret; accept if any matches.
+- **Multiple `s` values**: the header holds one `s` for each secret generated; accept if any matches.
 - **Hex case**: compare case-insensitively (lowercase both sides) after checking for exactly 64 hex characters.
 - **Never call `Buffer.from(sig, 'hex')` on an unvalidated value**: it silently drops invalid characters. Validate the alphabet and length first.
 - **Constant-time compare**: `crypto.timingSafeEqual` on equal-length Buffers; `hmac.compare_digest` on bytes (not `str`).

@@ -20,7 +20,7 @@ protection** (no signature, no timestamp). Anyone who captures a request or lear
 send your endpoint arbitrary tracking data, and a captured request can be replayed unchanged. So:
 
 - Serve the endpoint over HTTPS only.
-- Rotate the Webhook Secret if it leaks, and update `SHIP24_WEBHOOK_SECRET` at the same time.
+- Keep the Webhook Secret out of logs and source control. Ship24's docs don't describe rotating it.
 - Dedupe on `metadata.messageId` (this also absorbs Ship24's own retries).
 
 ## Implementation

@@ -24,4 +24,4 @@ Recommended events: `video.source.recorded`, `video.encoding.quality.completed`,
 
 ## Test Mode vs Live Mode
 
-Use a separate webhook per environment so each has its own secret. Upload a short video to trigger `video.source.recorded` and `video.encoding.quality.completed`.
+Use a separate webhook per environment so each has its own secret. Upload a short video to trigger `video.encoding.quality.completed`. `video.source.recorded` only fires for a live stream recording.

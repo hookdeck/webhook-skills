@@ -9,7 +9,7 @@
 
 Webhook endpoints are configured per account in the BigMailer console under the API settings, in the **Webhooks** section. Add your endpoint URL there; it then receives engagement events for the account's brands.
 
-Follow BigMailer's [getting started guide](https://docs.bigmailer.io/docs/webhooks-getting-started) for the current screens and options. The events delivered are `bounce`, `click`, `complaint`, `open`, and `unsubscribe`.
+Follow BigMailer's [getting started guide](https://docs.bigmailer.io/docs/webhooks) for the current screens and options. The events delivered are `bounce`, `click`, `complaint`, `open`, and `unsubscribe`.
 
 ## Get Your Signing Secret
 

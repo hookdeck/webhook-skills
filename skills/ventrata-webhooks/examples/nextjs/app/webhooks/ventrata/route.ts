@@ -19,22 +19,22 @@ function handleEvent(payload: VentrataPayload): void {
   switch (normalizeEvent(payload.event)) {
     case 'order_update':
       console.log(`Order updated: ${payload.order?.orderId}`);
-      // TODO: sync payload.order; payload.diff lists what changed
+      // Your code: sync payload.order; payload.diff lists what changed
       break;
 
     case 'booking_update':
       console.log(`Booking updated: ${payload.booking?.uuid}`);
-      // TODO: sync payload.booking; payload.diff lists what changed
+      // Your code: sync payload.booking; payload.diff lists what changed
       break;
 
     case 'availability_update':
       console.log(`Availability updated: ${payload.availability?.id}`);
-      // TODO: refresh inventory from payload.availability
+      // Your code: refresh inventory from payload.availability
       break;
 
     case 'product_update':
       console.log(`Product updated: ${payload.product?.id}`);
-      // TODO: re-sync payload.product; payload.diff lists what changed
+      // Your code: re-sync payload.product; payload.diff lists what changed
       break;
 
     default:

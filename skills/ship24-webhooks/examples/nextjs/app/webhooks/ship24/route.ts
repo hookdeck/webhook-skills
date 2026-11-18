@@ -21,7 +21,7 @@ function handleTracking(tracking: Ship24Tracking): void {
     case 'tracking/events': {
       const event = (tracking.events ?? [])[0];
       console.log(`Tracking update for ${tracker?.trackingNumber}: ${event?.status}`);
-      // TODO: compare event.occurrenceDatetime with the latest stored event before changing
+      // Your code: compare event.occurrenceDatetime with the latest stored event before changing
       // shipment status, because messages can arrive out of order
       break;
     }
@@ -29,7 +29,7 @@ function handleTracking(tracking: Ship24Tracking): void {
     case 'tracking/pod': {
       const { data } = tracking;
       console.log(`Proof of delivery for ${tracker?.trackingNumber}: ${data?.status}`);
-      // TODO: if data.status is "found", store data.content.text or download
+      // Your code: if data.status is "found", store data.content.text or download
       // data.content.downloadUrl (valid for 7 days)
       break;
     }

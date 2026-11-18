@@ -3,7 +3,7 @@ name: baseten-webhooks
 description: >
   Receive and verify Baseten webhooks. Use when setting up Baseten async
   inference callbacks (webhook_endpoint on /async_predict), debugging
-  X-BASETEN-SIGNATURE verification, or handling async_request_completed events.
+  X-BASETEN-SIGNATURE verification, or handling async_predict_completed callbacks.
 license: MIT
 metadata:
   author: hookdeck
@@ -17,7 +17,7 @@ metadata:
 
 - How do I receive Baseten webhooks for async inference results?
 - How do I verify the `X-BASETEN-SIGNATURE` header?
-- How do I handle `async_request_completed` events, including failed requests?
+- How do I handle `async_predict_completed` callbacks, including failed requests?
 - Why does my Baseten webhook signature verification fail (raw body, `v1=` prefix)?
 - How do I avoid losing model output when Baseten only retries once?
 
@@ -29,7 +29,7 @@ Store it as `BASETEN_WEBHOOK_SECRET`. Baseten calls your endpoint only for async
 
 ## Verification (core)
 
-Baseten sends `X-BASETEN-SIGNATURE: v1=<hex>`: a lowercase hex HMAC-SHA256 of the **raw request body bytes**, keyed with the UTF-8 bytes of your webhook secret. Nothing else is signed (no timestamp or id), so there is no replay window to check. During secret rotation the header may hold several comma-separated values; accept if any matches. Validate the hex (64 characters) before decoding, then compare in constant time.
+Baseten sends `X-BASETEN-SIGNATURE: v1=<hex>`: a lowercase hex HMAC-SHA256 of the **raw request body bytes**, keyed with the UTF-8 bytes of your webhook secret. Nothing else is signed (no timestamp or id), so there is no replay window to check. During secret rotation the header can hold a `v1=` signature for both the old and new secrets; accept if any matches. Validate the hex (64 characters) before decoding, then compare in constant time.
 
 Node:
 
@@ -72,11 +72,12 @@ Read the body as bytes before any JSON parsing (Express: `express.raw({ type: '*
 
 ## Event Types
 
-Baseten documents one event type. There is no type header; dispatch on the body's `type` field.
+Baseten documents one async callback type and, for Frontier Gateway, one billing type. There is no type header; dispatch on the body's `type` field.
 
 | `type` | Description |
 |--------|-------------|
-| `async_request_completed` | Async inference finished. Success and failure share this type: `data` holds the output (or `null`) and `errors` is empty on success or holds error objects (e.g. `MODEL_PREDICT_ERROR`) on failure |
+| `async_predict_completed` | Async inference finished. Success and failure share this type: `errors` is empty on success or holds error objects (e.g. `MODEL_PREDICT_ERROR`) on failure, and `data` holds the output on success. Check `errors` before using `data` |
+| `API_BILLING_USAGE` | Frontier Gateway billing (onboarded workspaces only, at a URL Baseten provisions): `data.events` holds one or more per-request token usage entries; dedupe each on `idempotencyKey` |
 
 Log and acknowledge any other `type` with `200`.
 
@@ -89,7 +90,7 @@ Log and acknowledge any other `type` with `200`.
 
 ## Delivery Behaviour
 
-Best effort: 2 attempts in total (one retry about 2 s later), 10 s timeout per attempt, retried only on `500`, `502`, `503` and `504`. If both fail, the model output is lost and the request status becomes `WEBHOOK_FAILED`. Respond quickly, return `401` for bad signatures (not retried) and `500` only for transient failures. Persist outputs in your model's `postprocess()` too.
+Async callbacks are best effort: 2 attempts in total (one retry about 2 s later), 10 s timeout per attempt, retried only on `500`, `502`, `503` and `504`. If both fail, the model output is lost and the request status becomes `WEBHOOK_FAILED`. Respond quickly, return `401` for bad signatures (not retried) and `500` only for transient failures. Persist outputs in your model's `postprocess()` too. Frontier Gateway billing webhooks retry with backoff for up to 15 s, treat any `4xx` as final and send exhausted events to a dead-letter queue.
 
 ## Environment Variables
 

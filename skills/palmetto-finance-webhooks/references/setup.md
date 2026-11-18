@@ -27,15 +27,15 @@ Use the default server API key authentication. Palmetto shows the key only once,
 
 2. Store the returned `apiKey` as `PALMETTO_FINANCE_WEBHOOK_SECRET` straight away. It is
    returned only once.
-3. Palmetto docs call the header `apiKey` in the authentication section and `api_key` in the
-   registration section. Send a test delivery and check which name your requests show, then set
-   `PALMETTO_FINANCE_WEBHOOK_HEADER` to match (default `apiKey`).
+3. Palmetto's guide calls the header `apiKey` in the authentication section and `api_key` in the
+   registration section, and the API reference's example request carries both with the same
+   value. Set `PALMETTO_FINANCE_WEBHOOK_HEADER` to match what your requests show (default `apiKey`).
 
 `hostUrl` is only the domain part. The path goes in the subscription's `endpointUrl`.
 
-The other two Palmetto mechanisms, **client headers** (`clientId` and `clientSecret` headers)
-and **client basic authorization** (`Authorization: Basic base64(clientId:clientSecret)`), are
-not covered by Hookdeck's Palmetto Finance source, and the examples don't check them.
+The examples don't check the other two Palmetto mechanisms, **client headers** (`clientId` and
+`clientSecret` in the guide, `client_id` and `client_secret` in the API reference) and **client
+basic authorization** (`Authorization: Basic base64(clientId:clientSecret)`).
 
 ## Register Your Endpoint
 
@@ -59,7 +59,7 @@ await fetch(`${envBaseUrl}/api/webhooks/registrations/${webhookRegistrationId}/s
 
 ## HTTP Method
 
-Each subscription sets its own `httpMethod`. The examples use `POST` but accept `GET`, `POST`,
+Each subscription sets its own `httpMethod`, `POST` or `PUT` in the API reference. The examples use `POST` but accept `GET`, `POST`,
 `PUT`, `PATCH` and `DELETE` on the route, check the key first for every method, and handle an
 empty body. Any method the sender uses must also be allowed on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
@@ -74,7 +74,7 @@ requests show `api_key`) and paste the key. Hookdeck checks the header before fo
 curl -X POST http://localhost:3000/webhooks/palmetto-finance \
   -H "Content-Type: application/json" \
   -H "apiKey: $PALMETTO_FINANCE_WEBHOOK_SECRET" \
-  -d '{"event":"accountCreated","accountId":"acct_1","programType":"solar"}'
+  -d '{"event":"accountCreated","accountId":"palmetto-finance-account-id","programType":"solar"}'
 ```
 
 ## Failure Handling

@@ -56,63 +56,63 @@ async def require_mighty_networks_key(request: Request) -> None:
 def handle_event(event_type: str, payload: dict) -> None:
     if event_type == "MemberJoined":
         print(f"Member joined space {payload.get('space_id')}")
-        # TODO: welcome the member, sync to your CRM (payload["member"])
+        # Your code: welcome the member, sync to your CRM (payload["member"])
 
     elif event_type == "MemberLeft":
         print(f"Member left space {payload.get('space_id')}")
-        # TODO: record churn (payload["member"], payload["reason"])
+        # Your code: record churn (payload["member"], payload["reason"])
 
     elif event_type == "MemberPurchased":
         print("Member purchased a plan")
-        # TODO: grant access (payload["member"], payload["plan"], payload["purchase"])
+        # Your code: grant access (payload["member"], payload["plan"], payload["purchase"])
 
     elif event_type == "MemberPurchaseRequested":
         print("Member requested a purchase")
-        # TODO: approve or follow up (payload["member_email"], payload["plan_id"])
+        # Your code: approve or follow up (payload["member_email"], payload["plan_id"])
 
     elif event_type == "MemberSubscriptionRenewed":
         print("Subscription renewed")
-        # TODO: extend access (payload["member"], payload["subscription"])
+        # Your code: extend access (payload["member"], payload["subscription"])
 
     elif event_type == "MemberSubscriptionCanceled":
         print("Subscription canceled")
-        # TODO: start a win-back flow (payload["member"], payload["subscription"])
+        # Your code: start a win-back flow (payload["member"], payload["subscription"])
 
     elif event_type == "MemberPlanChanged":
         print("Member changed plan")
-        # TODO: adjust entitlements (payload["plan"])
+        # Your code: adjust entitlements (payload["plan"])
 
     elif event_type == "MemberRemovedFromPlan":
         print("Member removed from plan")
-        # TODO: revoke access
+        # Your code: revoke access
 
     elif event_type == "PostCreated":
         print(f"Post created: {payload.get('title')}")
-        # TODO: moderate or cross-post (payload["id"], payload["space_id"])
+        # Your code: moderate or cross-post (payload["id"], payload["space_id"])
 
     elif event_type == "PostUpdated":
         print(f"Post updated: {payload.get('title')}")
-        # TODO: re-sync the post
+        # Your code: re-sync the post
 
     elif event_type == "CommentCreated":
         print(f"Comment created on {payload.get('targetable_type')} {payload.get('targetable_id')}")
-        # TODO: notify (payload["text"], payload["author_id"])
+        # Your code: notify (payload["text"], payload["author_id"])
 
     elif event_type == "RsvpCreated":
         print(f"RSVP created: {payload.get('status')}")
-        # TODO: update the attendee list (payload["event"], payload["member"])
+        # Your code: update the attendee list (payload["event"], payload["member"])
 
     elif event_type == "EventCreated":
         print(f"Event created: {payload.get('title')}")
-        # TODO: add to your calendar (payload["starts_at"])
+        # Your code: add to your calendar (payload["starts_at"])
 
     elif event_type == "EventCanceled":
         print(f"Event canceled: {payload.get('title')}")
-        # TODO: notify attendees
+        # Your code: notify attendees
 
     elif event_type == "ReportedContentCreated":
         print("Content reported")
-        # TODO: queue for moderation (payload["reported_content"])
+        # Your code: queue for moderation (payload["reported_content"])
 
     else:
         print(f"Unhandled event: {event_type}")

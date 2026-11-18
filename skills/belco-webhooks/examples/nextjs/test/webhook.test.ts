@@ -43,7 +43,7 @@ const answered = JSON.stringify({
   requestId: 'call-answered-1',
   eventName: 'call.answered',
   date: '2020-11-12T00:00:00Z',
-  payload: { shopId: 'm5phzRDim8GMsdMhP', call: { direction: 'inbound', status: 'answered' } },
+  payload: { shopId: 'm5phzRDim8GMsdMhP' },
 });
 const unknown = JSON.stringify({ requestId: 'x-1', eventName: 'conversation.snoozed', payload: {} });
 

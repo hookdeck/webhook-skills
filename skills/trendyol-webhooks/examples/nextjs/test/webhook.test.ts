@@ -144,6 +144,14 @@ describe('Trendyol webhook route', () => {
       expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Package delivered'));
     });
 
+    it('matches the getShipmentPackages spelling of multi-word statuses', async () => {
+      const res = await POST(
+        makeRequest({ 'x-api-key': SECRET }, JSON.stringify(samplePayload('AtCollectionPoint')))
+      );
+      expect(res.status).toBe(200);
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Package at collection point'));
+    });
+
     it('handles every package in content[]', async () => {
       const body = { content: [samplePackage('Created'), samplePackage('Shipped')] };
       const res = await POST(makeRequest({ 'x-api-key': SECRET }, JSON.stringify(body)));

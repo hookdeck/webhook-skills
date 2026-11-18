@@ -55,7 +55,7 @@ to compare against and it cannot be checked.
 curl -X POST http://localhost:3000/webhooks/measureone \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: Bearer your-shared-secret" \
-  -d '{"event":"datarequest.items_available","datarequest_id":"dr_01","individual_id":"ind_01"}'
+  -d '{"event":"datarequest.items_available","datarequest_id":"dr_TSEne2SSjP3GvpVrs5HLol4xor2","individual_id":"idv_TSEne2SSjP3GvpVrs5HLol4xor2"}'
 ```
 
 (Use the header name and value you configured.)

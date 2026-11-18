@@ -43,7 +43,7 @@ notes: >
   colon-separated URN (`bvnk:payment:channel:created`, `platform:accounts:customer:created`,
   `payment:v2:payin:status-change`). Legacy "Standard" webhooks instead carry `"source": "payment",
   "event": "statusChanged"` (camelCase names); those are not listed here. No header names the event.
-  Documented event types (28): platform:accounts:customer:status-change,
+  Documented event types (30): platform:accounts:customer:status-change,
   platform:accounts:customer:agreement-status-change,
   platform:accounts:customer:associate-status-change, platform:accounts:customer:associate-deleted,
   platform:accounts:customer:document-status-change,
@@ -51,7 +51,7 @@ notes: >
   platform:accounts:customer:data-updated, platform:accounts:customer:initialized,
   bvnk:customers:status-change, bvnk:customers:agreements:status-change,
   bvnk:customers:associates:status-change, bvnk:customers:documents:status-change,
-  bvnk:customers:associates:documents:status-change (and 14 more). Handle a few common ones and log
+  bvnk:customers:associates:documents:status-change (and 16 more). Handle a few common ones and log
   the rest. Method: POST. The examples handle
   POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();

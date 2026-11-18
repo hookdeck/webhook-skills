@@ -33,10 +33,10 @@ function handleAlert(alert: Alert, group: AlertGroup): void {
 
   if (alert.status === 'firing') {
     console.log(`Alert firing: ${name} (${alert.fingerprint}) on receiver ${group.receiver}`);
-    // TODO: page on-call or open an incident (alert.labels, alert.annotations)
+    // Your code: page on-call or open an incident (alert.labels, alert.annotations)
   } else if (alert.status === 'resolved') {
     console.log(`Alert resolved: ${name} (${alert.fingerprint})`);
-    // TODO: close the matching incident
+    // Your code: close the matching incident
   } else {
     console.log(`Unhandled alert status: ${alert.status}`);
   }

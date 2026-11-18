@@ -9,7 +9,7 @@ import crypto from 'crypto';
  * secret is compared exactly, in constant time.
  *
  * A static shared credential authenticates the sender, not the body, and gives no replay
- * protection (no signature, no timestamp): use HTTPS and rotate the secret if it leaks.
+ * protection (no signature, no timestamp): use HTTPS and keep the secret out of logs.
  */
 export function verifyShip24Request(
   headers: Headers,

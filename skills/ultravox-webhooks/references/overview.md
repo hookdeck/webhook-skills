@@ -12,10 +12,10 @@ The body carries the event name in its `event` field. Ultravox documents four:
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `call.started` | A call has started | Mark the call in progress, start monitoring |
-| `call.joined` | A participant has joined the call | Track participant connection |
-| `call.ended` | A call has ended | Fetch the transcript and final call details |
-| `call.billed` | A call has been billed | Reconcile usage and cost |
+| `call.started` | A call is created | Calls created for you by SIP or a telephony provider |
+| `call.joined` | A client connects to the call | Track live calls |
+| `call.ended` | A call ends (or an unjoined call reaches its join timeout) | Read the final call details |
+| `call.billed` | A call is billed | Reconcile usage and cost |
 
 ## Delivery and Retries
 

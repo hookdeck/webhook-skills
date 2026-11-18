@@ -97,7 +97,7 @@ credential if it leaks.
 
 Alertmanager has no event-type field. The body is a version `"4"` notification:
 `version`, `groupKey`, `truncatedAlerts`, `status`, `receiver`, `groupLabels`, `commonLabels`,
-`commonAnnotations`, `externalURL`, and `alerts[]` (each with `status`, `labels`, `annotations`,
+`commonAnnotations`, `externalURL`, `notification_reason`, and `alerts[]` (each with `status`, `labels`, `annotations`,
 `startsAt`, `endsAt`, `generatorURL`, `fingerprint`).
 
 | Status | Meaning |
@@ -108,8 +108,10 @@ Alertmanager has no event-type field. The body is a version `"4"` notification:
 `status` is a state, not an event type, and the group `status` is `firing` while any alert in it is
 firing. Loop over `alerts[]` and use each alert's own `status`.
 
-Notifications repeat every `group_interval` and `repeat_interval`. Deduplicate with `groupKey`
-plus each alert's `fingerprint` (and `status`, `startsAt`, `endsAt` if resolved should count as new).
+Notifications repeat every `group_interval` and `repeat_interval`, and each one carries the whole
+group. Key your handling on each alert's `fingerprint`, `status` and `startsAt`, as the examples
+do, never on `groupKey` alone: a group's firing and resolved notifications share the same
+`groupKey`.
 
 ## Environment Variables
 

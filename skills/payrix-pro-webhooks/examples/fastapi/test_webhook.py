@@ -18,9 +18,9 @@ HEADER = os.environ["PAYRIX_PRO_WEBHOOK_HEADER"]
 SECRET = os.environ["PAYRIX_PRO_WEBHOOK_SECRET"]
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
-# Illustrative payloads: Payrix doesn't document the body shape.
-TRANSACTION_ALERT = {"alert": "transaction", "transaction": {"id": "t1_txn_example", "total": 1500}}
-MERCHANT_ALERT = {"alert": "merchant", "merchant": {"id": "t1_mer_example", "status": 1}}
+# Placeholder bodies, not Payrix payloads: Payrix doesn't document the body shape.
+SAMPLE_BODY = {"placeholder": "first test body"}
+OTHER_BODY = {"placeholder": "second test body"}
 
 
 def send(method="POST", headers=None, body=None, content_type="application/json"):
@@ -34,16 +34,16 @@ def send(method="POST", headers=None, body=None, content_type="application/json"
 
 class TestCredentialCheck:
     def test_exact_value(self):
-        res = send(headers={HEADER: SECRET}, body=json.dumps(TRANSACTION_ALERT))
+        res = send(headers={HEADER: SECRET}, body=json.dumps(SAMPLE_BODY))
         assert res.status_code == 200
         assert res.json() == {"received": True}
 
     def test_header_name_is_case_insensitive(self):
-        res = send(headers={HEADER.lower(): SECRET}, body=json.dumps(MERCHANT_ALERT))
+        res = send(headers={HEADER.lower(): SECRET}, body=json.dumps(OTHER_BODY))
         assert res.status_code == 200
 
     def test_whole_value_compared_stripped_bearer_rejected(self):
-        res = send(headers={HEADER: SECRET.replace("Bearer ", "")}, body=json.dumps(TRANSACTION_ALERT))
+        res = send(headers={HEADER: SECRET.replace("Bearer ", "")}, body=json.dumps(SAMPLE_BODY))
         assert res.status_code == 401
 
     def test_wrong_value_same_length(self):
@@ -53,7 +53,7 @@ class TestCredentialCheck:
         assert send(headers={HEADER: "short"}).status_code == 401
 
     def test_missing_header(self):
-        assert send(body=json.dumps(TRANSACTION_ALERT)).status_code == 401
+        assert send(body=json.dumps(SAMPLE_BODY)).status_code == 401
 
     def test_fails_closed_without_secret(self):
         assert verify_payrix_pro_request({HEADER: "anything"}, secret="", header_name=HEADER) is False
@@ -79,7 +79,7 @@ class TestMethods:
 
 class TestBody:
     def test_form_and_text_bodies(self):
-        form = send(headers={HEADER: SECRET}, body="alert=transaction&id=t1",
+        form = send(headers={HEADER: SECRET}, body="placeholder=form-body",
                     content_type="application/x-www-form-urlencoded")
         assert form.status_code == 200
         text = send(headers={HEADER: SECRET}, body="hello", content_type="text/plain")

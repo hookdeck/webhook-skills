@@ -61,10 +61,10 @@ def handle_ayrshare_event(event: Dict[str, Any]) -> None:
             print(f"TikTok post published: {_str(event.get('id'))}")
         else:
             print(f"Scheduled post {_str(event.get('id'))}: {_str(event.get('status'))} ({error_count} errors)")
-        # TODO: Update your post record from event["postIds"] / event["errors"]
+        # Your code: Update your post record from event["postIds"] / event["errors"]
     elif action == "social":
         print(f"Social account {_str(event.get('type'))} on {_str(event.get('platform'))}")
-        # TODO: On "unlink" with source "system", prompt the user to relink
+        # Your code: On "unlink" with source "system", prompt the user to relink
     elif action == "messages":
         details = event.get("senderDetails")
         sender = _str(details.get("name")) if isinstance(details, dict) else None
@@ -72,12 +72,12 @@ def handle_ayrshare_event(event: Dict[str, Any]) -> None:
             f"Message {sub_action or 'event'} on {_str(event.get('platform'))} "
             f"from {sender or _str(event.get('senderId'))}: {_str(event.get('message')) or ''}"
         )
-        # TODO: Store the message; dedupe on id + subAction
+        # Your code: Store the message; dedupe on id + subAction
     elif action == "comments":
         sender = event.get("from")
         username = _str(sender.get("username")) if isinstance(sender, dict) else None
         print(f"Comment on {_str(event.get('platform'))} by {username}: {_str(event.get('text'))}")
-        # TODO: Reply or moderate the comment
+        # Your code: Reply or moderate the comment
     elif action == "ads":
         print(f"Ads event {_str(event.get('type'))} on {_str(event.get('platform')) or 'multiple platforms'}")
     else:
@@ -109,7 +109,7 @@ async def ayrshare_webhook(request: Request):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    # At-least-once delivery: dedupe on event["hookId"] (hold claims for 24 h+)
+    # At-least-once delivery: claim event["hookId"] (retries) and a payload key (re-notifications), held 24 h+
     print(f"Ayrshare delivery hookId={_str(event.get('hookId'))}")
     handle_ayrshare_event(event)
 

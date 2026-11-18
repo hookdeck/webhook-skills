@@ -30,8 +30,8 @@ HMAC-SHA512 of the **raw request body**.
 
 Set a secret on the Argyle webhook subscription. Without one, deliveries are unsigned and fail verification.
 
-Argyle does not generate the secret: you choose it when you create the subscription (Console or
-`POST /v2/webhooks`). Argyle's docs don't name the HTTP method. Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source.
+You choose the secret when you create the subscription (Console or `POST /v2/webhooks`), and
+Sandbox and Production each need their own subscriptions. Argyle's docs don't name the HTTP method. Hookdeck's Argyle source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)), so any other method the sender uses must also be allowed on the source.
 
 ## Verification (core)
 
@@ -77,7 +77,7 @@ Dispatch on the body's top-level `event` field (`<resource>.<action>`). No heade
 | `identities.added` / `identities.updated` | Identity data changes |
 | `items.updated` / `items.removed` | A supported employer or platform changes |
 
-Argyle documents 46 event types in all; the examples handle these 14 and log the rest. See
+Argyle documents 47 event types in all; the examples handle these 14 and log the rest. See
 [references/overview.md](references/overview.md).
 
 ## Environment Variables

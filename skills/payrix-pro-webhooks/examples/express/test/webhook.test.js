@@ -10,45 +10,45 @@ const { verifyPayrixProRequest, parseBody } = require('../src/index');
 const HEADER = 'X-Payrix-Secret';
 const SECRET = process.env.PAYRIX_PRO_WEBHOOK_SECRET;
 
-// Illustrative payload: Payrix doesn't document the body shape.
-const transactionAlert = { alert: 'transaction', transaction: { id: 't1_txn_example', total: 1500 } };
-const merchantAlert = { alert: 'merchant', merchant: { id: 't1_mer_example', status: 1 } };
+// Placeholder bodies, not Payrix payloads: Payrix doesn't document the body shape.
+const sampleBody = { placeholder: 'first test body' };
+const otherBody = { placeholder: 'second test body' };
 
 describe('Payrix Pro webhook', () => {
   describe('credential check', () => {
     it('accepts the exact header value', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).send(sampleBody);
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ received: true });
     });
 
     it('matches the header name case-insensitively', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set('x-payrix-secret', SECRET).send(merchantAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set('x-payrix-secret', SECRET).send(otherBody);
       expect(res.status).toBe(200);
     });
 
     it('compares the whole value: a stripped Bearer prefix is rejected', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET.replace('Bearer ', '')).send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET.replace('Bearer ', '')).send(sampleBody);
       expect(res.status).toBe(401);
     });
 
     it('rejects a wrong value of the same length', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, 'x'.repeat(SECRET.length)).send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, 'x'.repeat(SECRET.length)).send(sampleBody);
       expect(res.status).toBe(401);
     });
 
     it('rejects a value of a different length without throwing', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, 'short').send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, 'short').send(sampleBody);
       expect(res.status).toBe(401);
     });
 
     it('rejects a missing header', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').send(sampleBody);
       expect(res.status).toBe(401);
     });
 
     it('does not read the default Authorization header when another name is configured', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set('Authorization', SECRET).send(transactionAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set('Authorization', SECRET).send(sampleBody);
       expect(res.status).toBe(401);
     });
 
@@ -81,12 +81,12 @@ describe('Payrix Pro webhook', () => {
 
   describe('body handling', () => {
     it('accepts a JSON body', async () => {
-      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).send(merchantAlert);
+      const res = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).send(otherBody);
       expect(res.status).toBe(200);
     });
 
     it('accepts form-encoded and plain text bodies', async () => {
-      const form = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).type('form').send('alert=transaction&id=t1');
+      const form = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).type('form').send('placeholder=form-body');
       expect(form.status).toBe(200);
       const text = await request(app).post('/webhooks/payrix-pro').set(HEADER, SECRET).set('Content-Type', 'text/plain').send('hello');
       expect(text.status).toBe(200);

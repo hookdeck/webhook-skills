@@ -2,7 +2,7 @@
 
 ## How Does Vellum Authenticate Webhooks?
 
-Vellum Monitoring webhooks are unsigned. You add a secret header with **API Key Header** or
+Vellum Monitoring webhooks are unsigned unless you provide an HMAC token. You add a secret header with **API Key Header** or
 **Bearer Token** authentication, and your endpoint compares that header with the value you stored.
 
 ```
@@ -13,8 +13,7 @@ For Bearer Token that is `Authorization: Bearer <token>`. The comparison covers 
 value**; don't strip or parse a `Bearer ` prefix.
 
 Vellum can also sign requests with HMAC (`X-Vellum-Timestamp`, `X-Vellum-Signature` over
-timestamp, method, URL and body). Hookdeck's Vellum source doesn't check it, and this skill
-doesn't either.
+timestamp, method, URL and body) once you provide an HMAC token. This skill doesn't verify it.
 
 > **A static shared credential authenticates the sender, not the body, and gives no replay
 > protection** (no signature, no timestamp). Use HTTPS and rotate the credential if it leaks.

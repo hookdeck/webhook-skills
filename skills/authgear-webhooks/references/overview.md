@@ -18,5 +18,5 @@ The examples verify the signature, parse an object, then log only the event labe
 
 ## Official Documentation
 
-- [Webhooks](https://docs.authgear.com/integrate/events-hooks/webhooks)
-- [Verification](https://docs.authgear.com/integrate/events-hooks/webhooks#verifying-signature)
+- [Webhooks](https://docs.authgear.com/customization/events-hooks/webhooks)
+- [Verification](https://docs.authgear.com/customization/events-hooks/webhooks#verifying-signature)

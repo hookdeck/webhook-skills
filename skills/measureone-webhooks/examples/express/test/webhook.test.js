@@ -22,9 +22,9 @@ const EVENTS = [
 function samplePayload(event = 'datarequest.items_available') {
   return {
     event,
-    datarequest_id: 'dr_01',
-    individual_id: 'ind_01',
-    external_id: 'ext_01',
+    datarequest_id: 'dr_TSEne2SSjP3GvpVrs5HLol4xor2',
+    individual_id: 'idv_TSEne2SSjP3GvpVrs5HLol4xor2',
+    external_id: 'ABCDECD',
     metadata: {},
     is_refresh: false
   };

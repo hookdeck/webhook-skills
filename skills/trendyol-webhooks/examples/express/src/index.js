@@ -27,55 +27,63 @@ function verifyTrendyolRequest(headers, secret = process.env.TRENDYOL_WEBHOOK_SE
   return typeof received === 'string' && received !== '' && safeEqual(received, secret);
 }
 
+// Subscriptions use upper case (AT_COLLECTION_POINT), while bodies use the getShipmentPackages
+// spelling ("Delivered", and per its docs "AtCollectionPoint", "UnDelivered"). Drop underscores and
+// upper-case to compare, then map the one multi-word status back to its subscription name.
+function normalizeStatus(value) {
+  const key = String(value || '').replace(/_/g, '').toUpperCase();
+  return key === 'ATCOLLECTIONPOINT' ? 'AT_COLLECTION_POINT' : key;
+}
+
 // Each package is the full order package; its status says what changed.
 function handlePackage(pkg) {
-  const status = String(pkg.status || pkg.shipmentPackageStatus || '').toUpperCase();
+  const status = normalizeStatus(pkg.status || pkg.shipmentPackageStatus);
   const ref = `${pkg.orderNumber} (package ${pkg.shipmentPackageId})`;
 
   switch (status) {
     case 'CREATED':
       console.log(`Package created: ${ref}`);
-      // TODO: import the order and start picking
+      // Your code: import the order and start picking
       break;
 
     case 'PICKING':
       console.log(`Package picking: ${ref}`);
-      // TODO: mark the order as being prepared
+      // Your code: mark the order as being prepared
       break;
 
     case 'INVOICED':
       console.log(`Package invoiced: ${ref}`);
-      // TODO: record the invoice (pkg.invoiceNumber, pkg.invoiceLink)
+      // Your code: record the invoice (pkg.invoiceNumber, pkg.invoiceLink)
       break;
 
     case 'SHIPPED':
       console.log(`Package shipped: ${ref}`);
-      // TODO: store pkg.cargoTrackingNumber and pkg.cargoProviderName
+      // Your code: store pkg.cargoTrackingNumber and pkg.cargoProviderName
       break;
 
     case 'DELIVERED':
       console.log(`Package delivered: ${ref}`);
-      // TODO: complete the order
+      // Your code: complete the order
       break;
 
     case 'UNDELIVERED':
       console.log(`Package undelivered: ${ref}`);
-      // TODO: follow up with the carrier
+      // Your code: follow up with the carrier
       break;
 
     case 'CANCELLED':
       console.log(`Package cancelled: ${ref}`);
-      // TODO: release stock (pkg.lines[].cancelReason)
+      // Your code: release stock (pkg.lines[].cancelReason)
       break;
 
     case 'RETURNED':
       console.log(`Package returned: ${ref}`);
-      // TODO: start the return flow
+      // Your code: start the return flow
       break;
 
     case 'UNSUPPLIED':
       console.log(`Package unsupplied: ${ref}`);
-      // TODO: reconcile stock
+      // Your code: reconcile stock
       break;
 
     case 'AWAITING':
@@ -88,7 +96,7 @@ function handlePackage(pkg) {
 
     case 'AT_COLLECTION_POINT':
       console.log(`Package at collection point: ${ref}`);
-      // TODO: notify the customer if you track pickup
+      // Your code: notify the customer if you track pickup
       break;
 
     case 'VERIFIED':

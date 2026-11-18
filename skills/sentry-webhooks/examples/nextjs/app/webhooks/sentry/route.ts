@@ -211,11 +211,12 @@ export async function POST(request: NextRequest) {
   }
 
   /**
-   * IDEMPOTENCY KEY: the Request-ID header (per-request uuid4 hex).
+   * REPLAY KEY: the Request-ID header (per-request uuid4 hex).
    *
-   * The body has NO delivery id. And because the timestamp is not signed, a
-   * byte-for-byte replay carries a genuinely valid signature forever —
-   * deduplication on Request-ID is your ONLY real replay protection.
+   * The body has NO delivery id. Because the timestamp is not signed, a
+   * byte-for-byte replay carries a valid signature forever, and dedupe on
+   * Request-ID catches it. Sentry builds a NEW Request-ID on every retry
+   * attempt, so it does not catch retries: keep handleEvent idempotent.
    */
   const token = eventToken(resource, event.action);
 
@@ -245,7 +246,8 @@ function describeActor(actor: SentryActor | undefined): string {
 }
 
 function handleEvent(token: string, event: SentryWebhookEvent): void {
-  // TODO: check the Request-ID against your store and return early if seen.
+  // Your code: skip a replayed Request-ID, and make each write idempotent,
+  // because a retry from Sentry arrives with a new Request-ID.
 
   // `data` is resource-specific AND customizable via UI components, so
   // optional-chain everything in it.

@@ -72,37 +72,37 @@ export async function POST(request: NextRequest) {
   switch (event.name) {
     case 'order.placed':
       console.log('Order placed:', { eventId: event.id, order: data.id });
-      // TODO: Send the order to your fulfilment or CRM system
+      // Your code: Send the order to your fulfilment or CRM system
       break;
 
     case 'order.paid':
       console.log('Order paid:', { eventId: event.id, order: data.id });
-      // TODO: Release the order for fulfilment
+      // Your code: Release the order for fulfilment
       break;
 
     case 'order.canceled':
       console.log('Order canceled:', { eventId: event.id, order: data.id });
-      // TODO: Cancel downstream work
+      // Your code: Cancel downstream work
       break;
 
     case 'payment.completed':
       console.log('Payment completed:', { eventId: event.id, payment: data.id });
-      // TODO: Record the payment
+      // Your code: Record the payment
       break;
 
     case 'fulfillment.fulfilled':
       console.log('Parcel shipped:', { eventId: event.id, fulfillment: data.id });
-      // TODO: Notify the customer with tracking details
+      // Your code: Notify the customer with tracking details
       break;
 
     case 'user.created':
       console.log('Customer registered:', { eventId: event.id, user: data.id });
-      // TODO: Sync the customer to your CRM
+      // Your code: Sync the customer to your CRM
       break;
 
     case 'product.updated':
       console.log('Product updated:', { eventId: event.id, product: data.id });
-      // TODO: Refresh your search index or cache
+      // Your code: Refresh your search index or cache
       break;
 
     case 'webhook.test':

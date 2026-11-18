@@ -62,12 +62,12 @@ function handleEvent(payload) {
   switch (kind) {
     case 'email.bounce':
       console.log(`Email bounced (${event.bounceType}) for ${contact && contact.email}`);
-      // TODO: mark the address undeliverable (event.emailId, event.transientBounce)
+      // Your code: mark the address undeliverable (event.emailId, event.transientBounce)
       break;
 
     case 'email.complaint':
       console.log(`Spam complaint from ${contact && contact.email}`);
-      // TODO: suppress the contact in your own database
+      // Your code: suppress the contact in your own database
       break;
 
     case 'email.click':

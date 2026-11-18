@@ -73,7 +73,8 @@ app.post('/webhooks/belco', express.raw({ type: '*/*' }), (req, res) => {
     case 'call.queued':
     case 'call.answered':
     case 'call.closed':
-      console.log(`${event.eventName}: ${payload.call?.direction} call, status ${payload.call?.status}`);
+      // Your code: Belco publishes no call payload sample, so log one before reading its fields.
+      console.log(`${event.eventName} on shop ${payload.shopId}`);
       break;
     default:
       console.log(`Unhandled Belco event: ${event.eventName}`);

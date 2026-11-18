@@ -6,7 +6,7 @@ Minimal example of receiving Ultravox webhooks with signature verification
 ## Prerequisites
 
 - Node.js 18+
-- An Ultravox webhook with exactly one secret
+- An Ultravox webhook and one of its secrets
 
 ## Setup
 
@@ -21,8 +21,6 @@ Minimal example of receiving Ultravox webhooks with signature verification
    ```
 
 3. Add your Ultravox webhook secret to `.env` as `ULTRAVOX_WEBHOOK_SECRET`.
-
-> Give the Ultravox webhook exactly one secret and paste it here. A webhook without a secret is unsigned, and one with several secrets sends a list of signatures, so both fail verification.
 
 ## Run
 

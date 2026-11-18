@@ -93,7 +93,7 @@ dispatching. Dedupe on `event_id`: a non-2xx response is retried up to 5 times o
 | `EventCanceled` | An event is canceled |
 | `ReportedContentCreated` | A post, comment or chat is reported |
 
-[references/overview.md](references/overview.md) lists all 48 events.
+[references/overview.md](references/overview.md) lists all 49 events.
 
 ## Environment Variables
 

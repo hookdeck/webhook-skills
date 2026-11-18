@@ -78,11 +78,11 @@ def handle_event(payload) -> None:
 
     if kind == "email.bounce":
         print(f"Email bounced ({event.get('bounceType')}) for {email}")
-        # TODO: mark the address undeliverable (event["emailId"], event.get("transientBounce"))
+        # Your code: mark the address undeliverable (event["emailId"], event.get("transientBounce"))
 
     elif kind == "email.complaint":
         print(f"Spam complaint from {email}")
-        # TODO: suppress the contact in your own database
+        # Your code: suppress the contact in your own database
 
     elif kind == "email.click":
         print(f"Link clicked by {email}: {event.get('link')}")

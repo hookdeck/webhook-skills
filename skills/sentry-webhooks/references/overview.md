@@ -266,13 +266,16 @@ the action name.
 
 ## Idempotency
 
-The body carries **no delivery id**. Use the **`Request-ID` header** (a
-per-request uuid4 hex) as your dedupe key.
+The body carries **no delivery id**. The **`Request-ID` header** is a uuid4 hex
+generated per request, and Sentry's code builds a new one on every attempt
+([`app_platform_event.py`](https://github.com/getsentry/sentry/blob/master/src/sentry/sentry_apps/api/serializers/app_platform_event.py)), so a retried delivery of the same event
+carries a different `Request-ID`. Make the handler idempotent: upsert by the
+resource's id and set state rather than toggling it.
 
 This matters more than usual for Sentry: because `Sentry-Hook-Timestamp` is not
 part of the signed string, a byte-for-byte replay of a captured body and
 signature is **cryptographically valid forever**. Deduplication on `Request-ID`
-is the real replay protection — a timestamp tolerance check is at best a cheap
+catches that replay — a timestamp tolerance check is at best a cheap
 dampener.
 
 ## Delivery: 1 Second, a Few Short Retries, Then Lost

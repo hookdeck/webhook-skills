@@ -57,4 +57,4 @@ receive a `scheduled` event.
 - `401` for a missing, malformed or non-matching signature; `500` if no secret is configured
 - `400` for a signed body that is not a JSON object
 - Handles `scheduled`, `social`, `messages`, `comments` and `ads` actions and logs the rest
-- Dedupe on the body's `hookId` (at-least-once delivery)
+- Claim the body's `hookId` and a payload key (at-least-once delivery)

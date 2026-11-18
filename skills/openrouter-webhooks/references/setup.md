@@ -1,6 +1,6 @@
 # Setting Up OpenRouter Webhooks
 
-> OpenRouter signs only video-generation callbacks (the callback_url of a video request). Use this source for those callbacks.
+OpenRouter sends signed callbacks for two kinds of job: video generation (`POST /api/v1/videos`) and the Batch API (`POST /api/v1/batches`). Both use the same workspace signing secret and the same `X-OpenRouter-Signature` scheme, so one receiver can verify both.
 
 ## Prerequisites
 
@@ -11,12 +11,12 @@
 ## Get Your Signing Secret
 
 1. Open your OpenRouter **workspace settings**.
-2. Configure a **webhook signing secret** for the workspace.
+2. Under **Webhook signing secret**, select **Generate signing secret**. Setting a `callback_url` doesn't create one, and deliveries are unsigned until it exists. Video and batch callbacks share it.
 3. Store it as `OPENROUTER_WEBHOOK_SECRET` in your app's environment. It is used as-is, as UTF-8 bytes, for the HMAC key (do not hex- or base64-decode it).
 
 ## Register Your Endpoint
 
-OpenRouter has no event subscription list: you give it a URL per job (or a workspace default).
+OpenRouter has no event subscription list: you give it a URL per job or batch (or a workspace default). For batches, set `callback_url` on `POST /api/v1/batches` (before `requests` in the body) or **Default batch webhook URL** in the workspace settings.
 
 1. Submit the job with a `callback_url`:
 

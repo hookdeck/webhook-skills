@@ -18,7 +18,8 @@ The header name is your choice, so the examples read it from `INCODE_WEBHOOK_HEA
 A static shared credential authenticates the **sender**, not the **body**, and gives **no replay
 protection**: nothing ties the credential to the payload or to a point in time, so anyone who
 captures a request can resend it. Use HTTPS, rotate the credential if it leaks, and process
-events idempotently (key on `interviewId` plus the event name).
+events idempotently (key on `interviewId` plus the event name, and add `timestamp` for
+`SESSION_PROGRESS`, which fires on every resume of the same session).
 
 ## Implementation
 

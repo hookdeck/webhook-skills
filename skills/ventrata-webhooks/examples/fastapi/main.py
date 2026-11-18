@@ -48,19 +48,19 @@ def handle_event(payload: dict) -> None:
 
     if event == "order_update":
         print(f"Order updated: {(payload.get('order') or {}).get('orderId')}")
-        # TODO: sync payload["order"]; payload["diff"] lists what changed
+        # Your code: sync payload["order"]; payload["diff"] lists what changed
 
     elif event == "booking_update":
         print(f"Booking updated: {(payload.get('booking') or {}).get('uuid')}")
-        # TODO: sync payload["booking"]; payload["diff"] lists what changed
+        # Your code: sync payload["booking"]; payload["diff"] lists what changed
 
     elif event == "availability_update":
         print(f"Availability updated: {(payload.get('availability') or {}).get('id')}")
-        # TODO: refresh inventory from payload["availability"]
+        # Your code: refresh inventory from payload["availability"]
 
     elif event == "product_update":
         print(f"Product updated: {(payload.get('product') or {}).get('id')}")
-        # TODO: re-sync payload["product"]; payload["diff"] lists what changed
+        # Your code: re-sync payload["product"]; payload["diff"] lists what changed
 
     else:
         print(f"Unhandled event: {payload.get('event')}")

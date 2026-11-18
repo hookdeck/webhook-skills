@@ -7,7 +7,7 @@ Ship24 does not sign payloads, so there is no HMAC to verify. The handler compar
 value with your Webhook Secret using a constant-time comparison. A FastAPI dependency checks the header before the route reads the body with `request.body()`, so any
 content type works, and the body is parsed only after the check.
 A static shared credential authenticates the sender, not the body, and gives no replay protection:
-use HTTPS and rotate the secret if it leaks.
+use HTTPS and keep the secret out of logs.
 
 ## Prerequisites
 

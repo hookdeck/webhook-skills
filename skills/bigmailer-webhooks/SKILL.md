@@ -29,8 +29,8 @@ X-BigMailer-Signature: t=1492774578,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77
 ```
 
 - `t` is the Unix timestamp (seconds). Use it as the exact string from the header.
-- `v1` is HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the endpoint's **signing secret** (UTF-8 bytes, used as-is). `v1` is the only valid scheme; ignore other keys. The docs never name the digest encoding; it is 64 hex characters, so compare as hex (case-insensitively).
-- The header can carry more than one `v1=` entry (for example during key rotation). Accept the event if **any** entry matches.
+- `v1` is HMAC-SHA256 of `"<t>.<raw body>"`, keyed with the endpoint's **signing secret** (UTF-8 bytes, used as-is). `v1` is the only valid scheme; ignore other keys. The docs never name the digest encoding, but BigMailer's [PHP example](https://github.com/bigmailer/webhook-examples/blob/master/php/index.php) compares against `hash_hmac` output, which is lowercase hex, so compare as hex (case-insensitively).
+- BigMailer's docs say the header carries a timestamp and one or more signatures. Accept the event if **any** `v1=` entry matches.
 - A header with no `t=` value fails. Missing, empty, malformed, or mismatched signature: respond `401`.
 - The event type is the top-level `type` field of the body. The data sits under a key named after the type (`bounce`, `click`, ...). `bounce.type` (`hard`/`soft`) is the bounce kind, not the event.
 
@@ -102,7 +102,7 @@ Validate the signature's format (exactly 64 hex characters) before comparing, th
 
 These are the five documented event types. Each payload also carries `brand_id`, and the nested object has `date`, `campaign_id`, `contact_id`, and `email`. See [references/overview.md](references/overview.md).
 
-> **For the full event reference**, see [BigMailer's webhook documentation](https://docs.bigmailer.io/docs/webhooks-getting-started).
+> **For the full event reference**, see [BigMailer's webhook documentation](https://docs.bigmailer.io/docs/webhook-event-types).
 
 ## Important Headers
 

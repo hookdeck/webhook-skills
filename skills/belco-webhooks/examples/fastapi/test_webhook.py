@@ -43,7 +43,7 @@ ANSWERED = json.dumps({
     "requestId": "call-answered-1",
     "eventName": "call.answered",
     "date": "2020-11-12T00:00:00Z",
-    "payload": {"shopId": "m5phzRDim8GMsdMhP", "call": {"direction": "inbound", "status": "answered"}},
+    "payload": {"shopId": "m5phzRDim8GMsdMhP"},
 }).encode()
 UNKNOWN = json.dumps({"requestId": "x-1", "eventName": "conversation.snoozed", "payload": {}}).encode()
 
@@ -87,7 +87,7 @@ class TestEndpoint:
         assert res.status_code == 200
 
     def test_duplicate_request_id(self):
-        body = json.dumps({"requestId": "dup-1", "eventName": "call.closed", "payload": {"call": {}}}).encode()
+        body = json.dumps({"requestId": "dup-1", "eventName": "call.closed", "payload": {}}).encode()
         first = post(body, {"x-hook-signature": sign(body)})
         second = post(body, {"x-hook-signature": sign(body)})
         assert first.json() == {"received": True}

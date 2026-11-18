@@ -59,12 +59,13 @@ The reference pages name events without the suffix (`PostCreated`). Strip a trai
 
 ## All Events
 
-The webhook spec (`https://api.mn.co/webhooks/v1/spec.json`) defines 48 events:
+The webhook spec (`https://api.mn.co/webhooks/v1/spec.json`) defines 49 events:
 
 - **Members**: `MemberJoined`, `MemberJoinRequested`, `MemberLeft`, `MemberReturned`, `MemberUpdated`,
   `MemberPurchased`, `MemberPurchaseRequested`, `MemberSubscriptionRenewed`,
-  `MemberSubscriptionCanceled`, `MemberPlanChanged`, `MemberRemovedFromPlan`, `MemberTagAdded`,
-  `MemberTagRemoved`, `MemberBadgeAdded`, `MemberBadgeRemoved`, `MemberAmbassadorLeveledUp`,
+  `MemberSubscriptionCanceled`, `MemberPlanChanged`, `MemberSwitchedPlans`, `MemberRemovedFromPlan`,
+  `MemberTagAdded`, `MemberTagRemoved`, `MemberBadgeAdded`, `MemberBadgeRemoved`,
+  `MemberAmbassadorLeveledUp`,
   `InviteRequested`
 - **Courses**: `MemberCourseProgressStarted`, `MemberCourseProgressUpdated`,
   `MemberCourseProgressCompleted`, `MemberLessonCompleted`

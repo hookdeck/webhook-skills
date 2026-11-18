@@ -62,7 +62,7 @@ function verifyShip24Request(headers, configured = process.env.SHIP24_WEBHOOK_SE
 **What this does and doesn't give you.** A static shared credential authenticates the *sender*,
 not the *body*, and gives **no replay protection** (no signature, no timestamp). Anyone who
 captures one request, or learns the secret, can send you arbitrary tracking data. Use HTTPS only
-and rotate the Webhook Secret if it leaks.
+and keep the Webhook Secret out of logs and source control.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   switch (event.type) {
-    case 'async_request_completed':
+    case 'async_predict_completed':
       return NextResponse.json({ received: true, outcome: handleAsyncRequestCompleted(event) });
     default:
       console.log(`Unhandled Baseten event type: ${event.type}`);
