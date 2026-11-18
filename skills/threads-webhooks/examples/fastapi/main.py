@@ -52,8 +52,8 @@ def verify_threads_signature(raw_body: bytes, signature_header: Optional[str], a
 def handle_notification(notification: dict) -> None:
     """Dispatch one notification. Threads sends a flat object:
     { app_id, topic, target_id, time, subscription_id, values: [{ field, value }] }
-    Meta's docs show `values` as a single { field, value } object, but live deliveries
-    send an array of them, so accept both."""
+    Meta's docs show `values` as a single { field, value } object, but a live publish
+    notification (2026-11-18) sent an array of them, so accept both."""
     values = notification.get("values") if isinstance(notification, dict) else None
     changes = values if isinstance(values, list) else [values] if values else []
     for change in changes:

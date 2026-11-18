@@ -86,7 +86,8 @@ the verifier as unparsed bytes.
 ## Common Event Types
 
 Threads notifications are a flat object. `values` holds the change: Meta's docs show one
-`{ field, value }` object, but live deliveries send an **array** of them, so handle both.
+`{ field, value }` object, but a live `publish` notification (tested 2026-11-18) sent an **array** of them, so
+handle both.
 The event is each change's `field`; `topic` groups fields into `moderate` or `interaction`.
 
 | Field (`values[].field`) | Topic | Triggered When |

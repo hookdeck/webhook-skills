@@ -28,7 +28,7 @@ function notification(field: string, value: Record<string, unknown>, topic = 'mo
     time: 1723226877,
     subscription_id: '234567',
     has_uid_field: false,
-    // Live deliveries send an array; Meta's docs show a single object (tested below).
+    // A live publish notification sent an array; Meta's docs show a single object (tested below).
     values: [{ value, field }],
   });
 }

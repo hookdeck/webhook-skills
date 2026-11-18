@@ -41,7 +41,7 @@ interface ThreadsNotification {
   target_id?: string;
   time?: number;
   subscription_id?: string;
-  // Documented as one change object; live deliveries send an array of them.
+  // Documented as one change object; a live publish notification sent an array of them.
   values?: ThreadsChange | ThreadsChange[];
 }
 
@@ -53,8 +53,8 @@ interface ThreadsChange {
 /**
  * Dispatch one notification. Threads sends a flat object:
  * { app_id, topic, target_id, time, subscription_id, values: [{ field, value }] }
- * Meta's docs show `values` as a single { field, value } object, but live deliveries send
- * an array of them, so accept both.
+ * Meta's docs show `values` as a single { field, value } object, but a live publish
+ * notification (2026-11-18) sent an array of them, so accept both.
  */
 function handleNotification(notification: ThreadsNotification): void {
   const values = notification?.values;

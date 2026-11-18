@@ -28,7 +28,7 @@ the Threads samples):
 | `time` | Unix time the notification was sent |
 | `subscription_id` | Subscription ID for the user |
 | `has_uid_field` | Boolean shown in the samples |
-| `values` | The change. Meta's docs show one `{ field, value }` object; live deliveries send an array of them. Handle both |
+| `values` | The change. Meta's docs show one `{ field, value }` object; a live `publish` notification (2026-11-18) sent an array of them. Handle both |
 | `values[].field` | The event: `replies`, `mentions`, `publish` or `delete` |
 | `values[].value` | The media object (`id`, `username`, `text`, `media_type`, `permalink`, `shortcode`, `timestamp`; `deleted_at` and `owner` for `delete`) |
 

@@ -31,7 +31,7 @@ def notification(field: str, value: dict, topic: str = "moderate") -> bytes:
             "time": 1723226877,
             "subscription_id": "234567",
             "has_uid_field": False,
-            # Live deliveries send an array; Meta's docs show a single object (tested below).
+            # A live publish notification sent an array; Meta's docs show a single object (tested below).
             "values": [{"value": value, "field": field}],
         }
     ).encode()
