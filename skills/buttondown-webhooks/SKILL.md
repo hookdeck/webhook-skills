@@ -70,7 +70,7 @@ In Hookdeck, create a source of the Buttondown type and enter the same signing k
 
 ## Event Payload and Types
 
-Every payload is `{ "event_type": "...", "data": { ... } }`; `data` holds ids (for example `newsletter` and `subscriber`). Dispatch on `event_type`. Delivery is at least once and unordered, so make handlers idempotent.
+Every payload has an event `id`, an `event_type` and a `data` object; `data` holds ids (for example `newsletter` and `subscriber`). Dispatch on `event_type`. Delivery is at least once and unordered, so dedupe on the event's `id` and make handlers idempotent.
 
 | Event | Triggered When |
 |-------|----------------|
@@ -80,7 +80,7 @@ Every payload is `{ "event_type": "...", "data": { ... } }`; `data` holds ids (f
 | `email.sent` | An email finished its delivery |
 | `automation.invoked` | An automation is manually invoked (for example by a webhook or API call) |
 
-Buttondown documents about 84 event types (subscriber, email, stripe.*, shopify.*, patreon.*, date.* and more). The examples log the rest as unhandled. See [references/overview.md](references/overview.md).
+Buttondown documents 85 event types (subscriber, email, stripe.*, shopify.*, patreon.*, date.* and more). The examples log the rest as unhandled. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 

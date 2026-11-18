@@ -13,7 +13,7 @@ const app = express();
  * secret is compared exactly, in constant time.
  *
  * A static shared credential authenticates the sender, not the body, and gives no replay
- * protection (no signature, no timestamp): use HTTPS and rotate the secret if it leaks.
+ * protection (no signature, no timestamp): use HTTPS and keep the secret out of logs.
  */
 function verifyShip24Request(headers, configured = process.env.SHIP24_WEBHOOK_SECRET) {
   if (!configured) return false; // never accept when unconfigured
@@ -37,7 +37,7 @@ function handleTracking(tracking) {
     case 'tracking/events': {
       const event = (tracking.events || [])[0];
       console.log(`Tracking update for ${tracker?.trackingNumber}: ${event?.status}`);
-      // TODO: compare event.occurrenceDatetime with the latest stored event before changing
+      // Your code: compare event.occurrenceDatetime with the latest stored event before changing
       // shipment status, because messages can arrive out of order
       break;
     }
@@ -45,7 +45,7 @@ function handleTracking(tracking) {
     case 'tracking/pod': {
       const { data } = tracking;
       console.log(`Proof of delivery for ${tracker?.trackingNumber}: ${data?.status}`);
-      // TODO: if data.status is "found", store data.content.text or download
+      // Your code: if data.status is "found", store data.content.text or download
       // data.content.downloadUrl (valid for 7 days)
       break;
     }

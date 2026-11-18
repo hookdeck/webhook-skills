@@ -72,7 +72,7 @@ def verify_typefully(raw_body: bytes, timestamp, signature, secret: str) -> bool
 
 Respond `401` when the signature or timestamp header is missing, malformed, or doesn't match. Respond with any `2xx` once the event is accepted.
 
-**Replay window (opt-in):** Typefully suggests checking that the timestamp is recent. The examples don't, by default: Hookdeck's retries and replays resend the original timestamp, and Typefully doesn't document whether its own retries do, so a fixed window could reject legitimate redeliveries. Set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (the timestamp is Unix seconds) to opt in; unset or `0` leaves it off. Use idempotency on `data.id` plus the event for duplicate protection.
+**Replay window (opt-in):** Typefully suggests checking that the timestamp is recent. The examples don't, by default: Hookdeck's retries and replays resend the original timestamp, and Typefully doesn't document whether its own retries do, so a fixed window could reject legitimate redeliveries. Set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (the timestamp is Unix seconds) to opt in; unset or `0` leaves it off. Payloads carry no event ID, and one draft can produce several deliveries of the same event (`draft.tags_changed`, `draft.status_changed`), so `data.id` plus the event isn't a safe dedupe key: make handlers idempotent instead (upsert the draft by `data.id`, and run one-off side effects once per state, such as once per `data.id` and `data.published_at` for `draft.published`).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 

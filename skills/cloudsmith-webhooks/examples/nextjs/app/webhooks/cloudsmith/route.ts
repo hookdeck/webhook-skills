@@ -48,23 +48,23 @@ function handleEvent(item: JsonObject): void {
 
     case 'package.created':
       console.log(`Package created: ${pkg}`);
-      // TODO: Record the new upload
+      // Your code: Record the new upload
       break;
 
     case 'package.syncing':
     case 'package.synced':
       console.log(`${eventId}: ${pkg} (${data.stage_str ?? 'unknown stage'})`);
-      // TODO: package.synced means the package is ready to download
+      // Your code: package.synced means the package is ready to download
       break;
 
     case 'package.security_scanned':
       console.log(`Security scan finished: ${pkg}`);
-      // TODO: Fetch the scan results from the Cloudsmith API
+      // Your code: Fetch the scan results from the Cloudsmith API
       break;
 
     case 'package.quarantined':
       console.log(`Package quarantined: ${pkg}`);
-      // TODO: Alert the owning team
+      // Your code: Alert the owning team
       break;
 
     case 'package.failed':

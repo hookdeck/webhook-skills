@@ -73,10 +73,10 @@ async def kibana_webhook(request: Request):
     if isinstance(payload, dict):
         if str(payload.get("status")).lower() == "recovered":
             print(f"Rule recovered: {payload.get('rule')}")
-            # TODO: resolve the incident, notify the channel
+            # Your code: resolve the incident, notify the channel
         else:
             print(f"Rule action fired: {payload.get('rule')} ({payload.get('status')}): {payload.get('context')}")
-            # TODO: open an incident, page on-call
+            # Your code: open an incident, page on-call
     else:
         print(f"Received {request.method} with {'non-JSON' if text else 'empty'} body")
 

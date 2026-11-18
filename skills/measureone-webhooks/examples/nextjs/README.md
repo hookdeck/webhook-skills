@@ -56,7 +56,7 @@ To try it by hand (use your header name and value):
 curl -X POST http://localhost:3000/webhooks/measureone \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-shared-secret" \
-  -d '{"event":"datarequest.items_available","datarequest_id":"dr_01","individual_id":"ind_01"}'
+  -d '{"event":"datarequest.items_available","datarequest_id":"dr_TSEne2SSjP3GvpVrs5HLol4xor2","individual_id":"idv_TSEne2SSjP3GvpVrs5HLol4xor2"}'
 ```
 
 ## Receive Webhooks Locally

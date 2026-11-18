@@ -29,7 +29,7 @@ verifies with Python's `hmac` module rather than the svix or standardwebhooks li
    including the `whsec_` prefix. Magic Hour uses it as a plain HMAC key.
 
 Optionally set `MAGIC_HOUR_WEBHOOK_TOLERANCE_SECONDS` (for example `300`) to reject stale
-timestamps. It is off by default because retries and replays resend the original timestamp.
+timestamps. It is off by default because Hookdeck retries and replays resend the original timestamp.
 
 ## Run
 

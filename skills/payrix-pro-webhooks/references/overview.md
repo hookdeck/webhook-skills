@@ -11,24 +11,17 @@ Requests are **not signed**. The only authentication is the secret header you ad
 ## Which Alerts Can Fire?
 
 Payrix's webhook documentation does not list event-type strings; you choose which alerts to create
-in the Payrix Pro portal, and each alert defines what triggers it. This skill therefore does not
-invent event names. Typical examples are alerts on transactions and merchants:
+in the Payrix Pro portal, and each trigger is a Resource and an Event chosen from dropdowns that
+the docs don't enumerate. This skill therefore does not invent event names. Payrix's own example
+is a new merchant's onboarding status changing from *Not Ready* to *Boarded*.
 
-| Alert (illustrative) | Triggered When | Common Use Cases |
-|----------------------|----------------|------------------|
-| Transaction alert | A transaction you configured the alert for occurs | Reconcile payments, notify staff |
-| Merchant alert | A merchant record you configured the alert for changes | Sync onboarding status |
+Give each webhook a single trigger and its own endpoint URL, so the URL tells your handler what
+fired.
 
 ## Payload Structure
 
 Not documented, and the action has its own format (Content-Type) setting, so the body may be JSON
-or another format. Illustrative transaction alert (not an official sample):
-
-```json
-{ "alert": "transaction", "transaction": { "id": "t1_txn_example", "total": 1500 } }
-```
-
-The examples parse JSON when the content type says so and otherwise keep the raw text.
+or another format. Capture a delivery for each trigger before you write its parser. The examples parse JSON when the content type says so and otherwise keep the raw text.
 
 ## Method
 

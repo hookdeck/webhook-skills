@@ -41,7 +41,7 @@ Before decoding the signature, check its format: strip a leading `sha256=` (a ba
 
 ## Replay Protection
 
-Typefully says to verify the timestamp is recent but gives no window. The examples **don't check it by default**: Hookdeck's retries and replays carry the original `X-Typefully-Timestamp`, and Typefully doesn't document whether its own retries (up to an hour later) send a new timestamp or the original one, so a fixed window could reject legitimate redeliveries. To opt in, set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); the timestamp is Unix seconds. A value that isn't a whole number is treated as `0`, with a warning. Use `data.id` plus the event for idempotency (see webhook-handler-patterns).
+Typefully says to verify the timestamp is recent but gives no window. The examples **don't check it by default**: Hookdeck's retries and replays carry the original `X-Typefully-Timestamp`, and Typefully doesn't document whether its own retries (up to an hour later) send a new timestamp or the original one, so a fixed window could reject legitimate redeliveries. To opt in, set `TYPEFULLY_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); the timestamp is Unix seconds. A value that isn't a whole number is treated as `0`, with a warning. Payloads carry no event ID, and one draft can produce several deliveries of the same event (`draft.tags_changed`, `draft.status_changed`), so `data.id` plus the event isn't a safe dedupe key: make handlers idempotent instead (upsert the draft by `data.id`, and run one-off side effects once per state, such as once per `data.id` and `data.published_at` for `draft.published`). See webhook-handler-patterns.
 
 ## Common Gotchas
 

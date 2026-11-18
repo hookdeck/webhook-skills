@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 // BigMailer signs every event in X-BigMailer-Signature: "t=<unix seconds>,v1=<hex>"
-// (more than one v1= entry can appear, e.g. during key rotation).
+// (BigMailer's docs say the header can carry more than one signature).
 // Each v1 is HMAC-SHA256 (hex) of "<t>.<raw body>" keyed with the endpoint's signing secret.
 // https://docs.bigmailer.io/docs/verifying-webhook-signatures
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       break;
     case 'unsubscribe': {
       const lists = Array.isArray(data.unsubscribe_ids) ? data.unsubscribe_ids.length : 0;
-      console.log(`Unsubscribe by ${data.email} (all: ${data.unsubscribe_all === true}, ${lists} lists)`);
+      console.log(`Unsubscribe by ${data.email} (all: ${data.unsubscribe_all === true}, ${lists} message types)`);
       break;
     }
     default:

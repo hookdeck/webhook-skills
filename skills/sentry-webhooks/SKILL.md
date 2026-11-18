@@ -147,8 +147,11 @@ header is worth having as a cheap replay dampener, but it is *not*
 cryptographically bound. Sentry has **no** Stripe-style signed-timestamp replay
 protection. Dedupe on **`Request-ID`** — that is the real protection.
 
-**`Request-ID` is your idempotency key.** The body carries no delivery id.
-`Request-ID` is a per-request uuid4 hex.
+**`Request-ID` catches replays, not retries.** The body carries no delivery
+id. `Request-ID` is a uuid4 hex generated per request: Sentry's code builds a
+new one on every attempt ([`app_platform_event.py`](https://github.com/getsentry/sentry/blob/master/src/sentry/sentry_apps/api/serializers/app_platform_event.py)), so a retry of
+the same event arrives with a different `Request-ID`. Make the handler itself
+idempotent (upsert by `data.issue.id`, set a status rather than toggle it).
 
 **No source-IP allowlist exists** for sentry.io webhook egress. Do not invent
 one. (Sentry documents inbound *ingest* IPs for its own relays; that is a
@@ -203,7 +206,7 @@ keys:
 | Header | Value |
 |---|---|
 | `Content-Type` | `application/json` |
-| `Request-ID` | Per-request uuid4 hex — **your idempotency key** |
+| `Request-ID` | Per-request uuid4 hex, new on every attempt — catches replays, not retries |
 | `Sentry-Hook-Resource` | Which resource fired — **the event's first half** |
 | `Sentry-Hook-Timestamp` | UNIX **seconds** (`str(int(time()))`). Not signed. |
 | `Sentry-Hook-Signature` | Lowercase hex HMAC-SHA256 digest |
@@ -340,13 +343,10 @@ what you want when debugging). Paste the printed URL into your integration's
 **Webhook URL** in *Settings → Developer Settings*, then resolve or comment on
 an issue to get a real, signed delivery. (Use `8000` for the FastAPI example.)
 
-> **Note:** A `SENTRY` source type is being added to Hookdeck (in progress at
-> the time of writing), with a single secret labelled *Client Secret*. Until
-> it ships, `sentry` above is just a source name: use a generic HMAC source
-> with HMAC-SHA256, hex, signature header `sentry-hook-signature` and the
-> Client Secret. Either way the source verifies
-> `Sentry-Hook-Signature` only — the `Sentry-App-Signature` requests below are
-> synchronous request/response calls, so they are out of its scope.
+> **Note:** Hookdeck has a Sentry source type with a single secret labelled
+> *Client Secret*. The `Sentry-App-Signature` UI-component requests are
+> synchronous request/response calls whose reply Sentry reads, so point those
+> at your own endpoint.
 
 ## Reference Materials
 
@@ -368,7 +368,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one. Sentry's 1-second budget and **short retry window** (a few retries, then the delivery is lost) make these especially relevant:
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle asynchronously third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Key on the `Request-ID` header; the body has no delivery id
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — The body has no delivery id and `Request-ID` changes on each retry, so make the handler idempotent
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Sentry retries only a few times over ~10 minutes, so your own queue is the real retry layer
 

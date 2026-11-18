@@ -60,7 +60,7 @@ The event name is the body's top-level `type` field. The body is flat: `type`, `
 
 | Event | Triggered When |
 |-------|----------------|
-| `video.source.recorded` | A video's source file has been received/recorded |
+| `video.source.recorded` | A live stream ended and its recording is queued for encoding |
 | `video.encoding.quality.completed` | One rendition (`encoding`, `quality`, e.g. `hls` / `720p`) finished encoding |
 | `video.caption.generated` | A caption was generated for a video |
 | `video.summary.generated` | A summary was generated for a video |

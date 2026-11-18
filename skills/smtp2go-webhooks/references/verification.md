@@ -18,7 +18,7 @@ A static shared credential authenticates the sender, not the body, and gives no 
 
 - Use HTTPS only
 - Rotate the credential if it leaks
-- Make handlers idempotent (dedupe on the webhook `id`)
+- Make handlers idempotent. Don't dedupe on `id` alone, since SMTP2GO describes it as the unique id for the webhook; key on `event`, `email_id`, `rcpt` and `time` (SMS: `event`, `message_id`, `received_timestamp`)
 - Optionally also allow SMTP2GO's delivery IPs (A record for `webhooks.smtp2go.com`)
 
 ## Implementation

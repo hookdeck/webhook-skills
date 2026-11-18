@@ -21,7 +21,8 @@ notes: >
   JSON.parse/JSON.stringify before verifying. The HMAC key is the secret's UTF-8 bytes, used as-is
   (not hex- or base64-decoded). Hex is compared case-insensitively: require exactly
   64 hex characters, lowercase both sides (or decode both to bytes) before the constant-time compare.
-  Compare the WHOLE header value as one digest (no list splitting, no prefix parsing). Secret: the
+  The header holds one digest per secret, comma-separated: split on ',' and accept the delivery if
+  ANY digest matches, as Ultravox's docs require (no prefix parsing). Secret: the
   webhook's secret (auto-generated or user-provided when the webhook is created), used as UTF-8. Env
   var: ULTRAVOX_WEBHOOK_SECRET. Validate the signature's format before decoding it (exact length and
   alphabet), then compare in constant time: Node checks lengths, then crypto.timingSafeEqual on
@@ -33,18 +34,17 @@ notes: >
   fixed window would reject legitimate retries. Offer an opt-in tolerance (an env var such as
   ULTRAVOX_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in SKILL.md and verification.md
   (X-Ultravox-Webhook-Timestamp is ISO 8601; Ultravox's example rejects anything older than 1 minute).
-  Body FIRST, then the timestamp, NO separator. Compare the WHOLE
-  signature header to one expected digest: a webhook with several secrets sends a comma-separated list
-  and fails, and one without a secret is unsigned and fails. Ultravox recommends answering 204.
+  Body FIRST, then the timestamp, NO separator. A webhook with several secrets (key rotation) sends a
+  comma-separated list; accept any match. Ultravox recommends answering 204.
   Events: dispatch on the body's `event` field. Documented event types (4): call.started, call.joined,
   call.ended, call.billed. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
   and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. Hookdeck's source type is ULTRAVOX, labelled
-  'Ultravox'. Hookdeck shows this setup note for the source, and SKILL.md and references/setup.md must
-  tell the user the same thing, verbatim: "Give the Ultravox webhook exactly one secret and paste it
-  here. A webhook without a secret is unsigned, and one with several secrets sends a list of
-  signatures, so both fail verification."
+  'Ultravox'. SKILL.md and references/setup.md should tell users receiving through Hookdeck to paste
+  the webhook's secret into the source and to update the source's secret as soon as they rotate it in
+  Ultravox. Do not describe how Hookdeck handles several signatures. Example handlers use "Your code:"
+  comments, never TODO.
 testScenario:
   events:
     - "call.started"

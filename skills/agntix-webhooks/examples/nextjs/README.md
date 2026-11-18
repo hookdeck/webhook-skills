@@ -20,8 +20,8 @@ official [`svix`](https://www.npmjs.com/package/svix) library (Agntix signs deli
    cp .env.example .env
    ```
 
-3. Add your Agntix signing secret to `.env` as `AGNTIX_WEBHOOK_SECRET`. You'll find it on the
-   endpoint in the dashboard's **Developer** section.
+3. Add your Agntix signing secret to `.env` as `AGNTIX_WEBHOOK_SECRET`. Agntix's docs don't say where
+   it's shown: look on the endpoint you added in the dashboard's **Developer** section.
 
 ## Run
 

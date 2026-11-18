@@ -45,7 +45,7 @@ Parameters are flat (JSON object or form fields). Email events:
 | `sender` / `from` / `from_address` / `from_name` | Envelope-from and From details |
 | `rcpt` / `recipients` | Addressed email / all recipients |
 | `email_id` | Unique id of the email, for retrieving details |
-| `id` | Unique id for the webhook |
+| `id` | "The unique id for the webhook"; may be the same for every delivery from one webhook, so not a dedupe key on its own |
 | `message-id` | The sender's message id |
 | `subject`, `auth`, `host`, `message`, `context` | Subject, sending credential (API keys truncated), bouncing host, error text, extra context |
 | `bounce` | `hard` or `soft` (bounce events) |

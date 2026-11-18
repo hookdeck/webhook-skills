@@ -22,10 +22,10 @@ async function handle(request: NextRequest) {
     const p = payload as { rule?: string; status?: string; context?: string };
     if (String(p.status).toLowerCase() === 'recovered') {
       console.log(`Rule recovered: ${p.rule}`);
-      // TODO: resolve the incident, notify the channel
+      // Your code: resolve the incident, notify the channel
     } else {
       console.log(`Rule action fired: ${p.rule} (${p.status}): ${p.context}`);
-      // TODO: open an incident, page on-call
+      // Your code: open an incident, page on-call
     }
   } else {
     console.log(`Received ${request.method} with ${text ? 'non-JSON' : 'empty'} body`);

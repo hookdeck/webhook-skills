@@ -7,7 +7,7 @@
 
 ## Get Your Signing Secret
 
-Argyle does not generate a secret. You choose it:
+You choose the secret yourself and set it on the subscription:
 
 > Set a secret on the Argyle webhook subscription. Without one, deliveries are unsigned and fail verification.
 

@@ -61,30 +61,30 @@ def handle_event(event: dict) -> None:
 
     elif kind in ("tour.started", "tour.completed", "tour.exited", "tour.snoozed", "tour.button.clicked"):
         print(f"{kind}: {(data.get('tour') or {}).get('name')} ({who})")
-        # TODO: record onboarding progress for the user
+        # Your code: record onboarding progress for the user
 
     elif kind in ("survey.started", "survey.completed", "survey.exited", "survey.snoozed", "survey.button.clicked"):
         print(f"{kind}: {(data.get('survey') or {}).get('name')} ({who})")
-        # TODO: record survey progress
+        # Your code: record survey progress
 
     elif kind == "response.finished":
         print(f"Survey answered: \"{(data.get('response') or {}).get('button_text')}\" ({who})")
-        # TODO: store response.button_text and response.input_text
+        # Your code: store response.button_text and response.input_text
 
     elif kind in ("embed.started", "embed.completed", "embed.exited", "embed.snoozed", "embed.button.clicked"):
         print(f"{kind}: {(data.get('embed') or {}).get('name')} ({who})")
 
     elif kind in ("demo.started", "demo.reveal", "demo.finished", "demo.form.submitted", "demo.email.added"):
         print(f"{kind}: {(data.get('demo') or {}).get('name')} ({who})")
-        # TODO: sync the lead or engagement to your CRM
+        # Your code: sync the lead or engagement to your CRM
 
     elif kind in ("helpbar.search", "helpbar.answer", "helpbar.item.action", "helpbar.item.error"):
         print(f"{kind}: \"{(data.get('action') or {}).get('query')}\" ({who})")
-        # TODO: feed search analytics
+        # Your code: feed search analytics
 
     elif kind == "alert.triggered":
         print("Chameleon alert triggered")
-        # TODO: notify your team
+        # Your code: notify your team
 
     else:
         print(f"Unhandled event: {kind}")

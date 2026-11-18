@@ -38,14 +38,14 @@ These are the five documented event types. The examples handle all five and log 
 
 - `type` is the event type; `bounce.type` is the nested bounce kind (`hard` or `soft`), not the event.
 - `click` adds `link_id` and `url`.
-- `unsubscribe` adds `unsubscribe_all` (boolean) and `unsubscribe_ids` (array of list IDs).
+- `unsubscribe` adds `unsubscribe_all` (boolean) and `unsubscribe_ids` (array of message type IDs).
 - `date` is a Unix timestamp in seconds.
 - The payloads carry no event ID, so build an idempotency key from fields such as `type`, `contact_id`, `campaign_id`, and `date` (see webhook-handler-patterns).
 
 ## Delivery and Retries
 
-BigMailer's webhook documentation does not state a retry schedule, a response timeout, or which status codes count as success. Return a `2xx` quickly and do heavy work asynchronously. Running the endpoint behind Hookdeck gives you retries, replay, and a delivery log regardless.
+Any `2xx` counts as success, and BigMailer doesn't check the response body. A `4xx` or `5xx` is a failure, and BigMailer retries it for up to 5 days, with the interval doubling from 5 minutes up to a 12-hour cap. The same event can arrive more than once, and BigMailer doesn't guarantee delivery order. No timeout value is documented, but BigMailer warns that a slow handler can time out, so return a `2xx` quickly and do heavy work asynchronously. See [Webhooks: Getting Started](https://docs.bigmailer.io/docs/webhooks) and [Webhook Best Practices](https://docs.bigmailer.io/docs/webhooks-best-practices).
 
 ## Full Event Reference
 
-For the complete list of events and sample payloads, see [BigMailer's webhook documentation](https://docs.bigmailer.io/docs/webhooks-getting-started).
+For the complete list of events and sample payloads, see [BigMailer's webhook documentation](https://docs.bigmailer.io/docs/webhook-event-types).

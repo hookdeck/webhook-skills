@@ -46,13 +46,13 @@ Server runs on http://localhost:3000 and accepts requests at `/webhooks/payrix-p
 npm test
 ```
 
-To try it by hand (the payload is illustrative; Payrix doesn't document the body):
+To try it by hand (a placeholder body, not a Payrix payload; Payrix doesn't document the body):
 
 ```bash
 curl -X POST http://localhost:3000/webhooks/payrix-pro \
   -H "Content-Type: application/json" \
   -H "$PAYRIX_PRO_WEBHOOK_HEADER: $PAYRIX_PRO_WEBHOOK_SECRET" \
-  -d '{"alert":"transaction","transaction":{"id":"t1_txn_example","total":1500}}'
+  -d '{"placeholder":"test body"}'
 ```
 
 ## Receive Webhooks Locally

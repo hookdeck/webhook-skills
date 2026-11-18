@@ -27,7 +27,7 @@ The endpoint listens at `http://localhost:3000/webhooks/authgear`.
 npm test
 ```
 
-Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest checked against core; it is not a live vendor capture.
+Tests cover a fixed signing vector, tampering, malformed signatures, raw byte preservation and wrong-typed JSON. `vector.json` contains an illustrative payload and a fixed digest that matches the hex HMAC-SHA256 construction in Authgear's docs; it is not a live vendor capture.
 
 ## Receive Real Deliveries
 

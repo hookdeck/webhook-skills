@@ -52,28 +52,28 @@ def handle_event(payload: dict) -> None:
     # Session webhooks (event_type)
     if event == "SESSION_STARTED":
         print(f"Session started: {interview_id}")
-        # TODO: mark the applicant as in progress
+        # Your code: mark the applicant as in progress
 
     elif event == "SESSION_PROGRESS":
         print(f"Session progress: {interview_id}")
-        # TODO: track resumed sessions
+        # Your code: track resumed sessions
 
     elif event == "SESSION_SUCCEEDED":
         print(f"Session succeeded: {interview_id} (identity {payload.get('identityId')})")
-        # TODO: approve the applicant, fetch results with the Incode API
+        # Your code: approve the applicant, fetch results with the Incode API
 
     elif event == "SESSION_FAILED":
         print(f"Session failed: {interview_id} ({', '.join(payload.get('failureReasons') or [])})")
-        # TODO: reject or retry the applicant (payload["failureReasons"])
+        # Your code: reject or retry the applicant (payload["failureReasons"])
 
     elif event == "SESSION_PENDING_REVIEW":
         print(f"Session pending review: {interview_id}")
-        # TODO: queue for manual review
+        # Your code: queue for manual review
 
     # Identity Enrolled (eventType)
     elif event == "IDENTITY_ENROLLED":
         print(f"Identity enrolled: {payload.get('identityId')}")
-        # TODO: link payload["identityId"] to your user record
+        # Your code: link payload["identityId"] to your user record
 
     # Onboarding status webhook (onboardingStatus)
     elif event in (
@@ -85,27 +85,27 @@ def handle_event(payload: dict) -> None:
         "POST_PROCESSING_FINISHED_SECOND_ID",
     ):
         print(f"Onboarding step finished: {event} ({interview_id})")
-        # TODO: optionally fetch partial results; wait for ONBOARDING_FINISHED for final data
+        # Your code: optionally fetch partial results; wait for ONBOARDING_FINISHED for final data
 
     elif event == "ONBOARDING_FINISHED":
         print(f"Onboarding finished: {interview_id}")
-        # TODO: fetch the final session results
+        # Your code: fetch the final session results
 
     elif event == "MANUAL_REVIEW_APPROVED":
         print(f"Manual review approved: {interview_id}")
-        # TODO: approve the applicant
+        # Your code: approve the applicant
 
     elif event == "MANUAL_REVIEW_REJECTED":
         print(f"Manual review rejected: {interview_id}")
-        # TODO: reject the applicant
+        # Your code: reject the applicant
 
     elif event == "EXPIRED":
         print(f"Session expired: {interview_id}")
-        # TODO: expire the pending applicant
+        # Your code: expire the pending applicant
 
     elif event == "DELETED":
         print(f"Sessions deleted: {', '.join(payload.get('interviewIds') or [])}")
-        # TODO: delete your copies of these sessions (note interviewIds, not interviewId)
+        # Your code: delete your copies of these sessions (note interviewIds, not interviewId)
 
     else:
         print(f"Unhandled event: {event}")

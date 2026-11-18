@@ -13,7 +13,8 @@ const HEX_DIGEST = /^[0-9a-fA-F]{64}$/;
  * Verify an Ultravox webhook.
  *
  * Signature = lowercase hex HMAC-SHA256(secret, rawBody || X-Ultravox-Webhook-Timestamp),
- * with NO separator between the body bytes and the timestamp string.
+ * with NO separator between the body bytes and the timestamp string. The signature
+ * header may list several comma-separated digests (one per secret); any match is valid.
  * Returns null when valid, otherwise a short reason string.
  */
 function verifyUltravoxWebhook(rawBody, headers, secret, toleranceSeconds = 0) {
@@ -22,19 +23,19 @@ function verifyUltravoxWebhook(rawBody, headers, secret, toleranceSeconds = 0) {
   if (!signature) return 'Missing X-Ultravox-Webhook-Signature header';
   if (!timestamp) return 'Missing X-Ultravox-Webhook-Timestamp header';
 
-  // The whole header is one digest: exactly 64 hex characters, nothing else
-  if (typeof signature !== 'string' || !HEX_DIGEST.test(signature)) {
-    return 'Malformed signature';
-  }
-
   // Signed message as bytes: raw body, then the timestamp header exactly as received (latin1)
   const signedContent = Buffer.concat([rawBody, Buffer.from(timestamp, 'latin1')]);
   const expected = crypto.createHmac('sha256', secret).update(signedContent).digest();
-  const received = Buffer.from(signature.toLowerCase(), 'hex'); // safe: format validated above
 
-  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-    return 'Invalid signature';
-  }
+  // The header holds one hex digest, or several separated by commas when the webhook
+  // has more than one secret (key rotation). Accept the delivery if any of them matches.
+  if (typeof signature !== 'string') return 'Malformed signature';
+  const matched = signature.split(',').some((candidate) => {
+    if (!HEX_DIGEST.test(candidate)) return false;
+    const received = Buffer.from(candidate.toLowerCase(), 'hex'); // safe: format validated above
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  });
+  if (!matched) return 'Invalid signature';
 
   // Opt-in replay window. Off by default: Hookdeck retries/replays keep the original timestamp.
   if (toleranceSeconds > 0) {
@@ -76,19 +77,19 @@ app.post('/webhooks/ultravox', express.raw({ type: '*/*' }), (req, res) => {
   switch (payload.event) {
     case 'call.started':
       console.log('Call started');
-      // TODO: record the call as in progress
+      // Your code: record the call (fires when a call is created)
       break;
     case 'call.joined':
       console.log('Call joined');
-      // TODO: the participant connected to the call
+      // Your code: a client connected to the call
       break;
     case 'call.ended':
       console.log('Call ended');
-      // TODO: fetch the transcript / final call details
+      // Your code: the call is over; billing may not be ready yet
       break;
     case 'call.billed':
       console.log('Call billed');
-      // TODO: reconcile usage and cost
+      // Your code: billing information is available
       break;
     default:
       console.log('Unhandled Ultravox event:', payload.event);

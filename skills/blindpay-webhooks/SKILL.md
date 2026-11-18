@@ -98,8 +98,9 @@ list may not be exhaustive, so acknowledge unknown events with `200`):
 | Limit increase | `limitIncrease.new`, `limitIncrease.update` |
 | Payable | `payable.new`, `payable.update`, `payable.complete` |
 
-`payin.complete` fires when a payin finishes in any way (sent, refunded or failed), while a
-failed payout fires `payout.update`, not `payout.complete`. Check `status` on the payload. See
+`payin.complete` fires when a payin finishes in any way (sent, refunded or failed). BlindPay's
+events page says a failed payout fires `payout.update`, not `payout.complete`, while its Payouts
+page lists `failed` under `payout.complete`, so check `status` on both. See
 [references/overview.md](references/overview.md) for when each event fires and the payload shape.
 
 ## Environment Variables

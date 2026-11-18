@@ -70,12 +70,12 @@ def handle_event(payload: dict) -> str:
 
     if event == "temperature":
         print(f"Temperature {data} from {coreid} at {published_at}")
-        # TODO: store the reading (float(data))
+        # Your code: store the reading (float(data))
         return "temperature"
 
     if event == "motion-detected":
         print(f"Motion detected on {coreid} at {published_at}")
-        # TODO: raise an alert
+        # Your code: raise an alert
         return "motion-detected"
 
     print(f"Unhandled event: {event}")

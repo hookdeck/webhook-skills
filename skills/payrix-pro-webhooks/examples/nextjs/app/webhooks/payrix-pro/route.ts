@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyPayrixProRequest, parseBody } from '../../../lib/verify-payrix-pro';
 
 function handleAlert(payload: unknown): void {
-  // The payload shape isn't documented; this is an illustrative transaction alert:
-  // { "alert": "transaction", "transaction": { "id": "t1_txn_...", "total": 1500 } }
+  // Payrix doesn't document the payload shape: capture a delivery for each trigger first.
   if (payload && typeof payload === 'object') {
     console.log('Payrix Pro alert (JSON):', JSON.stringify(payload).slice(0, 200));
   } else if (payload) {
@@ -13,7 +12,7 @@ function handleAlert(payload: unknown): void {
   } else {
     console.log('Payrix Pro alert (empty body)');
   }
-  // TODO: dispatch on the fields your alert actually sends
+  // Your code: dispatch on the fields your own triggers actually send
 }
 
 async function handler(request: NextRequest) {

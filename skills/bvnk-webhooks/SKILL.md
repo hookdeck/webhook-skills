@@ -88,7 +88,7 @@ The body is JSON: `{ event, eventId, timestamp, data }`. Dispatch on the `event`
 | `platform:accounts:customer:status-change` | A customer's status changed |
 | `bvnk:customers:status-change` | A customer's status changed (customers API) |
 
-BVNK documents 28 event types in total across payments, customers and ledger; handle the ones you subscribe to and log the rest. See [references/overview.md](references/overview.md).
+BVNK documents 30 event types in total across payments, customers, cards and ledger; handle the ones you subscribe to and log the rest. See [references/overview.md](references/overview.md).
 
 > **For the full event list and payloads**, see [BVNK's webhook documentation](https://docs.bvnk.com/bvnk/get-started/create-webhook-listener).
 

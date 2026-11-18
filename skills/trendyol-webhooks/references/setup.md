@@ -4,7 +4,7 @@
 
 - A Trendyol seller account with API credentials (the same ones used for the marketplace APIs)
 - A publicly reachable HTTPS endpoint (use `npx hookdeck-cli listen 3000 trendyol --path /webhooks/trendyol` locally)
-- A URL that does not contain "Trendyol", "Dolap" or "Localhost"
+- A URL that does not contain "Trendyol", "Dolap" or "Localhost", so not a path like `/webhooks/trendyol`
 
 ## Choose an API Key
 
@@ -25,7 +25,7 @@ request itself uses Basic authentication with your sellerId, API key and API sec
 
 ```json
 {
-  "url": "https://example.com/webhooks/trendyol",
+  "url": "https://example.com/webhooks/orders",
   "authenticationType": "API_KEY",
   "apiKey": "your-webhook-api-key",
   "subscribedStatuses": ["CREATED", "SHIPPED", "DELIVERED"]
@@ -38,8 +38,9 @@ Trendyol then sends the `apiKey` in the `x-api-key` header.
 
 ## Test Mode vs Live Mode
 
-Trendyol has separate test (stage) and production environments with their own credentials.
-Create the webhook in each environment you use.
+Trendyol has separate test (stage) and production environments, and the stage account and API
+credentials are completely different from production ones. Stage API access also needs your server's
+IP authorized by Trendyol first. Create the webhook in each environment you use.
 
 ## Reactivating
 

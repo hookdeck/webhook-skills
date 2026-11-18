@@ -41,19 +41,19 @@ export async function POST(request: NextRequest) {
   switch (payload.event) {
     case 'call.started':
       console.log('Call started');
-      // TODO: record the call as in progress
+      // Your code: record the call (fires when a call is created)
       break;
     case 'call.joined':
       console.log('Call joined');
-      // TODO: the participant connected to the call
+      // Your code: a client connected to the call
       break;
     case 'call.ended':
       console.log('Call ended');
-      // TODO: fetch the transcript / final call details
+      // Your code: the call is over; billing may not be ready yet
       break;
     case 'call.billed':
       console.log('Call billed');
-      // TODO: reconcile usage and cost
+      // Your code: billing information is available
       break;
     default:
       console.log('Unhandled Ultravox event:', payload.event);

@@ -98,11 +98,20 @@ def test_rejects_tampered_timestamp():
     assert post(body, "2026-01-01T00:00:01.000Z", sig).status_code == 401
 
 
+def test_accepts_list_when_any_signature_matches():
+    body = event("call.ended").encode()
+    ts = now_iso()
+    other = sign(body, ts, "previous_secret")
+    for sig in [f"{other},{sign(body, ts)}", f"{sign(body, ts)},{other}"]:
+        assert post(body, ts, sig).status_code == 204
+
+
 def test_rejects_malformed_signatures():
     body = event("call.ended").encode()
     ts = now_iso()
     good = sign(body, ts)
-    for bad in [good[:62], good + "00", "z" * 64, f"sha256={good}", f"{good},{good}", good + "\n"]:
+    other = sign(body, ts, "previous_secret")
+    for bad in [good[:62], good + "00", "z" * 64, f"sha256={good}", f"{other},{other}", f"{good} ,x", good + "\n"]:
         assert post(body, ts, bad).status_code == 401
 
 

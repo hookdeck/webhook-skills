@@ -164,7 +164,7 @@ USAGE_EVENTS = {
 
 
 def handle_event(event: dict, event_id: Optional[str]) -> None:
-    # TODO: drop the event if event_id is already in your store (when event_id is set).
+    # Your code: drop the event if event_id is already in your store (when event_id is set).
     action = event.get("action")
 
     if action in COMPANY_USER_EVENTS:

@@ -87,7 +87,7 @@ describe('Magic Hour webhook endpoint', () => {
       expect(res.status).toBe(200);
     });
 
-    it('accepts an old timestamp by default (retries resend it)', async () => {
+    it('accepts an old timestamp by default (redeliveries resend it)', async () => {
       const res = await signedPost(samplePayload(), nowSeconds() - 3600);
       expect(res.status).toBe(200);
     });

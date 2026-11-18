@@ -27,7 +27,7 @@ def safe_equal(a: str, b: str) -> bool:
 def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> bool:
     """Palmetto Finance does not sign payloads. With the default server API key
     authentication, every delivery carries the key Palmetto returned at registration
-    in a header (apiKey by default; some pages show api_key). We compare the WHOLE
+    in a header (apiKey; the API reference example also shows api_key). We compare the WHOLE
     header value, with no 'Bearer ' parsing.
     Starlette headers are case-insensitive.
     """
@@ -77,27 +77,27 @@ def handle_event(payload: dict) -> None:
 
     if event == "accountCreated":
         print(f"{label}: {account_id} ({payload.get('programType')})")
-        # TODO: create the account in your system (payload["accountReference"])
+        # Your code: create the account in your system (payload["accountReference"])
 
     elif event == "applicationStatus":
         print(f"{label}: {account_id} application {payload.get('applicationId')}")
-        # TODO: update the application record (payload["applicants"])
+        # Your code: update the application record (payload["applicants"])
 
     elif event == "contractSigned":
         print(f"{label}: {account_id} contract {payload.get('contractReference')}")
-        # TODO: mark the contract signed (payload["quoteReference"])
+        # Your code: mark the contract signed (payload["quoteReference"])
 
     elif event == "milestoneAchieved":
         print(f"{label}: {payload.get('newMilestone')}")
-        # TODO: advance the project (payload["organizationId"])
+        # Your code: advance the project (payload["organizationId"])
 
     elif event == "quoteCreated":
         print(f"{label}: {account_id} quote {payload.get('quoteId')}")
-        # TODO: store the quote
+        # Your code: store the quote
 
     elif event == "documentUploaded":
         print(f"{label}: {account_id} document {payload.get('documentId')}")
-        # TODO: fetch the document
+        # Your code: fetch the document
 
     elif label:
         print(f"{label}: {account_id}")

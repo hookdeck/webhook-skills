@@ -29,22 +29,26 @@ def verify_ultravox_webhook(
     """Verify an Ultravox webhook. Returns None when valid, otherwise a short reason.
 
     Signature = lowercase hex HMAC-SHA256(secret, raw_body + X-Ultravox-Webhook-Timestamp),
-    with NO separator between the body bytes and the timestamp string.
+    with NO separator between the body bytes and the timestamp string. The signature
+    header may list several comma-separated digests (one per secret); any match is valid.
     """
     if not signature:
         return "Missing X-Ultravox-Webhook-Signature header"
     if not timestamp:
         return "Missing X-Ultravox-Webhook-Timestamp header"
 
-    # The whole header is one digest: exactly 64 hex characters, nothing else
-    if not HEX_DIGEST.fullmatch(signature):
-        return "Malformed signature"
-
     # Signed message as bytes: raw body, then the timestamp header exactly as received (latin-1)
     signed_content = b"".join([raw_body, timestamp.encode("latin-1")])
     expected = hmac.new(secret.encode("utf-8"), signed_content, hashlib.sha256).digest()
-    received = bytes.fromhex(signature)  # safe: format validated above
-    if not hmac.compare_digest(received, expected):
+
+    # The header holds one hex digest, or several separated by commas when the webhook
+    # has more than one secret (key rotation). Accept the delivery if any of them matches.
+    matched = False
+    for candidate in signature.split(","):
+        if HEX_DIGEST.fullmatch(candidate) and hmac.compare_digest(bytes.fromhex(candidate), expected):
+            matched = True
+            break
+    if not matched:
         return "Invalid signature"
 
     # Opt-in replay window. Off by default: Hookdeck retries/replays keep the original timestamp.
@@ -99,16 +103,16 @@ async def ultravox_webhook(request: Request):
     event = payload.get("event") if isinstance(payload, dict) else None
     if event == "call.started":
         print("Call started")
-        # TODO: record the call as in progress
+        # Your code: record the call (fires when a call is created)
     elif event == "call.joined":
         print("Call joined")
-        # TODO: the participant connected to the call
+        # Your code: a client connected to the call
     elif event == "call.ended":
         print("Call ended")
-        # TODO: fetch the transcript / final call details
+        # Your code: the call is over; billing may not be ready yet
     elif event == "call.billed":
         print("Call billed")
-        # TODO: reconcile usage and cost
+        # Your code: billing information is available
     else:
         print(f"Unhandled Ultravox event: {event}")
 

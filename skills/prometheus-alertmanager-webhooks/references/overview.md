@@ -21,42 +21,47 @@ both firing and resolved alerts. Loop over `alerts[]` and use each alert's own `
 
 ## Event Payload Structure
 
-Version `"4"` JSON, sent with POST:
+Alertmanager documents the version `"4"` body as a format description rather than a filled-in
+example. This is its format, as printed in the `webhook_config` docs:
 
-```json
+```
 {
   "version": "4",
-  "groupKey": "{}:{alertname=\"HighCPU\"}",
-  "truncatedAlerts": 0,
-  "status": "firing",
-  "receiver": "hookdeck",
-  "groupLabels": { "alertname": "HighCPU" },
-  "commonLabels": { "alertname": "HighCPU", "severity": "critical" },
-  "commonAnnotations": { "summary": "CPU above 90%" },
-  "externalURL": "http://alertmanager:9093",
+  "groupKey": <string>,              // key identifying the group of alerts (e.g. to deduplicate)
+  "truncatedAlerts": <int>,          // how many alerts have been truncated due to "max_alerts"
+  "status": "<resolved|firing>",
+  "receiver": <string>,
+  "groupLabels": <object>,
+  "commonLabels": <object>,
+  "commonAnnotations": <object>,
+  "externalURL": <string>,           // backlink to the Alertmanager.
+  "notification_reason": <string>,   // string represent the reason this notification was generated
   "alerts": [
     {
-      "status": "firing",
-      "labels": { "alertname": "HighCPU", "instance": "web-1:9100" },
-      "annotations": { "summary": "CPU above 90%" },
-      "startsAt": "2026-10-26T10:00:00.000Z",
-      "endsAt": "0001-01-01T00:00:00Z",
-      "generatorURL": "http://prometheus:9090/graph?g0.expr=cpu",
-      "fingerprint": "1a2b3c4d5e6f7a8b"
-    }
+      "status": "<resolved|firing>",
+      "labels": <object>,
+      "annotations": <object>,
+      "startsAt": "<rfc3339>",
+      "endsAt": "<rfc3339>",
+      "generatorURL": <string>,      // identifies the entity that caused the alert
+      "fingerprint": <string>        // fingerprint to identify the alert
+    },
+    ...
   ]
 }
 ```
 
 - `truncatedAlerts` is the number of alerts dropped because the receiver's `max_alerts` is set.
-- `endsAt` is the zero time (`0001-01-01T00:00:00Z`) while an alert is firing without an end time.
+- `labels` hold `alertname` and whatever labels your alerting rules set; `annotations` hold text
+  such as a summary or runbook link.
 
 ## Repeated Notifications
 
-Alertmanager re-sends a group every `group_interval` when it changes and every `repeat_interval`
-while it keeps firing, so the same alert arrives many times. Deduplicate with `groupKey` plus each
-alert's `fingerprint`; add `status`, `startsAt` and `endsAt` to the key if a resolved notification
-should count as new.
+Alertmanager notifies per group: after `group_wait` it sends the first notification, at each
+`group_interval` it sends again if the group changed, and it repeats an unchanged notification
+after `repeat_interval`. Each notification carries the whole group, so the same alert arrives many
+times. Key your handling on each alert's `fingerprint`, `status` and `startsAt`, as the examples do,
+not on `groupKey` alone: a group's firing and resolved notifications share the same `groupKey`.
 
 ## Full Reference
 

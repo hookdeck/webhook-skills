@@ -113,19 +113,24 @@ async def openrouter_webhook(request: Request):
     if event_type == "video.generation.completed":
         urls = _as_list(job.get("unsigned_urls"))
         print(f"Video ready: id={job.get('id')} key={idempotency_key} url={urls[0] if urls else None}")
-        # TODO: Store the job and download the video (send your bearer token if the URL is on the OpenRouter API)
+        # Your code: Store the job and download the video (send your bearer token if the URL is on the OpenRouter API)
 
     elif event_type == "video.generation.failed":
         print(f"Video failed: id={job.get('id')} key={idempotency_key} error={job.get('error')}")
-        # TODO: Mark the job failed and notify the user
+        # Your code: Mark the job failed and notify the user
 
     elif event_type == "video.generation.cancelled":
         print(f"Video cancelled: id={job.get('id')} key={idempotency_key}")
-        # TODO: Mark the job cancelled
+        # Your code: Mark the job cancelled
 
     elif event_type == "video.generation.expired":
         print(f"Video expired: id={job.get('id')} key={idempotency_key}")
-        # TODO: Mark the job expired and resubmit if needed
+        # Your code: Mark the job expired and resubmit if needed
+
+    elif event_type in ("batch.completed", "batch.failed", "batch.expired", "batch.cancelled"):
+        # The event holds only the batch ID; fetch the batch for its status and results
+        print(f"Batch final: type={event_type} event_id={event.get('id')} batch_id={job.get('id')} key={idempotency_key}")
+        # Your code: queue the batch ID (keyed on the event id), then fetch GET /api/v1/batches/{id}
 
     else:
         print(f"Unhandled event type: {event_type}")

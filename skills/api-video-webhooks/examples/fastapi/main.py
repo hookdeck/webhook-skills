@@ -56,17 +56,17 @@ async def api_video_webhook(request: Request):
     event_type = event.get("type")
 
     if event_type == "video.source.recorded":
-        print(f"Source recorded for video {event.get('videoId')}")
-        # TODO: mark upload as received
+        print(f"Live stream recording queued as video {event.get('videoId')}")
+        # Your code: the live stream recording is queued for encoding
     elif event_type == "video.encoding.quality.completed":
         print(f"Video {event.get('videoId')} encoded: {event.get('encoding')} {event.get('quality')}")
-        # TODO: make the rendition available
+        # Your code: make the rendition available
     elif event_type == "live-stream.broadcast.started":
         print(f"Live stream {event.get('liveStreamId')} started")
-        # TODO: notify viewers
+        # Your code: notify viewers
     elif event_type == "live-stream.broadcast.ended":
         print(f"Live stream {event.get('liveStreamId')} ended")
-        # TODO: finalize the recording
+        # Your code: finalize the recording
     elif event_type == "video.caption.generated":
         print(f"Caption generated for video {event.get('videoId')}")
     elif event_type == "video.summary.generated":

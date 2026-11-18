@@ -60,7 +60,7 @@ string and re-encode it, and never `JSON.parse` before verifying (Express:
 ### Timestamp tolerance is opt-in
 
 Magic Hour recommends rejecting timestamps more than 5 minutes old, but this skill does **not**
-do that by default. Retries (and Hookdeck replays) resend the original headers, so a fixed window would reject legitimate redeliveries. To opt in,
+do that by default. Magic Hour regenerates the timestamp on each of its own retries, but Hookdeck retries and replays resend the original headers, so a fixed window would reject those redeliveries. To opt in,
 set `MAGIC_HOUR_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off, e.g. `300`). The examples then
 require a numeric timestamp within that many seconds of now.
 
@@ -78,7 +78,7 @@ Dispatch on the body's `type` field (`{type, payload}`; the payload matches the 
 
 | Event | Sent When |
 |-------|-----------|
-| `video.started` / `image.started` / `audio.started` | Job moves from `queued` to `rendering` |
+| `video.started` / `image.started` / `audio.started` | Processing begins (`queued` to `rendering` for video and image) |
 | `video.completed` / `image.completed` / `audio.completed` | Job finished; `payload.downloads[]` holds URLs that expire |
 | `video.errored` / `image.errored` / `audio.errored` | Job failed; `payload.error` has `code` and `message` |
 
@@ -89,7 +89,7 @@ dedupe on `{payload.id}:{type}`.
 
 Network failures, timeouts and non-2xx responses are retried at 1, 2, 4, 8, ... minutes
 (capped at 60); events older than 24 hours are marked failed. The timestamp and signature are
-regenerated for each attempt. No timeout value is documented, so acknowledge quickly. Webhooks
+regenerated for each attempt. Magic Hour's Create a Webhook page asks for a 2xx within 10 seconds, so acknowledge quickly. Webhooks
 are `POST` requests.
 
 ## Environment Variables

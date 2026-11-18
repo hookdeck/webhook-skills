@@ -47,7 +47,7 @@ const ok = signatureHeader.split(' ').some((entry) => {   // any matching v1 ent
 });
 ```
 
-Rules the examples follow, matching Hookdeck's Bindbee source:
+Rules the examples follow:
 
 - Require all three headers; read `svix-id` / `svix-timestamp` / `svix-signature` instead when `webhook-id` is absent.
 - A secret starting with `whsec_` is base64-decoded after the prefix; any other secret is used as UTF-8 bytes. An empty key fails closed, as does an unset `BINDBEE_WEBHOOK_SECRET`.

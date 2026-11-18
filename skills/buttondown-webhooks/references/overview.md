@@ -4,7 +4,7 @@
 
 Buttondown is a newsletter publishing platform. Whenever something happens to a newsletter (a subscriber signs up, an email finishes sending, an automation is invoked), Buttondown creates an event, and a webhook delivers it as an HTTP `POST` with a JSON body to your URL. Delivery is at least once and unordered, so make handlers idempotent.
 
-A webhook has a URL, the event types it listens to, and an optional signing key. Create one in the Buttondown app (Events & webhooks) or through the API.
+A webhook has a URL, the event types it listens to, and an optional signing key. Create one in the Buttondown app (**Settings**, then **Create webhook**) or through the API.
 
 ## Common Event Types
 
@@ -30,7 +30,7 @@ Other documented events, logged as unhandled by the examples, include `subscribe
 }
 ```
 
-`event_type` is top level. `data` carries ids, which you can look up through the Buttondown API; its fields vary by event.
+`event_type` is top level. Buttondown's API reference also lists an event `id` on every delivery, which its docs tell you to dedupe on, although this example omits it. `data` carries ids, which you can look up through the Buttondown API; its fields vary by event.
 
 ## Delivery and Retries
 

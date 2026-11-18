@@ -61,7 +61,7 @@ describe('Quicknode webhook route', () => {
     expect((await post(delivery(streamsBatch))).status).toBe(200);
   });
 
-  it('accepts a valid Webhooks array', async () => {
+  it('accepts a valid array body', async () => {
     expect((await post(delivery(webhookMatches))).status).toBe(200);
   });
 

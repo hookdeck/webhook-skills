@@ -24,11 +24,15 @@ HMAC-SHA256 using the webhook's secret.
 - How do I verify Ultravox webhook signatures?
 - Why is my Ultravox webhook signature verification failing?
 - How do I handle `call.started`, `call.joined`, `call.ended` or `call.billed` events?
-- Why do I get a 401 for a webhook with several secrets, or none?
+- How do I rotate an Ultravox webhook secret without downtime?
 
 ## Secret Setup (important)
 
-> Give the Ultravox webhook exactly one secret and paste it here. A webhook without a secret is unsigned, and one with several secrets sends a list of signatures, so both fail verification.
+Each webhook has a `secrets` array. Ultravox generates a secret when you create the webhook,
+or you supply your own, and you change secrets by updating or patching the webhook. Ultravox
+signs every delivery once per secret, so during a rotation the signature header carries a
+comma-separated list. If you receive through Hookdeck, paste the webhook's secret into the
+Ultravox source, and update the source's secret as soon as you rotate it in Ultravox.
 
 ## Verification (core)
 
@@ -40,16 +44,20 @@ directly by the timestamp header value, with no separator**.
 ```javascript
 const HEX_DIGEST = /^[0-9a-fA-F]{64}$/;
 // rawBody: Buffer from express.raw({ type: '*/*' }) - NOT parsed JSON
-if (!sig || !ts || !HEX_DIGEST.test(sig)) return res.status(401).end();
+if (!sig || !ts) return res.status(401).end();
 const signed = Buffer.concat([rawBody, Buffer.from(ts, 'latin1')]); // body, then timestamp
 const expected = crypto.createHmac('sha256', secret).update(signed).digest();
-const received = Buffer.from(sig.toLowerCase(), 'hex'); // safe: format validated above
-if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
-  return res.status(401).end();
-}
+// One digest per secret, comma-separated: accept the delivery if any of them matches
+const ok = sig.split(',').some((candidate) => {
+  if (!HEX_DIGEST.test(candidate)) return false;
+  const received = Buffer.from(candidate.toLowerCase(), 'hex'); // safe: format validated above
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+});
+if (!ok) return res.status(401).end();
 ```
 
-- Compare the **whole** header as one digest. Do not split on commas or strip a prefix.
+- Split the header on commas and accept the delivery if **any** digest matches. A webhook with
+  several secrets (for example during a rotation) sends one digest per secret. There's no prefix.
 - Missing/empty signature or timestamp, malformed value, or mismatch: respond `401`.
 - Verify first, then `JSON.parse`. Never re-serialize the body.
 - **Timestamp window is off by default.** Hookdeck retries and replays resend the original
@@ -67,17 +75,17 @@ Dispatch on the body's `event` field.
 
 | Event | Fires When |
 |-------|------------|
-| `call.started` | A call has started |
-| `call.joined` | A participant has joined the call |
-| `call.ended` | A call has ended |
-| `call.billed` | A call has been billed |
+| `call.started` | A call is created |
+| `call.joined` | A client connects to the call |
+| `call.ended` | A call ends, including an unjoined call that reaches its join timeout |
+| `call.billed` | A call is billed; billing information is available |
 
 > **For payload details**, see [Ultravox webhook events](https://docs.ultravox.ai/webhooks/available-webhooks).
 
 ## Environment Variables
 
 ```bash
-ULTRAVOX_WEBHOOK_SECRET=your_ultravox_webhook_secret_here   # the webhook's single secret
+ULTRAVOX_WEBHOOK_SECRET=your_ultravox_webhook_secret_here   # one of the webhook's secrets
 ULTRAVOX_WEBHOOK_TOLERANCE_SECONDS=0                       # optional; 0/unset = no timestamp check
 ```
 

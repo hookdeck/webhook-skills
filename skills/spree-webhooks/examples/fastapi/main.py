@@ -95,31 +95,31 @@ async def spree_webhook(request: Request):
     # Dispatch on the body's name (also sent as X-Spree-Webhook-Event)
     if name == "order.placed":
         print(f"Order placed: event={event_id} order={data.get('id')}")
-        # TODO: Send the order to your fulfilment or CRM system
+        # Your code: Send the order to your fulfilment or CRM system
 
     elif name == "order.paid":
         print(f"Order paid: event={event_id} order={data.get('id')}")
-        # TODO: Release the order for fulfilment
+        # Your code: Release the order for fulfilment
 
     elif name == "order.canceled":
         print(f"Order canceled: event={event_id} order={data.get('id')}")
-        # TODO: Cancel downstream work
+        # Your code: Cancel downstream work
 
     elif name == "payment.completed":
         print(f"Payment completed: event={event_id} payment={data.get('id')}")
-        # TODO: Record the payment
+        # Your code: Record the payment
 
     elif name == "fulfillment.fulfilled":
         print(f"Parcel shipped: event={event_id} fulfillment={data.get('id')}")
-        # TODO: Notify the customer with tracking details
+        # Your code: Notify the customer with tracking details
 
     elif name == "user.created":
         print(f"Customer registered: event={event_id} user={data.get('id')}")
-        # TODO: Sync the customer to your CRM
+        # Your code: Sync the customer to your CRM
 
     elif name == "product.updated":
         print(f"Product updated: event={event_id} product={data.get('id')}")
-        # TODO: Refresh your search index or cache
+        # Your code: Refresh your search index or cache
 
     elif name == "webhook.test":
         print(f"Test delivery received: event={event_id}")

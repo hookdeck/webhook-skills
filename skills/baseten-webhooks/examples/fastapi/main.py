@@ -31,7 +31,7 @@ def verify_baseten_signature(raw_body: bytes, header: str | None, secret: str | 
     return False
 
 
-def handle_async_request_completed(event: dict) -> str:
+def handle_async_predict_completed(event: dict) -> str:
     """Success and failure share the same event type; `data` and `errors` tell them apart."""
     errors = event.get("errors")
     if not event.get("data") or (isinstance(errors, list) and errors):
@@ -69,8 +69,8 @@ async def baseten_webhook(raw_body: bytes = Depends(verified_body)):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    if event.get("type") == "async_request_completed":
-        return {"received": True, "outcome": handle_async_request_completed(event)}
+    if event.get("type") == "async_predict_completed":
+        return {"received": True, "outcome": handle_async_predict_completed(event)}
 
     print(f"Unhandled Baseten event type: {event.get('type')}")
     return {"received": True, "outcome": "ignored"}

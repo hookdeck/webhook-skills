@@ -48,7 +48,7 @@ function handleEvent(event) {
     case 'tour.snoozed':
     case 'tour.button.clicked':
       console.log(`${kind}: ${data.tour && data.tour.name} (${who})`);
-      // TODO: record onboarding progress for the user
+      // Your code: record onboarding progress for the user
       break;
 
     case 'survey.started':
@@ -57,12 +57,12 @@ function handleEvent(event) {
     case 'survey.snoozed':
     case 'survey.button.clicked':
       console.log(`${kind}: ${data.survey && data.survey.name} (${who})`);
-      // TODO: record survey progress
+      // Your code: record survey progress
       break;
 
     case 'response.finished':
       console.log(`Survey answered: "${data.response && data.response.button_text}" (${who})`);
-      // TODO: store data.response.button_text and data.response.input_text
+      // Your code: store data.response.button_text and data.response.input_text
       break;
 
     case 'embed.started':
@@ -79,7 +79,7 @@ function handleEvent(event) {
     case 'demo.form.submitted':
     case 'demo.email.added':
       console.log(`${kind}: ${data.demo && data.demo.name} (${who})`);
-      // TODO: sync the lead or engagement to your CRM
+      // Your code: sync the lead or engagement to your CRM
       break;
 
     case 'helpbar.search':
@@ -87,12 +87,12 @@ function handleEvent(event) {
     case 'helpbar.item.action':
     case 'helpbar.item.error':
       console.log(`${kind}: "${data.action && data.action.query}" (${who})`);
-      // TODO: feed search analytics
+      // Your code: feed search analytics
       break;
 
     case 'alert.triggered':
       console.log('Chameleon alert triggered');
-      // TODO: notify your team
+      // Your code: notify your team
       break;
 
     default:

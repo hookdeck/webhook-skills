@@ -71,7 +71,7 @@ def verify_magic_hour_signature(
     if not hmac.compare_digest(bytes.fromhex(signature), expected):
         return "Signature mismatch"
 
-    # Opt-in replay window. Off by default: retries and replays resend the original timestamp.
+    # Opt-in replay window. Off by default: Hookdeck retries and replays resend the original timestamp.
     if tolerance_seconds and tolerance_seconds > 0:
         if not re.fullmatch(r"[0-9]+", timestamp):
             return "Invalid timestamp"

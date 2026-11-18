@@ -63,23 +63,23 @@ app.post('/webhooks/api-video',
     // The event name is the body's `type` field (X-Api-Video-WebhookID is the subscription id)
     switch (event.type) {
       case 'video.source.recorded':
-        console.log(`Source recorded for video ${event.videoId}`);
-        // TODO: mark upload as received
+        console.log(`Live stream recording queued as video ${event.videoId}`);
+        // Your code: the live stream recording is queued for encoding
         break;
 
       case 'video.encoding.quality.completed':
         console.log(`Video ${event.videoId} encoded: ${event.encoding} ${event.quality}`);
-        // TODO: make the rendition available
+        // Your code: make the rendition available
         break;
 
       case 'live-stream.broadcast.started':
         console.log(`Live stream ${event.liveStreamId} started`);
-        // TODO: notify viewers
+        // Your code: notify viewers
         break;
 
       case 'live-stream.broadcast.ended':
         console.log(`Live stream ${event.liveStreamId} ended`);
-        // TODO: finalize the recording
+        // Your code: finalize the recording
         break;
 
       case 'video.caption.generated':

@@ -12,7 +12,7 @@ X-BigMailer-Signature: t=1492774578,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77
 - Key: the endpoint's signing secret (shown with "show" in the Webhooks settings), as UTF-8 bytes, used as-is
 - Signed message: the `t` value exactly as it appears in the header, a literal `.`, then the raw request body bytes
 - `v1`: the only valid signature scheme. Ignore other keys.
-- Encoding: BigMailer's docs never name the digest encoding. The example value is 64 hex characters, so the examples treat it as lowercase hex and compare case-insensitively.
+- Encoding: BigMailer's docs never name the digest encoding. Its official [PHP example](https://github.com/bigmailer/webhook-examples/blob/master/php/index.php) compares against `hash_hmac` output, which is lowercase hex, and the docs' example value is 64 hex characters, so the examples treat it as hex and compare case-insensitively.
 - There is no official SDK helper in the docs, so the examples verify manually, and all three share one algorithm.
 
 ## Implementation
@@ -25,11 +25,11 @@ const ok = signatures.some((sig) =>
   /^[0-9a-fA-F]{64}$/.test(sig) && crypto.timingSafeEqual(Buffer.from(sig.toLowerCase()), expected));
 ```
 
-Parse the header by splitting on `,`, trimming each item, and splitting on the first `=`. Collect every `v1` value and accept the event if any matches (several can appear during key rotation). A header with no `t` value fails.
+Parse the header by splitting on `,`, trimming each item, and splitting on the first `=`. Collect every `v1` value and accept the event if any matches (BigMailer's docs say the header can carry more than one signature). A header with no `t` value fails.
 
 ## Replay Protection
 
-The examples **don't check the timestamp by default**. Retries and replays (BigMailer's, Hookdeck's, manual resends) resend the original headers, so a fixed window would reject legitimate late redeliveries. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is Unix seconds, and with a tolerance set it must be a whole number. Unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup.
+The examples **don't check the timestamp by default**. Hookdeck's retries and replays resend the original headers, and BigMailer keeps retrying for up to 5 days, so a fixed window can reject legitimate late deliveries. BigMailer's docs leave the tolerance to you; its PHP example uses 300 seconds. To opt in, set `BIGMAILER_WEBHOOK_TOLERANCE_SECONDS` to a positive number of seconds (for example `300`); `t` is Unix seconds, and with a tolerance set it must be a whole number. Unset or `0` leaves it off, and a value that isn't a whole number is treated as `0` with a warning at startup.
 
 ## Common Gotchas
 

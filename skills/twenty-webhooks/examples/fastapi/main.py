@@ -90,23 +90,23 @@ async def twenty_webhook(request: Request):
     # Handle the event based on <object>.<created|updated|deleted>
     if event_name == "person.created":
         print(f"Person created: {record_id}")
-        # TODO: Sync the new contact to your system
+        # Your code: Sync the new contact to your system
 
     elif event_name == "person.deleted":
         print(f"Person deleted: {record_id}")
-        # TODO: Remove or archive the contact
+        # Your code: Remove or archive the contact
 
     elif event_name == "company.updated":
         print(f"Company updated: {record_id}")
-        # TODO: Refresh the company in your system
+        # Your code: Refresh the company in your system
 
     elif event_name == "opportunity.updated":
         print(f"Opportunity updated: {record_id}")
-        # TODO: React to stage or amount changes
+        # Your code: React to stage or amount changes
 
     elif event_name == "note.created":
         print(f"Note created: {record_id}")
-        # TODO: Attach the note to the related record
+        # Your code: Attach the note to the related record
 
     else:
         # Any other object (custom objects included) and action: <object>.<action>

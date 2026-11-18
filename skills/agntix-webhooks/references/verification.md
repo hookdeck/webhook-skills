@@ -139,7 +139,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `svix-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
-- **One secret per endpoint.** Each endpoint has its own `whsec_` secret, shown in the dashboard's Developer section (Svix).
+- **Wrong secret.** Agntix's docs don't say where the secret is shown; use the one from the endpoint you added under Developer, not an API key.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures

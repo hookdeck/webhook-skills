@@ -114,6 +114,11 @@ class TestStatusDispatch:
         assert res.status_code == 200
         assert "Package delivered" in capsys.readouterr().out
 
+    def test_matches_the_getshipmentpackages_spelling(self, capsys):
+        res = post(body=json.dumps(sample_payload("AtCollectionPoint")), headers={"x-api-key": SECRET})
+        assert res.status_code == 200
+        assert "Package at collection point" in capsys.readouterr().out
+
     def test_handles_every_package_in_content(self, capsys):
         body = {"content": [sample_package("Created"), sample_package("Shipped")]}
         res = post(body=json.dumps(body), headers={"x-api-key": SECRET})

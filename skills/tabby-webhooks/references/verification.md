@@ -65,7 +65,8 @@ def verify_tabby_request(headers, name=None, secret=None) -> bool:
   strip or parse a `Bearer ` prefix.
 - **Header names are case-insensitive.** Node lower-cases them; look up `name.toLowerCase()`.
 - **Registered without a header?** Then there is nothing to verify. Re-register with one.
-- **Masked on read.** Tabby returns `header.value` masked, so keep your own copy of the secret.
+- **Masked on read (dispute webhooks).** Dispute webhook responses return `header.value` masked
+  (payment webhook responses return it as registered), so keep your own copy of the secret.
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python encode to bytes first.
 - **Fail closed.** If `TABBY_WEBHOOK_SECRET` is unset, reject everything.

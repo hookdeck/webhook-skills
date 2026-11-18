@@ -16,18 +16,18 @@ metadata:
 
 Vellum, the LLM app platform, can stream platform events (workflow executions, usage, metrics)
 to your endpoint through the organization **Monitoring Integration > Webhook Integration**.
-Requests are **unsigned**: you authenticate them with a secret header you add yourself, using
-Vellum's **API Key Header** or **Bearer Token** authentication option.
+You authenticate requests with a secret header you add yourself, using Vellum's
+**API Key Header** or **Bearer Token** authentication option.
 
 Vellum can also sign requests with HMAC (`X-Vellum-Timestamp` and `X-Vellum-Signature`, over the
-timestamp, method, URL and body). Hookdeck's Vellum source does not check that signature, and
-this skill does not verify it either.
+timestamp, method, URL and body) once you provide an HMAC token. This skill checks the header
+credential, not that signature.
 
 ## When to Use This Skill
 
 - How do I receive Vellum webhooks?
 - How do I authenticate Vellum monitoring webhooks (API Key Header or Bearer Token)?
-- Does Vellum sign webhook payloads? (Optionally, but this skill uses the shared header instead)
+- Does Vellum sign webhook payloads? (Only with an HMAC token; this skill uses the shared header)
 - How do I handle `workflow.execution.rejected` or `metric.execution.fulfilled` events?
 - Why does my Vellum webhook endpoint return 401?
 

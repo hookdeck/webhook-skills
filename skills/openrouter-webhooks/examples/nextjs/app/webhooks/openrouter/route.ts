@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Parse only after the signature check
-  let event: { type?: string; data?: Record<string, any> };
+  let event: { id?: string; type?: string; data?: Record<string, any> };
   try {
     event = JSON.parse(rawBody.toString('utf8'));
   } catch {
@@ -86,22 +86,31 @@ export async function POST(request: NextRequest) {
   switch (event.type) {
     case 'video.generation.completed':
       console.log('Video ready:', { id: job.id, idempotencyKey, url: job.unsigned_urls?.[0] });
-      // TODO: Store the job and download the video (send your bearer token if the URL is on the OpenRouter API)
+      // Your code: Store the job and download the video (send your bearer token if the URL is on the OpenRouter API)
       break;
 
     case 'video.generation.failed':
       console.error('Video failed:', { id: job.id, idempotencyKey, error: job.error });
-      // TODO: Mark the job failed and notify the user
+      // Your code: Mark the job failed and notify the user
       break;
 
     case 'video.generation.cancelled':
       console.log('Video cancelled:', { id: job.id, idempotencyKey });
-      // TODO: Mark the job cancelled
+      // Your code: Mark the job cancelled
       break;
 
     case 'video.generation.expired':
       console.log('Video expired:', { id: job.id, idempotencyKey });
-      // TODO: Mark the job expired and resubmit if needed
+      // Your code: Mark the job expired and resubmit if needed
+      break;
+
+    case 'batch.completed':
+    case 'batch.failed':
+    case 'batch.expired':
+    case 'batch.cancelled':
+      // The event holds only the batch ID; fetch the batch for its status and results
+      console.log('Batch final:', { type: event.type, eventId: event.id, batchId: job.id, idempotencyKey });
+      // Your code: queue the batch ID (keyed on event.id), then fetch GET /api/v1/batches/{id}
       break;
 
     default:

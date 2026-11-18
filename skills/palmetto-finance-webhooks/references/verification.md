@@ -10,10 +10,11 @@ registration endpoint, and sends it on every webhook in a header.
 apiKey: <server API key>
 ```
 
-Other Palmetto pages call the header `api_key`, so the name is configurable here
-(`PALMETTO_FINANCE_WEBHOOK_HEADER`, default `apiKey`). Check a delivery to see which one your
-requests use. Not covered by Hookdeck's Palmetto Finance source or this skill: **client
-headers** (`clientId` and `clientSecret`) and **client basic authorization** (`Authorization:
+The registration section of Palmetto's guide calls the header `api_key`, and the API
+reference's example request carries both `api_key` and `apiKey` with the same value, so the name
+is configurable here (`PALMETTO_FINANCE_WEBHOOK_HEADER`, default `apiKey`). Not covered by this
+skill: **client headers** (`clientId` and `clientSecret` in the guide, `client_id` and
+`client_secret` in the API reference) and **client basic authorization** (`Authorization:
 Basic base64(clientId:clientSecret)`).
 
 There is no HMAC, timestamp or prefix. The raw body is not part of the check, but authenticate
@@ -73,10 +74,10 @@ def verify_palmetto_finance_request(headers, secret=None, header_name=None) -> b
 ## Common Gotchas
 
 - **The key is shown once.** If you didn't store it at registration, create a new registration.
-- **Header name.** `apiKey` by default; some pages say `api_key`. Look at a real request. Some
+- **Header name.** `apiKey` by default; the API reference example also shows `api_key`. Some
   proxies drop headers containing underscores, so prefer `apiKey` where you can.
-- **Check every method first.** The subscription's `httpMethod` may be GET, PUT, PATCH or
-  DELETE, and those often have no body. Authenticate before looking at the body.
+- **Check every method first.** The subscription's `httpMethod` may be `PUT` rather than
+  `POST`, and a request without a body should still be authenticated. Authenticate before looking at the body.
 - **Hookdeck source methods.** Allow your subscription's method on the Hookdeck source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 - **Constant-time compare.** Hash both sides (or check lengths) before `timingSafeEqual`, which
   throws on unequal lengths. In Python use `compare_digest` on bytes, never `str` (non-ASCII

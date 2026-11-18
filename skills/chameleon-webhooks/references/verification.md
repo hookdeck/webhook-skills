@@ -69,7 +69,7 @@ it after an outage.
 - **Case.** Hex is compared case-insensitively; lowercase or decode both sides.
 - **Status code.** The examples answer `401` for a bad signature. Chameleon's guidance says `400`;
   either is non-2xx and gets retried.
-- **Which secret.** One Webhook Secret per account, from Integrations -> Webhooks.
+- **Which secret.** The Webhook Secret from Integrations -> Webhooks, not the REST API's Account Secret.
 
 ## How to Debug Verification Failures
 

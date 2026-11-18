@@ -75,27 +75,27 @@ app.post('/webhooks/twenty',
     switch (eventName) {
       case 'person.created':
         console.log('Person created:', record.id);
-        // TODO: Sync the new contact to your system
+        // Your code: Sync the new contact to your system
         break;
 
       case 'person.deleted':
         console.log('Person deleted:', record.id);
-        // TODO: Remove or archive the contact
+        // Your code: Remove or archive the contact
         break;
 
       case 'company.updated':
         console.log('Company updated:', record.id);
-        // TODO: Refresh the company in your system
+        // Your code: Refresh the company in your system
         break;
 
       case 'opportunity.updated':
         console.log('Opportunity updated:', record.id);
-        // TODO: React to stage or amount changes
+        // Your code: React to stage or amount changes
         break;
 
       case 'note.created':
         console.log('Note created:', record.id);
-        // TODO: Attach the note to the related record
+        // Your code: Attach the note to the related record
         break;
 
       default:

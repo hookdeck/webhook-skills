@@ -62,7 +62,7 @@ app.post('/webhooks/blindpay', express.raw({ type: '*/*' }), (req, res) => {
 
   // Flat body: `webhook_event` first, then the resource's own fields (no wrapper object)
   const event = payload.webhook_event;
-  // svix-id is stable across retries and replays: deduplicate on it (or on the resource id + event)
+  // svix-id is stable across retries and replays: deduplicate on it (one resource id carries several .update events, so id + event is not unique)
   console.log(`Received BlindPay webhook ${event} (${id}) for ${payload.id}`);
 
   switch (event) {

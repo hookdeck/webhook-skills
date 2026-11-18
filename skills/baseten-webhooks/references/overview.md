@@ -10,14 +10,14 @@ Endpoints must use HTTPS (except `localhost` for development). Baseten supports 
 
 | Event (`type`) | Triggered When | Common Use Cases |
 |----------------|----------------|------------------|
-| `async_request_completed` | An async inference request finishes, successfully or not | Store the model output, mark a job done, alert on `errors` |
+| `async_predict_completed` | An async inference request finishes, successfully or not | Store the model output, mark a job done, alert on `errors` |
 
-This is the only documented value. Nothing in the headers names a type, so dispatch on the body's `type` field and log anything else.
+This is the only documented async value. Workspaces onboarded to Frontier Gateway also receive `API_BILLING_USAGE` billing webhooks, signed the same way. Nothing in the headers names a type, so dispatch on the body's `type` field and log anything else.
 
 Success and failure share the same type:
 
 - Success: `data` holds the output (`{"output": ...}`) and `errors` is `[]`.
-- Failure: `data` is `null` and `errors` holds objects such as `{"code": "MODEL_PREDICT_ERROR", "message": "..."}`.
+- Failure: `errors` holds objects such as `{"code": "MODEL_PREDICT_ERROR", "message": "..."}`, and `data` may not contain model output. Check `errors` before using `data`.
 
 ## Event Payload Structure
 
@@ -26,7 +26,7 @@ Success and failure share the same type:
   "request_id": "9876543210abcdef1234567890fedcba",
   "model_id": "abc123",
   "deployment_id": "def456",
-  "type": "async_request_completed",
+  "type": "async_predict_completed",
   "time": "2024-04-30T01:01:08.883423Z",
   "data": { "output": "model response here" },
   "errors": []

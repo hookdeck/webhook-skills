@@ -51,28 +51,28 @@ def handle_event(payload: dict) -> None:
 
     if name == "workflow.execution.initiated":
         print(f"Workflow execution initiated: {(body.get('workflow_class') or {}).get('name')}")
-        # TODO: record the run start (body["inputs"])
+        # Your code: record the run start (body["inputs"])
 
     elif name == "workflow.execution.fulfilled":
         print(f"Workflow execution fulfilled: {(body.get('workflow_class') or {}).get('name')}")
-        # TODO: store the result (body["outputs"])
+        # Your code: store the result (body["outputs"])
 
     elif name == "workflow.execution.rejected":
         error = body.get("error") or {}
         print(f"Workflow execution rejected: {error.get('code')} {error.get('message')}")
-        # TODO: alert on the failure (body["error"])
+        # Your code: alert on the failure (body["error"])
 
     elif name in ("workflow_execution.usage_calculation.fulfilled", "workflow.usage_calculation.fulfilled"):
         print("Workflow usage calculated")
-        # TODO: record cost (body["usage"], body["cost"])
+        # Your code: record cost (body["usage"], body["cost"])
 
     elif name == "workflow_execution.usage_calculation.rejected":
         print("Workflow usage calculation failed")
-        # TODO: flag the run for re-calculation
+        # Your code: flag the run for re-calculation
 
     elif name == "metric.execution.fulfilled":
         print("Metric execution fulfilled")
-        # TODO: store the metric result (body)
+        # Your code: store the metric result (body)
 
     else:
         print(f"Unhandled event: {name}")
