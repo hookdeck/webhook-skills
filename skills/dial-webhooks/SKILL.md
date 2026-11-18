@@ -29,14 +29,15 @@ Dial sends `X-Dial-Signature: t=<unix-seconds>,v1=<hex>`. `v1` is the lowercase 
 **HMAC-SHA256** of `{t}.{raw request body}`, keyed with the **full signing secret as a
 UTF-8 string, `whsec_` prefix included**. It is not Standard Webhooks: do not
 base64-decode the secret. Always verify against the **raw body**, never re-serialized
-JSON, and reject stale timestamps to limit replay (Dial's docs suggest 5 minutes).
+JSON. Dial's docs suggest rejecting timestamps older than 5 minutes; the examples make
+that window opt-in (see below).
 
 Dial publishes no webhook verification SDK, so verify manually:
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
+function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 0) {
   let t = null;
   const v1 = [];
   for (const part of String(header || '').split(',')) {
@@ -47,7 +48,7 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
     if (key === 't') t = value;
     else if (key === 'v1') v1.push(value);
   }
-  if (!t || !/^\d+$/.test(t) || v1.length === 0) return false;
+  if (!t || !/^\d{1,12}$/.test(t) || v1.length === 0) return false;
   if (toleranceSeconds > 0 && Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(`${t}.`).update(rawBody).digest();
@@ -59,11 +60,12 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
 ```python
 import hashlib, hmac, time
 
-def verify(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
     parts = [p.split("=", 1) for p in header.split(",") if "=" in p]
     t = next((v.strip() for k, v in parts if k.strip() == "t"), "")
     sigs = [v.strip().lower() for k, v in parts if k.strip() == "v1"]
-    if not t.isascii() or not t.isdigit() or not sigs:
+    # Cap t at 12 digits: a longer int overflows the float math below (a 500, not a 401)
+    if not t.isascii() or not t.isdigit() or len(t) > 12 or not sigs:
         return False
     if tolerance > 0 and abs(time.time() - int(t)) > tolerance:
         return False
@@ -72,11 +74,12 @@ def verify(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> b
     return any(hmac.compare_digest(expected, s.encode()) for s in sigs)
 ```
 
-> **Retries and replays:** Dial signs every one of its own retry attempts with a fresh
-> `t`, so a 5-minute window is safe for direct delivery. Hookdeck retries and replays
-> resend the **original** `t`, so behind Hookdeck widen or disable the window
-> (`DIAL_WEBHOOK_TOLERANCE_SECONDS`, `0` disables) and rely on deduplicating
-> `X-Dial-Event-ID` instead. See [references/verification.md](references/verification.md).
+> **Timestamp window is opt-in:** Dial signs each of its own retry attempts with a fresh
+> `t`, but Hookdeck retries and replays resend the **original** `t`, so a fixed window
+> rejects late redeliveries. The examples skip the check unless
+> `DIAL_WEBHOOK_TOLERANCE_SECONDS` is a positive number (e.g. `300` for Dial's suggested
+> 5 minutes). Either way, dedupe on `X-Dial-Event-ID`. See
+> [references/verification.md](references/verification.md).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -103,8 +106,9 @@ dedupe on `id` (also in `X-Dial-Event-ID`). `version` is per event type:
 ```bash
 # Full signing secret, whsec_ prefix included
 DIAL_WEBHOOK_SECRET=whsec_your_signing_secret
-# Max age of the signed timestamp in seconds (0 disables the check)
-DIAL_WEBHOOK_TOLERANCE_SECONDS=300
+# Optional: max age of the signed timestamp in seconds (unset or 0 = no check;
+# Dial's docs suggest 300 for direct delivery)
+DIAL_WEBHOOK_TOLERANCE_SECONDS=
 PORT=3000
 ```
 

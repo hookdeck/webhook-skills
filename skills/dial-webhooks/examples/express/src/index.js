@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
  * `{t}.{raw body}` keyed with the full signing secret (UTF-8, `whsec_` prefix included).
  * A toleranceSeconds of 0 skips the timestamp check.
  */
-function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
+function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 0) {
   let t = null;
   const v1 = [];
   for (const part of String(header || '').split(',')) {
@@ -23,7 +23,7 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
     if (key === 't') t = value;
     else if (key === 'v1') v1.push(value);
   }
-  if (!t || !/^\d+$/.test(t) || v1.length === 0) return false;
+  if (!t || !/^\d{1,12}$/.test(t) || v1.length === 0) return false;
   if (toleranceSeconds > 0 && Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(`${t}.`).update(rawBody).digest();
@@ -31,10 +31,13 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
   return v1.some((sig) => /^[0-9a-f]{64}$/i.test(sig) && crypto.timingSafeEqual(expected, Buffer.from(sig, 'hex')));
 }
 
+// Optional replay window in seconds. Off by default: retries and replays, including
+// Hookdeck's, can carry the original timestamp, so a window would reject late redeliveries.
+// Set DIAL_WEBHOOK_TOLERANCE_SECONDS to a positive whole number (Dial's docs suggest 300) to
+// opt in; anything else leaves the check off.
 function toleranceSeconds() {
-  const raw = process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS;
-  const n = raw === undefined || raw === '' ? 300 : Number(raw);
-  return Number.isFinite(n) && n >= 0 ? n : 300;
+  const raw = (process.env.DIAL_WEBHOOK_TOLERANCE_SECONDS ?? '').trim();
+  return /^\d+$/.test(raw) ? Number(raw) : 0;
 }
 
 // Raw body for any content type so we verify the exact bytes Dial sent

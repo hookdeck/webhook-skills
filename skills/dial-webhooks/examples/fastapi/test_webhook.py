@@ -97,15 +97,36 @@ def test_rejects_tampered_body():
     assert post(envelope("call.transcribed"), sig).status_code == 401
 
 
-def test_rejects_stale_timestamp_by_default():
+def test_accepts_old_timestamp_by_default():
+    # The window is opt-in: Hookdeck retries and replays keep the original timestamp
+    body = envelope("call.ended")
+    assert post(body, sign(body, now() - 86400)).status_code == 200
+
+
+def test_rejects_stale_timestamp_when_tolerance_set():
+    os.environ["DIAL_WEBHOOK_TOLERANCE_SECONDS"] = "300"
     body = envelope("call.ended")
     assert post(body, sign(body, now() - 600)).status_code == 401
 
 
-def test_accepts_stale_timestamp_when_tolerance_disabled():
-    os.environ["DIAL_WEBHOOK_TOLERANCE_SECONDS"] = "0"
+def test_accepts_fresh_timestamp_when_tolerance_set():
+    os.environ["DIAL_WEBHOOK_TOLERANCE_SECONDS"] = "300"
+    body = envelope("call.ended")
+    assert post(body, sign(body)).status_code == 200
+
+
+@pytest.mark.parametrize("value", ["0", "abc", "-5"])
+def test_invalid_or_zero_tolerance_is_off(value):
+    os.environ["DIAL_WEBHOOK_TOLERANCE_SECONDS"] = value
     body = envelope("call.ended")
     assert post(body, sign(body, now() - 86400)).status_code == 200
+
+
+def test_rejects_timestamp_longer_than_12_digits():
+    # A 400-digit t would overflow the float math: must be 401, not 500
+    os.environ["DIAL_WEBHOOK_TOLERANCE_SECONDS"] = "300"
+    body = envelope("call.ended")
+    assert post(body, sign(body, "9" * 400)).status_code == 401
 
 
 def test_rejects_malformed_signatures():

@@ -16,14 +16,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 
-def verify_dial_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify_dial_signature(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
     """X-Dial-Signature is `t=<unix-seconds>,v1=<hex>`, where v1 is the hex HMAC-SHA256 of
     `{t}.{raw body}` keyed with the full signing secret (UTF-8, `whsec_` prefix included).
     A tolerance of 0 skips the timestamp check."""
     parts = [p.split("=", 1) for p in header.split(",") if "=" in p]
     t = next((v.strip() for k, v in parts if k.strip() == "t"), "")
     sigs = [v.strip().lower() for k, v in parts if k.strip() == "v1"]
-    if not t.isascii() or not t.isdigit() or not sigs:
+    # Cap t at 12 digits: a longer int overflows the float math below (a 500, not a 401)
+    if not t.isascii() or not t.isdigit() or len(t) > 12 or not sigs:
         return False
     if tolerance > 0 and abs(time.time() - int(t)) > tolerance:
         return False
@@ -33,12 +34,12 @@ def verify_dial_signature(raw_body: bytes, header: str, secret: str, tolerance: 
 
 
 def tolerance_seconds() -> int:
-    raw = os.getenv("DIAL_WEBHOOK_TOLERANCE_SECONDS", "")
-    try:
-        value = int(raw) if raw else 300
-    except ValueError:
-        return 300
-    return value if value >= 0 else 300
+    """Optional replay window in seconds. Off by default: retries and replays, including
+    Hookdeck's, can carry the original timestamp, so a window would reject late redeliveries.
+    Set DIAL_WEBHOOK_TOLERANCE_SECONDS to a positive whole number (Dial's docs suggest 300) to
+    opt in; anything else leaves the check off."""
+    raw = (os.getenv("DIAL_WEBHOOK_TOLERANCE_SECONDS") or "").strip()
+    return int(raw) if raw.isascii() and raw.isdigit() else 0
 
 
 @app.get("/health")

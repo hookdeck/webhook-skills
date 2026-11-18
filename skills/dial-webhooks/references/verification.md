@@ -7,8 +7,8 @@
 - Algorithm: HMAC-SHA256, lowercase hex digest (64 chars)
 - Key: the **full** signing secret as a UTF-8 string, **`whsec_` prefix included**.
   This is not the Standard Webhooks scheme: do not strip the prefix or base64-decode it.
-- Replay protection: reject a `t` too far from now (Dial's docs suggest 5 minutes),
-  and dedupe on `X-Dial-Event-ID`.
+- Replay protection: dedupe on `X-Dial-Event-ID`. Dial's docs also suggest rejecting a
+  `t` more than 5 minutes from now; the examples make that window opt-in.
 
 ## Implementation
 
@@ -19,7 +19,7 @@ Dial has no published webhook verification SDK, so verify manually.
 ```javascript
 const crypto = require('crypto');
 
-function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
+function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 0) {
   let t = null;
   const v1 = [];
   for (const part of String(header || '').split(',')) {
@@ -30,7 +30,7 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
     if (key === 't') t = value;
     else if (key === 'v1') v1.push(value);
   }
-  if (!t || !/^\d+$/.test(t) || v1.length === 0) return false;
+  if (!t || !/^\d{1,12}$/.test(t) || v1.length === 0) return false;
   if (toleranceSeconds > 0 && Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false;
 
   const expected = crypto.createHmac('sha256', secret).update(`${t}.`).update(rawBody).digest();
@@ -43,11 +43,12 @@ function verifyDialSignature(rawBody, header, secret, toleranceSeconds = 300) {
 ```python
 import hashlib, hmac, time
 
-def verify(raw_body: bytes, header: str, secret: str, tolerance: int = 300) -> bool:
+def verify(raw_body: bytes, header: str, secret: str, tolerance: int = 0) -> bool:
     parts = [p.split("=", 1) for p in header.split(",") if "=" in p]
     t = next((v.strip() for k, v in parts if k.strip() == "t"), "")
     sigs = [v.strip().lower() for k, v in parts if k.strip() == "v1"]
-    if not t.isascii() or not t.isdigit() or not sigs:
+    # Cap t at 12 digits: a longer int overflows the float math below (a 500, not a 401)
+    if not t.isascii() or not t.isdigit() or len(t) > 12 or not sigs:
         return False
     if tolerance > 0 and abs(time.time() - int(t)) > tolerance:
         return False
@@ -63,9 +64,13 @@ verifier working if a future header carries more than one.
 Dial computes a fresh `t` (and signature) on **each** of its own retry attempts, so a
 5-minute window never rejects a legitimate direct delivery. Hookdeck retries and
 replays forward the original header unchanged, so behind Hookdeck a 5-minute window
-rejects anything retried or replayed later than that. Widen it with
-`DIAL_WEBHOOK_TOLERANCE_SECONDS`, or set `0` to skip the check, and rely on deduping
-`X-Dial-Event-ID` for replay safety.
+rejects anything retried or replayed later than that.
+
+The examples therefore skip the timestamp check by default. Set
+`DIAL_WEBHOOK_TOLERANCE_SECONDS` to a positive whole number (e.g. `300`) to turn it on
+when Dial delivers to your handler directly. Either way, dedupe on `X-Dial-Event-ID`
+for replay safety. The verifiers also reject a `t` longer than 12 digits, which can't
+be a real Unix time.
 
 ## Common Gotchas
 
