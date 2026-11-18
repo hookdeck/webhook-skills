@@ -44,7 +44,7 @@ Complete a response on the survey and watch for `response_completed`.
 npx hookdeck-cli listen 3000 surveymonkey --path /webhooks/surveymonkey
 ```
 
-Use the printed URL as `subscription_url`. If the `HEAD` check fails through the CLI URL, create the webhook with `?bypass_ping=true`.
+Use the printed URL as `subscription_url`. A plain CLI source answers `HEAD` with `405`, so pass `?bypass_ping=true` (or first create a SurveyMonkey-type source named `surveymonkey`).
 
 ## Using Hookdeck
 
