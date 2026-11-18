@@ -25,7 +25,7 @@ The same API lists, fetches, and updates webhooks, lists past webhook requests, 
 
 Limits: one active webhook per action and URL, and at most two active webhooks per action.
 
-Partner (OAuth) apps can also add webhooks in Motive's developer portal. Its URL field only accepts hosts whose top-level domain is 2 to 5 letters, so it rejects `https://hkdk.events/...`. For a Hookdeck source, enter `https://events.hookdeck.com/e/<source id>` instead (the same source, under a URL the portal accepts).
+Partner (OAuth) apps can also add webhooks in Motive's developer portal. Its URL field only accepts hosts whose top-level domain is 2 to 5 letters, so it rejects `https://hkdk.events/...`. For a Hookdeck source, enter `https://events.hookdeck.com/e/` followed by the part of the source URL after `hkdk.events/` instead (the same source, under a URL the portal accepts).
 
 ## The Activation Test Request
 
