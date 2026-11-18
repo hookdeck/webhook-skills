@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
-  // Huntress's docs name svix-* headers, but a live delivery (2026-11-18) sent the
+  // Huntress's docs name svix-* headers, but a live Send Test delivery (2026-11-18) sent the
   // Standard Webhooks names (webhook-id, webhook-timestamp, webhook-signature).
   // The signed content is the same, so accept either prefix.
   const svixId = request.headers.get('svix-id') ?? request.headers.get('webhook-id');

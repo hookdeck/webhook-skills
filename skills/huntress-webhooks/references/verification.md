@@ -33,7 +33,7 @@ Portal's **View Signing Secret** value is a `whsec_` secret.
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
-// Accept either prefix: live deliveries use webhook-*, the docs say svix-*
+// Accept either prefix: a live Send Test (2026-11-18) used webhook-*, the docs say svix-*
 const h = (name) => req.headers[`svix-${name}`] ?? req.headers[`webhook-${name}`];
 new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET).verify(rawBody, {
   'svix-id': h('id'),
@@ -142,7 +142,7 @@ def verify_huntress(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sig
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not
   the literal string.
 - **Header prefix.** Read `webhook-*` and fall back to `svix-*` (or the reverse).
-  Live deliveries use `webhook-*` even though Huntress's article says `svix-*`.
+  A live Send Test delivery (2026-11-18) used `webhook-*` even though Huntress's article says `svix-*`.
 - **Multiple signatures.** Split the signature header on spaces and accept any matching
   `v1,` entry. Don't compare the whole header.
 - **One secret per endpoint.** Each Huntress endpoint has its own signing secret.
