@@ -1,0 +1,24 @@
+name: spotdraft
+displayName: SpotDraft
+docs:
+  webhooks: https://developer.spotdraft.com/docs/webhooks/overview
+  verification: https://developer.spotdraft.com/docs/api-playbooks/receive-real-time-contract-events-via-webhooks
+  events: https://developer.spotdraft.com/docs/webhooks/overview
+notes: >
+  SpotDraft (contract lifecycle management) webhooks, registered under Settings > Developer
+  settings > Webhooks or through the API. Header X-SD-WEBHOOK-CONTENT-HASH: bare hex HMAC-SHA512 of
+  the raw body, keyed with the base64-DECODED hmac_key from GET /api/v2.1/public/webhooks/hmac_key/
+  (client-id / client-secret headers; not shown in the UI). No timestamp. POST with JSON. Activity
+  values: CONTRACT_CREATED, CONTRACT_DATA_UPDATED, CONTRACT_SENT_TO_COUNTERPARTY,
+  CONTRACT_SIGNATURE_REQUESTED, CONTRACT_SIGNED, CONTRACT_EXECUTED, CONTRACT_PROCESS_METRIC_UPDATED.
+  The webhook guides publish no payload fields, retry schedule, timeout or test vector; examples
+  use a synthetic key, assume no payload field and fingerprint the body for dedupe. "For new
+  integrations, verify X-SD-WEBHOOK-CONTENT-HASH" hints at an older, undocumented mechanism.
+  Hookdeck source type SPOTDRAFT (HMAC alias, sha512, hex, secret_encoding base64; verification
+  optional; no timestamp window).
+testScenario:
+  events:
+    - CONTRACT_EXECUTED
+    - CONTRACT_SENT_TO_COUNTERPARTY
+catalog:
+  summary: 'Verify SpotDraft webhooks (`X-SD-WEBHOOK-CONTENT-HASH`, hex HMAC-SHA512 of the body keyed with the base64-decoded hmac_key), handle contract activity events'
