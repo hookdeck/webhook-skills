@@ -99,12 +99,20 @@ MINDBODY_MESSAGE_SIGNATURE_KEY=your-message-signature-key   # from the POST subs
 
 ## Local Development
 
-```bash
-# Express / Next.js (use 8000 for FastAPI). No install or account required.
-npx hookdeck-cli listen 3000 mindbody --path /webhooks/mindbody
-```
+**A plain CLI source fails Mindbody's `HEAD` check.** `hookdeck-cli listen` on its own creates a plain source, and Hookdeck answers `HEAD` on a plain source with a `405` without forwarding it to localhost. The create call then fails with `invalidWebhookURLNoResponse`. Set up the source first:
 
-Use the printed URL as `webhookUrl` when you create the subscription. If the create call fails with `invalidWebhookURLNoResponse`, the `HEAD` check didn't get a 2xx: point the subscription at a Hookdeck Mindbody source or another deployed HTTPS endpoint that answers `HEAD`. See [references/setup.md](references/setup.md).
+1. In the Hookdeck dashboard, create a source of type **Mindbody** named `mindbody`. Hookdeck answers the `HEAD` check for Mindbody sources. You can add the `messageSignatureKey` to it once the create call returns the key.
+2. Log in, so the CLI uses that project, and listen. The CLI reuses the existing `mindbody` source:
+
+   ```bash
+   # Express / Next.js (use 8000 for FastAPI)
+   npx hookdeck-cli login
+   npx hookdeck-cli listen 3000 mindbody --path /webhooks/mindbody
+   ```
+
+3. Use the printed source URL as `webhookUrl` when you create the subscription, then activate it with `PATCH`.
+
+Alternatively, allow `HEAD` on a plain source (**Source Configuration > Advanced Source Configuration > HTTP methods**), or add `?x-hookdeck-allow-methods=post,head` to the URL. Hookdeck then accepts the `HEAD` and forwards it to your handler, which answers `200`. Allowing `HEAD` also makes uptime monitors and link checkers billable requests on that source. See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 

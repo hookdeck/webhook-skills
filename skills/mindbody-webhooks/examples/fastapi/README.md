@@ -44,7 +44,7 @@ The tests cover a valid signature, a hex digest (rejected), a signature without 
 npx hookdeck-cli listen 8000 mindbody --path /webhooks/mindbody
 ```
 
-Use the printed URL as `webhookUrl` when you create the subscription, then activate it with `PATCH`. If the create call fails with `invalidWebhookURLNoResponse`, the `HEAD` check didn't get a 2xx through that URL: use a Hookdeck Mindbody source or another deployed endpoint that answers `HEAD`.
+A plain CLI source fails Mindbody's `HEAD` check (Hookdeck answers `HEAD` on it with `405` and doesn't forward it). Before you run the command, create a source of type **Mindbody** named `mindbody` in the Hookdeck dashboard and log in with `npx hookdeck-cli login`: the CLI reuses that source, and Hookdeck answers the `HEAD` check for it. Then use the printed URL as `webhookUrl` and activate the subscription with `PATCH`. Alternatively, allow `HEAD` on the source (Advanced Source Configuration) or add `?x-hookdeck-allow-methods=post,head` to the URL. See [setup](../../references/setup.md).
 
 ## Notes
 

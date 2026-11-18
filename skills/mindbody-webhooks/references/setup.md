@@ -50,11 +50,19 @@ Trigger an event at the linked business (for example book a client into a class)
 
 ### Local testing with the Hookdeck CLI
 
-```bash
-npx hookdeck-cli listen 3000 mindbody --path /webhooks/mindbody
-```
+A plain CLI source URL always fails the `HEAD` check: Hookdeck answers `HEAD` on a plain source with a `405` and doesn't forward it to localhost, so creating the subscription fails with `invalidWebhookURLNoResponse`.
 
-Use the printed URL as `webhookUrl`. If the create call fails with `invalidWebhookURLNoResponse`, the `HEAD` check didn't get a 2xx through that URL: use a Hookdeck Mindbody source or another deployed endpoint that answers `HEAD`.
+1. In the Hookdeck dashboard, create a source of type **Mindbody** named `mindbody`. Hookdeck answers `HEAD` for Mindbody sources.
+2. Log in and listen. The CLI reuses the existing source:
+
+   ```bash
+   npx hookdeck-cli login
+   npx hookdeck-cli listen 3000 mindbody --path /webhooks/mindbody
+   ```
+
+3. Use the printed source URL as `webhookUrl`, then activate the subscription.
+
+Alternatively, allow `HEAD` on a plain source in **Source Configuration > Advanced Source Configuration** (HTTP methods), or append `?x-hookdeck-allow-methods=post,head` to the source URL (the parameter replaces the source's methods for that request, so keep `post` in it). Hookdeck then accepts the `HEAD` and forwards it to the example, which answers `200`. With `HEAD` allowed, uptime monitors and link checkers that hit the URL count as requests.
 
 ## Using Hookdeck
 
