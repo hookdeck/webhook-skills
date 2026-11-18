@@ -35,7 +35,7 @@ Server runs on http://localhost:3000. Webhook endpoint: `POST /webhooks/samsara`
 npm test
 ```
 
-The tests sign requests the way Samsara does. They check a vector built from Samsara's sample secret, a signature keyed with the secret as UTF-8 text instead of its decoded bytes, another secret, a tampered body, a missing header, a missing `v1=` prefix or another version, a changed or missing timestamp, a secret with a trailing newline, invalid JSON, and the `500` paths for a missing or malformed secret.
+The tests sign requests the way Samsara does. They check a vector built from Samsara's sample secret, a 1.0 `Ping` and a 2.0 `DvirSubmitted` payload, a signature keyed with the secret as UTF-8 text instead of its decoded bytes, another secret, a tampered body, a missing header, a missing `v1=` prefix or another version, a changed or missing timestamp, a secret with a trailing newline, invalid JSON, and the `500` paths for a missing or malformed secret.
 
 ## Receive real webhooks locally
 
@@ -51,3 +51,4 @@ Use the printed HTTPS URL as the webhook URL in Samsara, then click **Test** on 
 - The secret key is base64. The handler decodes it before using it as the HMAC key; the key string itself never matches.
 - Samsara documents no timestamp tolerance, so the handler doesn't apply one. The timestamp is still covered by the signature.
 - Samsara retries non-2xx responses (5 attempts in total, with exponential backoff) and doesn't follow redirects. Return `2xx` quickly and skip duplicates by `eventId`.
+- Samsara sends two payload shapes: Webhooks 1.0 (alerts and `Ping`: `eventMs`, `event`) and Webhooks 2.0 Event Subscriptions (`eventTime`, `orgId`, `webhookId`, `data`). The handler reads either.

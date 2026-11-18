@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Union
 
 from dotenv import load_dotenv
@@ -70,20 +71,33 @@ def verify_samsara_webhook(
     return hmac.compare_digest(bytes.fromhex(match.group(1)), expected)
 
 
+def _iso_from_ms(ms: Any) -> Optional[str]:
+    if not isinstance(ms, (int, float)) or isinstance(ms, bool):
+        return None
+    when = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+    return when.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(ms) % 1000:03d}Z"
+
+
 def handle_event(payload: Any, raw_body: bytes = b"") -> Dict[str, Any]:
-    """Alert webhooks send eventType "Alert", and the Test button sends "Ping".
-    Event Subscriptions use their own eventType names, such as "DvirSubmitted"."""
-    data = payload if isinstance(payload, dict) else {}
-    event_id = data.get("eventId")
-    event_type = data.get("eventType")
+    """Two payload shapes share eventId and eventType:
+    - Webhooks 1.0 (alerts, and Ping from the Test button): eventMs (epoch ms) and event.
+    - Webhooks 2.0 Event Subscriptions (e.g. DvirSubmitted): eventTime (RFC 3339),
+      orgId, webhookId and data."""
+    body = payload if isinstance(payload, dict) else {}
+    event_id = body.get("eventId")
+    event_type = body.get("eventType")
+    details = body["data"] if "data" in body else body.get("event")  # 2.0 data, 1.0 event
+    occurred_at = body.get("eventTime") or _iso_from_ms(body.get("eventMs"))
     if event_type == "Ping":
         logger.info("Samsara test ping %s", event_id)
     elif event_type == "Alert":
-        logger.info("Samsara alert %s", event_id)
+        logger.info("Samsara alert %s at %s: %s", event_id, occurred_at, details)
+    elif event_type == "DvirSubmitted":
+        logger.info("Samsara DVIR submitted %s at %s (org %s)", event_id, occurred_at, body.get("orgId"))
     else:
-        logger.info("Samsara %s event %s", event_type, event_id)
+        logger.info("Samsara %s event %s at %s", event_type, event_id, occurred_at)
     # Samsara retries non-2xx responses: use eventId to skip duplicates.
-    return {"received": True, "eventType": event_type}
+    return {"received": True, "eventType": event_type, "occurredAt": occurred_at}
 
 
 @app.post("/webhooks/samsara")

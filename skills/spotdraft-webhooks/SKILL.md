@@ -50,19 +50,15 @@ See [references/verification.md](references/verification.md) for Python and debu
 
 ## Events
 
-SpotDraft's webhook overview lists these activities:
-
 | Activity | When |
 |---|---|
 | `CONTRACT_CREATED` | A contract is created |
-| `CONTRACT_DATA_UPDATED` | Contract data changes |
 | `CONTRACT_SENT_TO_COUNTERPARTY` | A contract is sent to the counterparty |
-| `CONTRACT_SIGNATURE_REQUESTED` | A signature is requested |
-| `CONTRACT_SIGNED` | A party signs |
 | `CONTRACT_EXECUTED` | The contract is fully executed |
-| `CONTRACT_PROCESS_METRIC_UPDATED` | A process metric changes |
 
-The guides don't publish the payload fields (they point to the API reference for samples). The examples assume no field and fingerprint the raw body for deduplication; log the first real delivery and add dispatch on the activity field.
+SpotDraft's reachable docs don't publish the full list of activities: these three appear in the [webhooks playbook](https://developer.spotdraft.com/docs/api-playbooks/receive-real-time-contract-events-via-webhooks)'s registration example (`only_for_activities`). The playbook says you can also receive review, signature, execution and repository events; check the activity values offered when you register the endpoint.
+
+The guides don't publish the payload fields either (they point to the API reference for samples). The examples assume no field and fingerprint the raw body for deduplication; log the first real delivery and add dispatch on the activity field.
 
 ## Environment Variables
 

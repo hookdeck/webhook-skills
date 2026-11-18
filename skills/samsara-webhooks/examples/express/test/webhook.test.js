@@ -26,6 +26,16 @@ const BODY = JSON.stringify(
 );
 const TAMPER_FROM = '"eventMs": 1731924900123';
 const TAMPER_TO = '"eventMs": 1731924900124';
+
+// Illustrative Webhooks 2.0 Event Subscription payload (shape from Samsara's DvirSubmitted page; IDs made up).
+const V2_BODY = JSON.stringify({
+  eventId: '017db07f-6e95-470e-8cc0-a371f9deed2b',
+  eventTime: '2026-11-18T10:15:00.683Z',
+  eventType: 'DvirSubmitted',
+  orgId: 20936,
+  webhookId: '1411751028848270',
+  data: { dvir: { id: 'dvir-test-1' }, driver: { id: 'driver-1' }, vehicle: { id: 'vehicle-1' } },
+});
 process.env.SAMSARA_WEBHOOK_SECRET = SECRET;
 
 const { app, verifySamsaraWebhook } = require('../src/index');
@@ -71,7 +81,7 @@ describe('POST /webhooks/samsara', () => {
   it('accepts a valid signature', async () => {
     const res = await post(BODY, sign(BODY));
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true, eventType: 'Ping' });
+    expect(res.body).toEqual({ received: true, eventType: 'Ping', occurredAt: '2024-11-18T10:15:00.123Z' });
   });
 
   it('rejects a signature keyed with the secret as UTF-8 text instead of its decoded bytes', async () => {
@@ -122,8 +132,20 @@ describe('POST /webhooks/samsara', () => {
     expect((await post(BODY, without(sign(BODY), 'x-samsara-timestamp'))).status).toBe(401);
   });
 
-  it('dispatches on eventType', async () => {
-    const alert = JSON.stringify({ eventId: 'a1', eventMs: 1, eventType: 'Alert', event: {} });
-    expect((await post(alert, sign(alert))).body).toEqual({ received: true, eventType: 'Alert' });
+  it('handles a 1.0 Alert payload', async () => {
+    const alert = JSON.stringify({ eventId: 'a1', eventMs: 1731924900123, eventType: 'Alert', event: {} });
+    expect((await post(alert, sign(alert))).body).toEqual({
+      received: true,
+      eventType: 'Alert',
+      occurredAt: '2024-11-18T10:15:00.123Z',
+    });
+  });
+
+  it('handles a 2.0 Event Subscription payload', async () => {
+    expect((await post(V2_BODY, sign(V2_BODY))).body).toEqual({
+      received: true,
+      eventType: 'DvirSubmitted',
+      occurredAt: '2026-11-18T10:15:00.683Z',
+    });
   });
 });

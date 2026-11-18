@@ -53,7 +53,20 @@ Python: `base64.b64encode(hmac.new(base64.b64decode(secret), ts.encode() + b"." 
 
 ## Payload
 
-Employment Hero's webhook pages don't publish a payload sample, event names or the HTTP method. The examples accept `POST`, parse the JSON, assume no field, and dedupe on a SHA-256 hash of the raw body. Log the first real delivery, then add dispatch on the field that names the event.
+Employment Hero [lists about 40 webhook events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md), for example:
+
+| Area | Events |
+|---|---|
+| Employees | Employee Created, Employee Onboarded, Employee Updated, Employee Offboarding |
+| Leave | Leave Request Created, Updated, Approved, Declined, Deleted |
+| Bank accounts | Employee Bank Account Created, Updated, Deleted |
+| Employment history | Employment History Created, Updated, Deleted |
+| Timesheets | Timesheet Entry Created, Updated, Deleted |
+| Certifications | Certification Created, Updated, Deleted, Archived; Member Certification Created, Updated, Approved, Declined, Expired, Archived, Deleted |
+| Custom forms | Custom Form Response Submitted, Partially Approved, Approved, Declined |
+| Goals | Goal Created, Updated, Deleted; Key Result Created, Updated, Deleted |
+
+It doesn't publish a payload sample or the HTTP method. The examples accept `POST`, parse the JSON, assume no field, and dedupe on a SHA-256 hash of the raw body. Log the first real delivery, then add dispatch on the field that names the event.
 
 Delivery: a webhook counts as delivered on HTTP `200`. A failed delivery "will be retried for a maximum of 3 times".
 
@@ -74,7 +87,7 @@ Use the printed HTTPS URL as the webhook URL, then trigger a subscribed change s
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - What's documented, delivery and retries
+- [references/overview.md](references/overview.md) - Event names, what's documented, delivery and retries
 - [references/setup.md](references/setup.md) - Registering the webhook, the secret key, testing, Hookdeck
 - [references/verification.md](references/verification.md) - Signature details, the decoded key, debugging mismatches
 

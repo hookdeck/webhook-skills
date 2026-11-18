@@ -68,7 +68,8 @@ def verify_employment_hero_webhook(
 
 
 def handle_event(payload: Any, raw_body: bytes) -> Dict[str, Any]:
-    """Employment Hero doesn't publish a payload format, so this example assumes
+    """Employment Hero lists its event names (Employee Created, Leave Request
+    Approved, ...) but doesn't publish a payload sample, so this example assumes
     no field. Log the top-level keys of the first real delivery, then dispatch on
     the field that names the event. A hash of the raw body makes a dedupe key
     that doesn't depend on the payload's fields (Employment Hero retries up to

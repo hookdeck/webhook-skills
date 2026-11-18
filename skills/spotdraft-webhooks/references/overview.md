@@ -7,12 +7,10 @@ SpotDraft is a contract lifecycle management (CLM) platform. Webhooks notify you
 | Activity | When |
 |---|---|
 | `CONTRACT_CREATED` | A contract is created |
-| `CONTRACT_DATA_UPDATED` | Contract data changes |
 | `CONTRACT_SENT_TO_COUNTERPARTY` | A contract is sent to the counterparty |
-| `CONTRACT_SIGNATURE_REQUESTED` | A signature is requested |
-| `CONTRACT_SIGNED` | A party signs |
 | `CONTRACT_EXECUTED` | The contract is fully executed |
-| `CONTRACT_PROCESS_METRIC_UPDATED` | A process metric changes |
+
+SpotDraft's reachable docs don't publish the full list of activities: these three appear in the [webhooks playbook](https://developer.spotdraft.com/docs/api-playbooks/receive-real-time-contract-events-via-webhooks)'s registration example (`only_for_activities`). The playbook says you can also receive review, signature, execution and repository events; check the activity values offered when you register the endpoint.
 
 ## What's Documented
 
@@ -20,6 +18,7 @@ SpotDraft is a contract lifecycle management (CLM) platform. Webhooks notify you
 |---|---|
 | Method and body | `POST` with a JSON payload |
 | Signature | `X-SD-WEBHOOK-CONTENT-HASH`, hex HMAC-SHA512 of the raw body, base64-decoded `hmac_key` |
+| Activity list | Not published in full; the playbook names three |
 | Payload fields | Not in the webhook guides; they refer to the API reference |
 | Delivery ID header | Not named |
 | Retries and timeout | Not stated in the webhook guides (they link a general "Errors, Redirects, and Retries" page) |

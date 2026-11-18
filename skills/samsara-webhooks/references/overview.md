@@ -12,18 +12,37 @@ Samsara is a connected-operations platform (vehicle telematics, ELD, equipment a
 
 See [Samsara's webhooks guide](https://developers.samsara.com/docs/webhooks) for the full, current list.
 
-## Payload
+## Payloads
 
-Samsara says all payloads have these fields:
+There are two shapes. Both carry `eventId` and `eventType`, so a handler can read either.
+
+### Webhooks 1.0: alerts and Ping
+
+The [webhooks guide](https://developers.samsara.com/docs/webhooks) describes these fields as on "all payloads"; in practice that's the 1.0 shape:
 
 | Field | Meaning |
 |---|---|
 | `eventId` | The event's ID. Use it to skip duplicates |
 | `eventMs` | Unix epoch time in milliseconds when the event was sent |
-| `eventType` | `Alert`, `Ping`, or an Event Subscription type |
-| `event` | The event that triggered the notification; its shape depends on the type |
+| `eventType` | `Alert` or `Ping` |
+| `event` | The event that triggered the notification; its shape depends on the alert |
 
 A Ping's `event` contains `"text": "Ping"`.
+
+### Webhooks 2.0: Event Subscriptions
+
+Each event type has its own page, such as [DvirSubmitted](https://developers.samsara.com/docs/dvirsubmitted):
+
+| Field | Meaning |
+|---|---|
+| `eventId` | The event's ID. Use it to skip duplicates |
+| `eventTime` | When the event happened, RFC 3339 (UTC) |
+| `eventType` | The event type, such as `DvirSubmitted` |
+| `orgId` | The Samsara organization ID |
+| `webhookId` | The webhook that delivered it |
+| `data` | The event's objects; for `DvirSubmitted`: `driver`, `dvir` and `vehicle` |
+
+The examples take `eventTime` when present and otherwise convert `eventMs`, and read `data` or `event` for the details.
 
 ## Delivery
 

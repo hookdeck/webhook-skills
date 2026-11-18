@@ -50,6 +50,6 @@ Use the printed HTTPS URL as the webhook URL in the Developer Portal, then make 
 
 - The handler reads `await request.body()` before parsing. The HMAC covers the exact raw body, so don't parse and re-serialise it first.
 - The secret key is base64. The handler decodes it before using it as the HMAC key, as Employment Hero's Ruby sample does with `Base64.decode64`.
-- Employment Hero doesn't publish a payload format or the HTTP method. The route accepts `POST` and assumes no payload field: log the first real delivery and add your dispatch.
+- Employment Hero [lists its events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md) (Employee Created, Leave Request Approved and others) but doesn't publish a payload sample or the HTTP method. The route accepts `POST` and assumes no payload field: log the first real delivery and add your dispatch.
 - Employment Hero treats HTTP `200` as success and retries a failed delivery up to 3 times. Return `200` quickly.
 - No timestamp tolerance is documented, so the handler doesn't apply one. The timestamp is still covered by the signature.

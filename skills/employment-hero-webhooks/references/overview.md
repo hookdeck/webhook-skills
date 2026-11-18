@@ -15,13 +15,31 @@ Employment Hero is an HR, payroll and employee-management platform. Its webhooks
 | Success response | HTTP `200` |
 | Retries | "it will be retried for a maximum of 3 times" |
 | HTTP method | Not stated ("trigger an HTTP request to the URL") |
-| Payload format and event names | Not published on the webhook pages |
+| Event names | Yes: [Webhook Events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md) lists about 40, such as Employee Created and Leave Request Approved |
+| Payload samples | Not published (the per-event data pages aren't available) |
 | Timestamp tolerance | None |
 | Test vector | None |
 
+## Events
+
+From Employment Hero's [Webhook Events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md) page:
+
+| Area | Events |
+|---|---|
+| Employees | Employee Created, Employee Onboarded, Employee Updated, Employee Offboarding |
+| Leave | Leave Request Created, Updated, Approved, Declined, Deleted |
+| Bank accounts | Employee Bank Account Created, Updated, Deleted |
+| Employment history | Employment History Created, Updated, Deleted |
+| Timesheets | Timesheet Entry Created, Updated, Deleted |
+| Certifications | Certification Created, Updated, Deleted, Archived; Member Certification Created, Updated, Approved, Declined, Expired, Archived, Deleted |
+| Custom forms | Custom Form Response Submitted, Partially Approved, Approved, Declined |
+| Goals | Goal Created, Updated, Deleted; Key Result Created, Updated, Deleted |
+
+The page gives title-case names only, not the identifiers that appear in a payload.
+
 ## Handling Unknown Payloads
 
-Because the payload isn't documented, the examples:
+Because no payload sample is published, the examples:
 
 1. Verify the signature over the raw bytes.
 2. Parse the JSON and log its top-level keys.

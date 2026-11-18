@@ -34,6 +34,13 @@ BODY = """{
 TAMPER_FROM = '"eventMs": 1731924900123'
 TAMPER_TO = '"eventMs": 1731924900124'
 
+# Illustrative Webhooks 2.0 Event Subscription payload (shape from Samsara's DvirSubmitted page; IDs made up).
+V2_BODY = (
+    '{"eventId":"017db07f-6e95-470e-8cc0-a371f9deed2b","eventTime":"2026-11-18T10:15:00.683Z",'
+    '"eventType":"DvirSubmitted","orgId":20936,"webhookId":"1411751028848270",'
+    '"data":{"dvir":{"id":"dvir-test-1"},"driver":{"id":"driver-1"},"vehicle":{"id":"vehicle-1"}}}'
+)
+
 os.environ["SAMSARA_WEBHOOK_SECRET"] = SECRET
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -78,7 +85,7 @@ def test_vector_fails_with_another_timestamp_or_a_malformed_secret():
 def test_valid_signature_is_accepted():
     res = post(BODY, sign(BODY))
     assert res.status_code == 200
-    assert res.json() == {"received": True, "eventType": "Ping"}
+    assert res.json() == {"received": True, "eventType": "Ping", "occurredAt": "2024-11-18T10:15:00.123Z"}
 
 
 def test_secret_used_as_utf8_text_is_rejected():
@@ -128,6 +135,18 @@ def test_changed_or_missing_timestamp_is_rejected():
     assert post(BODY, without(sign(BODY), "x-samsara-timestamp")).status_code == 401
 
 
-def test_dispatches_on_event_type():
-    alert = '{"eventId":"a1","eventMs":1,"eventType":"Alert","event":{}}'
-    assert post(alert, sign(alert)).json() == {"received": True, "eventType": "Alert"}
+def test_handles_a_v1_alert_payload():
+    alert = '{"eventId":"a1","eventMs":1731924900123,"eventType":"Alert","event":{}}'
+    assert post(alert, sign(alert)).json() == {
+        "received": True,
+        "eventType": "Alert",
+        "occurredAt": "2024-11-18T10:15:00.123Z",
+    }
+
+
+def test_handles_a_v2_event_subscription_payload():
+    assert post(V2_BODY, sign(V2_BODY)).json() == {
+        "received": True,
+        "eventType": "DvirSubmitted",
+        "occurredAt": "2026-11-18T10:15:00.683Z",
+    }

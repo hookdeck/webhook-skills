@@ -59,25 +59,32 @@ function verifySamsaraWebhook(rawBody, signature, timestamp, secret) {
 }
 
 /**
- * Every payload has eventId, eventMs, eventType and event. Alert webhooks send
- * eventType "Alert", and the Test button sends "Ping". Event Subscriptions use
- * their own eventType names, such as "DvirSubmitted".
+ * Two payload shapes share eventId and eventType:
+ * - Webhooks 1.0 (alerts, and Ping from the Test button): eventMs (epoch ms) and event.
+ * - Webhooks 2.0 Event Subscriptions (e.g. DvirSubmitted): eventTime (RFC 3339),
+ *   orgId, webhookId and data.
  */
 function handleEvent(payload) {
-  const eventId = payload && payload.eventId;
-  const eventType = payload && payload.eventType;
+  const body = payload && typeof payload === 'object' ? payload : {};
+  const { eventId, eventType } = body;
+  const details = body.data !== undefined ? body.data : body.event; // 2.0 data, 1.0 event
+  const occurredAt =
+    body.eventTime || (typeof body.eventMs === 'number' ? new Date(body.eventMs).toISOString() : null);
   switch (eventType) {
     case 'Ping':
       console.log(`Samsara test ping ${eventId}`);
       break;
     case 'Alert':
-      console.log(`Samsara alert ${eventId}`);
+      console.log(`Samsara alert ${eventId} at ${occurredAt}`, details);
+      break;
+    case 'DvirSubmitted':
+      console.log(`Samsara DVIR submitted ${eventId} at ${occurredAt} (org ${body.orgId})`);
       break;
     default:
-      console.log(`Samsara ${eventType} event ${eventId}`);
+      console.log(`Samsara ${eventType} event ${eventId} at ${occurredAt}`);
   }
   // Samsara retries non-2xx responses: use eventId to skip duplicates.
-  return { received: true, eventType: eventType ?? null };
+  return { received: true, eventType: eventType ?? null, occurredAt };
 }
 
 // express.raw() keeps the exact bytes for the HMAC; express.json() would break it.

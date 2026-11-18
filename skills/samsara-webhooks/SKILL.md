@@ -20,8 +20,8 @@ Samsara sends webhooks for alerts (an alert's action is "Send webhook"), for Eve
 
 - How do I verify Samsara webhook signatures?
 - Why does my `X-Samsara-Signature` never match? (usually: the secret key wasn't base64-decoded, or the body was re-serialised)
-- How do I handle Samsara `Alert` and `Ping` webhooks?
-- What does a Samsara webhook payload look like?
+- How do I handle Samsara `Alert` and `Ping` webhooks, or Event Subscriptions such as `DvirSubmitted`?
+- What does a Samsara webhook payload look like? (two shapes: Webhooks 1.0 and 2.0)
 
 ## Verification (core)
 
@@ -55,7 +55,9 @@ Python: `hmac.new(base64.b64decode(secret), b"v1:" + ts.encode() + b":" + raw_bo
 
 ## Payload
 
-Samsara documents four fields on every payload:
+Samsara sends two payload shapes. Both have `eventId` and `eventType`; handle either.
+
+**Webhooks 1.0** (alerts, and `Ping` from the Test button):
 
 ```json
 {
@@ -66,9 +68,24 @@ Samsara documents four fields on every payload:
 }
 ```
 
-- `eventType` is `Alert` for alert webhooks and `Ping` for the Test button. Event Subscriptions use their own type names (`DvirSubmitted`, `AlertIncident`, `VehicleUpdated` and others).
-- `eventMs` is when the event was sent, in milliseconds. `event` holds the details and depends on the type.
-- Use `eventId` to skip duplicates: Samsara retries non-2xx responses.
+`eventType` is `Alert` or `Ping`, `eventMs` is when Samsara sent it (epoch milliseconds), and `event` holds the details.
+
+**Webhooks 2.0 Event Subscriptions** (`DvirSubmitted`, `AlertIncident`, `VehicleUpdated` and others), as on Samsara's [DvirSubmitted](https://developers.samsara.com/docs/dvirsubmitted) page:
+
+```json
+{
+  "eventId": "017db07f-6e95-470e-8cc0-a371f9deed2b",
+  "eventTime": "2026-11-18T10:15:00.683Z",
+  "eventType": "DvirSubmitted",
+  "orgId": 20936,
+  "webhookId": "1411751028848270",
+  "data": { "driver": { "...": "..." }, "dvir": { "...": "..." }, "vehicle": { "...": "..." } }
+}
+```
+
+`eventTime` is RFC 3339, `data` holds the event's objects, and `orgId` / `webhookId` identify the organization and webhook.
+
+The webhooks guide says "all payloads" have `eventId`, `eventMs`, `eventType` and `event`; that describes 1.0. Use `eventId` to skip duplicates in both: Samsara retries non-2xx responses.
 
 ## Environment Variables
 
@@ -87,7 +104,7 @@ Use the printed HTTPS URL as the webhook URL, then click **Test** on the webhook
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Webhook kinds, payload fields, delivery and retries
+- [references/overview.md](references/overview.md) - Webhook kinds, both payload shapes, delivery and retries
 - [references/setup.md](references/setup.md) - Adding the webhook, the secret key, testing, Hookdeck
 - [references/verification.md](references/verification.md) - Signature details, the decoded key, debugging mismatches
 
