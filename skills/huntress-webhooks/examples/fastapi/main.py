@@ -18,9 +18,12 @@ def parse_huntress_event(body: Any) -> tuple[Optional[str], Any]:
     """Return (type, payload).
 
     Huntress's article describes the body only as "a JSON payload describing the
-    event". Use `type` when the body has one; otherwise report the event as untyped.
+    event". A live test delivery (2026-11-18) carried `event_type` ("test.event");
+    fall back to `type`, otherwise report the event as untyped.
     """
-    event_type = body.get("type") if isinstance(body, dict) else None
+    event_type = None
+    if isinstance(body, dict):
+        event_type = body.get("event_type", body.get("type"))
     return (event_type if isinstance(event_type, str) else None), body
 
 
@@ -35,7 +38,18 @@ async def huntress_webhook(
     svix_id: Optional[str] = Header(None),
     svix_timestamp: Optional[str] = Header(None),
     svix_signature: Optional[str] = Header(None),
+    webhook_id: Optional[str] = Header(None),
+    webhook_timestamp: Optional[str] = Header(None),
+    webhook_signature: Optional[str] = Header(None),
 ):
+    # Huntress's docs don't name the headers; Svix's guide, which they link, uses svix-*.
+    # A live Send Test delivery (2026-11-18) sent the Standard Webhooks names
+    # (webhook-id, webhook-timestamp, webhook-signature). The signed content is the
+    # same, so accept either prefix.
+    svix_id = svix_id or webhook_id
+    svix_timestamp = svix_timestamp or webhook_timestamp
+    svix_signature = svix_signature or webhook_signature
+
     secret = os.environ.get("HUNTRESS_WEBHOOK_SECRET")
     if not secret or not secret.startswith("whsec_"):
         print("HUNTRESS_WEBHOOK_SECRET is missing or not a whsec_ secret")
@@ -70,7 +84,7 @@ async def huntress_webhook(
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event_type, payload = parse_huntress_event(body)
-    # svix-id is stable across retries: use it to deduplicate, and log it so you can
+    # The delivery ID is stable across retries: use it to deduplicate, and log it so you can
     # match it to the Portal's "View Delivery Attempts" page
     print(f"Received Huntress webhook {svix_id}: {event_type or '(untyped payload)'}")
 

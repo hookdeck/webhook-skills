@@ -47,6 +47,24 @@ describe('Huntress webhook handler', () => {
     expect(json.type).toBeNull();
   });
 
+  test('accepts the Standard Webhooks header names a live Huntress delivery used', async () => {
+    // Live test delivery, 2026-11-18: webhook-* headers, not svix-*
+    const payload = JSON.stringify({ event_type: 'test.event', message: 'Hello World' });
+    const msgId = `msg_${crypto.randomBytes(12).toString('hex')}`;
+    const timestamp = now();
+    const res = await send(payload, {
+      headers: {
+        'webhook-id': msgId,
+        'webhook-timestamp': timestamp,
+        'webhook-signature': sign(payload, msgId, timestamp),
+      },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.id).toBe(msgId);
+    expect(json.type).toBe('test.event');
+  });
+
   test('reports the type when the body has one', async () => {
     const res = await send(JSON.stringify({ type: 'example.event', data: {} }));
     expect(res.status).toBe(200);

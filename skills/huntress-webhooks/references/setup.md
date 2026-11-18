@@ -47,7 +47,7 @@ Open the endpoint's three-dot menu and choose **Send Test**.
 
 Open the three-dot menu and choose **View Delivery Attempts**. The logs take a moment
 to load (there is a manual refresh button). Select **View** next to an attempt to see
-the **Request Body** and **Response Body**. Match attempts to your logs using `svix-id`.
+the **Request Body** and **Response Body**. Match attempts to your logs using the delivery ID (`webhook-id`, or `svix-id`).
 
 ## Endpoint Requirements
 
