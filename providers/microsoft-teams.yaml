@@ -1,0 +1,26 @@
+name: microsoft-teams
+displayName: Microsoft Teams
+docs:
+  webhooks: https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook
+  verification: https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook
+  events: https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-outgoing-webhook
+notes: >
+  Teams OUTGOING webhooks (team > Manage team > Apps > Create an outgoing webhook), not incoming
+  webhooks or Workflows. Teams POSTs a Bot Framework Activity (type message, text with
+  <at>Name</at>, from, conversation, channelData) when a user @mentions the webhook in a public
+  channel of that team; never in personal or private scope. Header Authorization: HMAC <base64>,
+  HMAC-SHA256 over the raw UTF-8 body keyed with the base64-DECODED security token shown on
+  creation (Microsoft's C# sample: Convert.FromBase64String(signingKey); Node sample:
+  Buffer.from(sharedSecret, "base64")). Token doesn't expire, unique per webhook. Teams waits about
+  5 seconds and posts the response as a reply: reply with JSON {"type":"message","text":...}
+  (cards allowed, only openURL actions). Examples: 401 on bad HMAC, 500 when unconfigured, 400 on
+  invalid JSON. The docs' "contoso" example key/header has no body, so it isn't a usable vector;
+  examples use a made-up token. Hookdeck source type MICROSOFT_TEAMS (HMAC, secret_encoding base64,
+  signature_prefix "HMAC "; verification optional; no timestamp window). Hookdeck answers before
+  the destination runs, so tell users to set a custom JSON response on the source.
+testScenario:
+  events:
+    - '@mention message in a public channel'
+    - '@mention help command'
+catalog:
+  summary: 'Verify Microsoft Teams outgoing webhooks (`Authorization: HMAC <base64>`, HMAC-SHA256 of the raw body keyed with the base64-decoded security token), reply within 5 seconds with a {"type":"message"} JSON response to @mentions in a channel'
