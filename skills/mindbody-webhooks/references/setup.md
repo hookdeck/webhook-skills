@@ -62,7 +62,7 @@ A plain CLI source URL always fails the `HEAD` check: Hookdeck answers `HEAD` on
 
 3. Use the printed source URL as `webhookUrl`, then activate the subscription.
 
-Alternatively, allow `HEAD` on a plain source in **Source Configuration > Advanced Source Configuration** (HTTP methods), or append `?x-hookdeck-allow-methods=post,head` to the source URL (the parameter replaces the source's methods for that request, so keep `post` in it). Hookdeck then accepts the `HEAD` and forwards it to the example, which answers `200`. With `HEAD` allowed, uptime monitors and link checkers that hit the URL count as requests.
+Alternatively, allow `HEAD` on a plain source in **Source Configuration > Advanced Source Configuration** (HTTP methods), or append `?x-hookdeck-allow-methods=post,head` to the source URL (the parameter replaces the source's methods for that request, so keep `post` in it). Hookdeck answers the `HEAD` with `200` and forwards it to your handler as an event. With `HEAD` allowed, uptime monitors and link checkers that hit the URL count as requests.
 
 ## Using Hookdeck
 

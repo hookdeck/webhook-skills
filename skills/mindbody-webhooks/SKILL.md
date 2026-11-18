@@ -112,7 +112,7 @@ MINDBODY_MESSAGE_SIGNATURE_KEY=your-message-signature-key   # from the POST subs
 
 3. Use the printed source URL as `webhookUrl` when you create the subscription, then activate it with `PATCH`.
 
-Alternatively, allow `HEAD` on a plain source (**Source Configuration > Advanced Source Configuration > HTTP methods**), or add `?x-hookdeck-allow-methods=post,head` to the URL. Hookdeck then accepts the `HEAD` and forwards it to your handler, which answers `200`. Allowing `HEAD` also makes uptime monitors and link checkers billable requests on that source. See [references/setup.md](references/setup.md).
+Alternatively, allow `HEAD` on a plain source (**Source Configuration > Advanced Source Configuration > HTTP methods**), or add `?x-hookdeck-allow-methods=post,head` to the URL. Hookdeck answers the `HEAD` with `200` and forwards it to your handler as an event. Allowing `HEAD` also makes uptime monitors and link checkers billable requests on that source. See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 
