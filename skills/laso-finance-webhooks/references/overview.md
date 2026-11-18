@@ -42,10 +42,10 @@ There is no event id in the body. The `webhook-id` header (`msg_...`) identifies
 | `notification.withdrawal` | A withdrawal changes state |
 | `notification.card` | A card order is updated |
 | `notification.giftCard` | A gift card order is updated |
-| `notification.refund` | Named in the docs, not described |
-| `notification.balanceUpdate` | Named in the docs, not described |
+| `notification.refund` | A refund settles or changes state |
+| `notification.balanceUpdate` | The account balance changes |
 
-The docs say "Categories include" these eight, so the list may grow. The one example the docs show is `notification.transaction`; the other descriptions are inferred from the category names and the notification types the docs list. Ignore types you don't recognise and return `200`.
+The docs say "Categories include" these eight, so the list may grow. The one example the docs show is `notification.transaction`; the other descriptions are inferred from the category names, the notification types the webhook docs list, and the [MCP server page](https://docs.laso.finance/guides/mcp-server)'s Events section, which names "a refund or withdrawal settling, a balance change" among the notifications. Ignore types you don't recognise and return `200`.
 
 ## Delivery Behaviour
 

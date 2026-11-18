@@ -34,11 +34,11 @@ Vercel webhooks are HTTP POST requests that Vercel sends to your application whe
 
 ### Security Events
 
-| Event | Triggered When | Common Use Cases |
-|-------|----------------|------------------|
-| `attack.detected`* | Firewall detects attack (may require certain plans) | Security alerting, block IPs |
+The dashboard offers an **Attack Detected** firewall event, which fires when the Vercel Firewall detects and mitigates a DDoS attack. The [Webhooks API reference](https://vercel.com/docs/webhooks/webhooks-api) doesn't document its `type` value or payload, so log the `type` you receive before you branch on it.
 
-*Note: The `attack.detected` event may be limited to certain plan types or may require specific security features enabled. Check Vercel's current documentation for availability.
+### Legacy Event Types
+
+Hyphenated names such as `deployment-ready`, `deployment-error` and `project-created` are legacy events. Vercel still delivers them to webhooks that already listen for them, but new webhooks can't subscribe to them. Use the dotted names above instead.
 
 ## Event Payload Structure
 
@@ -46,53 +46,32 @@ All Vercel webhook events follow a standard structure:
 
 ```json
 {
-  "id": "event_2XqF5example",
-  "type": "deployment.created",
-  "createdAt": 1698345600000,
-  "payload": {
-    // Event-specific data
-  },
-  "region": "sfo1"
+  "id": "<eventId>",
+  "type": "<event-type>",
+  "createdAt": 1700000000000,
+  "payload": {},
+  "region": "<RegionId>"
 }
 ```
 
 ### Common Payload Fields
 
-- `id`: Unique identifier for this webhook event
+- `id`: The ID of the webhook delivery
 - `type`: The event type (e.g., `deployment.created`)
 - `createdAt`: JavaScript timestamp (milliseconds since epoch)
 - `payload`: Event-specific data that varies by event type
 - `region`: Vercel region where the event originated
 
-### Example: deployment.created Payload
+### deployment.created Payload Fields
 
-```json
-{
-  "id": "event_2XqF5example",
-  "type": "deployment.created",
-  "createdAt": 1698345600000,
-  "payload": {
-    "deployment": {
-      "id": "dpl_FjHqKqFexample",
-      "name": "my-app",
-      "url": "https://my-app-git-main-team.vercel.app",
-      "meta": {
-        "githubCommitRef": "main",
-        "githubCommitSha": "abc123def456",
-        "githubCommitMessage": "Update homepage"
-      }
-    },
-    "project": {
-      "id": "prj_Qmexample",
-      "name": "my-app"
-    },
-    "team": {
-      "id": "team_Vexample",
-      "name": "my-team"
-    }
-  }
-}
-```
+Vercel documents these keys for `deployment.created` (no example body is published):
+
+- `payload.team.id` (possibly null) and `payload.user.id`
+- `payload.alias`: aliases assigned when the deployment is ready
+- `payload.deployment.id`, `payload.deployment.meta`, `payload.deployment.url`, `payload.deployment.name`
+- `payload.links.deployment` and `payload.links.project`: dashboard URLs
+- `payload.target`: `production`, `staging` or `null`
+- `payload.project.id`, `payload.plan`, `payload.regions`
 
 ## Webhook Requirements
 
@@ -103,7 +82,7 @@ All Vercel webhook events follow a standard structure:
 ### Limits
 - Maximum of 20 custom webhooks per team
 - Response timeout: 30 seconds
-- Retry policy: Exponential backoff up to 24 hours
+- Retry policy: Exponential backoff up to 24 hours for any non-2xx response, then the event is discarded
 
 ### Endpoint Requirements
 - Must accept POST requests
