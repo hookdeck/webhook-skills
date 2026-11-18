@@ -9,8 +9,9 @@ delivery includes:
 - An HTTP `POST` to your configured HTTPS URL
 - A JSON payload describing the event
 - Headers carrying a Svix signature, a timestamp, and a unique delivery ID. Huntress's
-  article names them `svix-signature`, `svix-timestamp`, `svix-id`; a live test delivery
-  (2026-11-18) used `webhook-signature`, `webhook-timestamp`, `webhook-id`. Accept both.
+  article doesn't name them. Svix's guide uses `svix-signature`, `svix-timestamp` and
+  `svix-id`; a live test delivery (2026-11-18) used `webhook-signature`,
+  `webhook-timestamp` and `webhook-id`. Accept both.
 
 ## What Notification Categories Exist?
 

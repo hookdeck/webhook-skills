@@ -19,9 +19,10 @@ as webhooks. Each delivery is an HTTP `POST` with a JSON body and three signatur
 headers. Huntress states that it uses Svix to sign payloads, so any Svix client library
 verifies them.
 
-**Header names:** Huntress's article names `svix-id`, `svix-timestamp`, and
-`svix-signature`, but a live **Send Test** delivery (observed 2026-11-18) sent the
-Standard Webhooks names `webhook-id`, `webhook-timestamp`, and `webhook-signature`
+**Header names:** Huntress's article doesn't name the headers. It says only "a Svix
+signature, a timestamp, and a unique delivery ID" and links Svix's guide, which uses
+`svix-id`, `svix-timestamp`, and `svix-signature`. A live **Send Test** delivery
+(observed 2026-11-18) sent the Standard Webhooks names `webhook-id`, `webhook-timestamp`, and `webhook-signature`
 instead (plus `webhook-test: true`). The signed content is identical, so read
 whichever prefix is present. A handler that reads only `svix-*` rejected that
 test delivery as "missing headers". Real category deliveries have not been captured yet.
@@ -47,7 +48,7 @@ check on 2026-11-18 confirmed it is a `whsec_` secret.
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
 const wh = new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET); // "whsec_..."
-// Accept either header prefix: a live Send Test (2026-11-18) used webhook-*, the docs say svix-*
+// Accept either header prefix: a live Send Test (2026-11-18) used webhook-*, Svix's guide says svix-*
 const h = (name) => req.headers[`svix-${name}`] ?? req.headers[`webhook-${name}`];
 // rawBody: the raw Buffer/string, never re-serialized JSON
 wh.verify(rawBody, {

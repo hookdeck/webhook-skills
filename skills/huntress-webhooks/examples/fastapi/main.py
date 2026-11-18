@@ -42,9 +42,10 @@ async def huntress_webhook(
     webhook_timestamp: Optional[str] = Header(None),
     webhook_signature: Optional[str] = Header(None),
 ):
-    # Huntress's docs name svix-* headers, but a live Send Test delivery (2026-11-18) sent the
-    # Standard Webhooks names (webhook-id, webhook-timestamp, webhook-signature).
-    # The signed content is the same, so accept either prefix.
+    # Huntress's docs don't name the headers; Svix's guide, which they link, uses svix-*.
+    # A live Send Test delivery (2026-11-18) sent the Standard Webhooks names
+    # (webhook-id, webhook-timestamp, webhook-signature). The signed content is the
+    # same, so accept either prefix.
     svix_id = svix_id or webhook_id
     svix_timestamp = svix_timestamp or webhook_timestamp
     svix_signature = svix_signature or webhook_signature

@@ -3,12 +3,13 @@
 ## How Does Huntress Sign Webhooks?
 
 Huntress uses Svix to sign webhook payloads, so any Svix client library works out of
-the box. Each request includes three headers. Huntress's article names them with a
-`svix-` prefix, but a live **Send Test** delivery (2026-11-18) used the Standard
+the box. Each request includes three headers. Huntress's article doesn't name them;
+Svix's guide, which it links, uses a `svix-` prefix. A live **Send Test** delivery
+(2026-11-18) used the Standard
 Webhooks `webhook-` prefix (and added `webhook-test: true`). The values and signed
 content are the same either way, so read whichever is present:
 
-| Header (live / documented) | Contents |
+| Header (live test / Svix's guide) | Contents |
 |----------------------------|----------|
 | `webhook-id` / `svix-id` | Unique delivery ID (stable across retries; your idempotency key) |
 | `webhook-timestamp` / `svix-timestamp` | Attempt time, Unix seconds |
@@ -33,7 +34,7 @@ Portal's **View Signing Secret** value is a `whsec_` secret.
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
-// Accept either prefix: a live Send Test (2026-11-18) used webhook-*, the docs say svix-*
+// Accept either prefix: a live Send Test (2026-11-18) used webhook-*, Svix's guide says svix-*
 const h = (name) => req.headers[`svix-${name}`] ?? req.headers[`webhook-${name}`];
 new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET).verify(rawBody, {
   'svix-id': h('id'),
@@ -142,7 +143,10 @@ def verify_huntress(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sig
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not
   the literal string.
 - **Header prefix.** Read `webhook-*` and fall back to `svix-*` (or the reverse).
-  A live Send Test delivery (2026-11-18) used `webhook-*` even though Huntress's article says `svix-*`.
+  A live Send Test delivery (2026-11-18) used `webhook-*`, while Svix's guide shows `svix-*`.
+  The `svix` libraries fall back between the two prefixes themselves, so passing the
+  request's headers unchanged also works; the examples map them explicitly so the
+  manual verifier and logging use the same values.
 - **Multiple signatures.** Split the signature header on spaces and accept any matching
   `v1,` entry. Don't compare the whole header.
 - **One secret per endpoint.** Each Huntress endpoint has its own signing secret.
