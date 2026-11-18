@@ -37,19 +37,25 @@ function verifyQuickBooksSignature(
   }
 }
 
-// Legacy eventNotifications operations -> CloudEvents event names. Intuit's docs
-// print a CloudEvents example for these three only; any other legacy operation
-// (Delete, Void, Emailed) falls back to its lowercased name.
+// Legacy eventNotifications operations -> the operation segment of CloudEvents
+// type names (qbo.<entity>.<operation>.v1), as the Intuit Developer portal lists
+// them. Note Void is `void`, not `voided`. Anything unknown is lowercased.
 const LEGACY_OPERATIONS: Record<string, string> = {
   Create: 'created',
   Update: 'updated',
+  Delete: 'deleted',
   Merge: 'merged',
+  Void: 'void',
+  Emailed: 'emailed',
 };
 
 /**
  * Normalize both payload shapes into a flat list of events:
- * - CloudEvents (current): top-level array, type = "qbo.{entity}.{event}.v1"
- * - Legacy: { eventNotifications: [{ realmId, dataChangeEvent: { entities: [...] } }] }
+ * - CloudEvents (format toggle on): top-level ARRAY, type = "qbo.{entity}.{operation}.v1",
+ *   Content-Type application/cloudevents-batch+json
+ * - Legacy (toggle off): { eventNotifications: [{ realmId, dataChangeEvent: { entities: [...] } }] },
+ *   no type string - the entity name + operation identify the event
+ * Anything else (including a single CloudEvent object that isn't in an array) is rejected.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeEvents(payload: any): QuickBooksEvent[] | null {
@@ -107,14 +113,19 @@ function handleEvent(event: QuickBooksEvent) {
       // Re-fetch the record and update your copy
       break;
 
+    case 'deleted':
+      console.log(`Deleted: ${label}`);
+      // Remove or archive your copy of the record
+      break;
+
     case 'merged':
       console.log(`Merged: ${label}, removed ID ${event.data.deletedid}`);
       // Re-point references from data.deletedid to entityId
       break;
 
     default:
-      // Delete, Void and Emailed: Intuit doesn't print these event names, so
-      // re-fetch the record (or run a CDC query) to see its current state
+      // void, emailed, or an operation added later: re-fetch the record
+      // (or run a CDC query) to see its current state
       console.log(`Other change (${event.type}): ${label}`);
   }
 }

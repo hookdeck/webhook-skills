@@ -25,7 +25,7 @@ metadata:
 
 ## Verification (core)
 
-Intuit signs the **raw** request body with HMAC-SHA256 keyed on your app's **Verifier Token**, base64-encodes the digest, and sends it in the `intuit-signature` header. There is no timestamp in the signed content. Read the raw body **before** JSON parsing and compare timing-safe. Intuit's Java SDK has `WebhooksService.verifyPayload`; in other languages, verify manually.
+Intuit signs the **raw** request body with HMAC-SHA256 keyed on your app's **Verifier Token**, base64-encodes the digest, and sends it in the `intuit-signature` header. There is no timestamp in the signed content, and the scheme is identical for both payload formats (CloudEvents deliveries also send `intuit-signature-algorithm: HMAC-SHA256` and an `intuit-signature-id`, which you don't need to verify). Read the raw body **before** JSON parsing and compare timing-safe. Intuit's Java SDK has `WebhooksService.verifyPayload`; in other languages, verify manually.
 
 Node:
 
@@ -64,7 +64,9 @@ def verify_quickbooks_signature(raw_body: bytes, signature: str, verifier_token:
 
 ## Payload Structure
 
-QuickBooks webhooks use the **CloudEvents** format: a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Payloads are thin. Fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
+Intuit sends one of two formats, chosen **per app** by the **Enable cloud event payload format** toggle on the app's Webhooks page in the Intuit Developer portal. It was off by default on a test app checked in November 2026, so don't assume either format. Both carry the same `intuit-signature`.
+
+**CloudEvents** (toggle on): `Content-Type: application/cloudevents-batch+json`, `intuit-notification-schema-version: 2.0`, and a body that is a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Treat the body as an array even when it holds one event. Payloads are thin: fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
 
 ```json
 [
@@ -82,11 +84,17 @@ QuickBooks webhooks use the **CloudEvents** format: a JSON **array** of events, 
 ]
 ```
 
-Apps that haven't switched to CloudEvents get the **legacy** object shape `{"eventNotifications":[{"realmId", "dataChangeEvent":{"entities":[{"name","id","operation","lastUpdated"}]}}]}`. The examples normalize both shapes into one event list, and the same signature check covers both.
+**Legacy** (toggle off): `Content-Type: application/json`, `intuit-notification-schema-version: 1.0`, and a JSON **object**:
+
+```json
+{"eventNotifications":[{"realmId":"310687","dataChangeEvent":{"entities":[{"id":"1234","operation":"Create","name":"Account","lastUpdated":"2026-11-18T16:08:22.702Z"}]}}]}
+```
+
+The legacy format has no type string: the entity `name` plus `operation` identify the event. The examples normalize both shapes into one event list, and the same signature check covers both.
 
 ## Common Event Types
 
-`type` has the format `namespace.entitytype.eventname.version`. These are the four type strings Intuit's docs print:
+`type` has the format `qbo.<entity>.<operation>.v1`, all lowercase, with multi-word entities run together (`qbo.salesreceipt.updated.v1`). Intuit's docs print only four type strings, listed below, but the Developer portal's **Send test events** picker lists 105, covering every entity and operation in [overview.md](references/overview.md):
 
 | Event type | Triggered When |
 |------------|----------------|
@@ -95,7 +103,7 @@ Apps that haven't switched to CloudEvents get the **legacy** object shape `{"eve
 | `qbo.salesreceipt.updated.v1` | A sales receipt is changed |
 | `qbo.employee.created.v1` | An employee is created |
 
-Supported operations per entity are Create, Update, Delete, Merge, Void and Emailed, depending on the entity (see [overview.md](references/overview.md)). Intuit doesn't print the event names for Delete, Void or Emailed, so the examples handle `created`, `updated` and `merged` by name and send every other change to a default branch that re-fetches the record.
+The operation segment is one of `created`, `updated`, `deleted`, `merged`, `void` (not `voided`) or `emailed`, depending on the entity. The examples handle `created`, `updated`, `deleted` and `merged` by name and send `void`, `emailed` and anything new to a default branch that re-fetches the record.
 
 ## Environment Variables
 

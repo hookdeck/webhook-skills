@@ -13,16 +13,30 @@ To verify, recompute the same value and compare it with the header using a **tim
 
 - **No timestamp or ID** is signed, so it's not Standard Webhooks.
 - **No secret prefix or decoding**: use the Verifier Token as a UTF-8 string key.
-- **Same scheme for both formats**: it applies to the CloudEvents payload and the legacy `eventNotifications` payload.
+- **Same scheme for both formats**: it applies to the CloudEvents payload and the legacy `eventNotifications` payload, with the same Verifier Token. Live test deliveries of both formats in November 2026 verified this way, and failed with a wrong key.
 
-Example headers:
+Headers of a real legacy delivery (November 2026):
 
 ```
 content-type: application/json; charset=utf-8
-intuit-signature: 6kQBQtjwjupelRMwkyJsnpq80uhz2o+Rn92+m03GhKE=
-intuit-t-id: 9cf50b60-8b0e-4fea-8327-e6a66099fe6f
-intuit-created-time: 2016-02-02T16:25:00-0800
-user-agent: intuit_notification_server/0.1
+intuit-created-time: 2026-11-18T16:08:23.921Z
+intuit-notification-schema-version: 1.0
+intuit-signature: w5OMDcJlwfu999hkwBzzaaUE5aHXHQc06NpltIG+ZNs=
+intuit-t-id: a91ada21-2910-415c-8602-4673d92fb5e0
+user-agent: intuit_notification_server/1.0
+```
+
+Headers of a real CloudEvents delivery. It adds `intuit-signature-algorithm` and `intuit-signature-id`; neither changes how you verify:
+
+```
+content-type: application/cloudevents-batch+json; charset=utf-8
+intuit-created-time: 2026-11-18T16:10:07.602Z
+intuit-notification-schema-version: 2.0
+intuit-signature: d/mSzRAsJ+Zb8Dos20+v7GCNX3NdJppjTcU1s9CYvvU=
+intuit-signature-algorithm: HMAC-SHA256
+intuit-signature-id: 9bc559d3-553d-4d9b-a63b-91e0f5f79a1a
+intuit-t-id: 5df05f6a-218a-4688-8238-bf295d272f73
+user-agent: intuit_notification_server/1.0
 ```
 
 ## Implementation
@@ -87,10 +101,10 @@ return hash.equals(headers.get("intuit-signature"));
 - **Base64, not hex.** Compare against `digest('base64')`, not `digest('hex')`.
 - **Wrong environment token.** Development and Production have different Verifier Tokens. A sandbox token fails every production delivery.
 - **Header case.** The header is `intuit-signature`. Node and FastAPI lowercase incoming header names; Next.js `headers.get()` doesn't care about case.
-- **Content type.** Intuit doesn't document the `Content-Type` of CloudEvents deliveries, and it may not be `application/json`. Match every content type when reading the raw body (`express.raw({ type: '*/*' })`); a matcher that misses leaves `req.body` empty and every request fails verification.
+- **Content type.** CloudEvents deliveries arrive as `application/cloudevents-batch+json; charset=utf-8`, not `application/json` (Intuit's migration guide says `application/cloudevents+json`, which is also not what was sent). Match every content type when reading the raw body (`express.raw({ type: '*/*' })`); a matcher that misses leaves `req.body` empty and every request fails verification.
 - **Body-size limits.** Intuit sets no size limit, and big batches can exceed small server defaults. A truncated body fails verification.
 - **Rejections stall delivery.** Intuit retries non-2xx responses and may hold back later events until the first is acknowledged. A broken verifier stops the whole stream, not just one event.
-- **Array, not object.** CloudEvents payloads are a top-level JSON **array**. Code that reads `body.eventNotifications` only sees the legacy shape.
+- **Array, not object.** CloudEvents payloads are a top-level JSON **array**, even with one event. Code that reads `body.eventNotifications` only sees the legacy shape, and code that reads `body.type` gets `undefined`.
 
 ## Debugging Verification Failures
 
