@@ -53,7 +53,7 @@ Python: `base64.b64encode(hmac.new(base64.b64decode(secret), ts.encode() + b"." 
 
 ## Payload
 
-Employment Hero [lists about 40 webhook events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md), for example:
+Employment Hero [lists 40 webhook events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md), for example:
 
 | Area | Events |
 |---|---|
@@ -65,6 +65,7 @@ Employment Hero [lists about 40 webhook events](https://developer.employmenthero
 | Certifications | Certification Created, Updated, Deleted, Archived; Member Certification Created, Updated, Approved, Declined, Expired, Archived, Deleted |
 | Custom forms | Custom Form Response Submitted, Partially Approved, Approved, Declined |
 | Goals | Goal Created, Updated, Deleted; Key Result Created, Updated, Deleted |
+| Pay | Pay Detail Updated |
 
 It doesn't publish a payload sample or the HTTP method. The examples accept `POST`, parse the JSON, assume no field, and dedupe on a SHA-256 hash of the raw body. Log the first real delivery, then add dispatch on the field that names the event.
 

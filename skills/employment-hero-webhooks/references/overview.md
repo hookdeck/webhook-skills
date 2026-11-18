@@ -15,7 +15,7 @@ Employment Hero is an HR, payroll and employee-management platform. Its webhooks
 | Success response | HTTP `200` |
 | Retries | "it will be retried for a maximum of 3 times" |
 | HTTP method | Not stated ("trigger an HTTP request to the URL") |
-| Event names | Yes: [Webhook Events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md) lists about 40, such as Employee Created and Leave Request Approved |
+| Event names | Yes: [Webhook Events](https://developer.employmenthero.com/api-references/webhook/webhook-events.md) lists 40, such as Employee Created and Leave Request Approved |
 | Payload samples | Not published (the per-event data pages aren't available) |
 | Timestamp tolerance | None |
 | Test vector | None |
@@ -34,6 +34,7 @@ From Employment Hero's [Webhook Events](https://developer.employmenthero.com/api
 | Certifications | Certification Created, Updated, Deleted, Archived; Member Certification Created, Updated, Approved, Declined, Expired, Archived, Deleted |
 | Custom forms | Custom Form Response Submitted, Partially Approved, Approved, Declined |
 | Goals | Goal Created, Updated, Deleted; Key Result Created, Updated, Deleted |
+| Pay | Pay Detail Updated |
 
 The page gives title-case names only, not the identifiers that appear in a payload.
 

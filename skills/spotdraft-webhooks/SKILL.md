@@ -50,15 +50,25 @@ See [references/verification.md](references/verification.md) for Python and debu
 
 ## Events
 
-| Activity | When |
+SpotDraft's [Webhooks page](https://developer.spotdraft.com/docs/webhooks) lists the `only_for_activities` values. The contract lifecycle ones:
+
+| Activity | When it fires |
 |---|---|
-| `CONTRACT_CREATED` | A contract is created |
-| `CONTRACT_SENT_TO_COUNTERPARTY` | A contract is sent to the counterparty |
-| `CONTRACT_EXECUTED` | The contract is fully executed |
+| `CONTRACT_CREATED` | A new contract is created |
+| `CONTRACT_DATA_UPDATED` | Contract data changes |
+| `CONTRACT_VERSION_UPLOADED` | A new contract version is uploaded |
+| `CONTRACT_SENT_TO_COUNTERPARTY` | The contract is sent for counterparty review or redlining |
+| `CONTRACT_REVIEW_REQUESTED` / `CONTRACT_REVIEW_COMPLETED` | Internal review is requested / completed |
+| `CONTRACT_SIGNATURE_REQUESTED` | The contract is marked or sent for signature |
+| `CONTRACT_SIGNATURE_DECLINED` | A signatory declines to sign |
+| `CONTRACT_SIGNED` | A required signatory completes signing |
+| `CONTRACT_EXECUTED` | All required signatures are complete |
+| `CONTRACT_VOIDED` / `CONTRACT_DELETED` | The contract is voided / deleted |
+| `CONTRACT_PROCESS_METRIC_UPDATED` | Workflow metrics change |
 
-SpotDraft's reachable docs don't publish the full list of activities: these three appear in the [webhooks playbook](https://developer.spotdraft.com/docs/api-playbooks/receive-real-time-contract-events-via-webhooks)'s registration example (`only_for_activities`). The playbook says you can also receive review, signature, execution and repository events; check the activity values offered when you register the endpoint.
+The page also lists `CONTRACT_MARK_FOR_EXECUTION`, `CONTRACT_UNMARK_FOR_EXECUTION`, `CONTRACT_ENTITY_UPDATED` and `CONTRACT_ACTIVITY_LOG_COMMENT_CREATED`; approvals and structured data (`CONTRACT_APPROVAL_REQUESTED`, `CONTRACT_APPROVAL_COMPLETED`, `CONTRACT_EXTERNAL_METADATA_CREATED` / `_UPDATED`, `CONTRACT_KEY_POINTER_CREATION` / `_UPDATION`); counterparties (`COUNTER_PARTY_CREATED` / `_UPDATED`, `COUNTER_PARTY_CONTACT_CREATED` / `_UPDATED`, `COUNTER_PARTY_ADDRESS_CREATED` / `_UPDATED`); and email events (`POSTMARK_EMAIL_EVENT`, `SIGNING_EMAIL_DELIVERED` / `_OPENED` / `_NOT_DELIVERED` / `_LINK_CLICKED`, the same four `REDLINING_EMAIL_*` values, and `CONTRACT_SIGNATURE_REQUESTED_NOTIFICATION_SENT`).
 
-The guides don't publish the payload fields either (they point to the API reference for samples). The examples assume no field and fingerprint the raw body for deduplication; log the first real delivery and add dispatch on the activity field.
+The guides don't publish the payload fields (they point to the API reference for version-specific fields), and SpotDraft calls a delivery "a change signal": fetch the contract from the API when you need the full record. The examples assume no field and fingerprint the raw body for deduplication; log the first real delivery and add dispatch on the activity field.
 
 ## Environment Variables
 
