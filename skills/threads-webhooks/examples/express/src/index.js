@@ -36,11 +36,19 @@ function verifyThreadsSignature(rawBody, signatureHeader, appSecret) {
 
 /**
  * Dispatch one notification. Threads sends a flat object:
- * { app_id, topic, target_id, time, subscription_id, values: { field, value } }
+ * { app_id, topic, target_id, time, subscription_id, values: [{ field, value }] }
+ * Meta's docs show `values` as a single { field, value } object, but a live publish
+ * notification (2026-11-18) sent an array of them, so accept both.
  */
 function handleNotification(notification) {
-  const field = notification.values?.field;
-  const value = notification.values?.value || {};
+  const values = notification?.values;
+  const changes = Array.isArray(values) ? values : values ? [values] : [];
+  for (const change of changes) handleChange(change);
+}
+
+function handleChange(change) {
+  const field = change?.field;
+  const value = change?.value || {};
 
   switch (field) {
     case 'replies':

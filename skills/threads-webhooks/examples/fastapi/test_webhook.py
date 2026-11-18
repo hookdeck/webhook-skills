@@ -31,7 +31,8 @@ def notification(field: str, value: dict, topic: str = "moderate") -> bytes:
             "time": 1723226877,
             "subscription_id": "234567",
             "has_uid_field": False,
-            "values": {"value": value, "field": field},
+            # A live publish notification sent an array; Meta's docs show a single object (tested below).
+            "values": [{"value": value, "field": field}],
         }
     ).encode()
 
@@ -131,6 +132,16 @@ class TestEvents:
         body = notification(field, value, topic)
         assert post(body, sign(body)).status_code == 200
         assert "Unhandled" not in capsys.readouterr().out
+
+    def test_documented_single_object_values(self, capsys):
+        body = json.dumps(
+            {
+                **json.loads(notification("replies", {})),
+                "values": {"field": "replies", "value": {"id": "1", "username": "u"}},
+            }
+        ).encode()
+        assert post(body, sign(body)).status_code == 200
+        assert "Reply 1 by @u" in capsys.readouterr().out
 
     def test_unknown_field_acknowledged(self):
         body = notification("something_else", {})
