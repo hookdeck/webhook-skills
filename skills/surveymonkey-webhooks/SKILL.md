@@ -111,7 +111,7 @@ SURVEYMONKEY_CLIENT_SECRET=your-client-secret   # the HMAC key is "<client ID>&<
 npx hookdeck-cli listen 3000 surveymonkey --path /webhooks/surveymonkey
 ```
 
-Create a webhook with the printed URL as `subscription_url`, then complete a response on the survey. A plain CLI source answers `HEAD` with `405`, so pass `?bypass_ping=true` (or first create a SurveyMonkey-type source named `surveymonkey`). See [references/setup.md](references/setup.md).
+Create a webhook with the printed URL as `subscription_url`, then complete a response on the survey. A plain CLI source answers `HEAD` with `405`, so pass `?bypass_ping=true` (or first create a SurveyMonkey-type source named `surveymonkey` and run `npx hookdeck-cli login`, so the CLI reuses it). See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 

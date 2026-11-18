@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - A SurveyMonkey app (client ID, client secret, access token) with the Create/Modify Webhooks scope
-- A public HTTPS endpoint that answers `HEAD` with `200` (use the Hookdeck CLI locally)
+- A public HTTPS endpoint that answers `HEAD` with `200`, or create the webhook with `?bypass_ping=true`
 
 ## 1. Make the URL Answer HEAD
 
@@ -44,7 +44,7 @@ Complete a response on the survey and watch for `response_completed`.
 npx hookdeck-cli listen 3000 surveymonkey --path /webhooks/surveymonkey
 ```
 
-Use the printed URL as `subscription_url`. A plain CLI source answers `HEAD` with `405`, so pass `?bypass_ping=true` (or first create a SurveyMonkey-type source named `surveymonkey`).
+Use the printed URL as `subscription_url`. A plain CLI source answers `HEAD` with `405`, so pass `?bypass_ping=true` (or first create a SurveyMonkey-type source named `surveymonkey` and run `npx hookdeck-cli login`, so the CLI reuses it).
 
 ## Using Hookdeck
 

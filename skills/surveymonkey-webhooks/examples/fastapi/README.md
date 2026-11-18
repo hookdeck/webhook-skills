@@ -44,7 +44,7 @@ The tests cover the `<client ID>&<secret>` key, a key of the secret alone (rejec
 npx hookdeck-cli listen 8000 surveymonkey --path /webhooks/surveymonkey
 ```
 
-Create a webhook with `POST /v3/webhooks` and the printed URL as `subscription_url`. A plain CLI source answers `HEAD` with `405`, so add `?bypass_ping=true` to that call (or first create a SurveyMonkey-type source named `surveymonkey`).
+Create a webhook with `POST /v3/webhooks` and the printed URL as `subscription_url`. A plain CLI source answers `HEAD` with `405`, so add `?bypass_ping=true` to that call (or first create a SurveyMonkey-type source named `surveymonkey` and run `npx hookdeck-cli login`, so the CLI reuses it).
 
 ## Notes
 
