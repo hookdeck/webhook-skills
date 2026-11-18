@@ -119,10 +119,12 @@ async def motive_webhook(request: Request):
     try:
         event = json.loads(raw_body)
     except ValueError:
-        # The activation test request body ([vehicle_location_updated]) is not valid JSON.
-        # Answer 200 so Motive can enable the webhook.
+        # Not JSON. Answer 200 without processing it. (Motive's docs print the activation test
+        # body as [vehicle_location_updated], but the real one is a JSON array, handled below.)
         return {"received": True, "ignored": True}
 
+    # The activation test request is a JSON array of the webhook's actions, e.g.
+    # ["vehicle_location_updated","fault_code_closed"]: acknowledge it without dispatching.
     # Motive sends no event ID header: de-duplicate on action + payload id
     if isinstance(event, dict):
         handle_motive_event(event)

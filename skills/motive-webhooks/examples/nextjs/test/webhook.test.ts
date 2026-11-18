@@ -106,7 +106,14 @@ describe('POST /webhooks/motive', () => {
     expect(res.status).toBe(200);
   });
 
-  it('returns 200 for the activation test body, which is not valid JSON', async () => {
+  it('returns 200 for the activation test request, a JSON array of actions', async () => {
+    const body = '["vehicle_location_updated","fault_code_closed"]';
+    const res = await POST(makeRequest(body, sign(body)));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ received: true });
+  });
+
+  it('returns 200 without processing a signed body that is not JSON', async () => {
     const body = '[vehicle_location_updated]';
     const res = await POST(makeRequest(body, sign(body)));
     expect(res.status).toBe(200);
