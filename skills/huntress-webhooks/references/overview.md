@@ -8,8 +8,9 @@ delivery includes:
 
 - An HTTP `POST` to your configured HTTPS URL
 - A JSON payload describing the event
-- Headers carrying a Svix signature, a timestamp, and a unique delivery ID
-  (`svix-signature`, `svix-timestamp`, `svix-id`)
+- Headers carrying a Svix signature, a timestamp, and a unique delivery ID. Huntress's
+  article names them `svix-signature`, `svix-timestamp`, `svix-id`; a live test delivery
+  (2026-11-18) used `webhook-signature`, `webhook-timestamp`, `webhook-id`. Accept both.
 
 ## What Notification Categories Exist?
 
@@ -26,11 +27,12 @@ not event type strings in the payload.
 ## What Does the Payload Look Like?
 
 Huntress's article says only that the body is "a JSON payload describing the event".
-It does not document a `type` field, an envelope, or per-category schemas, and the
-category names above are not documented as wire values. Inspect a real delivery
+It does not document a type field, an envelope, or per-category schemas, and the
+category names above are not documented as wire values. The live **Send Test** body
+(2026-11-18) was `{"event_type":"test.event","message":"Hello World"}`. Inspect a real delivery
 (**View Delivery Attempts → View → Request Body**, or **Send Test**) before writing
 type-specific handling. The example handlers log the body and report `type` only if
-the body has one.
+the body has one (`event_type`, falling back to `type`).
 
 ## How Are Deliveries Signed?
 
@@ -41,7 +43,7 @@ Huntress uses Svix to sign payloads. See
 
 - Verify against the **raw body**, not parsed JSON.
 - Respond fast: verify, enqueue the work, return `200`. Don't process inline.
-- Log delivery IDs (`svix-id`) so you can correlate with the Portal's **View Delivery
+- Log delivery IDs (`webhook-id` or `svix-id`) so you can correlate with the Portal's **View Delivery
   Attempts** page when debugging missed events.
 
 ## Limits

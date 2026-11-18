@@ -14,9 +14,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
+  // Huntress's docs name svix-* headers, but a live delivery (2026-11-18) sent the
+  // Standard Webhooks names (webhook-id, webhook-timestamp, webhook-signature).
+  // The signed content is the same, so accept either prefix.
+  const svixId = request.headers.get('svix-id') ?? request.headers.get('webhook-id');
+  const svixTimestamp =
+    request.headers.get('svix-timestamp') ?? request.headers.get('webhook-timestamp');
+  const svixSignature =
+    request.headers.get('svix-signature') ?? request.headers.get('webhook-signature');
   if (!svixId || !svixTimestamp || !svixSignature) {
     return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
   }
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   const { type, payload } = parseHuntressEvent(body);
-  // svix-id is stable across retries: use it to deduplicate, and log it so you can
+  // The delivery ID is stable across retries: use it to deduplicate, and log it so you can
   // match it to the Portal's "View Delivery Attempts" page
   console.log(`Received Huntress webhook ${svixId}: ${type ?? '(untyped payload)'}`);
 

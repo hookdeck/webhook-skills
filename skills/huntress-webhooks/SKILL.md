@@ -2,7 +2,7 @@
 name: huntress-webhooks
 description: >
   Receive and verify Huntress webhooks (signed with Svix). Use when setting up
-  Huntress webhook handlers, debugging svix-signature verification, or handling
+  Huntress webhook handlers, debugging webhook-signature / svix-signature verification, or handling
   managed security notifications such as incident reports, escalations,
   platform actions, and account notices.
 license: MIT
@@ -15,35 +15,45 @@ metadata:
 # Huntress Webhooks
 
 Huntress (managed security) delivers real-time notifications from the Huntress Portal
-as webhooks. Each delivery is an HTTP `POST` with a JSON body and three Svix headers:
-`svix-id`, `svix-timestamp`, and `svix-signature`. Huntress states that it uses Svix
-to sign payloads, so any Svix client library verifies them.
+as webhooks. Each delivery is an HTTP `POST` with a JSON body and three signature
+headers. Huntress states that it uses Svix to sign payloads, so any Svix client library
+verifies them.
+
+**Header names:** Huntress's article names `svix-id`, `svix-timestamp`, and
+`svix-signature`, but a live **Send Test** delivery (observed 2026-11-18) sent the
+Standard Webhooks names `webhook-id`, `webhook-timestamp`, and `webhook-signature`
+instead (plus `webhook-test: true`). The signed content is identical, so read
+whichever prefix is present. A handler that reads only `svix-*` rejects real
+deliveries as "missing headers".
 
 ## When to Use This Skill
 
 - How do I receive Huntress webhooks?
-- How do I verify Huntress webhook signatures (`svix-signature`)?
+- How do I verify Huntress webhook signatures (`webhook-signature` or `svix-signature`)?
+- Why does my Huntress handler say the `svix-*` headers are missing?
 - How do I handle Huntress incident report or escalation notifications?
 - Why is my Huntress webhook signature verification failing?
 - Why do replayed or retried Huntress webhooks fail with "timestamp too old"?
 
 ## Verification (core)
 
-Signed content is `{svix-id}.{svix-timestamp}.{raw body}`, HMAC-SHA256 with the
-base64-decoded secret (the part after `whsec_`), base64-encoded. `svix-signature` holds
-one or more space-separated `v1,<base64>` entries; any match passes. The `whsec_`
-secret format comes from Svix's documentation: Huntress's own page never shows the
-secret, it only says to use **View Signing Secret** in the Portal.
+Signed content is `{id}.{timestamp}.{raw body}`, HMAC-SHA256 with the base64-decoded
+secret (the part after `whsec_`), base64-encoded. The signature header holds one or
+more space-separated `v1,<base64>` entries; any match passes. Huntress's own page never
+shows the secret (it only says to use **View Signing Secret** in the Portal); a live
+check on 2026-11-18 confirmed it is a `whsec_` secret.
 
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
 const wh = new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET); // "whsec_..."
+// Accept either header prefix: live deliveries use webhook-*, the docs say svix-*
+const h = (name) => req.headers[`svix-${name}`] ?? req.headers[`webhook-${name}`];
 // rawBody: the raw Buffer/string, never re-serialized JSON
 wh.verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
+  'svix-id': h('id'),
+  'svix-timestamp': h('timestamp'),
+  'svix-signature': h('signature'),
 }); // throws on a bad signature or a timestamp outside 5 minutes
 const body = JSON.parse(rawBody.toString('utf8')); // parse only after verify passes
 ```
@@ -51,8 +61,11 @@ const body = JSON.parse(rawBody.toString('utf8')); // parse only after verify pa
 ```python
 from svix.webhooks import Webhook, WebhookVerificationError
 
+def h(name):  # accept either header prefix
+    return request.headers.get(f"svix-{name}") or request.headers.get(f"webhook-{name}")
+
 wh = Webhook(os.environ["HUNTRESS_WEBHOOK_SECRET"])
-wh.verify(raw_body, {"svix-id": msg_id, "svix-timestamp": ts, "svix-signature": sig})
+wh.verify(raw_body, {"svix-id": h("id"), "svix-timestamp": h("timestamp"), "svix-signature": h("signature")})
 ```
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
@@ -60,12 +73,13 @@ wh.verify(raw_body, {"svix-id": msg_id, "svix-timestamp": ts, "svix-signature": 
 ### Hookdeck retries and the 5-minute window
 
 The `svix` and `standardwebhooks` libraries always enforce a fixed 5-minute timestamp
-window. Hookdeck retries and replays resend the **original** `svix-timestamp`, so the
+window. Hookdeck retries and replays resend the **original** timestamp header, so the
 library rejects any retry or replay that arrives more than 5 minutes after Huntress
 sent it. If your handler sits behind Hookdeck and must accept late deliveries, use the
 manual verifier in [references/verification.md](references/verification.md): it does
 the same HMAC-SHA256 check and compares every `v1,` entry in constant time, but the
-window can be dropped or widened. Deduplicate on `svix-id` instead.
+window can be dropped or widened. Deduplicate on the delivery ID (`webhook-id` or
+`svix-id`) instead.
 
 ## Notification Categories and Payload
 
@@ -80,8 +94,10 @@ the Portal. These are subscription toggles, not event type strings on the wire:
 | Account Notices | Account notice notifications |
 
 Huntress's webhook article describes the body only as "a JSON payload describing the
-event" and does not document a `type` field or the payload schema. The examples read
-`type` if the body has one and otherwise log the body as untyped. Use **View Delivery
+event" and does not document a type field or the payload schema. The live **Send Test**
+body (2026-11-18) was `{"event_type":"test.event","message":"Hello World"}`; real
+category payloads have not been captured. The examples read `event_type` (falling back
+to `type`) if the body has one and otherwise log the body as untyped. Use **View Delivery
 Attempts → Request Body** in the Portal (or **Send Test**) to see the real shape, then
 add handling for it.
 
@@ -122,7 +138,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on `svix-id`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on the delivery ID)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

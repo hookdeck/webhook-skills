@@ -65,6 +65,26 @@ def test_type_is_reported_when_present():
     assert response.json()["type"] == "example.event"
 
 
+def test_accepts_standard_webhooks_header_names_from_a_live_delivery():
+    # Live test delivery, 2026-11-18: webhook-* headers, not svix-*
+    payload = json.dumps({"event_type": "test.event", "message": "Hello World"})
+    msg_id = "msg_" + secrets.token_hex(12)
+    timestamp = now()
+    response = client.post(
+        "/webhooks/huntress",
+        content=payload,
+        headers={
+            "content-type": "application/json",
+            "webhook-id": msg_id,
+            "webhook-timestamp": timestamp,
+            "webhook-signature": sign(payload, msg_id, timestamp),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == msg_id
+    assert response.json()["type"] == "test.event"
+
+
 def test_verifies_regardless_of_content_type():
     assert send(json.dumps({"a": 1}), content_type="text/plain").status_code == 200
 

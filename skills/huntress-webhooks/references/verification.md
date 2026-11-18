@@ -3,25 +3,28 @@
 ## How Does Huntress Sign Webhooks?
 
 Huntress uses Svix to sign webhook payloads, so any Svix client library works out of
-the box. Each request includes:
+the box. Each request includes three headers. Huntress's article names them with a
+`svix-` prefix, but a live **Send Test** delivery (2026-11-18) used the Standard
+Webhooks `webhook-` prefix (and added `webhook-test: true`). The values and signed
+content are the same either way, so read whichever is present:
 
-| Header | Contents |
-|--------|----------|
-| `svix-id` | Unique delivery ID (stable across retries; your idempotency key) |
-| `svix-timestamp` | Attempt time, Unix seconds |
-| `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
+| Header (live / documented) | Contents |
+|----------------------------|----------|
+| `webhook-id` / `svix-id` | Unique delivery ID (stable across retries; your idempotency key) |
+| `webhook-timestamp` / `svix-timestamp` | Attempt time, Unix seconds |
+| `webhook-signature` / `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
 The algorithm (from [Svix's manual verification guide](https://docs.svix.com/receiving/verifying-payloads/how-manual)):
 
-1. Build the signed content: `{svix-id}.{svix-timestamp}.{raw body}`.
+1. Build the signed content: `{id}.{timestamp}.{raw body}`.
 2. Strip the `whsec_` prefix from the signing secret and base64-decode the rest.
 3. Compute HMAC-SHA256 of the signed content with the decoded key.
 4. Base64-encode the digest.
-5. Compare it in constant time against every `v1,` entry in `svix-signature`. Any
+5. Compare it in constant time against every `v1,` entry in the signature header. Any
    match passes.
 
-The `whsec_` secret format comes from Svix's docs. Huntress's own article never shows
-the secret.
+Huntress's own article never shows the secret; a live check on 2026-11-18 confirmed the
+Portal's **View Signing Secret** value is a `whsec_` secret.
 
 ## SDK Verification (recommended)
 
@@ -30,10 +33,12 @@ the secret.
 ```javascript
 import { Webhook } from 'svix'; // svix 2.x is ESM-only
 
+// Accept either prefix: live deliveries use webhook-*, the docs say svix-*
+const h = (name) => req.headers[`svix-${name}`] ?? req.headers[`webhook-${name}`];
 new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET).verify(rawBody, {
-  'svix-id': req.headers['svix-id'],
-  'svix-timestamp': req.headers['svix-timestamp'],
-  'svix-signature': req.headers['svix-signature'],
+  'svix-id': h('id'),
+  'svix-timestamp': h('timestamp'),
+  'svix-signature': h('signature'),
 }); // returns undefined, throws on failure; parse rawBody yourself afterwards
 ```
 
@@ -42,11 +47,14 @@ new Webhook(process.env.HUNTRESS_WEBHOOK_SECRET).verify(rawBody, {
 ```python
 from svix.webhooks import Webhook, WebhookVerificationError
 
+def h(name):  # accept either prefix
+    return headers.get(f"svix-{name}") or headers.get(f"webhook-{name}")
+
 try:
     Webhook(os.environ["HUNTRESS_WEBHOOK_SECRET"]).verify(raw_body, {
-        "svix-id": headers["svix-id"],
-        "svix-timestamp": headers["svix-timestamp"],
-        "svix-signature": headers["svix-signature"],
+        "svix-id": h("id"),
+        "svix-timestamp": h("timestamp"),
+        "svix-signature": h("signature"),
     })
 except WebhookVerificationError:
     ...  # return 400
@@ -56,10 +64,11 @@ except WebhookVerificationError:
 
 The `svix` and `standardwebhooks` libraries always enforce a fixed 5-minute timestamp
 window, and it can't be configured. Hookdeck retries and replays resend the original
-`svix-timestamp`, so the library rejects any delivery that reaches your handler more
+timestamp header, so the library rejects any delivery that reaches your handler more
 than 5 minutes after Huntress sent it. Use the manual verifier below when that
 matters. Leave the tolerance argument as `null`/`None` to drop the window, or pass a number of seconds to widen it.
-Without a window, deduplicate on `svix-id` to limit the impact of a replayed capture.
+Without a window, deduplicate on the delivery ID to limit the impact of a replayed capture.
+Pass the header values from whichever prefix arrived (`webhook-*` or `svix-*`).
 
 ## Manual Verification (no window enforced by default)
 
@@ -132,7 +141,9 @@ def verify_huntress(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sig
   `await request.text()` (Next.js), or `await request.body()` (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not
   the literal string.
-- **Multiple signatures.** Split `svix-signature` on spaces and accept any matching
+- **Header prefix.** Read `webhook-*` and fall back to `svix-*` (or the reverse).
+  Live deliveries use `webhook-*` even though Huntress's article says `svix-*`.
+- **Multiple signatures.** Split the signature header on spaces and accept any matching
   `v1,` entry. Don't compare the whole header.
 - **One secret per endpoint.** Each Huntress endpoint has its own signing secret.
 - **Timestamp window.** SDK verification rejects timestamps more than 5 minutes off,
@@ -145,10 +156,10 @@ def verify_huntress(raw_body: bytes, svix_id: str, svix_timestamp: str, svix_sig
 | Symptom | Likely cause |
 |---------|--------------|
 | Every request fails with "Invalid signature" | Wrong endpoint's secret, or the body was parsed/re-serialized before verification |
-| Fails only behind a proxy | A proxy or middleware rewrote the body or stripped `svix-*` headers |
+| Fails only behind a proxy | A proxy or middleware rewrote the body or stripped the signature headers |
 | "Timestamp too old" on retries or replays | The 5-minute window against a resent original timestamp; use the manual verifier |
 | "Timestamp too old" on fresh requests | Server clock drift |
-| Missing headers | Something in front of your app dropped `svix-*` headers |
+| Missing headers | The handler reads only `svix-*` but the delivery used `webhook-*` (or the reverse), or something in front of your app dropped the headers |
 
 Use **Send Test** from the endpoint's three-dot menu in the Huntress Portal to send a
 correctly signed request while debugging.
