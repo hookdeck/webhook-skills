@@ -43,7 +43,7 @@ The tests sign requests the way Brex does. They check Brex's documented sample v
 npx hookdeck-cli listen 3000 brex --path /webhooks/brex
 ```
 
-Register the printed URL with `POST https://api.brex.com/v1/webhooks` and the `event_types` you want. Brex allows one endpoint per API client, so this replaces any URL already registered.
+Register the printed URL with `POST https://api.brex.com/v1/webhooks` (with an `Idempotency-Key` header) and the `event_types` you want. Brex allows one endpoint per API client: if you already have one, point it at this URL with `PUT /v1/webhooks/{id}`.
 
 ## Notes
 

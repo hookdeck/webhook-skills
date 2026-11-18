@@ -11,13 +11,14 @@
 curl -X POST https://api.brex.com/v1/webhooks \
   -H "Authorization: Bearer $BREX_API_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d '{
     "url": "https://example.com/webhooks/brex",
     "event_types": ["TRANSFER_PROCESSED", "TRANSFER_FAILED", "USER_UPDATED"]
   }'
 ```
 
-Only **one endpoint per `client_id`** is allowed. Manage it with:
+Create Webhook requires an `Idempotency-Key` header. Only **one endpoint per `client_id`** is allowed, so to change the URL or events later, update the existing webhook with `PUT /v1/webhooks/{id}`. Manage it with:
 
 | Call | Purpose |
 |------|---------|
@@ -35,11 +36,11 @@ curl https://api.brex.com/v1/webhooks/secrets \
 
 The response is a list of `{ "secret": "...", "status": "ACTIVE" }` objects. Set `BREX_WEBHOOK_SECRET` to the `secret` whose `status` is `ACTIVE`, exactly as returned. The handlers strip an optional `whsec_` prefix and base64-decode it.
 
-| `status` | Meaning |
-|----------|---------|
-| `ACTIVE` | Current key, signs every delivery |
-| `PENDING_REVOKE` | Old key during a rotation, still signs deliveries until revoked |
-| `REVOKED` | No longer signs anything |
+| `status` | Brex's description | What it implies for verification |
+|----------|---------------------|----------------------------------|
+| `ACTIVE` | Active, can be used to validate webhooks | Use this one |
+| `PENDING_REVOKE` | Still active, but will soon be revoked (during key rotations) | Still valid until revoked |
+| `REVOKED` | No longer active, cannot be used to validate webhooks | Stop accepting it |
 
 ## 3. Key Rotation
 
@@ -62,4 +63,4 @@ Brex sends webhooks from these addresses (add all of them):
 
 ## Staging
 
-Brex's API also runs at `https://api-staging.brex.com`. Register a separate endpoint there for test traffic.
+Brex's OpenAPI lists `https://api-staging.brex.com`, but Brex says it is not a sandbox and does not work with customer tokens. Register and test against `https://api.brex.com`.

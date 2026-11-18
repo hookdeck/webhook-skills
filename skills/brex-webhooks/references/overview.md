@@ -30,8 +30,8 @@ Brex's [webhooks guide](https://developer.brex.com/guides/webhooks) lists six ev
 | `REFERRAL_CREATED` | Onboarding | A referral is created, by API or mobile/web | `referral_id` |
 | `REFERRAL_ACTIVATED` | Onboarding | A referred contact signs up with your referral link | `referral_id` |
 | `REFERRAL_APPLICATION_STATUS_CHANGED` | Onboarding | A product application status changes | `referral_id`, `application` |
-| `TRANSFER_PROCESSED` | Payments | A transfer is successfully received | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
-| `TRANSFER_FAILED` | Payments | A transfer fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
+| `TRANSFER_PROCESSED` | Payments | A Brex Cash transfer (incoming or outgoing) is processed | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
+| `TRANSFER_FAILED` | Payments | A Brex Cash transfer (incoming or outgoing) fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
 | `USER_UPDATED` | Team | A user is updated | `user_id`, `company_id`, `updated_attributes` |
 | `EXPENSE_PAYMENT_UPDATED` | Expenses | Expense activity on Brex cards | `expense_id`, `payment_status`, `payment_type`, `card_id`, `merchant`, `amount`, `version`, ... |
 | `ACCOUNTING_RECORD_READY_FOR_EXPORT` | Accounting | Accounting records are ready to export | `accountingRecordIds`, `companyId` (camelCase) |

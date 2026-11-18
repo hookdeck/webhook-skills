@@ -86,8 +86,8 @@ Partners with many customers map `company_id` to the right access token before c
 
 | Event | Fired when | Key fields |
 |-------|------------|------------|
-| `TRANSFER_PROCESSED` | A transfer is successfully received | `transfer_id`, `payment_type`, `company_id` |
-| `TRANSFER_FAILED` | A transfer fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
+| `TRANSFER_PROCESSED` | A Brex Cash transfer (incoming or outgoing) is processed | `transfer_id`, `payment_type`, `company_id` |
+| `TRANSFER_FAILED` | A Brex Cash transfer (incoming or outgoing) fails | `transfer_id`, `payment_type`, `return_for_id`, `company_id` |
 | `EXPENSE_PAYMENT_UPDATED` | Card expense activity (purchase, refund, decline) | `expense_id`, `payment_status`, `payment_type`, `card_id`, `amount` |
 | `USER_UPDATED` | A user's status, manager, department or location changes | `user_id`, `updated_attributes` |
 | `REFERRAL_CREATED` / `REFERRAL_ACTIVATED` | A referral is created / the contact signs up | `referral_id` |
@@ -110,7 +110,7 @@ BREX_WEBHOOK_SECRET=your_brex_webhook_secret   # "secret" with status ACTIVE fro
 npx hookdeck-cli listen 3000 brex --path /webhooks/brex
 ```
 
-Register the printed URL with `POST https://api.brex.com/v1/webhooks` (see [references/setup.md](references/setup.md)). Brex allows one endpoint per API client, so this replaces any URL already registered.
+Register the printed URL with `POST https://api.brex.com/v1/webhooks` (see [references/setup.md](references/setup.md)). Brex allows one endpoint per API client: if you already have one, point it at this URL with `PUT /v1/webhooks/{id}`.
 
 ## Reference Materials
 

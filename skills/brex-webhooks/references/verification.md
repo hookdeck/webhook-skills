@@ -22,7 +22,7 @@ webhook_timestamp = "1643393361"
 webhook_signature = "v1,6mFFi/Bg0gw1Yz2KJwZSVq6Bh+XzllS7JVltAlZ8yCU= v1,9dEEi/Bg0gw1Yz2KJwZSVq6Bh+XzllS7JVltAlZ8yDY="
 ```
 
-The first entry matches; the second stands in for a rotated-out key.
+The first entry matches the sample secret; the second does not.
 
 ## Node.js
 
@@ -54,7 +54,7 @@ function verifyBrexWebhook(rawBody, headers, secret, toleranceSeconds = null) {
 ## Python
 
 ```python
-import base64, hashlib, hmac, time
+import base64, binascii, hashlib, hmac, time
 
 def verify_brex_webhook(raw_body: bytes, headers, secret: str, tolerance_seconds=None) -> bool:
     webhook_id = headers.get("webhook-id")
@@ -64,11 +64,20 @@ def verify_brex_webhook(raw_body: bytes, headers, secret: str, tolerance_seconds
         return False
     if tolerance_seconds is not None and abs(int(time.time()) - int(timestamp)) > tolerance_seconds:
         return False
-    key = base64.b64decode(secret.removeprefix("whsec_"))
+    try:
+        key = base64.b64decode(secret.removeprefix("whsec_"), validate=True)
+    except (binascii.Error, ValueError):
+        return False
     expected = hmac.new(key, f"{webhook_id}.{timestamp}.".encode() + raw_body, hashlib.sha256).digest()
     for entry in signature_header.split(" "):
         version, _, signature = entry.partition(",")
-        if version == "v1" and signature and hmac.compare_digest(base64.b64decode(signature), expected):
+        if version != "v1" or not signature:
+            continue
+        try:
+            given = base64.b64decode(signature)
+        except (binascii.Error, ValueError):
+            continue
+        if hmac.compare_digest(given, expected):
             return True
     return False
 ```
@@ -96,4 +105,4 @@ Brex's guide recommends comparing `Webhook-Timestamp` with your clock to block r
 
 1. Run your verifier against Brex's sample vector above. If that fails, the code is wrong; if it passes, the secret or raw body is wrong.
 2. Log the lengths of the decoded key (Brex's sample key decodes to 24 bytes) and the raw body.
-3. Confirm you're using the secret for the same environment (production vs `api-staging.brex.com`).
+3. Fetch `GET /v1/webhooks/secrets` again with the same API client that registered the webhook, and use the `ACTIVE` secret.
