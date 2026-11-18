@@ -12,13 +12,15 @@ Webhooks apply to every company connected to the app. You only receive events fo
 
 Intuit sends one of two formats. Which one is a **per-app** setting: the **Enable cloud event payload format** toggle on the app's Webhooks page in the Intuit Developer portal. It was off by default on a test app checked in November 2026, and Intuit's warning next to it says that changing the format requires endpoint changes. The signature scheme is the same for both.
 
+The header rows below are what one test delivery of each format carried in November 2026, not values Intuit documents.
+
 | | CloudEvents (toggle on) | Legacy (toggle off) |
 |---|---|---|
 | `Content-Type` | `application/cloudevents-batch+json; charset=utf-8` | `application/json; charset=utf-8` |
 | `intuit-notification-schema-version` | `2.0` | `1.0` |
 | Body | JSON **array** of CloudEvents | JSON **object** with `eventNotifications` |
 | Event identifier | `type` string, e.g. `qbo.invoice.created.v1` | entity `name` + `operation`, e.g. `Account` + `Create` |
-| Extra headers | `intuit-signature-algorithm: HMAC-SHA256`, `intuit-signature-id` | none |
+| Extra headers | `intuit-signature-algorithm: HMAC-SHA256`, `intuit-signature-id` | none seen |
 
 ### CloudEvents format
 

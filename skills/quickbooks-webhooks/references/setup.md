@@ -32,8 +32,8 @@ It can take up to **five minutes** for the first notification to arrive.
 
 The same Webhooks page has an **Enable cloud event payload format** toggle. It decides which format your endpoint receives:
 
-- **Off** (the default on a test app checked in November 2026): the legacy `{"eventNotifications": [...]}` JSON object, sent as `application/json`.
-- **On**: a JSON array of CloudEvents, sent as `application/cloudevents-batch+json`. The event list on the page then shows event names such as `qbo.invoice.created.v1` instead of entity and operation.
+- **Off** (the default on a test app checked in November 2026): the legacy `{"eventNotifications": [...]}` JSON object, sent as `application/json` in a November 2026 test delivery.
+- **On**: a JSON array of CloudEvents, sent as `application/cloudevents-batch+json` in a November 2026 test delivery. The event list on the page then shows event names such as `qbo.invoice.created.v1` instead of entity and operation.
 
 Intuit warns that changing the format requires endpoint changes. The examples in this skill accept both, so you can switch without redeploying them.
 
@@ -66,9 +66,9 @@ Every notification carries:
 | `intuit-signature` | base64 HMAC-SHA256 of the raw body, keyed with the Verifier Token |
 | `intuit-t-id` | Intuit transaction ID, useful for support requests |
 | `intuit-created-time` | When the notification was created |
-| `intuit-notification-schema-version` | Payload format: `1.0` legacy, `2.0` CloudEvents |
-| `intuit-signature-algorithm` | `HMAC-SHA256` (CloudEvents deliveries only) |
-| `intuit-signature-id` | A UUID (CloudEvents deliveries only); not needed for verification |
+| `intuit-notification-schema-version` | Payload format: `1.0` legacy, `2.0` CloudEvents in November 2026 test deliveries |
+| `intuit-signature-algorithm` | `HMAC-SHA256` (seen on a CloudEvents test delivery, not the legacy one) |
+| `intuit-signature-id` | A UUID (seen on a CloudEvents test delivery, not the legacy one); not needed for verification |
 
 See [verification.md](verification.md) for the algorithm.
 

@@ -44,7 +44,7 @@ def normalize_events(payload: Any) -> Optional[list[dict]]:
     """
     Normalize both payload shapes into a flat list of events:
     - CloudEvents (format toggle on): top-level LIST, type = "qbo.{entity}.{operation}.v1",
-      Content-Type application/cloudevents-batch+json
+      Content-Type application/cloudevents-batch+json in a November 2026 test delivery
     - Legacy (toggle off): {"eventNotifications": [{"realmId", "dataChangeEvent": {"entities": [...]}}]},
       no type string - the entity name + operation identify the event
     Anything else (including a single CloudEvent object that isn't in a list) is rejected.

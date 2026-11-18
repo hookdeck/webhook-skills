@@ -66,7 +66,7 @@ def verify_quickbooks_signature(raw_body: bytes, signature: str, verifier_token:
 
 Intuit sends one of two formats, chosen **per app** by the **Enable cloud event payload format** toggle on the app's Webhooks page in the Intuit Developer portal. It was off by default on a test app checked in November 2026, so don't assume either format. Both carry the same `intuit-signature`.
 
-**CloudEvents** (toggle on): `Content-Type: application/cloudevents-batch+json`, `intuit-notification-schema-version: 2.0`, and a body that is a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Treat the body as an array even when it holds one event. Payloads are thin: fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
+**CloudEvents** (toggle on): `Content-Type: application/cloudevents-batch+json` and `intuit-notification-schema-version: 2.0` in a November 2026 test delivery, and a body that is a JSON **array** of events, which can cover several companies (realm IDs) in one delivery. Treat the body as an array even when it holds one event. Payloads are thin: fetch the full record from the Accounting API using `intuitentityid` and `intuitaccountid`.
 
 ```json
 [
@@ -84,7 +84,7 @@ Intuit sends one of two formats, chosen **per app** by the **Enable cloud event 
 ]
 ```
 
-**Legacy** (toggle off): `Content-Type: application/json`, `intuit-notification-schema-version: 1.0`, and a JSON **object**:
+**Legacy** (toggle off): `Content-Type: application/json` and `intuit-notification-schema-version: 1.0` in a November 2026 test delivery, and a JSON **object**:
 
 ```json
 {"eventNotifications":[{"realmId":"310687","dataChangeEvent":{"entities":[{"id":"1234","operation":"Create","name":"Account","lastUpdated":"2026-11-18T16:08:22.702Z"}]}}]}
