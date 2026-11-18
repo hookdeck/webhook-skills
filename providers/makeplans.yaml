@@ -1,0 +1,25 @@
+name: makeplans
+displayName: MakePlans
+docs:
+  webhooks: https://developer.makeplans.com/guide/webhooks/
+  verification: https://developer.makeplans.com/guide/webhooks/
+  events: https://developer.makeplans.com/guide/webhooks/
+notes: >
+  Webhooks are HTTP POSTs added in the admin (Setup > Webhooks) or via the API (POST /web_hooks),
+  per event or wildcard (* or booking.*). X-MakePlans-Signature = "sha256=" + HMAC-SHA256 of the
+  body keyed with the Account secret (app_secret, shown on the Webhooks page as "App secret for
+  verifying webhooks"; not the API key, and not returned by the Account API). Hex is inferred from
+  the docs example (64 lowercase hex characters); no code sample is published. Body {event,
+  idempotency_id, generated_at, performed_by, data {object, id, <object_type>}}; root copies of
+  object/id/<object_type> are deprecated. Events booking.cancelled/confirmed/created/declined/
+  deleted/modified/verified/waitlist_promoted/waitlisted, event.created/deleted/modified,
+  message.processed, person.created/deleted/updated. Retries after any 4xx/5xx, max 20, 10 s
+  timeout; 410 Gone deactivates the webhook. Basic Auth or a URL parameter secret are optional.
+  Test environment app.test.makeplans.net. Hookdeck source type MAKEPLANS (HMAC sha256 hex on
+  x-makeplans-signature; secret is the Account secret).
+testScenario:
+  events:
+    - booking.created
+    - person.updated
+catalog:
+  summary: Verify MakePlans webhooks (`X-MakePlans-Signature` "sha256=" + hex HMAC-SHA256 of the body keyed with the Account secret, not the API key), handle booking, event, person and message events
