@@ -1,0 +1,31 @@
+name: livekit
+displayName: 'LiveKit'
+docs:
+  webhooks: https://docs.livekit.io/intro/basics/rooms-participants-tracks/webhooks-events/
+  verification: https://docs.livekit.io/intro/basics/rooms-participants-tracks/webhooks-events/#receiving-webhooks
+notes: >
+  LiveKit (livekit.io) is the open-source WebRTC platform (SFU, Agents, SIP, Egress/Ingress). LiveKit
+  Cloud (Settings > Webhooks, pick a Signing API key) and self-hosted livekit-server (config.yaml
+  `webhook:` block with api_key + urls) send the identical request. NOT an HMAC header scheme: the
+  `Authorization` header holds a bare JWT (no Bearer prefix; tolerate one on read), HS256 keyed with the
+  project API secret, iss = API key, exp required (5-minute tokens, 10 s clock tolerance), plus a `sha256`
+  claim = standard padded base64(SHA-256(raw body)). Both steps are mandatory: verify the JWT (pin HS256,
+  require exp and iss), then timing-safe compare the body hash. Content-Type is application/webhook+json,
+  so Express must use express.raw({ type: 'application/webhook+json' }); express.json() leaves the body
+  empty and every delivery 401s. Env vars LIVEKIT_API_KEY / LIVEKIT_API_SECRET; fail closed (401) when
+  unset; no separate webhook secret, no IP allowlist, no handshake. Body is protojson: lowerCamelCase,
+  int64 as JSON strings (createdAt), enums as names, zero/default fields omitted. Dedupe on top-level `id`.
+  Twelve documented events: room_started, room_finished, participant_joined, participant_left,
+  participant_connection_aborted, track_published, track_unpublished (room/participant truncated to SID,
+  name, identity), egress_started, egress_updated, egress_ended, ingress_started, ingress_ended.
+  agent_job_pending/started/ended exist in livekit/protocol but not in the docs table; return 200 for
+  unknown names. numDropped > 0 means the sender's queue overflowed and events were lost; reconcile via
+  the RoomService API. Webhook event names are snake_case; PascalCase names (ParticipantConnected) are
+  client SDK events, not webhooks. Hookdeck source type LIVEKIT takes api_key + api_secret.
+testScenario:
+  events:
+    - 'participant_joined'
+    - 'room_finished'
+    - 'egress_ended'
+catalog:
+  summary: 'Verify LiveKit webhooks (`Authorization` JWT, HS256 with the API secret, `sha256` claim = base64 SHA-256 of the raw body), handle room, participant, track, egress and ingress events like `participant_joined` and `room_finished`'
