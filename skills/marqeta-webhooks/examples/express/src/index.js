@@ -71,7 +71,7 @@ function isPing(message) {
 
 /**
  * The body is keyed by notification type, each holding up to 10 notifications
- * of that type: { "transactions": [...] }, { "cardtransitions": [...] },
+ * of that type: { "transactions": [...] }, { "cards": [...] },
  * { "usertransitions": [...] }, { "chargebacktransitions": [...] } and so on.
  * Each notification has its own token: dedupe on it. Order isn't guaranteed:
  * use created_time.

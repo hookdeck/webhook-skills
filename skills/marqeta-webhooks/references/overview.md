@@ -11,7 +11,7 @@ Marqeta batches notifications of the same type, up to 10 per message, under one 
 | Key | Notifications |
 |---|---|
 | `transactions` | Authorizations, clearings, refunds, GPA credits and debits, and other transaction events |
-| `cardtransitions` | Card state changes (`cardtransition.*`) |
+| `cards` | Card state changes (`cardtransition.*`) |
 | `usertransitions` / `businesstransitions` | Account holder state changes |
 | `chargebacktransitions` | Dispute state changes |
 | `digitalwallettokentransitions` | Digital wallet token state changes |

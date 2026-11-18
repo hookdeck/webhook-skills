@@ -84,7 +84,7 @@ Notifications of the same type are batched, up to 10 per message, under a key na
 }
 ```
 
-Other keys include `cardtransitions`, `usertransitions`, `businesstransitions`, `chargebacktransitions`, `digitalwallettokentransitions`, `cardactions` and `directdeposittransitions`. Each notification has its own `token`: dedupe on it. Order isn't guaranteed, so use `created_time`.
+Other keys include `cards`, `usertransitions`, `businesstransitions`, `chargebacktransitions`, `digitalwallettokentransitions`, `cardactions` and `directdeposittransitions`. Each notification has its own `token`: dedupe on it. Order isn't guaranteed, so use `created_time`.
 
 The health check (`POST /webhooks/{token}/ping`) sends `{"pings":[{"token":"marqeta","payload":"healthcheck"}]}`. Answer it with `200`.
 

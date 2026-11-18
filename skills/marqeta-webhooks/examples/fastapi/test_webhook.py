@@ -22,7 +22,7 @@ from main import app, parse_algorithms, verify_basic_auth, verify_marqeta_signat
 client = TestClient(app)
 
 TXNS = '{"transactions":[{"type":"authorization","state":"PENDING","token":"synthetic-txn-0001","user_token":"synthetic-user-01","card_token":"synthetic-card-01","amount":10.00,"currency_code":"USD","created_time":"2026-11-18T10:15:00Z"},{"type":"authorization.clearing","state":"COMPLETION","token":"synthetic-txn-0002","user_token":"synthetic-user-01","card_token":"synthetic-card-01","amount":10.00,"currency_code":"USD","created_time":"2026-11-18T10:16:00Z"}]}'
-CARD = '{"cardtransitions":[{"token":"synthetic-cardtransition-01","card_token":"synthetic-card-01","user_token":"synthetic-user-01","state":"ACTIVE","type":"state.activated","channel":"API","created_time":"2026-11-18T10:17:00Z"}]}'
+CARD = '{"cards":[{"token":"synthetic-cardtransition-01","card_token":"synthetic-card-01","user_token":"synthetic-user-01","state":"ACTIVE","type":"state.activated","channel":"API","created_time":"2026-11-18T10:17:00Z"}]}'
 PING = '{"pings":[{"token":"marqeta","payload":"healthcheck"}]}'
 
 
@@ -86,7 +86,7 @@ def test_valid_credentials_count_notifications():
 
 
 def test_other_notification_types():
-    assert post(CARD, basic()).json()["counts"] == {"cardtransitions": 1}
+    assert post(CARD, basic()).json()["counts"] == {"cards": 1}
 
 
 def test_ping():

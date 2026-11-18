@@ -14,7 +14,7 @@ process.env.MARQETA_WEBHOOK_PASSWORD = PASSWORD;
 const { app, verifyBasicAuth, verifyMarqetaSignature, parseAlgorithms } = require('../src/index');
 
 const TXNS = '{"transactions":[{"type":"authorization","state":"PENDING","token":"synthetic-txn-0001","user_token":"synthetic-user-01","card_token":"synthetic-card-01","amount":10.00,"currency_code":"USD","created_time":"2026-11-18T10:15:00Z"},{"type":"authorization.clearing","state":"COMPLETION","token":"synthetic-txn-0002","user_token":"synthetic-user-01","card_token":"synthetic-card-01","amount":10.00,"currency_code":"USD","created_time":"2026-11-18T10:16:00Z"}]}';
-const CARD = '{"cardtransitions":[{"token":"synthetic-cardtransition-01","card_token":"synthetic-card-01","user_token":"synthetic-user-01","state":"ACTIVE","type":"state.activated","channel":"API","created_time":"2026-11-18T10:17:00Z"}]}';
+const CARD = '{"cards":[{"token":"synthetic-cardtransition-01","card_token":"synthetic-card-01","user_token":"synthetic-user-01","state":"ACTIVE","type":"state.activated","channel":"API","created_time":"2026-11-18T10:17:00Z"}]}';
 const PING = '{"pings":[{"token":"marqeta","payload":"healthcheck"}]}';
 
 const basic = (username = USERNAME, password = PASSWORD) =>
@@ -82,7 +82,7 @@ describe('POST /webhooks/marqeta', () => {
 
   it('handles other notification types', async () => {
     const res = await post(CARD, basic());
-    expect(res.body.counts).toEqual({ cardtransitions: 1 });
+    expect(res.body.counts).toEqual({ cards: 1 });
   });
 
   it('answers the health-check ping', async () => {

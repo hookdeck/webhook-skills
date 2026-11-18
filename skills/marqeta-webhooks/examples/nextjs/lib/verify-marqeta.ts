@@ -9,7 +9,7 @@ import crypto from 'crypto';
 
 export type MarqetaAlgorithm = 'sha256' | 'sha1';
 
-/** Keyed by notification type: { transactions: [...] }, { cardtransitions: [...] }, ... */
+/** Keyed by notification type: { transactions: [...] }, { cards: [...] }, ... */
 export type MarqetaMessage = Record<string, unknown>;
 
 const HEX_LENGTH: Record<MarqetaAlgorithm, number> = { sha256: 64, sha1: 40 };

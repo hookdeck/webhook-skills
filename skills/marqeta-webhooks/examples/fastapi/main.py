@@ -88,7 +88,7 @@ def verify_marqeta_signature(
 
 
 def handle_notifications(message: Dict[str, Any]) -> Dict[str, Any]:
-    """The body is keyed by notification type ("transactions", "cardtransitions",
+    """The body is keyed by notification type ("transactions", "cards",
     "usertransitions", ...), each with up to 10 notifications. Dedupe on each
     notification's token; use created_time for ordering."""
     counts: Dict[str, int] = {}

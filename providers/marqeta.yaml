@@ -11,7 +11,7 @@ notes: >
   (HMAC_SHA_256) or legacy HMAC-SHA1 (HMAC_SHA_1) of the raw body keyed with config.secret; after
   switching algorithms, retries signed the old way arrive for up to two weeks. Credentials and
   secret are masked in API responses. Body is keyed by type, up to 10 per message: transactions,
-  cardtransitions, usertransitions, businesstransitions, chargebacktransitions,
+  cards, usertransitions, businesstransitions, chargebacktransitions,
   digitalwallettokentransitions, cardactions, ...; ping body {"pings":[{"token":"marqeta","payload":
   "healthcheck"}]}. Only HTTP 200 succeeds; 10 retries with powers-of-4 backoff up to ~12 days; pings
   aren't retried. Dedupe on each notification's token; order by created_time. Hookdeck source type
