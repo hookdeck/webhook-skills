@@ -48,7 +48,7 @@ With `GET` (and often `DELETE`) the data goes in the query string instead, e.g. 
 
 ## What Isn't Documented
 
-Zoho's outgoing webhooks page doesn't describe a retry policy, a timeout or a delivery ID. Treat a failed call as a failed flow step (check the flow's history) and respond quickly with `2xx`. If the same flow can run twice for one source record, include an ID from the trigger in the payload and dedupe on it.
+Zoho's outgoing webhooks page doesn't describe a retry policy, a timeout or a delivery ID. Flow's [rerun article](https://help.zoho.com/portal/en/kb/flow/user-guide/troubleshooting/articles/rerun) does describe auto rerun for failed actions: on Flow internal errors and app API errors with status `408`, `409`, `429`, `500`, `503` or `504`, it retries at 5 minutes, then 10 minutes, 30 minutes, 1, 3, 6, 12 and 24 hours (eight attempts), resuming from the failed action. The article doesn't name Send Webhook, so treat this as likely rather than certain. Other failures, such as a `401` from a wrong secret, need a manual rerun from the flow's history. Respond quickly with `2xx`, and return `401` (not `5xx`) for a bad secret so a misconfiguration isn't retried. If the same flow can run twice for one source record, include an ID from the trigger in the payload and dedupe on it.
 
 ## Full Reference
 
