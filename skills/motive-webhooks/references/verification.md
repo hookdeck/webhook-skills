@@ -60,7 +60,7 @@ printf '%s' '["fault_code_closed"]' | openssl dgst -sha1 -hmac d9d36bea41c44ae49
 - **Raw body only.** Re-serializing parsed JSON can change whitespace, key order, or number formatting. In Express use `express.raw({ type: '*/*' })`; in Next.js use `request.text()`; in FastAPI use `await request.body()`.
 - **Don't base64-decode the secret.** It is used as the raw string.
 - **403, not 400.** Motive documents 403 as "signature could not be verified" and does not retry it. Other 4xx/5xx responses are retried.
-- **The activation test body isn't JSON.** `[vehicle_location_updated]` has no quotes, so verify first and don't fail on a parse error.
+- **The activation test body is an array, not an event.** It is signed JSON such as `["vehicle_location_updated","fault_code_closed"]` (the webhook's actions). Verify it, then answer 200 without dispatching it.
 - **SHA-1 only.** A SHA-256 digest never matches.
 
 ## Debugging Verification Failures

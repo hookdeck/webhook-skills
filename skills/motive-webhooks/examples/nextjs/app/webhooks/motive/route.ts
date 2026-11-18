@@ -120,11 +120,13 @@ export async function POST(request: NextRequest) {
   try {
     event = JSON.parse(rawBody);
   } catch {
-    // The activation test request body ([vehicle_location_updated]) is not valid JSON.
-    // Answer 200 so Motive can enable the webhook.
+    // Not JSON. Answer 200 without processing it. (Motive's docs print the activation test
+    // body as [vehicle_location_updated], but the real one is a JSON array, handled below.)
     return NextResponse.json({ received: true, ignored: true });
   }
 
+  // The activation test request is a JSON array of the webhook's actions, e.g.
+  // ["vehicle_location_updated","fault_code_closed"]: acknowledge it without dispatching.
   // Motive sends no event ID header: de-duplicate on action + payload id
   if (event && typeof event === 'object' && !Array.isArray(event)) {
     handleMotiveEvent(event);

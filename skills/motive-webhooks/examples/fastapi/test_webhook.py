@@ -97,7 +97,13 @@ class TestMotiveWebhook:
         body = json.dumps({"action": "something_new", "id": 1})
         assert post(body, sign(body)).status_code == 200
 
-    def test_activation_test_body_is_not_json(self):
+    def test_activation_test_request_is_an_array_of_actions(self):
+        body = '["vehicle_location_updated","fault_code_closed"]'
+        res = post(body, sign(body))
+        assert res.status_code == 200
+        assert res.json() == {"received": True}
+
+    def test_signed_non_json_body_is_ignored(self):
         body = "[vehicle_location_updated]"
         res = post(body, sign(body))
         assert res.status_code == 200
