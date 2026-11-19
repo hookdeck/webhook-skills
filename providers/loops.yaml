@@ -1,0 +1,24 @@
+name: loops
+displayName: Loops
+docs:
+  webhooks: https://loops.so/docs/webhooks
+  verification: https://loops.so/docs/webhooks#verify-requests
+  events: https://loops.so/docs/webhooks#event-types
+notes: >
+  Email sending and marketing platform (loops.so). One webhook endpoint per account, set in
+  Settings -> Webhooks with event toggles; a signing secret is shown there. Headers Webhook-Id,
+  Webhook-Timestamp, Webhook-Signature (whitespace-separated v1,<base64> entries; old secret
+  stays valid 24h after a roll). Signature = base64 HMAC-SHA256 over "<id>.<timestamp>.<raw body>"
+  keyed with the base64-DECODED secret after stripping an optional whsec_ prefix (Loops' own
+  example). Loops' docs don't mention Svix: don't call it Svix-delivered. Body has eventName,
+  eventTime (seconds), webhookSchemaVersion 1.0.0; 16 event types plus testing.testEvent (test
+  request from the settings page). Workflows were renamed from Loops in May 2026; payloads keep
+  loop.email.sent / loopId / sourceType "loop". Loops' example enforces a 300 s window; examples
+  make it opt-in (LOOPS_WEBHOOK_TOLERANCE_SECONDS) and dedupe on Webhook-Id. Hookdeck source
+  type LOOPS.
+testScenario:
+  events:
+    - contact.created
+    - email.hardBounced
+catalog:
+  summary: Verify Loops webhook signatures (`Webhook-Id`, `Webhook-Timestamp`, `Webhook-Signature` with a base64-decoded `whsec_` secret), handle secret rolls, the test event and events like contact.created, contact.unsubscribed, email.delivered, email.hardBounced and loop.email.sent

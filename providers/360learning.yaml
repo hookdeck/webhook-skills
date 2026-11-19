@@ -1,0 +1,24 @@
+name: 360learning
+displayName: 360Learning
+docs:
+  webhooks: https://360learning.readme.io/docs/webhooks
+  verification: https://360learning.readme.io/docs/security-and-signature-verification
+  events: https://360learning.readme.io/reference/v2webhooksubscriptionscreatesubscriptioncontroller_createsubscription
+notes: >
+  Learning platform (LMS). Delivered through Svix, Standard Webhooks format: headers webhook-id,
+  webhook-timestamp, webhook-signature (space-separated v1,<base64> entries; new and legacy
+  secret both sign for 24h after POST /api/v2/webhooks/subscriptions/{id}/secrets/rotate).
+  Signature = base64 HMAC-SHA256 over "<id>.<timestamp>.<raw body>" keyed with the base64-DECODED
+  secret (Settings > Webhooks > See secret, or GET /api/v2/webhooks/subscriptions/{id}/secrets;
+  docs show only a placeholder and no whsec_ prefix, so accept either). One subscription = one
+  event type + one URL, each with its own secret: handlers accept a comma-separated secret list.
+  360Learning's own Node sample signs JSON.stringify(req.body); examples must verify the raw body
+  and say why. Body {type, timestamp (ms), data}; xapi / xapi.started send xAPI statements with no
+  type. 54 event types (eventType enum). Hookdeck source type THREE_SIXTY_LEARNING. Timestamp
+  window is opt-in (THREE_SIXTY_LEARNING_WEBHOOK_TOLERANCE_SECONDS); dedupe on webhook-id.
+testScenario:
+  events:
+    - user.created
+    - course.attempt.closed
+catalog:
+  summary: Verify 360Learning webhook signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature` with a base64-decoded per-subscription secret, raw body not re-serialised JSON), handle secret rotation and events like user.created, course.attempt.closed, path.session.user.status.updated and user.certificate.awarded
