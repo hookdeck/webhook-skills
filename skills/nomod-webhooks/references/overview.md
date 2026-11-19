@@ -8,9 +8,10 @@ and so on), Nomod sends an HTTPS `POST` with a signed JSON body to the URL you c
 can automate order fulfilment, reconciliation and customer communication without polling the API.
 Deliveries go through Svix and are signed (see [verification.md](verification.md)).
 
-Each webhook is tied to one **integration type**: **Nomod API** (transactions processed through
-the Nomod API directly) or **Nomod Hosted Checkout** (transactions processed through Nomod's
-hosted checkout page). Create a separate webhook for each if you use both.
+Each webhook sends events from the **Nomod API** (transactions processed through the Nomod API
+directly), **Nomod Hosted Checkout** (transactions processed through Nomod's hosted checkout
+page) or both. One webhook can cover both, with one signing secret; create a webhook per type
+if you want them at different URLs. The choice is fixed when the webhook is created.
 
 | Aspect | Value |
 |--------|-------|

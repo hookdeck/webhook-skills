@@ -65,7 +65,7 @@ event-specific fields. No header names the event type.
 |-------|-----------|
 | `partner.created` | A new partner signs up or is created |
 | `partner.updated` | Partner information is updated |
-| `partner.approved` | A partner application is approved |
+| `partner.approved` | A partner is approved, from the dashboard or the API, with or without an application |
 | `partner.rejected` | A partner application is rejected |
 | `partner.archived` | A partner is archived |
 | `partner.deleted` | A partner is deleted |

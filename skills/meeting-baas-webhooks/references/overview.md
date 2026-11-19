@@ -57,9 +57,14 @@ Every event arrives as `{event, data}`:
 | `event` | The event name. Branch on this |
 | `data` | The event payload |
 | `data.bot_id` | The bot (bot events) |
-| `data.event_id` | Bot events carry an `event_id` in `data` |
-| `data.extra` | Echoes the `extra` object you set when creating the bot |
-| `extra` (top level) | Where `bot.chat_message` puts it: beside `data`, not inside |
+| `data.event_id` | On bot events, the calendar event the bot was created from (null otherwise), not a delivery ID |
+| `data.extra` | Echoes the `extra` object you set when creating the bot, in the Webhooks guide's examples |
+| `extra` (top level) | Where `bot.chat_message` puts it, and where the v2 API reference puts it for every bot event |
+
+The Webhooks guide's examples and the v2 API reference also disagree on some field names: the
+reference shows `video` where the guide shows `mp4`, `calendar_platform` for `platform`, and an
+`events` array on `calendar.events_synced` instead of `events_synced` and `sync_type`. Read both
+spellings until you've seen a real delivery.
 
 Calendar payloads are keyed by `data.calendar_id`. Calendar event payloads also have a `data.event_id`
 inside each instance, which is the calendar event, not a webhook event id.

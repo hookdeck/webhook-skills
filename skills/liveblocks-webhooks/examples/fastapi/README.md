@@ -73,7 +73,7 @@ Every body is `{ type, data }`. The handler reads the event name from the top-le
 - `threadMarkedAsResolved`, `threadMarkedAsUnresolved`
 - `notification` (`data.kind` is `thread`, `textMention` or a custom `$`-prefixed kind)
 
-There is no event id in the body: use the `webhook-id` header to deduplicate.
+There is no event id in the body, and Liveblocks doesn't document whether a retry reuses the `webhook-id` header, so make handling idempotent on payload values such as `commentId` or `inboxNotificationId`.
 
 ## Timestamp Window
 

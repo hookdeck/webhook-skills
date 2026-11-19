@@ -62,4 +62,4 @@ Use the printed URL as the webhook URL in Payt (see [../../references/setup.md](
 2. The header must be exactly 64 hex characters; it is lowercased and compared in constant time to the hex HMAC-SHA256 of the raw body. A missing, malformed or wrong signature returns `401`; a missing secret returns `500`.
 3. Only then is the body parsed (`400` for invalid JSON or a missing `event.event_name`).
 4. The handler dispatches on `event.event_name` and logs unhandled events.
-5. It returns `200 {"received": true}` (Payt needs a 200 within 10 seconds). Delivery is at least once and unordered: make processing idempotent.
+5. It returns `200 {"received": true}` (Payt counts any 2xx within 10 seconds as delivered). Delivery is at least once and unordered: make processing idempotent.

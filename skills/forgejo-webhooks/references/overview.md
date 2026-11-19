@@ -21,7 +21,7 @@ The event type is in the `X-Forgejo-Event-Type` header (not the body). `X-Forgej
 | `delete` | Branch or tag deleted | Cleanup |
 | `release` | Release published, updated, deleted | Deploy, changelog |
 
-Forgejo documents 41 event types in total, including `fork`, `issue_assign`, `issue_label`, `issue_milestone`, `pull_request_assign`, `pull_request_label` and `pull_request_milestone`. Handle the ones you need and log the rest.
+Forgejo's source defines 40 webhook event types (its user guide doesn't list them), including `fork`, `issue_assign`, `issue_label`, `issue_milestone`, `pull_request_assign`, `pull_request_label` and `pull_request_milestone`. Handle the ones you need and log the rest.
 
 ## Event Payload Structure
 
@@ -40,8 +40,8 @@ Headers on every delivery:
 
 ## Delivery
 
-The webhook settings page has a **Test Delivery** button and a list of **Recent Deliveries**. Timeouts and retries are not documented (they are instance settings).
+The webhook settings page has a **Test Delivery** button and a list of **Recent Deliveries**. The delivery timeout is the instance's `[webhook] DELIVER_TIMEOUT`, 5 seconds by default ([config cheat sheet](https://forgejo.org/docs/latest/admin/config-cheat-sheet/)), and a 2xx counts as success. Forgejo's docs describe no automatic retries: a failed delivery can be replayed from **Recent Deliveries**, and the replay gets a new `X-Forgejo-Delivery`.
 
 ## Full Event Reference
 
-See [Forgejo's webhook documentation](https://forgejo.org/docs/latest/user/webhooks/).
+See [Forgejo's webhook documentation](https://forgejo.org/docs/latest/user/repository/webhooks/).

@@ -2,16 +2,17 @@
 
 ## How Does GlobalStack Sign Webhooks?
 
-GlobalStack delivers through Svix, so every delivery carries three headers:
+GlobalStack signs in the Svix format, so every delivery carries three headers:
 
 | Header | Contents |
 |--------|----------|
-| `svix-id` | Unique message id (the body's `event_id` with a `msg_` prefix instead of `evt_`) |
+| `svix-id` | Unique message id: `msg_` followed by the body's full `event_id` (`msg_evt_…`) |
 | `svix-timestamp` | Unix timestamp in seconds when the delivery was signed |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. The examples read the `svix-*` headers and fall back to the `webhook-*` headers when `svix-id` is absent.
+GlobalStack documents only the `svix-*` names. The examples read those and fall back to the
+Standard Webhooks spellings (`webhook-id`, `webhook-timestamp`, `webhook-signature`) when `svix-id`
+is absent.
 
 The algorithm:
 

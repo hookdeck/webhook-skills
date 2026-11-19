@@ -12,14 +12,14 @@ Dispatch on the body's `status` field (the six values in Onramper's "Webhook Sta
 
 | `status` | Handled in the examples |
 |----------|-------------------------|
-| `completed` | Logged, with a TODO to fulfil the order |
+| `completed` | Logged, with a placeholder to fulfil the order |
 | `paid` | Logged |
 | `pending` | Logged |
 | `new` | Logged |
-| `failed` | Logged, with a TODO to alert or retry |
+| `failed` | Logged, with a placeholder to alert or retry |
 | `canceled` | Logged |
 
-Any other value is logged as unhandled. `transactionType` is `buy` or `offramp` and gives the direction.
+Any other value is logged as unhandled. `transactionType` gives the direction. Onramper's docs disagree on its values: one webhook page lists `buy` and `offramp`, the newer one `buy` and `sell`, so normalise it before comparing.
 
 ## Payload Structure
 

@@ -58,6 +58,15 @@ function verifyLangfuseSignature(
 }
 
 function handleEvent(event) {
+  // Route on `type` first: alert automations send `monitor-alert`, which has no `action`.
+  if (event.type === 'monitor-alert') {
+    console.log(`Langfuse alert ${event.payload?.severity}: ${event.payload?.message?.title}`);
+    return;
+  }
+  if (event.type !== 'prompt-version') {
+    console.log(`Unhandled Langfuse type: ${event.type}`);
+    return;
+  }
   switch (event.action) {
     case 'created':
       console.log(`Prompt version created: ${event.prompt?.name} v${event.prompt?.version}`);

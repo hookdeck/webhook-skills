@@ -81,7 +81,7 @@ async def crossmint_webhook(request: Request):
     elif event_type == "wallets.signer.exported":
         print(f"Wallet signer exported: {data}")
     elif event_type == "purchase.succeeded":
-        # Checkout V2: flat body, no `data`
+        # Checkout V2 (legacy; Crossmint's docs no longer list it): flat body, no `data`
         print(f"Purchase succeeded: {payload.get('txId')} {payload.get('walletAddress')}")
     elif event_type in ("orders.quote.created", "orders.quote.updated"):
         print(f"{event_type}: {data.get('orderId')} {data.get('phase')}")
@@ -109,7 +109,8 @@ async def crossmint_webhook(request: Request):
     elif event_type == "credential.creation.failed":
         print(f"Credential creation failed: {data.get('error', data)}")
     elif event_type == "payment_methods.status.updated":
-        # Offramp events may arrive out of order: compare timestamps before overwriting state
+        # Offramp events may arrive out of order. Status only moves forward (pending, active,
+        # rejected, deleted), so ignore an event whose status is behind the one you hold.
         print(f"Payment method status updated: {payload.get('id')} {payload.get('timestamp')} {data}")
     else:
         print(f"Unhandled event type: {event_type}")

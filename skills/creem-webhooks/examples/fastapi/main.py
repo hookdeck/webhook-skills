@@ -39,11 +39,11 @@ def handle_event(body: dict) -> None:
 
     if event_type == "checkout.completed":
         print("Checkout completed", resource.get("id"), _as_dict(resource.get("order")).get("id"))
-        # TODO: fulfil the order; resource["metadata"] / resource["request_id"] carry your own reference
+        # Your code: fulfil the order; resource["metadata"] / resource["request_id"] carry your own reference
 
     elif event_type == "subscription.paid":
         print("Subscription paid", resource.get("id"))
-        # TODO: grant or extend access (Creem recommends this event over subscription.active)
+        # Your code: grant or extend access (Creem recommends this event over subscription.active)
 
     elif event_type in (
         "subscription.active",
@@ -52,26 +52,27 @@ def handle_event(body: dict) -> None:
         "subscription.paused",
     ):
         print(f"Subscription state change ({event_type})", resource.get("id"), resource.get("status"))
-        # TODO: sync the subscription record
+        # Your code: sync the subscription record
 
     elif event_type == "subscription.scheduled_cancel":
         print("Subscription scheduled to cancel", resource.get("id"), resource.get("current_period_end_date"))
-        # TODO: notify the customer or offer a retention incentive
+        # Your code: notify the customer or offer a retention incentive
 
-    elif event_type in ("subscription.past_due", "subscription.unpaid"):
-        print(f"Subscription payment problem ({event_type})", resource.get("id"))
-        # TODO: prompt for a payment-method update; suspend access per your policy
+    elif event_type in ("subscription.past_due", "subscription.unpaid", "subscription.expired"):
+        # Creem can still collect payment after `expired`; only `canceled` is terminal.
+        print(f"Subscription payment problem ({event_type})", resource.get("id"), resource.get("status"))
+        # Your code: prompt for a payment-method update; suspend access per your policy
 
-    elif event_type in ("subscription.canceled", "subscription.expired"):
-        print(f"Subscription ended ({event_type})", resource.get("id"))
-        # TODO: revoke access
+    elif event_type == "subscription.canceled":
+        print("Subscription canceled", resource.get("id"))
+        # Your code: revoke access
 
     elif event_type == "refund.created":
         print("Refund created", resource.get("id"), resource.get("refund_amount"), resource.get("refund_currency"))
 
     elif event_type == "dispute.created":
         print("Dispute created", resource.get("id"), resource.get("amount"), resource.get("currency"))
-        # TODO: alert your team
+        # Your code: alert your team
 
     elif event_type in (
         "credits.granted",

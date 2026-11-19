@@ -12,7 +12,7 @@ Webhooks, or through the Webhooks API. Your endpoint should return a `2xx` withi
 |-------|----------------|------------------|
 | `partner.created` | New partner signs up or is created | Welcome email, mailing list, CRM |
 | `partner.updated` | Partner information is updated | Sync profile data |
-| `partner.approved` | Partner application is approved | Grant access, notify the partner |
+| `partner.approved` | Partner is approved, from the dashboard or the API, with or without an application | Grant access, notify the partner |
 | `partner.rejected` | Partner application is rejected | Notify, clean up |
 | `partner.archived` | Partner is archived | Deactivate downstream accounts |
 | `partner.deleted` | Partner is deleted | Remove records |
@@ -72,8 +72,10 @@ Return a `2xx` within 5 seconds and process asynchronously. Failed deliveries ar
 | 4 | 30 minutes |
 | 5 | 2 hours |
 
-After 5 failed attempts the webhook is marked failed in the Partnero dashboard logs. Deduplicate
-on your own keys because retries re-send the same event.
+After 5 failed attempts the webhook is marked failed in the Partnero dashboard logs. The envelope
+has no event ID, and one resource's `data.id` appears in several events (`partner.created`,
+`partner.updated`, `partner.approved`), so make processing idempotent and key one-off actions on
+`event` plus `data.id` (or `data.key` for transactions), not on `data.id` alone.
 
 ## Full Event Reference
 

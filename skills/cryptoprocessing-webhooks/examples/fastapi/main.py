@@ -22,6 +22,19 @@ SIGNATURE_PATTERN = re.compile(r"[0-9a-fA-F]{128}")
 seen: set = set()
 
 
+def callback_key(event: dict) -> str:
+    """Key for spotting a repeated callback.
+
+    Invoices send `pending` again for each partial payment and payment requests send
+    `processing` again for each detected transaction, so the key includes the `txid`s in
+    `transactions`: a new txid means a new payment.
+    """
+    event_id = event.get("id", event.get("payment_request_id"))
+    transactions = event.get("transactions") if isinstance(event.get("transactions"), list) else []
+    txids = ",".join(sorted(str(tx["txid"]) for tx in transactions if isinstance(tx, dict) and tx.get("txid")))
+    return f"{event.get('type')}:{event_id}:{event.get('status')}:{txids}"
+
+
 def verify_cryptoprocessing_signature(
     raw_body: bytes,
     signature: Optional[str],
@@ -45,7 +58,7 @@ def verify_cryptoprocessing_signature(
 def handle_callback(event: dict) -> None:
     """Dispatch a verified callback on the body's `type` field.
 
-    `status` carries the new state (confirmed, not_confirmed, cancelled, pending, ...).
+    `status` carries the new state (confirmed, not_confirmed, cancelled, pending, paid, ...).
     """
     kind = event.get("type")
     status = event.get("status")
@@ -53,18 +66,18 @@ def handle_callback(event: dict) -> None:
     if kind == "deposit":
         received = event.get("currency_received") or {}
         print(f"Deposit {event.get('id')} {status}: {received.get('amount')} {received.get('currency')}")
-        # TODO: Credit the user once status is "confirmed"
+        # Your code: credit the user once status is "confirmed"
     elif kind == "withdrawal":
         print(f"Withdrawal {event.get('id')} {status} (foreign_id {event.get('foreign_id')})")
-        # TODO: Mark the payout as settled or failed
+        # Your code: mark the payout as settled or failed
     elif kind == "exchange":
         sent = event.get("currency_sent") or {}
         received = event.get("currency_received") or {}
         print(f"Exchange {event.get('id')} {status}: {sent.get('currency')} -> {received.get('currency')}")
-        # TODO: Update the conversion record
+        # Your code: update the conversion record
     elif kind == "payment_request":
         print(f"Payment request {event.get('payment_request_id')} {status} (foreign_id {event.get('foreign_id')})")
-        # TODO: Fulfil the order once the request is paid
+        # Your code: fulfil the order once the request is paid
     else:
         # deposit_exchange, deposit_wallet_client, withdrawal_exchange,
         # withdrawal_instant, withdrawal_instant_exchange, invoice, and future types
@@ -95,8 +108,7 @@ async def cryptoprocessing_webhook(
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # A duplicate of an already handled callback: answer 201 to stop its retries
-    event_id = event.get("id", event.get("payment_request_id"))
-    key = f"{event.get('type')}:{event_id}:{event.get('status')}"
+    key = callback_key(event)
     if key in seen:
         return JSONResponse({"received": True, "duplicate": True}, status_code=201)
 

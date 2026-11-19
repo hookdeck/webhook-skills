@@ -26,6 +26,7 @@ Every request is signed with the `X-Lettermint-Signature` header (`t=<unix secon
 | `suppression.added` | A suppression entry affecting the route was added | Sync suppressions |
 | `suppression.removed` | A suppression entry was deleted | Sync suppressions |
 | `message.inbound` | An inbound route received and parsed an email | Process incoming mail |
+| `inbound.rejected` | Lettermint permanently rejected mail for an inbound route during SMTP | Tell the sender or your team |
 | `webhook.test` | You clicked **Test Webhook** in the dashboard | Confirm the endpoint works |
 
 The example handlers act on `message.delivered`, `message.hard_bounced`, `message.soft_bounced`, `message.spam_complaint`, `message.failed`, `suppression.added` and `webhook.test`, and log everything else.
@@ -55,7 +56,8 @@ All events share one envelope:
 
 - The request times out after 30 seconds.
 - Timeouts, `408`, `429` and `5xx` responses are retried with exponential backoff: 12 attempts over about 14 hours. Other `4xx` responses (including `401`) are not retried.
-- 20 consecutive deliveries with no response pause the webhook for 1 minute, doubling up to 5 minutes.
+- 20 failed deliveries in a row with a retryable error (such as a timeout or a `5xx`) pause the webhook for 1 minute, doubling up to 5 minutes.
+- A webhook whose every delivery has failed for 72 hours is disabled, and events during that time are not sent later.
 
 ## Full Event Reference
 

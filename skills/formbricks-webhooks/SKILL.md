@@ -70,23 +70,25 @@ Every body has the same three top-level fields, and the event name is `event`:
     "id": "responseId",
     "surveyId": "surveyId",
     "finished": true,
-    "data": { "newsletter_consent": "accepted" },
+    "data": { "cm9k2v7q00004": "accepted" },
+    "dataByQuestionCode": { "newsletter_consent": "accepted", "visit_reason": "Just browsing" },
+    "outcome": null,
     "survey": { "title": "Customer Satisfaction Survey", "status": "inProgress", "type": "link" }
   }
 }
 ```
 
-`data` is the response object: the answers are in `data.data` (keyed by question id), `data.survey` is a summary of the survey, and `data.finished` tells you whether the respondent completed it. Other fields include `contact`, `contactAttributes`, `language`, `meta`, `tags`, `ttc` and `variables`.
+`data` is the response object: the answers are in `data.data` (keyed by question id) and again in `data.dataByQuestionCode` (keyed by the question codes you set in the survey editor, with `null` for questions not answered yet), `data.survey` is a summary of the survey, and `data.finished` tells you whether the respondent completed it. `data.outcome` is `null`, or `"lowQuality"` when a reviewer marked the response Low quality; Formbricks still sends those, so filter on it if you want to skip them. Other fields include `contact`, `contactAttributes`, `language`, `meta`, `tags`, `ttc` and `variables`. A delivery queued before a Formbricks update can arrive without `dataByQuestionCode`, so don't validate against a strict schema.
 
 ## Event Types
 
 | Event | Fired when |
 |-------|------------|
 | `responseCreated` | A survey response is created |
-| `responseUpdated` | A response gains or changes answers |
+| `responseUpdated` | A response gains or changes answers, or is marked Low quality or restored |
 | `responseFinished` | The respondent completes the survey |
 
-These are the three documented triggers (the list may not be exhaustive): ignore types you don't recognise. See [references/overview.md](references/overview.md).
+These are the only three triggers (the `PipelineTriggers` enum in Formbricks' code has no others). The dashboard's **Test Endpoint** button sends a signed `POST` with the body `{"event":"testEndpoint"}`, so answer `2xx` to types you don't recognise rather than rejecting them. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

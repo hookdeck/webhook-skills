@@ -56,7 +56,7 @@ def verify_kolide(raw_body: bytes, authorization, secret: str) -> bool:
 - **Hex is case-insensitive.** The examples accept upper- or lowercase and lowercase both sides (or decode both to bytes) before the constant-time compare.
 - **Validate before decoding.** Require exactly 64 hex characters. `Buffer.from(sig, 'hex')` silently drops invalid characters, and Python's `hmac.compare_digest` raises `TypeError` on a non-ASCII `str`, so compare bytes.
 - **The secret is not decoded.** Use its UTF-8 bytes directly, not a hex- or base64-decoded form.
-- **No replay window.** No timestamp is signed, so don't invent one from unsigned headers or the body's `timestamp` field. Dedupe on the event `id` instead.
+- **No replay window.** No timestamp is signed, so don't invent one from unsigned headers or the body's `timestamp` field. Dedupe on `event` plus `id` instead.
 - **Rotation.** Rotating the secret also changes `X-Kolide-Webhook-Identifier`. Update `KOLIDE_WEBHOOK_SECRET` when you rotate.
 - **Respond 401** for a missing, empty, malformed, or mismatching `Authorization` value.
 

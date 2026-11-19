@@ -2,7 +2,7 @@
 
 Minimal example of receiving GlobalStack webhooks in the Next.js App Router with signature
 verification using the official [`svix`](https://www.npmjs.com/package/svix) library
-(GlobalStack delivers webhooks through Svix).
+(GlobalStack signs webhooks in the Svix format).
 
 ## Prerequisites
 

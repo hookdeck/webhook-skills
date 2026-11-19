@@ -80,6 +80,15 @@ def verify_langfuse_signature(
 
 
 def handle_event(event: dict) -> None:
+    # Route on `type` first: alert automations send `monitor-alert`, which has no `action`.
+    event_type = event.get("type")
+    if event_type == "monitor-alert":
+        alert = _as_dict(event.get("payload"))
+        print(f"Langfuse alert {alert.get('severity')}: {_as_dict(alert.get('message')).get('title')}")
+        return
+    if event_type != "prompt-version":
+        print(f"Unhandled Langfuse type: {event_type}")
+        return
     action = event.get("action")
     prompt = _as_dict(event.get("prompt"))
     if action == "created":

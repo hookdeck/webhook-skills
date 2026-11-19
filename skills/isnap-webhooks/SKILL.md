@@ -33,7 +33,7 @@ metadata:
 |--------|-------|
 | `webhook-id` | The event's `event_id` (`evt_...`), the same on every attempt and replay. Your idempotency key |
 | `webhook-timestamp` | Unix seconds when this attempt was sent; changes on every attempt |
-| `webhook-signature` | `v1,<base64>` (one or more space-separated entries) |
+| `webhook-signature` | `v1,<base64>`. iSnap sends one signature per header; the examples still accept any space-separated `v1,` entry, as the spec allows |
 
 Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`, HMAC-SHA256, base64 output. The key is the base64-**decoded** part of the `whsec_...` secret after the prefix (48 bytes; not hex-decoded, not the string itself). Compare against every `v1,` entry and ignore other versions. If `webhook-id` is absent, read `svix-id`, `svix-timestamp` and `svix-signature` instead. The examples use the [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) library (npm and PyPI):
 

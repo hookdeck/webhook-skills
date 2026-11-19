@@ -60,7 +60,8 @@ async def helcim_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # The event name is the top-level `type`. cardTransaction is thin: {id, type}.
-    # terminalCancel is {data, type}. webhook-id is stable across retries: use it to deduplicate.
+    # terminalCancel is {data, type}. Helcim doesn't say whether retries keep webhook-id:
+    # key cardTransaction work on the transaction id and make terminalCancel handling repeatable.
     event_type = event.get("type")
     print(f"Received Helcim webhook {sig_headers['webhook-id']}: {event_type}")
 

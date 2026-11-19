@@ -22,7 +22,7 @@ metadata:
 
 > Only notifications API version 3.0 is supported. Version 1.3 notifications aren't signed this way and fail verification.
 
-Khipu sends one POST to the collection's `notify_url` when a payment is reconciled, for collections created with `notify_api_version` `"3.0"`. The older 1.3 API sent only a `notification_token` and is not covered here. The docs don't describe retries or an expected acknowledgement; answer `200` once the payment is recorded.
+Khipu sends one POST to the collection's `notify_url` when a payment is reconciled, for collections created with `notify_api_version` `"3.0"`. The older 1.3 API sent only a `notification_token` and is not covered here. Khipu's API reference says it waits for an HTTP `200` and retries for up to two days if it doesn't get one, so answer `200` once the payment is recorded. No timeout or retry interval is documented.
 
 ## Essential Code (USE THIS)
 
@@ -34,7 +34,7 @@ x-khipu-signature: t=1711965600393,s=rq08YUGSaWa1D0RAwhMnJTRHMNmY4ToCn2Gd6G9LaDg
 
 - `t` is a Unix timestamp in **milliseconds**. Use it as the exact string from the header.
 - `s` is standard padded base64 of HMAC-SHA256 over `"<t>.<raw body>"`. The key is the **merchant secret** of the collecting account, as UTF-8 bytes (not decoded).
-- There is no event-name field or header: every POST is a reconciled payment.
+- There is no event-name field or header. Today every POST is a reconciled payment; Khipu lists three more notification kinds as upcoming without saying how they will be told apart.
 
 ### Verification (Node.js)
 
@@ -88,7 +88,7 @@ def verify_khipu(raw_body: bytes, header, secret: str) -> bool:
     )
 ```
 
-Accept the delivery if **any** `s=` entry matches (the header can carry several during key rotation) and ignore other keys. A missing header, no `t=`, a malformed signature or a mismatch gets `401`.
+Accept the delivery if **any** `s=` entry matches and ignore other keys. A missing header, no `t=`, a malformed signature or a mismatch gets `401`.
 
 **Timestamp window is off by default.** Hookdeck retries and replays resend the original `t`, so a fixed window would reject legitimate redeliveries. The examples offer an opt-in: set `KHIPU_WEBHOOK_TOLERANCE_SECONDS` to a positive number (`t` is milliseconds, the examples convert). Unset or `0` leaves it off. Use `payment_id` for idempotency instead.
 

@@ -111,7 +111,7 @@ npx hookdeck-cli listen 3000 nomod --path /webhooks/nomod
 ```
 
 Create the webhook in Settings > Tools & customisations > Apps & APIs > Webhooks (Owners and
-Admins only), pick an integration type and the events, and use the tunnel URL. Nomod sends no
+Admins only), pick Nomod API, Nomod Hosted Checkout or both, choose the events, and use the tunnel URL. Nomod sends no
 challenge. Copy the **Signing secret** into `.env`. See [references/setup.md](references/setup.md).
 
 ## Reference Materials

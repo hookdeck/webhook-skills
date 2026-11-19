@@ -137,7 +137,7 @@ async def notifuse_webhook(request: Request, event: Dict[str, Any] = Depends(ver
         return {"received": True, "duplicate": True}
 
     try:
-        # Notifuse needs a 2xx within 30 seconds. In production, enqueue the
+        # Notifuse needs a 2xx within 10 seconds. In production, enqueue the
         # event here and process it asynchronously.
         handle_event(event)
         processed_delivery_ids.add(delivery_id)

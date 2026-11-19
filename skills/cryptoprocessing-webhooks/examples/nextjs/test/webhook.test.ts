@@ -129,10 +129,18 @@ describe('POST /webhooks/cryptoprocessing', () => {
   });
 
   it('treats a new status of the same transaction as a new callback', async () => {
-    const pending = callback({ id: 6000, status: 'pending' });
+    const pending = callback({ id: 6000, status: 'not_confirmed' });
     const confirmed = callback({ id: 6000, status: 'confirmed' });
     expect((await POST(makeRequest(pending, { 'x-processing-signature': sign(pending) }))).status).toBe(200);
     expect((await POST(makeRequest(confirmed, { 'x-processing-signature': sign(confirmed) }))).status).toBe(200);
+  });
+
+  it('treats a repeated status with a new txid as a new callback', async () => {
+    const first = callback({ id: 7000, type: 'invoice', status: 'pending', transactions: [{ txid: 'a1' }] });
+    const second = callback({ id: 7000, type: 'invoice', status: 'pending', transactions: [{ txid: 'a1' }, { txid: 'b2' }] });
+    expect((await POST(makeRequest(first, { 'x-processing-signature': sign(first) }))).status).toBe(200);
+    expect((await POST(makeRequest(second, { 'x-processing-signature': sign(second) }))).status).toBe(200);
+    expect((await POST(makeRequest(second, { 'x-processing-signature': sign(second) }))).status).toBe(201);
   });
 
   it('verifies regardless of content type', async () => {

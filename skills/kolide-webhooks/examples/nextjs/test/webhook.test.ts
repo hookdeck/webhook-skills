@@ -26,7 +26,7 @@ const payloads = {
     event: 'devices.created',
     id: '01HDVY8MA3CQ48HJ356FP8M2P6',
     timestamp: '2023-10-28T20:05:33Z',
-    data: { device_id: 1, device_name: 'Jasons-MacBook-Pro' },
+    data: { device_id: 1, device_name: 'Example-MacBook-Pro' },
   },
   issueNew: {
     event: 'issues.new',
@@ -36,7 +36,7 @@ const payloads = {
       issue_id: 2,
       title: null,
       check_id: 71,
-      device: { id: 1, name: 'Jasons-MacBook-Pro-2' },
+      device: { id: 1, name: 'Example-MacBook-Pro-2' },
       check: { id: 71, name: 'macOS Firewall - Require macOS Firewall is Enabled', tags: [] },
     },
   },
@@ -44,7 +44,7 @@ const payloads = {
     event: 'device_trust.status_changed',
     id: '01J7EXHMF0FCA14EW04JASYCRP',
     timestamp: '2024-09-10T21:30:59Z',
-    data: { device_id: 9, device_name: 'Matts-Kolide-MacBook-Pro', device_status: 'blocked', device_url: 'https://api.kolide.com/devices/9' },
+    data: { device_id: 9, device_name: 'Example-MacBook-Air', device_status: 'blocked', device_url: 'https://api.kolide.com/devices/9' },
   },
   test: {
     event: 'webhook.test',
@@ -144,9 +144,9 @@ describe('Kolide event handling', () => {
   };
 
   it.each([
-    ['devices.created', payloads.deviceCreated, 'Device created: Jasons-MacBook-Pro (id 1)'],
-    ['issues.new', payloads.issueNew, 'issues.new: macOS Firewall - Require macOS Firewall is Enabled on Jasons-MacBook-Pro-2'],
-    ['device_trust.status_changed', payloads.statusChanged, 'Device Matts-Kolide-MacBook-Pro is now blocked'],
+    ['devices.created', payloads.deviceCreated, 'Device created: Example-MacBook-Pro (id 1)'],
+    ['issues.new', payloads.issueNew, 'issues.new: macOS Firewall - Require macOS Firewall is Enabled on Example-MacBook-Pro-2'],
+    ['device_trust.status_changed', payloads.statusChanged, 'Device Example-MacBook-Air is now blocked'],
     ['webhook.test', payloads.test, 'Test webhook received'],
   ])('handles %s', async (_name, payload, expected) => {
     expect((await send(payload)).status).toBe(200);

@@ -42,27 +42,27 @@ def handle_event(event_type: str, data: dict) -> None:
 
     if event_type == "booking.status.updated":
         print(f"Booking {event_id} status: {attributes.get('status')}")
-        # TODO: update table or guest state
+        # Your code: update table or guest state
 
     elif event_type == "order.state.updated":
         print(f"Order {event_id} state updated")
-        # TODO: sync the order lifecycle
+        # Your code: sync the order lifecycle
 
     elif event_type == "order.status.updated":
         print(f"Order {event_id} status updated")
-        # TODO: refresh kitchen and front-of-house displays
+        # Your code: refresh kitchen and front-of-house displays
 
     elif event_type == "order.total.updated":
         print(f"Order {event_id} total updated")
-        # TODO: reconcile totals
+        # Your code: reconcile totals
 
     elif event_type == "order.payments.added":
         print(f"Payment added to order {event_id}")
-        # TODO: record the payment for accounting
+        # Your code: record the payment for accounting
 
     elif event_type == "product.availability.updated":
         print(f"Product {event_id} availability updated")
-        # TODO: sync menu and stock
+        # Your code: sync menu and stock
 
     else:
         print(f"Unhandled Mews POS event: {event_type}")

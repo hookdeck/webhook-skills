@@ -2,7 +2,7 @@
 
 ## What Are Northpass Webhooks?
 
-Northpass (now Gainsight Customer Education) is a customer education LMS. Its Webhooks app
+Northpass (now Gainsight CE) is a customer education LMS. Its Webhooks app
 (Premium plan) sends an HTTP `POST` with a JSON body to your endpoint when learning events
 happen in your school: learners are created, invited or activated, courses are published,
 learners enroll, start and complete courses, activities and quizzes, register for ILT sessions,

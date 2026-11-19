@@ -108,7 +108,19 @@ async def globalstack_webhook(request: Request):
         customer = obj.get("customer") if isinstance(obj.get("customer"), dict) else {}
         print(f"KYC approved: {object_id} {customer.get('tier')}")
     elif event_type == "kyc.rejected":
-        print(f"KYC rejected: {object_id} {obj.get('failure_reason')}")
+        # The reason is inside the verification block
+        verification = obj.get("verification") if isinstance(obj.get("verification"), dict) else {}
+        print(f"KYC rejected: {object_id} {verification.get('failure_reason')}")
+    elif event_type == "wallet_transfer.success":
+        # A move between two of your own wallets; the first and only event is terminal
+        print(f"Wallet transfer committed: {object_id}")
+    elif event_type == "split.completed":
+        # Once per payment: the split is final (completed) or did not apply (skipped)
+        split = obj.get("split") if isinstance(obj.get("split"), dict) else {}
+        print(f"Split completed: {object_id} {split.get('status')}")
+    elif event_type == "split.leg_released":
+        # A share held for its recipient's limit was released and credited
+        print(f"Split share released: {object_id} {obj.get('transaction_id')}")
     else:
         # Return 200 for events you don't handle, or GlobalStack keeps retrying them
         print(f"Unhandled event type: {event_type}")

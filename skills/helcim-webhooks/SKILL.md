@@ -30,7 +30,7 @@ metadata:
 
 | Header | Value |
 |--------|-------|
-| `webhook-id` | Identifies the message; retries reuse it. Your idempotency key (the body has no event id) |
+| `webhook-id` | Identifies the message. Helcim doesn't say whether retries reuse it (the body has no event id) |
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
@@ -97,7 +97,7 @@ Helcim documents only these two (the list may not be exhaustive): ignore types y
 
 ## Delivery Semantics
 
-Return a `2xx` (200-299), then process asynchronously. Anything else is retried until a success code: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h, each period starting when the previous attempt fails. Deduplicate on `webhook-id`. Return `400` for missing headers and `401` for a bad signature. An event is only sent if its toggle is on at **Integrations > Webhooks**.
+Return a `2xx` (200-299), then process asynchronously. Anything else is retried until a success code: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h, each period starting when the previous attempt fails. Helcim doesn't document whether a retry keeps `webhook-id`, so make handlers idempotent: key `cardTransaction` work on the card transaction `id`, and make `terminalCancel` handling safe to repeat. Return `400` for missing headers and `401` for a bad signature. An event is only sent if its toggle is on at **Integrations > Webhooks**.
 
 ## Environment Variables
 

@@ -52,7 +52,7 @@ function verifyLettermintWebhook(
   const signatures = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t) return false;
 
-  // Lettermint recommends a 5-minute window, but retries (and Hookdeck's replays) carry the
+  // Lettermint recommends a 5-minute window, but deliveries Hookdeck retries or replays carry the
   // original `t`, so the window is opt-in (toleranceSeconds > 0).
   if (toleranceSeconds > 0) {
     if (!/^\d+$/.test(t) || Math.abs(nowSeconds - Number(t)) > toleranceSeconds) return false;
@@ -65,7 +65,7 @@ function verifyLettermintWebhook(
     .update(rawBody)
     .digest();
 
-  // Any v1 may match (several appear during key rotation). Validate length and alphabet before
+  // Any v1 may match (Lettermint's SDKs accept any matching v1). Validate length and alphabet before
   // decoding: Buffer.from(x, 'hex') silently drops bad characters.
   return signatures.some(
     (sig) => /^[0-9a-fA-F]{64}$/.test(sig) && crypto.timingSafeEqual(Buffer.from(sig, 'hex'), expected)
@@ -128,7 +128,7 @@ app.post('/webhooks/lettermint', express.raw({ type: '*/*' }), (req, res) => {
     default:
       console.log(`Unhandled event type: ${event}`);
   }
-  // TODO: persist / forward. `id` is unique per event: use it as the idempotency key.
+  // Your code: persist / forward. `id` is unique per event: use it as the idempotency key.
   console.log(`Processed ${event} (id ${id})`);
 
   // Respond 2XX quickly; timeouts, 408, 429 and 5xx are retried (12 attempts over ~14 hours).

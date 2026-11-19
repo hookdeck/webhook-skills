@@ -73,7 +73,7 @@ Logto documents more families: `Role.*`, `Scope.*`, `Organization.*`, `Organizat
 
 ## Payload Shape
 
-Every body has `hookId`, `event`, `createdAt` (ISO 8601) and optionally `userAgent`. The client IP is `userIp` on user-flow events and `ip` on data-mutation and exception events. Treat every field as untrusted after verification: check types before reading nested objects such as `user`, `application` or `data`.
+Every body has `hookId`, `deliveryId`, `event`, `createdAt` (ISO 8601) and optionally `userAgent`. Logto retries a delivery up to three times when your endpoint answers `500` or above, and every attempt carries the same `deliveryId`, so record the ones you've processed and skip repeats. The client IP is `userIp` on user-flow events and `ip` on data-mutation and exception events. Treat every field as untrusted after verification: check types before reading nested objects such as `user`, `application` or `data`.
 
 ## Environment Variables
 

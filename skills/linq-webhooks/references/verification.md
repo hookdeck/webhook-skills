@@ -85,8 +85,8 @@ deduplicating on the body's `event_id`.
 
 ## Manual Verification (configurable timestamp window)
 
-Linq secrets start with `whsec_`, and the key is the base64-decoded remainder. As in Hookdeck's source, a
-secret without that prefix is used as its raw UTF-8 bytes.
+Linq secrets start with `whsec_`, and the key is the base64-decoded remainder. The verifiers below use a
+secret without that prefix as its raw UTF-8 bytes.
 
 ```javascript
 const crypto = require('node:crypto');

@@ -28,13 +28,14 @@ def verify_onramper_signature(raw_body: bytes, signature: str | None, secret: st
 
 def handle_event(tx: dict) -> None:
     """Every delivery is a transaction snapshot with no event name, so dispatch on
-    `status`. `transactionType` (buy | offramp) gives the direction."""
+    `status`. `transactionType` gives the direction: `buy`, or `offramp` or `sell`
+    (Onramper's pages differ)."""
     status = tx.get("status")
     ref = f"{tx.get('transactionId')} ({tx.get('transactionType')})"
 
     if status == "completed":
         print(f"Transaction completed: {ref}")
-        # TODO: fulfil the order using outAmount, targetCurrency, transactionHash
+        # Your code: fulfil the order using outAmount, targetCurrency, transactionHash
 
     elif status == "paid":
         print(f"Transaction paid: {ref}")
@@ -47,7 +48,7 @@ def handle_event(tx: dict) -> None:
 
     elif status == "failed":
         print(f"Transaction failed: {ref}")
-        # TODO: notify the customer or alert support
+        # Your code: notify the customer or alert support
 
     elif status == "canceled":
         print(f"Transaction canceled: {ref}")

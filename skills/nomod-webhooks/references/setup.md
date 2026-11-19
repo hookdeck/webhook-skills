@@ -10,8 +10,8 @@
 
 1. In the Nomod dashboard go to **Settings > Tools & customisations > Apps & APIs**.
 2. Select **Webhooks > Create webhook**.
-3. Select an integration type, **Nomod API** or **Nomod Hosted Checkout**, then tap **Continue**.
-   A webhook belongs to exactly one type.
+3. Select the type of webhook: **Nomod API**, **Nomod Hosted Checkout**, or **Select all** for
+   both, then tap **Continue**. You can't change the type later.
 4. Select one or more events, then tap **Continue**. The events are `charge.created`,
    `charge.authorised`, `charge.completed`, `charge.failed`, `charge.cancelled`,
    `charge.refunded`, `charge.partially_refunded` and `charge.dispute.created`. An event can be
@@ -39,8 +39,8 @@ with the wrong key.
 
 Select the webhook, find the **Signing secret** field, tap the rotate icon, then tap **Generate**
 in the confirmation prompt. The new secret takes effect immediately, and the **old secret stays
-valid for 24 hours**. Update `NOMOD_WEBHOOK_SECRET` within that window. While both are valid,
-`svix-signature` can carry more than one `v1,` entry, and the examples accept any matching entry.
+valid for 24 hours**. Update `NOMOD_WEBHOOK_SECRET` within that window. Nomod's docs say `svix-signature` can carry
+more than one `v1,` entry, and the examples accept any matching entry.
 
 ## Managing, Monitoring and Replaying
 

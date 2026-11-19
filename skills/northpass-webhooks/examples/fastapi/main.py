@@ -50,31 +50,31 @@ def handle_event(event: dict) -> None:
 
     if event_type == "learner_created_events":
         print(f"Learner created (event {event_id})")
-        # TODO: create the learner in your system (see data.included for the person)
+        # Your code: create the learner in your system (see data.included for the person)
 
     elif event_type == "person_activated_events":
         print(f"Person activated (event {event_id})")
-        # TODO: mark the learner as active
+        # Your code: mark the learner as active
 
     elif event_type == "learner_enrolled_to_course_events":
         print(f"Learner enrolled in a course (event {event_id})")
-        # TODO: record the enrollment (data.relationships.course / person)
+        # Your code: record the enrollment (data.relationships.course / person)
 
     elif event_type == "learner_started_course_events":
         print(f"Learner started a course (event {event_id})")
-        # TODO: record course progress
+        # Your code: record course progress
 
     elif event_type == "course_completed_events":
         print(f"Course completed (event {event_id})")
-        # TODO: issue credit or update the CRM
+        # Your code: issue credit or update the CRM
 
     elif event_type == "quiz_completed_events":
         print(f"Quiz completed with value {attributes.get('value')} (event {event_id})")
-        # TODO: store the score (attributes.value, attributes.minimum_passing_score)
+        # Your code: store the score (attributes.value, attributes.minimum_passing_score)
 
     elif event_type == "course_published_events":
         print(f"Course published, version {attributes.get('version_number')} (event {event_id})")
-        # TODO: refresh your course catalog
+        # Your code: refresh your course catalog
 
     else:
         print(f"Unhandled event type: {event_type}")

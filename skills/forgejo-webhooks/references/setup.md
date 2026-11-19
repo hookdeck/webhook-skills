@@ -27,4 +27,4 @@ The Secret is a value **you choose** when creating the webhook; Forgejo does not
 
 ## Test Mode vs Live Mode
 
-Forgejo has no test mode. **Test Delivery** sends a real delivery for the repository's latest push, and **Recent Deliveries** shows the exact request headers and body of each attempt, which helps when debugging signature failures.
+Forgejo has no test mode. **Test Delivery** sends a synthetic `push` built from the default branch's latest commit (or a placeholder commit in an empty repository), and **Recent Deliveries** shows the exact request headers and body of each attempt, which helps when debugging signature failures.

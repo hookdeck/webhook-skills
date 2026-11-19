@@ -56,7 +56,8 @@ app.post('/webhooks/meetgeek', express.raw({ type: '*/*' }), (req, res) => {
     console.log(`MeetGeek analysis failed: ${payload.message}`);
   }
 
-  res.sendStatus(200);
+  // MeetGeek asks for 200 OK with no response body (sendStatus would send "OK")
+  res.status(200).end();
 });
 
 const port = process.env.PORT || 3000;

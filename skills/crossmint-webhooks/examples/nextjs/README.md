@@ -64,7 +64,7 @@ The event name is the top-level `type` in the JSON body (the envelope around it 
 logs anything else:
 
 - `wallets.transfer.in`, `wallets.transfer.out`, `wallets.signer.exported`
-- `purchase.succeeded` (Checkout V2, flat body)
+- `purchase.succeeded` (legacy Checkout V2, flat body; no longer in Crossmint's docs)
 - `orders.quote.created`, `orders.quote.updated`, `orders.payment.succeeded`, `orders.payment.failed`,
   `orders.delivery.initiated`, `orders.delivery.completed`, `orders.delivery.failed`
 - `collections.create.succeeded`, `collections.update.succeeded`, `nfts.create.succeeded`,

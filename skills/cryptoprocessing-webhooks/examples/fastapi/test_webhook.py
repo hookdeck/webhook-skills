@@ -127,10 +127,17 @@ class TestWebhookEndpoint:
         assert post(body, headers).status_code == 201
 
     def test_new_status_of_same_transaction_is_not_a_duplicate(self):
-        pending = callback(id=6000, status="pending")
+        pending = callback(id=6000, status="not_confirmed")
         confirmed = callback(id=6000, status="confirmed")
         assert post(pending, {"X-Processing-Signature": sign(pending)}).status_code == 200
         assert post(confirmed, {"X-Processing-Signature": sign(confirmed)}).status_code == 200
+
+    def test_repeated_status_with_new_txid_is_not_a_duplicate(self):
+        first = callback(id=7000, type="invoice", status="pending", transactions=[{"txid": "a1"}])
+        second = callback(id=7000, type="invoice", status="pending", transactions=[{"txid": "a1"}, {"txid": "b2"}])
+        assert post(first, {"X-Processing-Signature": sign(first)}).status_code == 200
+        assert post(second, {"X-Processing-Signature": sign(second)}).status_code == 200
+        assert post(second, {"X-Processing-Signature": sign(second)}).status_code == 201
 
     def test_verifies_regardless_of_content_type(self):
         body = callback()

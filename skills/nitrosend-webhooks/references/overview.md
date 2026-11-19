@@ -52,7 +52,7 @@ The `webhook-id` header (`evt_...`) is unique per event and stable across retrie
 
 ### email.received
 
-Inboxes are part of the Agent Inbox (in beta, enabled on request). Send with the inbox address as `reply_to` (or `from`) to have replies reported. The body adds:
+Inboxes are part of the Agent Inbox. Send with the inbox address as `reply_to` (or `from`) to have replies reported. It also reports a reply to one of your emails that comes back into the connected mailbox the email was sent from, when that mailbox's connection reads replies. The body adds:
 
 | Field | Meaning |
 |-------|---------|

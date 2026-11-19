@@ -17,7 +17,7 @@ Branch on `meeting_id`: present means success, absent means failure.
 
 ## Delivery
 
-- Up to three POSTs. The second and third are retries, sent only when the first is not acknowledged with `200 OK` (no body needed).
+- Acknowledge with `200 OK` and no response body. Up to three POSTs: the second and third are retries, sent only when the first is not acknowledged.
 - For team-shared meetings, every team member with view access receives the webhook.
 - Deduplicate on `meeting_id`.
 

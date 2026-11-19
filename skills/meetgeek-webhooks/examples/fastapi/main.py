@@ -7,7 +7,7 @@ import os
 import re
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 
 load_dotenv()
 
@@ -59,7 +59,8 @@ async def meetgeek_webhook(request: Request):
         # failed-analysis
         print(f"MeetGeek analysis failed: {payload.get('message')}")
 
-    return {"received": True}
+    # MeetGeek asks for 200 OK with no response body
+    return Response(status_code=200)
 
 
 if __name__ == "__main__":

@@ -41,10 +41,10 @@ def handle_event(event_name: str, context: dict[str, Any]) -> None:
     if event_name == "invoice_created":
         print(f"Invoice {context.get('invoice_number')} created for {debtor.get('name')} "
               f"(open: {context.get('amount_open')} {context.get('currency_code')})")
-        # TODO: sync the new invoice to your system
+        # Your code: sync the new invoice to your system
     elif event_name in ("invoice_paid", "invoice_closed"):
         print(f"Invoice {context.get('invoice_number')} {'paid' if event_name == 'invoice_paid' else 'closed'}")
-        # TODO: mark the invoice as settled
+        # Your code: mark the invoice as settled
     elif event_name == "invoice_payment_created":
         # book_amount is the amount in the administration's bookkeeping currency
         invoice = context.get("invoice")
@@ -52,11 +52,11 @@ def handle_event(event_name: str, context: dict[str, Any]) -> None:
             invoice = {}
         print(f"Payment {context.get('id')} of {context.get('amount')} {context.get('currency_code')} "
               f"on invoice {invoice.get('invoice_number')}")
-        # TODO: book the payment in your accounting system
+        # Your code: book the payment in your accounting system
     elif event_name == "case_created":
         print(f"Debt collection case {context.get('credit_case_number')} created "
               f"with {len(context.get('invoices') or [])} invoice(s)")
-        # TODO: flag the debtor's invoices as in collection
+        # Your code: flag the debtor's invoices as in collection
     elif event_name == "case_paid":
         print(f"Debt collection case {context.get('credit_case_number')} fully paid")
     elif event_name == "bundled_reminder_sent":
@@ -67,7 +67,7 @@ def handle_event(event_name: str, context: dict[str, Any]) -> None:
     elif event_name == "credit_limit_exceeded":
         print(f"Credit limit exceeded for debtor {context.get('debtor_code')} "
               f"({context.get('book_open_amount')} open of {context.get('credit_limit_amount')})")
-        # TODO: alert your credit controller
+        # Your code: alert your credit controller
     elif event_name == "psp_transaction_successful":
         print(f"PSP transaction registered on invoice {context.get('invoice_number')}")
     else:
@@ -94,7 +94,8 @@ async def payt_webhook(request: Request):
     if not isinstance(event, dict) or not isinstance(event.get("event_name"), str):
         return JSONResponse({"error": "Missing event.event_name"}, status_code=400)
 
-    # Delivery is at least once and unordered: make processing idempotent. For an unknown
+    # Delivery is at least once and unordered: make processing idempotent. X-PAYT-DELIVERY stays
+    # the same when a delivery is retried, so you can use it to spot repeats. For an unknown
     # object Payt suggests answering 404 so it retries later.
     context = event.get("context")
     try:
@@ -103,7 +104,7 @@ async def payt_webhook(request: Request):
         print(f"Error handling Payt webhook: {exc}")
         return JSONResponse({"error": "Handler error"}, status_code=500)
 
-    # Payt needs a 200 within 10 seconds, otherwise the delivery is retried
+    # Payt counts any 2xx within 10 seconds as delivered; anything else is retried
     return {"received": True}
 
 

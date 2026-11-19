@@ -19,7 +19,7 @@ DEVICE_CREATED = {
     "event": "devices.created",
     "id": "01HDVY8MA3CQ48HJ356FP8M2P6",
     "timestamp": "2023-10-28T20:05:33Z",
-    "data": {"device_id": 1, "device_name": "Jasons-MacBook-Pro"},
+    "data": {"device_id": 1, "device_name": "Example-MacBook-Pro"},
 }
 ISSUE_NEW = {
     "event": "issues.new",
@@ -29,7 +29,7 @@ ISSUE_NEW = {
         "issue_id": 2,
         "title": None,
         "check_id": 71,
-        "device": {"id": 1, "name": "Jasons-MacBook-Pro-2"},
+        "device": {"id": 1, "name": "Example-MacBook-Pro-2"},
         "check": {"id": 71, "name": "macOS Firewall - Require macOS Firewall is Enabled", "tags": []},
     },
 }
@@ -39,7 +39,7 @@ STATUS_CHANGED = {
     "timestamp": "2024-09-10T21:30:59Z",
     "data": {
         "device_id": 9,
-        "device_name": "Matts-Kolide-MacBook-Pro",
+        "device_name": "Example-MacBook-Air",
         "device_status": "blocked",
         "device_url": "https://api.kolide.com/devices/9",
     },
@@ -143,9 +143,9 @@ class TestEventHandling:
     @pytest.mark.parametrize(
         "payload,expected",
         [
-            (DEVICE_CREATED, "Device created: Jasons-MacBook-Pro (id 1)"),
-            (ISSUE_NEW, "issues.new: macOS Firewall - Require macOS Firewall is Enabled on Jasons-MacBook-Pro-2"),
-            (STATUS_CHANGED, "Device Matts-Kolide-MacBook-Pro is now blocked"),
+            (DEVICE_CREATED, "Device created: Example-MacBook-Pro (id 1)"),
+            (ISSUE_NEW, "issues.new: macOS Firewall - Require macOS Firewall is Enabled on Example-MacBook-Pro-2"),
+            (STATUS_CHANGED, "Device Example-MacBook-Air is now blocked"),
             (TEST_EVENT, "Test webhook received"),
         ],
     )

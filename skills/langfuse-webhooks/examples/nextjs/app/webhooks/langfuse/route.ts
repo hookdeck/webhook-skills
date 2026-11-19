@@ -11,6 +11,16 @@ interface LangfuseEvent {
 }
 
 function handleEvent(event: LangfuseEvent): void {
+  // Route on `type` first: alert automations send `monitor-alert`, which has no `action`.
+  if (event.type === 'monitor-alert') {
+    const alert = (event.payload ?? {}) as { severity?: string; message?: { title?: string } };
+    console.log(`Langfuse alert ${alert.severity}: ${alert.message?.title}`);
+    return;
+  }
+  if (event.type !== 'prompt-version') {
+    console.log(`Unhandled Langfuse type: ${event.type}`);
+    return;
+  }
   switch (event.action) {
     case 'created':
       console.log(`Prompt version created: ${event.prompt?.name} v${event.prompt?.version}`);

@@ -16,7 +16,7 @@ Deliveries are signed with `Convox-Signature` when the `webhook_signing_key` Rac
 
 ## Event Payload Structure
 
-Every payload has `action`, `status`, `timestamp` and `data` at the top level. Common fields live under `data`: `app`, `rack`, `actor` and, on tick-driven budget events, `tick_id`. `actor` is the authenticated identity for HTTP-handler events and `"system"` for accumulator-tick and render-time events. Ignore unknown actions and unknown fields.
+Every payload has `action`, `status`, `timestamp` and `data` at the top level. Common fields live under `data`: `app`, `rack`, `actor` and, where applicable, `tick_id` (the docs' own example, an HTTP-handler event, carries one). `actor` is the authenticated identity for HTTP-handler events and `"system"` for accumulator-tick and render-time events. Ignore unknown actions and unknown fields.
 
 ```json
 {

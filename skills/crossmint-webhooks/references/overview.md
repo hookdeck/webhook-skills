@@ -11,7 +11,7 @@ Crossmint's wallet transfers, checkout, NFT minting and credential issuance run 
 | `wallets.transfer.in` | Tokens arrive in a project wallet (confirmed onchain only) | Credit a user balance |
 | `wallets.transfer.out` | Tokens leave a project wallet; sent for failed attempts too | Track the full transfer lifecycle, read `data.error` |
 | `wallets.signer.exported` | A wallet's private key is exported for the first time | Security alerting |
-| `purchase.succeeded` | Checkout V2: an NFT purchase was delivered | Fulfil an order |
+| `purchase.succeeded` | Legacy Checkout V2: an NFT purchase was delivered (no longer in Crossmint's docs) | Fulfil an order |
 | `orders.quote.created` | Checkout V3: a new order is created | Store the order |
 | `orders.quote.updated` | Checkout V3: order details change | Refresh stored order data |
 | `orders.payment.succeeded` | Checkout V3: payment processed | Mark as paid |
@@ -28,7 +28,7 @@ Crossmint's wallet transfers, checkout, NFT minting and credential issuance run 
 | `credential.creation.failed` | Credential issuance failed | Alert, retry |
 | `payment_methods.status.updated` | Offramp: a payment method's status changed | Update account state |
 
-These are the 19 types Crossmint documents; the list may not be exhaustive. Treat any type you don't recognise as informational and return `2xx`.
+These are the 19 types Crossmint has documented (`purchase.succeeded` is no longer on its checkout page); the list may not be exhaustive. Treat any type you don't recognise as informational and return `2xx`.
 
 ## Event Payload Structure
 
@@ -36,9 +36,9 @@ Only `type` and `data` are common. The id and surrounding fields depend on the p
 
 | Product | Envelope |
 |---------|----------|
-| Wallets | `{ id: "evt_...", type, data }`; `data` has `status`, `token` (`symbol`, `amount`, `decimals`, `locator`, `chain`), `sender`, `recipient`, and on failures `error` |
-| Checkout V3 | `{ actionId, type, data }`; `data` has `orderId`, `phase`, `locale`, `lineItems` |
-| Checkout V2 | Flat `{ type, status, walletAddress, projectId, collectionId, clientId, txId, contractAddress, tokenIds, passThroughArgs }` (EVM) or `mintAddress` (Solana); no `data` |
+| Wallets | `{ id, type, data }` (`whevnt_...` on transfers, `evt_...` on signer export); `data` has `status`, `token` (`symbol`, `amount`, `decimals`, `locator`, `chain`), `sender`, `recipient`, and on failures `error` |
+| Checkout V3 | `{ actionId, type, data }`; `data` is the full order (`orderId`, `phase`, `lineItems`, `quote`, `payment`). `actionId` is the order id, shared by every event for that order |
+| Checkout V2 (legacy) | Flat `{ type, status, walletAddress, projectId, collectionId, clientId, txId, contractAddress, tokenIds, passThroughArgs }` (EVM) or `mintAddress` (Solana); no `data` |
 | NFT minting | `{ actionId, startedAt, completedAt, type, data, resource }` |
 | Credentials | `{ type, data }`, with `data.credential` or `data.error` |
 | Offramp | `{ id: "pm-status-...", type, data, timestamp }` |
@@ -47,8 +47,8 @@ Use `svix-id` as your idempotency key: it is the same on every retry.
 
 ## Delivery
 
-Return a `2xx` within 15 seconds. Crossmint attempts delivery 8 times: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h. After that the message is marked failed and can be resent from the console. Delivery is at-least-once, and offramp events can arrive out of order.
+Return a `2xx` within 15 seconds. Crossmint attempts delivery 8 times: immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h. After that the message is marked failed and can be resent from the console. Delivery is at-least-once. Offramp `payment_methods.status.updated` events can arrive out of order, and in rare cases one is missing: status only moves forward (`pending`, `active`, `rejected`, `deleted`), so ignore an older status and fetch the payment method before creating an order.
 
 ## Full Event Reference
 
-See Crossmint's [webhooks overview](https://docs.crossmint.com/introduction/platform/webhooks/overview) and the per-product pages: [wallets](https://docs.crossmint.com/wallets/guides/webhooks), [checkout](https://docs.crossmint.com/payments/advanced/webhooks), [minting](https://docs.crossmint.com/minting/nfts/integrate/webhooks-and-status-apis), [credentials](https://docs.crossmint.com/minting/verifiable-credentials/integrate/webhooks) and [offramp](https://docs.crossmint.com/offramp/guides/manage-orders).
+See Crossmint's [webhooks overview](https://docs.crossmint.com/introduction/platform/webhooks/overview) and the per-product pages: [wallets](https://docs.crossmint.com/wallets/guides/webhooks), [checkout](https://docs.crossmint.com/payments/advanced/webhooks), [minting](https://docs.crossmint.com/tokenization/nfts/integrate/webhooks-and-status-apis), [credentials](https://docs.crossmint.com/tokenization/verifiable-credentials/integrate/webhooks) and [offramp](https://docs.crossmint.com/offramp/guides/manage-orders).

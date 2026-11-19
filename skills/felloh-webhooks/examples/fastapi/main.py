@@ -49,19 +49,19 @@ def handle_event(payload: dict) -> None:
     if kind == "transaction-status":
         # Retried up to 5 times about a minute apart, so make this idempotent.
         print(f"Transaction {payload['transaction'].get('id')} is {payload['status']}")
-        # TODO: update the order or payment for payload["booking"]["booking_reference"]
+        # Your code: update the order or payment for payload["booking"]["booking_reference"]
 
     elif kind == "refund-status":
         print(f"Refund for transaction {payload['transaction'].get('id')} is {payload['status'].get('id')}")
-        # TODO: update the refund record (payload["authorisation_code"], payload["amount"])
+        # Your code: update the refund record (payload["authorisation_code"], payload["amount"])
 
     elif kind == "booking":
         print(f"Booking {payload['booking'].get('booking_reference')}")
-        # TODO: sync the booking (customer_name, departure_date, return_date)
+        # Your code: sync the booking, a deletion if deleted_at is set (customer_name, departure_date, return_date)
 
     elif kind == "user-create":
         print(f"User created: {payload['user'].get('id')}")
-        # TODO: provision or audit the new user (email, organisation)
+        # Your code: provision or audit the new user (email, organisation)
 
     else:
         print("Unhandled Felloh delivery")
@@ -76,8 +76,10 @@ async def felloh_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid or missing signature")
 
     # Dashboard test deliveries are signed with the real key and never retried.
+    # Felloh says to discard them, or a test looks like a genuine payment.
     if request.headers.get("x-felloh-test") == "true":
         print("Felloh test delivery")
+        return {"received": True}
 
     try:
         payload = json.loads(raw_body)

@@ -16,28 +16,28 @@ function handleEvent(topic: string | undefined, body: LoyaltyLionBody): void {
   switch (topic) {
     case 'customers/update':
       console.log(`Customer ${customer.id} updated (${customer.points_approved} points approved)`);
-      // TODO: sync the customer's points balance and tier to your system
+      // Your code: sync the customer's points balance and tier to your system
       break;
 
     case 'program_events/customer.enrolled':
       console.log(`Customer ${customer.id} enrolled in the loyalty program`);
-      // TODO: send a welcome message or tag the customer
+      // Your code: send a welcome message or tag the customer
       break;
 
     case 'program_events/customer.points_earned':
       console.log(`Customer ${customer.id} earned points`);
-      // TODO: record the transaction (data.properties.transaction)
+      // Your code: record the transaction (data.properties.transaction)
       break;
 
     case 'program_events/customer.tier_upgraded':
     case 'program_events/customer.tier_downgraded':
       console.log(`Customer ${customer.id} tier changed (${topic.split('.').pop()})`);
-      // TODO: update tier-based perks
+      // Your code: update tier-based perks
       break;
 
     case 'program_events/customer.claimed_reward':
       console.log(`Customer ${customer.id} claimed a reward`);
-      // TODO: fulfil or record the reward (voucher_code, discount_amount, ...)
+      // Your code: fulfil or record the reward (voucher_code, discount_amount, ...)
       break;
 
     case 'program_events/customer.referral_complete':
@@ -46,7 +46,7 @@ function handleEvent(topic: string | undefined, body: LoyaltyLionBody): void {
 
     case 'loyalty_emails/unsubscribe':
       console.log(`Customer ${data.unsubscribe?.customer?.id} unsubscribed from loyalty emails`);
-      // TODO: suppress loyalty emails for this customer
+      // Your code: suppress loyalty emails for this customer
       break;
 
     case 'receipts/manual_approval_required':
@@ -57,7 +57,7 @@ function handleEvent(topic: string | undefined, body: LoyaltyLionBody): void {
       // A 2xx response marks this redemption as successfully fulfilled. `test: true` is sent
       // when you create or update the custom reward, to confirm the URL works.
       console.log(`Fulfilment ${body.reward_fulfilment_id} for reward ${body.reward_identifier}${body.test ? ' (test)' : ''}`);
-      // TODO: grant the custom reward to body.customer_id
+      // Your code: grant the custom reward to body.customer_id
       break;
 
     default:

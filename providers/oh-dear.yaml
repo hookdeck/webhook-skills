@@ -1,8 +1,8 @@
 name: oh-dear
 displayName: "Oh Dear"
 docs:
-  webhooks: https://ohdear.app/docs/integrations/webhooks
-  verification: https://ohdear.app/docs/integrations/webhooks
+  webhooks: https://ohdear.app/docs/tools-and-sdks/webhooks
+  verification: https://ohdear.app/docs/tools-and-sdks/webhooks
 notes: >
   Oh Dear (ohdear.app), website and application monitoring (uptime, certificates, broken links, DNS,
   scheduled tasks, application health, Lighthouse, AI checks). A team adds a webhook URL in its

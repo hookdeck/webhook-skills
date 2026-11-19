@@ -53,7 +53,7 @@ Pass bytes to `hmac.compare_digest`: it raises `TypeError` on a non-ASCII `str`.
 - **Key encoding.** Don't hex- or base64-decode the signing key.
 - **Case.** Hex is compared case-insensitively; lowercase both sides (or compare decoded bytes).
 - **No replay window.** No timestamp is signed, so don't invent one from unsigned headers or body fields. Dedupe on the transaction, refund or booking id instead.
-- **Test deliveries** (`X-Felloh-Test: true`) are signed with the real key. Verify them like any other.
+- **Test deliveries** (`X-Felloh-Test: true`) are signed with the real key. Verify them like any other, then discard them as Felloh advises.
 - **Edit proxies.** Anything that changes the body (re-encoding, compression middleware that rewrites it) invalidates the signature.
 
 ## How Do I Debug Verification Failures?

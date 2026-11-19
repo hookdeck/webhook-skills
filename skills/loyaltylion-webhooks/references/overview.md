@@ -29,8 +29,9 @@ Two shapes differ from the envelope:
   `topic`: the body is `{ test, reward_fulfilment_id, reward_id, reward_identifier, customer_id,
   customer_merchant_id, customer_email }`.
 
-`program_events/*` payloads put their fields under `payload.properties` (for example
-`payload.properties.customer`).
+Most `program_events/*` payloads put their fields under `payload.properties` (for example
+`payload.properties.customer`). The segment-move topics (`moved_to_loyal_segment`,
+`moved_to_at_risk_segment`, `moved_to_defected_segment`) put `customer` directly under `payload`.
 
 ## Common Event Types
 

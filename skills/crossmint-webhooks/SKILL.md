@@ -6,7 +6,7 @@ description: >
   debugging svix-id / svix-timestamp / svix-signature verification, or handling
   wallet, checkout, NFT minting, credential and offramp events like
   wallets.transfer.in, orders.delivery.completed, nfts.create.succeeded and
-  purchase.succeeded.
+  payment_methods.status.updated.
 license: MIT
 metadata:
   author: hookdeck
@@ -61,34 +61,30 @@ The event name is the top-level `type` in every product's body. Only `type` and 
 
 | Product | Envelope |
 |---------|----------|
-| Wallets | `{ id: "evt_...", type, data }` |
+| Wallets | `{ id, type, data }` (`whevnt_...` on transfers, `evt_...` on signer export) |
 | Checkout V3 | `{ actionId, type, data }` |
-| Checkout V2 (`purchase.succeeded`) | Flat: `{ type, status, walletAddress, txId, ... }`, no `data` |
+| Checkout V2 (`purchase.succeeded`, legacy; no longer in Crossmint's docs) | Flat: `{ type, status, walletAddress, txId, ... }`, no `data` |
 | NFT minting | `{ actionId, startedAt, completedAt, type, data, resource }` |
 | Verifiable credentials | `{ type, data }` (`data.credential`, `data.error`) |
 | Offramp | `{ id: "pm-status-...", type, data, timestamp }` |
 
-```json
-{ "id": "evt_1b2c3d", "type": "wallets.transfer.in",
-  "data": { "status": "succeeded", "token": { "symbol": "USDC", "amount": "10", "decimals": 6 } } }
-```
 
 ## Common Event Types
 
 | Product | Events |
 |---------|--------|
 | Wallets | `wallets.transfer.in`, `wallets.transfer.out` (also sent for failed transfers), `wallets.signer.exported` |
-| Checkout V2 | `purchase.succeeded` |
+| Checkout V2 (legacy) | `purchase.succeeded` |
 | Checkout V3 | `orders.quote.created`, `orders.quote.updated`, `orders.payment.succeeded`, `orders.payment.failed`, `orders.delivery.initiated`, `orders.delivery.completed`, `orders.delivery.failed` |
 | NFT minting | `collections.create.succeeded`, `collections.update.succeeded`, `nfts.create.succeeded`, `nfts.create.failed`, `nfts.update.succeeded` |
 | Credentials | `credential.creation.succeeded`, `credential.creation.failed` |
 | Offramp | `payment_methods.status.updated` |
 
-These are the 19 documented types; the list may not be exhaustive, so ignore types you don't recognise. See [references/overview.md](references/overview.md).
+These are the 19 types Crossmint has documented (`purchase.succeeded` is no longer on its checkout page); the list may not be exhaustive, so ignore types you don't recognise. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 
-Return a `2xx` within 15 seconds. Crossmint makes 8 attempts (immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h), after which the message is marked failed and can be resent from the console. Delivery is at-least-once and offramp events can arrive out of order, so process asynchronously, deduplicate on `svix-id` (stable across retries) and compare timestamps before overwriting state. Return `400` for missing headers or a bad signature.
+Return a `2xx` within 15 seconds. Crossmint makes 8 attempts (immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h), after which the message is marked failed and can be resent from the console. Delivery is at-least-once, so process asynchronously and deduplicate on `svix-id` (stable across retries), not on `actionId`, which every event for one order shares. Offramp events can arrive out of order: status only moves forward (`pending`, `active`, `rejected`, `deleted`), so ignore an event whose status is behind the one you hold. Return `400` for missing headers or a bad signature.
 
 ## Environment Variables
 

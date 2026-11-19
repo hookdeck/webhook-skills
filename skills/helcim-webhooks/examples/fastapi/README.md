@@ -69,7 +69,7 @@ The event name is the top-level `type`. The handler routes these events and logs
 - `cardTransaction`: `{ id, type }`, a thin notification; fetch the amount and card details with Get Card Transaction by ID
 - `terminalCancel`: `{ data, type }`, a payment cancelled on a device in API mode
 
-There is no event id in the body: use the `webhook-id` header to deduplicate.
+There is no event id in the body, and Helcim doesn't say whether retries keep the `webhook-id` header. Key `cardTransaction` work on the card transaction `id` and make `terminalCancel` handling safe to repeat.
 
 ## Timestamp Window
 

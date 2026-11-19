@@ -13,7 +13,7 @@ load_dotenv()
 
 app = FastAPI(title="Junction Webhook Handler")
 
-DATA_EVENT = re.compile(r"^(daily|historical)\.data\.(.+)\.(created|updated)$")
+DATA_EVENT = re.compile(r"^(daily|historical)\.data\.(.+)\.(created|updated|in_progress)$")
 
 
 @app.get("/health")
@@ -74,12 +74,15 @@ async def junction_webhook(request: Request):
     # The delivery id is stable across retries: use it to deduplicate
     print(f"Received Junction webhook {msg_id}: {event_type}")
 
-    # Data events are named {daily|historical}.data.{resource}.{created|updated}, one per resource
+    # Data events are named {daily|historical}.data.{resource}.{created|updated|in_progress}, one per resource
     data_event = DATA_EVENT.match(event_type) if isinstance(event_type, str) else None
 
     if data_event:
         stage, resource, action = data_event.groups()
-        if stage == "historical":
+        if stage == "historical" and action == "in_progress":
+            # Data-less: one chunk of the backfill finished. Fetch those dates now; older history is still loading
+            print(f"Historical {resource} chunk ready for {user_id}: {data.get('completed_chunk_start_date')} {data.get('completed_chunk_end_date')}")
+        elif stage == "historical":
             # Data-less: the backfill for this resource finished. Fetch it through the Data Access API
             print(f"Historical {resource} backfill complete for {user_id}: {data.get('start_date')} {data.get('end_date')}")
         else:

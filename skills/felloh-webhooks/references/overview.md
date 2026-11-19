@@ -10,10 +10,10 @@ Felloh does not put an event name in the body or in a header. The events are sel
 
 | Event (label) | Triggered When | Common Use Cases |
 |---------------|----------------|------------------|
-| `transaction-status` | A transaction changes status | Mark an order paid, reconcile payments |
+| `transaction-status` | A transaction reaches a final status, declines included | Mark an order paid, reconcile payments |
 | `refund-status` | A refund changes status | Update refund state, notify the customer |
-| `booking` | A booking is created | Sync bookings into your CRM |
-| `user-create` | A Felloh user is created | Provision access, audit new users |
+| `booking` | A booking is created (`booking:create`) or deleted (`booking:delete`); a deletion has a non-null `deleted_at` | Sync bookings into your CRM |
+| `user-create` | A user, including an API user, is added to your organisation | Provision access, audit new users |
 
 ## Event Payload Structure
 
@@ -52,7 +52,7 @@ Anything else is acknowledged and logged as unhandled. Treat every field as untr
 - A non-2xx response is a failure; the timeout is 30 seconds.
 - Transaction status events are retried up to 5 times, about a minute apart.
 - Refund, booking and user events are sent once with no retry.
-- Test deliveries from the dashboard carry `X-Felloh-Test: true` and are never retried.
+- Test deliveries from the dashboard carry `X-Felloh-Test: true` and are never retried. Felloh says to discard them, so they don't look like genuine payments.
 - Delivery logs are kept for 30 days.
 
 ## Full Event Reference

@@ -20,6 +20,14 @@ There is no event-name field or header on a delivery. The payload shape tells yo
 `applicant` and `worker` are labels this skill and its examples use for the two payload shapes; they are not
 strings sent by Fountain.
 
+Each webhook setting also has a `type`, such as `Webhooks::Settings::Transition` or
+`Webhooks::Settings::PosthireWorkerActivation`: 16 are listed in Fountain's
+[Create a Hire webhook setting](https://developer.fountain.com/reference/post_v2-webhook-settings) reference.
+The type names the subscription, and Fountain doesn't document sending it with a delivery. Types for
+openings, hiring goals, locations, files, partner status and hire creation send other bodies, which the
+examples acknowledge and log as an unhandled shape. A `hire_created` body carries an `event_id` that stays
+the same across retries and resends.
+
 ## Event Payload Structure
 
 Screening (`applicant`):

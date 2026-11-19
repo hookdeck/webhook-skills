@@ -1,7 +1,7 @@
 ---
 name: northpass-webhooks
 description: >
-  Receive and verify Northpass (Gainsight Customer Education) webhooks. Use when setting up a
+  Receive and verify Northpass (Gainsight CE) webhooks. Use when setting up a
   Northpass webhook endpoint, verifying the X-Northpass-Hmac-SHA256 signature, debugging 401s,
   or handling learner_created_events, course_completed_events, learner_enrolled_to_course_events
   and other learner, course and learning path events.
@@ -14,7 +14,7 @@ metadata:
 
 # Northpass Webhooks
 
-Northpass (now Gainsight Customer Education) is a customer education LMS. Its Webhooks app
+Northpass (now Gainsight CE) is a customer education LMS. Its Webhooks app
 (Premium plan) sends a JSON `POST` when learners are created, invited or activated, courses are
 published, learners enroll, start or complete courses, activities and quizzes, register for ILT
 sessions, or progress through learning paths.

@@ -7,7 +7,7 @@ Every callback carries:
 - `X-Processing-Signature`: the lowercase hex HMAC-SHA512 (128 characters, no prefix) of the raw HTTP body
 - `X-Processing-Key`: the Master API key (public part) that signed it
 
-The HMAC key is the secret key of the account's **active Master API key**, used as UTF-8 bytes (not hex- or base64-decoded). Custom API keys never sign callbacks, and activating another Master key changes the secret. The signed content is only the body: no timestamp, id or other header is included, so there is nothing to replay-check from the signature.
+The HMAC key is the secret key of the account's **active Master API key**, used as UTF-8 bytes (not hex- or base64-decoded). Custom API keys never sign callbacks, and activating another Master key changes the secret. While no Master key is active, no callbacks are sent; they go out after you activate one, signed with that key. The signed content is only the body: no timestamp, id or other header is included, so there is nothing to replay-check from the signature.
 
 CryptoProcessing has no webhook verification SDK, so verification is manual in every framework. The same scheme signs the platform's API requests.
 
@@ -53,7 +53,7 @@ The docs write this example for signing API requests, which use the same scheme.
 - **Use the raw body.** Re-serializing parsed JSON changes whitespace and key order. In Express use `express.raw({ type: '*/*' })`; in Next.js use `request.arrayBuffer()`; in FastAPI use `await request.body()`. Don't gate the parser on `application/json`.
 - **Wrong key.** Use the secret of the *active Master* key, not a custom key and not the public key from `X-Processing-Key`. Rotating the Master key changes the secret.
 - **Hex case.** Compare hex case-insensitively (lowercase both sides) and require exactly 128 characters. Compare the whole header value as one digest; there is no `sha512=` prefix or list to split.
-- **No timestamp.** Nothing signed carries a time, so don't invent a replay window from unsigned fields. De-duplicate on `type`, the id (`id`, or `payment_request_id` for payment requests) and `status`.
+- **No timestamp.** Nothing signed carries a time, so don't invent a replay window from unsigned fields. De-duplicate on `type`, the id (`id`, or `payment_request_id` for payment requests), `status` and the `txid`s in `transactions`, because invoices and payment requests repeat a status for each new payment.
 - **Status codes.** Return `401` for a missing, malformed or wrong signature. Return `200` once processed; only `200` stops retries, and `201` stops them for a duplicate.
 
 ## Debugging Verification Failures

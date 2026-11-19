@@ -70,7 +70,7 @@ def verify_lettermint_webhook(
     if not t:
         return False
 
-    # Retries (and Hookdeck's replays) carry the original `t`, so the window is opt-in
+    # Deliveries Hookdeck retries or replays carry the original `t`, so the window is opt-in
     # (tolerance > 0).
     if tolerance is None:
         tolerance = timestamp_tolerance_seconds()
@@ -84,7 +84,7 @@ def verify_lettermint_webhook(
         secret.encode("utf-8"), t.encode("latin-1", "replace") + b"." + raw_body, hashlib.sha256
     ).digest()
 
-    # Any v1 may match (several appear during key rotation). Validate length and alphabet first,
+    # Any v1 may match (Lettermint's SDKs accept any matching v1). Validate length and alphabet first,
     # then compare the decoded bytes in constant time.
     return any(
         HEX64.fullmatch(sig) is not None and hmac.compare_digest(bytes.fromhex(sig), expected)
@@ -134,7 +134,7 @@ async def lettermint_webhook(request: Request):
         print("Received Lettermint test event")
     else:
         print(f"Unhandled event type: {event}")
-    # TODO: persist / forward. `id` is unique per event: use it as the idempotency key.
+    # Your code: persist / forward. `id` is unique per event: use it as the idempotency key.
     print(f"Processed {event} (id {payload.get('id')})")
 
     # Respond 2XX quickly; timeouts, 408, 429 and 5xx are retried (12 attempts over ~14 hours).

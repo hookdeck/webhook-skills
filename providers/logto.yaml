@@ -6,8 +6,9 @@ docs:
 notes: >
   Logto (logto.io), an open-source identity and auth platform (cloud and self-hosted). Webhooks are
   configured in Logto Console > Webhooks and fire on user flows, Management/Experience API data
-  mutations and security exceptions. Delivery (from the docs): Retries, timeout and success codes are
-  not on the surveyed pages. Logto's docs say: 'Extract the signature from the logto-signature-sha-256
+  mutations and security exceptions. Delivery (from the docs): respond 200 straight away; a response of 500 or
+  above is retried up to three times, and every attempt carries the same `deliveryId` (unique per
+  webhook and event), so deduplicate on it. No timeout length or retry interval is documented. Logto's docs say: 'Extract the signature from the logto-signature-sha-256
   header of the webhook request.' 'Logto uses an HMAC hex digest to compute the signature.' 'const
   hmac = createHmac('sha256', signingKey); hmac.update(rawBody); const signature =
   hmac.digest('hex');' From the docs (registry summary): `logto-signature-sha-256: <hex>` = hex

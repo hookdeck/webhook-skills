@@ -13,8 +13,8 @@ In the dashboard:
 2. Add a webhook with your publicly reachable HTTPS URL (a tunnel such as ngrok works for local
    development).
 
-Or programmatically, with `POST /v1/webhooks` (also available in the TypeScript SDK, the CLI and
-the MCP server; API keys need the `webhooks:write` scope):
+Or programmatically, with `POST /v1/webhooks` (also available in the TypeScript SDK and the CLI;
+API keys need the `webhooks:write` scope):
 
 ```bash
 creem webhooks create --url https://example.com/webhooks/creem \

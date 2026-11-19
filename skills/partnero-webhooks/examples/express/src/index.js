@@ -70,7 +70,8 @@ app.post('/webhooks/partnero', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   // Acknowledge within 5 seconds. Failed deliveries are retried (up to 5 attempts),
-  // so dedupe on your own keys (data.id / data.key) if processing is not idempotent.
+  // and there is no event ID. One data.id appears in several events, so key one-off
+  // actions on `${event}:${data.id || data.key}`, never on data.id alone.
   res.json({ received: true });
 });
 

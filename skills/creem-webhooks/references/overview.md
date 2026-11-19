@@ -14,14 +14,14 @@ Dispatch on the body's `eventType` field. Creem documents 17 events:
 | `eventType` | Triggered When | Common Use |
 |-------------|----------------|------------|
 | `checkout.completed` | A checkout finishes (carries `license_keys` when the product issues them) | Fulfil the order |
-| `subscription.active` | A new subscription is created and its payment collected | Synchronisation only; Creem advises `subscription.paid` for access |
+| `subscription.active` | A new subscription is paid, or a subscription returns to `active` (for example after a pause) | Synchronisation only; Creem advises `subscription.paid` for access |
 | `subscription.paid` | A subscription payment succeeds | Grant or extend access |
-| `subscription.canceled` | The merchant or customer canceled the subscription | Revoke access |
+| `subscription.canceled` | The merchant or customer canceled the subscription, or a scheduled cancellation took effect | Revoke access |
 | `subscription.scheduled_cancel` | Cancellation is scheduled for the end of the billing period | Retention offer |
 | `subscription.past_due` | A payment attempt failed; Creem retries it | Payment-recovery prompt |
 | `subscription.unpaid` | The subscription moved to `unpaid` after failed collection | Suspend access per policy |
-| `subscription.expired` | `current_end_period` was reached without a new payment | Revoke access (retries can still happen until `canceled`) |
-| `subscription.update` | The subscription was changed | Sync |
+| `subscription.expired` | `current_period_end_date` passed without a new payment (sent up to a day later) | Payment-recovery prompt; payment retries can still happen until `canceled` |
+| `subscription.update` | The subscription changed without a change of status | Sync |
 | `subscription.trialing` | The subscription entered a trial | Sync |
 | `subscription.paused` | The subscription was paused | Sync |
 | `refund.created` | A refund is created | Bookkeeping |
@@ -63,11 +63,13 @@ Dispatch on the body's `eventType` field. Creem documents 17 events:
 
 ## Retries and Delivery
 
-Reply with HTTP `200` to acknowledge. If delivery fails, Creem retries with progressive
-backoff: 5 attempts in total (the initial delivery, then after 30 seconds, 5 minutes,
-30 minutes and 6 hours). Events are not retried after 24 hours, even if attempts remain. The
-same event can arrive more than once, so make the handler idempotent. You can also resend
-events from the Developers section of the dashboard.
+Reply with any 2xx within 15 seconds to acknowledge; a slower response counts as a failed
+attempt. If delivery fails, Creem retries with progressive backoff: 5 attempts in total (the
+initial delivery, then after 30 seconds, 5 minutes, 30 minutes and 6 hours). Events are not
+retried after 24 hours, even if attempts remain. The same event can arrive more than once, so
+make the handler idempotent. Automatic retries keep the event `id`. You can also resend events
+from the Developers section of the dashboard, but a manual resend has a new `id` and
+`created_at`.
 
 Creem has no static source IPs for webhooks, so don't rely on an IP allowlist; verify the
 signature on every request. WAF or bot-protection products may challenge these automated

@@ -47,12 +47,21 @@ def handle_event(payload: dict) -> None:
     if event == "project.datafile_updated":
         data = data if isinstance(data, dict) else {}
         print(f"Datafile updated for {data.get('environment')} (revision {data.get('revision')})")
-        # TODO: re-fetch the datafile from data["cdn_url"]
+        # Your code: re-fetch the datafile from data["cdn_url"]
     elif event == "project.ruleset_updated":
         for change in data if isinstance(data, list) else []:
             entity = _as_dict(change.get("entity"))
             print(f"Ruleset change: {change.get('change_type')} on {entity.get('type')}")
-        # TODO: audit log, notify your team
+        # Your code: audit log, notify your team
+    elif event in (
+        "project.approval_created",
+        "project.approval_updated",
+        "project.approval_archived",
+    ):
+        for request in data if isinstance(data, list) else []:
+            entity = _as_dict(request.get("entity"))
+            print(f"Change request for {entity.get('name')} in {request.get('environment')}: {event}")
+        # Your code: notify reviewers, update your issue tracker
     else:
         print(f"Unhandled Optimizely event: {event}")
 

@@ -118,7 +118,7 @@ LOYALTYLION_WEBHOOK_SECRET=your_loyaltylion_secret   # OAuth client secret, or s
 npx hookdeck-cli listen 3000 loyaltylion --path /webhooks/loyaltylion
 ```
 
-No account required. Use the printed URL as the `url` when you subscribe with the Webhook API.
+No account required. Use the printed URL as the `address` when you subscribe with the Webhook API.
 
 ## Resources
 

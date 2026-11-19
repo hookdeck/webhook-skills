@@ -45,47 +45,57 @@ def handle_event(event_type: str, item: dict) -> None:
 
     if event_type == "user_created":
         print(f"User created: {user.get('userId')} ({user.get('email')})")
-        # TODO: provision the user in your system
+        # Your code: provision the user in your system
 
     elif event_type == "user_updated":
         print(f"User updated: {user.get('userId')}")
-        # TODO: sync the profile
+        # Your code: sync the profile
 
     elif event_type in ("course_cloning_complete", "course_updated"):
         print(f"Course event: {event_type}")
-        # TODO: refresh your course catalog
+        # Your code: refresh your course catalog
 
     elif event_type == "course_completion":
         print(f"Course completed: course {item.get('courseId')} by user {user.get('userId')} ({item.get('enrollmentStatus')})")
-        # TODO: issue a certificate or update HR records
+        # Your code: issue a certificate or update HR records
 
     elif event_type == "module_complete":
         print(f"Module completed: {event_type}")
-        # TODO: track progress
+        # Your code: track progress
 
-    elif event_type == "purchase_completion":
+    # LearnUpon's October 2026 changelog calls the Spree storefront webhook purchase_complete;
+    # the types table lists only purchase_completion, so accept both.
+    elif event_type in ("purchase_completion", "purchase_complete"):
         print(f"Purchase completed: order {item.get('orderId')} ({item.get('amountPaid')} {item.get('currency')})")
-        # TODO: fulfil the order
+        # Your code: fulfil the order
 
     elif event_type in ("badge_awarded", "badge_revoked"):
         print(f"Badge event: {event_type}")
-        # TODO: update recognition feeds
+        # Your code: update recognition feeds
 
     elif event_type == "course_enrollment":
         print(f"Course enrollment: user {user.get('userId')} on course {item.get('courseId')}")
-        # TODO: sync the roster
+        # Your code: sync the roster
 
     elif event_type == "course_unenrollment":
         print(f"Course unenrollment: user {user.get('userId')} from course {item.get('courseId')}")
-        # TODO: remove from the roster
+        # Your code: remove from the roster
 
     elif event_type in ("learning_path_enrollment", "learning_path_updated", "learning_path_completion"):
         print(f"Learning path event: {event_type}")
-        # TODO: sync learning path state
+        # Your code: sync learning path state
 
     elif event_type in ("event_session_creation", "event_session_updated", "event_session_canceled"):
         print(f"Live-learning session event: {event_type} (session {item.get('sessionId')})")
-        # TODO: sync your calendar
+        # Your code: sync your calendar
+
+    elif event_type in (
+        "event_session_series_created",
+        "event_session_series_updated",
+        "event_session_series_canceled",
+    ):
+        print(f"Live-learning session series event: {event_type} (series {item.get('id')})")
+        # Your code: sync your calendar
 
     elif event_type in (
         "learning_journey_enrollment",
@@ -95,7 +105,7 @@ def handle_event(event_type: str, item: dict) -> None:
         "learning_journey_archived",
     ):
         print(f"Learning journey event: {event_type}")
-        # TODO: sync learning journey state
+        # Your code: sync learning journey state
 
     else:
         print(f"Unhandled event: {event_type}")

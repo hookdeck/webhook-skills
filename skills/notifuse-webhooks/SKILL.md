@@ -82,12 +82,12 @@ The docs list 23 events (the list may not be exhaustive).
 | `email.bounced` / `email.complained` / `email.unsubscribed` | Delivery failure, spam report, unsubscribe link |
 | `custom_event.created` / `custom_event.updated` / `custom_event.deleted` | A custom event is recorded / updated / soft-deleted |
 
-> **Full payloads:** [references/overview.md](references/overview.md) and [Notifuse's webhook docs](https://docs.notifuse.com/features/webhooks).
+> **Full payloads:** [references/overview.md](references/overview.md) and [Notifuse's webhook docs](https://www.notifuse.com/docs/features/webhooks).
 
 ## Delivery Semantics
 
-- Return a `2xx` within **30 seconds**. Enqueue the event and process it asynchronously.
-- Up to 10 retries over about 34 hours (immediate, 30 s, 1 m, 2 m, 5 m, 15 m, 30 m, 1 h, 2 h, 6 h, final 24 h).
+- Return a `2xx` within **10 seconds**. Enqueue the event and process it asynchronously.
+- Up to 10 attempts, the last about 10 hours after the first (immediate, then 30 s, 1 m, 2 m, 5 m, 15 m, 30 m, 1 h, 2 h, 6 h). A failed 10th attempt is final.
 - `429` never counts as a failure. `410 Gone` retires the subscription at once.
 - 20 consecutive failures spanning more than 2 hours disable the subscription, and events while it is disabled are dropped, not replayed.
 - The URL must be publicly reachable: private, loopback and metadata addresses are refused (self-hosted can set `WEBHOOK_DELIVERY_ALLOW_PRIVATE_HOSTS=true`).

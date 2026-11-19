@@ -33,7 +33,7 @@ Use the printed URL as the endpoint URL in the dashboard. A hand-written `curl` 
 
 ## Retries and Recovery
 
-Failed deliveries are retried on an 8-attempt schedule (about 27.6 hours; see [overview.md](overview.md)). An endpoint that fails for 5 consecutive days is disabled and must be re-enabled from the dashboard (open the endpoint, then **Enable Endpoint**). The dashboard can resend a single message or recover failed ones since a date. Resent messages keep their original `webhook-timestamp` when they pass through Hookdeck, see [verification.md](verification.md).
+Failed deliveries are retried on an 8-attempt schedule (about 27.6 hours; see [overview.md](overview.md)). An endpoint that fails for 5 consecutive days is disabled and must be re-enabled from the dashboard (open the endpoint, then **Enable Endpoint**). The dashboard can resend a single message or recover failed ones since a date. Hookdeck retries and replays keep the original `webhook-timestamp`; see [verification.md](verification.md).
 
 ## Webhook Transformations
 

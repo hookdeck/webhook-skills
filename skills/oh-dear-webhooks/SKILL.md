@@ -64,7 +64,7 @@ Dispatch on the top-level `type` field of the JSON body (nested objects also hav
 |----------------|-------------|
 | `monitorAddedNotification` | A monitor was added to the team |
 | `httpUptimeCheckFailedNotification` | HTTP uptime check failed (`tcp...` and `ping...` variants exist) |
-| `httpUptimeCheckRecoveredNotification` | Site is back up (`tcp...` and `ping...` variants exist) |
+| `httpUptimeCheckRecoveredNotification` | Site is back up, or only partly reachable when `run.result` is `warning` (`tcp...` and `ping...` variants exist) |
 | `certificateExpiresSoonNotification` | TLS certificate is about to expire |
 | `brokenLinksFoundNotification` | Broken links were found on the site |
 | `cronFailedNotification` | A scheduled task reported a failure |
@@ -76,7 +76,6 @@ Oh Dear documents 37 event types in total (performance, mixed content, DNS, appl
 | Header | Description |
 |--------|-------------|
 | `OhDear-Signature` | Lowercase hex HMAC-SHA256 of the raw body |
-| `Content-Type` | `application/json` |
 
 The body also carries a `uuid`. A retry or manual Resend keeps the same `uuid`, so use it for idempotency.
 

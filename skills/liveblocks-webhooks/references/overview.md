@@ -4,7 +4,7 @@
 
 [Liveblocks](https://liveblocks.io) is realtime collaboration infrastructure: rooms, Storage, Yjs documents, Comments and notifications. It sends an HTTP POST with a JSON body to every webhook endpoint you add in your project's **Webhooks** dashboard whenever users or systems change Liveblocks data. Deliveries follow the [Standard Webhooks](https://standardwebhooks.com/) specification and are signed with the endpoint's `whsec_` secret.
 
-Each endpoint listens to all events by default. Narrow it with **Message Filtering** (the event selection in the endpoint form). The dashboard's Event Catalog lists the events available for subscription with their schemas.
+Each endpoint listens to all events by default. Narrow it by editing the endpoint's event subscriptions in the dashboard, or set `subscribedEvents` with the REST API's webhook management endpoints.
 
 ## Event Payload Structure
 
@@ -26,7 +26,7 @@ Every body is `{ type, data }`:
 | `type` | The camelCase event type, for example `storageUpdated`. This is what handlers switch on |
 | `data` | Event-specific fields. `projectId` and `roomId` are on every event except a custom notification, whose `roomId` can be `null` |
 
-There is no event id in the body. The `webhook-id` header is unique per message and stable across retries, so it is the idempotency key.
+There is no event id in the body, and Liveblocks doesn't document whether a retry reuses the `webhook-id` header. Make handlers idempotent on payload values, such as `commentId` with `type`, or `inboxNotificationId` with `channel` for notifications.
 
 ## Common Event Types
 
@@ -49,7 +49,7 @@ There is no event id in the body. The `webhook-id` header is unique per message 
 | `threadMetadataUpdated` | A thread's metadata is updated | `threadId`, `updatedAt`, `updatedBy` |
 | `threadMarkedAsResolved` | A thread is marked resolved | `threadId`, `updatedAt`, `updatedBy` |
 | `threadMarkedAsUnresolved` | A thread is marked unresolved | `threadId`, `updatedAt`, `updatedBy` |
-| `notification` | A user has an unseen notification; used to build notification emails | `channel` (`"email"`), `kind`, `userId`, `inboxNotificationId`, `createdAt`, `triggeredAt`, plus kind-specific fields |
+| `notification` | A user has an unseen notification; used to build notification emails | `channel`, `kind`, `userId`, `inboxNotificationId`, `createdAt`, `triggeredAt`, plus kind-specific fields |
 
 `userEntered`, `userLeft`, the room, comment and thread events are not throttled. `storageUpdated` and `ydocUpdated` are: a burst of writes yields one event roughly 60 seconds after the first (Enterprise plans can raise the throttle), so don't treat them as a write log.
 
@@ -64,6 +64,8 @@ There is no event id in the body. The `webhook-id` header is unique per message 
 | `$yourKind` | A custom notification you triggered from your server; any string starting with `$` | `roomId` can be `null` |
 
 `createdAt` is when the webhook event was created; `triggeredAt` is when the notification itself was created.
+
+The events reference shows `channel` as `"email"`, but Liveblocks' [notification settings announcement](https://liveblocks.io/blog/configure-each-users-notifications-settings-for-slack-email-and-more) says each channel (email, Slack, Microsoft Teams, Web Push) triggers its own event, and `@liveblocks/node` types `channel` as `email`, `slack`, `teams` or `webPush`. Check `channel` before sending, or a user with two channels enabled gets two emails.
 
 ## Full Event Reference
 

@@ -4,7 +4,7 @@
 
 [OpnForm](https://opnform.com) is an open-source form builder. A form's **webhook integration** (added in the form's Integrations settings, or with `POST /open/forms/{form}/integrations`) sends each new submission as an HTTPS `POST` to a URL you choose. You can add up to 10 custom headers, and optionally set a **webhook secret** so each request is signed.
 
-Each delivery attempt is logged per integration (List Integration Events in the API), and the latest eligible failed attempt can be retried manually through the API. OpnForm's docs do not state automatic retries, a timeout or the status code it expects, so respond `2xx` quickly and do slow work afterwards.
+Each delivery attempt is logged per integration (List Integration Events in the API), and the latest eligible failed attempt can be retried manually through the API. OpnForm's docs do not state automatic retries, a timeout or the status code it expects. Its [open-source code](https://github.com/OpnForm/OpnForm/blob/main/api/app/Integrations/Handlers/WebhookIntegration.php) makes one attempt with a 5-second timeout and counts any non-`2xx` response as a failure, so respond `2xx` quickly and do slow work afterwards.
 
 ## What Events Are Sent?
 
@@ -32,7 +32,7 @@ There is **one kind of delivery**: a form submission. OpnForm sends no event nam
 | Field | Description |
 |-------|-------------|
 | `form_id`, `form_title`, `form_slug` | The form that received the submission |
-| `submission_id` | Submission id; use it for idempotency |
+| `submission_id` | Submission id. A retry or an edit to the submission sends it again, so upsert on it |
 | `edit_link` | Link to edit the submission |
 | `submission` | Field name to submitted value |
 | `data` | Field id to `{ value, name, type }` |
