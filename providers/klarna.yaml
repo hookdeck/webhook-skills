@@ -1,0 +1,24 @@
+name: klarna
+displayName: Klarna
+docs:
+  webhooks: https://docs.klarna.com/klarna-network-distribution/setup-your-integration/connection-configuration/setup-your-webhooks/
+  verification: https://docs.klarna.com/klarna-network-distribution/setup-your-integration/connection-configuration/setup-your-webhooks/
+  events: https://docs.klarna.com/klarna-network-distribution/api/klarna-notifications-api/
+notes: >
+  Klarna Notifications API (Klarna Network Distribution, acquirers, Klarna Direct). Signing keys via
+  POST /v2/notification/signing-keys (shown once, up to 50 per account); webhooks via the same API
+  with event types and wildcards (payment.request.*, portal.*). Klarna-Signature = lowercase hex
+  HMAC-SHA256 of the raw body keyed with the signing_key as UTF-8 text; Klarna-Signing-Key-Id names
+  the key. Body {metadata {event_id, event_type, event_version, occurred_at, product_instance_id,
+  webhook_id, live, ...}, payload}. Store keyed on metadata.event_id, acknowledge with
+  200/201/202/204, process asynchronously; duplicates get a 2xx. Docs suggest 400 on a bad
+  signature. Endpoints must be HTTPS on port 443 or 8443. Retries after 10 s, 2 min, 15 min, 3 h,
+  6 h, 12 h. Test environment can simulate webhooks. Legacy Payments/Checkout push URLs are
+  unsigned and not covered. Hookdeck source type KLARNA (HMAC sha256 hex on klarna-signature; one
+  key per source; verification optional; no timestamp window).
+testScenario:
+  events:
+    - payment.request.state-change.completed
+    - payment.request.state-change.expired
+catalog:
+  summary: Verify Klarna Notifications API webhooks (`Klarna-Signature` lowercase hex HMAC-SHA256 of the raw body keyed with the signing key), rotate signing keys, handle payment request, transaction, dispute and settlement events

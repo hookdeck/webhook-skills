@@ -1,0 +1,24 @@
+{
+  "name": "monnify-webhooks-nextjs",
+  "version": "1.0.0",
+  "description": "Receive and verify Monnify webhooks with Next.js (App Router)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}
