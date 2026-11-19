@@ -1,0 +1,26 @@
+name: zoho-crm
+displayName: Zoho CRM
+docs:
+  webhooks: https://help.zoho.com/portal/en/kb/crm-v2/automate-business-processes/actions/articles/crm-v2-webhooks-workflow
+  verification: https://www.zoho.com/crm/developer/docs/api/v8/create-webhook.html
+  events: https://help.zoho.com/portal/en/kb/crm-v2/automate-business-processes/actions/articles/crm-v2-webhooks-workflow
+notes: >
+  CRM workflow webhooks (Setup > Automation > Actions > Webhooks, fired by a workflow rule's
+  Call Webhook action). No signature: requests are unsigned. Authenticate with a secret header the
+  user adds as a Custom Parameter under the webhook's Header (static name/value, documented for
+  "Auth tokens, security tokens, API key"). Per the create-webhook API reference, headers apply
+  "only for POST and PUT requests" (GET and DELETE send parameters in the URL), so the examples
+  accept POST and PUT only. The header name is user-chosen: ZOHO_CRM_WEBHOOK_HEADER (default
+  X-Webhook-Secret) and ZOHO_CRM_WEBHOOK_SECRET (exact whole value), looked up case-insensitively
+  and compared in constant time; 401 on mismatch, 500 when unconfigured. The body is user-defined
+  (form-data module/custom/user-defined parameters, or raw Text/JSON/HTML/XML with ${Module.Field}
+  merge fields), so payloads are illustrative and the examples parse JSON, form-encoded or text.
+  No event field or delivery ID. 10 s socket timeout; one retry after 15 min. Ports 80/443 only.
+  The notifications API (/actions/watch) is a different mechanism (token in the body) and isn't
+  covered. Hookdeck source type ZOHO_CRM (API_KEY, header name + value, verification optional).
+testScenario:
+  events:
+    - 'Leads workflow rule webhook (illustrative JSON template)'
+    - 'Deals workflow rule webhook (illustrative form-data parameters)'
+catalog:
+  summary: 'Authenticate Zoho CRM workflow webhooks (unsigned: a secret Custom Parameter header on POST/PUT compared in full in constant time), handle record notifications built from merge fields'

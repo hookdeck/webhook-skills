@@ -1,0 +1,28 @@
+name: flutterwave
+displayName: Flutterwave
+docs:
+  webhooks: https://developer.flutterwave.com/v4/docs/webhooks
+  verification: https://developer.flutterwave.com/v4/docs/webhooks
+  events: https://developer.flutterwave.com/docs/webhooks
+notes: >
+  African payments platform. Two webhook schemes, both still supported. v4: header
+  flutterwave-signature = base64 HMAC-SHA256 of the raw body keyed with the secret hash (UTF-8, used
+  as-is), per the "Sample hashing" helper on the v4 webhooks page. The same page's later Node/PHP/
+  Python framework examples compare the header to the secret hash directly; the docs contradict
+  themselves, the skill says so and follows the HMAC helper. v3: header verif-hash = the secret hash
+  itself, unsigned. Examples: if flutterwave-signature is present verify v4 (no fallback on
+  mismatch), else compare verif-hash in constant time; 401 on failure, 500 when unconfigured.
+  developer.flutterwave.com/v4/docs/webhooks.md serves the v3 text; the v4 section is on the
+  rendered page and in developer.flutterwave.com/llms-full.txt. v4 body {webhook_id or id (wbk_...),
+  timestamp (ms), type, data}; types charge.completed, transfer.disburse, transfer.reversal,
+  order.authorization, refund.completed. v3 body {event, data, "event.type"}; virtual card and v3
+  refund payloads have no event field. Must return 200 (any other code incl. 3xx fails); 60 s
+  timeout; 3 retries 30 min apart when retries are enabled. Re-verify transactions via the API
+  before giving value. Hookdeck source type FLUTTERWAVE (HMAC on flutterwave-signature, v4 only;
+  verification optional, leave it off for v3; no timestamp window).
+testScenario:
+  events:
+    - charge.completed
+    - transfer.disburse
+catalog:
+  summary: Verify Flutterwave webhooks (v4 `flutterwave-signature` base64 HMAC-SHA256 of the raw body keyed with the secret hash, v3 `verif-hash` secret hash compared in constant time), handle charge.completed, transfer.disburse, transfer.completed and refund events
