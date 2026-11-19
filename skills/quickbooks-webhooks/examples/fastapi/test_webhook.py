@@ -56,8 +56,23 @@ def legacy_payload(operation: str = "Create", name: str = "Customer") -> dict:
     }
 
 
-def post(body: str, signature=None):
-    headers = {"Content-Type": "application/json; charset=utf-8"}
+# Exact bodies of two live test deliveries from the Intuit Developer portal's
+# "Send test events" (November 2026), one per payload format. The real verifier token
+# isn't recorded, so the tests sign these bytes with the test token.
+CAPTURED_LEGACY_BODY = (
+    '{"eventNotifications":[{"realmId":"310687","dataChangeEvent":{"entities":[{"id":"1234",'
+    '"operation":"Create","name":"Account","lastUpdated":"2026-11-18T16:08:22.702Z"}]}}]}'
+)
+CAPTURED_CLOUDEVENTS_BODY = (
+    '[{"specversion":"1.0","id":"fb16f042-7faa-4897-b9a2-bed048bc3078",'
+    '"source":"intuit.dsnBgbseACLLRZNxo2dfc4evmEJdxde58xeeYcZliOU=","type":"qbo.invoice.created.v1",'
+    '"datacontenttype":"application/json","time":"2026-11-18T16:10:06.261845232Z",'
+    '"intuitentityid":"1234","intuitaccountid":"310687","data":{}}]'
+)
+
+
+def post(body: str, signature=None, content_type="application/json; charset=utf-8"):
+    headers = {"Content-Type": content_type}
     if signature is not None:
         headers["intuit-signature"] = signature
     return client.post("/webhooks/quickbooks", content=body, headers=headers)
@@ -109,8 +124,31 @@ class TestNormalizeEvents:
         assert event["action"] == "merged"
         assert event["realm_id"] == "310687"
 
+    @pytest.mark.parametrize(
+        "operation,action", [("Delete", "deleted"), ("Void", "void"), ("Emailed", "emailed")]
+    )
+    def test_legacy_maps_other_operations(self, operation, action):
+        [event] = normalize_events(legacy_payload(operation, "Invoice"))
+        assert event["type"] == f"qbo.invoice.{action}.v1"
+        assert event["action"] == action
+
+    def test_captured_legacy_body(self):
+        [event] = normalize_events(json.loads(CAPTURED_LEGACY_BODY))
+        assert event["type"] == "qbo.account.created.v1"
+        assert (event["entity_id"], event["realm_id"]) == ("1234", "310687")
+
+    def test_captured_cloudevents_array(self):
+        [event] = normalize_events(json.loads(CAPTURED_CLOUDEVENTS_BODY))
+        assert event["type"] == "qbo.invoice.created.v1"
+        assert (event["entity"], event["action"]) == ("invoice", "created")
+        assert (event["entity_id"], event["realm_id"]) == ("1234", "310687")
+        assert event["data"] == {}
+
     def test_unrecognized(self):
         assert normalize_events({"foo": "bar"}) is None
+
+    def test_single_cloudevent_object_rejected(self):
+        assert normalize_events(json.loads(CAPTURED_CLOUDEVENTS_BODY)[0]) is None
 
 
 class TestQuickBooksWebhook:
@@ -127,6 +165,24 @@ class TestQuickBooksWebhook:
         response = post_signed(json.dumps([cloud_event("qbo.account.created.v1")]))
         assert response.status_code == 200
         assert response.json() == {"received": True, "count": 1}
+
+    def test_captured_cloudevents_array_batch_content_type(self):
+        response = post(
+            CAPTURED_CLOUDEVENTS_BODY,
+            generate_quickbooks_signature(CAPTURED_CLOUDEVENTS_BODY, VERIFIER_TOKEN),
+            content_type="application/cloudevents-batch+json; charset=utf-8",
+        )
+        assert response.status_code == 200
+        assert response.json() == {"received": True, "count": 1}
+
+    def test_captured_legacy_body(self):
+        response = post_signed(CAPTURED_LEGACY_BODY)
+        assert response.status_code == 200
+        assert response.json() == {"received": True, "count": 1}
+
+    def test_single_cloudevent_object_returns_400(self):
+        response = post_signed(json.dumps(json.loads(CAPTURED_CLOUDEVENTS_BODY)[0]))
+        assert response.status_code == 400
 
     def test_multiple_companies(self):
         body = json.dumps(

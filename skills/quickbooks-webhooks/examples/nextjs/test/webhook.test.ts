@@ -32,8 +32,20 @@ function cloudEvent(type: string, overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeRequest(body: string, signature?: string): NextRequest {
-  const headers: Record<string, string> = { 'content-type': 'application/json; charset=utf-8' };
+// Exact bodies of two live test deliveries from the Intuit Developer portal's
+// "Send test events" (November 2026), one per payload format. The real verifier token
+// isn't recorded, so the tests sign these bytes with the test token.
+const CAPTURED_LEGACY_BODY =
+  '{"eventNotifications":[{"realmId":"310687","dataChangeEvent":{"entities":[{"id":"1234","operation":"Create","name":"Account","lastUpdated":"2026-11-18T16:08:22.702Z"}]}}]}';
+const CAPTURED_CLOUDEVENTS_BODY =
+  '[{"specversion":"1.0","id":"fb16f042-7faa-4897-b9a2-bed048bc3078","source":"intuit.dsnBgbseACLLRZNxo2dfc4evmEJdxde58xeeYcZliOU=","type":"qbo.invoice.created.v1","datacontenttype":"application/json","time":"2026-11-18T16:10:06.261845232Z","intuitentityid":"1234","intuitaccountid":"310687","data":{}}]';
+
+function makeRequest(
+  body: string,
+  signature?: string,
+  contentType = 'application/json; charset=utf-8'
+): NextRequest {
+  const headers: Record<string, string> = { 'content-type': contentType };
   if (signature !== undefined) headers['intuit-signature'] = signature;
   return new NextRequest('http://localhost:3000/webhooks/quickbooks', {
     method: 'POST',
@@ -82,6 +94,44 @@ describe('POST /webhooks/quickbooks', () => {
     const res = await POST(signedRequest(JSON.stringify([cloudEvent('qbo.account.created.v1')])));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true, count: 1 });
+  });
+
+  it('accepts the captured CloudEvents array sent as application/cloudevents-batch+json', async () => {
+    const res = await POST(
+      makeRequest(
+        CAPTURED_CLOUDEVENTS_BODY,
+        generateQuickBooksSignature(CAPTURED_CLOUDEVENTS_BODY, verifierToken),
+        'application/cloudevents-batch+json; charset=utf-8'
+      )
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ received: true, count: 1 });
+  });
+
+  it('accepts the captured legacy body sent as application/json', async () => {
+    const res = await POST(signedRequest(CAPTURED_LEGACY_BODY));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ received: true, count: 1 });
+  });
+
+  it('returns 400 for a validly signed single CloudEvent object (not an array)', async () => {
+    const res = await POST(signedRequest(JSON.stringify(JSON.parse(CAPTURED_CLOUDEVENTS_BODY)[0])));
+    expect(res.status).toBe(400);
+  });
+
+  it.each(['Delete', 'Void', 'Emailed'])('accepts a legacy %s operation', async (operation) => {
+    const body = JSON.stringify({
+      eventNotifications: [
+        {
+          realmId: '310687',
+          dataChangeEvent: {
+            entities: [{ name: 'Invoice', id: '1', operation, lastUpdated: '2026-11-18T16:08:22.702Z' }],
+          },
+        },
+      ],
+    });
+    const res = await POST(signedRequest(body));
+    expect(res.status).toBe(200);
   });
 
   it('handles events for multiple companies in one notification', async () => {
