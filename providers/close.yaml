@@ -1,0 +1,25 @@
+name: close
+displayName: Close
+docs:
+  webhooks: https://developer.close.com/topics/webhooks/
+  verification: https://developer.close.com/topics/webhooks/
+  events: https://developer.close.com/topics/webhooks/
+notes: >
+  Close (close.com CRM) webhook subscriptions, created through the API (POST /api/v1/webhook/); the
+  response includes signature_key. Headers close-sig-timestamp and close-sig-hash: bare hex
+  HMAC-SHA256 of the timestamp and payload concatenated with NO delimiter, keyed with the
+  HEX-decoded signature_key (Python sample: bytearray.fromhex(key); sample key
+  058bfb6a3d8cfdc4da7c3be5901b16ae11da982b46a25fb2cd7016e97a140a1c). The docs' sample hash can't be
+  reproduced (no payload shown), so examples use a vector built from the sample key. A 64-char hex
+  key is also valid base64 and decodes to 48 wrong bytes: never base64-decode it. No timestamp
+  tolerance documented. POST; payload {subscription_id, event: {id, object_type, action, object_id,
+  lead_id, changed_fields, data, previous_data, ...}}; 2xx within 15 s (connect within 5 s);
+  retries with exponential backoff up to every 20 minutes for 72 hours. Hookdeck source type CLOSE
+  (HMAC alias, secret_encoding hex, signed_content_template {header:close-sig-timestamp}{body};
+  verification optional; no timestamp window).
+testScenario:
+  events:
+    - lead.created
+    - opportunity.updated
+catalog:
+  summary: 'Verify Close (close.com) webhooks (`close-sig-hash`, hex HMAC-SHA256 of timestamp + body keyed with the hex-decoded signature_key), handle lead and opportunity events'

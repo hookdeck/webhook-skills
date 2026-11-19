@@ -1,0 +1,21 @@
+name: outseta
+displayName: Outseta
+docs:
+  webhooks: https://go.outseta.com/support/kb/articles/Rm85R5Q4/secure-and-verify-webhooks-with-a-sha256-signature
+  verification: https://go.outseta.com/support/kb/articles/Rm85R5Q4/secure-and-verify-webhooks-with-a-sha256-signature
+  events: https://go.outseta.com/support/kb/articles/Rm85R5Q4/secure-and-verify-webhooks-with-a-sha256-signature
+notes: >
+  Outseta notifications (Settings > Notifications). Signing is optional: once you add a Webhook
+  Signature Key, Outseta adds x-hub-signature-256: sha256=<hex HMAC-SHA256 of the raw body>. The key
+  is user-generated, "must be a 32-byte hex-encoded string" (openssl rand -hex 32), and is
+  HEX-decoded (Node sample: Buffer.from(keyAsHex, "hex")). A 64-char hex key is also valid base64
+  and decodes to 48 wrong bytes: never base64-decode it. No timestamp, no test vector, HTTP method
+  not stated on the article; suggested test trigger is Person Login. The article shows no payload;
+  examples read Uid if present and use a synthetic key. Hookdeck source type OUTSETA (HMAC alias,
+  secret_encoding hex; the sha256= value goes through the signature parser; POST pre-selected;
+  verification optional; no timestamp window).
+testScenario:
+  events:
+    - Person Login
+catalog:
+  summary: 'Verify Outseta webhooks (`x-hub-signature-256: sha256=<hex>`, HMAC-SHA256 of the body keyed with the hex-decoded 32-byte Webhook Signature Key)'

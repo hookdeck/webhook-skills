@@ -1,0 +1,26 @@
+name: employment-hero
+displayName: Employment Hero
+docs:
+  webhooks: https://developer.employmenthero.com/api-references/webhook.md
+  verification: https://developer.employmenthero.com/api-references/webhook/verify-webhook-request.md
+  events: https://developer.employmenthero.com/api-references/webhook/webhook-events.md
+notes: >
+  Employment Hero (HR / payroll) webhooks, registered in the Developer Portal (My Webhooks); only on
+  a Platinum subscription and above. Headers X-EmploymentHero-Timestamp and
+  X-EmploymentHero-Signature: bare base64 HMAC-SHA256 of "<timestamp>.<raw body>", keyed with the
+  base64-DECODED secret key (Ruby sample: Base64.decode64, OpenSSL::HMAC.digest,
+  Base64.strict_encode64, secure_compare). Events are listed at /api-references/webhook/webhook-events.md
+  (40 title-case names such as Employee Created, Leave Request Approved, Timesheet Entry
+  Updated, Goal Deleted, Pay Detail Updated). No test vector, no timestamp tolerance, no payload sample (the data
+  pages return 404) and no HTTP method are documented ("trigger an HTTP request"); success is HTTP 200 and a
+  failed delivery is retried up to 3 times. Examples use a synthetic secret, accept POST, assume
+  no payload field and dedupe on a hash of the body. Hookdeck source type EMPLOYMENT_HERO (HMAC
+  alias, secret_encoding base64, signed_content_template
+  {header:x-employmenthero-timestamp}.{body}; POST pre-selected; verification optional; no
+  timestamp window).
+testScenario:
+  events:
+    - Employee Created
+    - Employee Updated
+catalog:
+  summary: 'Verify Employment Hero webhooks (`X-EmploymentHero-Signature`, base64 HMAC-SHA256 of `<timestamp>.<body>` keyed with the base64-decoded secret key)'

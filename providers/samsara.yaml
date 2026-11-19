@@ -1,0 +1,28 @@
+name: samsara
+displayName: Samsara
+docs:
+  webhooks: https://developers.samsara.com/docs/webhooks
+  verification: https://developers.samsara.com/docs/webhooks
+  events: https://developers.samsara.com/docs/webhooks
+notes: >
+  Samsara (fleet / IoT) webhooks. Headers X-Samsara-Timestamp (unix seconds) and
+  X-Samsara-Signature: v1=<hex>, HMAC-SHA256 of "v1:<timestamp>:<raw body>". The secret key shown
+  with the webhook (Settings > Webhooks) is base64 and must be decoded before use (docs sample
+  secret rGoy+beNph0qGBLj6Aqoydj6SGA=). "v1 is the only current signature version; any other
+  prefix means the request is not from Samsara." The sample request on the docs page does not
+  reproduce with the sample secret, so examples use a vector built from the sample secret. No
+  timestamp tolerance is documented. POST; non-2xx retried, 5 attempts total with exponential
+  backoff; no redirects. Two payload shapes, both with eventId and eventType: Webhooks 1.0 (Alert,
+  and Ping from the Test button) add eventMs (epoch ms) and event; Webhooks 2.0 Event Subscriptions
+  (e.g. DvirSubmitted, see /docs/dvirsubmitted) add eventTime (RFC 3339), orgId, webhookId and data.
+  The webhooks page's "all payloads have eventId, eventMs, eventType, event" describes 1.0 only.
+  Examples accept either shape. Hookdeck source type SAMSARA
+  (HMAC alias, secret_encoding base64, signed_content_template v1:{header:x-samsara-timestamp}:{body};
+  verification optional; no timestamp window).
+testScenario:
+  events:
+    - Ping
+    - Alert
+    - DvirSubmitted
+catalog:
+  summary: 'Verify Samsara webhooks (`X-Samsara-Signature: v1=<hex>`, HMAC-SHA256 of `v1:<timestamp>:<body>` keyed with the base64-decoded secret key), handle Alert and Ping (1.0) and Event Subscription (2.0) payloads'
