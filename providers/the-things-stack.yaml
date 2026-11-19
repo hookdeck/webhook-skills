@@ -1,0 +1,25 @@
+name: the-things-stack
+displayName: The Things Stack
+docs:
+  webhooks: https://www.thethingsindustries.com/docs/integrations/webhooks/creating-webhooks/
+  verification: https://www.thethingsindustries.com/docs/integrations/webhooks/creating-webhooks/
+  events: https://www.thethingsindustries.com/docs/integrations/data-formats/
+notes: >
+  LoRaWAN Application Server webhooks (The Things Network / The Things Industries). Console:
+  application > Integrations > Webhooks > + Add webhook > Custom webhook, format JSON, Base URL, per
+  event type paths appended to it. No signing. "Request authentication" stores
+  Authorization: Basic base64(user:pass) (docs say "Authentication: Basic", a typo; lorawan-stack
+  webhook-form/mapping.js sets Authorization). Always POST (request.go uses http.MethodPost). Other
+  headers: X-Downlink-Apikey (secret) / X-Downlink-Push / X-Downlink-Replace when a downlink key is
+  set, X-Tts-Domain, Content-Type. One top-level object per message: uplink_message,
+  uplink_normalized, join_accept, downlink_ack/nack/sent/failed/queued/queue_invalidated,
+  location_solved, service_data; empty fields omitted. Default timeout 5 s (troubleshooting page;
+  retries page says 10 s); no retries by default; Cloud Plus "Retries" option: 7 tries, 4 min,
+  8 min, then 15 min, 15% jitter. Failures appear as as.webhook.fail in Live data. Hookdeck source
+  type THE_THINGS_STACK (BASIC_AUTH; POST).
+testScenario:
+  events:
+    - uplink_message
+    - join_accept
+catalog:
+  summary: 'Authenticate The Things Stack webhooks (unsigned; Request authentication sends `Authorization: Basic` checked in constant time), handle uplink_message, join_accept, downlink and location messages'

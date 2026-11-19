@@ -1,0 +1,27 @@
+name: surveymonkey
+displayName: SurveyMonkey
+docs:
+  webhooks: https://api.surveymonkey.com/v3/docs
+  verification: https://api.surveymonkey.com/v3/docs
+  events: https://api.surveymonkey.com/v3/docs
+notes: >
+  Webhooks are created with the API (POST /v3/webhooks; one event_type per webhook, object_type
+  survey/collector/app with object_ids; subscription_url unique across the account). Creating,
+  replacing (PUT) or modifying (PATCH) a webhook sends a HEAD request that must return 200;
+  bypass_ping=true on POST/PUT/PATCH skips it. Callbacks are POSTs with Sm-Apikey (client ID, or
+  API key on old auth) and Sm-Signature = base64 HMAC-SHA1 of the raw body keyed with the literal
+  "<client ID>&<client secret>" (old auth "<API key>&<API secret>"). Content-Type is
+  application/vnd.surveymonkey.<object>.v1+json, so JSON middleware may skip it. Optional
+  `authorization` field is sent as an Authorization header. Events response_completed,
+  response_updated (one per page), response_created, response_disqualified, response_overquota,
+  response_deleted, survey_created/updated/deleted, collector_created/updated/deleted,
+  app_installed/uninstalled. Body {name, filter_type, filter_id, event_type, event_id, object_type,
+  object_id, event_datetime, resources}; IDs only. Retries not documented. Hookdeck source type
+  SURVEYMONKEY (HMAC sha1 base64 on sm-signature, secret pasted as "<client ID>&<secret>";
+  verification optional; no timestamp window; the edge answers the HEAD check).
+testScenario:
+  events:
+    - response_completed
+    - survey_created
+catalog:
+  summary: Verify SurveyMonkey webhooks (`Sm-Signature` base64 HMAC-SHA1 of the raw body keyed with "<client ID>&<client secret>"), answer the HEAD check on webhook creation, handle response, survey, collector and app events
