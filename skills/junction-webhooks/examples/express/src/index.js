@@ -64,12 +64,15 @@ app.post('/webhooks/junction', express.raw({ type: '*/*' }), (req, res) => {
   // The delivery id is stable across retries: use it to deduplicate
   console.log(`Received Junction webhook ${id}: ${type}`);
 
-  // Data events are named {daily|historical}.data.{resource}.{created|updated}, one per resource
-  const dataEvent = /^(daily|historical)\.data\.(.+)\.(created|updated)$/.exec(type ?? '');
+  // Data events are named {daily|historical}.data.{resource}.{created|updated|in_progress}, one per resource
+  const dataEvent = /^(daily|historical)\.data\.(.+)\.(created|updated|in_progress)$/.exec(type ?? '');
 
   if (dataEvent) {
     const [, stage, resource, action] = dataEvent;
-    if (stage === 'historical') {
+    if (stage === 'historical' && action === 'in_progress') {
+      // Data-less: one chunk of the backfill finished. Fetch those dates now; older history is still loading
+      console.log(`Historical ${resource} chunk ready for ${event.user_id}:`, data.completed_chunk_start_date, data.completed_chunk_end_date);
+    } else if (stage === 'historical') {
       // Data-less: the backfill for this resource finished. Fetch it through the Data Access API
       console.log(`Historical ${resource} backfill complete for ${event.user_id}:`, data.start_date, data.end_date);
     } else {

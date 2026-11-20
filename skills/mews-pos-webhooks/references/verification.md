@@ -42,7 +42,7 @@ Use `await request.body()` in FastAPI and compare bytes with `hmac.compare_diges
 ## Common Gotchas
 
 - **Raw body**: parsing and re-serialising JSON changes the bytes and breaks the signature. Verify first, parse second.
-- **Compare the string, not just the decoded bytes**: a digest whose last Base64 character has stray low bits decodes to the same 32 bytes but is not canonical. Comparing the padded string rejects it, which matches Hookdeck's source.
+- **Compare the string, not just the decoded bytes**: a digest whose last Base64 character has stray low bits decodes to the same 32 bytes but is not canonical. Comparing the padded string rejects it.
 - **No timestamp**: nothing signed is time-based, so there is no tolerance window. Don't invent one from unsigned headers or body fields (`updatedAt` is not signed).
 - **Secret is not decoded**: use the secret's UTF-8 bytes directly.
 - **Whole header value**: don't split on commas or strip prefixes.

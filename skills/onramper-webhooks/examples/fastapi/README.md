@@ -52,5 +52,5 @@ Give the printed URL to your Onramper Customer Success Manager.
 
 1. The raw body bytes are hashed with HMAC-SHA256 keyed with `ONRAMPER_WEBHOOK_SECRET` and compared to `X-Onramper-Webhook-Signature` (64 hex characters, case-insensitive) with `hmac.compare_digest` on bytes. Failure returns `401`.
 2. Only then is the body parsed as JSON (`400` if invalid).
-3. The handler dispatches on `status` (`completed`, `paid`, `pending`, `new`, `failed`, `canceled`); `transactionType` is `buy` or `offramp`.
+3. The handler dispatches on `status` (`completed`, `paid`, `pending`, `new`, `failed`, `canceled`); `transactionType` gives the direction (`buy`, or `offramp` or `sell` for the other way, depending on which Onramper page you read).
 4. It returns `200 {"received": true}`.

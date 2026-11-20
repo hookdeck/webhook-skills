@@ -9,63 +9,73 @@ function handleEvent(type: string, item: LearnuponItem): void {
   switch (type) {
     case 'user_created':
       console.log(`User created: ${item.user?.userId} (${item.user?.email})`);
-      // TODO: provision the user in your system
+      // Your code: provision the user in your system
       break;
 
     case 'user_updated':
       console.log(`User updated: ${item.user?.userId}`);
-      // TODO: sync the profile
+      // Your code: sync the profile
       break;
 
     case 'course_cloning_complete':
     case 'course_updated':
       console.log(`Course event: ${type}`);
-      // TODO: refresh your course catalog
+      // Your code: refresh your course catalog
       break;
 
     case 'course_completion':
       console.log(`Course completed: course ${item.courseId} by user ${item.user?.userId} (${item.enrollmentStatus})`);
-      // TODO: issue a certificate or update HR records
+      // Your code: issue a certificate or update HR records
       break;
 
     case 'module_complete':
       console.log(`Module completed: ${type}`);
-      // TODO: track progress
+      // Your code: track progress
       break;
 
+    // LearnUpon's October 2026 changelog calls the Spree storefront webhook purchase_complete;
+    // the types table lists only purchase_completion, so accept both.
     case 'purchase_completion':
+    case 'purchase_complete':
       console.log(`Purchase completed: order ${item.orderId} (${item.amountPaid} ${item.currency})`);
-      // TODO: fulfil the order
+      // Your code: fulfil the order
       break;
 
     case 'badge_awarded':
     case 'badge_revoked':
       console.log(`Badge event: ${type}`);
-      // TODO: update recognition feeds
+      // Your code: update recognition feeds
       break;
 
     case 'course_enrollment':
       console.log(`Course enrollment: user ${item.user?.userId} on course ${item.courseId}`);
-      // TODO: sync the roster
+      // Your code: sync the roster
       break;
 
     case 'course_unenrollment':
       console.log(`Course unenrollment: user ${item.user?.userId} from course ${item.courseId}`);
-      // TODO: remove from the roster
+      // Your code: remove from the roster
       break;
 
     case 'learning_path_enrollment':
     case 'learning_path_updated':
     case 'learning_path_completion':
       console.log(`Learning path event: ${type}`);
-      // TODO: sync learning path state
+      // Your code: sync learning path state
       break;
 
     case 'event_session_creation':
     case 'event_session_updated':
     case 'event_session_canceled':
       console.log(`Live-learning session event: ${type} (session ${item.sessionId})`);
-      // TODO: sync your calendar
+      // Your code: sync your calendar
+      break;
+
+    case 'event_session_series_created':
+    case 'event_session_series_updated':
+    case 'event_session_series_canceled':
+      console.log(`Live-learning session series event: ${type} (series ${item.id})`);
+      // Your code: sync your calendar
       break;
 
     case 'learning_journey_enrollment':
@@ -74,7 +84,7 @@ function handleEvent(type: string, item: LearnuponItem): void {
     case 'learning_journey_deleted':
     case 'learning_journey_archived':
       console.log(`Learning journey event: ${type}`);
-      // TODO: sync learning journey state
+      // Your code: sync learning journey state
       break;
 
     default:

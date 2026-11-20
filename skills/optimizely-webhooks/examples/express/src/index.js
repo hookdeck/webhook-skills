@@ -23,13 +23,21 @@ function handleEvent(payload) {
   switch (payload.event) {
     case 'project.datafile_updated':
       console.log(`Datafile updated for ${payload.data?.environment} (revision ${payload.data?.revision})`);
-      // TODO: re-fetch the datafile from payload.data.cdn_url
+      // Your code: re-fetch the datafile from payload.data.cdn_url
       break;
     case 'project.ruleset_updated':
       for (const change of Array.isArray(payload.data) ? payload.data : []) {
         console.log(`Ruleset change: ${change.change_type} on ${change.entity?.type}`);
       }
-      // TODO: audit log, notify your team
+      // Your code: audit log, notify your team
+      break;
+    case 'project.approval_created':
+    case 'project.approval_updated':
+    case 'project.approval_archived':
+      for (const request of Array.isArray(payload.data) ? payload.data : []) {
+        console.log(`Change request for ${request.entity?.name} in ${request.environment}: ${payload.event}`);
+      }
+      // Your code: notify reviewers, update your issue tracker
       break;
     default:
       console.log(`Unhandled Optimizely event: ${payload.event}`);

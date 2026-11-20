@@ -8,7 +8,7 @@ Outhire uses [Standard Webhooks](https://www.standardwebhooks.com/). Every deliv
 |--------|-------|
 | `webhook-id` | Unique identifier for this delivery |
 | `webhook-timestamp` | Unix timestamp (seconds) of when the request was sent |
-| `webhook-signature` | One or more space-separated `v1,<base64 signature>` entries |
+| `webhook-signature` | `v1,<base64 signature>` (Outhire documents one value) |
 
 The signature is computed as:
 
@@ -112,10 +112,10 @@ Both verifiers use the same `webhook-*` or `svix-*` header selection as above. W
 - **Raw body.** The HMAC covers the exact bytes Outhire sent. Use `express.raw({ type: '*/*' })`, `await request.text()` or `await request.body()`. Parsing and re-serialising JSON changes whitespace and key order. Parse only after verifying.
 - **Decode the secret.** The HMAC key is the base64-decoded part after `whsec_`, not the literal string. Keep the `whsec_` prefix in the env var.
 - **One secret per webhook.** A staging webhook's secret won't verify production deliveries.
-- **Multiple signatures.** `webhook-signature` can hold several space-separated entries. Accept the request if any `v1,` entry matches.
+- **Multiple signatures.** Outhire documents a single `v1,` value, but Standard Webhooks allows several space-separated entries. Accept the request if any `v1,` entry matches.
 - **Late Hookdeck retries.** See the manual verifier above.
 - **Clock drift.** Keep your server clock in sync with NTP, or timestamps will fail the 5-minute check.
-- **No event ID in the body.** Dedupe on `webhook-id`.
+- **No event ID in the body.** Dedupe on `webhook-id` and on `event` + `candidate.id` + `occurred_at`; Outhire doesn't say whether a retry keeps the same `webhook-id`.
 
 ## How Do I Debug Outhire Verification Failures?
 

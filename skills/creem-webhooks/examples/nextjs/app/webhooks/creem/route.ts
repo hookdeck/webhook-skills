@@ -17,12 +17,12 @@ function handleEvent(body: CreemWebhook): void {
   switch (eventType) {
     case 'checkout.completed':
       console.log('Checkout completed', resource.id, resource.order?.id);
-      // TODO: fulfil the order; resource.metadata / resource.request_id carry your own reference
+      // Your code: fulfil the order; resource.metadata / resource.request_id carry your own reference
       break;
 
     case 'subscription.paid':
       console.log('Subscription paid', resource.id);
-      // TODO: grant or extend access (Creem recommends this event over subscription.active)
+      // Your code: grant or extend access (Creem recommends this event over subscription.active)
       break;
 
     case 'subscription.active':
@@ -30,24 +30,25 @@ function handleEvent(body: CreemWebhook): void {
     case 'subscription.update':
     case 'subscription.paused':
       console.log(`Subscription state change (${eventType})`, resource.id, resource.status);
-      // TODO: sync the subscription record
+      // Your code: sync the subscription record
       break;
 
     case 'subscription.scheduled_cancel':
       console.log('Subscription scheduled to cancel', resource.id, resource.current_period_end_date);
-      // TODO: notify the customer or offer a retention incentive
+      // Your code: notify the customer or offer a retention incentive
       break;
 
     case 'subscription.past_due':
     case 'subscription.unpaid':
-      console.log(`Subscription payment problem (${eventType})`, resource.id);
-      // TODO: prompt for a payment-method update; suspend access per your policy
+    case 'subscription.expired':
+      // Creem can still collect payment after `expired`; only `canceled` is terminal.
+      console.log(`Subscription payment problem (${eventType})`, resource.id, resource.status);
+      // Your code: prompt for a payment-method update; suspend access per your policy
       break;
 
     case 'subscription.canceled':
-    case 'subscription.expired':
-      console.log(`Subscription ended (${eventType})`, resource.id);
-      // TODO: revoke access
+      console.log('Subscription canceled', resource.id);
+      // Your code: revoke access
       break;
 
     case 'refund.created':
@@ -56,7 +57,7 @@ function handleEvent(body: CreemWebhook): void {
 
     case 'dispute.created':
       console.log('Dispute created', resource.id, resource.amount, resource.currency);
-      // TODO: alert your team
+      // Your code: alert your team
       break;
 
     case 'credits.granted':

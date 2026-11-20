@@ -3,9 +3,9 @@
 ## What Are GlobalStack Webhooks?
 
 [GlobalStack](https://globalstack.io) is a stablecoin and fiat money-movement API: onramps,
-offramps, conversions, transfers, deposits and KYC verifications. It sends an HTTPS `POST` to an
-endpoint you register when one of those resources changes, so you don't have to poll. Deliveries
-go through Svix and are signed (see [verification.md](verification.md)).
+offramps, conversions, transfers, wallet transfers, split payments, deposits and KYC verifications.
+It sends an HTTPS `POST` to an endpoint you register when one of those resources changes, so you
+don't have to poll. Deliveries are signed in the Svix format (see [verification.md](verification.md)).
 
 | Aspect | Value |
 |--------|-------|
@@ -39,7 +39,7 @@ Every event, in every category, arrives in the same flat envelope:
 |-------|---------|
 | `event_id` | `evt_` id, stable across retries. Equals `svix-id` without its `msg_` prefix |
 | `event_type` | The event name. Branch on this |
-| `event_category` | The subscription family (`onramp`, `offramp`, `conversion`, `transfer`, `deposit`, `kyc`) |
+| `event_category` | The subscription family (`onramp`, `offramp`, `conversion`, `transfer`, `wallet_transfer`, `deposit`, `kyc`, `split`) |
 | `event_developer_id` | Your integration's public id |
 | `api_version` | Envelope version, `v1` today |
 | `event_created_at` | When the event happened. A retry keeps the original time |
@@ -78,19 +78,22 @@ same money; join on `root_transaction_id`). Deposits carry the transaction ids f
 | `transfer.processing` | The payout has been submitted | Progress display |
 | `transfer.success` | The payout completed. Terminal | Confirm to the beneficiary side |
 | `transfer.failed` | Failed, cancelled or reversed. Terminal | `failure_reason` says which |
+| `wallet_transfer.success` | A move between two of your wallets committed. Terminal | Update both balances |
 | `deposit.received` | Funds seen but not final | Pending balance |
 | `deposit.held` | Credited but withheld; `metadata.hold_reason` says why | Compliance review |
 | `deposit.confirmed` | Settled and spendable. Terminal | Release goods or credit |
 | `deposit.failed` | Could not be credited. Terminal | Investigate |
 | `kyc.approved` | Verification passed; `customer.tier` is the new tier | Unlock limits |
-| `kyc.rejected` | Verification declined | Read `failure_reason` |
+| `kyc.rejected` | Verification declined | Read `verification.failure_reason` |
+| `split.completed` | A payment's split is final (`completed`) or `skipped`. Once per payment | Credit sellers |
+| `split.leg_released` | A held share was released and credited | Credit the held recipient |
 
-The examples handle exactly these 27 events and acknowledge anything else with `200`.
+The examples handle exactly these 30 events and acknowledge anything else with `200`.
 
 ## Subscriptions Are by Category
 
 You subscribe an endpoint to categories (`onramp`, `offramp`, `conversion`, `transfer`,
-`deposit`, `kyc`), not to single events, and receive every event in each family.
+`wallet_transfer`, `deposit`, `kyc`, `split`), not to single events, and receive every event in each family.
 
 ## Delivery Rules Worth Planning For
 

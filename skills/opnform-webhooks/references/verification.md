@@ -59,7 +59,7 @@ def verify_opnform(raw_body: bytes, signature_header, secret: str) -> bool:
 - **Secret is used as typed.** UTF-8 bytes, not hex- or base64-decoded.
 - **Validate before decoding.** `Buffer.from(sig, 'hex')` drops invalid characters without an error, so check for exactly 64 hex characters first. Hex is case-insensitive.
 - **Constant-time compare.** `crypto.timingSafeEqual` on equal-length buffers, `hmac.compare_digest` on bytes.
-- **No replay window.** No timestamp is signed, so don't invent one. Deduplicate on `submission_id`.
+- **No replay window.** No timestamp is signed, so don't invent one. Upsert on `submission_id` rather than dropping repeats, because an edited submission arrives again under the same id.
 
 ## Debugging Verification Failures
 

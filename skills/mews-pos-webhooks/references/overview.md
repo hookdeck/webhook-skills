@@ -4,7 +4,7 @@
 
 Mews (mews.com) is a hospitality cloud. Its **POS API** serves restaurant and bar point-of-sale integrations, and sends HTTP `POST` webhooks to your endpoint when bookings, orders or products change. Each request carries an `X-Signature` header so you can confirm it came from Mews. Only the POS API signs webhooks; the Mews Connector (PMS) API is separate.
 
-Retries, timeout and success codes are not documented, so acknowledge quickly with a `2xx` and process work asynchronously.
+Retries and timeouts are not documented, so acknowledge quickly with a `2xx` and process work asynchronously.
 
 ## Common Event Types
 

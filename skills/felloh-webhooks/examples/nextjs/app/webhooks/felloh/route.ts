@@ -24,25 +24,25 @@ function handleEvent(payload: Obj): void {
     case 'transaction-status': {
       // Retried up to 5 times about a minute apart, so make this idempotent.
       console.log(`Transaction ${payload.transaction.id} is ${payload.status}`);
-      // TODO: update the order or payment for payload.booking?.booking_reference
+      // Your code: update the order or payment for payload.booking?.booking_reference
       break;
     }
 
     case 'refund-status': {
       console.log(`Refund for transaction ${payload.transaction.id} is ${payload.status.id}`);
-      // TODO: update the refund record (payload.authorisation_code, payload.amount)
+      // Your code: update the refund record (payload.authorisation_code, payload.amount)
       break;
     }
 
     case 'booking': {
       console.log(`Booking ${payload.booking.booking_reference}`);
-      // TODO: sync the booking (payload.customer_name, payload.departure_date, payload.return_date)
+      // Your code: sync the booking, a deletion if deleted_at is set (payload.customer_name, payload.departure_date, payload.return_date)
       break;
     }
 
     case 'user-create': {
       console.log(`User created: ${payload.user.id}`);
-      // TODO: provision or audit the new user (payload.email, payload.organisation)
+      // Your code: provision or audit the new user (payload.email, payload.organisation)
       break;
     }
 
@@ -60,8 +60,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Dashboard test deliveries are signed with the real key and never retried.
+  // Felloh says to discard them, or a test looks like a genuine payment.
   if (request.headers.get('x-felloh-test') === 'true') {
     console.log('Felloh test delivery');
+    return NextResponse.json({ received: true });
   }
 
   let payload: unknown;

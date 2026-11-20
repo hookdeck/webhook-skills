@@ -6,7 +6,7 @@ Liveblocks follows [Standard Webhooks](https://standardwebhooks.com/). Each requ
 
 | Header | Contents |
 |--------|----------|
-| `webhook-id` | Message ID (stable across retries; your idempotency key) |
+| `webhook-id` | Message ID, part of the signed content. The docs don't say whether a retry reuses it |
 | `webhook-timestamp` | Unix seconds when the message was sent |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries, usually one |
 
@@ -81,7 +81,7 @@ try {
 
 The `standardwebhooks` library always enforces a fixed 5-minute timestamp window and has no option to change it. Hookdeck retries and replays resend the original request, including the original `webhook-timestamp`. A retry or replay more than 5 minutes after the first delivery is rejected as "Message timestamp too old", even though the signature is valid. Liveblocks' own retry schedule reaches 2 to 10 hours between attempts, so this matters when Liveblocks retries into a handler that has been down.
 
-If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating on `webhook-id`.
+If your handler sits behind Hookdeck, or you replay events for debugging, use the manual verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay protection then comes from idempotent handling.
 
 ## Manual Verification (configurable timestamp window)
 

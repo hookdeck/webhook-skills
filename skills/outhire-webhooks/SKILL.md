@@ -32,7 +32,7 @@ metadata:
 |--------|-------|
 | `webhook-id` | Unique ID of this delivery |
 | `webhook-timestamp` | Unix seconds when the request was sent |
-| `webhook-signature` | One or more space-separated `v1,<base64 HMAC-SHA256>` entries |
+| `webhook-signature` | `v1,<base64 HMAC-SHA256>` (Outhire documents one value; the code accepts any space-separated `v1,` entry, as Standard Webhooks allows) |
 
 Signed content is `{webhook-id}.{webhook-timestamp}.{raw body}`. The key is the base64-**decoded** part of the secret after `whsec_`; keep the full `whsec_` value in `OUTHIRE_WEBHOOK_SECRET`. The examples use [`standardwebhooks`](https://www.npmjs.com/package/standardwebhooks) (npm, PyPI), which compares in constant time against every `v1,` entry. Svix-style senders use the `svix-*` spelling of the same headers, so the examples read `webhook-*` and fall back to `svix-id`, `svix-timestamp` and `svix-signature` when `webhook-id` is absent.
 
@@ -65,7 +65,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
   "stage_change": { "previous_stage": "applied", "new_stage": "interview", "changed_by": "user" } }
 ```
 
-The top-level field is `event`. There is **no event ID** in the body: dedupe on the `webhook-id` header.
+The top-level field is `event`. There is **no event ID** in the body. The examples dedupe on the `webhook-id` header, but Outhire doesn't say whether a retried attempt keeps the same one, so in production also key on `event` + `candidate.id` + `occurred_at`, which mirrors Outhire's own event key.
 
 ## Common Event Types
 

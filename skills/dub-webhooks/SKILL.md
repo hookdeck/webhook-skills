@@ -49,7 +49,7 @@ Complete handlers and tests: [Express](examples/express/), [Next.js](examples/ne
 
 The envelope contains id, event, createdAt and data. Dub uses the entire whsec_ string as a UTF-8 HMAC key. Do not strip the prefix or decode the remainder; this scheme does not use the Standard Webhooks signing format.
 
-Acknowledge accepted events promptly and make changes idempotent using the delivery id. Store secrets only on the server.
+Acknowledge accepted events promptly and make changes idempotent using the envelope `id` (`evt_...`). Store secrets only on the server.
 
 ## Local Development
 

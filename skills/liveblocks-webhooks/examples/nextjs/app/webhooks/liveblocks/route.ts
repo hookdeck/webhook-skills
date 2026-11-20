@@ -59,7 +59,8 @@ export async function POST(request: Request) {
   // Every body is { type, data }: the event name is the camelCase top-level `type`
   const type = event.type;
   const data = event.data && typeof event.data === 'object' ? event.data : {};
-  // webhook-id is stable across retries and the body has no event id: use it to deduplicate
+  // The body has no event id, and Liveblocks doesn't say whether a retry reuses webhook-id,
+  // so make your handling idempotent on payload values
   console.log(`Received Liveblocks webhook ${id}: ${type}`);
 
   switch (type) {
@@ -117,7 +118,8 @@ export async function POST(request: Request) {
       console.log('Thread unresolved:', data.threadId);
       break;
     case 'notification':
-      // data.kind is 'thread', 'textMention' or a custom '$'-prefixed kind
+      // data.kind is 'thread', 'textMention' or a custom '$'-prefixed kind.
+      // Each notification channel gets its own event: check data.channel (for example 'email')
       console.log('Notification:', data.kind, 'for user', data.userId);
       break;
     default:

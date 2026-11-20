@@ -2,7 +2,7 @@
 
 Minimal example of receiving GlobalStack webhooks with signature
 verification using the official [`svix`](https://pypi.org/project/svix/) library
-(GlobalStack delivers webhooks through Svix).
+(GlobalStack signs webhooks in the Svix format).
 
 ## Prerequisites
 

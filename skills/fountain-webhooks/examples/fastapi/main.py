@@ -75,13 +75,13 @@ def handle_event(kind, payload: dict) -> None:
         print(f"Applicant {applicant.get('id')} ({applicant.get('name')}) is in stage: {stage.get('title')}")
         for check in _as_list(applicant.get("background_checks")):
             print(f"  Background check {_as_str(check.get('id'))} status: {check.get('status')}")
-        # TODO: sync the stage change or background-check result to your system
+        # Your code: sync the stage change or background-check result to your system
 
     elif kind == "worker":
         print(f"Worker {payload.get('id')} ({payload.get('name')}) is_active={str(payload.get('is_active')).lower()}")
         for check in _as_list(payload.get("data_collection_checks")):
             print(f"  Document check {check.get('id')}: {check.get('status')}")
-        # TODO: activate/deactivate the worker, or fetch approved documents
+        # Your code: activate/deactivate the worker, or fetch approved documents
 
     else:
         print("Unhandled Fountain payload shape")

@@ -54,7 +54,7 @@ def verify(raw_body: bytes, signature: str | None, secret: str | None) -> bool:
     return hmac.compare_digest(bytes.fromhex(signature), expected)
 ```
 
-Return **401** for a missing, empty, malformed or mismatched signature. There is no signed timestamp, so there is no replay window to check; use `X-Forgejo-Delivery` for idempotency. Read the raw bytes for any content type (in Express: `express.raw({ type: '*/*' })`) and parse only after verifying.
+Return **401** for a missing, empty, malformed or mismatched signature. There is no signed timestamp, so there is no replay window to check. `X-Forgejo-Delivery` identifies one attempt, and a replay from **Recent Deliveries** gets a new value, so make handlers idempotent on what changed (such as a push's `after` SHA). Read the raw bytes for any content type (in Express: `express.raw({ type: '*/*' })`) and parse only after verifying.
 
 > **For complete handlers with route wiring, event dispatch, and tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -73,9 +73,9 @@ Dispatch on the **`X-Forgejo-Event-Type`** header (the exact event type, e.g. `i
 | `delete` | Branch or tag deleted |
 | `release` | Release published, updated, deleted |
 
-Forgejo documents 41 event types in all, including `fork`, `issue_assign`, `issue_label`, `issue_milestone`, `pull_request_assign`, `pull_request_label` and `pull_request_milestone`. The examples handle the common ones above and log the rest. Most bodies also carry an `action`.
+Forgejo's source defines 40 webhook event types (its user guide doesn't list them), including `fork`, `issue_assign`, `issue_label`, `issue_milestone`, `pull_request_assign`, `pull_request_label` and `pull_request_milestone`. The examples handle the common ones above and log the rest. Most bodies also carry an `action`.
 
-> **Full reference**: [Forgejo webhooks](https://forgejo.org/docs/latest/user/webhooks/)
+> **Full reference**: [Forgejo webhooks](https://forgejo.org/docs/latest/user/repository/webhooks/)
 
 ## Important Headers
 

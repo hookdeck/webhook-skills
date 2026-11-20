@@ -8,7 +8,7 @@ Delivery notes from the docs:
 
 - Respond with `200` right after receiving the request. Slow processing can make the webhook time out, and Logto asks you not to return anything other than 200; handle processing errors on your own server.
 - Best practice is to put the event on your own queue and return quickly.
-- The retry schedule, timeout length and exact success codes are not documented on the pages these skills were built from, so make handlers idempotent.
+- When the response status is `500` or above, Logto retries the delivery up to three times. Every attempt carries the same `deliveryId`, so a handler that processed a request but answered `5xx` sees it again; skip a `deliveryId` you've already processed. The docs give no timeout length or retry interval.
 - Default request headers: `user-agent: Logto (https://logto.io/)`, `content-type: application/json` (both customizable), and `logto-signature-sha-256`.
 
 ## Common Event Types
@@ -40,6 +40,7 @@ Fields present in every delivery:
 | Field | Type | Notes |
 |-------|------|-------|
 | `hookId` | string | The webhook configuration ID |
+| `deliveryId` | string | The delivery ID: the same across retries, new for each event and webhook |
 | `event` | string | The event name |
 | `createdAt` | string | ISO 8601 time |
 | `userAgent` | string, optional | User agent of the triggering request |
@@ -57,6 +58,7 @@ Example (`Grant.LimitExceeded`, from the docs):
 ```json
 {
   "hookId": "hook_abc",
+  "deliveryId": "3nfp8xk1q2z7",
   "event": "Grant.LimitExceeded",
   "createdAt": "2024-01-01T00:00:00.000Z",
   "ip": "192.168.0.1",

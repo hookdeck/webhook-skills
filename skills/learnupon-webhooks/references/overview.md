@@ -40,7 +40,7 @@ changes and a different signature process, so give v2.0 its own endpoint and pro
 | `course_completion` | A learner completes a course | Issue certificates, update HR records |
 | `course_updated` | Someone updates a course | Refresh catalog data |
 | `module_complete` | A learner completes a module within a course | Track progress |
-| `purchase_completion` | A customer completes a purchase of courses | Fulfilment, accounting |
+| `purchase_completion` | A customer completes a purchase of courses (the October 2026 changelog calls the Spree storefront webhook `purchase_complete`; accept both) | Fulfilment, accounting |
 | `badge_awarded` | The portal awards a badge | Recognition feeds |
 | `badge_revoked` | An admin removes a badge from a learner | Revoke recognition |
 | `course_enrollment` | Someone enrolls a learner on a course | Notify the learner, sync rosters |
@@ -51,6 +51,7 @@ changes and a different signature process, so give v2.0 its own endpoint and pro
 | `event_session_creation` | Someone creates a live-learning event session | Calendar sync |
 | `event_session_updated` | Someone updates a live-learning event session | Calendar sync |
 | `event_session_canceled` | Someone cancels a live-learning event session | Calendar sync |
+| `event_session_series_created`, `event_session_series_updated`, `event_session_series_canceled` | Someone creates, updates or cancels a live-learning session series (documented in the series section, not the types table) | Calendar sync |
 | `learning_journey_enrollment` | Someone enrolls a learner on a learning journey | Sync rosters |
 | `learning_journey_completion` | A learner completes a learning journey | Issue credentials |
 | `learning_journey_blocked` | A learner's journey enrollment is blocked | Alert an admin |

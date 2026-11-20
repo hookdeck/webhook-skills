@@ -32,5 +32,5 @@ or compare against the example payloads in the [events documentation](https://do
 
 ## Respond Correctly
 
-Return `200` within 10 seconds. Failed deliveries are retried up to 10 times; if they keep failing Payt
-deactivates the webhook and emails you.
+Return any `2xx` within 10 seconds. Failed deliveries are retried up to 10 times over roughly 4 days and
+16 hours; if they keep failing Payt deactivates the webhook and emails the webhook's developer addresses.

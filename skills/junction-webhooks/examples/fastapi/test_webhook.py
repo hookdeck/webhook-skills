@@ -31,6 +31,7 @@ EVENTS = {
     "daily.data.glucose.updated": {"data": [{"timestamp": "2023-05-16T10:00:00+00:00", "unit": "mg/dL", "value": 98}], "source_id": 3, "source": {"name": "Freestyle Libre", "slug": "freestyle_libre_ble"}, "user_id": "user_1"},
     "historical.data.workouts.created": {"user_id": "user_1", "start_date": "2020-06-21T08:23:01+00:00", "end_date": "2024-11-02T14:39:28+00:00", "provider": "zwift"},
     "historical.data.sleep.created": {"user_id": "user_1", "start_date": "2020-06-21T08:23:01+00:00", "end_date": "2024-11-02T14:39:28+00:00", "provider": "oura"},
+    "historical.data.sleep.in_progress": {"user_id": "user_1", "provider": "oura", "historical_pull_id": "ce0753db-6b70-4ef5-a181-eebea6cb635a", "completed_chunk_start_date": "2026-10-15", "completed_chunk_end_date": "2026-11-13", "history_start_date": "2026-08-01", "history_end_date": "2026-11-13"},
     "labtest.order.created": {"id": "order_1"},
     "labtest.order.updated": {"id": "order_1"},
     "labtest.appointment.created": {"id": "appt_1"},

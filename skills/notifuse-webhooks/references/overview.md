@@ -61,21 +61,21 @@ The docs list 23 event types and the list may not be exhaustive.
 
 The docs show these `data` shapes:
 
-- **Contact:** `id`, `email`, `external_id`, `first_name`, `last_name`, `tags`, `created_at`, `updated_at`
+- **Contact:** `id`, `email`, `external_id`, `first_name`, `last_name`, `tags`, `tracking_opens_consent`, `tracking_clicks_consent`, `tracking_consent_updated_at`, `tracking_consent_source`, `created_at`, `updated_at` (the four tracking consent fields arrived in v43.0)
 - **Email:** `message_id`, `email`, `subject`, `broadcast_id`, `template_id`, `created_at`
 - **Segment:** `email`, `contact_id`, `segment_id`, `segment_name`, `created_at`
 
-The docs give no `data` example for `list.*` and `custom_event.*`, so the examples only log them generically.
+The docs give no `data` example for `list.*` and `custom_event.*`, so the examples only log them generically. A test sent with `webhookSubscriptions.test` and no `event_type` has `type` set to `test`, which the examples acknowledge as an unknown type.
 
 ## Delivery Semantics
 
 - JSON `POST` to a public address. Private, loopback, link-local and cloud-metadata addresses are refused, including via redirects. Self-hosted instances can allow private hosts with `WEBHOOK_DELIVERY_ALLOW_PRIVATE_HOSTS=true`.
-- Return a `2xx` within **30 seconds**.
-- Up to **10 retries over about 34 hours**: immediate, 30 s, 1 m, 2 m, 5 m, 15 m, 30 m, 1 h, 2 h, 6 h, then a final 24 h.
+- Return a `2xx` within **10 seconds**.
+- Up to **10 attempts**, the last about **10 hours** after the first: immediate, then 30 s, 1 m, 2 m, 5 m, 15 m, 30 m, 1 h, 2 h, 6 h. A failed 10th attempt is final.
 - `429` never counts as a failure. `410 Gone` retires the subscription at once.
 - After **20 consecutive failures spanning more than 2 hours** the subscription is disabled. Events that occur while it is disabled are dropped, not replayed on re-enable; read them from the API instead.
 - Webhooks may rarely arrive twice. Dedupe on the `webhook-id` header.
 
 ## Full Event Reference
 
-See [Notifuse's webhook documentation](https://docs.notifuse.com/features/webhooks).
+See [Notifuse's webhook documentation](https://www.notifuse.com/docs/features/webhooks).

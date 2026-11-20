@@ -65,36 +65,36 @@ async def forgejo_webhook(request: Request):
         commits = [c for c in _as_list(payload.get("commits")) if isinstance(c, dict)] or [{}]
         pusher = _as_dict(payload.get("pusher"))
         print(f"Push to {payload.get('ref')} by {pusher.get('login')}: {commits[0].get('message')}")
-        # TODO: Trigger CI/CD, run tests, deploy, etc.
+        # Your code: Trigger CI/CD, run tests, deploy, etc.
 
     elif event == "pull_request":
         pr = _as_dict(payload.get("pull_request"))
         print(f"PR #{payload.get('number')} {action}: {pr.get('title')}")
-        # TODO: Run checks, notify reviewers, etc.
+        # Your code: Run checks, notify reviewers, etc.
 
     elif event == "issues":
         issue = _as_dict(payload.get("issue"))
         print(f"Issue #{issue.get('number')} {action}: {issue.get('title')}")
-        # TODO: Triage, label, notify, etc.
+        # Your code: Triage, label, notify, etc.
 
     elif event in ("issue_comment", "pull_request_comment"):
         issue = _as_dict(payload.get("issue"))
         comment = _as_dict(payload.get("comment"))
         print(f"Comment on #{issue.get('number')} by {_as_dict(comment.get('user')).get('login')}")
-        # TODO: Bot commands, notifications, etc.
+        # Your code: Bot commands, notifications, etc.
 
     elif event == "create":
         print(f"Created {payload.get('ref_type')}: {payload.get('ref')}")
-        # TODO: Environment setup, etc.
+        # Your code: Environment setup, etc.
 
     elif event == "delete":
         print(f"Deleted {payload.get('ref_type')}: {payload.get('ref')}")
-        # TODO: Cleanup, archive, etc.
+        # Your code: Cleanup, archive, etc.
 
     elif event == "release":
         release = _as_dict(payload.get("release"))
         print(f"Release {action}: {release.get('tag_name')}")
-        # TODO: Deploy, notify, update changelog, etc.
+        # Your code: Deploy, notify, update changelog, etc.
 
     else:
         print(f"Unhandled event: {event}")

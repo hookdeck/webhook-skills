@@ -71,7 +71,7 @@ async def formbricks_webhook(request: Request):
     elif event_type == "responseFinished":
         print(f"Response finished: {data.get('id')} survey {data.get('surveyId')}")
     else:
-        # The documented list may not be exhaustive: ignore what you don't need
+        # Test Endpoint sends {"event":"testEndpoint"}: answer 200 and ignore anything else
         print(f"Unhandled event type: {event_type}")
 
     return {"received": True, "event": event_type}

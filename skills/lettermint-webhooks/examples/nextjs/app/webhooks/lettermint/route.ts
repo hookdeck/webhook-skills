@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     default:
       console.log(`Unhandled event type: ${event}`);
   }
-  // TODO: persist / forward. `id` is unique per event: use it as the idempotency key.
+  // Your code: persist / forward. `id` is unique per event: use it as the idempotency key.
   console.log(`Processed ${event} (id ${id})`);
 
   // Respond 2XX quickly; timeouts, 408, 429 and 5xx are retried (12 attempts over ~14 hours).

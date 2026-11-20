@@ -34,7 +34,7 @@ The key is the **secret key of your active Master API key**, used as UTF-8 bytes
 
 > Paste the secret key of your active Master API key. Rotating that key changes the callback secret.
 
-Only the active Master key signs callbacks; custom keys never do. After you activate a different Master key, verify with that key's secret.
+Only the active Master key signs callbacks; custom keys never do. While no Master key is active, CryptoProcessing sends no callbacks; they go out once you activate one, signed with the new key's secret, so update the secret as soon as you activate it.
 
 ```javascript
 const crypto = require('crypto');
@@ -56,16 +56,16 @@ Docs test vector: secret `AbCdEfG123456`, body `{"currency":"BTC","foreign_id":"
 
 ## Common Event Types
 
-There is no event header. Dispatch on the body's top-level `type` (the kind of transaction); `status` is its new state (`confirmed`, `not_confirmed`, `cancelled`, `pending`, `paid`, `expired`, `failed`, … depending on the kind). A callback fires on every status change, so a router needs both.
+There is no event header. Dispatch on the body's top-level `type` (the kind of transaction); `status` is its new state, which depends on the kind: deposits `not_confirmed`, `confirmed`, `cancelled`; withdrawals `pending`, `confirmed`, `declined`, `cancelled`; exchanges `confirmed` only; payment requests `processing`, `paid`, `expired`, `failed`; invoices `pending`, `processing`, `confirmed`, `failed`. A router needs both.
 
 | `type` | Meaning |
 |--------|---------|
 | `deposit` | Crypto received on one of your deposit addresses |
 | `withdrawal` | Crypto sent out to an external address |
-| `exchange` | Conversion between two currencies |
-| `payment_request` | Payment request (hosted payment page) progress |
+| `exchange` | Exchange made with `/v2/exchange/fixed` or `/v2/exchange/now` completed |
+| `payment_request` | Payment request created through the API changes status |
 | `deposit_exchange` | Deposit that is converted on arrival |
-| `deposit_wallet_client` | Deposit to a wallet client address |
+| `deposit_wallet_client` | Deposit to a merchant top-up address (needs business wallet transactions callbacks) |
 | `withdrawal_exchange` | Withdrawal funded by a conversion |
 | `withdrawal_instant` | Instant withdrawal |
 | `withdrawal_instant_exchange` | Instant withdrawal funded by a conversion |
@@ -76,6 +76,8 @@ Handle the ones you use and log the rest. See [references/overview.md](reference
 ## Delivery
 
 Only an HTTP `200` stops delivery. Otherwise CryptoProcessing retries 12 times after the first attempt (+1, +5, +15, +30, +60, +90, +120, +180 minutes, then +240 minutes four times); the schedule is not configurable. Answer a duplicate of a callback you already processed with `201` to stop its retries.
+
+Don't treat `type` + id + `status` as unique. Invoices send `pending` again for each partial payment and payment requests send `processing` again for each detected transaction, so compare the `txid`s in `transactions`: a new `txid` is a new payment. Exchange callbacks have no `txid`; use the exchange `id` and `status`. The portal's **Repeat callback** button (Transactions > a transaction > Callback tab) resends a transaction's latest callback.
 
 ## Environment Variables
 
@@ -110,7 +112,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (key on type, id and status)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (key on type, id, status and the `txid`s)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

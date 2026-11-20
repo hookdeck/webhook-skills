@@ -58,7 +58,7 @@ app.post('/webhooks/meeting-baas', express.raw({ type: '*/*' }), (req, res) => {
   }
 
   // Envelope is {event, data}: the event name is the top-level `event`.
-  // `extra` echoes what you set on the bot: inside `data` for most events, beside `data` for bot.chat_message.
+  // `extra` echoes what you set on the bot: inside `data` in the guide's examples, top level in the API reference.
   const type = event.event;
   const data = event.data ?? {};
   const extra = data.extra ?? event.extra;
@@ -72,7 +72,7 @@ app.post('/webhooks/meeting-baas', express.raw({ type: '*/*' }), (req, res) => {
       break;
     case 'bot.completed':
       // Artifact URLs are presigned and valid for 4 hours: download them promptly
-      console.log('Bot completed:', data.bot_id, data.mp4, data.transcription, data.duration_seconds, extra);
+      console.log('Bot completed:', data.bot_id, data.video ?? data.mp4, data.transcription, data.duration_seconds, extra);
       break;
     case 'bot.chat_message':
       // Only participant messages are delivered, not the bot's own
@@ -82,7 +82,7 @@ app.post('/webhooks/meeting-baas', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Bot failed:', data.bot_id, data.error_code, data.error_message, extra);
       break;
     case 'calendar.connection_created':
-      console.log('Calendar connected:', data.calendar_id, data.platform, data.account_email);
+      console.log('Calendar connected:', data.calendar_id, data.calendar_platform ?? data.platform, data.account_email);
       break;
     case 'calendar.connection_updated':
       console.log('Calendar connection updated:', data.calendar_id, data.status);

@@ -68,7 +68,7 @@ Dispatch on `meta.eventType`. `data.type` is the entity (`bookings`, `orders`, `
 | `order.payments.added` | A payment was added to an order |
 | `product.availability.updated` | A product's availability changed |
 
-> **Full reference**: [Mews POS webhooks](https://docs.mews.com/pos-api/events/webhooks). Retries, timeout and success codes are not documented, and the docs say a message "encapsulates all simultaneous events" without showing a multi-event body, so handlers should return `2xx` quickly and tolerate unknown events.
+> **Full reference**: [Mews POS webhooks](https://docs.mews.com/pos-api/events/webhooks). Retries and timeouts are not documented, and the docs say a message "encapsulates all simultaneous events" without showing a multi-event body, so handlers should return `2xx` quickly and tolerate unknown events.
 
 ## Environment Variables
 

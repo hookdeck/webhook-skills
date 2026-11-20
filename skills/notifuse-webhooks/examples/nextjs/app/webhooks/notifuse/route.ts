@@ -138,7 +138,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Notifuse needs a 2xx within 30 seconds. In production, enqueue the
+    // Notifuse needs a 2xx within 10 seconds. In production, enqueue the
     // event here and process it asynchronously.
     handleEvent(event);
     processedDeliveryIds.add(deliveryId);

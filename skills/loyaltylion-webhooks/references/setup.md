@@ -37,5 +37,5 @@ the reward to confirm the URL responds; a `2xx` response to a real request marks
 
 ## Test Mode vs Live Mode
 
-LoyaltyLion has no separate webhook test mode. Subscribe a development URL (a Hookdeck CLI tunnel works),
-then trigger the event (earn points, enrol a test customer) on a test program.
+The docs describe no separate test mode for webhooks. Subscribe a development URL (a Hookdeck CLI tunnel
+works), then trigger the event, for example by enrolling a customer or awarding points.

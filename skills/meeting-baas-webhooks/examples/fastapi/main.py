@@ -64,7 +64,7 @@ async def meeting_baas_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # Envelope is {event, data}: the event name is the top-level `event`.
-    # `extra` echoes what you set on the bot: inside `data` for most events, beside `data` for bot.chat_message.
+    # `extra` echoes what you set on the bot: inside `data` in the guide's examples, top level in the API reference.
     event_type = event.get("event")
     data = event.get("data") if isinstance(event.get("data"), dict) else {}
     extra = data.get("extra", event.get("extra"))
@@ -77,7 +77,7 @@ async def meeting_baas_webhook(request: Request):
         print(f"Bot status: {data.get('bot_id')} {status.get('code')} {extra}")
     elif event_type == "bot.completed":
         # Artifact URLs are presigned and valid for 4 hours: download them promptly
-        print(f"Bot completed: {data.get('bot_id')} {data.get('mp4')} {data.get('transcription')} "
+        print(f"Bot completed: {data.get('bot_id')} {data.get('video', data.get('mp4'))} {data.get('transcription')} "
               f"{data.get('duration_seconds')} {extra}")
     elif event_type == "bot.chat_message":
         # Only participant messages are delivered, not the bot's own
@@ -85,7 +85,7 @@ async def meeting_baas_webhook(request: Request):
     elif event_type == "bot.failed":
         print(f"Bot failed: {data.get('bot_id')} {data.get('error_code')} {data.get('error_message')} {extra}")
     elif event_type == "calendar.connection_created":
-        print(f"Calendar connected: {data.get('calendar_id')} {data.get('platform')} {data.get('account_email')}")
+        print(f"Calendar connected: {data.get('calendar_id')} {data.get('calendar_platform', data.get('platform'))} {data.get('account_email')}")
     elif event_type == "calendar.connection_updated":
         print(f"Calendar connection updated: {data.get('calendar_id')} {data.get('status')}")
     elif event_type == "calendar.connection_deleted":

@@ -2,19 +2,20 @@
 
 ## What Are Omnara Webhooks?
 
-Omnara hosts AI agents. An agent's `event_webhook` sends its timeline events (inputs, model
-outputs, tool results, context checkpoints) and tool-call updates to a public HTTPS endpoint as
-`POST` requests with a JSON body. Each agent sends its own events. Self-subagents inherit the
-webhook configuration and send events with their own agent IDs; other subagents use their
-profile's configuration.
+Omnara hosts AI agents. An event webhook is a project-owned subscription that sends agents'
+timeline events (inputs, model outputs, tool results, context checkpoints) and tool-call updates
+to a public HTTPS endpoint as `POST` requests with a JSON body. A subscription receives events
+from all agents in the project (subagents included), from agents using one profile, or from one
+agent (not its subagents). Subagents send events with their own agent IDs. Until 2026-10-29 the
+webhook was an `event_webhook` block in each agent config.
 
 Webhook deliveries are suppressed for deleted projects and organizations, including events
 produced by their deletion. No challenge or validation request is documented.
 
 ## Common Event Types
 
-`event_webhook.events` is a required, nonempty allowlist of these types (5 documented; the list
-may not be exhaustive). The type is the top-level `event` in the body:
+Each subscription's `event_types` is a required, nonempty allowlist of these types (the API's
+enum lists exactly these 5). The type is the top-level `event` in the body:
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -57,12 +58,12 @@ precedence over a late `open` update.
 
 ## Delivery Behavior
 
-- Deliveries are queued for up to ten minutes with a five-second request timeout.
+- Each delivery retries independently for up to ten minutes, with a five-second request timeout.
 - Failures are retried with exponential backoff and jitter within that window. Return `2xx` to acknowledge.
 - At-least-once and unordered: deduplicate on `Webhook-Id` (stable across retries) and tool calls by tool-call ID.
 - `Webhook-Timestamp` is the Unix time in seconds of each attempt.
 
 ## Full Event Reference
 
-See [Omnara's webhook payloads](https://docs.omnara.com/events/webhooks) and the
-[agent configuration](https://docs.omnara.com/agents/configuration#event-webhook) docs.
+See [Omnara's event webhooks](https://docs.omnara.com/events/webhooks) and
+[streaming events](https://docs.omnara.com/events/streaming) docs.

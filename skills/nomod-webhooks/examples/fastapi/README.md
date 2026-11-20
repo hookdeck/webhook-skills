@@ -56,7 +56,7 @@ npx hookdeck-cli listen 8000 nomod --path /webhooks/nomod
 ```
 
 1. In Nomod go to Settings > Tools & customisations > Apps & APIs > Webhooks > Create webhook.
-2. Pick an integration type (Nomod API or Nomod Hosted Checkout) and the `charge.*` events you want.
+2. Pick Nomod API, Nomod Hosted Checkout or both, and the `charge.*` events you want.
 3. Enter the tunnel URL as the webhook URL and create the webhook.
 4. Copy the webhook's **Signing secret** into `.env`.
 

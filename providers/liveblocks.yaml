@@ -36,7 +36,7 @@ notes: >-
   or bulk-recovered from the dashboard. An endpoint failing for 5 consecutive days is disabled. Some events
   are throttled (storageUpdated 60 s, ydocUpdated); notification events fire 30 minutes after the activity
   by default. No timeout or ordering statement. Setup: Per endpoint in the dashboard; all events by default,
-  narrowed via Message Filtering. A test endpoint option exists. No challenge or validation request is
+  narrowed by editing its event subscriptions. A test endpoint option exists. No challenge or validation request is
   documented, so the row has no handshake block. Express examples must read the raw body with express.raw({
   type: '*/*' }) so any content type works and the exact bytes are verified; parse the body only after
   the check. Hookdeck's source type is LIVEBLOCKS, labelled 'Liveblocks'.

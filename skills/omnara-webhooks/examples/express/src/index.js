@@ -28,7 +28,7 @@ app.post('/webhooks/omnara', express.raw({ type: '*/*' }), (req, res) => {
   const timestamp = req.headers[`${prefix}-timestamp`];
   const signature = req.headers[`${prefix}-signature`];
   if (!id || !timestamp || !signature) {
-    // Omnara only signs when event_webhook.signing_secret_id is set on the agent
+    // Omnara only signs when the subscription has a signing secret
     return res.status(400).json({ error: 'Missing required webhook headers' });
   }
 

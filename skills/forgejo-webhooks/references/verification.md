@@ -7,7 +7,7 @@
 3. The same digest is sent as `X-Gitea-Signature` and `X-Gogs-Signature`, as `X-Hub-Signature-256: sha256=<hex>`, and as a SHA-1 `X-Hub-Signature: sha1=<hex>`. This skill verifies `X-Forgejo-Signature`.
 4. You recompute the digest over the exact bytes received and compare in constant time.
 
-Only the body is signed: no timestamp, delivery id or other header. There is no replay window to enforce; use `X-Forgejo-Delivery` for idempotency.
+Only the body is signed: no timestamp, delivery id or other header. There is no replay window to enforce. `X-Forgejo-Delivery` identifies one attempt, and a replay from Recent Deliveries gets a new value, so make handlers idempotent on what changed.
 
 > Set a secret on the Forgejo webhook. Without one, deliveries are unsigned and fail verification. Set the webhook's HTTP method to POST and its content type to application/json. Form-encoded and GET deliveries sign the JSON payload rather than the request body and fail verification.
 

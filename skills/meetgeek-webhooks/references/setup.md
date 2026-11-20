@@ -27,4 +27,4 @@ npx hookdeck-cli listen 3000 meetgeek --path /webhooks/meetgeek
 
 ## Testing
 
-Finish a meeting analysis in MeetGeek, or send your own signed POST (see [verification.md](verification.md) for the signing command). Respond `200` quickly so MeetGeek does not retry.
+Finish a meeting analysis in MeetGeek, or send your own signed POST (see [verification.md](verification.md) for the signing command). Respond `200` with no body quickly so MeetGeek does not retry.

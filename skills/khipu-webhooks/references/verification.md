@@ -53,7 +53,7 @@ The examples **don't check the timestamp by default**. Hookdeck retries and repl
 ## Common Gotchas
 
 - **Raw body:** don't parse or re-serialise JSON before verifying (key order, spacing, escaped slashes and `"1000.0000"` strings all change the bytes). Use `express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`.
-- **Version 3.0 only:** a collection without `notify_api_version` `"3.0"` sends 1.3 notifications with a `notification_token`; they fail this check.
+- **Version 3.0 only:** a collection created with the older 2.0 payments API gets 1.3 notifications with a `notification_token`; they fail this check.
 - **Milliseconds:** `t` is milliseconds, not seconds.
 - **Use `t` as a string:** never parse it to a number and format it back.
 - **Secret:** the collecting account's merchant secret, with no whitespace or quotes.
@@ -61,6 +61,6 @@ The examples **don't check the timestamp by default**. Hookdeck retries and repl
 
 ## Debugging Verification Failures
 
-- Confirm the collection was created with `notify_api_version` `"3.0"` and the secret is for the account that created it (staging and production differ).
-- Log the raw body length and compare with Khipu's records; any middleware that re-serialises JSON breaks the signature.
+- Confirm the collection was created with `notify_api_version` `"3.0"` and the secret is for the account that created it.
+- Log the raw body length; any middleware that re-serialises JSON breaks the signature.
 - If you set a tolerance and valid events fail after downtime, the window is rejecting retries; raise it or turn it off.

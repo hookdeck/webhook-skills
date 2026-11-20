@@ -10,9 +10,9 @@ Novu delivers webhooks through Svix, white-labelled, and sends the Standard Webh
 | `webhook-timestamp` | Unix timestamp in seconds when the message was sent |
 | `webhook-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Svix's own header names (`svix-id`, `svix-timestamp`, `svix-signature`) carry the same values.
-The examples read the `webhook-*` headers and fall back to the `svix-*` headers when
-`webhook-id` is absent. The `svix` library accepts either set
+Novu's docs show only the `webhook-*` names. Svix's own names (`svix-id`, `svix-timestamp`,
+`svix-signature`) are the same scheme under another prefix, so the examples read the `webhook-*`
+headers and fall back to the `svix-*` headers when `webhook-id` is absent. The `svix` library accepts either set
 itself, so the examples pass it the resolved values under both sets of names.
 
 The algorithm:
@@ -141,7 +141,8 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Multiple signatures.** Split `webhook-signature` on spaces and accept any matching `v1,` entry.
   Don't compare the whole header.
 - **Fixed 5-minute window in the SDKs.** See the Hookdeck section above.
-- **One secret per endpoint, per environment.** A sandbox secret won't verify production traffic.
+- **One secret per endpoint.** Endpoints belong to a Novu environment, so a development
+  endpoint's secret won't verify production traffic.
 - **Plan requirement.** "Novu outbound webhooks are available on the Team and Enterprise plans."
   See [setup.md](setup.md).
 - **Placeholder secret.** Novu's docs show `YOUR_WEBHOOK_SECRET_KEY`. The real value is the

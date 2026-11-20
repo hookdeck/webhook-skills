@@ -64,6 +64,9 @@ Fountain has no event-name field or header. Dispatch on the shape of the payload
 | `applicant` | `{ "applicant": { id, name, email, stage, funnel, background_checks, ... } }` | An applicant changes stage, or a background check (Checkr/Onfido) changes status |
 | `worker` | Flat worker object `{ id, name, email, is_active, approved_at, data_collection_checks, ... }` | A Post-Hire worker is activated or deactivated, or documents are uploaded or approved |
 
+Each webhook setting has its own URL and a setting `type` (16, such as `Webhooks::Settings::Transition`). Fountain
+doesn't document sending the type with a delivery, so give each setting its own path if you need to tell them apart.
+
 Return `200` quickly and process slow work asynchronously: Fountain retries a failed request twice, and a
 webhook that fails more than 10 times in 24 hours is disabled until you fix and re-enable it.
 

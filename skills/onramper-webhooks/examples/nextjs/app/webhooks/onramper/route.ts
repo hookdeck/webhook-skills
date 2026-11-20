@@ -5,21 +5,21 @@ import { verifyOnramperSignature } from '../../../lib/verify-onramper';
 
 interface OnramperTransaction {
   transactionId?: string;
-  transactionType?: string; // 'buy' | 'offramp'
+  transactionType?: string; // 'buy', or 'offramp' or 'sell' (Onramper's pages differ)
   status?: string;
   [key: string]: unknown;
 }
 
 /**
  * Every delivery is a transaction snapshot with no event name, so dispatch on `status`.
- * `transactionType` (buy | offramp) gives the direction.
+ * `transactionType` gives the direction: `buy`, or `offramp` or `sell` (Onramper's pages differ).
  */
 function handleEvent(tx: OnramperTransaction): void {
   const ref = `${tx.transactionId} (${tx.transactionType})`;
   switch (tx.status) {
     case 'completed':
       console.log(`Transaction completed: ${ref}`);
-      // TODO: fulfil the order using tx.outAmount, tx.targetCurrency, tx.transactionHash
+      // Your code: fulfil the order using tx.outAmount, tx.targetCurrency, tx.transactionHash
       break;
 
     case 'paid':
@@ -36,7 +36,7 @@ function handleEvent(tx: OnramperTransaction): void {
 
     case 'failed':
       console.log(`Transaction failed: ${ref}`);
-      // TODO: notify the customer or alert support
+      // Your code: notify the customer or alert support
       break;
 
     case 'canceled':

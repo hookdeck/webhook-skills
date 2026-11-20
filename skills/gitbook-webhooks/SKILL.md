@@ -22,7 +22,7 @@ Receive GitBook content updates, page feedback and site views.
 
 ## Setup
 
-Install the Webhook integration in your GitBook organisation, configure its endpoint URL, and select events for the space or site. Configure the matching signing secret in your receiver. The guide does not specify where this secret is shown; confirm it in your installation or with GitBook.
+Install the Webhook integration in your GitBook organisation, then open its configuration in a space or site, enter the **Webhook URL**, select events and click **Save Configuration**. The **Secret** section of the same screen shows the signing secret, which GitBook generates. The URL and secret belong to the organisation's installation, so every space and site that sends to this endpoint uses the same secret. **Regenerate** replaces it once you save; update your receiver straight away.
 
 Set `GITBOOK_WEBHOOK_SECRET` in the server environment. Read [setup](references/setup.md) before enabling delivery.
 

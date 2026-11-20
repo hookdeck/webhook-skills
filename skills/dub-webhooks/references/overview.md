@@ -12,7 +12,7 @@ The tests use a minimal, illustrative payload with the routing fields. It is not
 
 ## Delivery and Processing
 
-Acknowledge accepted events promptly and make changes idempotent using the delivery id. Store secrets only on the server.
+Acknowledge accepted events promptly and make changes idempotent using the envelope `id` (`evt_...`). Store secrets only on the server.
 
 The examples verify the signature, parse an object, then log only the event label. Add durable queueing and application-specific processing before returning success. Validate nested fields before using them, and acknowledge unrecognised events you intentionally ignore.
 

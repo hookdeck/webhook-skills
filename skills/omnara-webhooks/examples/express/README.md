@@ -6,8 +6,8 @@ Minimal example of receiving Omnara event webhooks with Standard Webhooks signat
 ## Prerequisites
 
 - Node.js 18+
-- An Omnara agent config with `event_webhook` set. Signing is opt-in: set
-  `event_webhook.signing_secret_id` to a generic secret generated with `openssl rand -base64 32`
+- An Omnara event webhook subscription (project **Webhooks** tab). Signing is opt-in: select a
+  generic secret generated with `openssl rand -base64 32` as its signing secret
 
 ## Setup
 
@@ -43,7 +43,7 @@ Receive real deliveries locally with the Hookdeck CLI (no account required):
 npx hookdeck-cli listen 3000 omnara --path /webhooks/omnara
 ```
 
-Then set the agent's `event_webhook.url` to the tunnel URL.
+Then use the tunnel URL as the subscription's URL.
 
 ## Notes
 

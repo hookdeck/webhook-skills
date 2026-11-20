@@ -2,17 +2,21 @@
 
 ## What Are Langfuse Webhooks?
 
-Langfuse is an open-source LLM engineering platform. Its prompt-management **Automations** watch
-for changes to prompts and run an action. One action is a **Webhook Call**: Langfuse sends an HTTP
-`POST` with a JSON body to your URL (the other action posts to Slack). Every request carries an
-`x-langfuse-signature` header you can verify with the webhook's signing secret.
+Langfuse is an open-source LLM engineering platform. Its **Automations** watch for prompt version
+changes or alert severity changes and run an action. One action is a **Webhook**: Langfuse sends an
+HTTP `POST` with a JSON body to your URL (Slack, PagerDuty and GitHub Actions are the others). Every
+request carries an `x-langfuse-signature` header you can verify with the webhook's signing secret.
 
-Delivery: a `2xx` response confirms receipt; otherwise Langfuse may retry with exponential back-off
-until it succeeds. No timeout or attempt limit is documented.
+Delivery: a `2xx` response confirms receipt; otherwise Langfuse retries with exponential back-off,
+and 5 consecutive failed deliveries disable the automation's trigger. Langfuse's open-source worker
+uses a 10-second timeout and 4 attempts per delivery (self-hosting defaults).
 
 ## Common Event Types
 
-The event is the body's `action` field. Today `type` is always `"prompt-version"`.
+Route on the body's `type`: `prompt-version` for prompt automations (then on `action`, below) and
+`monitor-alert` for alert automations, whose body has a `payload` with `severity`, `message` and
+`permalink` instead of `action`. See the
+[Alerts webhook payload](https://langfuse.com/docs/observability/features/alerts#automations-webhook-payload).
 
 | `action` | Triggered When | Common Use Cases |
 |----------|----------------|------------------|
@@ -24,9 +28,9 @@ Notes:
 
 - An `updated` change fires **two** deliveries: one for the version gaining the label/tag and one
   for the version losing it.
-- Only `created` appears in Langfuse's documented payload. The lowercase spelling of `updated` and
-  `deleted` follows the automation UI (Created / Updated / Deleted); handle unknown actions by
-  logging and returning `200`.
+- Only `created` appears in Langfuse's documented payload. The lowercase `updated` and `deleted`
+  values match the enum in Langfuse's open-source code; handle unknown actions by logging and
+  returning `200`.
 
 ## Event Payload Structure
 

@@ -31,7 +31,7 @@ A delivery doesn't carry the `wh_` id of its subscription, so give each subscrip
 
 ## Where Is My Signing Secret?
 
-The `secret` field of the `POST /v1/webhooks` response: `whsec_` plus 64 base64 characters (48 bytes of key). It is returned once and no other call returns it, so run the command where its output isn't logged. Store the full value, prefix included, in `ISNAP_WEBHOOK_SECRET`. Keep it out of client-side code and version control. Each subscription has its own secret.
+The `secret` field of the `POST /v1/webhooks` response: `whsec_` plus 64 lowercase hexadecimal characters, 70 characters in all. The key is the base64 decoding of those 64 characters (48 bytes), never their hex decoding. It is returned once and no other call returns it, so run the command where its output isn't logged. Store the full value, prefix included, in `ISNAP_WEBHOOK_SECRET`. Keep it out of client-side code and version control. Each subscription has its own secret.
 
 ## How Do I Rotate the Signing Secret?
 

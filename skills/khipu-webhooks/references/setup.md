@@ -16,7 +16,7 @@ Khipu has no dashboard webhook list for this: the endpoint is set per collection
    - `notify_api_version`: `"3.0"`
 2. When the payment is reconciled, Khipu POSTs the payment's data to `notify_url` with an `x-khipu-signature` header.
 
-Collections created without `notify_api_version` `"3.0"` use the 1.3 notification, which sends a `notification_token` and is not signed this way.
+Collections created with the 3.0 payments API are always notified with notifications API 3.0. Collections created with the older 2.0 payments API use the 1.3 notification, which sends a `notification_token` instead of the payment.
 
 ## Get Your Signing Secret
 
@@ -32,4 +32,4 @@ Use the Hookdeck URL as `notify_url`. When creating the Hookdeck source, pick th
 
 ## Testing
 
-Create a collection against the staging environment with `notify_api_version` `"3.0"` and pay it with the demo bank. The documented test payload uses subject `TEST_COBRO` and bank `DemoBank`.
+Create a test collection with `notify_api_version` `"3.0"` and pay it with DemoBank, using the details on Khipu's [test cases page](https://docs.khipu.com/en/payment-solutions/instant-payments/khipu-client-test-cases). The documented example payload uses subject `TEST_COBRO` and bank `DemoBank`.

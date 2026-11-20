@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       console.log('Response finished:', data.id, 'survey', data.surveyId);
       break;
     default:
-      // The documented list may not be exhaustive: ignore what you don't need
+      // Test Endpoint sends {"event":"testEndpoint"}: answer 200 and ignore anything else
       console.log('Unhandled event type:', eventType);
   }
 

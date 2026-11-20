@@ -10,7 +10,7 @@ The older notifications API 1.3 sent only a `notification_token`; it is not cove
 
 ## Event Types
 
-Khipu has **no event-name field or header**. Each POST is a reconciled payment, so the examples treat every verified delivery as a payment reconciliation (the sample payloads call it `reconciliation`).
+Khipu has **no event-name field or header**. Today each POST is a reconciled payment, so the examples treat every verified delivery as a payment reconciliation (the sample payloads call it `reconciliation`). Khipu's page lists three more kinds as upcoming (collection generated, payment made, payment ended in error) without documenting how they will be told apart, so check that `conciliation_date` is set before marking an order paid.
 
 | Notification | Triggered When | Common Use Cases |
 |--------------|----------------|------------------|
@@ -46,7 +46,7 @@ The page's signing example shows the same payload with `amount` and `discount` a
 
 ## Delivery
 
-One POST per event to the collection's `notify_url`. The docs don't describe retries or what response Khipu expects, so return `200` after recording the payment and make the handler idempotent on `payment_id`.
+One POST per event to the collection's `notify_url`. Khipu's API reference says it waits for an HTTP `200` and retries for up to two days if it doesn't get one, so return `200` after recording the payment and make the handler idempotent on `payment_id`. No timeout or retry interval is documented.
 
 ## Full Event Reference
 

@@ -3,7 +3,7 @@
 ## How Does Omnara Sign Webhooks?
 
 Omnara follows [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md),
-but only when the agent config sets `event_webhook.signing_secret_id`. Signed deliveries carry:
+but only when the subscription has a signing secret (`signing_secret_id`). Signed deliveries carry:
 
 | Header | Contents |
 |--------|----------|
@@ -134,10 +134,11 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 
 ## Common Gotchas
 
-- **Signing is opt-in.** Without `event_webhook.signing_secret_id` there is no `webhook-signature`
-  and nothing to verify. Hookdeck's alert says: "Signing is opt-in per agent: set
-  event_webhook.signing_secret_id, then paste that secret here as whsec_ followed by the secret.
-  Unsigned deliveries fail verification."
+- **Signing is opt-in.** Without a `signing_secret_id` on the subscription there is no
+  `webhook-signature` and nothing to verify. In a Hookdeck Omnara source, enter the secret as
+  `whsec_` followed by the value.
+- **Rotation.** A signing change also applies to pending retries, and no overlap period is
+  documented, so update `OMNARA_WEBHOOK_SECRET` (and any Hookdeck source) as soon as you change it.
 - **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order. Use
   `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()` (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded secret, not the literal string.
@@ -150,7 +151,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 
 | Symptom | Likely cause |
 |---------|--------------|
-| "Missing required webhook headers" | Agent has no `signing_secret_id` (unsigned delivery), or a proxy dropped the headers |
+| "Missing required webhook headers" | Subscription has no `signing_secret_id` (unsigned delivery), or a proxy dropped the headers |
 | Every request fails with "Invalid signature" | Wrong secret, or the body was parsed/re-serialized before verification |
 | Fails only after deploys or proxies | A proxy or middleware rewrote the body |
 | "Timestamp too old" on retries or replays | The SDK's fixed 5-minute window; use the manual verifier |

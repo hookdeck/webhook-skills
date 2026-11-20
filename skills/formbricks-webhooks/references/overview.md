@@ -21,6 +21,8 @@
     "tags": [],
     "variables": {},
     "data": { "welcome_card_cta": "clicked" },
+    "dataByQuestionCode": { "newsletter_consent": null, "visit_reason": null },
+    "outcome": null,
     "ttc": { "welcome_card_cta": 2154.700000047684 },
     "meta": { "country": "DE", "url": "https://app.formbricks.com/s/surveyId", "userAgent": { "browser": "Chrome", "device": "desktop", "os": "macOS" } },
     "survey": { "title": "Customer Satisfaction Survey", "status": "inProgress", "type": "link", "createdAt": "2025-07-20T10:30:00.000Z", "updatedAt": "2025-07-24T07:45:00.000Z" },
@@ -38,6 +40,8 @@
 | `webhookId` | The id of the Formbricks webhook that sent the delivery |
 | `data` | The response object |
 | `data.data` | The answers, keyed by question id |
+| `data.dataByQuestionCode` | The same answers keyed by question code; unanswered questions are `null`. A delivery queued before a Formbricks update can lack it |
+| `data.outcome` | `null`, or `"lowQuality"` when a reviewer marked the response Low quality (still delivered) |
 | `data.ttc` | Time spent per question (`_total` appears once the response is finished) |
 | `data.finished` / `data.endingId` | Whether the respondent completed the survey, and which ending card they reached |
 | `data.survey` | A summary of the survey (title, status, type, timestamps) |
@@ -50,10 +54,10 @@ There is no event id in the body. The `webhook-id` header is unique per message 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
 | `responseCreated` | A new survey response is created | Track survey starts, notify a team |
-| `responseUpdated` | A response gains or changes answers | Stream partial answers, update a CRM record |
+| `responseUpdated` | A response gains or changes answers, or is marked Low quality or restored | Stream partial answers, update a CRM record |
 | `responseFinished` | The respondent completes the survey | Send answers to a database, trigger follow-up workflows |
 
-These are the three documented triggers. The list may not be exhaustive, so ignore types you don't recognise. The examples route all three and log the rest.
+These are the only three triggers: the `PipelineTriggers` enum in [Formbricks' code](https://github.com/formbricks/formbricks/blob/main/packages/database/schema/main.prisma) has no others. The dashboard's **Test Endpoint** button also sends a signed `POST` with the body `{"event":"testEndpoint"}` ([code](https://github.com/formbricks/formbricks/blob/main/apps/web/modules/integrations/webhooks/lib/webhook.ts)). The examples route the three triggers and answer `200` to anything else.
 
 ## Delivery Behaviour
 

@@ -33,32 +33,32 @@ function handleEvent(eventType, data) {
   switch (eventType) {
     case 'booking.status.updated':
       console.log(`Booking ${id} status: ${attributes.status}`);
-      // TODO: update table or guest state
+      // Your code: update table or guest state
       break;
 
     case 'order.state.updated':
       console.log(`Order ${id} state updated`);
-      // TODO: sync the order lifecycle
+      // Your code: sync the order lifecycle
       break;
 
     case 'order.status.updated':
       console.log(`Order ${id} status updated`);
-      // TODO: refresh kitchen and front-of-house displays
+      // Your code: refresh kitchen and front-of-house displays
       break;
 
     case 'order.total.updated':
       console.log(`Order ${id} total updated`);
-      // TODO: reconcile totals
+      // Your code: reconcile totals
       break;
 
     case 'order.payments.added':
       console.log(`Payment added to order ${id}`);
-      // TODO: record the payment for accounting
+      // Your code: record the payment for accounting
       break;
 
     case 'product.availability.updated':
       console.log(`Product ${id} availability updated`);
-      // TODO: sync menu and stock
+      // Your code: sync menu and stock
       break;
 
     default:

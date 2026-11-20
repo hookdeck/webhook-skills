@@ -4,8 +4,8 @@ description: >
   Receive and verify Openlayer webhooks, which follow the Standard Webhooks
   specification. Use when setting up an Openlayer webhook endpoint, getting the
   whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature
-  verification, or handling events like test.created, test.updated, test.deleted
-  and tests.result.updated.
+  verification, or handling events like test.created, tests.result.updated,
+  project.updated and project.lifecycle.changed.
 license: MIT
 metadata:
   author: hookdeck
@@ -15,7 +15,7 @@ metadata:
 
 # Openlayer Webhooks
 
-[Openlayer](https://openlayer.com) is an AI evaluation and observability platform. Workspace webhooks POST a signed JSON event to your HTTPS endpoint when a test is created, updated or deleted, and when a test suite finishes a run. Signatures follow [Standard Webhooks](https://www.standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
+[Openlayer](https://openlayer.com) is an AI evaluation and observability platform. Workspace webhooks POST a signed JSON event to your HTTPS endpoint when a test is created, updated or deleted, when a test suite finishes a run, and when a project or its governance state (intake, risk, lifecycle) changes. Signatures follow [Standard Webhooks](https://www.standardwebhooks.com/), so each delivery carries `webhook-id`, `webhook-timestamp` and `webhook-signature` headers.
 
 ## When to Use This Skill
 
@@ -56,7 +56,7 @@ The library always enforces a fixed **5-minute timestamp window**, which is the 
 
 ## Event Type and Payload
 
-Every body is `{ type, timestamp, data }`. The event name is the top-level `type`, `timestamp` is the ISO 8601 (UTC) time the event was generated, and the event fields sit under `data` (`data.test` for `test.*`, `data.tests` for `tests.result.updated`):
+Every body is `{ type, timestamp, data }`. The event name is the top-level `type`, `timestamp` is the ISO 8601 (UTC) time the event was generated, and the event fields sit under `data` (`data.test` for `test.*`, `data.tests` for `tests.result.updated`, `data.project` plus `data.actorId` for `project.*`):
 
 ```json
 {
@@ -83,8 +83,17 @@ Every body is `{ type, timestamp, data }`. The event name is the top-level `type
 | `test.updated` | A test's configuration is updated (`data.test` holds the new state) |
 | `test.deleted` | A test is deleted (`data.test` has only `id`) |
 | `tests.result.updated` | A test suite finishes a run: one event per run with `total`, `passing`, `failing`, `skipped`, `running` |
+| `project.created` | A project is created, in the app or by an integration |
+| `project.updated` | A project's name, description, owner or tags change (`data.changes` holds `from` and `to` per field) |
+| `project.deleted` | A project is deleted (full project with `dateDeleted` set; it can be restored) |
+| `project.restored` | A deleted project is restored |
+| `project.intake.updated` | A project's intake answers change (governance) |
+| `project.risk.assessed` | A risk assessment is submitted (governance) |
+| `project.risk_exception.updated` | A risk exception is set or revoked (governance) |
+| `project.lifecycle.changed` | A project advances, is sent back, is retired or is reopened (governance) |
+| `project.lifecycle.approved` | A reviewer approves a project's current lifecycle stage (governance) |
 
-These 4 are the documented events; the list may not be exhaustive, so ignore types you don't recognise. See [references/overview.md](references/overview.md).
+These 13 are the documented events. Project and governance events aren't sent for sample projects, and each carries the project's full current state, so upsert by `data.project.id` and skip an event whose `timestamp` is older than the last one you applied. The list may not be exhaustive, so ignore types you don't recognise. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

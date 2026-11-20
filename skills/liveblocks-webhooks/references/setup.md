@@ -11,7 +11,7 @@
 2. Click the **Webhooks** tab in the left-hand menu.
 3. Click **Add endpoint...**.
 4. Enter your endpoint URL, or click **use a test endpoint** to generate a URL at `https://webhooks.liveblocks.io/test/<token>`.
-5. Select the events you want to subscribe to. An endpoint listens to all events by default; narrow it with Message Filtering.
+5. Select the events you want to subscribe to. An endpoint listens to all events by default; change the selection later by editing its event subscriptions.
 6. Click **Add endpoint**.
 
 Your endpoint must return a `2xx` status (200 to 299). Anything else is treated as a failure and retried, see [verification.md](verification.md) and the SKILL.md delivery notes. To change subscribed events later, select the endpoint, choose **Edit endpoint...** from its top-right menu, update the selection and click **Save changes**.

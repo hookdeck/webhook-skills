@@ -30,7 +30,7 @@ metadata:
 
 | Header | Value |
 |--------|-------|
-| `webhook-id` | Identifies the message; retries reuse it. Your idempotency key (the body has no event id) |
+| `webhook-id` | Identifies the message and is signed. The body has no event id, and the docs don't say whether a retry reuses this one |
 | `webhook-timestamp` | Unix seconds |
 | `webhook-signature` | One or more space-separated `v1,<base64>` entries |
 
@@ -90,13 +90,13 @@ The `notification` event is refined by `data.kind`: `thread`, `textMention`, or 
 | `threadCreated` / `threadDeleted` | A thread is created, or deleted (all comments removed or deleted manually) |
 | `threadMetadataUpdated` | A thread's metadata is updated |
 | `threadMarkedAsResolved` / `threadMarkedAsUnresolved` | A thread's resolved state changes |
-| `notification` | A user was mentioned or replied to and hasn't seen it; sent 30 minutes after the activity by default (configurable in project settings), for email notifications |
+| `notification` | A user was mentioned or replied to and hasn't seen it; sent 30 minutes after the activity by default (configurable in project settings), once per enabled channel (`data.channel`) |
 
 These 18 are the events the examples route. The docs list them with a note that more will follow (`maxConnectionsReached` is mentioned), so ignore types you don't recognise. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 
-Return a `2xx` to acknowledge. Anything else is retried, 8 attempts in all (immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h). If every delivery to an endpoint fails for 5 consecutive days, Liveblocks disables it; re-enable it from the dashboard. After long downtime (over 8 hours), replay messages one at a time or use **Recover failed messages...**. Deduplicate on `webhook-id`. The docs give no timeout or ordering guarantee, so respond quickly, process asynchronously, and use the timestamps in `data` if order matters. Return `400` for missing headers and `401` for a bad signature. Liveblocks no longer sends from a fixed IP list: verify the signature instead of allowlisting.
+Return a `2xx` to acknowledge. Anything else is retried, 8 attempts in all (immediately, then after 5 s, 5 min, 30 min, 2 h, 5 h, 10 h and 10 h). If every delivery to an endpoint fails for 5 consecutive days, Liveblocks disables it; re-enable it from the dashboard. After long downtime (over 8 hours), replay messages one at a time or use **Recover failed messages...**. Make handlers idempotent on payload values (for example `commentId` with `type`, or `inboxNotificationId` with `channel`), because the docs don't say whether a retry reuses `webhook-id`. The docs give no timeout or ordering guarantee, so respond quickly, process asynchronously, and use the timestamps in `data` if order matters. Return `400` for missing headers and `401` for a bad signature. Liveblocks no longer sends from a fixed IP list: verify the signature instead of allowlisting.
 
 ## Environment Variables
 
