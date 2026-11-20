@@ -1,10 +1,10 @@
 # Setting Up Polygon Technology OMS Webhooks
 
-OMS webhooks are managed through the API, not a dashboard form. Examples use the sandbox host from the docs, `https://sandbox-api.polygon.technology/v0.13`.
+Subscribe to event types in the OMS Dashboard or through the Webhooks endpoints. This guide uses the API. Examples use the sandbox host from the docs, `https://sandbox-api.polygon.technology/v0.13`.
 
 ## Prerequisites
 
-- An OMS API key. Access is gated: [request it](https://polygon.technology/get-access) if your project doesn't have one.
+- An OMS API key. Access is gated: [request it](https://polygon.technology/get-access) if your project doesn't have one. Create a secret key (`sk_…`) in the OMS Dashboard under **API Keys**, then exchange it and its secret at `POST /auth/token` with `{"apiKey", "apiSecret"}` for an `accessToken` valid for 60 minutes. Send it as `Authorization: Bearer {accessToken}`, and request a new one on `401`.
 - A public HTTPS endpoint. Locally, use the Hookdeck CLI (below).
 
 ## 1. Register Your Endpoint
