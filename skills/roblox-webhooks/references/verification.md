@@ -62,8 +62,8 @@ const calculatedSignature = hmac.update(message).digest('base64');
 
 The prose says "the JSON string of the request body", which could mean either form. The examples in this skill sign the **raw request body bytes** (`express.raw()`, `request.arrayBuffer()`, `await request.body()`):
 
-- Roblox sends compact JSON, as in its samples. For compact JSON, `JSON.stringify(JSON.parse(raw)) === raw`, so both approaches produce the same bytes and the same signature. The test suites check this.
-- `JSON.stringify(parsed)` isn't byte-stable in general. Numeric-looking keys get reordered, non-ASCII escaping and float formatting can differ, and any middleware that mutates `req.body` silently breaks the signature. The raw body has none of these problems.
+- Assuming Roblox sends compact JSON (unconfirmed — the payloads in the docs are formatted for display, which says nothing about the wire body), the two forms agree for ordinary payloads, and the test suites check that on their fixtures.
+- But `JSON.stringify(parsed)` isn't byte-stable, even for compact JSON. A round trip rewrites escaped characters (`"a\/b"` → `"a/b"`) and normalises numbers (`1.0` → `1`, `1e2` → `100`); numeric-looking keys get reordered; and any middleware that mutates `req.body` silently breaks the signature. The raw body has none of these problems, so it is the safer choice.
 
 This is an engineering choice, not proof of what Roblox intends. Only a live delivery can settle that. If you ever see a signed Test Response fail on the raw body but pass on `JSON.stringify(JSON.parse(raw))`, please report it.
 

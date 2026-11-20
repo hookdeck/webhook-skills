@@ -56,8 +56,9 @@ npx hookdeck-cli listen 8000 roblox --path /webhooks/roblox
 Paste the printed HTTPS URL into the webhook, then:
 
 1. Open the [Webhooks](https://create.roblox.com/settings/webhooks) page.
-2. Click the pencil icon next to the webhook.
-3. Click **Test Response**.
+2. Select the webhook you want to test from the list of configured webhooks.
+3. Click the pencil icon next to it.
+4. Click **Test Response**.
 
 Roblox sends a `SampleNotification`:
 
