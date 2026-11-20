@@ -82,7 +82,11 @@ import hashlib, hmac, time
 def verify_recharge_webhook_timestamped(raw_body: bytes, signature_header: str, client_secret: str) -> bool:
     if not signature_header:
         return False
-    parts = dict(pair.partition("=")[::2] for pair in signature_header.split(","))
+    parts = {}
+    for pair in signature_header.split(","):
+        key, _, value = pair.partition("=")
+        if key and value:
+            parts[key.strip()] = value.strip()
     timestamp, signature = parts.get("t", ""), parts.get("v1", "")
     if not timestamp.isdigit() or not signature:
         return False
