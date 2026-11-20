@@ -81,7 +81,7 @@ async def elevenlabs_webhook(request: Request):
     sig = request.headers.get("ElevenLabs-Signature") or request.headers.get("elevenlabs-signature")
     
     if not sig:
-        raise HTTPException(status_code=400, detail="Missing signature header")
+        raise HTTPException(status_code=401, detail="Missing signature header")
     
     try:
         event = elevenlabs.webhooks.construct_event(
@@ -95,7 +95,7 @@ async def elevenlabs_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid signature")
 ```
 
-The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message.
+The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message. The 30-minute check can't be turned off, so a delivery retried or replayed more than 30 minutes after ElevenLabs sent it (for example through Hookdeck) fails it.
 
 ## Common Event Types
 

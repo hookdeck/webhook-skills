@@ -1,11 +1,9 @@
 import os
-import hmac
-import hashlib
-import time
 from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException, Header
-from fastapi.responses import JSONResponse
+from elevenlabs import ElevenLabs
+from elevenlabs.errors import BadRequestError
 import logging
 
 # Load environment variables
@@ -23,60 +21,8 @@ WEBHOOK_SECRET = os.getenv('ELEVENLABS_WEBHOOK_SECRET', '')
 if not WEBHOOK_SECRET:
     logger.warning("ELEVENLABS_WEBHOOK_SECRET not set!")
 
-
-def verify_elevenlabs_webhook(
-    raw_body: bytes,
-    signature_header: str,
-    secret: str
-) -> bool:
-    """
-    Verify ElevenLabs webhook signature
-    Referenced from elevenlabs-webhooks skill
-    """
-    if not signature_header:
-        raise ValueError('No signature header provided')
-
-    # Parse the signature header: "t=timestamp,v0=signature"
-    elements = signature_header.split(',')
-    timestamp = None
-    signatures = []
-
-    for element in elements:
-        if element.startswith('t='):
-            timestamp = element[2:]
-        elif element.startswith('v0='):
-            signatures.append(element[3:])
-
-    if not timestamp or not signatures:
-        raise ValueError('Invalid signature header format')
-
-    # Verify timestamp is within tolerance (30 minutes)
-    current_time = int(time.time())
-    timestamp_age = abs(current_time - int(timestamp))
-
-    if timestamp_age > 1800:
-        raise ValueError('Webhook timestamp too old')
-
-    # Create the signed payload
-    signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
-
-    # Calculate expected signature
-    expected_signature = hmac.new(
-        secret.encode(),
-        signed_payload.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    # Timing-safe comparison
-    is_valid = any(
-        hmac.compare_digest(sig, expected_signature)
-        for sig in signatures
-    )
-
-    if not is_valid:
-        raise ValueError('Invalid webhook signature')
-
-    return True
+# The API key is only needed for ElevenLabs API calls, not for webhook verification
+elevenlabs = ElevenLabs(api_key=os.getenv('ELEVENLABS_API_KEY') or 'webhook-only')
 
 
 @app.get("/health")
@@ -97,22 +43,19 @@ async def elevenlabs_webhook(
         elevenlabs_signature = request.headers.get('elevenlabs-signature')
 
     if not elevenlabs_signature:
-        raise HTTPException(status_code=400, detail="Missing signature header")
+        raise HTTPException(status_code=401, detail="Missing signature header")
 
     # Get raw body
     raw_body = await request.body()
 
     try:
-        # Verify webhook signature
-        verify_elevenlabs_webhook(
-            raw_body,
+        # Verify the signature and timestamp (30-minute tolerance) and parse the event.
+        # construct_event needs the raw body as a str, so decode the bytes first.
+        event = elevenlabs.webhooks.construct_event(
+            raw_body.decode('utf-8'),
             elevenlabs_signature,
             WEBHOOK_SECRET
         )
-
-        # Parse the webhook payload
-        import json
-        event = json.loads(raw_body)
 
         logger.info(f"Received ElevenLabs webhook: {event['type']}")
 
@@ -143,9 +86,9 @@ async def elevenlabs_webhook(
         # Return 200 to acknowledge receipt
         return {"status": "ok"}
 
-    except ValueError as e:
+    except BadRequestError as e:
         logger.error(f"Webhook verification failed: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
