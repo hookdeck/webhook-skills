@@ -1,0 +1,39 @@
+name: polygon-technology
+displayName: Polygon Technology
+docs:
+  webhooks: https://docs.polygon.technology/payments/guides/receiving-webhooks
+  verification: https://docs.polygon.technology/payments/guides/receiving-webhooks
+  events: https://docs.polygon.technology/api-reference/webhook-events
+notes: >
+  Polygon Technology OMS payments platform (stablecoin payments and orchestration,
+  docs.polygon.technology/payments; Mintlify docs with .md twins and llms.txt). NOT the
+  Polygon PoS chain (no block/log/NFT events) and NOT polygon.io. Register with
+  POST /webhooks {url, subscriptions: [types] or ["*"]}; response returns the cleartext
+  signingKey once (replay with same Idempotency-Key and body; 422 IdempotencyKeyReuse on a
+  different body); rotate-key has no overlap. Webhook-Signature: t=<unix>,v1=<hex
+  HMAC-SHA256 of "<t>.<raw body>">, key used as-is; parse by key; reject |now - t| > 300 in
+  both directions; not Standard Webhooks (no webhook-id/webhook-timestamp). Envelope {id
+  evt_..., idempotencyKey, type, createdAt (UTC, 3 fractional digits), schema "v1", data
+  {resource, previousStatus?, changedFields?}}. 26 types across 9 resources (customer,
+  externalAccount, counterparty, customerWallet, depositAddress, virtualAccount, cashIn,
+  transaction, transfer; no transaction.updated). At-least-once, parallel, unordered: dedupe
+  on id and idempotencyKey, order by createdAt per resource. timeoutMs default 5000 (max
+  10000); retries 0s,5s,10s,30s,1m,10m,1h,6h,1d,2d; suspended after ~72h (deliveries
+  skipped, recoverable via enable + deliveries/retry); disabled drops events; 30-day
+  history, no GET /events. POST /webhooks/{id}/test sends a signed test. Hookdeck source
+  type POLYGON_TECHNOLOGY (HMAC sha256 hex on webhook-signature, timestamp-prefixed).
+testScenario:
+  events:
+    - transaction.statusChanged
+    - transfer.statusChanged
+    - customer.statusChanged
+catalog:
+  summary: Verify Polygon Technology OMS payments webhooks (`Webhook-Signature` `t=...,v1=...`, hex HMAC-SHA256 of `<t>.<raw body>`, 300 s window), dedupe on id and idempotencyKey, order by createdAt, handle transaction.statusChanged, transfer.statusChanged and customer events
+  marketplace:
+    description: Verify Polygon Technology OMS stablecoin payments webhooks (Webhook-Signature, timestamp-prefixed hex HMAC-SHA256), dedupe and order deliveries, recover failed or suspended deliveries, handle transaction.statusChanged, transfer.statusChanged, customer, depositAddress and virtualAccount events.
+    keywords:
+    - webhooks
+    - polygon-technology
+    - oms
+    - stablecoin
+    - payments
