@@ -1,0 +1,28 @@
+name: roblox
+displayName: Roblox
+docs:
+  webhooks: https://create.roblox.com/docs/cloud/webhooks/webhook-notifications
+  verification: https://create.roblox.com/docs/cloud/webhooks/webhook-notifications#verify-webhook-security
+  events: https://create.roblox.com/docs/cloud/webhooks/webhook-notifications#supported-triggers
+notes: >
+  Roblox Open Cloud webhook notifications, configured per experience in the Creator Hub
+  (Configurations > Webhooks); up to 5 webhooks; group games: group owners only. Header
+  roblox-signature: t=<unix seconds>,v1=<sig> (CSV, parse members by key). v1 = standard base64
+  HMAC-SHA256 of "<t>.<body>" keyed with the webhook secret (UTF-8). The secret is OPTIONAL on
+  Roblox's side: without one the header is just t=<timestamp>, so reject a missing v1 rather than
+  skipping. Roblox's sample signs JSON.stringify(parsed body); the skill signs the raw body (identical
+  for the compact JSON Roblox sends). Replay window optional: sample uses 300 s, prose suggests 10 min.
+  Envelope is PascalCase {NotificationId, EventType, EventTime (7 fractional digits), EventPayload};
+  dedupe on NotificationId (and the commerce order ID for Commerce Product Order Paid). Only
+  RightToErasureRequest (UserId, GameIds = start place IDs), SampleNotification (Test Response
+  button) and AnalyticsAlert (analytics alerts doc) have published EventType values; subscription,
+  commerce, Transaction Refunded and Early Harm Detection wire names are unpublished, so the default
+  branch logs and returns 2xx. 2xx within 5 s required; 5 retries at a fixed window, then Roblox
+  treats the URL as invalid. No IP allowlist, no handshake. The erasure worker's Open Cloud API key
+  (x-api-key) is a different credential from the webhook secret. Hookdeck source type ROBLOX.
+testScenario:
+  events:
+    - RightToErasureRequest
+    - SampleNotification
+catalog:
+  summary: Verify Roblox webhook notifications (`roblox-signature` t=,v1= base64 HMAC-SHA256 of timestamp.body, rejecting unsecured webhooks), handle RightToErasureRequest, SampleNotification and AnalyticsAlert events
