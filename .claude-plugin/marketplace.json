@@ -3709,7 +3709,7 @@
     },
     {
       "name": "crossmint-webhooks",
-      "description": "Receive and verify Crossmint webhooks, which are delivered by Svix. Use when setting up a Crossmint webhook endpoint, getting the whsec_ signing secret, debugging svix-id / svix-timestamp / svix-signature verification, or handling wallet, checkout, NFT minting, credential and offramp events like wallets.transfer.in, orders.delivery.completed, nfts.create.succeeded and purchase.succeeded.",
+      "description": "Receive and verify Crossmint webhooks, which are delivered by Svix. Use when setting up a Crossmint webhook endpoint, getting the whsec_ signing secret, debugging svix-id / svix-timestamp / svix-signature verification, or handling wallet, checkout, NFT minting, credential and offramp events like wallets.transfer.in, orders.delivery.completed, nfts.create.succeeded and payment_methods.status.updated.",
       "source": "./skills/crossmint-webhooks",
       "strict": false,
       "skills": [
@@ -6036,7 +6036,7 @@
     },
     {
       "name": "globalstack-webhooks",
-      "description": "Receive and verify GlobalStack webhooks (stablecoin and fiat money-movement API, delivered via Svix). Use when setting up GlobalStack webhook handlers, debugging svix-signature verification, or handling events like onramp.success, offramp.failed, conversion.success, transfer.success, deposit.confirmed, and kyc.approved.",
+      "description": "Receive and verify GlobalStack webhooks (stablecoin and fiat money-movement API, delivered in the Svix format). Use when setting up GlobalStack webhook handlers, debugging svix-signature verification, or handling events like onramp.success, offramp.failed, conversion.success, transfer.success, deposit.confirmed, and kyc.approved.",
       "source": "./skills/globalstack-webhooks",
       "strict": false,
       "skills": [
@@ -7520,7 +7520,7 @@
     },
     {
       "name": "junction-webhooks",
-      "description": "Receive and verify Junction webhooks (health-data API for wearables, lab testing and continuous queries, formerly Vital; delivered via Svix). Use when setting up Junction webhook handlers, debugging svix-signature verification, or handling events like provider.connection.created, daily.data.sleep.created, historical.data.workouts.created, and labtest.order.updated.",
+      "description": "Receive and verify Junction webhooks (health-data API for wearables, lab testing and continuous queries; delivered via Svix). Use when setting up Junction webhook handlers, debugging svix-signature verification, or handling events like provider.connection.created, daily.data.sleep.created, historical.data.workouts.created, and labtest.order.updated.",
       "source": "./skills/junction-webhooks",
       "strict": false,
       "skills": [
@@ -7905,7 +7905,7 @@
     },
     {
       "name": "langfuse-webhooks",
-      "description": "Receive and verify Langfuse webhooks. Use when setting up a Langfuse prompt-management webhook endpoint, verifying the x-langfuse-signature header (t=,v1= HMAC-SHA256), debugging signature failures, or handling prompt version created, updated and deleted events.",
+      "description": "Receive and verify Langfuse webhooks. Use when setting up a Langfuse prompt-management webhook endpoint, verifying the x-langfuse-signature header (t=,v1= HMAC-SHA256), debugging signature failures, or handling prompt version created, updated and deleted events and alert notifications.",
       "source": "./skills/langfuse-webhooks",
       "strict": false,
       "skills": [
@@ -10052,7 +10052,7 @@
     },
     {
       "name": "northpass-webhooks",
-      "description": "Receive and verify Northpass (Gainsight Customer Education) webhooks. Use when setting up a Northpass webhook endpoint, verifying the X-Northpass-Hmac-SHA256 signature, debugging 401s, or handling learner_created_events, course_completed_events, learner_enrolled_to_course_events and other learner, course and learning path events.",
+      "description": "Receive and verify Northpass (Gainsight CE) webhooks. Use when setting up a Northpass webhook endpoint, verifying the X-Northpass-Hmac-SHA256 signature, debugging 401s, or handling learner_created_events, course_completed_events, learner_enrolled_to_course_events and other learner, course and learning path events.",
       "source": "./skills/northpass-webhooks",
       "strict": false,
       "skills": [
@@ -10225,7 +10225,7 @@
     },
     {
       "name": "omnara-webhooks",
-      "description": "Receive and verify Omnara webhooks (hosted AI agents, Standard Webhooks signing). Use when setting up an Omnara agent event_webhook handler, debugging webhook-signature verification, or handling agent_input, model_output, tool_result, context_checkpoint and tool_call_update events.",
+      "description": "Receive and verify Omnara webhooks (hosted AI agents, Standard Webhooks signing). Use when setting up an Omnara event webhook subscription handler, debugging webhook-signature verification, or handling agent_input, model_output, tool_result, context_checkpoint and tool_call_update events.",
       "source": "./skills/omnara-webhooks",
       "strict": false,
       "skills": [
@@ -10463,7 +10463,7 @@
     },
     {
       "name": "openlayer-webhooks",
-      "description": "Receive and verify Openlayer webhooks, which follow the Standard Webhooks specification. Use when setting up an Openlayer webhook endpoint, getting the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling events like test.created, test.updated, test.deleted and tests.result.updated.",
+      "description": "Receive and verify Openlayer webhooks, which follow the Standard Webhooks specification. Use when setting up an Openlayer webhook endpoint, getting the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling events like test.created, tests.result.updated, project.updated and project.lifecycle.changed.",
       "source": "./skills/openlayer-webhooks",
       "strict": false,
       "skills": [
@@ -10571,7 +10571,7 @@
     },
     {
       "name": "optimizely-webhooks",
-      "description": "Receive and verify Optimizely Feature Experimentation webhooks. Use when setting up Optimizely webhook handlers, debugging X-Hub-Signature verification, or handling project.datafile_updated and project.ruleset_updated events.",
+      "description": "Receive and verify Optimizely Feature Experimentation webhooks. Use when setting up Optimizely webhook handlers, debugging X-Hub-Signature verification, or handling project.datafile_updated, project.ruleset_updated and project.approval_* events.",
       "source": "./skills/optimizely-webhooks",
       "strict": false,
       "skills": [
