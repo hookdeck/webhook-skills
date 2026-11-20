@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 842 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 845 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -11768,6 +11768,30 @@
       ]
     },
     {
+      "name": "polygon-technology-webhooks",
+      "description": "Verify Polygon Technology OMS stablecoin payments webhooks (Webhook-Signature, timestamp-prefixed hex HMAC-SHA256), dedupe and order deliveries, recover failed or suspended deliveries, handle transaction.statusChanged, transfer.statusChanged, customer, depositAddress and virtualAccount events.",
+      "source": "./skills/polygon-technology-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/polygon-technology-webhooks",
+      "keywords": [
+        "webhooks",
+        "polygon-technology",
+        "oms",
+        "stablecoin",
+        "payments"
+      ]
+    },
+    {
       "name": "polytomic-webhooks",
       "description": "Receive and authenticate Polytomic webhooks. Use when building a Polytomic Webhook *destination* receiver, because Polytomic does NOT sign its payloads — there is NO signature, NO HMAC and NO signing secret, and the only authentication is a static shared bearer token compared against the connection Secret. Use when the `Polytomic-Signature-Timestamp` header misleads you into writing an HMAC verifier (it carries only an RFC 3339 timestamp, not a digest), when handling the single `sync.records` event, when looping over the `object.records[]` batch and its `hash` / user-defined `fields` keys, when deciding what `object.metadata` may be, or when a non-2xx response makes a Polytomic Model Sync appear as a failure.",
       "source": "./skills/polytomic-webhooks",
@@ -13000,6 +13024,27 @@
       "keywords": [
         "webhooks",
         "roam"
+      ]
+    },
+    {
+      "name": "roblox-webhooks",
+      "description": "Receive and verify Roblox webhook notifications (Open Cloud webhooks configured per experience in the Creator Dashboard). Use when verifying the roblox-signature header (t=<timestamp>,v1=<base64 HMAC-SHA256 of \"<t>.<raw body>\">), handling RightToErasureRequest (GDPR/CCPA right to erasure) and SampleNotification events, subscription, commerce order, transaction refund and experiment notifications, meeting the 5-second response budget, or debugging Roblox signature mismatches.",
+      "source": "./skills/roblox-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/roblox-webhooks",
+      "keywords": [
+        "webhooks",
+        "roblox"
       ]
     },
     {
@@ -14831,6 +14876,27 @@
         "getstream",
         "chat",
         "activity-feeds"
+      ]
+    },
+    {
+      "name": "strike-webhooks",
+      "description": "Receive and verify Strike (strike.me) Bitcoin/Lightning payments webhooks. Use when creating a Strike webhook subscription (POST /v1/subscriptions), verifying the X-Webhook-Signature header (lowercase hex HMAC-SHA256 of the raw body keyed with the subscription secret you chose), debugging signature mismatches or retries, fetching the entity by data.entityId, replaying missed events from GET /v1/events, or handling invoice.updated, payment.updated, payout.updated and receive-request.receive-completed. Not Stripe, Strike Graph or Strikedeck.",
+      "source": "./skills/strike-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/strike-webhooks",
+      "keywords": [
+        "webhooks",
+        "strike"
       ]
     },
     {
@@ -18193,7 +18259,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 845 provider skills (Stripe, Shopify, GitHub, and 842 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 851 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 848 provider skills (Stripe, Shopify, GitHub, and 845 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 854 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -18750,6 +18816,7 @@
         "./skills/plunk-webhooks",
         "./skills/podium-webhooks",
         "./skills/polar-webhooks",
+        "./skills/polygon-technology-webhooks",
         "./skills/polytomic-webhooks",
         "./skills/posthog-webhooks",
         "./skills/postmark-webhooks",
@@ -18808,6 +18875,7 @@
         "./skills/rewardful-webhooks",
         "./skills/ringcentral-webhooks",
         "./skills/roam-webhooks",
+        "./skills/roblox-webhooks",
         "./skills/rocketlane-webhooks",
         "./skills/rocketreach-webhooks",
         "./skills/roller-webhooks",
@@ -18894,6 +18962,7 @@
         "./skills/strava-webhooks",
         "./skills/streak-webhooks",
         "./skills/stream-webhooks",
+        "./skills/strike-webhooks",
         "./skills/stripe-webhooks",
         "./skills/stuart-webhooks",
         "./skills/stytch-webhooks",
