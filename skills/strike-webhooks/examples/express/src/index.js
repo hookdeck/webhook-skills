@@ -81,7 +81,12 @@ async function processEvent(event) {
   // The fetched entity is the source of truth. Deliveries can repeat and arrive
   // out of order, so don't rebuild state from the sequence of events.
   const changes = event.data?.changes ?? []; // only on *.updated events
-  console.log(`${event.eventType} ${entityId} changed [${changes.join(', ')}]`, entity);
+  // receive-request.* events also carry data.receiveId: entityId is the receive
+  // request (which can be reusable), receiveId the individual incoming payment.
+  // Match it against GET /v1/receive-requests/{entityId}/receives.
+  const receiveId = event.data?.receiveId;
+  const suffix = receiveId ? ` receive=${receiveId}` : '';
+  console.log(`${event.eventType} ${entityId} changed [${changes.join(', ')}]${suffix}`, entity);
   return entity;
 }
 

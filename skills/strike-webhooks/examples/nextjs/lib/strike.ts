@@ -36,7 +36,8 @@ export interface StrikeWebhookEvent {
   id: string;
   eventType: string;
   webhookVersion: string;
-  data?: { entityId?: string; changes?: string[]; [key: string]: unknown };
+  // `receiveId` appears on receive-request.* events only.
+  data?: { entityId?: string; changes?: string[]; receiveId?: string; [key: string]: unknown };
   created: string;
   deliverySuccess?: boolean | null;
 }
@@ -88,6 +89,11 @@ export async function processEvent(event: StrikeWebhookEvent): Promise<unknown> 
   // The fetched entity is the source of truth. Deliveries can repeat and arrive
   // out of order, so don't rebuild state from the sequence of events.
   const changes = event.data?.changes ?? []; // only on *.updated events
-  console.log(`${event.eventType} ${entityId} changed [${changes.join(', ')}]`, entity);
+  // receive-request.* events also carry data.receiveId: entityId is the receive
+  // request (which can be reusable), receiveId the individual incoming payment.
+  // Match it against GET /v1/receive-requests/{entityId}/receives.
+  const receiveId = event.data?.receiveId;
+  const suffix = typeof receiveId === 'string' ? ` receive=${receiveId}` : '';
+  console.log(`${event.eventType} ${entityId} changed [${changes.join(', ')}]${suffix}`, entity);
   return entity;
 }

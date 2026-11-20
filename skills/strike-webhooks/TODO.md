@@ -7,13 +7,30 @@ Contributions to address these items are welcome.
 
 ## Issues
 
-### Minor
+None outstanding.
 
-- [ ] **skills/strike-webhooks/references/overview.md**: receive-request.receive-pending / receive-request.receive-completed payloads also carry data.receiveId (the ID of the incoming payment; data.entityId is the receiveRequestId), per Strike's receive-request guide in https://docs.strike.me/llms-full.txt. The skill documents only data.entityId and data.changes, so integrators can't tell which receive on a reusable receive request (e.g. an on-chain address) triggered the event.
-  - Suggested fix: In overview.md's field table and SKILL.md's payload notes, add data.receiveId (string, present on receive-request.* events; read defensively). Note that the specific receive can be found with GET /v1/receive-requests/{entityId}/receives by matching receiveId. Optionally have the examples log data.receiveId for receive-request.* events.
+The review's one minor finding — that `receive-request.receive-pending` /
+`receive-request.receive-completed` also carry `data.receiveId` — was confirmed
+verbatim against Strike's receiving-payments walkthrough
+(https://docs.strike.me/walkthrough/receiving-payments: "The `entityId`
+corresponds to the `receiveRequestId`, while the `receiveId` is the ID of the
+incoming payment") and fixed: `SKILL.md`, `references/overview.md` and all three
+examples now document and surface it.
 
-## Suggestions
+The two review suggestions were confirmed from the same examples and also fixed:
+`deliverySuccess` is absent (not just null) from Strike's per-event examples, and
+`created` can carry seven fractional-second digits
+(`2024-10-14T10:24:47.0326505+00:00`), which `datetime.fromisoformat` rejects
+before Python 3.11.
 
-- [ ] Strike's per-event examples (payment.updated, receive-request.*) omit deliverySuccess entirely, so mention in overview.md that it may be absent as well as null; the examples already don't rely on it.
-- [ ] Strike's own receive-request example uses 7-digit fractional seconds in `created` (2024-10-14T10:24:47.0326505+00:00), which Python <3.11 datetime.fromisoformat rejects. Worth one line next to the existing 'parse it, don't assume a fixed format' note.
+## Open questions
 
+- [ ] **`webhookVersion: "v2"`.** Strike's OpenAPI accepts `v2` on subscriptions
+      and events, but no page documents how a v2 payload differs, and the API is
+      served only under `/v1/*`. The skill pins `v1` and makes a non-`v1` event
+      loud rather than guessing at the shape. Worth revisiting if Strike
+      publishes v2.
+- [ ] **Sandbox host.** Strike documents a full sandbox environment
+      (https://docs.strike.me/sandbox) but the examples' `STRIKE_API_BASE` is
+      left unset rather than naming a sandbox hostname, which was not confirmed
+      from the docs.

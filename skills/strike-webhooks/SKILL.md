@@ -75,8 +75,9 @@ function verifyStrikeSignature(rawBody, signature, secrets) {
 
 - `id`: the event ID. Dedupe on it; Strike can deliver the same event more than once.
 - `data.entityId`: fetch it, e.g. `GET /v1/invoices/{entityId}` with `Authorization: Bearer $STRIKE_API_KEY`. `data.changes` only appears on `*.updated` events; read it as `data?.changes ?? []`.
-- `created`: RFC 3339 with an offset (examples use `+01:00` and `+00:00`). Parse it; don't assume UTC.
-- `deliverySuccess`: Strike's own delivery bookkeeping (nullable). Don't branch on it.
+- `data.receiveId`: **`receive-request.*` events only.** `entityId` is the receive request, `receiveId` the individual incoming payment — and a receive request can be reusable, so you need both. Match it against `GET /v1/receive-requests/{entityId}/receives`.
+- `created`: RFC 3339 with an offset (examples use `+01:00`, `+00:00`, and 7 fractional digits, which Python's `datetime.fromisoformat` rejects before 3.11). Parse it tolerantly; don't assume UTC.
+- `deliverySuccess`: Strike's own delivery bookkeeping (nullable, and absent from several of Strike's own examples). Don't branch on it.
 - `webhookVersion`: pin `v1` on the subscription and check it in the handler. The API also accepts `v2`, but its payload is undocumented as of 2026-11-20.
 
 Deliveries aren't guaranteed to arrive in order. The fetched resource is the source of truth.

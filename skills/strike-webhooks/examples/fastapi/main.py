@@ -114,7 +114,18 @@ def process_event(event: Dict[str, Any]) -> Any:
     # The fetched entity is the source of truth. Deliveries can repeat and arrive
     # out of order, so don't rebuild state from the sequence of events.
     changes = data.get("changes") or []  # only on *.updated events
-    logger.info("%s %s changed %s: %s", event.get("eventType"), entity_id, changes, entity)
+    # receive-request.* events also carry data.receiveId: entity_id is the receive
+    # request (which can be reusable), receiveId the individual incoming payment.
+    # Match it against GET /v1/receive-requests/{entityId}/receives.
+    receive_id = data.get("receiveId")
+    logger.info(
+        "%s %s changed %s%s: %s",
+        event.get("eventType"),
+        entity_id,
+        changes,
+        f" receive={receive_id}" if receive_id else "",
+        entity,
+    )
     return entity
 
 

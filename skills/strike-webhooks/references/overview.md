@@ -39,8 +39,9 @@ The body is a `WebhookEvent` (Strike's documented example):
 | `webhookVersion` | string | `v1` or `v2` per the OpenAPI, fixed by the subscription. |
 | `data.entityId` | string (uuid) | The resource the event is about. Fetch it. |
 | `data.changes` | string[] | Names of the properties that changed. Present on `*.updated` events only. |
-| `created` | string (RFC 3339) | Offset-aware. The setup page shows `+01:00`, the API reference `+00:00`, the recovery page adds milliseconds. Parse it; don't assume UTC or a fixed format. |
-| `deliverySuccess` | boolean, nullable | Strike's own bookkeeping: `true` when all delivery attempts succeeded, `false` if any is pending or failed, `null` with no attempts. Don't branch on it in a receiver. It's mostly useful on the `GET /v1/events` recovery path. |
+| `data.receiveId` | string (uuid) | **`receive-request.*` events only.** The ID of the incoming payment. Strike's receiving-payments walkthrough: "The `entityId` corresponds to the `receiveRequestId`, while the `receiveId` is the ID of the incoming payment." Read it defensively — it is not in the OpenAPI schema. |
+| `created` | string (RFC 3339) | Offset-aware. The setup page shows `+01:00`, the API reference `+00:00`, the recovery page adds milliseconds, and the receive-request examples use **7 fractional digits** (`2024-10-14T10:24:47.0326505+00:00`), which Python's `datetime.fromisoformat` rejects before 3.11. Parse it with a tolerant parser; don't assume UTC or a fixed format. |
+| `deliverySuccess` | boolean, nullable | Strike's own bookkeeping: `true` when all delivery attempts succeeded, `false` if any is pending or failed, `null` with no attempts. It is also **absent entirely** from several of Strike's own per-event examples, so treat it as optional as well as nullable. Don't branch on it in a receiver. It's mostly useful on the `GET /v1/events` recovery path. |
 
 `id`, `eventType`, `webhookVersion`, `data` and `created` are required in the OpenAPI. `data` has no sub-schema at all, so read everything inside it defensively (`data?.changes ?? []`).
 
@@ -68,6 +69,27 @@ The 14 events in Strike's API reference ("Supported Events"), with Strike's desc
 | `deposit.updated` | State of the deposit has changed. | `GET /v1/deposits/{depositId}` |
 | `receive-request.receive-pending` | Receive for the receive request has been detected. | `GET /v1/receive-requests/{receiveRequestId}` (and `/receives`) |
 | `receive-request.receive-completed` | Receive for the receive request has been completed. | `GET /v1/receive-requests/{receiveRequestId}` (and `/receives`) |
+
+### `receive-request.*` carries a second ID
+
+These two events are the one place `data` holds more than `entityId`. Strike's documented example:
+
+```json
+{
+  "id": "2aa19d2a-22eb-4868-8fad-8ad765491c3b",
+  "eventType": "receive-request.receive-completed",
+  "webhookVersion": "v1",
+  "data": {
+    "entityId": "0191382f-387c-4eec-bc74-980872bfc5e5",
+    "receiveId": "24180fae-a62d-4583-a960-759d605d252b"
+  },
+  "created": "2024-10-14T10:25:18.8850861+00:00"
+}
+```
+
+`entityId` is the receive request; `receiveId` is the individual payment against it. A receive request can be reusable — an onchain address keeps accepting payments — so `entityId` alone does not tell you *which* receive fired the event. Use `GET /v1/receive-requests/{entityId}/receives` and match on `receiveId` (the endpoint supports filtering by `$receiveId`) to get the description, Lightning pre-image, onchain confirmation count and the paying Strike username.
+
+Note that this example also omits `deliverySuccess` and uses seven fractional-second digits.
 
 Things to notice:
 
