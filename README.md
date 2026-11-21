@@ -1,5 +1,9 @@
 # Webhook Skills
 
+<!-- yarkr:badges:start -->
+[![Indexed on Yarkr](https://api.yarkr.com/functions/v1/api/api/v1/badges/repos/hookdeck/webhook-skills/version.svg)](https://yarkr.com/arks/hookdeck/webhook-skills)
+<!-- yarkr:badges:end -->
+
 This repository contains webhook-related skills for AI coding agents that need to **receive, verify signatures, handle events, retry deliveries, or debug webhook integrations** from various providers ([see Provider Webhook Skills table below](#provider-webhook-skills)).
 
 Skills provide step-by-step instructions, signature verification code, and runnable examples for Express, Next.js, and FastAPI.
@@ -956,6 +960,40 @@ npx hookdeck-cli listen 3000 stripe --path /webhooks/stripe
 ```
 
 This provides a public URL that forwards webhook events to your local server, plus a web UI for inspecting and replaying webhook requests.
+
+<!-- yarkr:install:start -->
+## Install with Yarkr
+
+This repo is indexed on [Yarkr](https://yarkr.com/arks/hookdeck/webhook-skills) as the ark [hookdeck/webhook-skills](https://yarkr.com/arks/hookdeck/webhook-skills), so its skills install into Claude Code, Codex, Cursor and other agent harnesses with one command.
+
+### CLI
+
+Install the whole ark, which Yarkr keeps equal to this repo:
+
+```bash
+npx yarkr-cli sync hookdeck/webhook-skills
+```
+
+Or add individual skills:
+
+```bash
+npx yarkr-cli add skill:hookdeck/webhook-skills/100ms-webhooks
+npx yarkr-cli add skill:hookdeck/webhook-skills/360dialog-webhooks
+npx yarkr-cli add skill:hookdeck/webhook-skills/360learning-webhooks
+```
+
+No Node.js? `curl -fsSL https://yarkr.com/install.sh | sh` (macOS, Linux) or `irm https://yarkr.com/install.ps1 | iex` (Windows PowerShell) installs `yarkr` as a standalone binary; then type `yarkr` in place of `npx yarkr-cli`.
+
+### MCP
+
+Connect your agent to the ark over MCP:
+
+```bash
+npx yarkr-cli mcp add hookdeck/webhook-skills
+```
+
+Or point any MCP client at `https://api.yarkr.com/functions/v1/api/mcp/o/hookdeck/webhook-skills`.
+<!-- yarkr:install:end -->
 
 ## Example: How to Handle Stripe Webhooks
 
