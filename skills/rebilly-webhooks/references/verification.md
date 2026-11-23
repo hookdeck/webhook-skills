@@ -90,40 +90,15 @@ The `webhook-signature` header contains space-separated Ed25519 signatures in an
 Rebilly sends both `v2a` and legacy `v1a` and can send two of each during rotation. Verify
 any `v2a` entry with the environment's `whpk_` public key from [Rebilly's signing documentation](https://www.rebilly.com/docs/dev-docs/webhooks-configuration).
 
-```javascript
-const { createHash, createPublicKey, verify } = require('node:crypto');
+The [Node verifier](../examples/express/src/verify-v2a.js) and its
+[signature tests](../examples/express/test/verify-v2a.test.js) are runnable from the Express
+example. Load your environment’s public key from trusted configuration at startup. Pass the
+request headers, the original body as a Buffer or Uint8Array, the public key and your configured
+organization ID to `verifyV2a`. For a bodyless delivery, pass an empty Buffer. Process the event
+only if verification succeeds.
 
-// Load the public key from trusted configuration once per environment.
-function rebillyPublicKey(whpk) {
-  const rawKey = Buffer.from(whpk.slice('whpk_'.length), 'base64');
-  return createPublicKey({
-    key: { kty: 'OKP', crv: 'Ed25519', x: rawKey.toString('base64url') },
-    format: 'jwk',
-  });
-}
-
-function verifyV2a(headers, rawBody, publicKey, organizationId) {
-  const id = headers['webhook-id'];
-  const timestamp = headers['webhook-timestamp'];
-  const signatures = headers['webhook-signature'];
-  if (typeof id !== 'string' || !organizationId || !id.startsWith(organizationId + ':') ||
-      typeof timestamp !== 'string' || !timestamp || typeof signatures !== 'string') return false;
-
-  const endpointId = organizationId.replaceAll('%', '%25').replaceAll('.', '%2E');
-  const digest = createHash('sha256')
-    .update(`${endpointId}.${id}.${timestamp}.`)
-    .update(rawBody)
-    .digest();
-  return signatures.split(' ').some(entry => {
-    const match = /^v2a,([A-Za-z0-9+/]{86}==)$/.exec(entry); // Base64-encoded 64-byte signature
-    return match !== null && verify(null, digest, publicKey, Buffer.from(match[1], 'base64'));
-  });
-}
-```
-
-Pass the raw body bytes and the organization ID you expect. For multiple organizations on one
-URL, first check the organization prefix of `webhook-id` against your own list. The endpoint ID
-is derived locally. Ed25519 verifies the raw 32-byte SHA-256 digest. Legacy `v1a` signs
+For multiple organizations on one URL, check the organization prefix of `webhook-id` against
+your own list before deriving the endpoint ID. Ed25519 verifies the raw 32-byte SHA-256 digest. Legacy `v1a` signs
 `webhook-id.webhook-timestamp.raw-body` directly and requires a separate organization-prefix check.
 
 Rebilly's direct-receiver example also checks that the delivery attempt is within five minutes
