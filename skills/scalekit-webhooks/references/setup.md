@@ -7,14 +7,14 @@
 
 ## How Do I Add a Scalekit Webhook Endpoint?
 
-1. Open the Scalekit dashboard and go to **Dashboard > Webhooks**.
-2. Add an endpoint with your HTTPS URL, for example `https://your-app.com/webhooks/scalekit`.
+1. Open the Scalekit dashboard, select the environment and go to **Developers > Webhooks**. Each environment has its own endpoints, so add one in Production too when you go live.
+2. Select **Add Endpoint** and enter your HTTPS URL, for example `https://your-app.com/webhooks/scalekit`.
 3. Subscribe only to the events your app needs (for example `organization.directory.user_created`, `organization.directory.user_updated`, `organization.directory.user_deleted`). Scalekit can send every event, but a narrow subscription means less traffic to process.
 4. Save the endpoint. Scalekit documents no challenge or validation request, so nothing needs answering during setup.
 
 ## Where Is the Signing Secret?
 
-Each endpoint has its own signing secret, shown in the dashboard under **Webhooks > any endpoint**. It starts with `whsec_`. Put the full value in `SCALEKIT_WEBHOOK_SECRET`; the HMAC key is its base64-decoded part after `whsec_`, which the verifiers do for you.
+Each endpoint has its own signing secret: open the endpoint under **Developers > Webhooks** and select **Show** under **Signing secret**. It starts with `whsec_`. Reading it needs the Admin or Developer role. Put the full value in `SCALEKIT_WEBHOOK_SECRET`; the HMAC key is its base64-decoded part after `whsec_`, which the verifiers do for you.
 
 ## What Does Scalekit Expect Back?
 
@@ -30,7 +30,7 @@ Each endpoint has its own signing secret, shown in the dashboard under **Webhook
 npx hookdeck-cli listen 3000 scalekit --path /webhooks/scalekit
 ```
 
-Register the printed Hookdeck URL as the endpoint URL, then trigger an event (for example create an organization) or resend a message from the message log.
+Register the printed Hookdeck URL as the endpoint URL, then use the endpoint's **Send Test Event** button, trigger a real event (for example create an organization) or resend a message from the message log.
 
 ## Which Secret Do I Use?
 

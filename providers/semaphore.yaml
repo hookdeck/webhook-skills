@@ -1,8 +1,8 @@
 name: semaphore
 displayName: "Semaphore CI"
 docs:
-  webhooks: https://docs.semaphoreci.com/using-semaphore/notifications
-  verification: https://docs.semaphoreci.com/using-semaphore/notifications
+  webhooks: https://docs.semaphore.io/using-semaphore/notifications
+  verification: https://docs.semaphore.io/using-semaphore/notifications
 notes: >
   Semaphore CI (semaphore.io). A notification (UI or `sem create notification --webhook-endpoint`)
   with rules filtering on projects, branches, tags, pipelines and results posts to a webhook URL when
@@ -38,12 +38,11 @@ notes: >
   organization secret named on the notification (`--webhook-secret`); signing only happens when one is
   set. Events: there is no event-name field or header; every delivery is a finished pipeline
   (`version`, `organization`, `project`, `repository`, `revision`, `workflow`, `pipeline`, `blocks`).
-  Dispatch on `pipeline.result` (passed, failed, stopped, canceled). Methods: Semaphore's docs don't
-  name the HTTP method. The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and
-  DELETE on the webhook route (Express: app.all or one route per method; Next.js: export a handler for
-  each; FastAPI: api_route with those methods), verify the signature first for every method, and treat
-  a missing body as empty bytes (a GET with no body is verified over zero bytes, and once verified it
-  is acknowledged with 200, not rejected as invalid JSON). Say in SKILL.md and setup.md that any method the sender uses must be allowed on the Hookdeck source (link https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with
+  Dispatch on `pipeline.result` (passed, failed, stopped, canceled). Methods: Semaphore sends POST by default; the notification YAML's optional `action` property sets
+  PUT or PATCH instead (https://docs.semaphore.io/reference/notifications-yaml#action-in-webhook).
+  Accept POST, PUT and PATCH on the webhook route and verify the signature first. Say in SKILL.md and
+  setup.md that a PUT or PATCH `action` must be allowed on the Hookdeck source (link
+  https://hookdeck.com/docs/sources#custom-methods). Express examples must read the raw body with
   express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified (Next.js:
   await request.arrayBuffer(); FastAPI: await request.body()); parse the body only after the check.
   Documented sample payloads (each JSON file's `body` is the payload as the vendor's docs show it) are

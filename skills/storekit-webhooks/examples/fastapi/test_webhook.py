@@ -46,7 +46,7 @@ LINK = {"paymentLink": {"id": "plink_019dbc4d", "title": "Invoice #001", "refere
 LINK_REFUND = {"refund": {"id": "ref_xyz789", "transactionId": "txn_abc123", "amount": 1000, "currency": "GBP"}}
 PRINTER = {"printer": {"id": "6041b7c2", "name": "Kitchen Printer"}, "venue": VENUE}
 
-# All 27 documented events, each with a payload shaped like the docs
+# All 26 documented events, each with a payload shaped like the docs
 EVENTS = {
     "order.created.v2": envelope("order.created.v2", ORDER),
     "order.created": json.dumps(ORDER),  # legacy: bare order object, no `event`
@@ -73,9 +73,8 @@ EVENTS = {
     "item.out_of_stock": envelope("item.out_of_stock", {
         "venue": VENUE, "item": {"id": 5678, "name": "Margherita Pizza"}, "reason": "snoozed",
         "source": "manual", "details": {"snoozeEnd": None}}),
-    "payments.payout.created": envelope("payments.payout.created", {
-        "amounts": [{"currency": "GBP", "value": "3210.50"}], "estimatedArrivalDate": "1/2024"}),
-    "bill.payment.created": envelope("bill.payment.created", {}),
+    "account.holder.payout": envelope("account.holder.payout", {
+        "amounts": [{"currency": "GBP", "value": 321050}], "estimatedArrivalDate": "1/2024"}),
     "payment_link.created": envelope("payment_link.created", {
         "paymentLink": {"id": "plink_019dbc4d", "type": "one_off", "amountType": "fixed", "amount": 2500, "currency": "GBP"},
         "venue": VENUE}),
@@ -127,7 +126,7 @@ def test_health_check():
 
 
 def test_documented_event_count():
-    assert len(EVENTS) == 27
+    assert len(EVENTS) == 26
 
 
 @pytest.mark.parametrize("event_type", list(EVENTS))

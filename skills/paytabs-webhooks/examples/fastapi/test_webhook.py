@@ -25,7 +25,7 @@ TRANSACTION = {
     "tran_total": "500.00",
     "tran_type": "Sale",
     "tran_class": "ECom",
-    "customer_details": {"name": "Mohammed EL Rayes", "email": "mohammed.elrayes@paytabs.com", "country": "EG"},
+    "customer_details": {"name": "Jane Doe", "email": "user1@example.com", "country": "EG"},
     "payment_result": {
         "response_status": "D",
         "response_code": "344",

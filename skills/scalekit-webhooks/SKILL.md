@@ -93,7 +93,7 @@ The event type is the top-level `type`. `id` (`evt_…`) is unique per event and
 SCALEKIT_WEBHOOK_SECRET=whsec_xxxxx   # full whsec_ value; handlers fail closed (500) without it
 ```
 
-One signing secret per endpoint, from **Dashboard > Webhooks > any endpoint**.
+One signing secret per endpoint: open it under **Developers > Webhooks** and select **Show** under **Signing secret**.
 
 ## Local Development
 

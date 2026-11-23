@@ -20,8 +20,8 @@ headers: `svix-id`, `svix-timestamp`, and `svix-signature`. The event name is th
 `event_type` field. In the unified `intent.*` payload, the top-level `type` is the **payment method**
 (`payment`, `bank_transfer`, `crypto`, `balance`, `cash`), not the event.
 
-Recurrente's docs are in Spanish. Endpoints receive every event (no per-endpoint filter is
-documented), so ignore the ones you don't need and return `200` for them.
+Recurrente's guides are in Spanish, with English versions. An endpoint receives every event unless
+you limit its event types in the Webhooks dashboard, so return `200` for the ones you don't need.
 
 ## When to Use This Skill
 
@@ -65,8 +65,9 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
 Each endpoint has its own secret, shaped like `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw` (that is the
-docs' example, not a real secret). It is returned **once**, as `signingSecret`, by
-`POST /api/webhook_endpoints`, and can be read at any time in the Svix dashboard reachable from
+docs' example, not a real secret). It is returned as `signingSecret` by
+`POST /api/webhook_endpoints` and by `GET /api/webhook_endpoints/{id}` (with a write key), and can
+be read at any time in the Svix dashboard reachable from
 Configuración > Desarrolladores y API > Webhooks. Keep the full `whsec_...` value in
 `RECURRENTE_WEBHOOK_SECRET`. Handlers fail closed: with the variable unset they return 500 instead
 of accepting anything. Missing headers or a bad signature return 400.

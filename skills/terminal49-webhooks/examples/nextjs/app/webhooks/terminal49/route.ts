@@ -32,7 +32,7 @@ function handleNotification(payload: Terminal49Notification): void {
     case 'tracking_request.failed': {
       const trackingRequest = included.find((r) => r.type === 'tracking_request');
       console.log(`${event} (${referenceType}) ${trackingRequest?.attributes?.request_number ?? ''}`);
-      // TODO: mark the tracking request done, or surface request.attributes.failed_reason
+      // Your code: mark the tracking request done, or surface request.attributes.failed_reason
       break;
     }
 
@@ -41,14 +41,14 @@ function handleNotification(payload: Terminal49Notification): void {
     case 'container.transport.available': {
       const container = included.find((r) => r.type === 'container');
       console.log(`${event} for container ${container?.attributes?.number}`);
-      // TODO: update your container milestone from the transport_event in `included`
+      // Your code: update your container milestone from the transport_event in `included`
       break;
     }
 
     case 'container.updated':
     case 'shipment.estimated.arrival':
       console.log(`${event} (${referenceType})`);
-      // TODO: re-fetch the container or shipment from the REST API for the latest ETA/state
+      // Your code: re-fetch the container or shipment from the REST API for the latest ETA/state
       break;
 
     default:

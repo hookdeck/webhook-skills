@@ -2,7 +2,7 @@
 
 ## Register the Endpoint
 
-Use the Ryft Portal profile menu > Developer > Webhooks, or the Webhook API, to register the endpoint and obtain its secret. Configure test and live credentials separately.
+Use the Ryft Portal profile menu > Developer > Webhooks, or the Webhook API, to register the endpoint. `POST /webhooks` returns the endpoint's secret only when the endpoint is created, so store it then.
 
 Use `POST /webhooks/ryft`. Configure `RYFT_WEBHOOK_SECRET` with the same secret as the sender; keep it out of source control.
 
@@ -18,7 +18,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `RYFT` source type once it is available in your environment and configure its verification secret. A request with a bad signature is recorded as failed verification and creates no event. The example receivers themselves return 401 for invalid signatures.
+Choose the Ryft source type and enter the endpoint's webhook secret. A request with a bad signature is recorded as failed verification and creates no event. The example receivers themselves return 401 for invalid signatures.
 
 No timestamp is included in the signed message. These examples do not invent an age check from unsigned fields.
 

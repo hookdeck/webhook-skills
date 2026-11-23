@@ -21,7 +21,6 @@ async function send(body: string, signature: string | null = sign(body), content
 beforeEach(() => {
   process.env.SURVICATE_WEBHOOK_SECRET = vector.secret;
   process.env.SURVICATE_WEBHOOK_TOLERANCE_SECONDS = '0';
-  process.env.UPPROMOTE_WEBHOOK_TOPIC = 'questionAnswered';
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 afterEach(() => { vi.restoreAllMocks(); });

@@ -29,57 +29,57 @@ function handleEvent(payload) {
   switch (type) {
     case 'affiliate.created':
       console.log(`Affiliate created: ${object.email} (${object.id})`);
-      // TODO: create a CRM contact
+      // Your code: create a CRM contact
       break;
 
     case 'affiliate.confirmed':
       console.log(`Affiliate confirmed: ${object.email} (${object.id})`);
-      // TODO: send onboarding
+      // Your code: send onboarding
       break;
 
     case 'referral.lead':
       console.log(`Referral became a lead: ${object.id}`);
-      // TODO: track the funnel
+      // Your code: track the funnel
       break;
 
     case 'referral.converted':
       console.log(`Referral converted: ${object.id}`);
-      // TODO: attribute revenue to the affiliate
+      // Your code: attribute revenue to the affiliate
       break;
 
     case 'sale.created':
       console.log(`Sale created: ${object.id}`);
-      // TODO: record the sale
+      // Your code: record the sale
       break;
 
     case 'sale.refunded':
       console.log(`Sale refunded: ${object.id}`);
-      // TODO: reverse attribution
+      // Your code: reverse attribution
       break;
 
     case 'commission.created':
       console.log(`Commission created: ${object.id}`);
-      // TODO: record the liability
+      // Your code: record the liability
       break;
 
     case 'commission.paid':
       console.log(`Commission paid: ${object.id}`);
-      // TODO: notify the affiliate
+      // Your code: notify the affiliate
       break;
 
     case 'payout.due':
       console.log(`Payout due: ${object.id}`);
-      // TODO: queue finance work
+      // Your code: queue finance work
       break;
 
     case 'payout.paid':
       console.log(`Payout paid: ${object.id}`);
-      // TODO: mark as settled
+      // Your code: mark as settled
       break;
 
     case 'payout.failed':
       console.log(`Payout failed: ${object.id}`);
-      // TODO: alert finance
+      // Your code: alert finance
       break;
 
     default:

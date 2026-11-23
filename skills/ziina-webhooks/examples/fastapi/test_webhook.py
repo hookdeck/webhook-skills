@@ -34,7 +34,7 @@ REFUND = {"event": "refund.status.updated", "data": {"id": "r-1", "status": "com
 
 
 def sign(body: bytes, secret: str = SECRET) -> str:
-    """Ziina: lowercase hex HMAC-SHA256 of the raw body, no prefix."""
+    """Ziina: hex HMAC-SHA256 of the raw body, no prefix."""
     return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 

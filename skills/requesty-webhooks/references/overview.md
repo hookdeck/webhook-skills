@@ -70,6 +70,7 @@ values must be strings holding a float, an int64, or a string under the same con
 | Retry signing | Each attempt is signed again: new `webhook-timestamp` and `webhook-signature` |
 | Delivery model | At-least-once, so deduplicate on `webhook-id` |
 | Challenge | None |
+| Source IPs | Nine static egress IPs across three AWS regions ([list](https://docs.requesty.ai/features/static-ips)) |
 
 Return `2xx` quickly and process asynchronously. Requesty retries failed deliveries, so make handlers
 idempotent.

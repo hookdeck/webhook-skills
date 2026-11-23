@@ -67,7 +67,7 @@ The default payload is `WebhookV2Payload`:
 {
   "actionType": "updateData",
   "data": {
-    "actionUser": { "userId": "michael", "name": "Michael Scott", "organizationId": "crdt-array-demo-org1" },
+    "actionUser": { "userId": "michael", "name": "Jane Doe", "organizationId": "crdt-array-demo-org1" },
     "crdtData": { "id": "crdt-array-demo-todos-1", "lastUpdatedBy": "michael", "data": [] },
     "metadata": {
       "apiKey": "VKabul7W2DJhLu1BiMaj",

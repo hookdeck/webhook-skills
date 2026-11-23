@@ -36,11 +36,12 @@ export async function POST(request: NextRequest) {
   const status = typeof result.response_status === 'string' ? result.response_status : undefined;
 
   if (status === 'A') {
-    switch (tranType) {
-      case 'Sale':
+    // PayTabs' docs spell tran_type as "sale" in requests and "Sale" in responses: normalise it
+    switch (tranType?.toLowerCase()) {
+      case 'sale':
         console.log('Sale authorised:', tranRef);
         break;
-      case 'Refund':
+      case 'refund':
         console.log('Refund authorised:', tranRef);
         break;
       default:

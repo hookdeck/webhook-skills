@@ -82,6 +82,8 @@ export async function POST(request: Request) {
       console.log('Pin by CID queued:', file?.id, file?.cid, file?.status);
       break;
     case 'ipfs.public.pin_by_cid_succeeded':
+    // Pinata's catalog example for this event prints this name instead
+    case 'ipfs.public.pin_by_cid_created':
       // The pinned file is data.new_file; data.object is the pin request
       console.log('Pin by CID succeeded:', event.data?.new_file?.id, event.data?.new_file?.cid);
       break;

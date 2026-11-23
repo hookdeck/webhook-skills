@@ -50,12 +50,20 @@ function verifySurgeWebhook(rawBody, headers, secret = process.env.SURGE_WEBHOOK
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
 // Envelope: {id, type, timestamp, account_id, data}. Some of Surge's examples
-// omit `id`, so fall back to type + data.id.
+// omit `id`, so fall back to type + data.id, but only for events that happen
+// once per object. A contact can opt out, back in and out again, and a
+// campaign can be resubmitted, so those events repeat a data.id: keep their
+// handlers idempotent instead.
+const ONCE_PER_OBJECT = new Set([
+  'message.sent', 'message.delivered', 'message.failed', 'message.received',
+  'conversation.created', 'call.ended', 'recording.completed', 'voicemail.received',
+]);
 const processedEventKeys = new Set();
 
 function eventKey(event) {
   if (event.id) return event.id;
-  return event.data?.id ? `${event.type}:${event.data.id}` : null;
+  if (!ONCE_PER_OBJECT.has(event.type) || !event.data?.id) return null;
+  return `${event.type}:${event.data.id}`;
 }
 
 function handleEvent(event) {

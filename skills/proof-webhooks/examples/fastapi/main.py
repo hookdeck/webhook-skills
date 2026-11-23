@@ -66,23 +66,23 @@ async def proof_webhook(request: Request):
 
     if event == "transaction.created":
         print(f"Transaction created: {data.get('transaction_id')}")
-        # TODO: Record the transaction in your system
+        # Your code: record the transaction in your system
 
     elif event == "transaction.completed":
         print(f"Transaction completed: {data.get('transaction_id')}")
-        # TODO: Update state. Documents may not be downloadable yet: wait for transaction.released
+        # Your code: update state. Documents may not be downloadable yet: wait for transaction.released
 
     elif event == "transaction.released":
         print(f"Transaction released: {data.get('transaction_id')}")
-        # TODO: Fetch the signed documents from the Proof API
+        # Your code: fetch the signed documents from the Proof API
 
     elif event == "transaction.declined":
         print(f"Transaction declined: {data.get('transaction_id')}")
-        # TODO: Notify the requester
+        # Your code: notify the requester
 
     elif event == "notary.created":
         print(f"Notary created: {data.get('notary_id')}")
-        # TODO: Sync the notary to your system
+        # Your code: sync the notary to your system
 
     else:
         print(f"Unhandled event: {event}")

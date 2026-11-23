@@ -71,6 +71,12 @@ but cannot retry, replay or reveal secrets. Every replay must pass through the s
 verification and durable inbox. After downtime, replay the affected window and refetch each
 referenced resource. Completed event ids remain no-ops.
 
+Swipelux pauses an endpoint after repeated delivery failures, and when its daily re-check refuses
+the URL's hostname; the endpoint then reads `disabled: true`. Resume it with
+`PATCH /v3/webhooks/{webhookId}` and `{"disabled": false}` (Swipelux re-checks the URL and returns
+`400` if it no longer passes), then replay the gap. The portal can't create, change or delete
+endpoints; use the API.
+
 If you verify behind Hookdeck, note that retries and replays resend the original timestamp, which
 the `svix` library rejects after 5 minutes. See [verification.md](verification.md).
 
@@ -79,6 +85,6 @@ the `svix` library rejects after 5 minutes. See [verification.md](verification.m
 | Symptom | Likely cause |
 |---------|--------------|
 | Every delivery fails verification | The handler verifies a re-serialized body instead of the raw bytes, or the secret belongs to a different endpoint |
-| No deliveries arrive | The endpoint isn't subscribed to the event (remember `PATCH` replaces the selection), or the URL isn't reachable |
+| No deliveries arrive | The endpoint isn't subscribed to the event (remember `PATCH` replaces the selection), the URL isn't reachable, or the endpoint is paused (`disabled: true`) |
 | Legacy-style events fail verification | The integration is a legacy one; only new Svix-delivered integrations are supported |
 | 500 "Server configuration error" | `SWIPELUX_WEBHOOK_SECRET` is unset or doesn't start with `whsec_` |

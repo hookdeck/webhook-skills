@@ -43,47 +43,47 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "affiliate.created":
         print(f"Affiliate created: {obj.get('email')} ({obj.get('id')})")
-        # TODO: create a CRM contact
+        # Your code: create a CRM contact
 
     elif event_type == "affiliate.confirmed":
         print(f"Affiliate confirmed: {obj.get('email')} ({obj.get('id')})")
-        # TODO: send onboarding
+        # Your code: send onboarding
 
     elif event_type == "referral.lead":
         print(f"Referral became a lead: {obj.get('id')}")
-        # TODO: track the funnel
+        # Your code: track the funnel
 
     elif event_type == "referral.converted":
         print(f"Referral converted: {obj.get('id')}")
-        # TODO: attribute revenue to the affiliate
+        # Your code: attribute revenue to the affiliate
 
     elif event_type == "sale.created":
         print(f"Sale created: {obj.get('id')}")
-        # TODO: record the sale
+        # Your code: record the sale
 
     elif event_type == "sale.refunded":
         print(f"Sale refunded: {obj.get('id')}")
-        # TODO: reverse attribution
+        # Your code: reverse attribution
 
     elif event_type == "commission.created":
         print(f"Commission created: {obj.get('id')}")
-        # TODO: record the liability
+        # Your code: record the liability
 
     elif event_type == "commission.paid":
         print(f"Commission paid: {obj.get('id')}")
-        # TODO: notify the affiliate
+        # Your code: notify the affiliate
 
     elif event_type == "payout.due":
         print(f"Payout due: {obj.get('id')}")
-        # TODO: queue finance work
+        # Your code: queue finance work
 
     elif event_type == "payout.paid":
         print(f"Payout paid: {obj.get('id')}")
-        # TODO: mark as settled
+        # Your code: mark as settled
 
     elif event_type == "payout.failed":
         print(f"Payout failed: {obj.get('id')}")
-        # TODO: alert finance
+        # Your code: alert finance
 
     else:
         print(f"Unhandled event: {event_type}")

@@ -57,13 +57,20 @@ There is no event header. Dispatch on the body's numeric `eventType`, scoped by 
 
 | `eventType` (RTC) | Meaning |
 |-------------------|---------|
-| `101` | Channel create |
-| `102` | Channel destroy |
-| `103` | Broadcaster joins channel |
-| `104` | Broadcaster leaves channel |
-| `105`, `106`, `107`, `108`, `111`, `112` | Other documented RTC codes (audience join/leave, role changes, and more); the examples log them. Check the Agora docs for each code's meaning |
+| `101` | Channel create (first user joins) |
+| `102` | Channel destroy (last user leaves) |
+| `103` | Host joins (streaming profile) |
+| `104` | Host leaves (streaming profile) |
+| `105` | Audience member joins (streaming profile) |
+| `106` | Audience member leaves (streaming profile) |
+| `107` | User joins (communication profile) |
+| `108` | User leaves (communication profile) |
+| `111` | Audience member switches to host |
+| `112` | Host switches to audience member |
 
-Payload shape: `{noticeId, productId, eventType, notifyMs, sid, payload: {channelName, ts, uid, clientSeq, ...}}`. Deduplicate on `noticeId`; deliveries can repeat and arrive out of order.
+The examples handle `101` to `104` and log the rest.
+
+Envelope: `{noticeId, productId, eventType, notifyMs, payload}`. `payload` varies by event; every event except `101` and `102` carries `payload.clientSeq`. Deliveries can repeat and arrive out of order, and `notifyMs` changes on each resend. Agora's documented approach is to keep the last `clientSeq` per user and ignore a callback whose `clientSeq` is lower.
 
 ## Environment Variables
 

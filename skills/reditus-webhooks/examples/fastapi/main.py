@@ -48,19 +48,19 @@ def handle_event(payload: dict) -> None:
 
     if event_type == "partnership.accepted":
         print(f"Partnership accepted: {text(data.get('affiliate_email'))}")
-        # TODO: activate the affiliate in your system
+        # Your code: activate the affiliate in your system
 
     elif event_type == "referral.created":
         print(f"Referral created: {text(data.get('referral_id'))} (affiliate {text(data.get('affiliate_email'))})")
-        # TODO: record the referral
+        # Your code: record the referral
 
     elif event_type == "advocate.created":
         print(f"Advocate created: {text(data.get('advocate_id'))} ({text(data.get('advocate_email'))})")
-        # TODO: send the advocate their referral link
+        # Your code: send the advocate their referral link
 
     elif event_type == "lead.created":
         print(f"Lead created: {text(data.get('lead_id'))} for advocate {text(data.get('advocate_uid'))}")
-        # TODO: attribute the lead to the advocate
+        # Your code: attribute the lead to the advocate
 
     elif event_type == "reward.created":
         # The docs' sample shows amount 5521 as $55.21, i.e. minor units.
@@ -68,7 +68,7 @@ def handle_event(payload: dict) -> None:
         if isinstance(amount, bool) or not isinstance(amount, (int, float)):
             amount = None
         print(f"Reward created: {text(data.get('reward_id'))} amount={amount} {text(data.get('currency'))}")
-        # TODO: grant the reward
+        # Your code: grant the reward
 
     else:
         print(f"Unhandled event: {event_type}")

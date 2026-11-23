@@ -10,7 +10,7 @@
 
 1. In the Celitech dashboard, go to **Developers → Webhooks**.
 2. Add an endpoint and enter its URL (HTTPS), e.g. `https://example.com/webhooks/celitech`.
-3. Add a description.
+3. Optionally, add a description.
 4. Select the event types you want (`consumption.threshold.reached`, `esim.downloaded`,
    `esim.installed`, `esim.enabled`, `esim.disabled`, `esim.deleted`).
 5. Save. There is no verification challenge.
@@ -21,7 +21,7 @@ Each endpoint has its own secret, shown under **Developers → Webhooks** for th
 and rotatable there. Celitech's docs don't show the literal value. Svix endpoint secrets
 look like `whsec_<base64>`. If yours doesn't start with `whsec_`, confirm the format with
 Celitech or a dashboard test event: the `svix` library would base64-decode it, while
-Hookdeck (and the manual verifier) use a secret without `whsec_` as its raw UTF-8 bytes.
+the manual verifier uses a secret without `whsec_` as its raw UTF-8 bytes.
 Store the full value as `CELITECH_WEBHOOK_SECRET`:
 
 ```bash

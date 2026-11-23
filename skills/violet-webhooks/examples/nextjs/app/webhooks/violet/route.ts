@@ -34,8 +34,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Body must be a JSON object' }, { status: 400 });
   }
 
-  // X-Violet-Event-Id identifies the event: use it for idempotency (retries and resends repeat it)
-  console.log(`Violet event ${request.headers.get('x-violet-event-id') ?? '(no id)'}`);
+  // Dedupe key: recovery case events carry a stable X-Violet-Recovery-Event-Key (their
+  // X-Violet-Event-Id can change), and a resend carries the original ID in X-Violet-Event-Id-Source
+  const dedupeKey =
+    request.headers.get('x-violet-recovery-event-key') ||
+    request.headers.get('x-violet-event-id-source') ||
+    request.headers.get('x-violet-event-id');
+  console.log(`Violet event ${dedupeKey || '(no id)'}`);
   handleEvent(topic, body);
 
   // Respond 2XX within 10 seconds; do slow work asynchronously

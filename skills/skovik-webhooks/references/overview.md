@@ -2,7 +2,7 @@
 
 ## What Are Skovik Webhooks?
 
-[Skovik](https://skovik.com) is an operations platform whose [API](https://developer.skovik.com) exposes
+[Skovik](https://skovik.com) is an expense management platform whose [API](https://developer.skovik.com) exposes
 resources such as users, branches and export orders. Webhooks notify your systems when one of them
 changes, so you don't have to poll. You register an HTTPS endpoint in the settings UI, and Skovik sends a
 JSON `POST` for each subscribed event, signed with
@@ -69,7 +69,7 @@ examples handle all of these:
 
 ## Full Event Reference
 
-See [Receiving webhooks](https://developer.skovik.com/docs/api-webhooks-receiving) and the per-event
+See [Receiving webhooks](https://developer.skovik.com/reference/api-webhooks-receiving) and the per-event
 pages in Skovik's API reference:
 [users](https://developer.skovik.com/reference/webhookuser),
 [export orders](https://developer.skovik.com/reference/webhookexportorder),

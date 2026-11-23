@@ -6,7 +6,7 @@ Privy delivers through Svix, so every delivery carries three headers:
 
 | Header | Contents |
 |--------|----------|
-| `svix-id` | Unique delivery ID (stable across retries; your idempotency key) |
+| `svix-id` | Unique message ID (stable across retries; identifies a redelivery) |
 | `svix-timestamp` | Unix timestamp in seconds when the message was sent |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 

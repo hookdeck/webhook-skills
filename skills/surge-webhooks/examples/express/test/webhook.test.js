@@ -229,6 +229,14 @@ describe('Surge webhook endpoint', () => {
       const retry = await send(raw, signedHeaders(raw));
       expect(retry.body).toEqual({ received: true, duplicate: true });
     });
+
+    it('does not dedupe repeatable events on data.id when the envelope has no id', async () => {
+      const raw = JSON.stringify(envelope('contact.opted_out', { id: 'ctc_repeat' }, null));
+      const first = await send(raw, signedHeaders(raw));
+      expect(first.body).toEqual({ received: true });
+      const again = await send(raw, signedHeaders(raw));
+      expect(again.body).toEqual({ received: true });
+    });
   });
 
   describe('verifySurgeWebhook', () => {

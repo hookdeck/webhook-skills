@@ -67,7 +67,7 @@ There is no event name in the body or in a header. Every callback and IPN is the
 
 | Field | Meaning |
 |-------|---------|
-| `tran_type` | Transaction type, for example `Sale`, `Refund` |
+| `tran_type` | Transaction type: sale, auth, capture, void, register or refund. The docs print `Sale` in responses and `sale` in requests, so compare case-insensitively |
 | `payment_result.response_status` | Outcome: `A` is authorised (the docs sample shows `D` for a declined payment) |
 | `payment_result.response_message` | Human-readable outcome |
 | `tran_ref` | PayTabs transaction reference, for dedupe |
@@ -82,11 +82,11 @@ PAYTABS_WEBHOOK_SECRET=your_profile_server_key
 
 ## Setup (PayTabs and Hookdeck)
 
-The signing secret is your profile **ServerKey**, the same key you use to call the PT2 API. There is no separate webhook secret. Set the callback URL on the payment request, or the IPN listener URL on the profile, to your endpoint. The URL must be public HTTPS, and a framework with CSRF protection must exempt the route.
+The signing secret is a profile **server key** from **Developers > API Keys > Key Management**: the one your payment request used, or, for PayLinks and dashboard invoices, the key set as the default signature key. There is no separate webhook secret. Set the callback URL on the payment request, or add an IPN config under **Developers > Payment Notification > Configuration** with the **Default Web** type (Basic Web sends a flat body these handlers don't read). The URL must be public HTTPS, and a framework with CSRF protection must exempt the route.
 
 For the Hookdeck source: Paste your PayTabs profile server key. Only callback (IPN) requests are supported, not the browser return URL.
 
-PayTabs does not document retries, a timeout or the expected response, so reply `2xx` quickly and make handlers idempotent. See [references/setup.md](references/setup.md).
+The IPN expects a `200 OK`. Without one it is queued and retried up to 5 times with an increasing delay, then PayTabs adds a note to the transaction. The timeout is not documented, so reply `200` quickly and make handlers idempotent. See [references/setup.md](references/setup.md).
 
 ## Local Development
 

@@ -29,14 +29,19 @@ The event name is `data.attributes.event` (`data.type` is always `webhook_notifi
 | `container.transport.delivered`, `empty_in`, `full_out`, `not_available` | Delivery-side milestones | Completion, returns |
 | `container.transport.estimated.vessel_arrived` / `vessel_departed` / `arrived_at_inland_destination` | Estimated milestone changed | ETA updates |
 | `container.created`, `container.updated` | A container record was created or changed | Re-fetch container state |
-| `container.pickup_lfd.changed` (and `_line`, `_rail`, `_terminal` variants), `container.pickup_appointment.changed`, `container.delivery_appointment.changed`, `container.detention_lfd_line.changed`, `container.holds_at_pod_terminal.changed`, `container.pod_terminal_changed` | Last free day, appointment, hold or terminal changes | Demurrage and pickup planning |
+| `container.pickup_lfd.changed` (and `_line`, `_rail`, `_terminal` variants), `container.pickup_appointment.changed`, `container.delivery_appointment.changed`, `container.detention_lfd_line.changed`, `container.pod_terminal_changed` | Last free day, appointment or terminal changes | Demurrage and pickup planning |
 | `shipment.estimated.arrival` | A shipment's estimated arrival changed | ETA updates |
 | `shipment.routing.filled` | Routing data was filled in | Show the route |
+| `document_representation.created`, `document_representation.failed`, `link.created` | A document was extracted, failed extraction, or was linked | Document workflows |
 
 The handlers in `examples/` act on `tracking_request.succeeded`, `tracking_request.failed`,
 `container.transport.vessel_arrived`, `container.transport.vessel_departed`,
 `container.transport.available`, `container.updated` and `shipment.estimated.arrival`, and log
-the rest. Terminal49 also sends document-processing events; check the live catalog.
+the rest. There are no separate hold, fee or availability events: those changes arrive as
+`container.updated`, with the changed fields in its `changeset`. For document processing, the
+API's event enums and Terminal49's document examples use `document_representation.created` and
+`document_representation.failed`; the event catalog page shows `document.extracted` and
+`document.extraction_failed` instead, so log unknown event names rather than dropping them.
 
 ## Event Payload Structure
 

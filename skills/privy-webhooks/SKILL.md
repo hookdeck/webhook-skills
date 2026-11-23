@@ -79,12 +79,13 @@ it can't be configured. Hookdeck retries and replays resend the **original** `sv
 the library rejects any retry or replay that happens more than 5 minutes after the original
 delivery. If you verify behind Hookdeck (or replay old events), use the manual verifier in
 [references/verification.md](references/verification.md), where the window can be dropped or
-widened. Deduplicate on `svix-id` (and `idempotency_key` where present) instead of relying on the
-timestamp.
+widened. Deduplicate on the payload's `event_id` instead of relying on the timestamp. Funds
+events have no `event_id`, so use `idempotency_key` for them, and `user_op_hash` plus `caip2` for
+`user_operation.completed`. `svix-id` identifies a redelivery of the same webhook.
 
 ## Common Event Types
 
-70 events are documented (the list may not be exhaustive). The name is `type` in the JSON body.
+71 events are documented (the list may not be exhaustive). The name is `type` in the JSON body.
 The examples handle these:
 
 | Event | Triggered When |

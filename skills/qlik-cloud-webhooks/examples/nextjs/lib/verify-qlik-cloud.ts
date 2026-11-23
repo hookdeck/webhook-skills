@@ -2,7 +2,7 @@
 // https://github.com/hookdeck/webhook-skills
 import crypto from 'crypto';
 
-// Qlik Cloud's docs don't name the HTTP method, so accept all the usual ones.
+// Qlik documents deliveries as POST requests; the other methods are accepted defensively.
 export const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 // Verify the qlik-signature header: the lowercase hex HMAC-SHA256 of the raw request
@@ -39,40 +39,40 @@ export function handleEvent(payload: Record<string, unknown>): void {
   switch (type) {
     case 'com.qlik.v1.app.created':
       console.log('App created:', id);
-      // TODO: register the new app in your catalog
+      // Your code: register the new app in your catalog
       break;
     case 'com.qlik.v1.app.published':
       console.log('App published:', id);
-      // TODO: refresh whatever depends on the published app
+      // Your code: refresh whatever depends on the published app
       break;
     case 'com.qlik.v1.app.deleted':
       console.log('App deleted:', id);
-      // TODO: remove the app from your catalog
+      // Your code: remove the app from your catalog
       break;
     case 'com.qlik.v1.app.reload.finished':
     case 'com.qlik.v1.reload.finished':
       console.log('Reload finished:', id, data.succeeded === true ? 'succeeded' : 'not reported as succeeded');
-      // TODO: kick off downstream work if the reload succeeded, alert if it did not
+      // Your code: kick off downstream work if the reload succeeded, alert if it did not
       break;
     case 'com.qlik.v1.user.created':
       console.log('User created:', id);
-      // TODO: provision the user in your own system
+      // Your code: provision the user in your own system
       break;
     case 'com.qlik.v1.user.deleted':
       console.log('User deleted:', id);
-      // TODO: deprovision the user
+      // Your code: deprovision the user
       break;
     case 'com.qlik.v1.automation.created':
       console.log('Automation created:', id);
-      // TODO: track the new automation
+      // Your code: track the new automation
       break;
     case 'com.qlik.v1.automation.run.started':
       console.log('Automation run started:', id);
-      // TODO: record the run
+      // Your code: record the run
       break;
     case 'com.qlik.v1.api-key.validation.failed':
       console.log('API key validation failed');
-      // TODO: alert the tenant admin
+      // Your code: alert the tenant admin
       break;
     default:
       console.log(`Unhandled Qlik Cloud event: ${type}`);

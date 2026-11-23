@@ -31,7 +31,7 @@ Set a secret on the Spacelift webhook. Without one, deliveries are unsigned and 
 npm run dev
 ```
 
-Server runs on http://localhost:3000. The route at `/webhooks/spacelift` handles `GET`, `POST`, `PUT`, `PATCH` and `DELETE` (Spacelift doesn't name its method; allow the method it uses on the Hookdeck source too, see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
+Server runs on http://localhost:3000. The route at `/webhooks/spacelift` handles `GET`, `POST`, `PUT`, `PATCH` and `DELETE` (Spacelift sends `POST` by default, and a notification policy can set another method; allow that method on the Hookdeck source too, see [custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Test
 

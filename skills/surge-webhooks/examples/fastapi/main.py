@@ -28,7 +28,14 @@ app = FastAPI(title="Surge Webhook Handler")
 
 # In-memory dedupe for the demo. Use Redis or your database in production.
 # Envelope: {id, type, timestamp, account_id, data}. Some of Surge's examples
-# omit `id`, so fall back to type + data.id.
+# omit `id`, so fall back to type + data.id, but only for events that happen
+# once per object. A contact can opt out, back in and out again, and a campaign
+# can be resubmitted, so those events repeat a data.id: keep their handlers
+# idempotent instead.
+ONCE_PER_OBJECT = {
+    "message.sent", "message.delivered", "message.failed", "message.received",
+    "conversation.created", "call.ended", "recording.completed", "voicemail.received",
+}
 processed_event_keys: set = set()
 
 
@@ -36,7 +43,9 @@ def event_key(event: Dict[str, Any]) -> Optional[str]:
     if event.get("id"):
         return event["id"]
     data_id = (event.get("data") or {}).get("id")
-    return f"{event.get('type')}:{data_id}" if data_id else None
+    if event.get("type") not in ONCE_PER_OBJECT or not data_id:
+        return None
+    return f"{event.get('type')}:{data_id}"
 
 
 def resolve_signature_headers(headers) -> Optional[Dict[str, str]]:

@@ -72,7 +72,8 @@ app.post('/webhooks/agora', express.raw({ type: '*/*' }), (req, res) => {
     console.log(`Unhandled product ${productId} event: ${eventType}`);
   }
 
-  // Agora wants a 200 with a JSON body within 10 seconds; duplicates happen, so dedupe on noticeId
+  // Agora wants a 200 with a JSON body within 10 seconds. Callbacks can repeat and arrive out of
+  // order: keep the last payload.clientSeq per user and ignore lower ones
   res.status(200).json({ received: true });
 });
 

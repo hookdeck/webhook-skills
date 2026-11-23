@@ -6,10 +6,10 @@ official [`svix`](https://pypi.org/project/svix/) library (Voiceflow organizatio
 ## Prerequisites
 
 - Python 3.9+
-- Voiceflow organization with a webhook URL set and its signing secret (`whsec_...`)
+- A Voiceflow webhook URL (organization or project session lifecycle) and its signing secret (`whsec_...`)
 
-> **Only organization event webhooks are supported.** The project-level session webhook doesn't
-> document this signing scheme and may fail verification here.
+> **One secret per endpoint.** Organization events and each project's session lifecycle webhook
+> have separate secrets. Set `VOICEFLOW_WEBHOOK_SECRET` to the secret of the endpoint that points here.
 
 ## Setup
 

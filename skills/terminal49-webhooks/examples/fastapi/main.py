@@ -45,7 +45,7 @@ def handle_notification(payload: dict) -> None:
     if event in ("tracking_request.succeeded", "tracking_request.failed"):
         request = next((r for r in included if r.get("type") == "tracking_request"), {})
         print(f"{event} ({reference_type}) {(request.get('attributes') or {}).get('request_number', '')}")
-        # TODO: mark the tracking request done, or surface request attributes.failed_reason
+        # Your code: mark the tracking request done, or surface request attributes.failed_reason
 
     elif event in (
         "container.transport.vessel_arrived",
@@ -54,11 +54,11 @@ def handle_notification(payload: dict) -> None:
     ):
         container = next((r for r in included if r.get("type") == "container"), {})
         print(f"{event} for container {(container.get('attributes') or {}).get('number')}")
-        # TODO: update your container milestone from the transport_event in `included`
+        # Your code: update your container milestone from the transport_event in `included`
 
     elif event in ("container.updated", "shipment.estimated.arrival"):
         print(f"{event} ({reference_type})")
-        # TODO: re-fetch the container or shipment from the REST API for the latest ETA/state
+        # Your code: re-fetch the container or shipment from the REST API for the latest ETA/state
 
     else:
         print(f"Unhandled event: {event}")

@@ -72,7 +72,7 @@ async def bump_sh_webhook(request: Request):
             "diff_keys": list(diff) if isinstance(diff, dict) else None,
         },
     )
-    # TODO: post to chat, open a ticket, regenerate SDKs, notify API consumers, etc.
+    # Your code: post to chat, open a ticket, regenerate SDKs, notify API consumers, etc.
 
     # Return 200 to acknowledge receipt.
     return {"received": True}

@@ -84,7 +84,7 @@ If your verifier rejects this, the key, signed message or encoding is wrong.
 - **Raw body**: sign the bytes as received. Never `JSON.parse` / `JSON.stringify` (or decode and re-encode) before verifying; whitespace and key order matter.
 - **Secret handling**: `whsec_` stays in the key, and nothing is base64-decoded.
 - **`t` is a string**: use it as sent. Do not parse it to a number and format it back.
-- **Multiple `v1=` entries** (key rotation): accept if any matches. Ignore other keys such as `v0`. Header with no `t=`: fail.
+- **`v1=` entries**: Qonto's docs show one. Accept if any `v1=` entry matches, and ignore other keys such as `v0`. Header with no `t=`: fail.
 - **Validate before comparing**: require exactly 64 hex characters, lowercase both sides (hex is case-insensitive), then constant-time compare on equal-length buffers. Do not call `Buffer.from(sig, 'hex')` on unvalidated input (it silently drops bad characters). In Python compare `bytes` with `hmac.compare_digest`, not `str`.
 - **Timestamp window**: not enforced by default. Qonto documents no tolerance, and Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. The examples offer an opt-in `QONTO_WEBHOOK_TOLERANCE_SECONDS` (`t` is Unix seconds; unset or `0` = off).
 - **1-second deadline**: acknowledge first, process later.

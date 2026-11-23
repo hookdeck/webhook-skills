@@ -33,19 +33,21 @@ The body is flat: a top-level `type` and the event's fields, with no `data` wrap
 // consumption.threshold.reached
 {
   "type": "consumption.threshold.reached",
-  "purchaseId": "3f6c1c2e-0000-4000-8000-000000000001",
+  "purchaseId": "4973fa15-6979-4daa-9cf3-672620df819c",
   "dataLimitInGB": 5,
-  "dataUsageRemainingInGB": 1,
-  "actualPercentage": 80,
+  "dataUsageRemainingInGB": 0.2,
+  "actualPercentage": 80.03,
   "notificationPercentage": 80
 }
 
 // esim.downloaded / installed / enabled / disabled / deleted
-{ "type": "esim.installed", "iccid": "8910300000000000001" }
+{ "type": "esim.installed", "iccid": "1111222233334444555000" }
 ```
 
-The five `esim.*` events carry only `type` and `iccid`. The JSON above uses illustrative
-values; field names come from Celitech's webhook schemas.
+The five `esim.*` events carry only `type` and `iccid`. Celitech publishes no whole
+example body: the values above are the per-field examples in its OpenAPI schemas
+(`x-webhooks` in https://api.celitech.com/swagger.yaml). `notificationPercentage` is
+`50` or `80`, and each threshold fires at most once per purchase.
 
 ## How Does Celitech Retry Failed Deliveries?
 

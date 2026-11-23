@@ -27,7 +27,7 @@ Failures return `401`.
 - **Raw body**: don't `JSON.parse`/`JSON.stringify` before verifying; whitespace changes break the digest. In Express use `express.raw({ type: '*/*' })`.
 - **Hex case**: compare case-insensitively (lowercase both sides or decode to bytes).
 - **No prefix**: the header is the bare digest; do not strip `sha1=`.
-- **No replay window**: there is no signed timestamp. Dedupe on `noticeId` instead.
+- **No replay window**: there is no signed timestamp. Track the last `payload.clientSeq` per user to ignore repeated or stale callbacks.
 - **Secret as text**: do not hex- or base64-decode the Signing Secret.
 
 ## How to Debug Verification Failures

@@ -63,9 +63,10 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-The webhook secret is per endpoint and lives in the Svix Portal (dashboard Webhooks > endpoint >
-**Open Svix Portal**). The docs print no secret sample, but Svix secrets start with `whsec_`. Keep
-the full `whsec_...` value in `SOHAR_HEALTH_WEBHOOK_SECRET`. Handlers fail closed: with the variable
+The webhook secret is per endpoint. An account administrator reveals it in the Sohar dashboard:
+**Webhooks** > select the endpoint > **Signing Secret** in the detail panel. Revealing it doesn't
+rotate it. The docs print no secret sample, but Svix secrets start with `whsec_`. Keep the full
+`whsec_...` value in `SOHAR_HEALTH_WEBHOOK_SECRET`. Handlers fail closed: with the variable
 unset they return 500 instead of accepting anything.
 
 ### Hookdeck retries and replays hit the 5-minute window
@@ -98,7 +99,7 @@ fetch the full resource from the API before acting. See
 ## Environment Variables
 
 ```bash
-# Webhook secret from the Svix Portal (Svix format, starts with whsec_)
+# Signing secret from the Sohar dashboard: Webhooks > endpoint > Signing Secret (starts with whsec_)
 SOHAR_HEALTH_WEBHOOK_SECRET=whsec_xxxxx
 ```
 
@@ -111,12 +112,12 @@ npx hookdeck-cli listen 3000 sohar-health --path /webhooks/sohar-health
 
 Register the tunnel URL with the Create Webhook API (`POST /v1/webhooks`), subscribe it with Create
 Event (`sandbox.verification.updated` is recommended for testing), and copy the secret from the
-Svix Portal into `.env`. See [references/setup.md](references/setup.md).
+endpoint's **Signing Secret** panel into `.env`. See [references/setup.md](references/setup.md).
 
 ## Reference Materials
 
 - [references/overview.md](references/overview.md) - Sohar Health webhook concepts, events, payloads, delivery rules
-- [references/setup.md](references/setup.md) - Register an endpoint via the API, get the secret from the Svix Portal
+- [references/setup.md](references/setup.md) - Register an endpoint via the API, reveal the signing secret in the dashboard
 - [references/verification.md](references/verification.md) - Svix verification details, header fallback, manual verifier, timestamp window
 
 ## Attribution

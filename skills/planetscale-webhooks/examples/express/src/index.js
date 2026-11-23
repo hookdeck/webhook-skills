@@ -56,7 +56,7 @@ app.post('/webhooks/planetscale',
     const event = typeof payload.event === 'string' ? payload.event : undefined;
     const resource = isObject(payload.resource) ? payload.resource : {};
     const database = typeof payload.database === 'string' ? payload.database : undefined;
-    // No delivery ID header: dedupe on event + resource.id + timestamp if you need idempotency
+    // No event or delivery ID: make side effects idempotent, e.g. compare resource state with what you stored
 
     switch (event) {
       case 'webhook.test':
@@ -65,12 +65,12 @@ app.post('/webhooks/planetscale',
 
       case 'branch.ready':
         console.log(`Branch ${resource.name} is ready on ${database}`);
-        // TODO: Run migrations, post connection details to a channel
+        // Your code: Run migrations, post connection details to a channel
         break;
 
       case 'branch.anomaly':
         console.log(`Anomaly on branch ${resource.name} of ${database}: ${resource.html_url}`);
-        // TODO: Page on-call, open a ticket
+        // Your code: Page on-call, open a ticket
         break;
 
       case 'deploy_request.opened':
@@ -80,27 +80,27 @@ app.post('/webhooks/planetscale',
           `${event}: deploy request #${resource.number} ` +
           `(${resource.branch} -> ${resource.into_branch}) on ${database}`
         );
-        // TODO: Notify reviewers, update the linked ticket or CI status
+        // Your code: Notify reviewers, update the linked ticket or CI status
         break;
 
       case 'backup.failed':
         console.log(`Backup ${resource.name} failed on ${database}`);
-        // TODO: Alert the team
+        // Your code: Alert the team
         break;
 
       case 'backup.succeeded':
         console.log(`Backup ${resource.name} succeeded on ${database}`);
-        // TODO: Record backup health
+        // Your code: Record backup health
         break;
 
       case 'cluster.storage':
         console.log(`Storage at ${resource.storage_percentage}% on ${resource.branch_name} (${database})`);
-        // TODO: Capacity alert
+        // Your code: Capacity alert
         break;
 
       case 'database.access_request':
         console.log(`PlanetScale access request (${resource.state}) on ${database}`);
-        // TODO: Notify database admins to review it
+        // Your code: Notify database admins to review it
         break;
 
       default:

@@ -42,19 +42,19 @@ def handle_event(event: dict) -> None:
 
     if resource == "order":
         print(f"Order {payload.get('id')} ({topic}): {payload.get('product_name')} for {payload.get('amount_cents')} cents")
-        # TODO: fulfil the order or record the sale
+        # Your code: fulfil the order or record the sale
 
     elif resource == "order_transaction":
         print(f"Transaction {payload.get('id')} {action}")  # succeeded, failed, refunded
-        # TODO: update payment state
+        # Your code: update payment state
 
     elif resource == "enrollment":
         print(f"Enrollment {payload.get('id')} {action}")
-        # TODO: grant access, send a certificate on "completed"
+        # Your code: grant access, send a certificate on "completed"
 
     elif resource == "user":
-        print(f"User {payload.get('id')} {action}")  # signup, signin, updated, deleted
-        # TODO: sync the user record
+        print(f"User {payload.get('id')} {action}")  # signup, signin, updated, deleted, deactivated, reactivated, merged
+        # Your code: sync the user record
 
     elif resource == "course":
         print(f"Course {payload.get('id')} {action}")  # created, updated, deleted

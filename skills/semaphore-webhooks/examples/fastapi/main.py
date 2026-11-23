@@ -20,8 +20,8 @@ load_dotenv()
 
 app = FastAPI(title="Semaphore CI Webhook Handler")
 
-# Semaphore's docs don't name the HTTP method, so accept all the usual ones.
-ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+# Semaphore sends POST unless the notification's `action` is set to PUT or PATCH.
+ALLOWED_METHODS = ["POST", "PUT", "PATCH"]
 
 _HEX_64 = re.compile(r"[0-9a-fA-F]{64}")
 
@@ -65,16 +65,16 @@ def handle_semaphore_event(payload: Dict[str, Any], webhook_id: Optional[str]) -
 
     if result == "passed":
         print(f"Pipeline passed: {label}")
-        # TODO: mark the commit green, trigger a deploy
+        # Your code: mark the commit green, trigger a deploy
     elif result == "failed":
         print(f"Pipeline failed: {label}")
-        # TODO: alert the team, inspect payload["blocks"][*]["jobs"] for the failing job
+        # Your code: alert the team, inspect payload["blocks"][*]["jobs"] for the failing job
     elif result == "stopped":
         print(f"Pipeline stopped: {label}")
-        # TODO: record that it was stopped (pipeline.result_reason says why)
+        # Your code: record that it was stopped (pipeline.result_reason says why)
     elif result == "canceled":
         print(f"Pipeline canceled: {label}")
-        # TODO: record that it was canceled
+        # Your code: record that it was canceled
     else:
         print(f"Unhandled Semaphore pipeline result: {result}")
 
@@ -84,10 +84,6 @@ async def handle_semaphore_webhook(
     raw: bytes = Depends(verified_body),
     x_semaphore_webhook_id: Optional[str] = Header(None),
 ):
-    # GET and DELETE carry no body: once verified, acknowledge them.
-    if not raw:
-        return {"received": True}
-
     try:
         payload = json.loads(raw)
     except (ValueError, UnicodeDecodeError):

@@ -64,11 +64,15 @@ Dispatch on the top-level `event` field of the JSON body.
 
 | Event | Triggered When |
 |-------|----------------|
-| `demo_viewed` | A demo session is viewed (alert fires with session, lead and buyer-reveal data) |
+| `demo_viewed` | A demo session matches a demo alert (session, lead and buyer-reveal data) |
+| `repx_conversation_completed` | A RepX AI agent conversation completes (RepX webhook, transcript and summary) |
 
-Only `demo_viewed` is documented. Known and unknown visitors share it: `lead` is an object for a
-known visitor and `null` otherwise. Log other event values rather than failing. Use the session `id`
-as your idempotency key. Storylane's docs don't describe timeouts or retries.
+`demo_viewed` is the only demo alert value documented. Known and unknown visitors share it: `lead`
+is an object for a known visitor and `null` otherwise. RepX webhooks are set up separately, in the
+RepX dashboard; their page points to the same verification examples but doesn't name the signature
+header itself. Log other event values rather than failing. Storylane doesn't say whether a session
+can be sent more than once, so upsert by `id` (the demo session, or the RepX conversation) rather
+than discarding repeats. Storylane's docs don't describe timeouts or retries.
 
 ## Environment Variables
 

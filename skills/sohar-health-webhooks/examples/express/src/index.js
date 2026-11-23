@@ -60,7 +60,7 @@ app.post('/webhooks/sohar-health', express.raw({ type: '*/*' }), (req, res) => {
   // Bodies are flat: `event` plus the resource id (verificationId | discoveryId | flowRunId).
   // `status` is the resource's state, not the event type. Sandbox events carry a `sandbox.` prefix.
   const { event } = payload;
-  // No retry schedule or ordering is documented: deduplicate on svix-id (or resource id + status)
+  // No retry schedule or ordering is documented: deduplicate on svix-id and keep updates idempotent
   console.log(`Received Sohar Health webhook ${event}`);
 
   switch (event) {

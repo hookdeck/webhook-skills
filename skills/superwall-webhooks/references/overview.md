@@ -46,6 +46,10 @@ Webhooks V2 is the current format. Every webhook created in the dashboard uses i
   `subscriber` has aliases and user attributes.
 - `app_user_id`, `subscription` and `subscriber` are `null` when Superwall doesn't know the owner. It
   holds such events up to 48 hours, then sends once; an event with no known owner never grants access.
+- `transferred` events have `event_data` and `previous` set to `null` and add a `transfer` block
+  (`from_app_user_id`, `to_app_user_id`, `subscription_id`, `store`, `environment`). Remove access from
+  `transfer.from_app_user_id` and grant it to `transfer.to_app_user_id`. Every other type has
+  `transfer: null`.
 
 ### Legacy format
 
@@ -72,7 +76,7 @@ uppercase names (`RENEWAL`) are only the dashboard and API subscription filter. 
 | `subscription_paused` | A user pauses their subscription (Google Play only) |
 | `subscription_extended` | The store extends a subscription's expiration date |
 | `expiration` | A subscription expires |
-| `transferred` | Reserved for ownership changes; not sent yet |
+| `transferred` | A subscription moves to a different user (`event_data` is `null`; `transfer` names both users) |
 
 Useful `event_data` fields: `store` (`APP_STORE`, `MAC_APP_STORE`, `PLAY_STORE`, `STRIPE`, `CUSTOM`),
 `environment` (`PRODUCTION` or `SANDBOX`), `period_type` (`NORMAL`, `TRIAL`, `INTRO`, `PREPAID`,
@@ -83,7 +87,7 @@ Useful `event_data` fields: `store` (`APP_STORE`, `MAC_APP_STORE`, `PLAY_STORE`,
 - **Return `2xx` quickly**, then process asynchronously.
 - A **paused** webhook does not get the events it missed while paused.
 - There are **no test events** for V2: use a sandbox purchase.
-- Retries and replays keep the same `id` and the original `svix-timestamp`.
+- A retried or redelivered event keeps the same body `id`.
 
 ## Full Event Reference
 

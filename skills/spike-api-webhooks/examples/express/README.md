@@ -9,7 +9,7 @@ Node's `crypto` module.
 ## Prerequisites
 
 - Node.js 18+
-- A Spike API application with a webhook endpoint configured in the admin console, and its shared HMAC key
+- A Spike API application with a webhook endpoint configured in the admin console, and its Webhook Signature Key
 
 ## Setup
 
@@ -23,7 +23,7 @@ Node's `crypto` module.
    cp .env.example .env
    ```
 
-3. Add your shared HMAC key to `.env` as `SPIKE_API_WEBHOOK_SECRET`
+3. Add your Webhook Signature Key to `.env` as `SPIKE_API_WEBHOOK_SECRET`
 
 ## Run
 

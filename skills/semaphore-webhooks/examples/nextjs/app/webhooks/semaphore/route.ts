@@ -24,11 +24,6 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // GET and DELETE carry no body: once verified, acknowledge them.
-  if (rawBody.length === 0) {
-    return NextResponse.json({ received: true }, { status: 200 });
-  }
-
   let payload: unknown;
   try {
     payload = JSON.parse(rawBody.toString('utf8'));
@@ -50,8 +45,6 @@ async function handle(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ received: true }, { status: 200 });
 }
 
-export const GET = handle;
 export const POST = handle;
 export const PUT = handle;
 export const PATCH = handle;
-export const DELETE = handle;

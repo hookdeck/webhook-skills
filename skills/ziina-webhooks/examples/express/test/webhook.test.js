@@ -25,7 +25,7 @@ const paymentIntent = {
 };
 const refund = { event: 'refund.status.updated', data: { id: 'r-1', status: 'completed' } };
 
-// Ziina: lowercase hex HMAC-SHA256 of the raw body, no prefix.
+// Ziina: hex HMAC-SHA256 of the raw body, no prefix.
 function sign(body, secret = SECRET) {
   return crypto.createHmac('sha256', secret).update(body).digest('hex');
 }

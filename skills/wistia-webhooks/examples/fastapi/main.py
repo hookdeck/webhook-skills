@@ -46,15 +46,15 @@ def handle_event(event: dict) -> None:
 
     if event_type == "media.created":
         print("Media created:", media_id)
-        # TODO: Record the media as uploaded
+        # Your code: Record the media as uploaded
     elif event_type == "media.processing":
         print("Media processing:", media_id)
     elif event_type == "media.ready":
         print("Media ready:", media_id)
-        # TODO: Publish the video; it is ready for playback
+        # Your code: Publish the video; it is ready for playback
     elif event_type == "media.failed":
         print("Media failed:", media_id)
-        # TODO: Mark the media as failed and notify the uploader
+        # Your code: Mark the media as failed and notify the uploader
     elif event_type == "media.updated":
         print("Media updated:", media_id, payload.get("previous_attributes"))
     elif event_type == "media.transcript_updated":
@@ -63,7 +63,7 @@ def handle_event(event: dict) -> None:
         print("Transcript failed:", media_id, _as_dict(payload.get("transcript")).get("reason"))
     elif event_type == "media.deleted":
         print("Media deleted:", media_id)
-        # TODO: Remove the media from your catalog
+        # Your code: Remove the media from your catalog
     elif event_type == "media.translation_created":
         print("Translation created:", media_id)
     elif event_type == "media.localization_created":
@@ -76,14 +76,14 @@ def handle_event(event: dict) -> None:
         print("Percent watched:", payload.get("percent_watched"), media_id)
     elif event_type == "viewing_session.turnstile.converted":
         print("Form converted:", _as_dict(payload.get("viewing_session")).get("id"))
-        # TODO: Send the lead to your CRM
+        # Your code: Send the lead to your CRM
     elif event_type == "viewing_session.call_to_action.converted":
         print("Call to action converted:", _as_dict(payload.get("viewing_session")).get("id"))
     elif event_type == "viewing_session.annotation.converted":
         print("Annotation converted:", _as_dict(payload.get("viewing_session")).get("id"))
     elif event_type == "live_event.registration":
         print("Live event registration:", _as_dict(payload.get("live_event")).get("id"))
-        # TODO: Add the registrant to your system
+        # Your code: Add the registrant to your system
     else:
         print(f"Unhandled event type: {event_type}")
 

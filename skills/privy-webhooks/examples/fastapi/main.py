@@ -66,7 +66,7 @@ async def privy_webhook(request: Request):
     # The event name is the top-level `type`; the event's own fields (user, wallet_id, ...)
     # sit beside it at the top level, not under `data`
     event_type = event.get("type")
-    # svix-id is stable across retries; `idempotency_key` (where present) identifies the event itself
+    # Deduplicate on `event_id` (funds events: `idempotency_key`); svix-id identifies a redelivery
     print(f"Received Privy webhook {msg_id}: {event_type}")
 
     user = event.get("user")

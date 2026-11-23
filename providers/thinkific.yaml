@@ -40,10 +40,10 @@ notes: >
   `X-Thinkific-Topic` header carries a topic string, but the guide's only example of it is
   `orders.created` for the order.created topic (plural resource), so whether the header equals the
   listed topic is untested. cart.abandoned follows a different (versioned, `name`/`data`) envelope.
-  Documented event types (27): lead.created, cart.abandoned, order.created,
+  Documented event types (30): lead.created, cart.abandoned, order.created,
   order_transaction.succeeded, order_transaction.failed, order_transaction.refunded,
   subscription.cancelled, subscription.past_due, subscription.unpaid, user.signup, user.signin,
-  user.updated, user.deleted, enrollment.trial (and 13 more). Handle a few common ones and log the
+  user.updated, user.deleted, user.deactivated (and 16 more). Handle a few common ones and log the
   rest. Method: POST. The examples handle
   POST on the webhook route. Express examples must read the raw body with express.raw({ type: '*/*' })
   so any content type works and the exact bytes are verified (Next.js: await request.arrayBuffer();

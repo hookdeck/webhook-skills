@@ -35,7 +35,7 @@ Which results you receive is controlled by the `results` filter on the notificat
     "commit_sha": "2d9f5fcec1ca7c68fa7bd44dd58ec4ff65814563",
     "commit_message": "empty",
     "branch": { "name": "rw/webhook_impl" },
-    "sender": { "login": "radwo" }
+    "sender": { "login": "jane-doe" }
   },
   "workflow": { "id": "acabe58e-4bcc-4d39-be06-e98d71917703" },
   "pipeline": {
@@ -51,7 +51,7 @@ Which results you receive is controlled by the `results` filter on the notificat
 }
 ```
 
-The payload above is trimmed from the sample in Semaphore's notification docs. Each block and job
+The payload above is trimmed from the sample in Semaphore's notification docs, with the sender's login replaced by a placeholder. Each block and job
 has its own `result`, so a failed pipeline tells you which job failed.
 
 ## Delivery Headers
@@ -67,4 +67,4 @@ timeouts. Any response, of any status, ends delivery.
 
 ## Full Event Reference
 
-See [Semaphore's notifications documentation](https://docs.semaphoreci.com/using-semaphore/notifications).
+See [Semaphore's notifications documentation](https://docs.semaphore.io/using-semaphore/notifications).

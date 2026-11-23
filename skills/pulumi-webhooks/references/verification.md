@@ -27,8 +27,8 @@ Nothing time-based is signed, so there is no replay window to enforce, and the e
 
 ## What Does Pulumi's Documentation Get Wrong?
 
-- The header table and the Go and TypeScript snippets say hex. The Python snippet computes `hexdigest()` and then compares against `base64.b64encode(hash.digest())`, which contradicts them. Use hex.
-- The JavaScript snippet is broken as printed (`hmac.update(payloadBody)` with `hmac` and `payloadBody` undefined).
+- The header table and the JavaScript, TypeScript and Go snippets say hex. The Python snippet computes `hexdigest()` and then compares against `base64.b64encode(hash.digest())`, which contradicts them. Use hex.
+- The JavaScript snippet on the ESC webhooks page is broken as printed (`hmac.update(payloadBody)` with `hmac` and `payloadBody` undefined). The copy on the stack webhooks page works.
 
 ## How Do I Debug Verification Failures?
 

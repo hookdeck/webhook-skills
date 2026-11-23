@@ -37,7 +37,7 @@ Tests cover a fixed signing vector, tampering, malformed signatures, raw byte pr
 npx hookdeck-cli listen 8000 survicate --path /webhooks/survicate
 ```
 
-Register the public URL with Survicate. Use messageId when deduplicating deliveries. Acknowledge accepted events and avoid logging survey answers or personal data.
+Register the public URL with Survicate. Survicate documents `messageId` only as the webhook ID and doesn't say whether a retry repeats it, so make processing idempotent: upsert answers keyed on `responseUuid` plus `question.id`, and completed responses on `responseUuid`. Acknowledge accepted events and avoid logging survey answers or personal data.
 
 ## Responses
 

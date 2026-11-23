@@ -21,8 +21,8 @@ official [`svix`](https://pypi.org/project/svix/) library (Recurrente delivers w
    cp .env.example .env
    ```
 
-3. Add your Recurrente signing secret to `.env` as `RECURRENTE_WEBHOOK_SECRET`. It is returned once as
-   `signingSecret` when you create the endpoint with `POST /api/webhook_endpoints`, and is always available in
+3. Add your Recurrente signing secret to `.env` as `RECURRENTE_WEBHOOK_SECRET`. It is returned as
+   `signingSecret` when you create the endpoint with `POST /api/webhook_endpoints` (and by `GET /api/webhook_endpoints/{id}` with a write key), and is always available in
    the Svix dashboard reachable from Configuración > Desarrolladores y API > Webhooks.
 
 ## Run

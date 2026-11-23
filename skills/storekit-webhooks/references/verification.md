@@ -70,7 +70,7 @@ change it. Hookdeck retries and replays resend the original request, including t
 timestamp. A retry or replay more than 5 minutes after the first delivery is rejected as
 "Message timestamp too old", even though the signature is valid.
 
-If your handler sits behind Hookdeck, or you replay events for debugging (including retries and **Recover Failed Messages** from the embedded webhooks portal), use the manual verifier below, which drops the
+If your handler sits behind Hookdeck, or you replay events for debugging (including retries and **Recover Failed** from the embedded webhooks portal), use the manual verifier below, which drops the
 window (`toleranceSeconds = null`) or widens it. Replay protection then comes from deduplicating
 on `svix-id`.
 

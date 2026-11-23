@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
  * Verify a Spike API webhook signature.
  *
  * X-Body-Signature is the bare hex HMAC-SHA256 of the raw request body, keyed
- * with the shared secret from the admin console (UTF-8 bytes, used as-is).
+ * with the Webhook Signature Key from the admin console (UTF-8 bytes, used as-is).
  * No timestamp is signed.
  */
 function verifySpikeSignature(rawBody, signature, secret) {

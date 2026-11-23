@@ -31,8 +31,8 @@ function verifyPlaneWebhook(rawBody, signature, secret) {
 
 const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
-// Plane's docs show one work item example whose `event` holds an enum label
-// instead of `workitem.updated`
+// Two of Plane's doc examples (under workitem.updated and workitem.link.updated, both
+// with a work item body) show this enum label in `event` instead of a dot-notation key
 const EVENT_ALIASES = {
   'WebhookScope.ScopeChoices.WORK_ITEM_UPDATED': 'workitem.updated',
 };
@@ -73,37 +73,37 @@ app.post('/webhooks/plane',
     switch (event) {
       case 'workitem.created':
         console.log('Work item created:', name);
-        // TODO: Sync to your tracker, notify a channel, etc.
+        // Your code: Sync to your tracker, notify a channel, etc.
         break;
 
       case 'workitem.updated': {
         const changed = isObject(payload.previous_attributes) ? Object.keys(payload.previous_attributes) : [];
         console.log(`Work item updated: ${name} (changed: ${changed.join(', ') || 'none'})`);
-        // TODO: React to state or assignee changes, etc.
+        // Your code: React to state or assignee changes, etc.
         break;
       }
 
       case 'workitem.deleted':
         console.log('Work item deleted:', payload.entity_id);
-        // TODO: Remove the work item from your own records
+        // Your code: Remove the work item from your own records
         break;
 
       case 'workitem.comment.created': {
         const comment = isObject(data.comment) ? data.comment : {};
         const text = typeof comment.comment_stripped === 'string' ? comment.comment_stripped : undefined;
         console.log(`Comment on "${name}":`, text);
-        // TODO: Bot commands, notifications, etc.
+        // Your code: Bot commands, notifications, etc.
         break;
       }
 
       case 'project.updated':
         console.log('Project updated:', name);
-        // TODO: Refresh cached project details
+        // Your code: Refresh cached project details
         break;
 
       case 'cycle.created':
         console.log('Cycle created:', name);
-        // TODO: Announce the new cycle, etc.
+        // Your code: Announce the new cycle, etc.
         break;
 
       default:

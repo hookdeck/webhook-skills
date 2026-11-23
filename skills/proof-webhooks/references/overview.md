@@ -57,11 +57,15 @@ Transaction: `transaction.created`, `transaction.deleted`, `transaction.canceled
 `transaction.signer.medium_risk_detected`, `transaction.held_for_review`,
 `transaction.declined`, `transaction.import.processed`, `transaction.import.failed`.
 
-The two IDV events are documented with a doubled prefix in their examples:
-`transaction.transaction.automated_identity_verification_by_idv_service_failed` and
-`..._passed`, under headings without it. Which form is actually sent is unknown, so match on the
-suffix if you rely on them. The wildcards `*`, `transaction.*` and `notary.*` are subscription
-strings, not event names.
+Identity verification: `transaction.transaction.automated_identity_verification_by_idv_service_failed`
+and `transaction.transaction.automated_identity_verification_by_idv_service_passed`. The prefix is
+doubled in the Webhook API's subscription list and in the example bodies, while the Webhooks V2
+page's headings spell them `transaction.automated_identity_verification_by_idv_service_*`. No
+delivery has confirmed which form arrives, so accept both when you compare `event`.
+
+The Webhook API's subscription list also names `transaction.sent` and `transaction.received`,
+which the Webhooks V2 page doesn't describe. The wildcards `*`, `transaction.*` and `notary.*` are
+subscription strings, not event names.
 
 ## Delivery and Retries
 

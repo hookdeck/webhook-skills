@@ -8,14 +8,14 @@
 
 ## Get Your Signing Secret
 
-PayTabs signs with your profile **ServerKey**, the same key you use to call the PT2 API. There is no separate webhook secret. Find it in the PayTabs merchant dashboard under your profile's developer settings (the exact menu name is not given in the signature article). Store it as `PAYTABS_WEBHOOK_SECRET` and use it as-is, as UTF-8 bytes.
+PayTabs signs with a profile **server key**, the same kind of key you use to call the PT2 API. There is no separate webhook secret. Keys are under **Developers > API Keys > Key Management** in your region's merchant dashboard. PayTabs signs with the server key the payment request used; for transactions with no payment request (PayLinks, dashboard invoices) it uses the key marked **Set as default signature key**. Use one key for both if you can. Store it as `PAYTABS_WEBHOOK_SECRET` and use it as-is, as UTF-8 bytes.
 
 ## Register Your Endpoint
 
 - **Callback URL.** Set `callback` on the payment request. It is called once when the payment ends.
-- **IPN listener URL.** Configure it on the profile (PayTabs' "How to configure Instant payment notification (IPN)" article). It is called on every transaction create or change.
+- **IPN listener URL.** Add an IPN config under **Developers > Payment Notification > Configuration** and pick the **Default Web** type ([How to configure IPN](https://support.paytabs.com/en/support/solutions/articles/60000710069)). It is called on every transaction create or change. If you also pass a callback, the config's `with_callback` setting decides whether both are called or only the callback.
 
-Both must be public HTTPS URLs. Both receive a `POST` with the transaction as JSON and a `Signature` header.
+Both must be public URLs. The IPN URL must be HTTPS or its body is empty, and the callback URL can't contain a port number. Both receive a `POST` with the transaction as JSON and a `Signature` header.
 
 ## Using Hookdeck
 
@@ -27,4 +27,4 @@ Test transactions use references such as `TST...`. Use the ServerKey of the prof
 
 ## Delivery and Retries
 
-Retries, timeout and the expected response are not documented. Reply `2xx` quickly and make handlers idempotent.
+The IPN expects a `200 OK`. Without one it is queued and retried up to 5 times with an increasing delay, then PayTabs adds a note to the transaction. The timeout is not documented. Reply `200` quickly and make handlers idempotent.

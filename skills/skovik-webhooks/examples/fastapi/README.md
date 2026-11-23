@@ -1,6 +1,6 @@
 # Skovik Webhooks - FastAPI Example
 
-Minimal example of receiving [Skovik](https://developer.skovik.com/docs/api-webhooks-receiving) webhooks with signature verification. Skovik signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the dependency verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
+Minimal example of receiving [Skovik](https://developer.skovik.com/reference/api-webhooks-receiving) webhooks with signature verification. Skovik signs deliveries with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks), so the dependency verifies the `webhook-id`, `webhook-timestamp` and `webhook-signature` headers with the [`standardwebhooks`](https://pypi.org/project/standardwebhooks/) package. If `webhook-id` is absent it falls back to the `svix-*` headers.
 
 ## Prerequisites
 

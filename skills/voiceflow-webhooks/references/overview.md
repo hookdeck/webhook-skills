@@ -2,20 +2,20 @@
 
 ## What Are Voiceflow Webhooks?
 
-[Voiceflow](https://www.voiceflow.com) is an AI-agent building platform. Organization events
-webhooks send an HTTPS `POST` to one URL whenever a project or a project environment changes
-in your organization. Svix delivers and signs them, so events come from
+[Voiceflow](https://www.voiceflow.com) is an AI-agent building platform. Its webhooks send an
+HTTPS `POST` when something happens, in two scopes: organization events (projects and
+environments changing) and each project's session lifecycle webhook (sessions and voice calls
+starting and ending). Svix delivers and signs both, so events come from
 [Svix's IP addresses](https://docs.svix.com/receiving/source-ips) rather than Voiceflow's.
 
 | Aspect | Value |
 |--------|-------|
 | Method | `POST`, JSON body |
 | Signature headers | `svix-id`, `svix-timestamp`, `svix-signature` (Standard Webhooks) |
-| Scope | One URL per organization; every organization event is sent to it |
+| Scopes | One URL and secret for organization events, and one per project for session events; each lets you listen for all events or pick specific ones |
 | Acknowledgement and retries | Voiceflow states no acknowledgement, timeout or retry policy |
 
-Only organization event webhooks are covered here. The project-level session webhook doesn't
-document this signing scheme (see [setup.md](setup.md)).
+Both scopes use the same signing scheme with separate secrets (see [setup.md](setup.md)).
 
 ## Event Payload Structure
 
@@ -24,8 +24,8 @@ Every payload has the same envelope:
 | Field | Meaning |
 |-------|---------|
 | `type` | The event name, e.g. `organization.project.created` |
-| `data` | Event details: `organizationID`, `projectID`, `projectMetadata.name`, `workspaceID`, plus event-specific fields |
-| `resource` | `organization-<organizationID>` |
+| `data` | Event details. Organization events: `organizationID`, `projectID`, `projectMetadata.name`, `workspaceID`, plus event-specific fields. Session and call events: `userID`, `projectID`, `environmentID`, `startTime` and more |
+| `resource` | `organization-<organizationID>` or `project-<projectID>` |
 | `time` | Event time as a Unix timestamp in milliseconds |
 
 ```json
@@ -49,7 +49,9 @@ Every payload has the same envelope:
 
 ## Common Event Types
 
-Six events are documented. The list may not be exhaustive, so acknowledge unknown types with `200`.
+Voiceflow says more event types may be added, so acknowledge unknown types with `200`.
+
+### Organization events
 
 | Event | Triggered When | Key `data` fields |
 |-------|----------------|-------------------|
@@ -64,7 +66,23 @@ The actor field is `createdBy`, `deletedBy`, `publishedBy` or `mergedBy` dependi
 each shaped `{ "type": "user", "userEmail": "..." }`. Environment metadata is
 `{ alias, isLive, name, trafficPercentage }`.
 
-The examples handle exactly these events and acknowledge anything else with `200`.
+### Session lifecycle events
+
+| Event | Triggered When | Key `data` fields |
+|-------|----------------|-------------------|
+| `runtime.session.start` | A session starts for a user | `sessionID`, `userID`, `projectID`, `startTime` |
+| `runtime.session.end` | A session ends: the conversation ends, the caller hangs up, or it idles out | `sessionID`, `endTime`, `endReason` |
+| `runtime.call.start` | A voice call starts | `platform`, `metadata` (varies by platform), `sessionID` |
+| `runtime.call.end` | A voice call's connection is torn down | `endTime`, `endReason`, `platform`, `metadata` |
+
+`versionID`, `transcriptID`, `versionVariant`, `projectEnvironmentID`, `projectEnvironmentAlias`,
+`sessionID` (call events) and `endReason` (session end) can be `null` or absent. A voice
+conversation sends call events and session events; join them on `data.sessionID` where it's set.
+Closing the chat widget doesn't end a session, so `runtime.session.end` can arrive at the idle
+timeout. `runtime.session.start.v2`, `runtime.call.start.v2` and `runtime.call.end.v2` are
+deprecated in favour of the names without `.v2`.
+
+The examples handle these events and acknowledge anything else with `200`.
 
 ## Retries and Ordering
 
@@ -73,4 +91,6 @@ on a queue, and deduplicate on `svix-id`, which is the same for every delivery o
 
 ## Full Event Reference
 
-See Voiceflow's [organization events webhooks documentation](https://www.voiceflow.com/docs/api-reference/webhooks/org-events).
+See Voiceflow's [organization events webhooks](https://www.voiceflow.com/docs/api-reference/webhooks/org-events)
+and [session lifecycle webhook](https://www.voiceflow.com/docs/api-reference/webhooks/session-lifecycle)
+documentation.

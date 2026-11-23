@@ -28,7 +28,7 @@ Set a secret when you register the webhook through the Ziina API. Without one, d
 
 ## Verification (core)
 
-When a `secret` was given to `POST /webhook`, Ziina sends `X-Hmac-Signature`: the bare lowercase hex HMAC-SHA256 of the **raw request body**, keyed with that secret's UTF-8 bytes. No prefix, and no timestamp or id is signed. This is not Standard Webhooks.
+When a `secret` was given to `POST /webhook`, Ziina sends `X-Hmac-Signature`: the bare hex HMAC-SHA256 of the **raw request body**, keyed with that secret's UTF-8 bytes. No prefix, and no timestamp or id is signed. This is not Standard Webhooks.
 
 ```javascript
 const crypto = require('crypto');

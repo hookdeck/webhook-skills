@@ -15,8 +15,8 @@ None: PayTabs sends no event name in the body or in a header. Every request is t
 
 | Field | Values seen in the docs | Use |
 |-------|-------------------------|-----|
-| `tran_type` | `Sale`, `Refund` (other types such as `Auth` exist) | What kind of transaction this is |
-| `payment_result.response_status` | `A` authorised, `D` declined (see PayTabs' Response_code and Response_status article for the rest) | Outcome |
+| `tran_type` | `Sale` in the samples; the documented types are sale, auth, capture, void, register and refund | What kind of transaction this is |
+| `payment_result.response_status` | `A` authorised, `H` hold, `P` pending (refunds), `V` voided, `E` error, `D` declined, `X` expired | Outcome |
 | `payment_result.response_message` | `Authorised`, `Acquirer is unable to process this request` | Human-readable reason |
 
 The examples handle `Sale` and `Refund` explicitly when `response_status` is `A`, and log anything else.
@@ -35,7 +35,7 @@ The examples handle `Sale` and `Refund` explicitly when `response_status` is `A`
   "tran_total": "500.00",
   "tran_type": "Sale",
   "tran_class": "ECom",
-  "customer_details": { "name": "Mohammed EL Rayes", "email": "mohammed.elrayes@paytabs.com", "country": "EG" },
+  "customer_details": { "name": "Jane Doe", "email": "user1@example.com", "country": "EG" },
   "payment_result": {
     "response_status": "D",
     "response_code": "344",
@@ -47,13 +47,17 @@ The examples handle `Sale` and `Refund` explicitly when `response_status` is `A`
 }
 ```
 
-(Abbreviated from the sample in the PayTabs docs; `shipping_details` and more `customer_details` fields are also sent.) Treat every field as untrusted and check types before reading nested objects.
+(Abbreviated from the sample in the PayTabs docs, with the customer's name and email replaced by placeholders; `shipping_details` and more `customer_details` fields are also sent.) Treat every field as untrusted and check types before reading nested objects.
 
 ## Delivery
 
-Retries, timeout and the expected response are not documented. Reply `2xx` quickly, do the real work in a background task, and dedupe on `tran_ref` plus `payment_result.response_status` because the IPN can repeat for one transaction.
+The IPN expects a `200 OK`. Without one it is queued and retried up to 5 times with an increasing delay; after the last failure PayTabs adds a note to the transaction. The timeout is not documented. Reply `200` quickly, do the real work in a background task, and dedupe on `tran_ref` plus `payment_result.response_status` because the IPN can repeat for one transaction.
+
+The IPN config's notification type sets the body: **Default Web** sends the nested transaction shown above, **Basic Web** a flat object with `response_status` at the top level.
 
 ## Full Reference
 
 - [Handle the post-payment responses](https://support.paytabs.com/en/support/solutions/articles/60000978877)
 - [Signature verification](https://support.paytabs.com/en/support/solutions/articles/60000718961)
+- [How to configure IPN](https://support.paytabs.com/en/support/solutions/articles/60000710069)
+- [Response_code and Response_status](https://support.paytabs.com/en/support/solutions/articles/60000711358)

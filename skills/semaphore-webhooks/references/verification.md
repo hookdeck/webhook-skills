@@ -51,8 +51,8 @@ Use `re.fullmatch` (or `\Z`): a `$` anchor also matches before a trailing newlin
   `Buffer.from(sig, 'hex')` on an unvalidated value, because it silently drops bad characters.
 - **No replay protection.** Nothing time-based is signed, so there is no tolerance window to apply.
   Dedupe on `X-Semaphore-Webhook-Id`.
-- **Any method.** The docs don't name the HTTP method. Verify the signature for every method, and
-  verify a body-less request over zero bytes.
+- **Method.** Semaphore sends `POST` unless the notification's `action` is `PUT` or `PATCH`. Verify
+  the signature whichever of the three arrives.
 - **Any response ends delivery.** Semaphore doesn't retry a 401 or a 500, only a timeout.
 
 ## How Do I Debug Verification Failures?
@@ -62,4 +62,3 @@ Use `re.fullmatch` (or `\Z`): a `$` anchor also matches before a trailing newlin
 | No `X-Semaphore-Signature-256` header | The notification has no secret set |
 | Signature always mismatches | Body parsed before verifying, wrong secret value, or a proxy changed the body |
 | Fails only after Hookdeck | The Hookdeck source's webhook secret differs from the notification's `WEBHOOK_SECRET` |
-| 401 on GET or DELETE | Verify over zero bytes: HMAC of the empty body, not skipping the check |

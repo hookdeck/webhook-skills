@@ -20,13 +20,13 @@ function handleMessage(payload: any): string {
       }
       lastVersion.set(runId, payload.stateVersion);
       console.log(`Run ${runId} on stack ${payload.stack?.id}: ${payload.state} (v${payload.stateVersion})`);
-      // TODO: update your run tracking, notify a channel, etc.
+      // Your code: update your run tracking, notify a channel, etc.
       break;
     }
 
     case 'internal_error':
       console.log(`Spacelift internal error (${payload.severity}): ${payload.title}`);
-      // TODO: alert the team
+      // Your code: alert the team
       break;
 
     default:
@@ -65,7 +65,7 @@ async function handle(request: NextRequest) {
   }
 }
 
-// Spacelift doesn't name the HTTP method, so handle all of them.
+// Spacelift sends POST by default, but a notification policy can set another method, so handle all of them.
 export const GET = handle;
 export const POST = handle;
 export const PUT = handle;

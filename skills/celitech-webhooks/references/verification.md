@@ -25,8 +25,7 @@ The algorithm below is the Svix one:
 ## Which Headers Do I Read?
 
 Read `svix-*`; when `svix-id` is absent, fall back to `webhook-id`, `webhook-timestamp`,
-and `webhook-signature` (the Standard Webhooks names). Hookdeck's Celitech source does
-the same. Then give the library the three values under the `svix-*` names, so it never
+and `webhook-signature` (the Standard Webhooks names). Then give the library the three values under the `svix-*` names, so it never
 sees a mix of the two sets. The examples do this in `resolveSignatureHeaders` /
 `resolve_signature_headers`, and their tests include a delivery sent with `webhook-*`
 headers.

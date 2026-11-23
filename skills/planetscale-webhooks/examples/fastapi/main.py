@@ -58,41 +58,41 @@ async def planetscale_webhook(request: Request):
     event = payload.get("event") if isinstance(payload.get("event"), str) else None
     resource = payload.get("resource") if isinstance(payload.get("resource"), dict) else {}
     database = payload.get("database") if isinstance(payload.get("database"), str) else None
-    # No delivery ID header: dedupe on event + resource.id + timestamp if you need idempotency
+    # No event or delivery ID: make side effects idempotent, e.g. compare resource state with what you stored
 
     if event == "webhook.test":
         print(f"Received webhook.test for database {database}")
 
     elif event == "branch.ready":
         print(f"Branch {resource.get('name')} is ready on {database}")
-        # TODO: Run migrations, post connection details to a channel
+        # Your code: Run migrations, post connection details to a channel
 
     elif event == "branch.anomaly":
         print(f"Anomaly on branch {resource.get('name')} of {database}: {resource.get('html_url')}")
-        # TODO: Page on-call, open a ticket
+        # Your code: Page on-call, open a ticket
 
     elif event in ("deploy_request.opened", "deploy_request.queued", "deploy_request.in_progress"):
         print(
             f"{event}: deploy request #{resource.get('number')} "
             f"({resource.get('branch')} -> {resource.get('into_branch')}) on {database}"
         )
-        # TODO: Notify reviewers, update the linked ticket or CI status
+        # Your code: Notify reviewers, update the linked ticket or CI status
 
     elif event == "backup.failed":
         print(f"Backup {resource.get('name')} failed on {database}")
-        # TODO: Alert the team
+        # Your code: Alert the team
 
     elif event == "backup.succeeded":
         print(f"Backup {resource.get('name')} succeeded on {database}")
-        # TODO: Record backup health
+        # Your code: Record backup health
 
     elif event == "cluster.storage":
         print(f"Storage at {resource.get('storage_percentage')}% on {resource.get('branch_name')} ({database})")
-        # TODO: Capacity alert
+        # Your code: Capacity alert
 
     elif event == "database.access_request":
         print(f"PlanetScale access request ({resource.get('state')}) on {database}")
-        # TODO: Notify database admins to review it
+        # Your code: Notify database admins to review it
 
     else:
         print(f"Unhandled event: {event}")
