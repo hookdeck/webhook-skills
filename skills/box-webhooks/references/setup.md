@@ -34,9 +34,9 @@ Choose triggers from the [triggers list](https://developer.box.com/guides/webhoo
 
 ## Rotate Keys
 
-On the Hookdeck source, configure both keys before rotating. Reset the primary in Box, then save the new primary on the source. The secondary verifies deliveries during that update. Once the primary is current, reset and update the secondary.
+On the Hookdeck source, configure both keys before rotating. Reset the primary in Box, then save the new primary on the source. The secondary verifies deliveries during that update. Wait until deliveries signed with the old primary have arrived before resetting the secondary in Box and updating it on the source.
 
-The standalone examples use only `BOX_WEBHOOK_SECRET`. Update that value when you reset the primary if your handler verifies the Box signature itself.
+The standalone examples check only the primary key in `BOX_WEBHOOK_SECRET`. Changing it can return `401` for deliveries still in flight with the old primary signature. For uninterrupted rotation, configure a secondary key in your handler before the reset and accept a match from either key and its corresponding header.
 
 ## Hookdeck Source
 

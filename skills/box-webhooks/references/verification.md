@@ -15,7 +15,7 @@ BOX-DELIVERY-TIMESTAMP:  2016-07-11T10:10:32-07:00
 - Signed message: the **raw body bytes, then the `BOX-DELIVERY-TIMESTAMP` header value**, no separator
 - The whole header is one digest: no list splitting, no `sha256=` parsing
 
-These examples verify `BOX-SIGNATURE-PRIMARY` only, against the primary key. Keep the primary key current when running them. On a Hookdeck Box source, configure the optional secondary key as well. Either signature can verify a delivery when it matches its corresponding key.
+These examples verify `BOX-SIGNATURE-PRIMARY` only, against the primary key. A primary-only receiver can reject deliveries in flight during rotation. For uninterrupted rotation, check each signature against its corresponding key and accept either match. On a Hookdeck Box source, configure the optional secondary key as well. Either signature can verify a delivery when it matches its corresponding key.
 
 ## Implementation
 

@@ -32,7 +32,7 @@ request, up front, and your endpoint compares it with the credentials you chose.
 
 **Choose Basic authentication on the Metabase webhook.** (Bearer, API key and query-param options
 are not covered here.) Use the same username and password in `METABASE_WEBHOOK_USERNAME` and
-`METABASE_WEBHOOK_PASSWORD`. If your Metabase HTTP channel uses `GET` or `PUT`, enable that method on the Hookdeck source and make sure your receiver accepts it. Keep `POST` enabled to use the admin form’s **Send a test** button.
+`METABASE_WEBHOOK_PASSWORD`. The examples accept `POST`. To receive the alert JSON with a `PUT` channel, enable `PUT` on the Hookdeck source and add a `PUT` route to your receiver. Hookdeck delivers `GET` without a body. Keep `POST` enabled for the admin form’s **Send a test** button.
 
 ## Verification (core)
 

@@ -39,7 +39,8 @@ notes: >
   SKILL.md and verification.md (BOX-DELIVERY-TIMESTAMP is an RFC 3339 date; Box suggests a 10-minute
   window, and Box's SDK helper always enforces it, which is why the examples verify by hand). The standalone examples use BOX_WEBHOOK_SECRET for the primary signature. Hookdeck's Box source
   accepts an optional secondary key. It compares each signature with its corresponding key and
-  accepts either match during rotation. Body FIRST, then the timestamp header, no separator. Do not use the Box
+  accepts either match during rotation. After saving the new primary, wait for deliveries signed with
+  the old primary to arrive before resetting the secondary. Body FIRST, then the timestamp header, no separator. Do not use the Box
   SDK's WebhookValidator / validateMessage in the examples (it checks both keys and enforces a
   10-minute window); mention it as an option in verification.md. Note that Box's own sample code
   compares the primary-key digest with the SECONDARY header; the prose (primary with primary) is

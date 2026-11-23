@@ -22,7 +22,7 @@
 Metabase's other options (None, Bearer, API key in a header or query param) are not covered by
 this skill.
 
-The Hookdeck Metabase source defaults to `POST`. If your HTTP channel uses `GET` or `PUT`, allow that method on the source and your receiver. The admin form’s **Send a test** button still uses `POST`.
+The Hookdeck Metabase source defaults to `POST`. The example receivers accept `POST`. If your channel uses `PUT`, enable it on the source and add a matching route to your receiver. An enabled `GET` can authenticate with Basic credentials, but [Hookdeck delivers it without the alert body](https://hookdeck.com/docs/sources#get-and-head). Keep `POST` enabled for the admin form’s **Send a test** button.
 
 ## Use It in an Alert
 
