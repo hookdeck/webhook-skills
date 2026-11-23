@@ -2,8 +2,8 @@
 
 ## What Are Tensorlake Webhooks?
 
-[Tensorlake](https://www.tensorlake.ai/) is a document-ingestion and serverless sandbox /
-application platform. Project-scoped webhooks send an HTTPS `POST` with a signed JSON payload
+[Tensorlake](https://www.tensorlake.ai/) runs MicroVM sandboxes and Orchestration applications
+for agent workloads. Project-scoped webhooks send an HTTPS `POST` with a signed JSON payload
 when sandboxes, applications, or application requests change state, so you can react to
 lifecycle changes without polling. Each destination receives only the events produced by its
 project and only the event types selected for it. Svix signs and delivers the messages, following
@@ -84,12 +84,17 @@ events and acknowledge anything else with `200`.
 
 Sandbox fields: `id`, `name`, `type` (`named` or `ephemeral`), `image`, `generation_id`,
 `status` (`pending`, `running`, `suspended`, `terminated`), `outcome` (`success`, `failure`, or
-`null`), `outcome_reason`, `snapshot_id`, `created_at`, `resources`. Application fields: `name`,
-`version`. Request fields: `id`, `status`, `failure_reason`, `created_at`, `finished_at` (`null`
+`null`), `outcome_reason`, `snapshot_id`, `created_at`, `resources`. Application event fields:
+`name`, `version`, `state` (`active` or `disabled`), `disabled_reason`, `created_at`; request events
+carry only the application's `name` and `version`. Request fields: `id`, `status`, `failure_reason`, `created_at`, `finished_at` (`null`
 until the request finishes).
 
-Sandbox failure reasons include `out_of_memory`, `timeout`, `internal_error`, `bad_image`,
-`image_not_found`, `container_startup_failed`, and `process_crash`. Application-request failure
+Sandbox failure reasons are `unknown`, `user_terminated`, `timeout`, `internal_error`,
+`constraint_unsatisfiable`, `executor_removed`, `out_of_memory`, `container_startup_failed`,
+`pool_deleted`, `container_terminated`, `bad_image`, `image_not_found`, `container_unhealthy`,
+`function_error`, `function_timeout`, `function_cancelled`, `desired_state_removed`,
+`process_crash`, and `executor_drained`. A successful termination can report `unknown`,
+`user_terminated`, or `timeout`, and `outcome_reason` can be `null`. Application-request failure
 reasons are `unknown`, `internal_error`, `function_error`, `function_timeout`, `request_error`,
 `constraint_unsatisfiable`, `cancelled`, and `out_of_memory`.
 
@@ -98,8 +103,9 @@ reasons are `unknown`, `internal_error`, `function_error`, `function_timeout`, `
 - **Deduplicate on `event_id`.** Delivery is at least once, and the same event can arrive more
   than once.
 - **Don't rely on order.** A later lifecycle event can arrive before an earlier one. When you need
-  source order, compare `Number(source_revision)` (or `int(...)`), then `source_ordinal`, for
-  events with the same `source_id`.
+  source order, compare `BigInt(source_revision)` (or `int(...)` in Python), then `source_ordinal`,
+  for events with the same `source_id`. Tensorlake keeps the revision as a string to avoid precision
+  loss, so never parse it as a float or `Number`.
 - Record accepted work durably before returning `2xx`, and do expensive work asynchronously.
 - A `2xx` acknowledges the delivery attempt only; it doesn't change the Tensorlake resource.
 - Delivery can be paused per destination (**Delivery enabled** switch).
@@ -108,4 +114,4 @@ reasons are `unknown`, `internal_error`, `function_error`, `function_timeout`, `
 
 For the complete catalog and payload shapes, see Tensorlake's
 [event reference](https://docs.tensorlake.ai/platform/webhooks/events) and
-[webhooks overview](https://docs.tensorlake.ai/webhooks/overview).
+[webhooks overview](https://docs.tensorlake.ai/platform/webhooks/overview).

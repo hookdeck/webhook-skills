@@ -40,7 +40,7 @@ Key events and when they fire:
 
 ```json
 {
-  "object": { "id": "3433fffa-8255-4843-81b1-22aebc21eb34", "email": "james@mi6.co.uk", "...": "..." },
+  "object": { "id": "3433fffa-8255-4843-81b1-22aebc21eb34", "email": "user1@example.com", "...": "..." },
   "event": {
     "id": "7fcdc81d-996a-4b7b-8faf-1db98b9d5507",
     "type": "affiliate.confirmed",

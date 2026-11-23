@@ -2,8 +2,8 @@
 
 ## What Are Spike API Webhooks?
 
-Spike API is a unified health and wearables data API. Each application configures
-**one** webhook endpoint in the admin console. After each data update from a
+Spike API is a unified health and wearables data API. Each application sets a
+**Main Webhook URL** in the admin console. After each data update from a
 provider (Garmin, Oura and others), Spike API sends a webhook event to that
 endpoint so you can fetch the new data.
 

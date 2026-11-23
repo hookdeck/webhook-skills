@@ -10,7 +10,7 @@ API or the admin UI. Each request is signed with an `X-Thinkific-Hmac-Sha256` he
 
 ## Event Types
 
-The topic is `resource.action`. Thinkific documents 27 topics; the examples handle the `order`,
+The topic is `resource.action`. Thinkific documents 30 topics; the examples handle the `order`,
 `order_transaction`, `enrollment`, `user` and `course` resources and log the rest.
 
 | Topic | Triggered When | Common Use Cases |
@@ -19,10 +19,11 @@ The topic is `resource.action`. Thinkific documents 27 topics; the examples hand
 | `order_transaction.succeeded` / `order_transaction.failed` / `order_transaction.refunded` | A payment succeeds, fails or is refunded | Payment state, revenue reporting |
 | `enrollment.created` / `enrollment.completed` / `enrollment.progress` / `enrollment.trial` | A student enrols, finishes, progresses or starts a trial | Grant access, certificates, nudges |
 | `user.signup` / `user.signin` / `user.updated` / `user.deleted` | A user signs up, signs in, is updated or deleted | CRM sync, GDPR deletion |
+| `user.deactivated` / `user.reactivated` / `user.merged` | An account is deactivated, reactivated or merged into another | Access control, deduplicating contacts |
 | `course.created` / `course.updated` / `course.deleted` | A course changes | Catalogue sync |
 | `lesson.completed` / `quiz.attempted` | A student completes a lesson or attempts a quiz | Progress tracking |
 | `product.created` / `product.updated` / `product.deleted` / `plan.updated` | Catalogue changes | Pricing and product sync |
-| `subscription.past_due` / `subscription.cancelled` / `subscription.unpaid` | A subscription changes state | Dunning, access removal |
+| `subscription.past_due` / `subscription.cancelled` / `subscription.unpaid` | A subscription changes state (the docs' cancellation example has `action` `canceled`) | Dunning, access removal |
 | `lead.created` | A lead is captured | Email marketing |
 | `app.uninstalled` | An OAuth app is uninstalled | Clean up tokens |
 | `cart.abandoned` | A cart is abandoned | Recovery emails |

@@ -94,7 +94,7 @@ so deduplicate on it (keep ids for at least 72 hours).
 
 ## Common Event Types
 
-27 events are documented (the list may not be exhaustive). The examples handle all of these:
+26 events are documented (the list may not be exhaustive). The examples handle all of these:
 
 | Event | Triggered When |
 |-------|----------------|
@@ -112,8 +112,7 @@ so deduplicate on it (keep ids for at least 72 hours).
 | `store.opened` / `store.closed` | A store opens (or a snooze ends) or closes (or is snoozed) |
 | `store.opening_hours.updated` | Opening hours change |
 | `item.out_of_stock` | A menu item becomes unavailable |
-| `payments.payout.created` | A payout is sent to your bank account |
-| `bill.payment.created` | A bill payment is created (no payload shown in the docs) |
+| `account.holder.payout` | A payout is sent to your bank account (formerly `payments.payout.created`) |
 | `payment_link.created` / `payment_link.paid` | A payment link is created or paid |
 | `payment_link.refund.created` / `.succeeded` / `.failed` | A payment link refund is initiated, then confirmed or rejected |
 | `printer.status.offline` / `printer.status.online` | A cloud printer drops off or reconnects |

@@ -28,7 +28,7 @@ Every event uses the same envelope:
   "body": {
     "identifier": "26d2f5f9-b128-48cd-add8-303e067df958",
     "title": "a title",
-    "status": "in_progress",
+    "status": "created",
     "importance": "very_high",
     "creator": { "email": "support@travtus.com", "first_name": "Bob", "last_name": "James" }
   }
@@ -39,7 +39,8 @@ Every event uses the same envelope:
 - `message_id` is the Svix-assigned message ID. Don't confuse it with `body.message_id` on
   Messaging API replies, which is the original message's identifier.
 - `body` is the lease, the task (with a `creator` object) or the AI reply.
-- Deduplicate on the `svix-id` header (stable across retries).
+- Deduplicate on the top-level `message_id`, which Travtus's task page says is used for idempotency
+  and deduplication, or on the `svix-id` header, which Svix keeps the same across retries.
 
 ## Common Event Types
 

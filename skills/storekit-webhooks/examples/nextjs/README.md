@@ -71,7 +71,7 @@ acknowledges anything else with `200`:
 - `order.refund.created`, `order.refund.succeeded`, `order.refund.failed` (no `data` wrapper)
 - `store.opened`, `store.closed`, `store.opening_hours.updated`
 - `item.out_of_stock`
-- `payments.payout.created`, `bill.payment.created`
+- `account.holder.payout` (and its former name, `payments.payout.created`)
 - `payment_link.created`, `payment_link.paid`, `payment_link.refund.created`, `payment_link.refund.succeeded`, `payment_link.refund.failed`
 - `printer.status.offline`, `printer.status.online`
 

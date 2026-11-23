@@ -58,7 +58,7 @@ function verifyThinkificSignature(rawBody, signature, secret = process.env.THINK
 ## Event Types
 
 Dispatch on the body's `resource` and `action` fields (topic = `resource.action`). Thinkific documents
-27 topics; the ones below are the ones the examples handle or that have documented sample payloads.
+30 topics; the ones below are the ones the examples handle or that have documented sample payloads.
 
 | Topic | Triggered when |
 |-------|----------------|
@@ -66,10 +66,11 @@ Dispatch on the body's `resource` and `action` fields (topic = `resource.action`
 | `order_transaction.succeeded` / `.failed` / `.refunded` | A payment succeeds, fails or is refunded |
 | `enrollment.created` / `.completed` / `.progress` / `.trial` | A student enrols, finishes, progresses or starts a trial |
 | `user.signup` / `.signin` / `.updated` / `.deleted` | A user signs up, signs in, changes or is removed |
+| `user.deactivated` / `.reactivated` / `.merged` | An account is deactivated, reactivated or merged into another |
 | `course.created` / `.updated` / `.deleted` | A course changes |
 | `lesson.completed`, `quiz.attempted` | A student completes a lesson or attempts a quiz |
 | `product.created` / `.updated` / `.deleted`, `plan.updated` | Catalogue changes |
-| `subscription.past_due` / `.cancelled` / `.unpaid` | Subscription state changes |
+| `subscription.past_due` / `.cancelled` / `.unpaid` | Subscription state changes (the docs' cancellation example has `action` `canceled`) |
 | `lead.created`, `app.uninstalled` | A lead is captured, an app is uninstalled |
 | `cart.abandoned` | A cart is abandoned (different envelope: `name` and `data`, no `resource`) |
 

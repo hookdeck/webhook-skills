@@ -29,9 +29,11 @@ notes: >
   Missing or empty signature header, malformed value or mismatch: 401. No timestamp is signed, so
   there is no replay window to check; do not invent one from unsigned headers or body fields. Events:
   dispatch on the body's `type` field. Top-level `type` in the envelope `id`, `type`, `created_at`,
-  `data`. Documented event types (11): course.created, course.updated, course.completed, course.join,
-  module.created, module.updated, element.created, element.updated, element.deleted,
-  element.completed, member.login. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route.
+  `data`. Documented event types (18, event reference rewritten 2026-10-30): organization.join,
+  member.created, member.updated, member.revoked, member.login, course.created, course.updated,
+  course.join, course.completed, module.created, module.updated, element.created, element.updated,
+  element.deleted, element.completed, xapi.statement.created, and app.installed / app.uninstalled
+  (extension app endpoints only). member.login's data.member is an ID string, not an object. Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route.
   Express examples must read the raw body with express.raw({ type: '*/*' }) so any content type works
   and the exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await
   request.body()); parse the body only after the check. Documented sample payloads (each JSON file's

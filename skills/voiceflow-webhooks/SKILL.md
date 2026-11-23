@@ -1,10 +1,10 @@
 ---
 name: voiceflow-webhooks
 description: >
-  Receive and verify Voiceflow organization event webhooks (AI agent platform, delivered via
-  Svix). Use when setting up Voiceflow webhook handlers, debugging svix-signature
-  verification, or handling events like organization.project.created,
-  organization.project.environment.published, and organization.project.environment.merged.
+  Receive and verify Voiceflow webhooks (AI agent platform, delivered via Svix): organization
+  events and the project-level session lifecycle webhook. Use when setting up Voiceflow webhook
+  handlers, debugging svix-signature verification, or handling events like
+  organization.project.environment.published, runtime.session.end, and runtime.call.end.
 license: MIT
 metadata:
   author: hookdeck
@@ -14,23 +14,23 @@ metadata:
 
 # Voiceflow Webhooks
 
-[Voiceflow](https://www.voiceflow.com) is an AI-agent building platform. Its organization events
-webhooks report project and project-environment lifecycle changes (created, published, merged,
-deleted). They are delivered through [Svix](https://www.svix.com/), which implements Standard
-Webhooks. Every delivery is an HTTP `POST` with a JSON body and three signature headers:
-`svix-id`, `svix-timestamp`, and `svix-signature`. The body is `{type, data, resource, time}`:
-`type` is the event name, `data` holds the details, `resource` is `organization-<organizationID>`,
-and `time` is Unix milliseconds.
+[Voiceflow](https://www.voiceflow.com) is an AI-agent building platform. It has two webhook
+scopes: **organization events** report project and project-environment changes (created,
+published, merged, deleted), and each project's **session lifecycle webhook** reports
+conversation sessions and voice calls starting and ending. Both are delivered through
+[Svix](https://www.svix.com/), which implements Standard Webhooks. Every delivery is an HTTP
+`POST` with a JSON body and three signature headers: `svix-id`, `svix-timestamp`, and
+`svix-signature`. The body is `{type, data, resource, time}`: `type` is the event name, `data`
+holds the details, `resource` is `organization-<organizationID>` or `project-<projectID>`, and
+`time` is Unix milliseconds.
 
-## Only organization event webhooks are supported
+## Two scopes, two secrets
 
-Hookdeck's configuration alert for this source reads: "Only organization event webhooks are
-supported. The project-level session webhook doesn't document this signing scheme and may fail
-verification."
-
-Set the URL under **Settings > Organization** in the Voiceflow dashboard. That webhook is
-signed by Svix with the scheme below. Don't point this handler at the project-level session
-lifecycle webhook, because Voiceflow doesn't document a signing scheme for it. See
+Organization events are set under dashboard **Settings → Organization**. Session and call events
+are set per project under the project's **Settings → Webhooks**. Each endpoint has its own URL
+and its own **Webhook secret**, so a verifier configured with one scope's secret fails on the
+other's deliveries. Use a separate endpoint (or a separate secret lookup) per scope. Both forms
+let you choose **Listen for all events** or **Listen for specific events**. See
 [references/setup.md](references/setup.md).
 
 ## When to Use This Skill
@@ -74,10 +74,10 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-The secret appears under **Settings > Organization** once a webhook URL is set, and there is one
-per organization webhook URL. Voiceflow doesn't print an example value. Svix secrets look like
-`whsec_<base64>`, so keep the full value in `VOICEFLOW_WEBHOOK_SECRET`. Regenerating the secret
-keeps the old one valid for 24 hours. Handlers fail closed: with the variable unset they return 500
+Copy **Webhook secret** from the same settings form as the URL. There is one per endpoint: the
+organization endpoint and each project's session endpoint have their own. Voiceflow doesn't print
+an example value. Svix secrets look like `whsec_<base64>`, so keep the full value in
+`VOICEFLOW_WEBHOOK_SECRET`. **Regenerate key** keeps the old secret valid for 24 hours. Handlers fail closed: with the variable unset they return 500
 instead of accepting anything.
 
 ### Hookdeck retries and replays hit the 5-minute window
@@ -91,7 +91,10 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-Six events are documented (the list may not be exhaustive). The name is `type` in the JSON body:
+The name is `type` in the JSON body. Voiceflow says more event types may be added, so
+acknowledge unknown types with `200`.
+
+Organization events (**Settings → Organization**):
 
 | Event | Triggered When |
 |-------|----------------|
@@ -102,12 +105,25 @@ Six events are documented (the list may not be exhaustive). The name is `type` i
 | `organization.project.environment.merged` | One environment is merged into another |
 | `organization.project.environment.deleted` | An environment is deleted |
 
+Session lifecycle events (a project's **Settings → Webhooks**):
+
+| Event | Triggered When |
+|-------|----------------|
+| `runtime.session.start` | A session starts for a user |
+| `runtime.session.end` | A session ends: the conversation ends, the caller hangs up, or it idles out |
+| `runtime.call.start` | A voice call starts (phone or web voice) |
+| `runtime.call.end` | A voice call's connection is torn down |
+
+`runtime.session.start.v2`, `runtime.call.start.v2` and `runtime.call.end.v2` are deprecated;
+subscribe to the names without `.v2`. Closing the chat widget doesn't end a session, so
+`runtime.session.end` can arrive at the idle timeout, long after the user left.
+
 See [references/overview.md](references/overview.md) for the payload shapes.
 
 ## Environment Variables
 
 ```bash
-# Organization webhook signing secret (Svix format, starts with whsec_)
+# Webhook signing secret for this endpoint (Svix format, starts with whsec_)
 VOICEFLOW_WEBHOOK_SECRET=whsec_xxxxx
 ```
 
@@ -118,13 +134,13 @@ VOICEFLOW_WEBHOOK_SECRET=whsec_xxxxx
 npx hookdeck-cli listen 3000 voiceflow --path /webhooks/voiceflow
 ```
 
-Set the tunnel URL under Settings > Organization in the Voiceflow dashboard, then trigger an
-event (for example, create a project) to see it arrive.
+Set the tunnel URL under **Settings → Organization** (or a project's **Settings → Webhooks**),
+then trigger an event, for example by creating a project or starting a test conversation.
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Voiceflow organization webhook concepts, events, payload shapes
-- [references/setup.md](references/setup.md) - Set the organization webhook URL, get the secret, org vs session webhooks
+- [references/overview.md](references/overview.md) - Voiceflow webhook scopes, events, payload shapes
+- [references/setup.md](references/setup.md) - Set each scope's webhook URL and events, get the secret, rotate it
 - [references/verification.md](references/verification.md) - Svix verification details, header fallback, manual verifier, timestamp window
 
 ## Attribution

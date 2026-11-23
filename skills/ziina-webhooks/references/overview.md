@@ -13,6 +13,8 @@ Ziina (ziina.com) is a UAE payments app with a payment API. Each account has one
 
 The event name does not change with the status. Read the new state from `data.status`. No header names the event; dispatch on the body's `event` field.
 
+Ziina's Webhooks page lists both events, but its Create Webhook API page says only `payment_intent.status.updated` is sent currently, so don't rely on refund deliveries arriving until you've seen one.
+
 ## Event Payload Structure
 
 ```json

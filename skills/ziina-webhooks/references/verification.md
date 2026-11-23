@@ -5,7 +5,7 @@
 If a `secret` was provided when the webhook was registered, each request carries:
 
 ```
-X-Hmac-Signature: <64 lowercase hex characters>
+X-Hmac-Signature: <64 hex characters>
 ```
 
 The value is the hex-encoded HMAC-SHA256 of the **raw request body**, keyed with the secret's UTF-8 bytes. Nothing else is signed: no timestamp, id or other header. There is no prefix (`sha256=` etc.) and no list of signatures, so compare the whole header value as one digest. This is not Standard Webhooks.

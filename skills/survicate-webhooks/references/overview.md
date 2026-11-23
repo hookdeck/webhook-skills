@@ -12,7 +12,7 @@ The tests use a minimal, illustrative payload with the routing fields. It is not
 
 ## Delivery and Processing
 
-Use messageId when deduplicating deliveries. Acknowledge accepted events and avoid logging survey answers or personal data.
+Survicate documents `messageId` only as the webhook ID and doesn't say whether a retry repeats it, so make processing idempotent: upsert answers keyed on `responseUuid` plus `question.id`, and completed responses on `responseUuid`. Acknowledge accepted events and avoid logging survey answers or personal data.
 
 The examples verify the signature, parse an object, then log only the event label. Add durable queueing and application-specific processing before returning success. Validate nested fields before using them, and acknowledge unrecognised events you intentionally ignore.
 

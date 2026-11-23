@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const timestamp = request.headers.get(`${prefix}-timestamp`);
   const signature = request.headers.get(`${prefix}-signature`);
   if (!id || !timestamp || !signature) {
-    // The project-level session webhook doesn't send these headers
+    // Svix sends these on every Voiceflow delivery; a request without them isn't from Voiceflow
     return NextResponse.json({ error: 'Missing required webhook headers' }, { status: 400 });
   }
 
@@ -89,6 +89,20 @@ export async function POST(request: Request) {
       break;
     case 'organization.project.environment.deleted':
       console.log('Environment deleted:', data.deletedProjectEnvironmentID);
+      break;
+    // Session lifecycle events (a project's Settings → Webhooks, with its own secret)
+    case 'runtime.session.start':
+      console.log('Session started:', data.sessionID, 'project', data.projectID);
+      break;
+    case 'runtime.session.end':
+      // Can arrive at the idle timeout, long after the user left
+      console.log('Session ended:', data.sessionID, data.endReason);
+      break;
+    case 'runtime.call.start':
+      console.log('Call started:', data.platform, 'session', data.sessionID);
+      break;
+    case 'runtime.call.end':
+      console.log('Call ended:', data.platform, data.endReason);
       break;
     default:
       // Return 200 for events you don't handle; the documented list may not be exhaustive

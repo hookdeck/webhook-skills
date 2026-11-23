@@ -2,7 +2,7 @@
 
 ## Register the Endpoint
 
-Copy the workspace Signing Secret from Survicate Webhooks Settings. In the survey's Connect tab, configure the webhook URL and choose questionAnswered or surveyCompleted. Use Send sample request to test. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
+Copy the workspace Signing Secret from **Integrations** > **Webhooks** (click **Connect**) in the Survicate panel. In the survey's Connect tab, pick Webhooks, paste the URL and enable delivery per answer (questionAnswered), on completion (surveyCompleted) or both. Use Send sample request to test. The secret and token can be regenerated at any time; update `SURVICATE_WEBHOOK_SECRET` as soon as you regenerate the secret. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
 
 Use `POST /webhooks/survicate`. Configure `SURVICATE_WEBHOOK_SECRET` with the same secret as the sender; keep it out of source control.
 

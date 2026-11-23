@@ -1,7 +1,7 @@
 ---
 name: skovik-webhooks
 description: >
-  Receive and verify Skovik webhooks (operations platform API, signed with Standard Webhooks). Use when
+  Receive and verify Skovik webhooks (expense management platform API, signed with Standard Webhooks). Use when
   setting up Skovik webhook handlers, debugging webhook-signature verification, or handling events like
   users.created, users.updated, export_orders.completed, export_orders.failed, branches.archived, and
   misc.ping.
@@ -14,7 +14,7 @@ metadata:
 
 # Skovik Webhooks
 
-[Skovik](https://developer.skovik.com/docs/api-webhooks-receiving) is an operations platform whose API
+[Skovik](https://developer.skovik.com/reference/api-webhooks-receiving) is an expense management platform whose API
 exposes users, branches and export orders. You add webhook endpoints in the settings UI, and Skovik
 delivers each event as a JSON `POST` signed with
 [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) headers: `webhook-id`,

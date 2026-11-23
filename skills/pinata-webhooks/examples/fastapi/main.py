@@ -86,7 +86,8 @@ async def pinata_webhook(request: Request):
         print(f"CAR import failed: {data.get('file_id')} {data.get('error')}")
     elif event_type == "ipfs.public.pin_by_cid_added":
         print(f"Pin by CID queued: {file.get('id')} {file.get('cid')} {file.get('status')}")
-    elif event_type == "ipfs.public.pin_by_cid_succeeded":
+    # Pinata's catalog example for pin_by_cid_succeeded prints pin_by_cid_created instead
+    elif event_type in ("ipfs.public.pin_by_cid_succeeded", "ipfs.public.pin_by_cid_created"):
         # The pinned file is data.new_file; data.object is the pin request
         print(f"Pin by CID succeeded: {new_file.get('id')} {new_file.get('cid')}")
     elif event_type == "ipfs.public.pin_by_cid_failed":

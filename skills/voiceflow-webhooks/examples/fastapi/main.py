@@ -31,7 +31,7 @@ async def voiceflow_webhook(request: Request):
     timestamp = request.headers.get(f"{prefix}-timestamp")
     signature = request.headers.get(f"{prefix}-signature")
     if not (msg_id and timestamp and signature):
-        # The project-level session webhook doesn't send these headers
+        # Svix sends these on every Voiceflow delivery; a request without them isn't from Voiceflow
         raise HTTPException(status_code=400, detail="Missing required webhook headers")
 
     # Verify the RAW body: the exact bytes Voiceflow (Svix) signed
@@ -90,6 +90,16 @@ async def voiceflow_webhook(request: Request):
         )
     elif event_type == "organization.project.environment.deleted":
         print(f"Environment deleted: {data.get('deletedProjectEnvironmentID')}")
+    # Session lifecycle events (a project's Settings → Webhooks, with its own secret)
+    elif event_type == "runtime.session.start":
+        print(f"Session started: {data.get('sessionID')} project {data.get('projectID')}")
+    elif event_type == "runtime.session.end":
+        # Can arrive at the idle timeout, long after the user left
+        print(f"Session ended: {data.get('sessionID')} {data.get('endReason')}")
+    elif event_type == "runtime.call.start":
+        print(f"Call started: {data.get('platform')} session {data.get('sessionID')}")
+    elif event_type == "runtime.call.end":
+        print(f"Call ended: {data.get('platform')} {data.get('endReason')}")
     else:
         # Return 200 for events you don't handle; the documented list may not be exhaustive
         print(f"Unhandled event type: {event_type}")

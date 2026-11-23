@@ -108,8 +108,10 @@ app.post('/webhooks/superwall', express.raw({ type: '*/*' }), (req, res) => {
       console.log('Subscription expired:', productId, legacy ? facts.expirationReason : facts.expiration_reason);
       break;
     case 'transferred':
-      // Reserved for ownership changes; documented as not sent yet
-      console.log('Subscription transferred:', productId);
+      // Ownership moved between users. event_data is null; the transfer block names both users.
+      // Your code: revoke access from transfer.from_app_user_id, grant it to transfer.to_app_user_id
+      console.log('Subscription transferred:', event.transfer?.subscription_id,
+        event.transfer?.from_app_user_id, '->', event.transfer?.to_app_user_id);
       break;
     default:
       // Return 2xx for events you don't handle, or Superwall keeps retrying them

@@ -22,7 +22,7 @@ Receive Survicate question answers and completed surveys.
 
 ## Setup
 
-Copy the workspace Signing Secret from Survicate Webhooks Settings. In the survey's Connect tab, configure the webhook URL and choose questionAnswered or surveyCompleted. Use Send sample request to test. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
+Copy the workspace Signing Secret from **Integrations** > **Webhooks** (click **Connect**) in the Survicate panel. In the survey's Connect tab, pick Webhooks, paste the URL and enable delivery per answer (questionAnswered), on completion (surveyCompleted) or both. Use Send sample request to test. The separate Verification Token is sent in plaintext and is not used by this HMAC verifier.
 
 Set `SURVICATE_WEBHOOK_SECRET` in the server environment. Read [setup](references/setup.md) before enabling delivery.
 
@@ -47,7 +47,7 @@ Complete handlers and tests: [Express](examples/express/), [Next.js](examples/ne
 
 The envelope is {messageId, deliveryTries, event: {questionAnswered: {...}}} or the corresponding surveyCompleted key. Dispatch on keys inside event, not on event as a string. The receiver guards each nested value before use.
 
-Use messageId when deduplicating deliveries. Acknowledge accepted events and avoid logging survey answers or personal data.
+Survicate documents `messageId` only as the webhook ID and doesn't say whether a retry repeats it, so make processing idempotent: upsert answers keyed on `responseUuid` plus `question.id`, and completed responses on `responseUuid`. Acknowledge accepted events and avoid logging survey answers or personal data.
 
 ## Local Development
 

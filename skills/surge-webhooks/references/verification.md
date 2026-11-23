@@ -153,7 +153,8 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 - **Rotation.** Several secrets can be live at once, so the header may hold several `v1,` entries.
 - **Deprecated header.** Earlier versions sent `surge-signature`. Read `webhook-signature` instead.
 - **Dedupe on the envelope `id`** when present (some of Surge's examples omit it, so the examples fall
-  back to `type` + `data.id`). The docs describe `webhook-id` as per delivery attempt, so don't rely on it.
+  back to `type` + `data.id` for events that happen once per object, and rely on idempotent handlers
+  for opt-ins, opt-outs and campaign events, which can repeat a `data.id`). The docs describe `webhook-id` as per delivery attempt, so don't rely on it.
 - **CSRF middleware** must be disabled on the webhook route.
 
 ## Debugging Verification Failures

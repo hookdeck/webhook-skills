@@ -16,15 +16,17 @@ The kind of event is in the `Pulumi-Webhook-Kind` header; the body has no event-
 | `deployment` | A Pulumi Deployments run changes state (`status`) | Track deployment progress |
 | `drift_detection` | A drift detection run completes (`status`, `driftDetected`) | Alert when infrastructure has drifted |
 | `drift_remediation` | A drift remediation run completes (`status`) | Confirm that drift was corrected |
-| `policy_violation` | A policy pack is violated | Compliance alerts |
+| `policy_violation` | A mandatory or advisory policy violation is detected | Compliance alerts |
+
+Pulumi ESC environment webhooks (and organization webhooks) also send `environment`, `environment_revision`, `environment_revision_tag`, `environment_tag`, `imported_environment_changed` and `environment_rotation`, with the same headers and signature. See [Pulumi's ESC webhook documentation](https://www.pulumi.com/docs/esc/concepts/webhooks/).
 
 ### Subscription filters vs what is sent
 
-In Pulumi Cloud you subscribe to 21 filters such as `update_succeeded` and `deployment_failed`. They are not on the wire as such. They decide which deliveries you receive; the body then says what happened within the kind:
+In Pulumi Cloud you subscribe to filters such as `update_succeeded` and `deployment_failed`. They are not on the wire as such. They decide which deliveries you receive; the body then says what happened within the kind:
 
 - `stack_update` and `stack_preview`: `kind` (the operation) and `result` (`succeeded` or `failed`)
-- `deployment`, `drift_detection`, `drift_remediation`: `status`
-- `stack`: `action`
+- `deployment`, `drift_detection`, `drift_remediation`: `status` (for deployments: `queued`, `running`, `succeeded` or `failed`; canceled and timed-out deployments are reported as failed)
+- `stack` and the ESC kinds: `action`
 
 ## Event Payload Structure
 
@@ -56,7 +58,8 @@ Plus per kind, for example `stack_update`:
 ## Delivery
 
 - Order is not guaranteed.
-- Pulumi Cloud records recent deliveries. A delivery whose endpoint returned non-2xx or did not respond counts as failed, and can be redelivered unchanged from the console (or the CLI for stack webhooks).
+- Pulumi Cloud records recent deliveries. A delivery whose endpoint returned non-2xx or did not respond counts as failed, and can be redelivered unchanged from the console (or the experimental `pulumi stack webhook delivery redeliver` command for stack webhooks).
+- Pulumi's docs don't say whether a redelivery keeps `Pulumi-Webhook-ID`, so deduplicate on the run (`updateUrl` + `result`, `deploymentUrl` + `status`) rather than the delivery ID.
 - No automatic retry is described, so respond `2xx` quickly and make handlers idempotent.
 
 ## Full Event Reference

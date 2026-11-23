@@ -20,22 +20,22 @@ function handleEvent(event: ThinkificEvent): void {
   switch (event.resource) {
     case 'order':
       console.log(`Order ${payload.id} (${topic}): ${payload.product_name} for ${payload.amount_cents} cents`);
-      // TODO: fulfil the order or record the sale
+      // Your code: fulfil the order or record the sale
       break;
 
     case 'order_transaction':
       console.log(`Transaction ${payload.id} ${event.action}`); // succeeded, failed, refunded
-      // TODO: update payment state
+      // Your code: update payment state
       break;
 
     case 'enrollment':
       console.log(`Enrollment ${payload.id} ${event.action}`);
-      // TODO: grant access, send a certificate on "completed"
+      // Your code: grant access, send a certificate on "completed"
       break;
 
     case 'user':
-      console.log(`User ${payload.id} ${event.action}`); // signup, signin, updated, deleted
-      // TODO: sync the user record
+      console.log(`User ${payload.id} ${event.action}`); // signup, signin, updated, deleted, deactivated, reactivated, merged
+      // Your code: sync the user record
       break;
 
     case 'course':

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
-import { DELETE, GET, PATCH, POST, PUT } from '../app/webhooks/semaphore/route';
+import * as route from '../app/webhooks/semaphore/route';
+import { PATCH, POST, PUT } from '../app/webhooks/semaphore/route';
 import { verifySemaphoreSignature } from '../lib/verify-semaphore';
 
 const SECRET = 'semaphore-test-secret';
@@ -118,13 +119,12 @@ describe('other HTTP methods', () => {
     expect(res.status).toBe(200);
   });
 
-  it('verifies an empty GET and DELETE over zero bytes and returns 200', async () => {
-    const headers = { 'x-semaphore-signature-256': sign('') };
-    expect((await GET(req('GET', headers))).status).toBe(200);
-    expect((await DELETE(req('DELETE', headers))).status).toBe(200);
+  it('exports no GET or DELETE handler, so Next.js answers 405', () => {
+    expect('GET' in route).toBe(false);
+    expect('DELETE' in route).toBe(false);
   });
 
-  it('rejects an unsigned GET with 401', async () => {
-    expect((await GET(req('GET'))).status).toBe(401);
+  it('rejects an unsigned PUT with 401', async () => {
+    expect((await PUT(req('PUT', {}, '{}'))).status).toBe(401);
   });
 });

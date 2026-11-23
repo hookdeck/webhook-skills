@@ -99,7 +99,7 @@ uppercase names (`RENEWAL`) are only the dashboard/API subscription filter. The 
 | `subscription_paused` | A user pauses (Google Play only) |
 | `subscription_extended` | The store extends the expiration date |
 | `expiration` | A subscription expires |
-| `transferred` | Reserved for ownership changes; not sent yet |
+| `transferred` | A subscription moves to a different user (`event_data` is `null`; `transfer` names both users) |
 
 Delivery is at least once and unordered: **deduplicate on `id`** (`evt_` + 32 hex, stable across
 redelivery; legacy uses `data.id`) and order by `occurred_at`. See

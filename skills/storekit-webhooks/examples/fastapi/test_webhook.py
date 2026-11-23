@@ -73,9 +73,8 @@ EVENTS = {
     "item.out_of_stock": envelope("item.out_of_stock", {
         "venue": VENUE, "item": {"id": 5678, "name": "Margherita Pizza"}, "reason": "snoozed",
         "source": "manual", "details": {"snoozeEnd": None}}),
-    "payments.payout.created": envelope("payments.payout.created", {
-        "amounts": [{"currency": "GBP", "value": "3210.50"}], "estimatedArrivalDate": "1/2024"}),
-    "bill.payment.created": envelope("bill.payment.created", {}),
+    "account.holder.payout": envelope("account.holder.payout", {
+        "amounts": [{"currency": "GBP", "value": 321050}], "estimatedArrivalDate": "1/2024"}),
     "payment_link.created": envelope("payment_link.created", {
         "paymentLink": {"id": "plink_019dbc4d", "type": "one_off", "amountType": "fixed", "amount": 2500, "currency": "GBP"},
         "venue": VENUE}),

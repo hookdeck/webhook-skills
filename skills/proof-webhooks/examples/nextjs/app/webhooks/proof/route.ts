@@ -57,27 +57,27 @@ export async function POST(request: NextRequest) {
   switch (payload.event) {
     case 'transaction.created':
       console.log('Transaction created:', data.transaction_id);
-      // TODO: Record the transaction in your system
+      // Your code: record the transaction in your system
       break;
 
     case 'transaction.completed':
       console.log('Transaction completed:', data.transaction_id);
-      // TODO: Update state. Documents may not be downloadable yet: wait for transaction.released
+      // Your code: update state. Documents may not be downloadable yet: wait for transaction.released
       break;
 
     case 'transaction.released':
       console.log('Transaction released:', data.transaction_id);
-      // TODO: Fetch the signed documents from the Proof API
+      // Your code: fetch the signed documents from the Proof API
       break;
 
     case 'transaction.declined':
       console.log('Transaction declined:', data.transaction_id);
-      // TODO: Notify the requester
+      // Your code: notify the requester
       break;
 
     case 'notary.created':
       console.log('Notary created:', data.notary_id);
-      // TODO: Sync the notary to your system
+      // Your code: sync the notary to your system
       break;
 
     default:

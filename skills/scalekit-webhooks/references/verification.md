@@ -146,4 +146,4 @@ def verify_scalekit(raw_body: bytes, msg_id: str, timestamp: str, signature_head
 | Hookdeck retries or replays fail, first deliveries pass | Library's fixed 5-minute window; use the manual verifier with `null` tolerance |
 | Missing headers | A proxy stripped `webhook-*` headers, or the request isn't from Scalekit |
 
-Review failed deliveries in the endpoint's message log in the Scalekit dashboard (Dashboard > Webhooks) and select **Resend** after you fix the handler.
+Review failed deliveries in the endpoint's message log in the Scalekit dashboard (Developers > Webhooks) and select **Resend** after you fix the handler.

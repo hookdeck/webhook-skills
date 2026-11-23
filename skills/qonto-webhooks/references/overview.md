@@ -57,4 +57,4 @@ The "Supported events" lists on Qonto's type pages are not consistent: transacti
 
 ## Full Event Reference
 
-See [Qonto's webhook setup page](https://docs.qonto.com/api-reference/business-api/webhooks/setup) and the per-type pages under `/webhooks/supported-webhooks/` (for example [v1/transactions](https://docs.qonto.com/api-reference/business-api/webhooks/supported-webhooks/v1-transactions)).
+See [Qonto's webhook setup page](https://docs.qonto.com/guides/webhooks/setup) and the per-type pages under `/webhooks/supported-webhooks/` (for example [v1/transactions](https://docs.qonto.com/api-reference/business-api/webhooks/supported-webhooks/v1-transactions)).

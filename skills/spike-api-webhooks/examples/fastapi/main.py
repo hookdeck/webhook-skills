@@ -20,7 +20,7 @@ HEX_SHA256 = re.compile(r"[0-9a-fA-F]{64}")
 
 def verify_spike_signature(raw_body: bytes, signature: str, secret: str) -> bool:
     """X-Body-Signature is the bare hex HMAC-SHA256 of the raw body, keyed with the
-    shared secret (UTF-8 bytes, used as-is). No timestamp is signed."""
+    Webhook Signature Key (UTF-8 bytes, used as-is). No timestamp is signed."""
     # Validate shape first (exact length and alphabet; a non-ASCII header fails here)
     if not HEX_SHA256.fullmatch(signature):
         return False

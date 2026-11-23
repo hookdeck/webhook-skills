@@ -108,6 +108,10 @@ and the examples handle all of them:
 | `account.details_changed` | An account's details (bank or wallet details, routing) change |
 | `transfer.state_changed` | A v3 transfer changes public state (`awaiting_funds`, `processing`, `action_required`, `completed`, `failed`, `canceled`) |
 
+The `POST /v3/webhooks` events enum also accepts `api.deprecation` (version sunset notices) and
+`transfer.created`, which Swipelux says is still delivered in the legacy v1 payload shape: treat it as
+a hint and refetch the transfer. Neither has a published example.
+
 Delivery is at least once: duplicates, delays and reordering are normal. Persist the envelope `id`,
 return `2xx`, then refetch the resource named by `resource.type` and `resource.id` before acting.
 See [references/overview.md](references/overview.md) for payloads.

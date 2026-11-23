@@ -40,7 +40,8 @@ notes: >
   uses 'the exact same mechanism as GitHub', so expect `sha256=<hex>`. Events: there is no event-name
   field or header. Tell the two documented payload shapes apart: run events (`account`, `state`,
   `stateVersion`, `timestamp`, `run`, `stack`) and internal error events (`title`, `body`, ...). Use
-  `stateVersion` to order run updates. Methods: Spacelift's docs don't name the HTTP method.
+  `stateVersion` to order run updates. Methods: Spacelift sends POST by default, and a notification policy's webhook rule can set
+  another method (its examples use PUT).
   The examples must NOT be POST-only: accept GET, POST, PUT, PATCH and DELETE on the webhook route
   (Express: app.all or one route per method; Next.js: export a handler for each; FastAPI: api_route
   with those methods), verify the signature first for every method, and treat a missing body as empty

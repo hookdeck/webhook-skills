@@ -61,4 +61,4 @@ Speed documents these 28 types and notes that more may be added, so acknowledge 
 
 ## Full Event Reference
 
-[Types of events](https://apidocs.tryspeed.com/reference/types-of-events), [Handle a request](https://apidocs.tryspeed.com/reference/handle-a-request) and [Webhooks](https://apidocs.tryspeed.com/reference/webhooks) in Speed's API reference.
+[Types of events](https://apidocs.tryspeed.com/reference/types-of-events), [Handle a request](https://apidocs.tryspeed.com/reference/handle-a-request) and [Manage webhook endpoints](https://apidocs.tryspeed.com/reference/manage-webhook-endpoints) in Speed's API reference.

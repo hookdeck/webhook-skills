@@ -43,7 +43,9 @@ The dashboard's "Test webhook" button sends a minimal event:
 
 Field names differ per event. Check the event's page under the
 [webhook reference](https://docs.privy.io/api-reference/webhooks/overview#webhook-events-reference)
-for its schema. Some payloads carry an `idempotency_key`; use it to drop duplicates when present.
+for its schema. Most payloads carry an `event_id`, which Privy says to deduplicate on.
+`wallet.funds_deposited` and `wallet.funds_withdrawn` have none, so use their `idempotency_key`, and
+use `user_op_hash` plus `caip2` for `user_operation.completed`.
 For `transaction.confirmed`, fetch the transaction directly if you need final gas data, because
 `gas_credits_charged` can still be `null` right after the webhook.
 
@@ -75,7 +77,7 @@ For `transaction.confirmed`, fetch the transaction directly if you need final ga
 
 The examples handle exactly these events and acknowledge anything else with `200`.
 
-## Full Event List (70 documented)
+## Full Event List (71 documented)
 
 The list may not be exhaustive. Names below come from Privy's webhook overview and reference.
 
@@ -91,10 +93,14 @@ The list may not be exhaustive. Names below come from Privy's webhook overview a
   `transaction.execution_reverted`, `transaction.replaced`, `transaction.still_pending`,
   `transaction.provider_error`
 - **Wallet action** (each with created, succeeded, rejected and failed variants):
-  `wallet_action.swap.*`, `wallet_action.transfer.*`, `wallet_action.earn_deposit.*`,
-  `wallet_action.earn_withdraw.*`, `wallet_action.earn_incentive_claim.*`
+  `wallet_action.swap.*`, `wallet_action.transfer.*`, `wallet_action.payout.*`,
+  `wallet_action.earn_deposit.*`, `wallet_action.earn_withdraw.*`,
+  `wallet_action.earn_incentive_claim.*`, `wallet_action.earn_fee_collect.*`
+- **Wallet automation:** `wallet_automation.submitted`
 - **Usage charges:** `usage.gas_sponsorship.recorded`, `usage.swap_provider_fee.recorded`, and
-  related charge events
+  `usage.ata_deposit.recorded` (in Privy's OpenAPI only)
+- **Yield** (in Privy's OpenAPI only): `yield.deposit.confirmed`, `yield.withdraw.confirmed`,
+  `yield.claim.confirmed`
 - **Intent:** `intent.created`, `intent.authorized`, `intent.rejected`, `intent.executed`,
   `intent.failed`
 - **User operation:** `user_operation.completed`
@@ -106,8 +112,8 @@ Any non-`2xx` response (including `3xx`), timeout or connection error is retried
 then after 5 seconds, 5 minutes, 30 minutes, 2 hours, 5 hours, 10 hours and 10 more hours. After
 the last attempt the message is marked failed and must be retried manually from the dashboard.
 An endpoint whose deliveries fail for 5 consecutive days is disabled automatically. Delivery is
-at least once, so deduplicate on `svix-id` (and on `idempotency_key` where present) and make
-handlers idempotent.
+at least once, so deduplicate on `event_id` (or the keys above for events without one) and make
+handlers idempotent. `svix-id` identifies a redelivery of the same webhook.
 
 ## Full Event Reference
 

@@ -43,7 +43,7 @@ const ok = candidates.some((c) => HEX64.test(c) && // validate before comparing
 Key points:
 
 - **Secret**: Paste the whole secret, including the whsec_ prefix. Qonto uses it as a plain HMAC key. It looks like a Standard Webhooks `whsec_` secret but is **not** one: nothing is stripped or base64-decoded, and the `standardwebhooks` / `svix` libraries will not verify it.
-- The header can carry more than one `v1=` entry (key rotation); accept if any matches and ignore other keys such as `v0`. No `t=` value means fail.
+- Qonto's docs show a single `v1=` entry. The code accepts the header if any `v1=` entry matches and ignores other keys such as `v0`. No `t=` value means fail.
 - Qonto documents no timestamp tolerance, and Hookdeck retries and replays keep the original `t`. Do not reject old timestamps by default; set `QONTO_WEBHOOK_TOLERANCE_SECONDS` (unset or `0` = off) to opt in.
 - Missing, malformed or mismatched signature: respond `401`.
 - Qonto waits **1 second** for a 2xx and retries with exponential backoff for a few days, so acknowledge first and process later.
@@ -56,7 +56,7 @@ Dispatch on the body's top-level `type` (the subscription type). What happened t
 
 | `type` | Description |
 |--------|-------------|
-| `v1/transactions` | Bank transactions (`data.event`: `created`, `updated`, `settled`, ...) |
+| `v1/transactions` | Bank transactions (`data.event`: `created`, `updated`) |
 | `v1/cards` | Card lifecycle (`created`, ...) |
 | `v1/transfers` | SEPA transfers (`created`, ...) |
 | `v1/accounts` | Bank accounts |

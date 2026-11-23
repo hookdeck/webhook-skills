@@ -73,10 +73,11 @@ and enter a new value. See [references/setup.md](references/setup.md).
 
 ## HTTP Methods
 
-Qlik Cloud's docs don't name the HTTP method of a delivery. The examples therefore accept
-**GET, POST, PUT, PATCH and DELETE** on the webhook route, verify the signature first for every
-method, treat a missing body as empty bytes, and acknowledge a verified empty request with 200.
-If Qlik Cloud uses a method other than POST, **also allow that method on the Hookdeck source** ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
+Qlik's [Webhooks API reference](https://qlik.dev/apis/rest/core/webhooks/) describes a delivery as a
+**POST** request; the help pages only say "an HTTP JSON request". The examples also accept GET, PUT,
+PATCH and DELETE defensively, verify the signature first for every method, treat a missing body as
+empty bytes, and acknowledge a verified empty request with 200. If you ever see another method arrive,
+**also allow it on the Hookdeck source** ([custom methods](https://hookdeck.com/docs/sources#custom-methods)).
 
 ## Event Payload and Types
 

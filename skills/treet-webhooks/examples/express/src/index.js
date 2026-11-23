@@ -30,12 +30,12 @@ function handleEvent(payload) {
   switch (payload.trigger) {
     case 'label/created':
       console.log(`Shipping label created for bundle ${payload.bundleId}`, payload.trackingNumber);
-      // TODO: store the carrier and tracking number
+      // Your code: store the carrier and tracking number
       break;
 
     case 'label/updated':
       console.log(`Shipping label updated for bundle ${payload.bundleId}: ${payload.status}`);
-      // TODO: update the shipment status
+      // Your code: update the shipment status
       break;
 
     default:

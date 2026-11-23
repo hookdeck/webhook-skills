@@ -117,12 +117,10 @@ app.post('/webhooks/storekit', express.raw({ type: '*/*' }), (req, res) => {
     case 'item.out_of_stock':
       console.log('Item out of stock:', data.item?.name, data.reason, data.source);
       break;
-    case 'payments.payout.created':
-      console.log('Payout created:', data.amounts, data.estimatedArrivalDate);
-      break;
-    case 'bill.payment.created':
-      // The docs list this event but show no payload: log what arrives
-      console.log('Bill payment created:', JSON.stringify(data));
+    case 'account.holder.payout':
+    case 'payments.payout.created': // former name of this event, no longer in storekit's docs
+      // amounts[].value is in minor units; failed payouts send no event
+      console.log('Payout:', data.amounts, data.estimatedArrivalDate);
       break;
     case 'payment_link.created':
       console.log('Payment link created:', data.paymentLink?.id, data.paymentLink?.amount, data.paymentLink?.currency);

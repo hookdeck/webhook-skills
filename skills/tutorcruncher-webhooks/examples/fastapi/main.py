@@ -41,23 +41,23 @@ def handle_event(event: dict) -> None:
 
     if action == "CREATED_A_CONTRACTOR":
         print(f"Tutor created: {subject.get('id')} ({subject.get('email')})")
-        # TODO: onboard the tutor in your system
+        # Your code: onboard the tutor in your system
 
     elif action == "CHANGED_CONTRACTOR_STATUS":
         print(f"Tutor status changed: {subject.get('id')} -> {subject.get('status')}")
-        # TODO: sync the tutor's status
+        # Your code: sync the tutor's status
 
     elif action == "CLIENT_ENQUIRY":
         print(f"Client enquiry from: {subject.get('id')}")
-        # TODO: create a lead
+        # Your code: create a lead
 
     elif action == "CREATED_AN_APPOINTMENT":
         print(f"Lesson created: {subject.get('id')}")
-        # TODO: sync to your calendar
+        # Your code: sync to your calendar
 
     elif action == "RAISED_INVOICE":
         print(f"Invoice raised: {subject.get('id')}")
-        # TODO: push to accounting
+        # Your code: push to accounting
 
     else:
         print(f"Unhandled action: {action}")

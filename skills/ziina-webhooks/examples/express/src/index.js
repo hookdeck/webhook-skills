@@ -9,7 +9,7 @@ const app = express();
 /**
  * Verify a Ziina webhook signature.
  *
- * X-Hmac-Signature is the bare lowercase hex HMAC-SHA256 of the raw request body,
+ * X-Hmac-Signature is the bare hex HMAC-SHA256 of the raw request body,
  * keyed with the secret's UTF-8 bytes. Nothing else is signed.
  */
 function verifyZiinaWebhook(rawBody, signatureHeader, secret) {
@@ -47,11 +47,11 @@ app.post('/webhooks/ziina', express.raw({ type: '*/*' }), (req, res) => {
   switch (payload.event) {
     case 'payment_intent.status.updated':
       console.log(`Payment intent ${payload.data?.id} is now ${status}`);
-      // TODO: if status is 'completed', mark the order paid.
+      // Your code: if status is 'completed', mark the order paid.
       break;
     case 'refund.status.updated':
       console.log(`Refund ${payload.data?.id} is now ${status}`);
-      // TODO: update the refund state in your system.
+      // Your code: update the refund state in your system.
       break;
     default:
       console.log(`Unhandled Ziina event: ${payload.event}`);

@@ -1,7 +1,14 @@
 # Setting Up Velt Webhooks
 
 Advanced (V2) webhook endpoints are managed in the [Velt console](https://console.velt.dev/dashboard/config/webhook)
-(Advanced webhooks section). The webhook pages don't describe an endpoint-management API.
+(Advanced webhooks section) or with the REST API: enable Advanced webhooks with
+[Update Advanced Webhook Config](https://velt.dev/docs/api-reference/rest-apis/v2/workspace/advancedwebhookconfig-update)
+(`{ "isEnabled": true }`), create an endpoint with
+[`POST /v2/workspace/advancedwebhook/endpoints/create`](https://velt.dev/docs/api-reference/rest-apis/v2/workspace/advancedwebhook-endpoints-create)
+(`url`, optional `filterTypes`), and read its signing secret with
+[`POST /v2/workspace/advancedwebhook/endpoints/secret/get`](https://velt.dev/docs/api-reference/rest-apis/v2/workspace/advancedwebhook-endpoints-secret-get).
+These calls take the `x-velt-api-key` and `x-velt-auth-token` headers. Velt always generates the secret;
+the create call doesn't accept one.
 
 > **Requirement.** Hookdeck's configuration alert for this source reads: "Only Velt Advanced (V2) webhooks, available on Enterprise, are signed. Basic (V1) webhooks send an auth token instead and fail verification."
 > Basic (V1) webhooks only send an optional auth token in the `Authorization` header as
@@ -54,7 +61,8 @@ Use the URL the CLI prints as the endpoint URL in the console. For the FastAPI e
   endpoint and a `message.attempt.exhausted` webhook is sent.
 - Each retry is re-signed with a fresh `webhook-timestamp`; `webhook-id` stays the same.
 - Retry a message manually, or "Recover" all failed messages from a date, in the console. A removed or
-  disabled endpoint gets no deliveries.
+  disabled endpoint gets no deliveries. An endpoint whose attempts all fail for 5 days is disabled;
+  re-enable it from the webhook dashboard with "Enable Endpoint".
 - Do the heavy work asynchronously: verify the signature, enqueue, and return `2xx`.
 - No ordering guarantee is documented, and the same message can arrive more than once, so make the handler
   idempotent.

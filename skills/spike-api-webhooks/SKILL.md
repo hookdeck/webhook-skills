@@ -25,7 +25,8 @@ metadata:
 ## Verification (core)
 
 Spike API signs the **raw request body** with **HMAC-SHA256**, keyed with the
-shared secret from the admin console (used as-is, as UTF-8 bytes), and sends the
+application's **Webhook Signature Key** from the admin console (used as-is, as
+UTF-8 bytes; not the separate **HMAC Key** used for user authentication), and sends the
 **bare lowercase hex digest** (no prefix, no timestamp) as the whole
 `X-Body-Signature` header value. Always verify against the **raw body**, never
 re-serialized JSON. There is no Spike API webhook SDK, so verify manually:
@@ -84,7 +85,7 @@ asynchronously, and make handling idempotent.
 ## Environment Variables
 
 ```bash
-# Shared HMAC key from the Spike API admin console
+# Webhook Signature Key from the Spike API admin console (not the authentication HMAC Key)
 SPIKE_API_WEBHOOK_SECRET=your_spike_api_webhook_secret
 ```
 
@@ -103,7 +104,7 @@ port 3000; the FastAPI example uses `8000`.
 ## Resources
 
 - [Overview](references/overview.md) - What Spike API webhooks are, event types and payloads
-- [Setup](references/setup.md) - Configure the endpoint and get the shared key
+- [Setup](references/setup.md) - Configure the endpoint and get the Webhook Signature Key
 - [Verification](references/verification.md) - Signature details and gotchas
 - [Express Example](examples/express/) - Express.js implementation
 - [Next.js Example](examples/nextjs/) - Next.js App Router implementation

@@ -32,14 +32,14 @@ function handleEvent(body) {
       const member = asObject(data.member);
       const course = asObject(data.course);
       console.log('Member joined course', { member: member.id, course: course.id });
-      // TODO: provision access or add the member to your CRM
+      // Your code: provision access or add the member to your CRM
       break;
     }
 
     case 'course.completed': {
       const member = asObject(data.member);
       console.log('Course completed', { member: member.id, data: data.id });
-      // TODO: issue a credential or notify the learner
+      // Your code: issue a credential or notify the learner
       break;
     }
 
@@ -63,13 +63,13 @@ function handleEvent(body) {
       const member = asObject(data.member);
       const context = asObject(data.context);
       console.log('Element completed', { member: member.id, element: context.id, passed: data.passed });
-      // TODO: update progress tracking
+      // Your code: update progress tracking
       break;
     }
 
     case 'member.login': {
-      const member = asObject(data.member);
-      console.log('Member logged in', member.id ?? data.id);
+      // data is a login activity; data.member is the member's id string.
+      console.log('Member logged in', { member: data.member, at: data.logged_in_at });
       break;
     }
 

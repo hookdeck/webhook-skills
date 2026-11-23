@@ -6,8 +6,8 @@ const express = require('express');
 
 const app = express();
 
-// Semaphore's docs don't name the HTTP method, so accept all the usual ones.
-const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+// Semaphore sends POST unless the notification's `action` is set to PUT or PATCH.
+const ALLOWED_METHODS = ['POST', 'PUT', 'PATCH'];
 
 const HEX_64 = /^[0-9a-fA-F]{64}$/;
 
@@ -30,22 +30,22 @@ function handleEvent(payload, webhookId) {
   switch (pipeline.result) {
     case 'passed':
       console.log(`Pipeline passed: ${label}`);
-      // TODO: mark the commit green, trigger a deploy
+      // Your code: mark the commit green, trigger a deploy
       break;
 
     case 'failed':
       console.log(`Pipeline failed: ${label}`);
-      // TODO: alert the team, inspect payload.blocks[].jobs[] for the failing job
+      // Your code: alert the team, inspect payload.blocks[].jobs[] for the failing job
       break;
 
     case 'stopped':
       console.log(`Pipeline stopped: ${label}`);
-      // TODO: record that it was stopped (pipeline.result_reason says why)
+      // Your code: record that it was stopped (pipeline.result_reason says why)
       break;
 
     case 'canceled':
       console.log(`Pipeline canceled: ${label}`);
-      // TODO: record that it was canceled
+      // Your code: record that it was canceled
       break;
 
     default:
@@ -60,7 +60,7 @@ app.all('/webhooks/semaphore', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
-  // A missing body is verified as zero bytes.
+  // A missing body is verified as zero bytes, so it fails the check.
   const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
 
   // Signature first, for every method.
@@ -71,11 +71,6 @@ app.all('/webhooks/semaphore', express.raw({ type: '*/*' }), (req, res) => {
   if (!ALLOWED_METHODS.includes(req.method)) {
     res.set('Allow', ALLOWED_METHODS.join(', '));
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // GET and DELETE carry no body: once verified, acknowledge them.
-  if (rawBody.length === 0) {
-    return res.status(200).json({ received: true });
   }
 
   let payload;

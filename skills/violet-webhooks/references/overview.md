@@ -9,17 +9,18 @@ Webhooks are "near real time": a webhook can take several minutes, sometimes 10-
 ## Request Format
 
 - Method: `POST`, with the entity as a JSON body (the full Order, Offer, PayoutAccount, transfer, ...)
-- The body has **no event field**. The event name is in the `X-Violet-Topic` header
+- Most bodies have **no event field**. The event name is in the `X-Violet-Topic` header (recovery case bodies also carry `event` and `event_key`)
 - Several events share one entity shape (every `ORDER_*` event sends an Order)
 
 | Header | Meaning |
 |--------|---------|
 | `X-Violet-Hmac` | Base64 HMAC-SHA256 of the raw body, keyed with the app secret |
 | `X-Violet-Topic` | The event name, e.g. `ORDER_SHIPPED` |
-| `X-Violet-Event-Id` | Identifies the event (use for idempotency) |
+| `X-Violet-Event-Id` | Unique event ID, named for idempotency (recovery events can be redelivered under a new one) |
 | `X-Violet-Webhook-Id` | The webhook that produced the delivery |
 | `X-Violet-Entity-Length` | Body length in bytes |
-| `X-Violet-Event-Id-Source` | Marks a resend of an existing event |
+| `X-Violet-Event-Id-Source` | The original event ID, on a resend |
+| `X-Violet-Recovery-Event-Key` | Stable key for deduplicating recovery case events |
 
 Webhook bodies always carry the entity regardless of size. If you can't consume a large body, ignore it and fetch the event by id later ([Retrieving Webhook Events](https://docs.violet.io/prism/webhooks/retrieving-webhook-events)).
 
@@ -42,9 +43,9 @@ Webhook bodies always carry the entity regardless of size. If you can't consume 
 | `MERCHANT_NEEDS_ATTENTION` | A merchant health check fails | Ask the merchant to fix their connection |
 | `TRANSFER_SENT` | A payout to a merchant is sent | Reconciliation |
 
-## All Documented Events (52)
+## All Documented Events (56)
 
-- **Order:** `ORDER_ACCEPTED`, `ORDER_UPDATED`, `ORDER_COMPLETED`, `ORDER_SHIPPED`, `ORDER_DELIVERED`, `ORDER_REFUNDED`, `ORDER_CANCELLED`, `ORDER_FAILED`
+- **Order:** `ORDER_ACCEPTED`, `ORDER_UPDATED`, `ORDER_COMPLETED`, `ORDER_SHIPPED`, `ORDER_DELIVERED`, `ORDER_REFUNDED`, `ORDER_CANCELLED` (also spelled `ORDER_CANCELED` in the API's event enum), `ORDER_FAILED`, and `ORDER_RETURNED` (in the API's event enum only)
 - **Merchant:** `MERCHANT_CONNECTED`, `MERCHANT_DISCONNECTED`, `MERCHANT_ENABLED`, `MERCHANT_DISABLED`, `MERCHANT_NEEDS_ATTENTION`, `MERCHANT_COMPLETE`
 - **Offer:** `OFFER_CREATED` (deprecated), `OFFER_ADDED`, `OFFER_UPDATED`, `OFFER_REMOVED`, `OFFER_DELETED`
 - **Collection:** `COLLECTION_CREATED`, `COLLECTION_UPDATED`, `COLLECTION_REMOVED`, `COLLECTION_OFFERS_UPDATED`
@@ -52,7 +53,8 @@ Webhook bodies always carry the entity regardless of size. If you can't consume 
 - **Payout account:** `MERCHANT_PAYOUT_ACCOUNT_CREATED`, `MERCHANT_PAYOUT_ACCOUNT_REQUIREMENTS_UPDATED`, `MERCHANT_PAYOUT_ACCOUNT_ACTIVATED`, `MERCHANT_PAYOUT_ACCOUNT_DEACTIVATED`, `MERCHANT_PAYOUT_ACCOUNT_DELETED`
 - **Payment transaction:** `PAYMENT_TRANSACTION_CAPTURE_STATUS_UPDATED`, `PAYMENT_TRANSACTION_CAPTURE_STATUS_AUTHORIZED`, `PAYMENT_TRANSACTION_CAPTURE_STATUS_CAPTURED`, `PAYMENT_TRANSACTION_CAPTURE_STATUS_REFUNDED`, `PAYMENT_TRANSACTION_CAPTURE_STATUS_PARTIALLY_REFUNDED`, `PAYMENT_TRANSACTION_CAPTURE_STATUS_FAILED`
 - **Transfer:** `TRANSFER_SENT`, `TRANSFER_PARTIALLY_SENT`, `TRANSFER_FAILED`, `TRANSFER_UPDATED`, `TRANSFER_REVERSED`, `TRANSFER_PARTIALLY_REVERSED`, `TRANSFER_REVERSAL_FAILED`
-- **Recovery case:** the docs list further `RECOVERY_CASE_*` events (see the events page)
+- **Recovery case:** `RECOVERY_CASE_OPENED`, `RECOVERY_CASE_GAP_REMAINING`, `RECOVERY_CASE_RECOVERED`, `RECOVERY_CASE_EXHAUSTED`
+- **Dispute:** `PAYMENT_TRANSACTION_DISPUTE_OPENED`, `ORDER_DISPUTED`, `PAYMENT_TRANSACTION_DISPUTE_WON`, `PAYMENT_TRANSACTION_DISPUTE_LOST`
 
 ## Delivery and Retries
 

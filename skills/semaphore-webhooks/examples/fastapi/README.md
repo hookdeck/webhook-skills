@@ -28,7 +28,7 @@ Minimal example of receiving Semaphore CI notification webhooks with signature v
 uvicorn main:app --reload --port 8000
 ```
 
-Server runs on http://localhost:8000 and accepts GET, POST, PUT, PATCH and DELETE on `/webhooks/semaphore`.
+Server runs on http://localhost:8000 and accepts POST, PUT and PATCH on `/webhooks/semaphore`.
 
 ## Test
 

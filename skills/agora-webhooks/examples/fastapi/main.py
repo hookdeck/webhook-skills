@@ -81,7 +81,8 @@ async def agora_webhook(request: Request):
     else:
         print(f"Unhandled product {product_id} event: {event_type}")
 
-    # Agora wants a 200 with a JSON body within 10 seconds; duplicates happen, so dedupe on noticeId
+    # Agora wants a 200 with a JSON body within 10 seconds. Callbacks can repeat and arrive out of
+    # order: keep the last payload.clientSeq per user and ignore lower ones
     return {"received": True}
 
 

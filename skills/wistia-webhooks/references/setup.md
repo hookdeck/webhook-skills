@@ -23,4 +23,4 @@ Return a `2xx` within 10 seconds. Slower responses time out and Wistia may resen
 
 ## Testing
 
-Trigger events by uploading a video (`media.created`, `media.processing`, `media.ready`), playing one (`viewing_session.play`) or editing its title (`media.updated`), and inspect the deliveries in the Hookdeck CLI web UI. Wistia has no separate test mode.
+Trigger events by uploading a video (`media.created`, `media.processing`, `media.ready`), playing one (`viewing_session.play`) or editing its title (`media.updated`), and inspect the deliveries in the Hookdeck CLI web UI.

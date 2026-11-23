@@ -44,8 +44,8 @@ and use the tunnel URL as the endpoint. Use a separate endpoint (and secret) for
 
 ## What Happens When Delivery Fails?
 
-A delivery fails on a non-2xx response, no response within 15 seconds, or a connection failure.
-Storekit retries with exponential backoff over about 3 days:
+A delivery fails on a non-2xx response, no response within 30 seconds, or a connection failure.
+Storekit retries with exponential backoff over about 28 hours:
 
 | Attempt | Delay after previous |
 |---------|----------------------|
@@ -56,7 +56,7 @@ Storekit retries with exponential backoff over about 3 days:
 | 5 | 2 hours |
 | 6 | 5 hours |
 | 7 | 10 hours |
-| 8 | 24 hours |
+| 8 | 10 hours |
 
 After the last attempt the message is marked failed. If every attempt to an endpoint fails for
 **5 consecutive days**, the endpoint is disabled automatically; re-enable it in the portal.
@@ -64,7 +64,8 @@ After the last attempt the message is marked failed. If every attempt to an endp
 To recover:
 
 - **Retry one message:** open the endpoint, find the failed message in the logs, click **Retry**.
-- **Recover an outage:** endpoint **Options > Recover Failed Messages**, then pick a time window.
+- **Recover an outage:** open the endpoint and use **Recover Failed** to resend every failed message
+  since a date you choose, or **Replay Missing** for messages that were never attempted.
 
 ## Verification Behind Hookdeck
 

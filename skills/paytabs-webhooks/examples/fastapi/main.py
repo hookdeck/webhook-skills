@@ -56,9 +56,11 @@ async def paytabs_webhook(request: Request):
     status = result.get("response_status") if isinstance(result.get("response_status"), str) else None
 
     if status == "A":
-        if tran_type == "Sale":
+        # PayTabs' docs spell tran_type as "sale" in requests and "Sale" in responses: normalise it
+        kind = tran_type.lower() if tran_type else None
+        if kind == "sale":
             print(f"Sale authorised: {tran_ref}")
-        elif tran_type == "Refund":
+        elif kind == "refund":
             print(f"Refund authorised: {tran_ref}")
         else:
             print(f"Transaction authorised: {tran_type} {tran_ref}")

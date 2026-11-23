@@ -14,7 +14,7 @@ load_dotenv()
 
 app = FastAPI(title="Qlik Cloud Webhook Handler")
 
-# Qlik Cloud's docs don't name the HTTP method, so accept all the usual ones.
+# Qlik documents deliveries as POST requests; the other methods are accepted defensively.
 ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 _HEX_64 = re.compile(r"[0-9a-fA-F]{64}")
@@ -73,32 +73,32 @@ def handle_qlik_event(payload: Dict[str, Any]) -> None:
 
     if event_type == "com.qlik.v1.app.created":
         print("App created:", event_id)
-        # TODO: register the new app in your catalog
+        # Your code: register the new app in your catalog
     elif event_type == "com.qlik.v1.app.published":
         print("App published:", event_id)
-        # TODO: refresh whatever depends on the published app
+        # Your code: refresh whatever depends on the published app
     elif event_type == "com.qlik.v1.app.deleted":
         print("App deleted:", event_id)
-        # TODO: remove the app from your catalog
+        # Your code: remove the app from your catalog
     elif event_type in ("com.qlik.v1.app.reload.finished", "com.qlik.v1.reload.finished"):
         outcome = "succeeded" if data.get("succeeded") is True else "not reported as succeeded"
         print("Reload finished:", event_id, outcome)
-        # TODO: kick off downstream work if the reload succeeded, alert if it did not
+        # Your code: kick off downstream work if the reload succeeded, alert if it did not
     elif event_type == "com.qlik.v1.user.created":
         print("User created:", event_id)
-        # TODO: provision the user in your own system
+        # Your code: provision the user in your own system
     elif event_type == "com.qlik.v1.user.deleted":
         print("User deleted:", event_id)
-        # TODO: deprovision the user
+        # Your code: deprovision the user
     elif event_type == "com.qlik.v1.automation.created":
         print("Automation created:", event_id)
-        # TODO: track the new automation
+        # Your code: track the new automation
     elif event_type == "com.qlik.v1.automation.run.started":
         print("Automation run started:", event_id)
-        # TODO: record the run
+        # Your code: record the run
     elif event_type == "com.qlik.v1.api-key.validation.failed":
         print("API key validation failed")
-        # TODO: alert the tenant admin
+        # Your code: alert the tenant admin
     else:
         print(f"Unhandled Qlik Cloud event: {event_type}")
 

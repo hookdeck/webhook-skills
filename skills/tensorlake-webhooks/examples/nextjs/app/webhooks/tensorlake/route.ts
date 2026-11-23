@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   const data: Record<string, any> = event.data ?? {};
   console.log(`Received Tensorlake webhook ${event.event_id ?? id}: ${type}`);
   // Delivery is at-least-once and unordered: dedupe on event_id, and order related events from the same
-  // source_id by Number(source_revision) then source_ordinal.
+  // source_id by BigInt(source_revision) then source_ordinal (a decimal string; keep it exact).
 
   switch (type) {
     case 'tensorlake.sandbox.created':

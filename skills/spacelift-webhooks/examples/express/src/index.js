@@ -45,13 +45,13 @@ function handleMessage(payload) {
       }
       lastVersion.set(runId, payload.stateVersion);
       console.log(`Run ${runId} on stack ${payload.stack && payload.stack.id}: ${payload.state} (v${payload.stateVersion})`);
-      // TODO: update your run tracking, notify a channel, etc.
+      // Your code: update your run tracking, notify a channel, etc.
       break;
     }
 
     case 'internal_error':
       console.log(`Spacelift internal error (${payload.severity}): ${payload.title}`);
-      // TODO: alert the team
+      // Your code: alert the team
       break;
 
     default:
@@ -61,7 +61,7 @@ function handleMessage(payload) {
   return type;
 }
 
-// Spacelift doesn't name the HTTP method, so accept all of them. Read the body raw
+// Spacelift sends POST by default, but a notification policy can set another method, so accept all of them. Read the body raw
 // (any content type) and verify before parsing. A missing body is zero bytes.
 app.all('/webhooks/spacelift', express.raw({ type: '*/*' }), (req, res) => {
   if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {

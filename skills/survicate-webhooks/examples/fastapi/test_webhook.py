@@ -35,7 +35,6 @@ def send(body, signature="AUTO", content_type="application/json"):
 def environment(monkeypatch):
     monkeypatch.setenv("SURVICATE_WEBHOOK_SECRET", vector["secret"])
     monkeypatch.setenv("SURVICATE_WEBHOOK_TOLERANCE_SECONDS", "0")
-    monkeypatch.setenv("UPPROMOTE_WEBHOOK_TOPIC", "questionAnswered")
 
 
 def test_fixed_vector_and_event_routing(caplog):

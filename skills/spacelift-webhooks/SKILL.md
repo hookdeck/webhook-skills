@@ -56,7 +56,7 @@ function verifySpaceliftSignature(rawBody, header, secret) {
 
 ## HTTP Methods
 
-Spacelift's docs don't name the HTTP method. If you use Hookdeck, allow the method the sender uses on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`, verify the signature first for every method, and treat a missing body as empty bytes.
+Spacelift sends `POST` by default. A notification policy's `webhook` rule can set another `method` (Spacelift's own examples use `PUT`), add headers and replace the payload. If you use Hookdeck, allow any non-`POST` method your policy sets on the source ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). The examples accept `GET`, `POST`, `PUT`, `PATCH` and `DELETE`, verify the signature first for every method, and treat a missing body as empty bytes.
 
 ## Message Types
 

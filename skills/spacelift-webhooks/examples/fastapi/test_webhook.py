@@ -23,10 +23,10 @@ RUN = {
     "run": {
         "id": "01EF9PFPNFFM2MQXTJKHK1B869",
         "branch": "master",
-        "commit": {"authorLogin": "marcinwyszynski", "hash": "0ee3a3b7266daf5a1d44a193a0f48ce995fa75eb", "message": "Update demo.tf"},
+        "commit": {"authorLogin": "example-user", "hash": "0ee3a3b7266daf5a1d44a193a0f48ce995fa75eb", "message": "Update demo.tf"},
         "createdAt": 1596979665,
         "delta": {"added": 0, "changed": 0, "deleted": 0, "resources": 1},
-        "triggeredBy": "marcinw@spacelift.io",
+        "triggeredBy": "user1@example.com",
         "type": "TRACKED",
     },
     "stack": {"id": "spacelift-demo", "name": "Spacelift demo", "description": "", "labels": []},

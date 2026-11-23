@@ -13,7 +13,7 @@ X-Violet-Hmac: X6+KKoN/xePC3yN6i+DVbDza3JqoasnMNDX1dz2c5fA=
 - Signed content: the **raw request body bytes** only. No timestamp, event id or header is signed
 - Encoding: standard base64 with padding, always 44 characters (`[A-Za-z0-9+/]{43}=`), no prefix
 
-Because no timestamp is signed, there is no replay window to enforce. Don't invent one from unsigned headers or body fields; use `X-Violet-Event-Id` for idempotency instead.
+Because no timestamp is signed, there is no replay window to enforce. Don't invent one from unsigned headers or body fields; use `X-Violet-Event-Id` for idempotency instead (`X-Violet-Event-Id-Source` on a resend, and `X-Violet-Recovery-Event-Key` for recovery case events).
 
 ## Implementation
 
@@ -55,7 +55,7 @@ def verify_violet_signature(raw_body: bytes, header: str | None, secret: str) ->
 - **Validate the format before decoding.** `Buffer.from(sig, 'base64')` silently drops invalid characters, so check length and alphabet first
 - **Compare the base64 string exactly.** The last base64 character carries two unused bits; a value that differs only there decodes to the same digest but isn't what Violet sent, so the skill compares the string exactly
 - **Respond 401** for a missing, malformed or mismatched signature, and answer quickly: Violet needs a 2XX within 10 seconds
-- **Name the event from the header.** The body has no event field, so read `X-Violet-Topic`
+- **Name the event from the header.** Most bodies have no event field, so read `X-Violet-Topic`
 
 ## How Does Hookdeck Verify Violet Webhooks?
 

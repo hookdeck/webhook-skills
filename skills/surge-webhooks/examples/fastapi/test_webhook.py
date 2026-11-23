@@ -226,6 +226,11 @@ class TestEventHandling:
         assert post(raw, signed_headers(raw)).json() == {"received": True}
         assert post(raw, signed_headers(raw)).json() == {"received": True, "duplicate": True}
 
+    def test_does_not_dedupe_repeatable_events_without_envelope_id(self):
+        raw = json.dumps(envelope("contact.opted_out", {"id": "ctc_repeat"}, event_id=None))
+        assert post(raw, signed_headers(raw)).json() == {"received": True}
+        assert post(raw, signed_headers(raw)).json() == {"received": True}
+
 
 class TestResolveSignatureHeaders:
     def test_maps_svix_headers_when_webhook_id_absent(self):

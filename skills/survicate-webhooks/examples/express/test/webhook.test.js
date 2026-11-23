@@ -20,7 +20,6 @@ function send(body, signature = sign(body), contentType = 'application/json') {
 beforeEach(() => {
   process.env.SURVICATE_WEBHOOK_SECRET = vector.secret;
   process.env.SURVICATE_WEBHOOK_TOLERANCE_SECONDS = '0';
-  process.env.UPPROMOTE_WEBHOOK_TOPIC = 'questionAnswered';
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 afterEach(() => { jest.restoreAllMocks(); });

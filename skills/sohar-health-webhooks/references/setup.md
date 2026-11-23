@@ -26,10 +26,11 @@ Event names to subscribe to: `verification.updated`, `verification.pending`, `di
 
 ## Where Do I Find the Webhook Secret?
 
-In the Svix Portal, per endpoint: open the endpoint's detail view from the
-[Webhooks](https://app.soharhealth.com/webhooks) page of your dashboard, then choose
-**Open Svix Portal** from the menu in the top-right corner. The docs print no secret sample, but
-Sohar Health delivers through Svix, whose secrets start with `whsec_`. Store the full value,
+In the Sohar dashboard, per endpoint: open [Webhooks](https://app.soharhealth.com/webhooks), select
+the endpoint, find the **Signing Secret** section in the right-hand detail panel, and click to reveal
+and copy the value. Only account administrators can reveal signing secrets, and revealing one
+doesn't generate or rotate it. The docs print no secret sample, but Sohar Health delivers through
+Svix, whose secrets start with `whsec_`. Store the full value,
 prefix included:
 
 ```bash

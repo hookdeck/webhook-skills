@@ -61,12 +61,19 @@ function verifySurgeWebhook(
 }
 
 // In-memory dedupe for the demo. Use Redis or your database in production.
-// Fall back to type + data.id when the envelope has no id.
+// Fall back to type + data.id when the envelope has no id, but only for events
+// that happen once per object. Contact opt-ins and opt-outs and campaign review
+// events can repeat a data.id, so keep those handlers idempotent instead.
+const ONCE_PER_OBJECT = new Set([
+  'message.sent', 'message.delivered', 'message.failed', 'message.received',
+  'conversation.created', 'call.ended', 'recording.completed', 'voicemail.received',
+]);
 const processedEventKeys = new Set<string>();
 
 function eventKey(event: SurgeEvent): string | null {
   if (event.id) return event.id;
-  return event.data?.id ? `${event.type}:${event.data.id}` : null;
+  if (!ONCE_PER_OBJECT.has(event.type) || !event.data?.id) return null;
+  return `${event.type}:${event.data.id}`;
 }
 
 function handleEvent(event: SurgeEvent): void {

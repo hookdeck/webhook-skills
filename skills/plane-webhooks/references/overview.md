@@ -70,7 +70,7 @@ For `workitem.comment.created`, the comment is nested at `data.comment` (with `c
 
 ## Known Quirk
 
-One of the work item examples in Plane's docs shows `event` as `WebhookScope.ScopeChoices.WORK_ITEM_UPDATED` instead of `workitem.updated`. The example handlers map that value to `workitem.updated`; log and ignore anything else you don't recognize.
+Two of the four example bodies in Plane's docs, under the `workitem.updated` and `workitem.link.updated` headings, show `event` as `WebhookScope.ScopeChoices.WORK_ITEM_UPDATED` instead of a dot-notation key. Both carry a work item (`entity_type` `issue`) in `data`, and Plane doesn't say whether live deliveries do the same. The example handlers map that value to `workitem.updated`; log and ignore anything else you don't recognize.
 
 ## Full Event Reference
 

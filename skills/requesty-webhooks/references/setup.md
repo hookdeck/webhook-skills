@@ -36,7 +36,10 @@ challenge or validation request is sent when you save the URL.
 
 ## Register a Sample Request Receiver
 
-Sample requests are configured per API request through the `requesty.sample` object, not in the Admin Panel:
+Sample requests are configured per API request through the `requesty.sample` object, not in the Admin Panel.
+Requesty labels the feature experimental and offers it on the Enterprise plan only: a request from another
+plan that sets `requesty.sample.webhook_url` returns `403 Forbidden`.
+
 
 ```json
 {

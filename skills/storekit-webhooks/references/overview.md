@@ -33,7 +33,7 @@ The body carries no event id. `svix-id` is the message id, unchanged across retr
 
 ## Common Event Types
 
-27 events are documented (the list may not be exhaustive). The name is the top-level `event`.
+26 events are documented (the list may not be exhaustive). The name is the top-level `event`.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
@@ -55,8 +55,7 @@ The body carries no event id. `svix-id` is the message id, unchanged across retr
 | `store.closed` | A store closes or is snoozed (`closedReason`, `closedUntil`, empty strings if unset) | Sync availability |
 | `store.opening_hours.updated` | Opening hours change (`openingHours`, `specialHours`, `source`) | Sync listings |
 | `item.out_of_stock` | A menu item becomes unavailable (`reason`, `source`, `details`) | Update external menus |
-| `payments.payout.created` | A payout is sent to your bank account (`amounts`, `bankAccount`) | Reconciliation |
-| `bill.payment.created` | A bill payment is created | Reconciliation (no payload shown in the docs) |
+| `account.holder.payout` | A payout is sent to your bank account (`amounts` in minor units, `bankAccount`); formerly `payments.payout.created` | Reconciliation |
 | `payment_link.created` | A payment link is created (`paymentLink`) | Track links |
 | `payment_link.paid` | A payment link payment is collected (`payment.transactionId`, `amount`) | Mark invoice paid |
 | `payment_link.refund.created` | A payment link refund is initiated (pending) | Accounting |
@@ -65,7 +64,7 @@ The body carries no event id. `svix-id` is the message id, unchanged across retr
 | `printer.status.offline` | A cloud printer misses check-ins for 5 minutes | Alert staff |
 | `printer.status.online` | A printer reconnects after being offline for at least 5 minutes | Clear the alert |
 
-The examples handle exactly these 27 events and acknowledge anything else with `200`. The
+The examples handle exactly these 26 events and acknowledge anything else with `200`. The
 `order.created` payload has no `event` field, so the examples treat a body with `id`,
 `orderType` and `items` and no `event` as `order.created`.
 
@@ -79,9 +78,11 @@ expired (`410`), or already used (`409`).
 
 ## Delivery Rules Worth Planning For
 
-- **Acknowledge fast.** Return a `2xx` within 15 seconds and process on a queue.
+- **Acknowledge fast.** Return a `2xx` within 30 seconds and process on a queue.
 - **At-least-once.** Duplicates happen. Deduplicate on `svix-id` and keep ids at least 72 hours.
-- **Retries over about 3 days** after a non-2xx, a timeout or a connection failure. See
+  Rarely, storekit creates the same event twice with different `svix-id` values, so for one-off
+  events such as `order.created.v2` also deduplicate on the event plus the order `id`.
+- **Retries over about 28 hours** after a non-2xx, a timeout or a connection failure. See
   [setup.md](setup.md) for the schedule.
 - **No ordering statement.** Don't assume `order.preparing` arrives before `order.completed`.
 - **Endpoints can be disabled** after 5 consecutive days of failures.

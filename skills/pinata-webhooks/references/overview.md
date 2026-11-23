@@ -54,8 +54,9 @@ Variations in Pinata's event catalog:
   instead of `event_type`. `car_import_failed` has only `data.error` and `data.file_id`. Read
   `event.event_type ?? event.event`, as the examples do.
 - The catalog's `pin_by_cid_succeeded` example prints `ipfs.public.pin_by_cid_created` as its
-  `event_type`. That string is not a catalog event name; subscribe to and match
-  `ipfs.public.pin_by_cid_succeeded`.
+  `event_type`. That string is not a catalog event name. Subscribe to
+  `ipfs.public.pin_by_cid_succeeded`, and match both names until a real delivery shows which
+  one arrives, as the examples do.
 
 ## Common Event Types
 

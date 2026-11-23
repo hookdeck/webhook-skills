@@ -82,7 +82,7 @@ return `401`.
 | `transaction.held_for_review` | A transaction is held for review |
 | `notary.created` | A notary is created in your organization |
 
-37 documented events in all: see [references/overview.md](references/overview.md).
+39 events in all, two of them named only in the Webhook API's subscription list: see [references/overview.md](references/overview.md).
 
 ## Environment Variables
 

@@ -13,8 +13,8 @@ app = FastAPI()
 # X-Plane-Signature is exactly 64 hex characters (HMAC-SHA256), no prefix
 SIGNATURE_PATTERN = re.compile(r"[0-9a-fA-F]{64}", re.ASCII)
 
-# Plane's docs show one work item example whose `event` holds an enum label
-# instead of `workitem.updated`
+# Two of Plane's doc examples (under workitem.updated and workitem.link.updated, both
+# with a work item body) show this enum label in `event` instead of a dot-notation key
 EVENT_ALIASES = {
     "WebhookScope.ScopeChoices.WORK_ITEM_UPDATED": "workitem.updated",
 }
@@ -74,29 +74,29 @@ async def plane_webhook(request: Request):
 
     if event == "workitem.created":
         print(f"Work item created: {name}")
-        # TODO: Sync to your tracker, notify a channel, etc.
+        # Your code: Sync to your tracker, notify a channel, etc.
 
     elif event == "workitem.updated":
         changed = list(as_dict(payload.get("previous_attributes")))
         print(f"Work item updated: {name} (changed: {', '.join(changed) or 'none'})")
-        # TODO: React to state or assignee changes, etc.
+        # Your code: React to state or assignee changes, etc.
 
     elif event == "workitem.deleted":
         print(f"Work item deleted: {payload.get('entity_id')}")
-        # TODO: Remove the work item from your own records
+        # Your code: Remove the work item from your own records
 
     elif event == "workitem.comment.created":
         comment = as_dict(data.get("comment"))
         print(f'Comment on "{name}": {as_str(comment.get("comment_stripped"))}')
-        # TODO: Bot commands, notifications, etc.
+        # Your code: Bot commands, notifications, etc.
 
     elif event == "project.updated":
         print(f"Project updated: {name}")
-        # TODO: Refresh cached project details
+        # Your code: Refresh cached project details
 
     elif event == "cycle.created":
         print(f"Cycle created: {name}")
-        # TODO: Announce the new cycle, etc.
+        # Your code: Announce the new cycle, etc.
 
     else:
         print(f"Unhandled event: {event}")
