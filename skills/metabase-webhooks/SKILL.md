@@ -14,7 +14,7 @@ metadata:
 
 # Metabase Webhooks
 
-Metabase can send the results of a saved question to a webhook when an alert fires. The request is
+Metabase can send the results of a saved question to a webhook when an alert fires. The default request is
 a `POST` with a JSON body. Webhooks are **not signed**: there is no signature header and no
 timestamp. Instead you choose an authentication method on the webhook, and this skill covers
 **HTTP Basic**, where Metabase sends `Authorization: Basic base64(username:password)` on every
@@ -32,7 +32,7 @@ request, up front, and your endpoint compares it with the credentials you chose.
 
 **Choose Basic authentication on the Metabase webhook.** (Bearer, API key and query-param options
 are not covered here.) Use the same username and password in `METABASE_WEBHOOK_USERNAME` and
-`METABASE_WEBHOOK_PASSWORD`.
+`METABASE_WEBHOOK_PASSWORD`. The examples accept `POST`. To receive the alert JSON with a `PUT` channel, enable `PUT` on the Hookdeck source and add a `PUT` route to your receiver. Hookdeck delivers `GET` without a body. Keep `POST` enabled for the admin form’s **Send a test** button.
 
 ## Verification (core)
 
