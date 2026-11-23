@@ -26,7 +26,7 @@ This skill covers **V2 webhooks** (created through the API per file or folder). 
 
 ## Essential Code (USE THIS)
 
-Box sends two signatures, `BOX-SIGNATURE-PRIMARY` and `BOX-SIGNATURE-SECONDARY`. Verify the primary one only:
+Box sends two signatures, `BOX-SIGNATURE-PRIMARY` and `BOX-SIGNATURE-SECONDARY`. The example below checks the primary signature. A receiver with both keys can accept either signature after checking it with its matching key.
 
 - Signature: standard base64 (padded, 44 characters) HMAC-SHA256, no prefix
 - Signed message: the **raw request body bytes, then the `BOX-DELIVERY-TIMESTAMP` header value**, with no separator
@@ -60,7 +60,7 @@ def verify_box(raw_body: bytes, signature, timestamp, secret: str) -> bool:
 
 A missing or empty header, a malformed value, or a mismatch gets `401`.
 
-> **Setup note (same text Hookdeck shows for its Box source):** Paste the primary signature key from the Box Developer Console; only the primary signature is verified, so during key rotation paste the key that signs it. Only V2 webhooks are signed.
+> **Setup note (same text Hookdeck shows for its Box source):** Paste the primary signature key from the Box Developer Console. Add the secondary key to keep V2 deliveries verified while rotating either key.
 
 **Timestamp window:** Box suggests rejecting a `BOX-DELIVERY-TIMESTAMP` (RFC 3339) older than 10 minutes. The examples leave that **off by default**, because Hookdeck retries and replays resend the original headers and timestamp. Set `BOX_WEBHOOK_TOLERANCE_SECONDS` to a positive number (for example `600`) to opt in; unset or `0` is off. Box's own SDK helper (`WebhookValidator`) always enforces the 10 minutes and checks both keys, which is why the examples verify by hand. See [references/verification.md](references/verification.md).
 
@@ -95,8 +95,8 @@ Box documents 46 triggers in all, including file, folder, comment, collaboration
 
 | Header | Description |
 |--------|-------------|
-| `BOX-SIGNATURE-PRIMARY` | Base64 HMAC-SHA256 made with the primary signature key (the one verified) |
-| `BOX-SIGNATURE-SECONDARY` | Same, made with the secondary key (ignored) |
+| `BOX-SIGNATURE-PRIMARY` | Base64 HMAC-SHA256 made with the primary signature key |
+| `BOX-SIGNATURE-SECONDARY` | Base64 HMAC-SHA256 made with the secondary signature key |
 | `BOX-DELIVERY-TIMESTAMP` | RFC 3339 send time; part of the signed message |
 | `BOX-DELIVERY-ID` | Unique per delivery attempt; changes on retry |
 

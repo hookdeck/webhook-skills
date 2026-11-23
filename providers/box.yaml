@@ -37,10 +37,9 @@ notes: >
   timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries. Offer an
   opt-in tolerance (an env var such as BOX_WEBHOOK_TOLERANCE_SECONDS, unset or 0 = off) and say so in
   SKILL.md and verification.md (BOX-DELIVERY-TIMESTAMP is an RFC 3339 date; Box suggests a 10-minute
-  window, and Box's SDK helper always enforces it, which is why the examples verify by hand). Verify
-  BOX-SIGNATURE-PRIMARY ONLY, against the primary key; do not
-  fall back to BOX-SIGNATURE-SECONDARY. During key rotation the user pastes the key that currently
-  signs the primary header. Body FIRST, then the timestamp header, no separator. Do not use the Box
+  window, and Box's SDK helper always enforces it, which is why the examples verify by hand). The standalone examples use BOX_WEBHOOK_SECRET for the primary signature. Hookdeck's Box source
+  accepts an optional secondary key. It compares each signature with its corresponding key and
+  accepts either match during rotation. Body FIRST, then the timestamp header, no separator. Do not use the Box
   SDK's WebhookValidator / validateMessage in the examples (it checks both keys and enforces a
   10-minute window); mention it as an option in verification.md. Note that Box's own sample code
   compares the primary-key digest with the SECONDARY header; the prose (primary with primary) is
@@ -58,9 +57,7 @@ notes: >
   it) are in /home/user/regwt/b14-merge/samples-doc/providers/box/latest/ (FILE.UPLOADED.json); base
   the examples' test payloads on them. Hookdeck's source type is BOX, labelled 'Box'. Hookdeck shows
   this setup note for the source, and SKILL.md and references/setup.md must tell the user the same
-  thing, verbatim: "Paste the primary signature key from the Box Developer Console; only the primary
-  signature is verified, so during key rotation paste the key that signs it. Only V2 webhooks are
-  signed."
+  thing, verbatim: "Paste the primary signature key from the Box Developer Console. Add the secondary key to keep V2 deliveries verified while rotating either key."
 testScenario:
   events:
     - "FILE.UPLOADED"

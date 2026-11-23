@@ -13,7 +13,7 @@
 
 Every webhook then includes `BOX-SIGNATURE-PRIMARY` and `BOX-SIGNATURE-SECONDARY`. Set the **primary** key as `BOX_WEBHOOK_SECRET`.
 
-> Paste the primary signature key from the Box Developer Console; only the primary signature is verified, so during key rotation paste the key that signs it. Only V2 webhooks are signed.
+> Paste the primary signature key from the Box Developer Console. Add the secondary key to keep V2 deliveries verified while rotating either key.
 
 ## Register Your Endpoint
 
@@ -34,11 +34,13 @@ Choose triggers from the [triggers list](https://developer.box.com/guides/webhoo
 
 ## Rotate Keys
 
-Box signs every delivery with both keys, so you can change one at a time. Verification here uses the primary header only, so paste the key that currently produces `BOX-SIGNATURE-PRIMARY`. If you replace the primary key, update `BOX_WEBHOOK_SECRET` (or the Hookdeck source secret) at the same time.
+On the Hookdeck source, configure both keys before rotating. Reset the primary in Box, then save the new primary on the source. The secondary verifies deliveries during that update. Once the primary is current, reset and update the secondary.
+
+The standalone examples use only `BOX_WEBHOOK_SECRET`. Update that value when you reset the primary if your handler verifies the Box signature itself.
 
 ## Hookdeck Source
 
-Create a source of type **Box** and paste the primary signature key. When you reset the primary key in Box, paste the new one into the source straight away. Use the source URL as the webhook `address`.
+Create a source of type **Box** and enter the app’s **Primary Signature Key**. For rotation, also enter its **Secondary Signature Key**. Use the source URL as the webhook `address`.
 
 ## Test Mode vs Live Mode
 
