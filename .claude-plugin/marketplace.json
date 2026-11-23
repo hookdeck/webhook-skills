@@ -14135,7 +14135,7 @@
     },
     {
       "name": "skovik-webhooks",
-      "description": "Receive and verify Skovik webhooks (operations platform API, signed with Standard Webhooks). Use when setting up Skovik webhook handlers, debugging webhook-signature verification, or handling events like users.created, users.updated, export_orders.completed, export_orders.failed, branches.archived, and misc.ping.",
+      "description": "Receive and verify Skovik webhooks (expense management platform API, signed with Standard Webhooks). Use when setting up Skovik webhook handlers, debugging webhook-signature verification, or handling events like users.created, users.updated, export_orders.completed, export_orders.failed, branches.archived, and misc.ping.",
       "source": "./skills/skovik-webhooks",
       "strict": false,
       "skills": [
@@ -17088,7 +17088,7 @@
     },
     {
       "name": "voiceflow-webhooks",
-      "description": "Receive and verify Voiceflow organization event webhooks (AI agent platform, delivered via Svix). Use when setting up Voiceflow webhook handlers, debugging svix-signature verification, or handling events like organization.project.created, organization.project.environment.published, and organization.project.environment.merged.",
+      "description": "Receive and verify Voiceflow webhooks (AI agent platform, delivered via Svix): organization events and the project-level session lifecycle webhook. Use when setting up Voiceflow webhook handlers, debugging svix-signature verification, or handling events like organization.project.environment.published, runtime.session.end, and runtime.call.end.",
       "source": "./skills/voiceflow-webhooks",
       "strict": false,
       "skills": [
