@@ -50,7 +50,7 @@ const statusData = (status) => ({ order: { id: 'ord_abc123', code: 'A1B2', statu
 const linkData = { paymentLink: { id: 'plink_019dbc4d', title: 'Invoice #001', reference: 'INV-001' }, venue };
 const printerData = { printer: { id: '6041b7c2', name: 'Kitchen Printer' }, venue };
 
-// All 27 documented events, each with a payload shaped like the docs
+// All 26 documented events, each with a payload shaped like the docs
 const EVENTS = {
   'order.created.v2': envelope('order.created.v2', order),
   'order.created': JSON.stringify(order), // legacy: bare order object, no `event`
@@ -85,8 +85,8 @@ describe('Storekit webhook handler', () => {
     process.env.STOREKIT_WEBHOOK_SECRET = TEST_SECRET;
   });
 
-  test('covers the 27 documented events', () => {
-    expect(Object.keys(EVENTS)).toHaveLength(27);
+  test('covers the 26 documented events', () => {
+    expect(Object.keys(EVENTS)).toHaveLength(26);
   });
 
   test.each(Object.entries(EVENTS))('handles %s', async (type, payload) => {

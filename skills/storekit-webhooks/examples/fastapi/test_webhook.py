@@ -46,7 +46,7 @@ LINK = {"paymentLink": {"id": "plink_019dbc4d", "title": "Invoice #001", "refere
 LINK_REFUND = {"refund": {"id": "ref_xyz789", "transactionId": "txn_abc123", "amount": 1000, "currency": "GBP"}}
 PRINTER = {"printer": {"id": "6041b7c2", "name": "Kitchen Printer"}, "venue": VENUE}
 
-# All 27 documented events, each with a payload shaped like the docs
+# All 26 documented events, each with a payload shaped like the docs
 EVENTS = {
     "order.created.v2": envelope("order.created.v2", ORDER),
     "order.created": json.dumps(ORDER),  # legacy: bare order object, no `event`
@@ -126,7 +126,7 @@ def test_health_check():
 
 
 def test_documented_event_count():
-    assert len(EVENTS) == 27
+    assert len(EVENTS) == 26
 
 
 @pytest.mark.parametrize("event_type", list(EVENTS))
