@@ -26,7 +26,7 @@ metadata:
 
 AgentLine signs the **raw request body** with **HMAC-SHA256**, keyed with the
 webhook signing secret as a UTF-8 string, and sends the **bare hex digest** (no
-prefix, no timestamp) in the `X-Webhook-Signature` header. The secret is returned
+prefix, no timestamp) in `X-Webhook-Signature` by default. The secret is returned
 in full **once** when the webhook is created and is masked on later reads. Always
 verify against the **raw body**, never re-serialized JSON.
 
@@ -87,10 +87,9 @@ PORT=3000
 ## Setup
 
 Create the webhook with `POST /v1/webhooks` (`agent_id`, `url`, optional `secret`), save
-the returned `secret`, and **keep the default `X-Webhook-Signature` header**.
-AgentLine allows a custom `signature_header`, but a custom signature_header
-isn't supported by Hookdeck's AgentLine source. Details:
-[references/setup.md](references/setup.md).
+the returned `secret`, and enter it on your Hookdeck AgentLine source. Leave **Signature Header**
+blank to use `X-Webhook-Signature`. If you set `signature_header` in AgentLine, enter the
+same name in Hookdeck. [Setup and test instructions](references/setup.md).
 
 ## Local Development
 
