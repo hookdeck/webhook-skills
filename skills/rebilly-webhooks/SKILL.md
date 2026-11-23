@@ -26,7 +26,7 @@ only basic auth, so set basic auth on the Rebilly webhook.
 
 - How do I receive Rebilly webhooks?
 - How do I check the `Authorization: Basic` header on a Rebilly webhook?
-- Does Rebilly sign webhooks? (Yes, `Security-Signature` JWT and `v1a` Ed25519, but the examples check basic auth)
+- Does Rebilly sign webhooks? (Yes, `Security-Signature` JWT and `v2a` and legacy `v1a` Ed25519, but the examples check basic auth)
 - How do I handle `transaction-processed`, `subscription-activated` or `invoice-issued` events?
 - Why does my Rebilly webhook endpoint return 401, or why does Rebilly keep retrying?
 
@@ -70,12 +70,11 @@ and compare with `hmac.compare_digest` on `bytes` (encode both sides; `str` rais
 
 ## Rebilly Also Signs Webhooks
 
-Every Rebilly webhook carries a `Security-Signature` header (an RS256 JWT) and Standard Webhooks
-`v1a` Ed25519 signatures in `webhook-id`, `webhook-timestamp` and `webhook-signature`. Hookdeck's
-Rebilly source does not check them, and the examples don't either. Hookdeck forwards the original
-headers, so a delivery it retries later carries Rebilly's original `webhook-timestamp`, and
-Rebilly's 5-minute timestamp check would reject it. The optional `v1a` check is described in
-[references/verification.md](references/verification.md).
+Rebilly sends a `Security-Signature` JWT and a `webhook-signature` header with Ed25519
+signatures. Rebilly recommends the organization-bound `v2a` signature for new receivers and
+continues to send `v1a` for existing receivers. Hookdeck's Rebilly source and the runnable
+examples check HTTP basic auth. For optional body verification, including deliveries replayed
+through Hookdeck, see [signature verification](references/verification.md).
 
 ## Methods
 
