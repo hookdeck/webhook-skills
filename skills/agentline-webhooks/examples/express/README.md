@@ -26,8 +26,9 @@ any content type verifies.
 
 3. Add your signing secret to `.env` as `AGENTLINE_WEBHOOK_SECRET`
 
-Keep the default `X-Webhook-Signature` header on the webhook; a custom
-`signature_header` isn't supported by Hookdeck's AgentLine source.
+This example reads `X-Webhook-Signature`. If you set a custom `signature_header`
+in AgentLine, update the example’s header lookup. If you also verify in Hookdeck,
+set the AgentLine source’s **Signature Header** to that same name.
 
 ## Run
 

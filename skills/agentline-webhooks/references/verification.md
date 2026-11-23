@@ -2,7 +2,7 @@
 
 ## How Does AgentLine Sign Webhooks?
 
-- Header: `X-Webhook-Signature` (the default; keep it — see [setup.md](setup.md))
+- Header: `X-Webhook-Signature` by default, or the name set in `signature_header` ([setup](setup.md))
 - Algorithm: HMAC-SHA256 over the **raw request body**
 - Key: the webhook signing secret, used as a UTF-8 string
 - Encoding: bare lowercase hex digest (64 chars), no prefix, no timestamp
@@ -42,7 +42,7 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 - **Validate hex before `Buffer.from(x, 'hex')`**: invalid hex is silently truncated, which can make a malformed header compare equal to a shorter digest.
 - **`timingSafeEqual` throws on length mismatch**: check length (the 64-hex regex does this) first.
 - **Python `compare_digest` with `str`**: raises `TypeError` for non-ASCII input (a 500). Encode both sides to bytes.
-- **Custom `signature_header`**: not supported by Hookdeck's AgentLine source; keep the default.
+- **Custom header**: Read the header named by `signature_header`. AgentLine documents a bare hex digest for the default header. If you rename it, inspect the value on a signed `webhook.test` delivery to confirm its format.
 - **Secret shown once**: if lost, re-POST the webhook to set a new secret.
 
 ## Debugging Verification Failures
@@ -50,4 +50,4 @@ def verify(raw_body: bytes, signature: str, secret: str) -> bool:
 1. Confirm the secret is the full value from creation (not the masked one).
 2. Confirm you hash the raw bytes, not re-serialized JSON.
 3. Trigger `webhook.test` and log the received header and body.
-4. Confirm the webhook still uses `X-Webhook-Signature`.
+4. Compare the header name on the test delivery with the name your receiver reads. On a Hookdeck AgentLine source, set **Signature Header** to match.
