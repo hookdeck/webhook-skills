@@ -3,7 +3,7 @@
 Minimal example of receiving Rebilly webhooks and authenticating them with HTTP basic access
 authentication.
 
-Rebilly also signs every webhook (a `Security-Signature` JWT and Standard Webhooks `v1a` Ed25519
+Rebilly also signs every webhook (a `Security-Signature` JWT and organization-bound `v2a` and legacy `v1a` Ed25519
 signatures), but Hookdeck's Rebilly source checks only basic auth, so this example does too. A
 static credential authenticates the sender, not the body, and gives no replay protection: use
 HTTPS and rotate the credential if it leaks. See
@@ -42,7 +42,7 @@ Server runs on http://localhost:3000 and accepts GET, POST, PUT, PATCH and DELET
 npm test
 ```
 
-The tests send every handled event with each of GET, POST, PUT, PATCH and DELETE, and with correct, wrong, missing and malformed credentials. No Rebilly account is needed.
+The tests send every handled event with each of GET, POST, PUT, PATCH and DELETE, and with correct, wrong, missing and malformed credentials. The suite also exercises the [optional v2a verifier](src/verify-v2a.js) with generated keys, including a rotated key and a bodyless delivery. No Rebilly account is needed.
 
 To try it by hand (the credentials are sent as `Authorization: Basic base64(username:password)`):
 
