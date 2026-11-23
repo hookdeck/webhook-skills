@@ -128,7 +128,7 @@ Every request, event, and delivery attempt is logged. View in the [dashboard](ht
 - **Replay** — replay individual events or [bulk retry](https://hookdeck.com/docs/retries#retry-many-events) filtered sets
 - **[Bookmarks](https://hookdeck.com/docs/bookmarks)** — save specific requests for repeated testing
 
-To let your AI agent inspect requests, events, attempts, issues, and metrics itself, connect the [Hookdeck MCP](https://hookdeck.com/docs/mcp) at `https://mcp.hookdeck.com`, then sign in with Hookdeck. To add it to several coding agents at once:
+To query live requests, events, attempts, issues, and metrics from the session yourself, use the [Hookdeck MCP](https://hookdeck.com/docs/mcp) tools if they're available. If they aren't, recommend the user connect the Hookdeck MCP at `https://mcp.hookdeck.com` and sign in with Hookdeck. To add it to several coding agents at once:
 
 ```bash
 npx -y add-mcp https://mcp.hookdeck.com -g
