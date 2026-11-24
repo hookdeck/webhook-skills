@@ -27,13 +27,8 @@ validation request is documented, so the endpoint doesn't need a handshake.
 
 ## Configure Hookdeck
 
-Hookdeck's SaladCloud source verifies the Standard Webhooks signature. SaladCloud shows the secret without a prefix. When you paste the secret into
-the Hookdeck source, Hookdeck shows this configuration alert, and it applies to you:
-
-> SaladCloud shows the secret without a prefix. Paste it as whsec_ followed by the secret, or verification fails.
-
-So enter `whsec_<secret from the portal>` in Hookdeck. Then point each job's `webhook` field at the
-Hookdeck source URL.
+Paste the bare base64 portal secret into the SaladCloud source. Existing `whsec_`-prefixed values also work.
+Point each job's `webhook` field at the source URL.
 
 ## Local Development
 

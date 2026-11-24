@@ -64,15 +64,10 @@ prefix if there is one and otherwise base64-decodes the whole value, so the bare
 `whsec_`-prefixed form give the same key. Handlers fail closed: with the variable unset they return 500
 instead of accepting anything. A missing header or a bad signature returns 400 (401 also works).
 
-### Hookdeck needs the secret as `whsec_` plus the secret
+### Configure the Hookdeck source
 
-SaladCloud shows the secret without a prefix, and Hookdeck's configuration alert for this source
-reads:
-
-> SaladCloud shows the secret without a prefix. Paste it as whsec_ followed by the secret, or verification fails.
-
-When you configure the Hookdeck source, enter `whsec_<secret from the portal>`. Your own handler, behind or
-beside Hookdeck, can keep using the bare value.
+Paste the organization's webhook secret key into the SaladCloud source exactly as the portal shows it.
+Hookdeck also accepts an existing `whsec_`-prefixed value.
 
 ### Hookdeck retries and replays hit the 5-minute window
 

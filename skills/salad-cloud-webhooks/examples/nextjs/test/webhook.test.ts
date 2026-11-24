@@ -7,7 +7,7 @@ import { POST } from '../app/webhooks/salad-cloud/route';
 
 // SaladCloud shows the secret as bare base64 (no "whsec_" prefix). The HMAC key
 // is its base64 decoding. The standardwebhooks library also accepts the
-// "whsec_" + secret form that Hookdeck needs, and derives the same key.
+// "whsec_" + secret form, and derives the same key.
 const KEY = Buffer.from('salad-test-signing-key-0123456789');
 const SECRET = KEY.toString('base64');
 
@@ -104,7 +104,7 @@ describe('SaladCloud webhook route', () => {
       expect(await res.json()).toEqual({ received: true });
     });
 
-    it('accepts the whsec_-prefixed form of the secret (what Hookdeck needs)', async () => {
+    it('accepts the whsec_-prefixed form of the secret', async () => {
       process.env.SALAD_CLOUD_WEBHOOK_SECRET = `whsec_${SECRET}`;
       const raw = JSON.stringify(jobSucceeded());
       const res = await post(raw, signedHeaders(raw));
