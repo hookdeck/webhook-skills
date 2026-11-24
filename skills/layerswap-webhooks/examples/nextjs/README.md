@@ -60,15 +60,18 @@ npx hookdeck-cli listen 3000 layerswap --path /webhooks/layerswap
 
 ## Event Handling
 
-The body is `{ swap, quote, deposit_actions }` and has **no event-type field**. The route
-routes on `swap.status` and acknowledges anything else with `200`:
+The body is the swap itself, a flat JSON object with **no event-type field** (every update is
+the one Svix `partner` event type). The route routes on `status`, which webhooks send in
+PascalCase, and acknowledges anything else with `200`:
 
-- `user_transfer_pending`, `ls_transfer_pending`
-- `completed`, `failed`, `expired`
-- `pending_refund`, `refunded`
+- `PendingDeposit`, `PendingWithdrawal`
+- `Completed`, `Failed`, `Expired`
+- `PendingRefund`, `Refunded`
 
-Layerswap documents no retry schedule or ordering, so deduplicate on `swap.id` plus `status`
-and fetch `GET /swaps/{id}` before irreversible actions.
+API swap objects use snake_case instead (`PendingDeposit` is `user_transfer_pending`). Layerswap
+documents no retry schedule or ordering, so deduplicate side effects on `id` plus `status`
+(or a transaction hash), compare the body's `timestamp`, and fetch `GET /swaps/{id}` before
+irreversible actions.
 
 ## Timestamp Window
 

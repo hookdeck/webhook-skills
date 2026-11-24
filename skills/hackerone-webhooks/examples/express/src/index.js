@@ -37,7 +37,7 @@ function handleEvent(eventName, body) {
   switch (eventName) {
     case 'report_created':
       console.log(`New report ${id}: ${title}`);
-      // TODO: create a ticket in your issue tracker
+      // Your code: create a ticket in your issue tracker
       break;
 
     case 'report_new':
@@ -46,12 +46,12 @@ function handleEvent(eventName, body) {
 
     case 'report_triaged':
       console.log(`Report ${id} triaged`);
-      // TODO: assign an owner
+      // Your code: assign an owner
       break;
 
     case 'report_bounty_awarded':
       console.log(`Bounty awarded on report ${id}`);
-      // TODO: record the payout
+      // Your code: record the payout
       break;
 
     case 'report_comment_created':
@@ -60,7 +60,7 @@ function handleEvent(eventName, body) {
 
     case 'report_resolved':
       console.log(`Report ${id} resolved`);
-      // TODO: close the linked ticket
+      // Your code: close the linked ticket
       break;
 
     case 'report_closed_as_duplicate':

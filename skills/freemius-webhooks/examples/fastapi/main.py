@@ -42,19 +42,19 @@ def handle_event(event: dict) -> None:
 
     if event_type in ("license.activated", "license.created"):
         logger.info("License event %s (%s); objects: %s", event_type, event_id, object_names or "none")
-        # TODO: Provision or unlock the product for this license
+        # Your code: Provision or unlock the product for this license
     elif event_type == "license.cancelled":
         logger.info("License cancelled (%s)", event_id)
-        # TODO: Revoke access
+        # Your code: Revoke access
     elif event_type in ("subscription.created", "subscription.cancelled"):
         logger.info("Subscription event %s (%s)", event_type, event_id)
-        # TODO: Sync subscription state
+        # Your code: Sync subscription state
     elif event_type in ("payment.created", "payment.refund"):
         logger.info("Payment event %s (%s)", event_type, event_id)
-        # TODO: Record the payment or refund
+        # Your code: Record the payment or refund
     elif event_type == "user.created":
         logger.info("New user (%s)", event_id)
-        # TODO: Create the customer record
+        # Your code: Create the customer record
     else:
         # Freemius lists ~150 event types and may add more at any time: log and acknowledge
         logger.info("Unhandled Freemius event type: %s", event_type)

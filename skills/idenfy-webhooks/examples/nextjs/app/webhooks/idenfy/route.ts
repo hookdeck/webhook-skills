@@ -15,12 +15,12 @@ function handleEvent(eventType: string | null, body: IdenfyWebhook): void {
   switch (eventType) {
     case 'IDENTIFICATION_AUTO_FINISHED':
       console.log(`KYC auto review finished (scanRef ${body.scanRef}, final: ${body.final})`, body.status);
-      // TODO: if body.final is false, wait for IDENTIFICATION_MANUAL_FINISHED
+      // Your code: if body.final is false, wait for IDENTIFICATION_MANUAL_FINISHED
       break;
 
     case 'IDENTIFICATION_MANUAL_FINISHED':
       console.log(`KYC manual review finished (scanRef ${body.scanRef})`, body.status);
-      // TODO: record the final approve/deny decision
+      // Your code: record the final approve/deny decision
       break;
 
     case 'IDENTIFICATION_EXPIRED':

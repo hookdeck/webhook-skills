@@ -3,7 +3,7 @@
 ## What Are Salsa Webhooks?
 
 [Salsa](https://docs.salsa.dev) is an embedded payroll API. It uses webhooks to tell you about changes in your
-account: employers and workers being created or updated, onboarding status changes, payroll runs needing
+account: employers and workers being created or updated, onboarding progress, payroll runs needing
 input or being confirmed, workers being paid, and documents being uploaded. You register a **webhook
 endpoint** with `POST /webhook-endpoints`, and Salsa sends each event to its `endpointUrl` as a JSON `POST`
 signed with [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks) headers.
@@ -15,7 +15,7 @@ Events come in two categories, shown in `attributes.category`:
 
 ## Common Event Types
 
-More than 70 event types are documented in Salsa's
+78 event types are documented in Salsa's
 [Webhook Events reference](https://docs.salsa.dev/reference/webhookevent), and the list may not be exhaustive.
 The name is `data.type` in the JSON body. The examples handle these:
 
@@ -23,10 +23,10 @@ The name is `data.type` in the JSON body. The examples handle these:
 |-------|----------------|------------------|
 | `Employer.created` | An employer is created | Store the employer ID, start onboarding |
 | `Employer.updated` | An employer is updated | Keep your records in sync |
-| `Employer.onboardingStatus` | An employer's onboarding status changes | Unlock features when onboarding completes |
+| `Employer.onboardingStatus` | An employer completes the onboarding form | Unlock features when onboarding completes |
 | `Worker.created` | A worker is created | Store the worker |
 | `Worker.updated` | A worker is updated | Keep your records in sync |
-| `Worker.onboardingStatus` | A worker's onboarding status changes | Prompt the worker to finish onboarding |
+| `Worker.onboardingStatus` | A worker's onboarding status changes (`INVITED`, `STARTED`, `COMPLETED`, `INVALIDATED`) | Prompt the worker to finish onboarding |
 | `PayrollRun.awaitingInput` | A payroll run needs compensation data | Send all compensation data you have for the listed workers |
 | `PayrollRun.statusChanged` | A payroll run's status changes | Track run progress |
 | `Notification.workerPayday` | The day a worker is paid (sent at 1pm or 11pm UTC) | Notify the worker |
@@ -35,26 +35,34 @@ The name is `data.type` in the JSON body. The examples handle these:
 | `AccountingConfiguration.created` | An accounting configuration is created | Sync accounting settings |
 | `AccountingConfiguration.updated` | An accounting configuration is updated | Sync accounting settings |
 
-Other documented events the examples log as unhandled include:
+The other documented events, which the examples log as unhandled:
 
 - **Employer:** `Employer.deleted`, `Employer.awaitingRiskInsights`, `Employer.Address.created`,
   `Employer.Address.updated`, `Employer.Address.deleted`, `Employer.AccountStanding.statusChanged`,
   `Employer.AccountStanding.requirementsChanged`, `Employer.PayWorkersReadiness.statusChanged`,
   `Employer.PayWorkersReadiness.requirementsChanged`, `Employer.TaxesSetup.updated`,
   `Employer.PayType.created`, `Employer.PayType.updated`, `Employer.PayType.deleted`,
-  `Employer.TimeOffType.created`, `Employer.WorkerPayGroup.created`
+  `Employer.TimeOffType.created`, `Employer.TimeOffType.updated`, `Employer.TimeOffType.deleted`,
+  `Employer.WorkerPayGroup.created`, `Employer.WorkerPayGroup.updated`, `Employer.WorkerPayGroup.deleted`
 - **Payroll history:** `Employer.PayrollHistory.required`, `Employer.PayrollHistory.provided`,
   `Employer.PayrollHistory.importCompleted`, `Employer.PayrollHistory.statusChanged`
 - **Bank accounts and signatories:** `EmployerBankAccount.created`, `EmployerBankAccount.updated`,
   `EmployerBankAccount.deleted`, `EmployerBankAccount.Verification.statusChanged`, `EmployerSignatory.created`,
-  `WorkerBankAccount.created`, `WorkerBankAccount.updated`, `WorkerBankAccount.deleted`
+  `EmployerSignatory.updated`, `EmployerSignatory.deleted`, `WorkerBankAccount.created`, `WorkerBankAccount.updated`, `WorkerBankAccount.deleted`
 - **Workers:** `Worker.deleted`, `Worker.PaymentsReadiness.statusChanged`, `Worker.TaxesSetup.updated`,
-  `Worker.Termination.statusChanged`, `WorkerContract.created`, `WorkerPayDistribution.updated`,
+  `Worker.Termination.statusChanged`, `WorkerContract.created`, `WorkerContract.updated`, `WorkerContract.deleted`,
+  `WorkerPayDistribution.updated` (its reference description says `WorkerPaymentDistribution.updated`),
   `WorkerPaymentAdjustment.created`, `WorkerPersonalInformation.created`, `WorkerPersonalInformation.updated`
 - **Payroll runs and payments:** `PayrollRun.deleted`, `PayrollRun.EmployerFunding.statusChanged`,
   `PayrollRun.WorkerDisbursement.MoneyMovementTransaction.statusChanged`,
-  `Notification.Payment.employerFundingFailed`, `Notification.Payment.workerDisbursementFailed`,
-  `Notification.Payment.workerDisbursementScheduled`
+  `Notification.Payment.employerFundingFailed`, `Notification.Payment.employerFundingRescheduled`,
+  `Notification.Payment.employerFundingRedebitCleared`, `Notification.Payment.workerDisbursementFailed`,
+  `Notification.Payment.workerDisbursementScheduled`, `Notification.Payment.workerDisbursementRefundScheduled`
+- **Employer bank account notifications:** `Notification.EmployerBankAccount.microDepositVerificationSent`,
+  `Notification.EmployerBankAccount.microDepositVerificationCompleted`,
+  `Notification.EmployerBankAccount.microDepositVerificationFailed`,
+  `Notification.EmployerBankAccount.paymentAuthorizationCompleted`
+- **Transmissions:** `Transmission.processing`, `Transmission.completed`, `Transmission.failed`
 - **Other notifications:** `Notification.employerPaydayReminder`, `Notification.employerPayrollOperation`,
   `Notification.employerPayrollHistoryRequired`, `Notification.Employer.taxRateUpdatedFromAgency`
 - **Documents:** `Document.deleted`
@@ -62,7 +70,8 @@ Other documented events the examples log as unhandled include:
 ## Event Payload Structure
 
 Every delivery has the same envelope. `data.type` is the event name and `data.attributes` is the event object,
-whose fields depend on the event:
+whose fields depend on the event. This is the Consume webhooks guide's example; the Employer.created schema also
+requires `category`, which the example leaves out:
 
 ```json
 {

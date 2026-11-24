@@ -31,7 +31,7 @@ def secret(monkeypatch):
 
 
 def sign(raw: bytes, key: str = SECRET) -> str:
-    """Sign exactly like Sahha: lowercase hex HMAC-SHA256 of the raw body, no prefix."""
+    """Sign exactly like Sahha: hex HMAC-SHA256 of the raw body, no prefix."""
     return hmac.new(key.encode("utf-8"), raw, hashlib.sha256).hexdigest()
 
 

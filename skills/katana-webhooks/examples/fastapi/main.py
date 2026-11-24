@@ -20,7 +20,7 @@ HEX_DIGEST = re.compile(r"[0-9a-fA-F]{64}")
 
 
 def verify_katana_signature(raw_body: bytes, signature, secret=None) -> bool:
-    """Verify Katana's x-sha2-signature: lowercase hex HMAC-SHA256 of the raw body bytes,
+    """Verify Katana's x-sha2-signature: hex HMAC-SHA256 of the raw body bytes,
     keyed with the webhook's token as UTF-8 (never hex-decoded). Nothing else is signed.
     """
     secret = secret if secret is not None else os.environ.get("KATANA_WEBHOOK_SECRET")
@@ -38,23 +38,23 @@ def handle_event(payload: dict) -> None:
 
     if action == "sales_order.created":
         print(f"Sales order created: {obj.get('id')}")
-        # TODO: fetch the order from obj['href'] and sync it
+        # Your code: fetch the order from obj['href'] and sync it
 
     elif action == "sales_order.delivered":
         print(f"Sales order delivered: {obj.get('id')}")
-        # TODO: send a shipping confirmation
+        # Your code: send a shipping confirmation
 
     elif action == "purchase_order.received":
         print(f"Purchase order received: {obj.get('id')}")
-        # TODO: update inbound stock
+        # Your code: update inbound stock
 
     elif action == "manufacturing_order.done":
         print(f"Manufacturing order done: {obj.get('id')}")
-        # TODO: update finished-goods inventory
+        # Your code: update finished-goods inventory
 
-    elif action == "inventory.product_out_of_stock":
+    elif action == "current_inventory.product_out_of_stock":
         print(f"Product out of stock: {obj.get('id')}")
-        # TODO: trigger a reorder
+        # Your code: trigger a reorder
 
     else:
         print(f"Unhandled event: {action}")

@@ -7,7 +7,7 @@ process.env.KATANA_WEBHOOK_SECRET = SECRET;
 
 const app = require('../src/index');
 
-// Same algorithm as Katana: lowercase hex HMAC-SHA256 of the raw body, keyed with the token.
+// Same algorithm as Katana: hex HMAC-SHA256 of the raw body, keyed with the token.
 function sign(body, secret = SECRET) {
   return crypto.createHmac('sha256', secret).update(body).digest('hex');
 }
@@ -26,7 +26,7 @@ function send(method, body, headers = {}) {
 }
 
 describe('Katana webhook', () => {
-  it.each(['sales_order.created', 'sales_order.delivered', 'purchase_order.received', 'manufacturing_order.done', 'inventory.product_out_of_stock'])(
+  it.each(['sales_order.created', 'sales_order.delivered', 'purchase_order.received', 'manufacturing_order.done', 'current_inventory.product_out_of_stock'])(
     'accepts a signed %s event',
     async (action) => {
       const body = event(action);

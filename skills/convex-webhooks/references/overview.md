@@ -6,7 +6,8 @@ Convex's only outbound webhook is the **webhook log stream**, available on the P
 
 ## How Is Delivery Done?
 
-- The body is a **JSON array of events** (JSONL streams send one JSON object per line instead).
+- The body is a **JSON array of events** with the JSON format, or one event object per line with the JSONL format, which the dashboard preselects for a new stream. Both formats are sent with `Content-Type: application/json`.
+- A stream can be limited to chosen topics; with none chosen it gets every topic except the opt-in `custom_audit`.
 - Delivery is **best effort**: logs are buffered in memory and sent in batches, so events can be dropped under high throughput, and duplicated by network retries.
 - Log streams configured before May 23, 2024 use a legacy event format; recreate the stream to get the format below.
 - A `verification` event is sent to confirm the stream works.
@@ -26,6 +27,8 @@ Every event has `topic` (string), `timestamp` (Unix epoch milliseconds) and `con
 | `current_storage_usage` | Periodically | `total_document_size_bytes`, `total_index_size_bytes`, `total_file_storage_bytes`, ... |
 | `storage_api_bandwidth` | A client downloads a file from the storage HTTP API | `storage_id`, `egress_bytes` |
 | `ai_gateway_usage` | An AI Gateway inference ends | `inference_id`, `provider`, `model`, `cost`, `outcome` |
+| `s3_export_stats` | S3 export status changes, and about once a minute (S3 Export is in beta) | `status`, `lag_seconds`, `last_error` |
+| `custom_audit` | Your functions write an audit log; opt-in, for testing | `body` |
 
 `function` (on `console` and `function_execution`) has `type` (`query`, `mutation`, `action`, `http_action`), `path` (for example `messages:send`), `request_id` and optionally `cached`.
 

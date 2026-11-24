@@ -6,8 +6,10 @@ Deliverect (deliverect.com) is an order and menu hub between ordering channels, 
 couriers. Your integration (a channel, POS, dispatch or retail partner) receives Deliverect's calls on
 the URLs you register. A channel's `/register` response returns one URL per webhook kind.
 
-Each operational webhook expects a `200 OK`. Retries and timeouts are not described on the pages
-this skill was built from, so make handlers idempotent and fast.
+Each operational webhook expects a `200 OK`. Deliverect retries only when the connection times out or
+is refused (3 retries, after 5, 10 and 20 seconds). Any HTTP response, `5xx` included, ends delivery, and
+so does a read timeout (30 seconds by default, 60 at most), so return `200` fast for every verified call
+([Retry Policy](https://developers.deliverect.com/page/retry-policy)).
 
 ## Which Webhook Kinds Exist?
 
@@ -33,8 +35,9 @@ verification must treat a missing body as zero bytes.
 
 ## Payload Fields
 
-The fields the examples read (`orderId`, `status`, `menus`, `operations`, `action`, `data.items`) are
-**illustrative**. Check the payload for your integration type in the
+The fields the examples read (`orderId`, `status`, `menuId`, `categories`, `operations`, `action`,
+`data.items`) come from the channel webhook reference, where `status` is an order status code for order
+status calls and `PAUSED`, `BUSY` or `ONLINE` for busy mode. Confirm them for your integration type. Check the payload for your integration type in the
 [Deliverect developer docs](https://developers.deliverect.com). The examples treat every field of a
 verified body as untrusted and check its type before use.
 

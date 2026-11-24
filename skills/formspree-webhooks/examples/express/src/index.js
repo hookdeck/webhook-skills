@@ -12,7 +12,7 @@ const DECIMAL = /^[0-9]+$/;
 
 /**
  * Parse Formspree-Signature: "t=<unix>,v1=<hex>". The header can carry more
- * than one v1= entry (key rotation) and other keys such as v0, which are ignored.
+ * than one v1= entry and other keys such as v0, which are ignored.
  */
 function parseSignatureHeader(header) {
   let timestamp;

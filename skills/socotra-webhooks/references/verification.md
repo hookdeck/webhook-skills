@@ -36,14 +36,15 @@ Then:
    `Buffer.from(x, 'hex')` silently drops bad characters.
 4. Compare in constant time (`crypto.timingSafeEqual` on equal-length Buffers,
    `hmac.compare_digest` on bytes). Hex is case-insensitive, so lowercase it first.
-5. Accept if **any** `v1` matches (several can appear during key rotation).
+5. Accept if **any** `v1` matches. Socotra's docs show one `v1` per header; accepting any is a safe default.
 
 Complete code: [Express](../examples/express/), [Next.js](../examples/nextjs/), [FastAPI](../examples/fastapi/).
 
 ## Common Gotchas
 
-- **Tags break verification.** A tagged endpoint signs `<t>.<body>.<tag>`. Hookdeck
-  cannot verify that, so leave the tag unset.
+- **Tags change the signed string.** A tagged endpoint signs `<t>.<body>.<tag>`, which
+  these examples don't build. With a Hookdeck source, leave the tag unset (see the
+  Setup Note in SKILL.md).
 - **Raw body.** Express: `express.raw({ type: '*/*' })`; Next.js:
   `await request.arrayBuffer()`; FastAPI: `await request.body()`.
 - **`t` is a string.** Do not parse it to a number and re-format it (leading zeros

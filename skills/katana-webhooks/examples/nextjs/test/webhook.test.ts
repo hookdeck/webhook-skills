@@ -9,7 +9,7 @@ import * as route from '../app/webhooks/katana/route';
 
 const URL_ = 'http://localhost:3000/webhooks/katana';
 
-// Same algorithm as Katana: lowercase hex HMAC-SHA256 of the raw body, keyed with the token.
+// Same algorithm as Katana: hex HMAC-SHA256 of the raw body, keyed with the token.
 function sign(body: string, secret = SECRET): string {
   return crypto.createHmac('sha256', secret).update(body).digest('hex');
 }
@@ -39,7 +39,7 @@ describe('Katana webhook', () => {
     'sales_order.delivered',
     'purchase_order.received',
     'manufacturing_order.done',
-    'inventory.product_out_of_stock',
+    'current_inventory.product_out_of_stock',
   ])('accepts a signed %s event', async (action) => {
     const body = event(action);
     const res = await call('POST', body, { 'x-sha2-signature': sign(body) });

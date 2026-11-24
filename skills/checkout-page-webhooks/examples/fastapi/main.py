@@ -81,22 +81,25 @@ async def checkout_page_webhook(request: Request):
 
     if event == "payment.paid":
         print("Payment paid:", json.dumps(data.get("payment", data)))
-        # TODO: Fulfil the order, grant access
+        # Your code: fulfil the order, grant access
     elif event == "payment.created":
         print("Payment created")
     elif event == "payment.abandoned":
         print("Payment abandoned")
     elif event == "booking.created":
         print("Booking created:", json.dumps(data.get("booking", data)))
-        # TODO: Sync to calendar / CRM
+        # Your code: sync to calendar / CRM
     elif event == "booking.paid":
         print("Booking paid")
     elif event in ("subscription.created", "subscription.active"):
         print(f"Subscription started ({event})")
-        # TODO: Provision features
-    elif event in ("subscription.canceled", "subscription.expired"):
-        print(f"Subscription ended ({event})")
-        # TODO: Revoke access
+        # Your code: provision features
+    elif event == "subscription.canceled":
+        # Canceled now, at period end or on a custom date: not yet expired
+        print("Subscription canceled")
+    elif event == "subscription.expired":
+        print("Subscription expired")
+        # Your code: revoke access
     elif event in ("customer.created", "customer.updated"):
         print(f"Customer event: {event}")
     elif event == "submission.created":

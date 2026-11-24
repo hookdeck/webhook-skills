@@ -17,7 +17,7 @@ metadata:
 Katana MRP (katanamrp.com) is a cloud manufacturing ERP. You register webhooks through the public API
 (`POST /webhooks` with `url` and `subscribed_events`), and each webhook gets its **own signing token**,
 returned in the `token` field of the create response. Every delivery carries an `x-sha2-signature`
-header: the lowercase **hex** HMAC-SHA256 of the **raw request body**, keyed with that token.
+header: the **hex** HMAC-SHA256 of the **raw request body**, keyed with that token.
 
 ## When to Use This Skill
 
@@ -68,7 +68,7 @@ No header names the event. `object` holds only `id`, `status` and `href`, so fet
 | `purchase_order.received` | A purchase order is fully received |
 | `purchase_order.partially_received` | Part of a purchase order is received |
 | `manufacturing_order.done` | A manufacturing order is completed |
-| `inventory.product_out_of_stock` | A product runs out of stock |
+| `current_inventory.product_out_of_stock` | A product's stock falls below its optimal level |
 
 The handlers deal with these and log the rest. See [references/overview.md](references/overview.md) for the full list.
 

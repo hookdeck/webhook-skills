@@ -68,7 +68,7 @@ Column signs the body only. There is no timestamp to check and no replay window 
 
 ## Event Types
 
-Column sends 212 documented event types, named `{category}.{action}` or `{category}.{sub_category}.{action}`. Dispatch on the body's top-level `type` field; no header names the type. The examples handle these and log the rest:
+Column sends 213 documented event types, named `{category}.{action}` or `{category}.{sub_category}.{action}`. Dispatch on the body's top-level `type` field; no header names the type. The examples handle these and log the rest:
 
 | `type` | Fires |
 |--------|-------|

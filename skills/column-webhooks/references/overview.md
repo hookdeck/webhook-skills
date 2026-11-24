@@ -8,7 +8,7 @@ You create webhook endpoints through the API or the Dashboard with an `enabled_e
 
 ## Common Event Types
 
-Event types are `{category}.{action}` or `{category}.{sub_category}.{action}`. Column documents 212. The examples handle the first three and log the rest.
+Event types are `{category}.{action}` or `{category}.{sub_category}.{action}`. Column documents 213. The examples handle the first three and log the rest.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|

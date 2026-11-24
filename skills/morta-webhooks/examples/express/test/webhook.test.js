@@ -20,6 +20,7 @@ const envelope = (event, extra = {}) => ({
   context: {},
   user: null,
   createdAt: '2020-08-27T14:20:28.405158',
+  contextHubId: '9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00',
   contextProjectId: '9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00',
   ...extra,
 });
@@ -31,7 +32,7 @@ const post = (body, header, type = 'application/json') => {
 };
 
 describe('verifyMortaWebhook', () => {
-  const body = JSON.stringify(envelope('project.created'));
+  const body = JSON.stringify(envelope('hub.created'));
 
   test('accepts a valid signature', () => {
     expect(verifyMortaWebhook(body, sign(body), SECRET)).toBe(true);
@@ -118,12 +119,12 @@ describe('POST /webhooks/morta', () => {
   });
 
   test('verifies the exact bytes whatever the content type', async () => {
-    const body = JSON.stringify(envelope('project.created'));
+    const body = JSON.stringify(envelope('hub.created'));
     const res = await post(body, sign(body), 'text/plain');
     expect(res.status).toBe(200);
   });
 
-  test.each(['project.created', 'member.created', 'process.response_submitted'])('handles %s', async (name) => {
+  test.each(['hub.created', 'member.created', 'document.response_submitted', 'project.created', 'process.response_submitted'])('handles %s', async (name) => {
     const body = JSON.stringify(envelope(name));
     expect((await post(body, sign(body))).status).toBe(200);
   });
@@ -136,7 +137,7 @@ describe('POST /webhooks/morta', () => {
   });
 
   test('reads the double-encoded change field safely', async () => {
-    const body = JSON.stringify(envelope('project.duplication_failed', { change: '{"error": "Duplication timed out"}' }));
+    const body = JSON.stringify(envelope('hub.duplication_failed', { change: '{"error": "Duplication timed out"}' }));
     expect((await post(body, sign(body))).status).toBe(200);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Duplication timed out'));
   });
@@ -144,7 +145,7 @@ describe('POST /webhooks/morta', () => {
   test('ignores wrong-typed fields instead of failing', async () => {
     const body = JSON.stringify({ event: 'table.row_created', resourceId: 5, change: 7, context: { rows: 'nope' } });
     expect((await post(body, sign(body))).status).toBe(200);
-    const bad = JSON.stringify({ event: 'project.duplication_failed', change: '[1,2', context: [] });
+    const bad = JSON.stringify({ event: 'hub.duplication_failed', change: '[1,2', context: [] });
     expect((await post(bad, sign(bad))).status).toBe(200);
   });
 
@@ -160,22 +161,22 @@ describe('POST /webhooks/morta', () => {
   });
 
   test('returns 401 for a missing header', async () => {
-    const body = JSON.stringify(envelope('project.created'));
+    const body = JSON.stringify(envelope('hub.created'));
     expect((await post(body)).status).toBe(401);
   });
 
   test('returns 401 for an empty header', async () => {
-    const body = JSON.stringify(envelope('project.created'));
+    const body = JSON.stringify(envelope('hub.created'));
     expect((await post(body, ' ')).status).toBe(401);
   });
 
   test('returns 401 for a malformed header', async () => {
-    const body = JSON.stringify(envelope('project.created'));
+    const body = JSON.stringify(envelope('hub.created'));
     expect((await post(body, 'garbage')).status).toBe(401);
   });
 
   test('returns 401 for a bad signature', async () => {
-    const body = JSON.stringify(envelope('project.created'));
+    const body = JSON.stringify(envelope('hub.created'));
     expect((await post(body, sign(body, 'wrong'))).status).toBe(401);
   });
 
@@ -186,7 +187,7 @@ describe('POST /webhooks/morta', () => {
   test('returns 500 when the secret is not configured', async () => {
     delete process.env.MORTA_WEBHOOK_SECRET;
     try {
-      const body = JSON.stringify(envelope('project.created'));
+      const body = JSON.stringify(envelope('hub.created'));
       expect((await post(body, sign(body))).status).toBe(500);
     } finally {
       process.env.MORTA_WEBHOOK_SECRET = SECRET;

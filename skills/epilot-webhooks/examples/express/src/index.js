@@ -61,11 +61,12 @@ function verifyEpilotWebhook(rawBody, headers, secret = process.env.EPILOT_WEBHO
 // webhook-id is stable across retries of the same message.
 const processedMessageIds = new Set();
 
-// The event name is per organization. The default payload carries it in
-// metadata.event_type; Event Catalog payloads (file events) use _event_name.
-// metadata.webhook_id identifies the webhook config, i.e. one eventName.
+// Event Catalog payloads (Core and Custom Events) carry the bare event name in
+// _event_name. Automation-trigger and portal payloads have no documented name
+// field (only one docs sketch shows metadata.event_type), so fall back to
+// metadata.webhook_id, which identifies the webhook config, i.e. one eventName.
 function eventName(event) {
-  return event.metadata?.event_type || event._event_name || null;
+  return event._event_name || event.metadata?.event_type || null;
 }
 
 function handleEvent(event) {
@@ -74,13 +75,13 @@ function handleEvent(event) {
 
   switch (name) {
     case 'automation_trigger_webhook':
-      console.log(`Automation trigger: ${entity._schema_} ${entity._id} (webhook ${event.metadata?.webhook_id})`);
+      console.log(`Automation trigger: ${entity._schema} ${entity._id} (webhook ${event.metadata?.webhook_id})`);
       break;
-    case 'customer_request_created':
-      console.log(`Customer request created: ${entity._schema_} ${entity._id}`);
+    case 'CustomerRequestSubmitted':
+      // Core Event: the ticket and its attachments are ready.
+      console.log(`Customer request submitted: event ${event._event_id}`);
       break;
-    case 'FileCreated':
-    case 'event_FileCreated': {
+    case 'FileCreated': {
       // Event Catalog envelope; files are listed in event_attachments.
       const files = (event.event_attachments || []).map((f) => f.filename).join(', ');
       console.log(`File created in org ${event._org_id}: ${files}`);

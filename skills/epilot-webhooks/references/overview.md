@@ -10,16 +10,16 @@ Payloads are sent with `Transfer-Encoding: chunked`. Most web servers handle tha
 
 ## Which epilot Webhook Events Are There?
 
-The vocabulary is per organization: `GET /v1/webhooks/events` returns the `eventName` values you can subscribe to. Triggers include:
+`GET /v1/webhooks/events` returns the `eventName` values your organization can subscribe to. They include:
 
 | Event | Triggered when | Common use cases |
 |-------|----------------|------------------|
-| `automation_trigger_webhook` | An automation action sends a webhook request (the Automation Trigger Webhook, the most common trigger) | Push an entity to an ERP or billing system |
-| `customer_request_created` | A customer request is created (an example name from an organization's event list) | Open a ticket, notify a team |
-| `FileCreated` (listed as `event_FileCreated`) | A file is created. Event Catalog events use the `event_*` naming | Forward invoices and documents, optionally with the bytes |
+| Core Events (`event_<Name>`, e.g. `event_FileCreated`) | One of the 22 generally available [Core Events](https://docs.epilot.io/docs/integrations/core-events) happens, such as `FileCreated`, `MeterReadingAdded` or `CustomerRequestSubmitted`. Four Grid events are early access | Forward invoices, sync meter readings, open tickets |
+| Custom Events (`event_<Name>`) | An event your organization defined on its own entity attributes | Organization-specific integrations |
+| Automation Trigger Webhook | An automation action sends a webhook request (the most common trigger) | Push an entity to an ERP or billing system |
 | Portal activities | A portal user accesses an entity (fires on every portal user login) | Audit logins, sync contacts |
 
-Other entity events and Event Catalog `event_*` events appear in your organization's list. The examples handle the three names above and acknowledge everything else with `200`.
+The examples handle `FileCreated`, `CustomerRequestSubmitted` and the automation trigger, and acknowledge everything else with `200`.
 
 ## What Does an epilot Webhook Payload Look Like?
 
@@ -33,7 +33,7 @@ Default shape (no JSONata transformation):
     "event_type": "automation_trigger_webhook",
     "correlation_id": "c0ffee"
   },
-  "entity": { "_id": "123456", "_schema_": "opportunity", "name": "New Opportunity", "status": "open" },
+  "entity": { "_id": "123456", "_schema": "opportunity", "name": "New Opportunity", "status": "open" },
   "relations": [],
   "activity": {},
   "changed_attributes": { "added": {}, "deleted": {}, "updated": {} }
@@ -48,9 +48,9 @@ Default shape (no JSONata transformation):
 | `entity` | The main entity. For portal access it's the user's contact; for automations it's the entity the automation ran on |
 | `relations`, `activity`, `changed_attributes` | Optional, depending on the webhook configuration |
 
-Two caveats about the docs. The example block on epilot's Payload Structure page contains `//` comments, so it isn't valid JSON as shown. And only that example shows `metadata.event_type`: the field table below it doesn't list the field, and the portal example's `metadata` has only `webhook_id` and `organization_id`. Treat `event_type` as optional and key off `metadata.webhook_id` when you need to be certain.
+Two caveats about the docs. The example block on epilot's Payload Structure page contains `//` comments, so it isn't valid JSON as shown, and it spells the schema field `_schema_` where epilot's other examples use `_schema`. Only that example shows `metadata.event_type`: the field table below it doesn't list the field, and neither the full JSONata example nor the portal example has it. Treat `event_type` as optional and key off `metadata.webhook_id`.
 
-File events don't use that shape. They use the Event Catalog envelope (`_event_name`, `_event_id`, `_event_time`, `_org_id`, `operation`) plus an `event_attachments` array, and the handlers read `_event_name` for them.
+Core and Custom Events don't use that shape. They use the Event Catalog envelope (`_org_id`, `_event_time`, `_event_id`, `_event_name`, `_event_version`, `_event_source`) followed by the event's fields and hydrated entities, and the handlers read `_event_name` for them. File events add an `event_attachments` array.
 
 A JSONata expression can reshape the JSON body, so a webhook with one configured may not match any of the above.
 

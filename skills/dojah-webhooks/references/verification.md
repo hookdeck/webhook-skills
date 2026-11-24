@@ -16,7 +16,7 @@ x-dojah-signature: 63e0b2c79e8b73993777ce312d6b3ad421742d9a8f2657a3e3c14909c6578
 
 Paste the webhook secret from Developers > Webhooks, not your API secret key.
 
-Deliveries also carry `x-dojah-signature-v2`, a SHA256 hash of your secret key alone with no payload. It proves
+Deliveries also carry `x-dojah-signature-v2`, a SHA256 hash of your API secret key alone with no payload. It proves
 nothing about the body; verify only `x-dojah-signature`. Dojah also documents allowlisting its sender IP
 (`135.119.89.106`) as an additional check.
 

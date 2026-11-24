@@ -73,7 +73,7 @@ async def memos_webhook(request: Request):
     # The body is { url, activityType, creator, memo }; the event name is the top-level activityType
     activity_type = event.get("activityType")
     creator = event.get("creator")
-    # webhook-id is stable across retries and the body has no event id: use it to deduplicate
+    # The body has no event id: deduplicate on webhook-id
     print(f"Received Memos webhook {sig_headers['webhook-id']}: {activity_type}")
 
     if activity_type == "memos.memo.created":

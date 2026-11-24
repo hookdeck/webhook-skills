@@ -47,7 +47,7 @@ Complete handlers and tests: [Express](examples/express/), [Next.js](examples/ne
 
 ## Event Handling
 
-The body is a FHIR resource; dispatch on resourceType. There is no create/update/delete discriminator. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id, but is unsigned because the HMAC covers only the body. Reconcile it with application state before acting; these examples do not trust that header as an authenticated identifier.
+The body is a FHIR resource; dispatch on resourceType. Nothing in the body says whether it was created or updated. Medplum's [server code](https://github.com/medplum/medplum/blob/1f2c185cb97e93b4f1decbf19a19ea41ab39e8d0/packages/server/src/workers/subscription.ts) also sends `X-Medplum-Interaction` (`create`, `update` or `delete`) and `X-Medplum-Subscription` (the Subscription ID) on every rest-hook request, though Medplum's docs don't list them. Delete notifications contain {}. X-Medplum-Deleted-Resource supplies the resource type/id. None of these headers is signed, because the HMAC covers only the body. Reconcile them with application state before acting; these examples do not trust those headers as authenticated identifiers.
 
 Use the Subscription extensions to configure retry behaviour. Queue accepted work durably and keep clinical data out of logs. Signatures are optional at the sender, but these examples require signing to be enabled.
 

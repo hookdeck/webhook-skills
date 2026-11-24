@@ -127,8 +127,8 @@ class TestWebhookKinds:
         assert "Order o-9 status: 50" in capsys.readouterr().out
 
     def test_menu_update(self, capsys):
-        post("/webhooks/deliverect/menu_update", json.dumps({"menus": [{}, {}]}))
-        assert "Menu update with 2 menu(s)" in capsys.readouterr().out
+        post("/webhooks/deliverect/menu_update", json.dumps({"menuId": "m1", "categories": [{}, {}]}))
+        assert "Menu m1 update with 2 categories" in capsys.readouterr().out
 
     def test_snooze_unsnooze(self, capsys):
         body = json.dumps({"operations": [{"action": "snooze", "data": {"items": [{"plu": "a"}]}}]})
@@ -136,7 +136,8 @@ class TestWebhookKinds:
         assert 'Snooze operation "snooze" for 1 item(s)' in capsys.readouterr().out
 
     def test_busy_mode_with_hyphen(self, capsys):
-        post("/webhooks/deliverect/busy-mode", json.dumps({"status": "PAUSED"}))
+        res = post("/webhooks/deliverect/busy-mode", json.dumps({"status": "PAUSED"}))
+        assert res.json() == {"status": "PAUSED"}
         assert "Busy mode: PAUSED" in capsys.readouterr().out
 
     def test_unrecognised_kind(self, capsys):
@@ -158,7 +159,7 @@ class TestUntrustedBody:
         [
             ("order_status_update", {"orderId": 5, "status": {"a": 1}}),
             ("order_status_update", {"orderId": "o", "status": True}),
-            ("menu_update", {"menus": "nope"}),
+            ("menu_update", {"menuId": 5, "categories": "nope"}),
             ("snooze_unsnooze", {"operations": "x"}),
             ("snooze_unsnooze", {"operations": [None, 7, {"action": 3, "data": "y"}, {"action": "snooze", "data": {"items": 5}}]}),
             ("busy_mode", {"status": ["PAUSED"]}),

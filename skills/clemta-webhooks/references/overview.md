@@ -8,19 +8,15 @@ Deliveries are signed per the [Standard Webhooks](https://www.standardwebhooks.c
 
 ## Event Payload Structure
 
-```json
-{
-  "type": "company.status.changed",
-  "data": {
-    "object": { "object": "company", "id": "cmp_...", "status": "active" }
-  }
-}
-```
+The body is the `event` resource. Clemta publishes its schema in the Partner API spec (`https://api.clemta.com/v1/openapi.json`) but no example bodies. Top-level fields: `object` (always `event`), `id` (`evt_...`), `type`, `company_id` (when the event is about a company), `data`, `livemode`, `timestamp` and `created_at`.
 
 - `type` is the event name; branch on it.
+- `id` is the event id, the same value as the `webhook-id` header.
+- `timestamp` is when the fact happened and `created_at` when the event was recorded. They're usually the same, but `company.incorporated` carries the incorporation time and `calendar.reminder` the remind moment, either of which can be earlier than `created_at`. Clemta says to use `timestamp` when sequence matters, not the order deliveries arrive in.
+- `livemode` is `false` for events from a `clmt_test_` key.
 - `data.object` is the affected resource, in the shape it has on the API. Its own `object` field names the resource kind (for example `company`, `tax_filing`, `service_order`, `requirement`, `file`, `invoice`), so one handler can switch on `type` and read `data.object`.
 - The payload is rendered at the API version pinned on the endpoint, or the workspace's webhook version when none is pinned.
-- The event id is the `webhook-id` header, stable across retries. Use it as the idempotency key.
+- The `webhook-id` header is stable across retries. Use it as the idempotency key.
 
 ## Common Event Types
 
@@ -60,7 +56,7 @@ Deliveries are signed per the [Standard Webhooks](https://www.standardwebhooks.c
 
 - Respond `2xx` to acknowledge. Anything else, a timeout, or a `3xx` (redirects are not followed) is a failure.
 - Failed deliveries are retried up to 20 times with jittered exponential backoff, 15 seconds to 6 hours apart.
-- Events are delivered in order per endpoint on a best-effort basis, one at a time; an event that keeps failing is set aside after a few attempts. Don't rely on order, and deduplicate on `webhook-id`.
+- Events are delivered in order per endpoint on a best-effort basis, one at a time; an event that keeps failing is set aside after a few attempts. Don't rely on order: compare the event's `timestamp` when sequence matters, and deduplicate on `webhook-id`.
 - `Retry-After` on `429` or `503` pushes the next attempt back.
 - `410 Gone` disables the endpoint. An endpoint failing continuously for three days is disabled automatically; re-enabling resumes the queued deliveries.
 - Missed events can be replayed from `GET /events`, which never expires events.

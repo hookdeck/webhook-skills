@@ -10,10 +10,15 @@ export const dynamic = 'force-dynamic';
 // (in-memory for the example; use your database in production)
 const lastProductUpdate = new Map<string, number>();
 
-// Runa bodies are bare resources with no event-type field. Each Svix endpoint subscribes to a
-// single event type, so identify the event from the payload shape.
-function detectEvent(payload: any): 'order.completion' | 'product.update' | null {
+// order.completed, order.failed and payout.blocked use the Standard Webhooks envelope and name
+// themselves in `type`. The older order.completion and product.update are bare resources with no
+// event-type field, so identify those from the payload shape.
+const TYPED_EVENTS = ['order.completed', 'order.failed', 'payout.blocked'] as const;
+type RunaEvent = (typeof TYPED_EVENTS)[number] | 'order.completion' | 'product.update';
+
+function detectEvent(payload: any): RunaEvent | null {
   if (!payload || typeof payload !== 'object') return null;
+  if ((TYPED_EVENTS as readonly string[]).includes(payload.type)) return payload.type as RunaEvent;
   if ('product_code' in payload && 'new_state' in payload) return 'product.update';
   if (payload.status === 'COMPLETED' || payload.status === 'FAILED') return 'order.completion';
   return null;
@@ -68,6 +73,18 @@ export async function POST(request: Request) {
   let ignored: string | undefined;
 
   switch (event) {
+    case 'order.completed':
+      // The order is in `data`, shaped like a completed order.completion body
+      console.log('Order completed:', payload.data?.id, payload.timestamp);
+      break;
+    case 'order.failed':
+      // `reason` is `fraud` or `generic`
+      console.log('Order failed:', payload.data?.id, payload.data?.reason);
+      break;
+    case 'payout.blocked':
+      // `cancelled` false: the link is still active, but its redemptions keep being blocked
+      console.log('Payout blocked:', payload.data?.order_item_id, payload.data?.assessment_id, payload.data?.cancelled);
+      break;
     case 'order.completion':
       // The `status` field says which of the two payloads this is
       if (payload.status === 'COMPLETED') {

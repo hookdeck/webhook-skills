@@ -22,7 +22,7 @@ The event name is in the body's top-level `response` field.
 ## Delivery
 
 - Method: `POST`.
-- Respond `200` with a blank body. Anything else is treated as an error.
+- Respond `200` with a blank body, as ReferralHero asks. Every non-200 response counts as an error.
 - Failures are retried 3 times over 5 minutes. 10 consecutive bad responses disable the webhook.
 - The **Test** button sends fake data.
 - Signing is opt-in (see [setup.md](setup.md)). Signed deliveries carry `X-ReferralHero-Signature`.

@@ -57,12 +57,20 @@ The library always enforces a fixed **5-minute timestamp window**. Hookdeck retr
 
 ## Event Payload
 
-The body is `{ type, data }`. `data.object` is the resource in its API shape, and its own `object` field names the resource kind. The payload is rendered at the API version pinned on the endpoint.
+The body is Clemta's `event` resource. Its top-level fields, per the Partner API spec (`https://api.clemta.com/v1/openapi.json`):
 
-```json
-{ "type": "company.ein.assigned",
-  "data": { "object": { "object": "company", "id": "cmp_...", "ein": "12-3456789" } } }
-```
+| Field | Meaning |
+|-------|---------|
+| `object` | Always `event` |
+| `id` | The event id (`evt_...`), the same value as the `webhook-id` header |
+| `type` | The event name; branch on it |
+| `company_id` | The company the event is about (`cmp_...`), when it is about one |
+| `data.object` | The resource as of the event, in its API shape; its own `object` field names the kind (`company`, `service_order`, `invoice`, `requirement`, `file`, `tax_filing`, `calendar_event`) |
+| `livemode` | `false` for events from a `clmt_test_` key |
+| `timestamp` | When the fact happened (ISO 8601); use it when sequence matters |
+| `created_at` | When the event was recorded |
+
+The payload is rendered at the API version pinned on the endpoint, or the workspace's webhook version when none is pinned. Clemta publishes no example bodies, so capture one from the sandbox before writing parsers.
 
 ## Common Event Types
 

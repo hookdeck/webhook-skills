@@ -33,9 +33,9 @@ Formspree-Signature: t=<unix seconds>,v1=<hex>
 
 The signature is lowercase hex HMAC-SHA256 over `<t>.<raw body>`: the `t` value
 exactly as it appears in the header, a literal `.`, then the raw body bytes. The key
-is the webhook's signing secret as UTF-8 bytes (not decoded). The header may carry
-several `v1=` entries (key rotation): accept when **any** matches and ignore other
-keys such as `v0`. Respond `401` when the header is missing, malformed or wrong.
+is the webhook's signing secret as UTF-8 bytes (not decoded). Formspree documents one
+`v1=` value; the examples still accept a header with several and pass when **any**
+matches, ignoring other keys such as `v0`. Respond `401` when the header is missing, malformed or wrong.
 
 Node (from [examples/express/](examples/express/)):
 
@@ -95,16 +95,22 @@ you want replay protection.
 There is no event-name field or header: **every delivery is a new submission**.
 The examples call it `form_submission` in logs only; Formspree sends no such string.
 
+Formspree's documented shape (`form` is the form's hashid, left empty in the docs):
+
 ```json
 {
-  "form": "<form hashid>",
-  "keys": ["name", "email", "message"],
-  "submission": { "_date": "2026-10-26T10:00:00", "name": "Ada", "email": "ada@example.com", "message": "Hello" }
+  "form": "",
+  "keys": ["keys", "in", "the", "order", "they", "were", "submitted"],
+  "submission": {
+    "_date": "2029-12-31T00:00:00",
+    "field": "value",
+    "other-fields": "other value"
+  }
 }
 ```
 
-`keys` lists the field names in submission order. Build Hooks send an **empty body**
-(still signed). Treat every field as untrusted after verifying: check types before
+`keys` lists the field names in submission order. Build Hooks send an **empty body**;
+Formspree doesn't say whether they're signed (the examples accept a signed empty body). Treat every field as untrusted after verifying: check types before
 reading into nested values.
 
 ## Delivery and Idempotency

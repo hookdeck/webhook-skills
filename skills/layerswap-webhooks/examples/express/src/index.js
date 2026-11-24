@@ -57,37 +57,38 @@ app.post('/webhooks/layerswap', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
 
-  // The body is { swap, quote, deposit_actions } with no event-type field:
-  // the swap's lifecycle state is `swap.status`.
-  const swap = payload.swap ?? {};
+  // The body is the swap itself: a flat object with no event-type field (every update
+  // is the one Svix `partner` event type). Route on `status`, which webhooks send in
+  // PascalCase; API swap objects use snake_case (PendingDeposit = user_transfer_pending).
+  const swap = payload && typeof payload === 'object' ? payload : {};
   const status = swap.status;
-  // No retry schedule or ordering is documented: deduplicate on swap.id + status
-  // and fetch GET /swaps/{id} before any irreversible action.
+  // Deduplicate side effects on swap id + status (or a transaction hash), compare
+  // `timestamp` (Unix ms) for ordering, and fetch GET /swaps/{id} before crediting funds.
   console.log(`Received Layerswap webhook for swap ${swap.id}: ${status}`);
 
   switch (status) {
-    case 'user_transfer_pending':
-      // Swap created; waiting for the user's deposit (expires after 6 hours without one)
-      console.log('Awaiting deposit:', swap.id, payload.deposit_actions);
+    case 'PendingDeposit':
+      // API user_transfer_pending: waiting for the user's deposit (expires after 6 hours without one)
+      console.log('Awaiting deposit:', swap.id, swap.deposit_address);
       break;
-    case 'ls_transfer_pending':
-      // Deposit confirmed; Layerswap is executing the swap. Not final: it can retry for a while
+    case 'PendingWithdrawal':
+      // API ls_transfer_pending: Layerswap is processing the swap. Not final
       console.log('Swap executing:', swap.id);
       break;
-    case 'completed':
-      // Funds delivered to the destination address: safe to fulfil after reconciling with GET /swaps/{id}
-      console.log('Swap completed:', swap.id, swap.metadata?.reference_id, payload.quote?.receive_amount);
+    case 'Completed':
+      // Funds delivered to the destination address: fulfil after confirming with GET /swaps/{id}
+      console.log('Swap completed:', swap.id, swap.reference_id, swap.amount);
       break;
-    case 'failed':
-      console.log('Swap failed:', swap.id, swap.fail_reason);
+    case 'Failed':
+      console.log('Swap failed:', swap.id);
       break;
-    case 'expired':
+    case 'Expired':
       console.log('Swap expired (no deposit within 6 hours):', swap.id);
       break;
-    case 'pending_refund':
-      console.log('Refund pending:', swap.id, swap.fail_reason);
+    case 'PendingRefund':
+      console.log('Refund pending:', swap.id);
       break;
-    case 'refunded':
+    case 'Refunded':
       console.log('Swap refunded:', swap.id);
       break;
     default:

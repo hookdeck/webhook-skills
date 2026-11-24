@@ -86,7 +86,7 @@ integration type in the [Deliverect docs](https://developers.deliverect.com).
 | `snooze_unsnooze` | `snoozeUnsnoozeURL` | Items snoozed or unsnoozed |
 | `busy_mode` | `busyModeURL` | Location paused or put online |
 
-Each operational webhook expects a `200 OK`. Retry and timeout behaviour is not documented on the pages this skill was built from.
+Each operational webhook expects a `200 OK`, and the busy mode response should echo the store's new `status` (the examples do this). Deliverect retries only when the connection times out or is refused (3 retries, after 5, 10 and 20 seconds); any HTTP response ends delivery, and so does a read timeout (30 seconds by default, 60 at most). See the [Retry Policy](https://developers.deliverect.com/page/retry-policy).
 
 ## Environment Variables
 

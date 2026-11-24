@@ -86,7 +86,7 @@ can be dropped or widened. Deduplicate on `svix-id` instead of relying on the ti
 
 The event name is the top-level `event` field. Dots recommends subscribing to the canonical
 `.updated` events and fetching the resource by the id in the payload. The list below is the
-12 events Dots documents and may not be exhaustive.
+14 events Dots documents and may not be exhaustive.
 
 | Event | Triggered When | Id fields |
 |-------|----------------|-----------|
@@ -95,6 +95,8 @@ The event name is the top-level `event` field. Dots recommends subscribing to th
 | `flow.updated` | A flow was updated | `flow_id` |
 | `dispute.updated` | A dispute was updated | `dispute_id` |
 | `payout_request.updated` | A payout request changed status | `payout_request_id` |
+| `payout_batch.created` | A payout batch was created | `payout_batch_id` |
+| `payout_batch.updated` | A payout batch changed status (fetch the batch results for each item's transfer) | `payout_batch_id` |
 | `organization.updated` | An organization was updated | `organization_id` |
 | `app.updated` | An app was updated | `app_id` |
 | `transfer.updated` | A transfer was updated | `transfer_id` |

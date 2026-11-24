@@ -79,7 +79,9 @@ Contact events: `ContactCreated` = `74`, `GlobalUnsubscribe` = `73`.
 
 After verifying, treat every parsed field as untrusted: check the body is an object and `type` is
 an integer before using it (the examples also tolerate a numeric string such as `"8"`, converting it
-to a number). The docs only specify `type`; other body fields are not documented.
+to a number). The rest of the body is flat: `time`, a `data` string, and nullable IDs such as
+`contact_id`, `contact_email` and `campaign_id`. `time` is documented as milliseconds since the epoch,
+but SendX's example (`1686304219037565000`) is nanosecond-scale, so check its magnitude.
 
 ## Environment Variables
 
@@ -90,15 +92,16 @@ SENDX_WEBHOOK_SECRET=your_sendx_team_api_key   # SendX Settings → Team API Key
 ## Setup with Hookdeck
 
 Hookdeck's source type is **SendX**, which verifies the signature.
-Paste your SendX team API key. SendX signs webhooks with it.
 
 > Paste your SendX team API key. SendX signs webhooks with it.
 
 ## Delivery
 
-Respond in under 5 seconds (the docs' advice, not a stated timeout) and do heavy work asynchronously.
+Respond with a `200` in under 5 seconds (the docs' advice, not a stated timeout) and do heavy work
+asynchronously.
 SendX retries failed deliveries: `X-SendX-Webhook-Attempt` carries the attempt number, but the retry
-schedule is not documented. `X-SendX-Webhook-Id` identifies the delivery: use it for idempotency.
+schedule is not documented. `X-SendX-Webhook-Id` identifies the delivery: use it for idempotency, and
+keep handlers idempotent too, because the docs don't say whether a retry keeps the same id.
 
 ## Local Development
 

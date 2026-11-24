@@ -5,7 +5,7 @@ Minimal example of receiving [General Translation](https://generaltranslation.co
 ## Prerequisites
 
 - Node.js 18+
-- A General Translation organization on the Starter or Enterprise plan
+- A General Translation organization on the Enterprise plan
 - The signing secret (`whsec_...`) of your webhook endpoint
 
 ## Setup

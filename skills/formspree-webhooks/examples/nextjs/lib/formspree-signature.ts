@@ -13,7 +13,7 @@ export interface VerifyResult {
 
 /**
  * Parse Formspree-Signature: "t=<unix>,v1=<hex>". The header can carry more
- * than one v1= entry (key rotation) and other keys such as v0, which are ignored.
+ * than one v1= entry and other keys such as v0, which are ignored.
  */
 export function parseSignatureHeader(header: string) {
   let timestamp: string | undefined;

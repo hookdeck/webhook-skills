@@ -13,7 +13,7 @@ Paypercut (paypercut.io) sends a signed JSON webhook to your endpoint when somet
 | Header | Description |
 |--------|-------------|
 | `Paypercut-Signature` | `t=<unix seconds>,v1=<hex>` signature used to verify authenticity |
-| `Paypercut-Delivery-Id` | Unique ID of the delivery attempt (use it to dedupe) |
+| `Paypercut-Delivery-Id` | Unique ID of the event's delivery to this endpoint; retries of the same delivery send the same ID (use it to dedupe) |
 | `Paypercut-Event-Id` | Unique ID of the webhook event |
 | `Content-Type` | Always `application/json` |
 
@@ -49,17 +49,13 @@ No header names the event type: read it from the body.
 
 ## Event Payload Structure
 
-Paypercut documents no delivered sample body. Its payload-validation sample requires a string `type` and a `data` object, and the catalogue adds a top-level `account` for connected-account events. Dispatch on `type`, and log event types you don't handle.
+Every event has a complete example on Paypercut's [Types of events](https://docs.paypercut.io/api-reference/tag/events/types) page. The top-level fields are `id`, `account`, `api_version`, `type`, `created` (RFC 3339), `livemode`, `pending_webhooks`, `request` and `data`. `type` is the catalogue identifier, `data.object` is a snapshot of the resource when the event occurred, and `data.previous_attributes` holds old values of changed fields when supplied. `account` names the account that produced the event, which matters for `connect` deliveries. The `data.object` shape depends on the resource and, for Checkout Sessions and Payment Intents, on `api_version`. Dispatch on `type`, and log event types you don't handle.
 
-```json
-{ "type": "payment.succeeded", "data": { "id": "..." } }
-```
-
-(Illustrative: the `data` shape depends on the resource and `api_version`.)
+An explicit endpoint test from the Merchant Dashboard arrives as `webhook_endpoint.test` with an empty `data.object`. It can't be subscribed to; acknowledge it with `200`.
 
 ## Delivery
 
-A `2xx` means processed, and a `500` is retried (the schedule is undocumented). Return `2xx` only after processing. Paypercut advises deduping on `Paypercut-Delivery-Id`.
+A `2xx` means processed, and a `500` is retried (the schedule is undocumented, and retries eventually end). Return `2xx` only after processing. Events can be delivered more than once: Paypercut advises deduping on `Paypercut-Delivery-Id`, which stays the same across retries of a delivery. `GET /v1/events?delivery_success=false` lists events from the last 30 days with a delivery that hasn't succeeded.
 
 ## Full Event Reference
 

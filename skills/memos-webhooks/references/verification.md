@@ -2,11 +2,11 @@
 
 ## How Does Memos Sign Webhooks?
 
-Since 0.31 Memos signs deliveries in the [Standard Webhooks](https://standardwebhooks.com/) format, **only when the webhook has a signing secret** (the sender checks for a non-empty secret). New webhooks get one; older webhooks are unsigned until a secret is generated in the edit dialog. Each signed request includes:
+Since v0.30.0 Memos signs deliveries in the [Standard Webhooks](https://standardwebhooks.com/) format, **only when the webhook has a signing secret** (the sender checks for a non-empty secret). New webhooks get one; older webhooks are unsigned until a secret is generated in the edit dialog. Each signed request includes:
 
 | Header | Contents |
 |--------|----------|
-| `webhook-id` | Unique message ID beginning with `msg_` (stable across retries; your idempotency key) |
+| `webhook-id` | Unique message ID beginning with `msg_` (your idempotency key) |
 | `webhook-timestamp` | Unix seconds when the message was sent |
 | `webhook-signature` | Space-delimited list of `v1,<base64 signature>` entries |
 

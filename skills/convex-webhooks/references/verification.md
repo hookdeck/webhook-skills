@@ -62,4 +62,5 @@ def verify_signature(raw_body: bytes, signature_header: str | None, secret: str 
 | Always fails | Wrong secret (dev vs prod deployment), or the body was parsed before verifying |
 | Fails only in some frameworks | Body re-encoded as a string, or a proxy changed the bytes |
 | Fails on every request after recreating the stream | The secret is new; copy it again from the dashboard |
+| Fails on every request after regenerating the secret | The old secret stopped working immediately; update your receiver |
 | Missing header | A request that did not come from Convex; respond `401` |

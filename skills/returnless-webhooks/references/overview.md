@@ -18,10 +18,10 @@ Each webhook is configured in the panel with an endpoint URL, the events it shou
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `request.created` | A return request is submitted | Open a ticket, notify the warehouse |
+| `request.created` | A consumer submits a return that awaits webshop approval | Open a ticket, notify the warehouse |
 | `request.approved` | A request is approved | Issue a label, notify the customer |
-| `request.approved_with_manual_shipment` | Approved with a manually created shipment | Track the manual shipment |
-| `request.approved_without_shipment` | Approved with no shipment | Skip logistics, go to refund |
+| `request.approved_with_manual_shipment` | Approved with a shipment created outside Returnless | Track the manual shipment |
+| `request.approved_without_shipment` | Approved; the consumer doesn't send the items back | Skip logistics, go to refund |
 | `request.rejected` | A request is rejected | Notify support |
 | `request.status_changed` | A request changes status | Keep an external status in sync |
 | `request.deleted` | A request is deleted | Remove it from downstream systems |
@@ -34,7 +34,7 @@ Each webhook is configured in the panel with an endpoint URL, the events it shou
 | `shipment.created` | A shipment is created | Store tracking number |
 | `shipment.status_changed` | A shipment changes status | Tracking updates |
 | `shipment.delivered` | A shipment is delivered | Expect the parcel at the warehouse |
-| `depreciation.created` | A depreciation is created | Adjust refund amounts |
+| `depreciation.created` | A depreciation is added to an item | Adjust the refund for that item |
 
 These are the 17 events in Returnless's supported events list. The event name is **only** in the `X-Event-Name` header.
 

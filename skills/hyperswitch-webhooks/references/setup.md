@@ -19,8 +19,17 @@ profile.
 3. Put the same value in `HYPERSWITCH_WEBHOOK_SECRET`. The code uses it as
    UTF-8 bytes, exactly as written.
 
-The docs don't say whether Hyperswitch generates the key or you choose it. If
-the key isn't set, deliveries arrive without `X-Webhook-Signature-512`.
+You can pass `payment_response_hash_key` when you create or update the business
+profile through the API (at least 32 characters). If you don't, the
+[API reference](https://api-reference.hyperswitch.io/v1/business-profile/business-profile--update)
+says Hyperswitch generates a value, but profile responses show only its first
+4 characters, so set your own to have a key to verify with. A profile with no
+key sends deliveries without `X-Webhook-Signature-512`.
+
+If you change the key, update every verifier at once. Hyperswitch's
+[retry code](https://github.com/juspay/hyperswitch/blob/430d18b9b24364b9ddb3cdca6f40970d0f54e1bc/crates/router/src/workflows/outgoing_webhook_retry.rs)
+resends each retry exactly as first signed, so a retry of an earlier event
+still carries the old key's signature.
 
 ## How Do I Register the Endpoint?
 

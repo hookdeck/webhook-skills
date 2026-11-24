@@ -3,7 +3,8 @@ name: runa-webhooks
 description: >
   Receive and verify Runa webhooks (payouts network for gift cards, prepaid cards and
   push-to-card, delivered via Svix). Use when setting up Runa webhook handlers, debugging
-  svix-signature verification, or handling order.completion and product.update events.
+  svix-signature verification, or handling order.completed, order.failed, payout.blocked,
+  order.completion and product.update events.
 license: MIT
 metadata:
   author: hookdeck
@@ -14,21 +15,31 @@ metadata:
 # Runa Webhooks
 
 [Runa](https://runa.io) is a payouts network for gift cards, prepaid cards and push-to-card.
-Its webhooks report order completion and product-catalog changes. Endpoints are added in a
+Its webhooks report order outcomes, fraud-blocked payout links and product-catalog changes.
+Endpoints are added in a
 [Svix](https://www.svix.com/) webhook portal that opens from the API section of your Runa
 account, and Svix implements Standard Webhooks. Every delivery is an HTTP `POST` with a JSON
 body and three signature headers: `svix-id`, `svix-timestamp`, and `svix-signature`.
 
-The body is a **bare resource with no envelope and no event-type field**. Each endpoint
-subscribes to exactly one event type (`order.completion` or `product.update`), so the endpoint
-URL identifies the event. A handler that serves several event types on one URL tells them apart
-by payload shape, as the examples do.
+Runa sends two body formats:
+
+- `order.completed`, `order.failed` and `payout.blocked` (added November 2026) use the
+  Standard Webhooks envelope: the event name is in `type`, the time in `timestamp` and the
+  details in `data`. Route on `type`.
+- `order.completion` and `product.update` are **bare resources with no envelope and no
+  event-type field**. Tell them apart by endpoint or by payload shape, as the examples do.
+
+Runa says new integrations should use `order.completed` and `order.failed` instead of
+`order.completion`, which keeps working as before. Runa's webhooks page says each endpoint
+subscribes to a single event type, while its changelog says the new events can be added to an
+existing endpoint's event types, so check the portal before relying on either.
 
 ## When to Use This Skill
 
 - How do I receive Runa webhooks?
 - How do I verify Runa webhook signatures (`svix-signature`)?
-- How do I handle `order.completion` events, including failed orders?
+- How do I handle `order.completed` and `order.failed` events, or the older `order.completion`?
+- What does a `payout.blocked` event mean?
 - How do I keep my catalog in sync with `product.update` events?
 - Why is my Runa webhook signature verification failing, or rejecting Hookdeck retries?
 
@@ -82,12 +93,15 @@ timestamp.
 
 ## Event Types
 
-Runa documents two event types. The body carries no event name, so the examples identify the
-event from the payload:
+Runa documents five event types. The examples read `type` when it's present and otherwise
+identify the event from the payload shape:
 
 | Event | Triggered when | Body |
 |-------|----------------|------|
-| `order.completion` | An order has finished processing | `status` `COMPLETED`: the order summary. `status` `FAILED`: only `{ id, status }` |
+| `order.completed` | An order finishes processing successfully | `{ type, timestamp, data }`; `data` is the completed order summary |
+| `order.failed` | An order fails | `{ type, timestamp, data }`; `data` is `{ id, status: "FAILED", reason }`, `reason` `fraud` or `generic` |
+| `payout.blocked` | Runa's fraud checks block the redemption of a payout link | `{ type, timestamp, data }`; `data` is `{ order_item_id, order_id, assessment_id, cancelled }` |
+| `order.completion` | An order has finished processing (older; replaced by the two above) | `status` `COMPLETED`: the order summary. `status` `FAILED`: only `{ id, status }` |
 | `product.update` | A product in the catalog is added, updated or removed | `{ product_code, old_state, new_state, timestamp }` |
 
 For `order.completion`, the `status` field tells the two payloads apart (it distinguishes the

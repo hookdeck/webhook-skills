@@ -26,14 +26,14 @@ const str = (v) => (typeof v === 'string' ? v : undefined);
 const idOf = (v) => (isObject(v) && (typeof v.id === 'string' || typeof v.id === 'number') ? v.id : undefined);
 
 // Memberful's event reference lists these names but never shows where the name travels.
-// ASSUMPTION: a top-level `event` field. Confirm against a real delivery (Settings > Webhooks > test).
+// Memberful's WordPress plugin reads a top-level `event` field, so this does too. Confirm with a test delivery.
 function handleEvent(payload) {
   const eventType = str(payload.event);
 
   switch (eventType) {
     case 'member_signup':
       console.log(`Member signed up: ${idOf(payload.member)}`);
-      // TODO: create the member in your app
+      // Your code: create the member in your app
       break;
 
     case 'member_updated':
@@ -41,7 +41,7 @@ function handleEvent(payload) {
     case 'tax_id.updated':
     case 'custom_fields.updated':
       console.log(`${eventType}: member ${idOf(payload.member)}`);
-      // TODO: sync or remove the member's profile
+      // Your code: sync or remove the member's profile
       break;
 
     case 'subscription.created':
@@ -49,19 +49,19 @@ function handleEvent(payload) {
     case 'subscription.activated':
     case 'subscription.reactivated':
       console.log(`${eventType}: subscription ${idOf(payload.subscription)}`);
-      // TODO: grant or extend the member's access
+      // Your code: grant or extend the member's access
       break;
 
     case 'subscription.updated':
       // `changed` maps field -> [old, new]; a plan_id entry means a plan change.
       console.log(`subscription.updated: subscription ${idOf(payload.subscription)}`);
-      // TODO: re-fetch the subscription from the API (delivery order is not guaranteed)
+      // Your code: re-fetch the subscription from the API (delivery order is not guaranteed)
       break;
 
     case 'subscription.deactivated':
     case 'subscription.deleted':
       console.log(`${eventType}: subscription ${idOf(payload.subscription)}`);
-      // TODO: remove the member's access
+      // Your code: remove the member's access
       break;
 
     case 'order.purchased':
@@ -69,7 +69,7 @@ function handleEvent(payload) {
     case 'order.suspended':
     case 'order.completed':
       console.log(`${eventType}: order ${idOf(payload.order)}`);
-      // TODO: record the order or refund
+      // Your code: record the order or refund
       break;
 
     case 'subscription_plan.created':
@@ -79,7 +79,7 @@ function handleEvent(payload) {
     case 'download.updated':
     case 'download.deleted':
       console.log(`${eventType} received`);
-      // TODO: sync prices (subscription_plan.*) or downloads
+      // Your code: sync prices (subscription_plan.*) or downloads
       break;
 
     default:

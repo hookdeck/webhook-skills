@@ -5,8 +5,8 @@ description: >
   Webhooks. Use when setting up an epilot webhook endpoint, getting the
   whsec_ signing secret, debugging webhook-id / webhook-timestamp /
   webhook-signature verification (including the extra v1a Ed25519 entry), or
-  handling events like automation_trigger_webhook, customer_request_created
-  and FileCreated.
+  handling Event Catalog events like FileCreated and
+  CustomerRequestSubmitted or automation-trigger webhooks.
 license: MIT
 metadata:
   author: hookdeck
@@ -24,7 +24,7 @@ metadata:
 - How do I verify an epilot webhook signature?
 - Why does `webhook-signature` hold two entries (`v1a,...` and `v1,...`)?
 - Where do I find my epilot webhook `whsec_` signing secret?
-- How do I handle `automation_trigger_webhook`, `customer_request_created` or `FileCreated` events?
+- How do I handle `FileCreated`, `CustomerRequestSubmitted` or automation-trigger events?
 - Why do epilot webhook retries fail verification after a few minutes?
 
 ## Verification (core)
@@ -58,7 +58,7 @@ Python: `from standardwebhooks.webhooks import Webhook`, then `Webhook(secret).v
 
 ### Retries and the 5-minute window
 
-epilot retries and Hookdeck replays resend the **original** `webhook-timestamp`. The library always enforces a fixed 5-minute window, so it rejects late retries (the schedule runs to 5 hours) and replays of older events. To drop or widen the window, use the manual verifier in [references/verification.md](references/verification.md): HMAC-SHA256 over `{id}.{timestamp}.{raw body}` with the same key, every `v1,<base64>` entry compared in constant time after a length check, and the timestamp required to be a plain positive integer.
+The library always enforces a fixed 5-minute window. epilot's retries run up to 5 hours, its docs don't say whether a retry is signed again, and a replayed or queued request can arrive later than 5 minutes after signing, so the library can reject it. To drop or widen the window, use the manual verifier in [references/verification.md](references/verification.md): HMAC-SHA256 over `{id}.{timestamp}.{raw body}` with the same key, every `v1,<base64>` entry compared in constant time after a length check, and the timestamp required to be a plain positive integer.
 
 ### Hookdeck configuration alert
 
@@ -70,15 +70,15 @@ Use the `whsec_` secret returned when the webhook was created. Endpoint authenti
 
 ## Event Types and Payload
 
-The event vocabulary is **per organization**. Each webhook config subscribes to one `eventName` from `GET /v1/webhooks/events`. The reliable join key is `metadata.webhook_id`, because one webhook config is one `eventName`.
+Each webhook config subscribes to one `eventName` from `GET /v1/webhooks/events`. epilot's [Core Events](https://docs.epilot.io/docs/integrations/core-events) are the same in every organization and are subscribed as `event_<Name>`; organizations can add Custom Events, and the Automation Trigger Webhook and portal activities are also subscribable.
 
-| Event | Fired when |
+| Event (`_event_name`) | Fired when |
 |-------|------------|
-| `automation_trigger_webhook` | An automation action sends a webhook request (the most common trigger) |
-| `customer_request_created` | A customer request is created (an example event name from an organization's list) |
-| `FileCreated` (`event_FileCreated`) | A file is created (Event Catalog envelope with `_event_name`, `event_attachments`) |
+| `FileCreated` | A file entity is created (`event_attachments` lists the files) |
+| `CustomerRequestSubmitted` | A customer request ticket and its attachments are ready |
+| `MeterReadingAdded` | A meter reading is recorded |
 
-Default body: `{ metadata, entity, relations, activity, changed_attributes }`. `metadata` carries `webhook_id`, `organization_id`, `correlation_id` and optional automation and user IDs. The docs' payload example shows `metadata.event_type`, but their field table doesn't list it, so the examples fall back to `_event_name`. Details in [references/overview.md](references/overview.md).
+Event Catalog deliveries (Core and Custom Events) are flat JSON with `_event_name`, `_event_id`, `_event_time` and `_event_version`. Automation-trigger and portal deliveries use `{ metadata, entity, relations, activity, changed_attributes }` instead, with no documented event-name field: only one commented docs sketch shows `metadata.event_type`. Route those on `metadata.webhook_id`, because one webhook config is one `eventName`. The examples read `_event_name` first. Details in [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 

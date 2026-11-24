@@ -55,7 +55,7 @@ function verifyDojahSignature(rawBody, signatureHeader, secret) {
 - Compare the **whole** header value as one digest: no prefix, no list, no timestamp.
 - Python: `hmac.compare_digest` on bytes (encode both sides; never pass `str`).
 - Missing, empty or malformed header, or a mismatch: `401`. Respond `200` once handled.
-- Dojah also sends `x-dojah-signature-v2` (a hash of the secret alone, no payload). Verify only `x-dojah-signature`.
+- Dojah also sends `x-dojah-signature-v2` (a SHA256 hash of your API secret key alone, no payload). Verify only `x-dojah-signature`.
 - No timestamp is signed, so there is no replay window to check. Make handlers idempotent (key on `reference_id`).
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).

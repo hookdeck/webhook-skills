@@ -69,8 +69,11 @@ makes **16 retries over roughly 24 hours**:
 | 9th to 13th | 1 hour |
 | 14th to 16th | 6 hours |
 
-The docs state no request timeout, so respond quickly and do heavy work
-asynchronously.
+The docs state no request timeout. Hyperswitch's
+[code](https://github.com/juspay/hyperswitch/blob/430d18b9b24364b9ddb3cdca6f40970d0f54e1bc/crates/router/src/core/webhooks/outgoing.rs)
+passes none for webhook calls, so its HTTP client's 30-second default applies.
+Respond quickly and do heavy work asynchronously. Retries resend the first
+attempt's stored body, so `event_id` stays the same across them.
 
 - **Duplicates are possible.** Store `event_id` and make processing
   idempotent. If an `event_id` already completed, acknowledge without applying

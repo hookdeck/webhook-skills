@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 /**
- * Verify Katana's x-sha2-signature: lowercase hex HMAC-SHA256 of the raw body bytes,
+ * Verify Katana's x-sha2-signature: hex HMAC-SHA256 of the raw body bytes,
  * keyed with the webhook's token as UTF-8 (never hex-decoded). Nothing else is signed.
  */
 export function verifyKatanaSignature(

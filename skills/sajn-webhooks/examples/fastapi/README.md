@@ -45,7 +45,7 @@ The tests sign payloads the way sajn does (`base64(HMAC-SHA256(base64decode(secr
 npx hookdeck-cli listen 8000 sajn --path /webhooks/sajn
 ```
 
-Create the sajn webhook with the printed URL (**Inställningar > Utvecklare > Webhooks**, or `POST /api/v1/webhooks`), subscribe to events such as `document.completed`, then call `POST /api/v1/webhooks/{id}/test` to send a signed `webhook.test`.
+Create the sajn webhook with the printed URL (the **Webhooks** tab in Konsol, or `POST /api/v1/webhooks`), subscribe to events such as `document.completed`, then call `POST /api/v1/webhooks/{id}/test` to send a signed `webhook.test`.
 
 ## Notes
 

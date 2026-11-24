@@ -93,20 +93,23 @@ export function handleMortaEvent(body: Record<string, unknown>): void {
     case 'table.row_updated':
       console.log(`Table ${id}: row(s) updated`);
       break;
-    case 'project.created':
+    case 'hub.created':
+    case 'project.created': // legacy name, still sent to subscriptions created with it
       console.log(`Hub created: ${id}`);
       break;
-    case 'project.duplication_failed':
+    case 'hub.duplication_failed':
+    case 'project.duplication_failed': // legacy name
       console.log(`Hub duplication failed for ${id}: ${typeof change?.error === 'string' ? change.error : 'unknown error'}`);
       break;
     case 'member.created':
       console.log(`Member added to hub ${id}`);
       break;
-    case 'process.response_submitted':
+    case 'document.response_submitted':
+    case 'process.response_submitted': // legacy name
       console.log(`Document response submitted: ${id}`);
       break;
     default:
       console.log(`Unhandled event type: ${typeof event === 'string' ? event : 'missing'}`);
   }
-  // TODO: persist / forward. `id` (the event's unique public ID) is a good idempotency key.
+  // Your code: persist or forward the event. `id` is the event's unique public ID.
 }

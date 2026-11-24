@@ -76,7 +76,7 @@ app.post(
     switch (payload.event) {
       case 'payment.paid':
         console.log('Payment paid:', JSON.stringify(data.payment ?? data));
-        // TODO: Fulfil the order, grant access
+        // Your code: fulfil the order, grant access
         break;
 
       case 'payment.created':
@@ -89,7 +89,7 @@ app.post(
 
       case 'booking.created':
         console.log('Booking created:', JSON.stringify(data.booking ?? data));
-        // TODO: Sync to calendar / CRM
+        // Your code: sync to calendar / CRM
         break;
 
       case 'booking.paid':
@@ -99,13 +99,17 @@ app.post(
       case 'subscription.created':
       case 'subscription.active':
         console.log(`Subscription started (${payload.event})`);
-        // TODO: Provision features
+        // Your code: provision features
         break;
 
       case 'subscription.canceled':
+        // Canceled now, at period end or on a custom date: not yet expired
+        console.log('Subscription canceled');
+        break;
+
       case 'subscription.expired':
-        console.log(`Subscription ended (${payload.event})`);
-        // TODO: Revoke access
+        console.log('Subscription expired');
+        // Your code: revoke access
         break;
 
       case 'customer.created':

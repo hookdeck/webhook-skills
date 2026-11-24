@@ -58,6 +58,8 @@ Freemius says this is "a list of all the types of events we currently send" and 
 
 **license** (18): `license.activated`, `license.cancelled`, `license.created`, `license.deactivated`, `license.deleted`, `license.expired`, `license.expired_notice.sent`, `license.extended`, `license.ownership.changed`, `license.quota.changed`, `license.renewal_reminder.sent`, `license.shortened`, `license.trial_expiring_notice.sent`, `license.updated`, `license.site.blacklisted`, `license.blacklisted_site.deleted`, `license.site.whitelisted`, `license.whitelisted_site.deleted`
 
+The list omits `license.plan.changed`, which Freemius's [SaaS integration guide](https://freemius.com/help/documentation/saas/saas-integration/#creating-a-webhook-listener) and JS SDK handle. The SDK's types say it fires only when you change a license's plan by hand in the Developer Dashboard, and that `license.updated` comes with it.
+
 **member** (3): `member.created`, `member.deleted`, `member.updated`
 
 **plan** (4): `plan.created`, `plan.deleted`, `plan.lifetime.purchase`, `plan.updated`

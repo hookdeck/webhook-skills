@@ -95,7 +95,7 @@ async def referralhero_webhook(request: Request):
         logger.exception("Error handling ReferralHero event")
         return JSONResponse({"error": "Internal server error"}, status_code=500)
 
-    # ReferralHero wants 200 with a blank body; anything else counts as an error.
+    # ReferralHero asks for 200 with a blank body; any non-200 status counts as an error.
     return Response(status_code=200)
 
 

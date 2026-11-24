@@ -8,7 +8,7 @@ import { POST } from '../app/webhooks/sahha/route';
 // Any string from the Sahha Dashboard; it is used as UTF-8 bytes, not decoded.
 const SECRET = 'sahha_test_secret_key_123';
 
-/** Sign exactly like Sahha: lowercase hex HMAC-SHA256 of the raw body, no prefix. */
+/** Sign exactly like Sahha: hex HMAC-SHA256 of the raw body, no prefix. */
 function sign(rawBody: string, secret = SECRET): string {
   return crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 }

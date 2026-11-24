@@ -35,14 +35,15 @@ function handleDeliverectCall(kind, payload) {
         ? payload.status
         : 'unknown';
       console.log(`Order ${orderId} status: ${status}`);
-      // TODO: update the order in your system
+      // Your code: update the order in your system
       break;
     }
 
     case 'menu_update': {
-      const menus = Array.isArray(payload.menus) ? payload.menus : [];
-      console.log(`Menu update with ${menus.length} menu(s)`);
-      // TODO: sync the menu
+      const menuId = typeof payload.menuId === 'string' ? payload.menuId : 'unknown';
+      const categories = Array.isArray(payload.categories) ? payload.categories : [];
+      console.log(`Menu ${menuId} update with ${categories.length} categories`);
+      // Your code: sync the menu
       break;
     }
 
@@ -53,7 +54,7 @@ function handleDeliverectCall(kind, payload) {
         const action = typeof op.action === 'string' ? op.action : 'unknown';
         const items = isObject(op.data) && Array.isArray(op.data.items) ? op.data.items : [];
         console.log(`Snooze operation "${action}" for ${items.length} item(s)`);
-        // TODO: update item availability
+        // Your code: update item availability
       }
       break;
     }
@@ -61,8 +62,9 @@ function handleDeliverectCall(kind, payload) {
     case 'busy_mode': {
       const status = typeof payload.status === 'string' ? payload.status : 'unknown';
       console.log(`Busy mode: ${status}`);
-      // TODO: pause or resume accepting orders
-      break;
+      // Your code: pause or resume accepting orders
+      // Deliverect asks for the response to echo the store's new status.
+      return status === 'unknown' ? undefined : { status };
     }
 
     default:
@@ -103,14 +105,15 @@ async function deliverectHandler(req, res) {
     return res.status(400).json({ error: 'Expected a JSON object' });
   }
 
+  let response;
   try {
-    handleDeliverectCall(kindFromRequest(req), payload);
+    response = handleDeliverectCall(kindFromRequest(req), payload);
   } catch (err) {
     console.error('Error handling Deliverect webhook:', err);
     return res.status(500).json({ error: 'Handler error' });
   }
 
-  res.status(200).json({ received: true });
+  res.status(200).json(response ?? { received: true });
 }
 
 for (const method of ['get', 'post', 'put', 'patch', 'delete']) {

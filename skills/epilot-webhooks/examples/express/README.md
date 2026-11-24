@@ -50,6 +50,6 @@ Use the printed URL as the webhook URL in epilot, then trigger the event (for ex
 
 - The route uses `express.raw({ type: '*/*' })`, so any content type works and the exact bytes are verified. `express.json()` before verification breaks the signature. The body is parsed only after the check.
 - If `EPILOT_WEBHOOK_SECRET` is unset the handler returns `500` and rejects the delivery. It never accepts unverified requests.
-- The library enforces a fixed 5-minute timestamp window. epilot retries and Hookdeck replays resend the original timestamp, so late ones are rejected. For a wider or no window, use the manual verifier in [verification.md](../../references/verification.md).
+- The library enforces a fixed 5-minute timestamp window. epilot's retries run up to 5 hours, its docs don't say whether a retry is signed again, and a replayed or queued request can arrive later than 5 minutes after signing, so late ones can be rejected. For a wider or no window, use the manual verifier in [verification.md](../../references/verification.md).
 - `binary_multipart` file deliveries sign per-file metadata and fail verification here.
 - The handler dedupes on `webhook-id`, which stays the same across retries. The in-memory set is a demo; use Redis or a database in production.

@@ -90,57 +90,57 @@ function handleEvent(event) {
   switch (type) {
     case 'checkout_session.completed':
       console.log(`Checkout session completed: ${id}${scope}`);
-      // TODO: fulfil the order
+      // Your code: fulfil the order
       break;
 
     case 'payment.succeeded':
       console.log(`Payment succeeded: ${id}${scope}`);
-      // TODO: mark the payment as paid
+      // Your code: mark the payment as paid
       break;
 
     case 'payment.failed':
       console.log(`Payment failed: ${id}${scope}`);
-      // TODO: notify the customer / retry
+      // Your code: notify the customer / retry
       break;
 
     case 'payment_intent.authorized':
       console.log(`Payment intent authorized: ${id}${scope}`);
-      // TODO: capture when ready
+      // Your code: capture when ready
       break;
 
     case 'payment_intent.captured':
       console.log(`Payment intent captured: ${id}${scope}`);
-      // TODO: record the captured funds
+      // Your code: record the captured funds
       break;
 
     case 'payout.paid':
       console.log(`Payout paid: ${id}${scope}`);
-      // TODO: reconcile the payout
+      // Your code: reconcile the payout
       break;
 
     case 'payout.failed':
       console.log(`Payout failed: ${id}${scope}`);
-      // TODO: alert finance
+      // Your code: alert finance
       break;
 
     case 'account.updated':
       console.log(`Account updated: ${id}${scope}`);
-      // TODO: refresh the connected account's status
+      // Your code: refresh the connected account's status
       break;
 
     case 'invoice.paid':
       console.log(`Invoice paid: ${id}${scope}`);
-      // TODO: extend the subscription
+      // Your code: extend the subscription
       break;
 
     case 'invoice.payment_failed':
       console.log(`Invoice payment failed: ${id}${scope}`);
-      // TODO: start dunning
+      // Your code: start dunning
       break;
 
     case 'identity.verification_session.verified':
       console.log(`Identity verification verified: ${id}${scope}`);
-      // TODO: unlock the verified user
+      // Your code: unlock the verified user
       break;
 
     default:

@@ -21,7 +21,7 @@ Minimal example of receiving HackerOne webhooks with the App Router and verifyin
 
 3. Set `HACKERONE_WEBHOOK_SECRET` to the secret you set on the HackerOne webhook.
 
-Set a secret on the HackerOne webhook and paste it here. Without one, HackerOne signs with an empty key, which this source cannot verify.
+Set a secret on the HackerOne webhook. Without one, HackerOne signs with an empty-string key, which anyone can compute, so the signature proves nothing.
 
 ## Run
 

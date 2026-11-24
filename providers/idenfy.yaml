@@ -9,7 +9,7 @@ notes: >
   bank-card, facial-authentication and age-estimation results. Each webhook is configured per event
   type in the dashboard. Delivery (from the docs): A 2xx within 10 s acknowledges; anything else is
   retried the configured number of times at a fixed interval, then a failure email (if configured) and
-  a manual Resend in the dashboard. Dedupe on `scanRef` (KYC) or `id` (bank card). iDenfy's docs say:
+  a manual Resend in the dashboard. One KYC verification sends several webhooks with the same `scanRef`, so key idempotent state updates on it (or `id` for bank cards) rather than dropping repeats. iDenfy's docs say:
   'Every webhook request from iDenfy includes an `Idenfy-Signature` header containing an
   **HMAC-SHA256** digest of the raw HTTP body.' 'When a webhook fires, iDenfy computes
   `HMAC-SHA256(secret, raw_body)` and attaches the hex-encoded result in the `Idenfy-Signature`
@@ -42,11 +42,11 @@ notes: >
   one-value enum. The dashboard shows the same events under display names (`ID VERIFICATION AUTO
   FINISHED`, `COMPANY REVIEW`, ...), and the legacy IDENTIFICATION page calls the newer events
   `ID_VERIFICATION_*`; the header enums say `IDENTIFICATION_*`. The KYC body's `final` flag says
-  whether more webhooks follow for the verification. Documented event types (23): IDENTIFICATION,
+  whether more webhooks follow for the verification. Documented event types (24): IDENTIFICATION,
   IDENTIFICATION_AUTO_FINISHED, IDENTIFICATION_MANUAL_FINISHED, IDENTIFICATION_EXPIRED,
   IDENTIFICATION_CANCELLED, IDENTIFICATION_RESUBMITTED, DOCUMENT_EXPIRATION, VIDEO_CALL_FINISHED,
   COMPANY_REVIEW, COMPANY_DELETE, COMPANY_AML_REVIEW, COMPANY_INFO_REQUEST, COMPANY_EXPIRATION,
-  COMPANY_SUBMIT (and 9 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express
+  COMPANY_SUBMIT (and 10 more). Handle a few common ones and log the rest. Method: POST. The examples handle POST on the webhook route. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified (Next.js: await request.arrayBuffer(); FastAPI: await request.body());
   parse the body only after the check. Hookdeck's source type is IDENFY, labelled 'iDenfy'. Hookdeck

@@ -33,11 +33,11 @@ def handle_event(event_type, body: dict) -> None:
 
     if event_type == "IDENTIFICATION_AUTO_FINISHED":
         print(f"KYC auto review finished (scanRef {scan_ref}, final: {body.get('final')})", body.get("status"))
-        # TODO: if final is false, wait for IDENTIFICATION_MANUAL_FINISHED
+        # Your code: if final is false, wait for IDENTIFICATION_MANUAL_FINISHED
 
     elif event_type == "IDENTIFICATION_MANUAL_FINISHED":
         print(f"KYC manual review finished (scanRef {scan_ref})", body.get("status"))
-        # TODO: record the final approve/deny decision
+        # Your code: record the final approve/deny decision
 
     elif event_type == "IDENTIFICATION_EXPIRED":
         print(f"KYC verification expired (scanRef {scan_ref})")
