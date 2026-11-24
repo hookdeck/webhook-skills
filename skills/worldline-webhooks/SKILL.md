@@ -117,7 +117,7 @@ Connect says it will add events, so **return 2xx for unknown types**.
 - **Connect retries** (relative to the first attempt): immediately, 5 min, 1 h, 2 h, 4 h, 6 h, 8 h, 16 h, 24 h, 48 h, then undeliverable. There is no manual resend; use the REST API to check status. The first attempt can take up to 24 h.
 - **Direct retries** (relative to the last attempt): 10 min, 1 h, 2 h, 8 h, 24 h. Direct adds a `retry-count` header (0 on the first attempt). It is unsigned, so use it for logging only.
 - **Duplicates and out-of-order delivery are normal on both platforms.** Dedupe on `id`, persistently. Reconcile against the resource's `status`, or re-read it through the REST API. Never trust arrival order.
-- **Direct:** a capture or refund can carry a **different `payment.id`** from its authorisation. The Direct page's online/offline definitions contradict each other, and it advises against building business logic on the distinction. Correlate on `paymentOutput.references.merchantReference` as well.
+- **Direct:** a capture or refund can carry a **different `payment.id`** from its authorisation. The Direct page's online/offline definitions contradict each other, and it says the id changes "following an incremental logic" that does not hold "in some specific scenarios", so it advises against building business operations around the id. Correlate on `paymentOutput.references.merchantReference` as well.
 
 ## Environment Variables
 

@@ -4,7 +4,7 @@ Minimal FastAPI example of receiving Worldline Connect and Worldline Direct webh
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.11+ (`fastapi>=0.165.0` requires it)
 - A Worldline **webhooks key** (key id + secret key). Connect: Configuration Center → webhooks keys. Direct: Merchant Portal → Developer → Webhooks. See [setup](../../references/setup.md)
 
 ## Setup
