@@ -2,7 +2,7 @@
 
 ## What Are General Translation Webhooks?
 
-[General Translation](https://generaltranslation.com) is an AI localization platform. Webhooks send translation events to your backend as signed HTTP POST requests, so you can trigger your own workflows when translated files or translation jobs change. Webhooks require a Starter or Enterprise plan.
+[General Translation](https://generaltranslation.com) is an AI localization platform. Webhooks send translation events to your backend as signed HTTP POST requests, so you can trigger your own workflows when translated files or translation jobs change. Webhooks require an Enterprise plan.
 
 Each delivery is an HTTPS POST with a JSON body. Signatures follow the [Standard Webhooks](https://www.standardwebhooks.com/) convention (`webhook-id`, `webhook-timestamp`, `webhook-signature`).
 

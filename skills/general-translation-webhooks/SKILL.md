@@ -16,7 +16,7 @@ metadata:
 
 # General Translation Webhooks
 
-[General Translation](https://generaltranslation.com) is an AI localization platform. Its webhooks report translated files and translation jobs as signed HTTP POSTs with a JSON body. Signatures follow the [Standard Webhooks](https://www.standardwebhooks.com/) convention. Webhooks need a Starter or Enterprise plan, and each organization can have up to 5 endpoints.
+[General Translation](https://generaltranslation.com) is an AI localization platform. Its webhooks report translated files and translation jobs as signed HTTP POSTs with a JSON body. Signatures follow the [Standard Webhooks](https://www.standardwebhooks.com/) convention. Webhooks need an Enterprise plan, and each organization can have up to 5 endpoints.
 
 ## When to Use This Skill
 

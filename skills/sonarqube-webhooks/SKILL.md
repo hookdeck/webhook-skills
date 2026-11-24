@@ -59,7 +59,7 @@ Return `401` for a missing, empty, malformed or mismatched header. Read the body
 
 ## Events and Payload
 
-SonarQube has no event-name field or header. Every delivery is an analysis result, a `POST` with a JSON body containing `taskId`, `status`, `analysedAt`, `project`, `qualityGate` and `properties`. Branch on `qualityGate.status`:
+SonarQube has no event-name field or header. Every delivery is an analysis result, a `POST` with a JSON body containing `taskId`, `status`, `analysedAt`, `project`, `qualityGate` and `properties`. It's sent when an analysis completes and when an issue update changes the quality gate status; the second kind has no `taskId`. Branch on `qualityGate.status`:
 
 | `qualityGate.status` | Meaning |
 |----------------------|---------|
@@ -69,7 +69,8 @@ SonarQube has no event-name field or header. Every delivery is an analysis resul
 ## Delivery Behavior
 
 - A delivery fails if your URL does not respond within 10 seconds.
-- Failed deliveries are **never retried** (redeliver through the Web API if needed). Respond fast and process asynchronously.
+- SonarQube Server **never retries** a failed delivery. Its docs suggest building your own redelivery with the `api/webhooks` Web API, which returns past deliveries. Respond fast and process asynchronously.
+- SonarQube Cloud sends the same payload and signature but retries some temporary failures, at most 3 calls per event; deduplicate analysis deliveries on `taskId`.
 - Delivery records are kept for 30 days.
 - A project can have up to 10 webhooks, and global webhooks also fire. SonarQube is self-hosted, so each instance is its own sender.
 - Besides the HMAC, SonarQube supports basic auth credentials in the webhook URL (`https://user:password@host/path`).

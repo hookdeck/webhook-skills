@@ -13,7 +13,7 @@ HackerOne's API docs describe the webhook behaviour but not the dashboard screen
 2. Choose the events to subscribe to (for example `report_created`, `report_triaged`, `report_bounty_awarded`). Subscribing only to events you handle limits the number of requests.
 3. Set a secret.
 
-Set a secret on the HackerOne webhook and paste it here. Without one, HackerOne signs with an empty key, which this source cannot verify.
+Set a secret on the HackerOne webhook. Without one, HackerOne signs with an empty-string key, which anyone can compute, so the signature proves nothing.
 
 Store the secret as `HACKERONE_WEBHOOK_SECRET`. It is used as plain UTF-8 text: do not hex- or base64-decode it. An empty secret is a configuration error, and the examples reject every request while it is unset.
 

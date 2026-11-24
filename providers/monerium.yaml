@@ -26,15 +26,15 @@ notes: >-
   Hookdeck's configuration alert for this source reads exactly: "You create the secret when you register
   the webhook: generate whsec_ followed by base64 random bytes, send it to Monerium and paste the same
   value here." SKILL.md and references/setup.md must state this requirement, quoting the alert verbatim.
-  Verification notes: Raw body is required. Body: {type, data}. Inferred from the handler (`event.type`,
-  `event.data` with `id`, `state`, `meta`); not a printed body. Event type: Top-level `type` per the guide's
-  handler; the order is in `data` (`id`, `state`, `meta`). Only the handler code shows this; no payload
-  example is printed. Event types (3 documented, list may not be exhaustive): order.created, order.updated,
-  subscription.created. Transport: JSON POST (the handler reads it with express.raw({ type: 'application/json'
+  Verification notes: Raw body is required. Body: {type, timestamp, data} per the webhooks section of the OpenAPI spec
+  (https://docs.monerium.com/redocusaurus/api.yaml); subscription.created has no `data`. Event type: Top-level
+  `type`. Event types (6 in the spec's webhooks map): order.created, order.updated, profile.updated, profile.error
+  (opt-in), iban.updated, subscription.created. When POST /webhooks omits `types`, iban.updated and profile.updated
+  are subscribed by default. Transport: JSON POST (the handler reads it with express.raw({ type: 'application/json'
   })). Delivery: Anything but 200 OK is retried up to 10 times over 12 hours with exponential backoff;
   dedupe on webhook-id. No schedule, timeout or ordering statement. Setup: POST /webhooks with `url`,
   the integrator's `secret` and `types` (e.g. order.created, order.updated); a subscription.created event
-  follows and must be answered 200 to activate. Profile approval is notified by email, not webhook. Express
+  follows and must be answered 200 to activate. On the Private plan, profile approval is notified by email, not webhook. Express
   examples must read the raw body with express.raw({ type: '*/*' }) so any content type works and the
   exact bytes are verified; parse the body only after the check. Hookdeck's source type is MONERIUM, labelled
   'Monerium'.

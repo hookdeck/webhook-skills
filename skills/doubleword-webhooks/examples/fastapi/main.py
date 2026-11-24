@@ -62,10 +62,10 @@ async def doubleword_webhook(request: Request):
 
     if event_type == "batch.completed":
         print(f"Batch {data.get('batch_id')} completed: {data.get('request_counts')}")
-        # TODO: download results with the files API using data["output_file_id"]
+        # Your code: download results with the files API using data["output_file_id"]
     elif event_type == "batch.failed":
         print(f"Batch {data.get('batch_id')} failed: {data.get('request_counts')}")
-        # TODO: alert, then inspect data["error_file_id"]
+        # Your code: alert, then inspect data["error_file_id"]
     else:
         print(f"Unhandled event type: {event_type}")
 

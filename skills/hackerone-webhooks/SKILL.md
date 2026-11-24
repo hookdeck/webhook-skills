@@ -26,7 +26,7 @@ HackerOne (hackerone.com) sends an HTTP POST to a URL you configure when report 
 
 ## Verification (core)
 
-Set a secret on the HackerOne webhook and paste it here. Without one, HackerOne signs with an empty key, which this source cannot verify.
+Set a secret on the HackerOne webhook. Without one, HackerOne signs with an empty-string key, which anyone can compute, so the signature proves nothing.
 
 Only the raw body is signed: no timestamp, delivery ID or other header. The HMAC key is the secret's UTF-8 bytes, used as-is.
 

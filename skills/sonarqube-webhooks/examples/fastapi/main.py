@@ -44,10 +44,10 @@ def handle_analysis(payload: dict) -> None:
 
     if gate_status == "OK":
         print(f"Quality gate passed for {project} (task {payload.get('taskId')})")
-        # TODO: Promote the build, post a success message
+        # Your code: Promote the build, post a success message
     elif gate_status == "ERROR":
         print(f"Quality gate failed for {project} (task {payload.get('taskId')})")
-        # TODO: Block the deploy, notify the owner (see qualityGate.conditions)
+        # Your code: Block the deploy, notify the owner (see qualityGate.conditions)
     else:
         print(f"Analysis {payload.get('taskId')} for {project} has status {payload.get('status')}")
 

@@ -28,7 +28,7 @@ seen_deliveries: set[str] = set()
 def parse_signature_header(header: str) -> tuple[str | None, int, list[str]]:
     """Parse Formspree-Signature: "t=<unix>,v1=<hex>".
 
-    The header can carry more than one v1= entry (key rotation) and other keys
+    The header can carry more than one v1= entry and other keys
     such as v0, which are ignored.
     """
     timestamp = None

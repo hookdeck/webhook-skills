@@ -78,7 +78,9 @@ Payout and platform events use `type` and `data`:
 | `legal_entity.verification_status_changed` | A merchant KYC/compliance status changed | Unlock or restrict features |
 
 The examples handle exactly these 16 events and acknowledge anything else with `200`. The list
-may not be exhaustive.
+may not be exhaustive: the Create Webhook `events` enum in NextPay's API reference also lists
+unprefixed `payment_intent.created`, `.succeeded`, `.failed`, `.canceled` and `.expired`, whose body
+shape isn't documented.
 
 ## Delivery and Retries
 

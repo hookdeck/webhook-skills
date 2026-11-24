@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A General Translation organization on the Starter or Enterprise plan
+- A General Translation organization on the Enterprise plan
 - A public HTTPS URL for your endpoint (for local development, use the Hookdeck CLI below)
 
 ## How Do I Get the Signing Secret?

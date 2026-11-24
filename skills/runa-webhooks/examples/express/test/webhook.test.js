@@ -57,6 +57,11 @@ function productUpdate({ productCode = 'XYZ-US', orderable = false, timestamp = 
   return JSON.stringify({ product_code: productCode, old_state: state(!orderable), new_state: state(orderable), timestamp });
 }
 
+// Runa's printed example (webhooks page, Event format)
+const ORDER_FAILED = '{"type": "order.failed", "timestamp": "2024-01-03T14:25:07Z", "data": {"id": "O-01HK7VK8C3WM1MQ916GEXJGQ6P", "status": "FAILED", "reason": "fraud"}}';
+// Values from the PayoutBlockedWebhook schema's examples in Runa's OpenAPI file
+const PAYOUT_BLOCKED = '{"type": "payout.blocked", "timestamp": "2026-10-23T10:15:00Z", "data": {"order_item_id": "E-01HK7VK8C3WM1MQ916GEXJGQ6Q", "order_id": "O-01H5WQGHKCBB85MQFM68S9KJ5Q", "assessment_id": "asm_461BC429E43344DBA6EF5A91F98DDE7E", "cancelled": true}}';
+
 describe('Runa webhook handler', () => {
   beforeEach(() => {
     process.env.RUNA_WEBHOOK_SECRET = TEST_SECRET;
@@ -72,6 +77,18 @@ describe('Runa webhook handler', () => {
     const res = await send(failedOrder());
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ received: true, event: 'order.completion' });
+  });
+
+  test('handles order.failed (typed envelope)', async () => {
+    const res = await send(ORDER_FAILED);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true, event: 'order.failed' });
+  });
+
+  test('handles payout.blocked (typed envelope)', async () => {
+    const res = await send(PAYOUT_BLOCKED);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true, event: 'payout.blocked' });
   });
 
   test('handles product.update', async () => {

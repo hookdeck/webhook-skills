@@ -16,7 +16,7 @@ metadata:
 
 # Cerebrum Webhooks
 
-[Cerebrum](https://www.cerebrum.com) is a background-check and identity-verification (vID / vouchers) API. It POSTs order, voucher and monitoring notifications to the `postbackWebhookUrl` of your integration. Delivery, signing and the webhook portal are provided by **Svix**, so every webhook carries `svix-id`, `svix-timestamp` and `svix-signature` headers (Standard Webhooks).
+[Cerebrum](https://www.cerebrum.com) is a background-check and identity-verification (vID / vouchers) API. It POSTs compact order, vID invite and monitoring notifications to the `postbackWebhookUrl` you set when you create an order or invite. Delivery, signing and the webhook portal are provided by **Svix**, so every webhook carries `svix-id`, `svix-timestamp` and `svix-signature` headers (Standard Webhooks).
 
 ## When to Use This Skill
 
@@ -64,35 +64,42 @@ The JSON body (schema has `additionalProperties: false`) has these fields:
 | Field | Notes |
 |-------|-------|
 | `event` | Event type, required (see below) |
-| `id`, `idType` | The object the event is about and what kind of ID it is |
+| `id`, `idType` | The object the event is about, and whether it is an `order`, `invite`, `beamInput` or `report` ID |
+| `organizationId` | Organization the event belongs to (optional only for older payloads) |
 | `eventDate` | When the event happened |
-| `svixAppId`, `additionalMetadata` | Svix application ID and extra metadata |
-| `metadata` | Event details. `metadata.delta` is a JSON-Patch-style change list on some order updates |
+| `svixAppId`, `additionalMetadata` | Svix application ID (not a secret) and the metadata attached at creation |
+| `metadata` | Only `metadata.delta`, a JSON Patch-style change list, on the four order-update events |
 
-Cerebrum publishes no example body, so check a real delivery in the Svix Portal. Dedupe on the `svix-id` header.
+Notifications are lookup hints: fetch `GET /v1/orders/{id}`, `GET /v1/vid/invites/{id}` or `GET /v1/monitoring/reports/{id}` for the current state. Cerebrum's [Event Types](https://docs.cerebrum.com/docs/event-types) page has a synthetic example for every event. Dedupe on the `svix-id` header.
 
 ## Common Event Types
 
-The `event` field holds one of 9 documented values (the list may not be exhaustive, so acknowledge unknown ones):
+The `event` field holds one of 13 documented values. Cerebrum has no published policy for new names, so log and acknowledge unknown ones:
 
-| Event | Group |
-|-------|-------|
-| `ORDER_STATUS_CHANGE` | Order |
-| `ORDER_SCORE_CHANGE` | Order |
-| `ORDER_CUSTOM_SCORE_CHANGE` | Order |
-| `ORDER_DISPUTE_RESOLVED` | Order |
-| `VOUCHER_STARTED` | Voucher (vID) |
-| `VOUCHER_REDEEMED` | Voucher (vID) |
-| `VOUCHER_EXPIRED` | Voucher (vID) |
-| `MONITORING_REPORT_GENERATED` | Monitoring |
-| `BEAM_INPUT_CREATED` | Beam |
+| Event | Group | Note |
+|-------|-------|------|
+| `ORDER_STATUS_CHANGE` | Order | |
+| `ORDER_SCORE_CHANGE` | Order | |
+| `ORDER_CUSTOM_SCORE_CHANGE` | Order | |
+| `ORDER_DISPUTE_RESOLVED` | Order | Sent just before the matching `ORDER_STATUS_CHANGE` |
+| `ORDER_ERROR` | Order | Opt-in (`order.error`) |
+| `VOUCHER_REDEEMED` | vID invite | `id` is the invite ID |
+| `VOUCHER_ACCEPTED` | vID invite | Opt-in (`voucher.accepted`) |
+| `VOUCHER_STARTED` | vID invite | Opt-in (`voucher.started`) |
+| `VOUCHER_CANCELED` | vID invite | Opt-in (`voucher.canceled`) |
+| `VOUCHER_EXPIRED` | vID invite | |
+| `VOUCHER_OPTED_OUT` | vID invite | |
+| `MONITORING_REPORT_GENERATED` | Monitoring | |
+| `BEAM_INPUT_CREATED` | Beam | Simulation route only; no production emitter found by Cerebrum |
 
-> Cerebrum's delta page also mentions `order.updated`, a name that appears in neither event list. See [references/overview.md](references/overview.md).
+> Opt-in events are enabled under `metadata.webhooks.events` on the package or organization, keyed by the internal names in brackets. The delta page's `order.updated` is one of those internal names, not a payload value. See [references/overview.md](references/overview.md).
 
 ## Delivery Semantics
 
-- Any `2xx` within **30 seconds** succeeds. Anything else (3xx included) or a timeout is retried: immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h, then dropped.
-- Return `400` or `401` for a missing header or a bad signature. Enqueue the event and process it asynchronously.
+- Any `2xx` succeeds. Anything else (3xx included) or a timeout fails. Cerebrum says its deadline isn't confirmed and recommends acknowledging in **under 10 seconds**, after storing the notification durably.
+- Retries: immediately, 5 s, 5 min, 30 min, 2 h, 5 h, 10 h, 10 h, then the message is marked failed for that endpoint. Resend or recover it from the Svix portal.
+- Cerebrum promises no ordering or exactly-once delivery.
+- Return `400` or `401` for a missing header or a bad signature. Store the event and process it asynchronously.
 - No challenge or handshake.
 
 ## Environment Variables
@@ -101,7 +108,7 @@ The `event` field holds one of 9 documented values (the list may not be exhausti
 CEREBRUM_WEBHOOK_SECRET=whsec_xxxxx   # full value including whsec_; handlers fail closed (500) without it
 ```
 
-Cerebrum prints no secret value in its docs. The secret comes from the Svix Portal that Cerebrum provides on request; Svix's default form is `whsec_<base64>`.
+Each Svix endpoint has its own secret, copied from the Svix application portal that Cerebrum provides on request. Cerebrum's examples show it as `whsec_...`. It is not your Cerebrum API key. With CRA delegation, postbacks are signed with the parent CRA application's endpoint secrets.
 
 ## Local Development
 
@@ -110,7 +117,7 @@ Cerebrum prints no secret value in its docs. The secret comes from the Svix Port
 npx hookdeck-cli listen 3000 cerebrum --path /webhooks/cerebrum
 ```
 
-Set the URL it prints as your integration's `postbackWebhookUrl`.
+Use the HTTPS URL it prints as `postbackWebhookUrl` in a `POST /v1/orders/simulate-webhook` request, which sends a signed notification for a dummy ID. The simulation route refuses HTTP `localhost` URLs.
 
 ## Reference Materials
 

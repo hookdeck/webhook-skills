@@ -40,13 +40,13 @@ Each webhook has one signing key, starting with `whsec_`. It is returned once, a
 3. Deduplicate on `webhook-id`, persisting it before applying side effects.
 4. Process, then return a success response.
 
-If verification fails, return a 4xx (typically `401` or `400`), don't process the payload and don't retry internally. The docs don't describe the retry schedule. A webhook can be **Suspended** by the service after repeated delivery failures, an HTTP `410 Gone`, or revoked chain permission; **Paused** is an admin action. Activate it again once the cause is fixed.
+If verification fails, return a 4xx (typically `401` or `400`), don't process the payload and don't retry internally. Prividium's docs don't describe the retry schedule; the vendor's open-source [local-webhooks](https://github.com/matter-labs/local-webhooks/blob/main/docs/src/delivery/handling-requests.md) setup retries non-2xx responses, timeouts and network failures, with local defaults of 10 attempts and exponential backoff from 30 seconds capped at 30 minutes, which a deployment can change. `GET /api/v1/webhook-deliveries` lists deliveries and `POST /api/v1/webhook-deliveries/{id}/resend` resends a failed one. A webhook can be **Suspended** by the service after repeated delivery failures, an HTTP `410 Gone`, or revoked chain permission; **Paused** is an admin action. Activate it again once the cause is fixed.
 
 ## Full Reference
 
-- [Webhooks overview](https://docs.prividium.zksync.io/developers/webhooks/overview)
-- [Verifying signatures](https://docs.prividium.zksync.io/developers/webhooks/verifying-signatures)
-- [Event webhooks API](https://docs.prividium.zksync.io/developers/webhooks/event-webhooks-api)
-- [Address webhooks API](https://docs.prividium.zksync.io/developers/webhooks/address-webhooks-api)
-- [Webhook delivery handling](https://docs.prividium.zksync.io/developers/webhooks/webhook-delivery-handling)
-- [Rotating signing keys](https://docs.prividium.zksync.io/developers/webhooks/rotating-signing-keys)
+- [Webhooks overview](https://docs.prividium.com/developers/webhooks/overview)
+- [Verifying signatures](https://docs.prividium.com/developers/webhooks/verifying-signatures)
+- [Event webhooks API](https://docs.prividium.com/developers/webhooks/event-webhooks-api)
+- [Address webhooks API](https://docs.prividium.com/developers/webhooks/address-webhooks-api)
+- [Webhook delivery handling](https://docs.prividium.com/developers/webhooks/webhook-delivery-handling)
+- [Rotating signing keys](https://docs.prividium.com/developers/webhooks/rotating-signing-keys)

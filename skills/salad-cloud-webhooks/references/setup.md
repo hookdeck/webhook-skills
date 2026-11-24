@@ -10,8 +10,11 @@ portal only to read the secret key.
 
 ## Get Your Webhook Secret
 
-1. Open the SaladCloud portal and find your webhook secret key (the docs show it in the portal next to the
-   webhook settings).
+1. Copy your organization's webhook secret key from the SaladCloud portal, or read it with
+   `GET /organizations/{organization_name}/webhook-secret-key`
+   ([API reference](https://docs.salad.com/reference/saladcloud-api/organizations/get-webhook-secret-key)).
+   `POST` to the same path replaces it; SaladCloud documents no overlap period, so update every verifier
+   (and your Hookdeck source) when you rotate.
 2. Copy it. It is a **base64 string with no `whsec_` prefix**.
 3. Put it, exactly as shown, in `SALAD_CLOUD_WEBHOOK_SECRET` for your own handler. The
    `standardwebhooks` library accepts the bare value, and also the `whsec_` + secret form.

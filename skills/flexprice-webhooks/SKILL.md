@@ -88,7 +88,8 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-60 events are documented. The name is `event_type` in the JSON body. The examples handle these:
+79 events are documented: 77 in Flexprice's event catalog and two more (`invoice.sync.success`,
+`invoice.sync.failed`) only in its webhook OpenAPI spec. The name is `event_type` in the JSON body. The examples handle these:
 
 | Event | Triggered When |
 |-------|----------------|

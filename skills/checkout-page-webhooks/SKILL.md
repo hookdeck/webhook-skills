@@ -76,11 +76,11 @@ The event type is the body's top-level `event` field (no header carries it). The
 
 | Event | Triggered When |
 |-------|----------------|
-| `payment.created` / `payment.paid` / `payment.abandoned` | A payment is started, completed, or abandoned |
-| `booking.created` / `booking.paid` / `booking.abandoned` | A booking is made, paid, or abandoned |
+| `payment.created` / `payment.paid` / `payment.abandoned` / `payment.canceled` | A payment is started, completed, abandoned, or canceled |
+| `booking.created` / `booking.paid` / `booking.abandoned` / `booking.canceled` | A booking is made, paid, abandoned, or canceled |
 | `subscription.created` / `trialing` / `scheduled` / `active` / `completed` / `canceled` / `expired` / `abandoned` | A subscription changes state (all prefixed `subscription.`) |
 | `customer.created` / `customer.updated` | A customer is created or changed |
-| `submission.created` / `submission.updated` | A form submission is created or changed |
+| `submission.created` / `submission.updated` / `submission.canceled` | A form submission is created, changed, or canceled |
 | `ticket.created` | A ticket is issued |
 | `product.created` / `product.updated` | A product changes |
 | `checkout_page.created` / `checkout_page.updated` | A checkout page changes |
@@ -105,7 +105,7 @@ retried briefly and then not sent again.
 ## Environment Variables
 
 ```bash
-CHECKOUT_PAGE_WEBHOOK_SECRET=your_signing_secret   # Settings > Webhooks > View signing secret
+CHECKOUT_PAGE_WEBHOOK_SECRET=your_signing_secret   # Settings > Webhooks > actions menu > View signing secret
 ```
 
 ## Local Development

@@ -15,20 +15,22 @@ There is no event-name field or header. Every delivery is the booking resource i
 
 | Field | Meaning |
 |-------|---------|
-| `id` | Booking id (deduplicate on this) |
+| `id` | Booking id, the same on every update for the booking (deduplicate on `id` plus `status`) |
 | `booking_identifier` | Booking reference |
 | `status` | Current booking stage; dispatch on this |
 | `driver` | Assigned driver details |
 | `pickup` / `dropoff` | Addresses and details for each leg |
 
-The list of `status` values is not reproduced here; take it from the
-[Delivereasy webhook docs](https://developer.delivereasy.co.nz/intro/webhooks) and your account's API reference.
+The `status` values are listed on the `booking_response` schema in the Lastmile API reference for your
+account's API version, and the [Testing page](https://developer.delivereasy.co.nz/intro/testing/) lists the
+order staging bookings move through.
 
 ## Delivery Behavior
 
 - Method: `POST`.
 - Return `200` as soon as the webhook arrives and process asynchronously.
-- At least once: the same booking can arrive more than once, so deduplicate on the booking `id`.
+- At least once: the same update can arrive more than once. Deduplicate on `id` plus `status`, because
+  every stage change for a booking carries the same `id`.
 - Retry schedule and timeout are not documented.
 
 ## Marketplace Webhooks

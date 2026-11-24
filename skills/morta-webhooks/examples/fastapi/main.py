@@ -114,18 +114,18 @@ def handle_event(body: dict) -> None:
         print(f"Table {resource_id}: {added} row(s) created")
     elif event == "table.row_updated":
         print(f"Table {resource_id}: row(s) updated")
-    elif event == "project.created":
+    elif event in ("hub.created", "project.created"):  # project.* is the legacy name
         print(f"Hub created: {resource_id}")
-    elif event == "project.duplication_failed":
+    elif event in ("hub.duplication_failed", "project.duplication_failed"):
         error = change.get("error")
         print(f"Hub duplication failed for {resource_id}: {error if isinstance(error, str) else 'unknown error'}")
     elif event == "member.created":
         print(f"Member added to hub {resource_id}")
-    elif event == "process.response_submitted":
+    elif event in ("document.response_submitted", "process.response_submitted"):
         print(f"Document response submitted: {resource_id}")
     else:
         print(f"Unhandled event type: {event if isinstance(event, str) else 'missing'}")
-    # TODO: persist / forward. `id` (the event's unique public ID) is a good idempotency key.
+    # Your code: persist or forward the event. `id` is the event's unique public ID.
 
 
 @app.post("/webhooks/morta")

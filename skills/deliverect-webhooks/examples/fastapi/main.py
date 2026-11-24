@@ -47,20 +47,22 @@ async def verified_body(request: Request) -> bytes:
 
 # Deliverect has no event field: the kind of call is chosen by the URL you registered.
 # Kind names and body fields below are illustrative; check your integration's payloads.
-def handle_deliverect_call(kind: str, payload: dict) -> None:
+def handle_deliverect_call(kind: str, payload: dict) -> dict | None:
     if kind == "order_status_update":
         order_id = payload.get("orderId")
         status = payload.get("status")
         order_id = order_id if isinstance(order_id, str) else "unknown"
         status = status if isinstance(status, (str, int)) and not isinstance(status, bool) else "unknown"
         print(f"Order {order_id} status: {status}")
-        # TODO: update the order in your system
+        # Your code: update the order in your system
 
     elif kind == "menu_update":
-        menus = payload.get("menus")
-        menus = menus if isinstance(menus, list) else []
-        print(f"Menu update with {len(menus)} menu(s)")
-        # TODO: sync the menu
+        menu_id = payload.get("menuId")
+        menu_id = menu_id if isinstance(menu_id, str) else "unknown"
+        categories = payload.get("categories")
+        categories = categories if isinstance(categories, list) else []
+        print(f"Menu {menu_id} update with {len(categories)} categories")
+        # Your code: sync the menu
 
     elif kind == "snooze_unsnooze":
         operations = payload.get("operations")
@@ -73,15 +75,19 @@ def handle_deliverect_call(kind: str, payload: dict) -> None:
             items = data.get("items") if isinstance(data, dict) else None
             items = items if isinstance(items, list) else []
             print(f'Snooze operation "{action}" for {len(items)} item(s)')
-            # TODO: update item availability
+            # Your code: update item availability
 
     elif kind == "busy_mode":
         status = payload.get("status")
         print(f"Busy mode: {status if isinstance(status, str) else 'unknown'}")
-        # TODO: pause or resume accepting orders
+        # Your code: pause or resume accepting orders
+        # Deliverect asks for the response to echo the store's new status.
+        if isinstance(status, str):
+            return {"status": status}
 
     else:
         print(f"Unhandled Deliverect call: {kind or '(no kind)'}")
+    return None
 
 
 # Deliverect sends mostly POSTs, but some signed calls are GETs with no body, so every method
@@ -103,12 +109,12 @@ async def deliverect_webhook(kind: str = "", raw_body: bytes = Depends(verified_
         raise HTTPException(status_code=400, detail="Expected a JSON object")
 
     try:
-        handle_deliverect_call(kind.lower().replace("-", "_"), payload)
+        response = handle_deliverect_call(kind.lower().replace("-", "_"), payload)
     except Exception as err:  # noqa: BLE001
         print(f"Error handling Deliverect webhook: {err}")
         raise HTTPException(status_code=500, detail="Handler error")
 
-    return {"received": True}
+    return response or {"received": True}
 
 
 @app.get("/health")

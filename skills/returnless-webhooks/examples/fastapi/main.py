@@ -71,15 +71,15 @@ async def returnless_webhook(request: Request):
         "request.approved_without_shipment",
     ):
         print(f"Return request {resource_id} approved ({event})")
-        # TODO: Notify the customer or create a label
+        # Your code: Notify the customer or create a label
     elif event == "request.rejected":
         print(f"Return request {resource_id} rejected")
     elif event == "return.created":
         print(f"Return {resource_id} created")
-        # TODO: Sync the return to your ERP or OMS
+        # Your code: Sync the return to your ERP or OMS
     elif event == "return.product.marked_as_received":
         print(f"Returned product received on {resource_id}")
-        # TODO: Restock inventory or trigger a refund
+        # Your code: Restock inventory or trigger a refund
     elif event == "shipment.delivered":
         print(f"Shipment {resource_id} delivered")
     else:

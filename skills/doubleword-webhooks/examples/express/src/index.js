@@ -63,13 +63,13 @@ app.post('/webhooks/doubleword', express.raw({ type: '*/*' }), (req, res) => {
   switch (event.type) {
     case 'batch.completed':
       console.log(`Batch ${data.batch_id} completed:`, data.request_counts);
-      // TODO: download results with the files API using data.output_file_id
+      // Your code: download results with the files API using data.output_file_id
       // (and data.error_file_id for individual failed requests)
       break;
 
     case 'batch.failed':
       console.log(`Batch ${data.batch_id} failed:`, data.request_counts);
-      // TODO: alert, then inspect data.error_file_id
+      // Your code: alert, then inspect data.error_file_id
       break;
 
     default:

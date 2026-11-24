@@ -30,7 +30,7 @@ const isObject = (value: unknown): value is JsonObject =>
 
 // Deliverect has no event field: the kind of call is chosen by the URL you registered.
 // Kind names and body fields below are illustrative; check your integration's payloads.
-function handleDeliverectCall(kind: string, payload: JsonObject): void {
+function handleDeliverectCall(kind: string, payload: JsonObject): JsonObject | undefined {
   switch (kind) {
     case 'order_status_update': {
       const orderId = typeof payload.orderId === 'string' ? payload.orderId : 'unknown';
@@ -39,14 +39,15 @@ function handleDeliverectCall(kind: string, payload: JsonObject): void {
           ? payload.status
           : 'unknown';
       console.log(`Order ${orderId} status: ${status}`);
-      // TODO: update the order in your system
+      // Your code: update the order in your system
       break;
     }
 
     case 'menu_update': {
-      const menus = Array.isArray(payload.menus) ? payload.menus : [];
-      console.log(`Menu update with ${menus.length} menu(s)`);
-      // TODO: sync the menu
+      const menuId = typeof payload.menuId === 'string' ? payload.menuId : 'unknown';
+      const categories = Array.isArray(payload.categories) ? payload.categories : [];
+      console.log(`Menu ${menuId} update with ${categories.length} categories`);
+      // Your code: sync the menu
       break;
     }
 
@@ -57,7 +58,7 @@ function handleDeliverectCall(kind: string, payload: JsonObject): void {
         const action = typeof op.action === 'string' ? op.action : 'unknown';
         const items = isObject(op.data) && Array.isArray(op.data.items) ? op.data.items : [];
         console.log(`Snooze operation "${action}" for ${items.length} item(s)`);
-        // TODO: update item availability
+        // Your code: update item availability
       }
       break;
     }
@@ -65,13 +66,15 @@ function handleDeliverectCall(kind: string, payload: JsonObject): void {
     case 'busy_mode': {
       const status = typeof payload.status === 'string' ? payload.status : 'unknown';
       console.log(`Busy mode: ${status}`);
-      // TODO: pause or resume accepting orders
-      break;
+      // Your code: pause or resume accepting orders
+      // Deliverect asks for the response to echo the store's new status.
+      return status === 'unknown' ? undefined : { status };
     }
 
     default:
       console.log(`Unhandled Deliverect call: ${kind || '(no kind)'}`);
   }
+  return undefined;
 }
 
 /**
@@ -105,12 +108,13 @@ export async function handleDeliverectRequest(request: Request, kindSegment?: st
   }
 
   const kind = (kindSegment ?? '').toLowerCase().replace(/-/g, '_');
+  let response: JsonObject | undefined;
   try {
-    handleDeliverectCall(kind, payload);
+    response = handleDeliverectCall(kind, payload);
   } catch (err) {
     console.error('Error handling Deliverect webhook:', err);
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }
 
-  return NextResponse.json({ received: true });
+  return NextResponse.json(response ?? { received: true });
 }

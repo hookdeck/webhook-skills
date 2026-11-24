@@ -78,7 +78,10 @@ widened. Deduplicate on `svix-id` (or the event `id`) instead of relying on the 
 
 ## Common Event Types
 
-16 events are documented (the list may not be exhaustive). The examples handle all of these:
+16 events are listed on NextPay's Understanding Webhooks page (the list may not be exhaustive). The
+examples handle all of these. The API reference's Create Webhook `events` enum also lists unprefixed
+`payment_intent.created`, `.succeeded`, `.failed`, `.canceled` and `.expired`, with no documented body
+shape, and doesn't list `v2.payment_intent.canceled`. Log one before writing a parser for them.
 
 | Event | Body shape | Triggered When |
 |-------|-----------|----------------|

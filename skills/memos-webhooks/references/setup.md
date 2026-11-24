@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A Memos instance on 0.31 or later (older versions don't sign deliveries in the Standard Webhooks format)
+- A Memos instance on v0.30.0 or later (older versions don't sign deliveries in the Standard Webhooks format)
 - Your application's public HTTP(S) webhook URL (use the Hookdeck CLI for local development)
 
 ## How Do I Add a Webhook?

@@ -19,7 +19,8 @@ import { Webhook } from 'svix';
 // `metadata.delta` is a JSON-Patch-style change list on some order updates.
 interface CerebrumEvent {
   id: string;
-  idType: string;
+  idType: string; // order, invite, beamInput or report
+  organizationId?: string;
   additionalMetadata?: Record<string, unknown>;
   event: string; // e.g. "ORDER_STATUS_CHANGE"
   eventDate: string;
@@ -75,11 +76,18 @@ function handleEvent(payload: CerebrumEvent): void {
     case 'ORDER_DISPUTE_RESOLVED':
       console.log(`Order dispute resolved: ${idType} ${id}`);
       break;
+    case 'ORDER_ERROR': // opt-in: enable order.error
+      console.log(`County search dispatch failed: ${idType} ${id}`);
+      break;
 
     // --- Vouchers (vID) ----------------------------------------------------
+    // VOUCHER_ACCEPTED, VOUCHER_STARTED and VOUCHER_CANCELED are opt-in.
+    case 'VOUCHER_ACCEPTED':
     case 'VOUCHER_STARTED':
-    case 'VOUCHER_REDEEMED':
+    case 'VOUCHER_CANCELED':
+    case 'VOUCHER_REDEEMED': // id is the invite ID, not the new order ID
     case 'VOUCHER_EXPIRED':
+    case 'VOUCHER_OPTED_OUT':
       console.log(`${event}: ${idType} ${id}`);
       break;
 
@@ -92,7 +100,7 @@ function handleEvent(payload: CerebrumEvent): void {
       break;
 
     default:
-      // The documented list may not be exhaustive: acknowledge, don't fail.
+      // Cerebrum has no published policy for new event names: acknowledge and log.
       console.log(`Unhandled Cerebrum event: ${event}`);
   }
 }
@@ -128,8 +136,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Cerebrum needs a 2xx within 30 seconds. In production, enqueue the
-    // payload here and process it asynchronously.
+    // Cerebrum recommends a 2xx in under 10 seconds. In production, store the
+    // payload durably here and fetch the order or invite asynchronously.
     handleEvent(payload);
     processedMessageIds.add(messageId);
   } catch (err) {

@@ -18,24 +18,26 @@ two kinds of webhooks:
 | `payment.created` | A payment is started | Track pending orders |
 | `payment.paid` | A payment succeeds | Fulfil orders, grant access |
 | `payment.abandoned` | A payment is abandoned | Recovery emails |
+| `payment.canceled` | A payment is canceled | Cancel the order |
 | `booking.created` | A booking is made | Calendar / CRM sync |
 | `booking.paid` | A booking is paid | Confirm the booking |
 | `booking.abandoned` | A booking is abandoned | Follow-up |
+| `booking.canceled` | A booking is canceled | Release the slot |
 | `subscription.created` | A subscription is created | Provision account |
 | `subscription.trialing` | A subscription enters a trial | Trial onboarding |
 | `subscription.scheduled` | A subscription is scheduled | Prepare start |
 | `subscription.active` | A subscription becomes active | Enable features |
 | `subscription.completed` | A subscription completes | Wind down |
-| `subscription.canceled` | A subscription is canceled | Revoke access at period end |
+| `subscription.canceled` | A subscription is set to cancel (now, at period end or on a date) | Schedule the end of access |
 | `subscription.expired` | A subscription expires | Revoke access |
 | `subscription.abandoned` | A subscription checkout is abandoned | Follow-up |
 | `customer.created` / `customer.updated` | A customer is created or changed | Sync to CRM |
-| `submission.created` / `submission.updated` | A form submission is created or changed | Lead capture |
+| `submission.created` / `submission.updated` / `submission.canceled` | A form submission is created, changed, or canceled | Lead capture |
 | `ticket.created` | A ticket is issued | Send tickets |
 | `product.created` / `product.updated` | A product changes | Catalog sync |
 | `checkout_page.created` / `checkout_page.updated` | A checkout page changes | Audit |
 
-That is the full documented list of 23 events.
+That is the full documented list of 26 events.
 
 ## Event Payload Structure
 

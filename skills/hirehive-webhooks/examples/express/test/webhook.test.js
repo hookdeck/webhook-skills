@@ -81,9 +81,9 @@ describe('HireHive webhook handler', () => {
   });
 
   test('acknowledges an event type it does not handle', async () => {
-    const res = await send(envelope('job.archived'));
+    const res = await send(envelope('example.unlisted'));
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('job.archived');
+    expect(res.body.type).toBe('example.unlisted');
   });
 
   test('accepts a delivery signed the same way but sent with svix-* headers', async () => {

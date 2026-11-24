@@ -22,10 +22,10 @@ Formspree has no event types: there is no event-name field or header, and every 
 
 ```json
 {
-  "form": "<form hashid>",
+  "form": "",
   "keys": ["keys", "in", "the", "order", "they", "were", "submitted"],
   "submission": {
-    "_date": "2026-10-26T10:00:00",
+    "_date": "2029-12-31T00:00:00",
     "field": "value",
     "other-fields": "other value"
   }

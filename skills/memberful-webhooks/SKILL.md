@@ -52,7 +52,7 @@ function verifyMemberfulSignature(rawBody, signature, secret = process.env.MEMBE
 
 ## Event Types
 
-Names are exact (member events use `object_event`, most others `object.event`). The docs list the names but never show where the name sits in the payload; the examples assume a top-level `event` field and log anything else. Confirm against a real delivery.
+Names are exact (member events use `object_event`, most others `object.event`). The docs list the names but never show where the name sits in the payload. Memberful's own WordPress plugin routes on a top-level `event` field ([webhook.php](https://github.com/memberful/memberful-wp/blob/main/src/endpoints/webhook.php)), and the examples do the same and log anything else. Confirm against a test delivery.
 
 | Group | Events |
 |-------|--------|

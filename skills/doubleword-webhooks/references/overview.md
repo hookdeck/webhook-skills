@@ -2,8 +2,8 @@
 
 ## What Are Doubleword Webhooks?
 
-Doubleword is a batch inference API. Instead of polling a batch for status, you can register one
-webhook URL on your user profile and Doubleword sends an HTTP POST when a batch reaches a
+Doubleword is a batch inference API. Instead of polling a batch for status, you can add a webhook
+in your profile or with the `dw` CLI, and Doubleword sends an HTTP POST when a batch reaches a
 terminal state (completed or failed). Requests follow the Standard Webhooks specification.
 
 ## Common Event Types
@@ -13,8 +13,10 @@ terminal state (completed or failed). Requests follow the Standard Webhooks spec
 | `batch.completed` | A batch completes (`data.status` is `completed`) | Download `output_file_id` and `error_file_id` with the files API, start downstream processing |
 | `batch.failed` | A batch fails (`data.status` is `failed`) | Alert, inspect the error file, resubmit |
 
-Both events are always sent; there is no per-event subscription. Doubleword documents these two
-types and the list may not be exhaustive, so acknowledge unknown types with a `2xx`.
+Each webhook lists the event types it receives (`dw webhooks create --events ...`); the dashboard
+selects both batch events by default. Doubleword's open-source control layer also defines
+platform-scoped `batch.created`, `user.created` and `api_key.created` events, which only a platform
+manager can subscribe to. Acknowledge unknown types with a `2xx`.
 
 ## Event Payload Structure
 

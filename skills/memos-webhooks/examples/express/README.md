@@ -7,7 +7,7 @@ Standard Webhooks specification).
 ## Prerequisites
 
 - Node.js 18+
-- A Memos instance (0.31+) with a webhook and its signing secret (`whsec_...`)
+- A Memos instance (v0.30.0+) with a webhook and its signing secret (`whsec_...`)
 
 ## Setup
 

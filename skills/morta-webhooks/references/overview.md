@@ -23,8 +23,9 @@ Every event shares one top-level envelope. Only `event` and `context` vary by ev
 | `context` | Object whose shape depends on the event (e.g. `{ "rows": [...] }`) |
 | `user` | User that triggered the event, or `null` for system events |
 | `createdAt` | UTC timestamp the event was generated |
-| `contextProjectId` | Hub ID |
-| `contextProcessId`, `contextProcessSectionId`, `contextProcessResponseId` | Related document, section, response IDs, or `null` |
+| `contextHubId` | Hub ID |
+| `contextDocumentId`, `contextDocumentSectionId`, `contextDocumentResponseId` | Related document, section, response IDs, or `null` |
+| `contextProjectId`, `contextProcessId`, `contextProcessSectionId`, `contextProcessResponseId` | Deprecated copies of the four fields above, with the same values |
 | `contextTableId`, `contextTableViewId`, `contextTableColumnId` | Related table, view, column IDs, or `null` |
 
 ```json
@@ -36,6 +37,7 @@ Every event shares one top-level envelope. Only `event` and `context` vary by ev
   "context": { "rows": ["See the TableRow schema"] },
   "user": "See the User schema",
   "createdAt": "2020-08-27T14:20:28.405158",
+  "contextHubId": "9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00",
   "contextProjectId": "9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00",
   "contextTableId": "4e687ada-900a-4562-b493-6c6f67ffca6e"
 }
@@ -50,15 +52,15 @@ their API reference.)
 |-------|----------------|------------------|
 | `table.row_created` | Rows are added to a table | Sync new data downstream |
 | `table.row_updated` | Table rows change | Keep a mirror up to date |
-| `project.created` | A hub is created | Provision related resources |
-| `project.duplication_failed` | A hub duplication job fails | Alert an owner (`change` carries the error) |
+| `hub.created` | A hub is created | Provision related resources |
+| `hub.duplication_failed` | A hub duplication job fails | Alert an owner (`change` carries the error) |
 | `member.created` | A user is added to a hub | Onboarding automation |
-| `process.response_submitted` | A document response is submitted | Start a review workflow |
+| `document.response_submitted` | A document response is submitted | Start a review workflow |
 
-## All Documented Events (76)
+## All Documented Events (75)
 
-Hub: `project.created`, `project.updated`, `project.deleted`, `project.restored`, `project.searched`,
-`project.duplicated`, `project.duplication_failed`, `project.joined`, `project.read`
+Hub: `hub.created`, `hub.updated`, `hub.deleted`, `hub.restored`, `hub.searched`,
+`hub.duplicated`, `hub.duplication_failed`, `hub.joined`, `hub.read`
 
 Members and policies: `member.created`, `member.updated`, `member.deleted`, `policy.created`,
 `policy.updated`, `policy.deleted`
@@ -70,20 +72,27 @@ Tables: `table.created`, `table.updated`, `table.deleted`, `table.restored`, `ta
 `table.view_updated`, `table.view_deleted`, `table.view_duplicated`, `table.view_read`,
 `table.comment_created`, `table.comment_updated`, `table.comment_deleted`, `table.thread_created`,
 `table.thread_resolved`, `table.thread_reopened`, `table.thread_deleted`, `table.sync_created`,
-`table.sync_completed`, `table.sync_error`, `table.sync_deleted`, `table.join_error`,
-`table.script_error`
+`table.sync_completed`, `table.sync_error`, `table.sync_deleted`, `table.join_error`
 
-Documents (`process.*`): `process.created`, `process.updated`, `process.deleted`,
-`process.restored`, `process.duplicated`, `process.duplication_failed`, `process.read`,
-`process.section_created`, `process.section_updated`, `process.section_deleted`,
-`process.section_duplicated`, `process.section_restored`, `process.pdf_exported`,
-`process.word_exported`, `process.response_created`, `process.response_updated`,
-`process.response_submitted`, `process.response_reset`, `process.response_deleted`,
-`process.response_restored`, `process.comment_created`, `process.comment_updated`,
-`process.comment_deleted`, `process.thread_created`, `process.thread_resolved`,
-`process.thread_reopened`, `process.thread_deleted`
+Documents: `document.created`, `document.updated`, `document.deleted`,
+`document.restored`, `document.duplicated`, `document.duplication_failed`, `document.read`,
+`document.section_created`, `document.section_updated`, `document.section_deleted`,
+`document.section_duplicated`, `document.section_restored`, `document.pdf_exported`,
+`document.word_exported`, `document.response_created`, `document.response_updated`,
+`document.response_submitted`, `document.response_reset`, `document.response_deleted`,
+`document.response_restored`, `document.comment_created`, `document.comment_updated`,
+`document.comment_deleted`, `document.thread_created`, `document.thread_resolved`,
+`document.thread_reopened`, `document.thread_deleted`
 
-`user.*` account events are audit-log only and are never delivered by webhook. `project.read` and
+### Legacy names
+
+Hub events were named `project.*` and document events `process.*` (for example `project.created`,
+`process.response_submitted`). Morta deprecated those names but still delivers them: a webhook
+subscribed to `process.updated` receives `"event": "process.updated"`. A webhook subscribed under
+both names gets one delivery per event, named with the new name. Accept both spellings while any
+old subscription exists.
+
+`user.*` account events are audit-log only and are never delivered by webhook. `hub.read` and
 similar `*.read` events are high volume: subscribe only if you need them.
 
 ## Full Event Reference

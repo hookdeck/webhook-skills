@@ -138,8 +138,8 @@ describe('Deliverect webhook', () => {
     });
 
     it('handles menu updates', async () => {
-      await post(JSON.stringify({ menus: [{}, {}] }), undefined, 'menu_update');
-      expect(logSpy).toHaveBeenCalledWith('Menu update with 2 menu(s)');
+      await post(JSON.stringify({ menuId: 'm1', categories: [{}, {}] }), undefined, 'menu_update');
+      expect(logSpy).toHaveBeenCalledWith('Menu m1 update with 2 categories');
     });
 
     it('handles snooze/unsnooze operations', async () => {
@@ -149,7 +149,8 @@ describe('Deliverect webhook', () => {
     });
 
     it('handles busy mode and accepts hyphens in the kind', async () => {
-      await post(JSON.stringify({ status: 'PAUSED' }), undefined, 'busy-mode');
+      const res = await post(JSON.stringify({ status: 'PAUSED' }), undefined, 'busy-mode');
+      expect(await res.json()).toEqual({ status: 'PAUSED' });
       expect(logSpy).toHaveBeenCalledWith('Busy mode: PAUSED');
     });
 
@@ -172,7 +173,7 @@ describe('Deliverect webhook', () => {
     it('does not fail on wrong-typed fields', async () => {
       const cases: Array<[string, unknown]> = [
         ['order_status_update', { orderId: 5, status: { a: 1 } }],
-        ['menu_update', { menus: 'nope' }],
+        ['menu_update', { menuId: 5, categories: 'nope' }],
         ['snooze_unsnooze', { operations: 'x' }],
         ['snooze_unsnooze', { operations: [null, 7, { action: 3, data: 'y' }, { action: 'snooze', data: { items: 5 } }] }],
         ['busy_mode', { status: ['PAUSED'] }],

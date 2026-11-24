@@ -14,11 +14,11 @@ Set it explicitly with `"apiVersion": "2026-10"` and the `Sajn-Version: 2026-10`
 
 ## How Do I Add a sajn Webhook in the Dashboard?
 
-1. Go to [app.sajn.se](https://app.sajn.se) **Inställningar > Utvecklare > Webhooks**.
+1. In [app.sajn.se](https://app.sajn.se), open the **Webhooks** tab in **Konsol**, the developer console at the bottom of the page.
 2. Click **Skapa webhook** (Create webhook).
 3. Enter your **Webhook URL** (HTTPS), for example `https://your-app.com/webhooks/sajn`.
 4. Select **Händelser** (Events), for example `document.completed`, `document.party.signed`, `document.party.delivery_failed`.
-5. Set **API-version** to `2026-10` or later.
+5. Set **API-version** to `2026-10` or later (it defaults to your organization's version).
 6. Leave **Hemlighet** (Secret) empty so sajn generates one.
 7. Click **Skapa webhook**. An organization administrator can pick **Alla arbetsytor** to receive every workspace's events (requires `2026-10`).
 
@@ -53,7 +53,7 @@ For 24 hours after a rotation every delivery carries two signatures (new and old
 
 ## How Do I Test a sajn Webhook?
 
-`POST /api/v1/webhooks/{id}/test` sends a signed `webhook.test` event to that webhook only. Each attempt, with its status code and response, shows in **Inställningar > Utvecklare > Loggar** and in `GET /api/v1/webhooks/{id}/deliveries`.
+`POST /api/v1/webhooks/{id}/test` sends a signed `webhook.test` event to that webhook only. Each attempt, with its status code and response, shows on the **Webhooks** tab in Konsol and in `GET /api/v1/webhooks/{id}/deliveries`.
 
 ### Local development with Hookdeck CLI
 
@@ -70,4 +70,4 @@ A sandbox organization sends events with `"environment": "SANDBOX"`. Secrets are
 
 ## Managing Endpoints
 
-`PATCH /api/v1/webhooks/{id}` changes `url`, `events`, `enabled` or `apiVersion`. A paused endpoint (`status: PAUSED`) must be reactivated explicitly; setting `enabled` doesn't lift a pause. See [Manage webhook endpoints](https://docs.sajn.se/webhooks/manage-endpoints).
+`PATCH /api/v1/webhooks/{id}` changes `url`, `events`, `enabled` or `apiVersion`. A paused endpoint (`status: PAUSED`) must be reactivated explicitly; setting `enabled` doesn't lift a pause. See [Manage webhook endpoints](https://www.sajn.se/docs/webhooks/manage-endpoints).

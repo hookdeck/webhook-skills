@@ -54,8 +54,9 @@ def verify_idenfy_signature(raw_body: bytes, signature, secret: str) -> bool:
 - **Hex case.** Compare case-insensitively; iDenfy sends lowercase.
 - **No signing key, no header.** Set the key on every webhook you receive.
 - **One key per webhook.** Each event type's webhook can have its own key.
-- **No timestamp.** Signatures never expire, so deduplicate on `scanRef` (KYC) or `id` (bank
-  card) instead of relying on a freshness window.
+- **No timestamp.** Signatures never expire, so make handlers idempotent (an update keyed on
+  `scanRef`, or `id` for bank cards, that gives the same result when repeated) instead of
+  relying on a freshness window.
 - **Proxies.** A reverse proxy or load balancer that re-encodes JSON or changes whitespace
   breaks the signature. Verify before any body-transforming middleware.
 - **Reject when no secret is configured.** An empty key would make the HMAC trivially forgeable.

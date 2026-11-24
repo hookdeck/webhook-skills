@@ -3,12 +3,12 @@ import crypto from 'crypto';
 /**
  * SOCOTRA WEBHOOK VERIFICATION
  *
- *   header    : socotra-signature: t=<unix ms>,v1=<hex>[,v1=<hex>...]
+ *   header    : socotra-signature: t=<unix ms>,v1=<hex>[,tag=<tag>]
  *   algorithm : HMAC-SHA256, lowercase hex
  *   signed    : the t value exactly as sent (a string), ".", then the RAW body bytes
  *   key       : the endpoint `secret`, used as UTF-8 bytes
  *   tag       : leave the endpoint's `tag` unset. A tagged endpoint signs
- *               `{t}.{body}.{tag}`, which this check (and Hookdeck) cannot verify.
+ *               `{t}.{body}.{tag}`, which this check does not verify.
  */
 const SIGNATURE_HEX = /^[0-9a-fA-F]{64}$/;
 

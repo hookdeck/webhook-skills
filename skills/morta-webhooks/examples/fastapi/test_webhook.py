@@ -32,6 +32,7 @@ def envelope(event: str, **extra) -> dict:
         "context": {},
         "user": None,
         "createdAt": "2020-08-27T14:20:28.405158",
+        "contextHubId": "9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00",
         "contextProjectId": "9f1c0e2a-1b2c-4d3e-8f4a-5b6c7d8e9f00",
         **extra,
     }
@@ -44,7 +45,7 @@ def post(body: str, header: str | None = None, content_type: str = "application/
     return client.post("/webhooks/morta", content=body, headers=headers)
 
 
-BODY = json.dumps(envelope("project.created"))
+BODY = json.dumps(envelope("hub.created"))
 
 
 class TestVerify:
@@ -104,7 +105,7 @@ class TestEndpoint:
     def test_verifies_exact_bytes_for_any_content_type(self):
         assert post(BODY, sign(BODY), "text/plain").status_code == 200
 
-    @pytest.mark.parametrize("name", ["project.created", "member.created", "process.response_submitted"])
+    @pytest.mark.parametrize("name", ["hub.created", "member.created", "document.response_submitted", "project.created", "process.response_submitted"])
     def test_handles_events(self, name):
         body = json.dumps(envelope(name))
         assert post(body, sign(body)).status_code == 200
@@ -115,14 +116,14 @@ class TestEndpoint:
         assert "Unhandled event type: table.view_read" in capsys.readouterr().out
 
     def test_reads_double_encoded_change(self, capsys):
-        body = json.dumps(envelope("project.duplication_failed", change='{"error": "Duplication timed out"}'))
+        body = json.dumps(envelope("hub.duplication_failed", change='{"error": "Duplication timed out"}'))
         assert post(body, sign(body)).status_code == 200
         assert "Duplication timed out" in capsys.readouterr().out
 
     def test_wrong_typed_fields_are_ignored(self):
         for payload in (
             {"event": "table.row_created", "resourceId": 5, "change": 7, "context": {"rows": "nope"}},
-            {"event": "project.duplication_failed", "change": "[1,2", "context": []},
+            {"event": "hub.duplication_failed", "change": "[1,2", "context": []},
             {"event": ["x"], "change": {"added": 1}, "context": None},
         ):
             body = json.dumps(payload)

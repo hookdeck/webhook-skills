@@ -12,13 +12,13 @@
 3. Choose the events to listen for: one or several of the 19 documented events (`job.*`, `application.*`, `candidate.*`, `feedback.*`, `interview.*`).
 4. Save the webhook.
 
-You can create an unlimited number of webhooks, enable or disable each one at any time, and view a log of the requests sent to it. No challenge or validation request is sent to your URL when you save.
+You can create an unlimited number of webhooks, enable or disable each one at any time, and view a log of the requests sent to it. HireHive documents no challenge or validation request when you save.
 
 HireHive also has API endpoints for listing, creating and updating webhooks and for listing webhook events, see the [API reference](https://docs.hirehive.com/api-reference/webhooks/list).
 
 ## Where Is My Signing Secret?
 
-Each webhook has its own secret in that webhook's settings. HireHive's text never shows the format; the video displays a value starting with `whsec_` (for example `whsec_XgGh8Iqsem+...`). Store the full value, prefix included, in `HIREHIVE_WEBHOOK_SECRET`. The HMAC key is the base64-decoded part after `whsec_`. Keep it out of client-side code and version control.
+Each webhook has its own secret in that webhook's settings. HireHive's text never shows the format; the video displays a value starting with `whsec_`. Store the full value, prefix included, in `HIREHIVE_WEBHOOK_SECRET`. The HMAC key is the base64-decoded part after `whsec_`. Keep it out of client-side code and version control.
 
 Because every webhook has its own secret, a handler that serves several webhooks needs the matching secret for each URL.
 
@@ -37,7 +37,7 @@ Because every webhook has its own secret, a handler that serves several webhooks
 
 ## Retries and Replays
 
-Failed deliveries are retried on a fixed schedule for about 75.5 hours. Retries and replays keep their original `webhook-timestamp`, so the `standardwebhooks` library's 5-minute window rejects them when they arrive late. See [verification.md](verification.md) for a manual verifier with a configurable window.
+Failed deliveries are retried on a fixed schedule for about 75.5 hours. Under the Standard Webhooks spec each HireHive retry carries a new attempt timestamp (HireHive doesn't say so itself). Hookdeck retries and replays keep the original `webhook-timestamp`, so the `standardwebhooks` library's 5-minute window rejects them when they arrive late. See [verification.md](verification.md) for a manual verifier with a configurable window.
 
 ## IP Allowlists
 

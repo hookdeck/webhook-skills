@@ -97,6 +97,24 @@ def test_order_completion_failed_stub():
     assert response.json() == {"received": True, "event": "order.completion"}
 
 
+# Runa's printed example (webhooks page, Event format)
+ORDER_FAILED = '{"type": "order.failed", "timestamp": "2024-01-03T14:25:07Z", "data": {"id": "O-01HK7VK8C3WM1MQ916GEXJGQ6P", "status": "FAILED", "reason": "fraud"}}'
+# Values from the PayoutBlockedWebhook schema's examples in Runa's OpenAPI file
+PAYOUT_BLOCKED = '{"type": "payout.blocked", "timestamp": "2026-10-23T10:15:00Z", "data": {"order_item_id": "E-01HK7VK8C3WM1MQ916GEXJGQ6Q", "order_id": "O-01H5WQGHKCBB85MQFM68S9KJ5Q", "assessment_id": "asm_461BC429E43344DBA6EF5A91F98DDE7E", "cancelled": true}}'
+
+
+def test_order_failed():
+    response = send(ORDER_FAILED)
+    assert response.status_code == 200
+    assert response.json() == {"received": True, "event": "order.failed"}
+
+
+def test_payout_blocked():
+    response = send(PAYOUT_BLOCKED)
+    assert response.status_code == 200
+    assert response.json() == {"received": True, "event": "payout.blocked"}
+
+
 def test_product_update():
     response = send(product_update(product_code="BASIC-US"))
     assert response.status_code == 200

@@ -5,7 +5,7 @@ Minimal example of receiving Mailcoach webhooks with signature verification (`Si
 ## Prerequisites
 
 - Python 3.9+
-- A Mailcoach account (hosted or self-hosted) with a webhook that has a secret
+- A Mailcoach account with a webhook (Settings > Webhooks)
 
 ## Setup
 
@@ -20,7 +20,7 @@ Minimal example of receiving Mailcoach webhooks with signature verification (`Si
    cp .env.example .env
    ```
 
-3. Add the secret you entered on the Mailcoach webhook's details page to `.env` as `MAILCOACH_WEBHOOK_SECRET`. Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification.
+3. Add the secret Mailcoach generated, from the webhook's details page, to `.env` as `MAILCOACH_WEBHOOK_SECRET`.
 
 ## Run
 

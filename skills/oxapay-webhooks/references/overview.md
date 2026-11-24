@@ -16,7 +16,7 @@ There is no event name and no event header: each callback is the transaction's c
 | `Confirmed` | Payout | Payout confirmed by the network | Mark the payout as completed |
 | `Failed` | Payout | Payout failed | Alert, release or retry |
 
-You first receive `Paying`, then must wait for a second callback with `Paid`. The docs' examples capitalise the status; their prose writes "paying" and "paid". Match the documented spelling and log anything unfamiliar.
+You first receive `Paying`, then must wait for a second callback with `Paid`. The docs' examples capitalise the status; their prose writes "paying" and "paid". Match the documented spelling and log anything unfamiliar. OxaPay's [payment](https://docs.oxapay.com/api-reference/payment/payment-status-table) and [payout](https://docs.oxapay.com/api-reference/payout/payout-status-table) status tables list more states, such as `underpaid`, `expired` and `canceled`, without saying which of them send a callback, so store any other status for review rather than treating it as settled.
 
 ## Event Payload Structure
 

@@ -2,7 +2,7 @@
 
 ## How It Works
 
-Each delivery has an `x-sha2-signature` header holding the lowercase hex HMAC-SHA256 of the raw request body,
+Each delivery has an `x-sha2-signature` header holding the hex HMAC-SHA256 of the raw request body,
 keyed with the webhook's `token`.
 
 | Item | Value |
@@ -13,7 +13,7 @@ keyed with the webhook's `token`.
 | Key | The webhook `token`, UTF-8 bytes as-is (not hex- or base64-decoded) |
 | Encoding | Hex, compared case-insensitively |
 
-Katana has no SDK for this; verify manually. There is no timestamp, so there is no replay window to enforce.
+Katana publishes pseudocode for this rather than an SDK. There is no timestamp, so there is no replay window to enforce.
 
 ## Implementation
 
@@ -52,8 +52,7 @@ def verify_katana_signature(raw_body: bytes, signature: str | None, secret: str 
   exactly 64 hex characters before decoding, and check lengths before `timingSafeEqual`.
 - **Compare as bytes.** Python's `compare_digest` raises on non-ASCII `str`; encode both sides.
 - **One token per webhook.** A delivery is signed with the token of the webhook that sent it.
-- **Any HTTP method.** The docs don't name the method. Verify first for every method; a GET with no body is
-  signed over zero bytes.
+- **Any HTTP method.** The docs don't name the method. Verify first for every method.
 - **No replay protection from the signature.** Deduplicate events in your handler.
 
 ## Debugging Verification Failures

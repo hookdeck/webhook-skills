@@ -47,25 +47,25 @@ def handle_event(event_name: str, body: dict) -> None:
 
     if event_name == "report_created":
         print(f"New report {report_id}: {title}")
-        # TODO: create a ticket in your issue tracker
+        # Your code: create a ticket in your issue tracker
 
     elif event_name == "report_new":
         print(f"Report {report_id} needs program input")
 
     elif event_name == "report_triaged":
         print(f"Report {report_id} triaged")
-        # TODO: assign an owner
+        # Your code: assign an owner
 
     elif event_name == "report_bounty_awarded":
         print(f"Bounty awarded on report {report_id}")
-        # TODO: record the payout
+        # Your code: record the payout
 
     elif event_name == "report_comment_created":
         print(f"Comment on report {report_id}")
 
     elif event_name == "report_resolved":
         print(f"Report {report_id} resolved")
-        # TODO: close the linked ticket
+        # Your code: close the linked ticket
 
     elif event_name in (
         "report_closed_as_duplicate",

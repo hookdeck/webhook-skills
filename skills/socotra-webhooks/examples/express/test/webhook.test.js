@@ -49,7 +49,7 @@ describe('Socotra webhook verification', () => {
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Quote issued'));
   });
 
-  it('accepts when any v1 entry matches (key rotation)', async () => {
+  it('accepts when any v1 entry matches', async () => {
     const body = event('policy.account.create');
     const { t, v1 } = sign(body);
     const bad = 'a'.repeat(64);

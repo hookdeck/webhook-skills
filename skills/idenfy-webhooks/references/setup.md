@@ -22,11 +22,13 @@ Copy the key exactly: trailing whitespace breaks verification.
 
 ## Register Your Endpoint
 
-1. In **Settings → System notifications**, open the webhook for the event type you want.
-2. Enter your HTTPS URL, e.g. `https://example.com/webhooks/idenfy`.
-3. Enable the events you need: `ID VERIFICATION AUTO FINISHED`, `ID VERIFICATION MANUAL
-   FINISHED`, `COMPANY REVIEW` and `AML MONITORING` are the usual starting set.
-4. Save, then create a sample result from the dashboard sandbox to see a delivery.
+1. In **Settings → System notifications**, choose **Create new** (or open an existing webhook).
+2. Enter your HTTPS URL in **Receiver**, e.g. `https://example.com/webhooks/idenfy`.
+3. Pick the **Event Type**. Each webhook covers one event type, so create one per event:
+   `ID VERIFICATION AUTO FINISHED`, `ID VERIFICATION MANUAL FINISHED`, `COMPANY REVIEW` and
+   `AML MONITORING` are the usual starting set.
+4. Save and press **Test**, or create a Sample verification (Verifications → New
+   verification) to trigger a real webhook.
 
 ## Local Development
 
@@ -39,5 +41,5 @@ Use the URL it prints as the webhook URL. For FastAPI use port `8000`.
 ## Test Mode vs Live Mode
 
 iDenfy provides a sandbox and dummy results for testing. Webhook signing works the same way
-in both; set the signing key on the webhook in each environment. Optionally restrict inbound
-traffic to iDenfy's published IP ranges as defense in depth (see iDenfy's IP whitelisting page).
+in both; set the signing key on the webhook in each environment. iDenfy doesn't publish its
+webhook IPs: its support team gives you the current list on request, and it can change.

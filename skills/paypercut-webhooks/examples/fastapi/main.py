@@ -122,37 +122,37 @@ def handle_paypercut_event(event: Dict) -> None:
 
     if event_type == "checkout_session.completed":
         print(f"Checkout session completed: {obj_id}{scope}")
-        # TODO: fulfil the order
+        # Your code: fulfil the order
     elif event_type == "payment.succeeded":
         print(f"Payment succeeded: {obj_id}{scope}")
-        # TODO: mark the payment as paid
+        # Your code: mark the payment as paid
     elif event_type == "payment.failed":
         print(f"Payment failed: {obj_id}{scope}")
-        # TODO: notify the customer / retry
+        # Your code: notify the customer / retry
     elif event_type == "payment_intent.authorized":
         print(f"Payment intent authorized: {obj_id}{scope}")
-        # TODO: capture when ready
+        # Your code: capture when ready
     elif event_type == "payment_intent.captured":
         print(f"Payment intent captured: {obj_id}{scope}")
-        # TODO: record the captured funds
+        # Your code: record the captured funds
     elif event_type == "payout.paid":
         print(f"Payout paid: {obj_id}{scope}")
-        # TODO: reconcile the payout
+        # Your code: reconcile the payout
     elif event_type == "payout.failed":
         print(f"Payout failed: {obj_id}{scope}")
-        # TODO: alert finance
+        # Your code: alert finance
     elif event_type == "account.updated":
         print(f"Account updated: {obj_id}{scope}")
-        # TODO: refresh the connected account's status
+        # Your code: refresh the connected account's status
     elif event_type == "invoice.paid":
         print(f"Invoice paid: {obj_id}{scope}")
-        # TODO: extend the subscription
+        # Your code: extend the subscription
     elif event_type == "invoice.payment_failed":
         print(f"Invoice payment failed: {obj_id}{scope}")
-        # TODO: start dunning
+        # Your code: start dunning
     elif event_type == "identity.verification_session.verified":
         print(f"Identity verification verified: {obj_id}{scope}")
-        # TODO: unlock the verified user
+        # Your code: unlock the verified user
     else:
         print(f"Unhandled Paypercut event: {event_type}")
 

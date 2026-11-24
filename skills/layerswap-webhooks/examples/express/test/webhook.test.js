@@ -27,26 +27,29 @@ function send(payload, { msgId = `msg_${crypto.randomBytes(12).toString('hex')}`
     .send(payload);
 }
 
-// Layerswap's body: { swap, quote, deposit_actions } (no event-type field; swap.status is the state)
-function body(status, swap = {}) {
+// Layerswap's documented example body: a flat swap object (no event-type field; `status` is the state)
+function body(status, fields = {}) {
   return JSON.stringify({
-    swap: {
-      id: 'SWAP_ID',
-      status,
-      destination_address: '0x0000000000000000000000000000000000000001',
-      requested_amount: 100,
-      fail_reason: null,
-      metadata: { reference_id: 'your-external-id' },
-      transactions: [],
-      ...swap,
-    },
-    quote: { receive_amount: 99.5, min_receive_amount: 99.0 },
-    deposit_actions: [],
+    id: 'SWAP_ID',
+    from: 'ETHEREUM_MAINNET',
+    to: 'BASE_MAINNET',
+    fee: 0.5,
+    source_address: null,
+    deposit_address: '0x...',
+    status,
+    app_name: 'YOUR_APP_CLIENT_ID',
+    is_testnet: false,
+    amount: 100,
+    to_address: '0x...',
+    reference_id: 'your-external-id',
+    transactions: [],
+    timestamp: 1793577600000,
+    ...fields,
   });
 }
 
-// swap.status values from the swap lifecycle docs
-const STATUSES = ['user_transfer_pending', 'ls_transfer_pending', 'completed', 'failed', 'expired', 'pending_refund', 'refunded'];
+// Webhook `status` values (PascalCase) from Layerswap's Webhooks page
+const STATUSES = ['PendingDeposit', 'PendingWithdrawal', 'Completed', 'Failed', 'Expired', 'PendingRefund', 'Refunded'];
 
 describe('Layerswap webhook handler', () => {
   beforeEach(() => {
@@ -65,30 +68,30 @@ describe('Layerswap webhook handler', () => {
     expect(res.body.status).toBe('something_new');
   });
 
-  test('handles a body without a swap object', async () => {
+  test('handles a body without a status', async () => {
     const res = await send('{}');
     expect(res.status).toBe(200);
   });
 
   test('verifies regardless of request content type', async () => {
-    const res = await send(body('completed'), { contentType: 'application/octet-stream' });
+    const res = await send(body('Completed'), { contentType: 'application/octet-stream' });
     expect(res.status).toBe(200);
   });
 
   test('accepts a delivery signed the same way but sent with webhook-* headers', async () => {
-    const res = await send(body('completed'), { prefix: 'webhook' });
+    const res = await send(body('Completed'), { prefix: 'webhook' });
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, status: 'completed' });
+    expect(res.body).toEqual({ success: true, status: 'Completed' });
   });
 
   test('rejects an invalid signature sent with webhook-* headers', async () => {
-    const res = await send(body('completed'), { prefix: 'webhook', signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
+    const res = await send(body('Completed'), { prefix: 'webhook', signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Invalid signature');
   });
 
   test('accepts any matching signature among several (secret rotation)', async () => {
-    const payload = body('refunded');
+    const payload = body('Refunded');
     const msgId = 'msg_rotation';
     const timestamp = now();
     const signature = `v1,aW52YWxpZF9zaWduYXR1cmU= ${sign(payload, msgId, timestamp)}`;
@@ -97,7 +100,7 @@ describe('Layerswap webhook handler', () => {
   });
 
   test('ignores signature versions other than v1', async () => {
-    const payload = body('refunded');
+    const payload = body('Refunded');
     const msgId = 'msg_v1a';
     const timestamp = now();
     const signature = sign(payload, msgId, timestamp).replace('v1,', 'v1a,');
@@ -112,13 +115,13 @@ describe('Layerswap webhook handler', () => {
   });
 
   test('rejects an invalid signature', async () => {
-    const res = await send(body('completed'), { signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
+    const res = await send(body('Completed'), { signature: 'v1,aW52YWxpZF9zaWduYXR1cmU=' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Invalid signature');
   });
 
   test('rejects a signature made with a different secret', async () => {
-    const payload = body('completed');
+    const payload = body('Completed');
     const msgId = 'msg_other';
     const timestamp = now();
     const signature = sign(payload, msgId, timestamp, 'whsec_b3RoZXJfc2VjcmV0X2tleQ==');
@@ -129,21 +132,21 @@ describe('Layerswap webhook handler', () => {
   test('rejects a tampered body', async () => {
     const msgId = 'msg_tamper';
     const timestamp = now();
-    const signature = sign(body('failed'), msgId, timestamp);
-    const res = await send(body('completed'), { msgId, timestamp, signature });
+    const signature = sign(body('Failed'), msgId, timestamp);
+    const res = await send(body('Completed'), { msgId, timestamp, signature });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Invalid signature');
   });
 
   test('rejects a timestamp older than 5 minutes', async () => {
-    const res = await send(body('completed'), { timestamp: String(Math.floor(Date.now() / 1000) - 600) });
+    const res = await send(body('Completed'), { timestamp: String(Math.floor(Date.now() / 1000) - 600) });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Timestamp too old');
   });
 
   test('returns 500 when the secret is not configured', async () => {
     delete process.env.LAYERSWAP_WEBHOOK_SECRET;
-    const res = await send(body('completed'));
+    const res = await send(body('Completed'));
     expect(res.status).toBe(500);
   });
 

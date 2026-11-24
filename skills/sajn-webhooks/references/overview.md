@@ -60,10 +60,12 @@ The examples handle these. The type is the top-level `type` field.
 
 ## Full Event List
 
-64 documented types (sajn adds more without a new API version, so acknowledge unknown ones with `2xx`):
+70 documented types (sajn adds more without a new API version, so acknowledge unknown ones with `2xx`):
 
 - **Document (15):** `document.created`, `document.sent`, `document.fully_signed`, `document.completed`, `document.rejected`, `document.expired`, `document.expiring_soon`, `document.expiration_extended`, `document.withdrawn`, `document.updated`, `document.deleted`, `document.restored`, `document.archived`, `document.unarchived`, `document.comment.created`
 - **Party (13):** `document.party.sent`, `document.party.delivery_failed`, `document.party.opened`, `document.party.read`, `document.party.verified`, `document.party.auth_failed`, `document.party.signed`, `document.party.rejected`, `document.party.delegated`, `document.party.updated`, `document.party.added`, `document.party.removed`, `document.party.reminded`
+- **Bundle (4):** `bundle.sent`, `bundle.party.signed`, `bundle.completed`, `bundle.cancelled` (in the API reference and the `POST /api/v1/webhooks` event list; not yet on the Webhook events page)
+- **Archive import (2):** `archive_import.completed`, `archive_import.undone` (API reference only, like the bundle events)
 - **Approval (4):** `approval_request.created`, `approval_request.approved`, `approval_request.rejected`, `approval_request.cancelled`
 - **Identity check (6):** `identity_check.created`, `identity_check.sent`, `identity_check.opened`, `identity_check.verified`, `identity_check.failed`, `identity_check.cancelled`
 - **Contact and company (6):** `contact.created`, `contact.updated`, `contact.deleted`, `company.created`, `company.updated`, `company.deleted`
@@ -73,7 +75,7 @@ The examples handle these. The type is the top-level `type` field.
 - **sajn Login (2):** `login.completed`, `login.failed`
 - **Test (1):** `webhook.test`
 
-The authoritative list is [Webhook events](https://docs.sajn.se/webhooks/events) and the per-event pages under [API reference > Webhook events](https://docs.sajn.se/api-reference/webhook-events/documentcompleted).
+The authoritative list is [Webhook events](https://www.sajn.se/docs/webhooks/events) and the per-event pages under [API reference > Webhook events](https://www.sajn.se/docs/api-reference/webhook-events/documentcompleted).
 
 ## How Does Delivery Behave?
 

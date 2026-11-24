@@ -55,24 +55,28 @@ npx hookdeck-cli listen 3000 runa --path /webhooks/runa
 
 1. In your Runa account, open the [API section](https://app.runa.io/api-keys) and click
    **View webhook** to open the portal.
-2. Click **Add new endpoint**, enter the tunnel URL and select one event type
-   (`order.completion` or `product.update`).
+2. Click **Add new endpoint**, enter the tunnel URL and select an event type
+   (`order.completed`, `order.failed`, `payout.blocked`, `order.completion` or `product.update`).
 3. Copy the endpoint's signing secret into `.env`.
 4. Use the endpoint's **Testing** tab and **Send Example** to deliver a test event. Webhooks
    aren't available in Runa's playground environment.
 
 ## Event Handling
 
-The body is a bare resource with **no event-type field**: each endpoint subscribes to a single
-event type, and this handler identifies the event from the payload shape. Anything else is
-acknowledged with `200`.
+`order.completed`, `order.failed` and `payout.blocked` name themselves in `type` (Standard
+Webhooks envelope, details in `data`). `order.completion` and `product.update` are bare resources
+with **no event-type field**, so this handler identifies them from the payload shape. Anything
+else is acknowledged with `200`.
 
-- `order.completion`: `status` is `COMPLETED` (full order summary) or `FAILED` (only `{ id, status }`)
+- `order.completed`: `data` is the completed order summary
+- `order.failed`: `data` is `{ id, status: "FAILED", reason }`, with `reason` `fraud` or `generic`
+- `payout.blocked`: `data` is `{ order_item_id, order_id, assessment_id, cancelled }`
+- `order.completion` (older): `status` is `COMPLETED` (full order summary) or `FAILED` (only `{ id, status }`)
 - `product.update`: `{ product_code, old_state, new_state, timestamp }`
 
 Delivery order isn't guaranteed, so for `product.update` the example keeps the newest
 `timestamp` per `product_code` and ignores older events (in memory; use your database).
-Deduplicate order handling on the order `id` plus `status`.
+Deduplicate order handling on the order `id` plus the event, or on `svix-id`.
 
 ## Timestamp Window
 

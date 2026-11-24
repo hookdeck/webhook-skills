@@ -2,7 +2,9 @@
 
 ## Register the Endpoint
 
-Create a webhook in the Fingerprint dashboard, enable signature protection, and save the symmetric key shown at creation. Send an identification request to produce a delivery.
+Create a webhook under **Dashboard > Webhooks** and copy the signing key from the success modal; Fingerprint shows it only once. Click **Send test event**, or run an identification request, to produce a delivery.
+
+A webhook created through the Management API doesn't receive identification events until it's verified: `POST /webhooks/{id}/verification` sends a mocked test event, and your endpoint must answer it with HTTP 200.
 
 Use `POST /webhooks/fingerprint`. Configure `FINGERPRINT_WEBHOOK_SECRET` with the same secret as the sender; keep it out of source control.
 
@@ -18,7 +20,7 @@ For FastAPI use port 8000. Configure the resulting public URL at the sender. Run
 
 ## Hookdeck Event Gateway
 
-Choose the `FINGERPRINT` source type once it is available in your environment and configure its verification secret. A failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures.
+Choose the Fingerprint source type and set the webhook's signing key as its verification secret. A failed signature is recorded as failed verification afterwards. The example receivers themselves return 401 for invalid signatures.
 
 No timestamp is included in the signed message. These examples do not invent an age check from unsigned fields.
 

@@ -2,9 +2,10 @@
 name: mailcoach-webhooks
 description: >
   Receive and verify Mailcoach webhooks. Use when setting up Mailcoach webhook
-  handlers, debugging Signature header verification, or handling
-  SubscribedEvent, UnsubscribedEvent, UnconfirmedSubscriberCreatedEvent and
-  CampaignSentEvent events from Mailcoach email marketing.
+  handlers, debugging Signature header verification, or handling subscriber,
+  tag, campaign, open, click and bounce events (SubscribedEvent,
+  UnsubscribedEvent, CampaignSentEvent, LinkClickedEvent, BounceRegisteredEvent
+  and others) from Mailcoach email marketing.
 license: MIT
 metadata:
   author: hookdeck
@@ -14,7 +15,7 @@ metadata:
 
 # Mailcoach Webhooks
 
-Mailcoach (email marketing by Spatie, hosted or self-hosted) sends an HTTP POST with a JSON body to your endpoint when a subscriber joins or leaves a list or a campaign finishes sending. If you set a secret on the webhook, each request carries a `Signature` header with an HMAC-SHA256 of the body.
+Mailcoach (email marketing by Spatie) sends an HTTP POST with a JSON body to your HTTPS endpoint when subscribers join, leave or are tagged, a campaign is sent, and an email is opened, clicked or bounces. Each request carries a `Signature` header: an HMAC-SHA256 keyed with the secret Mailcoach generates for the webhook.
 
 ## When to Use This Skill
 
@@ -22,13 +23,11 @@ Mailcoach (email marketing by Spatie, hosted or self-hosted) sends an HTTP POST 
 - How do I verify the Mailcoach `Signature` header?
 - Why is my Mailcoach webhook signature verification failing?
 - How do I handle `SubscribedEvent`, `UnsubscribedEvent` or `CampaignSentEvent`?
-- Why do unsigned Mailcoach deliveries fail verification?
-
-> Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification.
+- How do I handle Mailcoach bounce, open and click events?
 
 ## Verification (core)
 
-`Signature: <hex>` is the lowercase hex HMAC-SHA256 of the **raw request body bytes**, keyed with the secret as UTF-8 (not hex- or base64-decoded). There is no prefix, and no timestamp or id is signed. Compare the whole header value as one digest.
+`Signature: <hex>` is a lowercase hex HMAC-SHA256 keyed with the webhook secret as UTF-8 (not hex- or base64-decoded). Mailcoach's docs describe the signed content as PHP's default `json_encode($payload)` with top-level keys sorted, and their Laravel receiver re-encodes the decoded body before hashing. Outside PHP, hash the **raw request body bytes** as received: another language's JSON encoder may not reproduce PHP's output. There is no prefix, and no timestamp or id is signed. Compare the whole header value as one digest.
 
 Node (validate the 64-hex shape before comparing):
 
@@ -63,33 +62,38 @@ Return `401` for a missing, empty, malformed or mismatching `Signature`. In Expr
 
 ## Common Event Types
 
-The event name is the `event` field in the JSON body (the PHP event class name); no header carries it. Mailcoach documents four:
+The event name is the top-level `event` field in the JSON body; no header carries it. Fields sit flat beside it, not wrapped in `data`. Mailcoach documents eleven:
 
 | Event | Description |
 |-------|-------------|
-| `UnconfirmedSubscriberCreatedEvent` | Someone was added to a list that uses confirmation; not confirmed yet |
-| `SubscribedEvent` | A subscriber was confirmed |
-| `UnsubscribedEvent` | Someone unsubscribed |
-| `CampaignSentEvent` | A campaign has been fully sent |
+| `SubscribedEvent` | A subscription becomes confirmed |
+| `ResubscribedEvent` | A previously unsubscribed address subscribes again |
+| `UnconfirmedSubscriberCreatedEvent` | A new address awaits confirmation (`subscribed_at` is null) |
+| `UnsubscribedEvent` | Someone unsubscribes |
+| `TagAddedEvent` / `TagRemovedEvent` | A tag is added to or removed from a subscriber (`added_tag` / `removed_tag`) |
+| `CampaignSentEvent` | Mailcoach marks a campaign as sent (not a delivery or read receipt) |
+| `ContentOpenedEvent` | A campaign email is opened |
+| `LinkClickedEvent` | A link in an email is clicked |
+| `BounceRegisteredEvent` / `SoftBounceRegisteredEvent` | A permanent / temporary delivery failure |
 
-Subscriber events carry `email_list_uuid`, `email`, `first_name`, `last_name`, `extra_attributes`, `tags`, `subscribed_at`, `unsubscribed_at`, `created_at`, `updated_at`. `CampaignSentEvent` carries the campaign fields (`uuid`, `name`, `sent_to_number_of_subscribers`, open and click statistics, `sent_at`, ...). Handle the ones you need and log the rest. See [references/overview.md](references/overview.md).
+Subscriber events carry the subscriber resource (`uuid`, `email_list_uuid`, `email`, names, `tags`, timestamps and a human-readable `text`). `CampaignSentEvent` carries the campaign resource. Open, click and bounce events carry `send_uuid`, subscriber fields and their own UUIDs. Handle the ones you need and log the rest. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
-| `Signature` | Hex HMAC-SHA256 of the raw body (only sent when a secret is set) |
+| `Signature` | Hex HMAC-SHA256 keyed with the webhook secret |
 
 Header names are case-insensitive.
 
 ## Setup with Hookdeck
 
-In Mailcoach, open Settings > Webhooks, create a webhook with your Hookdeck source URL, and **set a secret** on its details page. Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification. Use the same secret as the Hookdeck source's signing secret (Mailcoach source type). See [references/setup.md](references/setup.md).
+In Mailcoach, open your team's Settings > Webhooks, click **Create webhook**, and enter a name and your Hookdeck source URL. Copy the generated secret from the webhook's details page into the Hookdeck source (Mailcoach source type). See [references/setup.md](references/setup.md).
 
 ## Environment Variables
 
 ```bash
-MAILCOACH_WEBHOOK_SECRET=your_webhook_secret   # Secret entered on the Mailcoach webhook details page
+MAILCOACH_WEBHOOK_SECRET=your_webhook_secret   # Secret from the Mailcoach webhook's details page
 ```
 
 ## Local Development

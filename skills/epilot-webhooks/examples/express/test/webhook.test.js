@@ -49,7 +49,7 @@ const automationTrigger = () => ({
     event_type: 'automation_trigger_webhook',
     correlation_id: 'c0ffee',
   },
-  entity: { _id: 'e1', _schema_: 'opportunity', name: 'New Opportunity', status: 'open' },
+  entity: { _id: 'e1', _schema: 'opportunity', name: 'New Opportunity', status: 'open' },
   relations: [],
   changed_attributes: { added: {}, deleted: {}, updated: {} },
 });
@@ -71,13 +71,15 @@ describe('valid signatures', () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Automation trigger: opportunity e1'));
   });
 
-  it('accepts customer_request_created', async () => {
-    const payload = automationTrigger();
-    payload.metadata.event_type = 'customer_request_created';
-    const body = JSON.stringify(payload);
+  it('accepts a CustomerRequestSubmitted Event Catalog payload', async () => {
+    const body = JSON.stringify({
+      _event_name: 'CustomerRequestSubmitted',
+      _event_id: '01F130Q52Q6MWSNS8N2AVXV4JN',
+      _org_id: '739224',
+    });
     const res = await post(body, signedHeaders(body));
     expect(res.status).toBe(200);
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Customer request created'));
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Customer request submitted'));
   });
 
   it('accepts a FileCreated Event Catalog payload', async () => {

@@ -2,7 +2,7 @@
 
 ## How It Works
 
-When a secret is set on the webhook, Mailcoach (via `spatie/laravel-webhook-server`) sends `Signature: <hex>`:
+Every request carries `Signature: <hex>`, keyed with the secret Mailcoach generates for the webhook:
 
 1. Take the **raw request body** bytes exactly as received.
 2. Compute HMAC-SHA256 keyed with the secret's UTF-8 bytes (used as-is, not hex- or base64-decoded).
@@ -11,7 +11,7 @@ When a secret is set on the webhook, Mailcoach (via `spatie/laravel-webhook-serv
 
 There is no prefix, and no timestamp, id or other header is signed, so the signature does not protect against replays. Do not invent a replay window from unsigned fields; deduplicate on your own key if it matters.
 
-Mailcoach's guide shows `hash_hmac('sha256', json_encode($payload), $secret)`, a re-encoding of the decoded body. The sender actually signs the exact body string it sends (`calculateSignature(string $webhookUrl, string $body, string $secret)` returns `hash_hmac('sha256', $body, $secret)`), and that body is itself `json_encode` of the payload, so the raw body is what is signed.
+Mailcoach's docs describe the signed content as PHP's default `json_encode($payload)`, with top-level keys sorted before signing, and say it is "not necessarily a signature of the raw HTTP bytes". Their Laravel receiver decodes the body and re-encodes it with `json_encode` before hashing. In PHP you can follow that example. In other languages, hash the raw body as received: re-serialising parsed JSON with another encoder can change escaping, key order or the difference between an empty object and an empty array.
 
 ## Implementation
 
@@ -51,15 +51,14 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 ## Common Gotchas
 
 - **Raw body:** Parsing and re-serializing JSON changes bytes and breaks the signature. In Express use `express.raw({ type: '*/*' })` so any content type stays raw; in Next.js use `await request.arrayBuffer()`; in FastAPI use `await request.body()`. Parse only after the check.
-- **Unsigned deliveries:** Set a secret on the Mailcoach webhook. Without one, deliveries are unsigned and fail verification.
 - **Header name:** It is literally `Signature` (no `X-` prefix). Names are case-insensitive.
 - **No prefix:** The value is the bare digest. Reject `sha256=...` values.
 - **Case:** Hex is compared case-insensitively. Require exactly 64 hex characters, then lowercase both sides.
-- **Secret encoding:** The secret is the string you typed, used as UTF-8 bytes.
+- **Secret encoding:** Use the secret string from the details page as UTF-8 bytes.
 
 ## Debugging Verification Failures
 
 - Confirm the secret in your env var (and in Hookdeck) matches the one on the Mailcoach webhook's details page exactly, with no stray whitespace.
 - Make sure nothing (a proxy, a body parser, a middleware) rewrites the body before verification.
-- A missing `Signature` header means no secret is set on the webhook.
-- If you enabled webhook call logs (`webhooks.logs` in `config/mailcoach.php`), check them for what Mailcoach sent.
+- Check **Webhook logs** on the webhook's details page for what Mailcoach sent and how your endpoint answered.
+- Test with a known signed fixture, a wrong secret and a modified payload before you enable processing, as Mailcoach's docs suggest.

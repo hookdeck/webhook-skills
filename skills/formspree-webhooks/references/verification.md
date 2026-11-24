@@ -61,7 +61,7 @@ The complete versions, with header parsing and tests, are in [examples/express/]
 - Missing or empty header, no `t=` value, no valid `v1=`: `401`.
 - `v1` must be exactly 64 hex characters. Hex is case-insensitive, so lowercase before comparing. Check the format *before* decoding: `Buffer.from(sig, 'hex')` silently drops bad characters.
 - Compare equal-length values in constant time (`crypto.timingSafeEqual`, `hmac.compare_digest` on bytes, never `str`).
-- The header can contain more than one `v1=` entry (for example during key rotation). Accept if any matches. Ignore other keys such as `v0`.
+- Formspree documents a single `v1=` value. If a header ever carries more than one, accept when any matches, and ignore other keys such as `v0`.
 - The secret is used as-is: don't hex- or base64-decode it.
 
 ## Should I Reject Old Timestamps?
@@ -76,7 +76,7 @@ Formspree's docs list this as optional. This skill leaves it **off by default**:
 - Using a different secret, such as an API key, instead of the webhook's signing secret.
 - Reformatting `t` (for example `parseInt` then back to a string) before building the message; use the received string.
 - A body parser consuming the stream first. In Express, register `express.raw({ type: '*/*' })` on the route.
-- Build Hooks send an empty body; it is still signed (HMAC of `<t>.`).
+- Build Hooks send an empty body. Formspree doesn't say whether they're signed; if they are, the message is just `<t>.`.
 
 ## How to Debug Verification Failures
 

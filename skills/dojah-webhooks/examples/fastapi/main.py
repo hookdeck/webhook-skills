@@ -21,7 +21,7 @@ def verify_dojah_signature(raw_body: bytes, signature_header, secret: str) -> bo
     Dojah signs the raw POST body with HMAC-SHA256 keyed on the subscription's
     webhook secret (UTF-8) and sends a bare lowercase hex digest in
     x-dojah-signature (no prefix, no timestamp). x-dojah-signature-v2 is a static
-    hash of the secret with no payload, so it is not checked here.
+    hash of the API secret key with no payload, so it is not checked here.
     """
     if not secret or not isinstance(signature_header, str):
         return False

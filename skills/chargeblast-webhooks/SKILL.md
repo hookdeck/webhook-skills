@@ -96,7 +96,7 @@ Chargeblast's docs state no timeout, retry schedule or ordering guarantee. Retur
 ## Environment Variables
 
 ```bash
-CHARGEBLAST_WEBHOOK_SECRET=whsec_xxxxx   # full value from the dashboard's settings tab; handlers fail closed (500) without it
+CHARGEBLAST_WEBHOOK_SECRET=whsec_xxxxx   # full whsec_ value from your Chargeblast dashboard; handlers fail closed (500) without it
 ```
 
 ## Local Development

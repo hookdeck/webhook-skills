@@ -3,8 +3,8 @@ name: layerswap-webhooks
 description: >
   Receive and verify Layerswap webhooks (crypto bridging and exchange-to-chain swap API, delivered
   via Svix). Use when setting up Layerswap webhook handlers, debugging svix-signature
-  verification, or handling swap status updates like ls_transfer_pending, completed, failed,
-  pending_refund, and refunded.
+  verification, or handling swap status updates like PendingDeposit, PendingWithdrawal,
+  Completed, Failed, PendingRefund, and Refunded.
 license: MIT
 metadata:
   author: hookdeck
@@ -18,16 +18,16 @@ metadata:
 swap status updates to an endpoint configured per app in the Partner Dashboard, delivered through
 [Svix](https://www.svix.com/), which implements Standard Webhooks. Every delivery is an HTTP
 `POST` with a JSON body and three signature headers: `svix-id`, `svix-timestamp`, and
-`svix-signature`. The body is `{ swap, quote, deposit_actions }` and has **no event-type field**:
-`swap.status` (for example `ls_transfer_pending`) is the swap's lifecycle state, and `swap.id`
-is the durable key.
+`svix-signature`. Every update is the one Svix `partner` event type, and the body is a flat swap
+object with **no event-type field**: `status` (PascalCase, for example `PendingWithdrawal`) is the
+swap's lifecycle state, and `id` is the durable key.
 
 ## When to Use This Skill
 
 - How do I receive Layerswap webhooks?
 - How do I verify Layerswap webhook signatures (`svix-signature`)?
-- How do I handle `ls_transfer_pending`, `completed` or `failed` swap updates?
-- How do I react to `pending_refund` and `refunded` swaps?
+- How do I handle `PendingWithdrawal`, `Completed` or `Failed` swap updates?
+- How do I react to `PendingRefund` and `Refunded` swaps?
 - Why is my Layerswap webhook signature verification failing, or rejecting Hookdeck retries?
 
 ## Verification (core)
@@ -75,25 +75,27 @@ Hookdeck retries and replays resend the **original** `svix-timestamp`, so the li
 retry or replay that happens more than 5 minutes after the original delivery. If you verify
 behind Hookdeck (or replay old events), use the manual verifier in
 [references/verification.md](references/verification.md), where the window can be dropped or
-widened. Deduplicate on `swap.id` plus `status` (or `svix-id`) instead of relying on the timestamp.
+widened. Deduplicate on the swap `id` plus `status` (or `svix-id`) instead of relying on the timestamp.
 
 ## Swap Statuses
 
-There are no named events. The examples branch on `swap.status`, using the values from
-Layerswap's swap lifecycle docs, and acknowledge any other value with `200`:
+There are no named events. The examples branch on the body's `status`, using the PascalCase
+values from Layerswap's Webhooks page, and acknowledge any other value with `200`. API swap
+objects use snake_case for the same states, so don't compare one form with the other:
 
-| `swap.status` | Meaning |
-|---------------|---------|
-| `user_transfer_pending` | Swap created; waiting for the user's deposit (becomes `expired` after 6 hours without one) |
-| `ls_transfer_pending` | Deposit confirmed; Layerswap is executing the swap and may retry. Not final |
-| `completed` | Funds were delivered to the destination address. Terminal |
-| `failed` | For example the deposit was below the minimum. Terminal |
-| `expired` | No deposit arrived in time. Terminal |
-| `pending_refund` | Execution failed and a refund to `refund_address` is queued |
-| `refunded` | The refund was confirmed on-chain. Terminal |
+| Webhook `status` | API `status` | Meaning |
+|------------------|--------------|---------|
+| `PendingDeposit` | `user_transfer_pending` | Swap created; waiting for the user's deposit (becomes `Expired` after 6 hours without one) |
+| `PendingWithdrawal` | `ls_transfer_pending` | Deposit confirmed; Layerswap is processing the swap and may retry. Not final |
+| `Completed` | `completed` | Funds were delivered to the destination address. Terminal |
+| `Failed` | `failed` | For example the deposit was below the minimum. Terminal |
+| `Expired` | `expired` | No deposit arrived in time. Terminal |
+| `PendingRefund` | `pending_refund` | A failure eligible for an automatic refund; a refund to `refund_address` is under way |
+| `Refunded` | `refunded` | The refund was confirmed on-chain. Terminal |
 
-No retry schedule, timeout or ordering is documented. Deduplicate side effects by `swap.id`
-plus `status`, and fetch `GET /swaps/{id}` before irreversible business logic. See
+Layerswap documents no retry schedule, timeout value or ordering. Deduplicate side effects by
+`id` plus `status` (or a transaction hash), compare the body's `timestamp` (Unix milliseconds),
+and fetch `GET /swaps/{id}` before crediting funds. See
 [references/overview.md](references/overview.md) for the payload and delivery rules.
 
 ## Environment Variables
@@ -133,7 +135,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on `swap.id` plus `status`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on `id` plus `status`)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

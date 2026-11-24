@@ -18,11 +18,18 @@ app = FastAPI(title="Runa Webhook Handler")
 last_product_update: dict = {}
 
 
+# order.completed, order.failed and payout.blocked use the Standard Webhooks envelope and name
+# themselves in `type`.
+TYPED_EVENTS = {"order.completed", "order.failed", "payout.blocked"}
+
+
 def detect_event(payload):
-    """Runa bodies are bare resources with no event-type field. Each Svix endpoint subscribes
-    to a single event type, so identify the event from the payload shape."""
+    """The typed events carry `type`. The older order.completion and product.update are bare
+    resources with no event-type field, so identify those from the payload shape."""
     if not isinstance(payload, dict):
         return None
+    if payload.get("type") in TYPED_EVENTS:
+        return payload["type"]
     if "product_code" in payload and "new_state" in payload:
         return "product.update"
     if payload.get("status") in ("COMPLETED", "FAILED"):
@@ -94,7 +101,17 @@ async def runa_webhook(request: Request):
     event_type = detect_event(event)
     ignored = None
 
-    if event_type == "order.completion":
+    data = event.get("data") if isinstance(event.get("data"), dict) else {}
+    if event_type == "order.completed":
+        # The order is in `data`, shaped like a completed order.completion body
+        print(f"Order completed: {data.get('id')} {event.get('timestamp')}")
+    elif event_type == "order.failed":
+        # `reason` is "fraud" or "generic"
+        print(f"Order failed: {data.get('id')} {data.get('reason')}")
+    elif event_type == "payout.blocked":
+        # cancelled False: the link is still active, but its redemptions keep being blocked
+        print(f"Payout blocked: {data.get('order_item_id')} {data.get('assessment_id')} {data.get('cancelled')}")
+    elif event_type == "order.completion":
         # The `status` field says which of the two payloads this is
         if event.get("status") == "COMPLETED":
             # Full order summary: safe to fulfil after reconciling with the Orders API

@@ -29,18 +29,16 @@ Events defined in your configuration arrive as `custom.*`.
 
 ## Event Payload Structure
 
-```json
-{
-  "locator": "9a8b7c6d-1111-2222-3333-444455556666",
-  "requestId": "req-1",
-  "userLocator": "user-1",
-  "timestamp": 1695835536078,
-  "type": "policy.quote.issue",
-  "data": {}
-}
-```
+Socotra documents the `EventResponse` schema but prints no example delivery body.
 
-`data` varies by event type. (The illustrative values above are not from Socotra's docs.)
+| Field | Type | Meaning |
+|---|---|---|
+| `locator` | ULID | The event's identifier |
+| `requestId` | ULID | The API request that triggered the event |
+| `userLocator` | UUID | The user behind that request |
+| `timestamp` | datetime | When the event happened |
+| `type` | string | The event type |
+| `data` | object | Type-specific; the Event Definitions page names its schema (for example `AccountEventData` with `accountLocator`) |
 
 ## Delivery and Failure Handling
 

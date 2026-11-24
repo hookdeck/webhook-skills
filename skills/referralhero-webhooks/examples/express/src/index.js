@@ -92,7 +92,7 @@ app.post('/webhooks/referralhero', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 
-  // ReferralHero wants 200 with a blank body; anything else counts as an error.
+  // ReferralHero asks for 200 with a blank body; any non-200 status counts as an error.
   return res.status(200).end();
 });
 

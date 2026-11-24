@@ -12,75 +12,98 @@ delivery is signed (see [verification.md](verification.md)).
 | Method | `POST`, JSON body |
 | Signature headers | `svix-id`, `svix-timestamp`, `svix-signature` (Standard Webhooks) |
 | Success | Return a `2xx` only after the event is durably accepted; process slow work asynchronously |
-| Delivery | No retry schedule, timeout or ordering guarantee is documented |
+| Delivery | No retry schedule, timeout value or ordering guarantee is documented by Layerswap |
 
-Layerswap's docs mark event, retry, ordering and payload guarantees as gaps, so don't hard-code
-a retry schedule or assume order. Deduplicate on `swap.id` plus the resulting `status` (or
-transaction hash) and reconcile with `GET /swaps/{id}`.
+Layerswap documents no retry schedule or ordering, so don't hard-code one or assume order.
+Svix's own defaults (a `2xx` within 30 seconds, 8 attempts over about 27 hours) are Svix's, and
+Layerswap doesn't say it keeps them. Deduplicate side effects on the swap `id` plus the
+resulting `status` (or a transaction hash) and reconcile with `GET /swaps/{id}`.
 
 ## Event Payload Structure
 
-There is **no event-type field**. The body describes the swap at the status available when it
-was sent. Docs give this representative shape (placeholders such as `SWAP_ID`, `0x...`):
+Layerswap sends every update through one Svix event type, `partner`, which is not in the body.
+There is **no event-type field**: the body is a flat object describing the swap. Layerswap's
+example (placeholders such as `SWAP_ID` and `0x...` are Layerswap's):
 
 ```json
 {
-  "swap": {
-    "id": "SWAP_ID",
-    "status": "ls_transfer_pending",
-    "destination_address": "0x...",
-    "requested_amount": 100,
-    "fail_reason": null,
-    "metadata": { "reference_id": "your-external-id" },
-    "transactions": []
+  "id": "SWAP_ID",
+  "from": "ETHEREUM_MAINNET",
+  "to": "BASE_MAINNET",
+  "fee": 0.5,
+  "source_address": null,
+  "deposit_address": "0x...",
+  "status": "PendingDeposit",
+  "app_name": "YOUR_APP_CLIENT_ID",
+  "is_testnet": false,
+  "from_network": {
+    "name": "ETHEREUM_MAINNET",
+    "display_name": "Ethereum",
+    "logo": "https://example.com/ethereum.png"
   },
-  "quote": { "receive_amount": 99.5, "min_receive_amount": 99.0 },
-  "deposit_actions": []
+  "to_network": {
+    "name": "BASE_MAINNET",
+    "display_name": "Base",
+    "logo": "https://example.com/base.png"
+  },
+  "asset": {
+    "asset": "USDC",
+    "display_name": "USD Coin",
+    "refuel": false,
+    "contract": "0x...",
+    "decimals": 6
+  },
+  "amount": 100,
+  "to_address": "0x...",
+  "reference_id": "your-external-id",
+  "transactions": [],
+  "timestamp": 1793577600000
 }
 ```
 
 | Field | Meaning |
 |-------|---------|
-| `swap.id` | The durable key for the swap |
-| `swap.status` | The swap's lifecycle state. The handlers branch on this |
-| `swap.metadata` | Your own data, such as `reference_id` |
-| `swap.transactions` | Input, output, refuel and refund transactions, each with its own `type` and `status` |
-| `quote` | `receive_amount` and `min_receive_amount`; more quote data arrives as processing progresses |
-| `deposit_actions` | What the user must do to fund the swap |
+| `id` | The swap ID, and the durable key for the swap |
+| `status` | The swap's lifecycle state, in PascalCase. The handlers branch on this |
+| `reference_id` | Your app's correlation reference, set when you create the swap |
+| `transactions` | Entries with `transaction_id`, `type`, `from`, `to`, `amount`, `usd_price`, `usd_value`, `created_date`, `timestamp`, `confirmations`, `max_confirmations` and `explorer_url` |
+| `timestamp` | When the webhook message was created, in Unix milliseconds |
+| `source_address` | Can be `null` |
 
-`swap.status` is a lifecycle state, not a documented event name. Use the swap-level `status` for
-the overall swap and the transaction status for one on-chain operation.
+`status` is a lifecycle state, not a documented event name.
 
 ## Swap Statuses
 
-These are the `swap.status` values from Layerswap's swap lifecycle docs. The examples handle
-exactly these and acknowledge anything else with `200`.
+Webhook `status` values use PascalCase. API swap objects use snake_case for the same states,
+so don't compare one form with the other. The examples handle each value below and acknowledge
+any other with `200`.
 
-| `swap.status` | Meaning | Common Use Cases |
-|---------------|---------|------------------|
-| `user_transfer_pending` | Swap created; waiting for the user's deposit on the source network. No deposit within 6 hours becomes `expired` | Show deposit instructions |
-| `ls_transfer_pending` | Deposit confirmed; Layerswap is executing the swap. It can retry automatically, and without a `refund_address` it stays here until resolved | Progress display |
-| `completed` | Funds were delivered to the destination address. Terminal | Fulfil after reconciling with `GET /swaps/{id}` |
-| `failed` | For example the deposit was below the minimum. Terminal | Read `fail_reason`, notify |
-| `expired` | No deposit arrived in time. Terminal | Clean up the pending order |
-| `pending_refund` | Execution failed and retries are exhausted; a refund to `refund_address` is queued | Tell the user a refund is coming |
-| `refunded` | The refund was confirmed on-chain, minus gas fees. Terminal | Refund bookkeeping |
+| Webhook `status` | API `status` | Meaning | Common Use Cases |
+|------------------|--------------|---------|------------------|
+| `PendingDeposit` | `user_transfer_pending` | Swap created; waiting for the user's deposit. No deposit within 6 hours becomes `Expired` | Show deposit instructions |
+| `PendingWithdrawal` | `ls_transfer_pending` | Deposit confirmed; Layerswap is processing the swap and may retry failed operations. Not final | Progress display |
+| `Completed` | `completed` | Funds were delivered to the destination address. Terminal | Fulfil after confirming with `GET /swaps/{id}` |
+| `Failed` | `failed` | For example the deposit was below the minimum. Terminal | Fetch the swap and read `fail_reason`, notify |
+| `Expired` | `expired` | No deposit arrived within 6 hours. Terminal | Cancel the pending order |
+| `PendingRefund` | `pending_refund` | A failure eligible for an automatic refund; a refund to `refund_address` is under way | Tell the user a refund is coming |
+| `Refunded` | `refunded` | The refund was confirmed on-chain, minus gas fees. Terminal | Refund bookkeeping |
 
-The status names are snake_case on swap objects. The `GET /swaps` filter uses different
-PascalCase values (`PendingDeposit`, `PendingWithdrawal`, `PendingRefund`, `Completed`,
-`Failed`, `Expired`, `Refunded`); don't mix them up.
+The `GET /swaps` status filters use the same PascalCase values as webhooks.
 
 ## Delivery Rules Worth Planning For
 
 - **Verify before acting.** Keep signature verification ahead of any balance credit, order
   fulfilment or database state change.
-- **Don't trust the payload alone.** Fetch `GET /swaps/{id}` before irreversible business logic.
+- **Don't trust the payload alone.** Fetch `GET /swaps/{id}` before crediting funds or
+  fulfilling an order, and act on the current status.
 - **Deduplicate side effects** by swap ID and resulting status or transaction hash.
-- **Reconcile periodically** with the track-swaps API, since delivery guarantees are not documented.
+- **Compare `timestamp`** with the last one you stored for a swap, since order isn't documented.
+- **Reconcile periodically** with the track-swaps API.
 - **No per-event selection.** One or more endpoint URLs are configured per app, and no event
   filter is documented.
 
 ## Full Reference
 
-See Layerswap's [webhooks](https://docs.layerswap.io/api/webhooks) page and the
-[swap lifecycle](https://docs.layerswap.io/concepts/swap-lifecycle) page.
+See Layerswap's [webhooks](https://docs.layerswap.io/api/webhooks) page, the
+[swap lifecycle](https://docs.layerswap.io/concepts/swap-lifecycle) page and
+[track swaps](https://docs.layerswap.io/api/track-swaps) for the status mapping.

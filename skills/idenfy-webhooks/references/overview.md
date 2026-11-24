@@ -34,8 +34,9 @@ certificate from a trusted CA.
 Other documented events include `IDENTIFICATION`, `IDENTIFICATION_RESUBMITTED`,
 `DOCUMENT_EXPIRATION`, `VIDEO_CALL_FINISHED`, `COMPANY_DELETE`, `COMPANY_AML_REVIEW`,
 `COMPANY_INFO_REQUEST`, `COMPANY_EXPIRATION`, `COMPANY_SUBMIT`, `GOV_ORDERED_DOCUMENT`,
-`SOS_REPORT`, `AML_MONITORING_EXPIRATION`, `BANK_VERIFICATION`, `ACCOUNT_CHECK` and
-`FACIAL_AUTHENTICATION`. The handlers in `examples/` handle the six above and log the rest.
+`COMPANY_TOKEN_EXPIRED`, `SOS_REPORT`, `AML_MONITORING_EXPIRATION`, `BANK_VERIFICATION`,
+`ACCOUNT_CHECK`, `FACIAL_AUTHENTICATION`, `AGE_ESTIMATION` and
+`BANK_CARD_VERIFICATION_COMPLETED`. The handlers in `examples/` handle the six above and log the rest.
 
 The dashboard lists the same events under display names (`ID VERIFICATION AUTO FINISHED`,
 `COMPANY REVIEW`, ...). The legacy `IDENTIFICATION` page calls the newer events
@@ -43,10 +44,13 @@ The dashboard lists the same events under display names (`ID VERIFICATION AUTO F
 
 ## Event Payload Structure
 
-KYC payloads include `scanRef` (the verification's unique ID, use it to deduplicate),
-`clientId`, a `status` object with the overall result (`APPROVED`, `DENIED`, `SUSPECTED`,
-`EXPIRED`), document and face-match data, and a boolean `final`. When `final` is `true`,
-iDenfy sends no further webhooks for that verification. Bank-card results deduplicate on `id`.
+KYC payloads include `scanRef` (the verification's unique ID), `clientId`, a `status` object
+with the overall result (`APPROVED`, `DENIED`, `SUSPECTED`, `EXPIRED`), document and
+face-match data, and a boolean `final`. When `final` is `true`, iDenfy sends no further
+webhooks for that verification, unless you later request more information, which leads to
+`IDENTIFICATION_RESUBMITTED`. Because one verification can send several webhooks with the
+same `scanRef`, key an idempotent state update on it rather than dropping repeats by
+`scanRef` alone. Bank-card results carry an `id`, and their verdict is final.
 The body does **not** name the event: read the `Idenfy-Event-Type` header.
 
 ## Full Event Reference

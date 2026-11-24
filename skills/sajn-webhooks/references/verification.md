@@ -18,7 +18,7 @@ content   = "{webhook-id}.{webhook-timestamp}.{raw request body}"
 signature = base64(HMAC-SHA256(key, content))
 ```
 
-The request is valid when any `v1,` entry matches. For 24 hours after you rotate the secret there are two entries, one per secret. Other versions (such as `v1a`) are ignored. sajn's docs: [Verify webhook signatures](https://docs.sajn.se/webhooks/verify-signatures).
+The request is valid when any `v1,` entry matches. For 24 hours after you rotate the secret there are two entries, one per secret. Other versions (such as `v1a`) are ignored. sajn's docs: [Verify webhook signatures](https://www.sajn.se/docs/webhooks/verify-signatures).
 
 > **API version 2026-10 or later is required.** Create the sajn webhook endpoint on API version 2026-10 or later. Endpoints on the deprecated 2026-09 version sign with X-Sajn-Signature instead of Standard Webhooks and fail verification.
 
@@ -150,4 +150,4 @@ def verify_sajn(raw_body: bytes, msg_id: str, timestamp: str, signature_header: 
 | Fails right after rotating | `SAJN_WEBHOOK_SECRET` still holds the old value. Fix within 24 hours while both signatures are sent |
 | Missing headers | A proxy stripped `webhook-*` headers, or the request isn't from sajn |
 
-Each attempt (status code, response, request headers) is in **Inställningar > Utvecklare > Loggar** and `GET /api/v1/webhooks/{id}/deliveries`. Send a signed test with `POST /api/v1/webhooks/{id}/test`.
+Each attempt (status code, response, request headers) is on the **Webhooks** tab in Konsol (the dashboard's developer console) and `GET /api/v1/webhooks/{id}/deliveries`. Send a signed test with `POST /api/v1/webhooks/{id}/test`.

@@ -17,7 +17,7 @@ No per-event-type selection, challenge request or validation request is document
 
 ## Where Do I Find the Webhook Secret?
 
-The webhook secret is shown in the dashboard's settings tab as `whsec_xxxxxxxxxxxx`. Store the full value, prefix included:
+Chargeblast's docs show the secret as `whsec_xxxxxxxxxxxx` but don't say which dashboard screen shows it; their screenshot of the settings has a Webhooks **Configure** button on the **Developer** tab. Store the full value, prefix included:
 
 ```bash
 CHARGEBLAST_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxx

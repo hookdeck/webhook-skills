@@ -50,9 +50,9 @@ async def delivereasy_webhook(request: Request):
         return JSONResponse({"error": "Invalid payload"}, status_code=400)
 
     # The payload is the booking itself; there is no event name. Dispatch on status.
-    # Delivery is at least once: deduplicate on booking["id"].
+    # Delivery is at least once: deduplicate on booking["id"] plus booking["status"].
     print(f"Booking {booking.get('id')} ({booking.get('booking_identifier')}) status: {booking.get('status')}")
-    # TODO: enqueue for async processing, keyed by id and status
+    # Your code: enqueue for async processing, keyed by id and status
 
     return {"received": True}
 

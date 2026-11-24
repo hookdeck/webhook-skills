@@ -87,6 +87,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 
-  // ReferralHero wants 200 with a blank body; anything else counts as an error.
+  // ReferralHero asks for 200 with a blank body; any non-200 status counts as an error.
   return new Response(null, { status: 200 });
 }

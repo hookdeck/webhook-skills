@@ -63,33 +63,31 @@ async def layerswap_webhook(request: Request):
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # The body is {swap, quote, deposit_actions} with no event-type field:
-    # the swap's lifecycle state is `swap.status`.
-    swap = event.get("swap") if isinstance(event.get("swap"), dict) else {}
-    quote = event.get("quote") if isinstance(event.get("quote"), dict) else {}
-    metadata = swap.get("metadata") if isinstance(swap.get("metadata"), dict) else {}
-    swap_status = swap.get("status")
-    swap_id = swap.get("id")
-    # No retry schedule or ordering is documented: deduplicate on swap.id + status
-    # and fetch GET /swaps/{id} before any irreversible action.
+    # The body is the swap itself: a flat object with no event-type field (every update
+    # is the one Svix `partner` event type). Route on `status`, which webhooks send in
+    # PascalCase; API swap objects use snake_case (PendingDeposit = user_transfer_pending).
+    swap_status = event.get("status")
+    swap_id = event.get("id")
+    # Deduplicate side effects on swap id + status (or a transaction hash), compare
+    # `timestamp` (Unix ms) for ordering, and fetch GET /swaps/{id} before crediting funds.
     print(f"Received Layerswap webhook for swap {swap_id}: {swap_status}")
 
-    if swap_status == "user_transfer_pending":
-        # Swap created; waiting for the user's deposit (expires after 6 hours without one)
-        print(f"Awaiting deposit: {swap_id} {event.get('deposit_actions')}")
-    elif swap_status == "ls_transfer_pending":
-        # Deposit confirmed; Layerswap is executing the swap. Not final: it can retry for a while
+    if swap_status == "PendingDeposit":
+        # API user_transfer_pending: waiting for the user's deposit (expires after 6 hours without one)
+        print(f"Awaiting deposit: {swap_id} {event.get('deposit_address')}")
+    elif swap_status == "PendingWithdrawal":
+        # API ls_transfer_pending: Layerswap is processing the swap. Not final
         print(f"Swap executing: {swap_id}")
-    elif swap_status == "completed":
-        # Funds delivered to the destination address: safe to fulfil after reconciling with GET /swaps/{id}
-        print(f"Swap completed: {swap_id} {metadata.get('reference_id')} {quote.get('receive_amount')}")
-    elif swap_status == "failed":
-        print(f"Swap failed: {swap_id} {swap.get('fail_reason')}")
-    elif swap_status == "expired":
+    elif swap_status == "Completed":
+        # Funds delivered to the destination address: fulfil after confirming with GET /swaps/{id}
+        print(f"Swap completed: {swap_id} {event.get('reference_id')} {event.get('amount')}")
+    elif swap_status == "Failed":
+        print(f"Swap failed: {swap_id}")
+    elif swap_status == "Expired":
         print(f"Swap expired (no deposit within 6 hours): {swap_id}")
-    elif swap_status == "pending_refund":
-        print(f"Refund pending: {swap_id} {swap.get('fail_reason')}")
-    elif swap_status == "refunded":
+    elif swap_status == "PendingRefund":
+        print(f"Refund pending: {swap_id}")
+    elif swap_status == "Refunded":
         print(f"Swap refunded: {swap_id}")
     else:
         # Return 200 for statuses you don't handle, or Svix keeps retrying them

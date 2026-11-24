@@ -5,7 +5,7 @@ docs:
   verification: 'https://generaltranslation.com/en-US/docs/platform/dashboard/reference/webhooks'
 notes: >-
   General Translation (generaltranslation.com), an AI localization platform: translated files and translation
-  jobs. Endpoints (up to 5 per organization, Starter or Enterprise plans) are added under Organization
+  jobs. Endpoints (up to 5 per organization; webhooks require an Enterprise plan) are added under Organization
   > Developer > Webhooks. Standard Webhooks signature with webhook-* headers: webhook-id, webhook-timestamp
   (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>' entries). Signed content
   is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64 output. SECRET: Per endpoint,

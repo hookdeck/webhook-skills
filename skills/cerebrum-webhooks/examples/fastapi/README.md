@@ -5,7 +5,7 @@ Minimal example of receiving Cerebrum webhooks (delivered by Svix) with signatur
 ## Prerequisites
 
 - Python 3.9+
-- A Cerebrum integration with a `postbackWebhookUrl`, and the webhook signing secret from the Svix Portal that Cerebrum gives you access to (on request)
+- A Cerebrum API key, and the endpoint's signing secret from the Svix application portal that Cerebrum gives you access to (on request)
 
 ## Setup
 
@@ -44,7 +44,7 @@ To receive real deliveries locally, use the Hookdeck CLI (no install or account 
 npx hookdeck-cli listen 8000 cerebrum --path /webhooks/cerebrum
 ```
 
-Set the URL it prints as your integration's `postbackWebhookUrl`.
+Use the HTTPS URL it prints as the `postbackWebhookUrl` when you create an order or vID invite, or in a `POST /v1/orders/simulate-webhook` request.
 
 ## How It Works
 

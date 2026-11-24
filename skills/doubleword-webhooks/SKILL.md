@@ -20,7 +20,7 @@ metadata:
 - How do I verify Doubleword webhook signatures?
 - How do I handle `batch.completed` and `batch.failed` events?
 - Why is my Doubleword webhook signature verification failing?
-- Setting up the webhook URL and signing key on a Doubleword profile
+- Adding a webhook and copying its signing key in a Doubleword profile or with `dw webhooks create`
 
 ## Verification (core)
 
@@ -55,8 +55,9 @@ from standardwebhooks.webhooks import Webhook
 Webhook(os.environ["DOUBLEWORD_WEBHOOK_SECRET"]).verify(raw_body, headers, json_parse=False)
 ```
 
-> **Secret handling:** the library base64-decodes whatever it is given, so pass the `whsec_`
-> value as-is. The examples use a secret without the `whsec_` prefix as its raw UTF-8 bytes, > passing raw bytes to the library.
+> **Secret handling:** the library strips `whsec_` and base64-decodes the rest, so pass the
+> `whsec_` value as-is. Doubleword keys always carry the prefix; the examples treat a value without
+> it as raw UTF-8 bytes and pass those bytes to the library.
 
 > **Header fallback:** the library only reads `webhook-*` names. The examples read `webhook-*`,
 > fall back to `svix-*` when `webhook-id` is absent, and hand the library the
@@ -72,8 +73,8 @@ Webhook(os.environ["DOUBLEWORD_WEBHOOK_SECRET"]).verify(raw_body, headers, json_
 
 ## Common Event Types
 
-Doubleword documents two events (the list may not be exhaustive). The event type is the top-level
-`type`; `data.status` repeats the outcome.
+Doubleword documents two events, and each webhook can select which it receives. The event type is
+the top-level `type`; `data.status` repeats the outcome.
 
 | Event | Triggered When |
 |-------|----------------|
@@ -88,6 +89,9 @@ Payload: `{ type, timestamp, data }`, where `data` has `batch_id`, `status`, `re
 Respond with any `2xx` to acknowledge. Other statuses and timeouts are retried with exponential
 backoff until attempts run out. After 10 consecutive failed deliveries the webhook is disabled;
 re-enable it from your profile. Unknown event types should still get a `2xx` after verification.
+
+Each webhook has its own signing key, shown once at creation. `dw webhooks rotate-secret` replaces
+it and the old key stops working immediately.
 
 ## Environment Variables
 

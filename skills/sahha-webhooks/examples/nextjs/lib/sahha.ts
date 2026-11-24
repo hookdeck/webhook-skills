@@ -6,7 +6,7 @@ import crypto from 'crypto';
 const SIGNATURE_PATTERN = /^[0-9a-fA-F]{64}$/;
 
 /**
- * Verify Sahha's X-Signature: lowercase hex HMAC-SHA256 of the raw body,
+ * Verify Sahha's X-Signature: hex HMAC-SHA256 of the raw body,
  * keyed with the Dashboard secret as UTF-8 bytes. No prefix, no timestamp.
  */
 export function verifySahhaSignature(

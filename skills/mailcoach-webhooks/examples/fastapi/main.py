@@ -46,16 +46,19 @@ async def mailcoach_webhook(request: Request):
     event = payload.get("event") if isinstance(payload, dict) else None
     if event == "UnconfirmedSubscriberCreatedEvent":
         print(f"Unconfirmed subscriber: {payload.get('email')} (list {payload.get('email_list_uuid')})")
-        # TODO: wait for SubscribedEvent before treating them as subscribed
-    elif event == "SubscribedEvent":
+        # Your code: wait for SubscribedEvent before treating them as subscribed
+    elif event in ("SubscribedEvent", "ResubscribedEvent"):
         print(f"Subscribed: {payload.get('email')} (list {payload.get('email_list_uuid')})")
-        # TODO: create or update the subscriber in your database
+        # Your code: create or update the subscriber in your database
     elif event == "UnsubscribedEvent":
         print(f"Unsubscribed: {payload.get('email')} (list {payload.get('email_list_uuid')})")
-        # TODO: mark the subscriber as unsubscribed
+        # Your code: mark the subscriber as unsubscribed
     elif event == "CampaignSentEvent":
         print(f"Campaign sent: {payload.get('name')} to {payload.get('sent_to_number_of_subscribers')} subscribers")
-        # TODO: record the send and its statistics
+        # Your code: record the send (the statistics may not be final yet)
+    elif event in ("BounceRegisteredEvent", "SoftBounceRegisteredEvent"):
+        print(f"{event}: {payload.get('subscriber_email')} (send {payload.get('send_uuid')})")
+        # Your code: flag the address; BounceRegisteredEvent is a permanent failure
     else:
         print("Unhandled event:", event)
 
