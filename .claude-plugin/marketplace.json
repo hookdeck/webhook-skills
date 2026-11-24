@@ -3540,7 +3540,7 @@
     },
     {
       "name": "convex-webhooks",
-      "description": "Receive and verify Convex webhook log stream events. Use when setting up a Convex webhook log stream endpoint, debugging x-webhook-signature verification, or handling log events such as verification, console, function_execution, audit_log and scheduler_stats.",
+      "description": "Receive and verify Convex webhook log stream events. Use when setting up a Convex webhook log stream endpoint, debugging x-webhook-signature verification, or handling log events such as verification, console, function_execution, audit_log, scheduler_stats and s3_export_stats.",
       "source": "./skills/convex-webhooks",
       "strict": false,
       "skills": [
@@ -4800,7 +4800,7 @@
     },
     {
       "name": "epilot-webhooks",
-      "description": "Receive and verify epilot (epilot.cloud) webhooks, signed per Standard Webhooks. Use when setting up an epilot webhook endpoint, getting the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification (including the extra v1a Ed25519 entry), or handling events like automation_trigger_webhook, customer_request_created and FileCreated.",
+      "description": "Receive and verify epilot (epilot.cloud) webhooks, signed per Standard Webhooks. Use when setting up an epilot webhook endpoint, getting the whsec_ signing secret, debugging webhook-id / webhook-timestamp / webhook-signature verification (including the extra v1a Ed25519 entry), or handling Event Catalog events like FileCreated and CustomerRequestSubmitted or automation-trigger webhooks.",
       "source": "./skills/epilot-webhooks",
       "strict": false,
       "skills": [
@@ -7969,7 +7969,7 @@
     },
     {
       "name": "layerswap-webhooks",
-      "description": "Receive and verify Layerswap webhooks (crypto bridging and exchange-to-chain swap API, delivered via Svix). Use when setting up Layerswap webhook handlers, debugging svix-signature verification, or handling swap status updates like ls_transfer_pending, completed, failed, pending_refund, and refunded.",
+      "description": "Receive and verify Layerswap webhooks (crypto bridging and exchange-to-chain swap API, delivered via Svix). Use when setting up Layerswap webhook handlers, debugging svix-signature verification, or handling swap status updates like PendingDeposit, PendingWithdrawal, Completed, Failed, PendingRefund, and Refunded.",
       "source": "./skills/layerswap-webhooks",
       "strict": false,
       "skills": [
@@ -8546,7 +8546,7 @@
     },
     {
       "name": "mailcoach-webhooks",
-      "description": "Receive and verify Mailcoach webhooks. Use when setting up Mailcoach webhook handlers, debugging Signature header verification, or handling SubscribedEvent, UnsubscribedEvent, UnconfirmedSubscriberCreatedEvent and CampaignSentEvent events from Mailcoach email marketing.",
+      "description": "Receive and verify Mailcoach webhooks. Use when setting up Mailcoach webhook handlers, debugging Signature header verification, or handling subscriber, tag, campaign, open, click and bounce events (SubscribedEvent, UnsubscribedEvent, CampaignSentEvent, LinkClickedEvent, BounceRegisteredEvent and others) from Mailcoach email marketing.",
       "source": "./skills/mailcoach-webhooks",
       "strict": false,
       "skills": [
@@ -9504,7 +9504,7 @@
     },
     {
       "name": "monerium-webhooks",
-      "description": "Receive and verify Monerium webhooks, which follow the Standard Webhooks specification. Use when registering a Monerium webhook with POST /webhooks, generating the whsec_ secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling order.created, order.updated and subscription.created events for EURe orders.",
+      "description": "Receive and verify Monerium webhooks, which follow the Standard Webhooks specification. Use when registering a Monerium webhook with POST /webhooks, generating the whsec_ secret, debugging webhook-id / webhook-timestamp / webhook-signature verification, or handling order.created, order.updated, profile.updated, profile.error, iban.updated and subscription.created events.",
       "source": "./skills/monerium-webhooks",
       "strict": false,
       "skills": [
@@ -9631,7 +9631,7 @@
     },
     {
       "name": "morta-webhooks",
-      "description": "Receive and verify Morta webhooks. Use when setting up Morta webhook endpoints, debugging Morta-Signature verification, or handling Morta hub events like table.row_created, project.created, member.created, and process.response_submitted.",
+      "description": "Receive and verify Morta webhooks. Use when setting up Morta webhook endpoints, debugging Morta-Signature verification, or handling Morta hub events like table.row_created, hub.created, member.created, and document.response_submitted.",
       "source": "./skills/morta-webhooks",
       "strict": false,
       "skills": [
@@ -13197,7 +13197,7 @@
     },
     {
       "name": "runa-webhooks",
-      "description": "Receive and verify Runa webhooks (payouts network for gift cards, prepaid cards and push-to-card, delivered via Svix). Use when setting up Runa webhook handlers, debugging svix-signature verification, or handling order.completion and product.update events.",
+      "description": "Receive and verify Runa webhooks (payouts network for gift cards, prepaid cards and push-to-card, delivered via Svix). Use when setting up Runa webhook handlers, debugging svix-signature verification, or handling order.completed, order.failed, payout.blocked, order.completion and product.update events.",
       "source": "./skills/runa-webhooks",
       "strict": false,
       "skills": [
