@@ -8,7 +8,7 @@ notes: >-
   job's result; the secret key is shown in the portal. Standard Webhooks signature with webhook-* headers:
   webhook-id, webhook-timestamp (Unix seconds), webhook-signature (one or more space-separated 'v1,<base64>'
   entries). Signed content is '{webhook-id}.{webhook-timestamp}.{raw request body}', HMAC-SHA256, base64
-  output. Notes: The secret is bare base64; it is pasted with a whsec_ prefix. SECRET: The
+  output. Notes: The secret is bare base64; paste it as shown. SECRET: The
   webhook secret key from the portal: a bare base64 string with no `whsec_` prefix.  Research: raw base64,
   no whsec_ (https://docs.salad.com/container-engine/how-to-guides/job-processing/webhook-signature: "The
   webhook secret key is a base64 string with no `whsec_` prefix."). The HMAC key is the base64-decoding
@@ -26,10 +26,8 @@ notes: >-
   in references/verification.md (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare
   every space-separated v1,<base64> entry in constant time after a length check, require the timestamp
   to be a plain positive integer) where the window can be dropped or widened. Missing headers or a bad
-  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck's configuration
-  alert for this source reads exactly: "SaladCloud shows the secret without a prefix. Paste it as whsec_
-  followed by the secret, or verification fails." SKILL.md and references/setup.md must state this requirement,
-  quoting the alert verbatim. Verification notes: Raw body is required. Body: {type, timestamp, data}.
+  signature: 400 or 401; handlers fail closed when the secret env var is unset. Hookdeck’s SaladCloud source accepts the portal value directly
+  and also accepts the whsec_-prefixed form. Verification notes: Raw body is required. Body: {type, timestamp, data}.
   `data` is the job document (id, status, input, output, events, timestamps, webhook, organization/project/queue
   names). Event type: Top-level `type` in a `{type, timestamp, data}` envelope; `data.events[].type` are
   job lifecycle steps (`created`, `started`, `succeeded`), not the event. Event types (1 documented, list

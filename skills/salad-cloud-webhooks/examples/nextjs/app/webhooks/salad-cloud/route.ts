@@ -12,7 +12,7 @@ import { Webhook } from 'standardwebhooks';
 // Signed content: `${webhook-id}.${webhook-timestamp}.${rawBody}`
 // Key: base64-decode of the secret. SaladCloud shows the secret as bare base64
 // with no `whsec_` prefix; the library accepts it as is, and also accepts the
-// `whsec_`-prefixed form that Hookdeck needs.
+// `whsec_`-prefixed form.
 // This handler also accepts the svix-* header names when
 // webhook-id is absent.
 // ---------------------------------------------------------------------------
