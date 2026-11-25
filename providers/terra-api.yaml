@@ -6,11 +6,11 @@ docs:
 notes: >
   Terra (tryterra.co), the wearables and health-data API. A webhook destination receives
   authentication lifecycle events and normalised data (activity, sleep, body, daily, ...) for
-  connected users. Delivery (from the docs): A 2xx within 8 s succeeds. Otherwise up to 10 retries
-  with exponential backoff from 30 s (about 8 hours in all), then the event is dropped without notice.
-  A per-destination circuit breaker pauses data events (not auth events) during sustained failure;
-  paused cycles count toward the 10. Read X-Terra-Signature first. Use the deprecated terra-signature duplicate only when the
-  current header is absent. MAC = HMAC-SHA256(key = the endpoint
+  connected users. A 2xx within eight seconds succeeds. Terra retries failed attempts with
+  exponential backoff for several hours. Retry counts and intervals can change. Failed deliveries
+  can be resent from Events in the dashboard. A per-destination circuit breaker pauses data events
+  during sustained failure and lets auth events through. Read X-Terra-Signature first. Use the
+  deprecated terra-signature duplicate only when the current header is absent. MAC = HMAC-SHA256(key = the endpoint
   signing secret, message = `<t>.<raw body>`); compare against every `v1` and ignore other schemes
   (the manual example also shows a `v0`). The page never says "hex": hex is read from the example
   values (64 lowercase hex characters). SIGNATURE SCHEME: The X-Terra-Signature header is

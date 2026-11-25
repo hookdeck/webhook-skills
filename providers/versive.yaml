@@ -28,7 +28,8 @@ notes: >-
   closed when the secret env var is unset. Copy the endpoint secret from Organization > Connectors > Webhooks > Manage endpoints.
   Verification notes: Versive says to "reject
   stale timestamps" without a number. Body: {event_type, interview, study}. No event id in the body; dedupe
-  on svix-id. Event type: Top-level `event_type` beside `interview` and `study`. Documented events include interview.completed and interview.screened_out. Transport: HTTPS POST via Svix. Delivery: 2xx once
+  on svix-id. Screened-out interviews contain identifiers, status, timestamps and metadata. Only completed
+  interviews can include a transcript, conversation or recording. Event type: Top-level `event_type` beside `interview` and `study`. Documented events include interview.completed and interview.screened_out. Transport: HTTPS POST via Svix. Delivery: 2xx once
   accepted; retried otherwise (schedule unstated). Setup: Organization owners and admins can add endpoints in the webhooks portal. No challenge. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
   the body only after the check. Hookdeck's source type is VERSIVE, labelled 'Versive'.
