@@ -23,7 +23,7 @@ In Hookdeck, create a source of type **Bitculator** and paste the same signing s
 
 ## Alarms
 
-The alarm items returned by `GET /api/v1/alarms` include a `notification` field (documented value `"webhook"`), `status` (`"active"` / `"triggered"`) and the target `metric`, `direction` and `target`. See the [Bitculator API documentation](https://bitculator.com/en/documentation/api/v1) for how alarms are created.
+The alarm items returned by `GET /api/v1/alarms` include a `notification` field (documented value `"webhook"`), `status` (`"active"` / `"triggered"`) and the target `metric`, `direction` and `target`. See the [Bitculator API documentation](https://bitculator.com/en/documentation/crypto-api/v1) for how alarms are created.
 
 ## Manage Endpoints
 
@@ -31,7 +31,7 @@ The alarm items returned by `GET /api/v1/alarms` include a `notification` field 
 |---------|---------|
 | `GET /api/v1/webhooks` | List endpoints |
 | `DELETE /api/v1/webhooks/{id}` | Remove an endpoint |
-| `POST /api/v1/webhooks/{id}/test` | Fire a signed `alarm.triggered` test event (`test: true` in the payload, real signature headers, attempted once) |
+| `POST /api/v1/webhooks/{id}/test` | Fire a signed `alarm.triggered` test event (`data.test: true` in the payload, real signature headers, attempted once) |
 | `GET /api/v1/webhooks/{id}/deliveries` | Delivery log kept for 30 days: event, `response_status`, `error`, `attempts`, `delivered_at` |
 
 ## Send a Test Event

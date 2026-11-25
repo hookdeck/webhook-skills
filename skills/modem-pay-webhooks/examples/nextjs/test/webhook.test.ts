@@ -98,7 +98,7 @@ describe('POST /webhooks/modem-pay', () => {
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Charge succeeded: 23419194'));
   });
 
-  it.each(['charge.updated', 'payment_intent.created', 'customer.created', 'transfer.succeeded', 'transfer.failed'])(
+  it.each(['charge.failed', 'payment_intent.created', 'customer.created', 'transfer.succeeded', 'transfer.failed'])(
     'handles %s',
     async (name) => {
       const body = event(name);
@@ -107,11 +107,11 @@ describe('POST /webhooks/modem-pay', () => {
     }
   );
 
-  it('acknowledges unknown events', async () => {
-    const body = event('charge.expired');
+  it('acknowledges events it does not handle', async () => {
+    const body = event('invoice.created');
     const res = await post(body, sign(body));
     expect(res.status).toBe(200);
-    expect(logSpy).toHaveBeenCalledWith('Unhandled Modem Pay event: charge.expired');
+    expect(logSpy).toHaveBeenCalledWith('Unhandled Modem Pay event: invoice.created');
   });
 
   it('verifies the raw bytes, not re-serialised JSON', async () => {

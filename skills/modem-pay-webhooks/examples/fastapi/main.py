@@ -73,14 +73,14 @@ async def modem_pay_webhook(raw_body: bytes = Depends(verified_body)):
 
     event_type = event["event"]
     payload = event["payload"]
-    # There is no delivery id: dedupe retries on (event, payload.id), e.g. in a unique DB index.
+    # There is no delivery id: dedupe retries on (event, payload.id, payload.updatedAt), e.g. in a unique DB index.
     ref = _str(payload.get("id")) or "(no id)"
 
     if event_type == "charge.succeeded":
         logger.info("Charge succeeded: %s %s %s", ref, payload.get("amount"), _str(payload.get("currency")) or "")
-        # TODO: mark the order paid (check payload.test_mode before fulfilling)
-    elif event_type == "charge.updated":
-        logger.info("Charge updated: %s status=%s", ref, _str(payload.get("status")) or "unknown")
+        # Your code: mark the order paid (check payload.test_mode before fulfilling)
+    elif event_type == "charge.failed":
+        logger.info("Charge failed: %s", ref)
     elif event_type == "payment_intent.created":
         logger.info("Payment intent created: %s", ref)
     elif event_type == "customer.created":

@@ -132,7 +132,7 @@ Pass it the same resolved `id`, `timestamp` and `signature` values as the SDK ex
 
 ## Common Gotchas
 
-- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order (Trunk's docs call this out: "Pass the library the raw request body exactly as received"). Use
+- **Raw body only.** Parsing JSON and re-serializing changes whitespace and key order (Trunk's route-flaky-tests recipe reads the body with `express.raw()` and verifies those bytes). Use
   `express.raw({ type: '*/*' })`, `await request.text()` (Next.js), or `await request.body()`
   (FastAPI).
 - **Decode the secret.** The HMAC key is the base64-decoded bytes after `whsec_`, not the

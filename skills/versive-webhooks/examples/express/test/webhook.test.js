@@ -33,6 +33,16 @@ const completed = {
   study: { id: 'study-uuid', title: 'Onboarding research' },
 };
 
+const screenedOut = {
+  event_type: 'interview.screened_out',
+  version: 1,
+  interview: {
+    id: 'interview-uuid', status: 'screened_out', vid: 'participant-facing-id', is_mock: false,
+    created_at: '2026-10-20T10:00:00.000Z', completed_at: '2026-10-20T10:05:00.000Z', metadata: {},
+  },
+  study: { id: 'study-uuid', title: 'Onboarding research' },
+};
+
 describe('Versive webhook handler', () => {
   beforeEach(() => {
     process.env.VERSIVE_WEBHOOK_SECRET = TEST_SECRET;
@@ -42,6 +52,12 @@ describe('Versive webhook handler', () => {
     const res = await send(JSON.stringify(completed));
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true, type: 'interview.completed' });
+  });
+
+  test('handles interview.screened_out', async () => {
+    const res = await send(JSON.stringify(screenedOut));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, type: 'interview.screened_out' });
   });
 
   test('handles unknown event types gracefully', async () => {

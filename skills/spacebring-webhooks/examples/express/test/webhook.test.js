@@ -34,6 +34,7 @@ const events = {
   'booking.created': booking,
   'booking.deleted': booking,
   'booking.paid': booking,
+  'booking.upcoming': booking,
   'booking.updated': booking,
   'company.created': { company: { id: 'co_01' } },
   'company.deleted': { company: { id: 'co_01' } },

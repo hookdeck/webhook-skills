@@ -2,11 +2,11 @@
 
 ## What Are Versive Webhooks?
 
-[Versive](https://getversive.com/) (formerly Mirio) is an AI-moderated user-interview research
-platform. It can send an HTTPS `POST` with a signed JSON body when a participant completes an
-interview. Webhooks are an organization-level integration provisioned by Versive support: creating
-and rotating destinations is not part of the public `v1` REST API. Deliveries go through Svix and
-follow Standard Webhooks with the `svix-*` header names.
+[Versive](https://getversive.com/) is an AI-moderated user-research platform. It can send an
+HTTPS `POST` with a signed JSON body when a participant completes an interview or is screened out.
+Webhooks are an organization-level integration that owners and admins set up in **Organization →
+Connectors → Webhooks**; creating and rotating destinations is not part of the public `v1` REST API.
+Deliveries go through Svix and follow Standard Webhooks with the `svix-*` header names.
 
 | Aspect | Value |
 |--------|-------|
@@ -18,7 +18,7 @@ follow Standard Webhooks with the `svix-*` header names.
 
 ## Event Payload Structure
 
-The body has the event type at the top level, beside the completed interview and its study:
+The body has the event type at the top level, beside the interview and its study. `interview.completed`:
 
 ```json
 {
@@ -28,6 +28,29 @@ The body has the event type at the top level, beside the completed interview and
     "status": "closed",
     "vid": "participant-facing-id",
     "used_fallback_transcription": false
+  },
+  "study": {
+    "id": "study-uuid",
+    "title": "Onboarding research"
+  }
+}
+```
+
+`interview.screened_out` is a slim body with identifiers, status, timestamps and the interview
+metadata. It never includes the transcript, conversation or recording:
+
+```json
+{
+  "event_type": "interview.screened_out",
+  "version": 1,
+  "interview": {
+    "id": "interview-uuid",
+    "status": "screened_out",
+    "vid": "participant-facing-id",
+    "is_mock": false,
+    "created_at": "2026-10-20T10:00:00.000Z",
+    "completed_at": "2026-10-20T10:05:00.000Z",
+    "metadata": {}
   },
   "study": {
     "id": "study-uuid",
@@ -50,11 +73,12 @@ The body has the event type at the top level, beside the completed interview and
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `interview.completed` | A participant completes an interview (screened-out interviews are excluded) | Pull the transcript into your research repository, notify a channel, kick off analysis |
+| `interview.completed` | A participant completes an interview | Pull the transcript into your research repository, notify a channel, kick off analysis |
+| `interview.screened_out` | A participant is screened out of an interview | Track screener drop-off, update a participant record |
 
-One event is documented and the list may not be exhaustive. The examples handle
-`interview.completed` and acknowledge anything else with `200`, so new event types don't trigger
-retries. Versive's [versioning policy](https://docs.getversive.com/api-reference/versioning.md)
+Two events are documented and the list may not be exhaustive. The examples handle both and
+acknowledge anything else with `200`, so new event types don't trigger retries. An endpoint with no
+event filter receives every event type. Versive's [versioning policy](https://docs.getversive.com/api-reference/versioning.md)
 covers changes to available events.
 
 ## Delivery Notes
@@ -63,6 +87,8 @@ covers changes to available events.
   processed it.
 - Return `2xx` only after your service has accepted the event, and queue slow work instead of
   doing it in the request handler.
+- The webhooks portal shows delivery logs and can replay messages. Turning webhooks off stops
+  deliveries, and events from that period are not sent later.
 
 ## Full Event Reference
 

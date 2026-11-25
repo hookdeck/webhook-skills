@@ -14,6 +14,11 @@ Dispatch on the body's top-level `event` field. These are the event types docume
 |-------|----------------|------------------|
 | `message_send` | A campaign message is sent to a recipient | Delivery funnels, send logs |
 | `message_delivery` | A campaign message is delivered to a recipient | Delivery confirmation, engagement analytics |
+| `message_bounce` | An email message bounces | Suppress permanently failing addresses |
+| `message_complaint` | A recipient marks an email message as spam | Suppress the address, watch sender reputation |
+| `message_failure` | A campaign message fails | Alerting, failure analysis (`error_message`) |
+
+`message_send` and `message_delivery` come from the [Webhooks Integration](https://docs.xtremepush.com/docs/webhooks-integration-1) page; `message_bounce`, `message_complaint` and `message_failure` from [Email Webhook Failure Codes](https://docs.xtremepush.com/docs/email-webhook-failure-codes). On email, those three also carry `failure_status_code` (a numeric reason) and `is_permanent` (`true` only for codes 1, 15 and 100, where Xtremepush recommends suppressing the address); on other channels both are `null`. Xtremepush's page refers to a full Message Events list that isn't published, and names open and unsubscribe events only in prose.
 
 Xtremepush reports other message and subscription activity too, so keep a default branch that logs and acknowledges unknown events. The examples handle `message_send` and `message_delivery`.
 
@@ -41,4 +46,4 @@ Respond within 5 seconds or the delivery may fail. No retry policy is documented
 
 ## Full Event Reference
 
-For the complete list of events and fields, see [Xtremepush's webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration).
+For the complete list of events and fields, see [Xtremepush's webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration-1).

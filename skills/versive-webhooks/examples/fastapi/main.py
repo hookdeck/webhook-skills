@@ -76,10 +76,14 @@ async def versive_webhook(request: Request):
     print(f"Received Versive webhook {msg_id}: {event_type}")
 
     if event_type == "interview.completed":
-        # Sent when a participant completes an interview (screened-out interviews are excluded).
+        # Sent when a participant completes an interview.
         # The interview can carry transcripts and recordings: treat it as sensitive and log only what you need.
         fallback = " (fallback transcription)" if interview.get("used_fallback_transcription") else ""
         print(f"Interview completed: {interview.get('id')} study {study.get('id')} {study.get('title')}{fallback}")
+    elif event_type == "interview.screened_out":
+        # Sent when a participant is screened out. A slim body: ids, status, timestamps and
+        # metadata, never the transcript, conversation or recording.
+        print(f"Interview screened out: {interview.get('id')} study {study.get('id')} {study.get('title')}")
     else:
         # Return 2xx for events you don't handle, or Versive keeps retrying them
         print(f"Unhandled event type: {event_type}")

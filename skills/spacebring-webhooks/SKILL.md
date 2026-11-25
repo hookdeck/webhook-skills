@@ -78,12 +78,13 @@ widened. Deduplicate on `svix-id` instead of relying on the timestamp.
 
 ## Common Event Types
 
-32 events are documented (the list may not be exhaustive). The examples route all of them on the
+33 events are documented (the list may not be exhaustive). The examples route all of them on the
 top-level `type` field and acknowledge anything else with `200`:
 
 | Event | Triggered When |
 |-------|----------------|
 | `booking.created` | A booking is made (also `booking.updated`, `booking.deleted`, `booking.paid`) |
+| `booking.upcoming` | A booking, or each date of a repeating booking, starts in an hour |
 | `company.created` | A company is created (also `company.deleted`) |
 | `membership.created` | A membership is created (also `membership.invited`) |
 | `event.created` | An event is created (also `event.updated`, `event.deleted`, `event.canceled`) |

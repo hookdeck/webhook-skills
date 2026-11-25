@@ -27,27 +27,27 @@ function handleEvent(payload) {
   switch (event) {
     case 'file.uploaded':
       console.log(`File uploaded: ${payload.data && payload.data.uuid}`);
-      // TODO: save a record for payload.data / payload.file (CDN URL)
+      // Your code: save a record for payload.data / payload.file (CDN URL)
       break;
 
     case 'file.stored':
       console.log(`File stored: ${payload.data && payload.data.uuid}`);
-      // TODO: mark the upload as permanent
+      // Your code: mark the upload as permanent
       break;
 
     case 'file.info_updated':
       console.log(`File info updated: ${payload.data && payload.data.uuid}`);
-      // TODO: sync payload.data.metadata / appdata (v0.7); see payload.previous_values
+      // Your code: sync payload.data.metadata / appdata (v0.7); see payload.previous_values
       break;
 
     case 'file.infected':
       console.log(`File infected: ${payload.data && payload.data.uuid}`);
-      // TODO: quarantine or delete the file
+      // Your code: quarantine or delete the file
       break;
 
     case 'file.deleted':
       console.log(`File deleted: ${payload.data && payload.data.uuid}`);
-      // TODO: remove your matching record
+      // Your code: remove your matching record
       break;
 
     default:

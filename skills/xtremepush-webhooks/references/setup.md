@@ -7,9 +7,9 @@
 
 ## Register Your Endpoint and Get the Webhook Secret Key
 
-1. In Xtremepush, open the Webhooks integration (see the [webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration)) and add a webhook with your endpoint URL.
+1. In Xtremepush, go to **Settings > Integrations > Marketplace > Webhooks** and click **Connect** (see the [webhooks documentation](https://docs.xtremepush.com/docs/webhooks-integration-1)). Name the connection and enter your endpoint URL, which must start with `https://`.
 2. Select the events to receive (start with `message_send` and `message_delivery`).
-3. Choose the authentication type. The options are None, Basic Auth, Bearer Token and Signed Payload.
+3. Choose the authentication type. The options are None, Basic Auth, Bearer Token, Signed Payload and OAuth 2.0 Token.
 4. With Signed Payload, Xtremepush generates a Webhook Secret Key. Copy it into `XTREMEPUSH_WEBHOOK_SECRET`.
 
 **Choose the Signed Payload auth type on the Xtremepush webhook and paste its Webhook Secret Key. Other auth types are unsigned and fail verification.**

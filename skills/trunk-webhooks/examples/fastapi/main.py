@@ -79,16 +79,14 @@ async def trunk_webhook(request: Request):
     elif isinstance(event_type, str) and event_type.startswith("pull_request_batch."):
         # Merge Queue: a batch of PRs tested together (subscribe to this family separately)
         print(f"Merge Queue batch {event_type.split('.')[1]}: {event.get('status')}")
-    elif event_type in ("test_case.status_changed", "v2.test_case.status_changed"):
-        # The v1 event is being phased out in favor of v2.test_case.status_changed
+    elif event_type == "v2.test_case.status_changed":
+        # A test's health moves between HEALTHY, FLAKY and BROKEN
         print(f"Test {test_case.get('name')}: {event.get('previous_status')} -> {event.get('new_status')}")
     elif event_type == "test_case.monitor_status_changed":
         print(f"Monitor {monitor.get('type')} {monitor.get('status')}: {test_case.get('name')}")
-    elif event_type in ("test_case.quarantining_setting_changed", "v2.test_case.quarantining_setting_changed"):
+    elif event_type == "v2.test_case.quarantining_setting_changed":
         # Fires only when a setting is manually overridden to ALWAYS_QUARANTINE or NEVER_QUARANTINE
-        print(f"Quarantine setting changed: {test_case.get('name')} {test_case.get('quarantined')}")
-    elif event_type == "test_case.investigation_completed":
-        print(f"AI investigation completed: {test_case.get('name')} {event.get('trigger')} {event.get('confidence')}")
+        print(f"Quarantine setting changed: {test_case.get('name')} {event.get('updated_quarantining_setting')}")
     else:
         # Return 2xx for events you don't handle, or Trunk keeps retrying them
         print(f"Unhandled event type: {event_type}")

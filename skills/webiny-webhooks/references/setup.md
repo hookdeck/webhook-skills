@@ -3,11 +3,11 @@
 ## Prerequisites
 
 - A Webiny 6.x project with the Webhooks feature available in the admin
-- A public HTTPS URL for your endpoint (for local development use the Hookdeck CLI below)
+- A public HTTPS URL for your endpoint; Webiny's 6.5.2 source rejects plain HTTP and local addresses (for local development use the Hookdeck CLI below)
 
 ## How Do I Choose the Signing Secret?
 
-The secret is **free text that you enter** in the Webiny admin. It is not generated, and it is not a `whsec_` value. Webiny signs each delivery with:
+The global secret in **Webhook settings** is **free text that you enter**. A per-webhook secret overrides it: the 6.4.13 webhook form has a Signing Secret field with a generate action that creates a `whsec_` value, and in 6.5.2 it can be set through the GraphQL API. Webiny signs each delivery with:
 
 1. the webhook's own signing secret, else
 2. the global signing secret in **Webhook settings**, else
@@ -17,17 +17,17 @@ With no secret at all, Webiny signs with an empty key and deliveries fail verifi
 
 > "Paste the signing secret exactly as entered: the Webiny webhook's own secret (Webiny 6), or the global webhook secret if the webhook has none. With neither set, Webiny signs with an empty key and deliveries fail verification."
 
-So set a secret on the webhook or in Webhook settings, then copy **the same string** into `WEBINY_WEBHOOK_SECRET`. Do not add a `whsec_` prefix and do not base64-encode it.
+So set a secret on the webhook or in Webhook settings, then copy **the same string** into `WEBINY_WEBHOOK_SECRET`. Do not add a `whsec_` prefix and do not base64-encode it. A generated `whsec_` value is copied as it is too.
 
 ## How Do I Register an Endpoint?
 
 1. In the Webiny admin, open the webhooks settings and create a new webhook.
 2. Enter your endpoint URL, for example `https://your-app.com/webhooks/webiny`.
 3. Choose the events to subscribe to from the list the admin shows.
-4. Optionally enter a signing secret for this webhook. If you leave it empty, the global secret is used.
+4. If your version's form has a Signing Secret field, optionally enter or generate one. If it's empty, the global secret is used.
 5. Save. There is no challenge or handshake step.
 
-Deliveries can be resent from the admin, which is the easiest way to test.
+Use **Trigger Test** in the webhook's actions menu to send a `webhook.test` delivery, and resend real deliveries from the webhook's deliveries list.
 
 ## Local Development
 

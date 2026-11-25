@@ -4,23 +4,25 @@
 
 ## Prerequisites
 
-- Taskade account on the Pro plan or above
-- A Taskade API token (for `POST /api/v2/webhooks`) or access to **Settings > API**
+- Taskade account on the Pro plan or above, with a verified email address
+- A Taskade personal access token (for `POST /api/v2/webhooks`) or access to **Settings > API**
 - An `https` endpoint URL of at most 2,048 characters (use the Hookdeck CLI for local development)
 
 ## Get Your Signing Secret
 
-Registration returns a signing `secret` **exactly once**. Store it before anything else, as `TASKADE_WEBHOOK_SECRET`. If you lose it, register a new webhook.
+Registration returns a signing `secret` **exactly once**. Store it before anything else, as `TASKADE_WEBHOOK_SECRET`. If you lose it, delete the webhook and register it again.
 
 ## Register Your Endpoint
 
 1. Register through the public API (`POST /api/v2/webhooks`) or in **Settings > API**.
-2. Provide the target URL, the `events` to receive (`task.due`, `task.assigned`, `comment.created`, `project.created`, `project.assigned`, `project.joined`) and optional workspace scoping.
+2. Provide the target URL, the `events` to receive (`task.due`, `task.assigned`, `comment.created`, `project.created`, `project.assigned`, `project.joined`) and optional `spaceIds`.
 3. Copy the `secret` from the response.
+
+The webhook's id is its target URL, and a URL can only be registered once. To tell events apart by URL, register a different path for each event, such as `/webhooks/taskade/task-due`.
 
 Limits: up to 100 event-workspace combinations per account. The docs describe no retry or timeout behaviour.
 
-Legacy webhooks are unsigned and will fail verification. Re-register them through the public API.
+Legacy `subscribeWebhook` subscriptions are unsigned. Register the same URL with `POST /api/v2/webhooks`, then remove the old subscription.
 
 ## Local Development
 
@@ -32,4 +34,4 @@ Use the Hookdeck URL as the webhook target. In Hookdeck, create the source with 
 
 ## Testing and Troubleshooting
 
-Trigger one of the registered events in a scoped workspace (for example, assign a task). If verification fails, the usual causes are a lost or mistyped secret, a legacy (unsigned) webhook, or a body parsed before verification.
+Trigger one of the registered events in a scoped workspace (for example, assign a task). If verification fails, the usual causes are a lost or mistyped secret, a legacy (unsigned) subscription, a body parsed before verification, or a clock more than 5 minutes off.

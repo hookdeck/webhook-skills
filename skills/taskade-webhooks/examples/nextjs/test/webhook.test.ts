@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
-import { verifyTaskadeWebhook } from '../lib/verify';
+import { verifyTaskadeWebhook, taskadeEventType } from '../lib/verify';
 
 const SECRET = 'test_taskade_secret';
 
@@ -10,54 +10,79 @@ beforeAll(() => {
 });
 
 /**
- * Generate a valid Taskade signature for testing (sha256=<hex> of the raw body)
+ * Generate a valid X-Taskade-Signature-V2 value: sha256=<hex> of "<timestamp>.<raw body>"
  */
-function generateTaskadeSignature(payload: string | Buffer, secret: string): string {
-  const digest = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+function generateTaskadeSignature(payload: string | Buffer, timestamp: string, secret: string): string {
+  const digest = crypto.createHmac('sha256', secret).update(`${timestamp}.`).update(payload).digest('hex');
   return `sha256=${digest}`;
 }
 
+function now(): string {
+  return String(Math.floor(Date.now() / 1000));
+}
+
+// Test bodies use field names from Taskade's Delivery payload table with placeholder values
+const bodies: Record<string, Record<string, unknown>> = {
+  'task.due': { projectId: 'p_test', id: 'n_test', text: 'test', taskEndDate: 'test' },
+  'task.assigned': { projectId: 'p_test', assignedNodes: [], nodes: [] },
+  'comment.created': { projectId: 'p_test', nodeId: 'n_test', commentBody: 'test' },
+  'project.created': { projectId: 'p_test', creatorName: 'test' },
+  'project.assigned': { projectId: 'p_test', assigneeId: 'u_test' },
+  'project.joined': { projectId: 'p_test', joinerUserId: 'u_test' },
+};
+
 describe('verifyTaskadeWebhook', () => {
-  const body = Buffer.from('{"event":"task.due"}');
+  const body = Buffer.from('{"projectId":"p_test"}');
 
   it('returns true for a valid signature', () => {
-    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, SECRET), SECRET)).toBe(true);
+    const ts = now();
+    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, ts, SECRET), ts, SECRET)).toBe(true);
   });
 
   it('accepts the bare digest without the prefix', () => {
-    const bare = generateTaskadeSignature(body, SECRET).slice('sha256='.length);
-    expect(verifyTaskadeWebhook(body, bare, SECRET)).toBe(true);
+    const ts = now();
+    const bare = generateTaskadeSignature(body, ts, SECRET).slice('sha256='.length);
+    expect(verifyTaskadeWebhook(body, bare, ts, SECRET)).toBe(true);
   });
 
-  it('accepts an uppercase hex digest', () => {
-    const sig = 'sha256=' + generateTaskadeSignature(body, SECRET).slice(7).toUpperCase();
-    expect(verifyTaskadeWebhook(body, sig, SECRET)).toBe(true);
+  it('returns false for a timestamp more than 5 minutes old', () => {
+    const ts = String(Math.floor(Date.now() / 1000) - 301);
+    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, ts, SECRET), ts, SECRET)).toBe(false);
   });
 
-  it('returns false for an invalid signature', () => {
-    expect(verifyTaskadeWebhook(body, 'sha256=invalid', SECRET)).toBe(false);
+  it('returns false for a body-only signature', () => {
+    const ts = now();
+    const bodyOnly = 'sha256=' + crypto.createHmac('sha256', SECRET).update(body).digest('hex');
+    expect(verifyTaskadeWebhook(body, bodyOnly, ts, SECRET)).toBe(false);
   });
 
-  it('returns false for right-length non-hex characters', () => {
-    expect(verifyTaskadeWebhook(body, 'sha256=' + 'zz'.repeat(32), SECRET)).toBe(false);
+  it('returns false for invalid or non-hex signatures', () => {
+    const ts = now();
+    expect(verifyTaskadeWebhook(body, 'sha256=invalid', ts, SECRET)).toBe(false);
+    expect(verifyTaskadeWebhook(body, 'sha256=' + 'zz'.repeat(32), ts, SECRET)).toBe(false);
   });
 
   it('returns false for a different secret', () => {
-    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, 'other'), SECRET)).toBe(false);
+    const ts = now();
+    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, ts, 'other'), ts, SECRET)).toBe(false);
   });
 
-  it('returns false for a missing or empty signature', () => {
-    expect(verifyTaskadeWebhook(body, null, SECRET)).toBe(false);
-    expect(verifyTaskadeWebhook(body, '', SECRET)).toBe(false);
+  it('returns false for missing headers or secret', () => {
+    const ts = now();
+    const sig = generateTaskadeSignature(body, ts, SECRET);
+    expect(verifyTaskadeWebhook(body, null, ts, SECRET)).toBe(false);
+    expect(verifyTaskadeWebhook(body, sig, null, SECRET)).toBe(false);
+    expect(verifyTaskadeWebhook(body, sig, ts, undefined)).toBe(false);
+  });
+});
+
+describe('taskadeEventType', () => {
+  it.each(Object.entries(bodies))('identifies %s from its fields', (event, body) => {
+    expect(taskadeEventType(body)).toBe(event);
   });
 
-  it('returns false when no secret is configured', () => {
-    expect(verifyTaskadeWebhook(body, generateTaskadeSignature(body, SECRET), undefined)).toBe(false);
-  });
-
-  it('verifies raw bytes, not re-serialized JSON', () => {
-    const raw = Buffer.from('{ "event" : "task.due",  "task": {} }');
-    expect(verifyTaskadeWebhook(raw, generateTaskadeSignature(raw, SECRET), SECRET)).toBe(true);
+  it('returns undefined for an unrecognised body', () => {
+    expect(taskadeEventType({ projectId: 'p_test' })).toBeUndefined();
   });
 });
 
@@ -72,35 +97,39 @@ describe('POST /webhooks/taskade', () => {
     return POST(request);
   }
 
+  function signed(body: string, ts = now()) {
+    return { 'x-taskade-timestamp': ts, 'x-taskade-signature-v2': generateTaskadeSignature(body, ts, SECRET) };
+  }
+
   it('returns 401 for a missing signature', async () => {
-    const response = await post('{"event":"task.due"}');
+    const response = await post(JSON.stringify(bodies['task.due']));
     expect(response.status).toBe(401);
   });
 
   it('returns 401 for an invalid signature', async () => {
-    const response = await post('{"event":"task.due"}', { 'x-taskade-signature': 'sha256=invalid' });
+    const response = await post(JSON.stringify(bodies['task.due']), {
+      'x-taskade-timestamp': now(),
+      'x-taskade-signature-v2': 'sha256=invalid',
+    });
     expect(response.status).toBe(401);
   });
 
-  it.each(['task.due', 'task.assigned', 'comment.created', 'project.created', 'project.joined'])(
-    'returns 200 for a valid %s event',
-    async (event) => {
-      const body = JSON.stringify({ event });
-      const response = await post(body, { 'x-taskade-signature': generateTaskadeSignature(body, SECRET) });
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ received: true });
-    }
-  );
+  it.each(Object.keys(bodies))('returns 200 for a valid %s delivery', async (event) => {
+    const body = JSON.stringify(bodies[event]);
+    const response = await post(body, signed(body));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true });
+  });
 
   it('verifies pretty-printed JSON that JSON.stringify would change', async () => {
-    const body = JSON.stringify({ event: 'task.assigned', task: { id: 't_1' } }, null, 4);
-    const response = await post(body, { 'x-taskade-signature': generateTaskadeSignature(body, SECRET) });
+    const body = JSON.stringify(bodies['task.assigned'], null, 4);
+    const response = await post(body, signed(body));
     expect(response.status).toBe(200);
   });
 
   it('returns 400 for a validly signed non-JSON body', async () => {
     const body = 'not json';
-    const response = await post(body, { 'x-taskade-signature': generateTaskadeSignature(body, SECRET) });
+    const response = await post(body, signed(body));
     expect(response.status).toBe(400);
   });
 });

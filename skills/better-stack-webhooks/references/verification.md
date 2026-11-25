@@ -18,7 +18,8 @@ out of logs and rotate it if it leaks.
 
 ## What Does the Handler Check?
 
-Hookdeck's Better Stack source offers the same two options: Basic auth (the default) and a custom header (an API key check). A request is accepted if **either configured** method passes:
+Hookdeck's Better Stack source offers the same two options: Basic auth (the default) and a custom
+header. The example handlers accept a request if **either configured** method passes:
 
 1. **Custom header:** find the header named by `BETTER_STACK_WEBHOOK_HEADER` (default
    `X-Better-Stack-Secret`) case-insensitively and compare the **whole value** with
@@ -140,8 +141,8 @@ def verify_better_stack_request(headers, env=os.environ) -> bool:
   alphabet and padding, or compare a re-encoded value. Python needs `validate=True`.
 - **Fail closed.** A method whose env vars are unset is rejected; with none set, everything is.
 - **Hookdeck and methods.** The Better Stack source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). Allow any other method the
-  webhook uses on the source (`GET`, `HEAD`, `PUT`, `PATCH`); `OPTIONS` can't be allowed, so don't
-  use it for a webhook routed through Hookdeck.
+  webhook uses on the source (`GET`, `HEAD`, `PUT`, `PATCH`). The methods Hookdeck documents for
+  sources don't include `OPTIONS`, so don't use it for a webhook routed through Hookdeck.
 
 ## Debugging Verification Failures
 

@@ -40,7 +40,7 @@ const chat = [
     status: 'handled',
     pastStatus: ['created', 'handled'],
     reference: { type: 'ticket', id: '22282' },
-    creator: { entityId: 106, name: 'Jason He', userId: 'dd~c~106' },
+    creator: { entityId: 106, name: 'Example Contact', userId: 'dd~c~106' },
     users: [],
     lastModifiedDateTime: '2020-04-15T21:12:00.9897216Z',
   },

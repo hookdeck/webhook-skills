@@ -163,16 +163,16 @@ def handle_event(event: dict) -> None:
     if kind == "incident":
         if event["state"] == "comment":
             print(f"Incident {event['id']} comment by {event['author']}: {event['content']}")
-            # TODO: mirror the comment into your ticketing system
+            # Your code: mirror the comment into your ticketing system
         else:
             print(f"Incident {event['id']} {event['state']}: {event['name']} ({event['cause']})")
-            # TODO: open, update or close the matching incident on your side
+            # Your code: open, update or close the matching incident on your side
     elif kind == "monitor":
         print(f"Monitor {event['id']} {event['state']}: {event['name']}")
-        # TODO: sync monitor configuration
+        # Your code: sync monitor configuration
     elif kind == "on_call":
         print(f"On-call {event['change']} change on {event['calendar']}: {', '.join(event['emails'])}")
-        # TODO: update who is on call in your tools
+        # Your code: update who is on call in your tools
     else:
         print("Unrecognised Better Stack payload (customised body_template?)")
 

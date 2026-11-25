@@ -6,13 +6,14 @@ Terminal delivers webhooks through Svix, so every delivery carries three headers
 
 | Header | Contents |
 |--------|----------|
-| `svix-id` | Unique delivery ID (stable across retries; your idempotency key) |
+| `svix-id` | Unique message ID |
 | `svix-timestamp` | Unix timestamp in seconds when the message was sent |
 | `svix-signature` | Space-separated list of `v1,<base64 signature>` entries |
 
-Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and `webhook-signature`
-carry the same values. Hookdeck's Terminal source (`TERMINAL_TELEMATICS`) reads the `svix-*` headers and falls back to
-the `webhook-*` headers when `svix-id` is absent, and the examples here do the same.
+Terminal's guide prints these names and the signing steps in its script for sending signed test
+events. Svix implements Standard Webhooks, so `webhook-id`, `webhook-timestamp`, and
+`webhook-signature` carry the same values; the examples here read the `svix-*` headers and fall back
+to the `webhook-*` headers when `svix-id` is absent.
 
 The algorithm:
 
@@ -72,7 +73,8 @@ is rejected as "Message timestamp too old", even though the signature is valid.
 
 If your handler sits behind Hookdeck, or you replay events for debugging, use the manual
 verifier below, which drops the window (`toleranceSeconds = null`) or widens it. Replay
-protection then comes from deduplicating on `svix-id`.
+protection then comes from deduplicating on the payload `id`, which Terminal keeps the same across
+retries.
 
 ## Manual Verification (configurable timestamp window)
 

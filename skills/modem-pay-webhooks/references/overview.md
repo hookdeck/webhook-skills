@@ -2,11 +2,11 @@
 
 ## What Are Modem Pay Webhooks?
 
-Modem Pay is a payment gateway in The Gambia (mobile money, cards and payouts; its samples use `GMD`). Its webhooks "notify your server about key events, such as customer creation, payment intent updates, and successful charges." Modem Pay POSTs a JSON event to your HTTPS endpoint and signs it with `x-modem-signature`.
+Modem Pay is a payments API for The Gambia (mobile money, cards and payouts; its samples use `GMD`). A webhook is a `POST` request Modem Pay sends to your server when something happens, such as a payment succeeding, so you can mark orders paid even when the customer closes their browser. Each request is signed with `x-modem-signature`.
 
 ## Event Payload Structure
 
-"The event type is provided in the event field, while the main data is within the payload." The sample from Modem Pay's docs, trimmed (customer details removed):
+Every webhook has two fields: `event`, the name of what happened, and `payload`, the object it happened to. The sample from Modem Pay's docs, trimmed (customer contact fields removed):
 
 ```json
 {
@@ -16,53 +16,60 @@ Modem Pay is a payment gateway in The Gambia (mobile money, cards and payouts; i
     "type": "payment",
     "amount": 2500,
     "currency": "GMD",
-    "payment_method": "qmoney",
-    "customer": "0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6",
-    "metadata": {},
     "status": "completed",
+    "payment_method": "qmoney",
+    "transaction_reference": "VOAO1CFEN7",
+    "payment_intent_id": "273ac751-369d-4198-8340-da480208bded",
     "payment_link_id": null,
+    "customer": "0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6",
+    "metadata": { "order_id": "1042" },
+    "custom_fields_values": {},
     "business_id": "a10a51ae-05c8-406e-968c-7b1d309a77e0",
     "account_id": "7788dd90-3801-47a6-8597-b46eaa0a7d7d",
     "test_mode": true,
     "createdAt": "2024-12-15T09:34:17.036Z",
-    "updatedAt": "2024-12-15T09:34:43.306Z",
-    "payment_intent_id": "273ac751-369d-4198-8340-da480208bded",
-    "transaction_reference": "VOAO1CFEN7",
-    "payment_method_id": "4dbaaec5-7a16-4908-8fd9-c3d2bd24f739"
+    "updatedAt": "2024-12-15T09:34:43.306Z"
   }
 }
 ```
 
-The sample also carries customer contact details and `payment_metadata` (browser, device, IP address). Treat those as personal data: don't log them.
+The full sample also carries the customer's name, phone and email and a masked `payment_account`. Treat those as personal data: don't log them.
 
 `payload` is only documented for `charge.succeeded`. For other events, check each field's type before you use it.
 
-## Common Event Types
+## Event Types
 
-From Modem Pay's webhooks page ("Event Structure"):
+From Modem Pay's webhooks page:
 
 | Group | Events |
 |-------|--------|
-| Customer | `customer.created`, `customer.updated`, `customer.deleted` |
-| Payment intent | `payment_intent.created`, `payment_intent.cancelled`, `payment_intent.expired` |
-| Charge | `charge.succeeded`, `charge.cancelled`, `charge.created`, `charge.updated`, `charge.expired` |
-| Payout (transfer) | `transfer.succeeded`, `transfer.cancelled`, `transfer.reversed`, `transfer.failed`, `transfer.flagged` |
+| Payments | `charge.created`, `charge.succeeded`, `charge.failed`, `charge.cancelled`, `charge.refunded` |
+| Payment intents | `payment_intent.created`, `payment_intent.cancelled`, `payment_intent.expired`, `payment_intent.restored` |
+| Payouts | `transfer.succeeded`, `transfer.failed`, `transfer.reversed`, `transfer.flagged`, `transfer.queued`, `transfer.cancelled` |
+| Customers | `customer.created`, `customer.updated`, `customer.deleted` |
+| Invoices | `invoice.created`, `invoice.updated`, `invoice.deleted`, `invoice.overdue` (live mode only) |
 
-The Modem Pay CLI page lists `charge.failed` among the events `modempay trigger` can send, and the webhooks page doesn't. Handle it if you rely on failed charges, and acknowledge any event you don't recognise with a 200.
+Modem Pay's invoice pages also say a paid invoice triggers `paymentrequest.success`. The Node SDK's `EventType` union (modem-pay 2.0.1) adds `charge.updated`, which no docs page lists. Acknowledge any event you don't recognise with a 200.
 
 ## Retries
 
-"If your server fails to acknowledge a webhook event with a 200 OK HTTP response, Modem Pay will retry the delivery up to 3 times, with each retry spaced 10 minutes apart. A failure could be due to reasons such as server timeouts, network errors, or non-2xx response codes."
+If your endpoint doesn't reply with a 2xx, or times out, Modem Pay tries again up to 3 more times, 10 minutes apart. Developers > Webhooks > Events lists every delivery with your server's response, and you can resend any event from there.
 
-Modem Pay recommends answering 200 "immediately" and offloading slow work "to a background worker or job queue."
+Modem Pay recommends replying `200` as soon as you've checked the signature and doing slow work afterwards.
+
+## Webhooks and `callback_url`
+
+A payment intent created with a `callback_url` sends that payment's events to that URL instead of your webhook. The body and retries are the same, but the signing key is different. See [verification.md](verification.md).
 
 ## What Isn't Documented
 
-- An event or delivery ID. Deduplicate on `(event, payload.id)` instead (our suggestion).
+- An event or delivery ID. Modem Pay says `payload.id` stays the same across retries; deduplicate on `(event, payload.id, payload.updatedAt)` (our suggestion), because `payload.id` alone is shared by different events about the same object.
 - The request timeout, the source IP addresses, the `Content-Type` and any header other than `x-modem-signature`.
+- Delivery order.
 - Payload fields for events other than `charge.succeeded`.
 
 ## Full Event Reference
 
 - [Modem Pay webhooks](https://docs.modempay.com/documentation/core/webhooks)
-- [Webhook Tester (CLI)](https://docs.modempay.com/documentation/core/webhook-cli)
+- [Modem Pay CLI](https://docs.modempay.com/documentation/cli)
+- [Callback URL](https://docs.modempay.com/documentation/payment-intents/callback_url)

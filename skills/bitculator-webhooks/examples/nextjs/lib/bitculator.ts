@@ -7,7 +7,7 @@ import crypto from 'crypto';
 //   X-Bitculator-Signature: t=<unix seconds>,v1=<hex>
 // v1 = HMAC-SHA256 of "<t>.<raw body>" in hex, keyed with the whole secret string's UTF-8 bytes
 // (the whsec_ prefix included; not base64-decoded). <t> is used exactly as it appears in the header.
-// https://bitculator.com/en/documentation/api/v1
+// https://bitculator.com/en/documentation/crypto-api/v1
 
 // Optional replay window in seconds, off by default (unset or 0). Bitculator's own example accepts a
 // delivery only when |now - t| < 300; set BITCULATOR_WEBHOOK_TOLERANCE_SECONDS=300 to match that when
