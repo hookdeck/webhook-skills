@@ -5,7 +5,7 @@
     "email": "phil@hookdeck.com"
   },
   "metadata": {
-    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 845 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
+    "description": "Webhook integration skills for AI coding agents: provider skills (Stripe, Shopify, GitHub, and 846 others) plus framework-agnostic handler patterns and Hookdeck infrastructure plugins for receiving, verifying, and delivering webhooks across Express, Next.js, and FastAPI.",
     "version": "0.1.0"
   },
   "plugins": [
@@ -9416,7 +9416,7 @@
     },
     {
       "name": "modem-pay-webhooks",
-      "description": "Receive and verify Modem Pay webhooks. Use when setting up Modem Pay webhook handlers, debugging x-modem-signature (HMAC-SHA512) verification, or handling charge, payment intent, customer and transfer events from the Modem Pay payment gateway.",
+      "description": "Receive and verify Modem Pay webhooks. Use when setting up Modem Pay webhook handlers, debugging x-modem-signature (HMAC-SHA512) verification, or handling charge, payment intent, payout (transfer), customer and invoice events from the Modem Pay payment gateway.",
       "source": "./skills/modem-pay-webhooks",
       "strict": false,
       "skills": [
@@ -15367,7 +15367,7 @@
     },
     {
       "name": "taskade-webhooks",
-      "description": "Receive and verify Taskade webhooks. Use when setting up Taskade webhook handlers, debugging X-Taskade-Signature verification, or handling events such as task.due, task.assigned, comment.created, and project.created.",
+      "description": "Receive and verify Taskade webhooks. Use when setting up Taskade webhook handlers, debugging X-Taskade-Signature-V2 verification, or handling events such as task.due, task.assigned, comment.created, and project.created.",
       "source": "./skills/taskade-webhooks",
       "strict": false,
       "skills": [
@@ -15600,7 +15600,7 @@
     },
     {
       "name": "terra-api-webhooks",
-      "description": "Receive and verify Terra API webhooks (tryterra.co wearables and health data). Use when setting up a Terra webhook destination, debugging terra-signature verification, or handling events like auth, deauth, user_reauth, access_revoked, connection_error, activity, sleep, body and daily.",
+      "description": "Receive and verify Terra API webhooks (tryterra.co wearables and health data). Use when setting up a Terra webhook destination, debugging X-Terra-Signature (terra-signature) verification, or handling events like auth, deauth, user_reauth, access_revoked, connection_error, activity, sleep, body and daily.",
       "source": "./skills/terra-api-webhooks",
       "strict": false,
       "skills": [
@@ -16301,7 +16301,7 @@
     },
     {
       "name": "trunk-webhooks",
-      "description": "Receive and verify Trunk webhooks (trunk.io Merge Queue and Flaky Tests, delivered via Svix). Use when setting up Trunk webhook handlers, debugging svix-signature verification, or handling events like pull_request.merged, pull_request_batch.pending_failure, v2.test_case.status_changed, and test_case.investigation_completed.",
+      "description": "Receive and verify Trunk webhooks (trunk.io Merge Queue and Flaky Tests, delivered via Svix). Use when setting up Trunk webhook handlers, debugging svix-signature verification, or handling events like pull_request.merged, pull_request_batch.pending_failure, v2.test_case.status_changed, and v2.test_case.quarantining_setting_changed.",
       "source": "./skills/trunk-webhooks",
       "strict": false,
       "skills": [
@@ -16940,7 +16940,7 @@
     },
     {
       "name": "versive-webhooks",
-      "description": "Receive and verify Versive webhooks (AI-moderated user-interview research platform, formerly Mirio, delivered via Svix). Use when setting up Versive webhook handlers, debugging svix-signature verification, or handling the interview.completed event.",
+      "description": "Receive and verify Versive webhooks (AI-moderated user-research platform, delivered via Svix). Use when setting up Versive webhook handlers, debugging svix-signature verification, or handling the interview.completed and interview.screened_out events.",
       "source": "./skills/versive-webhooks",
       "strict": false,
       "skills": [
@@ -17622,6 +17622,30 @@
       ]
     },
     {
+      "name": "worldline-webhooks",
+      "description": "Verify Worldline Connect and Worldline Direct webhook signatures (X-GCS-Signature, HMAC-SHA256, X-GCS-KeyId key rotation), answer the Connect endpoint-verification GET, dedupe on event id, handle payment.captured, payment.paid, payment.rejected, refund.refunded, dispute.created and paymentlink.paid events.",
+      "source": "./skills/worldline-webhooks",
+      "strict": false,
+      "skills": [
+        "./"
+      ],
+      "category": "integration",
+      "license": "MIT",
+      "author": {
+        "name": "Hookdeck",
+        "email": "phil@hookdeck.com"
+      },
+      "repository": "https://github.com/hookdeck/webhook-skills",
+      "homepage": "https://github.com/hookdeck/webhook-skills/tree/main/skills/worldline-webhooks",
+      "keywords": [
+        "webhooks",
+        "worldline",
+        "ingenico",
+        "globalcollect",
+        "payments"
+      ]
+    },
+    {
       "name": "xendit-webhooks",
       "description": "Receive and verify Xendit webhooks. Use when setting up Xendit webhook handlers, checking the x-callback-token verification token, debugging 401s or failed verification, or handling payment.capture, payment.failure, payment_token.activation, refund.succeeded and invoice PAID callbacks.",
       "source": "./skills/xendit-webhooks",
@@ -17665,7 +17689,7 @@
     },
     {
       "name": "xtremepush-webhooks",
-      "description": "Receive and verify Xtremepush webhooks. Use when setting up Xtremepush customer engagement webhook handlers, debugging X-Xtremepush-Signature verification, or handling campaign message events like message_send and message_delivery.",
+      "description": "Receive and verify Xtremepush webhooks. Use when setting up Xtremepush customer engagement webhook handlers, debugging X-Xtremepush-Signature verification, or handling campaign message events like message_send and message_delivery, message_bounce and message_failure.",
       "source": "./skills/xtremepush-webhooks",
       "strict": false,
       "skills": [
@@ -18259,7 +18283,7 @@
     },
     {
       "name": "webhook-skills",
-      "description": "Bundle of all webhook integration skills in this repo: 848 provider skills (Stripe, Shopify, GitHub, and 845 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 854 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
+      "description": "Bundle of all webhook integration skills in this repo: 849 provider skills (Stripe, Shopify, GitHub, and 846 others) for verifying signatures and handling provider-specific events, framework-agnostic webhook handler patterns covering idempotency, error handling and retries, three Hookdeck infrastructure skills for the Event Gateway and Outpost, a webhook DX audit skill for scoring how a platform sends outbound webhooks, and a Black Friday / Cyber Monday (BFCM) playbook for preparing for peak traffic and recovering missed webhooks. Each provider skill includes Express, Next.js, and FastAPI examples. Install this plugin to get all 855 skills; install individual `<name>-webhooks@webhook-skills` plugins for narrower per-provider use.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -19093,6 +19117,7 @@
         "./skills/workato-webhooks",
         "./skills/workos-webhooks",
         "./skills/workspace-one-webhooks",
+        "./skills/worldline-webhooks",
         "./skills/xendit-webhooks",
         "./skills/xero-webhooks",
         "./skills/xtremepush-webhooks",
