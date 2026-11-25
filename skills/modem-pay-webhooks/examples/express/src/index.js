@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 //   x-modem-signature: <hex>
 // <hex> = HMAC-SHA512 of the request body, keyed with the webhook secret (Developers > Webhooks in
 // the Modem Pay dashboard) used as-is. There is no timestamp and no prefix such as "sha512=".
-// https://docs.modempay.com/documentation/core/webhooks#webhook-security-and-signature-validation
+// https://docs.modempay.com/documentation/core/webhooks#verify-the-signature
 //
 // Hash the RAW body bytes. Modem Pay's own snippets hash JSON.stringify(req.body), which only works
 // while re-serialising reproduces the exact bytes that were sent; the raw body always does.

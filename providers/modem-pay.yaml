@@ -2,48 +2,20 @@ name: modem-pay
 displayName: "Modem Pay"
 docs:
   webhooks: https://docs.modempay.com/documentation/core/webhooks
-  verification: https://docs.modempay.com/documentation/core/webhooks#webhook-security-and-signature-validation
-  events: https://docs.modempay.com/documentation/core/webhooks#event-structure
+  verification: https://docs.modempay.com/documentation/core/webhooks#verify-the-signature
+  events: https://docs.modempay.com/documentation/core/webhooks#events
 notes: >
-  Modem Pay (modempay.com), a payment gateway in The Gambia (mobile money, cards, payouts; sample
-  currency GMD). Docs are Mintlify pages and each has a Markdown twin: append .md to the path
-  (https://docs.modempay.com/documentation/core/webhooks.md,
-  https://docs.modempay.com/documentation/core/webhook-cli.md). Do not add claims the quotes below
-  do not support. SETUP, verbatim: 'You can generate your unique Modem Pay webhook secret in the
-  Modem Pay dashboard under Developers > Webhooks.' and 'Create a dedicated POST endpoint on your
-  server to receive webhook events from Modem Pay. Ensure this endpoint is accessible over HTTPS'.
-  BODY, verbatim: 'The event type is provided in the event field, while the main data is within the
-  payload.' Documented sample: {"event": "charge.succeeded", "payload": {"id": "...", "type":
-  "payment", "amount": 2500, "currency": "GMD", "payment_method": "qmoney", "customer": "...",
-  "metadata": {}, "status": "completed", "test_mode": true, "transaction_reference": "VOAO1CFEN7",
-  "payment_intent_id": "...", "createdAt": "...", "updatedAt": "...", ...}} (use a trimmed copy in
-  tests, with obviously fake customer name/email/phone). The body has no event id or delivery id,
-  and payload.id is the object's id, not the delivery's: dedupe on (event, payload.id) and say this
-  is a suggestion, not a documented idempotency key. EVENTS, as listed on the webhooks page:
-  customer.created, customer.updated, customer.deleted; payment_intent.created,
-  payment_intent.cancelled, payment_intent.expired; charge.succeeded, charge.cancelled,
-  charge.created, charge.updated, charge.expired; transfer.succeeded, transfer.cancelled,
-  transfer.reversed, transfer.failed, transfer.flagged. The CLI page's trigger list also has
-  charge.failed (and lacks payment_intent.expired, charge.expired); mention charge.failed as listed
-  only by the CLI page. Handle a few in the examples (charge.succeeded, charge.updated,
-  payment_intent.created, customer.created, transfer.succeeded, transfer.failed) and acknowledge
-  (200) unknown events. SIGNATURE:: the x-modem-signature header is the bare lowercase hex HMAC-SHA512 (128 hex characters,
-  no prefix such as sha512=) of the request body, keyed with the webhook secret's UTF-8 bytes as-is
-  (no decoding, no prefix stripping). The vendor's own examples re-serialise the parsed JSON
-  (JS: JSON.stringify(req.body); Flask: json.dumps(request.json), which uses different separators
-  than JSON.stringify) before hashing; their SDK (npm modem-pay, webhooks.composeEventDetails)
-  hashes the string as-is when given a string. The examples must hash the raw body bytes. The examples
-  must hash the RAW body bytes exactly as received, never re-serialised JSON, and SKILL.md must
-  say why (re-serialising can change bytes; the raw body is what was sent). Do not use the vendor's
-  Flask json.dumps pattern. Compare hex case-insensitively: require exactly 128 hex
-  characters, lowercase it, then constant-time compare. Node: check the format with a regex first,
-  then crypto.timingSafeEqual on equal-length Buffers; never call Buffer.from(sig, 'hex') on an
-  unvalidated value. Python: hmac.compare_digest on bytes (never on str, which raises TypeError on
-  non-ASCII header values). Missing or empty header, malformed value or mismatch: 401 (the vendor
-  examples answer 400; say we use 401 for auth failures and either works for Modem Pay's retry
-  logic since any non-2xx is a failure). There is no timestamp in the scheme, so no replay window
-  exists; do not invent one. Env var: MODEM_PAY_WEBHOOK_SECRET (the vendor examples use
-  MODEM_WEBHOOK_SECRET or MODEM_PAY_SECRET_HASH; mention that it's the same value). Test mode: the
+  Modem Pay sends payment events in a JSON envelope with event and payload fields. Verify the
+  exact bytes received using HMAC-SHA512 and compare the bare hex digest in x-modem-signature.
+  For account webhooks, copy the signing secret from Developers > Webhooks. Saving the webhook
+  URL creates a new secret. For a payment callback_url, use the lowercase hex SHA-256 hash of
+  the secret API key as the UTF-8 HMAC key. Use a separate Hookdeck source for that credential.
+  See https://docs.modempay.com/documentation/payment-intents/callback_url.
+  The 2.x SDK checks the raw body with webhooks.composeEventDetails. The signature covers no timestamp.
+  Keep the raw bytes until verification completes. For repeated updates, a suggested deduplication
+  key combines event, payload.id and payload.updatedAt. Examples can handle charge.succeeded,
+  charge.failed, transfer.failed and customer.updated. Use MODEM_PAY_WEBHOOK_SECRET for the signing key.
+  Test mode: the
   CLI ('npm install -g modem-pay-cli', 'modempay listen --forward-url=http://localhost:3000/...',
   'modempay trigger charge.succeeded') prints a test-mode signing secret; 'always use the webhook
   secret generated by the listen command', test and live secrets differ. RETRIES, verbatim: 'If

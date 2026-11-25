@@ -1,25 +1,19 @@
 name: terra-api
 displayName: "Terra API"
 docs:
-  webhooks: https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
-  verification: https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
+  webhooks: https://docs.tryterra.co/destinations/webhooks
+  verification: https://docs.tryterra.co/destinations/webhooks
 notes: >
   Terra (tryterra.co), the wearables and health-data API. A webhook destination receives
   authentication lifecycle events and normalised data (activity, sleep, body, daily, ...) for
   connected users. Delivery (from the docs): A 2xx within 8 s succeeds. Otherwise up to 10 retries
   with exponential backoff from 30 s (about 8 hours in all), then the event is dropped without notice.
   A per-destination circuit breaker pauses data events (not auth events) during sustained failure;
-  paused cycles count toward the 10. Terra API's docs say: 'Every webhook sent by Terra includes an
-  HMAC-based signature header terra-signature , which takes the form:
-  t=1723808700,v1=a5ee9dba96b4f65aeff6c841aa50121b1f73ec7990d28d53b201523776d4eb00' 'The
-  signed_payload string is created by concatenating: The timestamp (as a string) The character . The
-  actual JSON payload (that is, the request body)' 'Terra generates signatures using a hash-based
-  message authentication code ( HMAC ) with SHA-256 . ... Terra requires the raw, unaltered body of
-  the request to perform signature verification.' From the docs (registry summary): Header
-  `terra-signature: t=<unix seconds>,v1=<sig>[,v0=<sig>]`. MAC = HMAC-SHA256(key = the endpoint
+  paused cycles count toward the 10. Read X-Terra-Signature first. Use the deprecated terra-signature duplicate only when the
+  current header is absent. MAC = HMAC-SHA256(key = the endpoint
   signing secret, message = `<t>.<raw body>`); compare against every `v1` and ignore other schemes
   (the manual example also shows a `v0`). The page never says "hex": hex is read from the example
-  values (64 lowercase hex characters). SIGNATURE SCHEME: The terra-signature header is
+  values (64 lowercase hex characters). SIGNATURE SCHEME: The X-Terra-Signature header is
   `t=<timestamp>,v1=<hex>` (comma-separated key=value pairs). The signature is lowercase hex
   HMAC-SHA256, keyed with the secret, over: the t value exactly as it appears in the header (a string;
   never parse it to a number and re-format it), then a literal ".", then the raw request body bytes.
@@ -55,4 +49,4 @@ testScenario:
     - "activity"
     - "sleep"
 catalog:
-  summary: "Verify Terra API webhooks (`terra-signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle auth lifecycle and health data events"
+  summary: "Verify Terra API webhooks (`X-Terra-Signature`: `t=`/`v1=` hex HMAC-SHA256 of `{t}.{body}`), handle auth lifecycle and health data events"
