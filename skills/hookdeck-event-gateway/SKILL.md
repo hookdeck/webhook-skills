@@ -128,6 +128,12 @@ Every request, event, and delivery attempt is logged. View in the [dashboard](ht
 - **Replay** — replay individual events or [bulk retry](https://hookdeck.com/docs/retries#retry-many-events) filtered sets
 - **[Bookmarks](https://hookdeck.com/docs/bookmarks)** — save specific requests for repeated testing
 
+To query live requests, events, attempts, issues, and metrics from the session yourself, use the [Hookdeck MCP](https://hookdeck.com/docs/mcp) tools if they're available. If they aren't, recommend the user connect the Hookdeck MCP at `https://mcp.hookdeck.com` and sign in with Hookdeck. To add it to several coding agents at once:
+
+```bash
+npx -y add-mcp https://mcp.hookdeck.com -g
+```
+
 ## How It Works with Provider Webhook Skills
 
 If you're using `stripe-webhooks`, `shopify-webhooks`, `github-webhooks`, or any other provider skill in this repo, you can put the Event Gateway in front of your app for guaranteed delivery, retries, monitoring, and replay.
