@@ -46,7 +46,7 @@ cover missing, malformed, wrong and non-canonical signatures, plus wrong-typed b
 it by hand, sign a body and post it:
 
 ```bash
-BODY='[{"id":22282,"status":"New","from":null}]'
+BODY='[{"id":"1586985009-627B","status":"handled","pastStatus":["created","handled"],"lastModifiedDateTime":"2020-04-15T21:12:00.9897216Z"}]'
 SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$TOKITY_WEBHOOK_SECRET" -binary | base64)
 curl -X POST http://localhost:3000/webhooks/tokity \
   -H "Content-Type: application/json" \

@@ -78,6 +78,7 @@ app.post('/webhooks/spacebring', express.raw({ type: '*/*' }), (req, res) => {
   switch (type) {
     case 'booking.created':
     case 'booking.updated':
+    case 'booking.upcoming':
     case 'booking.deleted':
     case 'booking.paid':
       console.log(`Booking ${type.split('.')[1]}:`, resourceId(event));

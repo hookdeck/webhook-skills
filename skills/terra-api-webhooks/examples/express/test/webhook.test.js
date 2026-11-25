@@ -58,6 +58,11 @@ describe('Terra webhook', () => {
       expect(res.body).toEqual({ received: true });
     });
 
+    it('accepts a valid signature in X-Terra-Signature', async () => {
+      const body = event('activity');
+      expect((await post(body, { 'X-Terra-Signature': sign(body) })).status).toBe(200);
+    });
+
     it('accepts any matching v1 and ignores v0 and unknown keys', async () => {
       const body = event('sleep');
       const t = now();

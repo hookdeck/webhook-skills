@@ -84,8 +84,11 @@ def verify_texture_signature(raw_body: bytes, signature: str | None, secret: str
 - **Validate before decoding.** `Buffer.from(sig, 'hex')` silently drops bad characters, so check
   64 hex characters first. Hex is compared case-insensitively.
 - **Redacted payloads.** The signature covers the redacted body you receive, not the stored event.
-- **No replay protection from the signature.** `Texture-Timestamp` is not signed, so don't treat
-  it as authenticated. Dedupe on the event `key` instead.
+- **No replay protection from the signature.** `Texture-Timestamp` (Unix milliseconds) is not
+  signed, so don't treat it as authenticated. Texture's docs recommend rejecting deliveries older
+  than 5 minutes; that also rejects events you replay or queue later. Dedupe on the event `key`.
+- **Rotation.** Sending a new `secret` with `PATCH /v1/destinations/:id` replaces the old one, and
+  the docs describe no overlap, so update your receiver at the same time.
 
 ## Debugging Verification Failures
 

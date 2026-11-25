@@ -23,8 +23,9 @@ Paste the whole secret, including the whsec_ prefix. Texture uses it as a plain 
    `https://example.com/webhooks/texture`.
 2. Optionally add **Headers**; Texture sends them on every request.
 3. Choose the events to subscribe to. In the API these are UPPER_SNAKE names, for example
-   `["DEVICE_UPDATED", "COMMAND_SUCCEEDED", "CUSTOMER_CREATED"]`. Optionally scope by device
-   type (`ALL`, `BATTERIES`, `CHARGERS`, `SOLAR_INVERTERS`, `THERMOSTATS`, `VEHICLES`).
+   `["DEVICE_UPDATED", "COMMAND_SUCCEEDED", "CUSTOMER_CREATED"]`. Choose a device-type scope
+   (`ALL`, `BATTERIES`, `CHARGERS`, `SOLAR_INVERTERS`, `THERMOSTATS`, `VEHICLES`, `OTHER`, `UNKNOWN`).
+   With the API, create the destination with `POST /v1/destinations/webhooks`.
 4. Optionally set `redactCategories` (`LOCATION`, `CONTACT`) to omit personal data from payloads.
 
 ## Local Development

@@ -97,7 +97,7 @@ ZITADEL does not document a replay window or retries. The examples **do not reje
 
 ## Common Event Types
 
-Event executions carry the type in `event_type`, plus `aggregateType`, `aggregateID` and a base64-encoded JSON `event_payload`. You choose which events to send by creating an execution with an `event` condition.
+Event executions carry the type in `event_type`, plus `aggregateType`, `aggregateID`, `sequence` and the event's data in `event_payload`. ZITADEL's docs call `event_payload` base64 encoded, but their example and current ZITADEL code send a JSON object (older releases sent base64), so the examples accept both. You choose which events to send by creating an execution with an `event` condition.
 
 | Event | Description |
 |-------|-------------|

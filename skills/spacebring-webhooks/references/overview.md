@@ -19,14 +19,8 @@ subscriptions and visitors. Deliveries go through Svix and are signed. Webhooks 
 ## Event Payload Structure
 
 Most event schemas have a top-level `type` string beside one resource object named for the domain:
-`booking`, `company`, `event`, `ticket`, `membership`, `order` or `application`.
-
-```json
-{
-  "type": "booking.created",
-  "booking": { "id": "..." }
-}
-```
+`booking`, `company`, `event`, `ticket`, `membership`, `order` or `application`. The resource key
+alone doesn't name the event: `ticket` is used by both `event.ticket.*` and `support.ticket.created`.
 
 Caveats, all from Spacebring's webhook catalog:
 
@@ -48,6 +42,7 @@ else they return `200` and log it, so a different `type` value never causes retr
 | `booking.updated` | A booking changes | Update calendars |
 | `booking.deleted` | A booking is deleted | Free the resource |
 | `booking.paid` | A booking is paid | Release access, mark paid |
+| `booking.upcoming` | A booking, or one date of a repeating booking, starts in an hour | Send a door code |
 | `membership.created` | A membership is created | Provision access |
 | `membership.invited` | A member is invited | Track onboarding |
 | `company.created` | A company is created | Create the account in your CRM |
@@ -58,10 +53,10 @@ else they return `200` and log it, so a different `type` value never causes retr
 | `visitors.visit.checked_in` | A visitor checks in | Notify the host |
 | `support.ticket.created` | A support ticket is created | Route to a helpdesk |
 
-## Full Event List (32 documented, may not be exhaustive)
+## Full Event List (33 documented, may not be exhaustive)
 
 - **Benefit:** `benefit.application.created`
-- **Booking:** `booking.created`, `booking.deleted`, `booking.paid`, `booking.updated`
+- **Booking:** `booking.created`, `booking.deleted`, `booking.paid`, `booking.upcoming`, `booking.updated`
 - **Company:** `company.created`, `company.deleted`
 - **Event:** `event.canceled`, `event.created`, `event.deleted`, `event.updated`,
   `event.ticket.created`, `event.ticket.paid`
@@ -75,7 +70,13 @@ else they return `200` and log it, so a different `type` value never causes retr
 - **Support:** `support.ticket.created`
 - **Visitors:** `visitors.request.approved`, `visitors.visit.checked_in`, `visitors.visit.checked_out`
 
-The examples route all 32 and acknowledge anything else with `200`.
+The examples route all 33 and acknowledge anything else with `200`.
+
+A repeating booking is one booking, so `booking.created` arrives once, with its first date.
+`booking.upcoming` arrives an hour before each date, and a date after the first has the `id`
+`{bookingId}_{isoDate}`. A booking made, paid or rescheduled less than an hour before it starts gets
+no `booking.upcoming`. For non-card payments, `booking.paid` arrives at the same time as
+`booking.created`.
 
 ## Delivery and Idempotency
 
@@ -85,5 +86,5 @@ a retry schedule, so don't depend on specific timings. Acknowledge fast and proc
 
 ## Full Event Reference
 
-For payload schemas, see Spacebring's [webhook documentation](https://www.spacebring.com/docs/webhooks)
+For payload schemas, see Spacebring's [webhook documentation](https://www.spacebring.com/docs/developer/webhooks)
 and its [event catalog](https://webhooks.spacebring.com/).

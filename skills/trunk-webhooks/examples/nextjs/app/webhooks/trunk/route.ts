@@ -79,8 +79,7 @@ export async function POST(request: Request) {
     case 'pull_request_batch.merged':
       console.log(`Merge Queue batch ${type.split('.')[1]}:`, event.status);
       break;
-    // Flaky Tests: the v1 event is being phased out in favor of v2.test_case.status_changed
-    case 'test_case.status_changed':
+    // Flaky Tests: a test's health moves between HEALTHY, FLAKY and BROKEN
     case 'v2.test_case.status_changed':
       console.log(`Test ${event.test_case?.name}: ${event.previous_status} -> ${event.new_status}`);
       break;
@@ -88,12 +87,8 @@ export async function POST(request: Request) {
       console.log(`Monitor ${event.monitor?.type} ${event.monitor?.status}:`, event.test_case?.name);
       break;
     // Fires only when a setting is manually overridden to ALWAYS_QUARANTINE or NEVER_QUARANTINE
-    case 'test_case.quarantining_setting_changed':
     case 'v2.test_case.quarantining_setting_changed':
-      console.log('Quarantine setting changed:', event.test_case?.name, event.test_case?.quarantined);
-      break;
-    case 'test_case.investigation_completed':
-      console.log('AI investigation completed:', event.test_case?.name, event.trigger, event.confidence);
+      console.log('Quarantine setting changed:', event.test_case?.name, event.updated_quarantining_setting);
       break;
     default:
       // Return 2xx for events you don't handle, or Trunk keeps retrying them

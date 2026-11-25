@@ -52,4 +52,4 @@ Trigger a registered event (for example `task.assigned`) in a workspace the webh
 
 ## Endpoint
 
-- `POST /webhooks/taskade` - Receives and verifies Taskade webhook events (`X-Taskade-Signature`). Uses `express.raw({ type: '*/*' })` so the signature is checked against the raw bytes for any content type.
+- `POST /webhooks/taskade` - Receives and verifies Taskade webhook events (`X-Taskade-Signature-V2` and `X-Taskade-Timestamp`). Uses `express.raw({ type: '*/*' })` so the signature is checked against the raw bytes for any content type.

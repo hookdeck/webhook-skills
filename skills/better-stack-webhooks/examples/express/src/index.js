@@ -136,19 +136,19 @@ function handleEvent(event) {
     case 'incident':
       if (event.state === 'comment') {
         console.log(`Incident ${event.id} comment by ${event.author}: ${event.content}`);
-        // TODO: mirror the comment into your ticketing system
+        // Your code: mirror the comment into your ticketing system
       } else {
         console.log(`Incident ${event.id} ${event.state}: ${event.name} (${event.cause})`);
-        // TODO: open, update or close the matching incident on your side
+        // Your code: open, update or close the matching incident on your side
       }
       break;
     case 'monitor':
       console.log(`Monitor ${event.id} ${event.state}: ${event.name}`);
-      // TODO: sync monitor configuration
+      // Your code: sync monitor configuration
       break;
     case 'on_call':
       console.log(`On-call ${event.change} change on ${event.calendar}: ${event.emails.join(', ')}`);
-      // TODO: update who is on call in your tools
+      // Your code: update who is on call in your tools
       break;
     default:
       console.log('Unrecognised Better Stack payload (customised body_template?)');

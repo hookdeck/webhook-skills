@@ -22,6 +22,7 @@ EVENTS = {
     "booking.created": BOOKING,
     "booking.deleted": BOOKING,
     "booking.paid": BOOKING,
+    "booking.upcoming": BOOKING,
     "booking.updated": BOOKING,
     "company.created": {"company": {"id": "co_01"}},
     "company.deleted": {"company": {"id": "co_01"}},

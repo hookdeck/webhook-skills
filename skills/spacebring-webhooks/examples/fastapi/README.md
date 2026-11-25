@@ -61,9 +61,9 @@ npx hookdeck-cli listen 8000 spacebring --path /webhooks/spacebring
 ## Event Handling
 
 The handler routes on the top-level `type` field and acknowledges anything else with `200`. Spacebring's
-docs never show the value of `type`, so confirm it against a real delivery. These 32 documented events are routed:
+docs never show the value of `type`, so confirm it against a real delivery. These 33 documented events are routed:
 
-- `booking.created`, `booking.updated`, `booking.deleted`, `booking.paid`
+- `booking.created`, `booking.updated`, `booking.upcoming`, `booking.deleted`, `booking.paid`
 - `company.created`, `company.deleted`, `membership.created`, `membership.invited`
 - `event.created`, `event.updated`, `event.deleted`, `event.canceled`, `event.ticket.created`, `event.ticket.paid`
 - `shop.order.created`, `shop.order.paid`, `invoice.issued`, `benefit.application.created`, `support.ticket.created`

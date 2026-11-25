@@ -95,7 +95,7 @@ Route on the signed body `Type`, not on the `x-amz-sns-message-type` header (Sca
 
 ## Delivery, Retries and Duplicates
 
-- Standard topics are "at-least-once": "it is possible under rare circumstances that the same message may be received more than once." Deduplicate on `MessageId`. FIFO topics preserve order without duplicates.
+- Standard topics are "at-least-once": "it is possible under rare circumstances that the same message may be received more than once." Deduplicate on `MessageId`. HTTP/S subscriptions are only available on Standard topics (Scaleway lists FIFO topics as supporting Queues subscriptions), so an HTTP endpoint never gets FIFO ordering or deduplication.
 - Scaleway doesn't support `DeliveryPolicy` and doesn't document a retry schedule, timeout, source IPs or `Content-Type` (AWS SNS sends `text/plain`). The examples read the raw body for any content type and answer quickly.
 - There's no timestamp window by default. Hookdeck retries and replays resend the original envelope, `Timestamp` included. Set `SCALEWAY_SNS_MAX_AGE_SECONDS` to opt in when Scaleway calls you directly.
 

@@ -60,7 +60,7 @@ Field notes:
 ## Delivery Guarantees
 
 - **Standard topics** "offer an at-least-once message delivery system … it is possible under rare circumstances that the same message may be received more than once." They deliver in order on a best-effort basis only.
-- **FIFO topics** guarantee "that messages are delivered in order and without duplication".
+- **FIFO topics** guarantee "that messages are delivered in order and without duplication", but they only support Queues subscriptions. HTTP/S subscriptions are available on Standard topics only, per [How to create and manage topics](https://www.scaleway.com/en/docs/topics-and-events/how-to/create-manage-topics/).
 - "messages sent to topics with no subscriptions are automatically deleted."
 
 Deduplicate on `MessageId` and answer 2xx quickly.

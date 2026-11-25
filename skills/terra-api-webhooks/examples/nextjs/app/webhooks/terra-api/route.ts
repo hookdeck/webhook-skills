@@ -4,11 +4,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-// Terra signs every delivery in the terra-signature header:
+// Terra signs every delivery in the X-Terra-Signature header (Terra still sends a deprecated
+// Terra-Signature duplicate, so the handler falls back to it):
 //   t=<unix seconds>,v1=<hex>[,v0=<hex>]
-// v1 is HMAC-SHA256 (lowercase hex) of "<t>.<raw body>", keyed with the destination's signing secret
+// v1 is HMAC-SHA256 (lowercase hex) of "<t>.<raw body>", keyed with the webhook's signing secret
 // (UTF-8 bytes, used as-is). The header can carry several v1 values; any match is enough. Ignore v0.
-// https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks
+// https://docs.tryterra.co/destinations/webhooks
 
 // Optional replay window in seconds. Off by default (0): retries and replays, including
 // Hookdeck's, carry the original timestamp, so a window would reject late redeliveries.
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
   // Raw bytes, not request.json(): the signature covers the exact body Terra sent
   const rawBody = Buffer.from(await request.arrayBuffer());
 
-  if (!verifyTerra(rawBody, request.headers.get('terra-signature'), secret)) {
+  if (!verifyTerra(rawBody, request.headers.get('x-terra-signature') ?? request.headers.get('terra-signature'), secret)) {
     console.error('Terra webhook signature verification failed');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }

@@ -1,6 +1,6 @@
 # Webiny Webhooks - Next.js App Router Example
 
-Minimal example of receiving [Webiny](https://www.webiny.com) 6.x webhooks with Standard Webhooks signature verification (`webhook-id`, `webhook-timestamp`, `webhook-signature`). The verifier is hand-written because Webiny's secret is free text used as raw UTF-8 bytes; the `standardwebhooks` and `svix` libraries would base64-decode it and use the wrong key.
+Minimal example of receiving [Webiny](https://www.webiny.com) 6.x webhooks with Standard Webhooks signature verification (`webhook-id`, `webhook-timestamp`, `webhook-signature`). The verifier is hand-written because a plain-text Webiny secret is used as raw UTF-8 bytes; the `standardwebhooks` and `svix` libraries would base64-decode it and use the wrong key.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ The tests sign payloads the way Webiny does and cover a valid delivery, svix-* h
 npx hookdeck-cli listen 3000 webiny --path /webhooks/webiny
 ```
 
-Paste the printed URL as the endpoint of a webhook in the Webiny admin, then resend a delivery from the admin.
+Paste the printed URL as the endpoint of a webhook in the Webiny admin, then send a `webhook.test` delivery with Trigger Test in the webhook's actions menu.
 
 ## Notes
 
@@ -51,4 +51,4 @@ Paste the printed URL as the endpoint of a webhook in the Webiny admin, then res
 - If `WEBINY_WEBHOOK_SECRET` is unset the handler returns `500`. It never accepts unverified requests.
 - No timestamp window by default (retries and replays resend the original timestamp). Set `WEBINY_WEBHOOK_TOLERANCE_SECONDS` to opt in.
 - Event names are registered by the installed Webiny apps; the handler dispatches on the envelope's `event` string.
-- The handler dedupes on `webhook-id`, which stays the same across retries and resends.
+- The handler dedupes on `webhook-id`, which stays the same across Webiny's automatic retries. A resend from the admin starts a new task with a new `webhook-id`, so make the work itself safe to repeat.

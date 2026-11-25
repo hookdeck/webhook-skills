@@ -68,7 +68,7 @@ async def terminal_telematics_webhook(request: Request):
     event_type = event.get("type") if isinstance(event.get("type"), str) else None
     detail = event.get("detail") if isinstance(event.get("detail"), dict) else {}
     action = event_type.split(".")[1] if event_type and "." in event_type else None
-    # The delivery id (svix-id) is stable across retries: use it to deduplicate
+    # Terminal keeps the payload `id` the same across retries: deduplicate on it
     print(f"Received Terminal webhook {msg_id}: {event_type} ({event.get('id')})")
 
     def entity_id(key: str):

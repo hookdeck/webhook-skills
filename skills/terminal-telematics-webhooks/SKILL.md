@@ -17,7 +17,7 @@ metadata:
 [Terminal](https://withterminal.com) is a unified API for telematics and ELD data (connections to
 fleet providers, syncs, vehicles, drivers, trailers, safety events). Its webhooks are delivered
 through [Svix](https://www.svix.com/), which implements Standard Webhooks. Every delivery is an HTTP
-`POST` with a JSON body shaped `{ id, type, detail }` and three signature headers: `svix-id`,
+`POST` with a JSON body shaped `{ id, type, timestamp, detail }` and three signature headers: `svix-id`,
 `svix-timestamp`, and `svix-signature`. The event name is the top-level `type` (for example
 `sync.completed`), `id` is the event ID (`evt_...`), and `detail` holds the related entities
 (`connection`, `sync`, `vehicle`, ...).
@@ -63,8 +63,8 @@ wh.verify(raw_body, {"svix-id": id, "svix-timestamp": ts, "svix-signature": sig,
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
-Terminal registers endpoints in its dashboard and its docs don't print the signing secret, but
-Svix-issued secrets start with `whsec_`. Keep the full `whsec_...` value in
+Copy the endpoint's signing secret from the endpoint detail in the webhooks section of Terminal's
+dashboard; it starts with `whsec_`. Keep the full `whsec_...` value in
 `TERMINAL_TELEMATICS_WEBHOOK_SECRET`. Handlers fail closed: with the variable unset they return
 500 instead of accepting anything. A missing header or a bad signature returns 400.
 
@@ -75,7 +75,8 @@ it can't be configured. Hookdeck retries and replays resend the **original** `sv
 the library rejects any retry or replay that happens more than 5 minutes after the original
 delivery. If you verify behind Hookdeck (or replay old events), use the manual verifier in
 [references/verification.md](references/verification.md), where the window can be dropped or
-widened. Deduplicate on `svix-id` instead of relying on the timestamp.
+widened. Deduplicate on the payload `id`, which Terminal keeps the same across retries, instead of
+relying on the timestamp.
 
 ## Common Event Types
 
@@ -118,8 +119,10 @@ TERMINAL_TELEMATICS_WEBHOOK_SECRET=whsec_xxxxx
 npx hookdeck-cli listen 3000 terminal-telematics --path /webhooks/terminal-telematics
 ```
 
-Register the tunnel URL as a webhook endpoint in the Terminal dashboard, then trigger an event
-(for example, connect a test provider account or request a sync) to see it arrive.
+Register the tunnel URL as a webhook endpoint in your sandbox application in the Terminal dashboard,
+then create a sandbox connection, which triggers real events such as `connection.created`,
+`sync.started` and `sync.completed`. Terminal's docs suggest Svix Play in relay mode for the same job.
+To re-run a handler, replay a recent event from **Message Attempts** in the dashboard's webhooks section.
 
 ## Reference Materials
 
@@ -141,7 +144,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on `svix-id`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on the payload `id`)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

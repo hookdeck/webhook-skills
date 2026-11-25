@@ -10,17 +10,17 @@ x-modem-signature: 1f0c…e9a4   (128 hex characters)
 
 The value is `hex(HMAC-SHA512(key = webhook secret, message = request body))`:
 
-- **Key:** the webhook secret from Developers > Webhooks, as UTF-8 bytes, exactly as shown.
+- **Key:** the webhook signing secret from Developers > Webhooks, as UTF-8 bytes, exactly as shown. It isn't your API secret key.
 - **Message:** the request body bytes exactly as received. No timestamp, ID or delimiter is added.
 - **Encoding:** hex, with no `sha512=` or other prefix. Modem Pay produces lowercase; the examples compare hex case-insensitively.
 
-There's no timestamp, so there's no replay window to configure. Deduplicate retries on `(event, payload.id)` instead.
+There's no timestamp, so there's no replay window to configure. Deduplicate retries on `(event, payload.id, payload.updatedAt)` instead.
 
 ## Implementation
 
 ### SDK Verification
 
-Modem Pay's SDKs expose `webhooks.composeEventDetails(payload, signature, secret)` (Node `modem-pay`, Python `compose_event_details`, PHP `composeEventDetails`), which checks the signature and returns `{ event, payload }`. In the Node SDK, a string `payload` is hashed as-is and an object is passed through `JSON.stringify` first, so pass the **raw body string**, not a parsed object. The Node SDK also compares the hex case-sensitively and throws on any mismatch.
+Modem Pay's SDKs expose `webhooks.composeEventDetails(payload, signature, secret)` (Node `modem-pay`, PHP `composeEventDetails`), which checks the signature and returns `{ event, payload }`, and throws on a mismatch. Modem Pay's examples pass the raw body (`req.body.toString("utf8")` after `express.raw`, `req.rawBody` on Firebase, `await request.text()` in Next.js). In the Node SDK (2.x), a string or Buffer is hashed as-is and any other object goes through `JSON.stringify` first, so never pass a parsed object.
 
 The examples in this skill verify manually, because it takes a few lines, needs no API key, and lets them answer 401 without exceptions.
 
@@ -68,14 +68,23 @@ Compare `bytes`, not `str`: `hmac.compare_digest` raises `TypeError` on non-ASCI
 
 ## Common Gotchas
 
-1. **Re-serialised JSON.** Modem Pay's snippets hash `JSON.stringify(req.body)` (Node) or `json.dumps(request.json)` (Flask). `json.dumps` puts a space after `:` and `,`, unlike `JSON.stringify`, and any round trip can change key order, number formatting or Unicode escapes. Hash the raw bytes.
-2. **SHA-256 instead of SHA-512.** A SHA-256 hex digest is 64 characters; Modem Pay's is 128. (A comment in the Node SDK says "SHA256", but its code uses `sha512`.)
-3. **Wrong secret for the mode.** `modempay listen` prints a test-mode secret; live deliveries use the live secret.
+1. **Re-serialised JSON.** Parsing the JSON and turning it back into a string changes spacing or key order. Modem Pay calls this the most common reason signature checks fail, especially on Firebase, Vercel and other serverless platforms. Hash the raw bytes.
+2. **SHA-256 instead of SHA-512.** A SHA-256 hex digest is 64 characters; Modem Pay's is 128.
+3. **Wrong secret.** Test and live webhooks have different secrets, saving the webhook URL creates a new one, `modempay listen` swaps in its own test secret while it runs, and the API secret key is a different value.
 4. **Body parser order.** With `app.use(express.json())` registered first, the raw bytes are gone by the time your route runs.
+
+## Callback URL Deliveries
+
+Events for a payment intent created with a `callback_url` go to that URL instead of your webhook, and they're signed differently. The `x-modem-signature` value is still the hex HMAC-SHA512 of the raw body, but the key is `sha256(secret_key)` as lowercase hex, where `secret_key` is your secret API key. `x-modem-signature-key` holds the last 4 characters of the API key that signed it. Callbacks are signed with the newest active secret key, so after you roll a key, recompute the signing key.
+
+```javascript
+const signingKey = crypto.createHash('sha256').update(process.env.MODEMPAY_SECRET_KEY).digest('hex');
+verifyModemPay(rawBody, req.headers['x-modem-signature'], signingKey);
+```
 
 ## Debugging Verification Failures
 
-1. Log the length of `x-modem-signature` (it should be 128) and of the raw body. Don't log the secret.
+1. Log the length of `x-modem-signature` (it should be 128) and of the raw body, and compare the body length with `Content-Length`. Don't log the secret.
 2. Recompute locally:
    ```bash
    printf '%s' "$BODY" | openssl dgst -sha512 -hmac "$MODEM_PAY_WEBHOOK_SECRET"

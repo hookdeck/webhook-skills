@@ -53,4 +53,4 @@ Trigger a registered event (for example `task.assigned`) in a workspace the webh
 
 ## Endpoint
 
-- `POST /webhooks/taskade` - Receives and verifies Taskade webhook events (`X-Taskade-Signature`). Reads `await request.body()` so the signature is checked against the raw bytes.
+- `POST /webhooks/taskade` - Receives and verifies Taskade webhook events (`X-Taskade-Signature-V2` and `X-Taskade-Timestamp`). Reads `await request.body()` so the signature is checked against the raw bytes.

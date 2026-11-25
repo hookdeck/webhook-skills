@@ -8,7 +8,7 @@ Signing is available with the **Signed Payload** auth type only. Every request t
 X-Xtremepush-Signature: t=1689343556, v1=2c709b15aee216e2d7097cb57b7c5b422bea3fd938589dafab265506f7651011, v1=874f7108d19848f35f3e70a4751ee2bfae164f4cc74259c405275c235963a141
 ```
 
-Entries are separated by a comma and a space. Parse by splitting on `,` and trimming each part.
+Xtremepush's docs say to split the header on the comma character. Split on `,` and trim each part, so it doesn't matter whether a space follows the comma.
 
 - `t`: Unix timestamp in seconds. Keep it as the exact string from the header; never parse it to a number and re-format it
 - `v1`: lowercase hex HMAC-SHA256 (64 characters). A second one appears for up to 24 hours after the Webhook Secret Key is replaced
@@ -56,7 +56,7 @@ The signature covers `t`, so an attacker can't refresh an old request's timestam
 
 - **Raw body:** the signature covers the exact bytes. Do not parse and re-serialise JSON first (`express.raw({ type: '*/*' })`, `await request.arrayBuffer()`, `await request.body()`). `type: '*/*'` makes verification independent of the `Content-Type`.
 - **Any method:** verify before checking the method. A GET with no body is verified over zero bytes; once verified, acknowledge it with `200`.
-- **Other auth types are unsigned:** only Signed Payload produces `X-Xtremepush-Signature`. None, Basic Auth and Bearer Token deliveries carry no signature and fail verification.
+- **Other auth types are unsigned:** only Signed Payload produces `X-Xtremepush-Signature`. None, Basic Auth, Bearer Token and OAuth 2.0 Token deliveries carry no signature and fail verification.
 - **Secret as-is:** use the key as shown, as UTF-8.
 - **Two `v1` entries:** during the 24 hours after a key is replaced, don't read only the first one.
 - **Status codes:** reply `401` for a missing or bad signature and `200` once verified.

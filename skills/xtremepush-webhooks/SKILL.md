@@ -4,7 +4,7 @@ description: >
   Receive and verify Xtremepush webhooks. Use when setting up Xtremepush
   customer engagement webhook handlers, debugging X-Xtremepush-Signature
   verification, or handling campaign message events like message_send and
-  message_delivery.
+  message_delivery, message_bounce and message_failure.
 license: MIT
 metadata:
   author: hookdeck
@@ -98,6 +98,9 @@ Dispatch on the body's top-level `event` field (default body: `event`, `time`, `
 |-------|----------------|
 | `message_send` | A campaign message is sent to a recipient |
 | `message_delivery` | A campaign message is delivered to a recipient |
+| `message_bounce` | An email message bounces (adds `failure_status_code` and `is_permanent`) |
+| `message_complaint` | A recipient marks an email message as spam (adds `failure_status_code` and `is_permanent`) |
+| `message_failure` | A campaign message fails (`error_message`; email adds `failure_status_code` and `is_permanent`) |
 
 Handle these and log the rest. Each connection's payload can be edited ("Custom format"), so a customised connection may rename or drop `event`. Read every field defensively (check types before reading into the parsed body). See [references/overview.md](references/overview.md).
 

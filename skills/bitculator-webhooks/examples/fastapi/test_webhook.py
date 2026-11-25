@@ -48,21 +48,19 @@ def post(body, signature=None, content_type="application/json", event_name="alar
 
 
 def event(**overrides) -> str:
-    # ILLUSTRATIVE body: Bitculator documents a JSON body but not its fields. Only `test: true` is a
-    # documented fact; data.alarm mirrors an item of GET /api/v1/alarms.
+    # The alarmTriggered callback example from Bitculator's OpenAPI spec.
     body = {
-        "test": True,
+        "event": "alarm.triggered",
+        "created_at": "2026-07-03T08:00:00+00:00",
         "data": {
             "alarm": {
                 "id": 42,
-                "name": "BTC above 100k",
+                "name": "BTC above 70k",
                 "coin": {"slug": "bitcoin", "symbol": "BTC", "name": "Bitcoin"},
                 "metric": "rate",
                 "direction": "above",
-                "target": "100000",
-                "notification": "webhook",
-                "status": "triggered",
-                "created_at": "2026-01-15T10:00:00Z",
+                "target": "70000.00000000",
+                "triggered_at": "2026-07-03T08:00:00+00:00",
             }
         },
     }
@@ -76,7 +74,14 @@ class TestValidSignatures:
         res = post(body, sign(body))
         assert res.status_code == 200
         assert res.json() == {"received": True}
-        assert "Test alarm triggered: BTC above 100k BTC above 100000" in caplog.text
+        assert "alarm triggered: BTC above 70k BTC above 70000.00000000" in caplog.text
+        assert "Test alarm" not in caplog.text
+
+    def test_marks_test_delivery_from_data_test(self, caplog):
+        # A test delivery sends data: {test: true, alarm: null}
+        body = json.dumps({"event": "alarm.triggered", "data": {"test": True, "alarm": None}})
+        assert post(body, sign(body)).status_code == 200
+        assert "Test alarm triggered: (unnamed)" in caplog.text
 
     def test_verifies_bytes_directly_and_rejects_non_ascii_digits_in_t(self):
         body = b'{"hello":"world"}'
@@ -182,7 +187,7 @@ class TestInvalidSignatures:
 
     def test_tampered_body(self):
         body = event()
-        assert post(body.replace("100000", "1"), sign(body)).status_code == 401
+        assert post(body.replace("70000", "1"), sign(body)).status_code == 401
 
     def test_wrong_secret(self):
         body = event()

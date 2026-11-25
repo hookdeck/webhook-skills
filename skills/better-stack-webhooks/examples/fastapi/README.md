@@ -65,7 +65,7 @@ To try it by hand:
 curl -X POST http://localhost:8000/webhooks/better-stack \
   -H "Content-Type: application/json" \
   -H "X-Better-Stack-Secret: $BETTER_STACK_WEBHOOK_SECRET" \
-  -d '{"data":{"id":"1","type":"incident","attributes":{"name":"Tesla.com homepage","cause":"Error 500","started_at":"2026-10-26T10:51:28.151Z","acknowledged_at":"","resolved_at":""}}}'
+  -d '{"data":{"id":"1","type":"incident","attributes":{"name":"Tesla.com homepage","cause":"Error 500","started_at":"2020-10-21T10:51:28.151Z","acknowledged_at":null,"resolved_at":null}}}'
 ```
 
 ## Receive Webhooks Locally

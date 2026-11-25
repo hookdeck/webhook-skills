@@ -13,20 +13,24 @@
 2. Enter the endpoint URL Uploadcare should call.
 3. Enter a **signing secret** so requests are signed.
 4. Choose the REST API version (v0.7 supports all five events and the richer payload).
-5. Select the events to subscribe to: `file.uploaded`, `file.info_updated`, `file.deleted`,
-   `file.stored`, `file.infected`.
+5. Choose the event. Each webhook covers one event (`file.uploaded`, `file.info_updated`,
+   `file.deleted`, `file.stored` or `file.infected`), so add the same URL once per event you need,
+   with the same signing secret on each.
 
 ## Set or Change the Signing Secret via the REST API
 
-Add `signing_secret` when creating or updating a webhook:
+Send `signing_secret` (up to 32 characters) when creating (`POST /webhooks/`) or updating
+(`PUT /webhooks/{id}/`) a webhook. The REST API reference documents both as form-encoded:
 
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
+curl -X PUT \
+  -H "Accept: application/vnd.uploadcare-v0.7+json" \
   -H "Authorization: Uploadcare.Simple $YOUR_PUBLIC_KEY:$YOUR_SECRET_KEY" \
-  -d '{"signing_secret": "some-secret"}' \
+  -d "signing_secret=some-secret" \
   "https://api.uploadcare.com/webhooks/WEBHOOK_ID/"
 ```
+
+The Uploadcare CLI does the same with `uploadcare webhook update WEBHOOK_ID --signing-secret some-secret`.
 
 Store the same value on your server as `UPLOADCARE_WEBHOOK_SECRET`. Without a `signing_secret`,
 Uploadcare sends no `X-Uc-Signature` header and verification fails.

@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  // The body is documented as JSON, but its fields are not (only `test: true` on test deliveries):
-  // parse defensively and don't depend on any field.
+  // Documented body (the alarmTriggered callback in Bitculator's OpenAPI spec): { event, created_at,
+  // data: { alarm: { id, name, coin, metric, direction, target, triggered_at } } }. Parse it defensively.
   let event: unknown;
   try {
     event = JSON.parse(rawBody.toString('utf8'));
@@ -48,16 +48,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  // `test: true` marks a delivery from POST /api/v1/webhooks/{id}/test.
-  const isTest = event.test === true;
-  // Illustrative shape: data.alarm mirrors an item of GET /api/v1/alarms. Check every type.
-  const alarm = isObject(event.data) && isObject(event.data.alarm) ? event.data.alarm : {};
+  // A delivery from POST /api/v1/webhooks/{id}/test sends data: { test: true, alarm: null }.
+  const data = isObject(event.data) ? event.data : {};
+  const isTest = data.test === true;
+  // Check every field's type before reading into it.
+  const alarm = isObject(data.alarm) ? data.alarm : {};
   const coin = isObject(alarm.coin) ? alarm.coin : {};
   console.log(
     `${isTest ? 'Test ' : ''}alarm triggered: ${str(alarm.name) ?? '(unnamed)'} ` +
       `${str(coin.symbol) ?? ''} ${str(alarm.direction) ?? ''} ${str(alarm.target) ?? ''}`.trimEnd()
   );
-  // TODO: notify, trade or update dashboards; deduplicate, since deliveries are retried
+  // Your code: notify, trade or update dashboards. Deliveries are retried, so deduplicate, for
+  // example on data.alarm.id with data.alarm.triggered_at.
 
   return NextResponse.json({ received: true });
 }

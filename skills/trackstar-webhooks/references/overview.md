@@ -3,7 +3,7 @@
 ## What Are Trackstar Webhooks?
 
 [Trackstar](https://trackstarhq.com) is a unified API for warehouse management (WMS), shopping
-cart, carrier and freight systems. It sends an HTTPS `POST` to an endpoint you register when a
+cart, carrier, freight and ERP systems. It sends an HTTPS `POST` to an endpoint you register when a
 resource changes in a customer's connected system (orders, inventory, shipments, products, ...)
 and when something happens to a connection itself (created, deleted, sync stuck, error).
 Trackstar uses [Svix](https://www.svix.com/) as its webhook provider, so every delivery is signed
@@ -29,8 +29,10 @@ Every payload has the same envelope:
 | `event_type` | The event name, e.g. `order.updated` |
 | `connection_id` | The connection the event came from |
 | `integration_name` | The integration (e.g. a WMS) the event came from |
+| `integration_type` | `wms`, `cart`, `carrier` or `erp` (in Trackstar's OpenAPI spec, not its webhooks table) |
 | `data` | The created or updated object |
-| `previous_attributes` | Only on `*.updated` events: the previous values of the changed fields |
+| `previous_attributes` | Only on updated events: the previous values of the changed fields |
+| `data_truncated`, `data_url` | Only when the event was too large to send: `data` holds just the `id`; call `data_url` with your API key for a download link to the full event |
 
 Changes inside nested fields use a `.`-joined path where integers are array indexes and strings
 are object keys: `"line_items.1.received_quantity": 1` refers to `data.line_items[1].received_quantity`.
@@ -76,7 +78,7 @@ in the list below, and let unknown names fall through to a `200`.
 
 The examples handle exactly these events and acknowledge anything else with `200`.
 
-## Full Event List (47 documented)
+## Full Event List (68: 47 with event pages, 21 spec-only)
 
 - **Admin:** `install.failed`, `connection.created`, `connection.deleted`,
   `connection.historical-sync-completed`, `connection.force-sync-completed`,
@@ -94,11 +96,18 @@ The examples handle exactly these events and acknowledge anything else with `200
 - **Freight:** `freight-shipment.created`, `freight-shipment.updated`
 - **Carrier:** `carrier-file.created`, `carrier-invoice-line-item.created`,
   `carrier-invoice-line-item.updated`
+- **Spec-only** (in Trackstar's [OpenAPI spec](https://production.trackstarhq.com/openapi.json)
+  `webhooks` block, with no event page): `connection.sync-job-cancelled`, and for ERP
+  connections `erp-customer`, `erp-employee`, `erp-inventory`, `erp-item`, `erp-location`,
+  `erp-purchase-order`, `erp-purchase-order-receipt`, `erp-sales-order`,
+  `erp-sales-order-shipment` and `erp-vendor`, each with `.created` and `.updated`
 
-The list is taken from the webhook pages in Trackstar's docs and may not be exhaustive.
+The list is taken from the webhook pages in Trackstar's docs and its OpenAPI spec, and may not be
+exhaustive.
 
 ## Full Event Reference
 
-For each event's payload schema, see Trackstar's
-[webhook documentation](https://docs.trackstarhq.com/how-to-guides/webhooks/webhooks) and the
-event pages beneath it.
+Each event's payload schema is in the `webhooks` block of Trackstar's
+[OpenAPI spec](https://production.trackstarhq.com/openapi.json), with a full and a truncated shape
+per event. The [webhook documentation](https://docs.trackstarhq.com/how-to-guides/webhooks/webhooks)
+covers the envelope.

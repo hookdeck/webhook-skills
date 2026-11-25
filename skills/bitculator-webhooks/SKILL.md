@@ -76,7 +76,7 @@ Respond **401** when the header is missing or empty, malformed, or the signature
 
 ### Timestamp window
 
-The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is unset or `0` by default (off). Bitculator's own PHP example accepts a delivery only when `abs(time() - t) < 300`, so set `300` to match it when Bitculator calls you directly (`t` is Unix seconds; the check uses the absolute difference). Behind Hookdeck leave it off: Hookdeck retries and replays resend the **original** headers and timestamp, and Hookdeck's own source verifies the signature without a tolerance, so a fixed window would reject legitimate redeliveries.
+The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is unset or `0` by default (off). Bitculator's own PHP example accepts a delivery only when `abs(time() - t) < 300`, so set `300` to match it when Bitculator calls you directly (`t` is Unix seconds; the check uses the absolute difference). Behind Hookdeck leave it off: Hookdeck retries and replays resend the **original** headers and timestamp, so a fixed window would reject legitimate redeliveries.
 
 > **For complete handlers with tests**, see [examples/express/](examples/express/), [examples/nextjs/](examples/nextjs/), [examples/fastapi/](examples/fastapi/).
 
@@ -86,11 +86,11 @@ The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is un
 |-------|-------------|
 | `alarm.triggered` | A price alarm fired. This is the only value Bitculator accepts in a webhook's `events` list |
 
-`POST /api/v1/webhooks/{id}/test` sends a signed `alarm.triggered` test event with `test: true` in the payload and real signature headers, so you can verify your receiver end to end.
+`POST /api/v1/webhooks/{id}/test` sends a signed `alarm.triggered` test event with real signature headers, so you can verify your receiver end to end. Its body carries `data: { test: true, alarm: null }`.
 
 **Route on the `X-Bitculator-Event` header, after verifying.** Bitculator names the event in `X-Bitculator-Event: alarm.triggered`. That header is **not** covered by the signature, so verify first and use it only as a routing label. The examples assume `alarm.triggered` when it is absent, and acknowledge (`200`) and skip any event they don't know.
 
-**The body is JSON, but its fields are not documented.** The only documented body fact is `test: true` on test deliveries. The examples parse defensively (a non-JSON body is acknowledged and logged, not a 500), check every field's type before reading into it, and use an illustrative `data.alarm` shape in their tests. See [references/overview.md](references/overview.md).
+**The body.** Bitculator's OpenAPI spec (`https://bitculator.com/api/v1/openapi.json`, the `alarmTriggered` callback) documents it: `event`, `created_at` and `data.alarm` with `id`, `name`, `coin` (`slug`, `symbol`, `name`), `metric`, `direction` (`above` or `below`), `target` (a decimal string) and `triggered_at`. The examples still check every field's type before reading into it, and acknowledge and log a non-JSON body instead of answering 500. See [references/overview.md](references/overview.md).
 
 ## Important Headers
 
@@ -99,11 +99,11 @@ The timestamp window is **opt-in**: `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` is un
 | `X-Bitculator-Signature` | `t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>` |
 | `X-Bitculator-Event` | The event name, `alarm.triggered`. Not signed: a routing label to read after verifying |
 
-Bitculator POSTs each event as JSON ("Bitculator POSTs each event as JSON with an HMAC signature header"), and The examples handle `POST` on `/webhooks/bitculator` and read the raw body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`) so the exact signed bytes are verified.
+Bitculator POSTs each event as JSON ("Bitculator POSTs each event as JSON with an HMAC signature header"), and the examples handle `POST` on `/webhooks/bitculator` and read the raw body with `express.raw({ type: '*/*' })` (Next.js: `request.arrayBuffer()`; FastAPI: `await request.body()`) so the exact signed bytes are verified.
 
 ## Delivery and Retries
 
-Bitculator's docs: "Each delivery is attempted up to 3 times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed deliveries." Return a 2xx quickly, process asynchronously, and deduplicate, since a retried delivery repeats. The backoff intervals, timeout, source IPs and any delivery ID are not documented.
+Bitculator's docs: "Each delivery is attempted up to 3 times with backoff, a test event once; an endpoint auto-disables after 10 consecutive failed deliveries." Any status other than a 2xx counts as a failed attempt. Return a 2xx quickly, process asynchronously, and deduplicate, for example on `data.alarm.id` with `data.alarm.triggered_at`, since a retried delivery repeats. The backoff intervals, timeout, source IPs and any delivery ID are not documented.
 
 ## Environment Variables
 

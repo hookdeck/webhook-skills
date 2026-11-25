@@ -95,7 +95,7 @@ Compare `bytes`, never `str`: `compare_digest` raises `TypeError` on a non-ASCII
 
 ## Timestamp Tolerance (Opt-In)
 
-The vendor's PHP example rejects timestamps 300 seconds or more from now. The examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, and Hookdeck's Bitculator source verifies the signature without applying a tolerance, so a fixed window would reject legitimate retries.
+The vendor's PHP example rejects timestamps 300 seconds or more from now. The examples do **not** reject old timestamps by default. Hookdeck retries and replays resend the original headers and timestamp, so a fixed window would reject legitimate retries.
 
 Set `BITCULATOR_WEBHOOK_TOLERANCE_SECONDS` to opt in. Unset or `0` means off; `300` matches the vendor's example when receiving directly. `t` is Unix seconds and the check uses the absolute difference, as the vendor does (a timestamp too far in the future is rejected too). Handle duplicate deliveries with idempotency instead; see the [webhook-handler-patterns idempotency guide](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md).
 

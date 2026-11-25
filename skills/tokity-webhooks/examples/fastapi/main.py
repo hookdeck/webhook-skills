@@ -72,7 +72,7 @@ def handle_chat(chat: dict) -> None:
     print(f"Chat session {text(chat.get('id'))} is {text(chat.get('status'))} (past: {', '.join(past) or 'none'})")
     if isinstance(ref, dict) and ref.get("type") == "ticket":
         print(f"  about ticket {text(ref.get('id'))}")
-    # TODO: notify technicians, or follow up on 'missed' / 'callback' sessions
+    # Your code: notify technicians, or follow up on 'missed' / 'callback' sessions
 
 
 def handle_ticket(ticket: dict) -> None:
@@ -80,7 +80,7 @@ def handle_ticket(ticket: dict) -> None:
     previous = ticket.get("from")
     if "from" in ticket and previous is None:
         print(f"Ticket {ticket_id} created")
-        # TODO: act on the new ticket
+        # Your code: act on the new ticket
     elif isinstance(previous, dict):
         changed = [
             key
@@ -88,7 +88,7 @@ def handle_ticket(ticket: dict) -> None:
             if key != "from" and json.dumps(ticket[key], sort_keys=True) != json.dumps(previous.get(key), sort_keys=True)
         ]
         print(f"Ticket {ticket_id} changed: {', '.join(changed) or 'no fields'}")
-        # TODO: act on the fields that changed
+        # Your code: act on the fields that changed
     else:
         print(f"Ticket {ticket_id} event (no previous state, sent by a Tokity Events action)")
 

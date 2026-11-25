@@ -2,11 +2,11 @@
 
 ## What Are Terra API Webhooks?
 
-Terra (tryterra.co) is a wearables and health-data API. A **webhook destination** receives two kinds of deliveries for your connected users: authentication lifecycle events (a user connected, disconnected or hit an error) and normalised health data (activity, sleep, body, daily, ...). Every delivery is a `POST` with a JSON body and a `terra-signature` header.
+Terra (tryterra.co) is a wearables and health-data API. A **webhook destination** receives two kinds of deliveries for your connected users: authentication lifecycle events (a user connected, disconnected or hit an error) and normalised health data (activity, sleep, body, daily, ...). Every delivery is a `POST` with a JSON body and an `X-Terra-Signature` header. Lab Reports results (`lab_report.completed`, `lab_report.failed`) go to the same destinations.
 
 ## Common Event Types
 
-The event type is the top-level `type` field of the body; every documented payload starts with it, and `status` (`success`, `warning`, `error`, ...) qualifies it. Terra documents 20 types.
+The event type is the top-level `type` field of the body; every documented payload starts with it, and `status` (`success`, `warning`, `error`, ...) qualifies it on most types.
 
 | Event (`type`) | Triggered When | Common Use Cases |
 |----------------|----------------|------------------|
@@ -21,31 +21,24 @@ The event type is the top-level `type` field of the body; every documented paylo
 | `daily` | New daily summary | Daily dashboards |
 | `athlete` | Profile data | Keep profile fields in sync |
 
-The other documented types are `google_no_datasource`, `processing`, `large_request_sending`, `large_request_processing`, `rate_limit_hit` and further data types. The examples log anything they don't handle and return `200`.
+The other documented types are `auth_cancelled`, `permission_change`, `google_no_datasource`, `large_request_sending`, `large_request_processing`, `rate_limit_hit`, further data types (`hormone`, `menstruation`, `nutrition`, `clinical_record`), `lab_report.completed`, `lab_report.failed` and `healthcheck`. `processing` is an HTTP response only and is never sent to a destination. The examples log anything they don't handle and return `200`.
 
 In ping mode a data delivery carries `"type": "s3_payload"` and a download URL rather than the data itself.
 
 ## Event Payload Structure
 
-```json
-{
-  "type": "activity",
-  "status": "success",
-  "user": { "user_id": "…", "provider": "FITBIT", "reference_id": "u_42" },
-  "data": [ { "…": "…" } ]
-}
-```
-
-Field names beyond `type` vary per event; check each event's Format block in the Terra docs.
+Most bodies carry `type`, `status` and a `user` object (`user_id`, `provider`, `reference_id`, ...). Data events add `version` and a `data` array of normalised records, except `athlete`, which carries one `athlete` object. `user_reauth` has `new_user` and `old_user`. Lab report deliveries are an envelope of `type`, `event_id`, `occurred_at`, `upload_id` and `data`. Terra's [API reference](https://docs.tryterra.co/reference/health-and-fitness-api/webhooks) has a complete example for each type.
 
 ## Delivery and Retries
 
 - A `2xx` within **8 seconds** counts as success.
-- Otherwise Terra retries up to **10 times** with exponential backoff starting at 30 seconds (about 8 hours in all), then drops the event without notice.
-- A per-destination circuit breaker pauses **data** events (not auth events) during sustained failure. Paused cycles count toward the 10 retries.
+- Otherwise (any other status, a `3xx` included, a timeout or an unreachable URL) Terra retries with exponential backoff for **several hours**. Terra says the number and timing of retries can change.
+- When retries run out the delivery becomes `failed` and Terra doesn't notify you. Resend failed events from the dashboard Events page or with `terra events resend`.
+- A per-destination circuit breaker holds **data** events (not auth events) during sustained failure. Held cycles count toward the retry limit.
+- Deliveries are at least once and order isn't guaranteed: upsert on Terra's record keys and compare the `x-terra-ordering-timestamp` header.
 
 Acknowledge quickly and process asynchronously. Running behind the Hookdeck Event Gateway gives you queuing, replay and alerting so nothing is dropped silently.
 
 ## Full Event Reference
 
-For the complete list of events, see [Terra's webhook documentation](https://docs.tryterra.co/health-and-fitness-api/integration-setup/setting-up-data-destinations/webhooks).
+For the complete list of events, see [Terra's event types](https://docs.tryterra.co/reference/health-and-fitness-api/event-types).

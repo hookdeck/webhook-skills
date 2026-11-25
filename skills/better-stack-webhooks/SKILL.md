@@ -133,8 +133,8 @@ or `options` (default `post`), so the examples accept all six on the webhook rou
 authenticated request with no body is acknowledged with `200`.
 
 Hookdeck's Better Stack source accepts only the methods you allow ([custom methods](https://hookdeck.com/docs/sources#custom-methods)). If the webhook uses
-another method, also allow it on the source. Hookdeck sources can allow `GET`, `HEAD`, `POST`,
-`PUT` and `PATCH` but not `OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
+another method, also allow it on the source. The methods Hookdeck documents for sources don't
+include `OPTIONS`, so don't use `options` for a webhook routed through Hookdeck.
 
 ## Environment Variables
 

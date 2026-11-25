@@ -35,19 +35,27 @@ use `delivery.completed` for that.
 
 ## Event Payload Structure
 
+Terminal's webhooks guide shows this shape, with the entities elided:
+
 ```json
 {
   "id": "evt_01GV12VR4DJP70GD1ZBK0SDWFH",
   "type": "sync.completed",
   "detail": {
-    "connection": { "id": "cnn_...", "provider": { "code": "...", "name": "..." } },
-    "sync": { "id": "...", "status": "completed" }
+    "connection": {
+      // connection details
+    },
+    "sync": {
+      // sync details
+    }
   }
 }
 ```
 
 - `id` is the event ID (`evt_...`); `type` is the event name; `detail` holds the related entities.
   Most events include the full related entities so you don't need a follow-up request.
+- Every event schema in the OpenAPI spec also requires a top-level `timestamp` (ISO 8601), which the
+  guide's example leaves out.
 - Terminal's guide shows `connection` and `sync`. Its OpenAPI spec (`terminal.openapi.json`) gives the
   `detail` keys for the rest, listed below. Check the API reference for the full schemas.
 
@@ -81,15 +89,22 @@ receives it for every provider.
   `driver.modified`, `driver.removed`, `trailer.added`, `trailer.modified`, `trailer.removed`,
   `safety_event.added`, `safety_event.modified`
 
-The list is from Terminal's webhook events overview and may not be exhaustive: the OpenAPI spec also
-describes `vehicle.location_updated` (`detail`: `connection`, `location`), which the overview doesn't
-list. The examples acknowledge it with `200` and take no action.
+The list is from Terminal's webhook events overview. The OpenAPI spec also has a
+`vehicle.location_updated` schema (`detail`: `connection`, `location`), marked hidden behind a feature
+flag, which the overview doesn't list. The examples acknowledge any unlisted type with `200` and take
+no action.
 
 ## Delivery and Retries
 
-Terminal treats any non-`2xx` response as a failed delivery and may retry it. It doesn't state a
-retry schedule or timeout. Make your endpoint idempotent (deduplicate on `svix-id`) and respond
-`2xx` quickly. Terminal's dashboard shows delivery status and errors and can replay messages.
+A delivery succeeds only on a `2xx` within 30 seconds. Any other status (`3xx` included), a
+connection error or a timeout is a failure, retried on Svix's schedule: immediately, then 5 seconds,
+5 minutes, 30 minutes, 2 hours, 5 hours, 10 hours and 10 hours after each failure. After the eighth
+attempt the message is marked failed; open it in the dashboard to replay it or recover failed
+messages from a given time. If every attempt to an endpoint fails for 5 days, Svix disables it.
+
+Delivery is at-least-once: retries carry the same payload `id`, so deduplicate on it. A later event
+can succeed while an earlier one is still retrying, so events can arrive out of order; compare
+`timestamp` before overwriting newer state.
 
 ## Full Event Reference
 

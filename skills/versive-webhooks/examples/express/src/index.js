@@ -67,10 +67,15 @@ app.post('/webhooks/versive', express.raw({ type: '*/*' }), (req, res) => {
 
   switch (type) {
     case 'interview.completed':
-      // Sent when a participant completes an interview (screened-out interviews are excluded).
+      // Sent when a participant completes an interview.
       // The interview can carry transcripts and recordings: treat it as sensitive and log only what you need.
       console.log('Interview completed:', interview.id, 'study', study.id, study.title,
         interview.used_fallback_transcription ? '(fallback transcription)' : '');
+      break;
+    case 'interview.screened_out':
+      // Sent when a participant is screened out. A slim body: ids, status, timestamps and
+      // metadata, never the transcript, conversation or recording.
+      console.log('Interview screened out:', interview.id, 'study', study.id, study.title);
       break;
     default:
       // Return 2xx for events you don't handle, or Versive keeps retrying them
