@@ -4,12 +4,12 @@ docs:
   webhooks: 'https://docs.getversive.com/api-reference/webhooks'
   verification: 'https://docs.getversive.com/api-reference/webhooks'
 notes: >-
-  Versive (getversive.com, formerly Mirio), an AI-moderated user-interview research platform. An organisation-level
-  webhook (provisioned by Versive support) reports completed interviews; Svix signs and delivers it. Standard
+  Versive (getversive.com), an AI-moderated user-interview research platform. An organisation-level
+  webhook reports completed and screened-out interviews; Svix signs and delivers it. Standard
   Webhooks signature with svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one
   or more space-separated 'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request
   body}', HMAC-SHA256, base64 output. Notes: Delivered by Svix. SECRET: Per endpoint ("your
-  endpoint secret"), handed over by Versive support when the destination is provisioned. No value or format
+  endpoint secret"), shown in the endpoint details in the webhooks portal. No value or format
   is printed; Svix secrets are `whsec_<base64>`. Research: whsec_ (inferred: "Deliveries are signed by
   Svix"; the literal secret is not printed). It starts with whsec_; the key is the base64-decoding of
   the part after whsec_. VERSIVE_WEBHOOK_SECRET holds the full whsec_ value. Verify with the svix library
@@ -25,20 +25,22 @@ notes: >-
   (HMAC-SHA256 over '{id}.{timestamp}.{raw body}' with the same key, compare every space-separated v1,<base64>
   entry in constant time after a length check, require the timestamp to be a plain positive integer) where
   the window can be dropped or widened. Missing headers or a bad signature: 400 or 401; handlers fail
-  closed when the secret env var is unset. Hookdeck's configuration alert for this source reads exactly:
-  "Versive support sets up webhooks. Ask them for the endpoint's signing secret." SKILL.md and references/setup.md
-  must state this requirement, quoting the alert verbatim. Verification notes: Versive says to "reject
+  closed when the secret env var is unset. Copy the endpoint secret from Organization > Connectors > Webhooks > Manage endpoints.
+  Verification notes: Versive says to "reject
   stale timestamps" without a number. Body: {event_type, interview, study}. No event id in the body; dedupe
-  on svix-id. Event type: Top-level `event_type` beside `interview` and `study`. Event types (1 documented,
-  list may not be exhaustive): interview.completed. Transport: HTTPS POST via Svix. Delivery: 2xx once
-  accepted; retried otherwise (schedule unstated). Setup: One organisation-level destination provisioned
-  by Versive support; not in the public v1 API. No challenge. Express examples must read the raw body
+  on svix-id. Screened-out interviews contain identifiers, status, timestamps and metadata. Only completed
+  interviews can include a transcript, conversation or recording. Event type: Top-level `event_type` beside `interview` and `study`. Documented events include interview.completed and interview.screened_out. Transport: HTTPS POST via Svix. Delivery: 2xx once
+  accepted; retried otherwise (schedule unstated). Setup: Organization owners and admins can add endpoints in the webhooks portal. For organizations set up by Versive before
+  self-service, an owner or admin must turn webhooks off and back on to receive interview.screened_out.
+  Set the endpoint event filter to interview.completed first if the receiver only handles that event.
+  No challenge. Express examples must read the raw body
   with express.raw({ type: '*/*' }) so any content type works and the exact bytes are verified; parse
   the body only after the check. Hookdeck's source type is VERSIVE, labelled 'Versive'.
 testScenario:
   events:
   - 'interview.completed'
+  - 'interview.screened_out'
 catalog:
   summary: >-
     Verify Versive webhooks (delivered by Svix: `svix-id`, `svix-timestamp`, `svix-signature`, `whsec_`
-    secret), handle interview.completed events
+    secret), handle interview.completed and interview.screened_out events

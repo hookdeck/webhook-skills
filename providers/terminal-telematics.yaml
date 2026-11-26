@@ -9,10 +9,9 @@ notes: >-
   vehicles, drivers, trailers, safety events). Webhooks run on Svix. Standard Webhooks signature with
   svix-* headers: svix-id, svix-timestamp (Unix seconds), svix-signature (one or more space-separated
   'v1,<base64>' entries). Signed content is '{svix-id}.{svix-timestamp}.{raw request body}', HMAC-SHA256,
-  base64 output. Notes: Delivered by Svix. SECRET: Not described by Terminal (endpoints
-  are registered in Terminal's dashboard); Svix secrets are `whsec_`-prefixed. Research: whsec_ (Svix-issued;
-  docs state Svix delivery but print no literal secret). It starts with whsec_; the key is the base64-decoding
-  of the part after whsec_. TERMINAL_TELEMATICS_WEBHOOK_SECRET holds the full whsec_ value. Verify with
+  base64 output. Notes: Delivered by Svix. SECRET: Each endpoint has its own whsec_-prefixed
+  signing secret on its detail page in the Terminal dashboard. Set TERMINAL_TELEMATICS_WEBHOOK_SECRET
+  to the full value. Verify with
   the svix library (npm 'svix', pip 'svix'), whose Webhook.verify reads svix-id, svix-timestamp and svix-signature
   and falls back to webhook-id, webhook-timestamp and webhook-signature. HEADER FALLBACK (all three frameworks
   and the manual verifier): read the svix-* headers and, when svix-id is absent, fall back to the webhook-*
@@ -34,9 +33,9 @@ notes: >-
   delivery.requested, delivery.started, delivery.failed, delivery.completed, issue.reported, issue.resolved,
   provider.availability_updated, unsupported_provider.requested, link.analytics_event_emitted, vehicle.added,
   vehicle.modified, vehicle.removed, driver.added, driver.modified, driver.removed, trailer.added, trailer.modified,
-  trailer.removed and 2 more. Transport: HTTP POST with a JSON payload. Delivery: Non-2xx responses count
-  as failures and may be retried; the dashboard shows delivery status and can replay messages. No schedule
-  or timeout is stated. Setup: Endpoints are registered in Terminal's dashboard; some event types need
+  trailer.removed and 2 more. Transport: HTTP POST with a JSON payload. Terminal expects a 2xx within
+  30 seconds and retries failures on Svix's schedule. The dashboard shows delivery status and
+  can replay messages. Endpoints are registered in Terminal's dashboard; some event types need
   configuration by Terminal support. No challenge or validation request is documented, so the row has
   no handshake block. Express examples must read the raw body with express.raw({ type: '*/*' }) so any
   content type works and the exact bytes are verified; parse the body only after the check. Hookdeck's
