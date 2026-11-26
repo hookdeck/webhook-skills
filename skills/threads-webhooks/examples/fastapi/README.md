@@ -38,13 +38,11 @@ Server runs on http://localhost:8000
 
 ### Using Hookdeck CLI
 
+In your Hookdeck project, create a **Threads** source named `threads` and enter the Threads App Secret. Use that source's URL as Meta's Callback URL. Sign the CLI into the same project, then forward the source to your local server.
+
 ```bash
-# Forward webhooks to localhost (no account required)
 npx hookdeck-cli listen 8000 threads --path /webhooks/threads
 ```
-
-Use the tunnel URL as the **Callback URL** in the App Dashboard. Meta sends a `GET`
-handshake to verify the URL, then `POST`s events.
 
 ### Run the tests
 

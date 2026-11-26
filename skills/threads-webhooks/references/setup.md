@@ -42,6 +42,8 @@ don't need to handle the GET in the destination.
 
 For local development:
 
+In your Hookdeck project, create a **Threads** source named `threads` and enter the Threads App Secret. Use that source's URL as Meta's Callback URL. Sign the CLI into the same project, then forward the source to your local server.
+
 ```bash
 npx hookdeck-cli listen 3000 threads --path /webhooks/threads
 ```

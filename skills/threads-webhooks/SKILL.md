@@ -143,12 +143,11 @@ the user must have granted the matching permissions. See
 
 ## Local Development
 
+In your Hookdeck project, create a **Threads** source named `threads` and enter the Threads App Secret. Use that source's URL as Meta's Callback URL. Sign the CLI into the same project, then forward the source to your local server.
+
 ```bash
-# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 threads --path /webhooks/threads
 ```
-
-Use the tunnel URL as the Callback URL in the App Dashboard.
 
 ## Reference Materials
 
