@@ -125,7 +125,7 @@ The event is each change's `field`; `topic` groups fields into `moderate` or `in
 
 ```bash
 THREADS_APP_SECRET=your_threads_app_secret  # Threads App Secret, not the Meta App Secret
-THREADS_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the token in the Dashboard
+THREADS_VERIFY_TOKEN=your_verify_token   # For a direct callback, use the token entered in Meta
 ```
 
 ## Setup
@@ -135,7 +135,7 @@ THREADS_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the t
 2. Select a topic, click **Subscribe to this object**, and set the Callback URL and verify token.
 3. Subscribe to the fields you need (`replies`, `mentions`, `publish`, `delete`).
 4. **Hookdeck setup:** paste the Threads App Secret into the source. Hookdeck
-   answers the `hub.challenge` handshake itself.
+   answers the `hub.challenge` handshake itself. Enter the verify token in Meta only for this setup.
 
 Webhooks only arrive for apps in Live Mode (or with Advanced Access for tech providers), and
 the user must have granted the matching permissions. See

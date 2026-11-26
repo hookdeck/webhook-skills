@@ -25,8 +25,7 @@ Store it as `THREADS_APP_SECRET`.
 
 ## Choose a Verify Token
 
-An arbitrary string you invent (`openssl rand -hex 20`). Store it as `THREADS_VERIFY_TOKEN`
-and enter the same value next to the Callback URL.
+Choose a token (for example, with `openssl rand -hex 20`) and enter it next to the Callback URL in Meta. If Meta calls your server directly, set `THREADS_VERIFY_TOKEN` on that server so it can check the GET request. A Hookdeck Threads source answers the GET itself.
 
 ## Register Your Endpoint
 
@@ -37,12 +36,7 @@ and enter the same value next to the Callback URL.
 
 ## Hookdeck Setup
 
-Paste the Threads App Secret into the Threads source's verification settings. Hookdeck's edge answers the `hub.challenge` handshake itself, so you
-don't need to handle the GET in the destination.
-
-For local development:
-
-In your Hookdeck project, create a **Threads** source named `threads` and enter the Threads App Secret. Use that source's URL as Meta's Callback URL. Sign the CLI into the same project, then forward the source to your local server.
+Create a **Threads** source named `threads`, enter the Threads App Secret in its verification settings, and register its URL as the Callback URL in Meta. To forward its POST deliveries to your local server, sign the CLI into the same project and run:
 
 ```bash
 npx hookdeck-cli listen 3000 threads --path /webhooks/threads
