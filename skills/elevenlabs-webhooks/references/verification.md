@@ -11,7 +11,7 @@ ElevenLabs uses HMAC-SHA256 signature verification with a custom header format t
 
 ## SDK Verification (Recommended)
 
-ElevenLabs tells you to verify the header with its SDK: `constructEvent` in `@elevenlabs/elevenlabs-js`, and `construct_event(rawBody=..., sig_header=..., secret=...)` in the `elevenlabs` Python package (2.0.0 or later), which returns a `dict` and raises `BadRequestError`. See [Webhooks: Authentication](https://elevenlabs.io/docs/eleven-api/resources/webhooks#authentication).
+ElevenLabs tells you to verify the header with its SDK: `constructEvent` in `@elevenlabs/elevenlabs-js`, and `construct_event(rawBody=..., sig_header=..., secret=...)` in the `elevenlabs` Python package (2.4.0 or later), which returns a `dict` and raises `BadRequestError`. See [Webhooks: Authentication](https://elevenlabs.io/docs/eleven-api/resources/webhooks#authentication).
 
 ```javascript
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
@@ -34,7 +34,7 @@ const event = await elevenlabs.webhooks.constructEvent(
 
 ## Manual Implementation (Fallback)
 
-Both SDKs compare the signature with a plain string comparison and fix the timestamp tolerance at 30 minutes. Use the manual implementation below when you need a constant-time comparison, a different tolerance or no dependency. It follows the SDKs' code: HMAC-SHA256 of `<t>.<raw body>`, keyed with the secret string, hex-encoded.
+Both SDKs compare the signature with a plain string comparison and fix the timestamp tolerance at 30 minutes. Use the manual implementation below for a language without an SDK helper, or when you need a constant-time comparison, a different tolerance or no dependency. It follows the SDKs' code: HMAC-SHA256 of `<t>.<raw body>`, keyed with the secret string, hex-encoded.
 
 ```javascript
 const crypto = require('crypto');
@@ -47,11 +47,10 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
   // Parse the signature header
   const elements = signatureHeader.split(',');
   const timestamp = elements.find(e => e.startsWith('t='))?.substring(2);
-  const signatures = elements
-    .filter(e => e.startsWith('v0='))
-    .map(e => e.substring(3));
+  // ElevenLabs sends one v0= value; like the SDKs, read only that one
+  const signature = elements.find(e => e.startsWith('v0='))?.substring(3);
 
-  if (!timestamp || signatures.length === 0) {
+  if (!timestamp || !signature) {
     throw new Error('Invalid signature header format');
   }
 
@@ -72,18 +71,12 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
     .update(signedPayload)
     .digest('hex');
 
-  // Timing-safe comparison
-  const isValid = signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      // Different lengths = not equal
-      return false;
-    }
-  });
+  // Timing-safe comparison (lengths must match first)
+  const received = Buffer.from(signature);
+  const expected = Buffer.from(expectedSignature);
+  const isValid =
+    received.length === expected.length &&
+    crypto.timingSafeEqual(received, expected);
 
   if (!isValid) {
     throw new Error('Invalid webhook signature');
@@ -106,14 +99,19 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
    - The SDKs reject a timestamp more than 30 minutes old (from their code; the docs give no figure)
    - Reject webhooks with timestamps outside your window
    - This limits replay attacks
+   - The SDKs always enforce the window. A delivery retried or replayed more than 30 minutes after ElevenLabs sent it, for example through Hookdeck, fails the check. If you need a longer window, use the manual implementation and widen its tolerance
 
 3. **Header Case Sensitivity**
    - The header name is `ElevenLabs-Signature` (capital E, capital L, capital S)
    - Some frameworks lowercase headers - check for both cases
 
-4. **Multiple Signatures**
-   - ElevenLabs doesn't document more than one `v0=` value per header; the JS SDK reads the first and the Python SDK the last
-   - Accepting a match on any `v0=` value, as the code above does, is safe either way
+4. **One Signature per Header**
+   - The header format is `t=<unix seconds>,v0=<hex HMAC-SHA256 of "<t>.<rawBody>">`
+   - ElevenLabs doesn't document more than one `v0=` value per header. The SDKs read a single value (JS: the first, Python: the last), and the manual implementation above reads the first
+
+5. **Constant-Time Comparison**
+   - Both SDKs compare the signature with a plain string comparison (`!==` in JS, `!=` in Python), which isn't constant-time
+   - The manual implementation above uses `crypto.timingSafeEqual`; in Python, use `hmac.compare_digest`
 
 ## Framework-Specific Examples
 
@@ -131,7 +129,7 @@ app.post('/webhooks/elevenlabs',
       res.sendStatus(200);
     } catch (error) {
       console.error('Webhook verification failed:', error.message);
-      res.status(400).send('Invalid signature');
+      res.status(401).send('Invalid signature');
     }
   }
 );
@@ -150,60 +148,43 @@ export async function POST(req: Request) {
     // Process webhook...
     return new Response('OK', { status: 200 });
   } catch (error) {
-    return new Response('Invalid signature', { status: 400 });
+    return new Response('Invalid signature', { status: 401 });
   }
 }
 ```
 
 ### FastAPI (Python)
 
-Prefer `construct_event` from the `elevenlabs` package (see [SDK verification](#sdk-verification-recommended)). This manual version is for when you need a constant-time comparison or a different tolerance.
+Use the Python SDK's `construct_event` (`elevenlabs` >= 2.4.0). It verifies the signature, checks the timestamp (30-minute tolerance, enforced by the SDK) and returns the parsed event as a `dict`. `raw_body` must be a `str`, so decode the request bytes first. On failure it raises `elevenlabs.errors.BadRequestError`. For a constant-time comparison or a different tolerance, port the manual implementation above and compare with `hmac.compare_digest`.
 
 ```python
 import os
-import hmac
-import hashlib
-from fastapi import HTTPException, Header, Request
+from fastapi import FastAPI, HTTPException, Request
+from elevenlabs import ElevenLabs
+from elevenlabs.errors import BadRequestError
 
-async def verify_elevenlabs_webhook(
-    request: Request,
-    elevenlabs_signature: str = Header(None, alias="ElevenLabs-Signature")
-):
-    if not elevenlabs_signature:
-        raise HTTPException(status_code=400, detail="Missing signature header")
+app = FastAPI()
+# The API key isn't needed to verify webhooks
+elevenlabs = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY") or "webhook-only")
 
-    # Get webhook secret from environment
-    webhook_secret = os.environ.get('ELEVENLABS_WEBHOOK_SECRET')
-    if not webhook_secret:
-        raise HTTPException(status_code=500, detail="Webhook secret not configured")
+@app.post("/webhooks/elevenlabs")
+async def elevenlabs_webhook(request: Request):
+    sig = request.headers.get("elevenlabs-signature")
+    if not sig:
+        raise HTTPException(status_code=401, detail="Missing signature header")
 
-    # Get raw body
     raw_body = await request.body()
+    try:
+        event = elevenlabs.webhooks.construct_event(
+            raw_body.decode("utf-8"),
+            sig,
+            os.environ["ELEVENLABS_WEBHOOK_SECRET"],
+        )
+    except BadRequestError:
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # Parse signature header
-    elements = elevenlabs_signature.split(',')
-    timestamp = next((e[2:] for e in elements if e.startswith('t=')), None)
-    signatures = [e[3:] for e in elements if e.startswith('v0=')]
-
-    # Verify timestamp
-    import time
-    current_time = int(time.time())
-    if abs(current_time - int(timestamp)) > 1800:
-        raise HTTPException(status_code=400, detail="Timestamp too old")
-
-    # Calculate expected signature
-    signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
-    expected_sig = hmac.new(
-        webhook_secret.encode(),
-        signed_payload.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    # Verify signature
-    if not any(hmac.compare_digest(sig, expected_sig) for sig in signatures):
-        raise HTTPException(status_code=400, detail="Invalid signature")
-
-    return raw_body
+    # Handle event["type"], event["data"]...
+    return {"status": "ok"}
 ```
 
 ## Debugging Verification Failures
