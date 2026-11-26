@@ -22,7 +22,7 @@ client = TestClient(app)
 # (including the legacy `callback_url` field, which handlers must tolerate).
 DOCUMENTED_PAYLOAD: Dict[str, Any] = {
     "callback_url": (
-        "https://registry.hub.docker.com/u/svendowideit/testhook/hook/"
+        "https://registry.hub.docker.com/u/example-user/testhook/hook/"
         "2141b5bi5i5b02bec211i4eeih0242eg11000a/"
     ),
     "push_data": {
@@ -40,10 +40,10 @@ DOCUMENTED_PAYLOAD: Dict[str, Any] = {
         "is_private": True,
         "is_trusted": True,
         "name": "testhook",
-        "namespace": "svendowideit",
-        "owner": "svendowideit",
-        "repo_name": "svendowideit/testhook",
-        "repo_url": "https://registry.hub.docker.com/u/svendowideit/testhook/",
+        "namespace": "example-user",
+        "owner": "example-user",
+        "repo_name": "example-user/testhook",
+        "repo_url": "https://registry.hub.docker.com/u/example-user/testhook/",
         "star_count": 0,
         "status": "Active",
     },
@@ -180,7 +180,7 @@ def test_accepts_documented_payload_with_correct_token(capsys):
 
     assert response.status_code == 200
     assert response.json() == {"received": True}
-    assert "Docker Hub push: svendowideit/testhook:latest by trustedbuilder" in capsys.readouterr().out
+    assert "Docker Hub push: example-user/testhook:latest by trustedbuilder" in capsys.readouterr().out
 
 
 def test_rejects_wrong_token_with_401():
@@ -276,7 +276,7 @@ def test_parse_push_reads_pushed_at_as_unix_seconds_and_ignores_unknown_fields()
     assert error is None
     assert parsed == {
         "tag": "latest",
-        "repo_name": "svendowideit/testhook",
+        "repo_name": "example-user/testhook",
         "pusher": "trustedbuilder",
         "pushed_at": 1417566161,
     }
@@ -295,7 +295,7 @@ def test_rejects_repo_outside_allowlist_with_403(env):
 
 
 def test_accepts_repo_in_allowlist(env):
-    env.setenv("DOCKER_HUB_ALLOWED_REPOS", "myorg/myapp, svendowideit/testhook")
+    env.setenv("DOCKER_HUB_ALLOWED_REPOS", "myorg/myapp, example-user/testhook")
 
     response = client.post(PATH, json=documented_payload())
 

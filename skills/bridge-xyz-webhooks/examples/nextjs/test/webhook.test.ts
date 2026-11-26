@@ -46,28 +46,28 @@ describe('Bridge Webhook Route', () => {
   });
 
   it('should return 400 for invalid signature', async () => {
-    const payload = JSON.stringify({ event_type: 'customer.updated', event_object_id: 'cust_123' });
+    const payload = JSON.stringify({ event_type: 'customer.updated.status_transitioned', event_object_id: 'cust_123' });
     const res = await POST(makeRequest(payload, `t=${Date.now()},v0=bm90LXJlYWw=`));
     expect(res.status).toBe(400);
   });
 
   it('should return 400 for a tampered payload', async () => {
-    const original = JSON.stringify({ event_type: 'transfer.updated', event_object_id: 'transfer_123' });
+    const original = JSON.stringify({ event_type: 'transfer.updated.status_transitioned', event_object_id: 'transfer_123' });
     const signature = signBridge(original, privateKey);
-    const tampered = JSON.stringify({ event_type: 'transfer.updated', event_object_id: 'transfer_x' });
+    const tampered = JSON.stringify({ event_type: 'transfer.updated.status_transitioned', event_object_id: 'transfer_x' });
     const res = await POST(makeRequest(tampered, signature));
     expect(res.status).toBe(400);
   });
 
   it('should return 400 for a stale timestamp (replay protection)', async () => {
-    const payload = JSON.stringify({ event_type: 'customer.updated', event_object_id: 'cust_123' });
+    const payload = JSON.stringify({ event_type: 'customer.updated.status_transitioned', event_object_id: 'cust_123' });
     const signature = signBridge(payload, privateKey, Date.now() - 11 * 60 * 1000);
     const res = await POST(makeRequest(payload, signature));
     expect(res.status).toBe(400);
   });
 
   it('should return 200 for a valid signature', async () => {
-    const payload = JSON.stringify({ event_type: 'customer.updated', event_object_id: 'cust_valid' });
+    const payload = JSON.stringify({ event_type: 'customer.updated.status_transitioned', event_object_id: 'cust_valid' });
     const signature = signBridge(payload, privateKey);
     const res = await POST(makeRequest(payload, signature));
     expect(res.status).toBe(200);
@@ -77,11 +77,11 @@ describe('Bridge Webhook Route', () => {
   it('should handle all documented event types', async () => {
     const eventTypes = [
       'customer.created',
-      'customer.updated',
-      'kyc_link.updated',
+      'customer.updated.status_transitioned',
+      'kyc_link.updated.status_transitioned',
       'transfer.created',
-      'transfer.updated',
-      'virtual_account.activity',
+      'transfer.updated.status_transitioned',
+      'virtual_account.activity.created',
       'unknown.event',
     ];
 
@@ -96,7 +96,7 @@ describe('Bridge Webhook Route', () => {
 
 describe('verifyBridgeSignature', () => {
   it('validates a correctly signed payload', () => {
-    const payload = '{"event_type":"customer.updated"}';
+    const payload = '{"event_type":"customer.updated.status_transitioned"}';
     const signature = signBridge(payload, privateKey);
     expect(verifyBridgeSignature(payload, signature, publicKey)).toBe(true);
   });

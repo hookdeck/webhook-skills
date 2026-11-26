@@ -104,7 +104,7 @@ async def airtable_webhook(request: Request):
             result = await fetch_payloads(base_id, webhook_id)  # pass a persisted cursor
             for payload in result["payloads"]:
                 print("Changes:", json.dumps(summarize_changes(payload)))
-                # TODO: dispatch on summary["tables"] / payload["actionMetadata"]["source"]
+                # Your code: dispatch on summary["tables"] / payload["actionMetadata"]["source"]
         except Exception as err:  # noqa: BLE001
             print(f"Failed to fetch payloads: {err}")
 

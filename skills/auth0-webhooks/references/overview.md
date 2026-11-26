@@ -1,88 +1,80 @@
 # Auth0 Webhooks Overview
 
-## What Are Auth0 Webhooks?
+## What Are Auth0 Event Streams?
 
-Auth0 (an Okta company) doesn't ship a traditional per-event webhook product.
-This skill covers tenant activity exposed through **Log Streams**. (Auth0's
-separate [Event Streams](https://auth0.com/docs/customize/events/create-an-event-stream)
-deliver CloudEvents-format lifecycle events such as `user.created` and are not
-covered here.) A **Custom Log Stream (Webhook / HTTP)** streams your tenant's
-log events to an HTTPS endpoint you control by sending HTTP `POST` requests.
+Auth0 Event Streams deliver real-time notifications about changes in your
+tenant, such as a user being created or added to an organization. A stream
+subscribes to the event types you choose and sends them to a destination:
+a webhook (covered here), AWS EventBridge or an Auth0 Action. Auth0 also offers
+an Events API that serves the same events as a Server-Sent Events stream you
+pull from.
+
+Event Streams became generally available on April 30, 2026. The dashboard
+still labels the page **Event Streams (Early)**, and some event types are
+Early Access (see below).
 
 Key characteristics:
 
-- **Content Format** — you choose JSON lines, arrays, or objects on the
-  stream. With **JSON Array** each request body is a JSON array of one or
-  more log records; with **JSON Lines** it is newline-delimited JSON objects.
-- **Near real-time** — events are streamed shortly after they occur.
-- **No signature** — requests are not HMAC-signed. You authenticate them with a
-  static **Authorization** token you configure on the stream (see
-  [verification.md](verification.md)).
-- **At-least-once with retries** — Auth0 **retries** delivery on any non-`2xx`
-  response, so your handler must be fast and idempotent.
+- **One event per request**: Auth0 delivers each event to your webhook URL as
+  an HTTP `POST` with a JSON body.
+- **No signature**: requests carry the authorization you configured on the
+  stream (see [verification.md](verification.md)).
+- **Short retry window**: four attempts in total, with retries after 1s, 2s and
+  4s. A `4xx` response fails the event with no retry.
+- **Duplicates and ordering**: an endpoint may receive the same event more than
+  once, and events aren't guaranteed to arrive in the order they happened.
 
-## Common Event Types
+## Event Envelope
 
-The event type is a short **log event type code** found at `event.data.type`
-inside each record.
-
-| Code | Triggered When | Common Use Cases |
-|------|----------------|------------------|
-| `s` | A user logs in successfully | Audit trails, "new login" notifications, sync last-login |
-| `f` | A login attempt fails | Fraud/brute-force detection, alerting |
-| `ss` | A user signs up successfully | Provisioning, welcome emails, CRM sync |
-| `fs` | A signup attempt fails | Debugging registration flows |
-| `sepft` | Successful exchange of Password for Access Token | Token issuance auditing |
-| `seacft` | Successful exchange of Authorization Code for Access Token | OAuth flow auditing |
-| `feacft` | Failed exchange of Authorization Code for Access Token | OAuth error monitoring |
-| `slo` | A user logs out successfully | Session accounting |
-
-Auth0 also emits MFA, password-change, breached-password, and rate-limit codes.
-See the reference links under "Full Event Reference" below.
-
-## Event Payload Structure
-
-With the JSON Array content format, the request body is an array. Each
-element is a log record shaped like:
+Events follow the CloudEvents specification. This is the `user.created`
+example from Auth0's Event Catalog, shortened to a few `data.object` fields:
 
 ```json
-[
-  {
-    "log_id": "90020210714154213417000000000000000000000000000000",
-    "data": {
-      "date": "2021-07-14T15:42:13.410Z",
-      "type": "s",
-      "description": "Successful login",
-      "connection": "Username-Password-Authentication",
-      "connection_id": "con_abc123",
-      "client_id": "AbC123ClientId",
-      "client_name": "My App",
-      "ip": "203.0.113.10",
-      "user_agent": "Mozilla/5.0 ...",
-      "user_id": "auth0|64f...",
-      "user_name": "user@example.com",
-      "strategy": "auth0",
-      "strategy_type": "database"
+{
+  "specversion": "1.0",
+  "type": "user.created",
+  "source": "urn:auth0:example.auth0app.com",
+  "id": "evt_vjFVP5pVdfvsfRKatshkVV",
+  "time": "2025-02-01T12:34:56Z",
+  "data": {
+    "object": {
+      "user_id": "auth0|507f1f77bcf86cd799439020",
+      "created_at": "2025-02-01T12:34:56Z",
+      "updated_at": "2025-02-01T12:34:56Z"
     }
-  }
-]
+  },
+  "a0tenant": "my-tenant",
+  "a0stream": "est_vjFVP5pVdfvsfRKatshkVV"
+}
 ```
 
-Key fields (under `data`):
+- `type`: the event type. Dispatch on this.
+- `id`: identifies the event. Record it to skip duplicates.
+- `time`: when the event happened. Compare it with your stored data so an
+  older event doesn't overwrite a newer one.
+- `data.object`: the entity after the change. Some events also carry
+  `data.previous_object` and `data.context` (client, connection, request).
+- `a0stream`: the event stream that delivered it. Test events sent from Auth0
+  also carry `a0purpose: "test"`.
 
-- `type` — the log event type code (dispatch on this).
-- `date` — ISO 8601 timestamp of the event.
-- `description` — human-readable summary.
-- `user_id` / `user_name` — the affected user, when applicable.
-- `client_id` / `client_name` — the application involved.
-- `ip` / `user_agent` — request origin metadata.
-- `log_id` — unique id for the record (useful for idempotency).
+## Event Types
 
-> Field availability varies by event `type` — failed events may omit
-> `user_id`, and non-interactive events may omit `user_agent`. Always read
-> defensively.
+Auth0's Event Catalog lists these types:
+
+| Category | Events |
+|----------|--------|
+| User | `user.created`, `user.updated`, `user.deleted`, `user.role.assigned`, `user.role.deleted` |
+| Organization | `organization.created`, `organization.updated`, `organization.deleted`, `organization.member.added`, `organization.member.deleted`, `organization.member.role.assigned`, `organization.member.role.deleted`, `organization.connection.added`, `organization.connection.updated`, `organization.connection.removed`, `organization.group.role.assigned`, `organization.group.role.deleted` |
+| Group | `group.created`, `group.updated`, `group.deleted`, `group.member.added`, `group.member.deleted`, `group.role.assigned`, `group.role.deleted` |
+| Role | `role.created`, `role.updated`, `role.deleted` |
+| Connection | `connection.created`, `connection.updated`, `connection.deleted` |
+
+The catalog marks `connection.created`, `connection.updated`,
+`connection.deleted`, `group.member.added` and `group.member.deleted` as Early
+Access.
 
 ## Full Event Reference
 
-- [Auth0 Log Event Type Codes](https://auth0.com/docs/deploy-monitor/logs/log-event-type-codes)
-- [Custom Log Streams (Webhooks)](https://auth0.com/docs/customize/log-streams/custom-log-streams)
+- [Auth0 Event Catalog](https://auth0.com/docs/events)
+- [Events Best Practices](https://auth0.com/docs/customize/events/events-best-practices)
+- [How to Test, Monitor, and Retry Event Streams](https://auth0.com/docs/customize/events/event-testing-observability-and-failure-recovery)

@@ -2,7 +2,7 @@ const request = require('supertest');
 const crypto = require('crypto');
 
 // Set the webhook secret before importing the app.
-process.env.AIRWALLEX_WEBHOOK_SECRET = 'whsec_test_secret';
+process.env.AIRWALLEX_WEBHOOK_SECRET = 'test_secret';
 
 const app = require('../src/index');
 

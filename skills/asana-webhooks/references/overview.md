@@ -44,12 +44,13 @@ The body is always a JSON object with a single `events` key:
     {
       "action": "changed",
       "resource": { "gid": "12345", "resource_type": "task" },
-      "parent": { "gid": "67890", "resource_type": "project" },
-      "user": { "gid": "11111", "resource_type": "user" },
-      "created_at": "2026-07-22T10:00:00.000Z",
+      "parent": null,
+      "user": { "gid": "12345", "resource_type": "user" },
+      "created_at": "2012-02-22T02:06:58.147Z",
       "change": {
-        "field": "completed",
-        "action": "changed"
+        "field": "assignee",
+        "action": "changed",
+        "new_value": { "gid": "12345", "resource_type": "user" }
       }
     }
   ]
@@ -60,10 +61,10 @@ Fields:
 
 - `action` — one of `added`, `changed`, `removed`, `deleted`, `undeleted`
 - `resource` — the object that changed (`{ gid, resource_type }`)
-- `parent` — the parent the change relates to (may be `null`)
+- `parent` — for `added` and `removed` events, the parent the resource was added to or removed from; `null` otherwise
 - `user` — who caused the change (may be `null` for system changes)
 - `created_at` — ISO 8601 timestamp of the change
-- `change` — present when the webhook has filters; describes the specific field that changed
+- `change` — present when `action` is `changed`; names the field and how it changed
 
 ## Heartbeats
 
@@ -76,8 +77,8 @@ If Asana receives **no successful response for 24 hours**, it deletes the webhoo
 ## Delivery Semantics
 
 - **Timing:** ~1 minute on average, up to ~10 minutes.
-- **Retries:** a non-2xx response, or a response slower than 10 seconds, is a failed
-  delivery. Asana retries with exponential backoff for up to 24 hours, then deletes
+- **Retries:** any response other than `200` or `204`, or one slower than 10 seconds, is a
+  failed delivery. Asana retries with exponential backoff for up to 24 hours, then deletes
   the webhook.
 - **At-most-once:** there is no replay. Return `200` quickly and do heavy work async.
 - **Signal deletion:** respond with `410 Gone` to tell Asana to delete the webhook.

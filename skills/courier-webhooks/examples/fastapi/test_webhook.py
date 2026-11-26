@@ -60,7 +60,7 @@ class TestVerifyCourierSignature:
         assert verify_courier_signature(payload.encode(), header, WEBHOOK_SECRET) is False
 
     def test_accepts_seconds_precision_timestamp(self):
-        # Courier does not document whether `t` is seconds or milliseconds.
+        # Courier documents milliseconds; seconds are accepted defensively.
         payload = json.dumps({"type": "message:updated", "data": {"id": "m1"}})
         header = generate_courier_signature(payload, WEBHOOK_SECRET, int(time.time()))
         assert verify_courier_signature(payload.encode(), header, WEBHOOK_SECRET) is True

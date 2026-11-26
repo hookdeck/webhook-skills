@@ -57,10 +57,11 @@ validator.validate(message, (err, msg) => {
 Python has no AWS webhook SDK — verify manually. Build the canonical string in
 **byte-sorted field order**, one `Key\nValue\n` pair per field that is present
 (`Message`, `MessageId`, `Subject`?, `Timestamp`, `TopicArn`, `Type` for a
-Notification; add `SubscribeURL` and `Token` for a SubscriptionConfirmation),
+Notification; `Message`, `MessageId`, `SubscribeURL`, `Timestamp`, `Token`,
+`TopicArn`, `Type` for a SubscriptionConfirmation or UnsubscribeConfirmation),
 then RSA-verify with the cert from `SigningCertURL` (SHA1 for `SignatureVersion`
 1, SHA256 for 2). See [references/verification.md](references/verification.md)
-(includes the `UnsubscribeConfirmation` field-set nuance).
+(includes the `sns-validator` version to pin).
 
 > **For complete handlers with subscription confirmation, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)
@@ -96,8 +97,10 @@ certificate, so no shared secret is configured. Restrict trust by validating the
 
 ## Local Development
 
+Create a Hookdeck source with the **AWS SNS** source type named `aws-sns`,
+then forward it to your local handler:
+
 ```bash
-# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 aws-sns --path /webhooks/aws-sns
 ```
 

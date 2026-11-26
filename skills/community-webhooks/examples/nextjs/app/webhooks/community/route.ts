@@ -101,9 +101,9 @@ function extractObject(event: any): any {
 }
 
 // Deduplication store — Community delivers AT-LEAST-ONCE and documents that the
-// same event can arrive more than once. Keep event ids for at least an hour.
+// same event can arrive more than once. Keep event ids for at least two hours, longer than the one-hour retry window.
 // Replace with Redis/Postgres in production (module state is per-instance).
-const DEDUPE_TTL_MS = 60 * 60 * 1000;
+const DEDUPE_TTL_MS = 2 * 60 * 60 * 1000;
 const seenEvents = new Map<string, number>();
 
 function alreadyProcessed(eventId: string): boolean {
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       console.log(
         `Inbound message ${object?.id} from ${member.communication_channel_id}: ${object?.text}`
       );
-      // TODO: route to support inbox, run keyword automations
+      // Your code: route to support inbox, run keyword automations
       break;
     }
 
@@ -170,26 +170,35 @@ export async function POST(request: NextRequest) {
       // so compare case-insensitively.
       const kind = (object?.outbound_message_type ?? '').toLowerCase();
       console.log(`Outbound message ${object?.id} (type: ${kind})`);
-      // TODO: log conversation history, attribute campaign sends
+      // Your code: log conversation history, attribute campaign sends
       break;
     }
 
     case 'member.created':
       console.log(`Member created: ${object?.id}`);
-      // TODO: welcome flow, create the contact in your CRM
+      // Your code: welcome flow, create the contact in your CRM
       break;
 
     case 'member.updated':
       console.log(`Member updated: ${object?.id} (active: ${object?.active})`);
-      // TODO: sync profile changes downstream
+      // Your code: sync profile changes downstream
       break;
 
     case 'member.deleted':
       // Sparse payload: only id, active, timestamp, client_id,
       // communication_channel, and an emptied communication_channel_id.
       console.log(`Member deleted: ${object?.id}`);
-      // TODO: suppression list, downstream deletion
+      // Your code: downstream deletion
       break;
+
+    case 'member.opted_out': {
+      // The member unsubscribed (for example by replying STOP). A member.updated
+      // event for the same member arrives too, so don't treat them as duplicates.
+      const optOut = object?.opt_out ?? {};
+      console.log(`Member opted out: ${object?.id} (source: ${optOut.source})`);
+      // Your code: add to your suppression list
+      break;
+    }
 
     default:
       console.log(`Unhandled Community event type: ${event.type}`);

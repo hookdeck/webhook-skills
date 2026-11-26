@@ -11,9 +11,11 @@ automations, or update your CRM as events happen.
 Attentive supports two webhook flavors that deliver the **same event payloads**:
 
 - **Universal webhooks** — configured in the Attentive dashboard under a custom
-  app's **Webhooks** tab. One endpoint receives all selected event types.
+  app's **Webhooks** tab. Events for every company that installs the app go to
+  the same URL.
 - **Subscription webhooks** — created programmatically via the Webhooks API
-  (`POST /webhooks`). Each subscription targets specific event types.
+  (`POST /webhooks`) or the GraphQL `createWebhook` mutation. Each company that
+  installs the app gets its own URL.
 
 Both sign requests with the same `x-attentive-hmac-sha256` header.
 
@@ -56,20 +58,36 @@ Payloads are JSON with a common envelope:
 ```json
 {
   "type": "sms.subscribed",
-  "timestamp": 1721664000000,
-  "company": { "id": "..." },
+  "timestamp": 1632945178104,
+  "company": {
+    "display_name": "Hudson & Ivy",
+    "company_id": "MDc6Q29tcGFueTU"
+  },
   "subscriber": {
-    "phone": "+15555550123",
-    "email": "user@example.com"
+    "email": "user1@example.com",
+    "phone": "+15555555555",
+    "external_id": 16467358
+  },
+  "creative": {
+    "name": "Desktop Fullscreen (Email + SMS) - 15% Off",
+    "type": "DESKTOP",
+    "subtype": "DYNAMIC"
+  },
+  "subscription": {
+    "type": "MARKETING"
   }
 }
 ```
 
+Example from Attentive's webhook payloads page (email replaced with a
+placeholder). There is no event ID field.
+
 - `type` — the event type string (e.g. `sms.subscribed`)
 - `timestamp` — Unix time in **milliseconds**
 - `company` — the Attentive company (brand) the event belongs to
-- `subscriber` — subscriber identifiers and event-specific detail (fields vary
-  by event type)
+- `subscriber` — subscriber identifiers (`phone` or `email` may be missing)
+- other objects such as `creative`, `subscription`, `message` or
+  `message_link_click` vary by event type
 
 ## Delivery Behavior
 

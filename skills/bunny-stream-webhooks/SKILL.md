@@ -26,7 +26,7 @@ metadata:
 
 Bunny Stream signs the **exact raw request body** with HMAC-SHA256, keyed on your **video library's Read-Only API key**, and sends the digest as **lowercase hex** in the `X-BunnyStream-Signature` header. Verify against the **unparsed raw body** (do NOT re-serialize the JSON — whitespace or key-order changes break the digest) and compare timing-safe.
 
-> This is a **custom scheme, not Standard Webhooks** (no `webhook-id` / `webhook-timestamp` / `webhook-signature`). It is also distinct from Bunny's general-platform webhooks (HMAC-SHA1, `x-bunny-signature`) — Stream uses SHA-256 and `X-BunnyStream-Signature`. There is no official SDK, so verify manually.
+> This is a **custom scheme, not Standard Webhooks** (no `webhook-id` / `webhook-timestamp` / `webhook-signature`). Bunny's own steps also check that `X-BunnyStream-Signature-Version` is `v1` and `X-BunnyStream-Signature-Algorithm` is `hmac-sha256` before computing the digest. There is no official SDK, so verify manually.
 
 Node:
 
@@ -66,13 +66,22 @@ def verify_bunny_stream(raw_body: bytes, signature_header: str, secret: str) -> 
 
 ## The Payload Is Thin — Fetch Back
 
-The callback body carries only three fields:
+The callback body identifies the video and the event, and nothing more (Bunny's documented example):
 
 ```json
-{ "VideoLibraryId": 12345, "VideoGuid": "0a1b2c3d-...", "Status": 3 }
+{
+  "IsLiveStreamWebhook": false,
+  "VideoLibraryId": 133,
+  "VideoGuid": "657bb740-a71b-4529-a012-528021c31a92",
+  "Status": 3,
+  "EventId": "0f8e2c52-6a3e-4c1f-9d55-2b8c4f6c2a10",
+  "Timestamp": "2026-10-01T12:30:15.1234567Z"
+}
 ```
 
-There is no title, duration, or resolution in the payload. When you need full metadata, call the [Stream API](https://docs.bunny.net/reference/video_getvideo) `GET /library/{libraryId}/videos/{videoGuid}` with your (read-write) AccessKey, using `VideoGuid` from the webhook. Verify the signature **before** making any fetch-back call.
+`EventId` is unique per event and stays the same on retries, so deduplicate on it. `Timestamp` is when the event happened (UTC); deliveries can arrive out of order, so compare it before updating state. `Reason` is added for `SmartGenerationFailed` and left out otherwise. Ignore fields you don't know: Bunny added the last four to an existing payload.
+
+There is no title, duration, or resolution in the payload. When you need full metadata, call the [Stream API](https://bunny.net/docs/api-reference/stream/manage-videos/get-video) `GET /library/{libraryId}/videos/{videoGuid}` with the library's read-write API key, using `VideoGuid` from the webhook. Verify the signature **before** making any fetch-back call.
 
 ## Status Codes (the event type lives in `Status`)
 
@@ -82,25 +91,34 @@ There is no title, duration, or resolution in the payload. When you need full me
 | `1` | Processing | Ingest started |
 | `2` | Encoding | Transcoding in progress |
 | `3` | **Finished** | Encoding done — video ready to play |
-| `4` | ResolutionFinished | A single resolution finished encoding |
+| `4` | Resolution finished | One resolution finished; sent once per resolution, the first means playable |
 | `5` | **Failed** | Encoding failed — alert / retry |
 | `6` | PresignedUploadStarted | TUS/presigned upload began |
 | `7` | PresignedUploadFinished | Presigned upload completed |
 | `8` | PresignedUploadFailed | Presigned upload failed |
 | `9` | CaptionsGenerated | Auto-captions ready |
 | `10` | TitleOrDescriptionGenerated | AI title/description ready |
+| `11` | CaptionGenerationFailed | Auto-captions failed |
+| `12` | ChaptersGenerated | AI chapters ready |
+| `13` | MomentsGenerated | AI moments ready |
+| `32` | VideoDeleted | Video deleted (once per video, including collection deletes) |
+| `33` | SmartGenerationFailed | A smart feature failed; `Reason` is `Title`, `Description`, `Chapters` or `Moments` |
 
-> **For the full event reference**, see [Bunny Stream Webhooks](https://docs.bunny.net/stream/webhooks).
+Switch on the numeric `Status`, not the name, as Bunny advises.
+
+> **For the full event reference**, see [Bunny Stream Webhooks](https://bunny.net/docs/stream/webhooks).
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
 | `X-BunnyStream-Signature` | HMAC-SHA256 of the raw body, lowercase hex — verify this |
-| `X-BunnyStream-Signature-Version` | Signature scheme version (`v1`) — **unconfirmed** (see note) |
-| `X-BunnyStream-Signature-Algorithm` | Algorithm identifier (`hmac-sha256`) — **unconfirmed** (see note) |
+| `X-BunnyStream-Signature-Version` | Signature scheme version, `v1` |
+| `X-BunnyStream-Signature-Algorithm` | Algorithm identifier, `hmac-sha256` |
 
-> The `-Version` and `-Algorithm` headers were observed in a single fetch only and are unconfirmed — they may or may not be present. Do not rely on them; verify solely against `X-BunnyStream-Signature`.
+## Retries
+
+Any `2xx` acknowledges a delivery. A network error, timeout, `408`, `429` or `5xx` is retried after 30 seconds, 2 minutes, 10 minutes, 30 minutes, 1 hour and 2 hours, then dropped (about four hours after the event). Other `4xx` responses are not retried. Retries resend the same body and are signed with the library's current Read-Only API key.
 
 ## Environment Variables
 
@@ -136,7 +154,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Bunny may resend the same Status)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (deduplicate on `EventId`)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

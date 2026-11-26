@@ -50,13 +50,19 @@ Server runs on http://localhost:3000. The route is
 
 Event Grid only delivers to a publicly reachable **HTTPS** endpoint with a
 CA-signed certificate (self-signed certificates are not supported for
-validation). Start a tunnel with the Hookdeck CLI (no account required):
+validation). With Hookdeck, create a source with the **Azure Event Grid** type
+in the dashboard, then forward it to this server with the Hookdeck CLI:
 
 ```bash
-npx hookdeck-cli listen 3000 azure-event-grid --path /webhooks/azure-event-grid
+hookdeck login
+hookdeck listen 3000 <your-azure-event-grid-source-name> --path /webhooks/azure-event-grid
 ```
 
-Use the printed HTTPS URL as the event subscription's `--endpoint`. The
+The source answers the CloudEvents `OPTIONS` preflight. For an Event Grid schema
+subscription, open the `validationUrl` from the logged validation event within
+10 minutes, because your handler's response doesn't go back to Azure.
+
+Use the source's URL as the event subscription's `--endpoint`. The
 subscription is validated the moment you create it, so start the dev server first.
 
 ## How it works

@@ -40,7 +40,7 @@ Event names are **dotted lowercase** in v2 (e.g. `transaction.created`). The leg
 | `transaction.status.updated` | The transaction's primary status changes (e.g. `SUBMITTED` → `COMPLETED`) | Update order/settlement state, credit balances on completion |
 | `transaction.approval_status.updated` | The approval/authorization status changes | Notify approvers, gate release of funds |
 | `transaction.network_records.processing_completed` | On-chain / network processing finishes | Reconcile against `NetworkRecord` details, confirmations |
-| `transaction.alert.stuck_confirming` | An EVM transaction is stuck `CONFIRMING` due to low fees | Alert ops, trigger a fee boost (`BOOST_TRANSACTION`) |
+| `transaction.alert.stuck` | Transactions from a vault account are stuck `CONFIRMING` on an EVM chain, usually because of low fees | Alert ops, trigger a fee boost (`BOOST_TRANSACTION`) |
 
 ### Transaction status values
 
@@ -50,11 +50,14 @@ Event names are **dotted lowercase** in v2 (e.g. `transaction.created`). The leg
 
 Beyond transactions, Webhooks v2 covers additional categories that use the same envelope:
 
-- `vault_account.*` — vault account and asset lifecycle
-- `whitelist.*` — whitelisted address/contract changes
-- `tokenization.*` — token deployment and lifecycle
-- `network_connection.*` — Fireblocks Network connection changes
+- `vault_account.*` — vault accounts, their assets and balances, and bulk jobs
+- `internal_wallet.*`, `external_wallet.*`, `contract_wallet.*` — whitelisted wallet assets added or removed (the Whitelist category)
+- `embedded_wallet.*` — embedded (non-custodial) wallets, assets and devices
+- `exchange_account.*`, `fiat_account.*`, `connected_account.*` — connected CeFi accounts
+- `connection.*` — Fireblocks Network connections
+- `ticket.*` — Smart Transfer tickets and terms
+- `onchain_data.updated` — logs from managed tokenization contracts
 
 ## Full Event Reference
 
-For the complete, authoritative list of events and payload schemas, see the [Fireblocks event catalog](https://developers.fireblocks.com/reference/webhooks-structures-eventtypes) and the [transaction event types](https://developers.fireblocks.com/reference/webhooks-structures-eventtypes-transaction).
+For the complete, authoritative list of events and payload schemas, see the [Fireblocks webhooks overview](https://developers.fireblocks.com/reference/webhooks-overview) and the [transaction event types](https://developers.fireblocks.com/reference/webhooks-structures-eventtypes-transaction).

@@ -1,13 +1,13 @@
 // Generated with: alipay-webhooks skill
 // https://github.com/hookdeck/webhook-skills
 //
-// Alipay (Antom / Alipay+) RSA256 (SHA256withRSA) signing + verification.
+// Alipay (Antom / Alipay+) RSA256 (SHA256withRSA) notification verification.
 
-import { createVerify, createSign } from 'crypto';
+import { createVerify } from 'crypto';
 
-// The acknowledgement body Antom expects, verbatim.
+// The acknowledgement body Antom expects, with fixed values. No signature is required.
 export const ACK_BODY = JSON.stringify({
-  result: { resultCode: 'SUCCESS', resultStatus: 'S', resultMessage: 'Success' },
+  result: { resultCode: 'SUCCESS', resultStatus: 'S', resultMessage: 'success' },
 });
 
 // PEM values are commonly stored on one line with literal "\n"; restore newlines.
@@ -49,7 +49,7 @@ export function verifyAlipaySignature(params: VerifyParams): boolean {
 
   const content = buildSignedContent(method, uri, clientId, requestTime, rawBody);
 
-  // base64URL, often percent-encoded on the wire: decode, normalize, decode.
+  // Antom base64-encodes, then URL-encodes: percent-decode, accept URL-safe base64, decode.
   let sigBytes: Buffer;
   try {
     sigBytes = Buffer.from(
@@ -68,25 +68,4 @@ export function verifyAlipaySignature(params: VerifyParams): boolean {
   } catch {
     return false;
   }
-}
-
-export interface SignParams {
-  method: string;
-  uri: string;
-  clientId: string;
-  responseTime: string;
-  body: string;
-  privateKey: string;
-  keyVersion?: string | number;
-}
-
-// Sign the acknowledgement response with YOUR merchant PRIVATE key.
-export function signAlipayResponse(params: SignParams): string {
-  const { method, uri, clientId, responseTime, body, privateKey, keyVersion = 1 } = params;
-  const content = buildSignedContent(method, uri, clientId, responseTime, body);
-  const signer = createSign('RSA-SHA256');
-  signer.update(content, 'utf8');
-  signer.end();
-  const signature = signer.sign(normalizePem(privateKey)).toString('base64url');
-  return `algorithm=RSA256,keyVersion=${keyVersion},signature=${signature}`;
 }

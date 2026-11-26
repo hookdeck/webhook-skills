@@ -10,8 +10,8 @@ downstream automation, or feed analytics without polling the Courier API.
 
 Every outbound webhook is a `POST` request with a JSON body and a `courier-signature`
 header you use to verify the request is genuinely from Courier. The header carries a
-timestamp (`t`) whose unit Courier does not document, and Courier publishes no replay
-tolerance — the 5-minute window in this skill's examples is a chosen default. See
+millisecond timestamp (`t`), and Courier publishes no replay tolerance: the 5-minute
+window in this skill's examples is a chosen default. See
 [verification.md](verification.md).
 
 ## Event Payload Structure
@@ -36,14 +36,17 @@ Your handler should switch on `type` and read details from `data`.
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `message:updated` | A message's delivery status changes | Sync delivery/open state, retry logic, analytics |
-| `notification:submitted` | A notification is submitted for sending | Audit trail, track sends in flight |
-| `notification:submission_canceled` | A submitted notification is canceled | Reconcile canceled sends |
-| `notification:published` | A notification template is published | Invalidate caches, sync template versions |
-| `audiences:updated` | An audience definition is updated | Sync segment definitions |
-| `audiences:user:matched` | A user starts matching an audience | Trigger onboarding, tag users |
-| `audiences:user:unmatched` | A user stops matching an audience | Revoke access, update CRM |
-| `audiences:calculated` | An audience membership recalculation completes | Kick off downstream jobs |
+| `message:updated` | A message's delivery status changes | Sync delivery/open state, analytics |
+| `notification:submitted` | A template is submitted for review | Custom approval workflows |
+| `notification:submission_canceled` | A pending template submission is canceled | Close the review task |
+| `notification:published` | A template is published | Sync template content to a translation system |
+| `audiences:created` | An audience is created | Mirror segment definitions |
+| `audiences:updated` | An audience's definition changes | Sync segment definitions |
+| `audiences:deleted` | An audience is deleted | Remove the mirrored segment |
+| `audiences:calculated` | Courier finishes recalculating an audience | Kick off downstream jobs |
+| `audiences:user:matched` | A user starts matching an audience's filter | Trigger onboarding, tag users |
+| `audiences:user:unmatched` | A user stops matching an audience's filter | Revoke access, update CRM |
+| `preferences:user:updated` | A user changes a topic's subscription preference | Sync opt-outs to your own records |
 
 ## Important: No Per-Status Message Events
 
@@ -53,11 +56,11 @@ Courier does **not** emit separate events for each delivery status. There is no
 `status` plus relevant timestamps are carried inside `data`. Inspect `data.status`
 to react to specific states.
 
-> The status values often cited for Courier messages — `DELIVERED`, `OPENED`,
-> `CLICKED`, `UNDELIVERABLE` — are **illustrative only**. This skill was not built
-> from a verified enumeration of `data.status`, so log the values your workspace
-> actually sends before you branch on them, and keep a fallback branch for values
-> you do not recognize.
+> Courier's events page lists the statuses a `message:updated` event carries:
+> `ENQUEUED`, `SENT`, `DELIVERED`, `OPENED`, `CLICKED`, `UNROUTABLE` and
+> `UNDELIVERABLE`. One message produces several events that share `data.id`, and
+> `OPENED` or `CLICKED` can arrive before `DELIVERED`, or without it. Keep a
+> fallback branch for values you do not recognize.
 
 ## Environment Scoping
 
@@ -67,12 +70,13 @@ only production events. Configure a webhook in each environment you want to moni
 
 ## Delivery and Response
 
-Send a `2xx` (typically `200`) response to Courier as quickly as possible, and defer any
-heavy processing to an asynchronous background job or queue. Courier's retry behavior for
-non-`2xx` responses is not documented, so treat delivery as at-least-once and make your
-handler idempotent.
+Return a `2xx` within 10 seconds and defer heavy processing to a background job or
+queue. Courier retries network errors, timeouts, `408`, `429` and `5xx` responses, from a
+few seconds apart up to 15-minute intervals, for about a day, then drops the event. Any
+other `4xx` is not retried. A retry can deliver the same event twice, so make your
+handler idempotent, keyed on `data.id` plus `data.status` for `message:updated`.
 
 ## Full Event Reference
 
 For the complete list of events and payloads, see
-[Courier's Outbound Webhooks documentation](https://www.courier.com/docs/platform/workspaces/outbound-webhooks).
+[Courier's webhook event types page](https://www.courier.com/docs/monitor/webhooks/events).

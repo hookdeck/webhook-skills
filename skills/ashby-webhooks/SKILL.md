@@ -29,7 +29,7 @@ secret token and sends the digest in the `Ashby-Signature` header formatted as
 over the raw body (before JSON parsing) and compare the hex digest timing-safe.
 
 The event name is **in the body**, not a header — every payload is
-`{ "action": "<eventName>", "data": {...} }`.
+`{ "webhookActionId": "<uuid>", "action": "<eventName>", "data": {...} }`.
 
 Node:
 
@@ -81,9 +81,15 @@ The `action` field carries the event name (camelCase, no dot notation).
 | `offerCreate` | An offer is created |
 
 > **Fan-out:** some events trigger others. For example, `candidateHire` also
-> fires `applicationUpdate` and `candidateStageChange`. Make handlers idempotent.
+> fires `applicationUpdate` and `candidateStageChange`, with the same
+> `webhookActionId`. Deduplicate on `webhookActionId` plus `action`, not
+> `webhookActionId` alone.
 
-> **For the full event reference**, see [Ashby webhook docs](https://developers.ashbyhq.com/docs/setting-up-webhooks).
+> **Retries:** Ashby retries non-2xx responses with exponential backoff, up to
+> 10 attempts, but never retries `401`, `403`, `404`, `405` or `410`. See
+> [Retries](https://developers.ashbyhq.com/docs/retries).
+
+> **For the full event reference**, see [Ashby's webhook payloads](https://developers.ashbyhq.com/reference/applicationsubmitwebhook).
 
 ## Important Headers
 

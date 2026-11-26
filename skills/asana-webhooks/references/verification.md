@@ -13,8 +13,9 @@ header and **no** `X-Hook-Signature`. Your endpoint must:
 1. Read `X-Hook-Secret`.
 2. Set the **same value** as an `X-Hook-Secret` response header.
 3. Return `200`.
-4. **Persist the secret** — it is the HMAC key for every future delivery and is never
-   shown again.
+4. **Persist the secret** — it is the HMAC key for every future delivery. Asana repeats
+   it in the `201 Created` response body to `POST /webhooks`, but
+   `GET /webhooks/{webhook_gid}` never returns it.
 
 ### Per-Delivery Signature
 

@@ -78,6 +78,9 @@ as an Express, Next.js, or FastAPI route handler. Two consequences:
   **manually** with the snippet above so the handler fits your existing routes.
 - Its rejection response for a bad key is HTTP **500**; the examples here return
   **401** instead, which is the more conventional "unauthorized" status.
+- Its type list (last changed 2020) predates v2.1, so it answers **500** to
+  `ItemDeliveryStarted`, `ItemDeliveryCompleted` and `ItemDeliveryFailed`, and
+  CloudSignal retries them. Don't subscribe to those signals if you use it.
 
 Use the SDK only if you want a dedicated, standalone Node receiver process.
 
@@ -105,11 +108,12 @@ Use the SDK only if you want a dedicated, standalone Node receiver process.
 - **Signals never arrive:** confirm the endpoint URL registered in the Dashboard /
   CloudApps API is your public HTTPS URL and reachable.
 - **Repeated deliveries of the same signal:** you are not returning `200`/`204`
-  fast enough (or at all) — CloudSignal retries non-2xx responses. Acknowledge
+  fast enough (or at all) — CloudSignal retries any other response, including
+  other 2xx codes. Acknowledge
   first, process asynchronously, and deduplicate (see the overview's idempotency
   note).
 
 ## Full Documentation
 
-- [CloudSignal Webhooks v2.0](https://docs.cloudprinter.com/client/cloudsignal-webhooks-v2-0)
+- [CloudSignal Webhooks v2.1](https://docs.cloudprinter.com/client/cloudsignal-webhooks-v2-1)
 - [CloudSignal connected app (setup)](https://docs.cloudprinter.com/connected-apps/cloudsignal-webhooks/)

@@ -23,12 +23,14 @@ metadata:
 
 ## Verification (core)
 
-Airwallex signs every webhook with **HMAC-SHA256**. Two headers arrive with each request:
+Airwallex signs webhooks with **HMAC-SHA256** once the webhook has a secret: it starts signing after you retrieve the notification URL's secret key in the web app, and deliveries before that carry no `x-signature`. Two headers arrive with each signed request:
 
 - `x-timestamp` — the send time as a Unix timestamp in **milliseconds**
 - `x-signature` — the HMAC-SHA256 **hex** digest
 
-The signed message is `x-timestamp` concatenated with the **raw** request body (timestamp first), keyed with the endpoint's unique secret. There is **no** Node SDK helper for this — verify manually and always use the original, unmodified raw body. Verify **before** parsing JSON.
+The signed message is `x-timestamp` concatenated with the **raw** request body (timestamp first), keyed with the endpoint's unique secret. Airwallex's docs show manual verification only, so verify by hand and always use the original, unmodified raw body. Verify **before** parsing JSON.
+
+Test events are the exception: Airwallex signs them with the key in the test event's `client-secret-key` header, not with your subscription's secret.
 
 ```javascript
 const crypto = require('crypto');
@@ -54,12 +56,13 @@ function verifyAirwallexSignature(rawBody, timestamp, signature, secret) {
 
 ## Common Event Types
 
-Airwallex event types are dot-namespaced. The event type is in the payload's **`name`** field (not `type`); the resource is in `data.object`.
+Airwallex event types are dot-namespaced. The event type is in the payload's **`name`** field (not `type`). Online Payments events carry the resource in `data.object`; several other products put its fields directly in `data`. The subscription's API version decides both the event names and the payload shape.
 
 | Event | Triggered When |
 |-------|----------------|
 | `payment_intent.succeeded` | A PaymentIntent is fully paid |
-| `payment_intent.requires_payment_method` | A payment attempt failed; a new method is needed |
+| `payment_intent.requires_payment_method` | The PaymentIntent needs a payment method to continue |
+| `payment_intent.payment_failed` | An attempt on the PaymentIntent failed |
 | `payment_attempt.authorized` | A payment attempt is authorized |
 | `payment_attempt.paid` | A payment attempt is captured/paid |
 | `refund.settled` | A refund has settled to the customer |
@@ -68,13 +71,13 @@ Airwallex event types are dot-namespaced. The event type is in the payload's **`
 | `payment_dispute.requires_response` | A dispute needs evidence submitted |
 | `payment_dispute.won` / `payment_dispute.lost` | A dispute is resolved |
 
-> **For the full event list** (all `payment_intent.*`, `payment_attempt.*`, `refund.*`, `payment_consent.*`, `payment_dispute.*`), see [references/overview.md](references/overview.md) and the [Airwallex webhook events docs](https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events/online-payments).
+> **For the full event list**, see [references/overview.md](references/overview.md) for Online Payments and Airwallex's event-type pages under [Listen for webhook events](https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events) for every other product (Payouts, Issuing, Billing, Spend and more).
 
 ## Environment Variables
 
 ```bash
-# Unique secret for THIS webhook URL (Web app > Settings > Developer > Webhooks)
-AIRWALLEX_WEBHOOK_SECRET=whsec_xxxxx
+# Unique secret for THIS webhook URL (Web app > Developer > Webhooks)
+AIRWALLEX_WEBHOOK_SECRET=your_webhook_secret
 ```
 
 Each webhook URL has its own secret — if you register multiple endpoints, each has a distinct secret.

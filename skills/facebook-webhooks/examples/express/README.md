@@ -36,11 +36,13 @@ Server runs on http://localhost:3000
 ### Using Hookdeck CLI
 
 ```bash
-# Forward webhooks to localhost (no account required)
+# Forward a Facebook-type Hookdeck source named "facebook" to localhost
 npx hookdeck-cli listen 3000 facebook --path /webhooks/facebook
 ```
 
-Use the tunnel URL as your **Callback URL** in App Dashboard → Webhooks. Meta
+Create the source with the **Facebook** source type first, because Meta sends a `GET`
+verification request when you save the URL. Use the source URL as your **Callback URL** in
+App Dashboard → Webhooks. Meta
 sends a `GET` handshake to verify the URL, then `POST`s events.
 
 ### Run the tests

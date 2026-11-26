@@ -70,12 +70,12 @@ type SnsMessage = Record<string, string>;
 
 // Build the canonical "Key\nValue\n" string exactly as sns-validator does:
 // a fixed ordered key list per type, including a key only if present.
-// Only SubscriptionConfirmation includes Token.
+// Both confirmation types include SubscribeURL and Token; a Notification doesn't.
 function stringToSign(message: SnsMessage): string {
   const fields =
-    message.Type === 'SubscriptionConfirmation'
-      ? ['Message', 'MessageId', 'Subject', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type']
-      : ['Message', 'MessageId', 'Subject', 'SubscribeURL', 'Timestamp', 'TopicArn', 'Type'];
+    message.Type === 'Notification'
+      ? ['Message', 'MessageId', 'Subject', 'Timestamp', 'TopicArn', 'Type']
+      : ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type'];
   let out = '';
   for (const field of fields) {
     if (message[field] === undefined || message[field] === null) continue;

@@ -18,24 +18,18 @@ digest.
 | Property | Value |
 |----------|-------|
 | Algorithm | HMAC-SHA256 |
-| Encoding | **Not specified in Clio's docs** — accept hex or base64 (see below) |
+| Encoding | Lowercase hex (Clio's examples use `hexdigest`) |
 | Header | `X-Hook-Signature` |
 | Signed content | Raw request body (exact bytes) |
 | Key | Shared secret from the `X-Hook-Secret` handshake |
 | SDK | None — Clio has no official server SDK; verify manually |
 
-### Encoding: hex or base64
+### Encoding: hex
 
-Clio's Webhook Security page says only that Clio "will compute an HMAC-SHA256
-signature based on the shared secret and the request body" and place it in
-`X-Hook-Signature`. It does **not** state whether that digest is hex- or
-base64-encoded, and neither does the rest of the API reference.
-
-Rather than guess, compute the digest once and **constant-time compare against
-both encodings** — the correct one matches, the other never will. Then
-**confirm which encoding your real deliveries actually use** (log the raw header
-value from one live delivery: 64 lowercase hex characters vs a 44-character
-base64 string ending in `=`) and you can safely narrow the check to that one.
+Clio's [webhooks guide](https://docs.developers.clio.com/guides/clio-manage/webhooks/) verifies with `hexdigest` in both its Ruby and
+Python examples, so `X-Hook-Signature` is 64 lowercase hex characters. The code
+below computes the digest once and also accepts base64 as a safety net; the
+wrong encoding never matches, so this costs nothing.
 
 ## Implementation
 
@@ -51,7 +45,7 @@ const crypto = require('crypto');
 function verifyClioWebhook(rawBody, signatureHeader, secret) {
   if (!signatureHeader) return false;
   const digest = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  // Encoding is unspecified in Clio's docs — accept hex or base64.
+  // Clio's examples use hex; base64 is accepted as a safety net.
   return [digest.toString('hex'), digest.toString('base64')].some((expected) => {
     try {
       return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
@@ -75,7 +69,7 @@ def verify_clio_webhook(raw_body: bytes, signature_header: str, secret: str) -> 
     if not signature_header:
         return False
     digest = hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
-    # Encoding is unspecified in Clio's docs — accept hex or base64.
+    # Clio's examples use hex; base64 is accepted as a safety net.
     return (
         hmac.compare_digest(signature_header, digest.hex())
         or hmac.compare_digest(signature_header, base64.b64encode(digest).decode())
@@ -103,8 +97,8 @@ if (hookSecret) {
 - **Use the raw body.** Verify the exact received bytes. In Express use
   `express.raw()`; in Next.js use `await request.text()`; in FastAPI use
   `await request.body()`. Never `JSON.stringify(parsedBody)`.
-- **Do not assume an encoding.** Clio's docs never say hex or base64, so accept
-  both and confirm against a live delivery. There is no `sha256=` prefix.
+- **Compare hex.** Clio's examples use `hexdigest`. There is no `sha256=`
+  prefix.
 - **Handshake before verification.** Verifying the `X-Hook-Secret` handshake POST
   will fail (it has no `X-Hook-Signature`); handle it separately.
 - **Use the right secret.** Verify with the secret Clio delivered during the

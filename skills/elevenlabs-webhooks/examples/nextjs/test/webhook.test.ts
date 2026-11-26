@@ -41,13 +41,13 @@ describe('ElevenLabs Webhook Handler', () => {
       const payload = JSON.stringify({
         type: 'post_call_transcription',
         data: {
-          call_id: 'test_call_123',
+          conversation_id: 'test_conversation_123',
           transcript: {
             text: 'Test transcription',
             segments: []
           }
         },
-        event_timestamp: new Date().toISOString()
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       const { header } = generateTestSignature(payload, webhookSecret);
@@ -65,8 +65,8 @@ describe('ElevenLabs Webhook Handler', () => {
     it('should reject webhook with invalid signature', async () => {
       const payload = JSON.stringify({
         type: 'post_call_transcription',
-        data: { call_id: 'test_call_123' },
-        event_timestamp: new Date().toISOString()
+        data: { conversation_id: 'test_conversation_123' },
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       const request = createMockRequest(payload, {
@@ -83,8 +83,8 @@ describe('ElevenLabs Webhook Handler', () => {
     it('should reject webhook without signature header', async () => {
       const payload = JSON.stringify({
         type: 'post_call_transcription',
-        data: { call_id: 'test_call_123' },
-        event_timestamp: new Date().toISOString()
+        data: { conversation_id: 'test_conversation_123' },
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       const request = createMockRequest(payload, {
@@ -100,8 +100,8 @@ describe('ElevenLabs Webhook Handler', () => {
     it('should reject webhook with expired timestamp', async () => {
       const payload = JSON.stringify({
         type: 'post_call_transcription',
-        data: { call_id: 'test_call_123' },
-        event_timestamp: new Date().toISOString()
+        data: { conversation_id: 'test_conversation_123' },
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       // Create signature with timestamp 40 minutes ago
@@ -123,7 +123,7 @@ describe('ElevenLabs Webhook Handler', () => {
       const payload = JSON.stringify({
         type: 'voice_removed',
         data: { voice_id: 'test_voice_456' },
-        event_timestamp: new Date().toISOString()
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       const { header } = generateTestSignature(payload, webhookSecret);
@@ -141,7 +141,7 @@ describe('ElevenLabs Webhook Handler', () => {
       const payload = JSON.stringify({
         type: 'voice_removal_notice',
         data: { voice_id: 'test_voice_789' },
-        event_timestamp: new Date().toISOString()
+        event_timestamp: Math.floor(Date.now() / 1000)
       });
 
       const { header, timestamp } = generateTestSignature(payload, webhookSecret);
@@ -169,7 +169,7 @@ describe('ElevenLabs Webhook Handler', () => {
         const payload = JSON.stringify({
           type: eventType,
           data: { test_id: `test_${eventType}` },
-          event_timestamp: new Date().toISOString()
+          event_timestamp: Math.floor(Date.now() / 1000)
         });
 
         const { header } = generateTestSignature(payload, webhookSecret);

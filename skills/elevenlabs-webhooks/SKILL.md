@@ -2,7 +2,8 @@
 name: elevenlabs-webhooks
 description: >
   Receive and verify ElevenLabs webhooks. Use when setting up ElevenLabs webhook
-  handlers, debugging signature verification, or handling call transcription events.
+  handlers, debugging signature verification, or handling post-call, voice removal,
+  speech-to-text or image and video generation events.
 license: MIT
 metadata:
   author: hookdeck
@@ -17,14 +18,15 @@ metadata:
 - Setting up ElevenLabs webhook handlers
 - Debugging signature verification failures
 - Understanding ElevenLabs event types and payloads
-- Processing call transcription events
+- Processing post-call transcription, audio and call initiation failure events
 - Handling voice removal notifications
+- Receiving asynchronous speech-to-text and image and video generation results
 
 ## Essential Code
 
 ### Signature Verification (SDK — Recommended)
 
-ElevenLabs recommends using the official `@elevenlabs/elevenlabs-js` SDK for webhook verification and event construction. See [Verify the webhook secret and construct the webhook payload](https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload).
+ElevenLabs tells you to verify the `ElevenLabs-Signature` header with its SDK: `constructEvent` in `@elevenlabs/elevenlabs-js` and `construct_event` in the `elevenlabs` Python package. See [Webhooks: Authentication](https://elevenlabs.io/docs/eleven-api/resources/webhooks#authentication).
 
 ```javascript
 // Express.js / Node example
@@ -95,16 +97,23 @@ async def elevenlabs_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Invalid signature")
 ```
 
-The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp (30-minute tolerance), and returns the parsed event. On failure it throws; return 401 and the error message.
+The SDK (Node/TypeScript and Python) verifies the signature, validates the timestamp, and returns the parsed event. In the SDKs' code the tolerance is 30 minutes and can't be changed. On failure it throws; return 401 and the error message.
 
 ## Common Event Types
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `post_call_transcription` | Call analysis completed | Process call insights, save transcripts |
-| `voice_removal_notice` | Notice that voice will be removed | Notify users, backup voice data |
-| `voice_removal_notice_withdrawn` | Voice removal notice cancelled | Update user notifications |
-| `voice_removed` | Voice has been removed | Clean up voice data, update UI |
+| `post_call_transcription` | An agent call ends and analysis is complete | Save transcripts, update CRM records |
+| `post_call_audio` | The call's full audio is ready (base64 MP3) | Archive call recordings |
+| `call_initiation_failure` | An agent phone call fails to connect (`busy`, `no-answer`, `unknown`) | Retry or mark the lead |
+| `voice_removal_notice` | A shared voice is scheduled for removal | Switch to a suggested voice before `future_removal_timestamp` |
+| `voice_removal_notice_withdrawn` | A scheduled removal is cancelled | Keep using the voice |
+| `voice_removed` | A shared voice is removed without notice | Switch voices now |
+| `speech_to_text_transcription` | An async transcription requested with `webhook=true` completes | Store the transcript |
+| `webhook_error` | That transcription fails (fields are top-level, no `data`) | Log `error_message`, retry |
+| `flows_generation` | An image or video generation completes or fails | Download `content_url` within an hour |
+
+Post-call events for one conversation share `data.conversation_id`, so key on `type` plus `conversation_id`, or on the `ElevenLabs-Webhook-Delivery-Id` header, which stays the same across retries. See the [Webhooks](https://elevenlabs.io/docs/eleven-api/resources/webhooks) and [post-call webhooks](https://elevenlabs.io/docs/eleven-agents/workflows/post-call-webhooks) docs.
 
 ## Environment Variables
 
@@ -114,20 +123,12 @@ ELEVENLABS_WEBHOOK_SECRET=your_webhook_secret_here
 
 ## Local Development
 
-For local webhook testing, install Hookdeck CLI:
-
 ```bash
-# Install via npm (recommended)
-
-```
-
-Then start the tunnel:
-
-```bash
+# Start tunnel (no account needed)
 npx hookdeck-cli listen 3000 elevenlabs --path /webhooks/elevenlabs
 ```
 
-No account required. Provides local tunnel + web UI for inspecting requests.
+Use the tunnel URL as the webhook's callback URL. To send a signed sample event, call [Send Test Webhook Event](https://elevenlabs.io/docs/api-reference/webhooks/test).
 
 ## Resources
 

@@ -63,9 +63,9 @@ Event names are **dotted lowercase** (v2). The event type is in the `eventType` 
 | `transaction.status.updated` | The transaction's primary status changed |
 | `transaction.approval_status.updated` | The transaction's approval/authorization status changed |
 | `transaction.network_records.processing_completed` | Network-level (on-chain) processing completed |
-| `transaction.alert.stuck_confirming` | An EVM transaction is stuck `CONFIRMING` due to low fees |
+| `transaction.alert.stuck` | Transactions from a vault account are stuck `CONFIRMING` on an EVM chain, usually because of low fees |
 
-Other categories (`vault_account.*`, `whitelist.*`, `tokenization.*`, `network_connection.*`) follow the same envelope. See [references/overview.md](references/overview.md) and the [transaction event types](https://developers.fireblocks.com/reference/webhooks-structures-eventtypes-transaction).
+Other categories (`vault_account.*`, `internal_wallet.*` / `external_wallet.*` / `contract_wallet.*`, `embedded_wallet.*`, `connection.*`, `ticket.*`, `onchain_data.updated`) follow the same envelope. See [references/overview.md](references/overview.md) and the [transaction event types](https://developers.fireblocks.com/reference/webhooks-structures-eventtypes-transaction).
 
 ## Environment Variables
 
@@ -105,7 +105,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Fireblocks retries up to 10 times)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (Fireblocks makes up to 10 delivery attempts)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

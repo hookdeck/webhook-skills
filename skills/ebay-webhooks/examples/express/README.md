@@ -59,15 +59,18 @@ preloads the public-key cache (so no OAuth/network call is made), and asserts:
 
 ## Receive real webhooks locally
 
-Use the Hookdeck CLI to tunnel eBay notifications to your local server (no
-install, no account required):
+
+In Hookdeck Event Gateway, create an **eBay** source with your keyset's Client
+ID and Client Secret and the same verification token you give eBay, then
+forward that source to your machine (`ebay` is the source's name):
 
 ```bash
-npx hookdeck-cli listen 3000 ebay --path /webhooks/ebay
+hookdeck listen 3000 ebay --path /webhooks/ebay
 ```
 
-Register the printed HTTPS URL as your eBay destination endpoint and set the
-**same** URL as `EBAY_ENDPOINT` — the challenge hash depends on it.
+Register the source URL as your eBay destination endpoint. The eBay source
+answers eBay's challenge itself, so the challenge route in this code isn't
+called in that setup; the tests cover it.
 
 ## Official SDK
 

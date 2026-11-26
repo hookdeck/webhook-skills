@@ -60,4 +60,4 @@ pytest test_webhook.py
 
 - The event name is in the body (`action`), not a header.
 - `await request.body()` gives the raw bytes needed for signature verification.
-- Return `2xx`; a status `>= 400` can cause Ashby to auto-disable the webhook.
+- Return `2xx`. Ashby retries other failures up to 10 attempts, but not a `401`, `403`, `404`, `405` or `410`.

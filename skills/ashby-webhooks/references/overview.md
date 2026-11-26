@@ -19,12 +19,17 @@ body (`action`), **not** in a header:
 
 ```json
 {
-  "action": "applicationSubmit",
+  "webhookActionId": "75395d87-4044-4dc4-bc29-0cec185e5f06",
+  "action": "candidateStageChange",
   "data": {
     // event-specific fields
   }
 }
 ```
+
+`webhookActionId` identifies the underlying event. Ashby keeps it the same across
+retries, across several webhooks configured for the same event, and across the
+related webhooks one action fans out to.
 
 Dispatch on `payload.action` after verifying the signature.
 
@@ -53,11 +58,18 @@ not `interviewSchedule.create`).
 ## Fan-Out Events
 
 Some events trigger additional events. For example, `candidateHire` also fires
-`applicationUpdate` and `candidateStageChange`. Because you may receive several
-related webhooks for one logical action, **make handlers idempotent** (e.g. dedupe
-on a stable ID from `data`). Ashby does not document a retry or backoff policy —
-only the auto-disable behavior below — so do not assume a failed delivery will be
-re-sent.
+`applicationUpdate` and `candidateStageChange`, all with the same
+`webhookActionId`. Because you may receive several related webhooks for one
+logical action, and retries repeat the same `webhookActionId`, **make handlers
+idempotent**: deduplicate on `webhookActionId` plus `action`. Keying on
+`webhookActionId` alone would drop the fanned-out events.
+
+## Retries
+
+Ashby retries a failed delivery (non-2xx or timeout) with exponential backoff,
+`(2^attempt - 1) × 10` seconds, up to 10 attempts. It does not retry `401`,
+`403`, `404`, `405` or `410`. See
+[Retries](https://developers.ashbyhq.com/docs/retries).
 
 ## Event Headers
 
@@ -66,15 +78,16 @@ re-sent.
 | `Ashby-Signature` | HMAC SHA-256 signature of the raw body, as `sha256=<hex>` |
 | `Ashby-Webhook` (User-Agent) | Identifies Ashby requests — **not** a security control |
 
-## Ping and Auto-Disable
+## Ping on Create or Edit
 
 When you create or edit a webhook, Ashby sends a `ping` event. If your endpoint
-does not respond, or returns a status code `>= 400`, Ashby **disables** the
-webhook. Re-enable it in the dashboard after fixing your endpoint. Always return
-`2xx` quickly once the signature is verified.
+does not respond, or responds with an error code, the webhook is still saved but
+**disabled**. After fixing your endpoint, check "enabled" and click "Update" to
+send a new ping. Always return `2xx` quickly once the signature is verified.
 
 ## Full Event Reference
 
 For the complete list of events and payloads, see:
 - [Setting Up Webhooks](https://developers.ashbyhq.com/docs/setting-up-webhooks)
 - [Authenticating Webhooks](https://developers.ashbyhq.com/docs/authenticating-webhooks)
+- [Webhook payloads](https://developers.ashbyhq.com/reference/applicationsubmitwebhook)

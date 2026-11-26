@@ -1,7 +1,7 @@
 {
   "name": "auth0-webhooks-nextjs",
   "version": "1.0.0",
-  "description": "Auth0 Custom Log Stream webhook handler with Next.js",
+  "description": "Auth0 Event Streams webhook handler with Next.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

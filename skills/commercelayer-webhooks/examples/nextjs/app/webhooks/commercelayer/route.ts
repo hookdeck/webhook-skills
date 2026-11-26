@@ -51,42 +51,42 @@ export async function POST(request: NextRequest) {
   switch (topic) {
     case 'orders.place':
       console.log('Order placed:', resource?.id);
-      // TODO: Start fulfillment, notify ops, etc.
+      // Your code: Start fulfillment, notify ops, etc.
       break;
 
     case 'orders.approve':
       console.log('Order approved:', resource?.id);
-      // TODO: Trigger downstream processing.
+      // Your code: Trigger downstream processing.
       break;
 
     case 'orders.cancel':
       console.log('Order cancelled:', resource?.id);
-      // TODO: Release stock, reverse workflows.
+      // Your code: Release stock, reverse workflows.
       break;
 
     case 'orders.pay':
       console.log('Order paid:', resource?.id);
-      // TODO: Record revenue, kick off fulfillment.
+      // Your code: Record revenue, kick off fulfillment.
       break;
 
     case 'orders.refund':
       console.log('Order refunded:', resource?.id);
-      // TODO: Update accounting, notify customer.
+      // Your code: Update accounting, notify customer.
       break;
 
     case 'customers.create':
       console.log('Customer created:', resource?.id);
-      // TODO: CRM sync, welcome email.
+      // Your code: CRM sync, welcome email.
       break;
 
     case 'shipments.ship':
       console.log('Shipment shipped:', resource?.id);
-      // TODO: Send tracking, update order status.
+      // Your code: Send tracking, update order status.
       break;
 
     case 'shipments.deliver':
       console.log('Shipment delivered:', resource?.id);
-      // TODO: Close order, request a review.
+      // Your code: Close order, request a review.
       break;
 
     default:

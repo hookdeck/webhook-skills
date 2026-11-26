@@ -20,7 +20,7 @@ Key facts:
 - **One header only.** There is **no** `sha256=` prefix, **no** `webhook-id`, and **no** timestamp.
   Alchemy is **not** Standard Webhooks compliant, so don't reach for a Svix-style verifier.
 - **Key is per-webhook**, copied from the top-right of the webhook's detail page (or fetched via the
-  Notify API / `alchemy-sdk`'s `notify.getSigningKey(webhookId)`). It is **not** your app Auth Token.
+  Notify API, which returns it as `signing_key` on each webhook). It is **not** your team Auth Token.
 - **Sign the raw body.** The digest must be computed over the exact bytes Alchemy sent. Re-serializing
   parsed JSON (`JSON.stringify(req.body)`) reorders/reformats fields and will not match.
 
@@ -32,7 +32,8 @@ the HMAC proves the request came from Alchemy and the body wasn't tampered with 
 
 ## Implementation
 
-Alchemy's `alchemy-sdk` does **not** ship a verification helper, so verify manually in every language.
+Alchemy ships no verification helper (and its `alchemy-sdk` is deprecated and archived), so verify
+manually in every language.
 
 ### Node.js
 

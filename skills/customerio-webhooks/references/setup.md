@@ -54,5 +54,5 @@ The CLI prints a public URL — use it as the **Endpoint URL** in the Reporting 
 
 - Endpoints must return a `2xx` response **within 4 seconds**. Do heavy work asynchronously.
 - Failed deliveries are retried with exponential backoff for **7 days**; a persistently failing
-  endpoint backlogs later events. Error responses (`400/401/403/404/429/5xx`) add ~1 hour of
-  delay before the next retry batch.
+  endpoint backlogs later events. Error responses (`400/401/402/403/404/405/410/422/429/500/502/521`)
+  put the call in a batch retried after an hour.

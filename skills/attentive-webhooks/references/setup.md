@@ -6,8 +6,10 @@
 - Your application's public HTTPS webhook endpoint URL (e.g.
   `https://your-app.com/webhooks/attentive`)
 
-Attentive offers two ways to configure webhooks. Both deliver identical payloads
-and sign with the same `x-attentive-hmac-sha256` header.
+Attentive offers two webhook types. Both deliver identical payloads and sign
+with the same `x-attentive-hmac-sha256` header. A **universal** webhook sends
+events for every company that installs your app to one URL; a **subscription**
+webhook gives each installing company its own URL.
 
 ## Option A: Dashboard (Universal webhooks)
 
@@ -16,26 +18,27 @@ and sign with the same `x-attentive-hmac-sha256` header.
 3. Enable the **Event Webhook Status** toggle.
 4. Choose **Universal webhook** as the webhook type.
 5. Enter your **HTTPS URL** (e.g. `https://your-app.com/webhooks/attentive`).
-6. **Save the signing key** ("client secret") shown for this webhook somewhere
-   secure — this is the secret you use to verify signatures. Attentive generates
-   a unique signing key per webhook.
+6. **Save the Signing key** shown on this tab somewhere secure — this is the
+   secret you use to verify signatures. Attentive's docs also call it a client
+   secret and say it is unique per webhook.
 7. Select the events you want to receive (e.g. `sms.subscribed`,
    `sms.unsubscribed`, `email.opened`).
 8. Click **Save**.
 
 ## Option B: Webhooks API (Subscription webhooks)
 
-Create webhook subscriptions programmatically with `POST /webhooks`. Each
-subscription targets specific event types and returns a signing key you use to
-verify incoming requests. Authenticate API calls with your Attentive API token
-(sent as a bearer token). See the
-[Attentive API docs](https://docs.attentive.com/) for the exact request schema.
+On the custom app's **Webhooks** tab, enable **Event Webhook Status**, choose
+**Subscription webhook**, copy the **Signing key** and save. Then create each
+company's webhook with `POST https://api.attentivemobile.com/v1/webhooks`
+(body: `url` and an `events` array, OAuth scope `webhooks:write`) or the GraphQL
+`createWebhook` mutation. The API response does not include the signing key.
+Edit subscription webhooks through the API, not the dashboard. See
+[Create webhook](https://docs.attentive.com/reference/createwebhook).
 
 ## Get Your Signing Key
 
-The **signing key** (a.k.a. "client secret") is shown in the webhook settings
-when you create the webhook (dashboard) or returned in the API response
-(subscription). Store it as an environment variable — never commit it:
+The **Signing key** is shown on the custom app's **Webhooks** tab for both
+webhook types. Store it as an environment variable — never commit it:
 
 ```bash
 ATTENTIVE_WEBHOOK_SECRET=your_signing_key
@@ -46,8 +49,9 @@ party who learns your endpoint URL could post forged events.
 
 ## Testing Your Endpoint
 
-- The dashboard provides an **example payload** you can send to your endpoint
-  while configuring the webhook.
+- Next to the **HTTP Post URL** field, click **Send test event**, pick an event
+  type and send its example payload. The dialog shows the response; Attentive
+  expects a `200`.
 - For local development, tunnel public traffic to your local server with the
   Hookdeck CLI (no account required):
 

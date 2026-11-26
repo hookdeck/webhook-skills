@@ -1,77 +1,70 @@
-# Setting Up Auth0 Webhooks (Custom Log Stream)
+# Setting Up Auth0 Webhooks (Event Streams)
 
 ## Prerequisites
 
-- An Auth0 tenant with **Admin** access to the Dashboard.
-- A publicly reachable **HTTPS** endpoint for your handler (e.g.
-  `https://your-app.com/webhooks/auth0`). For local development use a tunnel
-  (see [Local Development](#local-development)).
+- An Auth0 tenant.
+- A public **HTTPS** endpoint for your handler, such as
+  `https://your-app.com/webhooks/auth0`. Auth0 rejects a webhook endpoint that
+  doesn't start with `https://`. For local development, use a tunnel (see
+  [Local Development](#local-development)).
 
-## Choose Your Authorization Token
+## Choose Your Token
 
-Auth0 log streams are secured with a static shared secret sent in the
-`Authorization` header — there is no signing secret to fetch. **You** generate
-this token and configure both sides with the same value.
-
-Generate a long, random value:
+There's no Auth0-issued secret. You generate a token and set it on the stream:
 
 ```bash
 openssl rand -hex 32
 ```
 
-Store it in your app as `AUTH0_LOG_STREAM_TOKEN`.
+Store it in your app as `AUTH0_EVENT_STREAM_TOKEN`.
 
-## Create the Log Stream
+## Create the Event Stream
 
-1. Go to **Auth0 Dashboard → Monitoring → Streams**.
-2. Click **Create Stream** and choose **Custom Webhook** (HTTP).
-3. Give the stream a name (e.g. `My App Webhook`).
-4. Configure the delivery settings:
-   - **Payload URL** — your endpoint, e.g. `https://your-app.com/webhooks/auth0`
-   - **Content Type** — `application/json`
-   - **Content Format** — select **JSON Array**. Auth0 offers JSON lines,
-     arrays, or objects; JSON Array sends a single JSON array of log records,
-     which the examples in this skill parse. **JSON Lines** sends
-     newline-delimited JSON objects, which a standard JSON body parser rejects.
-     Auth0's docs don't spell out the JSON Object body; the examples treat a
-     non-array body as a single record.
-   - **Authorization Token** — paste the value of your `AUTH0_LOG_STREAM_TOKEN`.
-     Auth0 sends this **verbatim** as the `Authorization` request header.
-5. Click **Save**.
+### Dashboard
 
-> **Tip:** If you want a `Bearer`-style header, set the Authorization Token to
-> `Bearer <your-secret>` and compare against that exact string in your handler.
-> Whatever you type is what Auth0 sends — match it exactly.
+1. Go to **Auth0 Dashboard > Event Streams (Early)**.
+2. Select **+Create Event Stream**, then **Webhook**.
+3. Enter a **Stream Name** and the **Endpoint** URL.
+4. Choose **Bearer Token** as the **Authentication Method** and paste your token
+   as the **Authorization Token**.
+5. Under **Select Event Types**, choose the events you handle.
+6. Select **Save Changes**. New event streams are enabled by default.
 
-## Select Events
+### Auth0 CLI
 
-Custom log streams deliver **all tenant log events** by default. Filter to the
-event types you care about (e.g. `s`, `f`, `ss`) in your handler by inspecting
-`event.data.type`. Some Auth0 plans also support server-side event filtering on
-the stream configuration.
+```bash
+auth0 events create -n my-stream -t webhook -s "user.created" \
+  -c '{"webhook_endpoint":"https://your-app.com/webhooks/auth0","webhook_authorization":{"method":"bearer","token":"YOUR_TOKEN"}}'
+```
 
-## Verify Delivery
+The Management API (`POST /api/v2/event-streams`, with the
+`create:event_streams` scope) and the Terraform `auth0_event_stream` resource
+take the same `webhook_endpoint` and `webhook_authorization` settings.
 
-After saving, Auth0 begins streaming events. Trigger a login or signup in your
-tenant and confirm your endpoint receives a `POST` with a JSON array body (with
-the JSON Array content format) and a matching `Authorization` header. Auth0's stream **Health** view shows recent
-delivery successes and failures.
+## Test the Stream
 
-## Retries
+Create a test user (`auth0 users create`) to trigger `user.created`. Auth0 does
+not send events to a disabled stream.
 
-Auth0 **retries** delivery when your endpoint returns a non-`2xx` status or
-times out. Return `2xx` as soon as you've authenticated and accepted the batch;
-do heavy processing asynchronously. Repeated failures can pause the stream.
+## Monitor and Recover
+
+- List failed deliveries with `GET /api/v2/event-streams/{id}/deliveries`. Auth0
+  suggests polling every 5 minutes.
+- Retry one failed event with `POST /api/v2/event-streams/{id}/redeliver/{event_id}`,
+  or all of them with `POST /api/v2/event-streams/{id}/redeliver`.
+- Auth0 disables a stream after 500 consecutive failures or 5000 total failures.
+  After that, use the Redelivery API to process failed events and re-enable the
+  stream through the API once failures drop below 5000.
 
 ## Local Development
 
-Use the Hookdeck CLI to receive events on your local machine — no account
-required, no install (`npx` fetches it):
+Use the Hookdeck CLI to receive events on your machine, with no account and no
+install (`npx` fetches it):
 
 ```bash
 npx hookdeck-cli listen 3000 auth0 --path /webhooks/auth0
 ```
 
-The CLI prints a public URL. Use that URL as the log stream's **Payload URL**
-in the Auth0 Dashboard. Requests are tunneled to `http://localhost:3000/webhooks/auth0`
-and shown in the Hookdeck web UI for inspection and replay.
+Use the printed URL as the stream's webhook endpoint. Requests are forwarded to
+`http://localhost:3000/webhooks/auth0` and shown in the Hookdeck web UI for
+inspection and replay.

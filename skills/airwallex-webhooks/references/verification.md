@@ -8,8 +8,10 @@ the body was not tampered with in transit. Never act on an unverified payload.
 
 ## How It Works
 
-Airwallex signs every webhook with **HMAC-SHA256**. Each request carries two
-headers:
+Airwallex signs webhooks with **HMAC-SHA256** once the webhook has a secret.
+It starts signing after you retrieve the notification URL's secret key in the
+web app; until then deliveries carry no `x-signature`. Each signed request
+carries two headers:
 
 | Header | Value |
 |--------|-------|
@@ -48,9 +50,8 @@ break the signature. Verify **before** parsing:
 
 ## Implementation
 
-There is **no webhook-verification helper in `@airwallex/node-sdk`** (the SDK
-covers API resources and webhook *management*, not inbound signature checks), so
-verify manually in every framework.
+Airwallex's docs show manual verification in Java, PHP and Node.js and document
+no SDK helper for it, so verify manually in every framework.
 
 ### Node.js (Express, Next.js)
 
@@ -105,6 +106,10 @@ Keep the window generous enough to tolerate retries and clock skew.
 - **Parsed body** — re-serialized JSON won't match. Use the raw bytes.
 - **Wrong secret** — each webhook URL has its **own** secret. Using another
   endpoint's secret fails verification.
+- **Test events** — Airwallex signs these with the key in the test event's
+  `client-secret-key` header, not the webhook's secret.
+- **No signature yet** — `x-signature` is only sent once the webhook's secret
+  has been retrieved in the web app.
 - **Header casing** — Node lowercases headers (`req.headers['x-signature']`);
   fetch `Headers` are case-insensitive; FastAPI's `request.headers` is
   case-insensitive too.
@@ -116,6 +121,6 @@ Keep the window generous enough to tolerate retries and clock skew.
 2. Log `x-timestamp` and confirm it's a 13-digit millisecond value.
 3. Recompute the digest manually and diff against `x-signature`.
 4. Confirm `AIRWALLEX_WEBHOOK_SECRET` matches the secret shown for **this exact
-   URL** in Settings → Developer → Webhooks.
+   URL** under Developer → Webhooks.
 5. If using a proxy/framework that buffers or reformats bodies, ensure it isn't
    pretty-printing or re-encoding the JSON before your handler sees it.

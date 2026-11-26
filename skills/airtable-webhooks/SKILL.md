@@ -89,8 +89,8 @@ that filters which changes trigger notifications:
 |-------|--------|
 | `dataTypes` | `tableData`, `tableFields`, `tableMetadata` |
 | `changeTypes` | `add`, `remove`, `update` |
-| `fromSources` | `client`, `publicApi`, `formSubmission`, `automation`, `system`, `sync`, `anonymousUser`, `unknown` |
-| `recordChangeScope` | a `tableId` to scope record changes to one table |
+| `fromSources` | `client`, `publicApi`, `formSubmission`, `formPageSubmission`, `automation`, `system`, `sync`, `anonymousUser`, `unknown` |
+| `recordChangeScope` | a table ID or view ID to scope changes to one table or view |
 
 Each fetched payload reports changes as created / changed / destroyed records and
 fields per table, keyed by table id.
@@ -141,7 +141,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (use the payload `baseTransactionNumber`)
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (track the payloads cursor; split payloads share `baseTransactionNumber`)
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Provider retry schedules, backoff patterns
 

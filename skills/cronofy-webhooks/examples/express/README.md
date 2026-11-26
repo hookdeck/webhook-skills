@@ -126,9 +126,9 @@ GET {data_center_url}/v1/events?tzid=Etc/UTC&last_modified={changes_since}
 - Returns `400` on a missing header, an invalid signature, invalid JSON, or a missing
   `notification.type`
 - **No replay protection exists.** Nothing but the body is signed — no timestamp, no
-  nonce, no id — so a captured delivery replays cleanly. Make handling idempotent (key on
-  `channel_id` + `changes_since`, or upsert downstream) rather than attempting a timestamp
-  tolerance check, which is impossible here
+  nonce, no id — so a captured delivery replays cleanly. Make handling idempotent (upsert the
+  Read Events sync on `event_uid`) rather than attempting a timestamp tolerance check,
+  which is impossible here
 - No source IP allowlist is published by Cronofy
 
 ## Cronofy Delivery Behaviour This Example Accounts For

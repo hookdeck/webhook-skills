@@ -304,7 +304,7 @@ app.post('/webhooks/docker-hub/:token', express.json(), (req, res) => {
   res.status(200).json({ received: true });
 
   // 5. Then re-confirm before acting. Off unless DOCKER_HUB_API_TOKEN is set.
-  //    TODO: replace the log with your own processing, and deploy by DIGEST
+  //    Your code: replace the log with your own processing, and deploy by DIGEST
   //    rather than by tag.
   confirmTag(parsed.repoName, parsed.tag)
     .then((record) => {

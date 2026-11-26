@@ -34,7 +34,7 @@ export function createApp(jwks = getFireblocksJWKS()) {
       switch (event.eventType) {
         case 'transaction.created':
           console.log('Transaction created:', event.data?.id ?? event.resourceId);
-          // TODO: record the pending transaction
+          // Your code: record the pending transaction
           break;
 
         case 'transaction.status.updated':
@@ -44,7 +44,7 @@ export function createApp(jwks = getFireblocksJWKS()) {
             '->',
             event.data?.status
           );
-          // TODO: update settlement state; credit balances on COMPLETED
+          // Your code: update settlement state; credit balances on COMPLETED
           break;
 
         case 'transaction.approval_status.updated':
@@ -52,7 +52,7 @@ export function createApp(jwks = getFireblocksJWKS()) {
             'Transaction approval status updated:',
             event.data?.id ?? event.resourceId
           );
-          // TODO: notify approvers / gate release of funds
+          // Your code: notify approvers / gate release of funds
           break;
 
         default:

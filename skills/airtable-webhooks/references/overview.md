@@ -39,12 +39,12 @@ you create the webhook. Notifications fire when a matching change occurs.
 |-------|--------|---------|
 | `dataTypes` | `tableData`, `tableFields`, `tableMetadata` | Which kind of change to watch |
 | `changeTypes` | `add`, `remove`, `update` | Restrict to additions, removals, or edits |
-| `fromSources` | `client`, `publicApi`, `formSubmission`, `automation`, `system`, `sync`, `anonymousUser`, `unknown` | Restrict to changes from certain origins |
-| `recordChangeScope` | a `tableId` | Scope record-level changes to a single table |
+| `fromSources` | `client`, `publicApi`, `formSubmission`, `formPageSubmission`, `automation`, `system`, `sync`, `anonymousUser`, `unknown` | Restrict to changes from certain origins |
+| `recordChangeScope` | a table ID or view ID | Scope changes to a single table or view |
 
 - **`tableData`** — record cell values created, changed, or destroyed.
 - **`tableFields`** — fields (columns) added, updated, or removed.
-- **`tableMetadata`** — base/table schema changes (e.g. table name).
+- **`tableMetadata`** — table name and description changes.
 
 ## Payload Structure
 
@@ -75,7 +75,11 @@ The top-level response wraps these:
 { "payloads": [ ... ], "cursor": 5, "mightHaveMore": false }
 ```
 
-Use `baseTransactionNumber` as an idempotency key — it is monotonic per base.
+Don't use `baseTransactionNumber` alone as an idempotency key. When one action is split across
+several payloads, they share the same `timestamp`, `baseTransactionNumber` and `actionMetadata`.
+Track the cursor instead: payloads come back in transaction order, the last payload in a response
+has transaction number `cursor - 1`, and any payload numbered below your stored cursor has already
+been processed.
 
 ## Full Event Reference
 

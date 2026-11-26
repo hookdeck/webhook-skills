@@ -43,12 +43,10 @@ async def ashby_webhook(request: Request):
 
     # Verify webhook signature before parsing
     if not verify_ashby_webhook(raw_body, signature_header, ashby_secret):
-        # WARNING: on Ashby any status >= 400 -- including this 401 -- counts as a
-        # delivery failure and can AUTO-DISABLE the webhook until someone re-enables
-        # it in Admin > Integrations > Webhooks. Rejecting is the right security call,
-        # so alert on verification failures: a wrong secret will otherwise take the
-        # integration offline silently. The alternative is to return 2xx here (without
-        # processing) and alert out-of-band. See references/verification.md.
+        # Ashby does not retry a 401, so a wrong secret drops deliveries. Alert on
+        # verification failures. If this happens on the ping sent when the webhook
+        # is created or edited, Ashby saves the webhook disabled. See
+        # references/verification.md.
         print("Webhook signature verification failed")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
@@ -66,33 +64,33 @@ async def ashby_webhook(request: Request):
 
     elif action == "applicationSubmit":
         print(f"Application submitted: {data.get('application', {}).get('id')}")
-        # TODO: Sync candidate, notify recruiters, etc.
+        # Your code: Sync candidate, notify recruiters, etc.
 
     elif action == "applicationUpdate":
         print(f"Application updated: {data.get('application', {}).get('id')}")
-        # TODO: Keep external systems in sync.
+        # Your code: Keep external systems in sync.
 
     elif action == "candidateHire":
-        print(f"Candidate hired: {data.get('candidate', {}).get('id')}")
-        # TODO: Trigger onboarding, HRIS provisioning, etc.
+        print(f"Candidate hired, application: {data.get('application', {}).get('id')}")
+        # Your code: Trigger onboarding, HRIS provisioning, etc.
         # Note: candidateHire also fans out applicationUpdate + candidateStageChange.
 
     elif action == "candidateStageChange":
-        print(f"Candidate stage changed: {data.get('candidate', {}).get('id')}")
-        # TODO: Pipeline analytics, Slack alerts, etc.
+        print(f"Candidate stage changed, application: {data.get('application', {}).get('id')}")
+        # Your code: Pipeline analytics, Slack alerts, etc.
 
     elif action == "interviewScheduleCreate":
         print(f"Interview schedule created: {data.get('interviewSchedule', {}).get('id')}")
-        # TODO: Calendar sync, interviewer prep, etc.
+        # Your code: Calendar sync, interviewer prep, etc.
 
     elif action == "offerCreate":
         print(f"Offer created: {data.get('offer', {}).get('id')}")
-        # TODO: Offer tracking, approvals, etc.
+        # Your code: Offer tracking, approvals, etc.
 
     else:
         print(f"Unhandled event: {action}")
 
-    # Return 200 to acknowledge receipt. Any status >= 400 can auto-disable the webhook.
+    # Return 200 to acknowledge receipt. Ashby retries non-2xx responses except 401, 403, 404, 405 and 410.
     return {"received": True}
 
 

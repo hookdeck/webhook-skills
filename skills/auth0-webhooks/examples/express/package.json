@@ -1,7 +1,7 @@
 {
   "name": "auth0-webhooks-express",
   "version": "1.0.0",
-  "description": "Auth0 Custom Log Stream webhook handler with Express",
+  "description": "Auth0 Event Streams webhook handler with Express",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

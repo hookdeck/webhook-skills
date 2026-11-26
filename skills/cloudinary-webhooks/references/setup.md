@@ -4,13 +4,15 @@
 
 - A Cloudinary account.
 - A publicly reachable **HTTPS** endpoint that accepts `POST` requests.
-- Your account **API Secret** (see below).
+- The **API Secret** that signs notifications (see below).
 
 ## Get Your Signing Secret (the account API Secret)
 
-Cloudinary signs every notification with your **account API Secret** — there is
-**no separate per-webhook signing secret**. It is the `api_secret` portion of your
-account's environment variable:
+Cloudinary signs every notification with the API secret of the API key selected
+for webhook notifications (**Select API Key** on the Console's Webhook
+Notifications page), or of the oldest active key if none is selected. There is
+**no separate per-webhook signing secret**. For a single-key environment it is the
+`api_secret` portion of:
 
 ```
 CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
@@ -28,16 +30,16 @@ CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
 Your handler verifies the incoming `x-cld-signature` / `x-cld-timestamp` headers
 against this secret — see [verification.md](verification.md).
 
-> **Signature algorithm:** Cloudinary signs with **sha1** by default. Some
-> accounts enable **sha256** (a Console setting). If your account uses sha256, set
-> `CLOUDINARY_SIGNATURE_ALGORITHM=sha256` so verification matches.
+> **Signature algorithm:** Cloudinary accepts SHA-1 and SHA-256 digests, and the
+> SDKs use SHA-1 unless `signature_algorithm` is `sha256`. If support has limited
+> your account to SHA-256, set `CLOUDINARY_SIGNATURE_ALGORITHM=sha256`.
 
 ## Register Your Notification URL
 
 You can receive notifications two ways:
 
-- **Global Notification URL** — Console → **Settings → Webhook Notifications**
-  (or **Upload → Notification URL**). Cloudinary POSTs eligible events here.
+- **Global Notification URL** — Console → **Settings → Webhook Notifications**,
+  or the Admin API `triggers` method. Cloudinary POSTs eligible events here.
 - **Per-request `notification_url`** — pass `notification_url` when calling the
   Upload API (or set `eager_notification_url` for eager transformations) to
   receive the notification for that specific operation.
@@ -48,8 +50,9 @@ you want.
 
 ## Acknowledge Correctly (Retries)
 
-Return **HTTP 2xx** as soon as you have accepted the notification. If your
-endpoint fails or is unreachable, Cloudinary retries delivery. Acknowledge fast
+Return **HTTP 200** within 20 seconds of receiving the notification. For any
+other response Cloudinary makes three more attempts (after 3, 6 and 9 minutes,
+as its docs list them). Acknowledge fast
 and do heavy work asynchronously; return `401` only for a failed signature check
 and `400` for missing headers or invalid JSON.
 

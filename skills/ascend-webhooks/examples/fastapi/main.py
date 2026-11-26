@@ -59,19 +59,19 @@ async def ascend_webhook(request: Request):
 
     if event_type == "invoice.paid":
         print(f"Invoice paid: {data.get('id')} {data.get('invoice_number')}")
-        # TODO: Record payment, update billing history, unlock coverage.
+        # Your code: Record payment, update billing history, unlock coverage.
 
     elif event_type == "invoice.voided":
         print(f"Invoice voided: {data.get('id')}")
-        # TODO: Reverse the local billing record.
+        # Your code: Reverse the local billing record.
 
     elif event_type == "payout.paid":
         print(f"Payout paid: {data.get('id')}")
-        # TODO: Reconcile payouts, update accounting ledger.
+        # Your code: Reconcile payouts, update accounting ledger.
 
     elif event_type == "refund.paid":
         print(f"Refund paid: {data.get('id')}")
-        # TODO: Update policy/billing records, notify the customer.
+        # Your code: Update policy/billing records, notify the customer.
 
     else:
         print(f"Unhandled event type: {event_type}")

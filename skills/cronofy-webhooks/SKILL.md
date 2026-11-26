@@ -102,7 +102,7 @@ With both secrets active the header is the two joined by a comma:
 ## Payload Envelope
 
 The discriminator is `notification.type` — a **body field**. There is **no event-type
-header**; the only headers Cronofy sends are `Cronofy-HMAC-SHA256` and
+header**; push notifications document only `Cronofy-HMAC-SHA256` and
 `Content-Type: application/json; charset=utf-8`.
 
 ```json
@@ -140,9 +140,6 @@ Cronofy's docs say "your code should be tolerant of others, by ignoring them, so
 are introduced in future your integration will not fail" — your handler **must** have a
 default branch that ignores unknown types and still returns 2xx.
 
-> Cronofy's prose says "there are currently five types" and then lists six. The
-> enumerated list above is authoritative.
-
 ## `change` Is a Thin Notification
 
 **The `change` payload does not contain the changed events.** It is a ping. You always
@@ -166,10 +163,10 @@ don't build reconciliation that assumes echo-back.
   one event — it eventually kills the channel. Ack fast, process async.
 - **No replay protection.** There is no timestamp, nonce, channel id, URL or method mixed
   into the signed content — body only. Cronofy notifications are replayable by design.
-  Use idempotency keyed on `channel_id` + `changes_since` (or on the Read Events result)
-  rather than a timestamp tolerance check, which is impossible here.
+  Make the Read Events sync idempotent (upsert on `event_uid`) rather than attempting a
+  timestamp tolerance check, which is impossible here.
 - **No source IP allowlist** is published. Don't invent one.
-- Event Triggers (a separate beta surface) use a **7-second** timeout — don't generalize
+- Event Triggers (a separate surface) use a **7-second** timeout — don't generalize
   the 5s figure to it.
 
 ## Environment Variables

@@ -83,7 +83,7 @@ delivery is an ordinary signed event.
   Verification is never silently skipped.
 - **No timestamp check.** There is no `Cko-Timestamp` header and no signed
   timestamp, so there is no replay window to enforce. Replay protection is
-  deduplication on the event `id` (`evt_…`).
+  deduplication on the event `type` plus `id` (`evt_…`).
 - **Acknowledge fast, work async** — a 200 goes out inside Checkout.com's
   10-second budget and `handleEvent` runs afterwards.
 - **`created_on ?? timestamp`** — the field name genuinely varies by event

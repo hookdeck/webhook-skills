@@ -24,7 +24,7 @@ whichever you have a value for.
 
 THERE IS NO TIMESTAMP. No Cko-Timestamp header exists and no timestamp is
 signed, so there is nothing to build a replay window from. Do NOT add a
-tolerance check -- replay protection is deduplication on the event id.
+tolerance check -- replay protection is deduplication on event type + id.
 
 Checkout.com's official SDKs manage workflows but ship NO webhook-signature
 verify helper, and there is no Python webhook SDK to reach for, so this is a
@@ -204,12 +204,13 @@ async def checkout_webhook(
     # The envelope `id` (evt_...) is all there is -- Checkout.com sends no
     # per-delivery id header. Delivery is AT-LEAST-ONCE, and because no
     # timestamp is signed, a byte-for-byte replay carries a genuinely valid
-    # signature. Deduplication on this id is therefore your ONLY replay
+    # signature. Deduplicate on `type` plus this id (Checkout.com's examples
+    # reuse one id across event types); that key is your ONLY replay
     # protection.
     #
     # Retain processed ids for AT LEAST 31 hours: retries run 5m, 10m, 15m,
     # 30m, 1h, 4h, 12h, 12h after each previous attempt (~30 hours total). That
-    # is a floor, not a ceiling -- manual resends can come later, so longer is
+    # is a floor, not a ceiling -- resends reach back 90 days, so longer is
     # safer.
     event_id = event.get("id")
 
@@ -234,8 +235,8 @@ async def checkout_webhook(
 
 def handle_event(event: Dict[str, Any]) -> None:
     """Dispatch a verified Checkout.com event."""
-    # TODO: check event["id"] against your store and return early if seen.
-    #   if store.has(event["id"]): return
+    # Your code: check event["type"] + event["id"] against your store and return early if seen.
+    #   if store.has(f"{event['type']}:{event['id']}"): return
 
     event_type = event.get("type")
     data = event.get("data") or {}

@@ -109,7 +109,7 @@ describe('Flexport Webhook Endpoint', () => {
       const payload = JSON.stringify({
         type: '/shipment_leg#departed',
         id: 456,
-        data: { location: { name: 'Port of Shanghai' }, shipment: { id: 100 } }
+        data: { location: { place: { name: 'Port of Shanghai' } }, shipment: { id: 100 } }
       });
       const signature = generateFlexportSignature(payload, webhookSecret);
 

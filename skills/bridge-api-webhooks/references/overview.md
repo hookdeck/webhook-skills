@@ -3,8 +3,8 @@
 ## What Are Bridge API Webhooks?
 
 [Bridge API](https://bridgeapi.io) (`bridgeapi.io`) is the open-banking /
-account-aggregation and payment-initiation platform by Bridge (formerly
-Bankin'). Webhooks let Bridge notify your backend when something happens
+account-aggregation and payment-initiation platform by Bridge, the business
+sister brand of Bankin'. Webhooks let Bridge notify your backend when something happens
 asynchronously — a bank connection ("item") finishes refreshing, an account
 balance changes, a payment transaction updates, or a user is deleted — so you
 don't have to poll the API.
@@ -27,15 +27,19 @@ event is the exception).
 
 | Event | Triggered When | Common Use Cases |
 |-------|----------------|------------------|
-| `item.created` | A bank connection (item) is created | Track onboarding progress |
-| `item.refreshed` | An item's data finished refreshing | Pull fresh accounts/transactions |
-| `item.account.created` | A new account is discovered under an item | Store the account, start reconciliation |
-| `item.account.updated` | An account's balance or details changed | Update cached balances |
-| `item.account.deleted` | An account is removed from an item | Clean up local records |
+| `item.created` | A user starts adding a bank connection (item) | Track onboarding progress |
+| `item.refreshed` | An item was refreshed (`status_code`, `refresh_trigger`) | Check status, pull fresh accounts/transactions |
+| `item.deleted` | An item is deleted | Clean up local records |
+| `item.account.created` | A new account is detected on an item | Store the account, start reconciliation |
+| `item.account.updated` | An account's transactions, balance or data access changed | Update cached balances |
+| `item.account.deleted` | The bank no longer updates an account | Mark the account inactive |
+| `provider.created` | A new provider (bank) is added | Refresh your provider list |
+| `provider.updated` | A provider's details changed | Refresh your provider list |
 | `payment.transaction.created` | A payment transaction is created | Record a pending payment |
 | `payment.transaction.updated` | A payment transaction's status changed | Reconcile payment status |
 | `payment.link.updated` | A payment link's status changed | Update checkout/payment-link state |
 | `user.deleted` | A user is deleted | GDPR cleanup, revoke access |
+| `guidance.health.ready` | A guidance is generated (Guidance product) | Fetch the guidance |
 | `TEST_EVENT` | The dashboard "Send a test" button was clicked | Verify your endpoint is reachable |
 
 ## Event Payload Structure
@@ -44,34 +48,45 @@ All events share the same envelope:
 
 ```json
 {
-  "type": "item.refreshed",
-  "timestamp": 1699999999,
   "content": {
-    "item_id": 12345,
-    "user_uuid": "a1b2c3d4-...",
-    "status": 0
-  }
+    "account_types": "payment",
+    "full_refresh": false,
+    "refresh_trigger": "scheduler",
+    "item_id": 4568565,
+    "status_code": 0,
+    "status_code_info": "ok",
+    "authentication_expires_at": "2025-09-04T10:25:35Z",
+    "user_uuid": "766b2f5d-a942-492c-9ea7-2e5aa88cb672",
+    "external_user_id": "external-id"
+  },
+  "timestamp": 1612783550980,
+  "type": "item.refreshed"
 }
 ```
 
 - `type` — the event name (dispatch on this).
-- `timestamp` — Unix timestamp of the event.
+- `timestamp` — Unix timestamp of the event, in milliseconds.
 - `content` — event-specific fields (e.g. `item_id`, `account_id`, `user_uuid`,
-  `status`). The exact fields vary by event type.
+  `status_code`). The exact fields vary by event type. Fields Bridge marks
+  "only if not null", such as `external_user_id`, may be absent.
 
 The test event looks like:
 
 ```json
 {
-  "type": "TEST_EVENT",
-  "timestamp": 1699999999,
-  "content": { "item_id": 0, "status": 0, "user_uuid": "..." }
+  "content": {
+    "item_id": 1234567890,
+    "status": 0,
+    "user_uuid": "9a95b38f-f98b-417a-988b-9d0d584893e7"
+  },
+  "timestamp": 1611681789,
+  "type": "TEST_EVENT"
 }
 ```
 
 ## Delivery Behaviour
 
-- **Retries:** Non-200 responses (or responses that are too slow) are retried
+- **Retries:** Non-2xx responses (or responses that are too slow) are retried
   for **1–2 days** with an exponential back-off.
 - **Respond fast, respond small:** Return `200` quickly and keep the response
   body under **10 KB**. Do heavy work asynchronously after acknowledging.

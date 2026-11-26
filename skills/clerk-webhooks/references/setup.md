@@ -107,4 +107,4 @@ From Clerk Dashboard → Webhooks → your endpoint → Signing Secret.
 ## Next Steps
 
 - See [verification.md](verification.md) for signature verification details
-- Review [Clerk's webhook best practices](https://clerk.com/docs/integrations/webhooks/sync-data)
+- Review [Clerk's webhook best practices](https://clerk.com/docs/guides/development/webhooks/syncing)

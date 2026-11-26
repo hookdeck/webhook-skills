@@ -86,7 +86,9 @@ placing a call to one of your Aircall numbers — Aircall has no test-event butt
 
 ## Events Handled
 
-Dispatch is on the `event` name, covering all 67 published Aircall events:
+Dispatch is on the `event` name, covering these 67 Aircall events (the 11 added since,
+`conversation.*`, `whatsapp_username_message.*`, `outbound_campaign.*` and
+`ai_messaging_agent.*`, fall through to the default branch):
 
 - **Call** (19) — `call.created`, `call.ringing_on_agent`, `call.agent_declined`,
   `call.answered`, `call.transferred`, `call.external_transferred`,

@@ -56,42 +56,42 @@ export async function POST(request: NextRequest) {
     switch (event.event_type) {
       case 'subscription_created':
         console.log('New subscription created:', event.content?.subscription?.id);
-        // TODO: Provision user access, send welcome email, etc.
+        // Your code: Provision user access, send welcome email, etc.
         break;
 
       case 'subscription_changed':
         console.log('Subscription updated:', event.content?.subscription?.id);
-        // TODO: Update user permissions, sync subscription data
+        // Your code: Update user permissions, sync subscription data
         break;
 
       case 'subscription_cancelled':
         console.log('Subscription cancelled:', event.content?.subscription?.id);
-        // TODO: Schedule access revocation, trigger retention flow
+        // Your code: Schedule access revocation, trigger retention flow
         break;
 
       case 'subscription_reactivated':
         console.log('Subscription reactivated:', event.content?.subscription?.id);
-        // TODO: Restore user access
+        // Your code: Restore user access
         break;
 
       case 'payment_succeeded':
         console.log('Payment succeeded:', event.content?.transaction?.id);
-        // TODO: Update payment status, send receipt
+        // Your code: Update payment status, send receipt
         break;
 
       case 'payment_failed':
         console.log('Payment failed:', event.content?.transaction?.id);
-        // TODO: Send payment failure notification, retry logic
+        // Your code: Send payment failure notification, retry logic
         break;
 
       case 'invoice_generated':
         console.log('Invoice generated:', event.content?.invoice?.id);
-        // TODO: Send invoice to customer
+        // Your code: Send invoice to customer
         break;
 
       case 'customer_created':
         console.log('Customer created:', event.content?.customer?.id);
-        // TODO: Create user account, sync customer data
+        // Your code: Create user account, sync customer data
         break;
 
       default:

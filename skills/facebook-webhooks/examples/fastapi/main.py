@@ -45,13 +45,14 @@ def verify_facebook_signature(raw_body: bytes, signature_header: str, app_secret
 def handle_entry(obj: str, entry: dict) -> None:
     """Dispatch a single entry. A POST can batch up to 1000 updates, so handle
     each entry individually."""
-    # Messenger deliveries carry a `messaging` array instead of `changes`.
+    # Messenger (and Page Integrity) deliveries carry a `messaging` array instead of `changes`.
+    # For Messenger, see the messenger-webhooks skill.
     if isinstance(entry.get("messaging"), list):
         for event in entry["messaging"]:
             sender = event.get("sender", {}).get("id")
             text = event.get("message", {}).get("text")
             print(f"Messenger message from {sender}: {text}")
-            # TODO: Route to your chatbot / support system.
+            # Your code: route to your chatbot or support system.
         return
 
     for change in entry.get("changes", []):
@@ -63,8 +64,8 @@ def handle_entry(obj: str, entry: dict) -> None:
             print(f"Page feed change: {value.get('item')} {value.get('verb')}")
         elif key == "page:mention":
             print(f"Page mentioned: {value.get('post_id')}")
-        elif key == "page:messages":
-            print(f"Page message field change: {value}")
+        elif key == "page:leadgen":
+            print(f"New lead: {value.get('leadgen_id')}")
         elif key == "instagram:comments":
             print(f"Instagram comment: {value.get('id')}")
         elif key == "instagram:mentions":

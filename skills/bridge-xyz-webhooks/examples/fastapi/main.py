@@ -100,28 +100,28 @@ async def bridge_webhook(request: Request):
     except ValueError:
         return Response("Invalid JSON", status_code=400)
 
-    # Events are named "<category>.<action>", e.g. "customer.updated".
+    # Events are named "<category>.<action>", e.g. "customer.updated.status_transitioned".
     event_type = event.get("event_type") or event.get("type")
     object_id = event.get("event_object_id")
 
     if event_type == "customer.created":
         print(f"Customer created: {object_id}")
-        # TODO: provision the account, begin onboarding
-    elif event_type == "customer.updated":
-        print(f"Customer updated: {object_id}")
-        # TODO: react to KYC approval/rejection, update customer state
-    elif event_type == "kyc_link.updated":
-        print(f"KYC link updated: {object_id}")
-        # TODO: track KYC/ToS completion, unblock onboarding
+        # Your code: provision the account, begin onboarding
+    elif event_type == "customer.updated.status_transitioned":
+        print(f"Customer status changed: {object_id}")
+        # Your code: react to KYC approval/rejection, update customer state
+    elif event_type == "kyc_link.updated.status_transitioned":
+        print(f"KYC link status changed: {object_id}")
+        # Your code: track KYC/ToS completion, unblock onboarding
     elif event_type == "transfer.created":
         print(f"Transfer created: {object_id}")
-        # TODO: record the new transfer in your ledger
-    elif event_type == "transfer.updated":
-        print(f"Transfer updated: {object_id}")
-        # TODO: update payment status, trigger fulfillment on settlement
-    elif event_type == "virtual_account.activity":
+        # Your code: record the new transfer in your ledger
+    elif event_type == "transfer.updated.status_transitioned":
+        print(f"Transfer status changed: {object_id}")
+        # Your code: update payment status, trigger fulfillment on settlement
+    elif event_type == "virtual_account.activity.created":
         print(f"Virtual account activity: {object_id}")
-        # TODO: reconcile incoming funds, credit a balance
+        # Your code: reconcile incoming funds, credit a balance
     else:
         print(f"Unhandled event type: {event_type}")
 

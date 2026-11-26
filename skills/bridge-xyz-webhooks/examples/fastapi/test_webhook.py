@@ -53,7 +53,7 @@ class TestBridgeWebhook:
         assert response.status_code == 400
 
     def test_invalid_signature_returns_400(self):
-        payload = json.dumps({"event_type": "customer.updated", "event_object_id": "cust_123"})
+        payload = json.dumps({"event_type": "customer.updated.status_transitioned", "event_object_id": "cust_123"})
         ts = int(time.time() * 1000)
         response = client.post(
             "/webhooks/bridge-xyz",
@@ -66,9 +66,9 @@ class TestBridgeWebhook:
         assert response.status_code == 400
 
     def test_tampered_payload_returns_400(self):
-        original = json.dumps({"event_type": "transfer.updated", "event_object_id": "transfer_123"})
+        original = json.dumps({"event_type": "transfer.updated.status_transitioned", "event_object_id": "transfer_123"})
         signature = sign_bridge(original)
-        tampered = json.dumps({"event_type": "transfer.updated", "event_object_id": "transfer_x"})
+        tampered = json.dumps({"event_type": "transfer.updated.status_transitioned", "event_object_id": "transfer_x"})
         response = client.post(
             "/webhooks/bridge-xyz",
             content=tampered,
@@ -77,7 +77,7 @@ class TestBridgeWebhook:
         assert response.status_code == 400
 
     def test_stale_timestamp_returns_400(self):
-        payload = json.dumps({"event_type": "customer.updated", "event_object_id": "cust_123"})
+        payload = json.dumps({"event_type": "customer.updated.status_transitioned", "event_object_id": "cust_123"})
         # 11 minutes ago — beyond the 10-minute tolerance.
         old_ts = int(time.time() * 1000) - 11 * 60 * 1000
         signature = sign_bridge(payload, timestamp=old_ts)
@@ -89,7 +89,7 @@ class TestBridgeWebhook:
         assert response.status_code == 400
 
     def test_valid_signature_returns_200(self):
-        payload = json.dumps({"event_type": "customer.updated", "event_object_id": "cust_valid"})
+        payload = json.dumps({"event_type": "customer.updated.status_transitioned", "event_object_id": "cust_valid"})
         signature = sign_bridge(payload)
         response = client.post(
             "/webhooks/bridge-xyz",
@@ -102,11 +102,11 @@ class TestBridgeWebhook:
     def test_handles_all_event_types(self):
         event_types = [
             "customer.created",
-            "customer.updated",
-            "kyc_link.updated",
+            "customer.updated.status_transitioned",
+            "kyc_link.updated.status_transitioned",
             "transfer.created",
-            "transfer.updated",
-            "virtual_account.activity",
+            "transfer.updated.status_transitioned",
+            "virtual_account.activity.created",
             "unknown.event",
         ]
         for event_type in event_types:
@@ -124,7 +124,7 @@ class TestVerifyHelper:
     def test_validates_correct_signature(self):
         from main import verify_bridge_signature
 
-        payload = '{"event_type":"customer.updated"}'
+        payload = '{"event_type":"customer.updated.status_transitioned"}'
         signature = sign_bridge(payload)
         assert verify_bridge_signature(payload.encode(), signature, _public_key_pem) is True
 

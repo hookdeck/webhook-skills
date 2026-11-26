@@ -70,32 +70,32 @@ app.post(
     switch (event.name) {
       case 'payment_intent.succeeded':
         console.log('PaymentIntent succeeded:', resource && resource.id);
-        // TODO: fulfill the order, send a receipt, etc.
+        // Your code: fulfill the order, send a receipt, etc.
         break;
 
       case 'payment_attempt.paid':
         console.log('Payment attempt paid:', resource && resource.id);
-        // TODO: mark the attempt as paid.
+        // Your code: mark the attempt as paid.
         break;
 
       case 'refund.settled':
         console.log('Refund settled:', resource && resource.id);
-        // TODO: reconcile the refund.
+        // Your code: reconcile the refund.
         break;
 
       case 'refund.failed':
         console.log('Refund failed:', resource && resource.id);
-        // TODO: alert / retry the refund.
+        // Your code: alert / retry the refund.
         break;
 
       case 'payment_consent.verified':
         console.log('Payment consent verified:', resource && resource.id);
-        // TODO: enable recurring / merchant-initiated payments.
+        // Your code: enable recurring / merchant-initiated payments.
         break;
 
       case 'payment_dispute.requires_response':
         console.log('Dispute requires response:', resource && resource.id);
-        // TODO: gather and submit evidence before the deadline.
+        // Your code: gather and submit evidence before the deadline.
         break;
 
       default:

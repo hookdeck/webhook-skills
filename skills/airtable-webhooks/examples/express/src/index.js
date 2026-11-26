@@ -121,7 +121,7 @@ app.post(
           for (const payload of payloads) {
             const summary = summarizeChanges(payload);
             console.log('Changes:', JSON.stringify(summary));
-            // TODO: dispatch on summary.tables / payload.actionMetadata.source
+            // Your code: dispatch on summary.tables / payload.actionMetadata.source
           }
           saveCursor(baseId, webhookId, next); // persist for next notification
         })

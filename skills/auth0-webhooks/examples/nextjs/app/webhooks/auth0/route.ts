@@ -4,72 +4,61 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 /**
- * Auth0 Custom Log Streams are not signed. Authenticate the request by
- * timing-safe comparing the incoming Authorization header against the token
- * you configured on the log stream.
+ * Auth0 Event Streams are not signed. With bearer authorization, Auth0 sends
+ * `Authorization: Bearer <token>` on every request, so compare the whole
+ * header with a timing-safe check.
  */
-export function verifyAuth0Token(
+export function verifyAuth0Authorization(
   headerValue: string | null,
-  expectedToken: string | undefined
+  token: string | undefined
 ): boolean {
-  if (!headerValue || !expectedToken) return false;
+  if (!headerValue || !token) return false;
   const a = Buffer.from(headerValue);
-  const b = Buffer.from(expectedToken);
-  // timingSafeEqual throws on unequal lengths — guard first.
+  const b = Buffer.from(`Bearer ${token}`);
+  // timingSafeEqual throws on unequal lengths, so guard first.
   if (a.length !== b.length) return false;
-  try {
-    return crypto.timingSafeEqual(a, b);
-  } catch {
-    return false;
-  }
+  return crypto.timingSafeEqual(a, b);
 }
 
-interface Auth0LogData {
-  type?: string;
-  description?: string;
-  ip?: string;
-  user_id?: string;
-  user_name?: string;
+interface Auth0Event {
+  id: string;
+  type: string;
+  time: string;
+  source?: string;
+  data?: { object?: Record<string, unknown> };
   [key: string]: unknown;
 }
 
-interface Auth0LogEvent {
-  log_id?: string;
-  data?: Auth0LogData;
-}
+/**
+ * Handle one Auth0 event. Each request carries a single CloudEvents-shaped
+ * object: `type` says what happened and `data.object` holds the entity.
+ */
+function handleEvent(event: Auth0Event): void {
+  const object = event.data?.object ?? {};
 
-function handleEvent(event: Auth0LogEvent): void {
-  const data = event.data ?? (event as Auth0LogData);
-  const type = data.type;
-
-  switch (type) {
-    case 's':
-      console.log(`Success login: ${data.user_name ?? data.user_id}`);
-      // TODO: update last-login, send "new login" notification, etc.
+  switch (event.type) {
+    case 'user.created':
+      console.log(`User created: ${object.user_id} (event ${event.id} at ${event.time})`);
+      // Your code: create the user in your database
       break;
 
-    case 'f':
-      console.log(`Failed login from ${data.ip}: ${data.description}`);
-      // TODO: fraud/brute-force detection, alerting, etc.
+    case 'user.updated':
+      console.log(`User updated: ${object.user_id}`);
+      // Your code: compare `time` with your stored copy before overwriting
       break;
 
-    case 'ss':
-      console.log(`Success signup: ${data.user_name ?? data.user_id}`);
-      // TODO: provision the user, send welcome email, CRM sync, etc.
+    case 'user.deleted':
+      console.log(`User deleted: ${object.user_id}`);
+      // Your code: remove or deactivate the user
       break;
 
-    case 'fs':
-      console.log(`Failed signup: ${data.description}`);
-      // TODO: debug registration flow, alerting, etc.
-      break;
-
-    case 'sepft':
-      console.log(`Token exchange (password grant) for ${data.user_name ?? data.user_id}`);
-      // TODO: token issuance auditing, etc.
+    case 'organization.member.added':
+      console.log(`Organization member added: event ${event.id}`);
+      // Your code: grant access in your system
       break;
 
     default:
-      console.log(`Unhandled event type: ${type}`);
+      console.log(`Unhandled event type: ${event.type}`);
   }
 }
 
@@ -83,26 +72,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!verifyAuth0Token(authHeader, process.env.AUTH0_LOG_STREAM_TOKEN)) {
+  if (!verifyAuth0Authorization(authHeader, process.env.AUTH0_EVENT_STREAM_TOKEN)) {
     return NextResponse.json(
-      { error: 'Invalid Authorization token' },
+      { error: 'Invalid Authorization header' },
       { status: 401 }
     );
   }
 
-  // JSON Array content format: the body is an array (be defensive about a single object).
-  const body = await request.json();
-  const events: Auth0LogEvent[] = Array.isArray(body) ? body : [body];
+  const event = (await request.json()) as Auth0Event;
 
-  // Process synchronously here; for slow work, enqueue and return immediately.
-  for (const event of events) {
-    try {
-      handleEvent(event);
-    } catch (err) {
-      console.error('Error handling event:', err);
-    }
+  // Processed before responding, since serverless work after the response
+  // isn't guaranteed to run. Auth0 retries only three times, 1s, 2s and 4s
+  // apart, so hand slow work to a queue and return quickly.
+  try {
+    handleEvent(event);
+  } catch (err) {
+    console.error('Error handling event:', err);
   }
 
-  // Acknowledge — Auth0 retries on any non-2xx response.
-  return NextResponse.json({ received: events.length });
+  return new NextResponse(null, { status: 204 });
 }

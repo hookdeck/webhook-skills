@@ -3,7 +3,8 @@ name: aiprise-webhooks
 description: >
   Receive and verify AiPrise webhooks (callbacks). Use when setting up AiPrise
   identity/KYC/KYB callback handlers, debugging X-HMAC-SIGNATURE verification, or
-  handling verification results like APPROVED, DECLINED, REVIEW, and UNKNOWN.
+  handling case, profile and token sharing events or verification results like
+  APPROVED, DECLINED and REVIEW.
 license: MIT
 metadata:
   author: hookdeck
@@ -14,13 +15,14 @@ metadata:
 # AiPrise Webhooks
 
 AiPrise is an identity verification (KYC/KYB) platform. It notifies your server of
-verification outcomes and business-profile changes via **callbacks** — signed HTTP
-POST webhooks.
+each step of a verification case or profile, final decisions and token sharing
+changes via **callbacks**: signed HTTP POST webhooks.
 
 ## When to Use This Skill
 
 - How do I receive AiPrise webhooks (callbacks)?
 - How do I verify the AiPrise `X-HMAC-SIGNATURE` header?
+- How do I handle event callbacks such as `CASE_STATUS_UPDATE`?
 - How do I handle `APPROVED`, `DECLINED`, `REVIEW`, or `UNKNOWN` verification results?
 - Why is my AiPrise webhook signature verification failing?
 - How do I correlate a callback with a verification session?
@@ -61,10 +63,30 @@ function verifyAiPriseWebhook(rawBody, signatureHeader, apiKey) {
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
-## Verification Results
+## Callback Types
 
-There is no rich typed-event system — the outcome **is** the
-`aiprise_summary.verification_result` value:
+AiPrise sends three kinds of signed callback, all with the same `X-HMAC-SIGNATURE`:
+
+- **Event callbacks** (`events_callback_url`) report each step of a case or profile.
+  The body names the event in `event_type` for cases, `user_profile_event_type` for
+  user profiles and `business_profile_event_type` for business profiles. Examples:
+  `VERIFICATION_SESSION_STARTED`, `CASE_STATUS_UPDATE`, `AML_MONITORING_UPDATE`,
+  `CREATE_TICKET`, `RUN_BUSINESS_VERIFICATION`.
+- **Decision callbacks** (`callback_url`) carry the final result of a session that
+  isn't linked to a profile (business profiles send one too). They have no event
+  field: read `aiprise_summary`.
+- **Token sharing webhooks** (URL set on the sharing agreement) name the event in
+  `token_sharing_event_type`: `TOKEN_READY_TO_BE_IMPORTED`, `TOKEN_IMPORTED`,
+  `TOKEN_IMPORT_FAILED`.
+
+Full event lists: [user cases](https://docs.aiprise.com/docs/event-callbacks),
+[user profiles](https://docs.aiprise.com/docs/profile-event-callback),
+[business profiles](https://docs.aiprise.com/docs/event-callback) and
+[token sharing](https://docs.aiprise.com/docs/token-sharing-webhooks).
+
+### Decision results
+
+The API reference defines `aiprise_summary.verification_result`:
 
 | `verification_result` | Meaning | Typical action |
 |-----------------------|---------|----------------|
@@ -73,14 +95,9 @@ There is no rich typed-event system — the outcome **is** the
 | `REVIEW` | Needs manual review | Queue for an analyst |
 | `UNKNOWN` | Result indeterminate | Retry / investigate |
 
-Callbacks also carry a process status (`COMPLETED`, `PENDING`, `FAILED`, ...).
-Correlate to your records with `verification_session_id` and the optional
-`client_reference_id`.
-
-There are two callback destinations, both signed the same way:
-
-- **`callback_url`** — verification result callbacks (`aiprise_summary.verification_result`)
-- **`events_callback_url`** — business-profile change events
+AiPrise's callback pages print `aiprise_summary.decision` with `APPROVED`, `DECLINED`,
+`MANUAL_REVIEW` or `FAILED` instead, so the examples read both. Correlate to your
+records with `verification_session_id` and the optional `client_reference_id`.
 
 ## Environment Variables
 

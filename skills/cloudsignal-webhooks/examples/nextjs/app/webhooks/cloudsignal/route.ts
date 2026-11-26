@@ -3,7 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-// The nine CloudSignal Webhooks v2.0 signal types (case-sensitive, PascalCase).
+// CloudSignal Webhooks v2.1 signal types (case-sensitive, PascalCase): the 11 on the
+// v2.1 reference, plus CloudprinterOrderCanceled, which only the official Node SDK lists.
 export const KNOWN_EVENT_TYPES = [
   'CloudprinterOrderValidated',
   'ItemValidated',
@@ -14,6 +15,9 @@ export const KNOWN_EVENT_TYPES = [
   'ItemError',
   'ItemCanceled',
   'CloudprinterOrderCanceled',
+  'ItemDeliveryStarted',
+  'ItemDeliveryCompleted',
+  'ItemDeliveryFailed',
 ] as const;
 
 /**
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
       break;
 
     case 'ItemShipped':
-      // Type-specific fields: tracking, shipping_option.
+      // Type-specific fields: tracking, shipping_option, url.
       console.log(
         'Item shipped:',
         item,
@@ -91,17 +95,17 @@ export async function POST(request: NextRequest) {
         'shipping_option:',
         signal.shipping_option
       );
-      // TODO: Store the tracking number, notify the customer.
+      // Your code: Store the tracking number, notify the customer.
       break;
 
     case 'ItemError':
-      // Type-specific field: cause (optional).
+      // Type-specific fields: cause, delay (both optional).
       console.log('Item error:', item, 'cause:', signal.cause);
-      // TODO: Alert your team, reprint, or refund.
+      // Your code: Alert your team, reprint, or refund.
       break;
 
     case 'ItemCanceled':
-      // Type-specific field: cause (optional).
+      // Type-specific fields: cause, message (both optional).
       console.log('Item canceled:', item, 'cause:', signal.cause);
       break;
 
@@ -109,12 +113,19 @@ export async function POST(request: NextRequest) {
       console.log('Order canceled:', order, order_reference);
       break;
 
+    case 'ItemDeliveryStarted':
+    case 'ItemDeliveryCompleted':
+    case 'ItemDeliveryFailed':
+      // v2.1 delivery signals. Type-specific fields: tracking, message (both optional).
+      console.log('Delivery update:', type, item, 'tracking:', signal.tracking, signal.message);
+      break;
+
     default:
       // Unknown/new type: acknowledge with 200 so CloudSignal does not retry.
       console.log(`Unhandled CloudSignal type: ${type}`);
   }
 
-  // Respond 200 quickly. Any non-2xx makes CloudSignal retry (up to 100 attempts
-  // over 7 days).
+  // Respond 200 quickly. Anything other than 200 or 204 makes CloudSignal retry
+  // (up to 100 attempts over 7 days).
   return NextResponse.json({ received: true });
 }

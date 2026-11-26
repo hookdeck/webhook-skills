@@ -85,13 +85,13 @@ Replay the documented payload by hand:
 curl -X POST "http://localhost:3000/webhooks/docker-hub/$DOCKER_HUB_WEBHOOK_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
-    "callback_url": "https://registry.hub.docker.com/u/svendowideit/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
+    "callback_url": "https://registry.hub.docker.com/u/example-user/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
     "push_data": { "pushed_at": 1417566161, "pusher": "trustedbuilder", "tag": "latest" },
     "repository": {
       "name": "testhook",
-      "namespace": "svendowideit",
-      "repo_name": "svendowideit/testhook",
-      "repo_url": "https://registry.hub.docker.com/u/svendowideit/testhook/",
+      "namespace": "example-user",
+      "repo_name": "example-user/testhook",
+      "repo_url": "https://registry.hub.docker.com/u/example-user/testhook/",
       "is_private": true
     }
   }'
@@ -117,8 +117,8 @@ a public HTTPS URL plus a web UI for inspecting requests. Paste that URL into
 the repository's **Webhooks** tab (it must be 255 characters or fewer) and push
 a tag.
 
-Hookdeck's `DOCKER_HUB` source is **"No verification (schema only)"** — it does
-not verify a Docker Hub signature, because none exists.
+Docker Hub signs nothing, so there is no Docker Hub signature for a Hookdeck
+`DOCKER_HUB` source to check.
 
 ## Endpoint
 

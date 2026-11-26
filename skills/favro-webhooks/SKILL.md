@@ -99,13 +99,13 @@ signature does not cover the body, so re-serialization is not a concern here.
 
 ## The Setup Ping
 
-When a webhook is created, Favro sends a **ping** to validate the endpoint. Your
-handler must return a `2xx` or the webhook stays unvalidated. The ping carries a
-`payloadId`, so it is signed with the same scheme — verify it like any other event
-and return `200`:
+When a webhook is created, Favro sends a **ping** to check that it is configured
+correctly. Favro expects a `200` for every payload, the ping included. The ping
+carries a `payloadId`, so it is signed with the same scheme — verify it like any
+other event and return `200`. This is Favro's documented example:
 
 ```json
-{ "payloadId": "AbCdEf==", "action": "ping", "hookId": "abc123", "hook": { "url": "https://example.com/webhooks/favro" } }
+{ "payloadId": "ZnvqwjdLh1wmbnEj6vOfHhv8ARY=", "action": "ping", "hookId": "67973f72db34592d8fc96c48", "hook": { "url": "https://yourserver.com/webhookfromfavro" } }
 ```
 
 If your ping fails verification during setup, the cause is almost always that
@@ -114,24 +114,27 @@ If your ping fails verification during setup, the cause is almost always that
 ## Common Event Types
 
 Every payload has a top-level `action` string. The object type is determined by
-which object is present (`card`, `comment`, or `hook` for the ping), so handlers
-dispatch on the combined **`<type>.<action>`** key below.
+which object is present (`comment`, `card`, or `hook` for the ping), so handlers
+dispatch on the combined **`<type>.<action>`** key below. Comment events also carry
+the `card` they belong to, so check for `comment` before `card`.
 
 | Event | `action` | Fires When |
 |-------|----------|------------|
-| `ping` | `ping` | Webhook is created — validate the endpoint (return 2xx) |
+| `ping` | `ping` | Webhook is created — confirms the configuration (return 200) |
 | `card.created` | `created` | A card is created |
-| `card.committed` | `committed` | A card is committed (moved out of a sheet/backlog into a board) |
-| `card.moved` | `moved` | A card moves between columns/boards |
-| `card.updated` | `updated` | A card's fields change |
+| `card.committed` | `committed` | A card is committed to another widget |
+| `card.moved` | `moved` | A card is moved on a widget |
+| `card.updated` | `updated` | Any card field except comments changes, or the card moves to another column |
 | `card.deleted` | `deleted` | A card is deleted |
 | `comment.created` | `created` | A comment is added |
 | `comment.updated` | `updated` | A comment is edited |
 | `comment.deleted` | `deleted` | A comment is deleted |
 
-> **Note:** UI-automation-triggered webhooks send partial data with no pre-update
-> state. Treat fields as possibly-absent and fetch the full card from the Favro
-> API when you need the complete record. See [references/overview.md](references/overview.md).
+> **Note:** Moving a card to another column sends both `card.moved` and
+> `card.updated`, so make handlers idempotent. When you choose notifications for a
+> webhook, Favro names them `Card created`, `Card committed`, `Card moved`,
+> `Card updated`, `Card removed`, `Comment added`, `Comment changed` and
+> `Comment removed`. See [references/overview.md](references/overview.md).
 
 ## Environment Variables
 
@@ -155,7 +158,7 @@ and set `FAVRO_WEBHOOK_URL` to that exact same URL.
 
 ## Reference Materials
 
-- [references/overview.md](references/overview.md) - Event types, payload structure, partial-data caveat
+- [references/overview.md](references/overview.md) - Event types, payload structure, delivery behaviour
 - [references/setup.md](references/setup.md) - Creating a webhook, the secret, and the URL gotcha
 - [references/verification.md](references/verification.md) - X-Favro-Webhook HMAC-SHA1 verification in depth and gotchas
 
@@ -173,7 +176,7 @@ When using this skill, add this comment at the top of generated files:
 We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify fast, dispatch, acknowledge quickly
-- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Deduplicate on `payloadId` in case a delivery arrives twice
+- [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Make handlers idempotent; Favro doesn't document what `payloadId` identifies or whether it retries
 - [Error handling](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/error-handling.md) — Return codes, logging, dead letter queues
 - [Retry logic](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/retry-logic.md) — Return 2xx quickly so slow work never blocks the response
 

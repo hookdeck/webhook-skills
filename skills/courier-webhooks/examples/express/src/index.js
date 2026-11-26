@@ -9,9 +9,8 @@ const app = express();
 /**
  * Normalize the `t` value from courier-signature to milliseconds.
  *
- * Courier does not document whether `t` is epoch seconds or milliseconds.
- * Assuming the wrong unit rejects every delivery, so detect it from the
- * magnitude: a ~10-digit value is seconds, a ~13-digit value is already
+ * Courier documents `t` as a millisecond timestamp. As a safeguard, a
+ * ~10-digit value is treated as seconds and a ~13-digit value as
  * milliseconds. Only the staleness check needs this - the HMAC always covers
  * the `t` string exactly as received.
  *
@@ -95,45 +94,45 @@ app.post(
     switch (type) {
       case 'message:updated':
         // Courier does NOT emit per-status events — status lives in `data`.
-        // The set of status values is not documented; log what you receive
-        // before branching on specific ones.
+        // Statuses: ENQUEUED, SENT, DELIVERED, OPENED, CLICKED, UNROUTABLE,
+        // UNDELIVERABLE. Keep a fallback for values you don't recognize.
         console.log(`Message updated: ${data?.id} status=${data?.status}`);
-        // TODO: Sync delivery status, retry, analytics, etc.
+        // Your code: Sync delivery status, retry, analytics, etc.
         break;
 
       case 'notification:submitted':
         console.log('Notification submitted:', data?.id);
-        // TODO: Record send in flight, audit trail, etc.
+        // Your code: Record send in flight, audit trail, etc.
         break;
 
       case 'notification:submission_canceled':
         console.log('Notification submission canceled:', data?.id);
-        // TODO: Reconcile canceled send, etc.
+        // Your code: Reconcile canceled send, etc.
         break;
 
       case 'notification:published':
         console.log('Notification published:', data?.id);
-        // TODO: Invalidate template cache, sync versions, etc.
+        // Your code: Invalidate template cache, sync versions, etc.
         break;
 
       case 'audiences:updated':
         console.log('Audience updated:', data?.id);
-        // TODO: Sync segment definition, etc.
+        // Your code: Sync segment definition, etc.
         break;
 
       case 'audiences:user:matched':
         console.log('User matched audience:', data?.audience_id, data?.user_id);
-        // TODO: Trigger onboarding, tag user, etc.
+        // Your code: Trigger onboarding, tag user, etc.
         break;
 
       case 'audiences:user:unmatched':
         console.log('User unmatched audience:', data?.audience_id, data?.user_id);
-        // TODO: Revoke access, update CRM, etc.
+        // Your code: Revoke access, update CRM, etc.
         break;
 
       case 'audiences:calculated':
         console.log('Audience calculated:', data?.audience_id);
-        // TODO: Kick off downstream jobs, etc.
+        // Your code: Kick off downstream jobs, etc.
         break;
 
       default:

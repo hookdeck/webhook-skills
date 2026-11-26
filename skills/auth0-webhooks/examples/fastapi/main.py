@@ -4,74 +4,70 @@ import hmac
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 
 load_dotenv()
 
 app = FastAPI()
 
-AUTH0_LOG_STREAM_TOKEN = os.environ.get("AUTH0_LOG_STREAM_TOKEN")
+# The token you set as the event stream's bearer authorization.
+AUTH0_EVENT_STREAM_TOKEN = os.environ.get("AUTH0_EVENT_STREAM_TOKEN")
 
 
-def verify_auth0_token(header_value: str | None, expected_token: str | None) -> bool:
-    """Auth0 Custom Log Streams are not signed. Authenticate the request by
-    constant-time comparing the incoming Authorization header against the token
-    configured on the log stream."""
-    if not header_value or not expected_token:
+def verify_auth0_authorization(header_value: str | None, token: str | None) -> bool:
+    """Auth0 Event Streams are not signed. With bearer authorization, Auth0
+    sends `Authorization: Bearer <token>` on every request, so compare the
+    whole header in constant time."""
+    if not header_value or not token:
         return False
     # compare_digest is constant-time and safe for unequal lengths.
-    return hmac.compare_digest(header_value, expected_token)
+    return hmac.compare_digest(header_value.encode(), f"Bearer {token}".encode())
 
 
 def handle_event(event: dict) -> None:
-    """Process a single Auth0 log record. The type code is at data.type."""
-    data = event.get("data", event)
-    event_type = data.get("type")
+    """Handle one Auth0 event. Each request carries a single CloudEvents-shaped
+    object: `type` says what happened and `data.object` holds the entity."""
+    event_type = event.get("type")
+    obj = (event.get("data") or {}).get("object") or {}
 
-    if event_type == "s":
-        print(f"Success login: {data.get('user_name') or data.get('user_id')}")
-        # TODO: update last-login, send "new login" notification, etc.
+    if event_type == "user.created":
+        print(f"User created: {obj.get('user_id')} (event {event.get('id')} at {event.get('time')})")
+        # Your code: create the user in your database
 
-    elif event_type == "f":
-        print(f"Failed login from {data.get('ip')}: {data.get('description')}")
-        # TODO: fraud/brute-force detection, alerting, etc.
+    elif event_type == "user.updated":
+        print(f"User updated: {obj.get('user_id')}")
+        # Your code: compare `time` with your stored copy before overwriting
 
-    elif event_type == "ss":
-        print(f"Success signup: {data.get('user_name') or data.get('user_id')}")
-        # TODO: provision the user, send welcome email, CRM sync, etc.
+    elif event_type == "user.deleted":
+        print(f"User deleted: {obj.get('user_id')}")
+        # Your code: remove or deactivate the user
 
-    elif event_type == "fs":
-        print(f"Failed signup: {data.get('description')}")
-        # TODO: debug registration flow, alerting, etc.
-
-    elif event_type == "sepft":
-        print(f"Token exchange (password grant) for {data.get('user_name') or data.get('user_id')}")
-        # TODO: token issuance auditing, etc.
+    elif event_type == "organization.member.added":
+        print(f"Organization member added: event {event.get('id')}")
+        # Your code: grant access in your system
 
     else:
         print(f"Unhandled event type: {event_type}")
 
 
-@app.post("/webhooks/auth0")
+@app.post("/webhooks/auth0", status_code=204)
 async def auth0_webhook(request: Request, authorization: str | None = Header(default=None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 
-    if not verify_auth0_token(authorization, AUTH0_LOG_STREAM_TOKEN):
-        raise HTTPException(status_code=401, detail="Invalid Authorization token")
+    if not verify_auth0_authorization(authorization, AUTH0_EVENT_STREAM_TOKEN):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header")
 
-    # JSON Array content format: the body is an array (be defensive about a single object).
-    body = await request.json()
-    events = body if isinstance(body, list) else [body]
+    event = await request.json()
 
-    for event in events:
-        try:
-            handle_event(event)
-        except Exception as err:  # noqa: BLE001 - keep processing the batch
-            print(f"Error handling event: {err}")
+    # Auth0 retries only three times, 1s, 2s and 4s apart, so hand slow work
+    # to a queue and return quickly.
+    try:
+        handle_event(event)
+    except Exception as err:  # noqa: BLE001 - always acknowledge an authenticated event
+        print(f"Error handling event: {err}")
 
-    # Acknowledge — Auth0 retries on any non-2xx response.
-    return {"received": len(events)}
+    return Response(status_code=204)
 
 
 @app.get("/health")

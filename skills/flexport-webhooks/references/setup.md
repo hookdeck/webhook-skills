@@ -14,10 +14,9 @@ there is no public `POST /webhook_endpoints` for creating them).
 1. Sign in to Flexport and open **Settings**.
 2. Find the **Webhooks** / API notifications area.
 3. Add a new webhook endpoint with your public HTTPS URL.
-4. Select the milestones (events) you want delivered — for example
-   `/shipment#created`, `/shipment_leg#departed`, `/invoice#invoice_payment_made`.
-   Some milestones are **available upon request** and must be enabled by Flexport
-   for your account.
+4. Select the event categories you want delivered. Milestones marked with an
+   asterisk on Flexport's Milestones page are **available upon request**, and
+   selecting a category doesn't activate them: ask your Flexport team.
 
 ## Get Your Secret Token
 
@@ -35,8 +34,9 @@ legacy `X-Hub-Signature` SHA-1 header). See [verification.md](verification.md).
 ## Respond Fast, Process Async
 
 Your endpoint **must return HTTP `200`** promptly to acknowledge receipt.
-Flexport's retry behavior is not documented, so do not assume a delivery you fail
-to acknowledge will be re-sent. Do the minimum synchronously (verify the
+Flexport retries a delivery a number of times when it doesn't get a `200`, with no
+published count or schedule, so reconcile with the Events API (`GET /events`) after
+an outage. Do the minimum synchronously (verify the
 signature, enqueue the event) and process the work asynchronously so you always
 respond quickly.
 

@@ -63,47 +63,47 @@ async def attentive_webhook(request: Request):
     # Handle the event based on its type
     if event_type == "sms.subscribed":
         print(f"SMS opt-in: {subscriber.get('phone')}")
-        # TODO: Sync opt-in state, trigger welcome flow, etc.
+        # Your code: Sync opt-in state, trigger welcome flow, etc.
 
     elif event_type == "sms.unsubscribed":
         print(f"SMS opt-out: {subscriber.get('phone')}")
-        # TODO: Suppress sends, update CRM consent, etc.
+        # Your code: Suppress sends, update CRM consent, etc.
 
     elif event_type == "sms.sent":
         print(f"SMS sent to: {subscriber.get('phone')}")
-        # TODO: Delivery logging, analytics, etc.
+        # Your code: Delivery logging, analytics, etc.
 
     elif event_type == "sms.inbound_message":
         print(f"Inbound SMS from: {subscriber.get('phone')}")
-        # TODO: Support routing, keyword automations, etc.
+        # Your code: Support routing, keyword automations, etc.
 
     elif event_type == "sms.message_link_click":
         print(f"SMS link click: {subscriber.get('phone')}")
-        # TODO: Attribution, engagement scoring, etc.
+        # Your code: Attribution, engagement scoring, etc.
 
     elif event_type == "email.subscribed":
         print(f"Email opt-in: {subscriber.get('email')}")
-        # TODO: Sync opt-in state, etc.
+        # Your code: Sync opt-in state, etc.
 
     elif event_type == "email.unsubscribed":
         print(f"Email opt-out: {subscriber.get('email')}")
-        # TODO: Suppress sends, update consent, etc.
+        # Your code: Suppress sends, update consent, etc.
 
     elif event_type == "email.sent":
         print(f"Email sent to: {subscriber.get('email')}")
-        # TODO: Delivery logging, etc.
+        # Your code: Delivery logging, etc.
 
     elif event_type == "email.opened":
         print(f"Email opened by: {subscriber.get('email')}")
-        # TODO: Engagement scoring, re-targeting, etc.
+        # Your code: Engagement scoring, re-targeting, etc.
 
     elif event_type == "email.message_link_click":
         print(f"Email link click: {subscriber.get('email')}")
-        # TODO: Attribution, engagement scoring, etc.
+        # Your code: Attribution, engagement scoring, etc.
 
     elif event_type == "custom_attribute.set":
         print(f"Custom attribute set for: {subscriber.get('phone') or subscriber.get('email')}")
-        # TODO: Sync enriched data to your systems, etc.
+        # Your code: Sync enriched data to your systems, etc.
 
     else:
         print(f"Unhandled event: {event_type}")

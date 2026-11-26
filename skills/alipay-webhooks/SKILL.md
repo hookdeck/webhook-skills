@@ -20,22 +20,19 @@ Alipay's global / cross-border products — **Antom (Cashier Payment / AMS)** an
 with an **asymmetric RSA256 (SHA256withRSA)** scheme carried in a `Signature`
 header. This skill targets that header-based scheme.
 
-> **Legacy note:** The older Alipay **openapi / MAPI** integration
-> (`openapi.alipay.com`, `global.alipay.com`) is a *different, unrelated*
-> scheme — form-encoded params with `sign` + `sign_type=RSA2`, verified by
-> stripping `sign`/`sign_type`, sorting the remaining params A–Z, joining with
-> `&`, and replying with the plain text `success`. If your integration posts
-> `application/x-www-form-urlencoded` bodies with a `sign` field, you are on
-> that older vintage — this skill does **not** cover it. Everything below is the
-> modern Antom/Alipay+ header RSA256 scheme.
+> **Scope note:** The domestic Alipay open platform sends form-encoded
+> notifications with a different signing scheme. If your integration receives
+> `application/x-www-form-urlencoded` bodies, this skill does **not** cover it.
+> Everything below is the Antom header RSA256 scheme (global.alipay.com/docs now
+> redirects to docs.antom.com).
 
 ## When to Use This Skill
 
 - How do I receive Alipay / Antom / Alipay+ webhooks?
 - How do I verify the Alipay `Signature` header (RSA256 / SHA256withRSA)?
 - How do I handle `notifyPayment`, `notifyRefund`, or `notifyDispute` events?
-- Why is my Alipay webhook signature verification failing (base64URL encoding)?
-- How do I sign the acknowledgement response Antom expects?
+- Why is my Alipay webhook signature verification failing (URL-encoded base64)?
+- What acknowledgement body does Antom expect?
 
 ## Verification (core)
 
@@ -45,14 +42,14 @@ key** (from the Dashboard). Three details trip people up:
 
 1. The signed content is **exactly two lines**: `<METHOD> <URI>` then
    `<Client-Id>.<Request-Time>.<RawBody>` joined by single periods.
-2. The signature is **base64URL** encoded (URL-safe alphabet), and is often
-   additionally **percent-encoded** on the wire — URL-decode, then base64-decode.
+2. The signature is **base64**, then **URL-encoded** (`%2F`, `%3D`) on the wire.
+   URL-decode it, then base64-decode it.
 3. Use the **raw** request body — never re-serialize parsed JSON first.
 
 ```javascript
 const { createVerify } = require('crypto');
 
-// Header: "algorithm=RSA256,keyVersion=1,signature=<urlEncoded base64url sig>"
+// Header: "algorithm=RSA256,keyVersion=1,signature=<URL-encoded base64 signature>"
 function parseSignatureHeader(header) {
   return Object.fromEntries(
     header.split(',').map((p) => {
@@ -66,7 +63,7 @@ function verifyAlipay({ method, uri, clientId, requestTime, rawBody, signatureHe
   const { signature } = parseSignatureHeader(signatureHeader);
   if (!signature) return false;
   const content = `${method} ${uri}\n${clientId}.${requestTime}.${rawBody}`;
-  // Percent-decode, normalize URL-safe base64 → standard, then decode.
+  // Percent-decode, accept a URL-safe alphabet too, then base64-decode.
   const sig = Buffer.from(decodeURIComponent(signature).replace(/-/g, '+').replace(/_/g, '/'), 'base64');
   const v = createVerify('RSA-SHA256');
   v.update(content, 'utf8');
@@ -79,46 +76,48 @@ function verifyAlipay({ method, uri, clientId, requestTime, rawBody, signatureHe
 }
 ```
 
-**Signing the acknowledgement** — unlike most providers, Antom expects the ack
-itself to be signed with *your* private key over the same two-line content
-(`<METHOD> <URI>\n<Client-Id>.<Response-Time>.<ResponseBody>`), returned in a
-`Signature` header alongside `Client-Id` and `Response-Time`. See the examples.
-
-> **For complete handlers (header parsing, response signing, event dispatch, tests)**, see:
+> **For complete handlers (header parsing, acknowledgement, event dispatch, tests)**, see:
 > - [examples/express/](examples/express/)
 > - [examples/nextjs/](examples/nextjs/)
 > - [examples/fastapi/](examples/fastapi/)
 
 ## The Acknowledgement Response
 
-Respond **HTTP 200** with this exact body so Antom stops retrying:
+Respond **HTTP 200** with this body, with fixed values, so Antom stops resending:
 
 ```json
-{ "result": { "resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "Success" } }
+{ "result": { "resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success" } }
 ```
 
-Include these response headers (the ack is signed):
+Antom's docs say **no digital signature is required** on the acknowledgement.
+Their example response headers are `Content-Type: application/json`,
+`client-id` and `response-time`.
 
-- `Client-Id` — your Client ID
-- `Response-Time` — ISO 8601 timestamp (e.g. `2026-07-24T10:00:00Z`)
-- `Signature` — `algorithm=RSA256,keyVersion=1,signature=<your base64url sig>`
-
-If the ack is missing or non-200, Antom **retries ~8 times over 24 hours**
-(0s, 2m, 10m, 10m, 1h, 2h, 6h, 15h). Make your handler idempotent.
+Until Antom receives this body it resends the notification up to eight times
+within 24 hours, at 0s, 2m, 10m, 10m, 1h, 2h, 6h and 15h (one Antom page says
+seven). In the sandbox a wrong acknowledgement isn't resent. Make your handler
+idempotent: there's no notification ID, so key on the type field plus the
+resource ID (`paymentId`, `refundId`, `captureId`, `disputeId`).
 
 ## Common Event Types
 
-Antom notifications are distinguished by the **`notifyType`** field in the body
-(there is no `type` field), plus `result.resultStatus` (`S` success, `F` fail,
-`U` unknown/pending).
+The event type sits in a **different body field per notification API** (there
+is no single `type` field), and most bodies also carry `result.resultStatus`
+(`S` success, `F` failure).
 
-| `notifyType` | Notification method | Fires when |
-|--------------|---------------------|-----------|
-| `PAYMENT_RESULT` | `notifyPayment` | A payment reaches a final success/failure state |
-| `CAPTURE_RESULT` | `notifyCapture` | A capture succeeds or fails (auth/capture flow) |
-| `REFUND_RESULT` | `notifyRefund` | A refund finishes processing |
-| `AUTHORIZATION_RESULT` | `notifyAuthorization` | An authorization is granted or cancelled |
-| `DISPUTE_CREATED` / `DISPUTE_JUDGED` | `notifyDispute` | A dispute is opened or judged |
+| Type field | Values | Notification API |
+|------------|--------|------------------|
+| `notifyType` | `PAYMENT_RESULT`, `PAYMENT_PENDING`, `UPDATE_AMOUNT_RESULT` | `notifyPayment` |
+| `notifyType` | `CAPTURE_RESULT` | `notifyCapture` |
+| `notifyType` | `REFUND_RESULT` | `notifyRefund` |
+| `notifyType` | `PAYMENT_REVERSAL` | `notifyReversal` |
+| `authorizationNotifyType` | `AUTHCODE_CREATED`, `TOKEN_CREATED`, `TOKEN_CANCELED` | `notifyAuthorization` |
+| `disputeNotificationType` | `DISPUTE_CREATED`, `DISPUTE_JUDGED`, `DEFENSE_DUE_ALERT`, ... | `notifyDispute` |
+| `subscriptionNotificationType` | `CREATE`, `CHANGE`, `CANCEL`, `TERMINATE`, `UPDATE` | `notifySubscription` |
+
+`notifyVaulting` and the Subscription Payment `notifyPayment` carry no type
+field. `PAYMENT_PENDING` only means the buyer has paid: never let it overwrite a
+stored `PAYMENT_RESULT`.
 
 > **For the full notification reference**, see [Antom notifications](https://docs.antom.com/ac/cashierpay/notifications).
 
@@ -126,14 +125,14 @@ Antom notifications are distinguished by the **`notifyType`** field in the body
 
 ```bash
 ALIPAY_CLIENT_ID=SANDBOX_5YC47N2ZQHJ004124        # Your Client ID (from the Dashboard)
-ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"          # Antom/Alipay+ public key — verifies inbound
-ALIPAY_MERCHANT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"  # Your private key — signs the ack
+ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"  # Antom public key — verifies inbound
 ```
 
 The notify URL is set **per API call** via `paymentNotifyUrl` / `refundNotifyUrl`
-in `pay()` / `createPaymentSession()` / `refund()` (a Dashboard URL is the
-fallback). There is no single shared "webhook secret" — verification is
-asymmetric key-based.
+in `pay()` / `createPaymentSession()` / `refund()`, or in the Antom Dashboard
+under Developer > Notification URL (a URL in the API call takes precedence).
+`notifyAuthorization` and `notifyDispute` are set only in the Dashboard. There is
+no shared "webhook secret": verification uses the Antom public key.
 
 ## Local Development
 

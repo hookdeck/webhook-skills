@@ -2,80 +2,77 @@
 
 ## How It Works
 
-Auth0 Custom Log Streams **do not sign** their requests — there is no HMAC
-signature, no `webhook-signature` header, and no Standard Webhooks envelope.
-Instead, authenticity is established with a **static shared secret**:
+Auth0 Event Streams **don't sign** their requests. There's no HMAC signature
+or signing secret. Each stream's webhook destination has one of three
+authorization methods:
 
-1. You configure an **Authorization Token** on the log stream in the Auth0
-   Dashboard.
-2. Auth0 sends that exact value in the `Authorization` header of every request.
-3. Your handler compares the incoming `Authorization` header against the token
-   you stored (`AUTH0_LOG_STREAM_TOKEN`) using a **timing-safe** comparison.
+| Method | What arrives |
+|--------|--------------|
+| `bearer` | `Authorization: Bearer <token>` |
+| `basic` | `Authorization: Basic <credentials>` |
+| `custom_header` | Your secret in a header whose name you choose (`header_key`) |
 
-Because the secret is static, **HTTPS is mandatory** — it's what keeps the token
-confidential in transit.
+This skill uses bearer, which Auth0's own examples use. Your handler compares
+the incoming `Authorization` header with `Bearer <token>` using a timing-safe
+comparison. Because the credential is static and doesn't cover the body, HTTPS
+is what keeps it secret in transit.
 
-There is **no Auth0 SDK method** for verifying log stream requests (it's not a
-signed webhook), so verification is a manual token comparison in every
+There's no Auth0 SDK method for this check. It's a header comparison in every
 framework.
 
 ## Implementation
 
-### Manual Verification (Node.js)
+### Node.js
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyAuth0Token(headerValue, expectedToken) {
-  if (!headerValue || !expectedToken) return false;
+function verifyAuth0Authorization(headerValue, token) {
+  if (!headerValue || !token) return false;
   const a = Buffer.from(headerValue);
-  const b = Buffer.from(expectedToken);
-  // timingSafeEqual throws if lengths differ — guard first.
+  const b = Buffer.from(`Bearer ${token}`);
+  // timingSafeEqual throws if lengths differ, so guard first.
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
 }
 
 // In the handler:
-if (!verifyAuth0Token(req.headers['authorization'], process.env.AUTH0_LOG_STREAM_TOKEN)) {
-  return res.status(401).send('Unauthorized');
+if (!verifyAuth0Authorization(req.headers['authorization'], process.env.AUTH0_EVENT_STREAM_TOKEN)) {
+  return res.status(401).json({ error: 'Unauthorized' });
 }
 ```
 
-### Manual Verification (Python)
+### Python
 
 ```python
 import hmac
 
-def verify_auth0_token(header_value: str | None, expected_token: str | None) -> bool:
-    if not header_value or not expected_token:
+def verify_auth0_authorization(header_value: str | None, token: str | None) -> bool:
+    if not header_value or not token:
         return False
-    # compare_digest is constant-time and length-safe.
-    return hmac.compare_digest(header_value, expected_token)
+    # compare_digest is constant-time and safe for unequal lengths.
+    return hmac.compare_digest(header_value.encode(), f"Bearer {token}".encode())
 ```
 
 ## Common Gotchas
 
-- **No signature header.** Don't look for `webhook-signature`,
-  `X-Auth0-Signature`, or `Stripe-Signature`-style headers — they don't exist.
-  The only credential is the `Authorization` header.
-- **Match the token exactly.** Auth0 sends whatever string you typed into the
-  Authorization Token field, byte-for-byte. If you configured
-  `Bearer abc123`, compare against `Bearer abc123`, not `abc123`.
-- **Use a timing-safe compare.** A plain `==` leaks timing information. Use
-  `crypto.timingSafeEqual` (Node) or `hmac.compare_digest` (Python), and guard
-  against unequal lengths.
-- **Return `2xx` fast.** Auth0 retries on non-`2xx`. Authenticate, accept the
-  batch, respond, then process asynchronously.
-- **The body is an array** (with the JSON Array content format). Iterate
-  every record — a single request can carry many events. Read `event.data.type` for the event code.
-- **HTTPS only.** A static bearer token over plain HTTP is trivially
-  interceptable.
+- **Include the `Bearer ` prefix.** The header is `Bearer <token>`, so a
+  comparison against the bare token fails every time.
+- **Custom header streams.** If the stream uses `custom_header`, read the
+  header you named instead of `Authorization`.
+- **Use a timing-safe compare.** Use `crypto.timingSafeEqual` (Node) or
+  `hmac.compare_digest` (Python) rather than `==`.
+- **Return `2xx` fast.** Auth0 retries after 1s, 2s and 4s and then marks the
+  event failed. A `4xx` fails it immediately, so don't return `4xx` for a
+  temporary problem in your own code.
+- **One event per request.** The body is a single JSON object. Read `type`
+  and `data.object`.
 
 ## Debugging Verification Failures
 
 | Symptom | Likely Cause | Fix |
 |---------|--------------|-----|
-| Every request is `401` | Token mismatch (extra `Bearer ` prefix or whitespace) | Make the stored value byte-identical to the Dashboard's Authorization Token |
-| Auth0 shows repeated retries/failures | Handler returns non-`2xx` (error, timeout) | Return `2xx` immediately; move slow work off the request path |
+| Every request is `401` | Comparing against the bare token, or stray whitespace | Compare against `Bearer <token>` exactly |
+| Header is missing | The stream uses `custom_header` | Read the header named in the stream's `header_key` |
+| Events marked failed in the Deliveries API | Handler returned non-`2xx` or a `4xx` | Return `2xx` once the header checks out, then redeliver |
 | `timingSafeEqual` throws | Buffers have different lengths | Length-check before comparing (shown above) |
-| Header is `undefined` | Reading the wrong header name | Read `Authorization` (case-insensitive in Express/FastAPI) |

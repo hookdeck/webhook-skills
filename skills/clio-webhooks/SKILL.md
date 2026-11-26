@@ -49,15 +49,10 @@ Clio Manage delivers webhooks in two distinct kinds of POST request to your URL:
 shared secret. Pass the **raw** body (never re-serialized JSON) and compare
 timing-safe.
 
-Clio's docs state only that it "will compute an HMAC-SHA256 signature based on
-the shared secret and the request body" — they never say whether the digest is
-hex or base64 encoded.
-
-**Verified against a live delivery: it is lowercase hex** (64 characters). This
-was confirmed by recomputing HMAC-SHA256 over the raw body with the webhook's
-`shared_secret` and matching the header exactly. The handlers below still compute
-the digest once and accept either encoding, so they keep working if Clio ever
-differs by region or changes it — but hex is what you should expect.
+**The digest is lowercase hex** (64 characters). Clio's
+[webhooks guide](https://docs.developers.clio.com/guides/clio-manage/webhooks/) computes it with `hexdigest` in both its Ruby and Python
+examples, and a live delivery matched. The handlers below compute the digest once
+and also accept base64 as a safety net, but hex is what you should expect.
 
 Node:
 
@@ -67,7 +62,7 @@ const crypto = require('crypto');
 function verifyClioWebhook(rawBody, signatureHeader, secret) {
   if (!signatureHeader) return false;
   const digest = crypto.createHmac('sha256', secret).update(rawBody).digest();
-  // Encoding is unspecified in Clio's docs — accept hex or base64.
+  // Clio's examples use hex; base64 is accepted as a safety net.
   return [digest.toString('hex'), digest.toString('base64')].some((expected) => {
     try {
       return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
@@ -87,7 +82,7 @@ def verify_clio_webhook(raw_body: bytes, signature_header: str, secret: str) -> 
     if not signature_header:
         return False
     digest = hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
-    # Encoding is unspecified in Clio's docs — accept hex or base64.
+    # Clio's examples use hex; base64 is accepted as a safety net.
     return (
         hmac.compare_digest(signature_header, digest.hex())
         or hmac.compare_digest(signature_header, base64.b64encode(digest).decode())
@@ -132,7 +127,7 @@ Example event payload:
   "meta": { "event": "created", "webhook_id": 1234 } }
 ```
 
-> **For the full model/event reference**, see [Clio Webhooks docs](https://docs.developers.clio.com/api-reference/#tag/Webhooks).
+> **For the full model/event reference**, see [Clio Webhooks docs](https://docs.developers.clio.com/guides/clio-manage/webhooks/).
 
 ## Important Headers
 
@@ -168,10 +163,17 @@ curl -X POST https://app.clio.com/api/v4/webhooks.json \
 
 ## Local Development
 
+Create a Clio source in Hookdeck Event Gateway, then forward it to your machine
+with the Hookdeck CLI, where `clio` is the source's name:
+
 ```bash
-# Start tunnel (no account needed)
-npx hookdeck-cli listen 3000 clio --path /webhooks/clio
+hookdeck listen 3000 clio --path /webhooks/clio
 ```
+
+Point the webhook's `url` at the source URL. Event Gateway answers the
+`X-Hook-Secret` handshake itself and doesn't forward it, so your local handler
+won't see the secret: read it from the webhook's `shared_secret` field
+(`GET /api/v4/webhooks/{id}.json?fields=shared_secret`).
 
 ## Reference Materials
 

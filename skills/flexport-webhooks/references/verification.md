@@ -9,9 +9,9 @@ headers, each a hex digest prefixed with the algorithm name:
 | Header | Algorithm | Format | Status |
 |--------|-----------|--------|--------|
 | `X-Hub-Signature-256` | HMAC-SHA256 | `sha256=<hexdigest>` | **Recommended** |
-| `X-Hub-Signature` | HMAC-SHA1 | `sha1=<hexdigest>` | Legacy, being deprecated |
+| `X-Hub-Signature` | HMAC-SHA1 | `sha1=<hexdigest>` | Legacy |
 
-The signed string is the UTF-8-encoded payload body, so you must compute the HMAC
+The signed string is the raw request body bytes, so you must compute the HMAC
 over the **raw bytes received**, before any JSON parsing or re-serialization.
 
 This is Flexport's own scheme (the same shape GitHub and Facebook use), **not**
@@ -71,8 +71,8 @@ def verify_flexport_webhook(raw_body: bytes, signature_header: str, secret: str)
   digest. Compare only the hex portion.
 - **Hex encoding, not base64.** Flexport uses hex digests (like GitHub), unlike
   Shopify which uses base64.
-- **Prefer `X-Hub-Signature-256`.** The legacy `X-Hub-Signature` (SHA-1) is being
-  deprecated — verify SHA-256. If you also support SHA-1 during migration, use
+- **Prefer `X-Hub-Signature-256`.** Flexport calls the `X-Hub-Signature` (SHA-1)
+  header legacy and asks integrations to move to SHA-256. If you also support SHA-1 during migration, use
   the same raw-body/HMAC approach with `sha1`.
 - **Timing-safe compare.** Use `crypto.timingSafeEqual` / `hmac.compare_digest`,
   and guard against buffer-length mismatches (wrap in try/except).

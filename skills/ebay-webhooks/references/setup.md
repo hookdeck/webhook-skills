@@ -98,11 +98,16 @@ production `kid` cannot be resolved against the sandbox host.
 - Save/re-save the destination to re-trigger the challenge.
 - Fire test account-deletion notifications from the developer portal's
   Marketplace Account Deletion screen.
-- Locally, tunnel with the Hookdeck CLI:
+- Locally:
+
+  In Hookdeck Event Gateway, create an **eBay** source with your keyset's Client
+  ID and Client Secret and the same verification token you give eBay, then
+  forward that source to your machine (`ebay` is the source's name):
 
   ```bash
-  npx hookdeck-cli listen 3000 ebay --path /webhooks/ebay
+  hookdeck listen 3000 ebay --path /webhooks/ebay
   ```
 
-  Register the printed HTTPS URL as your endpoint and set the **same** URL as
-  `EBAY_ENDPOINT` (the challenge hash depends on it).
+  Register the source URL as your eBay destination endpoint. The eBay source
+  answers eBay's challenge itself, so the challenge route in this code isn't
+  called in that setup; the tests cover it.

@@ -30,10 +30,10 @@ so a single verification path works.
 ## Ping and Auto-Disable
 
 - Creating or editing a webhook sends a `ping` event.
-- If your endpoint is unreachable or returns a status code **`>= 400`**, Ashby
-  **disables** the webhook.
-- To re-enable: fix your endpoint, then re-check the enabled box and save the
-  webhook in **Admin → Integrations → Webhooks**.
+- If your endpoint does not respond or returns an error code, Ashby saves the
+  webhook in a **disabled** state.
+- To re-enable: fix your endpoint, then check the enabled box and click
+  **Update** in **Admin → Integrations → Webhooks**, which sends a new ping.
 
 Always verify the signature first and return a `2xx` status quickly.
 

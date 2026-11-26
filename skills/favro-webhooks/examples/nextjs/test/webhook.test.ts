@@ -88,6 +88,10 @@ describe('eventKey', () => {
     const { eventKey } = await routeModulePromise;
     expect(eventKey({ action: 'deleted', comment: {} })).toBe('comment.deleted');
   });
+  it('maps a comment action when the card is included too', async () => {
+    const { eventKey } = await routeModulePromise;
+    expect(eventKey({ action: 'updated', card: {}, comment: {} })).toBe('comment.updated');
+  });
 });
 
 describe('POST /webhooks/favro', () => {

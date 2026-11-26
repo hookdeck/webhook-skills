@@ -16,13 +16,15 @@ notes: >
   this text is the secret you entered when setting up the webhook." ***
   Store the registered URL (FAVRO_WEBHOOK_URL) byte-identically or every signature fails —
   the #1 gotcha. Webhooks are created per board/widget via POST create-webhook (name,
-  widgetCommonId, postToUrl, secret) or via Favro UI automations. On creation Favro sends
-  a Ping the endpoint must accept (2xx) to validate setup; the ping carries a payloadId and
+  widgetCommonId, postToUrl, secret) or in the app (board menu > More > Integrations and API).
+  On creation Favro sends a Ping to check the configuration; Favro expects a 200 for every
+  payload. The ping carries a payloadId and
   is signed with the same scheme: {"payloadId":"<base64=>","action":"ping","hookId":"<id>",
   "hook":{"url":"<postToUrl>"}}. Payloads carry an `action` field; the object type is
-  inferred from the card/comment object present (handlers dispatch on <type>.<action>):
-  card created/committed/moved/updated/deleted, comment created/updated/deleted.
-  UI-automation-triggered webhooks send partial data with no pre-update state. Retry
+  inferred from the object present (handlers dispatch on <type>.<action>); comment events
+  also carry `card`, so check `comment` first: card created/committed/moved/updated/deleted,
+  comment created/updated/deleted. Moving a card to another column sends both moved and
+  updated. Repeated non-200 responses disable the webhook until it is reconfigured. Retry
   behavior is not documented. No official SDK (community Node @bscotch/bravo implements it).
 testScenario:
   events:

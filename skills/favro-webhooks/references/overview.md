@@ -9,84 +9,77 @@ moved, updated, or deleted, or a comment changes. Every delivery is signed so yo
 can confirm it genuinely came from Favro (see
 [verification.md](verification.md)).
 
-Webhooks are created either through Favro's UI automations or via the
-`POST create-webhook` API with `name`, `widgetCommonId`, `postToUrl`, and
-`secret`. When a webhook is created Favro immediately sends a **ping** to confirm
-the endpoint is reachable and correctly configured.
+Webhooks are created either in the Favro app (the board's menu, **More** >
+**Integrations and API...**) or with `POST https://favro.com/api/v1/webhooks` and
+`widgetCommonId`, `name`, `postToUrl` and `secret`. When a webhook is created Favro
+sends a **ping** to make sure it is configured correctly.
 
 ## Common Event Types
 
 Every payload has a top-level `action` string. Favro reuses the same `action`
 values across object types (a card and a comment can both be `created`), so the
-object type is inferred from which object the payload carries: `card`, `comment`,
-or `hook` (for the ping). Handlers in this skill dispatch on the combined
+object type is inferred from which object the payload carries: `comment`, `card`,
+or `hook` (for the ping). Comment events also carry the `card` they belong to, so
+check for `comment` first. Handlers in this skill dispatch on the combined
 **`<type>.<action>`** key.
 
 | Event | `action` | Object | Triggered When | Common Use Cases |
 |-------|----------|--------|----------------|------------------|
-| `ping` | `ping` | `hook` | Webhook created | Validate the endpoint during setup (return 2xx) |
+| `ping` | `ping` | `hook` | Webhook created | Confirm the configuration during setup (return 200) |
 | `card.created` | `created` | `card` | A card is created | Sync tasks, create mirror records |
-| `card.committed` | `committed` | `card` | A card is committed to a board | Kick off work, notify assignees |
-| `card.moved` | `moved` | `card` | A card moves column/board | Trigger stage automations, status sync |
-| `card.updated` | `updated` | `card` | A card's fields change | Keep external records in sync |
+| `card.committed` | `committed` | `card` | A card is committed to another widget | Kick off work, notify assignees |
+| `card.moved` | `moved` | `card` | A card is moved on a widget | Trigger stage automations, status sync |
+| `card.updated` | `updated` | `card` | Any card field except comments changes, or the card moves column | Keep external records in sync |
 | `card.deleted` | `deleted` | `card` | A card is deleted | Clean up mirror records |
-| `comment.created` | `created` | `comment` | A comment is added | Notifications, activity feeds |
-| `comment.updated` | `updated` | `comment` | A comment is edited | Sync edited content |
-| `comment.deleted` | `deleted` | `comment` | A comment is deleted | Clean up mirror records |
+| `comment.created` | `created` | `comment` + `card` | A comment is added | Notifications, activity feeds |
+| `comment.updated` | `updated` | `comment` + `card` | A comment is edited | Sync edited content |
+| `comment.deleted` | `deleted` | `comment` + `card` | A comment is deleted | Clean up mirror records |
 
 ## Event Payload Structure
 
-All payloads share a top-level envelope:
+Every payload carries `payloadId` and `action`. The rest depends on the event:
 
-```json
-{
-  "payloadId": "AbCdEf012345==",
-  "action": "created",
-  "hookId": "5c1a...",
-  "card": {
-    "cardId": "…",
-    "cardCommonId": "…",
-    "name": "Implement webhook receiver",
-    "columnId": "…",
-    "...": "…"
-  }
-}
-```
+- **Ping:** `hookId` and `hook` (with the webhook's `url`).
+- **Card events:** `card` and `sender`. `created`, `committed` and `moved` add
+  `column` and `widget`; `committed` adds `sourceWidget` and `moved` adds
+  `sourceColumn`.
+- **Comment events:** `card`, `comment` and `sender`.
 
 Key fields:
 
-- **`payloadId`** — a base64 string unique to this delivery. It is the value
-  concatenated with your webhook URL to produce the signature, and a good
-  idempotency key.
+- **`payloadId`** — concatenated with your webhook URL to produce the signature.
+  Favro's docs don't say what it identifies, and every documented example prints
+  the same value, so don't rely on it as a deduplication key.
 - **`action`** — one of `ping`, `created`, `committed`, `moved`, `updated`,
   `deleted`.
-- **`hookId`** — the id of the webhook that produced this delivery.
-- **`card` / `comment` / `hook`** — the changed object. The ping carries
-  `hook: { "url": "<postToUrl>" }`.
+- **`sender`** — the user whose action triggered the event.
 
 ### The Ping Payload
 
+Favro's documented example:
+
 ```json
 {
-  "payloadId": "AbCdEf==",
+  "payloadId": "ZnvqwjdLh1wmbnEj6vOfHhv8ARY=",
   "action": "ping",
-  "hookId": "abc123",
-  "hook": { "url": "https://example.com/webhooks/favro" }
+  "hookId": "67973f72db34592d8fc96c48",
+  "hook": { "url": "https://yourserver.com/webhookfromfavro" }
 }
 ```
 
-## Partial Data Caveat
+## Delivery Behavior
 
-**Webhooks triggered by Favro UI automations send partial data with no
-pre-update state.** Do not assume every field is present, and do not rely on a
-"before" snapshot. When you need the complete, current record, fetch the card
-from the Favro API using its id rather than trusting the webhook payload alone.
+Favro expects a `200` for each payload. If multiple payloads don't get a `200`,
+Favro disables the webhook and stops sending events until it is reconfigured.
+Favro doesn't document a timeout, retries or ordering. Moving a card to another
+column sends both `card.moved` and `card.updated`, so make handlers idempotent:
+write the card's current state keyed by `cardId` rather than applying each event
+as a change. Return `200` quickly and do slow work asynchronously.
 
-## Retry Behavior
-
-Favro's retry behavior for failed deliveries is **not documented**. Assume a
-delivery *may* be retried and make your handler idempotent — deduplicate on
-`payloadId`. Always return a `2xx` quickly and do slow work asynchronously.
+Updating a card through the Favro API also sends `card.updated`, so a handler
+that writes back to the card it was notified about can loop. Favro's own example
+app ([FavroRICECalculator](https://github.com/Favro/FavroRICECalculator/blob/master/index.js))
+only writes when the value has changed.
 
 ## Full Event Reference
 

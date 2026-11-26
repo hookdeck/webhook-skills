@@ -9,9 +9,9 @@ ElevenLabs uses HMAC-SHA256 signature verification with a custom header format t
 3. **Algorithm**: HMAC-SHA256
 4. **Encoding**: Hexadecimal
 
-## SDK Verification (Recommended for Node/TypeScript)
+## SDK Verification (Recommended)
 
-ElevenLabs recommends using the official `@elevenlabs/elevenlabs-js` SDK for webhook verification and event construction. See [Verify the webhook secret and construct the webhook payload](https://elevenlabs.io/docs/agents-platform/guides/integrations/upstash-redis#verify-the-webhook-secret-and-consrtuct-the-webhook-payload).
+ElevenLabs tells you to verify the header with its SDK: `constructEvent` in `@elevenlabs/elevenlabs-js`, and `construct_event(rawBody=..., sig_header=..., secret=...)` in the `elevenlabs` Python package (2.0.0 or later), which returns a `dict` and raises `BadRequestError`. See [Webhooks: Authentication](https://elevenlabs.io/docs/eleven-api/resources/webhooks#authentication).
 
 ```javascript
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
@@ -32,9 +32,9 @@ const event = await elevenlabs.webhooks.constructEvent(
 - **Success**: Returns the parsed event object (`event.type`, `event.data`).
 - **Failure**: Throws `ElevenLabsError` with `message` and `statusCode` (400). Return 401 and the error message to the client.
 
-## Manual Implementation (Fallback or Python)
+## Manual Implementation (Fallback)
 
-Only the JavaScript/TypeScript SDK (`@elevenlabs/elevenlabs-js`) provides `constructEvent` for verifying incoming webhooks; the [elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) SDK does not support webhook verification or event construction. Use the manual implementation below when using Python/FastAPI or when you need a dependency-free implementation.
+Both SDKs compare the signature with a plain string comparison and fix the timestamp tolerance at 30 minutes. Use the manual implementation below when you need a constant-time comparison, a different tolerance or no dependency. It follows the SDKs' code: HMAC-SHA256 of `<t>.<raw body>`, keyed with the secret string, hex-encoded.
 
 ```javascript
 const crypto = require('crypto');
@@ -103,17 +103,17 @@ function verifyElevenLabsWebhook(rawBody, signatureHeader, secret) {
    - FastAPI: Access `request.body()` directly
 
 2. **Timestamp Validation**
-   - ElevenLabs uses a 30-minute tolerance window
-   - Reject webhooks with timestamps outside this window
-   - This prevents replay attacks
+   - The SDKs reject a timestamp more than 30 minutes old (from their code; the docs give no figure)
+   - Reject webhooks with timestamps outside your window
+   - This limits replay attacks
 
 3. **Header Case Sensitivity**
    - The header name is `ElevenLabs-Signature` (capital E, capital L, capital S)
    - Some frameworks lowercase headers - check for both cases
 
 4. **Multiple Signatures**
-   - The header may contain multiple `v0=` signatures
-   - Validate if ANY signature matches (not all)
+   - ElevenLabs doesn't document more than one `v0=` value per header; the JS SDK reads the first and the Python SDK the last
+   - Accepting a match on any `v0=` value, as the code above does, is safe either way
 
 ## Framework-Specific Examples
 
@@ -157,7 +157,7 @@ export async function POST(req: Request) {
 
 ### FastAPI (Python)
 
-The official [elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) SDK does **not** provide webhook signature verification or event construction (it only exposes workspace webhook management: list, create, delete, update). Use the manual implementation below. For Node/TypeScript, prefer the [SDK verification](#sdk-verification-recommended-for-nodetypescript) above.
+Prefer `construct_event` from the `elevenlabs` package (see [SDK verification](#sdk-verification-recommended)). This manual version is for when you need a constant-time comparison or a different tolerance.
 
 ```python
 import os

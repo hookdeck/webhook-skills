@@ -180,7 +180,7 @@ Use `event.id` (envelope) or `event.eventId` (legacy) as the idempotency key,
 with two exceptions:
 
 - **Legacy `message.read`** reuses one `eventId` for every read receipt in a conversation. Key on `${eventId}:${timestamp}`. (`creator.message.read` and `creator.message.read_by_fan` are not affected.)
-- **`app.subscription.*`**: the same transition repeated for one subscription reuses the earlier id. Pair `id` with `timestamp`, or read current state from `GET /apps/{appUuid}/subscription-status`.
+- **`app.subscription.*`**: the same transition repeated for one subscription reuses the earlier id. Fanvue suggests pairing `id` with `timestamp`, but the envelope `timestamp` is when the delivery was built and changes on every retry, so that key keeps real transitions without collapsing retries. Make the handler idempotent and read current state from `GET /apps/{appUuid}/subscription-status`.
 
 ## Full Documentation
 

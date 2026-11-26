@@ -20,7 +20,7 @@ const { app, verifyUrlToken, parsePush, summarizeDhiMetadata } = require('../src
 function documentedPayload() {
   return {
     callback_url:
-      'https://registry.hub.docker.com/u/svendowideit/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/',
+      'https://registry.hub.docker.com/u/example-user/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/',
     push_data: {
       pushed_at: 1417566161,
       pusher: 'trustedbuilder',
@@ -36,10 +36,10 @@ function documentedPayload() {
       is_private: true,
       is_trusted: true,
       name: 'testhook',
-      namespace: 'svendowideit',
-      owner: 'svendowideit',
-      repo_name: 'svendowideit/testhook',
-      repo_url: 'https://registry.hub.docker.com/u/svendowideit/testhook/',
+      namespace: 'example-user',
+      owner: 'example-user',
+      repo_name: 'example-user/testhook',
+      repo_url: 'https://registry.hub.docker.com/u/example-user/testhook/',
       star_count: 0,
       status: 'Active',
     },
@@ -163,7 +163,7 @@ describe('Docker Hub webhook handler', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ received: true });
       expect(logSpy).toHaveBeenCalledWith(
-        'Docker Hub push: svendowideit/testhook:latest by trustedbuilder'
+        'Docker Hub push: example-user/testhook:latest by trustedbuilder'
       );
     });
 
@@ -258,7 +258,7 @@ describe('Docker Hub webhook handler', () => {
       expect(parsePush(payload)).toEqual({
         ok: true,
         tag: 'latest',
-        repoName: 'svendowideit/testhook',
+        repoName: 'example-user/testhook',
         pusher: 'trustedbuilder',
         pushedAt: 1417566161,
       });
@@ -276,7 +276,7 @@ describe('Docker Hub webhook handler', () => {
     });
 
     it('accepts a repo that is in DOCKER_HUB_ALLOWED_REPOS', async () => {
-      process.env.DOCKER_HUB_ALLOWED_REPOS = 'myorg/myapp, svendowideit/testhook';
+      process.env.DOCKER_HUB_ALLOWED_REPOS = 'myorg/myapp, example-user/testhook';
 
       const response = await request(app).post(PATH).send(documentedPayload());
 

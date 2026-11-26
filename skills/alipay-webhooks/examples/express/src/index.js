@@ -3,38 +3,35 @@
 
 require('dotenv').config();
 const express = require('express');
-const { ACK_BODY, verifyAlipaySignature, signAlipayResponse } = require('./verify');
+const { ACK_BODY, verifyAlipaySignature } = require('./verify');
 
 const app = express();
 
 const CLIENT_ID = process.env.ALIPAY_CLIENT_ID;
 const ALIPAY_PUBLIC_KEY = process.env.ALIPAY_PUBLIC_KEY; // Antom/Alipay+ public key — verifies inbound
-const MERCHANT_PRIVATE_KEY = process.env.ALIPAY_MERCHANT_PRIVATE_KEY; // your key — signs the ack
-const KEY_VERSION = process.env.ALIPAY_KEY_VERSION || 1;
 
 const WEBHOOK_PATH = '/webhooks/alipay';
 
-// Send the signed SUCCESS acknowledgement. Antom verifies THIS response, so it
-// must be signed with your merchant private key over the same two-line content.
-function sendSignedAck(req, res) {
-  const responseTime = new Date().toISOString();
-  const signature = signAlipayResponse({
-    method: req.method, // "POST"
-    uri: req.originalUrl, // the path Antom POSTed to, e.g. /webhooks/alipay
-    clientId: CLIENT_ID,
-    responseTime,
-    body: ACK_BODY,
-    privateKey: MERCHANT_PRIVATE_KEY,
-    keyVersion: KEY_VERSION,
-  });
-
+// Send the SUCCESS acknowledgement. Antom resends the notification until it
+// gets this fixed body; the acknowledgement needs no signature.
+function sendAck(res) {
   res
     .status(200)
     .set('Client-Id', CLIENT_ID)
-    .set('Response-Time', responseTime)
-    .set('Signature', signature)
+    .set('Response-Time', new Date().toISOString())
     .type('application/json')
     .send(ACK_BODY);
+}
+
+// The event type sits in a different field per notification API.
+function notificationType(event) {
+  return (
+    event.notifyType || // notifyPayment, notifyCapture, notifyRefund, notifyReversal
+    event.authorizationNotifyType || // notifyAuthorization
+    event.disputeNotificationType || // notifyDispute
+    event.subscriptionNotificationType || // notifySubscription
+    null // notifyVaulting and the subscription notifyPayment carry no type
+  );
 }
 
 // CRITICAL: express.raw() — the signature covers the exact raw bytes, so the
@@ -70,39 +67,50 @@ app.post(WEBHOOK_PATH, express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid JSON');
   }
 
-  // Notifications branch on `notifyType` (there is no `type` field). Use
-  // `result.resultStatus` for the outcome: S=success, F=failure, U=pending.
+  // `result.resultStatus` is S (success) or F (failure) where a body has it.
   const status = event.result && event.result.resultStatus;
+  const type = notificationType(event);
 
-  switch (event.notifyType) {
+  switch (type) {
     case 'PAYMENT_RESULT':
-      // Reconcile on paymentRequestId (your idempotency key). Only treat S as paid.
+      // Final result. Deduplicate on notifyType + paymentId; only S means paid.
       console.log('Payment result:', event.paymentRequestId, event.paymentId, status);
-      // TODO: if (status === 'S') fulfill the order
+      // Your code: if (status === 'S') fulfill the order
+      break;
+    case 'PAYMENT_PENDING':
+      // The buyer has paid; wait for PAYMENT_RESULT. Never overwrite a final result.
+      console.log('Payment pending:', event.paymentRequestId, event.paymentId);
       break;
     case 'CAPTURE_RESULT':
       console.log('Capture result:', event.captureRequestId, event.captureId, status);
-      // TODO: settle funds / reconcile the capture
+      // Your code: settle funds / reconcile the capture
       break;
     case 'REFUND_RESULT':
-      console.log('Refund result:', event.refundRequestId, event.refundId, status);
-      // TODO: update the refund record, notify the customer
+      console.log('Refund result:', event.refundRequestId, event.refundId, event.refundStatus);
+      // Your code: update the refund record, notify the customer
       break;
-    case 'AUTHORIZATION_RESULT':
-      console.log('Authorization result:', event.authorizationRequestId, status);
-      // TODO: enable / cancel the agreement (Auto Debit)
+    case 'AUTHCODE_CREATED':
+      // Exchange event.authCode for an access token with applyToken.
+      console.log('Authorization code created:', event.authState);
+      break;
+    case 'TOKEN_CREATED':
+    case 'TOKEN_CANCELED':
+      console.log('Authorization:', type, event.authState);
+      // Your code: store or revoke the access token
       break;
     case 'DISPUTE_CREATED':
+    case 'DEFENSE_DUE_ALERT':
     case 'DISPUTE_JUDGED':
-      console.log('Dispute:', event.notifyType, event.disputeId, status);
-      // TODO: alert risk/ops, gather evidence, record the judgement
+      console.log('Dispute:', type, event.disputeId, event.paymentId);
+      // Your code: alert risk/ops, gather evidence, record the judgement
       break;
     default:
-      console.log('Unhandled notifyType:', event.notifyType);
+      // Acknowledge types you don't handle too, or Antom keeps resending them.
+      console.log('Unhandled notification type:', type);
   }
 
-  // Acknowledge with a signed 200 so Antom stops retrying.
-  return sendSignedAck(req, res);
+  // Acknowledge with the fixed body so Antom stops resending.
+  return sendAck(res);
 });
 
 app.get('/health', (req, res) => {

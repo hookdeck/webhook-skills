@@ -23,59 +23,91 @@ events are delivered — see [setup.md](setup.md).
 
 ## Event Categories
 
-| Category | Example events | Fires when |
-|----------|----------------|------------|
-| `customer` | `customer.created`, `customer.updated` | A customer record or its KYC/verification status changes |
-| `kyc_link` | `kyc_link.updated` | A hosted KYC / Terms-of-Service link changes status |
-| `transfer` | `transfer.created`, `transfer.updated` | A transfer is created or changes status (e.g. payment processed, returned) |
-| `virtual_account` | `virtual_account.activity` | Funds are received or processed on a virtual account |
-| `liquidation_address` | `liquidation_address.*` | Activity on a liquidation (drain) address |
-| `card_account` | `card_account.*` | A card account changes |
-| `card_transaction` | `card_transaction.*` | A card transaction occurs |
-| `static_memo` | `static_memo.*` | Static memo deposit activity |
+| Category | Events | Fires when |
+|----------|--------|------------|
+| `customer` | `customer.created`, `.updated`, `.updated.status_transitioned`, `.deleted` | A customer record or its KYC status changes |
+| `kyc_link` | `kyc_link.created`, `.updated`, `.updated.status_transitioned` | A hosted KYC / Terms of Service link changes |
+| `transfer` | `transfer.created`, `.updated`, `.updated.status_transitioned` | A transfer is created or moves to a new state |
+| `virtual_account.activity` | `virtual_account.activity.created`, `.updated` | Deposit or account activity on a virtual account |
+| `liquidation_address.drain` | `liquidation_address.drain.created`, `.updated`, `.updated.status_transitioned` | Funds drain out of a liquidation address |
+| `static_memo.activity` | `static_memo.activity.created`, `.updated` | Deposit activity against a static memo |
+| `bridge_wallet.activity` | `bridge_wallet.activity.created`, `.updated` | Activity on a Bridge wallet |
+| `card_account` | `card_account.created`, `.updated`, `.updated.status_transitioned` | A card account is provisioned or changes |
+| `card_transaction` | `card_transaction.created`, `.updated`, `.updated.status_transitioned` | A card authorization, settlement or reversal |
+| `posted_card_account_transaction` | `posted_card_account_transaction.created`, `.updated` | A settled transaction posts to a card account |
+| `card_withdrawal` | `card_withdrawal.created`, `.updated` | A withdrawal from a card account |
+| `external_account` | `external_account.created`, `.updated`, `.deleted` | An external bank account is linked, changed or removed |
+| `rfi` (beta) | `rfi.created`, `.updated`, `.updated.status_transitioned` | Bridge requests information for a compliance review |
 
-Event names always follow the `<category>.<action>` pattern. The most commonly
-handled events are:
+Event names follow `<category>.<mutation>`. A status change arrives as
+`updated.status_transitioned`; plain `updated` means other fields changed. The
+most commonly handled events are:
 
 | Event | Common Use Cases |
 |-------|------------------|
 | `customer.created` | Provision an account, start onboarding |
-| `customer.updated` | React to KYC approval/rejection, update customer state |
-| `kyc_link.updated` | Track KYC/ToS completion, unblock onboarding steps |
-| `transfer.created` | Record a new payment/payout in your ledger |
-| `transfer.updated` | Update payment status, trigger fulfillment on settlement |
-| `virtual_account.activity` | Reconcile incoming funds, credit a balance |
+| `customer.updated.status_transitioned` | React to KYC approval or rejection |
+| `kyc_link.updated.status_transitioned` | Track KYC/ToS completion, unblock onboarding steps |
+| `transfer.created` | Record a new payment or payout in your ledger |
+| `transfer.updated.status_transitioned` | Update payment status, fulfil on `payment_processed` |
+| `virtual_account.activity.created` | Reconcile incoming funds, credit a balance |
 
 ## Event Payload Structure
 
-Bridge event payloads are JSON. Fields vary by category, but events commonly
-include an event identifier, the event type/category, a timestamp, and the
-affected resource object. A representative shape:
+Every event uses the same envelope. Bridge's documented example for a new transfer:
 
 ```json
 {
-  "api_version": "2024-01-01",
-  "event_id": "evt_00000000000000000000000000",
-  "event_category": "customer",
-  "event_type": "customer.updated",
-  "event_object_id": "cust_00000000000000000000000000",
-  "event_created_at": "2026-01-01T00:00:00.000Z",
+  "api_version": "v0",
+  "event_id": "wh_123abc456def",
+  "event_sequence": 1,
+  "event_developer_id": "dev_111aaa222bbb333ccc",
+  "event_category": "transfer",
+  "event_type": "transfer.created",
+  "event_object_id": "tr_8e9a1f2c3d4b5a69",
+  "event_object_status": "awaiting_funds",
   "event_object": {
-    "id": "cust_00000000000000000000000000",
-    "status": "active"
-  }
+    "id": "tr_8e9a1f2c3d4b5a69",
+    "state": "awaiting_funds",
+    "amount": "1500.00",
+    "currency": "usd",
+    "developer_fee": "0.0",
+    "client_reference_id": null,
+    "on_behalf_of": "cust_alice",
+    "source": {
+      "currency": "usdc",
+      "from_address": "0x1111111111111111111111111111111111111111",
+      "payment_rail": "polygon"
+    },
+    "destination": {
+      "currency": "usd",
+      "payment_rail": "ach",
+      "external_account_id": "external-account-123"
+    },
+    "source_deposit_instructions": {
+      "payment_rail": "polygon",
+      "amount": "1500.00",
+      "currency": "usdc",
+      "to_address": "0x2222222222222222222222222222222222222222"
+    },
+    "created_at": "2025-07-22T11:26:55.000Z",
+    "updated_at": "2025-07-22T11:26:55.000Z"
+  },
+  "event_object_changes": {},
+  "event_created_at": "2025-07-22T11:26:55.000Z"
 }
 ```
 
-Always treat the exact field names as authoritative from the Bridge API and the
-resource you subscribed to; branch your handler on the event type string
-(e.g. `event_type` / `event_category`) and access the nested resource object.
+- `event_id` is globally unique; Bridge suggests it as an idempotency key.
+- `event_object` is the full resource, rendered the same way as the API response.
+- `event_object_changes` holds diffs from the previous event on updates.
+- Branch your handler on `event_type`.
 
 ## Delivery, Retries, and Replay Protection
 
-- Return a **2xx quickly** (ideally within a couple of seconds) to acknowledge receipt.
-- On any verification/processing failure, return a **non-2xx (Bridge's docs use 400)** to trigger Bridge's automatic retries.
-- Reject events whose signature timestamp is **older than ~10 minutes** to guard against replay attacks.
+- Return a **200** as quickly as possible to avoid timeouts and retries. Bridge doesn't publish the timeout.
+- If your endpoint is unavailable, Bridge retries with exponential backoff for up to two days. Each retry carries a new signature timestamp.
+- Bridge advises disregarding events older than a few minutes (10 minutes in its example) and returning a **400** so Bridge retries.
 
 ## Full Event Reference
 
@@ -84,3 +116,4 @@ official documentation:
 
 - [Setting up webhooks](https://apidocs.bridge.xyz/get-started/introduction/quick-start/setting-up-webhooks)
 - [Webhook signature verification](https://apidocs.bridge.xyz/platform/additional-information/webhooks/signature)
+- [Event structure](https://apidocs.bridge.xyz/platform/additional-information/webhooks/structure)

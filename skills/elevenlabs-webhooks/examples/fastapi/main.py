@@ -118,24 +118,32 @@ async def elevenlabs_webhook(
 
         # Process based on event type
         if event['type'] == 'post_call_transcription':
-            # Handle call transcription completion
-            logger.info(f"Call transcription completed: {event['data'].get('call_id')}")
-            # Add your business logic here
+            # Call ended and analysis is complete
+            logger.info(f"Call transcription completed: {event['data'].get('conversation_id')}")
+            # Your code: store event['data']['transcript'] and event['data']['analysis']
+
+        elif event['type'] == 'post_call_audio':
+            # Full call audio as base64-encoded MP3 in event['data']['full_audio']
+            logger.info(f"Call audio ready: {event['data'].get('conversation_id')}")
+
+        elif event['type'] == 'call_initiation_failure':
+            # Phone call didn't connect: failure_reason is busy, no-answer or unknown
+            logger.info(f"Call initiation failed: {event['data'].get('failure_reason')}")
 
         elif event['type'] == 'voice_removal_notice':
             # Handle voice removal notice
             logger.info(f"Voice removal notice received: {event['data']}")
-            # Add logic to handle voice removal notice
+            # Your code: switch to one of event['data']['suggested_voices']
 
         elif event['type'] == 'voice_removal_notice_withdrawn':
             # Handle voice removal notice withdrawal
             logger.info(f"Voice removal notice withdrawn: {event['data']}")
-            # Add logic to handle notice withdrawal
+            # Your code: keep using event['data']['voice_id']
 
         elif event['type'] == 'voice_removed':
             # Handle voice removal completion
             logger.info(f"Voice removed: {event['data']}")
-            # Add logic to handle voice removal completion
+            # Your code: stop using event['data']['voice_id']
 
         else:
             logger.info(f"Unknown event type: {event['type']}")

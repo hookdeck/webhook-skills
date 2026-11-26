@@ -57,7 +57,7 @@ describe('Fireflies Webhook Endpoint (V2)', () => {
       expect(verifyFirefliesWebhook(tampered, signature, webhookSecret)).toBe(false);
     });
 
-    it('should return false for a bare hex digest with no sha256= prefix (V1 style)', () => {
+    it('should return false for a bare hex digest with no sha256= prefix', () => {
       const payload = Buffer.from('{"meeting_id":"abc"}');
       const bareHex = crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex');
 

@@ -28,7 +28,8 @@ Calendly signs each webhook with the **`Calendly-Webhook-Signature`** header, wh
 contains a timestamp and a signature: `t=<timestamp>,v1=<signature>`. Compute
 `HMAC-SHA256` (hex) over `{timestamp}.{raw body}` using the subscription's
 **signing key**, compare timing-safe, and reject stale timestamps (~3 min) to
-prevent replay. Calendly has no SDK verification helper — verify manually and
+prevent replay. With a personal access token, set `signing_key` yourself when you create
+the subscription; the subscription object Calendly returns doesn't include it. Calendly has no SDK verification helper — verify manually and
 always use the **raw** request body (don't `JSON.parse` first).
 
 ```javascript
@@ -71,12 +72,12 @@ function verifyCalendlySignature(rawBody, header, signingKey, toleranceSec = 180
 | `invitee_no_show.deleted` | A no-show mark is removed from an invitee |
 | `routing_form_submission.created` | A routing form is submitted |
 
-> **For the full event reference**, see [references/overview.md](references/overview.md) and [Calendly's webhook documentation](https://developer.calendly.com/api-docs/c1ddba8ce4a0d-webhook-subscriptions).
+> **For the full event reference**, see [references/overview.md](references/overview.md) and [Calendly's Create Webhook Subscription reference](https://developer.calendly.com/api-docs/calendly-api/webhooks/create-webhook-subscription).
 
 ## Environment Variables
 
 ```bash
-# Signing key returned when you create the webhook subscription
+# The signing_key you set when creating the subscription (or your OAuth app's key)
 CALENDLY_WEBHOOK_SIGNING_KEY=your_webhook_signing_key_here
 ```
 

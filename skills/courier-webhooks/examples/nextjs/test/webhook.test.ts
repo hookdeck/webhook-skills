@@ -59,7 +59,7 @@ describe('verifyCourierWebhook', () => {
     expect(verifyCourierWebhook(payload, header, webhookSecret)).toBe(false);
   });
 
-  it('accepts a seconds-precision timestamp (unit is undocumented)', () => {
+  it('accepts a seconds-precision timestamp (defensive; Courier documents milliseconds)', () => {
     const payload = JSON.stringify({ type: 'message:updated', data: { id: 'm1' } });
     const seconds = Math.floor(Date.now() / 1000);
     const header = generateCourierSignature(payload, webhookSecret, seconds);

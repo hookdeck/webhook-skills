@@ -82,38 +82,38 @@ app.post('/webhooks/bridge-xyz', express.raw({ type: '*/*' }), (req, res) => {
     return res.status(400).send('Invalid JSON');
   }
 
-  // Events are named "<category>.<action>", e.g. "customer.updated".
+  // Events are named "<category>.<action>", e.g. "customer.updated.status_transitioned".
   const eventType = event.event_type || event.type;
 
   switch (eventType) {
     case 'customer.created':
       console.log('Customer created:', event.event_object_id);
-      // TODO: provision the account, begin onboarding
+      // Your code: provision the account, begin onboarding
       break;
 
-    case 'customer.updated':
-      console.log('Customer updated:', event.event_object_id);
-      // TODO: react to KYC approval/rejection, update customer state
+    case 'customer.updated.status_transitioned':
+      console.log('Customer status changed:', event.event_object_id);
+      // Your code: react to KYC approval/rejection, update customer state
       break;
 
-    case 'kyc_link.updated':
-      console.log('KYC link updated:', event.event_object_id);
-      // TODO: track KYC/ToS completion, unblock onboarding
+    case 'kyc_link.updated.status_transitioned':
+      console.log('KYC link status changed:', event.event_object_id);
+      // Your code: track KYC/ToS completion, unblock onboarding
       break;
 
     case 'transfer.created':
       console.log('Transfer created:', event.event_object_id);
-      // TODO: record the new transfer in your ledger
+      // Your code: record the new transfer in your ledger
       break;
 
-    case 'transfer.updated':
-      console.log('Transfer updated:', event.event_object_id);
-      // TODO: update payment status, trigger fulfillment on settlement
+    case 'transfer.updated.status_transitioned':
+      console.log('Transfer status changed:', event.event_object_id);
+      // Your code: update payment status, trigger fulfillment on settlement
       break;
 
-    case 'virtual_account.activity':
+    case 'virtual_account.activity.created':
       console.log('Virtual account activity:', event.event_object_id);
-      // TODO: reconcile incoming funds, credit a balance
+      // Your code: reconcile incoming funds, credit a balance
       break;
 
     default:

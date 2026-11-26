@@ -81,6 +81,7 @@ import base64
 from fastapi import FastAPI, Request, HTTPException
 from time import time
 
+app = FastAPI()
 webhook_secret = os.environ.get("CLERK_WEBHOOK_SECRET")
 
 @app.post("/webhooks/clerk")
@@ -105,15 +106,15 @@ async def clerk_webhook(request: Request):
         hmac.new(secret_bytes, signed_content.encode(), hashlib.sha256).digest()
     ).decode()
 
-    # Svix can send multiple signatures, check each one
-    signatures = [sig.split(',')[1] for sig in svix_signature.split(' ')]
-    if expected_signature not in signatures:
+    # Svix can send several space-delimited "v1,<sig>" entries; accept a match on any v1 entry
+    signatures = [sig.split(',', 1)[1] for sig in svix_signature.split(' ')
+                  if sig.startswith('v1,')]
+    if not any(hmac.compare_digest(expected_signature, sig) for sig in signatures):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # Check timestamp (5-minute window)
-    current_time = int(time())
-    if current_time - int(svix_timestamp) > 300:
-        raise HTTPException(status_code=400, detail="Timestamp too old")
+    # Check timestamp (5 minutes either way, as the Svix libraries do)
+    if abs(int(time()) - int(svix_timestamp)) > 300:
+        raise HTTPException(status_code=400, detail="Timestamp outside tolerance")
 
     # Handle event...
     return {"success": True}
@@ -133,13 +134,13 @@ async def clerk_webhook(request: Request):
 | `user.deleted` | User account deleted |
 | `session.created` | User signed in |
 | `session.ended` | User signed out |
-| `session.removed` | Session revoked |
+| `session.removed` | User signed out and the session was removed from the client |
 | `organization.created` | New organization created |
 | `organization.updated` | Organization settings updated |
 | `organizationMembership.created` | User added to organization |
 | `organizationInvitation.created` | Invite sent to join organization |
 
-> **For full event reference**, see [Clerk Webhook Events](https://clerk.com/docs/integrations/webhooks/overview#event-types) and [Dashboard → Webhooks → Event Catalog](https://dashboard.clerk.com/~/webhooks).
+> **For the full event list**, see the **Event Catalog** tab on the [Webhooks page](https://dashboard.clerk.com/~/webhooks) in the Clerk Dashboard, Clerk's [webhooks OpenAPI spec](https://github.com/clerk/openapi-specs/blob/main/webhooks/2025-04-15.yml), and the [Billing webhooks](https://clerk.com/docs/guides/development/webhooks/billing) page.
 
 ## Environment Variables
 
