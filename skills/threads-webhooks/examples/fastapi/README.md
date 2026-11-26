@@ -21,10 +21,10 @@ handshake and `X-Hub-Signature-256` signature verification.
    cp .env.example .env
    ```
 
-3. Add `THREADS_APP_SECRET` and `THREADS_VERIFY_TOKEN` to `.env`. Use the Threads
-   App Secret (Use cases > Customize > Settings in the Threads API use case), not the
-   Meta App Secret under App settings > Basic: Threads notifications are signed with
-   the Threads App Secret.
+3. Set `THREADS_APP_SECRET` to the Threads App Secret from **Use cases > Customize >
+   Settings** in the Threads API use case. The example uses it to verify signed POSTs.
+   If Meta calls this server directly, also set `THREADS_VERIFY_TOKEN` to the value
+   you enter in Meta. With a Hookdeck Threads source, enter the verify token in Meta only.
 
 ## Run
 
@@ -38,13 +38,11 @@ Server runs on http://localhost:8000
 
 ### Using Hookdeck CLI
 
+In your Hookdeck project, create a **Threads** source named `threads` and enter the Threads App Secret. Use that source's URL as Meta's Callback URL. Sign the CLI into the same project, then forward the source to your local server.
+
 ```bash
-# Forward webhooks to localhost (no account required)
 npx hookdeck-cli listen 8000 threads --path /webhooks/threads
 ```
-
-Use the tunnel URL as the **Callback URL** in the App Dashboard. Meta sends a `GET`
-handshake to verify the URL, then `POST`s events.
 
 ### Run the tests
 
