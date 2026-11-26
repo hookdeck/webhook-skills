@@ -15,7 +15,7 @@ Clerk uses Svix to handle webhook delivery, which provides enterprise-grade reli
 | `user.deleted` | User account removed | Clean up user data, cancel subscriptions, archive records |
 | `session.created` | User signs in | Log activity, update last login, check concurrent sessions |
 | `session.ended` | User signs out | Log activity, clean up temporary data |
-| `session.removed` | Session is revoked | Force re-authentication, security audit |
+| `session.removed` | User signs out and the session is removed from the client | Log activity, clean up session data |
 | `organization.created` | New org created | Set up team workspace, assign default roles |
 | `organization.updated` | Org settings change | Update billing, sync permissions |
 | `organizationMembership.created` | User joins org | Grant access, send notification |
@@ -78,10 +78,11 @@ Clerk webhooks include these Svix headers for verification:
 ## Delivery Guarantees
 
 - **At-least-once delivery** - Events may be delivered multiple times
-- **Retry schedule** - Failed deliveries are retried with exponential backoff
+- **Retry schedule** - Failed deliveries are retried on [Svix's schedule](https://docs.svix.com/retries), with exponential backoff
+- **Same `svix-id` on every attempt** - Store it to skip events you've already processed
 - **Order not guaranteed** - Events may arrive out of order
 - **Idempotency required** - Your handler should handle duplicate events gracefully
 
 ## Full Event Reference
 
-For the complete list of events and their payloads, see [Clerk's Webhook Documentation](https://clerk.com/docs/integrations/webhooks/overview#event-types).
+For the complete list of events, see the **Event Catalog** tab on the [Webhooks page](https://dashboard.clerk.com/~/webhooks) in the Clerk Dashboard. Clerk's [webhooks OpenAPI spec](https://github.com/clerk/openapi-specs/blob/main/webhooks/2025-04-15.yml) has an example payload for each event it lists.

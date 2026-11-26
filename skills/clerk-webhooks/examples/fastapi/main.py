@@ -41,10 +41,11 @@ def verify_clerk_signature(
 
         # Svix can send multiple signatures separated by spaces
         # Each signature is in format "v1,actualSignature"
-        signatures = [sig.split(',')[1] for sig in svix_signature.split(' ')]
+        signatures = [sig.split(',', 1)[1] for sig in svix_signature.split(' ')
+                      if sig.startswith('v1,')]
 
-        # Check if any signature matches
-        return expected_signature in signatures
+        # Check if any signature matches, in constant time
+        return any(hmac.compare_digest(expected_signature, sig) for sig in signatures)
 
     except Exception:
         return False
@@ -95,7 +96,7 @@ async def clerk_webhook(
     try:
         timestamp = int(svix_timestamp)
         current_time = int(time())
-        if current_time - timestamp > 300:  # 5 minutes
+        if abs(current_time - timestamp) > 300:  # 5 minutes either way
             raise HTTPException(
                 status_code=400,
                 detail="Timestamp too old"
@@ -128,30 +129,30 @@ async def clerk_webhook(
         if email_addresses := event_data.get("email_addresses"):
             email = email_addresses[0].get("email_address") if email_addresses else None
         print(f"Email: {email}")
-        # TODO: Add your user creation logic here
+        # Your code: Add your user creation logic here
 
     elif event_type == "user.updated":
         print(f"User updated: {event_data.get('id')}")
-        # TODO: Add your user update logic here
+        # Your code: Add your user update logic here
 
     elif event_type == "user.deleted":
         print(f"User deleted: {event_data.get('id')}")
-        # TODO: Add your user deletion logic here
+        # Your code: Add your user deletion logic here
 
     elif event_type == "session.created":
         print(f"Session created: {event_data.get('id')}")
         print(f"User ID: {event_data.get('user_id')}")
-        # TODO: Add your session creation logic here
+        # Your code: Add your session creation logic here
 
     elif event_type == "session.ended":
         print(f"Session ended: {event_data.get('id')}")
         print(f"User ID: {event_data.get('user_id')}")
-        # TODO: Add your session end logic here
+        # Your code: Add your session end logic here
 
     elif event_type == "organization.created":
         print(f"Organization created: {event_data.get('id')}")
         print(f"Name: {event_data.get('name')}")
-        # TODO: Add your organization creation logic here
+        # Your code: Add your organization creation logic here
 
     else:
         print(f"Unhandled event type: {event_type}")

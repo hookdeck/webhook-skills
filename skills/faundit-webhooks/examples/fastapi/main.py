@@ -86,13 +86,13 @@ def handle_item_status(data: dict):
 
     if status == "pickup-scheduled":
         print(f"Item {item_id} pickup scheduled")
-        # TODO: notify the owner, prepare fulfillment
+        # Your code: notify the owner, prepare fulfillment
     elif status == "in-route":
         print(f"Item {item_id} is in route")
-        # TODO: update tracking
+        # Your code: update tracking
     elif status == "delivered":
         print(f"Item {item_id} delivered")
-        # TODO: mark return complete
+        # Your code: close the case with the owner
     elif status == "finished":
         print(f"Item {item_id} finished")
     elif status == "expired":
@@ -103,17 +103,18 @@ def handle_item_status(data: dict):
 
 def handle_request_status(data: dict):
     """Handle a request-status event. data["status"] is one of:
-    registered, not-found, resolved, deleted, expired, anonymized
+    registered, awaiting-guest-response, not-found, resolved, deleted,
+    expired, anonymized
     """
     status = data.get("status")
     request_id = data.get("id")
 
     if status == "registered":
         print(f"Request {request_id} registered")
-        # TODO: acknowledge the lost-item claim
+        # Your code: acknowledge the lost-item claim
     elif status == "resolved":
         print(f"Request {request_id} resolved")
-        # TODO: notify the customer their item was matched
+        # Your code: notify the customer their item was matched
     elif status == "not-found":
         print(f"Request {request_id} not found")
     elif status == "expired":

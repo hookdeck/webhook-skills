@@ -4,7 +4,7 @@ description: >
   Receive and verify Facebook (Meta Graph API) webhooks. Use when setting up
   Facebook webhook handlers, completing the GET verification handshake,
   debugging X-Hub-Signature-256 signature verification, or handling Page,
-  Instagram, and Messenger events like feed, mention, comments, and messages.
+  User, permissions and ad account events like feed, mention and leadgen.
 license: MIT
 metadata:
   author: hookdeck
@@ -18,11 +18,14 @@ Facebook webhooks are delivered through the **Meta Graph API** and are shared by
 Facebook Pages, Instagram, Messenger, WhatsApp, and other Meta products. They do
 **not** follow the Standard Webhooks spec.
 
-> **Using WhatsApp?** The WhatsApp Business Platform shares this exact Meta
-> mechanism but has its own events, payloads, and setup — use the dedicated
-> [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks)
-> skill. This skill covers Facebook Pages, Instagram, and Messenger. The shared
-> handshake + `X-Hub-Signature-256` algorithm is documented once, canonically, in
+> **Using WhatsApp, Messenger or Instagram?** They share this exact Meta
+> mechanism but have their own events, payloads, and setup — use the dedicated
+> [whatsapp-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/whatsapp-webhooks),
+> [messenger-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/messenger-webhooks)
+> or [instagram-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/instagram-webhooks)
+> skill. This skill covers the Graph API objects such as Pages, Users, permissions
+> and ad accounts. The shared handshake + `X-Hub-Signature-256` algorithm is
+> documented once, canonically, in
 > [references/verification.md](references/verification.md).
 
 ## When to Use This Skill
@@ -31,7 +34,7 @@ Facebook Pages, Instagram, Messenger, WhatsApp, and other Meta products. They do
 - How do I complete the Facebook GET verification handshake (hub.challenge)?
 - How do I verify Facebook webhook signatures with X-Hub-Signature-256?
 - Why is my Facebook webhook signature verification failing?
-- How do I handle Page `feed`, `mention`, Instagram `comments`, or Messenger `messages` events?
+- How do I handle Page `feed`, `mention` or `leadgen` events?
 
 ## Two Requests, Two Jobs
 
@@ -49,8 +52,7 @@ Facebook uses **one endpoint** for two different HTTP methods:
 Meta signs the **raw** request body with HMAC-SHA256 keyed on your **App
 Secret** and sends the digest in `X-Hub-Signature-256` as `sha256=<hex>`. Verify
 over the raw bytes **before** JSON parsing — Meta signs an escaped-unicode form
-of the payload, so a re-serialized JSON string will not match. (The legacy
-`X-Hub-Signature` header carries SHA-1 — prefer the SHA-256 header.)
+of the payload, so a re-serialized JSON string will not match.
 
 Node:
 
@@ -96,11 +98,10 @@ Facebook events are **(object, field) pairs**, not dotted names. The top-level
 |--------|-------|----------------|
 | `page` | `feed` | Post, comment, like, or reaction on the Page |
 | `page` | `mention` | The Page is mentioned in a post or comment |
-| `page` | `messages` | A person sends a message to the Page (Messenger) |
-| `instagram` | `comments` | A comment is added to an Instagram media object |
-| `instagram` | `mentions` | The Instagram account is @mentioned |
+| `page` | `leadgen` | Someone submits a lead ad form (`value.leadgen_id`) |
 | `user` | `feed` | An update is posted to the user's feed |
-| `permissions` | — | A user grants or revokes a permission |
+| `permissions` | `connected` | A user connects to or disconnects from the app |
+| `ad_account` | `creative_fatigue` | An ad's creative fatigue level changes |
 
 > **For the full list**, see [Meta Webhooks Reference](https://developers.facebook.com/docs/graph-api/webhooks/reference).
 
@@ -123,8 +124,10 @@ Facebook events are **(object, field) pairs**, not dotted names. The top-level
 
 - A single POST can **batch up to 1000 updates** across `entry[]` — always
   iterate `entry[]` and handle each individually.
-- Messenger deliveries carry a `messaging` array on each entry instead of
-  `changes`.
+- Messenger deliveries, and Page Integrity (`business_integrity`) ones, carry a
+  `messaging` array on each entry instead of `changes`.
+- With the App Dashboard's **Include Values** setting off, an entry carries
+  `changed_fields` (field names only) instead of `changes`.
 - Respond `200 OK` quickly. Failed deliveries are retried immediately, then with
   decreasing frequency for up to **36 hours**, after which they are dropped.
 
@@ -132,8 +135,7 @@ Facebook events are **(object, field) pairs**, not dotted names. The top-level
 
 | Header | Description |
 |--------|-------------|
-| `X-Hub-Signature-256` | HMAC SHA-256 of the raw body, `sha256=<hex>` (use this) |
-| `X-Hub-Signature` | Legacy HMAC SHA-1 signature (avoid) |
+| `X-Hub-Signature-256` | HMAC SHA-256 of the raw body, `sha256=<hex>` |
 
 ## Environment Variables
 
@@ -144,15 +146,19 @@ FACEBOOK_VERIFY_TOKEN=your_verify_token   # A string you choose; must match the 
 
 ## Local Development
 
+Meta sends a `GET` verification request when you save the Callback URL, so use
+a Hookdeck source created with the **Facebook** source type, which answers it,
+rather than a plain tunnel URL. Then forward that source's events to your
+local server:
+
 ```bash
-# Start tunnel (no account needed)
+# "facebook" is the name of a source you created with the Facebook source type
 npx hookdeck-cli listen 3000 facebook --path /webhooks/facebook
 ```
 
-Use the tunnel URL as the **Callback URL** in App Dashboard → Webhooks. Note:
-apps in **Development mode** only receive test notifications, and Page
-subscriptions also require the `pages_manage_metadata` permission granted via
-`POST /{page-id}/subscribed_apps`.
+Use the source URL as the **Callback URL** in App Dashboard → Webhooks. Page
+notifications are only sent once the Page has installed your app via
+`POST /{page-id}/subscribed_apps`, which needs `pages_manage_metadata`.
 
 ## Reference Materials
 

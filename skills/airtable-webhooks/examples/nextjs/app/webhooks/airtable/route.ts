@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       const { payloads } = await fetchPayloads(baseId, webhookId /*, loadCursor(...) */);
       for (const payload of payloads) {
         console.log('Changes:', JSON.stringify(summarizeChanges(payload)));
-        // TODO: dispatch on summary.tables / payload.actionMetadata.source
+        // Your code: dispatch on summary.tables / payload.actionMetadata.source
       }
     } catch (err) {
       console.error('Failed to fetch payloads:', err);

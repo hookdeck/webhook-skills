@@ -155,7 +155,8 @@ Because the token *is* the URL, rotation means re-registering:
 ## Using Hookdeck
 
 Hookdeck's source type for this provider is **`DOCKER_HUB`** (label "Docker
-Hub", slug `docker-hub`). Its verification setting is **"No verification (schema only)"**: Docker Hub repository webhooks are unsigned (no secret, signature or auth header).
+Hub", slug `docker-hub`). Docker Hub repository webhooks are unsigned (no
+secret, signature or auth header), so there is no signature to configure.
 
 What that means in practice:
 
@@ -171,9 +172,6 @@ What that means in practice:
 
 Register the Hookdeck source URL as the destination in the Docker Hub Webhooks
 tab, exactly as you would your own endpoint.
-
-Docker Hub is not yet listed at hookdeck.com/docs/sources (checked 2026-09-28),
-so there is no provider guide page for it there yet.
 
 ## Local Development
 

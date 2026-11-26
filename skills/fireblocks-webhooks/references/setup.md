@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - A Fireblocks workspace (Sandbox for testing, or Production/EU/EU2)
-- Admin or Editor access to the **Developer Center** in the Fireblocks Console
+- An Admin-level role (Owner, Admin or Non-Signing Admin): only these can configure webhooks
 - A publicly reachable HTTPS endpoint (use the Hookdeck CLI or a tunnel for local development)
 
 ## No Signing Secret to Copy
@@ -23,8 +23,8 @@ Keys rotate automatically; the JWKS response is cacheable (`Cache-Control: max-a
 
 ### Option A — Fireblocks Console (Developer Center)
 
-1. Go to the Fireblocks Console → **Developer Center** → **Webhooks (v2)**.
-2. Click **Add Webhook** (or **Create**).
+1. Go to the Fireblocks Console → **Developer center** → **Webhooks**.
+2. Click **Create webhook**.
 3. Enter your endpoint URL, e.g. `https://your-app.com/webhooks/fireblocks`.
 4. **Subscribe to events** — pick the categories or specific event types you need (e.g. `transaction.created`, `transaction.status.updated`, `transaction.approval_status.updated`).
 5. Save. Fireblocks starts delivering signed `POST` requests.

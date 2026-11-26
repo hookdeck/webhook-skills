@@ -13,24 +13,32 @@ configured endpoint whenever a subscribed event occurs.
 Unlike many providers, each FastSpring POST **batches multiple events** in a single
 request. The body is a JSON object with an `events` array:
 
-```json
+This is the request example from FastSpring's
+[Webhooks Overview](https://developer.fastspring.com/reference/webhooks-overview); each
+`data` object is printed on the event's own reference page:
+
+```jsonc
 {
   "events": [
     {
-      "id": "abc123",
-      "type": "order.completed",
+      "id": "jazYJQw5RSWVR474tU2Obw",
       "live": true,
       "processed": false,
-      "created": 1700000000000,
-      "data": { }
+      "type": "subscription.activated",
+      "created": 1426560444800,
+      "data": {
+        // See individual event reference pages for "data" contents
+      }
     },
     {
-      "id": "def456",
-      "type": "subscription.charge.completed",
+      "id": "VOe5PQx-T4S6t8yS_ziYeA",
       "live": true,
       "processed": false,
-      "created": 1700000000001,
-      "data": { }
+      "type": "subscription.deactivated",
+      "created": 1426560444900,
+      "data": {
+        // See individual event reference pages for "data" contents
+      }
     }
   ]
 }
@@ -48,7 +56,7 @@ dispatch on each `event.type`.
 | `live` | `true` for production, `false` for test events |
 | `processed` | Delivery/processing status flag |
 | `created` | Timestamp in milliseconds |
-| `data` | Event-specific object (order, subscription, etc.) |
+| `data` | Event-specific object. Only the related ID by default; the full account, order, product and subscription objects when Webhook Expansion is on |
 
 ## Common Event Types
 
@@ -77,8 +85,9 @@ Additional events include `account.created`, `account.updated`, `chargeback.crea
 
 ## Delivery & Retries
 
-- Endpoints must be served over **HTTPS**.
-- FastSpring **auto-retries** delivery until your endpoint returns HTTP `200`.
+- FastSpring recommends **HTTPS**, on port 443 or one of 3443, 8282, 9191, 9000 or 9999.
+- FastSpring retries any event not marked processed for up to 7 days (at most 12 retries). A `200` marks every event in the POST processed; a `202` marks only the event IDs you list in the response body, one per line; any other status is a failure.
+- After 7 days an event is marked permanently failed; fetch missed events with `GET /events/unprocessed`.
 - Automatic retries reuse the same event `id` — dedupe on `id` to stay idempotent.
 - Optional: allowlist FastSpring's source IP `107.23.30.83`.
 

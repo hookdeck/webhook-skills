@@ -19,7 +19,7 @@ def verify_flexport_webhook(raw_body: bytes, signature_header: str, secret: str)
 
     Flexport signs the raw request body with HMAC-SHA256 keyed on your endpoint's
     secret token and sends the digest in `X-Hub-Signature-256` as `sha256=<hex>`.
-    (A legacy `X-Hub-Signature` SHA-1 header is also sent but is being deprecated.)
+    (A legacy `X-Hub-Signature` SHA-1 header is also sent for legacy integrations.)
     """
     algo, _, sig = (signature_header or "").partition("=")
     if algo != "sha256" or not sig:
@@ -56,46 +56,44 @@ async def flexport_webhook(request: Request):
     print(f"Received Flexport event {event_type} (id: {event.get('id')})")
 
     # Dispatch on the milestone identifier (/object#event format).
-    # NOTE: only /shipment#created and /shipment_leg#departed are confirmed against
-    # Flexport's milestone reference -- the other branches below are illustrative, so
-    # verify the exact identifiers for your account before relying on them.
+    # All of these are documented types on Flexport's Milestones page.
     if event_type == "/shipment#created":
         print(f"Shipment created: {resource.get('id')}")
-        # TODO: create internal shipment/order record
+        # Your code: create internal shipment/order record
 
     elif event_type == "/shipment#booking_confirmed":
         print(f"Booking confirmed for shipment: {shipment.get('id')}")
-        # TODO: notify stakeholders, update ETAs
+        # Your code: notify stakeholders, update ETAs
 
     elif event_type == "/shipment#delivered_in_full":
         print(f"Shipment delivered in full: {shipment.get('id')}")
-        # TODO: close out order, trigger billing
+        # Your code: close out order, trigger billing
 
     elif event_type == "/shipment_leg#departed":
-        print(f"Shipment leg departed: {location.get('name')}")
-        # TODO: update in-transit status, notify customer
+        print(f"Shipment leg departed: {(location.get('place') or {}).get('name')}")
+        # Your code: update in-transit status, notify customer
 
     elif event_type == "/shipment_leg#arrived":
-        print(f"Shipment leg arrived: {location.get('name')}")
-        # TODO: trigger customs / last-mile workflow
+        print(f"Shipment leg arrived: {(location.get('place') or {}).get('name')}")
+        # Your code: trigger customs / last-mile workflow
 
     elif event_type == "/document#document_created":
         print(f"Document created: {resource.get('id')}")
-        # TODO: sync commercial invoice / BOL / packing list
+        # Your code: sync commercial invoice / BOL / packing list
 
     elif event_type == "/invoice#invoice_payment_made":
         print(f"Invoice payment made: {resource.get('id')}")
-        # TODO: reconcile accounts payable
+        # Your code: reconcile accounts payable
 
     elif event_type == "/purchase_order#acknowledged":
         print(f"Purchase order acknowledged: {resource.get('id')}")
-        # TODO: advance procurement workflow
+        # Your code: advance procurement workflow
 
     else:
         print(f"Unhandled event type: {event_type}")
 
-    # Return 200 promptly to acknowledge receipt (Flexport's retry behavior is not
-    # documented, so do not rely on a failed delivery being re-sent)
+    # Return 200 promptly: Flexport retries a delivery a number of times
+    # when it doesn't get one, so a slow response can bring the Event back.
     return {"received": True}
 
 

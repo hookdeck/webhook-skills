@@ -238,14 +238,19 @@ az eventgrid event-subscription update \
 ## 5. Local Development
 
 Event Grid needs a publicly reachable HTTPS URL with a CA-signed certificate, so
-you cannot point a subscription at `localhost`. Use the Hookdeck CLI (no account
-required):
+you cannot point a subscription at `localhost`. With Hookdeck, create a source
+with the **Azure Event Grid** type in the dashboard, then forward it with the
+Hookdeck CLI:
 
 ```bash
-npx hookdeck-cli listen 3000 azure-event-grid --path /webhooks/azure-event-grid
+hookdeck login
+hookdeck listen 3000 <your-azure-event-grid-source-name> --path /webhooks/azure-event-grid
 ```
 
-Use the printed HTTPS URL as `--endpoint`. Then publish a test event to your
+Use the source's URL as `--endpoint`. The source answers the CloudEvents
+`OPTIONS` preflight; for an Event Grid schema subscription, open the
+`validationUrl` from the logged validation event within 10 minutes, because
+your handler's response doesn't go back to Azure. Then publish a test event to your
 custom topic:
 
 ```bash

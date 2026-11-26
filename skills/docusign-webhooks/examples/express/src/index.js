@@ -61,52 +61,52 @@ app.post(
     switch (event) {
       case 'envelope-sent':
         console.log('Envelope sent:', envelopeId);
-        // TODO: Track that the envelope was emailed to recipients
+        // Your code: Track that the envelope was emailed to recipients
         break;
 
       case 'envelope-delivered':
         console.log('Envelope opened:', envelopeId);
-        // TODO: Update status to "viewed"
+        // Your code: Update status to "viewed"
         break;
 
       case 'envelope-completed':
         console.log('Envelope completed:', envelopeId);
-        // TODO: Download signed documents, mark deal as signed, etc.
+        // Your code: Download signed documents, mark deal as signed, etc.
         break;
 
       case 'envelope-declined':
         console.log('Envelope declined:', envelopeId);
-        // TODO: Notify sender, halt workflow
+        // Your code: Notify sender, halt workflow
         break;
 
       case 'envelope-voided':
         console.log('Envelope voided:', envelopeId);
-        // TODO: Clean up any pending state
+        // Your code: Clean up any pending state
         break;
 
       case 'recipient-sent':
         console.log('Recipient notified:', envelopeId);
-        // TODO: Track per-recipient delivery
+        // Your code: Track per-recipient delivery
         break;
 
       case 'recipient-delivered':
         console.log('Recipient opened documents:', envelopeId);
-        // TODO: Update per-recipient status
+        // Your code: Update per-recipient status
         break;
 
       case 'recipient-completed':
         console.log('Recipient completed:', envelopeId);
-        // TODO: Advance signing workflow to the next recipient
+        // Your code: Advance signing workflow to the next recipient
         break;
 
       case 'recipient-declined':
         console.log('Recipient declined:', envelopeId);
-        // TODO: Notify sender
+        // Your code: Notify sender
         break;
 
       case 'recipient-authenticationfailed':
         console.log('Recipient authentication failed:', envelopeId);
-        // TODO: Flag for review
+        // Your code: Flag for review
         break;
 
       default:

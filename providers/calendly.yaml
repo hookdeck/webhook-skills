@@ -1,8 +1,8 @@
 name: calendly
 displayName: Calendly
 docs:
-  webhooks: https://developer.calendly.com/api-docs/ZG9jOjQ2NDA2NA-webhook-signatures
-  overview: https://developer.calendly.com/api-docs
+  webhooks: https://developer.calendly.com/api-docs/overview/webhooks/webhook-signatures
+  overview: https://developer.calendly.com/api-docs/overview/api/reference
 notes: >
   Scheduling platform. Verify with the Calendly-Webhook-Signature header, which contains a
   timestamp and signature (`t=<ts>,v1=<sig>`). Compute HMAC-SHA256 (hex) over

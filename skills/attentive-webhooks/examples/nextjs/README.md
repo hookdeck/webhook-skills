@@ -5,7 +5,7 @@ Minimal example of receiving Attentive webhooks with signature verification usin
 ## Prerequisites
 
 - Node.js 18+
-- An Attentive webhook configured with a signing key ("client secret")
+- An Attentive webhook configured with a Signing key (from the custom app's Webhooks tab)
 
 ## Setup
 

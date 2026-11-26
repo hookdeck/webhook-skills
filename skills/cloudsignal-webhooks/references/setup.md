@@ -47,14 +47,16 @@ you want to receive.
 ## Acknowledge Correctly (Retries)
 
 Return **HTTP 200** (or 204) as soon as you have accepted the signal. Any other
-status — or an unreachable endpoint — causes CloudSignal to **retry, up to 100
-attempts over 7 days**. Acknowledge fast and do heavy work asynchronously; return
+status, including other 2xx codes, or an unreachable endpoint causes CloudSignal
+to **retry, up to 100 attempts over 7 days**. Acknowledge fast and do heavy work asynchronously; return
 `401` only for an incorrect/missing `apikey`.
 
 ## Testing
 
-- Trigger real signals by placing a test order in your Cloudprinter.com account
-  and watching it move through fulfilment.
+- Put your CloudCore API interface in Sandbox mode and place a test order:
+  Cloudprinter doesn't send it to a printer, but generates signals as if it were
+  printed and shipped. Watch them under "CloudSignal Webhooks" > "Logs" in the
+  admin dashboard, where you can also resend a signal.
 - For local development, tunnel to your machine with the Hookdeck CLI:
 
   ```bash
@@ -66,5 +68,5 @@ attempts over 7 days**. Acknowledge fast and do heavy work asynchronously; retur
 
 ## Full Documentation
 
-- [CloudSignal Webhooks v2.0](https://docs.cloudprinter.com/client/cloudsignal-webhooks-v2-0)
+- [CloudSignal Webhooks v2.1](https://docs.cloudprinter.com/client/cloudsignal-webhooks-v2-1)
 - [CloudSignal connected app (setup)](https://docs.cloudprinter.com/connected-apps/cloudsignal-webhooks/)

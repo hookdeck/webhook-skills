@@ -23,14 +23,12 @@ app = FastAPI()
 
 CLIENT_ID = os.environ.get("ALIPAY_CLIENT_ID", "")
 ALIPAY_PUBLIC_KEY = os.environ.get("ALIPAY_PUBLIC_KEY", "")  # verifies inbound
-MERCHANT_PRIVATE_KEY = os.environ.get("ALIPAY_MERCHANT_PRIVATE_KEY", "")  # signs the ack
-KEY_VERSION = os.environ.get("ALIPAY_KEY_VERSION", "1")
 
 WEBHOOK_PATH = "/webhooks/alipay"
 
-# The acknowledgement body Antom expects, verbatim (compact, no spaces).
+# The acknowledgement body Antom expects, with fixed values. No signature is required.
 ACK_BODY = json.dumps(
-    {"result": {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "Success"}},
+    {"result": {"resultCode": "SUCCESS", "resultStatus": "S", "resultMessage": "success"}},
     separators=(",", ":"),
 )
 
@@ -62,7 +60,7 @@ def verify_alipay_signature(method, uri, client_id, request_time, raw_body, sign
 
     content = _build_signed_content(method, uri, client_id, request_time, raw_body)
 
-    # base64URL, often percent-encoded on the wire: unquote, normalize, pad, decode.
+    # Antom base64-encodes, then URL-encodes: unquote, accept URL-safe base64, pad, decode.
     normalized = unquote(sig_b64).replace("-", "+").replace("_", "/")
     normalized += "=" * (-len(normalized) % 4)
     try:
@@ -78,29 +76,27 @@ def verify_alipay_signature(method, uri, client_id, request_time, raw_body, sign
         return False
 
 
-def sign_alipay_response(method: str, uri: str, response_time: str, body: str) -> str:
-    content = _build_signed_content(method, uri, CLIENT_ID, response_time, body)
-    private_key = serialization.load_pem_private_key(
-        _normalize_pem(MERCHANT_PRIVATE_KEY).encode("utf-8"), password=None
-    )
-    signature = private_key.sign(content, padding.PKCS1v15(), hashes.SHA256())
-    sig_b64url = base64.urlsafe_b64encode(signature).decode("utf-8").rstrip("=")
-    return f"algorithm=RSA256,keyVersion={KEY_VERSION},signature={sig_b64url}"
-
-
-def signed_ack(method: str) -> Response:
-    response_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    signature = sign_alipay_response(method, WEBHOOK_PATH, response_time, ACK_BODY)
+def ack() -> Response:
+    # Antom resends the notification until it gets this fixed body; no signature needed.
     return Response(
         content=ACK_BODY,
         status_code=200,
         media_type="application/json",
         headers={
             "Client-Id": CLIENT_ID,
-            "Response-Time": response_time,
-            "Signature": signature,
+            "Response-Time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
     )
+
+
+def notification_type(event: dict):
+    # The event type sits in a different field per notification API.
+    return (
+        event.get("notifyType")  # notifyPayment, notifyCapture, notifyRefund, notifyReversal
+        or event.get("authorizationNotifyType")  # notifyAuthorization
+        or event.get("disputeNotificationType")  # notifyDispute
+        or event.get("subscriptionNotificationType")  # notifySubscription
+    )  # notifyVaulting and the subscription notifyPayment carry no type
 
 
 @app.post(WEBHOOK_PATH)
@@ -131,26 +127,34 @@ async def alipay_webhook(request: Request):
     except json.JSONDecodeError:
         return Response(content="Invalid JSON", status_code=400)
 
-    # Branch on `notifyType` (no `type` field); result.resultStatus is S/F/U.
+    # result.resultStatus is S (success) or F (failure) where a body has it.
     status = (event.get("result") or {}).get("resultStatus")
-    notify_type = event.get("notifyType")
+    event_type = notification_type(event)
 
-    if notify_type == "PAYMENT_RESULT":
+    if event_type == "PAYMENT_RESULT":
+        # Final result. Deduplicate on notifyType + paymentId; only S means paid.
         print("Payment result:", event.get("paymentRequestId"), event.get("paymentId"), status)
-        # TODO: if status == "S": fulfill the order
-    elif notify_type == "CAPTURE_RESULT":
+        # Your code: if status == "S": fulfill the order
+    elif event_type == "PAYMENT_PENDING":
+        # The buyer has paid; wait for PAYMENT_RESULT. Never overwrite a final result.
+        print("Payment pending:", event.get("paymentRequestId"), event.get("paymentId"))
+    elif event_type == "CAPTURE_RESULT":
         print("Capture result:", event.get("captureRequestId"), event.get("captureId"), status)
-    elif notify_type == "REFUND_RESULT":
-        print("Refund result:", event.get("refundRequestId"), event.get("refundId"), status)
-    elif notify_type == "AUTHORIZATION_RESULT":
-        print("Authorization result:", event.get("authorizationRequestId"), status)
-    elif notify_type in ("DISPUTE_CREATED", "DISPUTE_JUDGED"):
-        print("Dispute:", notify_type, event.get("disputeId"), status)
+    elif event_type == "REFUND_RESULT":
+        print("Refund result:", event.get("refundRequestId"), event.get("refundId"), event.get("refundStatus"))
+    elif event_type == "AUTHCODE_CREATED":
+        # Exchange event["authCode"] for an access token with applyToken.
+        print("Authorization code created:", event.get("authState"))
+    elif event_type in ("TOKEN_CREATED", "TOKEN_CANCELED"):
+        print("Authorization:", event_type, event.get("authState"))
+    elif event_type in ("DISPUTE_CREATED", "DEFENSE_DUE_ALERT", "DISPUTE_JUDGED"):
+        print("Dispute:", event_type, event.get("disputeId"), event.get("paymentId"))
     else:
-        print("Unhandled notifyType:", notify_type)
+        # Acknowledge types you don't handle too, or Antom keeps resending them.
+        print("Unhandled notification type:", event_type)
 
-    # Signed 200 so Antom stops retrying.
-    return signed_ack("POST")
+    # The fixed body so Antom stops resending.
+    return ack()
 
 
 @app.get("/health")

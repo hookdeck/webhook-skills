@@ -7,7 +7,8 @@ your account — a PaymentIntent succeeding, a refund settling, a dispute being
 raised, and more. Instead of polling the API, you register an HTTPS endpoint and
 Airwallex POSTs a JSON payload to it whenever a subscribed event occurs.
 
-Every webhook is signed so you can verify it genuinely came from Airwallex. See
+Webhooks are signed once the webhook has a secret, so you can verify they came
+from Airwallex. See
 [verification.md](verification.md) for the signing scheme and
 [setup.md](setup.md) for configuring an endpoint.
 
@@ -17,20 +18,20 @@ Airwallex webhook payloads share a common envelope:
 
 ```json
 {
-  "id": "evt_hkdemoxxxxxxxxxxxxxxxxxx",
-  "name": "payment_intent.succeeded",
-  "account_id": "acct_xxxxxxxxxxxxxxxx",
+  "id": "evt_100_2019102201540902013102020043_8321220011893766",
+  "name": "payment_attempt.authorized",
+  "account_id": "19621303213",
   "data": {
-    "object": {
-      "id": "int_hkdemoxxxxxxxxxxxxxxxxxx",
-      "amount": 100.0,
-      "currency": "USD",
-      "status": "SUCCEEDED"
-    }
+    "object": {...}
   },
-  "created_at": "2026-07-24T12:34:56+0000"
+  "created_at": "2019-10-22T01:54:09+0000",
+  "version": "2024-02-22"
 }
 ```
+
+(The envelope example from Airwallex's
+[Listen for webhook events](https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events)
+page; `data.object` matches the resource's Retrieve API response.)
 
 Key fields:
 
@@ -39,7 +40,9 @@ Key fields:
 | `id` | Unique event ID. **Use this for idempotency** — Airwallex re-sends the same `id` on retry. |
 | `name` | The event type string (e.g. `payment_intent.succeeded`). **Not** `type`. |
 | `account_id` | The account the event belongs to (may be empty for non-account-level events). |
-| `data.object` | The business resource that changed (a PaymentIntent, refund, dispute, etc.). |
+| `org_id` | The organization the event belongs to, for organization-level events (may be empty). |
+| `data.object` | The business resource that changed (a PaymentIntent, refund, dispute, etc.). Several non-payments products put the resource's fields directly in `data`. |
+| `version` | The subscription's API version, which decides the event names and the content of `data`. |
 | `created_at` | When the event was generated. Airwallex does **not** guarantee delivery in generation order — sort by `created_at` if ordering matters. |
 
 ## Common Event Types
@@ -50,7 +53,7 @@ Event names are dot-namespaced by resource. The full set for Online Payments:
 | Event | Triggered When |
 |-------|----------------|
 | `payment_intent.created` | A PaymentIntent is created |
-| `payment_intent.requires_payment_method` | A payment attempt failed; a new payment method is required |
+| `payment_intent.requires_payment_method` | The PaymentIntent needs a payment method to continue |
 | `payment_intent.updated` | A PaymentIntent is updated |
 | `payment_intent.requires_capture` | Funds are authorized and awaiting capture |
 | `payment_intent.requires_customer_action` | Customer action (e.g. 3DS) is needed |
@@ -58,6 +61,7 @@ Event names are dot-namespaced by resource. The full set for Online Payments:
 | `payment_intent.pending_review` | Under review |
 | `payment_intent.succeeded` | Fully paid |
 | `payment_intent.cancelled` | Cancelled |
+| `payment_intent.payment_failed` | An attempt on the PaymentIntent failed |
 
 ### `payment_attempt.*`
 | Event | Triggered When |
@@ -117,14 +121,19 @@ Event names are dot-namespaced by resource. The full set for Online Payments:
 
 ## Delivery, Retries & Ordering
 
-- **Retries:** Any response other than `2xx`, or a timeout, is retried with
+- **Retries:** Any response other than `200 OK`, or a timeout, is retried with
   exponential back-off over roughly three days. Return `200` fast (do heavy work
   asynchronously).
 - **Idempotency:** Retries carry the same event `id`. De-duplicate on `id`.
 - **Ordering:** Not guaranteed. Use `created_at` if order matters.
-- **Re-trigger:** You can manually re-send past events from the Airwallex web app.
+- **Re-trigger:** Re-deliver past events from Settings → Developer → Events, for
+  up to 30 days after they occurred.
 
 ## Full Event Reference
 
-For the complete, current list see the
-[Airwallex webhook events documentation](https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events/online-payments).
+This file lists Online Payments only. Airwallex also sends events for Payouts
+(`payout.transfer.*`, `payout.batch_transfers.*`), Issuing (`issuing.*`), Billing,
+Spend, Connected Accounts, deposits, conversions and more. Each product has its
+own event-type page under
+[Listen for webhook events](https://www.airwallex.com/docs/developer-tools/webhooks/listen-for-webhook-events),
+and the subscription's API version decides which names you receive.

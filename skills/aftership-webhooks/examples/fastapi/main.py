@@ -213,7 +213,7 @@ def handle_tracking_event(payload: Dict[str, Any]) -> None:
             msg.get("tracking_number"),
             msg.get("aftership_estimated_delivery_date") or "unknown",
         )
-        # TODO: update the promised delivery date, notify the customer of a delay
+        # Your code: update the promised delivery date, notify the customer of a delay
 
     elif event == "tracking_pending_time":
         logger.info(
@@ -221,7 +221,7 @@ def handle_tracking_event(payload: Dict[str, Any]) -> None:
             msg.get("tracking_number"),
             msg.get("slug"),
         )
-        # TODO: chase the warehouse, flag the carrier
+        # Your code: chase the warehouse, flag the carrier
 
     else:
         # Forward-compatibility: acknowledge unknown events rather than failing.
@@ -250,22 +250,22 @@ def handle_tracking_status(msg: Dict[str, Any], is_first_tag: Optional[bool]) ->
 
     elif tag == "OutForDelivery":
         logger.info("🛵 Out for delivery: %s", where)
-        # TODO: send the "arriving today" notification
+        # Your code: send the "arriving today" notification
 
     elif tag == "AttemptFail":
         logger.info("⚠️  Delivery attempt failed for %s — %s", where, detail)
-        # TODO: prompt the customer to reschedule
+        # Your code: prompt the customer to reschedule
 
     elif tag == "Delivered":
         logger.info("✅ Delivered: %s", where)
-        # TODO: mark the order delivered, trigger the review request
+        # Your code: mark the order delivered, trigger the review request
 
     elif tag == "AvailableForPickup":
         logger.info("🏪 Available for pickup: %s — %s", where, detail)
 
     elif tag == "Exception":
         logger.info("🚨 Exception on %s — %s", where, detail)
-        # TODO: open a support ticket
+        # Your code: open a support ticket
 
     elif tag == "Expired":
         logger.info("🗑️  Expired (no tracking info for 30 days): %s", where)
@@ -315,7 +315,7 @@ def handle_shipping_event(payload: Dict[str, Any]) -> None:
     elif event_type == "create_a_label":
         label_url = ((data.get("files") or {}).get("label") or {}).get("url")
         logger.info("   label %s created — %s", data.get("id"), label_url or "no file URL")
-        # TODO: store the label URL against the order
+        # Your code: store the label URL against the order
 
     elif event_type == "cancel_a_label":
         logger.info("   label cancellation %s: %s", data.get("id"), data.get("status"))
@@ -353,14 +353,14 @@ def handle_returns_event(payload: Dict[str, Any]) -> None:
         logger.info(
             "   return %s approved (approval_status=%s)", rma, data.get("approval_status")
         )
-        # TODO: issue the return label, notify the shopper
+        # Your code: issue the return label, notify the shopper
 
     elif event == "return.rejected":
         logger.info("   return %s rejected", rma)
 
     elif event == "return.resolved":
         logger.info("   return %s resolved", rma)
-        # TODO: reconcile the refund / exchange / store credit
+        # Your code: reconcile the refund / exchange / store credit
 
     elif event == "return.expired":
         logger.info("   return %s expired", rma)

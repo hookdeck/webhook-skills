@@ -65,19 +65,19 @@ async def alchemy_webhook(request: Request):
                 f"{activity.get('fromAddress')} -> {activity.get('toAddress')} "
                 f"({activity.get('hash')})"
             )
-        # TODO: credit balances, detect deposits, update accounting, etc.
+        # Your code: credit balances, detect deposits, update accounting, etc.
 
     # DEPRECATED 2026-08-30: no longer documented by Alchemy and not accepted by the
     # Notify API's create-webhook endpoint. Kept so webhooks created before that date
     # keep working; don't wire new integrations to it.
     elif event_type == "MINED_TRANSACTION":
         print(f"Mined tx on {event.get('network')}: {event.get('transaction', {}).get('hash')}")
-        # TODO: confirm sends, advance order status, unlock features, etc.
+        # Your code: confirm sends, advance order status, unlock features, etc.
 
     # DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     elif event_type == "DROPPED_TRANSACTION":
         print(f"Dropped tx on {event.get('network')}: {event.get('transaction', {}).get('hash')}")
-        # TODO: resubmit with higher gas, alert the user, roll back UI, etc.
+        # Your code: resubmit with higher gas, alert the user, roll back UI, etc.
 
     elif event_type == "NFT_ACTIVITY":
         for activity in event.get("activity", []):
@@ -87,7 +87,7 @@ async def alchemy_webhook(request: Request):
                 f"contract {activity.get('contractAddress')} token {token_id} "
                 f"{activity.get('fromAddress')} -> {activity.get('toAddress')}"
             )
-        # TODO: update marketplace feed, track ownership, mint alerts, etc.
+        # Your code: update marketplace feed, track ownership, mint alerts, etc.
 
     # DEPRECATED 2026-08-30: see MINED_TRANSACTION above.
     elif event_type == "NFT_METADATA_UPDATE":
@@ -95,11 +95,11 @@ async def alchemy_webhook(request: Request):
             f"NFT metadata update on {event.get('network')}: "
             f"{event.get('contractAddress')} #{event.get('tokenId')}"
         )
-        # TODO: refresh cached media/attributes, re-index the collection, etc.
+        # Your code: refresh cached media/attributes, re-index the collection, etc.
 
     elif event_type == "GRAPHQL":
         print("Custom Webhook (GraphQL) matched:", json.dumps(event.get("data", {})))
-        # TODO: handle your Custom Webhook query results
+        # Your code: handle your Custom Webhook query results
 
     else:
         print(f"Unhandled webhook type: {event_type}")

@@ -140,10 +140,10 @@ printf '%s' '{"example":"well-known"}' \
   ID, not an access token, and not a "webhook signing secret" — Cronofy does not issue
   one.
 - **base64url instead of base64.** Standard base64 only. Digests contain `+`, `/`, `=`.
-- **Inventing headers.** The only headers Cronofy sends are `Cronofy-HMAC-SHA256` and
+- **Inventing headers.** Push notifications document only `Cronofy-HMAC-SHA256` and
   `Content-Type: application/json; charset=utf-8`. There is no `Cronofy-Signature`, no
-  `X-Cronofy-*`, no delivery-id, no request-id, and no timestamp header. If your code
-  reads one, it will read `undefined` forever.
+  delivery-id, no request-id, and no timestamp header on them. (Event Triggers add
+  `Cronofy-Notification-ID` and `Cronofy-Notification-Attempt`.)
 - **`crypto.timingSafeEqual` throwing.** It raises when buffer lengths differ. Guard the
   length check first, or wrap in try/catch and return `false`.
 - **Header case.** Node lowercases incoming headers: `req.headers['cronofy-hmac-sha256']`.
@@ -164,8 +164,8 @@ captured body.
 
 What to do instead:
 
-- **Idempotency, not staleness.** Key on `channel.channel_id` + `notification.changes_since`
-  for `change`, or make the downstream Read Events sync idempotent (upsert on `event_uid`).
+- **Idempotency, not staleness.** Make the downstream Read Events sync idempotent (upsert
+  on `event_uid`).
   A replayed `change` then costs one redundant API read and nothing else.
 - **Optional URL token.** Cronofy suggests embedding a secret token in the `callback_url`
   itself, which can differ per channel. It's defence in depth — a cheap pre-filter, not a
@@ -191,6 +191,6 @@ To isolate whether the problem is your HMAC or your raw-body plumbing, log
 
 ## Official Documentation
 
-- [Authentication of push notifications](https://docs.cronofy.com/developers/push-notifications/authentication/)
-- [Push Notifications](https://docs.cronofy.com/developers/api/push-notifications/)
+- [Authentication of push notifications](https://docs.cronofy.com/api-reference/authorization/webhook-authentication/)
+- [Push Notifications](https://docs.cronofy.com/api-reference/calendar-control/push-notifications/)
 - [cronofy/notification-hmac-examples](https://github.com/cronofy/notification-hmac-examples)

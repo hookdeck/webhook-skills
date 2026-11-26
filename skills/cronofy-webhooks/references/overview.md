@@ -26,9 +26,6 @@ differ per channel.
 | `profile_initial_sync_completed` | The initial calendar sync for a newly connected profile finished | Kick off a full read now that data is complete; flip an onboarding UI state |
 | `gdpr_requested` | The account invoked their GDPR right to be forgotten | Delete the account's data on your side |
 
-Cronofy's prose says "there are currently five types" and then enumerates six. The
-enumerated list is authoritative — treat all six as real.
-
 **Cronofy explicitly asks you to ignore unknown types:** "your code should be tolerant of
 others, by ignoring them, so if more are introduced in future your integration will not
 fail." Always include a default branch that logs and returns 2xx.
@@ -136,20 +133,21 @@ recreate it.
 
 ## Idempotency
 
-There is no delivery-id header and no timestamp header, so you cannot dedupe on provider
-metadata. Practical keys:
+Push notifications carry no delivery-id header and no timestamp header, so you cannot
+dedupe them on provider metadata. Make the downstream Read Events sync idempotent (upsert
+on event `event_uid`) instead. Don't key on `channel.channel_id` + `notification.type` or
+`notification.changes_since`: types such as `profile_disconnected` can genuinely recur on a
+channel and carry no `changes_since`, so those keys would drop real notifications.
 
-- `channel.channel_id` + `notification.changes_since` for `change`
-- `channel.channel_id` + `notification.type` for the one-shot types
-- Or skip webhook-level dedupe entirely and make the downstream Read Events sync
-  idempotent (upsert on event `event_uid`), which is the more robust option
+Event Triggers are the exception: they send `Cronofy-Notification-ID`, which Cronofy keeps
+the same across retries for deduplication, and `Cronofy-Notification-Attempt`.
 
 ## Other Cronofy Callback Surfaces
 
 Cronofy's docs state "HMACs are generated in the same way for all callback events", so the
 same verification code covers:
 
-- **Event Triggers** (beta) — note its timeout is **7 seconds**, not 5
+- **Event Triggers** — note its timeout is **7 seconds**, not 5
 - **Smart Invite** callbacks
 - **Meeting Agent** callback notifications
 
@@ -158,6 +156,6 @@ notifications.
 
 ## Full Event Reference
 
-- [Push Notifications](https://docs.cronofy.com/developers/api/push-notifications/)
-- [Push notification authentication](https://docs.cronofy.com/developers/push-notifications/authentication/)
-- [Data centres](https://docs.cronofy.com/developers/data-centers/)
+- [Push Notifications](https://docs.cronofy.com/api-reference/calendar-control/push-notifications/)
+- [Push notification authentication](https://docs.cronofy.com/api-reference/authorization/webhook-authentication/)
+- [Data centres](https://docs.cronofy.com/developers/temporal-grid/data-centers/)

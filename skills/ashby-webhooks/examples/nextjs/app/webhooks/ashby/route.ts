@@ -41,12 +41,10 @@ export async function POST(request: NextRequest) {
   // Verify webhook signature before parsing
   if (!verifyAshbyWebhook(body, signature, process.env.ASHBY_WEBHOOK_SECRET!)) {
     console.error('Webhook signature verification failed');
-    // WARNING: on Ashby any status >= 400 — including this 401 — counts as a
-    // delivery failure and can AUTO-DISABLE the webhook until someone re-enables
-    // it in Admin > Integrations > Webhooks. Rejecting is the right security
-    // call, so alert on this log line: a wrong secret will otherwise take the
-    // integration offline silently. The alternative is to return 2xx here
-    // (without processing) and alert out-of-band. See references/verification.md.
+    // Ashby does not retry a 401, so a wrong secret drops deliveries. Alert on
+    // this log line. If this happens on the ping sent when the webhook is
+    // created or edited, Ashby saves the webhook disabled. See
+    // references/verification.md.
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -65,39 +63,39 @@ export async function POST(request: NextRequest) {
 
     case 'applicationSubmit':
       console.log('Application submitted:', data?.application?.id);
-      // TODO: Sync candidate, notify recruiters, etc.
+      // Your code: Sync candidate, notify recruiters, etc.
       break;
 
     case 'applicationUpdate':
       console.log('Application updated:', data?.application?.id);
-      // TODO: Keep external systems in sync.
+      // Your code: Keep external systems in sync.
       break;
 
     case 'candidateHire':
-      console.log('Candidate hired:', data?.candidate?.id);
-      // TODO: Trigger onboarding, HRIS provisioning, etc.
+      console.log('Candidate hired, application:', data?.application?.id);
+      // Your code: Trigger onboarding, HRIS provisioning, etc.
       // Note: candidateHire also fans out applicationUpdate + candidateStageChange.
       break;
 
     case 'candidateStageChange':
-      console.log('Candidate stage changed:', data?.candidate?.id);
-      // TODO: Pipeline analytics, Slack alerts, etc.
+      console.log('Candidate stage changed, application:', data?.application?.id);
+      // Your code: Pipeline analytics, Slack alerts, etc.
       break;
 
     case 'interviewScheduleCreate':
       console.log('Interview schedule created:', data?.interviewSchedule?.id);
-      // TODO: Calendar sync, interviewer prep, etc.
+      // Your code: Calendar sync, interviewer prep, etc.
       break;
 
     case 'offerCreate':
       console.log('Offer created:', data?.offer?.id);
-      // TODO: Offer tracking, approvals, etc.
+      // Your code: Offer tracking, approvals, etc.
       break;
 
     default:
       console.log(`Unhandled event: ${action}`);
   }
 
-  // Return 200 to acknowledge receipt. Any status >= 400 can auto-disable the webhook.
+  // Return 200 to acknowledge receipt. Ashby retries non-2xx responses except 401, 403, 404, 405 and 410.
   return NextResponse.json({ received: true });
 }

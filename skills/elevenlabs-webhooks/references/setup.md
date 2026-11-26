@@ -6,40 +6,33 @@
 - Your application's webhook endpoint URL
 - HTTPS endpoint (required for production)
 
-## Get Your Signing Secret
+## Create the Webhook and Get Your Signing Secret
 
-1. Log in to your ElevenLabs account
-2. Navigate to **Settings** → **General**
-3. Scroll to the **Webhooks** section
-4. If no webhook exists, add one first (see below)
-5. Copy your **Webhook Signing Secret** - it will be displayed when you create or edit a webhook
+1. In the ElevenLabs dashboard, go to [**Developers** > **Webhooks**](https://elevenlabs.io/app/developers/webhooks) and click **Create webhook**
+2. Enter a **Name** and your HTTPS **Callback URL** (e.g., `https://yourdomain.com/webhooks/elevenlabs`)
+3. Choose **HMAC** as the **Webhook Auth Method**
+4. Under **Select events to listen to**, tick the workspace events you want (Voice Library removal notices, **Transcription completed**, **Image & Video API generation or template run completed**)
+5. Create the webhook and store the shared secret it generates in `ELEVENLABS_WEBHOOK_SECRET`
 
-## Register Your Endpoint
+Only workspace admins, or members with the Webhooks Manage permission, can create webhooks. With the API, `POST /v1/workspace/webhooks` with `auth_type: "hmac"` returns `webhook_secret`.
 
-1. In the **Webhooks** section, click **Add Webhook**
-2. Configure your webhook:
-   - **URL**: Enter your webhook endpoint (e.g., `https://yourdomain.com/webhooks/elevenlabs`)
-   - **Events**: Select the events you want to receive:
-     - `post_call_transcription` - Recommended for call analysis
-     - `voice_removal_notice` - For voice removal notifications
-     - `voice_removal_notice_withdrawn` - For voice removal notice withdrawals
-     - `voice_removed` - For voice removal completions
-3. Click **Create Webhook**
-4. **Important**: Copy the signing secret immediately - it won't be shown again
+## Subscribe Products to the Webhook
+
+- **Post-call events**: open the ElevenAgents [settings page](https://elevenlabs.io/app/agents/settings), choose the webhook as the post-call webhook, and select the events (`transcript`, `audio`, `call_initiation_failure`). Override it per agent under the agent's **Settings** > **Post-call webhooks**.
+- **Speech to text**: pass `webhook=true` on each `speech_to_text.convert` request.
+- **Image & Video and templates**: pass a `webhook` target (`{"type": "all"}` or a list of IDs) on each create request.
+- **Alerts**: add the webhook as a notifier under **Developers** > **Alerts** > **Alerts settings** > **Configure notifications**.
 
 ## Test Your Webhook
 
-ElevenLabs doesn't provide a test button, but you can trigger real events:
-
-1. For `post_call_transcription`: Make a test call using the API
-2. For voice events: Perform voice operations that trigger removal notices
+Call [Send Test Webhook Event](https://elevenlabs.io/docs/api-reference/webhooks/test) with a `webhook_type` such as `post_call_transcription`. Test events are signed like real ones and never retried. To resend a stored delivery, use [Redeliver Webhook Delivery](https://elevenlabs.io/docs/api-reference/webhooks/redeliver); it keeps the delivery ID and adds an `ElevenLabs-Webhook-Redelivery` header.
 
 ## Managing Webhooks
 
-- **View Status**: Check webhook health in the dashboard
-- **Update Events**: Edit webhook to add/remove event types
-- **Disable**: Temporarily stop receiving events without deleting
-- **Delete**: Permanently remove the webhook configuration
+- **Retries**: off by default; enable them per webhook in its settings or with `retry_enabled` on Update Workspace Webhook
+- **Disable**: temporarily stop deliveries from the general settings page
+- **Delete**: only when no product uses the webhook
+- **Custom headers**: set `request_headers` through the API or SDK; they are sent alongside `ElevenLabs-Signature`
 
 ## Security Best Practices
 
@@ -55,10 +48,11 @@ ElevenLabs doesn't provide a test button, but you can trigger real events:
 - Verify your endpoint is publicly accessible
 - Check that you've selected the correct event types
 - Ensure your endpoint returns HTTP 200 status
-- Look for auto-disable after 10 consecutive failures
+- Check whether the webhook was auto-disabled (10 or more consecutive failures with no success in the last 7 days) and re-enable it
+- For speech to text and Image & Video, check the request opted in to webhook delivery
 
 **Signature verification failing:**
 - Confirm you're using the raw request body
 - Check that you're parsing the header correctly
 - Verify your secret matches exactly (no extra spaces)
-- Ensure timestamp validation allows for network delay
+- The SDKs reject timestamps older than 30 minutes, so keep your clock in sync

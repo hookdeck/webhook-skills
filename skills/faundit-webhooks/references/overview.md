@@ -28,9 +28,9 @@ finished, expired, …) are **not** separate events.
 |--------|---------|
 | `contact-missing` | No contact details available for the owner |
 | `waiting-response` | Awaiting a response from the owner |
-| `wrong-owner` | Claimed by the wrong person |
+| `wrong-owner` | The contacted owner says the item isn't theirs |
 | `pickup-by-guest` | The guest/owner will pick the item up |
-| `left-behind` | Item was left behind |
+| `left-behind` | The owner doesn't want the item back |
 | `finished` | Handling complete |
 | `shipment-paid` | Shipment has been paid for |
 | `pickup-scheduled` | A pickup has been scheduled |
@@ -45,10 +45,11 @@ finished, expired, …) are **not** separate events.
 | Status | Meaning |
 |--------|---------|
 | `registered` | A lost-item request was registered |
-| `not-found` | No matching item found |
+| `awaiting-guest-response` | The location asked the guest for more details (listed on Faundit's Request status page only) |
+| `not-found` | The location marked the request as not found |
 | `resolved` | Request resolved (item matched/returned) |
 | `deleted` | Request record deleted |
-| `expired` | Request expired |
+| `expired` | Request unresolved for more than 18 days |
 | `anonymized` | Personal data anonymized (retention/GDPR) |
 
 ## Event Payload Structure
@@ -59,10 +60,10 @@ Both event types share the same envelope:
 {
   "event-type": "item-status",
   "data": {
-    "id": 12345,
-    "timestamp": "2026-01-15T10:30:00Z",
-    "status": "delivered",
-    "locationID": "loc_abc123"
+    "id": 133378,
+    "timestamp": "2022-08-01T08:48:09.621Z",
+    "status": "shipment-paid",
+    "locationID": "locationID"
   }
 }
 ```

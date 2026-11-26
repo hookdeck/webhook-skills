@@ -2,7 +2,7 @@
 name: bridge-api-webhooks
 description: >
   Receive and verify Bridge API webhooks (bridgeapi.io — the open-banking
-  aggregator by Bridge/Bankin', NOT bridge.xyz). Use when setting up Bridge API
+  aggregator, NOT bridge.xyz). Use when setting up Bridge API
   webhook handlers, debugging BridgeApi-Signature HMAC-SHA256 verification, or
   handling events like item.created, item.refreshed, item.account.updated,
   payment.transaction.created, or user.deleted.
@@ -16,7 +16,7 @@ metadata:
 # Bridge API Webhooks
 
 > **Which Bridge?** This skill is for **Bridge API** (`bridgeapi.io`), the
-> open-banking / account-aggregation platform by Bridge (formerly Bankin').
+> open-banking / account-aggregation platform by Bridge (the B2B sister brand of Bankin').
 > It is **not** [bridge.xyz](https://github.com/hookdeck/webhook-skills/tree/main/skills/bridge-xyz-webhooks)
 > (the stablecoin/crypto payments company). See
 > [bridge-xyz-webhooks](https://github.com/hookdeck/webhook-skills/tree/main/skills/bridge-xyz-webhooks)
@@ -96,30 +96,36 @@ Names are lowercase `resource.action` (except the dashboard test event).
 
 | Event | Triggered When |
 |-------|----------------|
-| `item.created` | A bank connection (item) is created |
-| `item.refreshed` | An item's data finished refreshing |
-| `item.account.created` | A new account is discovered under an item |
-| `item.account.updated` | An account's balance/details changed |
-| `item.account.deleted` | An account is removed from an item |
+| `item.created` | A user starts adding a bank connection (item) in Bridge Connect |
+| `item.refreshed` | An item was refreshed; carries `status_code` and `refresh_trigger` |
+| `item.deleted` | An item is deleted |
+| `item.account.created` | A new account is detected on an item |
+| `item.account.updated` | An account's transactions, balance or data access changed |
+| `item.account.deleted` | The bank no longer updates an account |
+| `provider.created` | A new provider (bank) is added |
+| `provider.updated` | A provider's details changed |
 | `payment.transaction.created` | A payment transaction is created |
-| `payment.transaction.updated` | A payment transaction's status changed |
-| `payment.link.updated` | A payment link's status changed |
+| `payment.transaction.updated` | A payment transaction is updated (e.g. its `status`) |
+| `payment.link.updated` | A payment link is updated (e.g. its `payment_link_status`) |
 | `user.deleted` | A user is deleted |
+| `guidance.health.ready` | A guidance is generated (Guidance product) |
 | `TEST_EVENT` | Sent by the dashboard's "Send a test" button |
 
 > **For the full event reference**, see [Bridge API Webhooks docs](https://docs.bridgeapi.io/docs/webhooks).
 
 ## Payload Structure
 
+Bridge's `item.created` example (`external_user_id` is sent only when it isn't null):
+
 ```json
 {
-  "type": "item.refreshed",
-  "timestamp": 1699999999,
   "content": {
-    "item_id": 12345,
-    "user_uuid": "a1b2c3d4-...",
-    "status": 0
-  }
+    "item_id": 4568477,
+    "user_uuid": "766b2f5d-a942-492c-9ea7-2e5aa88cb672",
+    "external_user_id": "external-id"
+  },
+  "timestamp": 1612782588323,
+  "type": "item.created"
 }
 ```
 
@@ -150,7 +156,7 @@ from `X-Forwarded-For` if you sit behind a proxy/load balancer):
 ```
 
 Keep your response body under **10 KB** and reply with `200` as quickly as
-possible. Non-200 or slow responses are retried with exponential backoff for 1–2 days.
+possible. Non-2xx or slow responses are retried with exponential backoff for 1–2 days.
 
 ## Local Development
 

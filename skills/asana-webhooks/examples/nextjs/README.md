@@ -21,7 +21,7 @@ Minimal example of receiving Asana webhooks with the `X-Hook-Secret` handshake a
    cp .env.example .env
    ```
 
-3. Capture `ASANA_WEBHOOK_SECRET` from the handshake (see below) and add it to `.env`.
+3. Capture `ASANA_WEBHOOK_SECRET` when you create the webhook (see below) and add it to `.env`.
 
 ## Run
 
@@ -47,8 +47,10 @@ curl -X POST https://app.asana.com/api/1.0/webhooks \
   -d '{"data": {"resource": "<PROJECT_GID>", "target": "https://<your-tunnel>/webhooks/asana"}}'
 ```
 
-The route echoes `X-Hook-Secret` during the handshake. Put that value in
-`ASANA_WEBHOOK_SECRET` so subsequent event deliveries verify.
+Asana also returns the secret in the body of the `201 Created` response to
+`POST /webhooks`. Through a Hookdeck URL, Hookdeck answers the handshake itself, so
+copy `X-Hook-Secret` from that response body into `ASANA_WEBHOOK_SECRET` (and restart)
+so subsequent event deliveries verify.
 
 ## How It Works
 

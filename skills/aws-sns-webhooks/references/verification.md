@@ -32,17 +32,14 @@ field **only if it is present** in the message, and include no extras:
 - **`SubscriptionConfirmation`:** `Message`, `MessageId`, `SubscribeURL`,
   `Timestamp`, `Token`, `TopicArn`, `Type`
 - **`UnsubscribeConfirmation`:** `Message`, `MessageId`, `SubscribeURL`,
-  `Timestamp`, `TopicArn`, `Type`
+  `Timestamp`, `Token`, `TopicArn`, `Type` (the same set as a
+  `SubscriptionConfirmation`)
 
-> **Note on `UnsubscribeConfirmation`:** The AWS-official Node validator
-> ([`sns-validator`](https://www.npmjs.com/package/sns-validator)) treats
-> `UnsubscribeConfirmation` with the *notification* field set — it does **not**
-> include `Token` in the string to sign (only `SubscriptionConfirmation` does).
-> AWS's signature docs group the two confirmation types together, so
-> implementations differ here; this skill follows the AWS-official validator's
-> behavior in all three examples so they stay byte-for-byte consistent. The two
-> unambiguous, common cases — `SubscriptionConfirmation` and `Notification` —
-> match the spec exactly.
+> **Note on `UnsubscribeConfirmation`:** AWS's signature page groups the two
+> confirmation types together, and the AWS-official
+> [`sns-validator`](https://www.npmjs.com/package/sns-validator) signs `Token`
+> for both from version 0.3.6 (November 2026). Versions up to 0.3.5 left
+> `Token` out for `UnsubscribeConfirmation`, so pin `^0.3.6`.
 
 Example canonical string for a Notification (each field on its own line):
 
@@ -90,8 +87,9 @@ validator.validate(message, (err, msg) => {
 });
 ```
 
-`sns-validator` **0.3.5+** (Aug 2022) supports both SignatureVersion 1 and 2.
-(0.3.4 and earlier reject SignatureVersion 2 — pin `^0.3.5`.)
+`sns-validator` **0.3.5+** (Aug 2022) supports both SignatureVersion 1 and 2
+(0.3.4 and earlier reject SignatureVersion 2). **0.3.6** (Nov 2026) adds `Token`
+to the `UnsubscribeConfirmation` string to sign, so pin `^0.3.6`.
 
 ### Manual Verification — Python (fallback)
 
@@ -111,16 +109,16 @@ from cryptography.exceptions import InvalidSignature
 _CERT_HOST = re.compile(r"^sns\.[a-zA-Z0-9\-]{3,}\.amazonaws\.com(\.cn)?$")
 
 # Fixed key order per type; include a key only if present in the message.
-# Mirrors the AWS-official sns-validator: only SubscriptionConfirmation adds Token.
-_SUBSCRIPTION_KEYS = ["Message", "MessageId", "Subject", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type"]
-_DEFAULT_KEYS = ["Message", "MessageId", "Subject", "SubscribeURL", "Timestamp", "TopicArn", "Type"]
+# Both confirmation types sign SubscribeURL and Token; a Notification signs Subject if present.
+_NOTIFICATION_KEYS = ["Message", "MessageId", "Subject", "Timestamp", "TopicArn", "Type"]
+_CONFIRMATION_KEYS = ["Message", "MessageId", "SubscribeURL", "Timestamp", "Token", "TopicArn", "Type"]
 
 def canonical_string(msg: dict) -> bytes:
-    keys = _SUBSCRIPTION_KEYS if msg.get("Type") == "SubscriptionConfirmation" else _DEFAULT_KEYS
+    keys = _NOTIFICATION_KEYS if msg.get("Type") == "Notification" else _CONFIRMATION_KEYS
     parts = []
     for field in keys:
         if field not in msg or msg[field] is None:
-            continue  # Subject / SubscribeURL included only when present
+            continue  # Subject is included only when present
         parts.append(field)
         parts.append(str(msg[field]))
     return ("\n".join(parts) + "\n").encode("utf-8")

@@ -5,7 +5,7 @@ import os
 import time
 
 # Set the webhook secret before importing the app.
-os.environ["AIRWALLEX_WEBHOOK_SECRET"] = "whsec_test_secret"
+os.environ["AIRWALLEX_WEBHOOK_SECRET"] = "test_secret"
 
 from fastapi.testclient import TestClient  # noqa: E402
 

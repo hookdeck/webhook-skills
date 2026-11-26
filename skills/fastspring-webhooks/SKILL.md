@@ -65,7 +65,7 @@ def verify(raw_body: bytes, signature_header: str, secret: str) -> bool:
 
 After verifying, iterate `payload.events` and dispatch on each `event.type`.
 Dedupe on `event.id` — automatic retries reuse the same id (manual retries get new
-ids). FastSpring auto-retries over HTTPS until your endpoint returns HTTP `200`.
+ids). FastSpring retries any event not marked processed for up to 7 days (at most 12 retries). A `200` marks every event in the POST processed; a `202` marks only the event IDs you list in the response body, one per line; any other status is a failure.
 
 > **For complete handlers with route wiring, batch iteration, event dispatch, and tests**, see:
 > - [examples/express/](examples/express/)

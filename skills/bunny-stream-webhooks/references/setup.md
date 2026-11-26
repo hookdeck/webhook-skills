@@ -13,7 +13,9 @@ Bunny Stream signs webhooks with the video library's **Read-Only API key** — t
 2. Open **API** (or **Security / API Keys** depending on the dashboard version).
 3. Copy the **Read-Only API key**. This is the value you set as `BUNNY_STREAM_WEBHOOK_SECRET`.
 
-> The Read-Only key is used **only** to verify signatures. To fetch full video metadata after a webhook, you also need the library's read-write **AccessKey** for the Stream API — keep them as separate environment variables.
+> To fetch full video metadata after a webhook, you also need the library's read-write API key for the Stream API. Keep the two keys in separate environment variables.
+>
+> Retries are signed with the library's current Read-Only API key, so if you reset it, update `BUNNY_STREAM_WEBHOOK_SECRET` straight away.
 
 ## Register Your Webhook URL
 
@@ -43,4 +45,6 @@ Then set the Hookdeck URL as the library's Webhook URL and upload a test video.
 
 ## Retry Behavior
 
-Bunny does not document a webhook retry policy. Design your handler to be **idempotent** (the same `Status` for a `VideoGuid` may arrive more than once) and to acknowledge quickly with a `200`, doing heavy work asynchronously.
+Any `2xx` acknowledges a delivery. If a delivery fails with a network error, a timeout, or a `408`, `429` or `5xx`, Bunny retries after 30 seconds, 2 minutes, 10 minutes, 30 minutes, 1 hour and 2 hours, then drops the webhook (about four hours after the event). Other `4xx` responses are not retried. Removing the webhook URL drops pending retries.
+
+A retry resends the original body, so deduplicate on `EventId`, not on `VideoGuid` and `Status`: `Resolution finished` (4) arrives once per resolution and `SmartGenerationFailed` (33) once per failed feature. Acknowledge quickly and do heavy work asynchronously.

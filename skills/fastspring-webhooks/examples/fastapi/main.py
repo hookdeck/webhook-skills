@@ -39,43 +39,43 @@ def handle_event(event: dict) -> None:
 
     if event_type == "order.completed":
         print(f"Order completed: {event_id}")
-        # TODO: Provision access, fulfill, send receipt, etc.
+        # Your code: Provision access, fulfill, send receipt, etc.
 
     elif event_type == "order.failed":
         print(f"Order failed: {event_id}")
-        # TODO: Alert, retry payment flow, etc.
+        # Your code: Alert, retry payment flow, etc.
 
     elif event_type == "order.canceled":
         print(f"Order canceled: {event_id}")
-        # TODO: Revoke provisional access, etc.
+        # Your code: Revoke provisional access, etc.
 
     elif event_type == "subscription.activated":
         print(f"Subscription activated: {event_id}")
-        # TODO: Grant access, start entitlement, etc.
+        # Your code: Grant access, start entitlement, etc.
 
     elif event_type == "subscription.charge.completed":
         print(f"Subscription charge completed: {event_id}")
-        # TODO: Extend entitlement, record revenue, etc.
+        # Your code: Extend entitlement, record revenue, etc.
 
     elif event_type == "subscription.charge.failed":
         print(f"Subscription charge failed: {event_id}")
-        # TODO: Start dunning, notify customer, etc.
+        # Your code: Start dunning, notify customer, etc.
 
     elif event_type == "subscription.updated":
         print(f"Subscription updated: {event_id}")
-        # TODO: Sync plan/quantity changes, etc.
+        # Your code: Sync plan/quantity changes, etc.
 
     elif event_type == "subscription.canceled":
         print(f"Subscription canceled: {event_id}")
-        # TODO: Schedule end-of-term downgrade, etc.
+        # Your code: Schedule end-of-term downgrade, etc.
 
     elif event_type == "subscription.deactivated":
         print(f"Subscription deactivated: {event_id}")
-        # TODO: Revoke access, etc.
+        # Your code: Revoke access, etc.
 
     elif event_type == "return.created":
         print(f"Return created: {event_id}")
-        # TODO: Reverse entitlement, adjust revenue, etc.
+        # Your code: Reverse entitlement, adjust revenue, etc.
 
     else:
         print(f"Unhandled event type: {event_type} ({event_id})")
@@ -106,7 +106,7 @@ async def fastspring_webhook(request: Request):
     for event in events:
         handle_event(event)
 
-    # Return 200 to acknowledge receipt (FastSpring retries until it gets a 200)
+    # Return 200 to mark every event in the batch processed (any status other than 200 or 202 is retried)
     return {"received": True}
 
 

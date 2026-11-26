@@ -1,24 +1,28 @@
 # Setting Up Fireflies Webhooks
 
-This covers **Webhooks V2**, the current scheme. Fireflies steers new webhook
-creation to V2 and marks the V1 page as deprecated. The
-[legacy V1 setup](#legacy-webhooks-v1-setup) is at the end for existing
-integrations.
+This covers **Webhooks V2**, the current scheme. V1 is deprecated and new V1
+webhooks can no longer be saved. The [legacy V1 notes](#legacy-webhooks-v1-setup)
+are at the end for existing integrations.
 
 ## Prerequisites
 
 - A Fireflies.ai account with access to the Webhooks V2 configuration page (an
   API key is also required to call the GraphQL API when you fetch transcripts).
-- Your application's webhook endpoint URL — **HTTPS is required**.
-- The endpoint must accept `POST` and return a `2xx` within 10 seconds.
+- Your application's webhook endpoint URL — **HTTPS is required**, it must
+  resolve to a public host, and redirects are not followed.
+- The endpoint must accept `POST` and return a `2xx` within 30 seconds.
 
 ## Create the Webhook (V2)
 
-1. Open the **Webhooks V2** configuration page in the Fireflies dashboard.
+1. Open the [Webhooks V2 configuration page](https://app.fireflies.ai/integrations/api/webhook).
 2. Enter your **HTTPS endpoint URL** (e.g. `https://your-app.com/webhooks/fireflies`).
-3. Optionally add a **signing secret** (see below — strongly recommended).
-4. **Select the events** you want delivered. Only subscribed events are sent.
-5. Save.
+3. Optionally add a **Signing Secret** (see below — strongly recommended).
+4. Under **Event Subscriptions**, select the events you want delivered. Only
+   subscribed events are sent.
+5. Optionally turn on **Resend when a meeting's notes change** to receive
+   `meeting.transcribed` and `meeting.summarized` again, with `reprocessed_at`,
+   when a meeting's transcript or summary changes.
+6. Save, then click **Send Test Event**.
 
 ### Selecting Events
 
@@ -39,11 +43,12 @@ handler so a future event type does not break existing behaviour.
 Fireflies treats the signing secret as optional at setup. This matters:
 
 > **If you do not set a signing secret, Fireflies sends no `X-Hub-Signature`
-> header at all** — confirmed on a live test delivery. Your endpoint then has no
-> way to prove a request came from Fireflies.
+> header at all** — the docs say the header is sent "only if a signing secret is
+> configured". Your endpoint then has no way to prove a request came from
+> Fireflies.
 
-Set one in production. Any sufficiently random string works; V2 does not
-document the 16–32 character limit that V1 enforced:
+Set one in production. The docs set no length or format rule, so use a long
+random string:
 
 ```bash
 # 32 hex characters
@@ -82,19 +87,22 @@ mutation UploadAudio($input: AudioUploadInput!) {
 }
 ```
 
-The `client_reference_id` you provide is echoed back in the V2 webhook payload
-as `client_reference_id` (same casing), so you can correlate the event with your
-upload without storing a Fireflies-side mapping.
+The per-upload `webhook` URL still delivers the **legacy V1 payload shape**
+(`meetingId`, `eventType`, `clientReferenceId`) for that single upload, and it
+is independent of your saved V2 webhook. If you also have a V2 webhook, the
+same upload's meeting arrives there in the V2 shape, with your reference as
+`client_reference_id`, so handlers that receive both should branch on which
+fields are present.
 
 ## Test Your Endpoint
 
 1. Point the webhook URL at a public tunnel during development (see below).
-2. Send a test delivery from the Webhooks V2 page, or record/upload a short meeting.
+2. Click **Send Test Event** on the Webhooks V2 page, or record/upload a short meeting.
 3. Confirm the request arrives, the signature verifies, and you return a `2xx`
    quickly.
 
-A test delivery is a real POST with a real signature (when a secret is
-configured), so it exercises your verification path.
+Fireflies says the test event confirms your endpoint "is reachable and
+validating payloads correctly". The test body itself is not documented.
 
 ## Local Development
 
@@ -118,21 +126,17 @@ FIREFLIES_WEBHOOK_SECRET=your_signing_secret
 
 ## Legacy: Webhooks V1 Setup
 
-Only relevant for integrations already on V1. New webhooks should use V2.
+Only relevant for integrations already on V1. New V1 webhooks can no longer
+be saved: the webhook field in **Settings → Developer settings** is read-only.
 
-V1 is configured globally rather than per-webhook:
-
-1. Go to the Fireflies dashboard at **app.fireflies.ai/settings**.
-2. Open the **Developer Settings** tab.
-3. In the **Webhooks** section, set the **Webhook URL** to your HTTPS endpoint.
-4. Enter a **custom secret key of 16–32 characters**, or click the refresh
-   button to generate a random secret. Unlike V2, this secret is required.
-5. Save. Fireflies POSTs a `Transcription completed` event to this URL each time
-   a meeting finishes processing.
+- Review an existing V1 webhook, and its secret, under **Settings → Developer
+  settings → Webhook → View Configuration**, where you can also disable it.
+- To move, follow Fireflies' migration steps: enter the same URL (and secret,
+  if you used one) on the Webhooks V2 page, subscribe to `meeting.transcribed`
+  for the V1 behaviour, and update your handler for the V2 payload.
 
 V1 has no event selection — it emits a single event type. Its payload uses
-camelCase (`meetingId`, `eventType`, `clientReferenceId`), and the
-`client_reference_id` passed to `uploadAudio` comes back as `clientReferenceId`.
+camelCase (`meetingId`, `eventType`, `clientReferenceId`).
 
 ## Full Documentation
 

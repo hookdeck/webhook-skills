@@ -70,7 +70,7 @@ async def bridge_webhook(request: Request):
         print(f"Item created: {content.get('item_id')}")
 
     elif event_type == "item.refreshed":
-        print(f"Item refreshed: {content.get('item_id')} (status {content.get('status')})")
+        print(f"Item refreshed: {content.get('item_id')} (status_code {content.get('status_code')})")
 
     elif event_type == "item.account.created":
         print(f"Account created under item {content.get('item_id')}")

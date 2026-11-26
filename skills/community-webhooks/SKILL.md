@@ -4,7 +4,7 @@ description: >
   Receive and verify Community (community.com) SMS platform webhooks. Use when
   setting up a Community webhook handler, debugging `community-signature`
   HMAC-SHA256 verification, or handling message.inbound, message.outbound,
-  member.created, member.updated, and member.deleted events.
+  member.created, member.updated, member.deleted, and member.opted_out events.
 license: MIT
 metadata:
   author: hookdeck
@@ -25,7 +25,7 @@ The developer hub is <https://developer.community.com>.
 - How do I verify the `community-signature` header?
 - Why is my Community webhook signature verification failing?
 - How do I handle `message.inbound` / `message.outbound` events?
-- How do I handle `member.created`, `member.updated`, and `member.deleted` events?
+- How do I handle `member.created`, `member.updated`, `member.deleted`, and `member.opted_out` events?
 - How do I deduplicate Community webhooks (at-least-once delivery)?
 
 ## Verification (core)
@@ -80,16 +80,19 @@ implement the HMAC directly, as above.
 
 ## Event Types
 
-Community documents exactly five event types. Subscriptions are selected
-per webhook in the Dashboard.
+Community documents six event types. Subscriptions are selected per webhook
+in the Dashboard.
 
 | Event | Triggered When | `object` |
 |-------|----------------|----------|
 | `message.inbound` | A member sends a message to your account | `message` |
-| `message.outbound` | Your account sends a message to a member (some are filtered out) | `message` |
+| `message.outbound` | Your account sends a message to a member (some are filtered out, including media-only messages) | `message` |
 | `member.created` | A new member joins | `member` |
-| `member.updated` | A member changes any standard personal data collected | `member` |
-| `member.deleted` | A member unsubscribes or deletes themselves | `member` |
+| `member.updated` | A member unsubscribes or changes any standard personal data collected | `member` |
+| `member.deleted` | A member deletes themselves | `member` |
+| `member.opted_out` | A member unsubscribes, such as by replying STOP; includes an `opt_out` object | `member` |
+
+An opt-out sends both `member.updated` and `member.opted_out` for the same member.
 
 ## Payload Envelope
 
@@ -117,9 +120,14 @@ or any other personal-data field is present on a member event.
 ## Delivery Semantics
 
 - **At-least-once.** The same event can be delivered more than once. Deduplicate
-  by storing the webhook `id` (or object `id`) for **at least an hour** and
-  checking it before processing. This matters most for messages — prefer
-  at-most-once handling there.
+  on the top-level event `id`, which stays the same across retries. Store it for
+  **at least two hours** (longer than the one-hour retry window) and record it
+  atomically before processing. Never deduplicate on `data.object.id`: that is the
+  member or message, and separate events share it (an opt-out sends
+  `member.updated` and `member.opted_out` for the same member). For sends, record
+  the id before acting, so a failure skips the action rather than repeating it.
+- **Ordering.** Retried events can arrive after newer ones. Compare the member's
+  `timestamp` with the one you stored and ignore older updates.
 - **Respond 2xx (200–299) within 15 seconds.** The response body is ignored.
 - **Retries:** on a connection error, non-2xx, or timeout, Community retries up
   to **5 times with increasing backoff, for up to an hour** from the first

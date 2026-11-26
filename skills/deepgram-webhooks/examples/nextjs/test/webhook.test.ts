@@ -5,7 +5,11 @@ import { NextRequest } from 'next/server';
 describe('Deepgram Webhook Handler', () => {
   const callbackUsername = 'dg_user';
   const callbackPassword = 'dg:pass-123'; // contains ':' on purpose
-  const validApiKeyId = 'test_api_key_id_12345';
+  const callbackSecret = '9f2c4e7a1b3d5f60';
+  const withSecret = (secret: string) => ({
+    ...validPayload,
+    metadata: { ...validPayload.metadata, extra: { callback_secret: secret } }
+  });
   const basicAuth = (user: string, pass: string) =>
     'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
   const validAuth = basicAuth(callbackUsername, callbackPassword);
@@ -61,11 +65,11 @@ describe('Deepgram Webhook Handler', () => {
   beforeAll(() => {
     vi.stubEnv('DEEPGRAM_CALLBACK_USERNAME', callbackUsername);
     vi.stubEnv('DEEPGRAM_CALLBACK_PASSWORD', callbackPassword);
-    vi.stubEnv('DEEPGRAM_API_KEY_ID', validApiKeyId);
+    vi.stubEnv('DEEPGRAM_CALLBACK_SECRET', '');
   });
 
   describe('POST /webhooks/deepgram', () => {
-    it('should accept valid Basic Auth without a dg-token header', async () => {
+    it('should accept valid Basic Auth', async () => {
       const response = await POST(makeRequest(validPayload, { Authorization: validAuth }));
       const data = await response.json();
 
@@ -74,15 +78,20 @@ describe('Deepgram Webhook Handler', () => {
       expect(data).toHaveProperty('requestId', 'a847f427-4ad5-4d67-9b95-db801e58251c');
     });
 
-    it('should accept valid Basic Auth with a matching dg-token', async () => {
-      const response = await POST(
-        makeRequest(validPayload, { Authorization: validAuth, 'dg-token': validApiKeyId })
-      );
-      expect(response.status).toBe(200);
+    it('should accept a matching extra callback secret when one is configured', async () => {
+      vi.stubEnv('DEEPGRAM_CALLBACK_SECRET', callbackSecret);
+      try {
+        const response = await POST(
+          makeRequest(withSecret(callbackSecret), { Authorization: validAuth })
+        );
+        expect(response.status).toBe(200);
+      } finally {
+        vi.stubEnv('DEEPGRAM_CALLBACK_SECRET', '');
+      }
     });
 
     it('should reject webhook with missing Authorization header', async () => {
-      const response = await POST(makeRequest(validPayload, { 'dg-token': validApiKeyId }));
+      const response = await POST(makeRequest(validPayload, {}));
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -96,14 +105,19 @@ describe('Deepgram Webhook Handler', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should reject webhook with a mismatched dg-token', async () => {
-      const response = await POST(
-        makeRequest(validPayload, { Authorization: validAuth, 'dg-token': 'invalid_token' })
-      );
-      const data = await response.json();
+    it('should reject a missing or wrong extra callback secret when one is configured', async () => {
+      vi.stubEnv('DEEPGRAM_CALLBACK_SECRET', callbackSecret);
+      try {
+        for (const body of [validPayload, withSecret('wrong')]) {
+          const response = await POST(makeRequest(body, { Authorization: validAuth }));
+          const data = await response.json();
 
-      expect(response.status).toBe(403);
-      expect(data).toHaveProperty('error', 'Invalid dg-token');
+          expect(response.status).toBe(401);
+          expect(data).toHaveProperty('error', 'Invalid callback secret');
+        }
+      } finally {
+        vi.stubEnv('DEEPGRAM_CALLBACK_SECRET', '');
+      }
     });
 
     it('should handle webhook with minimal payload', async () => {

@@ -6,10 +6,11 @@ docs:
 notes: >
   Speech-to-text transcription platform. Not traditional webhooks - these are
   per-request transcription completion callbacks (callback= query param on
-  /v1/listen). Unsigned. Primary auth is Basic Auth credentials embedded in
-  the callback URL (sent as Authorization: Basic). The dg-token header (API
-  Key Identifier) "is not guaranteed on every callback request" per the docs,
-  so it is a supplementary check only when present - never required.
+  /v1/listen, /v1/speak, /v1/read). Unsigned. Auth is Basic Auth credentials
+  embedded in the callback URL (arriving as Authorization: Basic), or for STT a
+  secret sent as extra=callback_secret:VALUE and returned in
+  metadata.extra.callback_secret. Deepgram retired the dg-token header as a
+  verification method on 2026-10-27 - don't check it.
   Callback body is the /v1/listen response { metadata, results } with
   request_id at metadata.request_id (no top-level request_id, no event-type
   field); extra=KEY:VALUE pairs come back in metadata.extra. There is no
@@ -27,7 +28,7 @@ catalog:
   summary: Receive and verify Deepgram transcription callbacks
   docsUrl: https://developers.deepgram.com/reference
   marketplace:
-    description: Receive and verify Deepgram transcription callbacks (Basic Auth / dg-token).
+    description: Receive and verify Deepgram transcription callbacks (Basic Auth / extra secret).
     keywords:
     - webhooks
     - deepgram

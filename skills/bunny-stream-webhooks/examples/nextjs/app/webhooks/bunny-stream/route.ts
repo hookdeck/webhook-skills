@@ -9,13 +9,18 @@ const STATUS: Record<number, string> = {
   1: 'Processing',
   2: 'Encoding',
   3: 'Finished',
-  4: 'ResolutionFinished',
+  4: 'Resolution finished',
   5: 'Failed',
   6: 'PresignedUploadStarted',
   7: 'PresignedUploadFinished',
   8: 'PresignedUploadFailed',
   9: 'CaptionsGenerated',
   10: 'TitleOrDescriptionGenerated',
+  11: 'CaptionGenerationFailed',
+  12: 'ChaptersGenerated',
+  13: 'MomentsGenerated',
+  32: 'VideoDeleted',
+  33: 'SmartGenerationFailed',
 };
 
 /**
@@ -62,7 +67,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Parse the payload after verification. Bunny's payload is thin:
-  // { VideoLibraryId, VideoGuid, Status }
+  // { IsLiveStreamWebhook, VideoLibraryId, VideoGuid, Status, EventId, Timestamp }
+  // plus Reason on SmartGenerationFailed. Deduplicate on EventId, which
+  // stays the same on retries.
   const { VideoLibraryId, VideoGuid, Status } = JSON.parse(body);
 
   console.log(
@@ -74,28 +81,28 @@ export async function POST(request: NextRequest) {
   switch (Status) {
     case 3: // Finished - encoding done, video is ready to play
       console.log(`Encoding finished for ${VideoGuid}`);
-      // TODO: publish the video, notify users, fetch full metadata via the
+      // Your code: publish the video, notify users, fetch full metadata via the
       // Stream API: GET /library/{VideoLibraryId}/videos/{VideoGuid}
       break;
 
     case 5: // Failed - encoding failed
       console.error(`Encoding failed for ${VideoGuid}`);
-      // TODO: alert, mark failed, offer re-upload
+      // Your code: alert, mark failed, offer re-upload
       break;
 
     case 9: // CaptionsGenerated
       console.log(`Captions generated for ${VideoGuid}`);
-      // TODO: enable captions, index transcript
+      // Your code: enable captions, index transcript
       break;
 
     case 10: // TitleOrDescriptionGenerated
       console.log(`AI title/description generated for ${VideoGuid}`);
-      // TODO: populate metadata fields
+      // Your code: populate metadata fields
       break;
 
     default:
-      // 0 Queued, 1 Processing, 2 Encoding, 4 ResolutionFinished,
-      // 6-8 presigned upload lifecycle
+      // 0 Queued, 1 Processing, 2 Encoding, 4 Resolution finished,
+      // 6-8 presigned upload lifecycle, 11-13 and 32-33
       console.log(`Unhandled status: ${Status}`);
   }
 

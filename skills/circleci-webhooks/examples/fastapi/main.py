@@ -188,9 +188,9 @@ def handle_event(event_type: Optional[str], payload: Dict[str, Any]) -> None:
         logger.info("  %s", workflow.get("url"))
 
         if workflow.get("status") == "success":
-            pass  # TODO: promote the build, deploy, mark the commit green.
+            pass  # Your code: promote the build, deploy, mark the commit green.
         elif workflow.get("status") in ("failed", "error"):
-            pass  # TODO: alert the team, open an incident, record a DORA failure.
+            pass  # Your code: alert the team, open an incident, record a DORA failure.
 
     elif event_type == "job-completed":
         # job.status: success | failed | canceled | unauthorized (NO "error").
@@ -202,7 +202,7 @@ def handle_event(event_type: Optional[str], payload: Dict[str, Any]) -> None:
             job.get("name"),
             job.get("status"),
         )
-        # TODO: record job timings, track flaky tests, ingest artifacts.
+        # Your code: record job timings, track flaky tests, ingest artifacts.
 
     elif event_type == "ping":
         # COMMUNITY-OBSERVED, not documented. The UI's "Test Ping Event" button

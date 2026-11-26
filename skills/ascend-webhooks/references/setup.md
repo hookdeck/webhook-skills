@@ -14,11 +14,10 @@ endpoints. Registration is handled by Ascend support.
 Email **`developers@useascend.com`** and include:
 
 1. **Organization** — the org the webhooks belong to.
-2. **Environment** — sandbox or production (secrets and endpoints differ per
-   environment).
-3. **Events** — the event types you want delivered (e.g. `invoice.paid`). Ask
-   Ascend to confirm the exact strings for payout and refund events if you need
-   them.
+2. **Environment** — Sandbox or Production (each is a separate registration).
+3. **Events** — the event types you want delivered (e.g. `invoice.paid`). The
+   invoice, payout and refund pages of Ascend's docs list all 12. Note the
+   spellings `payout.canceled` and `refund.cancelled`.
 4. **Endpoint URL** — the public HTTPS URL that will receive the `POST`
    requests.
 
@@ -52,10 +51,11 @@ Your endpoint must:
 
 ## Sandbox vs Production
 
-Sandbox and production are separate environments with **separate signing
-secrets and separate endpoint registrations**. Register and test against
-sandbox first, then repeat the registration for production. Make the secret
-configurable per environment rather than hardcoding it.
+Ascend's Sandbox and Production environments are fully separate: each has its
+own organization, data and API key, and no money moves in Sandbox. Register a
+webhook for Sandbox first, then send a separate registration for Production.
+Ascend's docs don't say whether the webhook key differs between them, so make
+the secret configurable per environment rather than hardcoding it.
 
 ## Test Locally with the Hookdeck CLI
 

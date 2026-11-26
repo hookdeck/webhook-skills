@@ -36,7 +36,7 @@ curl --request POST \
   --data '{
     "url": "https://your-domain.com/webhooks/bridge-xyz",
     "event_epoch": "webhook_creation",
-    "event_categories": ["customer", "kyc_link", "transfer", "virtual_account"]
+    "event_categories": ["customer", "kyc_link", "transfer", "virtual_account.activity"]
   }'
 ```
 
@@ -62,7 +62,7 @@ curl --request PUT \
   --data '{
     "url": "https://your-domain.com/webhooks/bridge-xyz",
     "status": "active",
-    "event_categories": ["customer", "kyc_link", "transfer", "virtual_account"]
+    "event_categories": ["customer", "kyc_link", "transfer", "virtual_account.activity"]
   }'
 ```
 
@@ -83,12 +83,15 @@ BRIDGE_WEBHOOK_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIB...\n-----END PUBLIC 
 Bridge provides endpoints to send test events and inspect delivery:
 
 ```bash
-# Send a test event to your endpoint
+# Send a specific event to your endpoint (works while the webhook is disabled)
 curl --request POST \
   --url https://api.bridge.xyz/v0/webhooks/<webhookID>/send \
-  --header 'Api-Key: <your-api-key>'
+  --header 'Api-Key: <your-api-key>' \
+  --header 'Content-Type: application/json' \
+  --header 'Idempotency-Key: <unique-key>' \
+  --data '{"event_id": "<event-id>"}'
 
-# Inspect delivery logs and events
+# Delivery logs, and the next 10 events queued for this webhook
 curl --url https://api.bridge.xyz/v0/webhooks/<webhookID>/logs   --header 'Api-Key: <your-api-key>'
 curl --url https://api.bridge.xyz/v0/webhooks/<webhookID>/events --header 'Api-Key: <your-api-key>'
 ```
@@ -103,11 +106,13 @@ npx hookdeck-cli listen 3000 bridge-xyz --path /webhooks/bridge-xyz
 ```
 
 Point your Bridge webhook `url` at the tunnel URL the CLI prints, then use the
-`/send` endpoint above to deliver a test event.
+`/send` endpoint above to deliver an event. Bridge's API reference says webhook
+endpoints can be created in Sandbox but no webhook events are sent there.
 
 ## Responding to Events
 
-- Return **2xx** quickly to acknowledge receipt.
+- Return a **200** as quickly as possible to acknowledge receipt.
+- Bridge retries an unavailable endpoint with exponential backoff for up to two days.
 - Return a **non-2xx (400)** on verification/processing failure so Bridge retries.
 - Reject events older than ~10 minutes (replay protection).
 

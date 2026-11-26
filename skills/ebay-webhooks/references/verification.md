@@ -63,20 +63,13 @@ def challenge_response(challenge_code: str, verification_token: str, endpoint: s
 
 ### The `x-ebay-signature` header
 
-The header value is **Base64-encoded JSON**. Decode it to get:
-
-```json
-{
-  "alg": "ecdsa",
-  "kid": "<public_key_id>",
-  "signature": "<base64_ecdsa_signature>",
-  "digest": "SHA1"
-}
-```
+The header value is **Base64-encoded JSON**. eBay's SDKs read two fields from it:
 
 - `kid` — the ID of the public key to fetch from eBay.
-- `signature` — the Base64 ECDSA signature (DER-encoded) over the **raw body**.
-- `digest` — the hash used, **SHA-1** (eBay's SDK verifies with `ssl3-sha1`).
+- `signature` — the Base64 ECDSA signature (DER-encoded) over the body.
+
+The algorithm and digest come from the `getPublicKey` response (`algorithm`
+ECDSA, `digest` SHA1); eBay's Node SDK verifies with `ssl3-sha1`.
 
 ### Steps
 
@@ -203,10 +196,11 @@ is testable offline: the SDK's signature path makes a live OAuth + `getPublicKey
 call that cannot run in CI without credentials. In production, either approach is
 valid — the crypto is identical.
 
-> **Note on the signed content:** the SDK internally verifies over
-> `JSON.stringify(parsedBody)`, which only matches because eBay sends compact
-> JSON. Verifying over the **raw request body** (as the examples do) is the
-> robust choice — never re-serialize before verifying.
+> **Note on the signed content:** eBay's Node SDK verifies over
+> `JSON.stringify(parsedBody)` and its Java SDK re-serialises with Jackson, so
+> the signed bytes are the compact JSON eBay sends. The examples verify the raw
+> request body, which is the same bytes while eBay sends compact JSON; don't
+> pretty-print or reorder the body before verifying.
 
 ## Common Gotchas
 
@@ -220,8 +214,9 @@ valid — the crypto is identical.
   only for the challenge).
 - **Cache the public key ~1 hour** keyed by `kid` — but not forever; eBay
   rotates keys, signalled by a new `kid`.
-- **Return 2xx (204)** promptly. Persistent non-2xx responses can get your
-  destination marked down and the application keyset disabled.
+- **Return 2xx (204)** promptly. Persistent failures can get your destination
+  marked down; for account deletion, eBay marks the URL down after 24 hours of
+  unacknowledged notifications.
 - **Idempotency:** deduplicate on `notification.notificationId`; eBay may retry.
 
 ## Debugging Verification Failures

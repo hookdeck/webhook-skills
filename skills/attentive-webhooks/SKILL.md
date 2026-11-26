@@ -25,7 +25,7 @@ metadata:
 ## Verification (core)
 
 Attentive signs the **raw request body** with HMAC-SHA256 keyed on your
-per-webhook **signing key** (called the "client secret" in the dashboard) and
+per-webhook **Signing key** (shown on your custom app's Webhooks tab) and
 sends the digest, **hex-encoded**, in the `x-attentive-hmac-sha256` header.
 There is no timestamp in the signature (Attentive does **not** use the Standard
 Webhooks scheme), so compute the HMAC over the exact raw body and compare
@@ -93,14 +93,31 @@ event-type header — only the signature header).
 ```json
 {
   "type": "sms.subscribed",
-  "timestamp": 1721664000000,
-  "company": { "id": "..." },
-  "subscriber": { "phone": "+15555550123", "email": "user@example.com" }
+  "timestamp": 1632945178104,
+  "company": {
+    "display_name": "Hudson & Ivy",
+    "company_id": "MDc6Q29tcGFueTU"
+  },
+  "subscriber": {
+    "email": "user1@example.com",
+    "phone": "+15555555555",
+    "external_id": 16467358
+  },
+  "creative": {
+    "name": "Desktop Fullscreen (Email + SMS) - 15% Off",
+    "type": "DESKTOP",
+    "subtype": "DYNAMIC"
+  },
+  "subscription": {
+    "type": "MARKETING"
+  }
 }
 ```
 
-`timestamp` is Unix time in **milliseconds**. Fields present under `subscriber`
-vary by event type.
+Example from Attentive's webhook payloads page (email replaced with a
+placeholder). `timestamp` is Unix time in **milliseconds**. `phone` or `email`
+can be missing when the subscriber only uses one channel, and the objects after
+`subscriber` vary by event type. There is no event ID field.
 
 ## Important Headers
 
@@ -111,7 +128,7 @@ vary by event type.
 ## Environment Variables
 
 ```bash
-ATTENTIVE_WEBHOOK_SECRET=your_signing_key   # "client secret" from the webhook settings
+ATTENTIVE_WEBHOOK_SECRET=your_signing_key   # Signing key from the custom app's Webhooks tab
 ```
 
 ## Local Development

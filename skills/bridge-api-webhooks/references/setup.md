@@ -27,7 +27,7 @@ displays it **only once**. Copy it immediately and store it securely — set it 
 BRIDGE_WEBHOOK_SECRET=your_webhook_signing_secret
 ```
 
-If you lose the secret you must rotate it (which generates a new one).
+If you lose it, update the secret by editing the webhook in the dashboard.
 
 ## Rotating the Signing Secret
 
@@ -38,6 +38,8 @@ If you lose the secret you must rotate it (which generates a new one).
   Bridge may send `BridgeApi-Signature: v1=<sig-new>,v1=<sig-old>`.
 - Your verification code should accept the delivery if **any** `v1` signature
   matches (the example handlers do this). After 24 hours, remove the old secret.
+- A webhook can't have more than two active secrets: updating twice in a row
+  without deploying invalidates the first secret.
 
 ## Test Your Webhook
 

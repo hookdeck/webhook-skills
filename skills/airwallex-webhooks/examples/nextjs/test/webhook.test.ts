@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import type { NextRequest } from 'next/server';
 import { POST } from '../app/webhooks/airwallex/route';
 
-const WEBHOOK_SECRET = 'whsec_test_secret';
+const WEBHOOK_SECRET = 'test_secret';
 
 beforeAll(() => {
   process.env.AIRWALLEX_WEBHOOK_SECRET = WEBHOOK_SECRET;

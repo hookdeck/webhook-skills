@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   // On creation Asana sends X-Hook-Secret and no signature. Echo it back with 200
   // and store it for verifying future deliveries.
   if (hookSecret) {
-    // TODO: Persist `hookSecret` keyed by the webhook. This example verifies
+    // Your code: Persist `hookSecret` keyed by the webhook. This example verifies
     // against ASANA_WEBHOOK_SECRET from the environment instead.
     console.log('Handshake received; echoing X-Hook-Secret');
     return new NextResponse(null, {
@@ -95,27 +95,27 @@ function handleAsanaEvent(event: AsanaEvent) {
   switch (event.action) {
     case 'added':
       console.log(`Added ${resourceType} ${gid}`);
-      // TODO: Sync the new resource into your system.
+      // Your code: Sync the new resource into your system.
       break;
 
     case 'changed':
       console.log(`Changed ${resourceType} ${gid} (field: ${event.change?.field})`);
-      // TODO: Fetch the resource and update your mirror.
+      // Your code: Fetch the resource and update your mirror.
       break;
 
     case 'removed':
       console.log(`Removed ${resourceType} ${gid} from parent ${event.parent?.gid}`);
-      // TODO: Update parent membership.
+      // Your code: Update parent membership.
       break;
 
     case 'deleted':
       console.log(`Deleted ${resourceType} ${gid}`);
-      // TODO: Soft-delete or archive in your system.
+      // Your code: Soft-delete or archive in your system.
       break;
 
     case 'undeleted':
       console.log(`Undeleted ${resourceType} ${gid}`);
-      // TODO: Restore in your system.
+      // Your code: Restore in your system.
       break;
 
     default:

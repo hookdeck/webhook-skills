@@ -3,14 +3,14 @@
 ## Prerequisites
 
 - A FastSpring account with access to the App Dashboard
-- Your application's webhook endpoint URL (must be **HTTPS**)
+- Your application's webhook endpoint URL (FastSpring recommends **HTTPS**; it posts to port 443, or to 3443, 8282, 9191, 9000 or 9999)
 
 ## Register Your Endpoint
 
 1. Log in to the [FastSpring App Dashboard](https://app.fastspring.com/).
 2. Go to **Developer Tools → Webhooks**.
 3. Click **Add Webhook** (or edit an existing one) under **Configuration**.
-4. Enter your endpoint **URL** (HTTPS required).
+4. Enter your endpoint **URL** (HTTPS recommended).
 5. Select the events you want to receive (e.g., `order.completed`,
    `subscription.activated`, `subscription.charge.completed`,
    `subscription.charge.failed`, `subscription.canceled`).
@@ -62,7 +62,7 @@ but signature verification via `X-FS-Signature` is the primary authenticity chec
 
 ## Retries
 
-FastSpring auto-retries delivery until your endpoint returns HTTP `200`. Return
+FastSpring retries any event not marked processed for up to 7 days (at most 12 retries). A `200` marks every event in the POST processed; a `202` marks only the event IDs you list in the response body, one per line; any other status is a failure. Return
 `200` only after you have successfully accepted (or safely enqueued) the events.
 Automatic retries reuse the same event `id`, so dedupe on `id`.
 

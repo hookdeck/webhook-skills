@@ -56,43 +56,53 @@ app.post('/webhooks/customerio',
 
     // Parse the payload after verification
     const payload = JSON.parse(req.body.toString());
-    const { event_id: eventId, object_type: objectType, metric, data } = payload;
+    const { event_id: eventId, metric, data } = payload;
+    // Customer.io's docs spell the in-app object type both `in_app` and `in-app`: accept both.
+    const objectType = payload.object_type === 'in-app' ? 'in_app' : payload.object_type;
+    // cio_subscription_preferences_changed carries the triggering channel in object_type,
+    // so route it on metric alone.
+    const route = metric === 'cio_subscription_preferences_changed' ? 'preferences' : objectType;
 
     // Customer.io has no dotted event name: identify events by object_type + metric.
     console.log(`Received ${objectType}.${metric} event (event_id: ${eventId})`);
 
-    // TODO: de-dupe on event_id before processing (Customer.io retries for 7 days)
+    // Your code: de-dupe on event_id before processing (Customer.io retries for 7 days)
 
-    switch (objectType) {
+    switch (route) {
+      case 'preferences':
+        console.log(`Subscription preferences changed for customer ${data?.customer_id}`);
+        // Your code: sync topic preferences (data.content, when Body content is on)
+        break;
+
       case 'email':
         handleEmailMetric(metric, data);
         break;
 
       case 'sms':
         console.log(`SMS ${metric} to ${data?.recipient}`);
-        // TODO: SMS analytics, two-way messaging, etc.
+        // Your code: SMS analytics, two-way messaging, etc.
         break;
 
       case 'push':
         console.log(`Push ${metric} for customer ${data?.customer_id}`);
-        // TODO: push engagement tracking, etc.
+        // Your code: push engagement tracking, etc.
         break;
 
       case 'in_app':
         console.log(`In-app ${metric} for customer ${data?.customer_id}`);
-        // TODO: in-app message engagement, etc.
+        // Your code: in-app message engagement, etc.
         break;
 
       case 'customer':
         console.log(`Customer ${data?.customer_id} ${metric}`);
-        // TODO: sync subscription state to your database, etc.
+        // Your code: sync subscription state to your database, etc.
         break;
 
       case 'slack':
       case 'webhook':
       case 'whatsapp':
         console.log(`${objectType} ${metric}`);
-        // TODO: channel-specific handling
+        // Your code: channel-specific handling
         break;
 
       default:
@@ -118,7 +128,7 @@ function handleEmailMetric(metric, data) {
       break;
     case 'bounced':
       console.log(`Email bounced for ${data?.recipient}: ${data?.failure_message}`);
-      // TODO: suppress the address, alert, etc.
+      // Your code: suppress the address, alert, etc.
       break;
     case 'spammed':
       console.log(`Email marked as spam by ${data?.recipient}`);

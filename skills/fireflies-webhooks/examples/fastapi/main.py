@@ -29,14 +29,14 @@ def verify_fireflies_webhook(raw_body: bytes, signature_header: str, secret: str
     V2 signs the raw request body with HMAC-SHA256 keyed on the signing secret
     you configured at webhook setup, and sends the digest in the
     ``X-Hub-Signature`` header as ``sha256=<hex>``. The ``sha256=`` prefix is
-    required in V2 (V1 sent a bare hex digest with no prefix).
+    required.
     """
     # Fail closed: no header or no configured secret means we cannot verify
     if not signature_header or not secret:
         return False
 
     # V2 requires the "sha256=" prefix - reject anything else (including a bare
-    # V1-style hex digest) rather than guessing at the format
+    # hex digest) rather than guessing at the format
     if not signature_header.startswith(SIGNATURE_PREFIX):
         return False
 
@@ -85,18 +85,18 @@ async def fireflies_webhook(request: Request):
     if event == "meeting.transcribed":
         ref = f" (ref: {client_reference_id})" if client_reference_id else ""
         print(f"Transcript ready for meeting {meeting_id}{ref}")
-        # TODO: Fetch the transcript from the Fireflies GraphQL API using
+        # Your code: fetch the transcript from the Fireflies GraphQL API using
         # meeting_id, then sync notes, post to Slack, update your CRM, etc.
     elif event == "meeting.summarized":
         print(f"Summary ready for meeting {meeting_id}")
-        # TODO: Fetch the AI summary / action items and route them onward.
+        # Your code: fetch the AI summary / action items and route them onward.
     elif event == "meeting.bot_joined":
         print(f"Fred bot joined meeting {meeting_id}")
-        # TODO: Mark the meeting as being recorded, notify participants, etc.
+        # Your code: mark the meeting as being recorded, notify participants, etc.
     else:
         print(f"Unhandled event type: {event}")
 
-    # Return 200 to acknowledge receipt (Fireflies expects a 2xx within 10s)
+    # Return 200 to acknowledge receipt (Fireflies expects a 2xx within 30s)
     return {"received": True}
 
 

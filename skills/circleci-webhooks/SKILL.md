@@ -157,7 +157,9 @@ endpoint to prove itself before sending.
 
 The UI's **"Test Ping Event"** button sends an ordinary, fully-signed POST — the
 docs say only that *"The test ping event has an abbreviated payload for ease of
-testing"*. The ping's exact `type` value is **not documented**. A community
+testing"*. CircleCI's Deliveries tab lists pings with the event type **Ping**,
+and its experimental v3 Webhook Deliveries API filters on `ping`, but the docs
+don't show the ping's body or header value. A community
 implementation ([circleci-hook](https://github.com/DavidS/circleci-hook)) logged
 a real one as `circleci-event-type: ping` with:
 

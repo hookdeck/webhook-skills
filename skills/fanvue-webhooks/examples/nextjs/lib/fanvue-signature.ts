@@ -116,7 +116,9 @@ export function idempotencyKey(event: FanvueEvent): string | undefined {
   if (typeof event.type === 'string') {
     const envelope = event as FanvueEnvelopeEvent;
     // app.subscription.* ids hash subscription id + topic, so a repeated
-    // transition reuses the earlier id.
+    // transition reuses the earlier id. The envelope timestamp changes on every
+    // retry, so this key keeps real transitions but won't collapse retries:
+    // read current state from GET /apps/{appUuid}/subscription-status.
     if (envelope.type.startsWith('app.subscription.')) {
       return `${envelope.id}:${envelope.timestamp}`;
     }

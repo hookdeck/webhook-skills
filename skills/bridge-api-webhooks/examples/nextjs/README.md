@@ -4,7 +4,7 @@ Minimal example of receiving Bridge API (`bridgeapi.io`) webhooks with signature
 verification, using the Next.js App Router.
 
 > **Not bridge.xyz.** This is Bridge API, the open-banking aggregator by Bridge
-> (formerly Bankin'), not the bridge.xyz stablecoin payments company.
+> (sister brand of Bankin'), not the bridge.xyz stablecoin payments company.
 
 ## Prerequisites
 

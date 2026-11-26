@@ -23,9 +23,9 @@ app = FastAPI(title="Community Webhooks Example")
 TOLERANCE_SECONDS = int(os.environ.get("COMMUNITY_WEBHOOK_TOLERANCE_SECONDS", "0"))
 
 # Deduplication store — Community delivers AT-LEAST-ONCE and documents that the
-# same event can arrive more than once. Keep event ids for at least an hour.
+# same event can arrive more than once. Keep event ids for at least two hours, longer than the one-hour retry window.
 # Replace with Redis/Postgres in production.
-DEDUPE_TTL_SECONDS = 60 * 60
+DEDUPE_TTL_SECONDS = 2 * 60 * 60
 _seen_events: dict[str, float] = {}
 
 
@@ -143,7 +143,7 @@ def extract_object(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def already_processed(event_id: str) -> bool:
-    """Track event ids for an hour so duplicate deliveries are not reprocessed."""
+    """Track event ids for two hours so duplicate deliveries are not reprocessed."""
     now = time.time()
     for seen_id, seen_at in list(_seen_events.items()):
         if now - seen_at > DEDUPE_TTL_SECONDS:
@@ -173,28 +173,35 @@ async def community_webhook(event: dict[str, Any] = Depends(verified_event)):
         member = obj.get("member") or {}
         channel_id = member.get("communication_channel_id") if isinstance(member, dict) else None
         print(f"Inbound message {obj.get('id')} from {channel_id}: {obj.get('text')}")
-        # TODO: route to support inbox, run keyword automations
+        # Your code: route to support inbox, run keyword automations
 
     elif event_type == "message.outbound":
         # The sample shows "automated" while the documented list is capitalized,
         # so compare case-insensitively.
         kind = str(obj.get("outbound_message_type") or "").lower()
         print(f"Outbound message {obj.get('id')} (type: {kind})")
-        # TODO: log conversation history, attribute campaign sends
+        # Your code: log conversation history, attribute campaign sends
 
     elif event_type == "member.created":
         print(f"Member created: {obj.get('id')}")
-        # TODO: welcome flow, create the contact in your CRM
+        # Your code: welcome flow, create the contact in your CRM
 
     elif event_type == "member.updated":
         print(f"Member updated: {obj.get('id')} (active: {obj.get('active')})")
-        # TODO: sync profile changes downstream
+        # Your code: sync profile changes downstream
 
     elif event_type == "member.deleted":
         # Sparse payload: only id, active, timestamp, client_id,
         # communication_channel, and an emptied communication_channel_id.
         print(f"Member deleted: {obj.get('id')}")
-        # TODO: suppression list, downstream deletion
+        # Your code: downstream deletion
+
+    elif event_type == "member.opted_out":
+        # The member unsubscribed (for example by replying STOP). A member.updated
+        # event for the same member arrives too, so don't treat them as duplicates.
+        opt_out = obj.get("opt_out") or {}
+        print(f"Member opted out: {obj.get('id')} (source: {opt_out.get('source')})")
+        # Your code: add to your suppression list
 
     else:
         print(f"Unhandled Community event type: {event_type}")

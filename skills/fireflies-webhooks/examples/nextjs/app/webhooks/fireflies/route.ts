@@ -8,8 +8,7 @@ import crypto from 'crypto';
  *
  * V2 signs the raw request body with HMAC-SHA256 keyed on the signing secret
  * you configured at webhook setup, and sends the digest in the
- * `X-Hub-Signature` header as `sha256=<hex>`. The `sha256=` prefix is required
- * in V2 (V1 sent a bare hex digest with no prefix).
+ * `X-Hub-Signature` header as `sha256=<hex>`. The `sha256=` prefix is required.
  */
 export function verifyFirefliesWebhook(
   rawBody: string,
@@ -22,7 +21,7 @@ export function verifyFirefliesWebhook(
   }
 
   // V2 requires the `sha256=` prefix - reject anything else (including a bare
-  // V1-style hex digest) rather than guessing at the format
+  // hex digest) rather than guessing at the format
   if (!signatureHeader.startsWith('sha256=')) {
     return false;
   }
@@ -79,24 +78,24 @@ export async function POST(request: NextRequest) {
     case 'meeting.transcribed':
       console.log(`Transcript ready for meeting ${meetingId}` +
         (clientReferenceId ? ` (ref: ${clientReferenceId})` : ''));
-      // TODO: Fetch the transcript from the Fireflies GraphQL API using
+      // Your code: fetch the transcript from the Fireflies GraphQL API using
       // meeting_id, then sync notes, post to Slack, update your CRM, etc.
       break;
 
     case 'meeting.summarized':
       console.log(`Summary ready for meeting ${meetingId}`);
-      // TODO: Fetch the AI summary / action items and route them onward.
+      // Your code: fetch the AI summary / action items and route them onward.
       break;
 
     case 'meeting.bot_joined':
       console.log(`Fred bot joined meeting ${meetingId}`);
-      // TODO: Mark the meeting as being recorded, notify participants, etc.
+      // Your code: mark the meeting as being recorded, notify participants, etc.
       break;
 
     default:
       console.log(`Unhandled event type: ${event}`);
   }
 
-  // Return 200 to acknowledge receipt (Fireflies expects a 2xx within 10s)
+  // Return 200 to acknowledge receipt (Fireflies expects a 2xx within 30s)
   return NextResponse.json({ received: true });
 }

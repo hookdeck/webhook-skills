@@ -46,25 +46,25 @@ def handle_asana_event(event: dict) -> None:
 
     if action == "added":
         print(f"Added {resource_type} {gid}")
-        # TODO: Sync the new resource into your system.
+        # Your code: Sync the new resource into your system.
 
     elif action == "changed":
         change = event.get("change") or {}
         print(f"Changed {resource_type} {gid} (field: {change.get('field')})")
-        # TODO: Fetch the resource and update your mirror.
+        # Your code: Fetch the resource and update your mirror.
 
     elif action == "removed":
         parent = event.get("parent") or {}
         print(f"Removed {resource_type} {gid} from parent {parent.get('gid')}")
-        # TODO: Update parent membership.
+        # Your code: Update parent membership.
 
     elif action == "deleted":
         print(f"Deleted {resource_type} {gid}")
-        # TODO: Soft-delete or archive in your system.
+        # Your code: Soft-delete or archive in your system.
 
     elif action == "undeleted":
         print(f"Undeleted {resource_type} {gid}")
-        # TODO: Restore in your system.
+        # Your code: Restore in your system.
 
     else:
         print(f"Unhandled action: {action}")
@@ -81,7 +81,7 @@ async def asana_webhook(request: Request):
     # On creation Asana sends X-Hook-Secret and no signature. Echo it back with 200
     # and store it for verifying future deliveries.
     if hook_secret:
-        # TODO: Persist `hook_secret` keyed by the webhook. This example verifies
+        # Your code: Persist `hook_secret` keyed by the webhook. This example verifies
         # against ASANA_WEBHOOK_SECRET from the environment instead.
         print("Handshake received; echoing X-Hook-Secret")
         return Response(status_code=200, headers={"X-Hook-Secret": hook_secret})

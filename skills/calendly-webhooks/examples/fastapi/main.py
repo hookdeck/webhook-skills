@@ -80,19 +80,19 @@ async def calendly_webhook(request: Request):
 
     if event_type == "invitee.created":
         print(f"Invitee scheduled: {payload.get('email')}")
-        # TODO: Create CRM record, send confirmation, provision resources, etc.
+        # Your code: Create CRM record, send confirmation, provision resources, etc.
 
     elif event_type == "invitee.canceled":
         print(f"Invitee canceled: {payload.get('email')}")
-        # TODO: Free up availability, trigger win-back flow, update CRM, etc.
+        # Your code: Free up availability, trigger win-back flow, update CRM, etc.
 
     elif event_type == "invitee_no_show.created":
-        print(f"Invitee marked as no-show: {payload.get('invitee')}")
-        # TODO: Flag account, send follow-up, adjust scoring, etc.
+        print(f"Invitee marked as no-show: {payload.get('uri')}")
+        # Your code: Flag account, send follow-up, adjust scoring, etc.
 
     elif event_type == "routing_form_submission.created":
         print(f"Routing form submitted: {payload.get('uri')}")
-        # TODO: Qualify/route leads, sync to marketing tools, etc.
+        # Your code: Qualify/route leads, sync to marketing tools, etc.
 
     else:
         print(f"Unhandled event type: {event_type}")

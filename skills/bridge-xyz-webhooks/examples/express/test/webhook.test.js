@@ -41,7 +41,7 @@ describe('Bridge Webhook Endpoint', () => {
 
     it('should return 400 for invalid signature', async () => {
       const payload = JSON.stringify({
-        event_type: 'customer.updated',
+        event_type: 'customer.updated.status_transitioned',
         event_object_id: 'cust_123',
       });
 
@@ -56,13 +56,13 @@ describe('Bridge Webhook Endpoint', () => {
 
     it('should return 400 for a tampered payload', async () => {
       const original = JSON.stringify({
-        event_type: 'transfer.updated',
+        event_type: 'transfer.updated.status_transitioned',
         event_object_id: 'transfer_123',
       });
       const signature = signBridge(original, privateKey);
 
       const tampered = JSON.stringify({
-        event_type: 'transfer.updated',
+        event_type: 'transfer.updated.status_transitioned',
         event_object_id: 'transfer_tampered',
       });
 
@@ -77,7 +77,7 @@ describe('Bridge Webhook Endpoint', () => {
 
     it('should return 400 for a stale timestamp (replay protection)', async () => {
       const payload = JSON.stringify({
-        event_type: 'customer.updated',
+        event_type: 'customer.updated.status_transitioned',
         event_object_id: 'cust_123',
       });
       // 11 minutes ago — beyond the 10-minute tolerance.
@@ -95,7 +95,7 @@ describe('Bridge Webhook Endpoint', () => {
 
     it('should return 200 for a valid signature', async () => {
       const payload = JSON.stringify({
-        event_type: 'customer.updated',
+        event_type: 'customer.updated.status_transitioned',
         event_object_id: 'cust_valid',
       });
       const signature = signBridge(payload, privateKey);
@@ -113,11 +113,11 @@ describe('Bridge Webhook Endpoint', () => {
     it('should handle all documented event types', async () => {
       const eventTypes = [
         'customer.created',
-        'customer.updated',
-        'kyc_link.updated',
+        'customer.updated.status_transitioned',
+        'kyc_link.updated.status_transitioned',
         'transfer.created',
-        'transfer.updated',
-        'virtual_account.activity',
+        'transfer.updated.status_transitioned',
+        'virtual_account.activity.created',
         'unknown.event',
       ];
 
@@ -141,7 +141,7 @@ describe('Bridge Webhook Endpoint', () => {
 
   describe('verifyBridgeSignature helper', () => {
     it('validates a correctly signed payload', () => {
-      const payload = '{"event_type":"customer.updated"}';
+      const payload = '{"event_type":"customer.updated.status_transitioned"}';
       const signature = signBridge(payload, privateKey);
       expect(app.verifyBridgeSignature(payload, signature, publicKey)).toBe(true);
     });

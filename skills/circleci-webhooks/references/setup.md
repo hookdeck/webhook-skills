@@ -194,6 +194,7 @@ handler for the changeover:
 | Can't add another webhook | The project already has its **5-webhook** limit |
 | URL rejected | CircleCI requires **HTTPS** |
 | TLS errors on delivery | Cert not trusted; fix the cert rather than disabling `verify-tls` |
+| Not sure whether CircleCI sent it | Open **View deliveries** on the webhook: 14 days of deliveries with outcome, last HTTP status, attempts and payload |
 | Nothing arrives after a build | Wrong event ticked — only `workflow-completed` and `job-completed` exist, and both fire at *terminal* state only |
 
 ## Official Documentation

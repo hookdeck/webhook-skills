@@ -1,15 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import crypto from 'crypto';
 
-// Two RSA key pairs: one stands in for Antom (signs inbound), one for the
-// merchant (signs the ack). SHA256withRSA is the exact provider algorithm.
+// An RSA key pair stands in for Antom (signs inbound notifications).
+// SHA256withRSA is the provider's algorithm.
 const alipayKeys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
-const merchantKeys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 
 const alipayPublicPem = alipayKeys.publicKey.export({ type: 'spki', format: 'pem' }).toString();
 const alipayPrivatePem = alipayKeys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
-const merchantPublicPem = merchantKeys.publicKey.export({ type: 'spki', format: 'pem' }).toString();
-const merchantPrivatePem = merchantKeys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
 
 const CLIENT_ID = 'SANDBOX_5YC47N2ZQHJ004124';
 const WEBHOOK_PATH = '/webhooks/alipay';
@@ -17,8 +14,6 @@ const WEBHOOK_PATH = '/webhooks/alipay';
 // Set env BEFORE importing the route (it reads process.env at module load).
 process.env.ALIPAY_CLIENT_ID = CLIENT_ID;
 process.env.ALIPAY_PUBLIC_KEY = alipayPublicPem;
-process.env.ALIPAY_MERCHANT_PRIVATE_KEY = merchantPrivatePem;
-process.env.ALIPAY_KEY_VERSION = '1';
 
 let POST: (req: Request) => Promise<Response>;
 
@@ -35,7 +30,7 @@ function signInbound(
   const signer = crypto.createSign('RSA-SHA256');
   signer.update(content, 'utf8');
   signer.end();
-  let signature = signer.sign(alipayPrivatePem).toString('base64url');
+  let signature = signer.sign(alipayPrivatePem).toString('base64');
   if (urlEncode) signature = encodeURIComponent(signature);
   return {
     'Client-Id': clientId,
@@ -90,35 +85,17 @@ describe('POST /webhooks/alipay', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 200 with a signed SUCCESS ack for a valid signature', async () => {
+  it('returns 200 with the fixed SUCCESS ack for a valid signature', async () => {
     const payload = paymentPayload();
     const headers = signInbound(payload);
 
     const res = await POST(makeRequest(payload, headers));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      result: { resultCode: 'SUCCESS', resultStatus: 'S', resultMessage: 'Success' },
+      result: { resultCode: 'SUCCESS', resultStatus: 'S', resultMessage: 'success' },
     });
     expect(res.headers.get('client-id')).toBe(CLIENT_ID);
     expect(res.headers.get('response-time')).toBeTruthy();
-    expect(res.headers.get('signature')).toMatch(/^algorithm=RSA256,keyVersion=1,signature=/);
-  });
-
-  it('signs the ack response with the merchant key so Antom can verify it', async () => {
-    const payload = paymentPayload();
-    const headers = signInbound(payload);
-
-    const res = await POST(makeRequest(payload, headers));
-    const responseTime = res.headers.get('response-time')!;
-    const sigValue = res.headers.get('signature')!.split('signature=')[1];
-    const body = await res.text();
-    const content = `POST ${WEBHOOK_PATH}\n${CLIENT_ID}.${responseTime}.${body}`;
-
-    const verifier = crypto.createVerify('RSA-SHA256');
-    verifier.update(content, 'utf8');
-    verifier.end();
-    const ok = verifier.verify(merchantPublicPem, Buffer.from(sigValue, 'base64url'));
-    expect(ok).toBe(true);
   });
 
   it('accepts a percent-encoded signature value', async () => {
@@ -130,18 +107,19 @@ describe('POST /webhooks/alipay', () => {
   });
 
   it.each([
-    ['PAYMENT_RESULT', { paymentRequestId: 'pay_1' }],
-    ['CAPTURE_RESULT', { captureRequestId: 'cap_1', captureId: 'c_1' }],
-    ['REFUND_RESULT', { refundRequestId: 'ref_1', refundId: 'r_1' }],
-    ['AUTHORIZATION_RESULT', { authorizationRequestId: 'auth_1' }],
-    ['DISPUTE_CREATED', { disputeId: 'dsp_1' }],
-    ['DISPUTE_JUDGED', { disputeId: 'dsp_1' }],
-    ['SOMETHING_ELSE', {}],
-  ])('handles notifyType %s', async (notifyType, extra) => {
+    [{ notifyType: 'PAYMENT_RESULT', paymentRequestId: 'pay_1' }],
+    [{ notifyType: 'PAYMENT_PENDING', paymentRequestId: 'pay_1' }],
+    [{ notifyType: 'CAPTURE_RESULT', captureRequestId: 'cap_1', captureId: 'c_1' }],
+    [{ notifyType: 'REFUND_RESULT', refundRequestId: 'ref_1', refundId: 'r_1' }],
+    [{ authorizationNotifyType: 'AUTHCODE_CREATED', authState: 'state_1' }],
+    [{ authorizationNotifyType: 'TOKEN_CANCELED' }],
+    [{ disputeNotificationType: 'DISPUTE_CREATED', disputeId: 'dsp_1' }],
+    [{ disputeNotificationType: 'DISPUTE_JUDGED', disputeId: 'dsp_1' }],
+    [{ notifyType: 'SOMETHING_ELSE' }],
+  ])('acknowledges %j', async (fields) => {
     const payload = JSON.stringify({
-      notifyType,
+      ...(fields as Record<string, unknown>),
       result: { resultCode: 'SUCCESS', resultStatus: 'S', resultMessage: 'success' },
-      ...(extra as Record<string, unknown>),
     });
     const headers = signInbound(payload);
 

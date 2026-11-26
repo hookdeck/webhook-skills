@@ -55,9 +55,26 @@ app.post('/webhooks/aiprise',
 
     // Parse the payload only after verification.
     const payload = JSON.parse(req.body.toString());
+    // Event callbacks (events_callback_url) and token sharing webhooks name their
+    // event in one of these fields. A decision callback (callback_url) has none.
+    const eventType =
+      payload.event_type ||
+      payload.user_profile_event_type ||
+      payload.business_profile_event_type ||
+      payload.token_sharing_event_type;
+    if (eventType) {
+      console.log(`AiPrise event ${eventType}`);
+      // Your code: handle the events you use, such as CASE_STATUS_UPDATE.
+      return res.status(200).send('OK');
+    }
+
+    // Decision callback: the final result of a verification session.
     const sessionId = payload.verification_session_id;
     const clientRef = payload.client_reference_id;
-    const result = payload.aiprise_summary?.verification_result;
+    // The API reference names this field verification_result; AiPrise's callback
+    // pages print aiprise_summary.decision instead, so read both.
+    const result =
+      payload.aiprise_summary?.verification_result ?? payload.aiprise_summary?.decision;
 
     console.log(
       `AiPrise callback for session ${sessionId}` +
@@ -65,30 +82,31 @@ app.post('/webhooks/aiprise',
       ` → ${result}`
     );
 
-    // The outcome IS the verification_result value.
     switch (result) {
       case 'APPROVED':
         console.log('Verification approved');
-        // TODO: Provision access, mark the customer verified.
+        // Your code: Provision access, mark the customer verified.
         break;
 
       case 'DECLINED':
         console.log('Verification declined');
-        // TODO: Block onboarding, request resubmission, flag for review.
+        // Your code: Block onboarding, request resubmission, flag for review.
         break;
 
       case 'REVIEW':
+      case 'MANUAL_REVIEW':
         console.log('Verification needs manual review');
-        // TODO: Route to a human analyst / compliance queue.
+        // Your code: Route to a human analyst / compliance queue.
         break;
 
       case 'UNKNOWN':
+      case 'FAILED':
         console.log('Verification result unknown');
-        // TODO: Retry or investigate.
+        // Your code: Retry or investigate.
         break;
 
       default:
-        console.log(`Unhandled verification_result: ${result}`);
+        console.log(`Unhandled result: ${result}`);
     }
 
     // Return 200 to acknowledge receipt.

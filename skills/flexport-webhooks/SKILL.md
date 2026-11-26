@@ -28,7 +28,7 @@ Flexport signs the **raw** request body with HMAC keyed on your per-endpoint
 prefixed with the algorithm:
 
 - `X-Hub-Signature-256` — HMAC-SHA256, formatted `sha256=<hex>` (**use this**)
-- `X-Hub-Signature` — HMAC-SHA1, formatted `sha1=<hex>` (legacy, being deprecated)
+- `X-Hub-Signature` — HMAC-SHA1, formatted `sha1=<hex>` (legacy; Flexport asks integrations to move to SHA-256)
 
 Verify against the raw UTF-8 body **before** parsing JSON, and compare timing-safe.
 
@@ -75,45 +75,49 @@ The delivered payload is a Flexport **Event** object. Dispatch on the `type`
 field, which holds the milestone identifier in `/object#event` format (note:
 `/object#event`, **not** `object.event`). The affected object is under `data`.
 
+Envelope from Flexport's Events API example (`data` abridged here):
+
 ```json
 {
   "_object": "/event",
-  "id": 123456,
+  "id": 354987,
   "version": 2,
-  "created_at": "2026-07-23T10:00:00Z",
-  "occurred_at": "2026-07-23T09:59:00Z",
-  "type": "/shipment#created",
-  "data": { "resource": { "...": "..." }, "shipment": { "...": "..." } }
+  "created_at": "2019-04-16T18:05:10.964Z",
+  "occurred_at": "2019-04-16T18:05:10.964Z",
+  "type": "/shipment_leg#departed",
+  "data": { "_object": "/shipment_event_data", "resource": {}, "shipment": {}, "location": {} }
 }
 ```
 
+For shipment, leg and container milestones `data` is a Shipment Event Data object
+(`resource`, `shipment`, `location`, with the place name at `location.place.name`).
+Invoice events carry no shipment, location or container.
+
 ## Common Event Types
 
-> **Only `/shipment#created` and `/shipment_leg#departed` are confirmed against
-> Flexport's milestone reference.** The other rows below are illustrative
-> examples of the `/object#event` format — verify the exact identifiers against
-> [Flexport's milestone reference](https://apidocs.flexport.com/v2/tag/Webhook-Endpoints/)
-> (or the events your account actually receives) before relying on them.
+> All rows below are documented types on Flexport's
+> [Milestones page](https://apidocs.flexport.com/v2/tag/Milestones/), which lists
+> over 200, most of them delay, hold and exception codes.
 
 | Event (`type`) | Triggered When |
 |----------------|----------------|
 | `/shipment#created` | A shipment is created (quote confirmed) |
-| `/shipment#booking_confirmed` | Carrier booking is confirmed |
+| `/shipment#booking_confirmed` | Air carrier confirms the booking |
 | `/shipment#delivered_in_full` | Entire shipment is delivered |
 | `/shipment_leg#departed` | A shipment leg departs its origin |
 | `/shipment_leg#arrived` | A shipment leg arrives at its destination |
-| `/document#document_created` | A document is uploaded/generated |
+| `/document#document_created` | A document is created (needs account-level activation) |
 | `/invoice#invoice_payment_made` | An invoice payment is processed |
 | `/purchase_order#acknowledged` | A purchase order is acknowledged |
 
-> **For the full milestone reference**, see [Flexport Webhook Endpoints](https://apidocs.flexport.com/v2/tag/Webhook-Endpoints/). Some milestones are "available upon request".
+> **For the full milestone reference**, see [Flexport Milestones](https://apidocs.flexport.com/v2/tag/Milestones/). Milestones marked with an asterisk are available upon request, and selecting a category in your webhook settings doesn't activate them: ask your Flexport team.
 
 ## Important Headers
 
 | Header | Description |
 |--------|-------------|
 | `X-Hub-Signature-256` | HMAC-SHA256 signature, `sha256=<hex>` (use this) |
-| `X-Hub-Signature` | HMAC-SHA1 signature, `sha1=<hex>` (legacy, deprecated) |
+| `X-Hub-Signature` | HMAC-SHA1 signature, `sha1=<hex>` (legacy) |
 
 ## Environment Variables
 
@@ -145,7 +149,7 @@ When using this skill, add this comment at the top of generated files:
 
 ## Recommended: webhook-handler-patterns
 
-We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Return `200` promptly and process async; Flexport's retry behavior is not documented, so do not assume a failed delivery will be re-sent. Key references (open on GitHub):
+We recommend installing the [webhook-handler-patterns](https://github.com/hookdeck/webhook-skills/tree/main/skills/webhook-handler-patterns) skill alongside this one for handler sequence, idempotency, error handling, and retry logic. Return `200` promptly and process async; Flexport retries a delivery a number of times when it doesn't get a `200`, with no published count or schedule, so dedupe on the Event `id` and reconcile with the Events API (`GET /events`) after an outage. Key references (open on GitHub):
 
 - [Handler sequence](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/handler-sequence.md) — Verify first, parse second, handle idempotently third
 - [Idempotency](https://github.com/hookdeck/webhook-skills/blob/main/skills/webhook-handler-patterns/references/idempotency.md) — Prevent duplicate processing (dedupe on the Event `id`)

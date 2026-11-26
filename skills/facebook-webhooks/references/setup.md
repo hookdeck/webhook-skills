@@ -38,7 +38,7 @@ configured.
    Callback URL. Your endpoint must echo `hub.challenge` (see
    [verification.md](verification.md)). If it fails, the URL is rejected.
 6. After the URL is verified, **subscribe to individual fields** (e.g. `feed`,
-   `mention`, `messages` for Page; `comments`, `mentions` for Instagram).
+   `mention`, `leadgen` for Page; `connected` for permissions).
 
 ## Subscribe a Page to Your App
 
@@ -49,7 +49,7 @@ Page to your app:
 ```bash
 curl -X POST \
   "https://graph.facebook.com/v24.0/{page-id}/subscribed_apps" \
-  -d "subscribed_fields=feed,mention,messages" \
+  -d "subscribed_fields=feed,mention,leadgen" \
   -d "access_token={page-access-token}"
 ```
 
@@ -65,12 +65,10 @@ verification, so this skill verifies signatures manually (see
 - Node.js: [`facebook-nodejs-business-sdk`](https://www.npmjs.com/package/facebook-nodejs-business-sdk) `^24.0.1`
 - Python: [`facebook-business`](https://pypi.org/project/facebook-business/) `>=25.0.3`
 
-## Development Mode vs Live Mode
+## Publishing Your App
 
-- **Development mode:** Your app only receives **test notifications** (e.g. the
-  "Test" button in the Dashboard, or events from users with a role on the app).
-- **Live mode:** Required to receive real events from the general public. Switch
-  the app to Live in the Dashboard once your endpoint is verified and reviewed.
+Meta's Marketing API use case guide says your app must be published to receive
+webhook notifications, and that App Review is not required to use webhooks.
 
 ## Optional: Mutual TLS (mTLS)
 
@@ -82,10 +80,11 @@ certificate so deliveries are not rejected.
 
 - Use the **Test** button next to each field in the Dashboard Webhooks UI to
   send a sample payload.
-- Use the [Hookdeck CLI](https://hookdeck.com/docs/cli) to tunnel to localhost:
+- Create a Hookdeck source with the **Facebook** source type (it answers Meta's
+  `GET` verification request), use its URL as your Callback URL, and forward its
+  events to localhost with the [Hookdeck CLI](https://hookdeck.com/docs/cli):
 
   ```bash
+  # "facebook" is the name of the source you created
   npx hookdeck-cli listen 3000 facebook --path /webhooks/facebook
   ```
-
-  Use the tunnel URL as your Callback URL while developing.

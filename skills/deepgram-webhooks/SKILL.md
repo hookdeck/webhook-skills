@@ -21,7 +21,7 @@ metadata:
 
 ## Essential Code
 
-Deepgram webhooks (callbacks) are used to receive transcription results asynchronously. When you provide a callback URL in your transcription request, Deepgram immediately responds with a `request_id` and sends the transcription results to your callback URL when processing is complete.
+Deepgram webhooks (callbacks) are used to receive transcription, text-to-speech and Text Intelligence results asynchronously. When you provide a callback URL in your transcription request, Deepgram immediately responds with a `request_id` and sends the transcription results to your callback URL when processing is complete.
 
 ### Basic Webhook Handler
 
@@ -36,7 +36,7 @@ function safeEqual(a, b) {
 }
 
 app.post('/webhooks/deepgram', express.raw({ type: 'application/json' }), (req, res) => {
-  // 1. Primary check: Basic Auth credentials you embedded in the callback URL
+  // 1. Basic Auth credentials you embedded in the callback URL
   //    (https://user:pass@your-domain.com/webhooks/deepgram)
   const auth = req.headers['authorization'] || '';
   const decoded = auth.startsWith('Basic ')
@@ -51,15 +51,16 @@ app.post('/webhooks/deepgram', express.raw({ type: 'application/json' }), (req, 
     return res.status(401).send('Unauthorized');
   }
 
-  // 2. Supplementary check: dg-token is NOT sent on every callback,
-  //    so only compare it when it is present
-  const dgToken = req.headers['dg-token'];
-  if (dgToken && process.env.DEEPGRAM_API_KEY_ID && !safeEqual(dgToken, process.env.DEEPGRAM_API_KEY_ID)) {
-    return res.status(403).send('Invalid dg-token');
-  }
-
   // The callback body is the normal /v1/listen response: { metadata, results }
   const payload = JSON.parse(req.body.toString());
+
+  // 2. Optional (speech-to-text): a secret you sent as extra=callback_secret:VALUE
+  //    comes back in metadata.extra.callback_secret
+  const secret = process.env.DEEPGRAM_CALLBACK_SECRET;
+  if (secret && !safeEqual(payload.metadata?.extra?.callback_secret, secret)) {
+    return res.status(401).send('Invalid callback secret');
+  }
+
   const requestId = payload.metadata?.request_id;
   const transcript = payload.results?.channels?.[0]?.alternatives?.[0]?.transcript;
   console.log('Received transcription:', requestId, transcript);
@@ -71,20 +72,19 @@ app.post('/webhooks/deepgram', express.raw({ type: 'application/json' }), (req, 
 
 ### Authentication Methods
 
-Deepgram documents two ways to authenticate callbacks:
+Deepgram doesn't sign callbacks. Its [callback docs](https://developers.deepgram.com/docs/callback#authenticating-callback-requests) describe:
 
-1. **Basic Auth (primary)**: Embed credentials in the callback URL; Deepgram sends them as an `Authorization: Basic` header
-2. **dg-token Header (supplementary)**: When present, contains the API Key Identifier of the key that submitted the request. Deepgram's docs state it "is not guaranteed on every callback request", so never rely on it alone
+1. **Basic Auth (recommended, all APIs)**: Embed credentials in the callback URL. Deepgram includes them when it sends results, and they arrive as an `Authorization: Basic` header. This is the only documented check for text-to-speech and Text Intelligence callbacks
+2. **Secret in Extra Metadata (speech-to-text only)**: Send a random secret as `extra=callback_secret:VALUE`. Deepgram returns it in `metadata.extra.callback_secret` in the callback body. Use a hex secret (`openssl rand -hex 32`): a `+` arrives as a space
+
+The `dg-token` header is no longer a supported way to verify callbacks ([changelog, 27 October 2026](https://developers.deepgram.com/changelog/2026/10/27)). Don't check it.
 
 ```javascript
 // Basic Auth in callback URL (percent-encode special characters in the credentials)
 // https://username:password@your-domain.com/webhooks/deepgram
 
-// dg-token: check only when present
-const dgToken = req.headers['dg-token'];
-if (dgToken && dgToken !== process.env.DEEPGRAM_API_KEY_ID) {
-  return res.status(403).send('Invalid dg-token');
-}
+// Optional extra secret (speech-to-text):
+// https://api.deepgram.com/v1/listen?callback=https://your-domain.com/webhooks/deepgram&extra=callback_secret:YOUR_SECRET_VALUE
 ```
 
 ### Making a Request with Callback
@@ -119,14 +119,13 @@ Deepgram callbacks carry no event-type field. The body is the same JSON a synchr
 # Your Deepgram API Key (for making requests)
 DEEPGRAM_API_KEY=your_api_key_here
 
-# Basic Auth credentials you embed in the callback URL (primary check)
+# Basic Auth credentials you embed in the callback URL
 DEEPGRAM_CALLBACK_USERNAME=your_callback_username
 DEEPGRAM_CALLBACK_PASSWORD=your_callback_password
 
-# Optional: API Key Identifier, used to check the dg-token header when present
-# Note: This is NOT your API Key secret - it's a unique identifier shown
-# in the Deepgram console that identifies which API key was used for a request
-DEEPGRAM_API_KEY_ID=your_api_key_id_here
+# Optional (speech-to-text): a random hex secret you send as
+# extra=callback_secret:VALUE; Deepgram returns it in metadata.extra.callback_secret
+DEEPGRAM_CALLBACK_SECRET=your_hex_secret_here
 
 # Your webhook endpoint URL
 WEBHOOK_URL=https://your-domain.com/webhooks/deepgram
@@ -161,7 +160,8 @@ This provides:
 
 ### No Signature Verification
 - Deepgram does not sign callbacks (no HMAC, no timestamp)
-- Authenticate with Basic Auth credentials embedded in the callback URL; treat the `dg-token` header as a supplementary check because it is not sent on every callback
+- Authenticate with Basic Auth credentials embedded in the callback URL, or for speech-to-text a secret in `metadata.extra.callback_secret`
+- `dg-token` is no longer a supported verification method
 - Always use HTTPS for webhook endpoints
 
 ## Resources

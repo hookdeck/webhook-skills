@@ -65,22 +65,22 @@ app.post(
     switch (event.type) {
       case 'invoice.paid':
         console.log('Invoice paid:', event.data.id, event.data.invoice_number);
-        // TODO: Record payment, update billing history, unlock coverage.
+        // Your code: Record payment, update billing history, unlock coverage.
         break;
 
       case 'invoice.voided':
         console.log('Invoice voided:', event.data.id);
-        // TODO: Reverse the local billing record.
+        // Your code: Reverse the local billing record.
         break;
 
       case 'payout.paid':
         console.log('Payout paid:', event.data.id);
-        // TODO: Reconcile payouts, update accounting ledger.
+        // Your code: Reconcile payouts, update accounting ledger.
         break;
 
       case 'refund.paid':
         console.log('Refund paid:', event.data.id);
-        // TODO: Update policy/billing records, notify the customer.
+        // Your code: Update policy/billing records, notify the customer.
         break;
 
       default:

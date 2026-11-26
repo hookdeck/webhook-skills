@@ -77,7 +77,7 @@ function verifyFirefliesWebhook(rawBody, signatureHeader, secret) {
   }
 
   // V2 requires the `sha256=` prefix - reject anything else, including a bare
-  // V1-style hex digest
+  // hex digest
   if (!signatureHeader.startsWith('sha256=')) {
     return false;
   }
@@ -131,7 +131,7 @@ def verify_fireflies_webhook(raw_body: bytes, signature_header: str, secret: str
         return False
 
     # V2 requires the "sha256=" prefix - reject anything else, including a bare
-    # V1-style hex digest
+    # hex digest
     if not signature_header.startswith(SIGNATURE_PREFIX):
         return False
 
@@ -193,9 +193,9 @@ Buffer.from(signatureHeader, 'hex');
 const receivedHex = signatureHeader.slice('sha256='.length);
 ```
 
-Reject a header that lacks the prefix rather than tolerating both formats. A
-bare hex digest means you are receiving V1 traffic, and quietly accepting both
-hides that from you.
+Reject a header that lacks the prefix rather than tolerating both formats.
+Fireflies documents `sha256=<hex>` as the only format, so a bare digest is not
+a Fireflies V2 signature.
 
 ### 2. Raw Body, Not Re-Serialized JSON
 
@@ -289,8 +289,9 @@ console.log('Computed:', computed);
 console.log('Received:', signature);
 ```
 
-If the received value has no `sha256=` prefix, you are handling V1 traffic with a
-V2 verifier — see the legacy section below.
+If the received value has no `sha256=` prefix, it doesn't match the documented
+format — see the legacy section below if the body has `eventType` rather than
+`event`.
 
 ### Check Your Secret
 
@@ -305,32 +306,25 @@ Webhooks V2 page. Watch out for:
 
 ## Legacy: Webhooks V1 Verification
 
-V1 is deprecated for new integrations, but existing V1 webhooks keep delivering.
+V1 is deprecated and new V1 webhooks can no longer be saved, but existing V1
+webhooks keep delivering. The `webhook` URL on the `uploadAudio` mutation also
+still sends the V1 payload shape.
 
-V1 signs with HMAC-SHA256 and sends a **bare hex-encoded digest** in the
-`x-hub-signature` header — there is **no** `sha256=` prefix (unlike V2, GitHub,
-or Facebook):
+Fireflies' V2 migration table lists the **same signature header and format** for
+V1 as for V2: `X-Hub-Signature` with `sha256=<hex>`. The V1 page itself only
+says the header carries "a SHA-256 HMAC signature of the request payload" and
+does not print the format. Earlier versions of this skill said V1 sent a bare
+hex digest with no prefix. Current docs say otherwise, so the V1 verifier below
+uses the V2 rule, and falls back to comparing a bare digest only if one arrives.
 
-```
-x-hub-signature: <hex-encoded-signature>
-```
-
-Compare the computed digest against the header value directly, using a
-timing-safe comparison.
-
-> **Unconfirmed in V1: raw bytes vs `JSON.stringify`.** The header name, the
-> algorithm, the hex encoding, and the absence of a prefix are documented. The
-> exact body form that goes into the HMAC is **not** stated in prose — the V1
-> docs point at an external Replit code sample that could not be read, so "raw
-> request body" here is the safest reading rather than a quoted fact. Keep raw
-> body as your default: when the provider signs a re-serialized string that
-> happens to be byte-identical to what it sent, raw body still verifies. But if
-> verification fails consistently — right secret, right header, right encoding —
-> try `JSON.stringify(JSON.parse(rawBody))` (Python:
+> **Unconfirmed in V1: raw bytes vs `JSON.stringify`.** The exact body form that
+> goes into the HMAC is not stated in prose — the V1 docs point at an external
+> Replit code sample. Keep the raw body as your default. If verification fails
+> consistently with the right secret, log the raw body and try
+> `JSON.stringify(JSON.parse(rawBody))` (Python:
 > `json.dumps(json.loads(raw_body), separators=(",", ":"))`) as the HMAC input
-> before concluding the secret is wrong. Log the raw body on your first few
-> deliveries so you can compare. **This uncertainty is V1-only** — the V2 docs
-> state plainly that the raw body is signed.
+> before concluding the secret is wrong. **This uncertainty is V1-only** — the V2
+> docs state plainly that the raw body is signed.
 
 ### V1 Implementation
 
@@ -343,16 +337,20 @@ function verifyFirefliesWebhookV1(rawBody, signatureHeader, secret) {
     return false;
   }
 
-  // Compute expected signature over the raw body (hex, no prefix)
-  const expectedSignature = crypto
+  // Documented format is `sha256=<hex>`; accept a bare digest too
+  const receivedHex = signatureHeader.startsWith('sha256=')
+    ? signatureHeader.slice('sha256='.length)
+    : signatureHeader;
+
+  const expectedHex = crypto
     .createHmac('sha256', secret)
     .update(rawBody)
     .digest('hex');
 
   try {
     return crypto.timingSafeEqual(
-      Buffer.from(signatureHeader, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
+      Buffer.from(receivedHex, 'hex'),
+      Buffer.from(expectedHex, 'hex')
     );
   } catch {
     return false;
@@ -369,35 +367,26 @@ def verify_fireflies_webhook_v1(raw_body: bytes, signature_header: str, secret: 
     if not signature_header or not secret:
         return False
 
-    expected_signature = hmac.new(
+    # Documented format is "sha256=<hex>"; accept a bare digest too
+    received = signature_header.removeprefix("sha256=")
+
+    expected = hmac.new(
         secret.encode("utf-8"),
         raw_body,
         hashlib.sha256
     ).hexdigest()
 
-    return hmac.compare_digest(signature_header, expected_signature)
+    return hmac.compare_digest(received, expected)
 ```
 
-### V1 Gotchas
+### V1 Notes
 
-**No `sha256=` prefix.** In V1, Fireflies sends the digest as a bare hex string.
-Do **not** strip a `sha256=` prefix (there isn't one) and do not expect one —
-compare the whole header value.
+**Secret.** An existing V1 webhook's secret can be viewed under **Settings →
+Developer Settings → Webhook → View Configuration**, but no longer changed. When
+you migrate, enter the same secret as the V2 **Signing Secret**.
 
-```javascript
-// WRONG (in V1) - there is no prefix to strip; this mangles the signature
-const signature = signatureHeader.replace('sha256=', '');
-
-// CORRECT (in V1) - use the header value as-is
-crypto.timingSafeEqual(Buffer.from(signatureHeader, 'hex'), Buffer.from(expected, 'hex'));
-```
-
-This is the exact inverse of the V2 rule. Check an actual delivery before
-picking a side — see [overview.md](overview.md#webhooks-v2-vs-v1).
-
-**Secret length.** V1 requires a 16–32 character secret, set in
-app.fireflies.ai/settings > Developer Settings. A secret outside that range is
-rejected by the dashboard.
+**Tell the versions apart by the body.** V1 payloads carry `eventType` and
+camelCase fields; V2 payloads carry `event` and snake_case fields.
 
 Hex encoding, timing-safe comparison, and header-name casing work the same way
 as in V2.

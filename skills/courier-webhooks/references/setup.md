@@ -7,19 +7,19 @@
 
 ## Register Your Endpoint
 
-1. Go to the Courier dashboard → **Settings** → **General**
-   (`https://app.courier.com/settings/general`).
-2. Under the webhooks section, click **+ Outbound Webhook**.
+1. In the Courier dashboard, go to **Platform → Webhooks**
+   (`https://app.courier.com/settings/webhooks`) and find **Outbound Webhooks**.
+2. Select **Add** and give the destination a name.
 3. Enter your endpoint URL (the route that receives `POST` requests, e.g.
    `https://your-app.com/webhooks/courier`).
-4. Select the events you want to receive (see [overview.md](overview.md) for the list),
-   for example `message:updated`, `notification:submitted`, `audiences:user:matched`.
-5. Save the webhook.
+4. Save. Every destination receives every event type (see [overview.md](overview.md)),
+   so your handler filters on `type`. Destinations are created in the dashboard only;
+   there is no API for them.
 
 ## Get Your Signing Secret
 
-When you create the webhook, Courier provides a **webhook signing secret**. Copy it and
-store it as an environment variable in your application:
+When you add the destination, Courier creates a `whsec_...` **signing secret** for it.
+Copy it and store it as an environment variable in your application:
 
 ```bash
 COURIER_WEBHOOK_SECRET=your_webhook_signing_secret
@@ -35,8 +35,8 @@ Webhooks are **scoped to the environment where they are created**:
 - A webhook created in the **test** environment receives only **test** events.
 - A webhook created in **production** receives only **production** events.
 
-If you want to receive events in both, create a separate webhook in each environment.
-Each environment has its own signing secret.
+If you want to receive events in both, create a separate destination in each
+environment. Each destination has its own signing secret.
 
 ## Verify It Works
 

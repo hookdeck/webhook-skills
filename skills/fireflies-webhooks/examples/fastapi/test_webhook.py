@@ -62,7 +62,7 @@ class TestVerifyFirefliesWebhook:
         assert verify_fireflies_webhook(tampered, signature, self.secret) is False
 
     def test_missing_prefix_returns_false(self):
-        # V2 requires the "sha256=" prefix; a bare hex digest is the V1 format
+        # The "sha256=" prefix is required; a bare hex digest is rejected
         payload = b'{"meeting_id":"abc"}'
         bare_hex = hmac.new(
             self.secret.encode("utf-8"), payload, hashlib.sha256

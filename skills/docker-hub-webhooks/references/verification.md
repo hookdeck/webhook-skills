@@ -171,7 +171,7 @@ including one they control — and steer whatever your handler does next.
 
 ### 4. What Hookdeck does and doesn't do
 
-Hookdeck's source type for this provider is **`DOCKER_HUB`**, configured as **"No verification (schema only)"**: Docker Hub repository webhooks are unsigned (no secret, signature or auth header).
+Hookdeck's source type for this provider is **`DOCKER_HUB`**. Docker Hub repository webhooks are unsigned (no secret, signature or auth header), so there is no signature to configure.
 
 | Claim | True? |
 |-------|-------|
@@ -179,9 +179,6 @@ Hookdeck's source type for this provider is **`DOCKER_HUB`**, configured as **"N
 | A Hookdeck source URL is unguessable | Yes — the same class of protection as the secret URL token, applied at the gateway |
 | Docker Hub can send Basic auth or custom headers to Hookdeck | **No.** Not offered in the create-webhook form, and undocumented |
 | Hookdeck can add verification to the Hookdeck → your destination hop | Yes — Hookdeck's own outbound signature. That secures the **second hop only**, and says nothing about whether the inbound request came from Docker Hub |
-
-Docker Hub is not yet listed at hookdeck.com/docs/sources (checked 2026-09-28),
-so there is no provider guide page for it there yet.
 
 ## Common Gotchas
 

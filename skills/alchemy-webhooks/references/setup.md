@@ -6,9 +6,9 @@
   monitor (e.g. Ethereum Mainnet).
 - Your application's public webhook endpoint URL (or a Hookdeck / tunnel URL for local development).
 
-## Option A: Configure in the Dashboard (Notify tab)
+## Option A: Configure in the Dashboard (Webhooks page)
 
-1. Go to the Alchemy Dashboard → **Notify** tab.
+1. Go to the Alchemy Dashboard → **Webhooks** page.
 2. Click **Create Webhook** and choose a type:
    - **Address Activity** (`ADDRESS_ACTIVITY`)
    - **NFT Activity** (`NFT_ACTIVITY`)
@@ -27,47 +27,39 @@
 
 The signing key is **per-webhook** (not per-app):
 
-1. Open the webhook you just created in the **Notify** tab.
+1. Open the webhook you just created on the **Webhooks** page.
 2. Copy the **signing key** from the **top-right** of the webhook's detail page.
 3. Store it as `ALCHEMY_SIGNING_KEY` in your environment.
 
 > Each webhook has its own key. If you create multiple webhooks, verify each delivery with the key that
 > matches its `webhookId`.
 
-## Option B: Configure via the Notify API / alchemy-sdk
+## Option B: Configure via the Notify API
 
-The Notify API (and the `alchemy-sdk` `NotifyNamespace`) let you create and manage webhooks
-programmatically. This requires your app's **Auth Token** (`X-Alchemy-Token`), which is **distinct from
-the per-webhook signing key**.
+The Notify API creates and manages webhooks programmatically. It requires your team's **Auth Token**,
+sent as `X-Alchemy-Token`, which is **distinct from the per-webhook signing key**. Find it on the
+Webhooks page of the Alchemy dashboard.
 
-Find the Auth Token in the Dashboard → **Notify** tab (top-right, "AUTH TOKEN").
-
-```javascript
-// npm install alchemy-sdk@^3.6.5
-const { Alchemy, Network, WebhookType } = require('alchemy-sdk');
-
-const alchemy = new Alchemy({
-  authToken: process.env.ALCHEMY_AUTH_TOKEN, // NOT the signing key
-});
-
-// Create an Address Activity webhook
-const webhook = await alchemy.notify.createWebhook(
-  'https://your-app.com/webhooks/alchemy',
-  WebhookType.ADDRESS_ACTIVITY,
-  {
-    addresses: ['0xd6b8b7...'],
-    network: Network.ETH_MAINNET,
-  }
-);
-
-// Read the signing key for a webhook (use it to verify that webhook's deliveries)
-const signingKey = await alchemy.notify.getSigningKey(webhook.id);
-console.log('Signing key:', signingKey);
+```bash
+curl --request POST \
+  --url https://dashboard.alchemy.com/api/create-webhook \
+  --header 'Content-Type: application/json' \
+  --header "X-Alchemy-Token: $ALCHEMY_AUTH_TOKEN" \
+  --data '{
+    "network": "ETH_MAINNET",
+    "webhook_type": "ADDRESS_ACTIVITY",
+    "webhook_url": "https://your-app.com/webhooks/alchemy",
+    "addresses": ["0xYourAddress"]
+  }'
 ```
 
-> **Important:** `alchemy-sdk` manages webhook CRUD and can fetch the signing key, but it does **not**
-> provide a signature-verification helper. You must verify the `X-Alchemy-Signature` header yourself —
-> see [verification.md](verification.md).
+Send `nft_filters` instead of `addresses` for `NFT_ACTIVITY`, or `graphql_query` for `GRAPHQL`. The
+response's `data.signing_key` is the key that signs that webhook's deliveries; `GET /api/team-webhooks`
+returns it for every webhook too.
+
+> **Note:** the JavaScript `alchemy-sdk` (`NotifyNamespace`) that older examples use is deprecated and
+> its repository is archived. It never had a signature-verification helper either — verify the
+> `X-Alchemy-Signature` header yourself, as in [verification.md](verification.md).
 
 ## Register Your Endpoint
 
@@ -85,4 +77,4 @@ console.log('Signing key:', signingKey);
   npx hookdeck-cli listen 3000 alchemy --path /webhooks/alchemy
   ```
 
-  Then set the resulting URL as the webhook's target in the Notify dashboard.
+  Then set the resulting URL as the webhook's target on the dashboard's Webhooks page.

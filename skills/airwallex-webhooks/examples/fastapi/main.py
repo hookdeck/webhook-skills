@@ -68,22 +68,22 @@ async def airwallex_webhook(request: Request):
 
     if event_name == "payment_intent.succeeded":
         print(f"PaymentIntent succeeded: {resource.get('id')}")
-        # TODO: fulfill the order, send a receipt, etc.
+        # Your code: fulfill the order, send a receipt, etc.
     elif event_name == "payment_attempt.paid":
         print(f"Payment attempt paid: {resource.get('id')}")
-        # TODO: mark the attempt as paid.
+        # Your code: mark the attempt as paid.
     elif event_name == "refund.settled":
         print(f"Refund settled: {resource.get('id')}")
-        # TODO: reconcile the refund.
+        # Your code: reconcile the refund.
     elif event_name == "refund.failed":
         print(f"Refund failed: {resource.get('id')}")
-        # TODO: alert / retry the refund.
+        # Your code: alert / retry the refund.
     elif event_name == "payment_consent.verified":
         print(f"Payment consent verified: {resource.get('id')}")
-        # TODO: enable recurring / merchant-initiated payments.
+        # Your code: enable recurring / merchant-initiated payments.
     elif event_name == "payment_dispute.requires_response":
         print(f"Dispute requires response: {resource.get('id')}")
-        # TODO: gather and submit evidence before the deadline.
+        # Your code: gather and submit evidence before the deadline.
     else:
         print(f"Unhandled event type: {event_name}")
 

@@ -21,7 +21,7 @@ def signal(**overrides):
         "order_reference": "ref-order-123",
         "item": "73O1230A-1",
         "item_reference": "ref-item-1",
-        "datetime": "2026-07-28 10:30:00",
+        "datetime": "2017-01-21T13:23:42+00:00",
     }
     body.update(overrides)
     return body
@@ -71,7 +71,7 @@ class TestCloudSignalWebhook:
             json=signal(
                 type="ItemShipped",
                 tracking="1Z999AA10123456784",
-                shipping_option="standard",
+                shipping_option="GLS",
             ),
         )
         assert response.status_code == 200

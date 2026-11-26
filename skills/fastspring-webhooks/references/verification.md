@@ -135,7 +135,7 @@ mismatches (they throw with `timingSafeEqual`).
 ### 6. Idempotency on Retries
 
 Automatic retries reuse the same event `id`; manual retries get new ids. FastSpring
-retries until you return `200`. Dedupe on `id` so repeated deliveries don't double-
+retries an event for up to 7 days until a `200` (or a `202` listing its ID) marks it processed. Dedupe on `id` so repeated deliveries don't double-
 process.
 
 ## Debugging Verification Failures

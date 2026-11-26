@@ -2,7 +2,7 @@
 
 ## What Are Cursor Webhooks?
 
-Cursor Cloud Agent webhooks are HTTP callbacks that notify your application when agent status changes occur. These webhooks enable real-time monitoring of Cloud Agent operations, allowing you to track when agents complete tasks or encounter errors.
+Cursor Cloud Agent webhooks are HTTP POST callbacks that notify your application when an agent you created through the API reaches `FINISHED` or `ERROR`. A webhook is set per agent with the `webhook` object on the legacy v0 Create An Agent request; the current Cloud Agents API lists webhooks as coming soon. These webhooks enable real-time monitoring of Cloud Agent operations, allowing you to track when agents complete tasks or encounter errors.
 
 ## Common Event Types
 
@@ -12,24 +12,24 @@ Cursor Cloud Agent webhooks are HTTP callbacks that notify your application when
 
 ## Event Payload Structure
 
-All Cursor webhooks share a consistent payload structure:
+Cursor's documented example (some fields are optional and only included when available):
 
 ```json
 {
   "event": "statusChange",
-  "timestamp": "2024-01-01T12:00:00.000Z",
-  "id": "agent_123456",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "id": "bc_abc123",
   "status": "FINISHED",
   "source": {
-    "repository": "https://github.com/user/repo",
+    "repository": "https://github.com/your-org/your-repo",
     "ref": "main"
   },
   "target": {
-    "url": "https://github.com/user/repo/pull/123",
-    "branchName": "feature-branch",
-    "prUrl": "https://github.com/user/repo/pull/123"
+    "url": "https://cursor.com/agents?id=bc_abc123",
+    "branchName": "cursor/add-readme-1234",
+    "prUrl": "https://github.com/your-org/your-repo/pull/1234"
   },
-  "summary": "Updated 3 files and fixed linting errors"
+  "summary": "Added README.md with installation instructions"
 }
 ```
 
@@ -45,10 +45,9 @@ Cursor sends these headers with every webhook:
 | Header | Description | Example |
 |--------|-------------|---------|
 | `X-Webhook-Signature` | HMAC-SHA256 signature | `sha256=abc123...` |
-| `X-Webhook-ID` | Unique delivery ID | `msg_01234567890` |
+| `X-Webhook-ID` | Unique ID for this delivery, useful for logging (whether a retry reuses it isn't documented) | |
 | `X-Webhook-Event` | Event type | `statusChange` |
 | `User-Agent` | Identifies Cursor webhooks | `Cursor-Agent-Webhook/1.0` |
-| `Content-Type` | Payload format | `application/json` |
 
 ## Full Event Reference
 

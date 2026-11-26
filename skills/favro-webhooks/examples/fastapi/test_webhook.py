@@ -80,6 +80,9 @@ class TestEventKey:
     def test_comment_action(self):
         assert event_key({"action": "created", "comment": {}}) == "comment.created"
 
+    def test_comment_action_with_card(self):
+        assert event_key({"action": "updated", "card": {}, "comment": {}}) == "comment.updated"
+
 
 class TestFavroWebhookEndpoint:
     def _post(self, payload: dict, signature: str = None):

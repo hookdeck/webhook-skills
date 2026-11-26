@@ -21,16 +21,15 @@ def verify_clio_webhook(raw_body: bytes, signature_header: str, secret: str) -> 
     Clio sends the HMAC-SHA256 of the raw body (keyed with the shared secret) in
     the ``X-Hook-Signature`` header. Verify against the RAW body.
 
-    Clio's docs do not say whether the digest is hex- or base64-encoded, so we
-    compute it once and compare against both. Confirm which encoding your real
-    deliveries use, then you can drop the other.
+    Clio's docs compute a lowercase hex digest (`hexdigest`). We compute it once
+    and also accept base64 as a safety net; the wrong encoding never matches.
     """
     if not signature_header:
         return False
 
     digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
 
-    # Accept hex or base64 (encoding unspecified) — constant-time either way.
+    # Hex per Clio's docs, base64 as a safety net — constant-time either way.
     return hmac.compare_digest(
         signature_header, digest.hex()
     ) or hmac.compare_digest(
@@ -69,27 +68,27 @@ async def clio_webhook(request: Request):
     # Handle the event based on meta.event.
     if event == "created":
         print(f"Record created: {record.get('id')}")
-        # TODO: sync the new record into your system
+        # Your code: sync the new record into your system
 
     elif event == "updated":
         print(f"Record updated: {record.get('id')}")
-        # TODO: update your local copy
+        # Your code: update your local copy
 
     elif event == "deleted":
         print(f"Record deleted: {record.get('id')}")
-        # TODO: soft-delete / archive locally
+        # Your code: soft-delete / archive locally
 
     elif event == "matter_opened":
         print(f"Matter opened: {record.get('id')}")
-        # TODO: kick off intake / billing setup
+        # Your code: kick off intake / billing setup
 
     elif event == "matter_pended":
         print(f"Matter pended: {record.get('id')}")
-        # TODO: pause automations
+        # Your code: pause automations
 
     elif event == "matter_closed":
         print(f"Matter closed: {record.get('id')}")
-        # TODO: final invoicing / close-out
+        # Your code: final invoicing / close-out
 
     else:
         print(f"Unhandled event: {event}")

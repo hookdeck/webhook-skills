@@ -54,11 +54,11 @@ and that is a repository property, not an event type.
 
 ## Event Payload Structure
 
-The documented example payload, verbatim from the docs:
+The documented example payload, from the docs, with the example account's username replaced by `example-user`:
 
 ```json
 {
-  "callback_url": "https://registry.hub.docker.com/u/svendowideit/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
+  "callback_url": "https://registry.hub.docker.com/u/example-user/testhook/hook/2141b5bi5i5b02bec211i4eeih0242eg11000a/",
   "push_data": {
     "pushed_at": 1417566161,
     "pusher": "trustedbuilder",
@@ -74,10 +74,10 @@ The documented example payload, verbatim from the docs:
     "is_private": true,
     "is_trusted": true,
     "name": "testhook",
-    "namespace": "svendowideit",
-    "owner": "svendowideit",
-    "repo_name": "svendowideit/testhook",
-    "repo_url": "https://registry.hub.docker.com/u/svendowideit/testhook/",
+    "namespace": "example-user",
+    "owner": "example-user",
+    "repo_name": "example-user/testhook",
+    "repo_url": "https://registry.hub.docker.com/u/example-user/testhook/",
     "star_count": 0,
     "status": "Active"
   }
@@ -97,7 +97,7 @@ asserting on them.
 | `push_data.tag` | string | The tag that was pushed. The single most useful field. |
 | `push_data.pusher` | string | The Docker Hub username that pushed. |
 | `push_data.pushed_at` | integer | **UNIX seconds.** Inferred from the 10-digit example value — the docs do not state the unit in words. |
-| `repository.repo_name` | string | `namespace/name`, e.g. `svendowideit/testhook`. |
+| `repository.repo_name` | string | `namespace/name`, e.g. `example-user/testhook`. |
 | `repository.namespace` | string | The owning user or organization. |
 | `repository.name` | string | Repository name without the namespace. |
 | `repository.is_private` | boolean | |

@@ -97,7 +97,9 @@ def idempotency_key(event: dict[str, Any]) -> str | None:
     event_type = event.get("type")
     if isinstance(event_type, str):
         # app.subscription.* ids hash subscription id + topic, so a repeated
-        # transition reuses the earlier id.
+        # transition reuses the earlier id. The envelope timestamp changes on every
+        # retry, so this key keeps real transitions but won't collapse retries:
+        # read current state from GET /apps/{appUuid}/subscription-status.
         if event_type.startswith("app.subscription."):
             return f"{event.get('id')}:{event.get('timestamp')}"
         return event.get("id")

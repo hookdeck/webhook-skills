@@ -66,42 +66,42 @@ async def handle_chargebee_webhook(
     if event_type == "subscription_created":
         subscription = event.get("content", {}).get("subscription", {})
         print(f"New subscription created: {subscription.get('id')}")
-        # TODO: Provision user access, send welcome email, etc.
+        # Your code: Provision user access, send welcome email, etc.
 
     elif event_type == "subscription_changed":
         subscription = event.get("content", {}).get("subscription", {})
         print(f"Subscription updated: {subscription.get('id')}")
-        # TODO: Update user permissions, sync subscription data
+        # Your code: Update user permissions, sync subscription data
 
     elif event_type == "subscription_cancelled":
         subscription = event.get("content", {}).get("subscription", {})
         print(f"Subscription cancelled: {subscription.get('id')}")
-        # TODO: Schedule access revocation, trigger retention flow
+        # Your code: Schedule access revocation, trigger retention flow
 
     elif event_type == "subscription_reactivated":
         subscription = event.get("content", {}).get("subscription", {})
         print(f"Subscription reactivated: {subscription.get('id')}")
-        # TODO: Restore user access
+        # Your code: Restore user access
 
     elif event_type == "payment_succeeded":
         transaction = event.get("content", {}).get("transaction", {})
         print(f"Payment succeeded: {transaction.get('id')}")
-        # TODO: Update payment status, send receipt
+        # Your code: Update payment status, send receipt
 
     elif event_type == "payment_failed":
         transaction = event.get("content", {}).get("transaction", {})
         print(f"Payment failed: {transaction.get('id')}")
-        # TODO: Send payment failure notification, retry logic
+        # Your code: Send payment failure notification, retry logic
 
     elif event_type == "invoice_generated":
         invoice = event.get("content", {}).get("invoice", {})
         print(f"Invoice generated: {invoice.get('id')}")
-        # TODO: Send invoice to customer
+        # Your code: Send invoice to customer
 
     elif event_type == "customer_created":
         customer = event.get("content", {}).get("customer", {})
         print(f"Customer created: {customer.get('id')}")
-        # TODO: Create user account, sync customer data
+        # Your code: Create user account, sync customer data
 
     else:
         print(f"Unhandled event type: {event_type}")

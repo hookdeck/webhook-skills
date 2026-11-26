@@ -58,11 +58,12 @@ interface Entry {
  * entry individually.
  */
 function handleEntry(object: string, entry: Entry): void {
-  // Messenger deliveries carry a `messaging` array instead of `changes`.
+  // Messenger (and Page Integrity) deliveries carry a `messaging` array instead of `changes`.
+  // For Messenger, see the messenger-webhooks skill.
   if (Array.isArray(entry.messaging)) {
     for (const event of entry.messaging) {
       console.log(`Messenger message from ${event.sender?.id}:`, event.message?.text);
-      // TODO: Route to your chatbot / support system.
+      // Your code: route to your chatbot or support system.
     }
     return;
   }
@@ -75,8 +76,8 @@ function handleEntry(object: string, entry: Entry): void {
       case 'page:mention':
         console.log('Page mentioned:', change.value?.post_id);
         break;
-      case 'page:messages':
-        console.log('Page message field change:', change.value);
+      case 'page:leadgen':
+        console.log('New lead:', change.value?.leadgen_id);
         break;
       case 'instagram:comments':
         console.log('Instagram comment:', change.value?.id);

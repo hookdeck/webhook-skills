@@ -46,32 +46,48 @@ async def aiprise_webhook(request: Request):
 
     # Parse the payload only after verification.
     payload = json.loads(raw_body)
+    # Event callbacks (events_callback_url) and token sharing webhooks name their
+    # event in one of these fields. A decision callback (callback_url) has none.
+    event_type = (
+        payload.get("event_type")
+        or payload.get("user_profile_event_type")
+        or payload.get("business_profile_event_type")
+        or payload.get("token_sharing_event_type")
+    )
+    if event_type:
+        print(f"AiPrise event {event_type}")
+        # Your code: handle the events you use, such as CASE_STATUS_UPDATE.
+        return {"received": True}
+
+    # Decision callback: the final result of a verification session.
     session_id = payload.get("verification_session_id")
     client_ref = payload.get("client_reference_id")
-    result = (payload.get("aiprise_summary") or {}).get("verification_result")
+    # The API reference names this field verification_result; AiPrise's callback
+    # pages print aiprise_summary.decision instead, so read both.
+    summary = payload.get("aiprise_summary") or {}
+    result = summary.get("verification_result") or summary.get("decision")
 
     ref = f" (ref: {client_ref})" if client_ref else ""
     print(f"AiPrise callback for session {session_id}{ref} -> {result}")
 
-    # The outcome IS the verification_result value.
     if result == "APPROVED":
         print("Verification approved")
-        # TODO: Provision access, mark the customer verified.
+        # Your code: Provision access, mark the customer verified.
 
     elif result == "DECLINED":
         print("Verification declined")
-        # TODO: Block onboarding, request resubmission, flag for review.
+        # Your code: Block onboarding, request resubmission, flag for review.
 
-    elif result == "REVIEW":
+    elif result in ("REVIEW", "MANUAL_REVIEW"):
         print("Verification needs manual review")
-        # TODO: Route to a human analyst / compliance queue.
+        # Your code: Route to a human analyst / compliance queue.
 
-    elif result == "UNKNOWN":
+    elif result in ("UNKNOWN", "FAILED"):
         print("Verification result unknown")
-        # TODO: Retry or investigate.
+        # Your code: Retry or investigate.
 
     else:
-        print(f"Unhandled verification_result: {result}")
+        print(f"Unhandled result: {result}")
 
     # Return 200 to acknowledge receipt.
     return {"received": True}

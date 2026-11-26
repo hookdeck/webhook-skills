@@ -196,7 +196,7 @@ your channels before debugging anything else — the channel may simply be gone.
 
 ## Official Documentation
 
-- [Push Notifications](https://docs.cronofy.com/developers/api/push-notifications/)
-- [Create Notification Channel](https://docs.cronofy.com/developers/api/push-notifications/create-channel/)
-- [Authentication of push notifications](https://docs.cronofy.com/developers/push-notifications/authentication/)
-- [Data centres](https://docs.cronofy.com/developers/data-centers/)
+- [Push Notifications](https://docs.cronofy.com/api-reference/calendar-control/push-notifications/)
+- [Create Notification Channel](https://docs.cronofy.com/api-reference/calendar-control/push-notifications/create-channel/)
+- [Authentication of push notifications](https://docs.cronofy.com/api-reference/authorization/webhook-authentication/)
+- [Data centres](https://docs.cronofy.com/developers/temporal-grid/data-centers/)

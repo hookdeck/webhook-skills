@@ -51,9 +51,6 @@ Secret** and sends the result in the `X-Hub-Signature-256` header, formatted as:
 X-Hub-Signature-256: sha256=<hex-digest>
 ```
 
-The legacy `X-Hub-Signature` header carries an **SHA-1** digest. Prefer the
-SHA-256 header.
-
 ### Manual Verification (recommended)
 
 The Meta Business SDKs do not include a webhook signature verifier, so compute
@@ -116,8 +113,7 @@ def verify_facebook_signature(raw_body: bytes, signature_header: str, app_secret
   non-ASCII characters and spacing will differ and the HMAC will not match.
   Capture the raw bytes before any body parser runs.
 - **Sign with the App Secret**, not a Page access token or the Verify Token.
-- **Use `X-Hub-Signature-256`** (SHA-256), not the legacy `X-Hub-Signature`
-  (SHA-1).
+- **Use `X-Hub-Signature-256`** (SHA-256), the header Meta documents.
 - **The header includes the `sha256=` prefix.** Strip it before comparing.
 - **Compare timing-safe.** Use `crypto.timingSafeEqual` /
   `hmac.compare_digest`, and guard against length-mismatch exceptions.
@@ -129,8 +125,7 @@ def verify_facebook_signature(raw_body: bytes, signature_header: str, app_secret
 | Symptom | Likely Cause |
 |---------|--------------|
 | Signature never matches | Verifying against parsed/re-serialized JSON instead of the raw body |
-| Signature never matches | Using SHA-1 logic against the SHA-256 header, or vice versa |
 | Signature never matches | Signing with the wrong secret (Verify Token instead of App Secret) |
 | Handshake fails on save | GET handler not echoing `hub.challenge`, or Verify Token mismatch |
 | `timingSafeEqual` throws | Compare hex-decoded buffers, or wrap in try/catch |
-| No events after verify | App in Development mode, or Page not subscribed via `/{page-id}/subscribed_apps` |
+| No events after verify | App not published, or Page not subscribed via `/{page-id}/subscribed_apps` |

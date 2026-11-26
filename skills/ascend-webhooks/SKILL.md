@@ -34,8 +34,8 @@ Standard Webhooks). Two headers are sent:
 
 | Header | Example | Purpose |
 |--------|---------|---------|
-| `X-Ascend-Signature` | `t=1696200697,v1=5257a869e7...` | Timestamp + HMAC signature |
-| `X-Ascend-Request-Timestamp` | `1696200697` | Same Unix timestamp (redundant) |
+| `X-Ascend-Signature` | `t=1657323346,v1=c159a974c8...` | Timestamp + HMAC signature |
+| `X-Ascend-Request-Timestamp` | `1657323346` | The same Unix timestamp, which is signed |
 
 The signature is verified by:
 

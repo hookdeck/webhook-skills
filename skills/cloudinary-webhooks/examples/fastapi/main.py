@@ -101,7 +101,7 @@ async def handle_cloudinary_webhook(request: Request):
     elif notification_type == "moderation":
         # A moderation result is available (manual or add-on moderation).
         print(f"Moderation result: {public_id} {notification.get('moderation_status')}")
-        # TODO: Approve/reject the asset based on moderation_status.
+        # Your code: approve or reject the asset based on moderation_status.
 
     elif notification_type == "resource_tags_changed":
         print(f"Tags changed: {notification.get('resources')}")
@@ -116,7 +116,7 @@ async def handle_cloudinary_webhook(request: Request):
         # Unknown/new type: acknowledge with 200 so Cloudinary does not retry.
         print(f"Unhandled Cloudinary notification_type: {notification_type}")
 
-    # Respond 2xx quickly. A non-2xx makes Cloudinary retry.
+    # Respond 200 quickly. Cloudinary retries any response other than 200 OK.
     return {"received": True}
 
 

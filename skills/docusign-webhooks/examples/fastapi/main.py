@@ -54,43 +54,43 @@ async def docusign_webhook(request: Request):
     # Handle the event based on the `event` field in the JSON body
     if event == "envelope-sent":
         print(f"Envelope sent: {envelope_id}")
-        # TODO: Track that the envelope was emailed to recipients
+        # Your code: Track that the envelope was emailed to recipients
 
     elif event == "envelope-delivered":
         print(f"Envelope opened: {envelope_id}")
-        # TODO: Update status to "viewed"
+        # Your code: Update status to "viewed"
 
     elif event == "envelope-completed":
         print(f"Envelope completed: {envelope_id}")
-        # TODO: Download signed documents, mark deal as signed, etc.
+        # Your code: Download signed documents, mark deal as signed, etc.
 
     elif event == "envelope-declined":
         print(f"Envelope declined: {envelope_id}")
-        # TODO: Notify sender, halt workflow
+        # Your code: Notify sender, halt workflow
 
     elif event == "envelope-voided":
         print(f"Envelope voided: {envelope_id}")
-        # TODO: Clean up any pending state
+        # Your code: Clean up any pending state
 
     elif event == "recipient-sent":
         print(f"Recipient notified: {envelope_id}")
-        # TODO: Track per-recipient delivery
+        # Your code: Track per-recipient delivery
 
     elif event == "recipient-delivered":
         print(f"Recipient opened documents: {envelope_id}")
-        # TODO: Update per-recipient status
+        # Your code: Update per-recipient status
 
     elif event == "recipient-completed":
         print(f"Recipient completed: {envelope_id}")
-        # TODO: Advance signing workflow to the next recipient
+        # Your code: Advance signing workflow to the next recipient
 
     elif event == "recipient-declined":
         print(f"Recipient declined: {envelope_id}")
-        # TODO: Notify sender
+        # Your code: Notify sender
 
     elif event == "recipient-authenticationfailed":
         print(f"Recipient authentication failed: {envelope_id}")
-        # TODO: Flag for review
+        # Your code: Flag for review
 
     else:
         print(f"Unhandled event: {event}")

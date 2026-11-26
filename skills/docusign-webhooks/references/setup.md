@@ -14,7 +14,7 @@ The HMAC secret is what DocuSign uses to sign each webhook. Generate it in the C
 3. Click **Add Secret Key** / **Generate a new key**.
 4. Copy the generated key value — this is your `DOCUSIGN_HMAC_SECRET`. Store it securely; you cannot retrieve it again later.
 
-You can have **up to 100 active keys** at once. When more than one is active, DocuSign signs each request once per key and sends a separate `X-DocuSign-Signature-N` header for each — this is how you rotate keys with zero downtime.
+You can have **up to 100 active keys** at once. When more than one is active, DocuSign signs each request once per key and sends a separate `X-DocuSign-Signature-N` header for each, numbered in key order. Removing a key moves every key below it up one place, so header numbers change. DocuSign recommends using one key, and rotating by stopping your app, deleting the old key, creating a new one, adding it to your app and restarting. HMAC keys can't be added through the API.
 
 ## Create an Account-Level Connect Configuration
 
@@ -29,7 +29,8 @@ You can have **up to 100 active keys** at once. When more than one is active, Do
 6. Set the **eventData** / **Include Data** version to **`restv2.1`**.
 7. Select the **events to subscribe to** (e.g. `envelope-completed`, `recipient-completed`).
 8. Under **Include Data**, optionally enable `Recipients`, `Documents`, `Tabs`, etc. — recipient/document detail is **only** delivered when these are on.
-9. Save.
+9. Under **Integration and Security Settings**, select **Include HMAC Signature**. Without it, no signature headers are sent even when keys exist.
+10. Save.
 
 ## Per-Envelope Configuration (API)
 
@@ -44,9 +45,9 @@ To attach a webhook to a single envelope, include an `eventNotification` when cr
     "requireAcknowledgment": "true",
     "loggingEnabled": "true",
     "deliveryMode": "SIM",
-    "eventData": { "version": "restv2.1" },
-    "events": ["envelope-completed", "recipient-completed"],
-    "includeData": ["recipients"]
+    "includeHMAC": "true",
+    "eventData": { "version": "restv2.1", "includeData": ["recipients"] },
+    "events": ["envelope-completed", "recipient-completed"]
   }
 }
 ```

@@ -51,7 +51,7 @@ The POST body is a JSON envelope sent with `Content-Type: text/plain; charset=UT
 
 | Field | Description |
 |-------|-------------|
-| `Token` | Token for `ConfirmSubscription` (valid ~3 days) |
+| `Token` | Token for `ConfirmSubscription` (valid for two days) |
 | `SubscribeURL` | GET this URL to confirm the subscription |
 
 ## Relevant HTTP Headers
@@ -61,7 +61,7 @@ The POST body is a JSON envelope sent with `Content-Type: text/plain; charset=UT
 | `x-amz-sns-message-type` | all | `SubscriptionConfirmation` / `Notification` / `UnsubscribeConfirmation` |
 | `x-amz-sns-message-id` | all | Same as `MessageId`; use for de-duplication |
 | `x-amz-sns-topic-arn` | all | The topic ARN |
-| `x-amz-sns-subscription-arn` | `Notification` | The subscription ARN |
+| `x-amz-sns-subscription-arn` | `Notification`, `UnsubscribeConfirmation` | The subscription ARN |
 
 ## Raw Message Delivery (Gotcha)
 

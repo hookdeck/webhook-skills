@@ -2,10 +2,10 @@
 name: cloudsignal-webhooks
 description: >
   Receive and verify CloudSignal webhooks from Cloudprinter.com. Use when setting
-  up a CloudSignal Webhooks v2.0 receiver, authenticating deliveries by the
+  up a CloudSignal Webhooks v2.1 receiver, authenticating deliveries by the
   plaintext `apikey` field in the JSON body (there is NO HMAC signature header),
   or handling print order/item status signals like CloudprinterOrderValidated,
-  ItemProduced, ItemShipped, ItemError, and ItemCanceled.
+  ItemProduced, ItemShipped, ItemError, ItemCanceled, and ItemDeliveryCompleted.
 license: MIT
 metadata:
   author: hookdeck
@@ -21,14 +21,14 @@ and its items move through fulfilment (validated → produced → packed → shi
 or when something errors or is canceled.
 
 > **Not to be confused** with the unrelated `cloudsignal.io` MQTT platform. This
-> skill is for **Cloudprinter.com CloudSignal Webhooks v2.0**.
+> skill is for **Cloudprinter.com CloudSignal Webhooks v2.1**.
 
 ## When to Use This Skill
 
 - How do I receive CloudSignal / Cloudprinter.com webhooks?
 - How do I authenticate a CloudSignal webhook without a signature header?
 - Why is there no `X-CloudSignal-Signature` / HMAC to verify?
-- How do I handle `ItemShipped`, `ItemError`, or `CloudprinterOrderCanceled` signals?
+- How do I handle `ItemShipped`, `ItemError`, or `ItemDeliveryFailed` signals?
 - What are the CloudSignal event/signal `type` values?
 
 ## Verification (core)
@@ -56,14 +56,17 @@ function verifyApiKey(providedKey, expectedKey) {
 }
 ```
 
-Return **200** (or 204) to acknowledge. Any other status makes CloudSignal retry
-the signal — **up to 100 attempts over 7 days**. Return **401** for a
-missing/incorrect `apikey`.
+Return **200** (or 204) to acknowledge. Any other status, including other 2xx
+codes, makes CloudSignal retry the signal — **up to 100 attempts over 7 days**,
+with the gap growing after each attempt. Return **401** for a missing/incorrect
+`apikey`.
 
 > **Official SDK (`@cloudprinter/cloudsignal`)** exists but is a **standalone Node
 > HTTP server** (`new CloudSignal.EventHandler(apikey, port)`) that listens on its
 > own port and emits events — it cannot be mounted as an Express/Next.js/FastAPI
 > route. Its internal check is exactly the `body.apikey === expectedKey` above.
+> Its type list predates v2.1 (last changed 2020), so it answers **500** to the
+> `ItemDelivery*` signals, and CloudSignal keeps retrying them.
 > The examples below verify manually so the handler fits your existing app; use
 > the SDK only for a greenfield standalone Node receiver.
 
@@ -71,7 +74,8 @@ missing/incorrect `apikey`.
 
 ## Signal Types
 
-Nine signal `type` values (case-sensitive, PascalCase):
+Signal `type` values (case-sensitive, PascalCase). The first eleven are on the
+v2.1 reference; `CloudprinterOrderCanceled` appears only in the official Node SDK:
 
 | `type` | Fires When | Notable fields |
 |--------|------------|----------------|
@@ -80,19 +84,23 @@ Nine signal `type` values (case-sensitive, PascalCase):
 | `ItemProduce` | Production of an item starts | `item` |
 | `ItemProduced` | Production of an item completes | `item` |
 | `ItemPacked` | An item is packed | `item` |
-| `ItemShipped` | An item is dispatched | `tracking`, `shipping_option` |
-| `ItemError` | A production issue occurs | `cause` (optional) |
-| `ItemCanceled` | An item is canceled in production | `cause` (optional) |
-| `CloudprinterOrderCanceled` | The whole order is canceled | `order`, `order_reference` |
+| `ItemShipped` | An item is dispatched | `tracking`, `shipping_option`, `url` |
+| `ItemError` | A production issue occurs | `cause`, `delay` (optional) |
+| `ItemCanceled` | An item is canceled in production | `cause`, `message` (optional) |
+| `ItemDeliveryStarted` | The carrier receives the item | `tracking`, `message` (optional) |
+| `ItemDeliveryCompleted` | The item is delivered | `tracking`, `message` (optional) |
+| `ItemDeliveryFailed` | Delivery fails (returned or lost) | `tracking`, `message` (optional) |
+| `CloudprinterOrderCanceled` | The whole order is canceled (SDK only) | `order`, `order_reference` |
 
-Common fields on every signal: `apikey`, `type`, `order`, `datetime`. Most also
-carry `item`, `order_reference`, and `item_reference`. See
+Common fields on every signal: `apikey`, `type`, `order`, `order_reference`,
+`datetime` (ISO 8601). Item signals also carry `item` and `item_reference`.
+There is no signal ID. See
 [references/overview.md](references/overview.md) for the full payload.
 
 ## Environment Variables
 
 ```bash
-CLOUDSIGNAL_WEBHOOK_APIKEY=your_webhook_api_key   # per-endpoint Webhook API key, from the Cloudprinter.com Dashboard
+CLOUDSIGNAL_WEBHOOK_APIKEY=your_webhook_api_key   # Webhook API key from the CloudSignal Webhooks configuration in the Cloudprinter.com Dashboard
 ```
 
 ## Local Development

@@ -58,7 +58,8 @@ Community has no "send test event" button, so trigger real events:
 - `message.inbound` — text your Community number from that phone
 - `message.outbound` — DM that member from the Dashboard
 - `member.updated` — change a standard personal data field for the member
-- `member.deleted` — have the test number text `STOP`
+- `member.opted_out` and `member.updated` — have the test number text `STOP`
+- `member.deleted` — have the test member delete themselves
 
 ### Run Unit Tests
 
@@ -71,7 +72,7 @@ pytest test_webhook.py -v
 - `POST /webhooks/community` — Verifies the `community-signature` header
   (HMAC-SHA256 of `{t}.{raw_body}`, hex) in a FastAPI dependency, deduplicates
   on the event `id`, and dispatches `message.inbound`, `message.outbound`,
-  `member.created`, `member.updated`, and `member.deleted`.
+  `member.created`, `member.updated`, `member.deleted`, and `member.opted_out`.
 - `GET /health` — Health check.
 
 ## Notes
@@ -83,7 +84,7 @@ pytest test_webhook.py -v
   request body on this route — FastAPI would parse and re-serialize it, and the
   signature would no longer match.
 - **At-least-once delivery.** Community can send the same event more than once.
-  The example keeps an in-memory dict of event ids for an hour; use Redis or
+  The example keeps an in-memory dict of event ids for two hours; use Redis or
   your database in production.
 - **Respond within 15 seconds** with a 2xx. Failed deliveries are retried up to
   5 times with increasing backoff for up to an hour, and persistently failing
