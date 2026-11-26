@@ -38,10 +38,10 @@ describe('Huntress webhook handler', () => {
     expect(res.body.type).toBeNull();
   });
 
-  test('reports the type when the body has one', async () => {
-    const res = await send(JSON.stringify({ type: 'example.event', data: {} }));
+  test('reports event_type, not the body-level type field', async () => {
+    const res = await send(JSON.stringify({ event_type: 'escalation.created', type: 'not_the_event_type' }));
     expect(res.status).toBe(200);
-    expect(res.body.type).toBe('example.event');
+    expect(res.body.type).toBe('escalation.created');
   });
 
   test('accepts the Standard Webhooks header names a live Huntress delivery used', async () => {

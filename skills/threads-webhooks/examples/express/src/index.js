@@ -53,22 +53,22 @@ function handleChange(change) {
   switch (field) {
     case 'replies':
       console.log(`Reply ${value.id} by @${value.username} to post ${value.replied_to?.id}`);
-      // TODO: Moderate or respond to the reply.
+      // Your code: Moderate or respond to the reply.
       break;
 
     case 'mentions':
       console.log(`Mention in post ${value.id} by @${value.username}`);
-      // TODO: Social listening / alerts.
+      // Your code: Social listening / alerts.
       break;
 
     case 'publish':
       console.log(`Post ${value.id} published by @${value.username}`);
-      // TODO: Sync published posts.
+      // Your code: Sync published posts.
       break;
 
     case 'delete':
       console.log(`Post ${value.id} deleted at ${value.deleted_at}`);
-      // TODO: Remove the post from your own store.
+      // Your code: Remove the post from your own store.
       break;
 
     default:

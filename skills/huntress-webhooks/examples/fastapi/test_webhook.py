@@ -59,10 +59,10 @@ def test_body_without_type_is_accepted():
     assert response.json()["type"] is None
 
 
-def test_type_is_reported_when_present():
-    response = send(json.dumps({"type": "example.event", "data": {}}))
+def test_event_type_is_reported_not_body_type():
+    response = send(json.dumps({"event_type": "escalation.created", "type": "not_the_event_type"}))
     assert response.status_code == 200
-    assert response.json()["type"] == "example.event"
+    assert response.json()["type"] == "escalation.created"
 
 
 def test_accepts_standard_webhooks_header_names_from_a_live_delivery():

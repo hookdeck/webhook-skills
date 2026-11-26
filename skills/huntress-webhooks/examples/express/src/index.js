@@ -11,11 +11,12 @@ dotenv.config({ quiet: true });
 export const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Huntress's article describes the body only as "a JSON payload describing the event".
-// A live test delivery (2026-11-18) carried `event_type` ("test.event"); fall back to
-// `type`, otherwise report the event as untyped.
+// Huntress's webhook payload reference (https://api.huntress.io/docs, "Webhooks") puts the
+// event type in the top-level `event_type`, e.g. "incident_report.created". Escalation and
+// platform action bodies also have a `type` field, which is NOT the event type, so don't
+// fall back to it. Send Test sends `event_type: "test.event"`.
 export function parseHuntressEvent(body) {
-  const raw = body && (body.event_type ?? body.type);
+  const raw = body && body.event_type;
   const type = typeof raw === 'string' ? raw : null;
   return { type, payload: body ?? {} };
 }

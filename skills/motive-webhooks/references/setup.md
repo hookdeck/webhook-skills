@@ -11,7 +11,7 @@ Every webhook has a **secret**. You choose it when creating the webhook: it must
 
 ## Register Your Endpoint
 
-Webhooks are managed through the Motive API ("Create a new company webhook", `POST`). Per the API reference, the body takes:
+Webhooks are managed through the Motive API ("Create a new company webhook", `POST /v1/company_webhooks`). Per the API reference, these are passed as query parameters:
 
 | Field | Description |
 |-------|-------------|
@@ -21,7 +21,7 @@ Webhooks are managed through the Motive API ("Create a new company webhook", `PO
 | `actions` | Array of action names, e.g. `["vehicle_location_updated", "fault_code_opened", "fault_code_closed"]` |
 | `enabled` | Whether the webhook is enabled |
 
-The same API lists, fetches, and updates webhooks, lists past webhook requests, and can trigger a specific webhook. See [Create a new company webhook](https://developer.gomotive.com/reference/create-a-new-company-webhook).
+The same API lists, fetches, and updates webhooks, lists past webhook requests, and can trigger a specific webhook. See [Create a new company webhook](https://developer-docs.gomotive.com/reference/create-a-new-company-webhook).
 
 Limits: one active webhook per action and URL, and at most two active webhooks per action.
 

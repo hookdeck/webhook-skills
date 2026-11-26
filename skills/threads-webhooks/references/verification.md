@@ -62,7 +62,7 @@ def verify_threads_signature(raw_body: bytes, signature_header: str, app_secret:
 - **Use the raw body.** Verify before JSON parsing. In Express use `express.raw({ type: '*/*' })`.
 - **Wrong secret.** Use the Threads App Secret, not the Meta App Secret, the verify token or an access token.
 - **Prefix required.** Reject a header without `sha256=`.
-- **No timestamp in the signature.** Dedupe with each change's `value.id` plus `field` (and `time`).
+- **No timestamp in the signature.** Dedupe on each change's `field`, `target_id` and `value.id` together. For `mentions`, `target_id` is the mentioned user, so notifications about one post for two of your users can share a `value.id`. And `time` records when a notification was sent, so leave it out of the key.
 
 ## Debugging Verification Failures
 

@@ -50,7 +50,7 @@ The body is a single JSON object (not an array). Fields vary by action, but all 
 }
 ```
 
-`vehicle_location_updated` carries `id`, `vehicle_id`, `vehicle_number`, `located_at`, `lat`, `lon`, `bearing`, `speed`, `odometer`, `type`, and more. Motive sends no event ID header, so de-duplicate on `action` plus the payload `id` (and a timestamp field such as `located_at` where the action has one).
+`vehicle_location_updated` carries `id`, `vehicle_id`, `vehicle_number`, `located_at`, `lat`, `lon`, `bearing`, `speed`, `odometer`, `type`, and more. Motive sends no event ID header. De-duplicate on `action` plus the payload `id` plus a field that changes between updates, such as `located_at` or `updated_at`: an `_upserted` resource keeps the same `id` across its created and updated deliveries.
 
 ## Delivery and Retries
 
@@ -64,4 +64,4 @@ The body is a single JSON object (not an array). Fields vary by action, but all 
 
 ## Full Event Reference
 
-For the complete list of actions and payloads, see [Motive's webhooks documentation](https://developer.gomotive.com/docs/overview-company-webhooks) and the [Webhooks v2 overview](https://developer.gomotive.com/docs/webhooks-v2).
+For the complete list of actions and payloads, see [Motive's webhooks documentation](https://developer-docs.gomotive.com/reference/overview-company-webhooks) and the [Webhooks v2 overview](https://developer-docs.gomotive.com/reference/webhooks-v2).
