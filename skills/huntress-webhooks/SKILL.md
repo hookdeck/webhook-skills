@@ -82,25 +82,29 @@ the same HMAC-SHA256 check and compares every `v1,` entry in constant time, but 
 window can be dropped or widened. Deduplicate on the delivery ID (`webhook-id` or
 `svix-id`) instead.
 
-## Notification Categories and Payload
+## Event Types and Payload
 
 An endpoint subscribes to four **notification categories**, toggled per endpoint in
-the Portal. These are subscription toggles, not event type strings on the wire:
+the Portal. Each category sends a set of event types, named in the top-level
+`event_type` field of the JSON body. Huntress's
+[webhook payload reference](https://api.huntress.io/docs) (the "Webhooks" source;
+JSON at `https://api.huntress.io/v1/webhooks_doc.json`) lists 12:
 
-| Category | Notes |
-|----------|-------|
-| Incident Reports | Incident report notifications |
-| Escalations | Escalation notifications |
-| Platform Actions | Platform action notifications |
-| Account Notices | Account notice notifications |
+| Category | `event_type` values |
+|----------|---------------------|
+| Incident Reports | `incident_report.created`, `incident_report.comment_added`, `incident_report.closed` |
+| Escalations | `escalation.created`, `escalation.updated`, `escalation.overdue`, `escalation.closed` |
+| Platform Actions | `platform_action.created`, `platform_action.overdue`, `platform_action.closed`, `platform_action.notification` |
+| Account Notices | `account_notice.notification` |
 
-Huntress's webhook article describes the body only as "a JSON payload describing the
-event" and does not document a type field or the payload schema. The live **Send Test**
-body (2026-11-18) was `{"event_type":"test.event","message":"Hello World"}`; real
-category payloads have not been captured. The examples read `event_type` (falling back
-to `type`) if the body has one and otherwise log the body as untyped. Use **View Delivery
-Attempts → Request Body** in the Portal (or **Send Test**) to see the real shape, then
-add handling for it.
+Bodies are flat (no `data` wrapper) and come in three shapes: incident report events,
+escalation and platform action events (which also have a `type` field that is **not**
+the event type), and the two `.notification` events (`id`, `subject`, `body`). The
+reference has schemas only, no example bodies. Incident report bodies still carry
+`account_id` and `organization_id`, marked deprecated in favour of `account` and
+`organization`. The live **Send Test** body (2026-11-18) was
+`{"event_type":"test.event","message":"Hello World"}`; `test.event` isn't in the
+reference. The examples read `event_type` and log the body as untyped if it's missing.
 
 ## Environment Variables
 

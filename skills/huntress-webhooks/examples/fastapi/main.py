@@ -17,13 +17,14 @@ app = FastAPI(title="Huntress Webhook Handler")
 def parse_huntress_event(body: Any) -> tuple[Optional[str], Any]:
     """Return (type, payload).
 
-    Huntress's article describes the body only as "a JSON payload describing the
-    event". A live test delivery (2026-11-18) carried `event_type` ("test.event");
-    fall back to `type`, otherwise report the event as untyped.
+    Huntress's webhook payload reference (https://api.huntress.io/docs, "Webhooks")
+    puts the event type in the top-level `event_type`, e.g. "incident_report.created".
+    Escalation and platform action bodies also have a `type` field, which is NOT the
+    event type, so don't fall back to it. Send Test sends `event_type: "test.event"`.
     """
     event_type = None
     if isinstance(body, dict):
-        event_type = body.get("event_type", body.get("type"))
+        event_type = body.get("event_type")
     return (event_type if isinstance(event_type, str) else None), body
 
 

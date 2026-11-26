@@ -37,53 +37,53 @@ function handleMotiveEvent(event) {
   switch (event.action) {
     case 'vehicle_location_updated':
       console.log(`Vehicle ${event.vehicle_number} at ${event.lat},${event.lon}`);
-      // TODO: Update live map / ETA
+      // Your code: Update live map / ETA
       break;
 
     case 'vehicle_location_received':
       console.log(`Location received for vehicle ${event.vehicle_id}`);
-      // TODO: Append to location history
+      // Your code: Append to location history
       break;
 
     case 'vehicle_upserted':
       console.log(`Vehicle ${event.id} ${event.trigger || 'upserted'}`);
-      // TODO: Sync the vehicle roster
+      // Your code: Sync the vehicle roster
       break;
 
     case 'fault_code_opened':
       console.log(`Fault ${event.code_label} opened on vehicle ${event.vehicle?.number}`);
-      // TODO: Create a maintenance ticket
+      // Your code: Create a maintenance ticket
       break;
 
     case 'fault_code_closed':
       console.log(`Fault ${event.code_label} closed on vehicle ${event.vehicle?.number}`);
-      // TODO: Close the maintenance ticket
+      // Your code: Close the maintenance ticket
       break;
 
     case 'user_upserted':
       console.log(`User ${event.id} (${event.role}) ${event.trigger}`);
-      // TODO: Sync drivers and admins
+      // Your code: Sync drivers and admins
       break;
 
     case 'inspection_report_upserted':
       console.log(`Inspection report ${event.id} upserted`);
-      // TODO: Route defects to maintenance
+      // Your code: Route defects to maintenance
       break;
 
     case 'hos_violation_upserted':
       console.log(`HOS violation ${event.id} upserted`);
-      // TODO: Alert dispatch / compliance
+      // Your code: Alert dispatch / compliance
       break;
 
     case 'vehicle_geofence_event':
     case 'asset_geofence_event':
       console.log(`Geofence event: ${event.action}`);
-      // TODO: Track arrivals and departures
+      // Your code: Track arrivals and departures
       break;
 
     case 'engine_toggle_event':
       console.log('Engine toggle event');
-      // TODO: Update usage and idling reports
+      // Your code: Update usage and idling reports
       break;
 
     case 'speeding_event_created':
@@ -91,24 +91,24 @@ function handleMotiveEvent(event) {
     case 'driver_performance_event_created':
     case 'driver_performance_event_updated':
       console.log(`Safety event: ${event.action} (${event.id})`);
-      // TODO: Queue driver coaching
+      // Your code: Queue driver coaching
       break;
 
     case 'user_duty_status_updated':
       console.log('Driver duty status updated');
-      // TODO: Sync timecards
+      // Your code: Sync timecards
       break;
 
     case 'form_entry_upserted':
       console.log(`Form entry ${event.id} upserted`);
-      // TODO: Update dispatch workflow
+      // Your code: Update dispatch workflow
       break;
 
     case 'vehicle_gateway_disconnected':
     case 'vehicle_gateway_disconnect_ended':
     case 'dashcam_disconnected':
       console.log(`Device event: ${event.action} (${event.id})`);
-      // TODO: Alert on device health
+      // Your code: Alert on device health
       break;
 
     default:
@@ -146,7 +146,7 @@ app.post('/webhooks/motive',
 
     // The activation test request is a JSON array of the webhook's actions, e.g.
     // ["vehicle_location_updated","fault_code_closed"]: acknowledge it without dispatching.
-    // Motive sends no event ID header: de-duplicate on action + payload id
+    // Motive sends no event ID header: de-duplicate on action + payload id + a changing timestamp
     if (event && typeof event === 'object' && !Array.isArray(event)) {
       handleMotiveEvent(event);
     }

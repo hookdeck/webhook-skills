@@ -68,16 +68,16 @@ def handle_change(change: dict) -> None:
     if field == "replies":
         replied_to = (value.get("replied_to") or {}).get("id")
         print(f"Reply {value.get('id')} by @{value.get('username')} to post {replied_to}")
-        # TODO: Moderate or respond to the reply.
+        # Your code: Moderate or respond to the reply.
     elif field == "mentions":
         print(f"Mention in post {value.get('id')} by @{value.get('username')}")
-        # TODO: Social listening / alerts.
+        # Your code: Social listening / alerts.
     elif field == "publish":
         print(f"Post {value.get('id')} published by @{value.get('username')}")
-        # TODO: Sync published posts.
+        # Your code: Sync published posts.
     elif field == "delete":
         print(f"Post {value.get('id')} deleted at {value.get('deleted_at')}")
-        # TODO: Remove the post from your own store.
+        # Your code: Remove the post from your own store.
     else:
         print(f"Unhandled Threads field: {field}")
 
